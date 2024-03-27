@@ -40,8 +40,7 @@ public class SystemUMRPRUEos extends SystemPrEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemUMRPRUEos(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     setBmixType(1);
     modelName = "UMR-PRU-EoS";
     attractiveTermNumber = 1;

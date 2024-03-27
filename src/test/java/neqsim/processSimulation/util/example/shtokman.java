@@ -63,7 +63,7 @@ public class shtokman {
     // ThermodynamicOperations ops = new ThermodynamicOperations(stream_2.getThermoSystem());
     /*
      * try { // ops.TPflash();
-     * 
+     *
      * ops.waterPrecipitationTemperature(); stream_2.getThermoSystem().display();
      * stream_2.getThermoSystem().init(0); ops.hydrateFormationTemperature(2);
      * stream_2.getThermoSystem().display(); // stream_2.getThermoSystem().display(); //
@@ -73,7 +73,7 @@ public class shtokman {
      * getThermoSystem().getPhase(1).getComponent("MEG").getMolarMass(); double wtwater =
      * stream_2.getThermoSystem().getPhase(1).getComponent("water").getx()*stream_2.
      * getThermoSystem().getPhase(1).getComponent("water").getMolarMass();
-     * 
+     *
      * System.out.println("wt% MEG " + wtMEG/(wtMEG+wtwater)*100); // operations.displayResult();
      */
   }

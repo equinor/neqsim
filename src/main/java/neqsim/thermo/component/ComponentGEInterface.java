@@ -7,6 +7,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -26,7 +27,7 @@ public interface ComponentGEInterface extends ComponentInterface {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param pt the PhaseType of the phase.
    * @param HValpha an array of {@link double} objects
    * @param HVgij an array of {@link double} objects
    * @param intparam an array of {@link double} objects
@@ -34,7 +35,7 @@ public interface ComponentGEInterface extends ComponentInterface {
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam,
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
       String[][] mixRule);
 
   /**

@@ -3,6 +3,7 @@ package neqsim.thermo.component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -14,40 +15,37 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentHydrateGF extends ComponentHydrate {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentHydrateGF.class);
 
   double[][] Ak = new double[2][2]; // [structure][cavitytype]
   double[][] Bk = new double[2][2]; // [structure][cavitytype]
-  static Logger logger = LogManager.getLogger(ComponentHydrateGF.class);
 
   /**
    * <p>
    * Constructor for ComponentHydrateGF.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentHydrateGF(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentHydrateGF(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
 
     java.sql.ResultSet dataSet = null;
-    if (!component_name.equals("default")) {
+    if (!name.equals("default")) {
       try (neqsim.util.database.NeqSimDataBase database =
           new neqsim.util.database.NeqSimDataBase()) {
         // System.out.println("reading GF hydrate parameters ..............");
         try {
-          dataSet =
-              database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+          dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           dataSet.next();
           dataSet.getString("ID");
         } catch (Exception ex) {
-          logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
+          logger.info("no parameters in tempcomp -- trying comp.. " + name);
           dataSet.close();
-          dataSet =
-              database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+          dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           dataSet.next();
         }
         Ak[0][0] = Double.parseDouble(dataSet.getString("A1_SmallGF"));
@@ -74,13 +72,6 @@ public class ComponentHydrateGF extends ComponentHydrate {
 
   /** {@inheritDoc} */
   @Override
-  public double fugcoef(PhaseInterface phase) {
-    return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-        phase.getPressure());
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
     double maxFug = 1.0e100;
     int stableStructure = 0;
@@ -94,7 +85,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
 
       refPhase.setTemperature(temp);
       refPhase.setPressure(pres);
-      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, 0, 1.0);
+      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, PhaseType.byValue(0), 1.0);
       double refWaterFugacityCoef = Math.log(refPhase.getComponent("water").fugcoef(refPhase));
 
       double dhf = 6010.0;
@@ -143,7 +134,6 @@ public class ComponentHydrateGF extends ComponentHydrate {
            * (getEmptyHydrateStructureVapourPressure(hydrateStructure, temp) * Math.exp(solvol / (R
            * * temp) * (pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)) *
            * 1e5)));
-           * 
            */
           // System.out.println("pointing "
           // +(Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStruct,temp))*1e5))));

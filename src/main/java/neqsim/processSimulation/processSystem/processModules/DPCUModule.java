@@ -47,7 +47,9 @@ public class DPCUModule extends ProcessModuleBaseClass {
   DistillationColumn distColumn;
 
   /**
-   * <p>Constructor for DPCUModule.</p>
+   * <p>
+   * Constructor for DPCUModule.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -150,55 +152,54 @@ public class DPCUModule extends ProcessModuleBaseClass {
     /*
      * Cooler inletCooler = new Cooler("inlet well stream cooler", feedStream);
      * inletCooler.setOutTemperature(inletSepTemperature + 273.15);
-     * 
+     *
      * inletSeparator = new Separator("Inlet separator", inletCooler.getOutStream());
-     * 
+     *
      * Cooler gasCooler = new Cooler("separator gas cooler", inletSeparator.getGasOutStream());
      * gasCooler.setOutTemperature(gasScrubberTemperature + 273.15);
-     * 
+     *
      * oilPump = new Pump("liquid pump", inletSeparator.getLiquidOutStream());
      * oilPump.setOutletPressure(liquidPumpPressure);
-     * 
+     *
      * Separator gasScrubber = new Separator("HC dew point control scrubber",
      * gasCooler.getOutStream());
-     * 
+     *
      * Recycle HPliquidRecycle = new Recycle("Resycle"); double tolerance = 1e-2;
      * HPliquidRecycle.setTolerance(tolerance);
      * HPliquidRecycle.addStream(gasScrubber.getLiquidOutStream());
      * inletSeparator.addStream(HPliquidRecycle.getOutStream());
-     * 
+     *
      * Compressor firstStageCompressor = new Compressor("1st stage compressor",
      * gasScrubber.getGasOutStream());
      * firstStageCompressor.setOutletPressure(firstStageOutPressure);
-     * 
+     *
      * glycolFeedStream.getThermoSystem().setPressure(firstStageOutPressure);
-     * 
+     *
      * Mixer glycolMixer = new Mixer("glycol injection mixer");
      * glycolMixer.addStream(firstStageCompressor.getOutStream());
      * glycolMixer.addStream(glycolFeedStream);
-     * 
+     *
      * Cooler mixerAfterCooler = new Cooler("glycol mixer after cooler",
      * glycolMixer.getOutStream()); mixerAfterCooler.setOutTemperature(glycolScrubberTemperature +
      * 273.15);
-     * 
+     *
      * glycolScrubber = new Separator("Water dew point control scrubber",
      * mixerAfterCooler.getOutStream());
-     * 
+     *
      * secondStageCompressor = new Compressor("2nd stage compressor",
      * glycolScrubber.getGasOutStream());
      * secondStageCompressor.setOutletPressure(secondStageOutPressure);
-     * 
+     *
      * secondStageAfterCooler = new Cooler("second stage after cooler",
      * secondStageCompressor.getOutStream());
      * secondStageAfterCooler.setOutTemperature(exportGasTemperature + 273.15);
-     * 
+     *
      * getOperations().add(inletCooler); getOperations().add(inletSeparator);
      * getOperations().add(gasCooler); getOperations().add(oilPump);
      * getOperations().add(gasScrubber); getOperations().add(HPliquidRecycle);
      * getOperations().add(firstStageCompressor); getOperations().add(glycolMixer);
      * getOperations().add(mixerAfterCooler); getOperations().add(glycolScrubber);
      * getOperations().add(secondStageCompressor); getOperations().add(secondStageAfterCooler);
-     * 
      */
   }
 

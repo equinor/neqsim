@@ -109,10 +109,10 @@ public class PhaseEnvelope {
        * testOps.setRunAsThread(true); testOps.waterDewPointLine(10, 200); boolean isFinished =
        * testOps.waitAndCheckForFinishedCalculation(50000); double[][] waterData =
        * testOps.getData();
-       * 
+       *
        * testOps.hydrateEquilibriumLine(10, 200); isFinished =
        * testOps.waitAndCheckForFinishedCalculation(50000); double[][] hydData = testOps.getData();
-       * 
+       *
        * testSystem.addComponent("water",
        * -testSystem.getPhase(0).getComponent("water").getNumberOfmoles());
        */

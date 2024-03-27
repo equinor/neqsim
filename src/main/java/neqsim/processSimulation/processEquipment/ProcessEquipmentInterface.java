@@ -28,9 +28,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * Get a <code>initMechanicalDesign</code> for the equipment.
    * </p>
    **/
-  default void initMechanicalDesign() {
-
-  }
+  default void initMechanicalDesign() {}
 
   /**
    * <p>
@@ -47,7 +45,6 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * </p>
    *
    * @return true or false
-   * 
    */
   public default boolean needRecalculation() {
     return true;

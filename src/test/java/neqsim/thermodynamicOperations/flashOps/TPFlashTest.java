@@ -7,7 +7,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
- *
  */
 class TPFlashTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
@@ -168,6 +167,5 @@ class TPFlashTest {
     testOps.TPflash();
     assertEquals(2, testSystem.getNumberOfPhases());
     // testSystem.prettyPrint();
-
   }
 }

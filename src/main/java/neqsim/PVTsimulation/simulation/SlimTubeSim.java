@@ -170,7 +170,7 @@ public class SlimTubeSim extends BasePVTsimulation {
       /*
        * double totalAccumulatedVolumeAtStadardConditions =
        * slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(0).getVolume();
-       * 
+       *
        * if (slimTubeNodeSystem[numberOfSlimTubeNodes].getNumberOfPhases() > 1) {
        * totalAccumulatedVolumeAtStadardConditions =
        * slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(1).getVolume(); }
@@ -192,11 +192,11 @@ public class SlimTubeSim extends BasePVTsimulation {
     /*
      * double totalAccumulatedVolumeAtStadardConditions =
      * slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(0).getVolume();
-     * 
+     *
      * if (slimTubeNodeSystem[numberOfSlimTubeNodes].getNumberOfPhases() > 1) {
      * totalAccumulatedVolumeAtStadardConditions =
      * slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(1).getVolume(); }
-     * 
+     *
      * System.out.println("accumulated VOlume " + totalAccumulatedVolumeAtStadardConditions +
      * " total reference volume " + totalReferenceNodeVolumeAtStadardConditions);
      * System.out.println("oil recovery ratio" + totalAccumulatedVolumeAtStadardConditions /

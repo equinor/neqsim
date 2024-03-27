@@ -40,7 +40,7 @@ public class Manifold extends ProcessEquipmentBaseClass {
    * <p>
    * Constructor for Splitter with name as input.
    * </p>
-   * 
+   *
    * @param name name of manifold
    */
   public Manifold(String name) {
@@ -69,12 +69,11 @@ public class Manifold extends ProcessEquipmentBaseClass {
     return localsplitter.getSplitStream(i);
   }
 
-
   /**
    * <p>
    * getMixedStream.
    * </p>
-   * 
+   *
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    **/
   public StreamInterface getMixedStream() {
@@ -88,5 +87,4 @@ public class Manifold extends ProcessEquipmentBaseClass {
     localsplitter.setInletStream(localmixer.getOutletStream());
     localsplitter.run();
   }
-
 }

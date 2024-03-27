@@ -22,7 +22,9 @@ public class InvalidInputException extends neqsim.util.exception.ThermoException
   }
 
   /**
-   * Constructs an <code>InvalidInputException</code> with a default message.
+   * Constructs an <code>InvalidInputException</code> with a default message like:
+   *
+   * Input " + inputName + " was invalid.
    *
    * @param className Class that exception is raised from
    * @param methodName Method that exception is raised from
@@ -33,7 +35,9 @@ public class InvalidInputException extends neqsim.util.exception.ThermoException
   }
 
   /**
-   * Constructs an <code>InvalidInputException</code> with the specified detail message.
+   * Constructs an <code>InvalidInputException</code> with a message like:
+   *
+   * "Input " + inputName + " " + msg
    *
    * @param className Class that exception is raised from
    * @param methodName Method that exception is raised from

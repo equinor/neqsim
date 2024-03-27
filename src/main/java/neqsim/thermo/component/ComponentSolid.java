@@ -7,6 +7,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -35,13 +36,13 @@ public class ComponentSolid extends ComponentSrk {
    * Constructor for ComponentSolid.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentSolid(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentSolid(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
   /**
@@ -108,7 +109,7 @@ public class ComponentSolid extends ComponentSrk {
 
     refPhase.setTemperature(temp);
     refPhase.setPressure(PvapSolid);
-    refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, 1, 1.0);
+    refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, PhaseType.byValue(1), 1.0);
     refPhase.getComponent(0).fugcoef(refPhase);
 
     // System.out.println("ref co2 fugcoef " +
@@ -138,7 +139,7 @@ public class ComponentSolid extends ComponentSrk {
   public double fugcoef2(PhaseInterface phase1) {
     refPhase.setTemperature(phase1.getTemperature());
     refPhase.setPressure(phase1.getPressure());
-    refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, 0, 1.0);
+    refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, PhaseType.byValue(0), 1.0);
     refPhase.getComponent(0).fugcoef(refPhase);
 
     double liquidPhaseFugacity =
@@ -243,7 +244,7 @@ public class ComponentSolid extends ComponentSrk {
         }
         refPhase.getComponent(componentName)
             .setAttractiveTerm(phase.getComponent(componentName).getAttractiveTermNumber());
-        refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, 1, 1.0);
+        refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, PhaseType.byValue(1), 1.0);
       }
     } catch (Exception ex) {
       logger.error("error occured", ex);

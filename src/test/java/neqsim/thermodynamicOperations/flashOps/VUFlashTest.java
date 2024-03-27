@@ -23,9 +23,7 @@ class VUFlashTest {
    * @throws java.lang.Exception
    */
   @BeforeEach
-  void setUp() throws Exception {
-
-  }
+  void setUp() throws Exception {}
 
   @Test
   void testVUflash() {
@@ -45,5 +43,4 @@ class VUFlashTest {
 
     assertEquals(21.387, testSystem.getPressure(), 0.01);
   }
-
 }

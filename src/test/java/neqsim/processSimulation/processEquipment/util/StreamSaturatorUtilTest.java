@@ -36,7 +36,6 @@ public class StreamSaturatorUtilTest extends neqsim.NeqSimTest {
     assertEquals(0.0012319218375683974,
         streamSaturator.getOutletStream().getFluid().getPhase(0).getComponent("water").getx(),
         1e-16);
-
   }
 
   @Test

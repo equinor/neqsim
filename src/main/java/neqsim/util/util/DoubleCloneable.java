@@ -49,17 +49,6 @@ public class DoubleCloneable implements Cloneable {
 
   /**
    * <p>
-   * set.
-   * </p>
-   *
-   * @param val a double
-   */
-  public void set(double val) {
-    doubleValue = val;
-  }
-
-  /**
-   * <p>
    * doubleValue.
    * </p>
    *
@@ -67,5 +56,16 @@ public class DoubleCloneable implements Cloneable {
    */
   public double doubleValue() {
     return doubleValue;
+  }
+
+  /**
+   * <p>
+   * set.
+   * </p>
+   *
+   * @param val a double
+   */
+  public void set(double val) {
+    doubleValue = val;
   }
 }

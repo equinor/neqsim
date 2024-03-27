@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 /**
+ * Base class for system with EOS.
  *
  * @author Even Solbraa
  */
@@ -23,13 +24,9 @@ public abstract class SystemEos extends neqsim.thermo.system.SystemThermo {
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemEos(double T, double P) {
-    this(T, P, false);
-  }
-
   public SystemEos(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;
+    super(T, P, checkForSolids);
   }
 }

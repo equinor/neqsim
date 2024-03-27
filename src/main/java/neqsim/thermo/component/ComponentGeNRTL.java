@@ -1,6 +1,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -22,20 +23,20 @@ public class ComponentGeNRTL extends ComponentGE {
    * Constructor for ComponentGeNRTL.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentGeNRTL(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentGeNRTL(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
   /** {@inheritDoc} */
   @Override
   @SuppressWarnings("unused")
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam,
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
       String[][] mixRule) {
     double type = phase.getInitType();
     double A = 0;
@@ -189,7 +190,7 @@ public class ComponentGeNRTL extends ComponentGE {
         - dA6dTetter);
     /*
      * if(w==0){ dlngammadtold = dlngammadt; temperature +=0.0001; }
-     * 
+     *
      * if(w==1){ lngammaold = lngamma; temperature -=0.0002; } }
      */
     // System.out.println("deriv: " + lngammaold + " " + lngamma + " " +
@@ -200,7 +201,7 @@ public class ComponentGeNRTL extends ComponentGE {
     // dlngammadt = (lngammaold-lngamma)/0.002;
 
     // phaseny.getExcessGibbsEnergy(numberOfComponents, temperature, pressure,
-    // phasetype)
+    // pt)
     gamma = Math.exp(lngamma);
     // System.out.println("gamma " +gamma);
     // if derivates....
@@ -256,14 +257,14 @@ public class ComponentGeNRTL extends ComponentGE {
 
   /*
    * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature,
-   * double pressure, int phasetype){ dfugdp = (Math.log(fugcoef(phase, numberOfComponents,
-   * temperature, pressure+0.01, phasetype))-Math.log(fugcoef(phase, numberOfComponents,
-   * temperature, pressure-0.01, phasetype)))/0.02; return dfugdp; }
-   * 
+   * double pressure, PhaseType pt){ dfugdp = (Math.log(fugcoef(phase, numberOfComponents,
+   * temperature, pressure+0.01, pt))-Math.log(fugcoef(phase, numberOfComponents, temperature,
+   * pressure-0.01, pt)))/0.02; return dfugdp; }
+   *
    * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,
-   * double pressure, int phasetype){ dfugdt = (Math.log(fugcoef(phase, numberOfComponents,
-   * temperature+0.01, pressure, phasetype))-Math.log(fugcoef(phase, numberOfComponents,
-   * temperature-0.01, pressure, phasetype)))/0.02; return dfugdt; }
+   * double pressure, PhaseType pt){ dfugdt = (Math.log(fugcoef(phase, numberOfComponents,
+   * temperature+0.01, pressure, pt))-Math.log(fugcoef(phase, numberOfComponents, temperature-0.01,
+   * pressure, pt)))/0.02; return dfugdt; }
    */
 
   /**

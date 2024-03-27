@@ -87,3 +87,6 @@ test_*.ser
 html/
 latex/
 eclipse_dictionary.txt
+
+src/main/**/*.png
+src/main/**/*.gif

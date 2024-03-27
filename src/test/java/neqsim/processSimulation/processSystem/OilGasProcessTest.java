@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class OilGasProcessTest extends neqsim.NeqSimTest {
-
   @Test
   public void runProcess() throws InterruptedException {
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);
@@ -80,8 +79,6 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     seprator3rdStage.addStream(valve2.getOutletStream());
     seprator3rdStage.addStream(recircstream1);
 
-
-
     ThrottlingValve pipeloss1st =
         new ThrottlingValve("pipeloss1st", seprator3rdStage.getGasOutStream());
     pipeloss1st.setOutletPressure(2.7 - 0.03);
@@ -127,6 +124,5 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
 
     // System.out.println("recycle flow " + recycle1.getOutletStream().getFlowRate("kg/hr"));
     // valveLP1.getOutletStream().getFluid().prettyPrint();
-
   }
 }

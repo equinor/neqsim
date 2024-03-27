@@ -9,6 +9,7 @@ package neqsim.thermo.component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.atomElement.Element;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
@@ -123,10 +124,17 @@ public abstract class Component implements ComponentInterface {
   protected double paulingAnionicDiameter = 0;
 
   private int orginalNumberOfAssociationSites = 0;
+
+  /* Derivative of fugacity wrt temperature */
   protected double dfugdt = 0.1;
+  /* Derivative of fugacity wrt pressure */
   protected double dfugdp = 0.1;
-  protected double[] dfugdn = new double[MAX_NUMBER_OF_COMPONENTS];
-  public double[] dfugdx = new double[MAX_NUMBER_OF_COMPONENTS];
+  /* Derivative of fugacity wrt mole fraction (of each ) */
+  protected double[] dfugdn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  /* Derivative of fugacity wrt temperature */
+  public double[] dfugdx = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+
+  // Parameters for Antoine equation
   double AntoineA = 0;
   double AntoineB = 0;
   double AntoineC = 0;
@@ -141,14 +149,14 @@ public abstract class Component implements ComponentInterface {
   private double[] CpSolid = new double[5];
   private double[] CpLiquid = new double[5];
   private double heatOfFusion = 0.0;
+
   double triplePointDensity = 10.0;
   double triplePointPressure = 0.0;
-
   private double triplePointTemperature = 1000.0;
   double meltingPointTemperature = 110.0;
+
   private double idealGasEnthalpyOfFormation = 0.0;
   double idealGasGibbsEnergyOfFormation = 0.0;
-
   double idealGasAbsoluteEntropy = 0.0;
 
   double Hsub = 0.0;
@@ -186,41 +194,38 @@ public abstract class Component implements ComponentInterface {
    * Constructor for Component.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public Component(String component_name, double moles, double molesInPhase, int compnumber) {
-    createComponent(component_name, moles, molesInPhase, compnumber);
+  public Component(String name, double moles, double molesInPhase, int compIndex) {
+    createComponent(name, moles, molesInPhase, compIndex);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void createComponent(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    if (component_name == null) {
+  public void createComponent(String name, double moles, double molesInPhase, int compIndex) {
+    if (name == null) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "createComponent", "component_name", "can not be null"));
+          "createComponent", "name", "can not be null"));
     }
-    if (component_name.trim() == "") {
+    if (name.trim() == "") {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "createComponent", "component_name", "can not be empty"));
+          "createComponent", "name", "can not be empty"));
     }
-    component_name = ComponentInterface.getComponentNameFromAlias(component_name);
-    componentName = component_name;
+    name = ComponentInterface.getComponentNameFromAlias(name);
+    componentName = name;
     numberOfMoles = moles;
     numberOfMolesInPhase = molesInPhase;
     java.sql.ResultSet dataSet = null;
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-      if (!component_name.equals("default")) {
+      if (!name.equals("default")) {
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
-            dataSet = database
-                .getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
+            dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
           } else {
-            dataSet =
-                database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+            dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           }
           dataSet.next();
           dataSet.getString("ID");
@@ -229,9 +234,8 @@ public abstract class Component implements ComponentInterface {
           try {
             dataSet.close();
             // logger.info("no parameters in tempcomp -- trying comp.. " +
-            // component_name);
-            dataSet =
-                database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+            // name);
+            dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
             dataSet.next();
           } catch (Exception e2) {
             throw new RuntimeException(e2);
@@ -437,7 +441,7 @@ public abstract class Component implements ComponentInterface {
         waxFormer = Integer.parseInt(dataSet.getString("waxformer")) == 1;
         // System.out.println(componentName + " pure component parameters: ok...");
       }
-      componentNumber = compnumber;
+      componentNumber = compIndex;
     } catch (Exception ex) {
       logger.error("error in comp", ex);
     }
@@ -519,12 +523,12 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
+      int initType) {
     if (totalNumberOfMoles == 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "init",
           "totalNumberOfMoles", "must be larger than 0"));
     }
-    if (type == 0) {
+    if (initType == 0) {
       K = Math.exp(Math.log(criticalPressure / pressure)
           + 5.373 * (1.0 + srkacentricFactor) * (1.0 - criticalTemperature / temperature));
       z = numberOfMoles / totalNumberOfMoles;
@@ -548,7 +552,7 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
-      int numberOfComponents, int type) {}
+      int numberOfComponents, int initType) {}
 
   /** {@inheritDoc} */
   @Override
@@ -2184,6 +2188,7 @@ public abstract class Component implements ComponentInterface {
    *
    * @return a double
    */
+  @Override
   public double getVolumeCorrection() {
     return 0.0;
   }

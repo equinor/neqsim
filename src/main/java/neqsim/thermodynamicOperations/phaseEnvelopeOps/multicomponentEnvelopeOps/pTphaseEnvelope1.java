@@ -315,7 +315,7 @@ public class pTphaseEnvelope1 extends BaseOperation {
        * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
        * file1.setOutputFileName(name1); file1.setXvalues(points2[2], "temp", "sec");
        * file1.setYvalues(points2[3], "pres", "meter"); file1.createFile();
-       * 
+       *
        * String name2 = new String(); name2 = fileName + "Bub.nc"; file2 = new
        * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
        * file2.setOutputFileName(name2); file2.setXvalues(points2[0], "temp", "sec");

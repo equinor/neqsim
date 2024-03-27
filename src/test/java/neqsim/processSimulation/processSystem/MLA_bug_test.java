@@ -342,7 +342,6 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
 
     richGLycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
 
-
     Thread runThr = p.runAsThread();
     try {
       runThr.join(100000);

@@ -6,13 +6,11 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 public class DistillationColumnTest {
-
   /**
    * @throws java.lang.Exception
    */
   @Test
   public void DistillationColumnTest() throws Exception {
-
     neqsim.thermo.system.SystemInterface richTEG =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     richTEG.addComponent("nitrogen", 0.0003884521907420086);
@@ -101,26 +99,22 @@ public class DistillationColumnTest {
             * column.getLiquidOutStream().getFluid().getComponent("water").getMolarMass()
             * column.getLiquidOutStream().getFluid().getComponent("water").getz();
 
-
     double totalWaterIn = waterFlowRateInColumn2 + waterFlowRateInColumnGasToReb;
     double totalWaterOut = waterFlowRateOutColumn + waterFlowRateOutColumnLeanTEG;
     /*
      * System.out.println("Column in is " + totalWaterIn + " kg/hr");
      * System.out.println("Column out is " + totalWaterOut + " kg/hr");
      * System.out.println("Column is solved  " + column.solved());
-     * 
-     * 
-     * 
+     *
      * System.out.println("Calc Water Flow rate via fluid component " + waterFlowRateInColumn);
      * System.out.println("Calc Water Flow rate via molar mass and flow rate total " +
      * waterFlowRateInColumn2 + " kg/hr");
-     * 
+     *
      * System.out .println("condenser temperature " +
      * column.getCondenser().getFluid().getTemperature("C")); System.out.println("condenser duty " +
      * ((Condenser) column.getCondenser()).getDuty());
      */
     assertEquals(totalWaterIn, totalWaterOut, 1.0);
-
   }
 
   /**

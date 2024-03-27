@@ -55,7 +55,6 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     this("controller");
   }
 
-
   /** {@inheritDoc} */
   @Override
   public void setActive(boolean isActive) {

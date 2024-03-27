@@ -101,6 +101,6 @@ public class Diffusivity extends
   /** {@inheritDoc} */
   @Override
   public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throw new UnsupportedOperationException("Unimplemented method 'calcBinaryDiffusionCoefficient");
   }
 }

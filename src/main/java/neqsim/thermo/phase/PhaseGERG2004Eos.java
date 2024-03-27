@@ -60,7 +60,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, molesInPhase);
+    super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentGERG2004(name, moles, molesInPhase, compNumber);
   }
 
@@ -81,17 +81,17 @@ public class PhaseGERG2004Eos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
-    IPHASE = phase.getValue() == 0 ? -1 : -2;
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    IPHASE = pt == PhaseType.LIQUID ? -1 : -2;
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     setxFracGERG();
 
     if (!okVolume) {
-      IPHASE = phase.getValue() == 0 ? -2 : -1;
-      super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+      IPHASE = pt == PhaseType.LIQUID ? -2 : -1;
+      super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     }
-    if (type >= 1) {
+    if (initType >= 1) {
       double[] temp = new double[18];
       temp = GERG2004EOS.SPHIOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1],
           xFracGERG[2], xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7],
@@ -137,7 +137,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
                            // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
       CvGERG = alloTPX[5]; // gergEOS.CPOTPX(temperature,pressure/10.0,
                            // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     }
   }
 
@@ -185,7 +185,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double temp = GERG2004EOS.ZOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1],

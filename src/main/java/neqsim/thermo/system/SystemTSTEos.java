@@ -46,8 +46,7 @@ public class SystemTSTEos extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemTSTEos(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     attractiveTermNumber = 14;
     modelName = "TST-EOS";
 
@@ -82,11 +81,6 @@ public class SystemTSTEos extends SystemEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

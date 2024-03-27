@@ -248,6 +248,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    *
    * @return an array of {@link java.lang.String} objects
    */
+  @Override
   public String[][] getResultTable() {
     return null;
   }

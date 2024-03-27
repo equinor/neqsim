@@ -1,10 +1,8 @@
 package neqsim.processSimulation.processSystem.processModules;
 
 import java.util.UUID;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
@@ -63,7 +61,9 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   double regenerationPressure = 1.4;
 
   /**
-   * <p>Constructor for GlycolDehydrationlModule.</p>
+   * <p>
+   * Constructor for GlycolDehydrationlModule.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -203,7 +203,6 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
      * stripperColumn.addFeedStream(valveMP.getOutStream(), 3);
      * stripperColumn.setCondenserTemperature(273.15 + 80.0); ((Reboiler)
      * stripperColumn.getReboiler()).setRefluxRatio(11.7);
-     * 
      */
 
     Heater reboiler = new Heater("reboiler", valveMP.getOutletStream());

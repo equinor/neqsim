@@ -59,7 +59,7 @@ public class TPmultiflash extends TPflash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
   public TPmultiflash(SystemInterface system, boolean checkForSolids) {
     super(system, checkForSolids);
@@ -258,7 +258,7 @@ public class TPmultiflash extends TPflash {
      * for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) { if
      * (system.getPhase(0).getComponent(i).getx() < 1e-100) { clonedSystem.add(null); continue; }
      * double numb = 0; clonedSystem.add(system.clone());
-     * 
+     *
      * // (clonedSystem.get(i)).init(0); commented out sept 2005, Even S. for (int j = 0; j <
      * system.getPhase(0).getNumberOfComponents(); j++) { numb = i == j ? 1.0 : 1.0e-12; // set to 0
      * by Even Solbraa 23.01.2013 - chaged back to 1.0e-12 27.04.13 if
@@ -275,7 +275,7 @@ public class TPmultiflash extends TPflash {
      * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!((
      * clonedSystem.get(k)) == null)) { sumw[k] += (
      * clonedSystem.get(k)).getPhase(1).getComponents()[i].getx(); } } }
-     * 
+     *
      * for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) { for
      * (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!((
      * clonedSystem.get(k)) == null) && system.getPhase(0).getComponent(k).getx() > 1e-100) { (
@@ -605,7 +605,7 @@ public class TPmultiflash extends TPflash {
      * for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) { if
      * (system.getPhase(0).getComponent(i).getx() < 1e-100) { clonedSystem.add(null); continue; }
      * double numb = 0; clonedSystem.add(system.clone());
-     * 
+     *
      * // (clonedSystem.get(i)).init(0); commented out sept 2005, Even S. for (int j = 0; j <
      * system.getPhase(0).getNumberOfComponents(); j++) { numb = i == j ? 1.0 : 1.0e-12; // set to 0
      * by Even Solbraa 23.01.2013 - chaged back to 1.0e-12 27.04.13 if
@@ -622,7 +622,7 @@ public class TPmultiflash extends TPflash {
      * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!((
      * clonedSystem.get(k)) == null)) { sumw[k] += (
      * clonedSystem.get(k)).getPhase(1).getComponents()[i].getx(); } } }
-     * 
+     *
      * for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) { for
      * (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!((
      * clonedSystem.get(k)) == null) && system.getPhase(0).getComponent(k).getx() > 1e-100) { (

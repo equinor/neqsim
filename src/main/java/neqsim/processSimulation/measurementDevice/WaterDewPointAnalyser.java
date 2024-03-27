@@ -31,7 +31,6 @@ public class WaterDewPointAnalyser extends StreamMeasurementDeviceBaseClass {
    */
   public WaterDewPointAnalyser(StreamInterface stream) {
     this("WaterDewPointAnalyser", stream);
-
   }
 
   /**

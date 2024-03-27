@@ -100,6 +100,41 @@ public class ProcessSystem extends SimulationBaseClass {
    * add.
    * </p>
    *
+   * @param position a int
+   * @param operation a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
+   *        object
+   */
+  public void add(int position, ProcessEquipmentInterface operation) {
+    ArrayList<ProcessEquipmentInterface> units = this.getUnitOperations();
+
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit == operation) {
+        return;
+      }
+    }
+
+    if (getAllUnitNames().contains(operation.getName())) {
+      String currClass = operation.getClass().getSimpleName();
+      int num = 1;
+      for (ProcessEquipmentInterface unit : units) {
+        if (unit.getClass().getSimpleName().equals(currClass)) {
+          num++;
+        }
+      }
+      operation.setName(currClass + Integer.toString(num));
+    }
+
+    getUnitOperations().add(position, operation);
+    if (operation instanceof ModuleInterface) {
+      ((ModuleInterface) operation).initializeModule();
+    }
+  }
+
+  /**
+   * <p>
+   * add.
+   * </p>
+   *
    * @param measurementDevice a
    *        {@link neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface} object
    */
@@ -397,8 +432,8 @@ public class ProcessSystem extends SimulationBaseClass {
         if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
           try {
             if (iter == 1
-                || ((ProcessEquipmentInterface) unitOperations.get(i)).needRecalculation()) {
-              ((ProcessEquipmentInterface) unitOperations.get(i)).run(id);
+                || unitOperations.get(i).needRecalculation()) {
+              unitOperations.get(i).run(id);
             }
           } catch (Exception ex) {
             // String error = ex.getMessage();
@@ -408,7 +443,7 @@ public class ProcessSystem extends SimulationBaseClass {
         if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
             && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {
           try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run(id);
+            unitOperations.get(i).run(id);
           } catch (Exception ex) {
             // String error = ex.getMessage();
             logger.error(ex.getMessage(), ex);
@@ -438,21 +473,19 @@ public class ProcessSystem extends SimulationBaseClass {
 
       /*
        * signalDB = new String[1000][1 + 3 * measurementDevices.size()];
-       * 
+       *
        * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for (int i = 0; i
        * < measurementDevices.size(); i++) { signalDB[timeStepNumber][0] = Double.toString(time);
        * signalDB[timeStepNumber][3 * i + 1] = ((MeasurementDeviceInterface)
        * measurementDevices.get(i)) .getName(); signalDB[timeStepNumber][3 * i + 2] = Double
        * .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
        * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface)
-       * measurementDevices.get(i)) .getUnit();
-       * 
-       * }
+       * measurementDevices.get(i)) .getUnit(); }
        */
     } while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
 
     for (int i = 0; i < unitOperations.size(); i++) {
-      ((ProcessEquipmentInterface) unitOperations.get(i)).setCalculationIdentifier(id);
+      unitOperations.get(i).setCalculationIdentifier(id);
     }
 
     setCalculationIdentifier(id);
@@ -508,6 +541,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @return a double
    */
+  @Override
   public double getTime() {
     return time;
   }
@@ -697,6 +731,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @return the name
    */
+  @Override
   public String getName() {
     return name;
   }
@@ -708,6 +743,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Setter for the field <code>name</code>.
    * </p>
    */
+  @Override
   public void setName(String name) {
     this.name = name;
   }
@@ -913,12 +949,12 @@ public class ProcessSystem extends SimulationBaseClass {
   /*
    * @XmlRootElement private class Report extends Object{ public Double name; public
    * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();
-   * 
+   *
    * Report(){ name= getName();
-   * 
+   *
    * for (int i = 0; i < unitOperations.size(); i++) {
    * unitOperationsReports.add(unitOperations.getReport()); } } }
-   * 
+   *
    * public Report getReport(){ return this.new Report(); }
    */
 }

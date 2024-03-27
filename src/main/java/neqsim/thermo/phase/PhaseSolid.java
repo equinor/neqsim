@@ -38,21 +38,22 @@ public abstract class PhaseSolid extends PhaseSrkEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
+
     return clonedPhase;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     setType(PhaseType.SOLID);
   }
 
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, molesInPhase);
+    super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentSolid(name, moles, molesInPhase, compNumber);
   }
 

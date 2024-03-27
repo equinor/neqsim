@@ -47,13 +47,13 @@ public class BubbleFlashCPA {
     testSystem.addComponent("TEG", 100.0);
     /*
      * testSystem.addComponent("methane", 69.243);
-     * 
+     *
      * testSystem.addComponent("CO2", 4.113); testSystem.addComponent("ethane", 8.732);
      * testSystem.addComponent("propane", 4.27); testSystem.addComponent("n-pentane", 1.641);
      * testSystem.addComponent("i-pentane", 0.877);
-     * 
+     *
      * testSystem.addComponent("benzene", 1.27);
-     * 
+     *
      * testSystem.addTBPfraction("C6", 1.49985, 86.178 / 1000.0, 0.664);
      * testSystem.addTBPfraction("C7", 1.359864, 96.0 / 1000.0, 0.738);
      * testSystem.addTBPfraction("C8", 0.939906, 107.0 / 1000.0, 0.765);

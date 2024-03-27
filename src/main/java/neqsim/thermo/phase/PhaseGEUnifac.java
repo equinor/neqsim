@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUniquac;
@@ -32,7 +33,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
    */
   public PhaseGEUnifac() {
     super();
-    componentArray = new ComponentGEUnifac[MAX_NUMBER_OF_COMPONENTS];
+    componentArray = new ComponentGEUnifac[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**
@@ -61,7 +62,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, molesInPhase);
+    super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentGEUnifac(name, moles, molesInPhase, compNumber);
   }
 
@@ -78,12 +79,12 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
     // if(type==0) calcaij();
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-    if (type == 0) {
-      super.init(totalNumberOfMoles, numberOfComponents, 1, phase, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+    if (initType == 0) {
+      super.init(totalNumberOfMoles, numberOfComponents, 1, pt, beta);
     }
   }
 
@@ -180,19 +181,19 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy() {
-    return getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, pt.getValue());
+    return getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure, pt);
   }
 
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
+      double temperature, double pressure, PhaseType pt) {
     double GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponents()[i].getx() * Math.log(((ComponentGEUniquac) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, phasetype));
+          .getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
-    return R * phase.getTemperature() * GE * phase.getNumberOfMolesInPhase();
+    return R * phase.getTemperature() * phase.getNumberOfMolesInPhase() * GE;
   }
 
   /** {@inheritDoc} */
@@ -203,7 +204,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
       val +=
           getComponent(i).getNumberOfMolesInPhase() * (getComponent(i).getLogFugacityCoefficient());
     }
-    return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
+    return R * temperature * numberOfMolesInPhase * (val + Math.log(pressure));
   }
 
   /**

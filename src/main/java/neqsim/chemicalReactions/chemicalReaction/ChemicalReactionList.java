@@ -112,7 +112,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         }
       } while (dataSet.next());
     } catch (Exception ex) {
-      logger.error("could not add reacton: ", ex);
+      logger.error("could not add reaction: ", ex);
     }
   }
 

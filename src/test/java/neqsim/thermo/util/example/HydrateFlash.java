@@ -167,10 +167,8 @@ public class HydrateFlash {
      *
      * testSystem2.setMixingRule(7); testSystem2.init(0); testSystem2.init(1);
      * ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2); try {
-     * testOps2.waterDewPointTemperatureFlash();
-     *
-     * } catch (Exception ex) { logger.error(ex.getMessage()) } testSystem2.display();
-     *
+     * testOps2.waterDewPointTemperatureFlash(); } catch (Exception ex) {
+     * logger.error(ex.getMessage()) } testSystem2.display();
      */
   }
 }

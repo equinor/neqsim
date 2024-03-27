@@ -40,17 +40,9 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemUMRPRUMCEos(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
-    setBmixType(1);
+    super(T, P, checkForSolids);
     modelName = "UMR-PRU-MC-EoS";
     attractiveTermNumber = 13;
-    CapeOpenProperties11 = new String[] {"speedOfSound", "jouleThomsonCoefficient",
-        "internalEnergy", "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy",
-        "fugacityCoefficient", "logFugacityCoefficient", "logFugacityCoefficient.Dtemperature",
-        "logFugacityCoefficient.Dpressure", "logFugacityCoefficient.Dmoles", "enthalpy",
-        "enthalpy.Dtemperature", "entropy", "heatCapacityCp", "heatCapacityCv", "density",
-        "volume"};
   }
 
   /** {@inheritDoc} */

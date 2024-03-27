@@ -133,6 +133,7 @@ public class GasTurbine extends TwoPortEquipment {
    * Setter for the field <code>inletStream</code>.
    * </p>
    */
+  @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
     try {
@@ -235,5 +236,4 @@ public class GasTurbine extends TwoPortEquipment {
     double AFR = A * (32.0 + 3.76 * 28.0) / 1000.0 / molMassHC * wtFracHC;
     return AFR;
   }
-
 }

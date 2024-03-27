@@ -11,7 +11,6 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * @author ESOL
- *
  */
 class StreamTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;

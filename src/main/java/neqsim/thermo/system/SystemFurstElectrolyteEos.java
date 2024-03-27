@@ -3,7 +3,6 @@ package neqsim.thermo.system;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
- *
  * This class defines a thermodynamic system using the electrolyte the Furst Electrolyte Eos.
  *
  * @author Even Solbraa
@@ -49,12 +48,6 @@ public class SystemFurstElectrolyteEos extends SystemSrkEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseModifiedFurstElectrolyteEos)
-    // phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

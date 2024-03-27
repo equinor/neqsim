@@ -154,7 +154,6 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   public boolean needRecalculation() {
     if (inStream == null) {
       return true;
-
     }
     if (inStream.getFluid().getTemperature() == lastTemperature
         && inStream.getFluid().getPressure() == lastPressure
@@ -226,17 +225,13 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     if (getCalculateSteadyState()) {
       run(id);
       increaseTime(dt);
-      return;
     } else {
       inStream.setPressure(outStream.getPressure());
       inStream.run();
       run(id);
       increaseTime(dt);
-      return;
     }
-
   }
-
 
   /** {@inheritDoc} */
   @Override

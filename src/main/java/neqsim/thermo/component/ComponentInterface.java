@@ -26,13 +26,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Helper function to create component. Typically called from constructors.
    * </p>
    *
-   * @param component_name Name of component.
+   * @param name Name of component.
    * @param moles Total number of moles of component in system.
    * @param molesInPhase Number of moles in phase.
-   * @param compnumber Index number of component in phase object component array.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public void createComponent(String component_name, double moles, double molesInPhase,
-      int compnumber);
+  public void createComponent(String name, double moles, double molesInPhase, int compIndex);
 
   /**
    * <p>
@@ -607,19 +606,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getTripplePointDensity.
-   * </p>
-   *
-   * @return a double
-   * @deprecated Replaced by {@link getTriplePointDensity}
-   */
-  @Deprecated
-  public default double getTripplePointDensity() {
-    return getTriplePointDensity();
-  }
-
-  /**
-   * <p>
    * getCriticalCompressibilityFactor.
    * </p>
    *
@@ -766,20 +752,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getIdealGasGibsEnergyOfFormation.
-   * </p>
-   *
-   * @return a double
-   * @deprecated Replaced by {@link getIdealGasGibbsEnergyOfFormation}
-   */
-  @Deprecated
-  public default double getIdealGasGibsEnergyOfFormation() {
-    return getIdealGasGibbsEnergyOfFormation();
-  }
-
-  /**
-   * <p>
-   * getIdealGasGibsEnergyOfFormation.
+   * getIdealGasGibbsEnergyOfFormation.
    * </p>
    *
    * @return a double
@@ -842,10 +815,11 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * @param pressure Pressure in unit ?. Used to calculate <code>K</code>.
    * @param totalNumberOfMoles Total number of moles of component.
    * @param beta Beta value, i.e.,
-   * @param type Init type. Calculate <code>K</code>, <code>z</code>, <code>x</code> if type == 0.
+   * @param initType Init type. Calculate <code>K</code>, <code>z</code>, <code>x</code> if type ==
+   *        0.
    */
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type);
+      int initType);
 
   /**
    * <p>
@@ -858,10 +832,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * @param totalNumberOfMoles a double
    * @param beta a double
    * @param numberOfComponents a int
-   * @param type a int
+   * @param initType a int
    */
   public void Finit(PhaseInterface phase, double temperature, double pressure,
-      double totalNumberOfMoles, double beta, int numberOfComponents, int type);
+      double totalNumberOfMoles, double beta, int numberOfComponents, int initType);
 
   /**
    * <p>
@@ -1442,7 +1416,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getName.
+   * Getter for property <code>componentName</code>, i.e., normalized component name.
    * </p>
    *
    * @return a {@link java.lang.String} object
@@ -1861,7 +1835,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Setter for field <code>solidCheck</code>.
    * </p>
    *
-   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
   public void setSolidCheck(boolean checkForSolids);
 

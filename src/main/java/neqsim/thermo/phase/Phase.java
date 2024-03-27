@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.PhysicalPropertyHandler;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.exception.InvalidInputException;
@@ -21,7 +22,9 @@ import neqsim.util.exception.InvalidInputException;
  * @author Even Solbraa
  */
 public abstract class Phase implements PhaseInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Phase.class);
 
   public int numberOfComponents = 0;
@@ -70,7 +73,7 @@ public abstract class Phase implements PhaseInterface {
    * </p>
    */
   public Phase() {
-    componentArray = new ComponentInterface[MAX_NUMBER_OF_COMPONENTS];
+    componentArray = new ComponentInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /** {@inheritDoc} */
@@ -98,29 +101,46 @@ public abstract class Phase implements PhaseInterface {
 
   /**
    * <p>
-   * addcomponent. Increase number of components and add moles to phase.
+   * Increase number of components and add moles to phase.
+   *
+   * NB! Does not actually add component to componentarray.
    * </p>
    *
    * @param name Name of component to add.
    * @param moles Number of moles of component to add to phase.
    */
-  public void addComponent(String name, double moles) {
+  public void addComponent(String name, double moles, int compNumber) {
     if (name == null) {
       // Will fail anyhow creating component with no name
       throw new RuntimeException(
           new InvalidInputException(this, "addcomponent", "name", "can not be null"));
     }
 
+    if (name.equals("")) {
+      throw new RuntimeException(
+          new InvalidInputException(this, "addcomponent", "name", "can not be empty."));
+    }
+
+    if (this.hasComponent(name)) {
+      // shall use addMoles/addMolesChemreac to adding/subtracting moles for component.
+      throw new RuntimeException(new InvalidInputException(this, "addComponent", "name",
+          "component with same name already exists in phase. Use addMoles or addMolesChemreac."));
+    }
+
     if (moles < 0) {
-      // should use addMoles/addMolesChemreac if subtracting moles.
       throw new RuntimeException(
           new InvalidInputException(this, "addComponent", "moles", "can not be negative"));
     }
 
-    if (this.hasComponent(name)) {
-      // should use addMoles/addMolesChemreac if adding/subtracting moles for
-      // component.
-      throw new RuntimeException("Component already exists in phase");
+    if (compNumber < 0 || compNumber >= ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS) {
+      throw new RuntimeException(new InvalidInputException(this, "addComponent", "compNumber",
+          " must be valid index, i.e., between 0 and "
+              + ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS + "."));
+    }
+
+    if (componentArray[compNumber] != null) {
+      throw new RuntimeException(new InvalidInputException(this, "addComponent", "compNumber",
+          "number is already in use."));
     }
 
     this.numberOfMolesInPhase += moles;
@@ -129,7 +149,7 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void removeComponent(String name, double moles, double molesInPhase, int compNumber) {
+  public void removeComponent(String name, double moles, double molesInPhase) {
     name = ComponentInterface.getComponentNameFromAlias(name);
 
     ArrayList<ComponentInterface> temp = new ArrayList<ComponentInterface>();
@@ -336,7 +356,8 @@ public abstract class Phase implements PhaseInterface {
     for (int i = 0; i < numberOfComponents; i++) {
       gmix += getComponent(i).getx() * Math.log(getComponent(i).getx());
     }
-    return getExcessGibbsEnergy() + R * temperature * gmix * numberOfMolesInPhase;
+    // todo: is this correct?
+    return R * temperature * numberOfMolesInPhase * getExcessGibbsEnergy() * gmix;
   }
 
   /** {@inheritDoc} */
@@ -396,13 +417,7 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init() {
-    init(numberOfMolesInPhase / beta, numberOfComponents, initType, getType(), beta);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
     if (totalNumberOfMoles <= 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "init",
@@ -411,14 +426,14 @@ public abstract class Phase implements PhaseInterface {
 
     this.beta = beta;
     numberOfMolesInPhase = beta * totalNumberOfMoles;
-    if (this.pt != phase) {
-      setType(phase);
+    if (this.pt != pt) {
+      setType(pt);
       // setPhysicalProperties(physicalPropertyType);
     }
-    this.setInitType(type);
+    this.setInitType(initType);
     this.numberOfComponents = numberOfComponents;
     for (int i = 0; i < numberOfComponents; i++) {
-      componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, type);
+      componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, initType);
     }
   }
 
@@ -481,13 +496,13 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double geta(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'geta'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'calcA'");
   }
 
   /**
@@ -504,67 +519,68 @@ public abstract class Phase implements PhaseInterface {
    */
   public double calcA(int comp, PhaseInterface phase, double temperature, double pressure,
       int numbcomp) {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'calcA'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcAi(int comp, PhaseInterface phase, double temperature, double pressure,
       int numbcomp) {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'calcAi'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcAiT(int comp, PhaseInterface phase, double temperature, double pressure,
       int numbcomp) {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'calcAiT'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcAT(int comp, PhaseInterface phase, double temperature, double pressure,
       int numbcomp) {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'calcAT'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcAij(int compNumb, int j, PhaseInterface phase, double temperature,
       double pressure, int numbcomp) {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'calcAij'");
+
   }
 
   /** {@inheritDoc} */
   @Override
   public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'getb'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'calcB'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double getg() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'getg'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcBij(int compNumb, int j, PhaseInterface phase, double temperature,
       double pressure, int numbcomp) {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'calcBij'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcBi(int comp, PhaseInterface phase, double temperature, double pressure,
       int numbcomp) {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'calcBi'");
   }
 
   /** {@inheritDoc} */
@@ -607,13 +623,13 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getA() {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'calcAij'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double getB() {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getB'");
   }
 
   /**
@@ -624,19 +640,19 @@ public abstract class Phase implements PhaseInterface {
    * @return a double
    */
   public double getBi() {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getBi'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double getAT() {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getAT'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double getATT() {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getATT'");
   }
 
   /**
@@ -647,7 +663,7 @@ public abstract class Phase implements PhaseInterface {
    * @return a double
    */
   public double getAiT() {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getAiT'");
   }
 
   /** {@inheritDoc} */
@@ -685,193 +701,193 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double Fn() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'Fn'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FT() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FT'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FV() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FD() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FD'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FB() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FB'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double gb() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'gb'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double fb() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'fb'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double gV() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'gV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double fv() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'fv'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FnV() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FnV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FnB() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FnB'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FTT() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FTT'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FBT() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FBT'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FDT() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FDT'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FBV() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FBV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FBB() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FBB'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FDV() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FDV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FBD() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FBD'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FTV() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FTV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double FVV() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'FVV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double gVV() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'gVV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double gBV() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'gBV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double gBB() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'gBB'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double fVV() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'fVV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double fBV() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'fBV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double fBB() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'fBB'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdT() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'dFdT'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdV() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'dFdV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdTdV() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'dFdTdV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdVdV() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'dFdVdV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdTdT() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'dFdTdT'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double getCpres() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'getCpres'");
   }
 
   /**
@@ -882,14 +898,13 @@ public abstract class Phase implements PhaseInterface {
    * @return a double
    */
   public double getCvres() {
-    return 1;
+    throw new UnsupportedOperationException("Unimplemented method 'getCvres'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double getHresTP() {
-    logger.error("error Hres");
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getHresTP'");
   }
 
   /**
@@ -900,15 +915,13 @@ public abstract class Phase implements PhaseInterface {
    * @return a double
    */
   public double getHresdP() {
-    logger.error(" getHresdP error Hres - not implemented?");
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getHresdP'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double getGresTP() {
-    logger.error("error Gres");
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getGresTP'");
   }
 
   /**
@@ -919,14 +932,13 @@ public abstract class Phase implements PhaseInterface {
    * @return a double
    */
   public double getSresTV() {
-    logger.error("error Hres");
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getSresTV'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double getSresTP() {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getSresTP'");
   }
 
   /** {@inheritDoc} */
@@ -1208,32 +1220,6 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  @Deprecated
-  public double getConductivity() {
-    return getPhysicalProperties().getConductivity();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @Deprecated
-  public double getConductivity(String unit) {
-    double refConductivity = getConductivity(); // conductivity in W/m*K
-    double conversionFactor = 1.0;
-    switch (unit) {
-      case "W/mK":
-        conversionFactor = 1.0;
-        break;
-      case "W/cmK":
-        conversionFactor = 0.01;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + unit);
-    }
-    return refConductivity * conversionFactor;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void initRefPhases(boolean onlyPure) {
     if (refPhase == null) {
       initRefPhases(onlyPure, "water");
@@ -1349,7 +1335,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getLogInfiniteDiluteFugacity(int k) {
-    PhaseInterface dilphase = (PhaseInterface) this.clone();
+    PhaseInterface dilphase = this.clone();
     dilphase.addMoles(k, -(1.0 - 1e-10) * dilphase.getComponent(k).getNumberOfMolesInPhase());
     dilphase.getComponent(k).setx(1e-10);
     dilphase.init(dilphase.getNumberOfMolesInPhase(), dilphase.getNumberOfComponents(), 1,
@@ -1580,7 +1566,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getJouleThomsonCoefficient() {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getJouleThomsonCoefficient'");
   }
 
   /** {@inheritDoc} */
@@ -1619,25 +1605,25 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getdPdrho() {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getdPdrho'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double getdrhodP() {
-    return 0.0;
+    throw new UnsupportedOperationException("Unimplemented method 'getdrhodP'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double getdrhodT() {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getdrhodT'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double getdrhodN() {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getdrhodN'");
   }
 
   /** {@inheritDoc} */
@@ -1711,13 +1697,13 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getdPdTVn() {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getdPdTVn'");
   }
 
   /** {@inheritDoc} */
   @Override
   public double getdPdVTn() {
-    return 0;
+    throw new UnsupportedOperationException("Unimplemented method 'getdPdVTn'");
   }
 
   /** {@inheritDoc} */
@@ -1782,10 +1768,37 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public boolean hasComponent(String name) {
+  public String[] getComponentNames() {
+    ArrayList<String> components = new ArrayList<String>();
+
+    for (int j = 0; j < componentArray.length; j++) {
+      if (componentArray[j] != null) {
+        components.add(componentArray[j].getComponentName());
+      }
+    }
+
+    String[] componentList = new String[components.size()];
+    for (int j = 0; j < numberOfComponents; j++) {
+      componentList[j] = components.get(j);
+    }
+    return componentList;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean hasComponent(String name, boolean normalized) {
     for (int i = 0; i < numberOfComponents; i++) {
-      if (componentArray[i].getName().equals(name)) {
-        return true;
+      if (componentArray != null) {
+        if (normalized) {
+          if (componentArray[i].getComponentName()
+              .equals(ComponentInterface.getComponentNameFromAlias(name))) {
+            return true;
+          }
+        } else {
+          if (componentArray[i].getName().equals(name)) {
+            return true;
+          }
+        }
       }
     }
     return false;
@@ -2063,7 +2076,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getSoundSpeed() {
-    return 0.0;
+    throw new UnsupportedOperationException("Unimplemented method 'getSoundSpeed'");
   }
 
   /** {@inheritDoc} */

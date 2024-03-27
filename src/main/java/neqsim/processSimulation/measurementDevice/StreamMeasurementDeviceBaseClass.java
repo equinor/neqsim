@@ -45,4 +45,3 @@ public abstract class StreamMeasurementDeviceBaseClass extends MeasurementDevice
     this.stream = stream;
   }
 }
-

@@ -28,7 +28,7 @@ public class MechVaneSection extends SepDesignSection {
   @Override
   public void calcDesign() {
     double vesselDiameter =
-        separatorSection.getSeparator().getMechanicalDesign().getOuterDiameter() * 1e3;
+        separatorSection.getOuterDiameter() * 1e3;
     if (vesselDiameter <= 616) {
       totalWeight = 6.0;
     } else if (vesselDiameter <= 770) {

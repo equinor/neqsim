@@ -60,8 +60,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /** Inner diameter/height of separator volume. */
   private double internalDiameter = 1.0;
 
-
-
   /** LiquidLevel as volume fraction of liquidvolume/(liquid + gas volume). */
   private double liquidLevel = 0.5;
   double liquidVolume =
@@ -316,7 +314,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       run(id);
       increaseTime(dt);
       setCalculationIdentifier(id);
-      return;
     } else {
       inletStreamMixer.run(id);
       thermoSystem.init(3);
@@ -382,7 +379,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           * getInternalDiameter() * getSeparatorLength();
       // System.out.println("gas volume " + gasVolume + " liq volime " + liquidVolume);
       setCalculationIdentifier(id);
-      return;
     }
   }
 
@@ -481,6 +477,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * </p>
    *
    **/
+  @Override
   public void setLiquidLevel(double liquidlev) {
     liquidLevel = liquidlev;
   }
@@ -877,7 +874,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /*
    * private class SeparatorReport extends Object{ public Double gasLoadFactor; SeparatorReport(){
    * gasLoadFactor = getGasLoadFactor(); } }
-   * 
+   *
    * public SeparatorReport getReport(){ return this.new SeparatorReport(); }
    */
 }

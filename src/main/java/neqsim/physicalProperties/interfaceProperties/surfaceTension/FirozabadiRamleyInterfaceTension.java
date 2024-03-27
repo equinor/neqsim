@@ -68,7 +68,7 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
         - system.getPhase(interface1).getPhysicalProperties().getDensity());
     double Tr = system.getPhase(interface1).getTemperature()
         / system.getPhase(interface1).getPseudoCriticalTemperature();
-    // System.out.println("deltaDens " + deltaDens + " Tr " + Tr + " phasetype " +
+    // System.out.println("deltaDens " + deltaDens + " Tr " + Tr + " pt " +
     // system.getPhase(interface1).getType());
     double a1 = 0.0;
     double b1 = 0.0;

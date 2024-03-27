@@ -248,9 +248,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     if (getCalculateSteadyState()) {
       run(id);
       increaseTime(dt);
-      return;
     } else {
-
       Mixer mixer = new Mixer();
       for (int i = 0; i < splitStream.length; i++) {
         splitStream[i].setPressure(inletStream.getPressure());
@@ -263,7 +261,6 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       inletStream.setThermoSystem(mixer.getThermoSystem());
       inletStream.run();
       setCalculationIdentifier(id);
-      return;
     }
   }
 

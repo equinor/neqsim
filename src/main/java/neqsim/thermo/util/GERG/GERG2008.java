@@ -3196,7 +3196,6 @@ public class GERG2008 {
       n0i[i][2] = n0i[i][2] - T0;
       n0i[i][1] = n0i[i][1] - Math.log(d0);
     }
-    return;
 
     // Code to produce nearly exact values for n0(1) and n0(2)
     // This is not called in the current code, but included below to show how the values were
@@ -3283,14 +3282,14 @@ public class GERG2008 {
     /*
      * // test.PressureGERG(400, 12.798286, x); String herr = ""; test.DensityGERG(0, T, P, x, ierr,
      * herr); double pres = test.P; double molarmass = test.Mm;
-     * 
+     *
      * // double dPdD=0.0, dPdD2=0.0, d2PdTD=0.0, dPdT=0.0, U=0.0, H=0.0, S=0.0, // Cv=0.0, Cp=0.0,
      * W=0.0, G=0.0, JT=0.0, Kappa=0.0, A=0.0;
-     * 
+     *
      * // void DensityGERG(const int iFlag, const double T, const double P, const //
      * std::vector<double> &x, double &D, int &ierr, std::string &herr) // test.DensityGERG(0, T, P,
      * x, ierr, herr);
-     * 
+     *
      * // Sub PropertiesGERG(T, D, x, P, Z, dPdD, dPdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, // W, G, JT,
      * Kappa) // test.PropertiesGERG(T, test.D, x);
      */

@@ -54,7 +54,6 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
 
   @Test
   void testIdealAiFuelRatio() {
-
     testSystem = new SystemSrkEos(298.15, 1.0);
     testSystem.addComponent("nitrogen", 1.0);
     testSystem.addComponent("CO2", 2.0);
@@ -76,6 +75,5 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     gasturb.setInletStream(gasStream);
     double AFR = gasturb.calcIdealAirFuelRatio();
     assertEquals(15.8430086719654, AFR, 0.0001);
-
   }
 }

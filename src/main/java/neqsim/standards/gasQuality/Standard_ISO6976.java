@@ -373,7 +373,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
    * </p>
    */
   public void checkReferenceCondition() {
-    Double[] validvalues = {0.0, 15.0, 15.55, 20.0};
+    Double[] validvalues = {0.0, 15.0, 15.55, 20.0, 25.0};
 
     if (!java.util.Arrays.stream(validvalues).anyMatch(Double.valueOf(energyRefT)::equals)) {
       energyRefT = 25.0;
@@ -417,7 +417,16 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(5);
     nf.applyPattern("#.#####E0");
-    String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
+
+    int rows = 0;
+    if (thermoSystem == null) {
+      String[][] table = new String[0][6];
+      return table;
+    }
+
+    rows = thermoSystem.getPhases()[0].getNumberOfComponents() + 30;
+    String[][] table = new String[rows][6];
+
     // String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
     table[0][0] = ""; // getPhases()[0].getType(); //"";
 

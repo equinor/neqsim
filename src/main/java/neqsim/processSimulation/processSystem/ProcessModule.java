@@ -3,11 +3,9 @@ package neqsim.processSimulation.processSystem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
@@ -18,9 +16,7 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
  * then run only once.
  *
  * @author [seros]
- * 
  * @version 1.0
- * 
  */
 public class ProcessModule extends SimulationBaseClass {
   private static final long serialVersionUID = 1000;
@@ -156,7 +152,7 @@ public class ProcessModule extends SimulationBaseClass {
     for (ProcessSystem operation : addedUnitOperations) {
       for (ProcessEquipmentInterface unitOperation : operation.getUnitOperations()) {
         if (unitOperation instanceof Recycle) {
-          recycleModules.add((Recycle) unitOperation);
+          recycleModules.add(unitOperation);
         }
       }
     }
@@ -217,6 +213,30 @@ public class ProcessModule extends SimulationBaseClass {
 
     for (ProcessModule processModule : addedModules) {
       Object unit = processModule.getUnit(name);
+      if (unit != null) {
+        return unit;
+      }
+    }
+    return null; // no unit found with the given name
+  }
+
+  /**
+   * Returns the unit with the given name from the list of added unit operations and list of added
+   * modules.
+   *
+   * @param name the name of the unit to retrieve
+   * @return the unit with the given name, or {@code null} if no such unit is found
+   */
+  public Object getMeasurementDevice(String name) {
+    for (ProcessSystem processSystem : addedUnitOperations) {
+      Object unit = processSystem.getMeasurementDevice(name);
+      if (unit != null) {
+        return unit;
+      }
+    }
+
+    for (ProcessModule processModule : addedModules) {
+      Object unit = processModule.getMeasurementDevice(name);
       if (unit != null) {
         return unit;
       }

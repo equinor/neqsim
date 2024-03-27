@@ -11,7 +11,6 @@ import neqsim.util.database.NeqSimDataBase;
 
 /**
  * @author ESOL
- *
  */
 class WaxFlashTest {
   static Logger logger = LogManager.getLogger(WaxFlashTest.class);

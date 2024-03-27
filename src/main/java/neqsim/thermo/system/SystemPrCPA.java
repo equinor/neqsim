@@ -44,10 +44,10 @@ public class SystemPrCPA extends SystemPrEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemPrCPA(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     modelName = "CPA-PR-EOS";
 
+    // Recreates phases created in super constructor SystemPrEos
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePrCPA();
       phaseArray[i].setTemperature(T);
@@ -79,10 +79,6 @@ public class SystemPrCPA extends SystemPrEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

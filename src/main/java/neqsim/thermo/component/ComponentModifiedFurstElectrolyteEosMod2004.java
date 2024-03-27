@@ -69,20 +69,21 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
    * Constructor for ComponentModifiedFurstElectrolyteEosMod2004.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentModifiedFurstElectrolyteEosMod2004(String component_name, double moles,
-      double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentModifiedFurstElectrolyteEosMod2004(String name, double moles, double molesInPhase,
+      int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     ionicCoVolume = this.getIonicDiameter();
     if (ionicCharge != 0) {
       setIsIon(true);
     }
-    b = ionicCharge != 0 ? (neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParams[0]
-        * Math.pow(getIonicDiameter(), 3.0)
+    b = ionicCharge != 0
+        ? (neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParams[0]
+            * Math.pow(getIonicDiameter(), 3.0)
             + neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParams[1]) * 1e5
         : b;
     a = ionicCharge != 0 ? 1.0e-35 : a;
@@ -118,8 +119,9 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
    * </p>
    */
   public void initFurstParam() {
-    b = ionicCharge != 0 ? (neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParams[0]
-        * Math.pow(getIonicDiameter(), 3.0)
+    b = ionicCharge != 0
+        ? (neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParams[0]
+            * Math.pow(getIonicDiameter(), 3.0)
             + neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParams[1]) * 1e5
         : b;
     lennardJonesMolecularDiameter =
@@ -155,7 +157,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   /** {@inheritDoc} */
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
-      int numberOfComponents, int type) {
+      int numberOfComponents, int initType) {
     Wi = ((PhaseModifiedFurstElectrolyteEosMod2004) phase).calcWi(componentNumber, phase, temp,
         pres, numberOfComponents);
     WiT = ((PhaseModifiedFurstElectrolyteEosMod2004) phase).calcWiT(componentNumber, phase, temp,
@@ -183,7 +185,8 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
                     ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstant(), 2.0)
                 * R * temp * temp)
             * diElectricdn
-        + 2.0 * electronCharge * electronCharge * avagadroNumber / (vacumPermittivity
+        + 2.0 * electronCharge * electronCharge * avagadroNumber
+            / (vacumPermittivity
                 * Math.pow(
                     ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstant(), 3.0)
                 * R * temp)
@@ -194,7 +197,8 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
             .pow(((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstant(), 2.0) * R
             * temp)
         * diElectricdndV
-        + 2.0 * electronCharge * electronCharge * avagadroNumber / (vacumPermittivity
+        + 2.0 * electronCharge * electronCharge * avagadroNumber
+            / (vacumPermittivity
                 * Math.pow(
                     ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstant(), 3.0)
                 * R * temp)
@@ -202,7 +206,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
             * ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstantdV();
     XLRi = calcXLRdN(phase, numberOfComponents, temp, pres);
     XBorni = ionicCharge * ionicCharge / (getLennardJonesMolecularDiameter() * 1e-10);
-    super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, type);
+    super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, initType);
   }
 
   /**

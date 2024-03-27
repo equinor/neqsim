@@ -26,33 +26,6 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
     super(value, unit);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(double val, String fromunit, String tounit) {
-    invalue = val;
-    return getConversionFactor(fromunit) / getConversionFactor(tounit) * invalue;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(String tounit) {
-    if (tounit.equals("barg")) {
-      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
-          - ThermodynamicConstantsInterface.referencePressure;
-    } else if (inunit.equals("barg")) {
-      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
-          + ThermodynamicConstantsInterface.referencePressure;
-    } else if (tounit.equals("atm")) {
-      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
-          / ThermodynamicConstantsInterface.referencePressure;
-    } else if (inunit.equals("atm")) {
-      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
-          * ThermodynamicConstantsInterface.referencePressure;
-    } else {
-      return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
-    }
-  }
-
   /**
    * <p>
    * getConversionFactor.
@@ -94,5 +67,32 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
     }
 
     return conversionFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(double val, String fromunit, String tounit) {
+    invalue = val;
+    return getConversionFactor(fromunit) / getConversionFactor(tounit) * invalue;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(String tounit) {
+    if (tounit.equals("barg")) {
+      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
+          - ThermodynamicConstantsInterface.referencePressure;
+    } else if (inunit.equals("barg")) {
+      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
+          + ThermodynamicConstantsInterface.referencePressure;
+    } else if (tounit.equals("atm")) {
+      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
+          / ThermodynamicConstantsInterface.referencePressure;
+    } else if (inunit.equals("atm")) {
+      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
+          * ThermodynamicConstantsInterface.referencePressure;
+    } else {
+      return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
+    }
   }
 }

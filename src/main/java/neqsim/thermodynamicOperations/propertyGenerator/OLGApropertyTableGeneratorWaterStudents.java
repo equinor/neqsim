@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
@@ -731,7 +732,7 @@ public class OLGApropertyTableGeneratorWaterStudents
           } while (k < 17); // names[k] = "GAS DENSITY";
           // units[k] = "KG/M3";
         } else {
-          oilSystem.setPhaseType(0, 0);
+          oilSystem.setPhaseType(0, PhaseType.byValue(0));
           oilSystem.setTemperature(temperatures[j]);
           oilSystem.setPressure(pressures[i]);
           oilSystem.init(3);
@@ -931,7 +932,7 @@ public class OLGApropertyTableGeneratorWaterStudents
         } else {
           waterSystem.setTemperature(temperatures[j]);
           waterSystem.setPressure(pressures[i]);
-          waterSystem.setPhaseType(0, 0);
+          waterSystem.setPhaseType(0, PhaseType.byValue(0));
           waterSystem.init(3);
           waterSystem.initPhysicalProperties();
 
@@ -1201,7 +1202,7 @@ public class OLGApropertyTableGeneratorWaterStudents
                * (temperatures[j] - temperatures[j - 1]))); if
                * (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j] < 10.0e-3) {
                * props[k][i][j] = 25.0e-3; LWS=1; }
-               * 
+               *
                * if (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j] > 120.0e-3) {
                * props[k][i][j] = 80.0e-3; LWS=1; } }
                */
@@ -1236,7 +1237,7 @@ public class OLGApropertyTableGeneratorWaterStudents
                * / (pressures[i - 1] - pressures[i - 3]) * (pressures[i] - pressures[i - 1]))); if
                * (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j] < 10.0e-3) {
                * props[k][i][j] = 25.0e-3; LWS=1; }
-               * 
+               *
                * if (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j] > 120.0e-3) {
                * props[k][i][j] = 80.0e-3; LWS=1; } }
                */

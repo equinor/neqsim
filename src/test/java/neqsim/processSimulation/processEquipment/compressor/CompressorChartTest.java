@@ -132,7 +132,7 @@ public class CompressorChartTest {
      * comp1.getPolytropicHead()); logger.info("Polytropic eff from curve:" +
      * comp1.getPolytropicEfficiency() * 100.0); logger.info("flow " +
      * stream_1.getThermoSystem().getFlowRate("m3/hr"));
-     * 
+     *
      * logger.info("speed " + comp1.getCompressorChart().getSpeed(
      * stream_1.getThermoSystem().getFlowRate("m3/hr") + 10.0, comp1.getPolytropicHead()));
      * logger.info("pressure out " + comp1.getOutletPressure()); logger.info("temperature out " +

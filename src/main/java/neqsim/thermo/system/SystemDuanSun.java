@@ -3,7 +3,6 @@ package neqsim.thermo.system;
 import neqsim.thermo.phase.PhaseDuanSun;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkEos;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * This class defines a thermodynamic system using the Duan Sun method used for CO2.
@@ -48,8 +47,7 @@ public class SystemDuanSun extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemDuanSun(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     attractiveTermNumber = 0;
     modelName = "Duan-Sun-model";
 
@@ -82,30 +80,5 @@ public class SystemDuanSun extends SystemEos {
     }
 
     return clonedSystem;
-  }
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  public static void main(String[] args) {
-    SystemInterface fluid1 = new SystemSrkCPA(298.15, 10.0);
-
-    fluid1.addComponent("CO2", 1.0);
-    fluid1.addComponent("nitrogen", 1.0);
-    fluid1.addComponent("water", 1.0);
-    fluid1.addComponent("NaCl", 1.0);
-    fluid1.setMixingRule(2);
-
-    try {
-      ThermodynamicOperations testOps = new ThermodynamicOperations(fluid1);
-      testOps.TPflash();
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-    }
-    fluid1.display();
   }
 }

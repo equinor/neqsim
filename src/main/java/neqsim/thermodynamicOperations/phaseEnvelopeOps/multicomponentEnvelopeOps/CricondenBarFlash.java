@@ -94,11 +94,11 @@ public class CricondenBarFlash extends pTphaseEnvelope {
     setNewX();
     /*
      * //iter X for (int iterX=0 ; iterX <= 10000 ; iterX++ ){
-     * 
+     *
      * system.setTemperature(T); system.setPressure(P);
-     * 
+     *
      * uold = u.copy(); init(); setNewK(); setNewX();
-     * 
+     *
      * double sumK=0.; for (int i=0 ; i < numberOfComponents ; i++ ){ sumK=
      * sumK+(uold.get(i,0)-u.get(i,0))*(uold.get(i,0)-u.get(i,0)); } if (iterX == 10000 ){ ITERX=-1;
      * u=uini.copy(); setNewX(); break; } if (sumK <= 1E-7){ ITERX=iterX; setNewX(); break; } }
@@ -198,7 +198,7 @@ public class CricondenBarFlash extends pTphaseEnvelope {
          * System.out.println("dfuncdT  :  " + dfuncdT); System.out.println("dfuncdP  :  " +
          * dfuncdP); System.out.println("funcT    :  " + funcT); System.out.println("funcP    :  " +
          * funcP);
-         * 
+         *
          * System.out.println(ITERX); System.out.println(ITER); System.out.println(ITERT);
          * System.out.println(ITERP);
          */
@@ -300,7 +300,7 @@ public class CricondenBarFlash extends pTphaseEnvelope {
       /*
        * double voll=system.getPhase(0).getMolarVolume(); double
        * volv=system.getPhase(1).getMolarVolume();
-       * 
+       *
        * double T=system.getPhase(0).getPressure(); double P=system.getPhase(1).getTemperature() ;
        */
       double fugl = system.getPhase(0).getComponent(j).getLogFugacityCoefficient();

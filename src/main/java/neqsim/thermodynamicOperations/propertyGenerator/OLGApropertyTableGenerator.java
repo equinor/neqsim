@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -161,8 +162,8 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         }
 
         if (!thermoSystem.hasPhaseType("gas")) {
-          // TODO: here is a bug, calling with input oil does nothing.
-          thermoSystem.setPhaseType("oil", 1);
+          thermoSystem.setPhaseType(thermoSystem.getPhaseNumberOfPhase(PhaseType.OIL),
+              PhaseType.byValue(1));
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
 
@@ -171,8 +172,8 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         }
 
         if (!thermoSystem.hasPhaseType("oil")) {
-          // TODO: here is a bug, calling with input gas does nothing.
-          thermoSystem.setPhaseType("gas", 1);
+          thermoSystem.setPhaseType(thermoSystem.getPhaseNumberOfPhase(PhaseType.GAS),
+              PhaseType.byValue(1));
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
 
@@ -181,7 +182,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         }
 
         if (!thermoSystem.hasPhaseType("aqueous")) {
-          thermoSystem.setPhaseType(1, 1);
+          thermoSystem.setPhaseType(1, PhaseType.byValue(1));
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
 

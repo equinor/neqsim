@@ -12,7 +12,6 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * @author ESOL
- *
  */
 class WellAllocatorTest extends neqsim.NeqSimTest {
   static Logger logger = LogManager.getLogger(WellAllocatorTest.class);

@@ -39,19 +39,18 @@ public class ComponentBWRS extends ComponentSrk {
    * Constructor for ComponentBWRS.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentBWRS(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentBWRS(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
-        dataSet = database
-            .getResultSet(("SELECT * FROM mbwr32param WHERE name='" + component_name + "'"));
+        dataSet = database.getResultSet(("SELECT * FROM mbwr32param WHERE name='" + name + "'"));
         dataSet.next();
         dataSet.getClob("name");
       } catch (Exception ex) {
@@ -102,8 +101,8 @@ public class ComponentBWRS extends ComponentSrk {
   /** {@inheritDoc} */
   @Override
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
+      int initType) {
+    super.init(temperature, pressure, totalNumberOfMoles, beta, initType);
 
     BP[0] = R * temperature;
     BP[1] = aBWRS[0] * temperature + aBWRS[1] * Math.sqrt(temperature) + aBWRS[2]

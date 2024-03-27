@@ -33,7 +33,9 @@ public class GORfitter extends TwoPortEquipment {
 
   @Deprecated
   /**
-   * <p>Constructor for GORfitter.</p>
+   * <p>
+   * Constructor for GORfitter.
+   * </p>
    */
   public GORfitter() {
     super("GOR fitter");
@@ -64,7 +66,9 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>getGFV.</p>
+   * <p>
+   * getGFV.
+   * </p>
    *
    * @return a double
    */
@@ -79,6 +83,7 @@ public class GORfitter extends TwoPortEquipment {
    * Setter for the field <code>inletStream</code>.
    * </p>
    */
+  @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
     try {
@@ -95,6 +100,7 @@ public class GORfitter extends TwoPortEquipment {
    *
    * @return a double
    */
+  @Override
   public double getPressure() {
     return pressure;
   }
@@ -211,6 +217,7 @@ public class GORfitter extends TwoPortEquipment {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
+    tempFluid.initProperties();
     outStream.setThermoSystem(tempFluid);
     if (!tempFluid.hasPhaseType("gas")) {
       GVF = 0.0;
@@ -262,7 +269,9 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>Getter for the field <code>referenceConditions</code>.</p>
+   * <p>
+   * Getter for the field <code>referenceConditions</code>.
+   * </p>
    *
    * @return the referenceConditions
    */
@@ -271,7 +280,9 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>Setter for the field <code>referenceConditions</code>.</p>
+   * <p>
+   * Setter for the field <code>referenceConditions</code>.
+   * </p>
    *
    * @param referenceConditions the referenceConditions to set
    */
@@ -280,7 +291,9 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>isFitAsGVF.</p>
+   * <p>
+   * isFitAsGVF.
+   * </p>
    *
    * @return the fitAsGVF
    */
@@ -289,7 +302,9 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>Setter for the field <code>fitAsGVF</code>.</p>
+   * <p>
+   * Setter for the field <code>fitAsGVF</code>.
+   * </p>
    *
    * @param fitAsGVF the fitAsGVF to set
    */

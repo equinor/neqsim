@@ -17,25 +17,6 @@ package neqsim.thermo.phase;
 public interface PhaseGEInterface {
   /**
    * <p>
-   * getExessGibbsEnergy.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
-   * @param phasetype a int
-   * @return a double
-   * @deprecated Replaced by {@link getExcessGibbsEnergy}.
-   */
-  @Deprecated
-  public default double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
-    return getExcessGibbsEnergy(phase, numberOfComponents, temperature, pressure, phasetype);
-  }
-
-  /**
-   * <p>
    * getExcessGibbsEnergy.
    * </p>
    *
@@ -43,9 +24,36 @@ public interface PhaseGEInterface {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param pt the PhaseType of the phase.
    * @return a double
    */
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype);
+      double temperature, double pressure, PhaseType pt);
+
+  /**
+   * <p>
+   * setAlpha.
+   * </p>
+   *
+   * @param alpha an array of {@link double} objects
+   */
+  public void setAlpha(double[][] alpha);
+
+  /**
+   * <p>
+   * setDij.
+   * </p>
+   *
+   * @param Dij an array of {@link double} objects
+   */
+  public void setDij(double[][] Dij);
+
+  /**
+   * <p>
+   * setDijT.
+   * </p>
+   *
+   * @param DijT an array of {@link double} objects
+   */
+  public void setDijT(double[][] DijT);
 }

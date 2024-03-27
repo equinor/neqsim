@@ -44,8 +44,7 @@ public class SystemKentEisenberg extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemKentEisenberg(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     attractiveTermNumber = 0;
     modelName = "Kent Eisenberg-model";
 
@@ -76,10 +75,6 @@ public class SystemKentEisenberg extends SystemEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

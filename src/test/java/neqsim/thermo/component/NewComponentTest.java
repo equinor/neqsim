@@ -25,7 +25,7 @@ public class NewComponentTest extends neqsim.NeqSimTest {
       p.addComponent("", 0, 0, 0);
     });
     Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: ComponentSrk:createComponent - Input component_name can not be empty",
+        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addcomponent - Input name can not be empty.",
         thrown.getMessage());
 
     RuntimeException thrown_2 = Assertions.assertThrows(RuntimeException.class, () -> {
@@ -34,6 +34,21 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(
         "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addcomponent - Input name can not be null",
         thrown_2.getMessage());
+
+    RuntimeException thrown_3 = Assertions.assertThrows(RuntimeException.class, () -> {
+      p.addComponent("ethane", 0, 0, -1);
+    });
+    Assertions.assertEquals(
+        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addComponent - Input compNumber  must be valid index, i.e., between 0 and 100.",
+        thrown_3.getMessage());
+
+    p.addComponent("ethane", 0, 0, 0);
+    RuntimeException thrown_4 = Assertions.assertThrows(RuntimeException.class, () -> {
+      p.addComponent("methane", 0, 0, 0);
+    });
+    Assertions.assertEquals(
+        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addComponent - Input compNumber number is already in use.",
+        thrown_4.getMessage());
   }
 
   @Test

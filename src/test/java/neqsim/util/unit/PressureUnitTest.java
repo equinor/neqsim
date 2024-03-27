@@ -6,7 +6,6 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 class PressureUnitTest extends neqsim.NeqSimTest {
-
   /**
    * <p>
    * testSetPressure

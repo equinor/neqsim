@@ -45,20 +45,6 @@ public class ChemicalReaction extends NamedBaseClass
    * Constructor for ChemicalReaction.
    * </p>
    *
-   * @deprecated use
-   *             {@link #ChemicalReaction(String, String[], double[], double[], double, double, double)}
-   *             instead
-   */
-  @Deprecated
-  public ChemicalReaction() {
-    super("ChemicalReaction");
-  }
-
-  /**
-   * <p>
-   * Constructor for ChemicalReaction.
-   * </p>
-   *
    * @param name a {@link java.lang.String} object
    * @param names an array of {@link java.lang.String} objects
    * @param stocCoefs an array of {@link double} objects
@@ -71,7 +57,6 @@ public class ChemicalReaction extends NamedBaseClass
       double activationEnergy, double refT) {
     /*
      * this.names = names; this.stocCoefs = stocCoefs; this.K = K;
-     * 
      */
     super(name);
     this.names = new String[names.length];
@@ -143,24 +128,6 @@ public class ChemicalReaction extends NamedBaseClass
     // return rateFactor * Math.exp(-activationEnergy/R*(1.0/phase.getTemperature()
     // - 1.0/refT));
     return 2.576e9 * Math.exp(-6024.0 / phase.getTemperature()) / 1000.0;
-  }
-
-  /**
-   * <p>
-   * getK.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
-   */
-  public double getK(PhaseInterface phase) {
-    double temperature = phase.getTemperature();
-    lnK = K[0] + K[1] / (temperature) + K[2] * Math.log(temperature) + K[3] * temperature;
-    if (shiftSignK) {
-      lnK = -lnK;
-    }
-    // System.out.println("K " + Math.exp(lnK));
-    return Math.exp(lnK);
   }
 
   /**
@@ -409,12 +376,12 @@ public class ChemicalReaction extends NamedBaseClass
           test = false;
         }
       }
-      if (test == false) {
+      if (!test) {
         break;
       }
     }
 
-    if (test == false) {
+    if (!test) {
       for (int j = 0; j < productNames.length; j++) {
         for (int i = 0; i < names.length; i++) {
           if (names[i].equals(productNames[j])) {
@@ -424,7 +391,7 @@ public class ChemicalReaction extends NamedBaseClass
             test = false;
           }
         }
-        if (test == false) {
+        if (!test) {
           break;
         }
       }
@@ -480,6 +447,24 @@ public class ChemicalReaction extends NamedBaseClass
    */
   public double[] getK() {
     return this.K;
+  }
+
+  /**
+   * <p>
+   * getK.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @return a double
+   */
+  public double getK(PhaseInterface phase) {
+    double temperature = phase.getTemperature();
+    lnK = K[0] + K[1] / (temperature) + K[2] * Math.log(temperature) + K[3] * temperature;
+    if (shiftSignK) {
+      lnK = -lnK;
+    }
+    // System.out.println("K " + Math.exp(lnK));
+    return Math.exp(lnK);
   }
 
   /**

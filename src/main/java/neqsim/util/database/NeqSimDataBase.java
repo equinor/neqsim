@@ -394,17 +394,15 @@ public class NeqSimDataBase
   }
 
   /**
-   * <p>
-   * hasComponent.
-   * </p>
+   * Verify if database has a component.
    *
-   * @param compName a {@link java.lang.String} object
-   * @return a boolean
+   * @param name Name of component to look for.
+   * @return True if component is found.
    */
-  public static boolean hasComponent(String compName) {
+  public static boolean hasComponent(String name) {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet =
-            database.getResultSet("select count(*) from comp WHERE NAME='" + compName + "'")) {
+            database.getResultSet("select count(*) from comp WHERE NAME='" + name + "'")) {
       dataSet.next();
       int size = dataSet.getInt(1);
       if (size == 0) {
@@ -419,7 +417,7 @@ public class NeqSimDataBase
 
   /**
    * Drops and re-creates table from contents in csv file.
-   * 
+   *
    * @param tableName Name of table to replace
    */
   public static void updateTable(String tableName) {
@@ -428,7 +426,7 @@ public class NeqSimDataBase
 
   /**
    * Drops and re-creates table from contents in csv file.
-   * 
+   *
    * @param tableName Name of table to replace
    * @param path Path to csv file to
    */
@@ -449,7 +447,7 @@ public class NeqSimDataBase
 
   /**
    * Drops and re-creates table from contents in csv file.
-   * 
+   *
    * @param tableName Name of table to replace
    * @param path Path to csv file to
    */
