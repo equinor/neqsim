@@ -17,7 +17,7 @@ class TPsolidFlash {
     testSystem.addComponent("methane", 90.0);
     testSystem.addComponent("nC10", 10.0);
     testSystem.addTBPfraction("C11", 1.0, 150.0 / 1000.0, 0.82);
-    //   testSystem.addComponent("nC10", 10.0);
+    // testSystem.addComponent("nC10", 10.0);
     testSystem.addComponent("S8", 10.0);
     testSystem.createDatabase(true);
     testSystem.setMixingRule("classic");
@@ -27,7 +27,7 @@ class TPsolidFlash {
     ThermodynamicOperations thermoops = new ThermodynamicOperations(testSystem);
     // thermoops.TPflash();
     thermoops.TPSolidflash();
-    testSystem.prettyPrint();
+    // testSystem.prettyPrint();
     assertEquals(3, testSystem.getNumberOfPhases());
     assertTrue(testSystem.hasPhaseType(PhaseType.SOLID));
 
