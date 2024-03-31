@@ -817,7 +817,7 @@ public abstract class SystemThermo implements SystemInterface {
         phaseArray[3].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
             getPhase(0).getComponent(i).getNumberOfmoles(), i);
         phaseArray[3].getComponent(i).setComponentName(getPhase(0).getComponent(i).getName());
-        // phaseArray[3].getComponent(i).setIsPlusFraction(true);
+        phaseArray[3].getComponent(i).setIsPlusFraction(true);
       } else {
         phaseArray[3].addComponent(getPhase(0).getComponent(i).getName(),
             getPhase(0).getComponent(i).getNumberOfmoles(),
