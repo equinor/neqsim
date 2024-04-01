@@ -24,8 +24,6 @@ public class PhasePureComponentSolid extends PhaseSolid {
    */
   public PhasePureComponentSolid() {
     super();
-    setType(PhaseType.SOLID);
-    calcMolarVolume = false;
   }
 
   /** {@inheritDoc} */
