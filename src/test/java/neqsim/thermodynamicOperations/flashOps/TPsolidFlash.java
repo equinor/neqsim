@@ -86,5 +86,4 @@ class TPsolidFlash {
     System.out.println("m3 oil per MSm3 " + (testSystem.getPhase(PhaseType.OIL).getFlowRate("m3/hr")
         * 24 / testSystem.getPhase(PhaseType.GAS).getFlowRate("MSm3/day")));
   }
-
 }
