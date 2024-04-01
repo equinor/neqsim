@@ -416,6 +416,28 @@ public class NeqSimDataBase
   }
 
   /**
+   * Verify if database has a component.
+   *
+   * @param name Name of component to look for.
+   * @return True if component is found.
+   */
+  public static boolean hasTempComponent(String name) {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet =
+            database.getResultSet("select count(*) from comptemp WHERE NAME='" + name + "'")) {
+      dataSet.next();
+      int size = dataSet.getInt(1);
+      if (size == 0) {
+        return false;
+      } else {
+        return true;
+      }
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
+  }
+
+  /**
    * Drops and re-creates table from contents in csv file.
    *
    * @param tableName Name of table to replace
