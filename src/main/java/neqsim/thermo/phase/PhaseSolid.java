@@ -27,6 +27,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
   public PhaseSolid() {
     super();
     setType(PhaseType.SOLID);
+    calcMolarVolume = false;
   }
 
   /** {@inheritDoc} */
@@ -48,6 +49,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
       double beta) {
     try {
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+      getDensityTemp();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
     }
