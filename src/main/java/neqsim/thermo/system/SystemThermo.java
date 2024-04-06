@@ -48,26 +48,26 @@ public abstract class SystemThermo implements SystemInterface {
   // Fraction of moles_in_phase / moles_in_system.
   protected double[] beta = new double[MAX_PHASES];
   protected String[] CapeOpenProperties10 = { "molecularWeight", "speedOfSound",
-      "jouleThomsonCoefficient", "energy", "energy.Dtemperature", "gibbsFreeEnergy",
-      "helmholtzFreeEnergy", "fugacityCoefficient", "logFugacityCoefficient",
-      "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure",
-      "logFugacityCoefficient.Dmoles", "enthalpy", "enthalpy.Dmoles", "enthalpy.Dtemperature",
-      "enthalpy.Dpressure", "entropy", "entropy.Dtemperature", "entropy.Dpressure",
-      "entropy.Dmoles", "heatCapacity", "heatCapacityCv", "density", "density.Dtemperature",
-      "density.Dpressure", "density.Dmoles", "volume", "volume.Dpressure", "volume.Dtemperature",
-      "molecularWeight.Dtemperature", "molecularWeight.Dpressure", "molecularWeight.Dmoles",
-      "compressibilityFactor" };
+          "jouleThomsonCoefficient", "energy", "energy.Dtemperature", "gibbsFreeEnergy",
+          "helmholtzFreeEnergy", "fugacityCoefficient", "logFugacityCoefficient",
+          "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure",
+          "logFugacityCoefficient.Dmoles", "enthalpy", "enthalpy.Dmoles", "enthalpy.Dtemperature",
+          "enthalpy.Dpressure", "entropy", "entropy.Dtemperature", "entropy.Dpressure",
+          "entropy.Dmoles", "heatCapacity", "heatCapacityCv", "density", "density.Dtemperature",
+          "density.Dpressure", "density.Dmoles", "volume", "volume.Dpressure", "volume.Dtemperature",
+          "molecularWeight.Dtemperature", "molecularWeight.Dpressure", "molecularWeight.Dmoles",
+          "compressibilityFactor" };
   // protected ArrayList<String> resultArray1 = new ArrayList<String>();
   protected String[] CapeOpenProperties11 = { "molecularWeight", "speedOfSound",
-      "jouleThomsonCoefficient", "internalEnergy", "internalEnergy.Dtemperature", "gibbsEnergy",
-      "helmholtzEnergy", "fugacityCoefficient", "logFugacityCoefficient",
-      "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure",
-      "logFugacityCoefficient.Dmoles", "enthalpy", "enthalpy.Dmoles", "enthalpy.Dtemperature",
-      "enthalpy.Dpressure", "entropy", "entropy.Dtemperature", "entropy.Dpressure",
-      "entropy.Dmoles", "heatCapacityCp", "heatCapacityCv", "density", "density.Dtemperature",
-      "density.Dpressure", "density.Dmoles", "volume", "volume.Dpressure", "volume.Dtemperature",
-      "molecularWeight.Dtemperature", "molecularWeight.Dpressure", "molecularWeight.Dmoles",
-      "compressibilityFactor" };
+          "jouleThomsonCoefficient", "internalEnergy", "internalEnergy.Dtemperature", "gibbsEnergy",
+          "helmholtzEnergy", "fugacityCoefficient", "logFugacityCoefficient",
+          "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure",
+          "logFugacityCoefficient.Dmoles", "enthalpy", "enthalpy.Dmoles", "enthalpy.Dtemperature",
+          "enthalpy.Dpressure", "entropy", "entropy.Dtemperature", "entropy.Dpressure",
+          "entropy.Dmoles", "heatCapacityCp", "heatCapacityCv", "density", "density.Dtemperature",
+          "density.Dpressure", "density.Dmoles", "volume", "volume.Dpressure", "volume.Dtemperature",
+          "molecularWeight.Dtemperature", "molecularWeight.Dpressure", "molecularWeight.Dmoles",
+          "compressibilityFactor" };
 
   public neqsim.thermo.characterization.Characterise characterization = null;
   protected boolean checkStability = true;
@@ -160,15 +160,15 @@ public abstract class SystemThermo implements SystemInterface {
     this();
     if (T < 0.0) {
       neqsim.util.exception.InvalidInputException ex = new neqsim.util.exception.InvalidInputException(
-          this.getClass().getSimpleName(),
-          "SystemThermo", "T", "is negative");
+              this.getClass().getSimpleName(),
+              "SystemThermo", "T", "is negative");
       throw new RuntimeException(ex);
     }
 
     if (P < 0.0) {
       neqsim.util.exception.InvalidInputException ex = new neqsim.util.exception.InvalidInputException(
-          this.getClass().getSimpleName(),
-          "SystemThermo", "P", "is negative");
+              this.getClass().getSimpleName(),
+              "SystemThermo", "P", "is negative");
       throw new RuntimeException(ex);
     }
 
@@ -192,7 +192,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void addCharacterized(String[] charNames, double[] charFlowrate, double[] molarMass,
-      double[] relativedensity) {
+                               double[] relativedensity) {
     if (charNames.length != charFlowrate.length) {
       logger.error("component names and mole fractions need to be same length...");
     }
@@ -206,31 +206,31 @@ public abstract class SystemThermo implements SystemInterface {
   public void addComponent(ComponentInterface inComponent) {
     if (inComponent.isIsTBPfraction()) {
       addTBPfraction(inComponent.getComponentName(), inComponent.getNumberOfmoles(),
-          inComponent.getMolarMass(), inComponent.getNormalLiquidDensity());
+              inComponent.getMolarMass(), inComponent.getNormalLiquidDensity());
       String componentName = inComponent.getComponentName();
       changeComponentName(componentName + "_PC", componentName.replaceFirst("_PC", ""));
       for (int i = 0; i < numberOfPhases; i++) {
         getPhase(i).getComponent(componentName)
-            .setAttractiveTerm(inComponent.getAttractiveTermNumber());
+                .setAttractiveTerm(inComponent.getAttractiveTermNumber());
         getPhase(i).getComponent(componentName).setTC(inComponent.getTC());
         getPhase(i).getComponent(componentName).setPC(inComponent.getPC());
         getPhase(i).getComponent(componentName).setMolarMass(inComponent.getMolarMass());
         getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
         getPhase(i).getComponent(componentName)
-            .setNormalLiquidDensity(inComponent.getNormalLiquidDensity());
+                .setNormalLiquidDensity(inComponent.getNormalLiquidDensity());
         getPhase(i).getComponent(componentName)
-            .setNormalBoilingPoint(inComponent.getNormalBoilingPoint());
+                .setNormalBoilingPoint(inComponent.getNormalBoilingPoint());
         getPhase(i).getComponent(componentName).setAcentricFactor(inComponent.getAcentricFactor());
         getPhase(i).getComponent(componentName).setCriticalVolume(inComponent.getCriticalVolume());
         getPhase(i).getComponent(componentName).setRacketZ(inComponent.getRacketZ());
         getPhase(i).getComponent(componentName).setRacketZCPA(inComponent.getRacketZCPA());
         getPhase(i).getComponent(componentName).setIsTBPfraction(true);
         getPhase(i).getComponent(componentName)
-            .setParachorParameter(inComponent.getParachorParameter());
+                .setParachorParameter(inComponent.getParachorParameter());
         getPhase(i).getComponent(componentName)
-            .setTriplePointTemperature(inComponent.getTriplePointTemperature());
+                .setTriplePointTemperature(inComponent.getTriplePointTemperature());
         getPhase(i).getComponent(componentName)
-            .setIdealGasEnthalpyOfFormation(inComponent.getIdealGasEnthalpyOfFormation());
+                .setIdealGasEnthalpyOfFormation(inComponent.getIdealGasEnthalpyOfFormation());
         getPhase(i).getComponent(componentName).setCpA(inComponent.getCpA());
         getPhase(i).getComponent(componentName).setCpB(inComponent.getCpB());
         getPhase(i).getComponent(componentName).setCpC(inComponent.getCpC());
@@ -298,13 +298,13 @@ public abstract class SystemThermo implements SystemInterface {
     if (addForFirstTime) {
       if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
         throw new RuntimeException(
-            new neqsim.util.exception.InvalidInputException(this, "addComponent", "componentName",
-                "with value " + componentName + " not found in database."));
+                new neqsim.util.exception.InvalidInputException(this, "addComponent", "componentName",
+                        "with value " + componentName + " not found in database."));
       }
       if (moles < 0.0) {
         String msg = "is negative input for component: " + componentName;
         throw new RuntimeException(
-            new neqsim.util.exception.InvalidInputException(this, "addComponent", "moles", msg));
+                new neqsim.util.exception.InvalidInputException(this, "addComponent", "moles", msg));
       }
       // System.out.println("adding " + componentName);
       componentNames.add(componentName);
@@ -316,7 +316,7 @@ public abstract class SystemThermo implements SystemInterface {
     } else {
       for (PhaseInterface tmpPhase : phaseArray) {
         if (tmpPhase != null
-            && (tmpPhase.getComponent(componentName).getNumberOfMolesInPhase() + moles) < 0.0) {
+                && (tmpPhase.getComponent(componentName).getNumberOfMolesInPhase() + moles) < 0.0) {
           init(0);
           break;
         }
@@ -378,7 +378,7 @@ public abstract class SystemThermo implements SystemInterface {
     if (moles < 0.0) {
       String msg = "Negative input number of moles.";
       neqsim.util.exception.InvalidInputException ex = new neqsim.util.exception.InvalidInputException(this,
-          "addComponent", "moles", msg);
+              "addComponent", "moles", msg);
       throw new RuntimeException(ex);
     }
 
@@ -403,6 +403,21 @@ public abstract class SystemThermo implements SystemInterface {
   public void addComponent(String componentName, double value, String unitName) {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
 
+    neqsim.util.database.COMP objCOMP = new neqsim.util.database.COMP();
+
+    double molarmass = 0.0;
+    double stddens = 0.0;
+    double boilp = 0.0;
+
+    if (objCOMP.objDictionary.get(componentName) != null)
+    {
+      molarmass = objCOMP.objDictionary.get(componentName).get("MOLARMASS") / 1000.0;
+      stddens = objCOMP.objDictionary.get(componentName).get("STDDENS") / 1000.0;
+      boilp = objCOMP.objDictionary.get(componentName).get("NORMBOIL") / 1000.0;
+
+
+    }
+    /*
     if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
       throw new RuntimeException("No component with name: " + componentName + " in database");
     }
@@ -420,6 +435,8 @@ public abstract class SystemThermo implements SystemInterface {
       // todo: mole amount may be not set. should not be caught?
       logger.error("failed ", ex);
     }
+
+    */
     neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(value, unitName, molarmass, stddens, boilp);
     double SIval = unit.getSIvalue();
     // System.out.println("number of moles " + SIval);
@@ -431,6 +448,22 @@ public abstract class SystemThermo implements SystemInterface {
   public void addComponent(String componentName, double value, String name, int phase) {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
 
+    neqsim.util.database.COMP objCOMP = new neqsim.util.database.COMP();
+
+    double molarmass = 0.0;
+    double stddens = 0.0;
+    double boilp = 0.0;
+
+    if (objCOMP.objDictionary.get(componentName) != null)
+    {
+      molarmass = objCOMP.objDictionary.get(componentName).get("MOLARMASS") / 1000.0;
+      stddens = objCOMP.objDictionary.get(componentName).get("STDDENS") / 1000.0;
+      boilp = objCOMP.objDictionary.get(componentName).get("NORMBOIL") / 1000.0;
+
+
+    }
+
+    /*
     if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
       throw new RuntimeException("No component with name: " + componentName + " in database");
     }
@@ -448,6 +481,8 @@ public abstract class SystemThermo implements SystemInterface {
       logger.error("failed ", ex);
       throw new RuntimeException(ex);
     }
+
+    */
     neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(value, name, molarmass, stddens, boilp);
     double SIval = unit.getSIvalue();
     // System.out.println("number of moles " + SIval);
@@ -465,24 +500,24 @@ public abstract class SystemThermo implements SystemInterface {
         addedNewComponent = true;
       } else {
         index = getPhase(0).getComponent(addSystem.getPhase(0).getComponent(i).getComponentName())
-            .getComponentNumber();
+                .getComponentNumber();
       }
 
       if (index != -1) {
         addComponent(index, addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
       } else if (addSystem.getPhase(0).getComponent(i).isIsTBPfraction()) {
         addTBPfraction(
-            addSystem.getPhase(0).getComponent(i).getComponentName().replaceFirst("_PC", ""),
-            addSystem.getPhase(0).getComponent(i).getNumberOfmoles(),
-            addSystem.getPhase(0).getComponent(i).getMolarMass(),
-            addSystem.getPhase(0).getComponent(i).getNormalLiquidDensity());
+                addSystem.getPhase(0).getComponent(i).getComponentName().replaceFirst("_PC", ""),
+                addSystem.getPhase(0).getComponent(i).getNumberOfmoles(),
+                addSystem.getPhase(0).getComponent(i).getMolarMass(),
+                addSystem.getPhase(0).getComponent(i).getNormalLiquidDensity());
       } else {
         if (addSystem.getPhase(0).getComponent(i).isIsTBPfraction()) {
           addTBPfraction(
-              addSystem.getPhase(0).getComponent(i).getComponentName().replaceFirst("_PC", ""),
-              addSystem.getPhase(0).getComponent(i).getNumberOfmoles(),
-              addSystem.getPhase(0).getComponent(i).getMolarMass(),
-              addSystem.getPhase(0).getComponent(i).getNormalLiquidDensity());
+                  addSystem.getPhase(0).getComponent(i).getComponentName().replaceFirst("_PC", ""),
+                  addSystem.getPhase(0).getComponent(i).getNumberOfmoles(),
+                  addSystem.getPhase(0).getComponent(i).getMolarMass(),
+                  addSystem.getPhase(0).getComponent(i).getNormalLiquidDensity());
         } else {
           addComponent(addSystem.getComponent(i));
         }
@@ -501,7 +536,7 @@ public abstract class SystemThermo implements SystemInterface {
   public SystemInterface addFluid(SystemInterface addSystem, int phase) {
     for (int i = 0; i < addSystem.getPhase(0).getNumberOfComponents(); i++) {
       addComponent(addSystem.getPhase(0).getComponent(i).getComponentName(),
-          addSystem.getPhase(0).getComponent(i).getNumberOfmoles(), phase);
+              addSystem.getPhase(0).getComponent(i).getNumberOfmoles(), phase);
     }
     return this;
   }
@@ -534,13 +569,13 @@ public abstract class SystemThermo implements SystemInterface {
       for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
         if (getPhase(0).getComponent(i).isIsTBPfraction()) {
           phaseArray[3].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
-              getPhase(0).getComponent(i).getNumberOfmoles(), i);
+                  getPhase(0).getComponent(i).getNumberOfmoles(), i);
           phaseArray[3].getComponent(i).setComponentName(getPhase(0).getComponent(i).getName());
           phaseArray[3].getComponent(i).setIsTBPfraction(true);
         } else {
           phaseArray[3].addComponent(getPhase(0).getComponent(i).getName(),
-              getPhase(0).getComponent(i).getNumberOfmoles(),
-              getPhase(0).getComponent(i).getNumberOfmoles(), i);
+                  getPhase(0).getComponent(i).getNumberOfmoles(),
+                  getPhase(0).getComponent(i).getNumberOfmoles(), i);
         }
       }
       ((PhaseSolid) phaseArray[3]).setSolidRefFluidPhase(phaseArray[0]);
@@ -553,13 +588,13 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
         phaseArray[4].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+                getPhase(0).getComponent(i).getNumberOfmoles(), i);
         phaseArray[4].getComponent(i).setComponentName(getPhase(0).getComponent(i).getName());
         phaseArray[4].getComponent(i).setIsTBPfraction(true);
       } else {
         phaseArray[4].addComponent(getPhase(0).getComponent(i).getName(),
-            getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+                getPhase(0).getComponent(i).getNumberOfmoles(),
+                getPhase(0).getComponent(i).getNumberOfmoles(), i);
       }
     }
     ((PhaseHydrate) phaseArray[4]).setSolidRefFluidPhase(phaseArray[0]);
@@ -582,13 +617,13 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
         phaseArray[3].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+                getPhase(0).getComponent(i).getNumberOfmoles(), i);
         phaseArray[3].getComponent("default")
-            .setComponentName(getPhase(0).getComponent(i).getName());
+                .setComponentName(getPhase(0).getComponent(i).getName());
       } else {
         phaseArray[3].addComponent(getPhase(0).getComponent(i).getName(),
-            getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+                getPhase(0).getComponent(i).getNumberOfmoles(),
+                getPhase(0).getComponent(i).getNumberOfmoles(), i);
       }
     }
     setNumberOfPhases(4);
@@ -607,16 +642,16 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
-      double[] relativedensity, boolean lastIsPlusFraction) {
+                              double[] relativedensity, boolean lastIsPlusFraction) {
     addOilFractions(charNames, charFlowrate, molarMass, relativedensity, lastIsPlusFraction, true,
-        12);
+            12);
   }
 
   /** {@inheritDoc} */
   @Override
   public void addOilFractions(String[] charNames, double[] charFlowrate, double[] molarMass,
-      double[] relativedensity, boolean lastIsPlusFraction, boolean lumpComponents,
-      int numberOfPseudoComponents) {
+                              double[] relativedensity, boolean lastIsPlusFraction, boolean lumpComponents,
+                              int numberOfPseudoComponents) {
     if (charNames.length != charFlowrate.length) {
       logger.error("component names and mole fractions need to be same length...");
     }
@@ -675,7 +710,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void addPhaseFractionToPhase(double fraction, String specification, String fromPhaseName,
-      String toPhaseName) {
+                                      String toPhaseName) {
     if (!(hasPhaseType(fromPhaseName) && hasPhaseType(toPhaseName) || fraction < 1e-30)) {
       return;
     }
@@ -692,7 +727,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void addPhaseFractionToPhase(double fraction, String specification, String specifiedStream,
-      String fromPhaseName, String toPhaseName) {
+                                      String fromPhaseName, String toPhaseName) {
     double moleFraction = fraction;
     if (!hasPhaseType(fromPhaseName) || !hasPhaseType(toPhaseName) || fraction < 1e-30) {
       return;
@@ -736,16 +771,16 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void addPlusFraction(String componentName, double numberOfMoles, double molarMass,
-      double density) {
+                              double density) {
     addTBPfraction(componentName, numberOfMoles, molarMass, density);
     componentName = (componentName + "_" + "PC"); // getFluidName());
     for (int i = 0; i < numberOfPhases; i++) {
       // System.out.println("comp " + componentName);
       getPhase(i).getComponent(componentName).setIsPlusFraction(true);
       getPhase(i).getComponent(componentName).setCriticalViscosity(
-          7.94830 * Math.sqrt(1e3 * getPhase(i).getComponent(componentName).getMolarMass())
-              * Math.pow(getPhase(i).getComponent(componentName).getPC(), 2.0 / 3.0)
-              / Math.pow(getPhase(i).getComponent(componentName).getTC(), 1.0 / 6.0) * 1e-7);
+              7.94830 * Math.sqrt(1e3 * getPhase(i).getComponent(componentName).getMolarMass())
+                      * Math.pow(getPhase(i).getComponent(componentName).getPC(), 2.0 / 3.0)
+                      / Math.pow(getPhase(i).getComponent(componentName).getTC(), 1.0 / 6.0) * 1e-7);
     }
   }
 
@@ -755,8 +790,8 @@ public abstract class SystemThermo implements SystemInterface {
     double val1 = 1e-20;
     double val2 = 1e-20;
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database
-            .getResultSet("SELECT * FROM compsalt WHERE SaltName='" + componentName + "'")) {
+         java.sql.ResultSet dataSet = database
+                 .getResultSet("SELECT * FROM compsalt WHERE SaltName='" + componentName + "'")) {
       dataSet.next();
       String name1 = dataSet.getString("ion1").trim();
       val1 = Double.parseDouble(dataSet.getString("stoc1")) * value;
@@ -790,13 +825,13 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
         phaseArray[5].addComponent(getPhase(0).getComponent(i).getName(),
-            getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+                getPhase(0).getComponent(i).getNumberOfmoles(),
+                getPhase(0).getComponent(i).getNumberOfmoles(), i);
         phaseArray[5].getComponent(i).setIsPlusFraction(true);
       } else {
         phaseArray[5].addComponent(getPhase(0).getComponent(i).getName(),
-            getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+                getPhase(0).getComponent(i).getNumberOfmoles(),
+                getPhase(0).getComponent(i).getNumberOfmoles(), i);
       }
     }
     ((PhaseSolid) phaseArray[5]).setSolidRefFluidPhase(phaseArray[0]);
@@ -818,13 +853,13 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
         phaseArray[3].addComponent("default", getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+                getPhase(0).getComponent(i).getNumberOfmoles(), i);
         phaseArray[3].getComponent(i).setComponentName(getPhase(0).getComponent(i).getName());
         phaseArray[3].getComponent(i).setIsPlusFraction(true);
       } else {
         phaseArray[3].addComponent(getPhase(0).getComponent(i).getName(),
-            getPhase(0).getComponent(i).getNumberOfmoles(),
-            getPhase(0).getComponent(i).getNumberOfmoles(), i);
+                getPhase(0).getComponent(i).getNumberOfmoles(),
+                getPhase(0).getComponent(i).getNumberOfmoles(), i);
       }
     }
     ((PhaseSolid) phaseArray[3]).setSolidRefFluidPhase(phaseArray[0]);
@@ -837,14 +872,14 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass,
-      double density) {
+                             double density) {
     if (density < 0.0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "addTBPfraction", "density", "is negative."));
+              "addTBPfraction", "density", "is negative."));
     }
     if (molarMass < 0.0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "addTBPfraction", "molarMass", "is negative."));
+              "addTBPfraction", "molarMass", "is negative."));
     }
 
     SystemInterface refSystem = null;
@@ -927,13 +962,13 @@ public abstract class SystemThermo implements SystemInterface {
     // System.out.println("watson " + Kwatson);
     double CF = Math.pow((12.8 - Kwatson) * (10.0 - Kwatson) / (10.0 * acs), 2.0);
     double acsKeslerLee = acs; // characterization.getTBPModel().calcAcentricFactorKeslerLee(molarMass*1000.0,
-                               // density);
+    // density);
     double cpa = (-0.33886 + 0.02827 * Kwatson - 0.26105 * CF + 0.59332 * acsKeslerLee * CF)
-        * 4.18682 * molarMass * 1e3;
+            * 4.18682 * molarMass * 1e3;
     double cpb = (-(0.9291 - 1.1543 * Kwatson + 0.0368 * Kwatson * Kwatson) * 1e-4
-        + CF * (4.56 - 9.48 * acsKeslerLee) * 1e-4) * 4.18682 * molarMass * 1.8 * 1e3;
+            + CF * (4.56 - 9.48 * acsKeslerLee) * 1e-4) * 4.18682 * molarMass * 1.8 * 1e3;
     double cpc = (-1.6658e-7 + CF * (0.536 - 0.6828 * acsKeslerLee) * 1.0e-7) * 4.18682 * molarMass
-        * 1.8 * 1.8 * 1.0e3;
+            * 1.8 * 1.8 * 1.0e3;
     double cpd = 0.0;
 
     for (int i = 0; i < numberOfPhases; i++) {
@@ -943,25 +978,25 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).getComponent(componentName).setNormalLiquidDensity(density);
       getPhase(i).getComponent(componentName).setNormalBoilingPoint(TB - 273.15);
       getPhase(i).getComponent(componentName)
-          .setAcentricFactor(refSystem.getPhase(0).getComponent(0).getAcentricFactor());
+              .setAcentricFactor(refSystem.getPhase(0).getComponent(0).getAcentricFactor());
       getPhase(i).getComponent(componentName).setCriticalVolume(critVol);
       getPhase(i).getComponent(componentName).setRacketZ(racketZ);
       getPhase(i).getComponent(componentName).setRacketZCPA(racketZ);
       getPhase(i).getComponent(componentName).setIsTBPfraction(true);
       getPhase(i).getComponent(componentName).setParachorParameter(
-          characterization.getTBPModel().calcParachorParameter(molarMass, density)); // 59.3+2.34*molarMass*1000.0);
-                                                                                     // 0.5003*thermo.ThermodynamicConstantsInterface.R*TC/PC*(0.25969-racketZ));
+              characterization.getTBPModel().calcParachorParameter(molarMass, density)); // 59.3+2.34*molarMass*1000.0);
+      // 0.5003*thermo.ThermodynamicConstantsInterface.R*TC/PC*(0.25969-racketZ));
       getPhase(i).getComponent(componentName).setCriticalViscosity(
-          characterization.getTBPModel().calcCriticalViscosity(molarMass * 1000.0, density)); // 7.94830*Math.sqrt(1e3*molarMass)*Math.pow(PC,2.0/3.0)/Math.pow(TC,
-                                                                                              // 1.0/6.0)*1e-7);
+              characterization.getTBPModel().calcCriticalViscosity(molarMass * 1000.0, density)); // 7.94830*Math.sqrt(1e3*molarMass)*Math.pow(PC,2.0/3.0)/Math.pow(TC,
+      // 1.0/6.0)*1e-7);
       getPhase(i).getComponent(componentName).setTriplePointTemperature(
-          374.5 + 0.02617 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
-              - 20172.0 / (getPhase(i).getComponent(componentName).getMolarMass() * 1000.0));
+              374.5 + 0.02617 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
+                      - 20172.0 / (getPhase(i).getComponent(componentName).getMolarMass() * 1000.0));
       getPhase(i).getComponent(componentName).setHeatOfFusion(
-          0.1426 / 0.238845 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
-              * getPhase(i).getComponent(componentName).getTriplePointTemperature());
+              0.1426 / 0.238845 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
+                      * getPhase(i).getComponent(componentName).getTriplePointTemperature());
       getPhase(i).getComponent(componentName)
-          .setIdealGasEnthalpyOfFormation(-1462600 * molarMass - 47566.0);
+              .setIdealGasEnthalpyOfFormation(-1462600 * molarMass - 47566.0);
       // getPhase(i).getComponent(componentName).set
 
       // System.out.println(" plusTC " + TC + " plusPC " + PC + " plusm " + m + "
@@ -978,15 +1013,15 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass,
-      double density, double criticalTemperature, double criticalPressure, double acentricFactor) {
+                             double density, double criticalTemperature, double criticalPressure, double acentricFactor) {
     if (density < 0.0 || molarMass < 0.0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "addTBPfraction", "density", "is negative."));
+              "addTBPfraction", "density", "is negative."));
     }
 
     if (density < 0.0 || molarMass < 0.0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "addTBPfraction", "molarMass", "is negative."));
+              "addTBPfraction", "molarMass", "is negative."));
     }
 
     SystemInterface refSystem = null;
@@ -1062,7 +1097,7 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density); // 0.2918-0.0928*
-                                                                                                   // acs)*ThermodynamicConstantsInterface.R*TC/PC*10.0;
+    // acs)*ThermodynamicConstantsInterface.R*TC/PC*10.0;
     addComponent(componentName, numberOfMoles, TC, PC, acs);
     double Kwatson = Math.pow(TB * 1.8, 1.0 / 3.0) / density;
     // System.out.println("watson " + Kwatson);
@@ -1071,11 +1106,11 @@ public abstract class SystemThermo implements SystemInterface {
     // density);
     double acsKeslerLee = acs;
     double cpa = (-0.33886 + 0.02827 * Kwatson - 0.26105 * CF + 0.59332 * acsKeslerLee * CF)
-        * 4.18682 * molarMass * 1e3;
+            * 4.18682 * molarMass * 1e3;
     double cpb = (-(0.9291 - 1.1543 * Kwatson + 0.0368 * Kwatson * Kwatson) * 1e-4
-        + CF * (4.56 - 9.48 * acsKeslerLee) * 1e-4) * 4.18682 * molarMass * 1.8 * 1e3;
+            + CF * (4.56 - 9.48 * acsKeslerLee) * 1e-4) * 4.18682 * molarMass * 1.8 * 1e3;
     double cpc = (-1.6658e-7 + CF * (0.536 - 0.6828 * acsKeslerLee) * 1.0e-7) * 4.18682 * molarMass
-        * 1.8 * 1.8 * 1.0e3;
+            * 1.8 * 1.8 * 1.0e3;
     double cpd = 0.0;
 
     for (int i = 0; i < numberOfPhases; i++) {
@@ -1085,25 +1120,25 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).getComponent(componentName).setNormalLiquidDensity(density);
       getPhase(i).getComponent(componentName).setNormalBoilingPoint(TB - 273.15);
       getPhase(i).getComponent(componentName)
-          .setAcentricFactor(refSystem.getPhase(0).getComponent(0).getAcentricFactor());
+              .setAcentricFactor(refSystem.getPhase(0).getComponent(0).getAcentricFactor());
       getPhase(i).getComponent(componentName).setCriticalVolume(critVol);
       getPhase(i).getComponent(componentName).setRacketZ(racketZ);
       getPhase(i).getComponent(componentName).setRacketZCPA(racketZ);
       getPhase(i).getComponent(componentName).setIsTBPfraction(true);
       getPhase(i).getComponent(componentName).setParachorParameter(
-          characterization.getTBPModel().calcParachorParameter(molarMass, density)); // 59.3+2.34*molarMass*1000.0);
-                                                                                     // //0.5003*thermo.ThermodynamicConstantsInterface.R*TC/PC*(0.25969-racketZ));
+              characterization.getTBPModel().calcParachorParameter(molarMass, density)); // 59.3+2.34*molarMass*1000.0);
+      // //0.5003*thermo.ThermodynamicConstantsInterface.R*TC/PC*(0.25969-racketZ));
       getPhase(i).getComponent(componentName).setCriticalViscosity(
-          characterization.getTBPModel().calcCriticalViscosity(molarMass * 1000.0, density)); // 7.94830*Math.sqrt(1e3*molarMass)*Math.pow(PC,2.0/3.0)/Math.pow(TC,
-                                                                                              // 1.0/6.0)*1e-7);
+              characterization.getTBPModel().calcCriticalViscosity(molarMass * 1000.0, density)); // 7.94830*Math.sqrt(1e3*molarMass)*Math.pow(PC,2.0/3.0)/Math.pow(TC,
+      // 1.0/6.0)*1e-7);
       getPhase(i).getComponent(componentName).setTriplePointTemperature(
-          374.5 + 0.02617 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
-              - 20172.0 / (getPhase(i).getComponent(componentName).getMolarMass() * 1000.0));
+              374.5 + 0.02617 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
+                      - 20172.0 / (getPhase(i).getComponent(componentName).getMolarMass() * 1000.0));
       getPhase(i).getComponent(componentName).setHeatOfFusion(
-          0.1426 / 0.238845 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
-              * getPhase(i).getComponent(componentName).getTriplePointTemperature());
+              0.1426 / 0.238845 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
+                      * getPhase(i).getComponent(componentName).getTriplePointTemperature());
       getPhase(i).getComponent(componentName)
-          .setIdealGasEnthalpyOfFormation(-1462600 * molarMass - 47566.0);
+              .setIdealGasEnthalpyOfFormation(-1462600 * molarMass - 47566.0);
       // getPhase(i).getComponent(componentName).set
 
       // System.out.println(" plusTC " + TC + " plusPC " + PC + " plusm " + m + "
@@ -1126,7 +1161,7 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       for (int j = 0; j < componentNames.size(); j++) {
         getPhase(i).getComponent(j)
-            .setComponentName(getPhase(i).getComponent(j).getComponentName() + postfix);
+                .setComponentName(getPhase(i).getComponent(j).getComponentName() + postfix);
       }
     }
   }
@@ -1148,12 +1183,12 @@ public abstract class SystemThermo implements SystemInterface {
   public void autoSelectMixingRule() {
     logger.info("setting mixing rule");
     if (modelName.equals("CPAs-SRK-EOS") || modelName.equals("CPA-SRK-EOS")
-        || modelName.equals("Electrolyte-CPA-EOS-statoil")
-        || modelName.equals("CPAs-SRK-EOS-statoil") || modelName.equals("Electrolyte-CPA-EOS")) {
+            || modelName.equals("Electrolyte-CPA-EOS-statoil")
+            || modelName.equals("CPAs-SRK-EOS-statoil") || modelName.equals("Electrolyte-CPA-EOS")) {
       this.setMixingRule(10);
       // System.out.println("mix rule 10");
     } else if ((modelName.equals("ScRK-EOS-HV") || modelName.equals("SRK-EOS")
-        || modelName.equals("ScRK-EOS")) && this.getPhase(0).hasComponent("water")) {
+            || modelName.equals("ScRK-EOS")) && this.getPhase(0).hasComponent("water")) {
       this.setMixingRule(4);
     } else if (modelName.equals("PR-EOS")) {
       this.setMixingRule(2);
@@ -1176,15 +1211,15 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public SystemInterface autoSelectModel() {
     if (this.getPhase(0).hasComponent("MDEA") && this.getPhase(0).hasComponent("water")
-        && this.getPhase(0).hasComponent("CO2")) {
+            && this.getPhase(0).hasComponent("CO2")) {
       return setModel("Electrolyte-ScRK-EOS");
     } else if (this.getPhase(0).hasComponent("water") || this.getPhase(0).hasComponent("methanol")
-        || this.getPhase(0).hasComponent("MEG") || this.getPhase(0).hasComponent("TEG")
-        || this.getPhase(0).hasComponent("ethanol") || this.getPhase(0).hasComponent("DEG")) {
+            || this.getPhase(0).hasComponent("MEG") || this.getPhase(0).hasComponent("TEG")
+            || this.getPhase(0).hasComponent("ethanol") || this.getPhase(0).hasComponent("DEG")) {
       if (this.getPhase(0).hasComponent("Na+") || this.getPhase(0).hasComponent("K+")
-          || this.getPhase(0).hasComponent("Br-") || this.getPhase(0).hasComponent("Mg++")
-          || this.getPhase(0).hasComponent("Cl-") || this.getPhase(0).hasComponent("Ca++")
-          || this.getPhase(0).hasComponent("Fe++") || this.getPhase(0).hasComponent("SO4--")) {
+              || this.getPhase(0).hasComponent("Br-") || this.getPhase(0).hasComponent("Mg++")
+              || this.getPhase(0).hasComponent("Cl-") || this.getPhase(0).hasComponent("Ca++")
+              || this.getPhase(0).hasComponent("Fe++") || this.getPhase(0).hasComponent("SO4--")) {
         logger.info("model elect");
         return setModel("Electrolyte-CPA-EOS-statoil");
       } else {
@@ -1207,12 +1242,12 @@ public abstract class SystemThermo implements SystemInterface {
       for (int i = 0; i < numberOfComponents; i++) {
         if (j == 0) {
           getPhase(j).getComponent(i)
-              .setx(getPhase(0).getComponent(i).getK() * getPhase(j).getComponents()[i].getz()
-                  / (1 - beta[phaseIndex[0]]
-                      + beta[phaseIndex[0]] * getPhase(0).getComponent(i).getK()));
+                  .setx(getPhase(0).getComponent(i).getK() * getPhase(j).getComponents()[i].getz()
+                          / (1 - beta[phaseIndex[0]]
+                          + beta[phaseIndex[0]] * getPhase(0).getComponent(i).getK()));
         } else if (j == 1) {
           getPhase(j).getComponent(i).setx(getPhase(0).getComponent(i).getz() / (1.0
-              - beta[phaseIndex[0]] + beta[phaseIndex[0]] * getPhase(0).getComponent(i).getK()));
+                  - beta[phaseIndex[0]] + beta[phaseIndex[0]] * getPhase(0).getComponent(i).getK()));
         }
         // phaseArray[j].getComponents()[i].setx(phaseArray[0].getComponents()[i].getx()
         // / phaseArray[0].getComponents()[i].getK());
@@ -1229,12 +1264,12 @@ public abstract class SystemThermo implements SystemInterface {
       for (int i = 0; i < numberOfComponents; i++) {
         if (j == 0) {
           getPhase(j).getComponents()[i].setx(getPhase(j).getComponents()[i].getK()
-              * getPhase(j).getComponents()[i].getz() / (1 - beta[phaseIndex[0]]
+                  * getPhase(j).getComponents()[i].getz() / (1 - beta[phaseIndex[0]]
                   + beta[phaseIndex[0]] * getPhase(0).getComponents()[i].getK()));
         }
         if (j == 1) {
           getPhase(j).getComponents()[i].setx(getPhase(0).getComponents()[i].getz() / (1.0
-              - beta[phaseIndex[0]] + beta[phaseIndex[0]] * getPhase(0).getComponents()[i].getK()));
+                  - beta[phaseIndex[0]] + beta[phaseIndex[0]] * getPhase(0).getComponents()[i].getK()));
         }
         // phaseArray[j].getComponents()[i].setx(phaseArray[0].getComponents()[i].getx()
         // / phaseArray[0].getComponents()[i].getK());
@@ -1247,7 +1282,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final double calcBeta() throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+          neqsim.util.exception.TooManyIterationsException {
     ComponentInterface[] compArray = getPhase(0).getComponents();
 
     int i;
@@ -1298,9 +1333,9 @@ public abstract class SystemThermo implements SystemInterface {
     double gtest = 0.0;
     for (i = 0; i < numberOfComponents; i++) {
       gtest += compArray[i].getz() * (compArray[i].getK() - 1.0)
-          / (1.0 - nybeta + nybeta * compArray[i].getK()); // beta
-                                                           // =
-                                                           // nybeta
+              / (1.0 - nybeta + nybeta * compArray[i].getK()); // beta
+      // =
+      // nybeta
     }
 
     if (gtest >= 0) {
@@ -1331,7 +1366,7 @@ public abstract class SystemThermo implements SystemInterface {
           double temp2 = 1.0 + temp1 * nybeta;
           deriv += -(compArray[i].getz() * temp1 * temp1) / (temp2 * temp2);
           gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0)
-              / (1.0 + (compArray[i].getK() - 1.0) * nybeta);
+                  / (1.0 + (compArray[i].getK() - 1.0) * nybeta);
         }
 
         if (gbeta >= 0) {
@@ -1361,9 +1396,9 @@ public abstract class SystemThermo implements SystemInterface {
 
         for (i = 0; i < numberOfComponents; i++) {
           deriv -= (compArray[i].getz() * (compArray[i].getK() - 1.0) * (1.0 - compArray[i].getK()))
-              / Math.pow((betal + (1 - betal) * compArray[i].getK()), 2);
+                  / Math.pow((betal + (1 - betal) * compArray[i].getK()), 2);
           gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0)
-              / (betal + (-betal + 1.0) * compArray[i].getK());
+                  / (betal + (-betal + 1.0) * compArray[i].getK());
         }
 
         if (gbeta < 0) {
@@ -1431,7 +1466,7 @@ public abstract class SystemThermo implements SystemInterface {
     } else {
       int compNumb = getPhase(getPhaseIndex(0)).getComponent(component).getComponentNumber();
       double hc = getPhase(getPhaseIndex(0)).getFugacity(compNumb)
-          / getPhase(getPhaseIndex(1)).getComponent(component).getx();
+              / getPhase(getPhaseIndex(1)).getComponent(component).getx();
       return hc;
     }
   }
@@ -1571,7 +1606,7 @@ public abstract class SystemThermo implements SystemInterface {
       if (NeqSimDataBase.createTemporaryTables()) {
         database.execute("insert into comptemp SELECT * FROM comp WHERE name IN (" + names + ")");
         database.execute("insert into intertemp SELECT DISTINCT * FROM inter WHERE comp1 IN ("
-            + names + ") AND comp2 IN (" + names + ")");
+                + names + ") AND comp2 IN (" + names + ")");
         database.execute("delete FROM intertemp WHERE comp1=comp2");
       }
       // System.out.println("ok " + names);
@@ -1582,7 +1617,7 @@ public abstract class SystemThermo implements SystemInterface {
 
       for (int i = 0; i < numberOfComponents; i++) {
         if (getPhase(0).getComponent(i).isIsTBPfraction()
-            || getPhase(0).getComponent(i).isIsPlusFraction()) {
+                || getPhase(0).getComponent(i).isIsPlusFraction()) {
           getPhase(0).getComponent(i).insertComponentIntoDatabase("");
         }
       }
@@ -1632,12 +1667,12 @@ public abstract class SystemThermo implements SystemInterface {
     table[getPhases()[0].getNumberOfComponents() + 4][1] = nf.format(getMolarMass() * 1000, buf, test).toString();
     buf = new StringBuffer();
     table[getPhases()[0].getNumberOfComponents() + 9][1] = nf
-        .format(getEnthalpy() / (getTotalNumberOfMoles() * getMolarMass() * 1000), buf, test)
-        .toString();
+            .format(getEnthalpy() / (getTotalNumberOfMoles() * getMolarMass() * 1000), buf, test)
+            .toString();
     buf = new StringBuffer();
     table[getPhases()[0].getNumberOfComponents() + 10][1] = nf
-        .format(getEntropy() / (getTotalNumberOfMoles() * getMolarMass() * 1000), buf, test)
-        .toString();
+            .format(getEntropy() / (getTotalNumberOfMoles() * getMolarMass() * 1000), buf, test)
+            .toString();
 
     for (int i = 0; i < numberOfPhases; i++) {
       for (int j = 0; j < getPhases()[0].getNumberOfComponents(); j++) {
@@ -1650,7 +1685,7 @@ public abstract class SystemThermo implements SystemInterface {
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 2][0] = "Density";
       table[getPhases()[0].getNumberOfComponents() + 2][i + 2] = nf
-          .format(getPhase(i).getPhysicalProperties().getDensity(), buf, test).toString();
+              .format(getPhase(i).getPhysicalProperties().getDensity(), buf, test).toString();
       table[getPhases()[0].getNumberOfComponents() + 2][6] = "[kg/m^3]";
 
       // Double.longValue(system.getPhase(i).getBeta());
@@ -1662,7 +1697,7 @@ public abstract class SystemThermo implements SystemInterface {
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 4][0] = "MolarMass";
       table[getPhases()[0].getNumberOfComponents() + 4][i + 2] = nf.format(getPhase(i).getMolarMass() * 1000, buf, test)
-          .toString();
+              .toString();
       table[getPhases()[0].getNumberOfComponents() + 4][6] = "[kg/kmol]";
 
       buf = new StringBuffer();
@@ -1673,57 +1708,57 @@ public abstract class SystemThermo implements SystemInterface {
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 6][0] = "Heat Capacity (Cp)";
       table[getPhases()[0].getNumberOfComponents() + 6][i + 2] = nf.format(
-          (getPhase(i).getCp()
-              / (getPhase(i).getNumberOfMolesInPhase() * getPhase(i).getMolarMass() * 1000)),
-          buf, test).toString();
+              (getPhase(i).getCp()
+                      / (getPhase(i).getNumberOfMolesInPhase() * getPhase(i).getMolarMass() * 1000)),
+              buf, test).toString();
       table[getPhases()[0].getNumberOfComponents() + 6][6] = "[kJ/kg*K]";
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 7][0] = "Heat Capacity (Cv)";
       table[getPhases()[0].getNumberOfComponents() + 7][i + 2] = nf.format(
-          (getPhase(i).getCv()
-              / (getPhase(i).getNumberOfMolesInPhase() * getPhase(i).getMolarMass() * 1000)),
-          buf, test).toString();
+              (getPhase(i).getCv()
+                      / (getPhase(i).getNumberOfMolesInPhase() * getPhase(i).getMolarMass() * 1000)),
+              buf, test).toString();
       table[getPhases()[0].getNumberOfComponents() + 7][6] = "[kJ/kg*K]";
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 8][0] = "Speed of Sound";
       table[getPhases()[0].getNumberOfComponents() + 8][i + 2] = nf.format((getPhase(i).getSoundSpeed()), buf, test)
-          .toString();
+              .toString();
       table[getPhases()[0].getNumberOfComponents() + 8][6] = "[m/sec]";
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 9][0] = "Enthalpy";
       table[getPhases()[0].getNumberOfComponents() + 9][i + 2] = nf.format(
-          (getPhase(i).getEnthalpy()
-              / (getPhase(i).getNumberOfMolesInPhase() * getPhase(i).getMolarMass() * 1000)),
-          buf, test).toString();
+              (getPhase(i).getEnthalpy()
+                      / (getPhase(i).getNumberOfMolesInPhase() * getPhase(i).getMolarMass() * 1000)),
+              buf, test).toString();
       table[getPhases()[0].getNumberOfComponents() + 9][6] = "[kJ/kg]";
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 10][0] = "Entropy";
       table[getPhases()[0].getNumberOfComponents() + 10][i + 2] = nf.format(
-          (getPhase(i).getEntropy()
-              / (getPhase(i).getNumberOfMolesInPhase() * getPhase(i).getMolarMass() * 1000)),
-          buf, test).toString();
+              (getPhase(i).getEntropy()
+                      / (getPhase(i).getNumberOfMolesInPhase() * getPhase(i).getMolarMass() * 1000)),
+              buf, test).toString();
       table[getPhases()[0].getNumberOfComponents() + 10][6] = "[kJ/kg*K]";
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 11][0] = "JT coefficient";
       table[getPhases()[0].getNumberOfComponents() + 11][i + 2] = nf
-          .format((getPhase(i).getJouleThomsonCoefficient()), buf, test).toString();
+              .format((getPhase(i).getJouleThomsonCoefficient()), buf, test).toString();
       table[getPhases()[0].getNumberOfComponents() + 11][6] = "[K/bar]";
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 13][0] = "Viscosity";
       table[getPhases()[0].getNumberOfComponents() + 13][i + 2] = nf
-          .format((getPhase(i).getPhysicalProperties().getViscosity()), buf, test).toString();
+              .format((getPhase(i).getPhysicalProperties().getViscosity()), buf, test).toString();
       table[getPhases()[0].getNumberOfComponents() + 13][6] = "[kg/m*sec]";
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 14][0] = "Conductivity";
       table[getPhases()[0].getNumberOfComponents() + 14][i + 2] = nf
-          .format(getPhase(i).getPhysicalProperties().getConductivity(), buf, test).toString();
+              .format(getPhase(i).getPhysicalProperties().getConductivity(), buf, test).toString();
       table[getPhases()[0].getNumberOfComponents() + 14][6] = "[W/m*K]";
 
       buf = new StringBuffer();
@@ -1731,26 +1766,26 @@ public abstract class SystemThermo implements SystemInterface {
       try {
         if (i < numberOfPhases - 1) {
           table[getPhases()[0].getNumberOfComponents() + 15][2] = nf
-              .format(getInterphaseProperties().getSurfaceTension(0, 1), buf, test).toString();
+                  .format(getInterphaseProperties().getSurfaceTension(0, 1), buf, test).toString();
           buf = new StringBuffer();
           table[getPhases()[0].getNumberOfComponents() + 15][3] = nf
-              .format(getInterphaseProperties().getSurfaceTension(0, 1), buf, test).toString();
+                  .format(getInterphaseProperties().getSurfaceTension(0, 1), buf, test).toString();
           buf = new StringBuffer();
           if (i == 1) {
             table[getPhases()[0].getNumberOfComponents() + 17][2] = nf
-                .format(getInterphaseProperties().getSurfaceTension(0, 2), buf, test).toString();
+                    .format(getInterphaseProperties().getSurfaceTension(0, 2), buf, test).toString();
             buf = new StringBuffer();
             table[getPhases()[0].getNumberOfComponents() + 17][4] = nf
-                .format(getInterphaseProperties().getSurfaceTension(0, 2), buf, test).toString();
+                    .format(getInterphaseProperties().getSurfaceTension(0, 2), buf, test).toString();
             table[getPhases()[0].getNumberOfComponents() + 17][6] = "[N/m]";
           }
           if (i == 1) {
             buf = new StringBuffer();
             table[getPhases()[0].getNumberOfComponents() + 16][3] = nf
-                .format(getInterphaseProperties().getSurfaceTension(1, 2), buf, test).toString();
+                    .format(getInterphaseProperties().getSurfaceTension(1, 2), buf, test).toString();
             buf = new StringBuffer();
             table[getPhases()[0].getNumberOfComponents() + 16][4] = nf
-                .format(getInterphaseProperties().getSurfaceTension(1, 2), buf, test).toString();
+                    .format(getInterphaseProperties().getSurfaceTension(1, 2), buf, test).toString();
             table[getPhases()[0].getNumberOfComponents() + 16][6] = "[N/m]";
           }
         }
@@ -1779,7 +1814,7 @@ public abstract class SystemThermo implements SystemInterface {
       table[getPhases()[0].getNumberOfComponents() + 23][0] = "Mixing Rule";
       try {
         table[getPhases()[0].getNumberOfComponents() + 23][i + 2] = ((PhaseEosInterface) getPhase(i))
-            .getMixingRuleName();
+                .getMixingRuleName();
       } catch (Exception ex) {
         table[getPhases()[0].getNumberOfComponents() + 23][i + 2] = "?";
         // logger.error(ex.getMessage(),e);
@@ -1826,7 +1861,7 @@ public abstract class SystemThermo implements SystemInterface {
     dialog.setSize(screenDimension.width / 2, screenDimension.height / 2); // pack();
     Jtab.setRowHeight(dialog.getHeight() / table.length);
     Jtab.setFont(new java.awt.Font("Serif", java.awt.Font.PLAIN,
-        dialog.getHeight() / table.length - dialog.getHeight() / table.length / 10));
+            dialog.getHeight() / table.length - dialog.getHeight() / table.length / 10));
 
     // dialog.pack();
     dialog.setVisible(true);
@@ -1954,7 +1989,7 @@ public abstract class SystemThermo implements SystemInterface {
     double volume = 0;
     for (int i = 0; i < numberOfPhases; i++) {
       volume += getPhase(i).getMolarMass() / getPhase(i).getPhysicalProperties().getDensity()
-          * getPhase(i).getNumberOfMolesInPhase();
+              * getPhase(i).getNumberOfMolesInPhase();
     }
     return volume;
   }
@@ -2061,8 +2096,8 @@ public abstract class SystemThermo implements SystemInterface {
         break;
       case "kg/Sm3":
         return getMolarMass() * ThermodynamicConstantsInterface.atm
-            / ThermodynamicConstantsInterface.R
-            / ThermodynamicConstantsInterface.standardStateTemperature;
+                / ThermodynamicConstantsInterface.R
+                / ThermodynamicConstantsInterface.standardStateTemperature;
       case "mol/m3":
         conversionFactor = 1.0 / getMolarMass();
         break;
@@ -2122,9 +2157,9 @@ public abstract class SystemThermo implements SystemInterface {
       phaseNumber = j;
       for (int i = 0; i < getPhase(j).getNumberOfComponents(); i++) {
         newSystem.getPhase(j).getComponents()[i].setNumberOfmoles(
-            getPhase(phaseNumber).getComponents()[i].getNumberOfMolesInPhase() / 1.0e30);
+                getPhase(phaseNumber).getComponents()[i].getNumberOfMolesInPhase() / 1.0e30);
         newSystem.getPhase(j).getComponents()[i].setNumberOfMolesInPhase(
-            getPhase(phaseNumber).getComponents()[i].getNumberOfMolesInPhase() / 1.0e30);
+                getPhase(phaseNumber).getComponents()[i].getNumberOfMolesInPhase() / 1.0e30);
       }
     }
 
@@ -2262,24 +2297,24 @@ public abstract class SystemThermo implements SystemInterface {
       return totalNumberOfMoles * getMolarMass() * 3600.0 / getIdealLiquidDensity("kg/m3");
     } else if (flowunit.equals("Sm3/sec")) {
       return totalNumberOfMoles * ThermodynamicConstantsInterface.R
-          * ThermodynamicConstantsInterface.standardStateTemperature
-          / ThermodynamicConstantsInterface.atm;
+              * ThermodynamicConstantsInterface.standardStateTemperature
+              / ThermodynamicConstantsInterface.atm;
     } else if (flowunit.equals("Sm3/hr")) {
       return totalNumberOfMoles * 3600.0 * ThermodynamicConstantsInterface.R
-          * ThermodynamicConstantsInterface.standardStateTemperature
-          / ThermodynamicConstantsInterface.atm;
+              * ThermodynamicConstantsInterface.standardStateTemperature
+              / ThermodynamicConstantsInterface.atm;
     } else if (flowunit.equals("Sm3/day")) {
       return totalNumberOfMoles * 3600.0 * 24.0 * ThermodynamicConstantsInterface.R
-          * ThermodynamicConstantsInterface.standardStateTemperature
-          / ThermodynamicConstantsInterface.atm;
+              * ThermodynamicConstantsInterface.standardStateTemperature
+              / ThermodynamicConstantsInterface.atm;
     } else if (flowunit.equals("MSm3/day")) {
       return totalNumberOfMoles * 3600.0 * 24.0 * ThermodynamicConstantsInterface.R
-          * ThermodynamicConstantsInterface.standardStateTemperature
-          / ThermodynamicConstantsInterface.atm / 1.0e6;
+              * ThermodynamicConstantsInterface.standardStateTemperature
+              / ThermodynamicConstantsInterface.atm / 1.0e6;
     } else if (flowunit.equals("MSm3/hr")) {
       return totalNumberOfMoles * 3600.0 * ThermodynamicConstantsInterface.R
-          * ThermodynamicConstantsInterface.standardStateTemperature
-          / ThermodynamicConstantsInterface.atm / 1.0e6;
+              * ThermodynamicConstantsInterface.standardStateTemperature
+              / ThermodynamicConstantsInterface.atm / 1.0e6;
     } else if (flowunit.equals("mole/sec")) {
       return totalNumberOfMoles;
     } else if (flowunit.equals("mole/min")) {
@@ -2338,7 +2373,7 @@ public abstract class SystemThermo implements SystemInterface {
       return 0;
     } else {
       return getPhase(0).getEnthalpy() / getPhase(0).getNumberOfMolesInPhase()
-          - getPhase(1).getEnthalpy() / getPhase(1).getNumberOfMolesInPhase();
+              - getPhase(1).getEnthalpy() / getPhase(1).getNumberOfMolesInPhase();
     }
   }
 
@@ -2365,7 +2400,7 @@ public abstract class SystemThermo implements SystemInterface {
     double molarMass = getMolarMass();
     for (int i = 0; i < getNumberOfComponents(); i++) {
       normalLiquidDensity += getComponent(i).getNormalLiquidDensity() * getComponent(i).getz()
-          * getComponent(i).getMolarMass() / molarMass;
+              * getComponent(i).getMolarMass() / molarMass;
     }
     if (unit.equals("gr/cm3")) {
       return normalLiquidDensity;
@@ -2400,7 +2435,7 @@ public abstract class SystemThermo implements SystemInterface {
   public double getInterfacialTension(String phase1, String phase2) {
     if (hasPhaseType(phase1) && hasPhaseType(phase2)) {
       return interfaceProp.getSurfaceTension(getPhaseNumberOfPhase(phase1),
-          getPhaseNumberOfPhase(phase2));
+              getPhaseNumberOfPhase(phase2));
     } else {
       return Double.NaN;
     }
@@ -2702,7 +2737,7 @@ public abstract class SystemThermo implements SystemInterface {
     int number = 0;
     for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()
-          || getPhase(0).getComponent(i).isIsPlusFraction()) {
+              || getPhase(0).getComponent(i).isIsPlusFraction()) {
         number++;
       }
     }
@@ -2723,7 +2758,7 @@ public abstract class SystemThermo implements SystemInterface {
     // int number = 0;
     for (int i = 0; i < numb; i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()
-          || getPhase(0).getComponent(i).isIsPlusFraction()) {
+              || getPhase(0).getComponent(i).isIsPlusFraction()) {
         IDs[i] = getPhase(0).getComponent(i).getIndex();
         // number++;
       }
@@ -2778,11 +2813,11 @@ public abstract class SystemThermo implements SystemInterface {
   public final PhaseInterface getPhase(int i) {
     if (i < 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getPhase",
-          "i", i + " is not valid, must be in the range 0-" + this.getNumberOfPhases()));
+              "i", i + " is not valid, must be in the range 0-" + this.getNumberOfPhases()));
     } else if (i >= getNumberOfPhases() && phaseArray[phaseIndex[i]] == null) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
-          this.getClass() + ":getPhase - Can not return phase number " + i
-              + ". Current number of phases are " + getNumberOfPhases()));
+              this.getClass() + ":getPhase - Can not return phase number " + i
+                      + ". Current number of phases are " + getNumberOfPhases()));
     }
     return phaseArray[phaseIndex[i]];
   }
@@ -2821,7 +2856,7 @@ public abstract class SystemThermo implements SystemInterface {
       case "mass":
         initPhysicalProperties("density");
         return getVolumeFraction(phaseNumber) * getPhase(phaseNumber).getDensity("kg/m3")
-            / getDensity("kg/m3");
+                / getDensity("kg/m3");
       default:
         return getBeta(phaseNumber);
     }
@@ -2842,7 +2877,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
     throw new RuntimeException(
-        new InvalidInputException(this, "getPhaseIndex", "phase", "is not found in phaseArray."));
+            new InvalidInputException(this, "getPhaseIndex", "phase", "is not found in phaseArray."));
   }
 
   /** {@inheritDoc} */
@@ -3211,7 +3246,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
       if (getPhase(i).getPhaseTypeName().equals(pt.getDesc())) {
         logger.error(
-            "Bug in setting phasetype somewhere. Phasetype and phasetypename should be the same.");
+                "Bug in setting phasetype somewhere. Phasetype and phasetypename should be the same.");
         return true;
       }
     }
@@ -3279,9 +3314,9 @@ public abstract class SystemThermo implements SystemInterface {
       // z = 0;
       for (int i = 0; i < numberOfComponents; i++) {
         getPhase(j).getComponents()[i]
-            .setz(getPhase(j).getComponents()[i].getNumberOfmoles() / getTotalNumberOfMoles());
+                .setz(getPhase(j).getComponents()[i].getNumberOfmoles() / getTotalNumberOfMoles());
         getPhase(j).getComponents()[i].setx(getPhase(j).getComponents()[i].getNumberOfMolesInPhase()
-            / getPhase(j).getNumberOfMolesInPhase());
+                / getPhase(j).getNumberOfMolesInPhase());
       }
       getPhase(j).normalize();
     }
@@ -3303,7 +3338,7 @@ public abstract class SystemThermo implements SystemInterface {
       for (int i = 0; i < getMaxNumberOfPhases(); i++) {
         if (isPhase(i)) {
           getPhase(i).init(getTotalNumberOfMoles(), numberOfComponents, type,
-              phaseType[phaseIndex[i]], beta[phaseIndex[i]]);
+                  phaseType[phaseIndex[i]], beta[phaseIndex[i]]);
         }
       }
       setNumberOfPhases(2);
@@ -3314,7 +3349,7 @@ public abstract class SystemThermo implements SystemInterface {
         if (isPhase(i)) {
           // todo: possible bug here, some components check for initType >= 3
           getPhase(i).init(getTotalNumberOfMoles(), numberOfComponents, Math.min(3, type),
-              phaseType[phaseIndex[i]], beta[phaseIndex[i]]);
+                  phaseType[phaseIndex[i]], beta[phaseIndex[i]]);
         }
       }
 
@@ -3333,9 +3368,9 @@ public abstract class SystemThermo implements SystemInterface {
           for (int j = 0; j < numberOfComponents; j++) {
             // TODO: only runs two calculations init == 3 runs three
             getPhase(i).getComponents()[j].fugcoefDiffTempNumeric(getPhase(i), numberOfComponents,
-                getPhase(i).getTemperature(), getPhase(i).getPressure());
+                    getPhase(i).getTemperature(), getPhase(i).getPressure());
             getPhase(i).getComponents()[j].fugcoefDiffPresNumeric(getPhase(i), numberOfComponents,
-                getPhase(i).getTemperature(), getPhase(i).getPressure());
+                    getPhase(i).getTemperature(), getPhase(i).getPressure());
           }
         }
       }
@@ -3387,7 +3422,7 @@ public abstract class SystemThermo implements SystemInterface {
 
     if (isPhase(phase)) {
       getPhase(phase).init(getTotalNumberOfMoles(), numberOfComponents, type,
-          phaseType[phaseIndex[phase]], beta[phaseIndex[phase]]);
+              phaseType[phaseIndex[phase]], beta[phaseIndex[phase]]);
       if (type > 0) {
         for (int j = 0; j < numberOfComponents; j++) {
           getPhase(phase).getComponents()[j].fugcoef(getPhase(phase));
@@ -3424,7 +3459,7 @@ public abstract class SystemThermo implements SystemInterface {
       this.beta[phaseIndex[i]] = getPhase(i).getNumberOfMolesInPhase() / getTotalNumberOfMoles();
     }
     if (this.getSumBeta() < 1.0 - ThermodynamicModelSettings.phaseFractionMinimumLimit
-        || this.getSumBeta() > 1.0 + ThermodynamicModelSettings.phaseFractionMinimumLimit) {
+            || this.getSumBeta() > 1.0 + ThermodynamicModelSettings.phaseFractionMinimumLimit) {
       logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0");
     }
   }
@@ -3439,9 +3474,9 @@ public abstract class SystemThermo implements SystemInterface {
     double[][] gasnumericDfugdp = new double[2][getPhases()[0].getNumberOfComponents()];
     double[][] liqnumericDfugdp = new double[2][getPhases()[0].getNumberOfComponents()];
     double[][][] gasnumericDfugdn = new double[2][getPhases()[0]
-        .getNumberOfComponents()][getPhases()[0].getNumberOfComponents()];
+            .getNumberOfComponents()][getPhases()[0].getNumberOfComponents()];
     double[][][] liqnumericDfugdn = new double[2][getPhases()[0]
-        .getNumberOfComponents()][getPhases()[0].getNumberOfComponents()];
+            .getNumberOfComponents()][getPhases()[0].getNumberOfComponents()];
 
     double dt = getTemperature() / 1e5;
     setTemperature(getTemperature() + dt);
@@ -3522,14 +3557,14 @@ public abstract class SystemThermo implements SystemInterface {
             gasnumericDfugdn[0][k][i] = (liqfug[0][i] - liqfug[1][i]) / (2 * dn);
             phaseArray[0].getComponents()[i].setdfugdn(k, gasnumericDfugdn[0][k][i]);
             phaseArray[0].getComponents()[i].setdfugdx(k,
-                gasnumericDfugdn[0][k][i] * phaseArray[0].getNumberOfMolesInPhase());
+                    gasnumericDfugdn[0][k][i] * phaseArray[0].getNumberOfMolesInPhase());
           }
 
           if (phase == 1) {
             liqnumericDfugdn[0][k][i] = (liqfug[0][i] - liqfug[1][i]) / (2 * dn);
             phaseArray[1].getComponents()[i].setdfugdn(k, liqnumericDfugdn[0][k][i]);
             phaseArray[1].getComponents()[i].setdfugdx(k,
-                liqnumericDfugdn[0][k][i] * phaseArray[1].getNumberOfMolesInPhase());
+                    liqnumericDfugdn[0][k][i] * phaseArray[1].getNumberOfMolesInPhase());
           }
         }
 
@@ -3646,9 +3681,9 @@ public abstract class SystemThermo implements SystemInterface {
 
             for (int i = 0; i < getPhases()[0].getNumberOfComponents(); i++) {
               getPhase(phase).getComponent(k).setdfugdn(i,
-                  (liqfug[0][i] - liqfug[1][i]) / (2 * dn));
+                      (liqfug[0][i] - liqfug[1][i]) / (2 * dn));
               getPhase(phase).getComponent(k).setdfugdx(i, (liqfug[0][i] - liqfug[1][i]) / (2 * dn)
-                  * getPhase(phase).getNumberOfMolesInPhase());
+                      * getPhase(phase).getNumberOfMolesInPhase());
             }
             // initBeta();
           }
@@ -3698,7 +3733,7 @@ public abstract class SystemThermo implements SystemInterface {
     for (int j = 0; j < numberOfPhases; j++) {
       for (int i = 0; i < numberOfComponents; i++) {
         getPhase(j).getComponents()[i]
-            .setNumberOfmoles(phaseArray[phaseIndex[0]].getComponents()[i].getNumberOfmoles());
+                .setNumberOfmoles(phaseArray[phaseIndex[0]].getComponents()[i].getNumberOfmoles());
       }
     }
   }
@@ -3841,7 +3876,7 @@ public abstract class SystemThermo implements SystemInterface {
           logger.error(ex.getMessage(), ex);
         }
         if (getPhase(i).getPhysicalProperties().calcDensity() < getPhase(i - 1)
-            .getPhysicalProperties().calcDensity()) {
+                .getPhysicalProperties().calcDensity()) {
           int tempIndex1 = getPhaseIndex(i - 1);
           int tempIndex2 = getPhaseIndex(i);
           setPhaseIndex(i, tempIndex1);
@@ -3860,9 +3895,9 @@ public abstract class SystemThermo implements SystemInterface {
     for (int j = 0; j < getMaxNumberOfPhases(); j++) {
       for (int i = 0; i < getPhase(j).getNumberOfComponents(); i++) {
         newSystem.getPhase(j).getComponent(i)
-            .setNumberOfmoles(getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase());
+                .setNumberOfmoles(getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase());
         newSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(
-            getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase());
+                getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase());
       }
     }
 
@@ -3883,16 +3918,16 @@ public abstract class SystemThermo implements SystemInterface {
     for (int j = 0; j < getMaxNumberOfPhases(); j++) {
       for (int i = 0; i < getPhase(j).getNumberOfComponents(); i++) {
         newSystem.getPhases()[j].getComponents()[i]
-            .setNumberOfmoles(getPhase(phaseNumber1).getComponents()[i].getNumberOfMolesInPhase()
-                + getPhase(phaseNumber2).getComponents()[i].getNumberOfMolesInPhase());
+                .setNumberOfmoles(getPhase(phaseNumber1).getComponents()[i].getNumberOfMolesInPhase()
+                        + getPhase(phaseNumber2).getComponents()[i].getNumberOfMolesInPhase());
         newSystem.getPhases()[j].getComponents()[i].setNumberOfMolesInPhase(
-            getPhase(phaseNumber1).getComponents()[i].getNumberOfMolesInPhase()
-                + getPhase(phaseNumber2).getComponents()[i].getNumberOfMolesInPhase());
+                getPhase(phaseNumber1).getComponents()[i].getNumberOfMolesInPhase()
+                        + getPhase(phaseNumber2).getComponents()[i].getNumberOfMolesInPhase());
       }
     }
 
     newSystem.setTotalNumberOfMoles(getPhase(phaseNumber1).getNumberOfMolesInPhase()
-        + getPhase(phaseNumber2).getNumberOfMolesInPhase());
+            + getPhase(phaseNumber2).getNumberOfMolesInPhase());
 
     newSystem.init(0);
 
@@ -3909,7 +3944,7 @@ public abstract class SystemThermo implements SystemInterface {
     // TODO: other phaseToSystem functions returns clones.
     for (int i = 0; i < newPhase.getNumberOfComponents(); i++) {
       newPhase.getComponents()[i]
-          .setNumberOfmoles(newPhase.getComponents()[i].getNumberOfMolesInPhase());
+              .setNumberOfmoles(newPhase.getComponents()[i].getNumberOfMolesInPhase());
     }
 
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
@@ -3937,7 +3972,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
     } catch (Exception ex) {
       logger.error("error....." + fluidName + " has no phase .... " + phaseName
-          + " ..... returning phase number 0");
+              + " ..... returning phase number 0");
     }
     return phaseToSystem(0);
   }
@@ -3956,20 +3991,20 @@ public abstract class SystemThermo implements SystemInterface {
 
         if (componentType.equalsIgnoreCase("normal")) {
           addComponent(dataSet.getString("ComponentName"),
-              Double.parseDouble(dataSet.getString("Rate")));
+                  Double.parseDouble(dataSet.getString("Rate")));
         } else if (componentType.equalsIgnoreCase("TBP")) {
           addTBPfraction(dataSet.getString("ComponentName"),
-              Double.parseDouble(dataSet.getString("Rate")),
-              Double.parseDouble(dataSet.getString("MolarMass")) / 1000.0,
-              Double.parseDouble(dataSet.getString("Density")));
+                  Double.parseDouble(dataSet.getString("Rate")),
+                  Double.parseDouble(dataSet.getString("MolarMass")) / 1000.0,
+                  Double.parseDouble(dataSet.getString("Density")));
         } else if (componentType.equalsIgnoreCase("plus")) {
           addPlusFraction(dataSet.getString("ComponentName"),
-              Double.parseDouble(dataSet.getString("Rate")),
-              Double.parseDouble(dataSet.getString("MolarMass")) / 1000.0,
-              Double.parseDouble(dataSet.getString("Density")));
+                  Double.parseDouble(dataSet.getString("Rate")),
+                  Double.parseDouble(dataSet.getString("MolarMass")) / 1000.0,
+                  Double.parseDouble(dataSet.getString("Density")));
         } else {
           logger.error(
-              "component type need to be specified for ... " + dataSet.getString("ComponentName"));
+                  "component type need to be specified for ... " + dataSet.getString("ComponentName"));
         }
       }
     } catch (Exception ex) {
@@ -4057,10 +4092,10 @@ public abstract class SystemThermo implements SystemInterface {
     name = ComponentInterface.getComponentNameFromAlias(name);
 
     setTotalNumberOfMoles(
-        getTotalNumberOfMoles() - phaseArray[0].getComponent(name).getNumberOfmoles());
+            getTotalNumberOfMoles() - phaseArray[0].getComponent(name).getNumberOfmoles());
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       getPhase(i).removeComponent(name, getTotalNumberOfMoles(),
-          getPhase(i).getComponent(name).getNumberOfMolesInPhase());
+              getPhase(i).getComponent(name).getNumberOfMolesInPhase());
     }
 
     componentNames.remove(name);
@@ -4075,8 +4110,8 @@ public abstract class SystemThermo implements SystemInterface {
     for (int j = 0; j < numberOfPhases; j++) {
       for (int i = 0; i < numberOfComponents; i++) {
         getPhase(j).getComponents()[i]
-            .setNumberOfmoles(getPhase(j).getComponents()[i].getNumberOfmoles()
-                - getPhase(specPhase).getComponents()[i].getNumberOfMolesInPhase());
+                .setNumberOfmoles(getPhase(j).getComponents()[i].getNumberOfmoles()
+                        - getPhase(specPhase).getComponents()[i].getNumberOfMolesInPhase());
       }
     }
 
@@ -4143,7 +4178,7 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < numberOfComponents; i++) {
       // TODO: numeric issue, nearly zero
       addComponent(getPhase(0).getComponent(i).getComponentName(),
-          -getPhase(0).getComponent(i).getNumberOfmoles());
+              -getPhase(0).getComponent(i).getNumberOfmoles());
     }
   }
 
@@ -4290,7 +4325,7 @@ public abstract class SystemThermo implements SystemInterface {
       int i = 0;
       for (; i < numberOfComponents; i++) {
         String sqlString = "'" + Integer.toString(i + 1) + "', '" + getPhase(0).getComponent(i).getName() + "', "
-            + "'molfrac[-] ', '" + Double.toString(getPhase(0).getComponent(i).getz()) + "'";
+                + "'molfrac[-] ', '" + Double.toString(getPhase(0).getComponent(i).getz()) + "'";
 
         int j = 0;
         for (; j < numberOfPhases; j++) {
@@ -4330,7 +4365,7 @@ public abstract class SystemThermo implements SystemInterface {
       i++;
 
       sqlString = "'" + Integer.toString(i + 1) + "', 'MolarMass', " + "'kg/mol ', '"
-          + Double.toString(getMolarMass()) + "'";
+              + Double.toString(getMolarMass()) + "'";
 
       j = 0;
       for (; j < numberOfPhases; j++) {
@@ -4364,12 +4399,12 @@ public abstract class SystemThermo implements SystemInterface {
           // System.out.println("moles of comp: " + i + " " +
           // phaseArray[k].getComponents()[i].getNumberOfMolesInPhase());
           phaseArray[phase].addMoles(i,
-              (phaseArray[k].getComponents()[i].getNumberOfMolesInPhase() * (1.0 - 0.01)));
+                  (phaseArray[k].getComponents()[i].getNumberOfMolesInPhase() * (1.0 - 0.01)));
           phaseArray[k].addMoles(i,
-              -(phaseArray[k].getComponents()[i].getNumberOfMolesInPhase() * (1.0 - 0.01)));
+                  -(phaseArray[k].getComponents()[i].getNumberOfMolesInPhase() * (1.0 - 0.01)));
           phaseArray[k].getComponents()[i]
-              .setx(phaseArray[k].getComponents()[i].getNumberOfMolesInPhase()
-                  / phaseArray[k].getNumberOfMolesInPhase());
+                  .setx(phaseArray[k].getComponents()[i].getNumberOfMolesInPhase()
+                          / phaseArray[k].getNumberOfMolesInPhase());
           // System.out.println("moles of comp after: " + i + " " +
           // phaseArray[k].getComponents()[i].getNumberOfMolesInPhase());
         }
@@ -4453,7 +4488,7 @@ public abstract class SystemThermo implements SystemInterface {
     componentNameTag = nameTag;
     for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
       if (!getPhase(0).getComponent(i).isIsTBPfraction()
-          && !getPhase(0).getComponent(i).isIsPlusFraction()) {
+              && !getPhase(0).getComponent(i).isIsPlusFraction()) {
         renameComponent(componentNames.get(i), componentNames.get(i) + nameTag);
       }
     }
@@ -4497,7 +4532,7 @@ public abstract class SystemThermo implements SystemInterface {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()
-          || getPhase(0).getComponent(i).isIsPlusFraction()) {
+              || getPhase(0).getComponent(i).isIsPlusFraction()) {
         if (getPhase(0).getComponent(i).getMolarMass() > molarMass) {
           molarMass = getPhase(0).getComponent(i).getMolarMass();
           compNumber = i;
@@ -4527,21 +4562,21 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void setImplementedCompositionDeriativesofFugacity(
-      boolean implementedCompositionDeriativesofFugacity) {
+          boolean implementedCompositionDeriativesofFugacity) {
     this.implementedCompositionDeriativesofFugacity = implementedCompositionDeriativesofFugacity;
   }
 
   /** {@inheritDoc} */
   @Override
   public void setImplementedPressureDeriativesofFugacity(
-      boolean implementedPressureDeriativesofFugacity) {
+          boolean implementedPressureDeriativesofFugacity) {
     this.implementedPressureDeriativesofFugacity = implementedPressureDeriativesofFugacity;
   }
 
   /** {@inheritDoc} */
   @Override
   public void setImplementedTemperatureDeriativesofFugacity(
-      boolean implementedTemperatureDeriativesofFugacity) {
+          boolean implementedTemperatureDeriativesofFugacity) {
     this.implementedTemperatureDeriativesofFugacity = implementedTemperatureDeriativesofFugacity;
   }
 
@@ -4651,7 +4686,7 @@ public abstract class SystemThermo implements SystemInterface {
         tempModel = new SystemPrEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
       } else if (model.equals("ScRK-EOS") || model.equals("ScRK-EOS-HV")) {
         tempModel = new SystemSrkSchwartzentruberEos(getPhase(0).getTemperature(),
-            getPhase(0).getPressure());
+                getPhase(0).getPressure());
       } else if (model.equals("Electrolyte-ScRK-EOS")) {
         tempModel = new SystemFurstElectrolyteEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
       } else if (model.equals("GERG-water-EOS")) {
@@ -4661,9 +4696,9 @@ public abstract class SystemThermo implements SystemInterface {
       } else if (model.equals("CPAs-SRK-EOS-statoil")) {
         tempModel = new SystemSrkCPAstatoil(getPhase(0).getTemperature(), getPhase(0).getPressure());
       } else if (model.equals("Electrolyte-CPA-EOS-statoil")
-          || model.equals("Electrolyte-CPA-EOS")) {
+              || model.equals("Electrolyte-CPA-EOS")) {
         tempModel = new SystemElectrolyteCPAstatoil(getPhase(0).getTemperature(),
-            getPhase(0).getPressure());
+                getPhase(0).getPressure());
       } else if (model.equals("UMR-PRU-EoS")) {
         tempModel = new SystemUMRPRUMCEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
       } else if (model.equals("PC-SAFT")) {
@@ -4685,22 +4720,22 @@ public abstract class SystemThermo implements SystemInterface {
       logger.info("created class " + tempModel);
       for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
         logger.info("adding " + getPhase(0).getComponent(i).getName() + " moles "
-            + getPhase(0).getComponent(i).getNumberOfmoles() + " isPlus "
-            + getPhase(0).getComponent(i).isIsPlusFraction() + " isTBP "
-            + getPhase(0).getComponent(i).isIsTBPfraction());
+                + getPhase(0).getComponent(i).getNumberOfmoles() + " isPlus "
+                + getPhase(0).getComponent(i).isIsPlusFraction() + " isTBP "
+                + getPhase(0).getComponent(i).isIsTBPfraction());
         if (getPhase(0).getComponent(i).isIsTBPfraction()) {
           tempModel.addTBPfraction(getPhase(0).getComponent(i).getName(),
-              getPhase(0).getComponent(i).getNumberOfmoles(),
-              getPhase(0).getComponent(i).getMolarMass(),
-              getPhase(0).getComponent(i).getNormalLiquidDensity());
+                  getPhase(0).getComponent(i).getNumberOfmoles(),
+                  getPhase(0).getComponent(i).getMolarMass(),
+                  getPhase(0).getComponent(i).getNormalLiquidDensity());
         } else if (getPhase(0).getComponent(i).isIsPlusFraction()) {
           tempModel.addPlusFraction(getPhase(0).getComponent(i).getName(),
-              getPhase(0).getComponent(i).getNumberOfmoles(),
-              getPhase(0).getComponent(i).getMolarMass(),
-              getPhase(0).getComponent(i).getNormalLiquidDensity());
+                  getPhase(0).getComponent(i).getNumberOfmoles(),
+                  getPhase(0).getComponent(i).getMolarMass(),
+                  getPhase(0).getComponent(i).getNormalLiquidDensity());
         } else {
           tempModel.addComponent(getPhase(0).getComponent(i).getName(),
-              getPhase(0).getComponent(i).getNumberOfmoles());
+                  getPhase(0).getComponent(i).getNumberOfmoles());
         }
       }
 
@@ -4714,7 +4749,7 @@ public abstract class SystemThermo implements SystemInterface {
       logger.info("done ... set mixing rule ......");
       tempModel.autoSelectMixingRule();
       if (model.equals("Electrolyte-ScRK-EOS")) { // ||
-                                                  // model.equals("Electrolyte-CPA-EOS-statoil"
+        // model.equals("Electrolyte-CPA-EOS-statoil"
         logger.info("chemical reaction init......");
         tempModel.setMultiPhaseCheck(false);
         tempModel.chemicalReactionInit();
@@ -4778,7 +4813,7 @@ public abstract class SystemThermo implements SystemInterface {
     if (totalFlow < 1e-100) {
       String msg = "must be larger than 0 (1e-100) when setting molar composition";
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "setMolarComposition", "totalFlow", msg));
+              "setMolarComposition", "totalFlow", msg));
     }
     double sum = 0;
     for (double value : molefractions) {
@@ -4793,7 +4828,7 @@ public abstract class SystemThermo implements SystemInterface {
           addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
         }
         for (int j = 0; j < getCharacterization().getLumpingModel().getNumberOfLumpedComponents()
-            - 1; j++) {
+                - 1; j++) {
           // addComponent(compNumb, totalFlow * molefractions[molefractions.length - 1]
           // * getCharacterization().getLumpingModel().getFractionOfHeavyEnd(j) / sum);
         }
@@ -4801,17 +4836,17 @@ public abstract class SystemThermo implements SystemInterface {
       case "Plus":
         // TODO: compNumb can be negative
         for (int compNumb = 0; compNumb < this.numberOfComponents
-            - getCharacterization().getLumpingModel().getNumberOfLumpedComponents(); compNumb++) {
+                - getCharacterization().getLumpingModel().getNumberOfLumpedComponents(); compNumb++) {
           addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
         }
         int ii = 0;
         for (int compNumb = this.numberOfComponents - getCharacterization().getLumpingModel()
-            .getNumberOfLumpedComponents(); compNumb < this.numberOfComponents; compNumb++) {
+                .getNumberOfLumpedComponents(); compNumb < this.numberOfComponents; compNumb++) {
           addComponent(compNumb,
-              totalFlow * getCharacterization().getLumpingModel().getFractionOfHeavyEnd(ii++)
-                  * molefractions[this.numberOfComponents
-                      - getCharacterization().getLumpingModel().getNumberOfLumpedComponents()]
-                  / sum);
+                  totalFlow * getCharacterization().getLumpingModel().getFractionOfHeavyEnd(ii++)
+                          * molefractions[this.numberOfComponents
+                          - getCharacterization().getLumpingModel().getNumberOfLumpedComponents()]
+                          / sum);
         }
         break;
       default:
@@ -5038,7 +5073,7 @@ public abstract class SystemThermo implements SystemInterface {
       } else if (totalNumberOfMolesLocal > 1e-100) {
         // (SIval / totalNumberOfMolesLocal - 1) * ...
         double change = SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
-            - getPhase(0).getComponent(i).getNumberOfmoles();
+                - getPhase(0).getComponent(i).getNumberOfmoles();
         if (Math.abs(change) > 1e-12) {
           addComponent(i, change);
         }
@@ -5078,11 +5113,11 @@ public abstract class SystemThermo implements SystemInterface {
   public void tuneModel(String model, double val, int phase) {
     if (model.equals("viscosity")) {
       getPhase(phase).getPhysicalProperties().getViscosityModel().tuneModel(val,
-          getPhase(phase).getTemperature(), getPhase(phase).getPressure());
+              getPhase(phase).getTemperature(), getPhase(phase).getPressure());
       for (int i = 0; i < getMaxNumberOfPhases(); i++) {
         for (int j = 0; j < numberOfPhases; j++) {
           getPhase(i).getComponent(j)
-              .setCriticalViscosity(getPhase(phase).getComponent(j).getCriticalViscosity());
+                  .setCriticalViscosity(getPhase(phase).getComponent(j).getCriticalViscosity());
         }
       }
     }
