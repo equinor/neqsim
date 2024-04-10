@@ -2,10 +2,17 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import neqsim.MathLib.matrix.DMatrixRMaj;
+import neqsim.MathLib.matrix.CommonOps_DDRM;
+import neqsim.MathLib.matrix.NormOps_DDRM;
+import neqsim.MathLib.matrix.SimpleMatrix;
+/*
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
+*/
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentElectrolyteCPA;
 import neqsim.thermo.mixingRule.CPAMixing;

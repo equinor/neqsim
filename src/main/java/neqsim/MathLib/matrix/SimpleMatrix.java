@@ -5,8 +5,8 @@ package neqsim.MathLib.matrix;
 public class SimpleMatrix {
 
     public double[][] matrix;
-    int numRows;
-    int numCols;
+    public int numRows;
+    public int numCols;
 
     public SimpleMatrix( int numRows, int numCols ) {
 
@@ -72,7 +72,7 @@ public class SimpleMatrix {
     */
 
     public SimpleMatrix solve(SimpleMatrix dQM) {
-        double inv[][] = Inverse.invertMatrix(matrix);
+        double inv[][] = Inverse.invert(matrix);
         double[][] result= mult(inv,dQM.matrix);
         return new SimpleMatrix(result);
     }
@@ -239,7 +239,7 @@ public class SimpleMatrix {
     }
 
     public SimpleMatrix invert() {
-        double inv[][] = Inverse.invertMatrix(this.matrix);
+        double inv[][] = Inverse.invert(this.matrix);
         return new SimpleMatrix(inv);
     }
 
