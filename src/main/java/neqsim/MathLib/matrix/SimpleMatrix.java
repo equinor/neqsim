@@ -239,7 +239,7 @@ public class SimpleMatrix {
     }
 
     public SimpleMatrix invert() {
-        double inv[][] = Inverse.invertMatrix(matrix);
+        double inv[][] = Inverse.invertMatrix(this.matrix);
         return new SimpleMatrix(inv);
     }
 
@@ -250,7 +250,7 @@ public class SimpleMatrix {
         int i, j;
         for (i = 0; i < numRows; i++)
             for (j = 0; j < numCols; j++)
-                matrixElementMult[i][j] = matrix[i][j] * mat.matrix[i][j];
+                matrixElementMult[i][j] = this.matrix[i][j] * mat.matrix[i][j];
 
         return new SimpleMatrix(matrixElementMult);
     }
