@@ -461,7 +461,10 @@ public class NeqSimDataBase
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       database.execute("DROP TABLE IF EXISTS " + tableName);
       String sqlString = "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('" + url + "')";
-      database.execute(sqlString);
+
+      String sqlStringModified = sqlString.replace("file:/C:","C:");
+      database.execute(sqlStringModified);
+      //database.execute(sqlString);
     } catch (Exception ex) {
       logger.error("Failed updating table " + tableName, ex);
     }
