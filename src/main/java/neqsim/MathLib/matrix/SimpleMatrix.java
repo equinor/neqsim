@@ -170,8 +170,23 @@ public class SimpleMatrix {
         return new SimpleMatrix(matrixTransposed);
     }
 
+    public double[][] transpose(double[][] mat) {
+
+        int numRows = mat.length;
+        int numCols = mat[0].length;
+        double[][] matrixTransposed = new double[numCols][numRows];
+
+        int i, j;
+        for (i = 0; i < numRows; i++)
+            for (j = 0; j < numCols; j++)
+                matrixTransposed[j][i] = mat[i][j];
+
+        return matrixTransposed;
+    }
+
     public SimpleMatrix mult(SimpleMatrix mat) {
 
+        SimpleMatrix matT = mat.transpose();
         int w1 = this.matrix.length;
         int w2 = this.matrix[0].length;
         int v1 = mat.matrix.length;
@@ -182,7 +197,8 @@ public class SimpleMatrix {
         for (int w_i1 = 0; w_i1 < w1; w_i1++) {
             for (int v_i2 = 0; v_i2 < v2; v_i2++) {
                 for (int w_i2 = 0; w_i2 < w2; w_i2++) {
-                    result[w_i1][v_i2] += this.matrix[w_i1][w_i2] * mat.matrix[w_i2][v_i2];
+                    //result[w_i1][v_i2] += this.matrix[w_i1][w_i2] * mat.matrix[w_i2][v_i2];
+                    result[w_i1][v_i2] += this.matrix[w_i1][w_i2] * matT.matrix[v_i2][w_i2];
                 }
             }
         }
@@ -192,6 +208,7 @@ public class SimpleMatrix {
 
     public double[][] mult(double[][] mat1, double[][] mat2) {
 
+        double[][] mat2T = transpose(mat2);
         int w1 = mat1.length;
         int w2 = mat1[0].length;
         int v1 = mat2.length;
@@ -202,7 +219,8 @@ public class SimpleMatrix {
         for (int w_i1 = 0; w_i1 < w1; w_i1++) {
             for (int v_i2 = 0; v_i2 < v2; v_i2++) {
                 for (int w_i2 = 0; w_i2 < w2; w_i2++) {
-                    result[w_i1][v_i2] += mat1[w_i1][w_i2] * mat2[w_i2][v_i2];
+                    //result[w_i1][v_i2] += mat1[w_i1][w_i2] * mat2[w_i2][v_i2];
+                    result[w_i1][v_i2] += mat1[w_i1][w_i2] * mat2T[v_i2][w_i2];
                 }
             }
         }

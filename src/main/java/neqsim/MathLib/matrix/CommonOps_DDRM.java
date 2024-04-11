@@ -2,8 +2,22 @@ package neqsim.MathLib.matrix;
 
 public class CommonOps_DDRM {
 
+    public static DMatrixRMaj transpose(DMatrixRMaj mat) {
+
+        int numRows = mat.matrix.length;
+        int numCols = mat.matrix[0].length;
+        double[][] matrixTransposed = new double[numCols][numRows];
+
+        int i, j;
+        for (i = 0; i < numRows; i++)
+            for (j = 0; j < numCols; j++)
+                matrixTransposed[j][i] = mat.matrix[i][j];
+
+        return new DMatrixRMaj(matrixTransposed);
+    }
     public static DMatrixRMaj mult(DMatrixRMaj mat, DMatrixRMaj mat2, DMatrixRMaj matout) {
 
+        DMatrixRMaj mat2T = transpose(mat2);
         int w1 = mat.matrix.length;
         int w2 = mat.matrix[0].length;
         int v1 = mat2.matrix.length;
@@ -14,7 +28,8 @@ public class CommonOps_DDRM {
         for (int w_i1 = 0; w_i1 < w1; w_i1++) {
             for (int v_i2 = 0; v_i2 < v2; v_i2++) {
                 for (int w_i2 = 0; w_i2 < w2; w_i2++) {
-                    result[w_i1][v_i2] += mat.matrix[w_i1][w_i2] * mat2.matrix[w_i2][v_i2];
+                    //result[w_i1][v_i2] += mat.matrix[w_i1][w_i2] * mat2.matrix[w_i2][v_i2];
+                    result[w_i1][v_i2] += mat.matrix[w_i1][w_i2] * mat2T.matrix[v_i2][w_i2];
                 }
 
 /*
@@ -36,6 +51,7 @@ public class CommonOps_DDRM {
 
         //double[][] mat = matInput.matrix;
         //matInput2
+        DMatrixRMaj mat2T = transpose(mat2);
 
         int w1 = mat.matrix.length;
         int w2 = mat.matrix[0].length;
@@ -47,7 +63,8 @@ public class CommonOps_DDRM {
         for (int w_i1 = 0; w_i1 < w1; w_i1++) {
             for (int v_i2 = 0; v_i2 < v2; v_i2++) {
                 for (int w_i2 = 0; w_i2 < w2; w_i2++) {
-                    result[w_i1][v_i2] += mat.matrix[w_i1][w_i2] * mat2.matrix[w_i2][v_i2];
+                    //result[w_i1][v_i2] += mat.matrix[w_i1][w_i2] * mat2.matrix[w_i2][v_i2];
+                    result[w_i1][v_i2] += mat.matrix[w_i1][w_i2] * mat2T.matrix[v_i2][w_i2];
                 }
             }
         }
