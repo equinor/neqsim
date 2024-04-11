@@ -16,8 +16,8 @@ public class CommonOps_DDRM {
                 double sum = 0;
                 for (int w_i2 = 0; w_i2 < w2; w_i2++) {
                     sum += mat.matrix[w_i1][w_i2] * mat2.matrix[w_i2][v_i2];
-                    result[w_i1][v_i2] = sum;
                 }
+                result[w_i1][v_i2] = sum;
             }
         }
 
@@ -43,8 +43,8 @@ public class CommonOps_DDRM {
                 double sum = 0;
                 for (int w_i2 = 0; w_i2 < w2; w_i2++) {
                     sum += mat.matrix[w_i1][w_i2] * mat2.matrix[w_i2][v_i2];
-                    result[w_i1][v_i2] = sum;
                 }
+                result[w_i1][v_i2] = sum;
             }
         }
 

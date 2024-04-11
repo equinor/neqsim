@@ -54,8 +54,8 @@ public class DMatrixRMaj {
                 double sum = 0;
                 for (int w_i2 = 0; w_i2 < w2; w_i2++) {
                     sum += this.matrix[w_i1][w_i2] * mat.matrix[w_i2][v_i2];
-                    result[w_i1][v_i2] = sum;
                 }
+                result[w_i1][v_i2] = sum;
             }
         }
 
