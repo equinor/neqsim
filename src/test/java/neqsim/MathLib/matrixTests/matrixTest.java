@@ -33,8 +33,6 @@ public class matrixTest {
 
     }
     public double CompareMatrix(neqsim.MathLib.matrix.SimpleMatrix matrixMat, org.ejml.simple.SimpleMatrix ejmlMat) {
-        int numRows = matrixMat.numRows;
-        int numCols = matrixMat.numCols;
 
         double[][] ejmlData = ejml2matrix(ejmlMat);
 
