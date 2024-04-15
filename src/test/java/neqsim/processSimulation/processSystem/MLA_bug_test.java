@@ -342,11 +342,14 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
 
     richGLycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
 
+    p.run();
+    /*
     Thread runThr = p.runAsThread();
     try {
       runThr.join(100000);
     } catch (Exception ex) {
       logger.error("Something failed");
     }
+    */
   }
 }
