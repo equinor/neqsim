@@ -38,7 +38,8 @@ public class Inverse
                 if (k != i) {
                     double factor = augmented[k][i];
                     for (int j = 0; j < n * 2; j++) {
-                        augmented[k][j] -= factor * augmented[i][j];
+                        double scaled_factor = factor * augmented[i][j];
+                        augmented[k][j] -= scaled_factor;
                     }
                 }
             }

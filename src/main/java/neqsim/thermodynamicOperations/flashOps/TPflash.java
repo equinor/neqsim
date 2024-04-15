@@ -24,6 +24,8 @@ public class TPflash extends Flash {
   double betaTolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
   double presdiff = 1.0;
 
+  boolean isInit = false;
+
   /**
    * <p>
    * Constructor for TPflash.
@@ -194,182 +196,195 @@ public class TPflash extends Flash {
       return;
     }
 
-    findLowestGibbsPhaseIsChecked = false;
-    int minGibbsPhase = 0;
-    double minimumGibbsEnergy = 0;
-
-    system.init(0);
-    system.init(1);
-
-    if (system.getPhase(0).getGibbsEnergy() < system.getPhase(1).getGibbsEnergy()) {
-      minimumGibbsEnergy = system.getPhase(0).getGibbsEnergy();
-    } else {
-      minGibbsPhase = 1;
-      minimumGibbsEnergy = system.getPhase(1).getGibbsEnergy();
-    }
-
-    if (system.getPhase(0).getNumberOfComponents() == 1 || system.getMaxNumberOfPhases() == 1) {
-      system.setNumberOfPhases(1);
-      if (minGibbsPhase == 0) {
-        system.setPhaseIndex(0, 0);
-      } else {
-        system.setPhaseIndex(0, 1);
-      }
-      if (solidCheck) {
-        ThermodynamicOperations operation = new ThermodynamicOperations(system);
-        operation.TPSolidflash();
-      }
-      return;
-    }
-
-    minGibsPhaseLogZ = new double[system.getPhase(0).getNumberOfComponents()];
-    minGibsLogFugCoef = new double[system.getPhase(0).getNumberOfComponents()];
-
-    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      if (system.getPhase(minGibbsPhase).getComponent(i).getz() > 1e-50) {
-        minGibsPhaseLogZ[i] = Math.log(system.getPhase(minGibbsPhase).getComponent(i).getz());
-      }
-      minGibsLogFugCoef[i] =
-          system.getPhase(minGibbsPhase).getComponent(i).getLogFugacityCoefficient();
-    }
-
-    presdiff = system.getPhase(1).getPressure() / system.getPhase(0).getPressure();
-    if (Math.abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) > 1e-12) {
-      for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        system.getPhase(0).getComponent(i)
-            .setK(system.getPhase(0).getComponent(i).getK() * presdiff);
-        system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
-      }
-    }
-
-    if (system.isChemicalSystem()) {
-      system.getChemicalReactionOperations().solveChemEq(1, 0);
-      system.getChemicalReactionOperations().solveChemEq(1, 1);
-    }
-
-    // Calculates phase fractions and initial composition based on Wilson K-factors
-    try {
-      system.calcBeta();
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-    }
-    system.calc_x_y();
-    system.init(1);
-    // If phase fraction using Wilson K factor returns pure gas or pure liquid, we
-    // try with another K value guess based on calculated fugacities.
-    // This solves some problems when we have high volumes of water and heavy
-    // hydrocarbons returning only one liquid phase (and this phase desolves all
-    // gas)
-    if (system.getBeta() > (1.0 - betaTolerance * 1.1)
-        || system.getBeta() < (betaTolerance * 1.1)) {
-      system.setBeta(0.5);
-      sucsSubs();
-    }
-
-    // Performs three iterations of successive substitution
-    for (int k = 0; k < 3; k++) {
-      if (system.getBeta() < (1.0 - betaTolerance * 1.1)
-          && system.getBeta() > (betaTolerance * 1.1)) {
-        sucsSubs();
-        if ((system.getGibbsEnergy() - minimumGibbsEnergy)
-            / Math.abs(minimumGibbsEnergy) < -1e-12) {
-          break;
-        }
-      }
-    }
-
-    // System.out.println("beta " + system.getBeta());
-
     int totiter = 0;
-    double tpdx = 1.0;
-    double tpdy = 1.0;
-    double dgonRT = 1.0;
-    boolean passedTests = false;
-    if (system.getBeta() > (1.0 - 1.1 * betaTolerance)
-        || system.getBeta() < (1.1 * betaTolerance)) {
-      tpdx = 1.0;
-      tpdy = 1.0;
-      dgonRT = 1.0;
-    } else if (system.getGibbsEnergy() < (minimumGibbsEnergy * (1.0 - 1.0e-12))) {
-      tpdx = -1.0;
-      tpdy = -1.0;
-      dgonRT = -1.0;
-    } else {
-      for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        if (system.getComponent(i).getz() > 1e-50) {
-          tpdy += system.getPhase(0).getComponent(i).getx()
-              * (Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient())
-                  + Math.log(system.getPhase(0).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
-                  - minGibsLogFugCoef[i]);
-          tpdx += system.getPhase(1).getComponent(i).getx()
-              * (Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
-                  + Math.log(system.getPhase(1).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
-                  - minGibsLogFugCoef[i]);
-        }
+    double gasgib = 0;
+    double liqgib = 0;
+
+    // Start Init operations
+  if (isInit == false) {
+
+
+      findLowestGibbsPhaseIsChecked = false;
+      int minGibbsPhase = 0;
+      double minimumGibbsEnergy = 0;
+
+
+      system.init(0);
+      system.init(1);
+
+      if (system.getPhase(0).getGibbsEnergy() < system.getPhase(1).getGibbsEnergy()) {
+        minimumGibbsEnergy = system.getPhase(0).getGibbsEnergy();
+      } else {
+        minGibbsPhase = 1;
+        minimumGibbsEnergy = system.getPhase(1).getGibbsEnergy();
       }
 
-      dgonRT = system.getPhase(0).getBeta() * tpdy + (1.0 - system.getPhase(0).getBeta()) * tpdx;
-
-      if (dgonRT > 0) {
-        if (tpdx < 0) {
-          for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-            system.getPhase(0).getComponent(i)
-                .setK(Math.exp(Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
-                    - minGibsLogFugCoef[i]) * presdiff);
-            system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
-          }
-        } else if (tpdy < 0) {
-          for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-            system.getPhase(0).getComponents()[i].setK(Math
-                .exp(minGibsLogFugCoef[i]
-                    - Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient()))
-                * presdiff);
-            system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
-          }
+      if (system.getPhase(0).getNumberOfComponents() == 1 || system.getMaxNumberOfPhases() == 1) {
+        system.setNumberOfPhases(1);
+        if (minGibbsPhase == 0) {
+          system.setPhaseIndex(0, 0);
         } else {
-          passedTests = true;
-        }
-      }
-    }
-
-    if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
-      if (system.checkStability() && stabilityCheck()) {
-        if (system.doMultiPhaseCheck()) {
-          // logger.info("one phase flash is stable - checking multiphase flash....");
-          TPmultiflash operation = new TPmultiflash(system, true);
-          operation.run();
+          system.setPhaseIndex(0, 1);
         }
         if (solidCheck) {
-          this.solidPhaseFlash();
+          ThermodynamicOperations operation = new ThermodynamicOperations(system);
+          operation.TPSolidflash();
         }
-        if (system.isMultiphaseWaxCheck()) {
-          TPmultiflashWAX operation = new TPmultiflashWAX(system, true);
-          operation.run();
-        }
-
-        system.orderByDensity();
-        system.init(1);
-        // commented out by Even Solbraa 6/2-2012k
-        // system.init(3);
         return;
       }
-    }
 
-    setNewK();
+      minGibsPhaseLogZ = new double[system.getPhase(0).getNumberOfComponents()];
+      minGibsLogFugCoef = new double[system.getPhase(0).getNumberOfComponents()];
 
-    gibbsEnergy = system.getGibbsEnergy();
-    gibbsEnergyOld = gibbsEnergy;
+      for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+        if (system.getPhase(minGibbsPhase).getComponent(i).getz() > 1e-50) {
+          minGibsPhaseLogZ[i] = Math.log(system.getPhase(minGibbsPhase).getComponent(i).getz());
+        }
+        minGibsLogFugCoef[i] =
+                system.getPhase(minGibbsPhase).getComponent(i).getLogFugacityCoefficient();
+      }
 
-    // Checks if gas or oil is the most stable phase
-    double gasgib = system.getPhase(0).getGibbsEnergy();
-    system.setPhaseType(0, PhaseType.byValue(0));
-    system.init(1, 0);
-    double liqgib = system.getPhase(0).getGibbsEnergy();
+      presdiff = system.getPhase(1).getPressure() / system.getPhase(0).getPressure();
+      if (Math.abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) > 1e-12) {
+        for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+          system.getPhase(0).getComponent(i)
+                  .setK(system.getPhase(0).getComponent(i).getK() * presdiff);
+          system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
+        }
+      }
 
-    if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
-      system.setPhaseType(0, PhaseType.byValue(1));
-    }
-    system.init(1);
+      if (system.isChemicalSystem()) {
+        system.getChemicalReactionOperations().solveChemEq(1, 0);
+        system.getChemicalReactionOperations().solveChemEq(1, 1);
+      }
+
+      // Calculates phase fractions and initial composition based on Wilson K-factors
+      try {
+        system.calcBeta();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
+      }
+      system.calc_x_y();
+      system.init(1);
+      // If phase fraction using Wilson K factor returns pure gas or pure liquid, we
+      // try with another K value guess based on calculated fugacities.
+      // This solves some problems when we have high volumes of water and heavy
+      // hydrocarbons returning only one liquid phase (and this phase desolves all
+      // gas)
+      if (system.getBeta() > (1.0 - betaTolerance * 1.1)
+              || system.getBeta() < (betaTolerance * 1.1)) {
+        system.setBeta(0.5);
+        sucsSubs();
+      }
+
+      // Performs three iterations of successive substitution
+      for (int k = 0; k < 3; k++) {
+        if (system.getBeta() < (1.0 - betaTolerance * 1.1)
+                && system.getBeta() > (betaTolerance * 1.1)) {
+          sucsSubs();
+          if ((system.getGibbsEnergy() - minimumGibbsEnergy)
+                  / Math.abs(minimumGibbsEnergy) < -1e-12) {
+            break;
+          }
+        }
+      }
+
+      // System.out.println("beta " + system.getBeta());
+
+
+      double tpdx = 1.0;
+      double tpdy = 1.0;
+      double dgonRT = 1.0;
+      boolean passedTests = false;
+      if (system.getBeta() > (1.0 - 1.1 * betaTolerance)
+              || system.getBeta() < (1.1 * betaTolerance)) {
+        tpdx = 1.0;
+        tpdy = 1.0;
+        dgonRT = 1.0;
+      } else if (system.getGibbsEnergy() < (minimumGibbsEnergy * (1.0 - 1.0e-12))) {
+        tpdx = -1.0;
+        tpdy = -1.0;
+        dgonRT = -1.0;
+      } else {
+        for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+          if (system.getComponent(i).getz() > 1e-50) {
+            tpdy += system.getPhase(0).getComponent(i).getx()
+                    * (Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient())
+                    + Math.log(system.getPhase(0).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
+                    - minGibsLogFugCoef[i]);
+            tpdx += system.getPhase(1).getComponent(i).getx()
+                    * (Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
+                    + Math.log(system.getPhase(1).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
+                    - minGibsLogFugCoef[i]);
+          }
+        }
+
+        dgonRT = system.getPhase(0).getBeta() * tpdy + (1.0 - system.getPhase(0).getBeta()) * tpdx;
+
+        if (dgonRT > 0) {
+          if (tpdx < 0) {
+            for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+              system.getPhase(0).getComponent(i)
+                      .setK(Math.exp(Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
+                              - minGibsLogFugCoef[i]) * presdiff);
+              system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
+            }
+          } else if (tpdy < 0) {
+            for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+              system.getPhase(0).getComponents()[i].setK(Math
+                      .exp(minGibsLogFugCoef[i]
+                              - Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient()))
+                      * presdiff);
+              system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
+            }
+          } else {
+            passedTests = true;
+          }
+        }
+      }
+
+      if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
+        if (system.checkStability() && stabilityCheck()) {
+          if (system.doMultiPhaseCheck()) {
+            // logger.info("one phase flash is stable - checking multiphase flash....");
+            TPmultiflash operation = new TPmultiflash(system, true);
+            operation.run();
+          }
+          if (solidCheck) {
+            this.solidPhaseFlash();
+          }
+          if (system.isMultiphaseWaxCheck()) {
+            TPmultiflashWAX operation = new TPmultiflashWAX(system, true);
+            operation.run();
+          }
+
+          system.orderByDensity();
+          system.init(1);
+          // commented out by Even Solbraa 6/2-2012k
+          // system.init(3);
+          return;
+        }
+      }
+
+      setNewK();
+
+      gibbsEnergy = system.getGibbsEnergy();
+      gibbsEnergyOld = gibbsEnergy;
+
+      // Checks if gas or oil is the most stable phase
+      gasgib = system.getPhase(0).getGibbsEnergy();
+      system.setPhaseType(0, PhaseType.byValue(0));
+      system.init(1, 0);
+      liqgib = system.getPhase(0).getGibbsEnergy();
+
+      if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
+        system.setPhaseType(0, PhaseType.byValue(1));
+      }
+      system.init(1);
+
+      isInit = false;
+      // End Init operations
+  }
 
     int accelerateInterval = 7;
     int newtonLimit = 20;
