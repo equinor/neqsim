@@ -30,7 +30,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
   @Test
   public void runProcessTEG() throws InterruptedException {
 
-    //TimeUnit.SECONDS.sleep(30);
+    TimeUnit.SECONDS.sleep(30);
 
     ProcessSystem p = new ProcessSystem();
 
