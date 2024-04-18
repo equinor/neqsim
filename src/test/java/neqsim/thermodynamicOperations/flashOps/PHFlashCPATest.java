@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author ESOL
  */
@@ -12,7 +14,11 @@ class PHFlashCPATest {
   static ThermodynamicOperations testOps = null;
 
   @Test
-  void testRun() {
+  void testRun() throws InterruptedException {
+
+    long timeout = 30;
+    TimeUnit.SECONDS.sleep(timeout);
+
     testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(323.15, 100.0);
     testSystem.addComponent("CO2", 9.0);
     testSystem.addComponent("methane", 90.0);
