@@ -22,11 +22,16 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPA;
 
+import java.util.concurrent.TimeUnit;
+
 public class MLA_bug_test extends neqsim.NeqSimTest {
   Logger logger = LogManager.getLogger(MLA_bug_test.class);
 
   @Test
   public void runProcessTEG() throws InterruptedException {
+
+    TimeUnit.SECONDS.sleep(30);
+
     ProcessSystem p = new ProcessSystem();
 
     SystemInterface feedGas = new SystemSrkCPA();
