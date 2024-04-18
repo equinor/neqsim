@@ -47,7 +47,12 @@ class PHFlashCPATest {
     double enthalpy = testSystem.getEnthalpy();
     double entropy = testSystem.getEntropy();
     testSystem.setPressure(50.0);
+    long startTimePH = System.currentTimeMillis();
     testOps.PHflash(enthalpy);
+    long endTimePH = System.currentTimeMillis();
+    long durationPH = endTimePH - startTimePH;
+    System.out.println("Execution time PHflash: " + durationPH + " milliseconds");
+
     assertEquals(enthalpy, testSystem.getEnthalpy(), 1e-2);
     assertEquals(307.5036701214, testSystem.getTemperature(), 1e-2);
     testOps.PSflash(entropy);

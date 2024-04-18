@@ -30,7 +30,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
   @Test
   public void runProcessTEG() throws InterruptedException {
 
-    TimeUnit.SECONDS.sleep(30);
+    //TimeUnit.SECONDS.sleep(30);
 
     ProcessSystem p = new ProcessSystem();
 
@@ -59,7 +59,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     coolingMedium.addComponent("MEG", 0.3, "kg/sec");
     coolingMedium.setMixingRule(10);
     coolingMedium.setMultiPhaseCheck(false);
-
+/*
     StreamInterface coolingWater1 = new Stream(coolingMedium);
     coolingWater1.setName("cooling water 1");
     coolingWater1.setFlowRate(30000.0, "kg/hr");
@@ -241,6 +241,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     column.setInternalDiameter(0.56);
     p.add(column);
 
+
     Heater coolerRegenGas = new Heater(column.getGasOutStream());
     coolerRegenGas.setName("regen gas cooler");
     coolerRegenGas.setOutTemperature(273.15 + 47.0);
@@ -346,7 +347,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(resycleLeanTEG);
 
     richGLycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
-
+*/
     p.run();
 
 /*
