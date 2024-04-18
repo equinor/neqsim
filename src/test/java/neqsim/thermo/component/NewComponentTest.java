@@ -59,4 +59,12 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     assertEquals(0.01703052, thermoSystem.getMolarMass("kg/mol"), 0.01);
     assertEquals(405.4, thermoSystem.getComponent(0).getTC(), 0.01);
   }
+
+  @Test
+  public void newComponentIsoButeneTest() {
+    thermoSystem = new SystemSrkEos(298.0, ThermodynamicConstantsInterface.referencePressure);
+    thermoSystem.addComponent("iso-butene", 1.0);
+    thermoSystem.init(0);
+    assertEquals(56.10632e-3, thermoSystem.getMolarMass("kg/mol"), 0.01);
+  }
 }
