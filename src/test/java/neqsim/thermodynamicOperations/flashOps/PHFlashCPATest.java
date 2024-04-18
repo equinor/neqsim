@@ -17,7 +17,7 @@ class PHFlashCPATest {
   void testRun() throws InterruptedException {
 
     long timeout = 30;
-    TimeUnit.SECONDS.sleep(timeout);
+    //TimeUnit.SECONDS.sleep(timeout);
 
     testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(323.15, 100.0);
     testSystem.addComponent("CO2", 9.0);
@@ -35,7 +35,14 @@ class PHFlashCPATest {
     testSystem.setMultiPhaseCheck(true);
 
     testOps = new ThermodynamicOperations(testSystem);
+
+    long startTime = System.currentTimeMillis();
     testOps.TPflash();
+    long endTime = System.currentTimeMillis();
+    long duration = endTime - startTime;
+
+    System.out.println("Execution time TPflash: " + duration + " milliseconds");
+
     testSystem.initProperties();
     double enthalpy = testSystem.getEnthalpy();
     double entropy = testSystem.getEntropy();
