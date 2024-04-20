@@ -8,7 +8,6 @@ package neqsim.thermo.phase;
 
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.PhysicalPropertyHandler;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
@@ -294,6 +293,14 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public double getTemperature() {
     return temperature;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getTemperature(String unit) {
+    neqsim.util.unit.TemperatureUnit tempConversion =
+        new neqsim.util.unit.TemperatureUnit(getTemperature(), "K");
+    return tempConversion.getValue(unit);
   }
 
   /** {@inheritDoc} */

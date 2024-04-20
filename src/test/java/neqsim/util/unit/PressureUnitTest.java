@@ -29,6 +29,9 @@ class PressureUnitTest extends neqsim.NeqSimTest {
     assertEquals(101325.0, fluid.getPressure("Pa"), 1e-4);
     assertEquals(101.3250, fluid.getPressure("kPa"), 1e-4);
     assertEquals(1.0, fluid.getPressure("atm"), 1e-4);
+    assertEquals(14.6959488, fluid.getPressure("psi"), 1e-4);
+    assertEquals(14.6959488, fluid.getPressure("psia"), 1e-4);
+    assertEquals(-0.0040512245077, fluid.getPressure("psig"), 1e-4);
 
     fluid.setPressure(11.0, "bara");
     testOps.TPflash();
@@ -39,6 +42,10 @@ class PressureUnitTest extends neqsim.NeqSimTest {
     assertEquals(11.0e5, fluid.getPressure("Pa"), 1e-4);
     assertEquals(11e2, fluid.getPressure("kPa"), 1e-4);
     assertEquals(10.856155933, fluid.getPressure("atm"), 1e-4);
+    assertEquals(159.54151180, fluid.getPressure("psi"), 1e-4);
+    assertEquals(159.54151180, fluid.getPressure("psia"), 1e-4);
+    assertEquals(144.841511503000, fluid.getPressure("psig"), 1e-4);
+
   }
 }
 
