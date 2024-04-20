@@ -14,6 +14,7 @@ import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.exception.InvalidInputException;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Phase class.
@@ -1071,6 +1072,12 @@ public abstract class Phase implements PhaseInterface {
         break;
       case "kJ/kg":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
+        break;
+      case "Btu/lbmol":
+        conversionFactor = 1.0 / getNumberOfMolesInPhase() * 0.429923;
+        break;
+      case "Btu":
+        conversionFactor = 0.00094781712;
         break;
       default:
         throw new RuntimeException("unit not supported " + unit);
