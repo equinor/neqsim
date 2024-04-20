@@ -2,18 +2,32 @@ package neqsim.MathLib.matrix;
 
 public class EigenDecomposition {
 
-    private double[][] matrix;
+    private double[] matrix;
     int numRows;
     int numCols;
 
     public EigenDecomposition( double[][] input ) {
 
-        this.matrix = input;
-        this.numRows = this.matrix.length;
-        this.numCols = this.matrix[0].length;
+        //this.matrix = input;
+        this.numRows = input.length;
+        this.numCols = input[0].length;
+
+        double[] inputArray = new double[this.numRows*this.numCols];
+
+        for (int row = 0; row < numRows; row++)
+            for (int col = 0; col < numCols; col++)
+                inputArray[row*this.numCols+col] = input[row][col];
+
+        this.matrix = inputArray;
+
     }
 
+    public EigenDecomposition( double[] input, int numRows, int numCols ) {
 
+        this.matrix = input;
+        this.numRows = numRows;
+        this.numCols = numCols;
+    }
 
     public int getNumberOfEigenvalues()
     {
@@ -23,7 +37,7 @@ public class EigenDecomposition {
 
     public SimpleMatrix getEigenVector(int a)
     {
-        int iterations = 10;
+        int iterations = 100;
         double eigenvalue = 0;
         double[] eigenvector = new double[this.numRows];
 
@@ -50,12 +64,12 @@ public class EigenDecomposition {
         return new SimpleMatrix(result);
     }
 
-    public double[] multiplyMatrixByVector(double[][] matrix, double[] vector)
+    public double[] multiplyMatrixByVector(double[] matrix, double[] vector)
     {
         double[] answer = new double[vector.length];
         for (int row = 0; row < answer.length; ++row) {
             for (int col = 0; col < vector.length; ++col) {
-                answer[row] += matrix[row][col] * vector[col];
+                answer[row] += matrix[row*answer.length+col] * vector[col];
             }
         }
         return answer;

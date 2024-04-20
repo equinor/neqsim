@@ -5,7 +5,73 @@ import java.util.Scanner;
 public class Inverse
 {
 
-    public static double[][] invert(double[][] matrix) {
+    public static double[] invert(double[] matrix, int numRowsCols) {
+        int n = numRowsCols;
+        double[] inverse = new double[n*n];
+
+        // Create identity matrix
+        for (int i = 0; i < n; i++) {
+            inverse[i*n+i] = 1;
+        }
+
+        // Perform Gaussian elimination
+        for (int i = 0; i < n; i++) {
+            double pivot = matrix[i*n+i];
+            if (pivot == 0) {
+                return null; // Cannot invert, pivot is zero
+            }
+            for (int j = 0; j < n; j++) {
+                matrix[i*n+j] /= pivot;
+                inverse[i*n+j] /= pivot;
+            }
+            for (int k = 0; k < n; k++) {
+                if (k != i) {
+                    double factor = matrix[k*n+i];
+                    for (int j = 0; j < n; j++) {
+                        matrix[k*n+j] -= factor * matrix[i*n+j];
+                        inverse[k*n+j] -= factor * inverse[i*n+j];
+                    }
+                }
+            }
+        }
+
+        return inverse;
+    }
+
+    public static double[][] invertGaussian(double[][] matrix) {
+        int n = matrix.length;
+        double[][] inverse = new double[n][n];
+
+        // Create identity matrix
+        for (int i = 0; i < n; i++) {
+            inverse[i][i] = 1;
+        }
+
+        // Perform Gaussian elimination
+        for (int i = 0; i < n; i++) {
+            double pivot = matrix[i][i];
+            if (pivot == 0) {
+                return null; // Cannot invert, pivot is zero
+            }
+            for (int j = 0; j < n; j++) {
+                matrix[i][j] /= pivot;
+                inverse[i][j] /= pivot;
+            }
+            for (int k = 0; k < n; k++) {
+                if (k != i) {
+                    double factor = matrix[k][i];
+                    for (int j = 0; j < n; j++) {
+                        matrix[k][j] -= factor * matrix[i][j];
+                        inverse[k][j] -= factor * inverse[i][j];
+                    }
+                }
+            }
+        }
+
+        return inverse;
+    }
+
+    public static double[][] invertGaussian2(double[][] matrix) {
         int n = matrix.length;
         double[][] inverse = new double[n][n];
         double[][] augmented = new double[n][n * 2];

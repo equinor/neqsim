@@ -39,10 +39,16 @@ class PHFlashCPATest {
     long duration00 = endTime00 - startTime00;
     System.out.println("Execution time addComp0: " + duration00 + " milliseconds");
 
-    long startTime0 = System.currentTimeMillis();
+    long startTime0000 = System.currentTimeMillis();
     testSystem.setMixingRule(10);
-    testSystem.setMultiPhaseCheck(true);
 
+
+    long endTime0000 = System.currentTimeMillis();
+    long duration0000 = endTime0000 - startTime0000;
+    System.out.println("Execution time addComp000: " + duration0000 + " milliseconds");
+
+    long startTime0 = System.currentTimeMillis();
+    testSystem.setMultiPhaseCheck(true);
     testOps = new ThermodynamicOperations(testSystem);
     long endTime0 = System.currentTimeMillis();
     long duration0 = endTime0 - startTime0;

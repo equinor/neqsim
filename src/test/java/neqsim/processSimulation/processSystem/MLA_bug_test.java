@@ -32,6 +32,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
 
     //TimeUnit.SECONDS.sleep(30);
 
+    long startTime000 = System.currentTimeMillis();
     ProcessSystem p = new ProcessSystem();
 
     SystemInterface feedGas = new SystemSrkCPA();
@@ -59,7 +60,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     coolingMedium.addComponent("MEG", 0.3, "kg/sec");
     coolingMedium.setMixingRule(10);
     coolingMedium.setMultiPhaseCheck(false);
-/*
+
     StreamInterface coolingWater1 = new Stream(coolingMedium);
     coolingWater1.setName("cooling water 1");
     coolingWater1.setFlowRate(30000.0, "kg/hr");
@@ -338,7 +339,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     makeupMixer.addStream(leanTEGtoabs);
     makeupMixer.addStream(makeupTEG);
     p.add(makeupMixer);
-
+/*
     Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
     resycleLeanTEG.addStream(makeupMixer.getOutStream());
     resycleLeanTEG.setOutletStream(TEGFeed);
@@ -347,8 +348,13 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(resycleLeanTEG);
 
     richGLycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
-*/
+
+    */
     p.run();
+
+    long endTime000 = System.currentTimeMillis();
+    long duration000 = endTime000 - startTime000;
+    System.out.println("Execution time total: " + duration000 + " milliseconds");
 
 /*
     Thread runThr = p.runAsThread();
