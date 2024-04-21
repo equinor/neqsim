@@ -1589,7 +1589,7 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public String[][] createTable(String name) {
     initProperties();
-    neqsim.Units units = new neqsim.Units();
+    neqsim.util.unit.Units units = new neqsim.util.unit.Units();
     java.text.DecimalFormat nf = new java.text.DecimalFormat();
 
     java.text.DecimalFormatSymbols symbols = new java.text.DecimalFormatSymbols();
@@ -1624,15 +1624,13 @@ public abstract class SystemThermo implements SystemInterface {
     }
     buf = new StringBuffer();
     table[getPhases()[0].getNumberOfComponents() + 4][1] =
-        nf.format(getMolarMass() * 1000, buf, test).toString();
+        nf.format(getMolarMass(units.getSymbol("Molar Mass")), buf, test).toString();
     buf = new StringBuffer();
     table[getPhases()[0].getNumberOfComponents() + 9][1] =
-        nf.format(getEnthalpy() / (getTotalNumberOfMoles() * getMolarMass() * 1000), buf, test)
-            .toString();
+        nf.format(getEnthalpy(units.getSymbol("enthalpy")), buf, test).toString();
     buf = new StringBuffer();
     table[getPhases()[0].getNumberOfComponents() + 10][1] =
-        nf.format(getEntropy() / (getTotalNumberOfMoles() * getMolarMass() * 1000), buf, test)
-            .toString();
+        nf.format(getEntropy(units.getSymbol("entropy")), buf, test).toString();
 
     for (int i = 0; i < numberOfPhases; i++) {
       for (int j = 0; j < getPhases()[0].getNumberOfComponents(); j++) {
@@ -1645,24 +1643,26 @@ public abstract class SystemThermo implements SystemInterface {
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 2][0] = "Density";
-      table[getPhases()[0].getNumberOfComponents() + 2][i + 2] = nf
-          .format(getPhase(i).getDensity(neqsim.Units.activeUnits.get("density").symbol), buf, test)
-          .toString();
+      table[getPhases()[0].getNumberOfComponents() + 2][i + 2] =
+          nf.format(getPhase(i).getDensity(units.activeUnits.get("density").symbol), buf, test)
+              .toString();
       table[getPhases()[0].getNumberOfComponents() + 2][6] =
-          neqsim.Units.activeUnits.get("density").symbol;
+          units.activeUnits.get("density").symbol;
 
       // Double.longValue(system.getPhase(i).getBeta());
       buf = new StringBuffer();
-      table[getPhases()[0].getNumberOfComponents() + 3][0] = "PhaseFraction";
+      table[getPhases()[0].getNumberOfComponents() + 3][0] = "Phase Fraction";
       table[getPhases()[0].getNumberOfComponents() + 3][i + 2] =
           nf.format(getPhase(i).getBeta(), buf, test).toString();
       table[getPhases()[0].getNumberOfComponents() + 3][6] = "[mole fraction]";
 
       buf = new StringBuffer();
-      table[getPhases()[0].getNumberOfComponents() + 4][0] = "MolarMass";
+      table[getPhases()[0].getNumberOfComponents() + 4][0] = "Molar Mass";
       table[getPhases()[0].getNumberOfComponents() + 4][i + 2] =
-          nf.format(getPhase(i).getMolarMass() * 1000, buf, test).toString();
-      table[getPhases()[0].getNumberOfComponents() + 4][6] = "[kg/kmol]";
+          nf.format(getPhase(i).getMolarMass(units.activeUnits.get("Molar Mass").symbol), buf, test)
+              .toString();
+      table[getPhases()[0].getNumberOfComponents() + 4][6] =
+          units.activeUnits.get("Molar Mass").symbol;
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 5][0] = "Z factor";
@@ -1672,60 +1672,62 @@ public abstract class SystemThermo implements SystemInterface {
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 6][0] = "Heat Capacity (Cp)";
-      table[getPhases()[0].getNumberOfComponents() + 6][i + 2] = nf.format(
-          (getPhase(i).getCp()
-              / (getPhase(i).getNumberOfMolesInPhase() * getPhase(i).getMolarMass() * 1000)),
-          buf, test).toString();
-      table[getPhases()[0].getNumberOfComponents() + 6][6] = "[kJ/kg*K]";
+      table[getPhases()[0].getNumberOfComponents() + 6][i + 2] =
+          nf.format((getPhase(i).getCp(units.activeUnits.get("Heat Capacity (Cp)").symbol)), buf,
+              test).toString();
+      table[getPhases()[0].getNumberOfComponents() + 6][6] =
+          units.activeUnits.get("Heat Capacity (Cp)").symbol;
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 7][0] = "Heat Capacity (Cv)";
-      table[getPhases()[0].getNumberOfComponents() + 7][i + 2] = nf.format(
-          (getPhase(i).getCv()
-              / (getPhase(i).getNumberOfMolesInPhase() * getPhase(i).getMolarMass() * 1000)),
-          buf, test).toString();
-      table[getPhases()[0].getNumberOfComponents() + 7][6] = "[kJ/kg*K]";
+      table[getPhases()[0].getNumberOfComponents() + 7][i + 2] =
+          nf.format((getPhase(i).getCv(units.activeUnits.get("Heat Capacity (Cv)").symbol)), buf,
+              test).toString();
+      table[getPhases()[0].getNumberOfComponents() + 7][6] =
+          units.activeUnits.get("Heat Capacity (Cv)").symbol;
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 8][0] = "Speed of Sound";
       table[getPhases()[0].getNumberOfComponents() + 8][i + 2] =
-          nf.format((getPhase(i).getSoundSpeed()), buf, test).toString();
-      table[getPhases()[0].getNumberOfComponents() + 8][6] = "[m/sec]";
+          nf.format((getPhase(i).getSoundSpeed(units.getSymbol("speed of sound"))), buf, test)
+              .toString();
+      table[getPhases()[0].getNumberOfComponents() + 8][6] = units.getSymbol("speed of sound");
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 9][0] = "Enthalpy";
       table[getPhases()[0].getNumberOfComponents() + 9][i + 2] =
-          nf.format((getPhase(i).getEnthalpy(neqsim.Units.getSymbol("enthalpy"))), buf, test)
-              .toString();
-      table[getPhases()[0].getNumberOfComponents() + 9][6] = neqsim.Units.getSymbol("enthalpy");
+          nf.format((getPhase(i).getEnthalpy(units.getSymbol("enthalpy"))), buf, test).toString();
+      table[getPhases()[0].getNumberOfComponents() + 9][6] = units.getSymbol("enthalpy");
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 10][0] = "Entropy";
       table[getPhases()[0].getNumberOfComponents() + 10][i + 2] =
-          nf.format((getPhase(i).getEntropy(neqsim.Units.getSymbol("entropy"))), buf, test)
-              .toString();
-      table[getPhases()[0].getNumberOfComponents() + 10][6] = neqsim.Units.getSymbol("entropy");
+          nf.format((getPhase(i).getEntropy(units.getSymbol("entropy"))), buf, test).toString();
+      table[getPhases()[0].getNumberOfComponents() + 10][6] = units.getSymbol("entropy");
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 11][0] = "JT coefficient";
       table[getPhases()[0].getNumberOfComponents() + 11][i + 2] =
-          nf.format((getPhase(i).getJouleThomsonCoefficient()), buf, test).toString();
-      table[getPhases()[0].getNumberOfComponents() + 11][6] = "[K/bar]";
+          nf.format((getPhase(i).getJouleThomsonCoefficient(units.getSymbol("JT coefficient"))),
+              buf, test).toString();
+      table[getPhases()[0].getNumberOfComponents() + 11][6] = units.getSymbol("JT coefficient");
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 13][0] = "Viscosity";
       table[getPhases()[0].getNumberOfComponents() + 13][i + 2] =
-          nf.format((getPhase(i).getPhysicalProperties().getViscosity()), buf, test).toString();
-      table[getPhases()[0].getNumberOfComponents() + 13][6] = "[kg/m*sec]";
+          nf.format((getPhase(i).getViscosity(units.getSymbol("viscosity"))), buf, test).toString();
+      table[getPhases()[0].getNumberOfComponents() + 13][6] = units.getSymbol("viscosity");
 
       buf = new StringBuffer();
-      table[getPhases()[0].getNumberOfComponents() + 14][0] = "Conductivity";
+      table[getPhases()[0].getNumberOfComponents() + 14][0] = "Thermal Conductivity";
       table[getPhases()[0].getNumberOfComponents() + 14][i + 2] =
-          nf.format(getPhase(i).getPhysicalProperties().getConductivity(), buf, test).toString();
-      table[getPhases()[0].getNumberOfComponents() + 14][6] = "[W/m*K]";
+          nf.format(getPhase(i).getThermalConductivity(units.getSymbol("thermal concdutivity")),
+              buf, test).toString();
+      table[getPhases()[0].getNumberOfComponents() + 14][6] =
+          units.getSymbol("thermal concdutivity");
 
       buf = new StringBuffer();
-      table[getPhases()[0].getNumberOfComponents() + 15][0] = "SurfaceTension";
+      table[getPhases()[0].getNumberOfComponents() + 15][0] = "Surface Tension";
       try {
         if (i < numberOfPhases - 1) {
           table[getPhases()[0].getNumberOfComponents() + 15][2] =
@@ -1760,14 +1762,14 @@ public abstract class SystemThermo implements SystemInterface {
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 19][0] = "Pressure";
       table[getPhases()[0].getNumberOfComponents() + 19][i + 2] =
-          Double.toString(getPhase(i).getPressure(neqsim.Units.getSymbol("pressure")));
-      table[getPhases()[0].getNumberOfComponents() + 19][6] = neqsim.Units.getSymbol("pressure");
+          Double.toString(getPhase(i).getPressure(units.getSymbol("pressure")));
+      table[getPhases()[0].getNumberOfComponents() + 19][6] = units.getSymbol("pressure");
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 20][0] = "Temperature";
       table[getPhases()[0].getNumberOfComponents() + 20][i + 2] =
-          Double.toString(getPhase(i).getTemperature(neqsim.Units.getSymbol("temperature")));
-      table[getPhases()[0].getNumberOfComponents() + 20][6] = neqsim.Units.getSymbol("temperature");
+          Double.toString(getPhase(i).getTemperature(units.getSymbol("temperature")));
+      table[getPhases()[0].getNumberOfComponents() + 20][6] = units.getSymbol("temperature");
       Double.toString(getPhase(i).getTemperature());
 
       buf = new StringBuffer();
@@ -2622,6 +2624,9 @@ public abstract class SystemThermo implements SystemInterface {
         conversionFactor = 1.0;
         break;
       case "gr/mol":
+        conversionFactor = 1000.0;
+        break;
+      case "lbm/lbmol":
         conversionFactor = 1000.0;
         break;
       default:

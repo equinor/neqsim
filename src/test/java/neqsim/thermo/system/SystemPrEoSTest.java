@@ -55,10 +55,10 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
 
     testSystem.prettyPrint();
 
-    neqsim.Units.activateFieldUnits();
+    neqsim.util.unit.Units.activateFieldUnits();
     testSystem.prettyPrint();
 
-    neqsim.Units.activateDefaultUnits();
+    neqsim.util.unit.Units.activateDefaultUnits();
     testSystem.prettyPrint();
   }
 

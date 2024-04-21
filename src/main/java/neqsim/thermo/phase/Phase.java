@@ -8,13 +8,13 @@ package neqsim.thermo.phase;
 
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.PhysicalPropertyHandler;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.exception.InvalidInputException;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Phase class.
@@ -122,7 +122,8 @@ public abstract class Phase implements PhaseInterface {
     }
 
     if (this.hasComponent(name)) {
-      // shall use addMoles/addMolesChemreac to adding/subtracting moles for component.
+      // shall use addMoles/addMolesChemreac to adding/subtracting moles for
+      // component.
       throw new RuntimeException(new InvalidInputException(this, "addComponent", "name",
           "component with same name already exists in phase. Use addMoles or addMolesChemreac."));
     }
@@ -1561,6 +1562,27 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getMolarMass(String unit) {
+    double refMolarMass = getMolarMass();
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "kg/mol":
+        conversionFactor = 1.0;
+        break;
+      case "gr/mol":
+        conversionFactor = 1000.0;
+        break;
+      case "lbm/lbmol":
+        conversionFactor = 1000.0;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
+    }
+    return refMolarMass * conversionFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getJouleThomsonCoefficient(String unit) {
     double JTcoef = getJouleThomsonCoefficient();
     double conversionFactor = 1.0;
@@ -2091,6 +2113,24 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public double getSoundSpeed() {
     throw new UnsupportedOperationException("Unimplemented method 'getSoundSpeed'");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSoundSpeed(String unit) {
+    double refVel = getSoundSpeed();
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "m/s":
+        conversionFactor = 1.0;
+        break;
+      case "km/hr":
+        conversionFactor = 3.6;
+        break;
+      default:
+        break;
+    }
+    return refVel * conversionFactor;
   }
 
   /** {@inheritDoc} */
