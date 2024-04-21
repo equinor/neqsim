@@ -55,7 +55,7 @@ public class Units {
       activeUnits.put("Molar Mass", new UnitDescription("kg/mol", "kilo gram per kilo mole"));
       activeUnits.put("molar volume", new UnitDescription("m3/mol", "cubic metre per mole"));
       activeUnits.put("mass flow", new UnitDescription("kg/hr", "kg per hour"));
-      activeUnits.put("molar flow", new UnitDescription("mol/hr", "mole per hour"));
+      activeUnits.put("molar flow", new UnitDescription("mole/hr", "mole per hour"));
       activeUnits.put("volume flow", new UnitDescription("m3/hr", "cubic metre per hour"));
 
       siUnits.putAll(activeUnits); // Makes a copy of activeUnits

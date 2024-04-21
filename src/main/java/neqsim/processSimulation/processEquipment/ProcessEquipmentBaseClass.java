@@ -6,6 +6,7 @@
 
 package neqsim.processSimulation.processEquipment;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
@@ -285,5 +286,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
         && Objects.equals(name, other.name) && Objects.equals(properties, other.properties)
         && Arrays.deepEquals(report, other.report)
         && Objects.equals(specification, other.specification);
+  }
+
+  public ArrayList<String[]> getReport() {
+    return null;
   }
 }

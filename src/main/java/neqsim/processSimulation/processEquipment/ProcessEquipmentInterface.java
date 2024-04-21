@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment;
 
+import java.util.ArrayList;
 import neqsim.processSimulation.SimulationInterface;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
@@ -213,4 +214,6 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
   /** {@inheritDoc} */
   @Override
   public int hashCode();
+
+  public ArrayList<String[]> getReport();
 }

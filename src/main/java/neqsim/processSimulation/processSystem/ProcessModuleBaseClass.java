@@ -6,6 +6,7 @@
 
 package neqsim.processSimulation.processSystem;
 
+import java.util.ArrayList;
 import java.util.UUID;
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
@@ -242,5 +243,9 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   @Override
   public double getPressure(String unit) {
     return 1.0;
+  }
+
+  public ArrayList<String[]> getReport(){
+    return null;
   }
 }

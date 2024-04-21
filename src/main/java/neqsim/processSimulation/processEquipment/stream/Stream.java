@@ -6,6 +6,7 @@
 
 package neqsim.processSimulation.processEquipment.stream;
 
+import java.util.ArrayList;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -436,8 +437,10 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    */
   @Override
   public String[][] getResultTable() {
-    return getFluid().getResultTable();
+    return getFluid().calcResultTable();
   }
+
+
 
   /** {@inheritDoc} */
   @Override
@@ -606,5 +609,31 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     } else {
       return thermoSystem;
     }
+  }
+
+  /**
+   * getReport() method
+   * 
+   */
+  @Override
+  public ArrayList<String[]> getReport() {
+    ArrayList<String[]> report = new ArrayList<String[]>();
+    report.add(new String[] {"Property", "Value", "Unit"});
+    report.add(new String[] {"temperature",
+        Double.toString(getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+        neqsim.util.unit.Units.getSymbol("temperature")});
+    report.add(new String[] {"pressure",
+        Double.toString(getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+        neqsim.util.unit.Units.getSymbol("pressure")});
+    report.add(new String[] {"mass flow",
+        Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+        neqsim.util.unit.Units.getSymbol("mass flow")});
+    report.add(new String[] {"molar flow",
+        Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("molar flow"))),
+        neqsim.util.unit.Units.getSymbol("molar flow")});
+    report.add(new String[] {"volume flow",
+        Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
+        neqsim.util.unit.Units.getSymbol("volume flow")});
+    return report;
   }
 }
