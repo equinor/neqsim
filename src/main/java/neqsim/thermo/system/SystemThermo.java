@@ -5015,11 +5015,20 @@ public abstract class SystemThermo implements SystemInterface {
   public void setTemperature(double newTemperature, String unit) {
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       if (unit.equals("K")) {
+        // Direct setting as Kelvin
         getPhases()[i].setTemperature(newTemperature);
       } else if (unit.equals("C")) {
+        // Convert Celsius to Kelvin
         getPhases()[i].setTemperature(newTemperature + 273.15);
+      } else if (unit.equals("F")) {
+        // Convert Fahrenheit to Kelvin
+        getPhases()[i].setTemperature((newTemperature - 32) * 5.0 / 9.0 + 273.15);
+      } else if (unit.equals("R")) {
+        // Convert Rankine to Kelvin
+        getPhases()[i].setTemperature(newTemperature * 5.0 / 9.0);
       } else {
-        throw new RuntimeException("unit not supported " + unit);
+        // Exception for unsupported units
+        throw new RuntimeException("Unit not supported: " + unit);
       }
     }
   }
