@@ -336,7 +336,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   public ComponentInterface[] getcomponentArray();
 
-
   /**
    * Get normalized names of components in phase.
    *
@@ -1391,6 +1390,14 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getMolarMass();
 
   /**
+   * method to get molar mass of a fluid phase.
+   *
+   * @param unit Supported units are kg/mol, gr/mol
+   * @return molar mass in specified unit
+   */
+  public double getMolarMass(String unit);
+
+  /**
    * <p>
    * getInternalEnergy.
    * </p>
@@ -1973,4 +1980,13 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return speed of sound in m/s
    */
   public double getSoundSpeed();
+
+  /**
+   * method to get the speed of sound of a system. The sound speed is implemented based on a molar
+   * average over the phases
+   *
+   * @param unit Supported units are m/s, km/h
+   * @return speed of sound in m/s
+   */
+  public double getSoundSpeed(String unit);
 }

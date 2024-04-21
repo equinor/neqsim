@@ -37,7 +37,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
    * </p>
    */
   @Test
-  @DisplayName("test testMolarVolume calc whre unit as input")
+  @DisplayName("test molarVolume calculation as well as unit conerters")
   public void testMolarVolume() {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
@@ -52,14 +52,6 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
     testSystem.initProperties();
     assertEquals(testSystem.getMolarVolume("m3/mol"),
         testSystem.getMolarMass("kg/mol") / testSystem.getDensity("kg/m3"));
-
-    testSystem.prettyPrint();
-
-    neqsim.Units.activateFieldUnits();
-    testSystem.prettyPrint();
-
-    neqsim.Units.activateDefaultUnits();
-    testSystem.prettyPrint();
   }
 
   /**

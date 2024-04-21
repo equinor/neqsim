@@ -1,0 +1,82 @@
+# Query: neqsim.Units
+# ContextLines: 1
+
+26 results - 1 file
+
+src/main/java/neqsim/thermo/system/SystemThermo.java:
+  1635      table[getPhases()[0].getNumberOfComponents() + 9][1] = nf
+  1636:         .format(getEnthalpy(neqsim.Units.getSymbol("enthalpy")), buf, test)
+  1637          .toString();
+
+  1639      table[getPhases()[0].getNumberOfComponents() + 10][1] = nf
+  1640:         .format(getEntropy(neqsim.Units.getSymbol("entropy")), buf, test)
+  1641          .toString();
+
+  1653        table[getPhases()[0].getNumberOfComponents() + 2][i + 2] = nf
+  1654:           .format(getPhase(i).getDensity(neqsim.Units.activeUnits.get("density").symbol), buf, test)
+  1655            .toString();
+  1656:       table[getPhases()[0].getNumberOfComponents() + 2][6] = neqsim.Units.activeUnits.get("density").symbol;
+  1657  
+
+  1666        table[getPhases()[0].getNumberOfComponents() + 4][i + 2] = nf
+  1667:           .format(getPhase(i).getMolarMass(neqsim.Units.activeUnits.get("Molar Mass").symbol), buf, test)
+  1668            .toString();
+  1669:       table[getPhases()[0].getNumberOfComponents() + 4][6] = neqsim.Units.activeUnits.get("Molar Mass").symbol;
+  1670  
+
+  1678        table[getPhases()[0].getNumberOfComponents() + 6][i + 2] = nf.format(
+  1679:           (getPhase(i).getCp(neqsim.Units.activeUnits.get("Heat Capacity (Cp)").symbol)),
+  1680            buf, test).toString();
+  1681:       table[getPhases()[0].getNumberOfComponents() + 6][6] = neqsim.Units.activeUnits.get("Heat Capacity (Cp)").symbol;
+  1682  
+
+  1685        table[getPhases()[0].getNumberOfComponents() + 7][i + 2] = nf.format(
+  1686:           (getPhase(i).getCv(neqsim.Units.activeUnits.get("Heat Capacity (Cv)").symbol)),
+  1687            buf, test).toString();
+  1688:       table[getPhases()[0].getNumberOfComponents() + 7][6] = neqsim.Units.activeUnits.get("Heat Capacity (Cv)").symbol;
+  1689  
+
+  1692        table[getPhases()[0].getNumberOfComponents() + 8][i + 2] = nf
+  1693:           .format((getPhase(i).getSoundSpeed(neqsim.Units.getSymbol("speed of sound"))), buf, test)
+  1694            .toString();
+  1695:       table[getPhases()[0].getNumberOfComponents() + 8][6] = neqsim.Units.getSymbol("speed of sound");
+  1696  
+
+  1699        table[getPhases()[0].getNumberOfComponents() + 9][i + 2] = nf
+  1700:           .format((getPhase(i).getEnthalpy(neqsim.Units.getSymbol("enthalpy"))), buf, test)
+  1701            .toString();
+  1702:       table[getPhases()[0].getNumberOfComponents() + 9][6] = neqsim.Units.getSymbol("enthalpy");
+  1703  
+
+  1706        table[getPhases()[0].getNumberOfComponents() + 10][i + 2] = nf
+  1707:           .format((getPhase(i).getEntropy(neqsim.Units.getSymbol("entropy"))), buf, test)
+  1708            .toString();
+  1709:       table[getPhases()[0].getNumberOfComponents() + 10][6] = neqsim.Units.getSymbol("entropy");
+  1710  
+
+  1713        table[getPhases()[0].getNumberOfComponents() + 11][i + 2] = nf
+  1714:           .format((getPhase(i).getJouleThomsonCoefficient(neqsim.Units.getSymbol("JT coefficient"))), buf, test)
+  1715            .toString();
+  1716:       table[getPhases()[0].getNumberOfComponents() + 11][6] = neqsim.Units.getSymbol("JT coefficient");
+  1717  
+
+  1720        table[getPhases()[0].getNumberOfComponents() + 13][i + 2] = nf
+  1721:           .format((getPhase(i).getViscosity(neqsim.Units.getSymbol("viscosity"))), buf, test).toString();
+  1722:       table[getPhases()[0].getNumberOfComponents() + 13][6] = neqsim.Units.getSymbol("viscosity");
+  1723  
+
+  1726        table[getPhases()[0].getNumberOfComponents() + 14][i + 2] = nf
+  1727:           .format(getPhase(i).getThermalConductivity(neqsim.Units.getSymbol("thermal concdutivity")), buf, test)
+  1728            .toString();
+  1729:       table[getPhases()[0].getNumberOfComponents() + 14][6] = neqsim.Units.getSymbol("thermal concdutivity");
+  1730  
+
+  1766        table[getPhases()[0].getNumberOfComponents() + 19][i + 2] = Double
+  1767:           .toString(getPhase(i).getPressure(neqsim.Units.getSymbol("pressure")));
+  1768:       table[getPhases()[0].getNumberOfComponents() + 19][6] = neqsim.Units.getSymbol("pressure");
+  1769  
+
+  1772        table[getPhases()[0].getNumberOfComponents() + 20][i + 2] = Double
+  1773:           .toString(getPhase(i).getTemperature(neqsim.Units.getSymbol("temperature")));
+  1774:       table[getPhases()[0].getNumberOfComponents() + 20][6] = neqsim.Units.getSymbol("temperature");
+  1775        Double.toString(getPhase(i).getTemperature());
