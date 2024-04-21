@@ -617,6 +617,9 @@ public abstract class Phase implements PhaseInterface {
       case "litre/mol":
         conversionFactor = 1000.0;
         break;
+      case "ft3/lbmole":
+        conversionFactor = 16018.463373960138;
+        break;
       default:
         throw new RuntimeException("unit not supported " + unit);
     }

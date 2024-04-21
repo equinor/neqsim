@@ -33,6 +33,7 @@ public class Units {
   private static String[] pressureUnits =
       new String[] {"Pa", "bara", "barg", "psi", "psig", "psia"};
   private static String[] temperatureUnits = new String[] {"K", "C", "F", "R"};
+  private static String[] molarVolumeUnits = new String[] {"mol/m3", "litre/m3", "ft3/lbmole"};
 
   public Units() {
     if (activeUnits.size() == 0) {
@@ -52,6 +53,7 @@ public class Units {
       activeUnits.put("Heat Capacity (Cp)",
           new UnitDescription("kJ/kg*K", "kilo joule per kg and Kelvin"));
       activeUnits.put("Molar Mass", new UnitDescription("kg/mol", "kilo gram per kilo mole"));
+      activeUnits.put("molar volume", new UnitDescription("m3/mol", "cubic metre per mole"));
 
       siUnits.putAll(activeUnits); // Makes a copy of activeUnits
       siUnits.put("temperature", new UnitDescription("K", "Kelvin"));
@@ -74,6 +76,7 @@ public class Units {
       fieldUnits.put("JT coefficient",
           new UnitDescription("F/psi", "Farenheit per pounds per square inch"));
       fieldUnits.put("speed of sound", new UnitDescription("ft/sec", "ft/sec"));
+      fieldUnits.put("molar volume", new UnitDescription("ft3/lbmole", "ft3/lbmole"));
 
 
       defaultUnits.putAll(activeUnits); // Makes a copy of activeUnits
@@ -114,5 +117,9 @@ public class Units {
 
   public String[] getPressureUnits() {
     return pressureUnits;
+  }
+
+  public String[] getMolarVolumeUnits() {
+    return molarVolumeUnits;
   }
 }
