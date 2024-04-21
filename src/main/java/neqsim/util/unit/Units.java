@@ -54,6 +54,9 @@ public class Units {
           new UnitDescription("kJ/kg*K", "kilo joule per kg and Kelvin"));
       activeUnits.put("Molar Mass", new UnitDescription("kg/mol", "kilo gram per kilo mole"));
       activeUnits.put("molar volume", new UnitDescription("m3/mol", "cubic metre per mole"));
+      activeUnits.put("mass flow", new UnitDescription("kg/hr", "kg per hour"));
+      activeUnits.put("molar flow", new UnitDescription("mol/hr", "mole per hour"));
+      activeUnits.put("volume flow", new UnitDescription("m3/hr", "cubic metre per hour"));
 
       siUnits.putAll(activeUnits); // Makes a copy of activeUnits
       siUnits.put("temperature", new UnitDescription("K", "Kelvin"));
@@ -78,7 +81,9 @@ public class Units {
       fieldUnits.put("speed of sound", new UnitDescription("ft/sec", "ft/sec"));
       fieldUnits.put("molar volume",
           new UnitDescription("ft3/lbmole", "cubic foot per pound-mass-mole"));
-
+      fieldUnits.put("mass flow", new UnitDescription("lb/hr", "lb/hr"));
+      fieldUnits.put("molar flow", new UnitDescription("lbmole/hr", "lbmole/hr"));
+      fieldUnits.put("actual volume flow", new UnitDescription("barrel/day", "barrel/day"));
 
       defaultUnits.putAll(activeUnits); // Makes a copy of activeUnits
     }
