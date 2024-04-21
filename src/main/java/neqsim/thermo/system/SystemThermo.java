@@ -2487,6 +2487,12 @@ public abstract class SystemThermo implements SystemInterface {
       case "C/bar":
         conversionFactor = 1.0;
         break;
+      case "K/Pa":
+        conversionFactor = 1.0e-5;
+        break;
+      case "F/psi":
+        conversionFactor = 1.8 * 1.0 / 14.503773773;
+        break;
       default:
         break;
     }
@@ -3025,6 +3031,9 @@ public abstract class SystemThermo implements SystemInterface {
         break;
       case "km/hr":
         conversionFactor = 3.6;
+        break;
+      case "ft/sec":
+        conversionFactor = 3.280839895;
         break;
       default:
         break;

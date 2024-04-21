@@ -40,7 +40,7 @@ public class Units {
       activeUnits.put("surface tension", new UnitDescription("N/m", "newton per meter"));
       activeUnits.put("thermal concdutivity",
           new UnitDescription("W/mK", "watts per meter and Kelvin"));
-      activeUnits.put("JT coefficient", new UnitDescription("K/bar", "Kelvin per bar"));
+      activeUnits.put("JT coefficient", new UnitDescription("C/bar", "Celsius per bar"));
       activeUnits.put("speed of sound", new UnitDescription("m/sec", "meter per second"));
       activeUnits.put("Heat Capacity (Cv)",
           new UnitDescription("kJ/kg*K", "kilo joule per kg and Kelvin"));
@@ -53,6 +53,7 @@ public class Units {
       siUnits.put("pressure", new UnitDescription("Pa", "Pascal"));
       siUnits.put("enthalpy", new UnitDescription("J/mol", "Joule per mole"));
       siUnits.put("density", new UnitDescription("mol/m3", "mol per cubic meter"));
+      siUnits.put("JT coefficient", new UnitDescription("K/Pa", "Kelvin per Pascal"));
 
       fieldUnits.putAll(activeUnits); // Makes a copy of activeUnits
       fieldUnits.put("temperature", new UnitDescription("F", "Fahrenheit"));
@@ -65,6 +66,9 @@ public class Units {
       fieldUnits.put("thermal concdutivity", new UnitDescription("Btu/hr-ft-F", "Btu/hr-ft-F"));
       fieldUnits.put("viscosity", new UnitDescription("cP", "centypoise"));
       fieldUnits.put("entropy", new UnitDescription("btu/lb-F", "btu/lb-F"));
+      fieldUnits.put("JT coefficient",
+          new UnitDescription("F/psi", "Farenheit per pounds per square inch"));
+      fieldUnits.put("speed of sound", new UnitDescription("ft/sec", "ft/sec"));
 
 
       defaultUnits.putAll(activeUnits); // Makes a copy of activeUnits
