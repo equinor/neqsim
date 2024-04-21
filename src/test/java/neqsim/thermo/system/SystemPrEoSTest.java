@@ -7,7 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-class SystemPrEoSTest extends neqsim.NeqSimTest {
+public class SystemPrEoSTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static neqsim.thermo.ThermodynamicModelTest testModel = null;
 
@@ -52,6 +52,14 @@ class SystemPrEoSTest extends neqsim.NeqSimTest {
     testSystem.initProperties();
     assertEquals(testSystem.getMolarVolume("m3/mol"),
         testSystem.getMolarMass("kg/mol") / testSystem.getDensity("kg/m3"));
+
+    testSystem.prettyPrint();
+
+    neqsim.Units.activateFieldUnits();
+    testSystem.prettyPrint();
+
+    neqsim.Units.activateDefaultUnits();
+    testSystem.prettyPrint();
   }
 
   /**

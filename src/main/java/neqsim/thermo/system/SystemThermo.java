@@ -1589,7 +1589,7 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public String[][] createTable(String name) {
     initProperties();
-
+    neqsim.Units units = new neqsim.Units();
     java.text.DecimalFormat nf = new java.text.DecimalFormat();
 
     java.text.DecimalFormatSymbols symbols = new java.text.DecimalFormatSymbols();
@@ -1645,9 +1645,11 @@ public abstract class SystemThermo implements SystemInterface {
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 2][0] = "Density";
-      table[getPhases()[0].getNumberOfComponents() + 2][i + 2] =
-          nf.format(getPhase(i).getPhysicalProperties().getDensity(), buf, test).toString();
-      table[getPhases()[0].getNumberOfComponents() + 2][6] = "[kg/m^3]";
+      table[getPhases()[0].getNumberOfComponents() + 2][i + 2] = nf
+          .format(getPhase(i).getDensity(neqsim.Units.activeUnits.get("density").symbol), buf, test)
+          .toString();
+      table[getPhases()[0].getNumberOfComponents() + 2][6] =
+          neqsim.Units.activeUnits.get("density").symbol;
 
       // Double.longValue(system.getPhase(i).getBeta());
       buf = new StringBuffer();
@@ -1692,19 +1694,17 @@ public abstract class SystemThermo implements SystemInterface {
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 9][0] = "Enthalpy";
-      table[getPhases()[0].getNumberOfComponents() + 9][i + 2] = nf.format(
-          (getPhase(i).getEnthalpy()
-              / (getPhase(i).getNumberOfMolesInPhase() * getPhase(i).getMolarMass() * 1000)),
-          buf, test).toString();
-      table[getPhases()[0].getNumberOfComponents() + 9][6] = "[kJ/kg]";
+      table[getPhases()[0].getNumberOfComponents() + 9][i + 2] =
+          nf.format((getPhase(i).getEnthalpy(neqsim.Units.getSymbol("enthalpy"))), buf, test)
+              .toString();
+      table[getPhases()[0].getNumberOfComponents() + 9][6] = neqsim.Units.getSymbol("enthalpy");
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 10][0] = "Entropy";
-      table[getPhases()[0].getNumberOfComponents() + 10][i + 2] = nf.format(
-          (getPhase(i).getEntropy()
-              / (getPhase(i).getNumberOfMolesInPhase() * getPhase(i).getMolarMass() * 1000)),
-          buf, test).toString();
-      table[getPhases()[0].getNumberOfComponents() + 10][6] = "[kJ/kg*K]";
+      table[getPhases()[0].getNumberOfComponents() + 10][i + 2] =
+          nf.format((getPhase(i).getEntropy(neqsim.Units.getSymbol("entropy"))), buf, test)
+              .toString();
+      table[getPhases()[0].getNumberOfComponents() + 10][6] = neqsim.Units.getSymbol("entropy");
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 11][0] = "JT coefficient";
@@ -1760,14 +1760,14 @@ public abstract class SystemThermo implements SystemInterface {
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 19][0] = "Pressure";
       table[getPhases()[0].getNumberOfComponents() + 19][i + 2] =
-          Double.toString(getPhase(i).getPressure());
-      table[getPhases()[0].getNumberOfComponents() + 19][6] = "[bar]";
+          Double.toString(getPhase(i).getPressure(neqsim.Units.getSymbol("pressure")));
+      table[getPhases()[0].getNumberOfComponents() + 19][6] = neqsim.Units.getSymbol("pressure");
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 20][0] = "Temperature";
       table[getPhases()[0].getNumberOfComponents() + 20][i + 2] =
-          Double.toString(getPhase(i).getTemperature());
-      table[getPhases()[0].getNumberOfComponents() + 20][6] = "[K]";
+          Double.toString(getPhase(i).getTemperature(neqsim.Units.getSymbol("temperature")));
+      table[getPhases()[0].getNumberOfComponents() + 20][6] = neqsim.Units.getSymbol("temperature");
       Double.toString(getPhase(i).getTemperature());
 
       buf = new StringBuffer();
@@ -2156,6 +2156,9 @@ public abstract class SystemThermo implements SystemInterface {
       case "J":
         conversionFactor = 1.0;
         break;
+      case "Btu":
+        conversionFactor = 0.00094781712;
+        break;
       case "kJ/kmol":
       case "J/mol":
         conversionFactor = 1.0 / getTotalNumberOfMoles();
@@ -2165,6 +2168,9 @@ public abstract class SystemThermo implements SystemInterface {
         break;
       case "kJ/kg":
         conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0;
+        break;
+      case "Btu/lbmol":
+        conversionFactor = 1.0 / getTotalNumberOfMoles() * 0.429923;
         break;
       default:
         throw new RuntimeException("unit not supported " + unit);

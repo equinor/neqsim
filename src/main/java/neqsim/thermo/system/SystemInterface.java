@@ -1394,7 +1394,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * method to return pressure in a specified unit.
    *
-   * @param unit Supported units are bara, barg, Pa and MPa
+   * @param unit Supported units are bara, barg, Pa, MPa, psi, psia, psig
    * @return pressure in specified unit
    */
   public double getPressure(String unit);
