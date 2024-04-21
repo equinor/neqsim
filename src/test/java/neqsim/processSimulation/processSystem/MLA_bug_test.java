@@ -348,5 +348,6 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     } catch (Exception ex) {
       logger.error("Something failed");
     }
+    System.out.println("water in gas "+ dehydratedGas.getFluid().getComponent("water").getx());
   }
 }

@@ -24,46 +24,89 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
   }
 
   /**
-   * <p>
-   * getConversionFactor.
-   * </p>
+   * Get conversion factor for temperature unit conversions to Kelvin. Note: This is primarily for
+   * understanding scale, not for direct conversions including offsets.
    *
-   * @param name a {@link java.lang.String} object
-   * @return a double
+   * @param name a {@link java.lang.String} object representing the temperature unit
+   * @return a double representing the conversion factor relative to Kelvin
    */
   public double getConversionFactor(String name) {
-    double conversionFactor = 1.0;
     switch (name) {
       case "K":
-        conversionFactor = 1.0;
-        break;
-      case "R":
-        conversionFactor = 5.0 / 9.0;
-        break;
+        return 1.0;
+      case "C":
+        return 1.0; // Same scale as Kelvin
       case "F":
-        conversionFactor = 5.0 / 9.0;
-        break;
+        return 5.0 / 9.0; // Scale factor for Fahrenheit to Kelvin
+      case "R":
+        return 5.0 / 9.0; // Scale factor for Rankine to Kelvin
+      default:
+        throw new IllegalArgumentException("Unknown unit: " + name);
     }
-    return conversionFactor;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Convert a value from one temperature unit to another.
+   *
+   * @param value the temperature value to convert
+   * @param fromUnit the unit of the input temperature
+   * @param toUnit the unit to convert the temperature to
+   * @return the converted temperature value
+   */
   @Override
-  public double getValue(double val, String fromunit, String tounit) {
-    invalue = val;
-    return getConversionFactor(fromunit) / getConversionFactor(tounit) * invalue;
+  public double getValue(double value, String fromUnit, String toUnit) {
+    if (fromUnit.equals(toUnit)) {
+      return value;
+    }
+
+    // Convert input to Kelvin first
+    double tempInKelvin = value;
+    if (fromUnit.equals("C")) {
+      tempInKelvin += 273.15;
+    } else if (fromUnit.equals("F")) {
+      tempInKelvin = (value - 32) * 5.0 / 9.0 + 273.15;
+    } else if (fromUnit.equals("R")) {
+      tempInKelvin = value * 5.0 / 9.0;
+    }
+
+    // Convert from Kelvin to target unit
+    if (toUnit.equals("K")) {
+      return tempInKelvin;
+    } else if (toUnit.equals("C")) {
+      return tempInKelvin - 273.15;
+    } else if (toUnit.equals("F")) {
+      return (tempInKelvin - 273.15) * 9.0 / 5.0 + 32;
+    } else if (toUnit.equals("R")) {
+      return tempInKelvin * 9.0 / 5.0;
+    }
+
+    throw new IllegalArgumentException("Unsupported unit: " + toUnit);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Convert a given temperature value from Kelvin to a specified unit.
+   *
+   * @param toUnit the target unit to convert the temperature to ("C", "F", "R")
+   * @return the converted temperature value in the target unit
+   */
   @Override
-  public double getValue(String tounit) {
-    if (tounit.equals("C")) {
-      return getConversionFactor(inunit) / getConversionFactor("K") * invalue - 273.15;
+  public double getValue(String toUnit) {
+    switch (toUnit) {
+      case "K":
+        // Convert from Kelvin to Kelvin
+        return invalue;
+      case "C":
+        // Convert from Kelvin to Celsius
+        return invalue - 273.15;
+      case "F":
+        // Convert from Kelvin to Fahrenheit
+        return invalue * 9.0/5.0 - 459.67;
+      case "R":
+        // Convert from Kelvin to Rankine
+        return invalue * 9.0 / 5.0;
+      default:
+        // Handle unsupported units
+        throw new IllegalArgumentException("Unsupported conversion unit: " + toUnit);
     }
-    if (tounit.equals("F")) {
-      return (getConversionFactor(inunit) / getConversionFactor("K") * invalue - 273.15) * 1.8
-          + 32.0;
-    }
-    return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
   }
 }
