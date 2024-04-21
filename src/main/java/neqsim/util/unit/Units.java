@@ -76,7 +76,8 @@ public class Units {
       fieldUnits.put("JT coefficient",
           new UnitDescription("F/psi", "Farenheit per pounds per square inch"));
       fieldUnits.put("speed of sound", new UnitDescription("ft/sec", "ft/sec"));
-      fieldUnits.put("molar volume", new UnitDescription("ft3/lbmole", "ft3/lbmole"));
+      fieldUnits.put("molar volume",
+          new UnitDescription("ft3/lbmole", "cubic foot per pound-mass-mole"));
 
 
       defaultUnits.putAll(activeUnits); // Makes a copy of activeUnits
