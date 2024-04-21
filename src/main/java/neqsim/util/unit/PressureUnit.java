@@ -47,7 +47,13 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
         conversionFactor = 1.0;
         break;
       case "psi":
-        conversionFactor = 0.06894757;
+        conversionFactor = 0.0689475729317831;
+        break;
+      case "psia":
+        conversionFactor = 0.0689475729317831;
+        break;
+      case "psig":
+        conversionFactor = 0.0689475729317831;
         break;
       case "Pa":
         conversionFactor = 1.0e-5;
@@ -82,6 +88,9 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
     if (tounit.equals("barg")) {
       return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
           - ThermodynamicConstantsInterface.referencePressure;
+    } else if (tounit.equals("psig")) {
+      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue * 14.503773773
+          - 14.7;
     } else if (inunit.equals("barg")) {
       return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
           + ThermodynamicConstantsInterface.referencePressure;

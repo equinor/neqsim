@@ -40,6 +40,9 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
       case "R":
         conversionFactor = 5.0 / 9.0;
         break;
+      case "F":
+        conversionFactor = 5.0 / 9.0;
+        break;
     }
     return conversionFactor;
   }
@@ -56,6 +59,10 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
   public double getValue(String tounit) {
     if (tounit.equals("C")) {
       return getConversionFactor(inunit) / getConversionFactor("K") * invalue - 273.15;
+    }
+    if (tounit.equals("F")) {
+      return (getConversionFactor(inunit) / getConversionFactor("K") * invalue - 273.15) * 1.8
+          + 32.0;
     }
     return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
   }

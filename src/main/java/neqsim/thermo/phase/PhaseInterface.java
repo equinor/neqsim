@@ -1361,6 +1361,14 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getTemperature();
 
   /**
+   * method to return temperature in a specified unit.
+   *
+   * @param unit Supported units are K, C, R
+   * @return temperature in specified unit
+   */
+  public double getTemperature(String unit);
+
+  /**
    * Get pressure of phase.
    *
    * @return pressure in unit bara
@@ -1370,7 +1378,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   /**
    * Get pressure of phase in a specified unit.
    *
-   * @param unit Supported units are bara, barg, Pa and MPa
+   * @param unit Supported units are bara, barg, Pa, MPa, psi, psia, psig
    * @return pressure in specified unit
    */
   public double getPressure(String unit);
