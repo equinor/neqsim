@@ -11,6 +11,7 @@ import java.util.HashMap;
  * @version $Id: $Id
  */
 public class Units {
+
   /**
    * Unit class nested within Units.
    */
@@ -28,6 +29,10 @@ public class Units {
   public static HashMap<String, UnitDescription> defaultUnits = new HashMap<>();
   private static HashMap<String, UnitDescription> siUnits = new HashMap<>();
   private static HashMap<String, UnitDescription> fieldUnits = new HashMap<>();
+
+  private static String[] pressureUnits =
+      new String[] {"Pa", "bara", "barg", "psi", "psig", "psia"};
+  private static String[] temperatureUnits = new String[] {"K", "C", "F", "R"};
 
   public Units() {
     if (activeUnits.size() == 0) {
@@ -101,5 +106,13 @@ public class Units {
       unit.symbol = symbol;
       unit.symbolName = symbolName;
     }
+  }
+
+  public String[] getTemperatureUnits() {
+    return temperatureUnits;
+  }
+
+  public String[] getPressureUnits() {
+    return pressureUnits;
   }
 }
