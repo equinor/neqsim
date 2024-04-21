@@ -1995,6 +1995,9 @@ public abstract class SystemThermo implements SystemInterface {
       case "kJ/kgK":
         conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0;
         break;
+      case "btu/lbmole-F":
+        conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0 * 0.2388;
+        break;
       default:
         throw new RuntimeException("unit not supported " + unit);
     }
@@ -2028,6 +2031,9 @@ public abstract class SystemThermo implements SystemInterface {
         break;
       case "kJ/kgK":
         conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0;
+        break;
+      case "btu/lbmole-F":
+        conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0 * 0.2388;
         break;
       default:
         throw new RuntimeException("unit not supported " + unit);
@@ -2207,6 +2213,9 @@ public abstract class SystemThermo implements SystemInterface {
         break;
       case "kJ/kgK":
         conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0;
+        break;
+      case "btu/lb-F":
+        conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0 * 0.2388;
         break;
       default:
         throw new RuntimeException("unit not supported " + unit);
@@ -3096,6 +3105,9 @@ public abstract class SystemThermo implements SystemInterface {
         break;
       case "W/cmK":
         conversionFactor = 0.01;
+        break;
+      case "Btu/hr-ft-F":
+        conversionFactor = 0.5781759824;
         break;
       default:
         throw new RuntimeException("unit not supported " + unit);

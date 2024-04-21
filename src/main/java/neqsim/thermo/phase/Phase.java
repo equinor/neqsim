@@ -1001,6 +1001,9 @@ public abstract class Phase implements PhaseInterface {
       case "kJ/kgK":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
         break;
+      case "btu/lbmole-F":
+        conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0 * 0.2388;
+        break;
       default:
         break;
     }
@@ -1030,6 +1033,9 @@ public abstract class Phase implements PhaseInterface {
         break;
       case "kJ/kgK":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
+        break;
+      case "btu/lbmole-F":
+        conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0 * 0.2388;
         break;
       default:
         break;
@@ -1166,6 +1172,9 @@ public abstract class Phase implements PhaseInterface {
       case "kJ/kgK":
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
         break;
+      case "btu/lb-F":
+        conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0 * 0.2388;
+        break;
       default:
         throw new RuntimeException("unit not supported " + unit);
     }
@@ -1226,6 +1235,9 @@ public abstract class Phase implements PhaseInterface {
         break;
       case "W/cmK":
         conversionFactor = 0.01;
+        break;
+      case "Btu/hr-ft-F":
+        conversionFactor = 0.5781759824;
         break;
       default:
         throw new RuntimeException("unit not supported " + unit);

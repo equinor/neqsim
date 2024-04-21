@@ -60,6 +60,12 @@ public class Units {
       fieldUnits.put("enthalpy", new UnitDescription("Btu/lbmol", "Btu per lbmol"));
       fieldUnits.put("density", new UnitDescription("lb/ft3", "pound per cubic foot"));
       fieldUnits.put("Molar Mass", new UnitDescription("lbm/lbmol", "pound-mass per pound-mole"));
+      fieldUnits.put("Heat Capacity (Cv)", new UnitDescription("btu/lbmole-F", "Btu/lbmole-F"));
+      fieldUnits.put("Heat Capacity (Cp)", new UnitDescription("btu/lbmole-F", "Btu/lbmole-F"));
+      fieldUnits.put("thermal concdutivity", new UnitDescription("Btu/hr-ft-F", "Btu/hr-ft-F"));
+      fieldUnits.put("viscosity", new UnitDescription("cP", "centypoise"));
+      fieldUnits.put("entropy", new UnitDescription("btu/lb-F", "btu/lb-F"));
+
 
       defaultUnits.putAll(activeUnits); // Makes a copy of activeUnits
     }
