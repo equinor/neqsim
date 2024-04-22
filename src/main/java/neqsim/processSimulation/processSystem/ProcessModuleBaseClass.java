@@ -244,6 +244,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     return 1.0;
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson() {
     return null;

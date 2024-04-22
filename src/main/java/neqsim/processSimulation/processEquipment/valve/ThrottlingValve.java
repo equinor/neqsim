@@ -475,6 +475,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     isCalcPressure = isSetPres;
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new ValveResponse(this));

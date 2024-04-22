@@ -873,6 +873,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         && Objects.equals(waterSystem, other.waterSystem);
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new SeparatorResponse(this));

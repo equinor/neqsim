@@ -78,6 +78,7 @@ public class Cooler extends Heater {
     return entrop;
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new HeaterResponse(this));

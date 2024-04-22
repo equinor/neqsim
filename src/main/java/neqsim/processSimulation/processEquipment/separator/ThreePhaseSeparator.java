@@ -270,6 +270,7 @@ public class ThreePhaseSeparator extends Separator {
         + getGasOutStream().getThermoSystem().getExergy(surroundingTemperature, unit) - entrop;
   }
 
+  /** {@inheritDoc} */s
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new SeparatorResponse(this));

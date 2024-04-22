@@ -656,6 +656,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     return report;
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new StreamResponse(this));

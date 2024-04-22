@@ -372,6 +372,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
         - inStream.getThermoSystem().getExergy(surroundingTemperature, unit);
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new HeaterResponse(this));
