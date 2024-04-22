@@ -6,7 +6,6 @@
 
 package neqsim.processSimulation.processSystem;
 
-import java.util.ArrayList;
 import java.util.UUID;
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
@@ -245,7 +244,8 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     return 1.0;
   }
 
-  public ArrayList<String[]> getReport(){
+  @Override
+  public String toJson() {
     return null;
   }
 }

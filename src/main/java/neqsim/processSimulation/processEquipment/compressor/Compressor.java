@@ -12,9 +12,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.util.monitor.CompressorResponse;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -1421,5 +1423,10 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
   public double getCompressionRatio() {
     return compressionRatio;
+  }
+
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new CompressorResponse(this));
   }
 }

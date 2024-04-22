@@ -1,9 +1,9 @@
 package neqsim.processSimulation.util.report;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
@@ -17,36 +17,19 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
  */
 public class Report {
   public static HashMap<String, List<String[]>> reports = new HashMap<>();
-
+  public static HashMap<String, String> json_reports = new HashMap<>();
+  Gson gson = new Gson();
   ProcessSystem process;
 
   public Report(ProcessSystem process) {
     this.process = process;
   }
 
-  public void write(String path) {
+  public String json() {
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-      reports.put(unit.getName(), unit.getReport());
-      System.out.println(unit.getName());
+      json_reports.put(unit.getName(), unit.toJson());
     }
-    reports.size();
-  }
-
-  public static void main(String[] args) {
-    // Initializing the HashMap with ten entries
-    reports.put("Finance", Arrays.asList(new String[] {"Budget Report", "John Doe", "2023-01-01"},
-        new String[] {"Income Statement", "Jane Doe", "2023-02-01"}));
-    reports.put("Finance2", Arrays.asList(new String[] {"Budget Report", "John Doe", "2023-01-01"},
-        new String[] {"Income Statement", "Jane Doe", "2023-02-01"}));
-
-    // Print out all reports
-    for (Map.Entry<String, List<String[]>> entry : reports.entrySet()) {
-      System.out.println(entry.getKey() + ": ");
-      for (String[] details : entry.getValue()) {
-        System.out.println(
-            "  Title: " + details[0] + ", Author: " + details[1] + ", Date: " + details[2]);
-      }
-    }
+    return new GsonBuilder().setPrettyPrinting().create().toJson(json_reports);
   }
 
 }
