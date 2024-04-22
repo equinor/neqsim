@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import Jama.Matrix;
 import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -17,7 +17,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(sysNewtonRhapsonPHflash.class);
+  
 
   int neq = 0;
   int iter = 0;
@@ -78,7 +78,7 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     Xgij = new Matrix(neq + 2, 4);
     setu();
     uold = u.copy();
-    // logger.info("Spec : " +speceq);
+    // 
     solver = new newtonRhapson();
     solver.setOrder(3);
   }
@@ -226,16 +226,16 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     }
 
     // dt = Math.exp(u.get(numberOfComponents+1,0)) - system.getTemperature();
-    // logger.info("temperature: " + system.getTemperature());
-    // logger.info("pressure: " + system.getPressure());
+    // 
+    // 
     // system.init(1);
     // v1 = system.getVolume();
     // system.setPressure(Math.exp(u.get(numberOfComponents+1,0)));
-    logger.info("temperature: " + system.getTemperature());
+    
     system
         .setTemperature(Math.exp(u.get(numberOfComponents, 0) + Math.log(system.getTemperature())));
     system.setPressure(Math.exp(u.get(numberOfComponents + 1, 0) + Math.log(system.getPressure())));
-    logger.info("etter temperature: " + system.getTemperature());
+    
 
     system.init(3);
   }
@@ -260,11 +260,11 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
       u = Jac.solve(fvec.times(-1.0));
       // u.equals(dx.timesEquals(1.0));
       fvec.print(10, 10);
-      logger.info("iter: " + iter);
+      
     } while (fvec.norm2() > 1.e-10 && iter < 1000); // && Double.isNaN(dx.norm2()));
-    logger.info("iter: " + iter);
-    logger.info("temperature: " + system.getTemperature());
-    logger.info("pressure: " + system.getPressure());
+    
+    
+    
     init();
     return iter;
   }

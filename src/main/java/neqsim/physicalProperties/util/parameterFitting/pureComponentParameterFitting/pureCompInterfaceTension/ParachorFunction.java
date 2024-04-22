@@ -1,7 +1,7 @@
 package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompInterfaceTension;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
@@ -13,7 +13,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class ParachorFunction extends LevenbergMarquardtFunction {
-  static Logger logger = LogManager.getLogger(ParachorFunction.class);
+  
 
   /**
    * <p>
@@ -31,7 +31,7 @@ public class ParachorFunction extends LevenbergMarquardtFunction {
     try {
       thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     system.initPhysicalProperties();
     return system.getInterphaseProperties().getSurfaceTension(0, 1) * 1e3;

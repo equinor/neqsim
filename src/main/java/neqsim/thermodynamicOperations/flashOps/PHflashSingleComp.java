@@ -51,7 +51,7 @@ public class PHflashSingleComp extends Flash {
         }
       } catch (Exception ex) {
         system.setTemperature(initTemp);
-        logger.error(ex.getMessage(), ex);
+        
       }
     } else {
       bubOps.PHflash2(Hspec, 0);

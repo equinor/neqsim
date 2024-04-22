@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processEquipment.stream;
 
 import java.util.Objects;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * <p>
@@ -14,7 +14,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class EnergyStream implements java.io.Serializable, Cloneable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(EnergyStream.class);
+  
 
   private double duty = 0.0;
 

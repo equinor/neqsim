@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -15,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class WATcalc extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(WATcalc.class);
+  
 
   /**
    * <p>
@@ -65,10 +65,9 @@ public class WATcalc extends constantDutyTemperatureFlash {
         system.setTemperature(system.getTemperature() - 0.1);
       }
       deltaT = system.getTemperature() - oldTemp;
-      // logger.info("sumx " + sumx + " deltaT "+ deltaT + " dT "+dT + " temperature "
-      // + system.getTemperature());
+      // 
     } while (Math.abs(sumx - 1.0) > 1e-8 && iter < 100);
-    // logger.info("sumx " + sumx);
+    // 
 
     system.setNumberOfPhases(system.getNumberOfPhases() + 1);
     system.setPhaseIndex(system.getNumberOfPhases() - 1, 5);

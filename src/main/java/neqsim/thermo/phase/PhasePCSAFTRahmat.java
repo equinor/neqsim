@@ -1,7 +1,7 @@
 package neqsim.thermo.phase;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentPCSAFT;
 
@@ -15,7 +15,7 @@ import neqsim.thermo.component.ComponentPCSAFT;
  */
 public class PhasePCSAFTRahmat extends PhasePCSAFT {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PhasePCSAFTRahmat.class);
+  
 
   double dnSAFTdVdVdV = 1.0;
 
@@ -57,7 +57,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     try {
       clonedPhase = (PhasePCSAFTRahmat) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedPhase;
@@ -1133,7 +1133,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     Btemp = getB();
     // Dtemp = getA();
     if (Btemp <= 0) {
-      logger.info("b negative in volume calc");
+      
     }
     setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
     int iterations = 0;

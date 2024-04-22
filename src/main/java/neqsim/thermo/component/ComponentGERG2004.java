@@ -50,7 +50,7 @@ public class ComponentGERG2004 extends ComponentEos {
     try {
       clonedComponent = (ComponentGERG2004) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedComponent;

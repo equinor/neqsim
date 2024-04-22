@@ -1,7 +1,7 @@
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -17,7 +17,7 @@ import neqsim.util.database.NeqSimDataBase;
  */
 public class ComponentHydrate extends Component {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ComponentHydrate.class);
+  
 
   // double[][] emptyHydrateVapourPressureConstant = {{17.6025820786,
   // -6056.0650578668},{17.332, -6017.6}}; //fitted
@@ -86,7 +86,7 @@ public class ComponentHydrate extends Component {
           dataSet.getString("FORMULA");
         } catch (Exception ex) {
           dataSet.close();
-          logger.info("no parameters in tempcomp -- trying comp.. " + name);
+          
           dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           dataSet.next();
         }
@@ -97,14 +97,14 @@ public class ComponentHydrate extends Component {
             Double.parseDouble(dataSet.getString("SphericalCoreRadiusHYDRATE"));
       }
     } catch (Exception ex) {
-      logger.error("error in comp", ex);
+      
     } finally {
       try {
         if (dataSet != null) {
           dataSet.close();
         }
       } catch (Exception ex) {
-        logger.error("error closing database.....", ex);
+        
       }
     }
   }
@@ -658,7 +658,7 @@ public class ComponentHydrate extends Component {
       refPhase.addComponent("water", 10.0, 10.0, 0);
       refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, PhaseType.byValue(1), 1.0);
     } catch (Exception ex) {
-      logger.error("error occured", ex);
+      
     }
   }
   // public double dfugdt(PhaseInterface phase, int numberOfComps, double temp,

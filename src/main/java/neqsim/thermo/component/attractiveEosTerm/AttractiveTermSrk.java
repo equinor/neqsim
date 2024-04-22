@@ -40,7 +40,7 @@ public class AttractiveTermSrk extends AttractiveTermBaseClass {
     try {
       attractiveTerm = (AttractiveTermSrk) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     return attractiveTerm;
   }

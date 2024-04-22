@@ -78,7 +78,7 @@ public class SystemPrGassemEos extends SystemPrEos {
     try {
       clonedSystem = (SystemPrGassemEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

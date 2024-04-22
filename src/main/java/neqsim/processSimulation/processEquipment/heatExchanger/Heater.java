@@ -235,10 +235,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    // System.out.println("heater dH: " + energyInput);
-    getOutletStream().displayResult();
-  }
+  public void displayResult() {}
 
   /**
    * <p>

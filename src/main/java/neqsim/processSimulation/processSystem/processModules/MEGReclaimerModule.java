@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processSystem.processModules;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.pump.Pump;
@@ -22,7 +22,7 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  */
 public class MEGReclaimerModule extends ProcessModuleBaseClass {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(MEGReclaimerModule.class);
+  
 
   protected StreamInterface streamToReclaimer = null;
   protected StreamInterface streamToWaterRemoval = null;
@@ -82,7 +82,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
       this.streamWithWaste = this.streamToReclaimer.clone();
       this.streamWithWaste.setName("Reclaimer Waste Stream");
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 

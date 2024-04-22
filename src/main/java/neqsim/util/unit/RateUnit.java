@@ -6,8 +6,8 @@
 
 package neqsim.util.unit;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.exception.InvalidInputException;
 
@@ -21,7 +21,7 @@ import neqsim.util.exception.InvalidInputException;
  */
 public class RateUnit extends neqsim.util.unit.BaseUnit {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(RateUnit.class);
+  
 
   double molarmass = 0.0;
   double stddens = 0.0;

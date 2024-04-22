@@ -5,8 +5,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * <p>
@@ -20,7 +20,7 @@ import org.apache.logging.log4j.Logger;
 public class NeqSimFluidDataBase
     implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(NeqSimFluidDataBase.class);
+  
 
   static boolean started = false;
   protected Connection databaseConnection;
@@ -47,8 +47,8 @@ public class NeqSimFluidDataBase
       databaseConnection = this.openConnection("FluidDatabase");
       statement = databaseConnection.createStatement();
     } catch (Exception ex) {
-      logger.error("error in FluidDatabase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
+      
+      
     }
   }
 
@@ -104,8 +104,8 @@ public class NeqSimFluidDataBase
       ResultSet result = statement.executeQuery(sqlString);
       return result;
     } catch (Exception ex) {
-      logger.error("error in FluidDatabase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
+      
+      
     }
     return null;
   }
@@ -137,8 +137,8 @@ public class NeqSimFluidDataBase
       }
       statement.execute(sqlString);
     } catch (Exception ex) {
-      logger.error("error in FluidDatabase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
+      
+      
     }
   }
 }

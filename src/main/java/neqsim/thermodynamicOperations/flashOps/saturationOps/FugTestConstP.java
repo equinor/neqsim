@@ -1,8 +1,8 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import neqsim.dataPresentation.JFreeChart.graph2b;
+
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -20,7 +20,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class FugTestConstP extends constantDutyTemperatureFlash
     implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(FugTestConstP.class);
+  
 
   public double temp = 0.0;
   public double pres = 0.0;
@@ -99,28 +99,28 @@ public class FugTestConstP extends constantDutyTemperatureFlash
           CCequation = false;
         }
         for (int i = 0; i < 20; i++) {
-          logger.info("--- calculating --- " + compName + " at ");
+          
           temp = trpTemp + 2 - i * trpTemp / 40;
           testSystem.setTemperature(temp);
           testSystem2.setTemperature(temp);
-          logger.info("temperature " + temp);
+          
           if (temp > trpTemp + 0.1) {
             temp = trpTemp;
           }
           // Vapor pressure estiamtion
           if (CCequation) {
             Pvapsolid = testSystem.getPhase(0).getComponent(k).getCCsolidVaporPressure(temp);
-            logger.info("pvap solid CC " + Pvapsolid);
+            
           } else {
             Pvapsolid = testSystem.getPhase(0).getComponent(k).getSolidVaporPressure(temp);
-            logger.info("pvap solid Antonie " + Pvapsolid);
+            
           }
           soldens =
               testSystem.getPhase(0).getComponent(k).getPureComponentSolidDensity(temp) * 1000;
           if (soldens > 2000) {
             soldens = 1000;
           }
-          logger.info("Solid_vapour_____solid density" + soldens);
+          
           solvol = 1.0 / soldens * testSystem.getPhase(0).getComponent(k).getMolarMass();
           SolidFug = Pvapsolid * Math.exp(solvol / (R * temp) * (pres - Pvapsolid));
 
@@ -180,13 +180,13 @@ public class FugTestConstP extends constantDutyTemperatureFlash
     // pr_writer.flush();
     // pr_writer.close();
 
-    // logger.error("Successful attempt to write to " + myFile);
+    // 
     // }
     // catch (SecurityException ex) {
-    // logger.error("writeFile: caught security exception");
+    // 
     // }
     // catch (IOException ioe) {
-    // logger.error("writeFile: caught i/o exception");
+    // 
     // }
   }
 }

@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -16,7 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(HydrateInhibitorwtFlash.class);
+  
 
   double wtfrac = 0.5;
   String inhibitor = "MEG";
@@ -96,9 +96,9 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
         }
         error = -(wtp - wtfrac);
 
-        logger.info("error " + error);
+        
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
     } while ((Math.abs(error) > 1e-5 && iter < 100) || iter < 3);
   }

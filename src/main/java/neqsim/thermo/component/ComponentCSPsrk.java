@@ -55,7 +55,7 @@ public class ComponentCSPsrk extends ComponentSrk {
     try {
       clonedComponent = (ComponentCSPsrk) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedComponent;

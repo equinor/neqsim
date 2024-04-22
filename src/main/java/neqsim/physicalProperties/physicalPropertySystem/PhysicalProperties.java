@@ -6,8 +6,8 @@
 
 package neqsim.physicalProperties.physicalPropertySystem;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86;
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.diffusivity.CorrespondingStatesDiffusivity;
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.FrictionTheoryViscosityMethod;
@@ -33,7 +33,7 @@ import neqsim.thermo.phase.PhaseInterface;
 public abstract class PhysicalProperties
     implements PhysicalPropertiesInterface, ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PhysicalProperties.class);
+  
 
   public PhaseInterface phase;
   protected int binaryDiffusionCoefficientMethod;
@@ -92,7 +92,7 @@ public abstract class PhysicalProperties
     try {
       properties = (PhysicalProperties) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     properties.densityCalc = densityCalc.clone();
     properties.diffusivityCalc = diffusivityCalc.clone();

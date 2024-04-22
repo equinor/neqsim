@@ -2,8 +2,8 @@ package neqsim.thermo.phase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.component.ComponentGEUnifac;
@@ -24,7 +24,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   double[][] bij = new double[1][1];
   double[][] cij = new double[1][1];
   boolean checkedGroups = false;
-  static Logger logger = LogManager.getLogger(PhaseGEUnifac.class);
+  
 
   /**
    * <p>
@@ -73,7 +73,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     if (!checkedGroups) {
       checkGroups();
     }
-    logger.info("checking unifac groups...");
+    
     calcaij();
   }
 
@@ -108,7 +108,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
             dataSet.next();
             dataSet.getClob("MainGroup");
           } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            
             dataSet.close();
             dataSet = database.getResultSet(("SELECT * FROM unifacinterparam WHERE MainGroup="
                 + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
@@ -118,18 +118,15 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
           aij[i][j] = Double.parseDouble(dataSet.getString(
               "n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
           if (Math.abs(aij[i][j]) < 1e-6) {
-            logger
-                .info(" i " + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup()
-                    + " j " + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup()
-                    + "  aij " + aij[i][j]);
+            
           }
           dataSet.close();
         } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
+          
         }
       }
     }
-    logger.info("finished finding interaction coefficient...A");
+    
   }
 
   /**

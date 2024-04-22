@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -15,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
+  
 
   String comp1;
   String comp2;
@@ -100,7 +100,7 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
           system.getPhases()[5].getComponent(i).setx(1e-20);
         }
       }
-      logger.info("Temperaure  " + system.getTemperature() + " sumx " + sumx);
+      
       sumx = 0.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         // system.getPhases()[5].getComponent(i).setx(Ksolid[i] *
@@ -122,9 +122,9 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
         system.setTemperature(system.getTemperature() + 0.01);
       }
       deltaT = system.getTemperature() - oldTemp;
-      logger.info("Temperaure  " + system.getTemperature() + " sumx " + sumx);
+      
     } while (Math.abs(sumx - 1.0) > 1e-8);
-    logger.info("sumx " + sumx);
+    
 
     system.setNumberOfPhases(system.getNumberOfPhases() + 1);
     system.setPhaseIndex(system.getNumberOfPhases() - 1, 5);
@@ -139,7 +139,7 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     double deltaT = 1.0;
 
-    // logger.info("starting.... ");
+    // 
     int compNumber_1 = system.getPhase(0).getComponent(comp1).getComponentNumber();
 
     // MEGwater parameters
@@ -166,14 +166,14 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
       if (complexActivity < 1e-5) {
         complexActivity = 1e-5;
       }
-      // logger.info("activityMix.... " + complexActivity);
+      // 
 
       double rightSide =
           neqsim.thermo.ThermodynamicConstantsInterface.R * Math.log(complexActivity);
-      // logger.info("right.... " + rightSide);
+      // 
       double leftSide = neqsim.thermo.ThermodynamicConstantsInterface.R * Math.log(Kcomplex)
           + HrefComplex * (1.0 / TrefComplex - 1.0 / system.getTemperature());
-      // logger.info("left.... " + leftSide);
+      // 
       error = rightSide - leftSide;
       double dErrordT = (error - oldError) / (temperature - oldTemperature);
       if (iteration >= 2 && testFalse) {
@@ -189,7 +189,7 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
       }
       oldTemperature = temperature;
       oldError = error;
-      // logger.info("temperature " + temperature);
+      // 
       system.setTemperature(system.getTemperature() + deltaT);
     } while (Math.abs(deltaT) > 0.001 && iteration < 50);
   }

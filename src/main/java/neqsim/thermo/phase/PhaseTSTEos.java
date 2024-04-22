@@ -33,7 +33,7 @@ public class PhaseTSTEos extends PhaseEos {
     try {
       clonedPhase = (PhaseTSTEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedPhase;

@@ -740,9 +740,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    system.display();
-  }
+  public void displayResult() {}
 
   /**
    * <p>

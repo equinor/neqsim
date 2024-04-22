@@ -9,8 +9,8 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang.SerializationUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
@@ -30,7 +30,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ProcessSystem extends SimulationBaseClass {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ProcessSystem.class);
+  
 
   transient Thread thisThread;
   String[][] signalDB = new String[10000][100];
@@ -438,7 +438,7 @@ public class ProcessSystem extends SimulationBaseClass {
             }
           } catch (Exception ex) {
             // String error = ex.getMessage();
-            logger.error(ex.getMessage(), ex);
+            
           }
         }
         if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
@@ -447,7 +447,7 @@ public class ProcessSystem extends SimulationBaseClass {
             unitOperations.get(i).run(id);
           } catch (Exception ex) {
             // String error = ex.getMessage();
-            logger.error(ex.getMessage(), ex);
+            
           }
         }
       }
@@ -595,23 +595,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * displayResult.
    * </p>
    */
-  public void displayResult() {
-    try {
-      thisThread.join();
-    } catch (Exception ex) {
-      logger.error("Thread did not finish", ex);
-    }
-    for (int i = 0; i < unitOperations.size(); i++) {
-      unitOperations.get(i).displayResult();
-    }
-
-    /*
-     * JFrame frame = new JFrame(); frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-     * frame.setLayout(new GridLayout(1, 0, 5, 5)); JTextArea area1 = new JTextArea(10, 10); JTable
-     * Jtab = new JTable(reportResults(), reportResults()[0]); frame.add(area1); frame.pack();
-     * frame.setLocationRelativeTo(null); frame.setVisible(true);
-     */
-  }
+  public void displayResult() {}
 
   /**
    * <p>
@@ -622,7 +606,7 @@ public class ProcessSystem extends SimulationBaseClass {
     try {
       thisThread.join();
     } catch (Exception ex) {
-      logger.error("Thread did not finish", ex);
+      
     }
     for (int i = 0; i < measurementDevices.size(); i++) {
       System.out.println("Measurements Device Name: " + measurementDevices.get(i).getName());
@@ -645,9 +629,9 @@ public class ProcessSystem extends SimulationBaseClass {
   public void save(String filePath) {
     try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filePath, false))) {
       out.writeObject(this);
-      logger.info("process file saved to:  " + filePath);
+      
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 
@@ -663,10 +647,10 @@ public class ProcessSystem extends SimulationBaseClass {
     try (ObjectInputStream objectinputstream =
         new ObjectInputStream(new FileInputStream(filePath))) {
       return (ProcessSystem) objectinputstream.readObject();
-      // logger.info("process file open ok: " + filePath);
+      // 
     } catch (Exception ex) {
-      // logger.error(ex.toString());
-      logger.error(ex.getMessage(), ex);
+      // 
+      
     }
     return null;
   }
@@ -697,13 +681,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @param filename a {@link java.lang.String} object
    */
-  public void printLogFile(String filename) {
-    neqsim.dataPresentation.fileHandeling.createTextFile.TextFile tempFile =
-        new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
-    tempFile.setOutputFileName(filename);
-    tempFile.setValues(signalDB);
-    tempFile.createFile();
-  }
+  public void printLogFile(String filename) {}
 
   /**
    * <p>

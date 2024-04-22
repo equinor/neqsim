@@ -47,7 +47,7 @@ public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
     try {
       clonedSystem = (SystemFurstElectrolyteEosMod2004) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

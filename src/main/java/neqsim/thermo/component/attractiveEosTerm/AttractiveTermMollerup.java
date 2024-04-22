@@ -44,7 +44,7 @@ public class AttractiveTermMollerup extends AttractiveTermBaseClass {
     try {
       attractiveTerm = (AttractiveTermMollerup) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return attractiveTerm;

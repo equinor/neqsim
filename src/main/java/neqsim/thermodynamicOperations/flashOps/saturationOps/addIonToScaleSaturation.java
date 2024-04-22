@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -15,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(addIonToScaleSaturation.class);
+  
 
   String saltName = "";
   String scaleSaltName = "";
@@ -39,7 +39,7 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
     this.phaseNumber = phaseNumber;
     this.scaleSaltName = scaleSaltName;
     this.nameOfIonToBeAdded = nameOfIonToBeAdded;
-    logger.info("ok ");
+    
   }
 
   /** {@inheritDoc} */
@@ -98,14 +98,14 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
         if (system.getPhase(phaseNumber).hasComponent(name1)
             && system.getPhase(phaseNumber).hasComponent(name2)) {
           numb++;
-          logger.info("reaction added: " + name1 + " " + name2);
-          logger.info("theoretic Ksp = " + ksp);
+          
+          
           double oldScalePotentialFactor = 1.0;
           double error = 1.0;
           int iterations = 0;
           do {
             iterations++;
-            logger.info("theoretic lnKsp = " + Math.log(ksp));
+            
             int compNumb1 = system.getPhase(phaseNumber).getComponent(name1).getComponentNumber();
             int compNumb2 = system.getPhase(phaseNumber).getComponent(name2).getComponentNumber();
             int waterompNumb =
@@ -124,34 +124,34 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
                     * system.getPhase(phaseNumber).getActivityCoefficient(compNumb2, waterompNumb),
                     stoc2);
             double stocKsp = Math.pow(x1, stoc1) * Math.pow(x2, stoc2);
-            logger.info("calc Ksp " + kspReac);
-            logger.info("stoc Ksp " + stocKsp);
-            logger.info("activity " + kspReac / stocKsp);
-            logger.info("mol/kg " + x1);
+            
+            
+            
+            
 
             double scalePotentialFactor = kspReac / ksp;
 
             error = (scalePotentialFactor - oldScalePotentialFactor) / scalePotentialFactor * 100;
             oldScalePotentialFactor = scalePotentialFactor;
-            logger.info("Scale potential factor " + scalePotentialFactor);
+            
             resultTable[numb][0] = name1 + " " + name2;
             resultTable[numb][1] = Double.toString(scalePotentialFactor);
             resultTable[numb][2] = "";
 
             if (saltName.equals(scaleSaltName)) {
-              logger.info("error " + error);
-              logger.info("pH : " + system.getPhase(phaseNumber).getpH());
+              
+              
               system.addComponent(nameOfIonToBeAdded, (1.0 - scalePotentialFactor) / 100000.0,
                   phaseNumber);
               ops.TPflash();
-              logger.info("x1 " + system.getPhase(phaseNumber).getComponent(name1).getx());
-              logger.info("x2 " + system.getPhase(phaseNumber).getComponent(name2).getx());
+              
+              
             }
           } while (saltName.equals(scaleSaltName) && Math.abs(error) > 1e-6 && iterations < 200);
         }
       }
     } catch (Exception ex) {
-      logger.info("failed ", ex);
+      
     }
 
     if (system.getPhase(phaseNumber).hasComponent("MEG")) {
@@ -169,12 +169,12 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
   /** {@inheritDoc} */
   @Override
   public String[][] getResultTable() {
-    logger.info("checking table...scale " + resultTable[0][0]);
-    logger.info("checking table...scale " + resultTable[0][1]);
-    logger.info("checking table...scale " + resultTable[0][2]);
-    logger.info("checking table...scale " + resultTable[1][0]);
-    logger.info("checking table...scale " + resultTable[1][1]);
-    logger.info("checking table...scale " + resultTable[1][2]);
+    
+    
+    
+    
+    
+    
     return resultTable;
   }
 }

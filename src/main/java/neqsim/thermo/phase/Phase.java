@@ -7,8 +7,8 @@
 package neqsim.thermo.phase;
 
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.physicalProperties.PhysicalPropertyHandler;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
@@ -24,8 +24,6 @@ import neqsim.util.exception.InvalidInputException;
 public abstract class Phase implements PhaseInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(Phase.class);
 
   public int numberOfComponents = 0;
   public ComponentInterface[] componentArray;
@@ -84,7 +82,7 @@ public abstract class Phase implements PhaseInterface {
     try {
       clonedPhase = (Phase) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     clonedPhase.componentArray = this.componentArray.clone();
@@ -160,13 +158,13 @@ public abstract class Phase implements PhaseInterface {
           temp.add(this.componentArray[i]);
         }
       }
-      // logger.info("length " + temp.size());
+      // 
       for (int i = 0; i < temp.size(); i++) {
         this.componentArray[i] = temp.get(i);
         this.getComponent(i).setComponentNumber(i);
       }
     } catch (Exception ex) {
-      logger.error("not able to remove " + name, ex);
+      
     }
 
     // componentArray = (ComponentInterface[])temp.toArray();
@@ -1240,7 +1238,7 @@ public abstract class Phase implements PhaseInterface {
       try {
         //refPhase[i] = this.getClass().getDeclaredConstructor().newInstance();//reflectionDebug
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
       refPhase[i].setTemperature(temperature);
       refPhase[i].setPressure(pressure);
@@ -1739,7 +1737,7 @@ public abstract class Phase implements PhaseInterface {
             / (0.01802 * neqsim.thermo.util.empiric.Water.waterDensity(temperature) / 1000.0));
       }
     }
-    logger.info("no H3Oplus");
+    
     return 7.0;
   }
 
@@ -1758,10 +1756,10 @@ public abstract class Phase implements PhaseInterface {
           return componentArray[i];
         }
       }
-      logger.error("could not find component " + name + ", returning null");
+      
       throw new Exception("component not in fluid... " + name);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     return null;
   }

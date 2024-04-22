@@ -38,9 +38,7 @@ public class MolarMassAnalyser extends StreamMeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    System.out.println("measured Molar mass " + getMeasuredValue());
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override

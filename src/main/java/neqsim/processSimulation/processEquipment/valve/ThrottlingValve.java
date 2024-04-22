@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processEquipment.valve;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.mechanicalDesign.valve.ValveMechanicalDesign;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -19,7 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class ThrottlingValve extends TwoPortEquipment implements ValveInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ThrottlingValve.class);
+  
   SystemInterface thermoSystem;
 
   private boolean valveCvSet = false;
@@ -247,7 +247,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
       inStream.getThermoSystem().init(3);
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      
     }
     // inletStream.run(id);
 
@@ -264,9 +264,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    thermoSystem.display(getName());
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override
@@ -310,14 +308,14 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       inStream.getThermoSystem().init(1);
       inStream.run(id);
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      
     }
     try {
       outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
       outStream.getThermoSystem().init(1);
       outStream.run(id);
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      
     }
     // System.out.println("delta p valve " +
     // (inletStream.getThermoSystem().getPressure() -

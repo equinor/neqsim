@@ -76,7 +76,7 @@ public class SystemDuanSun extends SystemEos {
     try {
       clonedSystem = (SystemDuanSun) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

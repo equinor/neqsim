@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(bubblePointTemperatureNoDer.class);
+  
 
   /**
    * <p>
@@ -110,8 +110,7 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
           system.getPhases()[0].getComponents()[i]
               .setx(system.getPhases()[0].getComponents()[i].getK()
                   * system.getPhases()[1].getComponents()[i].getz());
-          // logger.info("y err " +
-          // Math.abs(system.getPhases()[0].getComponents()[i].getx()-yold));
+          // 
         } while (Math.abs(system.getPhases()[0].getComponents()[i].getx() - yold) > 1e-4);
 
         ktot += Math.abs(system.getPhases()[1].getComponents()[i].getK() - 1.0);
@@ -126,7 +125,7 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
       if (ytotal < 0.8) {
         ytotal = 0.8;
       }
-      // logger.info("y tot " + ytotal);
+      // 
 
       // system.setTemperature(system.getTemperature() +
       // 0.05*(1.0/ytotal*system.getTemperature()-system.getTemperature()));
@@ -138,11 +137,11 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
       // (system.getPhases()[0].getComponents()[i].getK()*system.getPhases()[1].getComponents()[i].getx()
       // * 1.0 / ytotal-system.getPhases()[0].getComponents()[i].getx()));
       // }
-      // logger.info("temperature " + system.getTemperature());
+      // 
     } while ((((Math.abs(ytotal) - 1.0) > 1e-9)
         || Math.abs(oldTemp - system.getTemperature()) / oldTemp > 1e-8)
         && (iterations < maxNumberOfIterations));
-    // logger.info("iter " + iterations + " ktot " + ktot);
+    // 
     if (Math.abs(ytotal - 1.0) >= 1e-5
         || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
       setSuperCritical(true);

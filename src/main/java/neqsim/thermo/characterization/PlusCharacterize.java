@@ -1,8 +1,8 @@
 package neqsim.thermo.characterization;
 
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class PlusCharacterize implements java.io.Serializable, CharacteriseInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PlusCharacterize.class);
+  
 
   double[] TBPfractions = null;
   boolean firsttime = true;
@@ -89,7 +89,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
           }
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
     }
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
@@ -123,10 +123,10 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
           }
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
     }
-    logger.info("first plus fraction number " + firstPlusFractionNumber);
+    
 
     // NewtonSolveABCDplus solver = new NewtonSolveABCDplus(system, this);
     // NewtonSolveCDplus solver2 = new NewtonSolveCDplus(system, this);
@@ -161,9 +161,9 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
           Dtot += (getDensPlus() - this.getCoef(2)) / Math.log(i); // (this.getCoef(2)+this.getCoef(3)*Math.log(i)-this.getCoef(2))/Math.log(i);
         }
         double lengthPlus = this.getLastPlusFractionNumber() - this.getFirstPlusFractionNumber();
-        logger.info("length plus " + lengthPlus);
+        
         Dtot /= lengthPlus;
-        logger.info("D " + Dtot);
+        
         this.coefs[3] = Dtot;
       }
       firsttime = false;
@@ -440,9 +440,9 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     for (int i = 0; i < list.size(); i++) {
       try {
         system.removeComponent(list.get(i));
-        logger.info("removing " + list.get(i));
+        
       } catch (Exception ex) {
-        logger.error("not able to remove " + list.get(i), ex);
+        
         // return;
       }
     }

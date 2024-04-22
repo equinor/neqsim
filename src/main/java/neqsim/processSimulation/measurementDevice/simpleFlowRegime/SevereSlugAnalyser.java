@@ -2,8 +2,8 @@ package neqsim.processSimulation.measurementDevice.simpleFlowRegime;
 
 import java.util.Arrays;
 import java.util.Collections;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -20,7 +20,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1L;
-  static Logger logger = LogManager.getLogger(SevereSlugAnalyser.class);
+  
 
   FluidSevereSlug fluidSevereS;
   Pipe pipe;
@@ -455,7 +455,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     }
 
     if (iter == 199) {
-      logger.debug("Could not find solution for stratified flow holdup");
+      
     } else {
       holdUp = (gamma - 0.5 * Math.sin(2 * gamma)) / (pi);
     }
@@ -599,11 +599,11 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     double max = Collections.max(Arrays.asList(halfRes));
     slugValue = (max / meanValue) - 1;
     double stratifiedHoldUp = stratifiedHoldUp(fluid, pipe, severeSlug);
-    logger.debug(stratifiedHoldUp);
+    
 
     double slugHoldUp = slugHoldUp(pipe, severeSlug);
-    logger.debug(slugHoldUp);
-    logger.debug("The severe slug value is " + slugValue);
+    
+    
     if (slugValue > 0.1 && slugHoldUp > stratifiedHoldUp) {
       flowPattern = "Severe Slug";
     } else if (slugValue > 0.05 && slugHoldUp > stratifiedHoldUp) {
@@ -623,7 +623,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
         }
       }
     }
-    logger.debug("Simulated flow regime is then: " + flowPattern);
+    
     return flowPattern;
   }
 
@@ -686,7 +686,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * @return a {@link java.lang.String} object
    */
   public String getPredictedFlowRegime() {
-    logger.debug(angle);
+    
     SystemInterface fluid = streamS.getThermoSystem();
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
@@ -748,7 +748,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     Stream inputStream = new Stream("inputStream", testSystem);
     SevereSlugAnalyser mySevereSlug4 =
         new SevereSlugAnalyser(inputStream, 0.05, 167, 7.7, 2, 100000.0, 20.0, 200.0, 20000);
-    logger.debug(inputStream.getFlowRate("kg/sec"));
+    
     mySevereSlug4.getPredictedFlowRegime();
     // inputStream.setFlowRate(0.00001, "MSm^3/day");
     // System.out.println(inputStream.getFlowRate("kg/sec"));

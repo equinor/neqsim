@@ -6,8 +6,8 @@
 
 package neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86;
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodHeavyOil;
 import neqsim.thermo.phase.PhaseInterface;
@@ -23,7 +23,7 @@ import neqsim.thermo.phase.PhaseInterface;
 public class GasPhysicalProperties
     extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(GasPhysicalProperties.class);
+  
 
   /**
    * <p>
@@ -70,7 +70,7 @@ public class GasPhysicalProperties
     try {
       properties = (GasPhysicalProperties) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     return properties;
   }

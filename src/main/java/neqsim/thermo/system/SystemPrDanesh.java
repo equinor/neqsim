@@ -78,7 +78,7 @@ public class SystemPrDanesh extends SystemPrEos {
     try {
       clonedSystem = (SystemPrDanesh) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

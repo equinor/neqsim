@@ -77,7 +77,7 @@ public class SystemPrCPA extends SystemPrEos {
     try {
       clonedSystem = (SystemPrCPA) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

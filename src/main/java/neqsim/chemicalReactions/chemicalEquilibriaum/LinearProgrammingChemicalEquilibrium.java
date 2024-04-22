@@ -19,8 +19,8 @@ import org.apache.commons.math3.optim.linear.NonNegativeConstraint;
 import org.apache.commons.math3.optim.linear.Relationship;
 import org.apache.commons.math3.optim.linear.SimplexSolver;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import Jama.Matrix;
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.thermo.component.ComponentInterface;
@@ -37,7 +37,7 @@ import neqsim.thermo.system.SystemInterface;
 public class LinearProgrammingChemicalEquilibrium
     implements neqsim.thermo.ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(LinearProgrammingChemicalEquilibrium.class);
+  
 
   double[] xEts = null;
   double[][] Amatrix;
@@ -362,10 +362,10 @@ public class LinearProgrammingChemicalEquilibrium
     try {
       optimal = solver.optimize(new MaxIter(1000), f, consSet, GoalType.MINIMIZE, nonneg);
     } catch (NoFeasibleSolutionException ex) {
-      logger.error("no feasible solution", ex);
+      
       return null;
     } catch (Exception ex) {
-      logger.error("linear optimization failed", ex);
+      
       return null;
     }
 

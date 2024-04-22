@@ -1,7 +1,7 @@
 package neqsim.PVTsimulation.simulation;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -16,7 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SlimTubeSim extends BasePVTsimulation {
-  static Logger logger = LogManager.getLogger(SlimTubeSim.class);
+  
   SystemInterface inectionGasSystem = null;
   private int numberOfSlimTubeNodes = 200;
   SystemInterface[] slimTubeNodeSystem = null;
@@ -55,8 +55,7 @@ public class SlimTubeSim extends BasePVTsimulation {
     getThermoSystem().setTemperature(getTemperature());
     thermoOps.TPflash();
     if (getThermoSystem().getNumberOfPhases() > 1) {
-      logger.debug(
-          "more than one phase at initial pressure and temperature.....stopping slimtube simulation.");
+      
       return;
     }
 
@@ -143,7 +142,7 @@ public class SlimTubeSim extends BasePVTsimulation {
                   -slimTubeNodeSystem[i].getComponent(k).getNumberOfmoles());
             }
           } catch (Exception e) {
-            logger.warn(e.getMessage());
+            
           }
         }
         slimOps0.setSystem(slimTubeNodeSystem[i]);
@@ -158,9 +157,7 @@ public class SlimTubeSim extends BasePVTsimulation {
         // slimTubeNodeSystem[i + 1].display();
       }
       /*
-       * logger.DEBUG("time " + timeStep + " node " + numberOfSlimTubeNodes + " volume " +
-       * (slimTubeNodeSystem[numberOfSlimTubeNodes].getVolume()) + " moles " +
-       * slimTubeNodeSystem[numberOfSlimTubeNodes].getNumberOfMoles());
+       * 
        */
       slimTubeNodeSystem[numberOfSlimTubeNodes].setTemperature(288.15);
       slimTubeNodeSystem[numberOfSlimTubeNodes]

@@ -6,8 +6,8 @@
 
 package neqsim.thermo.phase;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import org.ojalgo.matrix.Primitive64Matrix;
 import org.ojalgo.matrix.Primitive64Matrix.Factory;
 import org.ojalgo.matrix.store.MatrixStore;
@@ -27,7 +27,7 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
  */
 public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PhaseSrkCPAojAlgo.class);
+  
 
   public CPAMixing cpaSelect = new CPAMixing();
   public CPAMixingInterface cpamix;
@@ -104,7 +104,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     try {
       clonedPhase = (PhaseSrkCPAojAlgo) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
     // clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
@@ -818,7 +818,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
       try {
         // hessianInvers2 = input.invert();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         return false;
       }
 
@@ -940,7 +940,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     try {
       // molarVolume(pressure, temperature, A, B, pt);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     double BonVold = BonV;
     double Btemp = 0;
@@ -1030,7 +1030,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     double d2 = 0;
     double Btemp = getB();
     if (Btemp < 0) {
-      logger.info("b negative in volume calc");
+      
     }
     calcDelta();
 
@@ -1176,7 +1176,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     double d2 = 0;
     Btemp = getB();
     if (Btemp < 0) {
-      logger.info("b negative in volume calc");
+      
     }
     calcDelta();
 

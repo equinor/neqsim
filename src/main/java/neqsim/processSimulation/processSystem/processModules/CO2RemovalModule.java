@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processSystem.processModules;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -18,7 +18,7 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  */
 public class CO2RemovalModule extends ProcessModuleBaseClass {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(CO2RemovalModule.class);
+  
 
   protected StreamInterface streamToAbsorber = null, streamFromAbsorber = null,
       gasFromCO2Stripper = null;
@@ -83,7 +83,7 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
       this.gasFromCO2Stripper = this.streamToAbsorber.clone();
       this.gasFromCO2Stripper.setName("Gas stream from Stripper");
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 

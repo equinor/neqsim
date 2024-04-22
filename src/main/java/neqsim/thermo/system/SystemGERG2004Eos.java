@@ -79,7 +79,7 @@ public class SystemGERG2004Eos extends SystemEos {
     try {
       clonedSystem = (SystemGERG2004Eos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

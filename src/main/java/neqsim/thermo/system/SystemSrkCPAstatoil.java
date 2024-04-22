@@ -72,7 +72,7 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
     try {
       clonedSystem = (SystemSrkCPAstatoil) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

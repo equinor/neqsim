@@ -5,8 +5,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * <p>
@@ -41,7 +41,7 @@ public class NeqSimExperimentDatabase
   }
 
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(NeqSimExperimentDatabase.class);
+  
 
   /** Constant <code>dataBasePath=""</code>. */
   public static String dataBasePath = "";
@@ -72,7 +72,7 @@ public class NeqSimExperimentDatabase
       databaseConnection = this.openConnection();
       statement = databaseConnection.createStatement();
     } catch (Exception ex) {
-      logger.error("SQLException ", ex);
+      
       throw new RuntimeException(ex);
     }
   }
@@ -107,7 +107,7 @@ public class NeqSimExperimentDatabase
         return DriverManager.getConnection(getConnectionString(), username, password);
       }
     } catch (Exception ex) {
-      logger.error("error loading NeqSimExperimentDatabase... ", ex);
+      
       throw new RuntimeException(ex);
     } finally {
       try {
@@ -115,7 +115,7 @@ public class NeqSimExperimentDatabase
           ctx.close();
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
     }
   }
@@ -144,7 +144,7 @@ public class NeqSimExperimentDatabase
       ResultSet result = getStatement().executeQuery(sqlString);
       return result;
     } catch (Exception ex) {
-      logger.error("error loading NeqSimExperimentDatabase ", ex);
+      
       throw new RuntimeException(ex);
     }
   }
@@ -164,8 +164,8 @@ public class NeqSimExperimentDatabase
       }
       getStatement().execute(sqlString);
     } catch (Exception ex) {
-      logger.error("error in NeqSimDataBase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
+      
+      
       throw new RuntimeException(ex);
     }
   }
@@ -231,7 +231,7 @@ public class NeqSimExperimentDatabase
         Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
       }
     } catch (Exception ex) {
-      logger.error("error loading database driver.. ", ex);
+      
       throw new RuntimeException(ex);
     }
   }

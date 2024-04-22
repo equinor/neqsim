@@ -30,7 +30,7 @@ public class PhaseWax extends PhaseSolid {
     try {
       clonedPhase = (PhaseWax) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedPhase;

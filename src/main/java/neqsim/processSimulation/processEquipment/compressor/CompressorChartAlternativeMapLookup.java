@@ -6,8 +6,8 @@ import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -23,7 +23,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class CompressorChartAlternativeMapLookup
     implements CompressorChartInterface, java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(CompressorChart.class);
+  
 
   ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
   ArrayList<Double> chartSpeeds = new ArrayList<Double>();

@@ -7,8 +7,8 @@
 package neqsim.chemicalReactions.chemicalReaction;
 
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * <p>
@@ -19,7 +19,7 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public final class ChemicalReactionFactory {
-  static Logger logger = LogManager.getLogger(ChemicalReactionFactory.class);
+  
 
   /**
    * Dummy constructor, not for use. Class is to be considered static.
@@ -75,8 +75,7 @@ public final class ChemicalReactionFactory {
       }
     } catch (Exception ex) {
       // TODO: improve warning message, probably table missing?
-      logger.error("Failed getting data from REACTIONDATA for component named " + name + ":\n\t"
-          + ex.getMessage());
+      
     }
 
     String[] nameArray = new String[names.size()];
@@ -103,7 +102,7 @@ public final class ChemicalReactionFactory {
         nameList.add(dataSet.getString("name").trim());
       } while (dataSet.next());
     } catch (Exception ex) {
-      logger.error("Failed reading from database.");
+      
     }
 
     return nameList.toArray(new String[0]);

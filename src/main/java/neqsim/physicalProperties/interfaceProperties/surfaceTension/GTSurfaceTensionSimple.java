@@ -3,8 +3,8 @@ package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
@@ -18,7 +18,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class GTSurfaceTensionSimple extends SurfaceTension {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(GTSurfaceTensionSimple.class);
+  
 
   int ite_step = 200;
   SystemInterface localSystem = null;
@@ -177,7 +177,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         try {
           ans = fmatrixJama.solveTranspose(bmatrixJama.transpose());
         } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
+          
         }
       }
 
@@ -255,7 +255,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
                 new org.apache.commons.math3.linear.LUDecomposition(fmatrixJama).getSolver();
             ans2 = solver1.solve(bRealMatrix);
           } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            
           }
         }
 

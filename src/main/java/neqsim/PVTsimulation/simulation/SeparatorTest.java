@@ -1,7 +1,7 @@
 package neqsim.PVTsimulation.simulation;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -16,7 +16,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class SeparatorTest extends BasePVTsimulation {
-  static Logger logger = LogManager.getLogger(SeparatorTest.class);
+  
 
   double[] temperature = null;
   double[] pressure = null;
@@ -89,7 +89,7 @@ public class SeparatorTest extends BasePVTsimulation {
         GOR[i] = Sm3gas[i] / oilVolumeStdCond;
         Bofactor[i] = m3oil[i] / oilVolumeStdCond;
       }
-      logger.info("GOR " + getGOR()[i] + " Bo " + Bofactor[i]);
+      
     }
   }
 

@@ -6,14 +6,14 @@
 
 package neqsim.standards;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
+
+
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
+
+
+
+
 import neqsim.standards.salesContract.BaseContract;
 import neqsim.standards.salesContract.ContractInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -156,19 +156,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
 
   /** {@inheritDoc} */
   @Override
-  public void display(String name) {
-    JDialog dialog = new JDialog(new JFrame(), "Standard-Report");
-    Container dialogContentPane = dialog.getContentPane();
-    dialogContentPane.setLayout(new BorderLayout());
-
-    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
-    String[][] table = createTable(name);
-    JTable Jtab = new JTable(table, names);
-    JScrollPane scrollpane = new JScrollPane(Jtab);
-    dialogContentPane.add(scrollpane);
-    dialog.pack();
-    dialog.setVisible(true);
-  }
+  public void display(String name) {}
 
   /** {@inheritDoc} */
   @Override

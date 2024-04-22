@@ -73,7 +73,7 @@ public class SystemGEWilson extends SystemEos {
     try {
       clonedSystem = (SystemGEWilson) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

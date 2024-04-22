@@ -1,7 +1,7 @@
 package neqsim.physicalProperties;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface;
 import neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties;
 import neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties;
@@ -23,7 +23,7 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PhysicalPropertyHandler.class);
+  
 
   private PhysicalPropertiesInterface gasPhysicalProperties = null;
   private PhysicalPropertiesInterface oilPhysicalProperties = null;
@@ -79,8 +79,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
         aqueousPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
         break;
       default:
-        logger
-            .error("error selecting physical properties model.\n Continue using default model...");
+        
         setPhysicalProperties(phase, 0);
         break;
     }
@@ -129,7 +128,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     try {
       clonedHandler = (PhysicalPropertyHandler) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     try {
       if (gasPhysicalProperties != null) {
@@ -148,7 +147,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
         clonedHandler.mixingRule = mixingRule.clone();
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     return clonedHandler;
   }

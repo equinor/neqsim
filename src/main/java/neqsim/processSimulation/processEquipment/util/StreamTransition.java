@@ -90,9 +90,7 @@ public class StreamTransition extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    outStream.getFluid().display();
-  }
+  public void displayResult() {}
 
   /**
    * <p>

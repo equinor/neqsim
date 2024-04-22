@@ -43,7 +43,7 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
     try {
       clonedPhase = (PhaseElectrolyteCPAstatoil) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     return clonedPhase;
   }

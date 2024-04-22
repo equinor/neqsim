@@ -78,7 +78,7 @@ public class SystemGERGwaterEos extends SystemPrEos {
     try {
       clonedSystem = (SystemGERGwaterEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

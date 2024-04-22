@@ -6,8 +6,8 @@
 
 package neqsim.physicalProperties.interfaceProperties;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.physicalProperties.interfaceProperties.solidAdsorption.AdsorptionInterface;
 import neqsim.physicalProperties.interfaceProperties.solidAdsorption.PotentialTheoryAdsorption;
 import neqsim.physicalProperties.interfaceProperties.surfaceTension.FirozabadiRamleyInterfaceTension;
@@ -29,7 +29,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class InterfaceProperties implements InterphasePropertiesInterface, java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(InterfaceProperties.class);
+  
 
   SystemInterface system;
   SurfaceTensionInterface gasLiquidSurfaceTensionCalc = null;
@@ -72,7 +72,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
       // clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations)
       // chemicalReactionOperations.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     // clonedSystem.system = system;
     return clonedSystem;

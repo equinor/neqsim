@@ -37,7 +37,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
     try {
       clonedPhase = (PhaseSolid) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedPhase;
@@ -51,7 +51,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
       getDensityTemp();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      
     }
     setType(PhaseType.SOLID);
   }

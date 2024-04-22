@@ -1,7 +1,7 @@
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
@@ -15,7 +15,7 @@ import neqsim.thermo.phase.PhaseType;
  */
 public class ComponentWax extends ComponentSolid {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ComponentWax.class);
+  
 
   /**
    * <p>
@@ -49,7 +49,7 @@ public class ComponentWax extends ComponentSolid {
       refPhase.setTemperature(phase1.getTemperature());
     } catch (Exception ex) {
       // System.out.println("compname " + componentName);
-      logger.error(ex.getMessage(), ex);
+      
     }
     refPhase.setPressure(phase1.getPressure());
     refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, PhaseType.byValue(0), 1.0);

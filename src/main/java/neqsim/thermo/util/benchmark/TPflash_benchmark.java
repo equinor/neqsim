@@ -1,7 +1,7 @@
 package neqsim.thermo.util.benchmark;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -15,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class TPflash_benchmark {
-  static Logger logger = LogManager.getLogger(TPflash_benchmark.class);
+  
 
   /**
    * This method is just meant to test the thermo package.
@@ -50,7 +50,7 @@ public class TPflash_benchmark {
 
     // testSystem.autoSelectMixingRule();
     // testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
-    logger.info("start benchmark TPflash......");
+    
 
     testSystem.init(0);
     long time = System.currentTimeMillis();

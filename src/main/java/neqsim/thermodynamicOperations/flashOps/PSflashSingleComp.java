@@ -47,7 +47,7 @@ public class PSflashSingleComp extends Flash {
         }
       } catch (Exception ex) {
         system.setTemperature(initTemp);
-        logger.error(ex.getMessage(), ex);
+        
       }
     } else {
       bubOps.PSflash2(Sspec);

@@ -6,8 +6,8 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.conductivity;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * Abstract class Conductivity.
@@ -19,7 +19,7 @@ abstract class Conductivity extends
     implements
     neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Conductivity.class);
+  
 
   double conductivity = 0;
 
@@ -52,7 +52,7 @@ abstract class Conductivity extends
     try {
       properties = (Conductivity) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return properties;

@@ -1,7 +1,7 @@
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentHydrateStatoil extends ComponentHydrate {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ComponentHydrateStatoil.class);
+  
 
   double[][] coordNumb = new double[2][2];
   double[][] cavRadius = new double[2][2];
@@ -149,10 +149,10 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
     }
     // System.out.println("integral " + val);
     if (Double.isNaN(val)) {
-      logger.error("val NaN ...");
+      
     }
     if (Double.isInfinite(val)) {
-      logger.error("val Infinite ...");
+      
     }
     return val;
   }
@@ -175,10 +175,10 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
     pot = Math.exp(-pot / (phase.getTemperature())) * radius * radius;
     // System.out.println("pot " + pot);
     if (Double.isNaN(pot)) {
-      logger.error("pot NaN ...");
+      
     }
     if (Double.isInfinite(pot)) {
-      logger.error("pot Infinite ...");
+      
     }
     // System.out.println("pot " +pot);
     return pot;
@@ -203,10 +203,10 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
     // System.out.println("diff2 " + diff2);
     // System.out.println("delt " + delt);
     if (Double.isNaN(delt)) {
-      logger.error("delt NaN ...");
+      
     }
     if (Double.isInfinite(delt)) {
-      logger.error("delt Infinite ...");
+      
     }
     return delt;
   }

@@ -7,8 +7,8 @@
 package neqsim.thermo.atomElement;
 
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
@@ -21,7 +21,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  */
 public class Element implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Element.class);
+  
 
   private String name;
   private String[] nameArray;
@@ -59,7 +59,7 @@ public class Element implements ThermodynamicConstantsInterface {
         nameArray[i] = names.get(i);
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 
@@ -125,7 +125,7 @@ public class Element implements ThermodynamicConstantsInterface {
         names.add(dataSet.getString("componentname").trim());
       } while (dataSet.next());
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
 
     return names;

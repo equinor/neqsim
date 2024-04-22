@@ -73,7 +73,7 @@ public class SystemKentEisenberg extends SystemEos {
     try {
       clonedSystem = (SystemKentEisenberg) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

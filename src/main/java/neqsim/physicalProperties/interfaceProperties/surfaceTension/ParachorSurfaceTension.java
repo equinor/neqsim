@@ -82,7 +82,7 @@ public class ParachorSurfaceTension extends SurfaceTension {
                     * system.getPhase(interface1).getComponent(i).getx());
       }
     } catch (Exception ex) {
-      // logger.error(ex.getMessage(), ex);
+      // 
       temp = 0.0;
     }
     return Math.pow(temp, 4.0) / 1000.0;

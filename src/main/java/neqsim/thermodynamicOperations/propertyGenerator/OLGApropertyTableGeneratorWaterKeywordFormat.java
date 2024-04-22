@@ -5,8 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -22,7 +22,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class OLGApropertyTableGeneratorWaterKeywordFormat
     extends neqsim.thermodynamicOperations.BaseOperation {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(OLGApropertyTableGeneratorWaterKeywordFormat.class);
+  
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
@@ -136,7 +136,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
       TC = thermoSystem.getTC() - 273.15;
       PC = thermoSystem.getPC() * 1e5;
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
 
     // thermoOps.ge
@@ -160,7 +160,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         bubP[i] = thermoSystem.getPressure();
         bubPLOG[i] = bubP[i] * 1e5;
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         bubP[i] = 0;
       }
     }
@@ -185,7 +185,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         dewP[i] = thermoSystem.getPressure();
         dewPLOG[i] = dewP[i] * 1e5;
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         dewP[i] = 0;
       }
     }
@@ -210,7 +210,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         bubT[i] = thermoSystem.getTemperature();
         bubTLOG[i] = bubT[i] - 273.15;
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         bubT[i] = 0.0;
       }
     }
@@ -266,7 +266,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
   /** {@inheritDoc} */
   @Override
   public void run() {
-    logger.info("Start creating arrays");
+    
     calcRSWTOB();
     nProps = 29;
     props = new double[nProps][pressures.length][temperatures.length];
@@ -302,7 +302,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         try {
           thermoOps.TPflash();
         } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
+          
         }
         thermoSystem.init(3);
         thermoSystem.initPhysicalProperties();
@@ -497,23 +497,13 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
     bubP = calcBubP(temperatures);
     // dewP = calcDewP(temperatures);
     bubT = calcBubT(temperatures);
-    logger.info("Finished creating arrays");
+    
     initCalc();
   }
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    logger.info("TC " + TC + " PC " + PC);
-    for (int i = 0; i < pressures.length; i++) {
-      thermoSystem.setPressure(pressures[i]);
-      for (int j = 0; j < temperatures.length; j++) {
-        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]);
-        // + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
-      }
-    }
-    writeOLGAinpFile("");
-  }
+  public void displayResult() {}
 
   /**
    * <p>

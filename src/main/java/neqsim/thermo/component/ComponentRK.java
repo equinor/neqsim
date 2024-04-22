@@ -57,7 +57,7 @@ public class ComponentRK extends ComponentEos {
     try {
       clonedComponent = (ComponentRK) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedComponent;

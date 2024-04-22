@@ -20,9 +20,12 @@ public class TwoPhaseReactorFlowSystem
    * Constructor for TwoPhaseReactorFlowSystem.
    * </p>
    */
-  public TwoPhaseReactorFlowSystem() {}
+  public TwoPhaseReactorFlowSystem() {
+  }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void createSystem() {
     // thermoSystem.init(1);
@@ -34,15 +37,17 @@ public class TwoPhaseReactorFlowSystem
 
     flowNode = new neqsim.fluidMechanics.flowNode.FlowNodeInterface[totalNumberOfNodes];
     flowNode[0] =
-        new neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.StratifiedFlowNode(
-            thermoSystem, equipmentGeometry[0]);
+            new neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.StratifiedFlowNode(
+                    thermoSystem, equipmentGeometry[0]);
     flowNode[totalNumberOfNodes - 1] = flowNode[0].getNextNode();
 
     super.createSystem();
     this.setNodes();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void init() {
     for (int j = 0; j < getTotalNumberOfNodes(); j++) {
@@ -65,7 +70,9 @@ public class TwoPhaseReactorFlowSystem
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void solveSteadyState(int type, UUID id) {
     double[] times = {0.0};
@@ -78,15 +85,17 @@ public class TwoPhaseReactorFlowSystem
     getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
 
     flowSolver =
-        new neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver.TwoPhaseFixedStaggeredGridSolver(
-            this, getSystemLength(), this.getTotalNumberOfNodes(), false);
+            new neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver.TwoPhaseFixedStaggeredGridSolver(
+                    this, getSystemLength(), this.getTotalNumberOfNodes(), false);
     flowSolver.setSolverType(type);
     flowSolver.solveTDMA();
     getTimeSeries().init(this);
     display.setNextData(this);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void solveTransient(int type, UUID id) {
     // pipeSolver pipeSolve = new pipeSolver(this, getSystemLength(),
@@ -109,20 +118,20 @@ public class TwoPhaseReactorFlowSystem
 
     // Definerer termodyanmikken5
     neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(295.3, 5.0); // initierer
-                                                           // et
-                                                           // system
-                                                           // som
-                                                           // benytter
-                                                           // SRK
-                                                           // tilstandsligning
+            new neqsim.thermo.system.SystemSrkEos(295.3, 5.0); // initierer
+    // et
+    // system
+    // som
+    // benytter
+    // SRK
+    // tilstandsligning
     // med trykk 305.3 K og 125 bar
     neqsim.thermodynamicOperations.ThermodynamicOperations testOps =
-        new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem); // gjor
-                                                                                // termodyanmiske
-                                                                                // Flash
-                                                                                // rutiner
-                                                                                // tilgjengelige
+            new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem); // gjor
+    // termodyanmiske
+    // Flash
+    // rutiner
+    // tilgjengelige
     testSystem.addComponent("methane", 0.11152181, 0);
     // testSystem.addComponent("ethane", 0.0011152181, 0);
     testSystem.addComponent("water", 0.04962204876, 1);
@@ -133,25 +142,25 @@ public class TwoPhaseReactorFlowSystem
     pipe.setInletThermoSystem(testSystem); // setter termodyanmikken for rorsystemet
     pipe.setNumberOfLegs(5); // deler inn roret i et gitt antall legger
     pipe.setNumberOfNodesInLeg(100); // setter antall nodepunkter (beregningspunkter/grid) pr.
-                                     // leg
+    // leg
     double[] height = {0, 0, 0, 0, 0, 0};
     double[] length = {0.0, 1.7, 3.5, 5.0, 7.5, 10.4};
     double[] outerTemperature =
-        {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 275.0, 275.0, 275.0, 275.0};
+            {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 275.0, 275.0, 275.0, 275.0};
 
     pipe.setLegHeights(height); // setter inn hoyde for hver leg-ende
     pipe.setLegPositions(length); // setter avstand til hver leg-ende
     pipe.setLegOuterTemperatures(outerTemperature);
 
     neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface[] pipeGemometry =
-        new neqsim.fluidMechanics.geometryDefinitions.reactor.ReactorData[5]; // Deffinerer
-                                                                              // geometrien
-                                                                              // for
-                                                                              // roret
+            new neqsim.fluidMechanics.geometryDefinitions.reactor.ReactorData[5]; // Deffinerer
+    // geometrien
+    // for
+    // roret
     double[] pipeDiameter = {0.02588, 0.02588, 0.02588, 0.02588, 0.02588};
     for (int i = 0; i < pipeDiameter.length; i++) {
       pipeGemometry[i] =
-          new neqsim.fluidMechanics.geometryDefinitions.reactor.ReactorData(pipeDiameter[i], 1);
+              new neqsim.fluidMechanics.geometryDefinitions.reactor.ReactorData(pipeDiameter[i], 1);
     }
     pipe.setEquipmentGeometry(pipeGemometry); // setter inn rorgeometrien for hver leg
     // utforer beregninger
@@ -160,9 +169,6 @@ public class TwoPhaseReactorFlowSystem
 
     pipe.solveSteadyState(2);
     // pipe.calcFluxes();
-    // pipe.getDisplay().displayResult("temperature");
-    // pipe.displayResults();
-    // testOps.TPflash();
-    // testOps.displayResult();
+    // pipe.getdisplay() {}
   }
 }

@@ -51,7 +51,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
     try {
       clonedPhase = (PhaseGERG2004Eos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedPhase;

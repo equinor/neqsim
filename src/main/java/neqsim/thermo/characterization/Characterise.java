@@ -1,7 +1,7 @@
 package neqsim.thermo.characterization;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class Characterise implements java.io.Serializable, Cloneable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Characterise.class);
+  
 
   SystemInterface system = null;
   TBPCharacterize TBPCharacterise = null;
@@ -75,7 +75,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
       // clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations)
       // chemicalReactionOperations.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     return clonedSystem;
   }
@@ -155,9 +155,9 @@ public class Characterise implements java.io.Serializable, Cloneable {
     system.init(0);
     if (plusFractionModel.hasPlusFraction()) {
       if (plusFractionModel.getMPlus() > plusFractionModel.getMaxPlusMolarMass()) {
-        logger.error("plus fraction molar mass too heavy for " + plusFractionModel.getName());
+        
         plusFractionModel = plusFractionModelSelector.getModel("heavyOil");
-        logger.info("changing to " + plusFractionModel.getName());
+        
       }
       plusFractionModel.characterizePlusFraction(TBPfractionModel);
       lumpingModel.generateLumpedComposition(this);

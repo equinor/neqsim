@@ -78,7 +78,7 @@ public class SystemCSPsrkEos extends SystemSrkEos {
     try {
       clonedSystem = (SystemCSPsrkEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

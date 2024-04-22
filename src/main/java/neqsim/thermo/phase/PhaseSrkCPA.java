@@ -1,7 +1,7 @@
 package neqsim.thermo.phase;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 import neqsim.MathLib.matrix.DMatrixRMaj;
 import neqsim.MathLib.matrix.CommonOps_DDRM;
@@ -41,7 +41,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   }
 
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PhaseSrkCPA.class);
+  
 
   public CPAMixing cpaSelect = new CPAMixing();
   public CPAMixingInterface cpamix;
@@ -111,7 +111,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     try {
       clonedPhase = (PhaseSrkCPA) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     if (activeAccosComp != null) {
       clonedPhase.activeAccosComp = activeAccosComp.clone();
@@ -710,7 +710,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     double d2 = 0;
     double Btemp = getB();
     if (Btemp < 0) {
-      logger.info("b negative in volume calc");
+      
     }
 
     setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
@@ -1034,7 +1034,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       try {
         hessianInvers = hessianMatrix.invert();
       } catch (Exception ex) {
-        // logger.error(ex.getMessage(), ex);
+        // 
         return false;
       }
       if (solvedX) {
@@ -1158,7 +1158,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     try {
       // molarVolume(pressure, temperature, A, B, pt);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     double BonVold = BonV;
     double Btemp = 0;
@@ -1257,7 +1257,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     double d2 = 0;
     Btemp = getB();
     if (Btemp < 0) {
-      logger.info("b negative in volume calc");
+      
     }
     calcDelta();
 
@@ -1923,7 +1923,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       try {
         hessianInvers = hessianMatrix.invert();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         return false;
       }
 
@@ -2046,7 +2046,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     double d2 = 0;
     double Btemp = getB();
     if (Btemp < 0) {
-      logger.info("b negative in volume calc");
+      
     }
     calcDelta();
 

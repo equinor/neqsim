@@ -1,7 +1,7 @@
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -15,7 +15,7 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentHydrateKluda extends Component {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ComponentHydrateKluda.class);
+  
 
   double par1_struc1 = 17.44;
   double par2_struc1 = -6003.9;
@@ -94,13 +94,13 @@ public class ComponentHydrateKluda extends Component {
             // System.out.println(phase.getComponent(j));
             tempy += ((ComponentHydrateKluda) phase.getComponent(j)).calcYKI(hydrateStructure,
                 cavType, phase);
-            logger.info("tempny " + tempy);
+            
             // System.out.println("temp ny " + this); //phase.getComponent(j));
           }
           val += cavprwat[hydrateStructure][cavType] * Math.log(1.0 - tempy);
         }
-        logger.info("val " + (val));
-        logger.info("fugacityCoefficient bef " + fugacityCoefficient);
+        
+        
         double solvol = 1.0 / 906.0 * getMolarMass();
         fugacityCoefficient = Math.exp(val)
             * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
@@ -109,7 +109,7 @@ public class ComponentHydrateKluda extends Component {
             / pres;
         // fugacityCoefficient = getAntoineVaporPressure(temp)/pres;
         // fugacityCoefficient = Math.exp(Math.log(fugacityCoefficient) + val*boltzmannConstant/R);
-        logger.info("fugacityCoefficient " + fugacityCoefficient);
+        
       } while (Math.abs((fugacityCoefficient - fugold) / fugold) > 1e-8);
     } else {
       fugacityCoefficient = 1e5;

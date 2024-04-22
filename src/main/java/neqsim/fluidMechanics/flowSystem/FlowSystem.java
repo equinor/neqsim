@@ -244,9 +244,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
 
   /** {@inheritDoc} */
   @Override
-  public FlowSystemVisualizationInterface getDisplay() {
-    return display;
-  }
+  public FlowSystemVisualizationInterface getdisplay() {}
 
   /** {@inheritDoc} */
   @Override

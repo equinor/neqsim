@@ -1,7 +1,7 @@
 package neqsim.thermo.characterization;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class LumpingModel implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(LumpingModel.class);
+  
 
   int numberOfLumpedComponents = 7;
   int numberOfPseudocomponents = 7;
@@ -131,7 +131,7 @@ public class LumpingModel implements java.io.Serializable {
               * system.getPhase(0).getComponent(name).getMolarMass()
               / system.getPhase(0).getComponent(name).getNormalLiquidDensity();
           system.removeComponent(name);
-          // logger.info("removing component " + name);
+          // 
           ii--;
         }
 
@@ -199,7 +199,7 @@ public class LumpingModel implements java.io.Serializable {
         neqsim.util.exception.ThermoException ex =
             new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
                 "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
-        logger.error(ex.getMessage(), ex);
+        
         throw new RuntimeException(ex);
       }
       return fractionOfHeavyEnd[i];
@@ -314,7 +314,7 @@ public class LumpingModel implements java.io.Serializable {
         neqsim.util.exception.ThermoException ex =
             new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
                 "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
-        logger.error(ex.getMessage(), ex);
+        
         throw new RuntimeException(ex);
       }
       return fractionOfHeavyEnd[i];
@@ -418,7 +418,7 @@ public class LumpingModel implements java.io.Serializable {
         neqsim.util.exception.ThermoException ex =
             new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
                 "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
-        logger.error(ex.getMessage(), ex);
+        
         throw new RuntimeException(ex);
       }
       return fractionOfHeavyEnd[i];

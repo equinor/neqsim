@@ -1,7 +1,7 @@
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.util.database.NeqSimDataBase;
@@ -19,7 +19,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
   double[][] Ak = new double[2][2]; // [structure][cavitytype]
   double[][] Bk = new double[2][2]; // [structure][cavitytype]
-  static Logger logger = LogManager.getLogger(ComponentHydratePVTsim.class);
+  
 
   /**
    * <p>
@@ -39,7 +39,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
     if (!name.equals("default")) {
       try (neqsim.util.database.NeqSimDataBase database =
           new neqsim.util.database.NeqSimDataBase()) {
-        logger.info("reading hydrate parameters ..............");
+        
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
             dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
@@ -49,7 +49,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
           dataSet.next();
         } catch (Exception ex) {
           dataSet.close();
-          logger.info("no parameters in tempcomp -- trying comp.. " + name);
+          
           dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           dataSet.next();
         }
@@ -63,12 +63,12 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
         Ak[1][1] = Double.parseDouble(dataSet.getString("HydrateA2Large"));
         Bk[1][1] = Double.parseDouble(dataSet.getString("HydrateB2Large"));
       } catch (Exception ex) {
-        logger.error("error in ComponentHydratePVTsim", ex);
+        
       } finally {
         try {
           dataSet.close();
         } catch (Exception ex2) {
-          logger.error("error closing comp hydrate database....." + name);
+          
         }
       }
     }
@@ -122,8 +122,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
           double alphaWater = reffug[getComponentNumber()];
 
           double wateralphaRef = Math.log(refWaterFugacity / alphaWater);
-          logger.info("wateralphaRef " + wateralphaRef + " refFUgalpha " + alphaWater + " refFug "
-              + refWaterFugacity);
+          
 
           double val = 0.0;
 
@@ -139,9 +138,8 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
             }
             val += getCavprwat()[hydrateStructure][cavType] * Math.log(1.0 - tempy);
           }
-          logger.info("val " + val + " structure " + hydrateStructure);
-          logger
-              .info("emty " + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure));
+          
+          
           // tempfugcoef = refWaterFugacity * Math.exp(val + calcDeltaChemPot(phase,
           // numberOfComps, temp, pres, hydrateStruct) + wateralphaRef) / (pres);
           fugacityCoefficient = alphaWater

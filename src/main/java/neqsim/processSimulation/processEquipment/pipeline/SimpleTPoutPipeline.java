@@ -98,13 +98,7 @@ public class SimpleTPoutPipeline extends Pipeline {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    outStream.getThermoSystem().display(name);
-    outStream.getThermoSystem().initPhysicalProperties();
-    System.out.println("Superficial velocity out gas : " + getSuperficialVelocity(0, 1));
-    System.out.println("Superficial velocity out condensate : " + getSuperficialVelocity(1, 1));
-    System.out.println("Superficial velocity out MEG/water : " + getSuperficialVelocity(2, 1));
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override

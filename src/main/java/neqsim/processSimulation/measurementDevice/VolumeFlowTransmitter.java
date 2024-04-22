@@ -41,9 +41,7 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    System.out.println("measured volume " + Double.toString(getMeasuredValue()) + " " + unit);
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override

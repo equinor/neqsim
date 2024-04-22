@@ -1,8 +1,8 @@
 package neqsim.PVTsimulation.util.parameterfitting;
 
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -18,7 +18,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class TestWaxTuning {
-  static Logger logger = LogManager.getLogger(TestWaxTuning.class);
+  
 
   /**
    * <p>
@@ -62,7 +62,7 @@ public class TestWaxTuning {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error", ex);
+      
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang.SerializationUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
@@ -20,7 +20,7 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
  */
 public class ProcessModule extends SimulationBaseClass {
   private static final long serialVersionUID = 1000;
-  private static final Logger logger = LogManager.getLogger(ProcessModule.class);
+  //private static final
 
   private int unitIndex = 0;
 
@@ -120,7 +120,7 @@ public class ProcessModule extends SimulationBaseClass {
    */
   @Override
   public void run(UUID id) {
-    logger.info("Running module " + getName());
+    
     checkModulesRecycles();
     int iteration = 0;
     do {
@@ -139,9 +139,9 @@ public class ProcessModule extends SimulationBaseClass {
         }
       }
       iteration++;
-      logger.info("Iteration : " + iteration + "  module : " + getName() + " ");
+      
     } while (!recyclesSolved() && iteration <= 100);
-    logger.info("Finished running module " + getName());
+    
     solved = true;
   }
 

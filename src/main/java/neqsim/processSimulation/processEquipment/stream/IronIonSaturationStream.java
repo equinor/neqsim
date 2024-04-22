@@ -7,8 +7,8 @@
 package neqsim.processSimulation.processEquipment.stream;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -22,7 +22,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class IronIonSaturationStream extends Stream {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(IronIonSaturationStream.class);
+  
 
   protected SystemInterface reactiveThermoSystem;
 
@@ -127,7 +127,7 @@ public class IronIonSaturationStream extends Stream {
       thermoOps.addIonToScaleSaturation(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"),
           "FeCO3", "Fe++");
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     reactiveThermoSystem.display();
     System.out.println("number of phases: " + reactiveThermoSystem.getNumberOfPhases());
@@ -137,7 +137,5 @@ public class IronIonSaturationStream extends Stream {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    reactiveThermoSystem.display(name);
-  }
+  public void displayResult() {}
 }

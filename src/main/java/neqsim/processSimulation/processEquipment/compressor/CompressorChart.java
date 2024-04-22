@@ -6,8 +6,8 @@ import java.util.Objects;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * <p>
@@ -19,7 +19,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class CompressorChart implements CompressorChartInterface, java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(CompressorChart.class);
+  
 
   ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
   private SurgeCurve surgeCurve = new SurgeCurve();
@@ -330,28 +330,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
   /** {@inheritDoc} */
   @Override
-  public void plot() {
-    neqsim.dataPresentation.JFreeChart.graph2b graph =
-        new neqsim.dataPresentation.JFreeChart.graph2b(flow, head,
-            Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new), "head vs flow",
-            "flow", "head");
-    graph.setVisible(true);
-    neqsim.dataPresentation.JFreeChart.graph2b graph2 =
-        new neqsim.dataPresentation.JFreeChart.graph2b(flow, polytropicEfficiency,
-            Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new), "eff vs flow",
-            "flow", "eff");
-    graph2.setVisible(true);
-    neqsim.dataPresentation.JFreeChart.graph2b graph3 =
-        new neqsim.dataPresentation.JFreeChart.graph2b(redflow, redhead,
-            Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new),
-            "red head vs red flow", "red flow", "red head");
-    graph3.setVisible(true);
-    neqsim.dataPresentation.JFreeChart.graph2b graph4 =
-        new neqsim.dataPresentation.JFreeChart.graph2b(redflow, polytropicEfficiency,
-            Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new),
-            "red eff vs red dflow", "red flow", "red eff");
-    graph4.setVisible(true);
-  }
+  public void plot() {}
 
   /** {@inheritDoc} */
   @Override

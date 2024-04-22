@@ -1,14 +1,14 @@
 package neqsim.thermodynamicOperations;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
+
+
 import java.util.Arrays;
 import java.util.List;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
+
+
+
 import neqsim.api.ioc.CalculationResult;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.component.ComponentInterface;
@@ -60,8 +60,8 @@ import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.HPTphaseEnvelope;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.pTphaseEnvelope;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves.pLoadingCurve2;
-import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudents;
-import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudentsPH;
+
+
 
 /**
  * <p>
@@ -81,7 +81,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   String fileName = null;
   private boolean runAsThread = false;
   protected String[][] resultTable = null;
-  static Logger logger = LogManager.getLogger(ThermodynamicOperations.class);
+  
 
   /**
    * <p>
@@ -931,7 +931,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       getThermoOperationThread().join(maxTime);
       getThermoOperationThread().interrupt();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     boolean didFinish = !getThermoOperationThread().isInterrupted();
     // getThermoOperationThread().stop();
@@ -947,7 +947,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       getThermoOperationThread().join();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 
@@ -1009,7 +1009,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
        * opsTemp = new ThermodynamicOperations(systemTemp);
        * systemTemp.setTemperature(temperature[i]); systemTemp.setPressure(pressure[i]);
        * systemTemp.init(0); systemTemp.display(); try { opsTemp.hydrateFormationTemperature(); }
-       * catch (Exception ex) { logger.error(ex.getMessage(),e); } systemTemp.display(); hydTemps[i]
+       * catch (Exception ex) {  } systemTemp.display(); hydTemps[i]
        * = systemTemp.getTemperature();
        */
       opsTemp = new ThermodynamicOperations(systemTemp);
@@ -1027,7 +1027,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       opsTemp.hydrateFormationTemperature();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     systemTemp.display();
     return hydTemps;
@@ -1048,7 +1048,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       opsTemp.hydrateFormationTemperature();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     systemTemp.display();
     system.setTemperature(systemTemp.getTemperature());
@@ -1133,7 +1133,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (system.getTemperature() > 298.15) {
       system.setTemperature(273.0 + 25.0);
     }
-    // logger.info("guess hydrate temperature " + system.getTemperature());
+    // 
     operation = new HydrateFormationTemperatureFlash(system);
 
     for (int i = 0; i < system.getPhase(4).getNumberOfComponents(); i++) {
@@ -1144,8 +1144,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } else {
       run();
     }
-    // logger.info("Hydrate structure " + (((ComponentHydrate)
-    // system.getPhase(4).getComponent("water")).getHydrateStructure() + 1));
+    // 
   }
 
   /**
@@ -1394,13 +1393,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     double oldTemperature = newTemperature;
     int iterations = 0;
     if (specification.equals("dewPointTemperature")) {
-      // logger.info("new temperature " + newTemperature);
+      // 
       do {
         iterations++;
         system.init(0);
         dewPointTemperatureFlash();
         newTemperature = system.getTemperature();
-        // logger.info("new temperature " + newTemperature);
+        // 
         double oldMoles = system.getPhase(0).getComponent(componentName).getNumberOfmoles();
         if (iterations > 1) {
           system.addComponent(componentName, -(iterations / (30.0 + iterations))
@@ -1692,9 +1691,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    *
    * @param name a {@link java.lang.String} object
    */
-  public void printToFile(String name) {
-    getOperation().printToFile(name);
-  }
+  public void printToFile(String name) {}
 
   // public double[] get(String name){
   // return operation.get(name);
@@ -1751,7 +1748,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       dewPointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     system.setTemperature(system.getTemperature() - dT);
     TPflash();
@@ -1759,7 +1756,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       dewPointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     return condensationRate / dT;
   }
@@ -1769,14 +1766,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * displayResult.
    * </p>
    */
-  public void displayResult() {
-    try {
-      getThermoOperationThread().join();
-    } catch (Exception ex) {
-      logger.error("Thread did not finish", ex);
-    }
-    getOperation().displayResult();
-  }
+  public void displayResult() {}
 
   /**
    * <p>
@@ -1794,25 +1784,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * display.
    * </p>
    */
-  public void display() {
-    if (resultTable == null) {
-      return;
-    }
-
-    JFrame dialog = new JFrame("System-Report");
-    Container dialogContentPane = dialog.getContentPane();
-    dialogContentPane.setLayout(new BorderLayout());
-
-    String[] names = new String[resultTable[0].length]; // {"", "", ""};
-    for (int i = 0; i < names.length; i++) {
-      names[i] = "";
-    }
-    JTable Jtab = new JTable(resultTable, names);
-    JScrollPane scrollpane = new JScrollPane(Jtab);
-    dialogContentPane.add(scrollpane);
-    dialog.pack();
-    dialog.setVisible(true);
-  }
+  public void display() {}
 
   /**
    * <p>
@@ -2051,13 +2023,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
         if (Sp1 == null || Sp2 == null || Double.isNaN(Sp1) || Double.isNaN(Sp2)) {
           calculationError[t] = "Sp1 or Sp2 is NaN";
-          logger.info("Sp1 or Sp2 is NULL for datapoint {}", t);
+          
           continue;
         }
 
         // Skip if sum is not similar to 100%
         if (calculationError[t] != null) {
-          logger.info("{}", calculationError[t]);
+          
           continue;
         }
 
@@ -2103,7 +2075,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         fluidProperties[t] = this.system.getProperties().getValues();
       } catch (Exception ex) {
         calculationError[t] = ex.getMessage();
-        logger.warn(calculationError[t]);
+        
       }
     }
 

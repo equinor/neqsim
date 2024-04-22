@@ -8,8 +8,8 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -22,7 +22,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class CalcIonicComposition extends Flash {
   private static final long serialVersionUID = 1000;
-  Logger logger = LogManager.getLogger(CalcIonicComposition.class);
+  
 
   int phaseNumber;
   String[][] resultTable = null;

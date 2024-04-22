@@ -6,8 +6,8 @@
 
 package neqsim.thermodynamicOperations.flashOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import Jama.Matrix;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -20,7 +20,7 @@ import neqsim.thermodynamicOperations.BaseOperation;
  */
 public abstract class Flash extends BaseOperation {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Flash.class);
+  
 
   SystemInterface system;
   SystemInterface minimumGibbsEnergySystem;
@@ -191,7 +191,7 @@ public abstract class Flash extends BaseOperation {
             }
 
             double lambda = prod1 / prod2;
-            // logger.info("lambda " + lambda);
+            // 
             for (i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
               logWi[i] += lambda / (1.0 - lambda) * deltalogWi[i];
               error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
@@ -237,10 +237,10 @@ public abstract class Flash extends BaseOperation {
             error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
           }
 
-          // logger.info("err newton " + error[j]);
+          // 
         }
 
-        logger.info("norm f " + f.norm1());
+        
         // clonedSystem.display();
         sumw[j] = 0.0;
         for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -251,16 +251,15 @@ public abstract class Flash extends BaseOperation {
           deltalogWi[i] = logWi[i] - oldlogw[i];
           clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
         }
-        // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " +
-        // iterations + " phase " + j);
+        // 
       } while ((f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0
           || iterations < 3);
       // (error[j]<oldErr && oldErr<oldOldErr) &&
-      // logger.info("err " + error[j]);
-      // logger.info("iterations " + iterations);
-      // logger.info("f.norm1() " + f.norm1());
+      // 
+      // 
+      // 
       if (iterations >= maxiterations) {
-        logger.error("err staability check " + error[j]);
+        
         // throw new util.exception.TooManyIterationsException();
       }
 
@@ -303,7 +302,7 @@ public abstract class Flash extends BaseOperation {
           system.getPhases()[0].getComponents()[i]
               .setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
         } else {
-          logger.info("error in stability anlysis");
+          
           system.init(0);
         }
 
@@ -313,8 +312,8 @@ public abstract class Flash extends BaseOperation {
       }
     }
 
-    // logger.info("STABILITY ANALYSIS: ");
-    // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);
+    // 
+    // 
   }
 
   /**
@@ -326,20 +325,20 @@ public abstract class Flash extends BaseOperation {
    */
   public boolean stabilityCheck() {
     boolean stable = false;
-    // logger.info("starting stability analysis....");
+    // 
     lowestGibbsEnergyPhase = findLowestGibbsEnergyPhase();
     if (system.getPhase(lowestGibbsEnergyPhase).getNumberOfComponents() > 1) {
       try {
         stabilityAnalysis();
       } catch (Exception ex) {
-        logger.error("error ", ex);
+        
       }
     }
     if (!(tm[0] < -1e-4) && !(tm[1] < -1e-4) || system.getPhase(0).getNumberOfComponents() == 1) {
       stable = true;
       system.init(0);
-      // logger.info("system is stable");
-      // logger.info("Stable phase is : " + lowestGibbsEnergyPhase);
+      // 
+      // 
       system.setNumberOfPhases(1);
 
       if (lowestGibbsEnergyPhase == 0) {
@@ -355,7 +354,7 @@ public abstract class Flash extends BaseOperation {
       try {
         system.calcBeta();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
       system.calc_x_y();
       system.init(1);
@@ -366,9 +365,7 @@ public abstract class Flash extends BaseOperation {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    system.display();
-  }
+  public void displayResult() {}
 
   /**
    * <p>
@@ -385,7 +382,7 @@ public abstract class Flash extends BaseOperation {
       system.setNumberOfPhases(system.getNumberOfPhases() + 1);
       system.setPhaseIndex(system.getNumberOfPhases() - 1, 3);
     }
-    // logger.info("numb " + system.getNumberOfPhases());
+    // 
     system.init(1);
 
     for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
@@ -406,7 +403,7 @@ public abstract class Flash extends BaseOperation {
           }
           system.getPhases()[3].getComponents()[solid].setx(1.0);
         }
-        // logger.info("tempVar: " + tempVar[k]);
+        // 
       }
     }
 
@@ -416,8 +413,8 @@ public abstract class Flash extends BaseOperation {
           // system.getPhases()[i].getComponents()[solid].setx(1.0e-10);
         }
         system.init(1);
-        // logger.info("solid phase will form..." + system.getNumberOfPhases());
-        // logger.info("freezing component " + solid);
+        // 
+        // 
         system.setBeta(system.getNumberOfPhases() - 1, frac);
         system.initBeta();
         system.setBeta(system.getNumberOfPhases() - 1,
@@ -432,7 +429,7 @@ public abstract class Flash extends BaseOperation {
         // }
         system.init(1);
         // for(int ph=0;ph<system.getNumberOfPhases();ph++){
-        // logger.info("beta " + system.getPhase(ph).getBeta());
+        // 
         // }
         // TPmultiflash operation = new TPmultiflash(system, true);
         // operation.run();
@@ -440,7 +437,7 @@ public abstract class Flash extends BaseOperation {
         solflash.setSolidComponent(solid);
         solflash.run();
       } else {
-        // logger.info("all liquid will freeze out - removing liquid phase..");
+        // 
         // int phasesNow = system.getNumberOfPhases()-1;
         // system.init(0);
         // system.setNumberOfPhases(phasesNow);
@@ -457,7 +454,7 @@ public abstract class Flash extends BaseOperation {
       // system.setPhaseIndex(system.getNumberOfPhases() - 1,
       // system.getNumberOfPhases() - 1);
       system.setNumberOfPhases(system.getNumberOfPhases() - 1);
-      // logger.info("no solid phase will form..");
+      // 
     }
   }
 

@@ -1,13 +1,13 @@
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
-import java.awt.FlowLayout;
+
 import java.text.DecimalFormat;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import neqsim.dataPresentation.JFreeChart.graph2b;
+
+
+
+
+
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -22,9 +22,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class pTphaseEnvelopeNew extends BaseOperation {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(pTphaseEnvelopeNew.class);
+  
 
-  graph2b graph2 = null;
+  
   SystemInterface system;
   double[] cricondenTherm = new double[3];
   double[] cricondenBar = new double[3];
@@ -36,10 +36,10 @@ public class pTphaseEnvelopeNew extends BaseOperation {
   int maxNumberOfIterations = 10000;
   double lowPres = 1.0;
   boolean outputToFile = false;
-  JProgressBar monitor;
-  JFrame mainFrame;
+  
+  
   String fileName = "c:/file";
-  JPanel mainPanel;
+  
   double temp = 0;
   double pres = 0;
   double[][] points = new double[2][];
@@ -83,7 +83,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
     mainFrame.setSize(200, 100);
     monitor = new JProgressBar(0, 00);
     monitor.setSize(200, 100);
-    monitor.setStringPainted(true);
+    
     mainPanel.add(monitor);
     mainFrame.getContentPane().add(mainPanel);
     mainFrame.setVisible(true);
@@ -106,7 +106,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
         ex.toString();
         return;
       }
-      logger.info("temperature bubT = " + system.getTemperature());
+      
 
       sysNewtonRhapsonPhaseEnvelope2 nonLinSolver = new sysNewtonRhapsonPhaseEnvelope2(system);
       nonLinSolver.solve(1);
@@ -114,8 +114,8 @@ public class pTphaseEnvelopeNew extends BaseOperation {
 
       for (np = 1; np < 5; np++) {
         if (np % 5 == 0) {
-          monitor.setValue(np);
-          monitor.setString("Calculated points: " + np);
+          
+          
         }
 
         nonLinSolver.calcInc(np);
@@ -137,11 +137,11 @@ public class pTphaseEnvelopeNew extends BaseOperation {
           pointsV[np - 1] = pointsV[np - 3];
           pointsS[np - 1] = pointsS[np - 3];
 
-          // logger.info("avbryter" + np);
+          // 
           break;
         }
-        // logger.info("Ideal pres: " + getPressure());
-        // logger.info("temp: " + system.getTemperature());
+        // 
+        // 
         points[0][np - 1] = system.getTemperature();
         points[1][np - 1] = system.getPressure();
         pointsH[np - 1] =
@@ -156,7 +156,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
       int ncr = nonLinSolver.getNpCrit();
       int ncr2 = np - ncr;
 
-      logger.info("ncr: " + ncr + "  ncr2 . " + ncr2);
+      
       points2[0] = new double[ncr + 1];
       points2[1] = new double[ncr + 1];
       pointsH2[0] = new double[ncr + 1];
@@ -246,7 +246,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
         }
       }
       // monitor.close();
-      mainFrame.setVisible(false);
+      
       /*
        * if (outputToFile) { String name1 = new String(); name1 = fileName + "Dew.nc"; file1 = new
        * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
@@ -259,55 +259,13 @@ public class pTphaseEnvelopeNew extends BaseOperation {
        * file2.setYvalues(points2[1], "pres", "meter"); file2.createFile(); }
        */
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    DecimalFormat nf = new DecimalFormat();
-    nf.setMaximumFractionDigits(1);
-    nf.applyPattern("####.#");
-
-    double TC = system.getTC();
-    double PC = system.getPC();
-    logger.info("tc : " + TC + "  PC : " + PC);
-    String[] navn = {"bubble point", "dew point", "bubble point", "dew point"};
-    String title =
-        "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-    String title3 =
-        "PH-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-    String title4 = "Density-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
-        + String.valueOf(nf.format(PC));
-    String title5 =
-        "PS-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-
-    // logger.info("start flash");
-    // logger.info("Tferdig..");
-
-    graph2b graph3 = new graph2b(pointsH2, navn, title3, "Enthalpy [kJ/kg]", "Pressure [bara]");
-    graph3.setVisible(true);
-    graph3.saveFigure((neqsim.util.util.FileSystemSettings.tempDir + "NeqSimTempFig4.png"));
-
-    graph2b graph4 = new graph2b(pointsV2, navn, title4, "Density [kg/m^3]", "Pressure [bara]");
-    graph4.setVisible(true);
-    graph4.saveFigure(neqsim.util.util.FileSystemSettings.tempDir + "NeqSimTempFig2.png");
-
-    graph2b graph5 = new graph2b(pointsS2, navn, title5, "Entropy [kJ/kg*K]", "Pressure [bara]");
-    graph5.setVisible(true);
-    graph5.saveFigure(neqsim.util.util.FileSystemSettings.tempDir + "NeqSimTempFig3.png");
-
-    graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
-    graph2.setVisible(true);
-    graph2.saveFigure(neqsim.util.util.FileSystemSettings.tempDir + "NeqSimTempFig1.png");
-
-    /*
-     * JDialog dialog = new JDialog(); Container dialogContentPane = dialog.getContentPane();
-     * dialogContentPane.setLayout(new FlowLayout()); JFreeChartPanel chartPanel =
-     * graph4.getChartPanel(); dialogContentPane.add(chartPanel); dialog.show();
-     */
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override
@@ -322,7 +280,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
 
     double TC = system.getTC();
     double PC = system.getPC();
-    logger.info("tc : " + TC + "  PC : " + PC);
+    
     String[] navn = {"bubble point", "dew point", "bubble point", "dew point"};
     String title = "PT-graph. TC=" + String.valueOf(nf.format(TC)) + "K, PC="
         + String.valueOf(nf.format(PC) + " bara");

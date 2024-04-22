@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import Jama.Matrix;
 import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.system.SystemInterface;
@@ -16,7 +16,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(sysNewtonRhapsonPhaseEnvelope.class);
+  
 
   double sumx = 0;
   double sumy = 0;
@@ -457,19 +457,19 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
       int sign2 = Integer.signum(intsign);
 
       if ((1 + dTmax / system.getTemperature()) < Math.exp(dxds.get(numberOfComponents, 0) * ds)) {
-        // logger.info("too high dT");
+        // 
         ds = Math.log(1 + dTmax / system.getTemperature()) / dxds.get(numberOfComponents, 0);
       } else if ((1 - dTmax / system.getTemperature()) > Math
           .exp(dxds.get(numberOfComponents, 0) * ds)) {
-        // logger.info("too low dT");
+        // 
         ds = Math.log(1 - dTmax / system.getTemperature()) / dxds.get(numberOfComponents, 0);
       } else if ((1 + dPmax / system.getPressure()) < Math
           .exp(dxds.get(numberOfComponents + 1, 0) * ds)) {
-        // logger.info("too low dP");
+        // 
         ds = Math.log(1 + dPmax / system.getPressure()) / dxds.get(numberOfComponents + 1, 0);
       } else if ((1 - dPmax / system.getPressure()) > Math
           .exp(dxds.get(numberOfComponents + 1, 0) * ds)) {
-        // logger.info("too low dP");
+        // 
         ds = Math.log(1 - dPmax / system.getPressure()) / dxds.get(numberOfComponents + 1, 0);
       }
       ds = sign2 * Math.abs(ds);
@@ -561,7 +561,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
             + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
 
     system.setTC(Math.exp(u.get(numberOfComponents, 0)));
@@ -628,7 +628,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
           u.set(numberOfComponents + 1, 0, ds);
         }
         // if the norm is NAN reduce step and try again
-        // logger.info("Double.isNaN(dx.norm2())........");
+        // 
         iter2++;
         u = uold.copy();
         ds *= 0.5;
@@ -646,7 +646,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         }
         // if the norm does not reduce there is a danger of entering trivial solution
         // reduce step and try again to avoid it
-        // logger.info("dxOldNorm < dx.norm2()");
+        // 
         iter2++;
         u = uold.copy();
         ds *= 0.5;
@@ -693,8 +693,8 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     /*
      * sysNewtonRhapson test=new sysNewtonRhapson(); double[] constants = new double[]{0.4,0.4};
      * test.setx(constants); while (test.nonsol()>1.0e-8) { constants=test.getx();
-     * logger.info(constants[0]+" "+constants[1]); } test.nonsol(); constants=test.getf();
-     * logger.info(constants[0]+" "+constants[1]); System.exit(0);
+     *  } test.nonsol(); constants=test.getf();
+     *  System.exit(0);
      */
   }
 }

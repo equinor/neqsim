@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -17,7 +17,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  */
 public class SetPoint extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(SetPoint.class);
+  
 
   ProcessEquipmentInterface sourceEquipment = null;
   ProcessEquipmentInterface targetEquipment = null;
@@ -191,7 +191,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
 
       double deviation = targetValue - targetValueCurrent;
 
-      logger.info("adjuster deviation " + deviation + " inputValue " + inputValue);
+      
 
       oldInputValue = inputValue;
     }

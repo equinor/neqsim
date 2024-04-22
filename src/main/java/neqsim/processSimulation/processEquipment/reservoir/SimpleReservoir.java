@@ -602,9 +602,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    thermoSystem.display();
-  }
+  public void displayResult() {}
 
   /**
    * <p>

@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -16,7 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class HydrateFormationPressureFlash extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(HydrateFormationPressureFlash.class);
+  
 
   /**
    * <p>
@@ -47,17 +47,15 @@ public class HydrateFormationPressureFlash extends constantDutyTemperatureFlash 
 
       system.init(1);
       system.getPhase(4).getComponent("water").setx(1.0);
-      logger.info("diff "
-          + (system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water")));
+      
       system.setPressure(system.getPressure()
           * (system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water")));
-      logger.info("pressure " + system.getPressure());
-      // logger.info("x water " + system.getPhase(3).getComponent("water").getx());
+      
+      // 
     } while (Math.abs((olfFug - system.getPhase(4).getFugacity("water")) / olfFug) > 1e-8
         && iter < 100);
-    // logger.info("hydrate structure = " + ((ComponentHydrate)
-    // system.getPhase(3).getComponent("water")).getHydrateStructure());
-    logger.info("end");
+    // 
+    
   }
 
   /**

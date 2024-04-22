@@ -1,7 +1,7 @@
 package neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.conductivity.Conductivity;
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.density.Density;
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.CO2water;
@@ -19,7 +19,7 @@ import neqsim.thermo.phase.PhaseInterface;
 public class CO2waterPhysicalProperties
     extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(CO2waterPhysicalProperties.class);
+  
 
   /**
    * <p>
@@ -54,7 +54,7 @@ public class CO2waterPhysicalProperties
     try {
       properties = (CO2waterPhysicalProperties) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     return properties;
   }

@@ -49,7 +49,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
     try {
       clonedPhase = (PhaseCSPsrkEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedPhase;

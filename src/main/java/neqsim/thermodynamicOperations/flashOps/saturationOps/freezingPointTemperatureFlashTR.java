@@ -3,8 +3,8 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
@@ -21,7 +21,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlash
     implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(freezingPointTemperatureFlashTR.class);
+  
 
   public boolean noFreezeFlash = true;
   public int Niterations = 0;
@@ -105,11 +105,10 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
 
       if (noFreezeFlash) {
         system.setTemperature(system.getPhases()[0].getComponents()[k].getTriplePointTemperature());
-        logger.info("Starting at Triple point temperature "
-            + system.getPhase(0).getComponent(k).getComponentName());
+        
       } else {
         system.setTemperature(system.getTemperature());
-        logger.info("starting at Temperature  " + system.getTemperature());
+        
       }
 
       // init reference system for vapor fugacity
@@ -151,7 +150,7 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
 
         soldens = system.getPhase(0).getComponent(k).getPureComponentSolidDensity(temp) * 1000;
 
-        logger.info("Solid density" + soldens);
+        
 
         if (soldens > 2000) {
           soldens = 1000;
@@ -190,7 +189,7 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
         } else {
           newTemp = system.getTemperature() + 0.5 * (iterations / (10.0 + iterations)) * funk;
         }
-        logger.info("newTEmp  " + newTemp);
+        
         if (newTemp > (trpTemp + 5)) {
           system.setTemperature(
               system.getPhases()[0].getComponents()[k].getTriplePointTemperature() + 0.4);
@@ -200,13 +199,13 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
         } else {
           system.setTemperature(newTemp);
         }
-        logger.info("funk " + funk);
-        logger.info("temperature " + system.getTemperature());
+        
+        
       } while ((Math.abs(funk) >= 0.001 && iterations < 100));
       FCompTemp[k] = system.getTemperature();
-      logger.info("iterations " + iterations);
+      
       Niterations = iterations;
-      // logger.info("funk " + funk + k + " " + system.getTemperature());
+      // 
       if (system.getTemperature() < minTemperature) {
         minTemperature = system.getTemperature();
       }
@@ -220,39 +219,15 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
     system.setTemperature(maxTemperature);
     // system.setSolidPhaseCheck(true);
     // ops.TPflash();
-    // logger.info("final funk:"+ Testfunk);
+    // 
     // system.display();
-    // logger.info("min freezing temp " + minTemperature);
-    // logger.info("max freezing temp " + maxTemperature);
+    // 
+    // 
   }
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {
-    for (int n = 0; n < system.getPhases()[0].getNumberOfComponents(); n++) {
-      name = name + "_" + system.getPhase(0).getComponent(n).getComponentName();
-    }
-
-    String myFile = "/java/" + name + ".frz";
-
-    try (PrintWriter pr_writer = new PrintWriter(new FileWriter(myFile, true))) {
-      pr_writer.println("name,freezeT,freezeP,z,iterations");
-      pr_writer.flush();
-
-      for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
-        // print line to output file
-        pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + ","
-            + system.getPressure() + ","
-            + java.lang.Double.toString(system.getPhases()[0].getComponents()[k].getz()) + ","
-            + Niterations);
-        pr_writer.flush();
-      }
-    } catch (SecurityException ex) {
-      logger.info("writeFile: caught security exception");
-    } catch (IOException ioe) {
-      logger.info("writeFile: caught i/o exception");
-    }
-  }
+  public void printToFile(String name) {}
 
   /**
    * <p>

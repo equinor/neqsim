@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
@@ -20,7 +20,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class PressureDrop extends ThrottlingValve {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PressureDrop.class);
+  
 
   SystemInterface thermoSystem;
   double pressureDrop = 0.1;

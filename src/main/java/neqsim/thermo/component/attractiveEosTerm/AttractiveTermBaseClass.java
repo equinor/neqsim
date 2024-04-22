@@ -6,8 +6,8 @@
 
 package neqsim.thermo.component.attractiveEosTerm;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
@@ -20,7 +20,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  */
 public class AttractiveTermBaseClass implements AttractiveTermInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(AttractiveTermBaseClass.class);
+  
 
   private ComponentEosInterface component = null;
   protected double m;
@@ -49,7 +49,7 @@ public class AttractiveTermBaseClass implements AttractiveTermInterface {
   @Override
   public void setm(double val) {
     this.m = val;
-    logger.info("does not solve for accentric when new m is set... in AccentricBase class");
+    
   }
 
   /** {@inheritDoc} */
@@ -59,7 +59,7 @@ public class AttractiveTermBaseClass implements AttractiveTermInterface {
     try {
       attractiveTerm = (AttractiveTermBaseClass) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     // atSystem.out.println("m " + m);ractiveTerm.parameters = (double[])

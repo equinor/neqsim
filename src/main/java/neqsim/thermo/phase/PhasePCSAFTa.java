@@ -1,7 +1,7 @@
 package neqsim.thermo.phase;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentPCSAFTa;
 import neqsim.thermo.mixingRule.CPAMixing;
@@ -33,7 +33,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
   int[][][] selfAccociationScheme = null;
   int[][][][] crossAccociationScheme = null;
-  static Logger logger = LogManager.getLogger(PhasePCSAFTa.class);
+  
 
   /**
    * <p>
@@ -51,7 +51,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     try {
       clonedPhase = (PhasePCSAFTa) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
 
@@ -395,7 +395,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     double d1 = 0;
     Btemp = getB();
     if (Btemp <= 0) {
-      logger.info("b negative in volume calc");
+      
     }
     setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
     int iterations = 0;

@@ -1,7 +1,7 @@
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -16,7 +16,7 @@ import neqsim.thermo.phase.PhaseInterface;
 public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyteEos
     implements ComponentCPAInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ComponentElectrolyteCPAOld.class);
+  
 
   int cpaon = 1;
 
@@ -43,9 +43,9 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     xsiteOld = new double[numberOfAssociationSites];
     xsitedT = new double[numberOfAssociationSites];
     if (numberOfAssociationSites != 0 && cpaon == 1) {
-      logger.info("ass sites: " + numberOfAssociationSites);
-      logger.info("aSRK " + a + " aCPA " + aCPA);
-      logger.info("bSRK " + b + " bCPA " + bCPA);
+      
+      
+      
       for (int j = 0; j < getNumberOfAssociationSites(); j++) {
         setXsite(j, 1.0);
         setXsiteOld(j, 1.0);
@@ -101,7 +101,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     try {
       clonedComponent = (ComponentElectrolyteCPAOld) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     clonedComponent.xsite = xsite.clone();
     System.arraycopy(this.xsite, 0, clonedComponent.xsite, 0, xsite.length);

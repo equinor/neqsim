@@ -37,7 +37,7 @@ public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
     try {
       attractiveTerm = (AttractiveTermPrGassem2001) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return attractiveTerm;

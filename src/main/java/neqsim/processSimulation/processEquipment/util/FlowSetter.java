@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -24,7 +24,7 @@ import neqsim.util.exception.InvalidInputException;
  */
 public class FlowSetter extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
-  private static final Logger logger = LogManager.getLogger(FlowSetter.class);
+  private static final 
   double[] pressure = new double[] {1.01325};
   double[] temperature = new double[] {15.0};
   String unitT = "C";
@@ -86,7 +86,7 @@ public class FlowSetter extends TwoPortEquipment {
     try {
       this.outStream = inletStream.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 
@@ -309,7 +309,7 @@ public class FlowSetter extends TwoPortEquipment {
     try {
       thermoOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
 
     outStream.setThermoSystem(tempFluid);

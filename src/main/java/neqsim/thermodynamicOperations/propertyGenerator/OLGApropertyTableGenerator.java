@@ -5,8 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -21,7 +21,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.BaseOperation {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(OLGApropertyTableGenerator.class);
+  
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
@@ -111,7 +111,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
       TC = thermoSystem.getTC() - 273.15;
       PC = thermoSystem.getPC() * 1e5;
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 
@@ -144,7 +144,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         try {
           thermoOps.TPflash();
         } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
+          
         }
         thermoSystem.init(3);
         thermoSystem.initPhysicalProperties();
@@ -216,17 +216,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    logger.info("TC " + TC + " PC " + PC);
-    for (int i = 0; i < pressures.length; i++) {
-      thermoSystem.setPressure(pressures[i]);
-      for (int j = 0; j < temperatures.length; j++) {
-        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j] + " ROG "
-            + ROG[i][j] + " ROL " + ROL[i][j]);
-      }
-    }
-    writeOLGAinpFile("");
-  }
+  public void displayResult() {}
 
   /**
    * <p>

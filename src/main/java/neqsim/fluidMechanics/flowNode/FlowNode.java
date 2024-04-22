@@ -1,16 +1,16 @@
 package neqsim.fluidMechanics.flowNode;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Toolkit;
+
+
+
+
+
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
+
+
+
+
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.InterphaseTransportCoefficientBaseClass;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.InterphaseTransportCoefficientInterface;
@@ -574,30 +574,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
 
   /** {@inheritDoc} */
   @Override
-  public void display(String name) {
-    DecimalFormat nf = new DecimalFormat();
-
-    nf.setMaximumFractionDigits(5);
-    nf.applyPattern("#.#####E0");
-
-    JDialog dialog = new JDialog(new JFrame(), "Node-Report");
-    Container dialogContentPane = dialog.getContentPane();
-    dialogContentPane.setLayout(new BorderLayout());
-    Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-    dialog.setSize(screenDimension.width / 2, screenDimension.height / 2); // pack();
-    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
-    String[][] table = createTable(name);
-    JTable Jtab = new JTable(table, names);
-    JScrollPane scrollpane = new JScrollPane(Jtab);
-    dialogContentPane.add(scrollpane);
-    if (table.length > 0) {
-      Jtab.setRowHeight(dialog.getHeight() / table.length);
-      Jtab.setFont(new Font("Serif", Font.PLAIN,
-          dialog.getHeight() / table.length - dialog.getHeight() / table.length / 10));
-      // dialog.pack();
-    }
-    dialog.setVisible(true);
-  }
+  public void display(String name) {}
 
   /** {@inheritDoc} */
   @Override
@@ -754,17 +731,5 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
 
   /** {@inheritDoc} */
   @Override
-  public void write(String name, String filename, boolean newfile) {
-    String[][] table = createTable(name);
-    neqsim.dataPresentation.fileHandeling.createTextFile.TextFile file =
-        new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
-    if (newfile) {
-      file.newFile(filename);
-    }
-    file.setOutputFileName(filename);
-    file.setValues(table);
-    file.createFile();
-    getBulkSystem().write(("thermo for " + name), filename, false);
-    getFluidBoundary().write(("boundary for " + name), filename, false);
-  }
+  public void write(String name, String filename, boolean newfile) {}
 }

@@ -38,9 +38,7 @@ public class PressureTransmitter extends StreamMeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    System.out.println("measured temperature " + stream.getPressure());
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override

@@ -29,7 +29,7 @@ public class PhaseSrkPenelouxEos extends PhaseSrkEos {
     try {
       clonedPhase = (PhaseSrkPenelouxEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedPhase;

@@ -712,9 +712,7 @@ public interface FlowNodeInterface extends Cloneable {
    * display.
    * </p>
    */
-  public default void display() {
-    display("");
-  }
+  public default void display() {}
 
   /**
    * <p>

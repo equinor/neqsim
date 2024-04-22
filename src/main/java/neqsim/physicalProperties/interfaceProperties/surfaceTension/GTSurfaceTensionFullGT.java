@@ -1,7 +1,7 @@
 package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 import no.uib.cipr.matrix.BandMatrix;
 import no.uib.cipr.matrix.DenseMatrix;
@@ -18,7 +18,7 @@ import no.uib.cipr.matrix.DenseMatrix;
  * @version $Id: $Id
  */
 public class GTSurfaceTensionFullGT {
-  static Logger logger = LogManager.getLogger(GTSurfaceTensionFullGT.class);
+  
 
   private int ncomp; // Number of components.
   private SystemInterface sys; // Local work copy of flashed system.
@@ -363,7 +363,7 @@ public class GTSurfaceTensionFullGT {
 
       // System.out.printf("Sigma=%.12f\n",sigma);
       if (!NDEBUG) {
-        logger.info("Sigma= " + sigma);
+        
       }
 
       sum_ztmp = 0.0;
@@ -709,8 +709,7 @@ public class GTSurfaceTensionFullGT {
       maxerr = Math.max(maxerr, Math.abs(mueq[i] / mueq2[i] - 1.0));
     }
     if (maxerr > reltol) {
-      logger.warn("Flash is not properly solved.  Maximum relative error in chemical potential:  "
-          + maxerr + " > " + reltol);
+      
       throw new RuntimeException("Flash not solved!");
     }
   }

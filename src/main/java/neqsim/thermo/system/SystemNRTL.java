@@ -73,7 +73,7 @@ public class SystemNRTL extends SystemEos {
     try {
       clonedSystem = (SystemNRTL) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

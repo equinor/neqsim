@@ -6,8 +6,8 @@
 
 package neqsim.thermodynamicOperations.flashOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -20,7 +20,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class dTPflash extends TPflash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(dTPflash.class);
+  
 
   String[] flashComp = null;
 
@@ -72,7 +72,7 @@ public class dTPflash extends TPflash {
             // system.getPhase(1).getComponent(i).getx();
 
             // hasgot = true;
-            // logger.info("x " + system.getPhase(1).getComponent(i).getx());
+            // 
           }
         }
         // if(!hasgot) system.getPhase(1).getComponent(i).setx(1e-16);
@@ -81,11 +81,11 @@ public class dTPflash extends TPflash {
       // system.setBeta(0.5+fracdiff);
 
       system.getPhase(1).normalize();
-      logger.info("diff " + diff);
+      
     } while (diff > 1e-10 && iterations < 1000);
 
     if (diff > 1e-10) {
-      logger.error("not able to converge dPflash....continuing....");
+      
     }
   }
 }

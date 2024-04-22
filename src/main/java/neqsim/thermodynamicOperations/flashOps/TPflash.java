@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -18,7 +18,7 @@ import neqsim.util.exception.TooManyIterationsException;
  */
 public class TPflash extends Flash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(TPflash.class);
+  
 
   SystemInterface clonedSystem;
   double betaTolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
@@ -95,10 +95,10 @@ public class TPflash extends Flash {
     try {
       system.calcBeta();
     } catch (IsNaNException ex) {
-      logger.warn("Not able to calculate beta. Value is NaN");
+      
       system.setBeta(oldBeta);
     } catch (TooManyIterationsException ex) {
-      logger.warn("Not able to calculate beta, calculation is not converging.");
+      
       system.setBeta(oldBeta);
     }
     if (system.getBeta() > 1.0 - betaTolerance) {
@@ -140,8 +140,8 @@ public class TPflash extends Flash {
       if (system.getBeta() > 1.0 - betaTolerance || system.getBeta() < betaTolerance) {
         system.setBeta(oldBeta);
       }
-      logger.info("temperature " + system.getTemperature() + " pressure " + system.getPressure());
-      logger.error(ex.getMessage(), ex);
+      
+      
     }
 
     system.calc_x_y();
@@ -184,7 +184,7 @@ public class TPflash extends Flash {
       system.calc_x_y();
       system.init(1);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 
@@ -262,7 +262,7 @@ public class TPflash extends Flash {
       try {
         system.calcBeta();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
       system.calc_x_y();
       system.init(1);
@@ -346,7 +346,7 @@ public class TPflash extends Flash {
       if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
         if (system.checkStability() && stabilityCheck()) {
           if (system.doMultiPhaseCheck()) {
-            // logger.info("one phase flash is stable - checking multiphase flash....");
+            // 
             TPmultiflash operation = new TPmultiflash(system, true);
             operation.run();
           }
@@ -428,17 +428,16 @@ public class TPflash extends Flash {
             && !system.isChemicalSystem() && timeFromLastGibbsFail > 0) {
           resetK();
           timeFromLastGibbsFail = 0;
-          // logger.info("gibbs decrease " + (gibbsEnergy - gibbsEnergyOld) /
-          // Math.abs(gibbsEnergyOld));
+          // 
           // setNewK();
-          // logger.info("reset K..");
+          // 
         } else {
           timeFromLastGibbsFail++;
           setNewK();
         }
-        // logger.info("iterations " + iterations + " error " + deviation);
+        // 
       } while ((deviation > 1e-10) && (iterations < maxNumberOfIterations));
-      // logger.info("iterations " + iterations + " error " + deviation);
+      // 
       if (system.isChemicalSystem()) {
         oldChemDiff = chemdev;
         chemdev = 0.0;
@@ -460,7 +459,7 @@ public class TPflash extends Flash {
         }
         diffChem = Math.abs(oldChemDiff - chemdev);
       }
-      // logger.info("chemdev: " + chemdev + " iter: " + totiter);
+      // 
       totiter++;
     } while ((diffChem > 1e-6 && chemdev > 1e-6 && totiter < 300)
         || (system.isChemicalSystem() && totiter < 2));

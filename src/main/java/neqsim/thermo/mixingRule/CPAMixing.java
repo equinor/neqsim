@@ -6,8 +6,8 @@
 
 package neqsim.thermo.mixingRule;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
@@ -25,7 +25,7 @@ import neqsim.util.database.NeqSimDataBase;
  */
 public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(CPAMixing.class);
+  
 
   int[][] assosSchemeType = null; // 0- ER - 1 - CR1
   double[][] cpaBetaCross = null;
@@ -49,7 +49,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
     try {
       clonedSystem = (CPAMixing) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;
@@ -519,7 +519,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
     // }
     // Xi = 1.0/(1.0+1.0/phase.getTotalVolume()*temp);
     // } catch(Exception ex){
-    // logger.error(ex.getMessage(), ex);
+    // 
     // }
     // return Xi;
     // }
@@ -637,7 +637,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
             // System.out.println("ass scheme " + assosSchemeType[l][k]);
             // System.out.println("cpaEpsCross[k][l] " + cpaEpsCross[k][l]);
           } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            
           }
         }
       }

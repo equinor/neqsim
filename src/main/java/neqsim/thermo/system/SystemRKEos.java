@@ -69,7 +69,7 @@ public class SystemRKEos extends SystemEos {
     try {
       clonedSystem = (SystemRKEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

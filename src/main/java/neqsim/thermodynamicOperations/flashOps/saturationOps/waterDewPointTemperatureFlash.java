@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(waterDewPointTemperatureFlash.class);
+  
 
   /**
    * <p>
@@ -49,7 +49,7 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
             .setTemperature(system.getPhases()[0].getComponents()[k].getMeltingPointTemperature());
         for (int l = 0; l < system.getPhases()[0].getNumberOfComponents(); l++) {
           system.getPhase(1).getComponent(l).setx(1e-30);
-          // logger.info("here");
+          // 
         }
         system.getPhase(1).getComponent(k).setx(1.0);
         system.init(1);
@@ -66,7 +66,7 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
               * system.getPhases()[1].getComponents()[k].getFugacityCoefficient()
               / system.getPhases()[0].getComponents()[k].getFugacityCoefficient();
 
-          // logger.info("funk " + funk);
+          // 
           /*
            * deriv -= system.getPhases()[0].getBeta()
            * (system.getPhases()[1].getComponents()[k].getFugacityCoefficient()
@@ -80,12 +80,12 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
 
           system.setTemperature(system.getTemperature() + 100.0 * funk);
 
-          // logger.info("temp " + system.getTemperature());
+          // 
           // if(system.getPhase(0).getComponent(k).getComponentName().equals("MEG"))
-          // logger.info("funk " + funk + " temp " + system.getTemperature());
+          // 
         } while (Math.abs(funk) >= 0.0000001 && iterations < maxNumberOfIterations);
 
-        // logger.info("funk " + funk + k + " " + system.getTemperature());
+        // 
         if (system.getTemperature() < minTemperature) {
           minTemperature = system.getTemperature();
         }
@@ -95,8 +95,8 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
       }
     }
     system.setTemperature(maxTemperature);
-    // logger.info("min freezing temp " + minTemperature);
-    // logger.info("max freezing temp " + maxTemperature);
+    // 
+    // 
   }
 
   /** {@inheritDoc} */

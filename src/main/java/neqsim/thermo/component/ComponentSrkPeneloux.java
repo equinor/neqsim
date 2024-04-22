@@ -67,7 +67,7 @@ public class ComponentSrkPeneloux extends ComponentSrk {
     try {
       clonedComponent = (ComponentSrkPeneloux) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedComponent;

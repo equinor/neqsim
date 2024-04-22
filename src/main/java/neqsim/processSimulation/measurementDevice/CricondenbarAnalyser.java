@@ -1,7 +1,7 @@
 package neqsim.processSimulation.measurementDevice;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -16,7 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(CricondenbarAnalyser.class);
+  
 
   /**
    * <p>
@@ -44,15 +44,7 @@ public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    /*
-     * try { // System.out.println("total water production [kg/dag]" + //
-     * stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()*stream.
-     * getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24); //
-     * System.out.println("water in phase 1 (ppm) " + //
-     * stream.getThermoSystem().getPhase(0).getComponent("water").getx()*1e6); } finally { }
-     */
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override
@@ -65,7 +57,7 @@ public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
       thermoOps.calcPTphaseEnvelope(false, 1.);
       thermoOps.waitAndCheckForFinishedCalculation(15000);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     return thermoOps.get("cricondenbar")[1];
   }
@@ -91,7 +83,7 @@ public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
     try {
       thermoOps.run();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     return thermoOps.getSaturationPressure();
   }

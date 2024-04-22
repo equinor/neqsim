@@ -2,8 +2,8 @@ package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFi
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -20,7 +20,7 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class TestChungFit {
-  static Logger logger = LogManager.getLogger(TestChungFit.class);
+  
 
   /**
    * <p>
@@ -59,7 +59,7 @@ public class TestChungFit {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error", ex);
+      
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

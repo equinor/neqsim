@@ -2,8 +2,8 @@ package neqsim.processSimulation.costEstimation;
 
 import java.util.ArrayList;
 import java.util.Objects;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 
@@ -17,7 +17,7 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
  */
 public class CostEstimateBaseClass implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(CostEstimateBaseClass.class);
+  
 
   private SystemMechanicalDesign processdesign;
   private double CAPEXperWeight = 1000.0; // KNOK/tones
@@ -77,7 +77,7 @@ public class CostEstimateBaseClass implements java.io.Serializable {
                   .getMechanicalDesign().getCostEstimate().getTotaltCost();
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
     }
     return cost;

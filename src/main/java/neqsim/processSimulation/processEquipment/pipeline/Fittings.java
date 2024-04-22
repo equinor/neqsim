@@ -2,8 +2,8 @@ package neqsim.processSimulation.processEquipment.pipeline;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * <p>
@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class Fittings implements Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Fittings.class);
+  
 
   ArrayList<Fitting> fittingList = new ArrayList<Fitting>();
 
@@ -89,7 +89,7 @@ public class Fittings implements Serializable {
         LtoD = (Double.parseDouble(dataSet.getString("LtoD")));
         System.out.printf("LtoD " + LtoD);
       } catch (Exception ex) {
-        logger.error("error in comp", ex);
+        
       }
     }
 

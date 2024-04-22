@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -15,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(freezingPointTemperatureFlashOld.class);
+  
 
   /**
    * <p>
@@ -60,7 +60,7 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
           system.getPhase(3).getComponent(k).fugcoef(system.getPhase(3));
 
           funk = system.getPhases()[0].getComponents()[k].getz();
-          logger.info("phase " + system.getNumberOfPhases());
+          
 
           for (int i = 0; i < system.getNumberOfPhases(); i++) {
             funk -= system.getPhases()[i].getBeta()
@@ -86,11 +86,11 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
           system.setTemperature(
               system.getTemperature() + 0.5 * (iterations / (10.0 + iterations)) * funk / deriv);
 
-          logger.info("funk/deriv " + funk / deriv);
-          logger.info("temperature " + system.getTemperature());
+          
+          
         } while ((Math.abs(funk / deriv) >= 1e-6 && iterations < 100));
 
-        // logger.info("funk " + funk + k + " " + system.getTemperature());
+        // 
         if (system.getTemperature() < minTemperature) {
           minTemperature = system.getTemperature();
         }
@@ -101,8 +101,8 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
     }
 
     system.setTemperature(maxTemperature);
-    // logger.info("min freezing temp " + minTemperature);
-    // logger.info("max freezing temp " + maxTemperature);
+    // 
+    // 
   }
 
   /** {@inheritDoc} */

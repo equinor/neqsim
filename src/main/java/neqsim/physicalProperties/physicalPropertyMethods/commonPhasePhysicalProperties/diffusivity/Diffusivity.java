@@ -1,7 +1,7 @@
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.diffusivity;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.CommonPhysicalPropertyMethod;
 
 /**
@@ -15,7 +15,7 @@ import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProp
 public class Diffusivity extends CommonPhysicalPropertyMethod implements
     neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Diffusivity.class);
+  
 
   double[][] binaryDiffusionCoefficients;
   double[][] binaryLennardJonesOmega;
@@ -55,7 +55,7 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements
     try {
       properties = (Diffusivity) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return properties;

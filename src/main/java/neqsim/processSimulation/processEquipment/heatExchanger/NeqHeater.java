@@ -91,7 +91,5 @@ public class NeqHeater extends Heater {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    System.out.println("heater dH: " + dH);
-  }
+  public void displayResult() {}
 }

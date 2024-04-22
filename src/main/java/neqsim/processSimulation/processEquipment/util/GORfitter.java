@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -19,7 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class GORfitter extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(GORfitter.class);
+  
 
   double pressure = ThermodynamicConstantsInterface.referencePressure;
   double temperature = 15.0;
@@ -89,7 +89,7 @@ public class GORfitter extends TwoPortEquipment {
     try {
       this.outStream = inletStream.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 
@@ -164,7 +164,7 @@ public class GORfitter extends TwoPortEquipment {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
       outStream.setThermoSystem(tempFluid);
       return;
@@ -177,7 +177,7 @@ public class GORfitter extends TwoPortEquipment {
     try {
       thermoOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     if (!tempFluid.hasPhaseType("gas") || !tempFluid.hasPhaseType("oil")) {
       outStream = inStream.clone();
@@ -215,7 +215,7 @@ public class GORfitter extends TwoPortEquipment {
     try {
       thermoOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     tempFluid.initProperties();
     outStream.setThermoSystem(tempFluid);

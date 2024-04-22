@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import Jama.Matrix;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -16,7 +16,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class SolidFlash extends TPflash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(SolidFlash.class);
+  
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
@@ -101,9 +101,9 @@ public class SolidFlash extends TPflash {
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
         x += system.getPhase(k).getComponent(i).getx();
       }
-      // logger.info("x tot " + x + " PHASE " + k);
+      // 
       if (x < 1.0 - 1e-6) {
-        // logger.info("removing phase " + k);
+        // 
         system.setBeta(system.getNumberOfPhases() - 2,
             system.getBeta(system.getNumberOfPhases() - 1));
         system.setBeta(0, 1.0 - system.getBeta(system.getNumberOfPhases() - 1));
@@ -130,7 +130,7 @@ public class SolidFlash extends TPflash {
       for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
         E[i] += system.getBeta(k) / system.getPhase(k).getComponent(i).getFugacityCoefficient();
       }
-      // logger.info("Ei " +E[i]);
+      // 
       // if(
     }
     // E[solidComponent] +=
@@ -138,10 +138,9 @@ public class SolidFlash extends TPflash {
     // system.getPhase(3).getComponent(solidComponent).getFugacityCoefficient();
     E[solidComponent] = system.getPhase(0).getComponent(solidComponent).getz()
         / system.getPhases()[3].getComponents()[solidComponent].getFugacityCoefficient();
-    // logger.info("Ei " +E[solidComponent]);
-    // logger.info("fug "
-    // +system.getPhase(3).getComponent(solidComponent).getFugacityCoefficient());
-    // logger.info("zi " +system.getPhase(0).getComponent(solidComponent).getz());
+    // 
+    // 
+    // 
   }
 
   /**
@@ -324,13 +323,13 @@ public class SolidFlash extends TPflash {
     if (tempVar > 0 && tempVar < 1.0) {
       system.setBeta(system.getNumberOfPhases() - 1, tempVar);
     }
-    // logger.info("beta " + tempVar);
+    // 
   }
 
   /** {@inheritDoc} */
   @Override
   public void run() {
-    // logger.info("starting ");
+    // 
     system.setNumberOfPhases(system.getNumberOfPhases());
     double oldBeta = 0.0;
     int iter = 0;
@@ -346,7 +345,7 @@ public class SolidFlash extends TPflash {
       if (system.getNumberOfPhases() > 1) {
         this.solveBeta(true);
       } else {
-        // logger.info("setting beta ");
+        // 
         system.setBeta(0, 1.0 - 1e-10);
         system.reset_x_y();
         system.init(1);
@@ -354,11 +353,11 @@ public class SolidFlash extends TPflash {
 
       // system.display();
       checkX();
-      // logger.info("iter " + iter);
+      // 
     } while ((Math.abs(system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) > 1e-3
         && !(iter > 20)) || iter < 4);
     // checkX();
-    // logger.info("iter " + iter);
+    // 
     // system.setNumberOfPhases(system.getNumberOfPhases()+1);
   }
 }

@@ -1,7 +1,7 @@
 package neqsim.processSimulation.measurementDevice;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -17,7 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(MultiPhaseMeter.class);
+  
 
   double pressure = 1.01325;
   double temperature = 288.15;
@@ -126,7 +126,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         return Double.NaN;
       }
       // tempFluid.display();
@@ -148,7 +148,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         return Double.NaN;
       }
       // tempFluid.display();
@@ -166,7 +166,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         return Double.NaN;
       }
       // tempFluid.display();
@@ -184,7 +184,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         return Double.NaN;
       }
       // tempFluid.display();
@@ -203,7 +203,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getStackTrace());
+        
         return Double.NaN;
       }
       tempFluid.initPhysicalProperties();
@@ -238,7 +238,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getStackTrace());
+        
         return Double.NaN;
       }
       if (!tempFluid.hasPhaseType("gas")) {
@@ -266,7 +266,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       return tempFluid.getPhase("gas").getCorrectedVolume()
           / tempFluid.getPhase("oil").getCorrectedVolume();
     } else {
-      logger.warn("Measurement type " + measurement + " is not found");
+      
       return 0.0;
     }
   }

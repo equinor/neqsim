@@ -1,7 +1,7 @@
 package neqsim.thermo.characterization;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class WaxCharacterise implements java.io.Serializable, Cloneable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(WaxCharacterise.class);
+  
 
   SystemInterface thermoSystem = null;
   String name = "";
@@ -39,7 +39,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
       clonedSystem = (WaxCharacterise) super.clone();
       clonedSystem.model = model.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     return clonedSystem;
   }
@@ -57,7 +57,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
       try {
         clonedSystem = (WaxBaseModel) super.clone();
       } catch (Exception ex) {
-        logger.error("Cloning failed.", ex);
+        
       }
       return clonedSystem;
     }

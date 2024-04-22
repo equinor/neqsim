@@ -107,7 +107,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     try {
       clonedComponent = (ComponentSrkCPA) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     clonedComponent.xsite = xsite.clone();

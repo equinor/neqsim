@@ -52,7 +52,7 @@ public class AttractiveTermMatCop extends AttractiveTermSrk {
     try {
       attractiveTerm = (AttractiveTermMatCop) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return attractiveTerm;

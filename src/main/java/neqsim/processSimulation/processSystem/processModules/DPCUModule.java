@@ -255,11 +255,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    System.out.println("compressor power " + compressor1.getEnergy());
-    System.out.println("expander power " + expander.getEnergy());
-    valve1.displayResult();
-  }
+  public void displayResult() {}
 
   /**
    * <p>

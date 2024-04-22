@@ -7,12 +7,12 @@
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
 import java.text.DecimalFormat;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import neqsim.dataPresentation.JFreeChart.graph2b;
+
+
+
+
+
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -27,12 +27,12 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class pTphaseEnvelope extends BaseOperation {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(pTphaseEnvelope.class);
+  
 
   double maxPressure = 1000.0;
   double minPressure = 1.0;
   double[][] copiedPoints = null;
-  graph2b graph2 = null;
+  
   SystemInterface system;
   boolean bubblePointFirst = true;
   boolean hascopiedPoints = false;
@@ -65,10 +65,10 @@ public class pTphaseEnvelope extends BaseOperation {
   double[] tm = {1, 1};
   double beta = 1e-5;
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
-  JProgressBar monitor;
-  JFrame mainFrame;
+  
+  
   String fileName = "c:/file";
-  JPanel mainPanel;
+  
   double temp = 0;
   double pres = 0;
   double startPres = 0;
@@ -514,10 +514,10 @@ public class pTphaseEnvelope extends BaseOperation {
        * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
        * file2.setOutputFileName(name2); file2.setXvalues(points2[0], "temp", "sec");
        * file2.setYvalues(points2[1], "pres", "meter"); file2.createFile(); } } catch (Exception e3)
-       * { logger.error(ex.getMessage(), e3); }
+       * {  }
        */
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
       throw ex;
     }
   }
@@ -532,7 +532,7 @@ public class pTphaseEnvelope extends BaseOperation {
     try {
       opsHyd.hydrateEquilibriumLine(10.0, 300.0);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
 
     // double[][] hydData = opsHyd.getData();
@@ -540,62 +540,7 @@ public class pTphaseEnvelope extends BaseOperation {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    DecimalFormat nf = new DecimalFormat();
-    nf.setMaximumFractionDigits(1);
-    nf.applyPattern("####.#");
-    if (bubblePointFirst) {
-      // bubble point side
-      navn[0] = "bubble point 2";
-      navn[1] = "dew point 2";
-      navn[2] = "dew point 1";
-      navn[3] = "bubble point 1";
-    } else {
-      // dew point side and does not crash
-      navn[0] = "dew point 2";
-      navn[1] = "bubble point 2";
-      navn[2] = "dew point 1";
-      navn[3] = "bubbl point 1";
-    }
-
-    double TC = system.getTC();
-    double PC = system.getPC();
-
-    String title =
-        "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-    String title3 =
-        "PH-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-    String title4 = "Density-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
-        + String.valueOf(nf.format(PC));
-    String title5 =
-        "PS-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-
-    graph2b graph3 = new graph2b(pointsH2, navn, title3, "Enthalpy [kJ/kg]", "Pressure [bara]");
-    graph3.setVisible(true);
-    // graph3.saveFigure(new String(util.util.FileSystemSettings.tempDir +
-    // "NeqSimTempFig4.png"));
-
-    graph2b graph4 = new graph2b(pointsV2, navn, title4, "Density [kg/m^3]", "Pressure [bara]");
-    graph4.setVisible(true);
-    // graph4.saveFigure(util.util.FileSystemSettings.tempDir +
-    // "NeqSimTempFig2.png");
-
-    graph2b graph5 = new graph2b(pointsS2, navn, title5, "Entropy [kJ/kg*K]", "Pressure [bara]");
-    graph5.setVisible(true);
-    // graph5.saveFigure(util.util.FileSystemSettings.tempDir +
-    // "NeqSimTempFig3.png");
-
-    graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
-    graph2.setVisible(true);
-    // graph2.saveFigure(util.util.FileSystemSettings.tempDir +
-    // "NeqSimTempFig1.png");
-
-    /*
-     * JDialog dialog = new JDialog(); Container dialogContentPane = dialog.getContentPane();
-     * dialogContentPane.setLayout(new FlowLayout()); JFreeChartPanel chartPanel =
-     * graph4.getChartPanel(); dialogContentPane.add(chartPanel); dialog.show();
-     */
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override

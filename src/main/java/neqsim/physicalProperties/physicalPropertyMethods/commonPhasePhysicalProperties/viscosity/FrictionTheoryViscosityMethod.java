@@ -1,7 +1,7 @@
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * <p>
@@ -14,7 +14,7 @@ import org.apache.logging.log4j.Logger;
 public class FrictionTheoryViscosityMethod extends Viscosity
     implements neqsim.thermo.ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(FrictionTheoryViscosityMethod.class);
+  
 
   public double[] pureComponentViscosity;
   public double[] Fc;
@@ -110,10 +110,10 @@ public class FrictionTheoryViscosityMethod extends Viscosity
           ((neqsim.thermo.phase.PhaseEosInterface) phase.getPhase()).getPressureRepulsive();
       Pattractive =
           ((neqsim.thermo.phase.PhaseEosInterface) phase.getPhase()).getPressureAttractive();
-      // logger.info("P rep " + Prepulsive);
-      // logger.info("P atr " + Pattractive);
+      // 
+      // 
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     double kaprmx = 0.0;
     double kapamx = 0.0;
@@ -238,7 +238,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity
           * Math.sqrt(phase.getPhase().getComponents()[i].getMolarMass() * 1000.0
               * phase.getPhase().getTemperature())
           / (Math.pow(critVol, 2.0 / 3.0) * omegaVisc[i]) * Fc[i];
-      // logger.info("visk " + pureComponentViscosity[i]);
+      // 
     }
   }
 
@@ -257,12 +257,12 @@ public class FrictionTheoryViscosityMethod extends Viscosity
       iter++;
       phase.getPhase().initPhysicalProperties();
       calcVisc = calcViscosity();
-      logger.info("visc " + calcVisc);
+      
       err = ((calcVisc - val) / calcVisc);
-      logger.info("err " + err);
+      
 
       if (phase.getPhase().hasPlusFraction() || phase.getPhase().hasTBPFraction()) {
-        logger.info("has plus fraction ");
+        
         for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
           if (phase.getPhase().getComponent(i).isIsPlusFraction()
               || phase.getPhase().getComponent(i).isIsTBPfraction()) {
@@ -271,7 +271,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity
           }
         }
       } else {
-        logger.info("no plus fraction ");
+        
         for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
           phase.getPhase().getComponent(i).setCriticalViscosity(
               phase.getPhase().getComponent(i).getCriticalViscosity() * (1 - err));

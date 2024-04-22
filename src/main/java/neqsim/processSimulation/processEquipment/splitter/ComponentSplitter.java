@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processEquipment.splitter;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -19,7 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class ComponentSplitter extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ComponentSplitter.class);
+  
 
   SystemInterface thermoSystem;
   StreamInterface inletStream;
@@ -86,7 +86,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
         splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 

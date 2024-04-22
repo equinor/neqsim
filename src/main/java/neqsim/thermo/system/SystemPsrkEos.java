@@ -52,7 +52,7 @@ public class SystemPsrkEos extends SystemSrkEos {
     try {
       clonedSystem = (SystemPsrkEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

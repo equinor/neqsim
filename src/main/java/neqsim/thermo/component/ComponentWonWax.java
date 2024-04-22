@@ -1,7 +1,7 @@
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
@@ -15,7 +15,7 @@ import neqsim.thermo.phase.PhaseType;
  */
 public class ComponentWonWax extends ComponentSolid {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ComponentWonWax.class);
+  
 
   /**
    * <p>
@@ -54,7 +54,7 @@ public class ComponentWonWax extends ComponentSolid {
         refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
 
     double solidActivityCoefficient = getWonActivityCoefficient(phase1);
-    logger.info("activity coef Won " + solidActivityCoefficient);
+    
     SolidFug =
         getx() * liquidPhaseFugacity * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
             * (1.0 - phase1.getTemperature() / getTriplePointTemperature()));

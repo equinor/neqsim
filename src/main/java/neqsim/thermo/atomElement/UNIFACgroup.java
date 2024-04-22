@@ -2,8 +2,8 @@ package neqsim.thermo.atomElement;
 
 import java.util.Arrays;
 import java.util.Objects;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEUnifac;
@@ -19,7 +19,7 @@ import neqsim.thermo.phase.PhaseGEUnifac;
  */
 public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<UNIFACgroup> {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(UNIFACgroup.class);
+  
 
   double R = 0.0;
   double Q = 0.0;
@@ -98,7 +98,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
       subGroup = Integer.parseInt(dataSet.getString("Secondary"));
       groupName = dataSet.getString("Name");
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 

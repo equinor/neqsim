@@ -1,7 +1,7 @@
 package neqsim.thermo;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * <p>
@@ -12,7 +12,7 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class Fluid {
-  static Logger logger = LogManager.getLogger(Fluid.class);
+  
 
   neqsim.thermo.system.SystemInterface fluid = null;
   private boolean hasWater = false;
@@ -237,7 +237,7 @@ public class Fluid {
       double[] flowrate, String unit) {
     setThermoModel();
     if (componentNames.length != flowrate.length) {
-      logger.error("component names and mole fractions need to be same length...");
+      
     }
 
     for (int i = 0; i < componentNames.length; i++) {

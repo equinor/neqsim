@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processEquipment.powerGeneration;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
@@ -24,7 +24,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class GasTurbine extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Compressor.class);
+  
 
   public SystemInterface thermoSystem;
   public StreamInterface airStream;
@@ -139,7 +139,7 @@ public class GasTurbine extends TwoPortEquipment {
     try {
       this.outStream = inletStream.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 

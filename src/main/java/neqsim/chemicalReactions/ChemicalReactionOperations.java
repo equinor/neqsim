@@ -8,8 +8,8 @@ package neqsim.chemicalReactions;
 
 import java.util.HashSet;
 import java.util.Iterator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import Jama.Matrix;
 import neqsim.chemicalReactions.chemicalEquilibriaum.ChemicalEquilibrium;
 import neqsim.chemicalReactions.chemicalEquilibriaum.LinearProgrammingChemicalEquilibrium;
@@ -30,7 +30,7 @@ import neqsim.thermo.system.SystemInterface;
 public class ChemicalReactionOperations
     implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ChemicalReactionOperations.class);
+  
 
   SystemInterface system;
   ComponentInterface[] components;
@@ -91,7 +91,7 @@ public class ChemicalReactionOperations
         initCalc =
             new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, 1);
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
       setComponents();
       Amatrix = initCalc.getA();
@@ -121,7 +121,7 @@ public class ChemicalReactionOperations
     try {
       clonedSystem = (ChemicalReactionOperations) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     return clonedSystem;
   }
@@ -429,7 +429,7 @@ public class ChemicalReactionOperations
         firsttime = false;
         return true;
       } catch (Exception ex) {
-        logger.error("error in chem eq", ex);
+        
         solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phase);
         return solver.solve();
       }
@@ -439,7 +439,7 @@ public class ChemicalReactionOperations
       try {
         solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phase);
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         // todo: Will this crash below?
       }
       return solver.solve();

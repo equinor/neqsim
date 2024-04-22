@@ -8,8 +8,8 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 import neqsim.MathLib.matrix.SimpleMatrix;
 //import org.ejml.simple.SimpleMatrix;
@@ -27,7 +27,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class TPmultiflash extends TPflash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(TPmultiflash.class);
+  
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
@@ -224,7 +224,7 @@ public class TPmultiflash extends TPflash {
       system.init(1);
       err = ans.normF();
     } while ((err > 1e-12 && iter < 50) || iter < 3);
-    // logger.info("iterations " + iter);
+    // 
     return err;
   }
 
@@ -272,7 +272,7 @@ public class TPmultiflash extends TPflash {
 
     lowestGibbsEnergyPhase = 0;
     /*
-     * // logger.info("low gibbs phase " + lowestGibbsEnergyPhase); for (int k = 0; k <
+     * //  for (int k = 0; k <
      * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) { for (int i = 0; i <
      * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!((
      * clonedSystem.get(k)) == null)) { sumw[k] += (
@@ -282,13 +282,12 @@ public class TPmultiflash extends TPflash {
      * (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!((
      * clonedSystem.get(k)) == null) && system.getPhase(0).getComponent(k).getx() > 1e-100) { (
      * clonedSystem.get(k)).getPhase(1).getComponents()[i].setx((
-     * clonedSystem.get(k)).getPhase(1).getComponents()[i].getx() / sumw[0]); } logger.info("x: " +
-     * ( clonedSystem.get(k)).getPhase(0).getComponents()[i].getx()); } if
+     * clonedSystem.get(k)).getPhase(1).getComponents()[i].getx() / sumw[0]); }  } if
      * (system.getPhase(0).getComponent(k).getx() > 1e-100) { d[k] =
      * Math.log(system.getPhase(0).getComponents()[k].getx()) +
      * system.getPhase(0).getComponents()[k].getLogFugacityCoefficient();
      * if(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents
-     * ()[k].getIonicCharge()!=0) d[k]=0; } //logger.info("dk: " + d[k]); }
+     * ()[k].getIonicCharge()!=0) d[k]=0; } // }
      */
     for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) {
       if (system.getPhase(0).getComponent(k).getx() > 1e-100) {
@@ -328,7 +327,7 @@ public class TPmultiflash extends TPflash {
         if (Math.abs(
             (minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmax) < 1e-5) {
           hydrocarbonTestCompNumb = i;
-          // logger.info("CHECKING heavy component " + hydrocarbonTestCompNumb);
+          // 
         }
       }
 
@@ -337,7 +336,7 @@ public class TPmultiflash extends TPflash {
         if (Math.abs(
             (minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmin) < 1e-5) {
           lightTestCompNumb = i;
-          // logger.info("CHECKING light component " + lightTestCompNumb);
+          // 
         }
       }
     }
@@ -361,14 +360,13 @@ public class TPmultiflash extends TPflash {
           try {
             clonedSystem.get(0).getPhase(1).getComponents()[cc].setx(nomb);
           } catch (Exception ex) {
-            logger.warn(ex.getMessage());
+            
           }
         }
       }
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName().equals("water")
       // && minimumGibbsEnergySystem.isChemicalSystem()) continue;
-      // logger.info("STAB CHECK COMP " +
-      // system.getPhase(0).getComponent(j).getComponentName());
+      // 
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).isInert()) break;
       int iter = 0;
       double errOld = 1.0e100;
@@ -395,7 +393,7 @@ public class TPmultiflash extends TPflash {
             }
 
             double lambda = prod1 / prod2;
-            // logger.info("lambda " + lambda);
+            // 
             for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
               logWi[i] += lambda / (1.0 - lambda) * deltalogWi[i];
               err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
@@ -500,9 +498,9 @@ public class TPmultiflash extends TPflash {
             err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
           }
 
-          // logger.info("err newton " + err);
+          // 
         }
-        // logger.info("err: " + err);
+        // 
         sumw[j] = 0;
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -518,7 +516,7 @@ public class TPmultiflash extends TPflash {
           }
         }
       } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
-      // logger.info("err: " + err + " ITER " + iter);
+      // 
       double xTrivialCheck0 = 0.0;
       double xTrivialCheck1 = 0.0;
 
@@ -529,15 +527,15 @@ public class TPmultiflash extends TPflash {
           tm[j] -= Math.exp(logWi[i]);
         }
         x[j][i] = clonedSystem.get(0).getPhase(1).getComponents()[i].getx();
-        // logger.info("txji: " + x[j][i]);
+        // 
 
         xTrivialCheck0 += Math.abs(x[j][i] - system.getPhase(0).getComponent(i).getx());
         xTrivialCheck1 += Math.abs(x[j][i] - system.getPhase(1).getComponent(i).getx());
       }
       if (iter >= maxiter) {
-        // logger.info("iter > maxiter multiphase stability ");
-        // logger.info("error " + Math.abs(err));
-        // logger.info("tm: " + tm[j]);
+        // 
+        // 
+        // 
       }
 
       if (Math.abs(xTrivialCheck0) < 1e-4 || Math.abs(xTrivialCheck1) < 1e-4) {
@@ -564,16 +562,16 @@ public class TPmultiflash extends TPflash {
         system.init(1);
         system.normalizeBeta();
 
-        // logger.info("STABILITY ANALYSIS: ");
-        // logger.info("tm1: " + k + " "+ tm[k]);
+        // 
+        // 
         // system.display();
         return;
       }
     }
 
     system.normalizeBeta();
-    // logger.info("STABILITY ANALYSIS: ");
-    // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);
+    // 
+    // 
     // system.display();
   }
 
@@ -619,7 +617,7 @@ public class TPmultiflash extends TPflash {
 
     lowestGibbsEnergyPhase = 0;
     /*
-     * // logger.info("low gibbs phase " + lowestGibbsEnergyPhase); for (int k = 0; k <
+     * //  for (int k = 0; k <
      * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) { for (int i = 0; i <
      * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!((
      * clonedSystem.get(k)) == null)) { sumw[k] += (
@@ -629,13 +627,12 @@ public class TPmultiflash extends TPflash {
      * (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!((
      * clonedSystem.get(k)) == null) && system.getPhase(0).getComponent(k).getx() > 1e-100) { (
      * clonedSystem.get(k)).getPhase(1).getComponents()[i].setx((
-     * clonedSystem.get(k)).getPhase(1).getComponents()[i].getx() / sumw[0]); } logger.info("x: " +
-     * ( clonedSystem.get(k)).getPhase(0).getComponents()[i].getx()); } if
+     * clonedSystem.get(k)).getPhase(1).getComponents()[i].getx() / sumw[0]); }  } if
      * (system.getPhase(0).getComponent(k).getx() > 1e-100) { d[k] =
      * Math.log(system.getPhase(0).getComponents()[k].getx()) +
      * system.getPhase(0).getComponents()[k].getLogFugacityCoefficient();
      * if(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents
-     * ()[k].getIonicCharge()!=0) d[k]=0; } //logger.info("dk: " + d[k]); }
+     * ()[k].getIonicCharge()!=0) d[k]=0; } // }
      */
     for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) {
       if (system.getPhase(0).getComponent(k).getx() > 1e-100) {
@@ -675,7 +672,7 @@ public class TPmultiflash extends TPflash {
         if (Math.abs(
             (minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmax) < 1e-5) {
           hydrocarbonTestCompNumb = i;
-          // logger.info("CHECKING heavy component " + hydrocarbonTestCompNumb);
+          // 
         }
       }
 
@@ -684,7 +681,7 @@ public class TPmultiflash extends TPflash {
         if (Math.abs(
             (minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmin) < 1e-5) {
           lightTestCompNumb = i;
-          // logger.info("CHECKING light component " + lightTestCompNumb);
+          // 
         }
       }
     }
@@ -708,14 +705,13 @@ public class TPmultiflash extends TPflash {
           try {
             clonedSystem.get(0).getPhase(1).getComponents()[cc].setx(nomb);
           } catch (Exception ex) {
-            logger.warn(ex.getMessage());
+            
           }
         }
       }
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName().equals("water")
       // && minimumGibbsEnergySystem.isChemicalSystem()) continue;
-      // logger.info("STAB CHECK COMP " +
-      // system.getPhase(0).getComponent(j).getComponentName());
+      // 
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).isInert()) break;
       int iter = 0;
       double errOld = 1.0e100;
@@ -742,7 +738,7 @@ public class TPmultiflash extends TPflash {
             }
 
             double lambda = prod1 / prod2;
-            // logger.info("lambda " + lambda);
+            // 
             for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
               logWi[i] += lambda / (1.0 - lambda) * deltalogWi[i];
               err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
@@ -847,9 +843,9 @@ public class TPmultiflash extends TPflash {
             err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
           }
 
-          // logger.info("err newton " + err);
+          // 
         }
-        // logger.info("err: " + err);
+        // 
         sumw[j] = 0;
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -865,7 +861,7 @@ public class TPmultiflash extends TPflash {
           }
         }
       } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
-      // logger.info("err: " + err + " ITER " + iter);
+      // 
       double xTrivialCheck0 = 0.0;
       double xTrivialCheck1 = 0.0;
 
@@ -876,15 +872,15 @@ public class TPmultiflash extends TPflash {
           tm[j] -= Math.exp(logWi[i]);
         }
         x[j][i] = clonedSystem.get(0).getPhase(1).getComponents()[i].getx();
-        // logger.info("txji: " + x[j][i]);
+        // 
 
         xTrivialCheck0 += Math.abs(x[j][i] - system.getPhase(0).getComponent(i).getx());
         xTrivialCheck1 += Math.abs(x[j][i] - system.getPhase(1).getComponent(i).getx());
       }
       if (iter >= maxiter - 1) {
-        // logger.info("iter > maxiter multiphase stability ");
-        // logger.info("error " + Math.abs(err));
-        // logger.info("tm: " + tm[j]);
+        // 
+        // 
+        // 
       }
 
       if (Math.abs(xTrivialCheck0) < 1e-4 || Math.abs(xTrivialCheck1) < 1e-4) {
@@ -911,16 +907,16 @@ public class TPmultiflash extends TPflash {
         system.init(1);
         system.normalizeBeta();
 
-        // logger.info("STABILITY ANALYSIS: ");
-        // logger.info("tm1: " + k + " "+ tm[k]);
+        // 
+        // 
         // system.display();
         return;
       }
     }
 
     system.normalizeBeta();
-    // logger.info("STABILITY ANALYSIS: ");
-    // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);
+    // 
+    // 
     // system.display();
   }
 
@@ -977,7 +973,7 @@ public class TPmultiflash extends TPflash {
 
     lowestGibbsEnergyPhase = 0;
 
-    // logger.info("low gibbs phase " + lowestGibbsEnergyPhase);
+    // 
     for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) {
       for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
         if (!((clonedSystem.get(k)) == null)) {
@@ -993,8 +989,7 @@ public class TPmultiflash extends TPflash {
           (clonedSystem.get(k)).getPhase(1).getComponents()[i]
               .setx((clonedSystem.get(k)).getPhase(1).getComponents()[i].getx() / sumw[0]);
         }
-        // logger.info("x: " + (
-        // clonedSystem.get(k)).getPhase(0).getComponents()[i].getx());
+        // 
       }
       if (system.getPhase(0).getComponent(k).getx() > 1e-100) {
         d[k] = Math.log(system.getPhase(0).getComponents()[k].getx())
@@ -1002,7 +997,7 @@ public class TPmultiflash extends TPflash {
         // if(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents()[k].getIonicCharge()!=0)
         // d[k]=0;
       }
-      // logger.info("dk: " + d[k]);
+      // 
     }
 
     for (int j = 0; j < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); j++) {
@@ -1033,7 +1028,7 @@ public class TPmultiflash extends TPflash {
         if (Math.abs(
             (minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmax) < 1e-5) {
           hydrocarbonTestCompNumb = i;
-          // logger.info("CHECKING heavy component " + hydrocarbonTestCompNumb);
+          // 
         }
       }
 
@@ -1042,7 +1037,7 @@ public class TPmultiflash extends TPflash {
         if (Math.abs(
             (minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmin) < 1e-5) {
           lightTestCompNumb = i;
-          // logger.info("CHECKING light component " + lightTestCompNumb);
+          // 
         }
       }
     }
@@ -1056,8 +1051,7 @@ public class TPmultiflash extends TPflash {
       }
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName().equals("water")
       // && minimumGibbsEnergySystem.isChemicalSystem()) continue;
-      // logger.info("STAB CHECK COMP " +
-      // system.getPhase(0).getComponent(j).getComponentName());
+      // 
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).isInert()) break;
       int iter = 0;
       double errOld = 1.0e100;
@@ -1081,7 +1075,7 @@ public class TPmultiflash extends TPflash {
             }
 
             double lambda = prod1 / prod2;
-            // logger.info("lambda " + lambda);
+            // 
             for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
               logWi[i] += lambda / (1.0 - lambda) * deltalogWi[i];
               err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
@@ -1174,9 +1168,9 @@ public class TPmultiflash extends TPflash {
             err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
           }
 
-          // logger.info("err newton " + err);
+          // 
         }
-        // logger.info("err: " + err);
+        // 
         sumw[j] = 0;
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -1197,7 +1191,7 @@ public class TPmultiflash extends TPflash {
         // + system.getTemperature("C") + " C " + system.getPressure("bara") + " bara");
         new Exception("to many iterations ");
       }
-      // logger.info("err: " + err + " ITER " + iter);
+      // 
       double xTrivialCheck0 = 0.0;
       double xTrivialCheck1 = 0.0;
 
@@ -1208,15 +1202,15 @@ public class TPmultiflash extends TPflash {
           tm[j] -= Math.exp(logWi[i]);
         }
         x[j][i] = (clonedSystem.get(j)).getPhase(1).getComponents()[i].getx();
-        // logger.info("txji: " + x[j][i]);
+        // 
 
         xTrivialCheck0 += Math.abs(x[j][i] - system.getPhase(0).getComponent(i).getx());
         xTrivialCheck1 += Math.abs(x[j][i] - system.getPhase(1).getComponent(i).getx());
       }
       if (iter >= 199) {
-        logger.info("iter > maxiter multiphase stability ");
-        logger.info("error " + Math.abs(err));
-        logger.info("tm: " + tm[j]);
+        
+        
+        
       }
 
       if (Math.abs(xTrivialCheck0) < 1e-6 || Math.abs(xTrivialCheck1) < 1e-6) {
@@ -1243,15 +1237,15 @@ public class TPmultiflash extends TPflash {
         system.init(1);
         system.normalizeBeta();
 
-        // logger.info("STABILITY ANALYSIS: ");
-        // logger.info("tm1: " + k + " "+ tm[k]);
+        // 
+        // 
         // system.display();
         return;
       }
     }
     system.normalizeBeta();
-    // logger.info("STABILITY ANALYSIS: ");
-    // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);
+    // 
+    // 
     // system.display();
   }
 
@@ -1259,7 +1253,7 @@ public class TPmultiflash extends TPflash {
   @Override
   public void run() {
     int aqueousPhaseNumber = 0;
-    // logger.info("Starting multiphase-flash....");
+    // 
 
     // system.setNumberOfPhases(system.getNumberOfPhases()+1);
     if (doStabilityAnalysis) {
@@ -1312,7 +1306,7 @@ public class TPmultiflash extends TPflash {
             for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
               chemdev += Math.abs(xchem[i] - system.getPhase(phase).getComponents()[i].getx());
             }
-            // logger.info("chemdev: " + chemdev);
+            // 
           }
         }
         setDoubleArrays();
@@ -1325,7 +1319,7 @@ public class TPmultiflash extends TPflash {
           diff = this.solveBeta();
           // diff = Math.abs((system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) /
           // oldBeta);
-          // logger.info("diff multiphase " + diff);
+          // 
           if (iterations % 50 == 0) {
             maxerr *= 100.0;
           }
@@ -1333,9 +1327,8 @@ public class TPmultiflash extends TPflash {
             && iterations < 200);
         // this.solveBeta(true);
         if (iterations >= 199) {
-          logger.error("error in multiphase flash..did not solve in 200 iterations");
-          logger.error("diff " + diff + " temperaure " + system.getTemperature("C") + " pressure "
-              + system.getPressure("bara"));
+          
+          
           diff = this.solveBeta();
         }
       } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100)

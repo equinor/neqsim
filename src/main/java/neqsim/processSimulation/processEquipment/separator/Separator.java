@@ -9,8 +9,8 @@ package neqsim.processSimulation.processEquipment.separator;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -34,7 +34,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class Separator extends ProcessEquipmentBaseClass implements SeparatorInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Separator.class);
+  
 
   SystemInterface thermoSystem;
   SystemInterface gasSystem;
@@ -245,7 +245,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       try {
         liquidOutStream.getFluid().init(3);
       } catch (Exception e) {
-        logger.error(e.getMessage());
+        
       }
     }
     if (getCalculateSteadyState()) {
@@ -288,7 +288,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
             * getInternalDiameter() * getSeparatorLength();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
     }
 
@@ -297,9 +297,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    thermoSystem.display();
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override
@@ -322,7 +320,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         gasOutStream.getThermoSystem().init(3);
         liquidOutStream.getThermoSystem().init(3);
       } catch (Exception e) {
-        logger.error(e.getMessage());
+        
       }
       boolean hasliq = false;
       double deliq = 0.0;

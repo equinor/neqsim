@@ -52,7 +52,7 @@ public class SystemSrkTwuCoonParamEos extends SystemSrkEos {
     try {
       clonedSystem = (SystemSrkTwuCoonParamEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

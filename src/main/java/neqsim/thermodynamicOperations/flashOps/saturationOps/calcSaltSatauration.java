@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class calcSaltSatauration extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(calcSaltSatauration.class);
+  
 
   String saltName;
 
@@ -29,7 +29,7 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
   public calcSaltSatauration(SystemInterface system, String name) {
     super(system);
     this.saltName = name;
-    logger.info("ok ");
+    
   }
 
   /** {@inheritDoc} */
@@ -53,7 +53,7 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
       system.addComponent(name2, ksp / 100.0);
       system.createDatabase(true);
     } catch (Exception ex) {
-      logger.error("failed ", ex);
+      
     }
 
     system.init(0);
@@ -67,7 +67,7 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
     do {
       iter++;
       double addnumb = 0.0;
-      // logger.info("testing");
+      // 
 
       system.addComponent(name1, 0.001);
       // *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
@@ -109,10 +109,10 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
                   * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0, stoc2);
 
       double diff = (kspcalc1 - kspcalc2) / 0.002;
-      // logger.info("diff " + diff);
+      // 
       err = (kspcalc - ksp);
       addnumb = -(err / diff);
-      logger.info("kspcalc " + kspcalc + " err " + err + " add " + addnumb);
+      
       system.addComponent(name1, iter / 100.0 * addnumb);
       // * stoc1 *constant * system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
       system.addComponent(name2, iter / 100.0 * addnumb);
@@ -121,7 +121,7 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
       system.initPhysicalProperties();
     } while (Math.abs(err / ksp) > 1e-5 && iter < 1000);
 
-    logger.info("solution found after " + iter + " iterations in calcSaltSatauration()");
+    
   }
 
   /** {@inheritDoc} */

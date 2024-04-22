@@ -1,7 +1,7 @@
 package neqsim.thermo.characterization;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class NewtonSolveCDplus implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(NewtonSolveCDplus.class);
+  
 
   int iter = 0;
   Matrix Jac;
@@ -77,10 +77,10 @@ public class NewtonSolveCDplus implements java.io.Serializable {
     densSum = mSum / densSum;
     double lengthPlus = characterizeClass.getLastPlusFractionNumber()
         - characterizeClass.getFirstPlusFractionNumber();
-    logger.info("diff " + lengthPlus);
+    
     // Dtot /= lengthPlus;
     // System.out.println("Dtot "+ Dtot);
-    logger.info("zsum " + zSum);
+    
     // System.out.println("zplus " + characterizeClass.getZPlus());
     fvec.set(0, 0, zSum - characterizeClass.getZPlus());
 
@@ -200,13 +200,13 @@ public class NewtonSolveCDplus implements java.io.Serializable {
     do {
       iter++;
       setfvec();
-      logger.info("fvec: ");
+      
       fvec.print(10, 17);
       setJac();
       Jac.print(10, 6);
       // System.out.println("rank " + Jac.rank());
       dx = Jac.solve(fvec);
-      logger.info("dx: ");
+      
       dx.print(10, 3);
       if (iter < 10) {
         sol.minusEquals(dx.times((iter) / (iter + 5000.0)));
@@ -217,7 +217,7 @@ public class NewtonSolveCDplus implements java.io.Serializable {
       // sol.print(10,10);
       characterizeClass.setCoefs(sol.transpose().copy().getArray()[0]);
     } while (((fvec.norm2() > 1e-6 || iter < 15) && iter < 3000));
-    logger.info("ok char: ");
+    
     sol.print(10, 10);
   }
 }

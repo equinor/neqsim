@@ -297,8 +297,7 @@ public class ComponentGeDuanSun extends ComponentGE {
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {
-    logger.info("fug coef "
-        + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
+    
     if (referenceStateType.equals("solvent")) {
       fugacityCoefficient =
           gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();

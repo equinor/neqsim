@@ -6,8 +6,8 @@
 
 package neqsim.thermo.phase;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
@@ -20,7 +20,7 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
  */
 public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PhaseEos.class);
+  
 
   private double loc_A;
   private double loc_AT;
@@ -43,7 +43,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     try {
       clonedPhase = (PhaseEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     // clonedPhase.mixSelect = (EosMixingRules) mixSelect.clone();
@@ -108,12 +108,12 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
               pt);
         }
       } catch (Exception ex) {
-        logger.warn("Failed to solve for molarVolume within the iteration limit.");
+        
         throw new RuntimeException(ex);
-        // logger.error("too many iterations in volume calc!", ex);
-        // logger.info("moles " + numberOfMolesInPhase);
-        // logger.info("molarVolume " + getMolarVolume());
-        // logger.info("setting molar volume to ideal gas molar volume.............");
+        // 
+        // 
+        // 
+        // 
         // setMolarVolume((R * temperature) / pressure);
         // System.exit(0);
       }
@@ -265,20 +265,15 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     } while (Math.abs(BonV - BonVold) > 1.0e-9 && iterations < maxIterations);
     // molarVolume = 1.0/BonV*Btemp/numberOfMolesInPhase;
     // Z = pressure*molarVolume/(R*temperature);
-    // logger.info("BonV: " + BonV + " " + h + " " +dh + " B " + Btemp + " D " +
-    // Dtemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
-    // logger.info("BonV: " + BonV + " "+" itert: " + iterations +" " +h + " " +dh +
-    // " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" +
-    // fVV());
+    // 
+    // 
     if (iterations >= maxIterations) {
       throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume2",
           maxIterations);
     }
     if (Double.isNaN(getMolarVolume())) {
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume2", "Molar volume");
-      // logger.info("BonV: " + BonV + " "+" itert: " + iterations +" " +h + " " +dh +
-      // " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" +
-      // fVV());
+      // 
     }
     return getMolarVolume();
   }
@@ -309,7 +304,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     double d2;
     double BonV2;
     if (Btemp < 0) {
-      logger.info("b negative in volume calc");
+      
     }
     setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
     boolean changeFase = false;
@@ -357,7 +352,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       }
 
       error = Math.abs((BonV - BonVold) / BonVold);
-      // logger.info("error " + error);
+      // 
 
       if (iterations > 150 && error > errorOld && !changeFase) {
         changeFase = true;
@@ -368,12 +363,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
       setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
       Z = pressure * getMolarVolume() / (R * temperature);
-      // logger.info("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold)));
+      // 
     } while (Math.abs((BonV - BonVold) / BonVold) > 1.0e-10 && iterations < maxIterations);
-    // logger.info("pressure " + Z*R*temperature/molarVolume);
-    // logger.info("error in volume " +
-    // (-pressure+R*temperature/molarVolume-R*temperature*dFdV()) + " firstterm " +
-    // (R*temperature/molarVolume) + " second " + R*temperature*dFdV());
+    // 
+    // 
     if (iterations >= maxIterations) {
       throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume",
           maxIterations);
@@ -382,9 +375,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       // A = calcA(this, temperature, pressure, numberOfComponents);
       // molarVolume(pressure, temperature, A, B, phase);
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
-      // logger.info("BonV: " + BonV + " "+" itert: " + iterations +" " +h + " " +dh +
-      // " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" +
-      // fVV());
+      // 
     }
     return getMolarVolume();
   }

@@ -1,7 +1,7 @@
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * <p>
@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class LBCViscosityMethod extends Viscosity {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(LBCViscosityMethod.class);
+  
 
   double[] a = {0.10230, 0.023364, 0.058533, -0.040758, 0.0093324};
 
@@ -72,7 +72,7 @@ public class LBCViscosityMethod extends Viscosity {
     }
 
     lowPresVisc = temp3 / temp4;
-    // logger.info("LP visc " + lowPresVisc);
+    // 
     critDens = 1.0 / par4; // mol/cm3
     double eps =
         Math.pow(par1, 1.0 / 6.0) * Math.pow(par2, -1.0 / 2.0) * Math.pow(par3, -2.0 / 3.0);

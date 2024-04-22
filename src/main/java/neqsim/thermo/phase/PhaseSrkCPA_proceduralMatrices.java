@@ -1,7 +1,7 @@
 package neqsim.thermo.phase;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
@@ -110,7 +110,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
   // DenseMatrix64F(getTotalNumberOfAccociationSites(),
   // 1);
-  static Logger logger = LogManager.getLogger(PhaseSrkCPA_proceduralMatrices.class);
+  
 
   /**
    * <p>
@@ -128,7 +128,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     try {
       clonedPhase = (PhaseSrkCPA) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
     // clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
@@ -925,7 +925,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
       try {
         CommonOps_DDRM.invert(hessianMatrix, hessianInvers);
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         return false;
       }
 
@@ -1043,7 +1043,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     try {
       // molarVolume(pressure, temperature, A, B, pt);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     double BonVold = BonV;
     double Btemp = 0;
@@ -1131,7 +1131,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     double BonVold;
     double Btemp = getB();
     if (Btemp < 0) {
-      logger.info("b negative in volume calc");
+      
     }
     calcDelta();
 
@@ -1277,7 +1277,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     double d2 = 0;
     Btemp = getB();
     if (Btemp < 0) {
-      logger.info("b negative in volume calc");
+      
     }
     calcDelta();
 

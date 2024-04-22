@@ -6,8 +6,8 @@
 
 package neqsim.thermodynamicOperations.flashOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -22,7 +22,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class VUflashQfunc extends Flash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(VUflashQfunc.class);
+  
 
   double Vspec = 0;
   double Uspec = 0.0;
@@ -112,25 +112,25 @@ public class VUflashQfunc extends Flash {
     double nyTemp = system.getTemperature();
     double oldTemp = system.getTemperature();
     double iterations = 1;
-    // logger.info("Vspec: " + Vspec);
-    // logger.info("Uspec: " + Uspec);
+    // 
+    // 
     do {
       iterations++;
       oldPres = nyPres;
       oldTemp = nyTemp;
       system.init(3);
-      // logger.info("dQdP: " + calcdQdP());
-      // logger.info("dQdT: " + calcdQdT());
+      // 
+      // 
       nyPres = oldPres - (iterations) / (iterations + 10.0) * calcdQdP() / calcdQdPP();
       nyTemp = oldTemp - (iterations) / (iterations + 10.0) * calcdQdT() / calcdQdTT();
-      // logger.info("volume: " + system.getVolume());
-      // logger.info("inernaleng: " + system.getInternalEnergy());
+      // 
+      // 
       system.setPressure(nyPres);
       system.setTemperature(nyTemp);
       tpFlash.run();
-      // logger.info("error1: " + Math.abs((nyPres - oldPres) / (nyPres)));
-      // logger.info("error2: " + Math.abs((nyTemp - oldTemp) / (nyTemp)));
-      // logger.info("inernaleng: " + system.getInternalEnergy());
+      // 
+      // 
+      // 
     } while (Math.abs((nyPres - oldPres) / (nyPres))
         + Math.abs((nyTemp - oldTemp) / (nyTemp)) > 1e-9 && iterations < 1000);
     return nyPres;
@@ -140,8 +140,8 @@ public class VUflashQfunc extends Flash {
   @Override
   public void run() {
     tpFlash.run();
-    // logger.info("internaleng: " + system.getInternalEnergy());
-    // logger.info("volume: " + system.getVolume());
+    // 
+    // 
     solveQ();
   }
 
@@ -176,7 +176,7 @@ public class VUflashQfunc extends Flash {
       testOps.VUflash(volume, energy);
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 }

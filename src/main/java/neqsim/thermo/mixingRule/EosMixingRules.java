@@ -6,13 +6,13 @@
 
 package neqsim.thermo.mixingRule;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
+
+
+
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentGEInterface;
@@ -35,7 +35,7 @@ import neqsim.util.database.NeqSimDataBase;
  */
 public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(EosMixingRules.class);
+  
 
   public double Atot = 0;
   public double Btot = 0;
@@ -91,7 +91,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     try {
       clonedSystem = (EosMixingRules) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     // clonedSystem.intparam = (double[][]) intparam.clone();
@@ -397,7 +397,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       try {
         clonedSystem = (ClassicVdW) super.clone();
       } catch (Exception ex) {
-        logger.error("Cloning failed.", ex);
+        
       }
 
       return clonedSystem;
@@ -569,7 +569,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       try {
         clonedSystem = (ClassicSRK) super.clone();
       } catch (Exception ex) {
-        logger.error("Cloning failed.", ex);
+        
       }
 
       // clonedSystem.intparam = (double[][]) clonedSystem.intparam.clone();
@@ -682,7 +682,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       try {
         clonedSystem = (ClassicSRKT) super.clone();
       } catch (Exception ex) {
-        logger.error("Cloning failed.", ex);
+        
       }
 
       return clonedSystem;
@@ -987,7 +987,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       try {
         clonedSystem = super.clone();
       } catch (Exception ex) {
-        logger.error("Cloning failed.", ex);
+        
       }
 
       return clonedSystem;

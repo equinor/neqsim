@@ -237,9 +237,7 @@ public class Tank extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    thermoSystem.display();
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override

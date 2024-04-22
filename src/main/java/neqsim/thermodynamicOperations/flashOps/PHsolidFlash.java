@@ -6,8 +6,8 @@
 
 package neqsim.thermodynamicOperations.flashOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -20,7 +20,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class PHsolidFlash extends Flash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PHsolidFlash.class);
+  
 
   Flash tpFlash;
   int refluxPhase = 0;
@@ -43,7 +43,7 @@ public class PHsolidFlash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    // logger.info("enthalpy: " + system.getEnthalpy());
+    // 
     double err = 0;
     int iter = 0;
     double f_func = 0.0;
@@ -62,7 +62,7 @@ public class PHsolidFlash extends Flash {
       t_old = system.getTemperature();
       system.init(3);
       f_func = enthalpyspec - system.getEnthalpy();
-      logger.info("entalp diff " + f_func);
+      
       df_func_dt = (f_func - f_func_old) / (t_old - t_oldold);
 
       err = Math.abs(f_func);
@@ -82,7 +82,7 @@ public class PHsolidFlash extends Flash {
       }
       tpFlash.run();
 
-      logger.info("temp " + system.getTemperature() + " err " + err);
+      
     } while (Math.abs(dt) > 1e-8 && iter < 200);
   }
 

@@ -77,7 +77,7 @@ public class SystemSrkCPAs extends SystemSrkCPA {
     try {
       clonedSystem = (SystemSrkCPAs) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

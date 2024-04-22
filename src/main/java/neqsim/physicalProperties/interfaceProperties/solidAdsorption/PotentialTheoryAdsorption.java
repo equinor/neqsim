@@ -1,7 +1,7 @@
 package neqsim.physicalProperties.interfaceProperties.solidAdsorption;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class PotentialTheoryAdsorption implements AdsorptionInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PotentialTheoryAdsorption.class);
+  
 
   SystemInterface system;
   double[] eps0; // = 7.458; //7.630; // J/mol
@@ -134,8 +134,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
     }
     for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
       surfaceExcessMolFraction[comp] = surfaceExcess[comp] / totalSurfaceExcess;
-      // logger.info("surface excess molfrac " + surfaceExcessMolFraction[comp] + "
-      // mol/kg adsorbent " + surfaceExcess[comp]);
+      // 
     }
   }
 
@@ -170,17 +169,14 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         beta[comp] = Double.parseDouble(dataSet.getString("z0"));
         z0[comp] = Double.parseDouble(dataSet.getString("beta"));
 
-        logger.info("adsorption parameters read ok for "
-            + system.getPhase(0).getComponent(comp).getComponentName() + " eps " + eps0[comp]);
+        
       } catch (Exception ex) {
-        logger.info("Component not found in adsorption DB "
-            + system.getPhase(0).getComponent(comp).getComponentName() + " on solid "
-            + solidMaterial);
-        logger.info("using default parameters");
+        
+        
         eps0[comp] = 7.2;
         beta[comp] = 2.0;
         z0[comp] = 3.2;
-        // logger.error(ex.getMessage(), ex);
+        // 
       }
     }
   }

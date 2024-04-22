@@ -1,7 +1,7 @@
 package neqsim.thermo.phase;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentElectrolyteCPA;
 import neqsim.thermo.component.ComponentEosInterface;
@@ -19,7 +19,7 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
 public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
     implements PhaseCPAInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PhaseElectrolyteCPAOld.class);
+  
 
   public CPAMixing cpaSelect = new CPAMixing();
 
@@ -58,7 +58,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
     try {
       clonedPhase = (PhaseElectrolyteCPAOld) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
 
@@ -565,7 +565,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
     Btemp = getB();
     // Dtemp = getA();
     if (Btemp < 0) {
-      logger.info("b negative in volume calc");
+      
     }
     setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
     int iterations = 0;
@@ -659,7 +659,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
     Btemp = getB();
     // Dtemp = getA();
     if (Btemp < 0) {
-      logger.info("b negative in volume calc");
+      
     }
     setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
     int iterations = 0;
@@ -760,13 +760,13 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
       // double factor1 = 1.0e0, factor2 = 1.0e0;
       err = -R * temperature * dFdV + R * temperature / getMolarVolume() - pressure;
 
-      logger.info("pressure " + -R * temperature * dFdV + " " + R * temperature / getMolarVolume());
+      
       // -pressure;
       dErrdV = -R * temperature * dFdVdV
           - R * temperature * numberOfMolesInPhase / Math.pow(getVolume(), 2.0);
 
-      logger.info("errdV " + dErrdV);
-      logger.info("err " + err);
+      
+      
 
       deltaV = -err / dErrdV;
 

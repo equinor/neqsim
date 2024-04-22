@@ -1,18 +1,18 @@
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Toolkit;
+
+
+
+
+
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
+
+
+
+
 import Jama.Matrix;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel.enhancementFactor.EnhancementFactor;
@@ -29,7 +29,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(FluidBoundary.class);
+  
 
   protected FlowNodeInterface flowNode;
   protected SystemInterface bulkSystem;
@@ -333,7 +333,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
         temp += bulkSystem.getPhase(phase).getComponent(j).getx()
             * binaryMassTransferCoefficient[phase][i][j];
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
     }
     return temp;
@@ -478,40 +478,9 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
 
   /** {@inheritDoc} */
   @Override
-  public void display(String name) {
-    DecimalFormat nf = new DecimalFormat();
-    nf.setMaximumFractionDigits(5);
-    nf.applyPattern("#.#####E0");
-
-    JDialog dialog = new JDialog(new JFrame(), "Node-Report");
-    Container dialogContentPane = dialog.getContentPane();
-    dialogContentPane.setLayout(new BorderLayout());
-    Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-    dialog.setSize(screenDimension.width / 2, screenDimension.height / 2); // pack();
-    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
-    String[][] table = createTable(name);
-    JTable Jtab = new JTable(table, names);
-    JScrollPane scrollpane = new JScrollPane(Jtab);
-    dialogContentPane.add(scrollpane);
-    Jtab.setRowHeight(dialog.getHeight() / table.length);
-    Jtab.setFont(new Font("Serif", Font.PLAIN,
-        dialog.getHeight() / table.length - dialog.getHeight() / table.length / 10));
-    // dialog.pack();
-    dialog.setVisible(true);
-  }
+  public void display(String name) {}
 
   /** {@inheritDoc} */
   @Override
-  public void write(String name, String filename, boolean newfile) {
-    String[][] table = createTable(name);
-    neqsim.dataPresentation.fileHandeling.createTextFile.TextFile file =
-        new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
-    if (newfile) {
-      file.newFile(filename);
-    }
-    file.setOutputFileName(filename);
-    file.setValues(table);
-    file.createFile();
-    getBulkSystem().write(name, filename, false);
-  }
+  public void write(String name, String filename, boolean newfile) {}
 }

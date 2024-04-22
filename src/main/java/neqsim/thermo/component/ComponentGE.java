@@ -6,8 +6,8 @@
 
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseGE;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -26,7 +26,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   protected double dlngammadp = 0;
   protected double dlngammadtdt = 0.0;
   protected double[] dlngammadn;
-  static Logger logger = LogManager.getLogger(ComponentGE.class);
+  
 
   /**
    * <p>
@@ -45,8 +45,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {
-    logger.info("fug coef "
-        + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
+    
     if (referenceStateType.equals("solvent")) {
       fugacityCoefficient =
           gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
@@ -103,7 +102,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
     if (referenceStateType.equals("solvent")) {
       dfugdt = dlngammadt
           + 1.0 / getAntoineVaporPressure(temperature) * getAntoineVaporPressuredT(temperature);
-      logger.info("check this dfug dt - antoine");
+      
     } else {
       dfugdt = dlngammadt + getHenryCoefdT(temperature);
     }

@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import Jama.Matrix;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -17,7 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class SolidFlash1 extends TPflash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(SolidFlash1.class);
+  
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
@@ -79,9 +79,9 @@ public class SolidFlash1 extends TPflash {
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
         x += system.getPhase(k).getComponent(i).getx();
       }
-      // logger.info("x tot " + x + " PHASE " + k);
+      // 
       if (x < 1.0 - 1e-6) {
-        // logger.info("removing phase " + k);
+        // 
         system.setBeta(system.getNumberOfPhases() - 2,
             system.getBeta(system.getNumberOfPhases() - 1));
         system.setBeta(0, 1.0 - system.getBeta(system.getNumberOfPhases() - 1));
@@ -257,14 +257,14 @@ public class SolidFlash1 extends TPflash {
         // ans = dQdBM.solve(dQM.transpose());
       }
       // dQdBM.print(10, 10);
-      // logger.info("BetaStep: ");
+      // 
       // ans.print(30, 30);
 
       betaReductionFactor = 1.0;
-      // logger.info("Oldbeta befor update");
+      // 
       // betaMatrix.print(10, 10);
       betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
-      // logger.info("Beta before multiplying reduction Factoer");
+      // 
       // betaMatrixTemp.print(10, 2);
 
       double minBetaTem = 1000000;
@@ -283,10 +283,10 @@ public class SolidFlash1 extends TPflash {
               1.0 + betaMatrixTemp.get(minBetaTemIndex, 0) / ans.get(minBetaTemIndex, 0);
         }
       }
-      // logger.info("Reduction Factor " + betaReductionFactor);
+      // 
       betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
 
-      // logger.info("Beta after multiplying reduction Factoer");
+      // 
       // betaMatrixTemp.print(10, 2);
 
       betaMatrixOld = betaMatrix.copy();
@@ -294,7 +294,7 @@ public class SolidFlash1 extends TPflash {
       boolean deactivatedPhase = false;
       for (int i = 0; i < system.getNumberOfPhases() - solidsNumber; i++) {
         system.setBeta(i, betaMatrix.get(i, 0));
-        // logger.info("Fluid Phase fraction" + system.getBeta(i));
+        // 
         if (Math.abs(system.getBeta(i)) < 1.0e-10) {
           FluidPhaseActiveDescriptors[i] = 0;
           deactivatedPhase = true;
@@ -303,11 +303,11 @@ public class SolidFlash1 extends TPflash {
 
       Qnew = calcQ();
 
-      // logger.info("Qold = " + Qold);
-      // logger.info("Qnew = " + Qnew);
+      // 
+      // 
 
       if (Qnew > Qold + 1.0e-10 && !deactivatedPhase) {
-        // logger.info("Qnew > Qold...............................");
+        // 
         int iter2 = 0;
         do {
           iter2++;
@@ -372,7 +372,7 @@ public class SolidFlash1 extends TPflash {
     }
     if (tempVar > 0 && tempVar < 1.0) {
       system.setBeta(system.getNumberOfPhases() - 1, tempVar);
-      // logger.info("Solid PhaseFraction " + tempVar);
+      // 
     }
     return tempVar;
   }
@@ -423,7 +423,7 @@ public class SolidFlash1 extends TPflash {
       beta = calcSolidBeta();
       /*
        * for (int i = 0; i < system.getNumberOfPhases() - solidsNumber; i++) { if
-       * (FluidPhaseActiveDescriptors[i] == 0) { logger.info("dQdB " + i + " " + dQdbeta[i]); if
+       * (FluidPhaseActiveDescriptors[i] == 0) {  if
        * (dQdbeta[i] < 0) { FluidPhaseActiveDescriptors[i] = 1; } } }
        */
     } while (Math.abs((beta - oldBeta) / beta) > 1e-6 && iter < 20);
@@ -518,7 +518,7 @@ public class SolidFlash1 extends TPflash {
       }
       double dsoliddn = (solidCandidate - solidCandidateOld) / dn;
       dn = -0.5 * solidCandidate / dsoliddn;
-      logger.info("solid cand " + solidCandidate);
+      
     } while (solidCandidate > 1e-5 && iter < 50);
 
     return 1.0;

@@ -136,7 +136,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
     try {
       clonedComponent = (ComponentModifiedFurstElectrolyteEosMod2004) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedComponent;

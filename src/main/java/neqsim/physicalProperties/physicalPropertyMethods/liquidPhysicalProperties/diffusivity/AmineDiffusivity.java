@@ -1,7 +1,7 @@
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * <p>
@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class AmineDiffusivity extends SiddiqiLucasMethod {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(AmineDiffusivity.class);
+  
 
   /**
    * <p>
@@ -63,7 +63,7 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
                       -2360.7 / liquidPhase.getPhase().getTemperature() - 24.727e-5 * molConsMDEA)
                   * 1e-4;
     } catch (Exception ex) {
-      logger.error("error eff diff calc ", ex);
+      
     }
   }
 

@@ -1,7 +1,7 @@
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseBWRSEos;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -15,7 +15,7 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentBWRS extends ComponentSrk {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ComponentBWRS.class);
+  
 
   int OP = 9;
   int OE = 6;
@@ -54,7 +54,7 @@ public class ComponentBWRS extends ComponentSrk {
         dataSet.next();
         dataSet.getClob("name");
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
 
       for (int i = 0; i < 32; i++) {
@@ -63,9 +63,9 @@ public class ComponentBWRS extends ComponentSrk {
       }
       rhoc = Double.parseDouble(dataSet.getString("rhoc"));
       gammaBWRS = 1.0 / (rhoc * rhoc);
-      // logger.info("gamma " + gammaBWRS);
+      // 
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 
@@ -92,7 +92,7 @@ public class ComponentBWRS extends ComponentSrk {
     try {
       clonedComponent = (ComponentBWRS) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedComponent;

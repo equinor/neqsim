@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -15,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(waterDewPointTemperatureMultiphaseFlash.class);
+  
 
   /**
    * <p>
@@ -52,9 +52,9 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
         system.setTemperature(system.getTemperature() + dT);
         // system.display();
       }
-      // logger.info("dew temperature " + system.getTemperature());
+      // 
     } while ((i < 350 && Math.abs(dT) > 1e-5));
-    logger.info("i " + i);
+    
     // system.display();
   }
 

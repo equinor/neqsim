@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processEquipment.reservoir;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
@@ -18,7 +18,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class WellFlow extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ThrottlingValve.class);
+  
   SystemInterface thermoSystem;
   private double wellProductionIndex = 0;
   double pressureOut = 1.0;
@@ -60,7 +60,7 @@ public class WellFlow extends TwoPortEquipment {
           presout = Math.sqrt(Math.pow(getInletStream().getPressure("bara"), 2.0)
               - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex);
         } else {
-          logger.error("pressure lower that 0");
+          
           throw new RuntimeException(
               new neqsim.util.exception.InvalidInputException("WellFlow", "run: calcOutletPressure",
                   "pressure", "- Outlet pressure is negative" + pressureOut));

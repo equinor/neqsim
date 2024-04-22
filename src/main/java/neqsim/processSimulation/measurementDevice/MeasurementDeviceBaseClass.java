@@ -140,9 +140,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    System.out.println("measured value: " + getMeasuredValue());
-  }
+  public void displayResult() {}
 
   /**
    * <p>

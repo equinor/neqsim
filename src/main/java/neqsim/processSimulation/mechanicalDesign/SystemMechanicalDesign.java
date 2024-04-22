@@ -2,8 +2,8 @@ package neqsim.processSimulation.mechanicalDesign;
 
 import java.util.ArrayList;
 import java.util.Objects;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
@@ -17,7 +17,7 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
  */
 public class SystemMechanicalDesign implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(SystemMechanicalDesign.class);
+  
 
   ProcessSystem processSystem = null;
   double totalPlotSpace = 0.0;
@@ -79,7 +79,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
           numberOfModules++;
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
     }
   }

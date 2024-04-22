@@ -6,8 +6,8 @@
 
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.attractiveEosTerm.AtractiveTermMatCopPRUMRNew;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermCPAstatoil;
@@ -79,7 +79,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   protected double[] dAdndn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   protected double[] dBdndn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   private AttractiveTermInterface attractiveParameter;
-  static Logger logger = LogManager.getLogger(ComponentEos.class);
+  
 
   /**
    * <p>
@@ -118,7 +118,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     try {
       clonedComponent = (ComponentEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     clonedComponent.setAttractiveParameter(this.getAttractiveParameter().clone());
@@ -213,8 +213,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     } else if (i == 19) {
       setAttractiveParameter(new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU()));
     } else {
-      logger.error("error selecting an alpha formultaion term");
-      logger.info("ok setting alpha function");
+      
+      
     }
   }
 

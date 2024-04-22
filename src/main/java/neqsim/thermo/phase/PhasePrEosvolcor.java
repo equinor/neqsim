@@ -626,7 +626,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     try {
       clonedPhase = (PhasePrEosvolcor) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedPhase;

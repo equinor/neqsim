@@ -85,9 +85,7 @@ public class ReBoiler extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    System.out.println("out Temperature " + reboilerDuty);
-  }
+  public void displayResult() {}
 
   /**
    * <p>

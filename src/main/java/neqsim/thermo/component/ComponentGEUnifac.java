@@ -7,8 +7,8 @@
 package neqsim.thermo.component;
 
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseInterface;
@@ -24,7 +24,7 @@ import neqsim.thermo.phase.PhaseType;
  */
 public class ComponentGEUnifac extends ComponentGEUniquac {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ComponentGEUnifac.class);
+  
 
   ArrayList<UNIFACgroup> unifacGroups = new ArrayList<UNIFACgroup>();
   UNIFACgroup[] unifacGroupsArray = new UNIFACgroup[0];
@@ -54,7 +54,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
       int intNumb = (int) Math.round(number) - 2;
       unifacGroups.add(new UNIFACgroup(1, 2));
       unifacGroups.add(new UNIFACgroup(2, intNumb));
-      logger.info("adding unifac pseudo.." + intNumb);
+      
       return;
     }
 
@@ -79,7 +79,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
       }
 
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 

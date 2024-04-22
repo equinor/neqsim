@@ -1,7 +1,7 @@
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseDesmukhMather;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -18,7 +18,7 @@ public class ComponentDesmukhMather extends ComponentGE {
   private static final long serialVersionUID = 1000;
 
   private double deshMathIonicDiameter = 1.0;
-  static Logger logger = LogManager.getLogger(ComponentDesmukhMather.class);
+  
 
   /**
    * <p>
@@ -42,14 +42,14 @@ public class ComponentDesmukhMather extends ComponentGE {
           dataSet.getString("FORMULA");
         } catch (Exception ex) {
           dataSet.close();
-          logger.info("no parameters in tempcomp -- trying comp.. " + name);
+          
           dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           dataSet.next();
         }
         deshMathIonicDiameter = Double.parseDouble(dataSet.getString("DeshMatIonicDiameter"));
       }
     } catch (Exception ex) {
-      logger.error("error in comp", ex);
+      
     }
   }
 
@@ -98,7 +98,7 @@ public class ComponentDesmukhMather extends ComponentGE {
     gamma = getMolality(phase) * ((PhaseDesmukhMather) phase).getSolventMolarMass()
         * Math.exp(lngamma) / getx();
     lngamma = Math.log(gamma);
-    logger.info("gamma " + componentName + " " + gamma);
+    
     return gamma;
   }
 

@@ -79,7 +79,7 @@ public class SystemBWRSEos extends SystemEos {
     try {
       clonedSystem = (SystemBWRSEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

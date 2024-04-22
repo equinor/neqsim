@@ -1,12 +1,12 @@
 package neqsim.processSimulation.mechanicalDesign;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
+
+
 import java.util.Hashtable;
 import java.util.Objects;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
+
+
+
 import neqsim.processSimulation.costEstimation.UnitCostEstimateBaseClass;
 import neqsim.processSimulation.mechanicalDesign.designStandards.AdsorptionDehydrationDesignStandard;
 import neqsim.processSimulation.mechanicalDesign.designStandards.CompressorDesignStandard;
@@ -1020,23 +1020,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * displayResults.
    * </p>
    */
-  public void displayResults() {
-    JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
-    Container dialogContentPane = dialog.getContentPane();
-    dialogContentPane.setLayout(new BorderLayout());
-
-    String[][] table = new String[3][3]; // createTable(getProcessEquipment().getName());
-    table[1][0] = getProcessEquipment().getName();
-    table[1][1] = Double.toString(getWeightTotal());
-    table[1][2] = Double.toString(getVolumeTotal());
-    String[] names = {"", "Volume", "Weight"};
-    JTable Jtab = new JTable(table, names);
-    JScrollPane scrollpane = new JScrollPane(Jtab);
-    dialogContentPane.add(scrollpane);
-    dialog.setSize(800, 600); // pack();
-    // dialog.pack();
-    dialog.setVisible(true);
-  }
+  public void displayResults() {}
 
   /**
    * <p>

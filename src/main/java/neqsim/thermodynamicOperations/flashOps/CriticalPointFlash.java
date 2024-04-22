@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 import neqsim.MathLib.matrix.SimpleMatrix;
 //import org.ejml.simple.SimpleMatrix;
@@ -17,7 +17,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class CriticalPointFlash extends Flash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(CriticalPointFlash.class);
+  
 
   SimpleMatrix Mmatrix = null;
   SimpleMatrix HeidemannMmatrix = null;
@@ -85,8 +85,7 @@ public class CriticalPointFlash extends Flash {
         }
       }
       HeidemannMmatrix.print();
-      logger.info("Q det " + HeidemannMmatrix.determinant() + " temperature "
-          + system.getTemperature() + " pressure " + system.getPressure());
+      
     }
   }
 
@@ -214,7 +213,7 @@ public class CriticalPointFlash extends Flash {
         }
         double oldTemp = system.getTemperature();
         system.setTemperature(oldTemp + dT);
-        logger.info("Temperature " + oldTemp + " dT " + dT + " evalMatrix " + evalMatrix.get(0, 0));
+        
       } while (Math.abs(dT) > 1e-8 && iter < 112); // && (Math.abs(dT) < Math.abs(dTOld) ||
       // iter < 3));
 
@@ -235,8 +234,7 @@ public class CriticalPointFlash extends Flash {
         dVOld = dVc;
         dVc = -valstart / ddetdV;
         system.getPhase(0).setTotalVolume(system.getPhase(0).getVolume() + 0.5 * dVc);
-        logger.info("Volume " + system.getPhase(0).getVolume() + " dVc " + dVc + " tddpp "
-            + valstart + " pressure " + system.getPressure());
+        
       } while (Math.abs(dVc) > 1e-5 && iter < 112 && (Math.abs(dVc) < Math.abs(dVOld) || iter < 3));
     }
     system.display();

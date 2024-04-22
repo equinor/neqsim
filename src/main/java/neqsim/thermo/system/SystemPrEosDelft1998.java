@@ -78,7 +78,7 @@ public class SystemPrEosDelft1998 extends SystemPrEos {
     try {
       clonedSystem = (SystemPrEosDelft1998) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

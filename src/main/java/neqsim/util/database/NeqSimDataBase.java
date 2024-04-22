@@ -9,8 +9,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import org.h2.jdbc.JdbcSQLSyntaxErrorException;
 
 /**
@@ -24,7 +24,7 @@ import org.h2.jdbc.JdbcSQLSyntaxErrorException;
 public class NeqSimDataBase
     implements neqsim.util.util.FileSystemSettings, java.io.Serializable, AutoCloseable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(NeqSimDataBase.class);
+  
 
   /** Constant <code>dataBasePath=""</code>. */
   public static String dataBasePath = "";
@@ -61,7 +61,7 @@ public class NeqSimDataBase
       databaseConnection = this.openConnection();
       statement = databaseConnection.createStatement();
     } catch (Exception ex) {
-      logger.error("SQLException ", ex);
+      
       throw new RuntimeException(ex);
     }
   }
@@ -111,7 +111,7 @@ public class NeqSimDataBase
         return DriverManager.getConnection(getConnectionString());
       }
     } catch (Exception ex) {
-      logger.error("error loading NeqSimDataBase... ", ex);
+      
       throw new RuntimeException(ex);
     } finally {
       try {
@@ -119,7 +119,7 @@ public class NeqSimDataBase
           ctx.close();
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
     }
   }
@@ -174,9 +174,9 @@ public class NeqSimDataBase
       }
       return getStatement().execute(sqlString);
     } catch (Exception ex) {
-      logger.error("error in NeqSimDataBase ", ex);
+      
       // TODO: should be checked against database type.
-      logger.error("The database must be registered on the local DBMS to work.");
+      
       throw new RuntimeException(ex);
     }
   }
@@ -196,9 +196,9 @@ public class NeqSimDataBase
       }
       getStatement().executeQuery(sqlString);
     } catch (Exception ex) {
-      logger.error("error in NeqSimDataBase ", ex);
+      
       // TODO: should be checked against database type.
-      logger.error("The database must be registered on the local DBMS to work.");
+      
       throw new RuntimeException(ex);
     }
   }
@@ -221,7 +221,7 @@ public class NeqSimDataBase
       }
       throw new RuntimeException(ex);
     } catch (Exception ex) {
-      logger.error("error loading NeqSimbataBase ", ex);
+      
       throw new RuntimeException(ex);
     }
   }
@@ -324,7 +324,7 @@ public class NeqSimDataBase
         Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
       }
     } catch (Exception ex) {
-      logger.error("error loading database driver.. ", ex);
+      
       throw new RuntimeException(ex);
     }
   }
@@ -464,7 +464,7 @@ public class NeqSimDataBase
       String sqlStringModified = sqlString.replace("file:/C:","C:");
       database.execute(sqlStringModified);
     } catch (Exception ex) {
-      logger.error("Failed updating table " + tableName, ex);
+      
     }
   }
 
@@ -482,7 +482,7 @@ public class NeqSimDataBase
       database.execute(sqlString);
     } catch (Exception ex) {
       updateTable(tableName);
-      logger.error("Failed updating table " + tableName, ex);
+      
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("NeqSimDataBase",
           "replaceTable", "path", "- Resource " + path + " not found"));
     }
@@ -541,7 +541,7 @@ public class NeqSimDataBase
 
       h2IsInitialized = true;
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 }

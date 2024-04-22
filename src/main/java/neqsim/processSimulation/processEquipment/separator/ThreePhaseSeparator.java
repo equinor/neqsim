@@ -212,27 +212,7 @@ public class ThreePhaseSeparator extends Separator {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    thermoSystem.display("from here " + getName());
-    // gasOutStream.getThermoSystem().initPhysicalProperties();
-    // waterOutStream.getThermoSystem().initPhysicalProperties();
-    // try {
-    // System.out.println("Gas Volume Flow Out " +
-    // gasOutStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase()*gasOutStream.getThermoSystem().getPhase(0).getMolarMass()/gasOutStream.getThermoSystem().getPhase(0).getPhysicalProperties().getDensity()*3600.0
-    // + " m^3/h");
-    // } finally {
-    // }
-    // try {
-    // waterOutStream.getThermoSystem().display();
-    // waterOutStream.run();
-    // System.out.println("Water/MEG Volume Flow Out " +
-    // waterOutStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase()*waterOutStream.getThermoSystem().getPhase(0).getMolarMass()/waterOutStream.getThermoSystem().getPhase(0).getPhysicalProperties().getDensity()*3600.0
-    // + " m^3/h");
-    // System.out.println("Density MEG " +
-    // waterOutStream.getThermoSystem().getPhase(0).getPhysicalProperties().getDensity());
-    // } finally {
-    // }
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override

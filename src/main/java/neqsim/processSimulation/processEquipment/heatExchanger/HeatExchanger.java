@@ -383,10 +383,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    outStream[0].displayResult();
-    outStream[1].displayResult();
-  }
+  public void displayResult() {}
 
   /**
    * <p>

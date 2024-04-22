@@ -6,8 +6,8 @@
 
 package neqsim.physicalProperties.mixingRule;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -22,7 +22,7 @@ import neqsim.thermo.phase.PhaseInterface;
 public class PhysicalPropertyMixingRule
         implements PhysicalPropertyMixingRuleInterface, ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
-    static Logger logger = LogManager.getLogger(PhysicalPropertyMixingRule.class);
+    
 
     public double[][] Gij;
 
@@ -41,7 +41,7 @@ public class PhysicalPropertyMixingRule
         try {
             mixRule = (PhysicalPropertyMixingRule) super.clone();
         } catch (Exception ex) {
-            logger.error("Cloning failed.", ex);
+            
         }
 
         double[][] Gij2 = Gij.clone();
@@ -79,7 +79,7 @@ public class PhysicalPropertyMixingRule
     /** {@inheritDoc} */
     @Override
     public void initMixingRules(PhaseInterface phase) {
-        // logger.info("reading mix Gij viscosity..");
+        // 
         Gij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
         for (int l = 0; l < phase.getNumberOfComponents(); l++) {
             if (phase.getComponent(l).isIsTBPfraction() || phase.getComponent(l).getIonicCharge() != 0) {

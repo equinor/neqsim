@@ -58,9 +58,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    getOperations().displayResult();
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override

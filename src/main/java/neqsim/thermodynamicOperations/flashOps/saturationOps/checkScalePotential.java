@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class checkScalePotential extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(checkScalePotential.class);
+  
 
   String saltName;
   int phaseNumber = 1;
@@ -31,7 +31,7 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
   public checkScalePotential(SystemInterface system, int phaseNumber) {
     super(system);
     this.phaseNumber = phaseNumber;
-    logger.info("ok ");
+    
   }
 
   /** {@inheritDoc} */
@@ -101,9 +101,9 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
         if (system.getPhase(phaseNumber).hasComponent(name1)
             && system.getPhase(phaseNumber).hasComponent(name2)) {
           numb++;
-          logger.info("reaction added: " + name1 + " " + name2);
-          logger.info("theoretic Ksp = " + ksp);
-          logger.info("theoretic lnKsp = " + Math.log(ksp));
+          
+          
+          
           int compNumb1 = system.getPhase(phaseNumber).getComponent(name1).getComponentNumber();
           int compNumb2 = system.getPhase(phaseNumber).getComponent(name2).getComponentNumber();
           int waterompNumb =
@@ -156,13 +156,13 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
             stocKsp = Math.pow(x1, stoc1) * Math.pow(x2, stoc2) * Math.pow(x3, 3) * Math.pow(x4, 2);
           }
 
-          logger.info("calc Ksp " + kspReac);
-          logger.info("stoc Ksp " + stocKsp);
-          logger.info("activity " + kspReac / stocKsp);
-          logger.info("mol/kg " + x1);
+          
+          
+          
+          
 
           double scalePotentialFactor = kspReac / ksp;
-          logger.info("Scale potential factor " + scalePotentialFactor);
+          
 
           resultTable[numb][0] = saltName; // name1+ " " +name2;
           resultTable[numb][1] = Double.toString(scalePotentialFactor);
@@ -174,7 +174,7 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
         }
       }
     } catch (Exception ex) {
-      logger.error("failed ", ex);
+      
 
       if (system.getPhase(phaseNumber).hasComponent("MEG")) {
         system.addComponent("MEG", numberOfMolesMEG * 0.9999, phaseNumber);
@@ -192,12 +192,12 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
   /** {@inheritDoc} */
   @Override
   public String[][] getResultTable() {
-    logger.info("checking table...scale " + resultTable[0][0]);
-    logger.info("checking table...scale " + resultTable[0][1]);
-    logger.info("checking table...scale " + resultTable[0][2]);
-    logger.info("checking table...scale " + resultTable[1][0]);
-    logger.info("checking table...scale " + resultTable[1][1]);
-    logger.info("checking table...scale " + resultTable[1][2]);
+    
+    
+    
+    
+    
+    
     return resultTable;
   }
 }

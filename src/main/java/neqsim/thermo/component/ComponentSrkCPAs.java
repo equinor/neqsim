@@ -50,7 +50,7 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
     try {
       clonedComponent = (ComponentSrkCPAs) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedComponent;

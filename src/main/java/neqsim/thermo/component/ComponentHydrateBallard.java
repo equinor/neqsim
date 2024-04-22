@@ -1,7 +1,7 @@
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
@@ -15,7 +15,7 @@ import neqsim.thermo.phase.PhaseType;
  */
 public class ComponentHydrateBallard extends ComponentHydrate {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ComponentHydrateBallard.class);
+  
 
   /**
    * <p>
@@ -72,10 +72,7 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         }
         val += getCavprwat()[hydrateStructure][cavType] * Math.log(1.0 - tempy);
       }
-      logger.info("val " + val + " wateralphaRef " + wateralphaRef
-          + " calcChemPotEmpty(phase, numberOfComps, temp, pres, hydrateStructure) "
-          + calcChemPotEmpty(phase, numberOfComps, temp, pres, hydrateStructure) + " "
-          + calcChemPotIdealWater(phase, numberOfComps, temp, pres, hydrateStructure));
+      
       fugacityCoefficient =
           alphaWater
               * Math.exp(wateralphaRef + val
@@ -85,7 +82,7 @@ public class ComponentHydrateBallard extends ComponentHydrate {
       // System.out.println("fugcoef " + tempfugcoef + "structure " +
       // (hydrateStruct+1));
 
-      logger.info("structure " + (hydrateStructure + 1));
+      
     } else {
       fugacityCoefficient = 1e50;
     }
@@ -147,10 +144,10 @@ public class ComponentHydrateBallard extends ComponentHydrate {
     }
     // System.out.println("integral " + val);
     if (Double.isNaN(val)) {
-      logger.error("val NaN ...");
+      
     }
     if (Double.isInfinite(val)) {
-      logger.error("val Infinite ...");
+      
     }
     return val;
   }
@@ -172,10 +169,10 @@ public class ComponentHydrateBallard extends ComponentHydrate {
     pot = Math.exp(-pot / (phase.getTemperature())) * radius * radius;
 
     if (Double.isNaN(pot)) {
-      logger.error("pot NaN ...");
+      
     }
     if (Double.isInfinite(pot)) {
-      logger.error("pot Infinite ...");
+      
     }
     return pot;
   }
@@ -199,10 +196,10 @@ public class ComponentHydrateBallard extends ComponentHydrate {
     // System.out.println("diff2 " + diff2);
     // System.out.println("delt " + delt);
     if (Double.isNaN(delt)) {
-      logger.error("delt NaN ...");
+      
     }
     if (Double.isInfinite(delt)) {
-      logger.error("delt Infinite ...");
+      
     }
     return delt;
   }

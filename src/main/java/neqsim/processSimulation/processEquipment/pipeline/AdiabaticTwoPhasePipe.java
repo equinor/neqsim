@@ -245,7 +245,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
       double outP = calcPressureOut();
       if (outP < 1e-10 || Double.isNaN(outP)) {
         system.setPressure(0.001);
-        logger.debug("pressure too low in pipe....");
+        
       }
       system.setPressure(outP);
       testOps = new ThermodynamicOperations(system);
@@ -318,9 +318,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    system.display();
-  }
+  public void displayResult() {}
 
   /**
    * <p>getSuperficialVelocity.</p>

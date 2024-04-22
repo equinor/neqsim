@@ -51,7 +51,7 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
     try {
       attractiveTerm = (AttractiveTermSchwartzentruber) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return attractiveTerm;

@@ -1,7 +1,7 @@
 package neqsim.thermo.phase;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.component.ComponentBWRS;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.component.ComponentBWRS;
  */
 public class PhaseBWRSEos extends PhaseSrkEos {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PhaseBWRSEos.class);
+  
 
   int OP = 9;
   int OE = 6;
@@ -35,7 +35,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     try {
       clonedPhase = (PhaseBWRSEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedPhase;
@@ -373,7 +373,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   public double calcPressure2() {
     // System.out.println("here............");
     double temp = 0.0;
-    logger.info("molar density " + getMolarDensity());
+    
     for (int i = 0; i < OP; i++) {
       temp += ((ComponentBWRS) componentArray[0]).getBP(i) * Math.pow(getMolarDensity(), 1.0 + i);
     }
@@ -405,7 +405,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
             * ((ComponentBWRS) componentArray[0]).getBE(i) * Math.pow(moldens[j], 3.0 + 2.0 * i);
       }
       pres[j] = temp / 100.0;
-      logger.info("moldens " + moldens[j] * 16.01 + "  pres " + pres[j]);
+      
     }
   }
 
@@ -553,7 +553,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
       guesPres = -R * temperature * dFdV() + R * temperature / getMolarVolume();
       guesPresdV = -R * temperature * dFdVdV()
           - getNumberOfMolesInPhase() * R * temperature / Math.pow(getTotalVolume(), 2.0);
-      logger.info("gues pres " + guesPres);
+      
       setMolarVolume(getMolarVolume()
           - 1.0 / (guesPresdV * getNumberOfMolesInPhase()) * (guesPres - pressure) / 50.0);
       Z = pressure * getMolarVolume() / (R * temperature);

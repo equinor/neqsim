@@ -1,7 +1,7 @@
 package neqsim.thermo.util.empiric;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
@@ -16,7 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class DuanSun {
-  static Logger logger = LogManager.getLogger(DuanSun.class);
+  
 
   double[] c = new double[] {0.1, 0.2, 0.3, 0.4, 0.5};
   double[] d = new double[] {0.1, 0.2, 0.3, 0.4, 0.5};
@@ -663,7 +663,7 @@ public class DuanSun {
       // fluid1.init(0);
       fluid1.display();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     // fluid1.setMolarComposition(new double[] {0.5, 0.5, 0.0, 0.0});
     fluid1.init(1);
@@ -672,7 +672,7 @@ public class DuanSun {
       // fluid1.init(0);
       fluid1.display();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     String fluidname = "" + "";
     fluid1.saveObjectToFile(fluidname, fluidname);

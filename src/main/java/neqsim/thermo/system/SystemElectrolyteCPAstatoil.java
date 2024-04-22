@@ -49,7 +49,7 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
     try {
       clonedSystem = (SystemElectrolyteCPAstatoil) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

@@ -41,9 +41,7 @@ public class CompressorMonitor extends MeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    System.out.println("measured speed " + compressor.getSpeed());
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override

@@ -1,7 +1,7 @@
 package neqsim.thermo.phase;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUnifacPSRK;
@@ -17,7 +17,7 @@ import neqsim.thermo.component.ComponentGEUniquac;
  */
 public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PhaseGEUnifacPSRK.class);
+  
 
   /**
    * <p>
@@ -104,7 +104,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
             dataSet.getClob("MainGroup");
           } catch (Exception ex) {
             dataSet.close();
-            logger.error(ex.getMessage(), ex);
+            
             dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb WHERE MainGroup="
                 + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
             dataSet.next();
@@ -115,11 +115,11 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
           dataSet.close();
         } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
+          
         }
       }
     }
-    logger.info("finished finding interaction coefficient...B");
+    
   }
 
   /**
@@ -142,7 +142,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
             dataSet.next();
             dataSet.getClob("MainGroup");
           } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            
             dataSet.close();
             dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc WHERE MainGroup="
                 + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
@@ -154,10 +154,10 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
           dataSet.close();
         } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
+          
         }
       }
     }
-    logger.info("finished finding interaction coefficient...C");
+    
   }
 }

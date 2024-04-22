@@ -1,7 +1,7 @@
 package neqsim.thermo.phase;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 import neqsim.MathLib.matrix.DMatrixRMaj;
 import neqsim.MathLib.matrix.CommonOps_DDRM;
@@ -29,7 +29,7 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
 public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     implements PhaseCPAInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PhaseElectrolyteCPA.class);
+  
 
   public CPAMixing cpaSelect = new CPAMixing();
   public CPAMixingInterface cpamix;
@@ -94,7 +94,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     try {
       clonedPhase = (PhaseElectrolyteCPA) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
     // clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
@@ -727,7 +727,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       try {
         hessianInvers = hessianMatrix.invert();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         return false;
       }
 
@@ -846,7 +846,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     try {
       // molarVolume(pressure, temperature, A, B, pt);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     double BonVold = BonV;
     double Btemp = 0;
@@ -929,7 +929,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     double d2 = 0;
     Btemp = getB();
     if (Btemp < 0) {
-      logger.info("b negative in volume calc");
+      
     }
     calcDelta();
 
@@ -1059,7 +1059,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     double d2 = 0;
     double Btemp = getB();
     if (Btemp < 0) {
-      logger.info("b negative in volume calc");
+      
     }
     calcDelta();
 
@@ -1205,7 +1205,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     double d2 = 0;
     Btemp = getB();
     if (Btemp < 0) {
-      logger.info("b negative in volume calc");
+      
     }
     calcDelta();
 

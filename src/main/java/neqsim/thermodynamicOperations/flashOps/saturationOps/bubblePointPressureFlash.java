@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class bubblePointPressureFlash extends constantDutyPressureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(bubblePointPressureFlash.class);
+  
 
   /**
    * <p>
@@ -41,7 +41,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
     double ytotal = 1;
     // double deriv = 0, funk = 0;
     boolean chemSolved = true;
-    // logger.info("starting");
+    // 
     // system.setPressure(1.0);
     system.init(0);
     system.setNumberOfPhases(2);
@@ -107,8 +107,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
             system.getPhases()[0].getComponents()[i]
                 .setx(system.getPhases()[0].getComponents()[i].getK()
                     * system.getPhases()[1].getComponents()[i].getz());
-            // logger.info("y err " +
-            // Math.abs(system.getPhases()[0].getComponents()[i].getx()-yold));
+            // 
           } while (Math.abs(system.getPhases()[0].getComponents()[i].getx() - yold) / yold > 1e-8);
           ktot += Math.abs(system.getPhases()[1].getComponents()[i].getK() - 1.0);
         }
@@ -119,7 +118,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
                     * system.getPhases()[1].getComponents()[i].getz());
           } else {
             system.init(0);
-            logger.error("k err. : nan");
+            
           }
         }
 
@@ -127,7 +126,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
           ytotal += system.getPhases()[0].getComponents()[i].getx();
         }
-        // zlogger.info("ytot " + ytotal + " pres " + system.getPressure());
+        // z
 
         // system.getPhase(0).normalize();
 
@@ -149,8 +148,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
           run();
           return;
         }
-        // logger.info("iter in bub calc " + iterations + " pres " +
-        // system.getPressure()+ " ytot " + ytotal + " chem iter " + chemIter);
+        // 
       } while (((((Math.abs(ytotal - 1.0)) > 1e-7)
           || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-6)
           && (iterations < maxNumberOfIterations)) || iterations < 5);
@@ -160,18 +158,16 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
         system.setBeta(1, 1.0 - 1e-10);
         system.setBeta(0, 1e-10);
       }
-      // logger.info("iter in bub calc " + iterations + " pres " +
-      // system.getPressure()+ " chem iter " + chemIter);
+      // 
     } while ((Math.abs(oldChemPres - system.getPressure()) / oldChemPres > 1e-6 || chemIter < 2
         || !chemSolved) && chemIter < 20);
     // if(system.getPressure()>300) system.setPressure(300.0);
-    // logger.info("iter in bub calc " + iterations + " pres " +
-    // system.getPressure()+ " chem iter " + chemIter);
-    // logger.info("iter " + iterations + " XTOT " +ytotal + " ktot " +ktot);
+    // 
+    // 
     system.init(1);
     if (Math.abs(ytotal - 1.0) > 1e-4
         || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
-      logger.info("ytot " + Math.abs(ytotal - 1.0));
+      
       setSuperCritical(true);
     }
   }

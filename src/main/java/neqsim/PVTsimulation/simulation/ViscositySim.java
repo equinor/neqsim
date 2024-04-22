@@ -1,8 +1,8 @@
 package neqsim.PVTsimulation.simulation;
 
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompViscosity.linearLiquidModel.ViscosityFunction;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
@@ -19,7 +19,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class ViscositySim extends BasePVTsimulation {
-  static Logger logger = LogManager.getLogger(ViscositySim.class);
+  
 
   double[] temperature = null;
 
@@ -90,7 +90,7 @@ public class ViscositySim extends BasePVTsimulation {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error", ex);
+      
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

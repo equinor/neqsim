@@ -72,7 +72,7 @@ public class SystemPrEos extends SystemEos {
     try {
       clonedSystem = (SystemPrEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

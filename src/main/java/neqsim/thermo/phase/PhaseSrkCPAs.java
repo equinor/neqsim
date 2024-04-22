@@ -31,7 +31,7 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
     try {
       clonedPhase = (PhaseSrkCPAs) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     return clonedPhase;
   }

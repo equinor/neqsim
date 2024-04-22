@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
@@ -17,7 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class SaturateWithWater extends QfuncFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(SaturateWithWater.class);
+  
 
   Flash tpFlash;
 
@@ -77,9 +77,9 @@ public class SaturateWithWater extends QfuncFlash {
       hasAq = system.hasPhaseType("aqueous");
     } while ((i < 50 && Math.abs(dn) > 1e-7) || !hasAq && i <= 50);
     if (i == 50) {
-      logger.error("could not find solution - in water saturate : dn  " + dn);
+      
     }
-    // logger.info("i " + i + " dn " + dn);
+    // 
     system.removePhase(system.getNumberOfPhases() - 1);
     tpFlash.run();
   }
@@ -119,7 +119,7 @@ public class SaturateWithWater extends QfuncFlash {
       testSystem.display();
       // testOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     // testSystem.display();
   }

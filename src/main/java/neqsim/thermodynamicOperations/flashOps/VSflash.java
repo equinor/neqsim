@@ -109,25 +109,25 @@ public class VSflash extends Flash {
     double oldPres = system.getPressure(), nyPres = system.getPressure(),
         nyTemp = system.getTemperature(), oldTemp = system.getTemperature();
     double iterations = 1;
-    // logger.info("Sspec: " + Sspec);
+    // 
     do {
       iterations++;
       oldPres = nyPres;
       oldTemp = nyTemp;
       system.init(3);
-      // logger.info("Sentr: " + system.getEntropy());
-      // logger.info("calcdQdT(): " + calcdQdT());
-      // logger.info("dQdP: " + calcdQdP());
-      // logger.info("dQdT: " + calcdQdT());
+      // 
+      // 
+      // 
+      // 
       nyPres = oldPres - (iterations) / (iterations + 10.0) * calcdQdP() / calcdQdPP();
       nyTemp = oldTemp - (iterations) / (iterations + 10.0) * calcdQdT() / calcdQdTT();
-      // logger.info("volume: " + system.getVolume());
-      // logger.info("inernaleng: " + system.getInternalEnergy());
+      // 
+      // 
       system.setPressure(nyPres);
       system.setTemperature(nyTemp);
       tpFlash.run();
-      // logger.info("error1: " + (Math.abs((nyPres - oldPres) / (nyPres))));
-      // logger.info("error2: " + (Math.abs((nyTemp - oldTemp) / (nyTemp))));
+      // 
+      // 
     } while (Math.abs((nyPres - oldPres) / (nyPres))
         + Math.abs((nyTemp - oldTemp) / (nyTemp)) > 1e-9 && iterations < 1000);
     return nyPres;
@@ -171,7 +171,7 @@ public class VSflash extends Flash {
       testOps.VSflash(volume, entropy);
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 }

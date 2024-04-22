@@ -1,8 +1,8 @@
 package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
@@ -28,7 +28,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
-  static Logger logger = LogManager.getLogger(GTSurfaceTensionODE.class);
+  
 
   private boolean initialized = false;
   private int ncomp; // Number of components.
@@ -141,8 +141,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
       maxerr = Math.max(maxerr, Math.abs(this.mueq[i] / mueq2[i] - 1.0));
     }
     if (maxerr > this.reltol) {
-      logger.error("Flash is not properly solved.  Maximum relative error in chemical potential:  "
-          + maxerr + " > " + reltol);
+      
       throw new RuntimeException("Flash not solved!");
     }
     this.initialized = true;
@@ -337,7 +336,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     if (iter >= this.maxit) {
       // System.out.printf("norm(f): %e\n", normf);
       for (i = 0; i < this.ncomp - 1; i++) {
-        logger.info("f[" + i + "]: " + f[this.algidx[i]]);
+        
       }
       throw new RuntimeException("Failed to solve for density");
     }

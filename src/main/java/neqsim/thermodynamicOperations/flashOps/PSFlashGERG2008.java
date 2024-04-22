@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class PSFlashGERG2008 extends QfuncFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PSFlashGERG2008.class);
+  
 
   double Sspec = 0;
   Flash tpFlash;
@@ -100,7 +100,7 @@ public class PSFlashGERG2008 extends QfuncFlash {
   public void run() {
     tpFlash.run();
     if (system.getNumberOfPhases() > 1) {
-      logger.error("PSFlashGERG2008 only supprt single phase gas calculations");
+      
       return;
     }
     solveQ();

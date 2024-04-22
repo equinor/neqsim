@@ -3,8 +3,8 @@ package neqsim.processSimulation.processEquipment.util;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 
@@ -18,7 +18,7 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
  */
 public class Calculator extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Calculator.class);
+  
 
   ArrayList<ProcessEquipmentInterface> inputVariable = new ArrayList<ProcessEquipmentInterface>();
   private ProcessEquipmentInterface outputVariable;
@@ -97,8 +97,8 @@ public class Calculator extends ProcessEquipmentBaseClass {
       outputVariable.run();
       outputVariable.setCalculationIdentifier(id);
     } catch (Exception ex) {
-      logger.info("flow rate error " + sum);
-      logger.error("error in calculator", ex);
+      
+      
     }
     setCalculationIdentifier(id);
   }

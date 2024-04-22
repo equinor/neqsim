@@ -59,7 +59,7 @@ public class SystemUMRPRUEos extends SystemPrEos {
     try {
       clonedSystem = (SystemUMRPRUEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

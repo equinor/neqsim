@@ -6,16 +6,16 @@
 
 package neqsim.statistics.parameterFitting;
 
-import java.awt.Container;
-import java.awt.FlowLayout;
+
+
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
+
+
+
+
 import Jama.Matrix;
 
 /**
@@ -27,7 +27,7 @@ import Jama.Matrix;
  * @version $Id: $Id
  */
 public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterface {
-  static Logger logger = LogManager.getLogger(StatisticsBaseClass.class);
+  
 
   protected SampleSet sampleSet = new SampleSet();
   protected double chiSquare = 0;
@@ -450,176 +450,18 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * displayValues.
    * </p>
    */
-  public void displayValues() {
-    DecimalFormat nf = new DecimalFormat();
-    nf.setMaximumFractionDigits(5);
-    nf.applyPattern("#.#####E0");
-    JDialog dialog = new JDialog(new JFrame(), "Results from Parameter Fitting");
-    Container dialogContentPane = dialog.getContentPane();
-    dialogContentPane.setLayout(new FlowLayout());
-
-    valTable = new String[sampleSet.getLength()
-        + 10][sampleSet.getSample(0).getDependentValues().length + 7];
-    String[] names = {"point", "x", "expY", "calcY", "abs dev [%]", "reference", "description"};
-    valTable[0][0] = "";
-    valTable[0][1] = "";
-    valTable[0][2] = "";
-    valTable[0][3] = "";
-    StringBuffer buf = new StringBuffer();
-    FieldPosition test = new FieldPosition(0);
-
-    for (int j = 0; j < sampleSet.getLength(); j++) {
-      valTable[j + 1][0] = "" + j;
-      buf = new StringBuffer();
-      valTable[j + 1][1] = nf.format(xVal[0][j], buf, test).toString();
-      buf = new StringBuffer();
-      valTable[j + 1][2] = nf.format(expVal[j], buf, test).toString();
-      buf = new StringBuffer();
-      valTable[j + 1][3] = nf.format(calcVal[j], buf, test).toString();
-      buf = new StringBuffer();
-      valTable[j + 1][4] = nf.format(absDev[j], buf, test).toString();
-      buf = new StringBuffer();
-      valTable[j + 1][5] = sampleSet.getSample(j).getReference();
-      valTable[j + 1][6] = sampleSet.getSample(j).getDescription();
-    }
-
-    for (int j = 0; j < sampleSet.getLength(); j++) {
-      for (int i = 0; i < sampleSet.getSample(j).getDependentValues().length; i++) {
-        buf = new StringBuffer();
-        valTable[j + 1][7 + i] =
-            nf.format(sampleSet.getSample(j).getDependentValue(i), buf, test).toString();
-      }
-    }
-
-    JTable Jtab = new JTable(valTable, names);
-    JScrollPane scrollpane = new JScrollPane(Jtab);
-    dialogContentPane.add(scrollpane);
-    dialog.pack();
-    dialog.setVisible(true);
-  }
+  public void displayValues() {}
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    DecimalFormat nf = new DecimalFormat();
-    nf.setMaximumFractionDigits(5);
-    nf.applyPattern("#.###E0");
-    JDialog dialog = new JDialog(new JFrame(), "Results from Parameter Fitting");
-    Container dialogContentPane = dialog.getContentPane();
-    dialogContentPane.setLayout(new FlowLayout());
-
-    String[][] table = new String[15][5];
-    String[] names = {"Parameter", "Value", "Standard deviation", "Uncertatnty ", "--"};
-    table[0][0] = "";
-    table[0][1] = "";
-    table[0][2] = "";
-    table[0][3] = "";
-    StringBuffer buf = new StringBuffer();
-    FieldPosition test = new FieldPosition(0);
-
-    for (int j = 0; j < sampleSet.getSample(0).getFunction().getFittingParams().length; j++) {
-      table[j + 1][0] = "parameter " + j;
-      buf = new StringBuffer();
-      table[j + 1][1] = nf
-          .format(sampleSet.getSample(0).getFunction().getFittingParams()[j], buf, test).toString();
-    }
-
-    int numb = sampleSet.getSample(0).getFunction().getFittingParams().length;
-
-    table[numb + 2][0] = "Number Of Data Points ";
-    buf = new StringBuffer();
-    nf.applyPattern("#");
-    table[numb + 2][1] = nf.format(sampleSet.getLength(), buf, test).toString();
-
-    table[numb + 3][0] = "Shi-Square ";
-    buf = new StringBuffer();
-    nf.applyPattern("#.###E0");
-    table[numb + 3][1] = nf.format(chiSquare, buf, test).toString();
-    table[numb + 4][0] = "Abs.rel.dev (%) ";
-    buf = new StringBuffer();
-    table[numb + 4][1] = nf.format(absStdDev, buf, test).toString();
-    table[numb + 5][0] = "Bias.dev (%) ";
-    buf = new StringBuffer();
-    table[numb + 5][1] = nf.format(biasdev, buf, test).toString();
-
-    JTable Jtab = new JTable(table, names);
-    JScrollPane scrollpane = new JScrollPane(Jtab);
-    dialogContentPane.add(scrollpane);
-    dialog.pack();
-    dialog.setVisible(true);
-  }
+  public void displayResult() {}
 
   /**
    * <p>
    * displayResultWithDeviation.
    * </p>
    */
-  public void displayResultWithDeviation() {
-    DecimalFormat nf = new DecimalFormat();
-    nf.setMaximumFractionDigits(5);
-    nf.applyPattern("#.###E0");
-
-    calcDeviation();
-    JDialog dialog = new JDialog(new JFrame(), "Results from Parameter Fitting");
-    Container dialogContentPane = dialog.getContentPane();
-    dialogContentPane.setLayout(new FlowLayout());
-
-    String[][] table = new String[15][5];
-    String[] names = {"Parameter", "Value", "Standard deviation", "Uncertatnty ", "--"};
-    table[0][0] = "";
-    table[0][1] = "";
-    table[0][2] = "";
-    table[0][3] = "";
-    StringBuffer buf = new StringBuffer();
-    FieldPosition test = new FieldPosition(0);
-
-    for (int j = 0; j < sampleSet.getSample(0).getFunction().getFittingParams().length; j++) {
-      table[j + 1][0] = "parameter " + j;
-      buf = new StringBuffer();
-      table[j + 1][1] = nf
-          .format(sampleSet.getSample(0).getFunction().getFittingParams()[j], buf, test).toString();
-      buf = new StringBuffer();
-      table[j + 1][2] = nf.format(parameterStandardDeviation[j], buf, test).toString();
-      buf = new StringBuffer();
-      table[j + 1][3] = nf.format(parameterUncertainty[j], buf, test).toString();
-      table[j + 1][4] = "[-]";
-    }
-
-    int numb = sampleSet.getSample(0).getFunction().getFittingParams().length;
-
-    table[numb + 2][0] = "Number Of Data Points ";
-    buf = new StringBuffer();
-    nf.applyPattern("#");
-    table[numb + 2][1] = nf.format(sampleSet.getLength(), buf, test).toString();
-
-    table[numb + 3][0] = "Shi-Square ";
-    buf = new StringBuffer();
-    nf.applyPattern("#.###E0");
-    table[numb + 3][1] = nf.format(chiSquare, buf, test).toString();
-    table[numb + 4][0] = "Abs.rel.dev (%) ";
-    buf = new StringBuffer();
-    table[numb + 4][1] = nf.format(absStdDev, buf, test).toString();
-    table[numb + 5][0] = "Bias.dev (%) ";
-    buf = new StringBuffer();
-    table[numb + 5][1] = nf.format(biasdev, buf, test).toString();
-    table[numb + 6][0] = "Goodnes Of Fit (0-1)";
-    buf = new StringBuffer();
-    nf.applyPattern("#.###E0");
-    table[numb + 6][1] = nf.format(incompleteGammaComplemented, buf, test).toString();
-
-    JTable Jtab = new JTable(table, names);
-    JScrollPane scrollpane = new JScrollPane(Jtab);
-    dialogContentPane.add(scrollpane);
-    dialog.pack();
-    dialog.setVisible(true);
-    // Matrix te = parameterStdDevMatrix.copy();
-    // te.display("Std. Deviation" ,5);
-    // coVarianceMatrix.display("CoVariance",5);
-    // parameterCorrelationMatrix.display("Correlation",5);
-    displayMatrix(coVarianceMatrix, "CoVariance", 5);
-    displayMatrix(parameterCorrelationMatrix, "Correlation", 5);
-    // parameterUncertaintyMatrix.display("Param. uncertatnty",5);
-  }
+  public void displayResultWithDeviation() {}
 
   /**
    * <p>
@@ -630,36 +472,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * @param name a {@link java.lang.String} object
    * @param d a int
    */
-  public void displayMatrix(Matrix coVarianceMatrix, String name, int d) {
-    int m = coVarianceMatrix.getRowDimension();
-    int n = coVarianceMatrix.getColumnDimension();
-    String[] names = new String[m];
-    StringBuffer buf = new StringBuffer();
-    DecimalFormat form = new DecimalFormat();
-    form.setMinimumIntegerDigits(1);
-    form.setMaximumFractionDigits(d);
-    form.setMinimumFractionDigits(d);
-    form.setGroupingUsed(false);
-    form.applyPattern("#.##E0");
-    FieldPosition test = new FieldPosition(0);
-    String[][] X = new String[m][n];
-    for (int i = 0; i < m; i++) {
-      names[i] = name + " " + i;
-      for (int j = 0; j < n; j++) {
-        buf = new StringBuffer();
-        X[i][j] = form.format(coVarianceMatrix.get(i, j), buf, test).toString();
-      }
-    }
-
-    JDialog dialog = new JDialog(new JFrame(), name);
-    Container dialogContentPane = dialog.getContentPane();
-    dialogContentPane.setLayout(new FlowLayout());
-    JTable Jtab = new JTable(X, names);
-    JScrollPane scrollpane = new JScrollPane(Jtab);
-    dialogContentPane.add(scrollpane);
-    dialog.pack();
-    dialog.setVisible(true);
-  }
+  public void displayMatrix(Matrix coVarianceMatrix, String name, int d) {}
 
   /**
    * <p>
@@ -697,13 +510,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
 
   /** {@inheritDoc} */
   @Override
-  public void writeToTextFile(String name) {
-    neqsim.dataPresentation.fileHandeling.createTextFile.TextFile tempfile =
-        new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
-    tempfile.setOutputFileName(name);
-    tempfile.setValues(valTable);
-    tempfile.createFile();
-  }
+  public void writeToTextFile(String name) {}
 
   /**
    * <p>
@@ -716,19 +523,19 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
       // displayGraph();
     } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(ex.getMessage(), ex);
+      
     }
     try {
       displayResult();
     } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(ex.getMessage(), ex);
+      
     }
     try {
       displayValues();
     } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 
@@ -740,25 +547,25 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
       // displayGraph();
     } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(ex.getMessage(), ex);
+      
     }
     try {
       displayResult();
     } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(ex.getMessage(), ex);
+      
     }
     try {
       displayValues();
     } catch (Exception ex) {
       System.out.println("could not display graph");
-      logger.error(ex.getMessage(), ex);
+      
     }
     try {
       displayResultWithDeviation();
     } catch (Exception ex) {
       System.out.println("could not calc deviation");
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 

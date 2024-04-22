@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(bubblePointTemperatureFlash.class);
+  
 
   /**
    * <p>
@@ -46,7 +46,7 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
     system.setNumberOfPhases(2);
     do {
       system.setTemperature((system.getTemperature() + system.getTemperature() / ytotal) / 10);
-      // logger.info("temp . " + system.getTemperature());
+      // 
       funk = 0;
       deriv = 0;
       ytotal = 0;
@@ -77,8 +77,8 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
                 - system.getPhases()[0].getComponents()[i].getdfugdt());
       }
 
-      // logger.info("FUNK: " + funk);
-      logger.info("temp: " + system.getTemperature());
+      // 
+      
       // system.setPressure(-Math.log(funk)/(deriv/funk)+system.getPressure());
       system.setTemperature(-(funk - 1) / deriv + system.getTemperature());
     } while ((Math.abs(ytotal - 1) > 1e-10) && (iterations < maxNumberOfIterations));

@@ -1,7 +1,7 @@
 package neqsim.thermo.phase;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUnifacUMRPRU;
@@ -17,7 +17,7 @@ import neqsim.thermo.component.ComponentGEUniquac;
  */
 public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PhaseGEUnifacUMRPRU.class);
+  
 
   double[] Qmix = null;
   double[][] QmixdN = null;
@@ -221,14 +221,14 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       } finally {
         try {
           if (dataSet != null) {
             dataSet.close();
           }
         } catch (Exception ex) {
-          logger.error("err closing dataSet...", ex);
+          
         }
       }
     }
@@ -265,7 +265,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
     }
     // System.out.println("finished finding interaction coefficient...C_UMR");
@@ -301,7 +301,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
     }
     // System.out.println("finished finding interaction coefficient...C_UMR");

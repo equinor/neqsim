@@ -77,7 +77,7 @@ public class SystemPrEos1978 extends SystemEos {
     try {
       clonedSystem = (SystemPrEos1978) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

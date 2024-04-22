@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -16,7 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class cricondebarFlash extends constantDutyPressureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(constantDutyFlash.class);
+  
 
   Matrix Jac;
   Matrix fvec;
@@ -104,7 +104,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
     try {
       localOperation.dewPointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     system.setNumberOfPhases(2);
     system.setBeta(0.5);
@@ -140,15 +140,13 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         system.setTemperature(system.getTemperature() - 0.5 * Q1 / dQ1dT);
 
         system.init(3);
-        logger.info(
-            "temp " + system.getTemperature() + " Q1 " + Q1 + " pressure " + system.getPressure());
+        
       } while (Math.abs(Q1) > 1e-10 && iterations < maxNumberOfIterations);
 
       iterations = 0;
       double presOld = system.getPressure();
       do {
-        logger.info(
-            "temp " + system.getTemperature() + " Q1 " + Q1 + " pressure " + system.getPressure());
+        
         Matrix dx = null;
 
         iterations++;
@@ -158,7 +156,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
           setJac();
           dx = Jac.solve(fvec);
         } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
+          
         }
         double damping = iterations * 1.0 / (10.0 + iterations);
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -169,7 +167,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
           if (xlocal > 1.0 - 1e-30) {
             xlocal = 1.0 - 1e-30;
           }
-          logger.info("x" + (xlocal) + " press " + system.getPressure() + " fvec " + fvec.norm2());
+          
           system.getPhase(1).getComponent(i).setx(xlocal);
         }
         system.setPressure(
@@ -205,7 +203,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         dewTemp = system.getTemperature();
         system.getPressure();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
 
       iterations = 0;
@@ -232,12 +230,11 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         system.setTemperature(
             system.getTemperature() - iterations * 1.0 / (iterations + 10.0) * Q1 / dQ1dT);
 
-        logger.info("temp " + system.getTemperature() + "dewTemp " + dewTemp + " Q1 " + Q1
-            + " pressure " + system.getPressure());
+        
       } while (Math.abs(Q1) > 1e-10 && iterations < 15); // maxNumberOfIterations);
-      logger.info("temp " + system.getTemperature() + " Q1 " + Q1);
+      
       // if(ii<2) system.setTemperature(dewTemp-);
-      logger.info("fvec " + fvec.norm2() + " pressure " + system.getPressure());
+      
     }
   }
 
@@ -257,7 +254,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
                   * system.getPhases()[1].getComponents()[i].getx() * system.getPressure()));
     }
     fvec.set(system.getPhase(0).getNumberOfComponents(), 0, 1.0 - sumxx);
-    // logger.info("sumx" + sumxx);
+    // 
   }
 
   /**

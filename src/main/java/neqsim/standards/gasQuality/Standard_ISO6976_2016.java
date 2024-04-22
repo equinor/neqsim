@@ -1,7 +1,7 @@
 package neqsim.standards.gasQuality;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class Standard_ISO6976_2016 extends Standard_ISO6976 {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Standard_ISO6976_2016.class);
+  
 
   // metering conditions
 
@@ -126,12 +126,11 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
             M[i] = this.thermoSystem.getPhase(0).getComponent(i).getMolarMass();
             dataSet.next();
           } catch (Exception er) {
-            logger.error(er.toString());
+            
           }
           componentsNotDefinedByStandard
               .add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
-          logger.info("added component not specified by ISO6976constants2016 "
-              + this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
+          
         }
 
         carbonNumber[i] = Integer.parseInt(dataSet.getString("numberOfCarbon"));
@@ -161,7 +160,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
         dataSet.close();
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 

@@ -1,7 +1,7 @@
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
@@ -15,7 +15,7 @@ import neqsim.thermo.phase.PhaseType;
  */
 public class ComponentHydrateGF extends ComponentHydrate {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ComponentHydrateGF.class);
+  
 
   double[][] Ak = new double[2][2]; // [structure][cavitytype]
   double[][] Bk = new double[2][2]; // [structure][cavitytype]
@@ -43,7 +43,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
           dataSet.next();
           dataSet.getString("ID");
         } catch (Exception ex) {
-          logger.info("no parameters in tempcomp -- trying comp.. " + name);
+          
           dataSet.close();
           dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           dataSet.next();
@@ -59,12 +59,12 @@ public class ComponentHydrateGF extends ComponentHydrate {
         Bk[1][1] = Double.parseDouble(dataSet.getString("B2_LargeGF"));
         dataSet.close();
       } catch (Exception ex) {
-        logger.error("error in ComponentHydrateGF", ex);
+        
       } finally {
         try {
           dataSet.close();
         } catch (Exception ex) {
-          logger.error("error closing database.....", ex);
+          
         }
       }
     }

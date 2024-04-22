@@ -28,7 +28,7 @@ public class PhaseSolidComplex extends PhaseSolid {
     try {
       clonedPhase = (PhaseSolidComplex) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedPhase;

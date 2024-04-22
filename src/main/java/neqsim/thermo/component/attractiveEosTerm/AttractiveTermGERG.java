@@ -44,7 +44,7 @@ public class AttractiveTermGERG extends AttractiveTermPr {
     try {
       attractiveTerm = (AttractiveTermGERG) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return attractiveTerm;

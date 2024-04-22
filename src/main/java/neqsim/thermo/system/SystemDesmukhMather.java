@@ -73,7 +73,7 @@ public class SystemDesmukhMather extends SystemEos {
     try {
       clonedSystem = (SystemDesmukhMather) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

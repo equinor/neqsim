@@ -1,7 +1,7 @@
 package neqsim.PVTsimulation.simulation;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class DifferentialLiberation extends BasePVTsimulation {
-  static Logger logger = LogManager.getLogger(DifferentialLiberation.class);
+  
 
   double VoilStd = 0.0;
   double[] relativeVolume = null;
@@ -75,7 +75,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
     } while (Math.abs(maxPres - minPres) > 1e-5);
     /*
      * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) {
-     * logger.error(ex.getMessage(), ex); }
+     *  }
      */
     saturationVolume = getThermoSystem().getVolume();
     saturationPressure = getThermoSystem().getPressure();
@@ -110,7 +110,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
       totalVolume[i] = getThermoSystem().getVolume();
       liquidVolume[i] = getThermoSystem().getVolume();
@@ -122,7 +122,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
           try {
             thermoOps.TPflash();
           } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            
           }
         }
         gasStandardVolume[i] = getThermoSystem().getPhase(0).getVolume()
@@ -165,7 +165,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
                         : test * getThermoSystem().getPhase(0).getComponent(j).getx();
             getThermoSystem().addComponent(j, -change);
           } catch (Exception e) {
-            logger.debug(e.getMessage());
+            
           }
         }
       }
@@ -175,7 +175,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
     try {
       thermoOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     VoilStd = getThermoSystem().getPhase(1).getVolume();
     totalGasStandardVolume += getThermoSystem().getPhase(0).getVolume();

@@ -1,8 +1,8 @@
 package neqsim.PVTsimulation.simulation;
 
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.PVTsimulation.util.parameterfitting.CVDFunction;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
@@ -19,7 +19,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class ConstantVolumeDepletion extends BasePVTsimulation {
-  static Logger logger = LogManager.getLogger(ConstantVolumeDepletion.class);
+  
 
   private double[] relativeVolume = null;
   double[] totalVolume = null;
@@ -86,7 +86,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     } while (Math.abs(maxPres - minPres) > 1e-5);
     /*
      * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) {
-     * logger.error(ex.getMessage(), ex); }
+     *  }
      */
     saturationVolume = getThermoSystem().getVolume();
     saturationPressure = getThermoSystem().getPressure();
@@ -117,7 +117,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
       // getThermoSystem().display();
       totalVolume[i] = getThermoSystem().getVolume();
@@ -131,7 +131,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
           try {
             thermoOps.TPflash();
           } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            
           }
         }
 
@@ -157,7 +157,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
                         : test * getThermoSystem().getPhase(0).getComponent(j).getx();
             getThermoSystem().addComponent(j, -change);
           } catch (Exception e) {
-            logger.debug(e.getMessage());
+            
           }
         }
       }
@@ -202,7 +202,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error", ex);
+      
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

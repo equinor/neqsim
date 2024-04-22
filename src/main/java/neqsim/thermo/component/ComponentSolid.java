@@ -143,7 +143,7 @@ public class ComponentSolid extends ComponentSrk {
     try {
       refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, PhaseType.byValue(0), 1.0);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      
     }
     refPhase.getComponent(0).fugcoef(refPhase);
 
@@ -249,7 +249,7 @@ public class ComponentSolid extends ComponentSrk {
           refPhase.getComponent("methane").setComponentName(componentName);
         }
       } catch (Exception ex) {
-        logger.error("error occured in setSolidRefFluidPhase ", ex);
+        
         refPhase.addComponent("methane", 10.0, 10.0, 0);
         refPhase.getComponent("methane").setComponentName(componentName);
       }
@@ -258,7 +258,7 @@ public class ComponentSolid extends ComponentSrk {
       refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, PhaseType.byValue(1), 1.0);
       // }
     } catch (Exception ex) {
-      logger.error("error occured", ex);
+      
     }
   }
 

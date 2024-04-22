@@ -1,7 +1,7 @@
 package neqsim.PVTsimulation.simulation;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class SwellingTest extends BasePVTsimulation {
-  static Logger logger = LogManager.getLogger(SwellingTest.class);
+  
 
   double[] gasInjected = null;
   private double[] pressures = null;
@@ -67,7 +67,7 @@ public class SwellingTest extends BasePVTsimulation {
     try {
       thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     double orginalOilVolume = getThermoSystem().getVolume();
     double oilMoles = getThermoSystem().getTotalNumberOfMoles();
@@ -90,15 +90,14 @@ public class SwellingTest extends BasePVTsimulation {
       try {
         thermoOps.bubblePointPressureFlash(false);
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
       pressures[i] = getThermoSystem().getPressure();
       getRelativeOilVolume()[i] = getThermoSystem().getVolume() / orginalOilVolume;
     }
 
     for (int i = 0; i < getPressures().length; i++) {
-      logger.info(
-          "pressure " + getPressures()[i] + " relativeOil volume " + getRelativeOilVolume()[i]);
+      
     }
   }
 

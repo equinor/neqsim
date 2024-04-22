@@ -1,7 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  */
 public class CompressorDesignStandard extends DesignStandard {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(CompressorDesignStandard.class);
+  
 
   private double compressorFactor = 0.11;
 
@@ -42,7 +42,7 @@ public class CompressorDesignStandard extends DesignStandard {
         }
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
   }

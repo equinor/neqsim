@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processSystem.processModules;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.adsorber.SimpleAdsorber;
 import neqsim.processSimulation.processEquipment.separator.Separator;
@@ -21,7 +21,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  */
 public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(AdsorptionDehydrationlModule.class);
+  
 
   protected StreamInterface gasStreamToAdsorber = null;
   protected StreamInterface gasStreamFromAdsorber = null;
@@ -111,7 +111,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
       this.gasStreamFromAdsorber = this.gasStreamToAdsorber.clone();
       this.gasStreamFromAdsorber.setName("Stream from Adsorber");
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 

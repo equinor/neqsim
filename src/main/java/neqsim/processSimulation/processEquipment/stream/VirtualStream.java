@@ -2,8 +2,8 @@ package neqsim.processSimulation.processEquipment.stream;
 
 import java.util.UUID;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 
@@ -17,7 +17,7 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
  */
 public class VirtualStream extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1L;
-  static Logger logger = LogManager.getLogger(VirtualStream.class);
+  
 
   protected StreamInterface refStream = null;
   protected StreamInterface outStream = null;

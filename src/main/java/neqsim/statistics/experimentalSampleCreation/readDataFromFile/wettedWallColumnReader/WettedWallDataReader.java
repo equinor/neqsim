@@ -8,8 +8,8 @@ package neqsim.statistics.experimentalSampleCreation.readDataFromFile.wettedWall
 
 import java.io.RandomAccessFile;
 import java.util.StringTokenizer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataReader;
 
 /**
@@ -21,7 +21,7 @@ import neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataReader;
  * @version $Id: $Id
  */
 public class WettedWallDataReader extends DataReader {
-  static Logger logger = LogManager.getLogger(WettedWallDataReader.class);
+  
 
   /**
    * <p>
@@ -85,7 +85,7 @@ public class WettedWallDataReader extends DataReader {
         sampleObjectList.add(dataObject);
       } while (filepointer < length);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     System.out.println("Read data from file done!");
     System.out.println(k + " datapoints imported from file");

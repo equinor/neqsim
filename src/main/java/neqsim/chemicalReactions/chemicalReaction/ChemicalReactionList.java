@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import Jama.Matrix;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
@@ -28,7 +28,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ChemicalReactionList.class);
+  
 
   ArrayList<ChemicalReaction> chemicalReactionList = new ArrayList<ChemicalReaction>();
   String[] reactiveComponentList;
@@ -95,7 +95,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
               stocCoef.add((dataSet2.getString("stoccoef")).trim());
             } while (dataSet2.next());
           } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            
           }
 
           nameArray = new String[names.size()];
@@ -112,7 +112,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         }
       } while (dataSet.next());
     } catch (Exception ex) {
-      logger.error("could not add reaction: ", ex);
+      
     }
   }
 
@@ -142,7 +142,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         return chemicalReactionList.get(i);
       }
     }
-    logger.warn("did not find reaction: " + name);
+    
     return null;
   }
 
@@ -255,7 +255,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         reactionNumber++;
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
 
     /*

@@ -1,7 +1,7 @@
 package neqsim.thermo.characterization;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class PedersenPlusModelSolver implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PedersenPlusModelSolver.class);
+  
 
   int iter = 0;
   Matrix JacAB;
@@ -218,13 +218,13 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
       setfvecAB();
       setJacAB();
       dx = JacAB.solve(fvecAB);
-      // logger.info("dx: ");
+      // 
       // dx.print(10, 3);
 
       solAB.minusEquals(dx.times((iter) / (iter + 50.0)));
       characterizeClass.setCoefs(solAB.transpose().copy().getArray()[0]);
     } while (((fvecAB.norm2() > 1e-6 || iter < 3) && iter < 200));
-    // logger.info("ok char: ");
+    // 
     // solAB.print(10, 10);
 
     iter = 0;
@@ -233,7 +233,7 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
       setfvecCD();
       setJacCD();
       dx = JacCD.solve(fvecCD);
-      // logger.info("dxCD: ");
+      // 
       // dx.print(10, 3);
 
       solCD.minusEquals(dx.times((iter) / (iter + 5.0)));

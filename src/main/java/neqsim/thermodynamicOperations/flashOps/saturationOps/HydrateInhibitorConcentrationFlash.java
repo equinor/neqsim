@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -16,7 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(HydrateInhibitorConcentrationFlash.class);
+  
 
   double hydT = 273.15;
   String inhibitor = "MEG";
@@ -77,9 +77,9 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
         ops.hydrateFormationTemperature(system.getTemperature());
         error = system.getTemperature() - hydT;
 
-        logger.info("error " + error);
+        
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
     } while ((Math.abs(error) > 1e-3 && iter < 100) || iter < 3);
   }
@@ -121,7 +121,7 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
               * testSystem.getPhase(0).getComponent("MEG").getMolarMass()
               + testSystem.getPhase(0).getComponent("water").getNumberOfmoles()
                   * testSystem.getPhase(0).getComponent("water").getMolarMass());
-      logger.info("hydrate inhibitor concentration " + cons + " wt%");
+      
     } catch (Exception ex) {
       ex.toString();
     }

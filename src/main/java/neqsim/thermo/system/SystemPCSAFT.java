@@ -1,7 +1,7 @@
 package neqsim.thermo.system;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePCSAFTRahmat;
 import neqsim.thermo.phase.PhasePureComponentSolid;
@@ -13,7 +13,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * @version $Id: $Id
  */
 public class SystemPCSAFT extends SystemSrkEos {
-  static Logger logger = LogManager.getLogger(SystemPCSAFT.class);
+  
   private static final long serialVersionUID = 1000;
 
   /**
@@ -96,8 +96,7 @@ public class SystemPCSAFT extends SystemSrkEos {
       getPhase(phaseIndex[i]).getComponent(componentName).setEpsikSAFT(epskSaftm / mSaft);
       getPhase(phaseIndex[i]).getComponent(componentName)
           .setSigmaSAFTi(Math.pow(msigm / mSaft, 1.0 / 3.0) / 1.0e10);
-      logger.info("Saft parameters: m " + mSaft + " epsk " + epskSaftm / mSaft + " sigma "
-          + Math.pow(msigm / mSaft, 1.0 / 3.0));
+      
     }
   }
 
@@ -108,7 +107,7 @@ public class SystemPCSAFT extends SystemSrkEos {
     try {
       clonedSystem = (SystemPCSAFT) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

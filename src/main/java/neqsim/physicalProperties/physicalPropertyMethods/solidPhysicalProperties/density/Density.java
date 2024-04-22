@@ -6,8 +6,8 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.density;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * <p>
@@ -21,7 +21,7 @@ public class Density extends
     neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
     implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Density.class);
+  
 
   /**
    * <p>
@@ -52,7 +52,7 @@ public class Density extends
     try {
       properties = (Density) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return properties;

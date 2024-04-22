@@ -74,7 +74,7 @@ public class SystemUNIFACpsrk extends SystemEos {
     try {
       clonedSystem = (SystemUNIFACpsrk) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

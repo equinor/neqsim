@@ -6,8 +6,8 @@
 
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.atomElement.Element;
@@ -17,7 +17,7 @@ import neqsim.util.database.NeqSimDataBase;
 
 public abstract class Component implements ComponentInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Component.class);
+  
 
   double[] surfTensInfluenceParam = {0.28367, -0.05164, -0.81594, 1.06810, -1.1147};
   /** Index number of Component in database. */
@@ -488,7 +488,7 @@ public abstract class Component implements ComponentInterface {
       }
       CASnumber = "00-00-0";
     } catch (Exception ex) {
-      logger.error("error in inserting to database", ex);
+      
     }
   }
 
@@ -499,7 +499,7 @@ public abstract class Component implements ComponentInterface {
     try {
       clonedComponent = (Component) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedComponent;
@@ -515,7 +515,7 @@ public abstract class Component implements ComponentInterface {
       neqsim.util.exception.InvalidInputException ex =
               new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
       throw new RuntimeException(ex);
-      // logger.error(ex.getMessage());
+      // 
     }
     numberOfMoles += totdn;
     numberOfMolesInPhase += dn;
@@ -1525,13 +1525,13 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void seta(double a) {
-    logger.error("no method set a");
+    
   }
 
   /** {@inheritDoc} */
   @Override
   public void setb(double b) {
-    logger.error("no method set b");
+    
   }
 
   /** {@inheritDoc} */

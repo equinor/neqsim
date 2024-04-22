@@ -1,7 +1,7 @@
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * Abstract class for Viscosity property.
@@ -13,7 +13,7 @@ abstract class Viscosity extends
     implements
     neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Viscosity.class);
+  
 
   public double[] pureComponentViscosity;
 
@@ -123,7 +123,7 @@ abstract class Viscosity extends
     try {
       properties = (Viscosity) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return properties;

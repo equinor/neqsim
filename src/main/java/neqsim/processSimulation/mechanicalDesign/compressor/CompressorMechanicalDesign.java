@@ -1,10 +1,10 @@
 package neqsim.processSimulation.mechanicalDesign.compressor;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
+
+
+
+
+
 import neqsim.processSimulation.costEstimation.compressor.CompressorCostEstimate;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.mechanicalDesign.designStandards.CompressorDesignStandard;
@@ -57,60 +57,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResults() {
-    JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
-    Container dialogContentPane = dialog.getContentPane();
-    dialogContentPane.setLayout(new BorderLayout());
-
-    String[] names = {"Name", "Value", "Unit"};
-    String[][] table = new String[16][3]; // createTable(getProcessEquipment().getName());
-
-    table[1][0] = "Separator Inner Diameter";
-    table[1][1] = Double.toString(getInnerDiameter());
-    table[1][2] = "m";
-
-    table[2][0] = "Separator TanTan Length";
-    table[2][1] = Double.toString(getTantanLength());
-    table[2][2] = "m";
-
-    table[3][0] = "Wall thickness";
-    table[3][1] = Double.toString(getWallThickness());
-    table[3][2] = "m";
-
-    table[4][0] = "Empty Vessel Weight Weight";
-    table[4][1] = Double.toString(getWeigthVesselShell());
-    table[4][2] = "kg";
-
-    table[5][0] = "Internals+Nozzle Weight";
-    table[5][1] = Double.toString(getWeigthInternals());
-    table[5][2] = "kg";
-
-    table[8][0] = "Module Length";
-    table[8][1] = Double.toString(getModuleLength());
-    table[8][2] = "m";
-
-    table[9][0] = "Module Height";
-    table[9][1] = Double.toString(getModuleHeight());
-    table[9][2] = "m";
-
-    table[10][0] = "Module Width";
-    table[10][1] = Double.toString(getModuleWidth());
-    table[10][2] = "m";
-
-    table[11][0] = "Module Total Weight";
-    table[11][1] = Double.toString(getWeightTotal());
-    table[11][2] = "kg";
-
-    // table[5][0] = "Module Total Cost";
-    // // table[5][1] = Double.toString(getMod());
-    // table[5][2] = "kg";
-    JTable Jtab = new JTable(table, names);
-    JScrollPane scrollpane = new JScrollPane(Jtab);
-    dialogContentPane.add(scrollpane);
-    dialog.setSize(800, 600); // pack();
-    // dialog.pack();
-    dialog.setVisible(true);
-  }
+  public void displayResults() {}
 
   /** {@inheritDoc} */
   @Override

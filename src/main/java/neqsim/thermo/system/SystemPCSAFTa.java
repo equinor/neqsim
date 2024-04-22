@@ -79,7 +79,7 @@ public class SystemPCSAFTa extends SystemSrkEos {
     try {
       clonedSystem = (SystemPCSAFTa) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

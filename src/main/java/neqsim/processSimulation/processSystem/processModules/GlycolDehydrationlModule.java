@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processSystem.processModules;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
@@ -25,7 +25,7 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  */
 public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(GlycolDehydrationlModule.class);
+  
 
   protected StreamInterface gasStreamToAbsorber = null;
   protected StreamInterface strippingGas = null;
@@ -174,7 +174,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
           leanGlycolMolarFlowRate * leanGlycolMolarFraction);
       this.leanTEGStreamToAbsorber.getThermoSystem().setTotalFlowRate(maxglycolFlowRate, "kg/hr");
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 
@@ -358,13 +358,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    gasStreamFromAbsorber.getThermoSystem().display();
-    leanTEGStreamToAbsorber.displayResult();
-    glycolFlashDrum.displayResult();
-    heatExchanger2.displayResult();
-    waterSeparator.displayResult();
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override

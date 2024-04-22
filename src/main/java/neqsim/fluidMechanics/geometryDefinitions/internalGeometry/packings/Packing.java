@@ -6,8 +6,8 @@
 
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.util.NamedBaseClass;
 
 /**
@@ -20,7 +20,7 @@ import neqsim.util.NamedBaseClass;
  */
 public abstract class Packing extends NamedBaseClass implements PackingInterface {
   private static final long serialVersionUID = 1L;
-  static Logger logger = LogManager.getLogger(Packing.class);
+  
 
   double voidFractionPacking = 0.951;
   double size = 0;
@@ -46,7 +46,7 @@ public abstract class Packing extends NamedBaseClass implements PackingInterface
       voidFractionPacking = Double.parseDouble(dataSet.getString("voidFraction"));
       System.out.println("packing ok");
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 
@@ -71,7 +71,7 @@ public abstract class Packing extends NamedBaseClass implements PackingInterface
       voidFractionPacking = Double.parseDouble(dataSet.getString("voidFraction"));
       System.out.println("packing ok");
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 

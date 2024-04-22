@@ -1,7 +1,7 @@
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -16,7 +16,7 @@ import neqsim.thermo.phase.PhaseType;
  */
 public class ComponentWaxWilson extends ComponentSolid {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ComponentWaxWilson.class);
+  
 
   /**
    * <p>

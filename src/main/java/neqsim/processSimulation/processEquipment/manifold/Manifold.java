@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processEquipment.manifold;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.splitter.Splitter;
@@ -20,7 +20,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  */
 public class Manifold extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Manifold.class);
+  
 
   protected Mixer localmixer = new Mixer("local mixer");
   protected Splitter localsplitter = new Splitter("local splitter");

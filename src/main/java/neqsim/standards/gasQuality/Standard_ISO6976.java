@@ -3,8 +3,8 @@ package neqsim.standards.gasQuality;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -19,7 +19,7 @@ import neqsim.thermo.system.SystemInterface;
 public class Standard_ISO6976 extends neqsim.standards.Standard
     implements neqsim.thermo.ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Standard_ISO6976.class);
+  
 
   // metering conditions
   ArrayList<String> componentsNotDefinedByStandard = new ArrayList<String>();
@@ -144,7 +144,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
             M[i] = this.thermoSystem.getPhase(0).getComponent(i).getMolarMass();
             dataSet.next();
           } catch (Exception ex2) {
-            logger.error(ex2.getMessage());
+            
           }
           componentsNotDefinedByStandard
               .add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
@@ -172,9 +172,9 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         Hinf60F[i] = Double.parseDouble(dataSet.getString("Hinfmolar60F"));
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
-    // logger.info("ok adding components in " + getName());
+    // 
   }
 
   /**
@@ -377,11 +377,11 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 
     if (!java.util.Arrays.stream(validvalues).anyMatch(Double.valueOf(energyRefT)::equals)) {
       energyRefT = 25.0;
-      logger.error("energy reference temperature not in valid range...setting it to 25C");
+      
     }
     if (!java.util.Arrays.stream(validvalues).anyMatch(Double.valueOf(volRefT)::equals)) {
       volRefT = 15.0;
-      logger.error("volume reference temperature not in valid range...setting it to 15C");
+      
     }
   }
 

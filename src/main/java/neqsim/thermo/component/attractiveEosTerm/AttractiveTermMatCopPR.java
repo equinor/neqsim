@@ -75,7 +75,7 @@ public class AttractiveTermMatCopPR extends AttractiveTermPr {
     try {
       attractiveTerm = (AttractiveTermMatCopPR) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return attractiveTerm;

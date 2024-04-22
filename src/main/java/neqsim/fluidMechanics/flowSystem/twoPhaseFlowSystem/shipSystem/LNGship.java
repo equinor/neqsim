@@ -2,8 +2,8 @@ package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.shipSystem;
 
 import java.text.DecimalFormat;
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.standards.StandardInterface;
 import neqsim.standards.gasQuality.Standard_ISO6578;
 import neqsim.standards.gasQuality.Standard_ISO6976;
@@ -23,7 +23,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class LNGship
     extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.TwoPhaseFlowSystem {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(LNGship.class);
+  
 
   double[] temperature = null;
   double dailyBoilOffRatio = 0.005;
@@ -100,11 +100,11 @@ public class LNGship
     if (version.equals("2016")) {
       setStandardISO6976(new Standard_ISO6976_2016(thermoSystem, getStandardISO6976().getVolRefT(),
           getStandardISO6976().getEnergyRefT(), "volume"));
-      logger.info("using  ISO6976 version 2016");
+      
     } else {
       setStandardISO6976(new Standard_ISO6976(thermoSystem, getStandardISO6976().getVolRefT(),
           getStandardISO6976().getEnergyRefT(), "volume"));
-      logger.info("using  ISO6976 version 1995");
+      
     }
   }
 
@@ -120,7 +120,7 @@ public class LNGship
         thermoOperations.bubblePointTemperatureFlash();
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     getThermoSystem().init(0);
 
@@ -128,11 +128,11 @@ public class LNGship
     standardDensity.calculate();
 
     liquidDensity = standardDensity.getValue("density");
-    logger.info("density start " + standardDensity.getValue("density"));
+    
     timeStep = getEndTime() / (numberOffTimeSteps * 1.0 - 1.0);
     dailyBoilOffVolume = totalTankVolume * dailyBoilOffRatio;
 
-    logger.info("daily boiloff volume " + dailyBoilOffVolume);
+    
     initialNumberOffMoles =
         totalTankVolume * getLiquidDensity() / getThermoSystem().getPhase(1).getMolarMass();
     double oldMoles = getThermoSystem().getTotalNumberOfMoles();
@@ -157,9 +157,9 @@ public class LNGship
         thermoOperations.bubblePointTemperatureFlash();
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
-    logger.info("temperature start " + getThermoSystem().getTemperature());
+    
     // TODO: getTimeSeries().init(this);
     calcIdentifier = id;
   }
@@ -208,7 +208,7 @@ public class LNGship
     if (backCalculate) {
       molarBoilOffRate = -molarBoilOffRate;
     }
-    logger.info("end Volume " + endVolume);
+    
     int iterations = 0;
     double boilOffCorrection = 0.0;
     do {
@@ -224,7 +224,7 @@ public class LNGship
             thermoOperations.bubblePointTemperatureFlash();
           }
         } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
+          
         }
         double[] xgas = new double[getThermoSystem().getPhase(0).getNumberOfComponents()];
 
@@ -311,15 +311,13 @@ public class LNGship
       } else {
         molarBoilOffRate = molarBoilOffRate * volume[numberOffTimeSteps - 1] / endVolume;
       }
-      // logger.info("error " + error + " iteration " + iterations + " molarboiloff "
-      // + molarBoilOffRate + " endVolume " + endVolume + " orginalMolarBoilOff " +
-      // orginalMolarBoilOff);
+      // 
     } while (Math.abs(error) > 1e-8 && iterations < 100);
     try {
       thermoOperations.bubblePointTemperatureFlash();
       calcIdentifier = id;
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 
@@ -392,7 +390,7 @@ public class LNGship
 
     /*
      * // for (int i = 0; i < 4; i++) { for (int j = 0; j < numberOffTimeSteps + 1; j++) {
-     * logger.info(resultTable[j][25]); logger.info(resultTable[j][14]); } //// }
+     *   } //// }
      */
     return table;
   }

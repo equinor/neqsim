@@ -56,7 +56,7 @@ public class AttractiveTermCPAstatoil extends AttractiveTermSrk {
     try {
       attractiveTerm = (AttractiveTermCPAstatoil) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     // attractiveTerm.parameters = (double[]) parameters.clone();
     // System.arraycopy(parameters,0, attractiveTerm.parameters, 0,

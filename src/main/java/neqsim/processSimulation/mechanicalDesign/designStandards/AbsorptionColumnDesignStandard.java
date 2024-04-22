@@ -1,7 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  */
 public class AbsorptionColumnDesignStandard extends DesignStandard {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(AbsorptionColumnDesignStandard.class);
+  
 
   private double molecularSieveWaterCapacity = 20;
 
@@ -41,7 +41,7 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
         }
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 

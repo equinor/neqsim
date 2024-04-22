@@ -84,7 +84,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
     try {
       clonedComponent = (ComponentPCSAFTa) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     clonedComponent.xsite = xsite.clone();

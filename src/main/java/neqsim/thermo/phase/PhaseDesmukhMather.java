@@ -1,7 +1,7 @@
 package neqsim.thermo.phase;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.component.ComponentDesmukhMather;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.util.exception.IsNaNException;
@@ -17,7 +17,7 @@ import neqsim.util.exception.TooManyIterationsException;
  */
 public class PhaseDesmukhMather extends PhaseGE {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PhaseDesmukhMather.class);
+  
 
   double GE = 0.0;
   double[][] aij;
@@ -86,14 +86,14 @@ public class PhaseDesmukhMather extends PhaseGE {
               this.aij[l][k] = this.aij[k][l];
               this.bij[l][k] = this.bij[k][l];
             } catch (Exception ex) {
-              logger.info("comp names " + component_name);
-              logger.error(ex.getMessage(), ex);
+              
+              
             }
           }
         }
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 

@@ -5,8 +5,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * <p>
@@ -19,7 +19,7 @@ import org.apache.logging.log4j.Logger;
 public class NeqSimBlobDatabase
     implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(NeqSimBlobDatabase.class);
+  
 
   /** Constant <code>dataBasePath=""</code>. */
   public static String dataBasePath = "";
@@ -67,7 +67,7 @@ public class NeqSimBlobDatabase
       databaseConnection = this.openConnection();
       statement = databaseConnection.createStatement();
     } catch (Exception ex) {
-      logger.error("SQLException ", ex);
+      
       throw new RuntimeException(ex);
     }
   }
@@ -114,7 +114,7 @@ public class NeqSimBlobDatabase
         return DriverManager.getConnection(getConnectionString(), username, password);
       }
     } catch (Exception ex) {
-      logger.error("error loading NeqSimBlobDatabase... ", ex);
+      
       throw new RuntimeException(ex);
     } finally {
       try {
@@ -122,7 +122,7 @@ public class NeqSimBlobDatabase
           ctx.close();
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
     }
   }
@@ -151,7 +151,7 @@ public class NeqSimBlobDatabase
       ResultSet result = getStatement().executeQuery(sqlString);
       return result;
     } catch (Exception ex) {
-      logger.error("error loading NeqSimBlobDatabase ", ex);
+      
       throw new RuntimeException(ex);
     }
   }
@@ -171,8 +171,8 @@ public class NeqSimBlobDatabase
       }
       getStatement().execute(sqlString);
     } catch (Exception ex) {
-      logger.error("error in NeqSimDataBase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
+      
+      
       throw new RuntimeException(ex);
     }
   }
@@ -221,7 +221,7 @@ public class NeqSimBlobDatabase
         Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
       }
     } catch (Exception ex) {
-      logger.error("error loading database driver.. ", ex);
+      
       throw new RuntimeException(ex);
     }
   }

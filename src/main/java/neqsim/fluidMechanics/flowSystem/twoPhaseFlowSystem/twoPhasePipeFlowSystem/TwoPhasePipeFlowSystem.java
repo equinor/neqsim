@@ -120,11 +120,11 @@ public class TwoPhasePipeFlowSystem
 
     // Definerer termodyanmikken5 - initierer et system som benytter SRK tilstandsligning
     neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(295.3, 5.0);
+            new neqsim.thermo.system.SystemSrkEos(295.3, 5.0);
 
     // med trykk 305.3 K og 125 bar - // gjor termodynamiske Flash rutiner tilgjengelige
     neqsim.thermodynamicOperations.ThermodynamicOperations testOps =
-        new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem);
+            new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem);
     testSystem.addComponent("methane", 0.11152181, 0);
     // testSystem.addComponent("ethane", 0.0011152181, 0);
     testSystem.addComponent("water", 0.04962204876, 1);
@@ -135,12 +135,12 @@ public class TwoPhasePipeFlowSystem
     pipe.setInletThermoSystem(testSystem); // setter termodyanmikken for rorsystemet
     pipe.setNumberOfLegs(5); // deler inn roret i et gitt antall legger
     pipe.setNumberOfNodesInLeg(10); // setter antall nodepunkter (beregningspunkter/grid) pr.
-                                    // leg
+    // leg
     double[] height = {0, 0, 0, 0, 0, 0};
     double[] length = {0.0, 1.7, 3.5, 5.0, 7.5, 10.4};
     double[] outerTemperature = {278.0, 278.0, 278.0, 278.0, 278.0, 278.0}; // , 278.0, 275.0,
-                                                                            // 275.0, 275.0,
-                                                                            // 275.0};
+    // 275.0, 275.0,
+    // 275.0};
     double[] roughness = {1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5};
     double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
     double[] wallHeacCoef = {15.0, 15.0, 15.0, 15.0, 15.0, 15.0};
@@ -153,11 +153,11 @@ public class TwoPhasePipeFlowSystem
 
     // Definerer geometrien for roret
     neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface[] pipeGemometry =
-        new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[6];
+            new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[6];
     double[] pipeDiameter = {0.02588, 0.02588, 0.02588, 0.02588, 0.02588, 0.02588};
     for (int i = 0; i < pipeDiameter.length; i++) {
       pipeGemometry[i] =
-          new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData(pipeDiameter[i]);
+              new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData(pipeDiameter[i]);
     }
     pipe.setEquipmentGeometry(pipeGemometry); // setter inn rorgeometrien for hver leg
     // utforer beregninger
@@ -167,9 +167,6 @@ public class TwoPhasePipeFlowSystem
     pipe.solveSteadyState(2);
     pipe.getNode(30).display();
     // pipe.calcFluxes();
-    // pipe.getDisplay().displayResult("temperature");
-    // pipe.displayResults();
-    // testOps.TPflash();
-    // testOps.displayResult();
+    // pipe.getdisplay() {}
   }
 }

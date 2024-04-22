@@ -202,7 +202,7 @@ public class PHflashGERG2008 extends Flash {
   public void run() {
     tpFlash.run();
     if (system.getNumberOfPhases() > 1) {
-      logger.error("PSFlashGERG2008 only support single phase gas calculations");
+      
       return;
     }
     solveQ();

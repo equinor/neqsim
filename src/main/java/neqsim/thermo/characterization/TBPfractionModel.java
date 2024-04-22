@@ -1,7 +1,7 @@
 package neqsim.thermo.characterization;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class TBPfractionModel implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(TBPfractionModel.class);
+  
 
   String name = "";
 
@@ -85,7 +85,7 @@ public class TBPfractionModel implements java.io.Serializable {
       double criticaVol =
           (0.2918 - 0.0928 * acs) * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
       if (criticaVol < 0) {
-        // logger.info("acentric factor in calc critVol " + acs);
+        // 
         criticaVol = (0.2918 - 0.0928) * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
       }
       return criticaVol;
@@ -325,12 +325,12 @@ public class TBPfractionModel implements java.io.Serializable {
     if (name.equals("PedersenSRK")) {
       return new PedersenTBPModelSRK();
     } else if (name.equals("PedersenSRKHeavyOil")) {
-      logger.info("using SRK heavy oil TBp.................");
+      
       return new PedersenTBPModelSRKHeavyOil();
     } else if (name.equals("PedersenPR")) {
       return new PedersenTBPModelPR();
     } else if (name.equals("PedersenPRHeavyOil")) {
-      logger.info("using PR heavy oil TBp.................");
+      
       return new PedersenTBPModelPRHeavyOil();
     } else if (name.equals("RiaziDaubert")) {
       return new RiaziDaubert();

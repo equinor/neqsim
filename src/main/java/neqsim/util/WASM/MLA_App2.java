@@ -352,7 +352,7 @@ public class MLA_App2 {
     try {
       runThr.join(1000000);
     } catch (Exception ex) {
-      logger.error("Something failed");
+      
     }
 */
 

@@ -6,8 +6,8 @@
 
 package neqsim.thermo.phase;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEInterface;
@@ -24,7 +24,7 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
  */
 public abstract class PhaseGE extends Phase implements PhaseGEInterface {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(PhaseGE.class);
+  
 
   EosMixingRules mixSelect = new EosMixingRules();
   EosMixingRulesInterface mixRuleEos;

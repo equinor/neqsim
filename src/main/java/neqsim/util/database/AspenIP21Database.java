@@ -5,8 +5,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * <p>
@@ -19,7 +19,7 @@ import org.apache.logging.log4j.Logger;
 public class AspenIP21Database
     implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(AspenIP21Database.class);
+  
 
   protected Connection databaseConnection = null;
   private static String dataBaseType = "Karsto";
@@ -36,15 +36,15 @@ public class AspenIP21Database
         Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
       }
     } catch (Exception ex) {
-      logger.error("error in Online Karsto ", ex);
-      logger.error("The database must be registered on the local DBMS to work.");
+      
+      
     }
 
     try {
       databaseConnection = this.openConnection("Karsto");
       setStatement(databaseConnection.createStatement());
     } catch (Exception ex) {
-      logger.error("SQLException ", ex);
+      
     }
   }
 
@@ -63,16 +63,16 @@ public class AspenIP21Database
     try {
       return DriverManager.getConnection(".....");
     } catch (Exception ex) {
-      logger.error("SQLException ", ex);
-      logger.error("error in Kaarsto DB ", ex);
-      logger.error("The Kaarsto database must be registered on the local DBMS to work.");
+      
+      
+      
     } finally {
       try {
         if (ctx != null) {
           ctx.close();
         }
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
       }
     }
     return null;
@@ -115,8 +115,8 @@ public class AspenIP21Database
       ResultSet result = getStatement().executeQuery(sqlString);
       return result;
     } catch (Exception ex) {
-      logger.error("error in DB ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
+      
+      
     }
     return null;
   }

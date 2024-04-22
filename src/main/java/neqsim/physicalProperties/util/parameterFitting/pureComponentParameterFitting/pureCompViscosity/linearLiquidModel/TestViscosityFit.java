@@ -2,8 +2,8 @@ package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFi
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -20,7 +20,7 @@ import neqsim.util.database.NeqSimExperimentDatabase;
  * @version $Id: $Id
  */
 public class TestViscosityFit {
-  static Logger logger = LogManager.getLogger(TestViscosityFit.class);
+  
 
   /**
    * <p>
@@ -47,7 +47,7 @@ public class TestViscosityFit {
         // //TEG
         function.setInitialGuess(guess);
         SystemInterface testSystem = new SystemSrkEos(280, 0.001);
-        // logger.info("component " + dataSet.getString("ComponentName"));
+        // 
         testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
         testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
         testSystem.createDatabase(true);
@@ -64,13 +64,12 @@ public class TestViscosityFit {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      logger.error("database error", ex);
+      
     }
 
     // double sample1[] = { 0.1 };
     // for (int i = 0; i < sampleList.size(); i++) {
-    // logger.info("ans: " +
-    // ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));
+    // 
     // }
 
     SampleSet sampleSet = new SampleSet(sampleList);

@@ -50,7 +50,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
     try {
       clonedPhase = (PhasePrCPA) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
     return clonedPhase;
   }
@@ -406,7 +406,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
     try {
       molarVolume(pressure, temperature, getA(), getB(), pt);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     do {
       iter++;

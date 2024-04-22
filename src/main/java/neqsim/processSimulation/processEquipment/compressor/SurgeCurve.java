@@ -5,8 +5,8 @@ import java.util.Objects;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 
 /**
  * <p>
@@ -18,7 +18,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class SurgeCurve implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(SurgeCurve.class);
+  
 
   double[] flow;
   double[] head;

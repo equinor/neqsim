@@ -6,14 +6,14 @@
 
 package neqsim.standards.salesContract;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
+
+
 import java.util.ArrayList;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
+
+
+
 import neqsim.standards.StandardInterface;
 import neqsim.standards.gasQuality.BestPracticeHydrocarbonDewPoint;
 import neqsim.standards.gasQuality.Draft_ISO18453;
@@ -33,7 +33,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class BaseContract implements ContractInterface {
-  static Logger logger = LogManager.getLogger(BaseContract.class);
+  
 
   private String[][] resultTable = new String[50][9];
   double waterDewPointTemperature = -12.0;
@@ -95,7 +95,7 @@ public class BaseContract implements ContractInterface {
         System.out.println("specification added..." + numb);
       }
     } catch (Exception ex) {
-      logger.error("error in comp", ex);
+      
     } finally {
       specificationsNumber = spesifications.size();
     }
@@ -178,7 +178,7 @@ public class BaseContract implements ContractInterface {
         try {
           spesification.getStandard().calculate();
         } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
+          
         }
         spesification.getStandard().setSalesContract(this);
         System.out.println("Type: " + spesification.getSpecification() + " Standard "
@@ -204,21 +204,7 @@ public class BaseContract implements ContractInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void display() {
-    JFrame dialog =
-        new JFrame("Specification check against sales specifications: " + getContractName());
-    Container dialogContentPane = dialog.getContentPane();
-    dialogContentPane.setLayout(new BorderLayout());
-
-    String[] names = {"Specification", "Value", "Country", "Terminal", "Minimum", "Maximum", "Unit",
-        "Method", "Reference temperature measurement", "Reference temperature of combustion",
-        "Reference pressure", "Comments"};
-    JTable Jtab = new JTable(getResultTable(), names);
-    JScrollPane scrollpane = new JScrollPane(Jtab);
-    dialogContentPane.add(scrollpane);
-    dialog.pack();
-    dialog.setVisible(true);
-  }
+  public void display() {}
 
   /** {@inheritDoc} */
   @Override

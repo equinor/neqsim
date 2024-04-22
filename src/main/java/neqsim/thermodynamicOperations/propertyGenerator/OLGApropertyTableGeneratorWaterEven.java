@@ -5,8 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -22,7 +22,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class OLGApropertyTableGeneratorWaterEven
     extends neqsim.thermodynamicOperations.BaseOperation {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(OLGApropertyTableGeneratorWaterEven.class);
+  
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
@@ -124,7 +124,7 @@ public class OLGApropertyTableGeneratorWaterEven
       TC = thermoSystem.getTC() - 273.15;
       PC = thermoSystem.getPC() * 1e5;
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
   }
 
@@ -146,7 +146,7 @@ public class OLGApropertyTableGeneratorWaterEven
         bubP[i] = thermoSystem.getPressure();
         bubPLOG[i] = bubP[i] * 1e5;
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         bubP[i] = 0;
       }
     }
@@ -171,7 +171,7 @@ public class OLGApropertyTableGeneratorWaterEven
         dewP[i] = thermoSystem.getPressure();
         dewPLOG[i] = dewP[i] * 1e5;
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         dewP[i] = 0;
       }
     }
@@ -194,7 +194,7 @@ public class OLGApropertyTableGeneratorWaterEven
         // thermoOps.bubblePointTemperatureFlash();
         bubT[i] = thermoSystem.getPressure();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        
         bubT[i] = 0.0;
       }
     }
@@ -254,7 +254,7 @@ public class OLGApropertyTableGeneratorWaterEven
   @Override
   public void run() {
     calcRSWTOB();
-    logger.info("RSWTOB " + RSWTOB);
+    
     nProps = 29;
     props = new double[nProps][pressures.length][temperatures.length];
     units = new String[nProps];
@@ -267,8 +267,7 @@ public class OLGApropertyTableGeneratorWaterEven
       for (int i = 0; i < pressures.length; i++) {
         thermoSystem.setPressure(pressures[i]);
         try {
-          // logger.info("TPflash... " + thermoSystem.getTemperature() + " pressure " +
-          // thermoSystem.getPressure());
+          // 
           thermoOps.TPflash();
           // thermoSystem.createTable("test");
           thermoSystem.init(3);
@@ -280,22 +279,15 @@ public class OLGApropertyTableGeneratorWaterEven
           acceptedFlash = true;
         } catch (Exception ex) {
           acceptedFlash = false;
-          logger.info("fail temperature " + thermoSystem.getTemperature() + " fail pressure "
-              + thermoSystem.getPressure());
+          
 
           thermoSystem.display();
-          logger.error(ex.getMessage(), ex);
+          
         }
 
         /*
-         * logger.info("water density " +
-         * thermoSystem.getPhase(2).getPhysicalProperties().getDensity()); logger.info("RSW " +
-         * thermoSystem.getPhase(0).getComponent("water").getx() *
-         * thermoSystem.getPhase(0).getComponent("water").getMolarMass() /
-         * thermoSystem.getPhase(0).getMolarMass()); logger.info("surf tens oil-water  " +
-         * thermoSystem.getInterphaseProperties().getSurfaceTension(1, 2));
-         * logger.info("surf tens gas-water  " +
-         * thermoSystem.getInterphaseProperties().getSurfaceTension(0, 2));
+         *   
+         * 
          */
         int k = 0;
         if (thermoSystem.hasPhaseType("gas") && acceptedFlash) {
@@ -419,10 +411,10 @@ public class OLGApropertyTableGeneratorWaterEven
          * for (int jj = 0; jj < 9; jj++) { Matrix xg = XMatrixgas.getMatrix(jj, jj, 0, 3);
          *
          * try { xcoef[jj] = aMatrix.solve(xg.transpose()); } catch (Exception ex) {
-         * logger.error(ex.getMessage(),e); } // logger.info("xcoef " + j); // xcoef.print(10, 10);
-         * //logger.info("dss: " +ds * dxds.get(speceq, 0)); // specVal = xcoef.get(0, 0) + sny *
+         *  } //  // xcoef.print(10, 10);
+         * // // specVal = xcoef.get(0, 0) + sny *
          * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))); //
-         * logger.info("vall" + vall); } }
+         *  } }
          */
         if (thermoSystem.hasPhaseType("oil") && acceptedFlash) {
           int phaseNumb = thermoSystem.getPhaseNumberOfPhase("oil");
@@ -714,29 +706,19 @@ public class OLGApropertyTableGeneratorWaterEven
         }
       }
     }
-    logger.info("Finished TPflash...");
+    
     if (thermoSystem.getPhase(0).hasComponent("water")) {
       thermoSystem.removeComponent("water");
     }
     bubP = calcBubP(temperatures);
     dewP = calcDewP(temperatures);
     // bubT = calcBubT(temperatures);
-    logger.info("Finished creating arrays");
+    
   }
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    logger.info("TC " + TC + " PC " + PC);
-    for (int i = 0; i < pressures.length; i++) {
-      thermoSystem.setPressure(pressures[i]);
-      for (int j = 0; j < temperatures.length; j++) {
-        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]);
-        // + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
-      }
-    }
-    writeOLGAinpFile("");
-  }
+  public void displayResult() {}
 
   /**
    * <p>
@@ -807,7 +789,7 @@ public class OLGApropertyTableGeneratorWaterEven
         if (names[k] == null) {
           continue;
         }
-        logger.info("Writing variable: " + names[k]);
+        
         writer.write(names[k] + " (" + units[k] + ")\n");
         for (int i = 0; i < pressures.length; i++) {
           // thermoSystem.setPressure(pressures[i]);
@@ -1303,7 +1285,7 @@ public class OLGApropertyTableGeneratorWaterEven
 
       /*
        * for (int k = 0; k < nProps; k++) { if (names[k] == null) { continue; }
-       * logger.info("Writing variable: " + names[k]); writer.write(names[k] + " (" + units[k] +
+       *  writer.write(names[k] + " (" + units[k] +
        * ")\n"); for (int i = 0; i < pressures.length; i++) {
        * //thermoSystem.setPressure(pressures[i]); int counter = 0; for (int j = 0; j <
        * temperatures.length; j++) { // thermoSystem.setTemperature(temperatures[j]); if (counter >

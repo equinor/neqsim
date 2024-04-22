@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processEquipment.stream;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -16,7 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class ScalePotentialCheckStream extends Stream {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ScalePotentialCheckStream.class);
+  
 
   protected SystemInterface reactiveThermoSystem;
 
@@ -118,7 +118,5 @@ public class ScalePotentialCheckStream extends Stream {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    reactiveThermoSystem.display(name);
-  }
+  public void displayResult() {}
 }

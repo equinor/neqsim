@@ -1,7 +1,7 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(HCdewPointPressureFlash.class);
+  
 
   /**
    * <p>
@@ -40,7 +40,7 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
     double xold = 0;
     double xtotal = 1;
     double xoldold = 0;
-    // logger.info("starting");
+    // 
     system.init(0);
     system.setBeta(0, 1.0 - 1e-10);
     system.setBeta(1, 1e-10);
@@ -115,13 +115,11 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
       }
       system.setPressure(newPres);
 
-      // logger.info("iter " + iterations + " pressure " + system.getPressure() + "
-      // xtotal " + xtotal);
+      // 
     } while ((((Math.abs(xtotal) - 1.0) > 1e-10)
         || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-9)
         && (iterations < maxNumberOfIterations));
-    // logger.info("iter " + iterations + " XTOT " +xtotal + " k "
-    // +system.getPhases()[1].getComponents()[0].getK());
+    // 
     if (Math.abs(xtotal - 1.0) >= 1e-5
         || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
       setSuperCritical(true);

@@ -73,7 +73,7 @@ public class SystemSrkPenelouxEos extends SystemSrkEos {
     try {
       clonedSystem = (SystemSrkPenelouxEos) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      
     }
 
     return clonedSystem;

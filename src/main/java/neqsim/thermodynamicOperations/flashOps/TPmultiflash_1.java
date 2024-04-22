@@ -7,8 +7,8 @@
 package neqsim.thermodynamicOperations.flashOps;
 
 import java.util.ArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
@@ -22,7 +22,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class TPmultiflash_1 extends TPflash {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(TPmultiflash_1.class);
+  
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
@@ -212,7 +212,7 @@ public class TPmultiflash_1 extends TPflash {
 
     lowestGibbsEnergyPhase = 0;
 
-    // logger.info("low gibbs phase " + lowestGibbsEnergyPhase);
+    // 
 
     for (int k = 0; k < minimumGibbsEnergySystem.getPhases()[1].getNumberOfComponents(); k++) {
       // sumz += minimumGibbsEnergySystem.getPhases()[1].getComponents()[k].getz();
@@ -225,14 +225,13 @@ public class TPmultiflash_1 extends TPflash {
       for (int i = 0; i < minimumGibbsEnergySystem.getPhases()[1].getNumberOfComponents(); i++) {
         (clonedSystem.get(k)).getPhases()[1].getComponents()[i]
             .setx((clonedSystem.get(k)).getPhases()[1].getComponents()[i].getx() / sumw[0]);
-        // logger.info("x: " + (
-        // clonedSystem.get(k)).getPhases()[0].getComponents()[i].getx());
+        // 
       }
       d[k] = Math.log(
           minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents()[k].getx())
           + Math.log(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents()[k]
               .getFugacityCoefficient());
-      // logger.info("dk: " + d[k]);
+      // 
     }
 
     for (int j = 0; j < minimumGibbsEnergySystem.getPhases()[1].getNumberOfComponents(); j++) {
@@ -250,7 +249,7 @@ public class TPmultiflash_1 extends TPflash {
           err += Math.abs(logWi[i] - oldlogw[i]);
           Wi[j][i] = Math.exp(logWi[i]);
         }
-        // logger.info("err: " + err);
+        // 
         sumw[j] = 0;
 
         for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
@@ -268,9 +267,9 @@ public class TPmultiflash_1 extends TPflash {
       for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
         tm[j] -= Math.exp(logWi[i]);
         x[j][i] = (clonedSystem.get(j)).getPhases()[1].getComponents()[i].getx();
-        // logger.info("txji: " + x[j][i]);
+        // 
       }
-      logger.info("tm: " + tm[j]);
+      
     }
     int unstabcomp = 0;
     for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
@@ -287,14 +286,14 @@ public class TPmultiflash_1 extends TPflash {
       }
     }
 
-    // logger.info("STABILITY ANALYSIS: ");
-    // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);*/
+    // 
+    // */
   }
 
   /** {@inheritDoc} */
   @Override
   public void run() {
-    logger.info("Starting multiphase-flash....");
+    
     stabilityAnalysis();
     system.init(1);
 
@@ -318,7 +317,7 @@ public class TPmultiflash_1 extends TPflash {
         for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
           chemdev += Math.abs(xchem[i] - system.getPhases()[phase].getComponents()[i].getx());
         }
-        logger.info("chemdev: " + chemdev);
+        
       }
     }
   }

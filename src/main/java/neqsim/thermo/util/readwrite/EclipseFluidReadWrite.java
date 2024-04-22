@@ -6,8 +6,8 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -21,7 +21,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class EclipseFluidReadWrite {
-  static Logger logger = LogManager.getLogger(EclipseFluidReadWrite.class);
+  
 
   /** Constant <code>pseudoName=""</code> */
   public static String pseudoName = "";
@@ -109,7 +109,7 @@ public class EclipseFluidReadWrite {
         }
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      
     }
   }
 
@@ -355,7 +355,7 @@ public class EclipseFluidReadWrite {
 
       // fluid.display();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     return fluid;
   }

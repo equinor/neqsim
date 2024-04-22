@@ -140,7 +140,5 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    thermoSystem.display(getName());
-  }
+  public void displayResult() {}
 }

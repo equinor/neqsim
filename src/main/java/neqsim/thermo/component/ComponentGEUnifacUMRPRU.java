@@ -1,7 +1,7 @@
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+
 import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
@@ -18,7 +18,7 @@ import neqsim.thermo.phase.PhaseType;
  */
 public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(ComponentGEUnifacUMRPRU.class);
+  
 
   int numberOfUnifacSubGroups = 139;
   double[][] aij = null;
@@ -75,7 +75,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         dataSet =
             database.getResultSet(("SELECT * FROM unifaccompumrpru WHERE Name='" + name + "'"));
         dataSet.next();
-        logger.error("Something went wrong. Closing database.", ex);
+        
       }
       unifacGroups.clear();
       for (int p = 1; p < numberOfUnifacSubGroups; p++) {
@@ -87,7 +87,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         }
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      
     }
     unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
     for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
@@ -399,7 +399,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     lngamma = lngammaResidual + lngammaCombinational;
 
     if (Double.isNaN(lngamma)) {
-      logger.warn("gamma NaN......");
+      
       lngamma = 0.0;
       gamma = 1.0;
       dlngammadt = 0;

@@ -242,9 +242,7 @@ public class AdiabaticPipe extends Pipeline {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    system.display();
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override
