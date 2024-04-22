@@ -618,7 +618,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * getReport() method
    * 
    */
-  @Override
   public ArrayList<String[]> getReport() {
     ArrayList<String[]> report = new ArrayList<String[]>();
     HashMap<String, String> gasprops = new HashMap<String, String>();
