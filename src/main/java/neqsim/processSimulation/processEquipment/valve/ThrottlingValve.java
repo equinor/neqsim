@@ -3,9 +3,11 @@ package neqsim.processSimulation.processEquipment.valve;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.mechanicalDesign.valve.ValveMechanicalDesign;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.util.monitor.ValveResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -471,5 +473,11 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   public void setIsCalcOutPressure(boolean isSetPres) {
     isCalcPressure = isSetPres;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new ValveResponse(this));
   }
 }

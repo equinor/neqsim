@@ -1,8 +1,10 @@
 package neqsim.processSimulation.processEquipment.separator;
 
 import java.util.UUID;
+import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.util.monitor.SeparatorResponse;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -266,5 +268,11 @@ public class ThreePhaseSeparator extends Separator {
     return getWaterOutStream().getThermoSystem().getExergy(surroundingTemperature, unit)
         + getOilOutStream().getThermoSystem().getEntropy(unit)
         + getGasOutStream().getThermoSystem().getExergy(surroundingTemperature, unit) - entrop;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new SeparatorResponse(this));
   }
 }

@@ -1,5 +1,6 @@
 package neqsim.processSimulation.util.monitor;
 
+import java.util.ArrayList;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
@@ -22,16 +23,28 @@ public class StreamResponse {
   public Double massflowGas;
   public Double massflowOil;
   public Double massflowAqueous;
+  public ArrayList<String[]> data = new ArrayList<String[]>();
 
   /**
    * <p>
    * Constructor for StreamResponse.
    * </p>
    *
-   * @param inputStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   * @param inputStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
    */
   public StreamResponse(StreamInterface inputStream) {
+
     name = inputStream.getName();
+
+    data.add(new String[] {"temperature",
+        Double
+            .toString(inputStream.getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+        neqsim.util.unit.Units.getSymbol("temperature")});
+    data.add(new String[] {"pressure",
+        Double.toString(inputStream.getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+        neqsim.util.unit.Units.getSymbol("pressure")});
+
     fluid = new Fluid(inputStream.getFluid());
     temperature = inputStream.getTemperature("C");
     pressure = inputStream.getPressure("bara");

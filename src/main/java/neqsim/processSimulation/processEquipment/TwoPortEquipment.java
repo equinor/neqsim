@@ -106,4 +106,10 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   public void setOutletTemperature(double temperature) {
     this.outStream.setTemperature(temperature, "unit");
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return null;
+  }
 }

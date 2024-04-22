@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -21,6 +22,7 @@ import neqsim.processSimulation.processEquipment.separator.sectionType.Separator
 import neqsim.processSimulation.processEquipment.separator.sectionType.ValveSection;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.util.monitor.SeparatorResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -869,6 +871,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         && Objects.equals(thermoSystem2, other.thermoSystem2)
         && Objects.equals(thermoSystemCloned, other.thermoSystemCloned)
         && Objects.equals(waterSystem, other.waterSystem);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new SeparatorResponse(this));
   }
 
   /*

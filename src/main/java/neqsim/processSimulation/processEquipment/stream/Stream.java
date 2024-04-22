@@ -6,10 +6,14 @@
 
 package neqsim.processSimulation.processEquipment.stream;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.util.monitor.StreamResponse;
 import neqsim.standards.gasQuality.Standard_ISO6976;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -436,8 +440,10 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    */
   @Override
   public String[][] getResultTable() {
-    return getFluid().getResultTable();
+    return getFluid().calcResultTable();
   }
+
+
 
   /** {@inheritDoc} */
   @Override
@@ -606,5 +612,56 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     } else {
       return thermoSystem;
     }
+  }
+
+  /**
+   * <p>
+   * getReport.
+   * </p>
+   *
+   * @return a String object
+   */
+  public ArrayList<String[]> getReport() {
+    ArrayList<String[]> report = new ArrayList<String[]>();
+    HashMap<String, String> gasprops = new HashMap<String, String>();
+    ArrayList<String> phases = new ArrayList<String>();
+
+    phases.add("Total");
+    if (getFluid().hasPhaseType("gas")) {
+      phases.add("Gas");
+      gasprops.put("temperature",
+          Double.toString(getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))));
+    }
+    if (getFluid().hasPhaseType("oil")) {
+      phases.add("oil");
+    }
+    if (getFluid().hasPhaseType("aqueous")) {
+      phases.add("aqueous");
+    }
+
+    report.add(phases.toArray(new String[0]));
+
+    report.add(new String[] {"temperature",
+        Double.toString(getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+        neqsim.util.unit.Units.getSymbol("temperature")});
+    report.add(new String[] {"pressure",
+        Double.toString(getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+        neqsim.util.unit.Units.getSymbol("pressure")});
+    report.add(new String[] {"mass flow",
+        Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+        neqsim.util.unit.Units.getSymbol("mass flow")});
+    report.add(new String[] {"molar flow",
+        Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("molar flow"))),
+        neqsim.util.unit.Units.getSymbol("molar flow")});
+    report.add(new String[] {"volume flow",
+        Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
+        neqsim.util.unit.Units.getSymbol("volume flow")});
+    return report;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new StreamResponse(this));
   }
 }

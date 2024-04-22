@@ -256,4 +256,8 @@ public class ProcessModule extends SimulationBaseClass {
     ProcessModule copyModule = (ProcessModule) SerializationUtils.deserialize(bytes);
     return copyModule;
   }
+
+  public ArrayList<String[]> getReport() {
+    return null;
+  }
 }

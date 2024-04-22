@@ -431,8 +431,7 @@ public class ProcessSystem extends SimulationBaseClass {
       for (int i = 0; i < unitOperations.size(); i++) {
         if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
           try {
-            if (iter == 1
-                || unitOperations.get(i).needRecalculation()) {
+            if (iter == 1 || unitOperations.get(i).needRecalculation()) {
               unitOperations.get(i).run(id);
             }
           } catch (Exception ex) {

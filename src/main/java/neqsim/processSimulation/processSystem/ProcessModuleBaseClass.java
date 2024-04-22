@@ -243,4 +243,10 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   public double getPressure(String unit) {
     return 1.0;
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return null;
+  }
 }

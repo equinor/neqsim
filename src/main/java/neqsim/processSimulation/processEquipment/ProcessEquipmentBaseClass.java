@@ -286,4 +286,10 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
         && Arrays.deepEquals(report, other.report)
         && Objects.equals(specification, other.specification);
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return null;
+  }
 }

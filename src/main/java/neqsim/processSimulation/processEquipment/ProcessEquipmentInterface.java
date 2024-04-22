@@ -213,4 +213,13 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
   /** {@inheritDoc} */
   @Override
   public int hashCode();
+
+  /**
+   * <p>
+   * toJson.
+   * </p>
+   *
+   * @return a String
+   */
+  public String toJson();
 }

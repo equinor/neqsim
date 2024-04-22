@@ -7,9 +7,11 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import java.util.UUID;
+import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.util.monitor.HeaterResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -368,5 +370,11 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
 
     return outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
         - inStream.getThermoSystem().getExergy(surroundingTemperature, unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new HeaterResponse(this));
   }
 }
