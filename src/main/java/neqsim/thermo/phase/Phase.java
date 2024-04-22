@@ -108,7 +108,7 @@ public abstract class Phase implements PhaseInterface {
    *
    * @param name Name of component to add.
    * @param moles Number of moles of component to add to phase.
-   * @param compNumber compoinent numer in fluid
+   * @param compNumber component number in fluid
    */
   public void addComponent(String name, double moles, int compNumber) {
     if (name == null) {
