@@ -40,10 +40,11 @@ public class ReportTest {
     processOps.add(valve);
     processOps.run();
 
-    neqsim.util.unit.Units units = new neqsim.util.unit.Units();
-
     Report report = new Report(processOps);
     String obj = report.json();
-    // System.out.println(obj);
+
+    neqsim.util.unit.Units.activateFieldUnits();
+    String obj2 = report.json();
+    // System.out.println(obj2);
   }
 }

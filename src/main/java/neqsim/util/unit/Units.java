@@ -90,26 +90,44 @@ public class Units {
   }
 
   public static void activateSIUnits() {
+    if (activeUnits.size() == 0) {
+      new Units();
+    }
     activeUnits = new HashMap<>(siUnits);
   }
 
   public static void activateFieldUnits() {
+    if (activeUnits.size() == 0) {
+      new Units();
+    }
     activeUnits = new HashMap<>(fieldUnits);
   }
 
   public static void activateDefaultUnits() {
+    if (activeUnits.size() == 0) {
+      new Units();
+    }
     activeUnits = new HashMap<>(defaultUnits); // Reassign with a copy
   }
 
   public static String getSymbol(String name) {
+    if (activeUnits.size() == 0) {
+      new Units();
+    }
     return activeUnits.get(name).symbol;
   }
 
   public static String getSymbolName(String name) {
+    if (activeUnits.size() == 0) {
+      new Units();
+    }
     return activeUnits.get(name).symbolName;
   }
 
   public void setUnit(String name, String symbol, String symbolName) {
+    if (activeUnits.size() == 0) {
+      new Units();
+    }
     UnitDescription unit = activeUnits.get(name);
     if (unit != null) {
       unit.symbol = symbol;
