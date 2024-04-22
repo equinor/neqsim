@@ -615,8 +615,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * getReport() method
-   * 
+   * <p>
+   * getReport.
+   * </p>
+   *
+   * @return a String object
    */
   public ArrayList<String[]> getReport() {
     ArrayList<String[]> report = new ArrayList<String[]>();

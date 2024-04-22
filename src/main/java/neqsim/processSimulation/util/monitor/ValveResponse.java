@@ -20,8 +20,7 @@ public class ValveResponse {
    * Constructor for StreamResponse.
    * </p>
    *
-   * @param inputStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
+   * @param valve a {@link neqsim.processSimulation.processEquipment.valve.ValveInterface} object
    */
   public ValveResponse(ValveInterface valve) {
 
