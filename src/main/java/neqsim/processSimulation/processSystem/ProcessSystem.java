@@ -429,6 +429,7 @@ public class ProcessSystem extends SimulationBaseClass {
       iter++;
       isConverged = true;
       for (int i = 0; i < unitOperations.size(); i++) {
+        System.out.println(unitOperations.get(i).getClass().getSimpleName());
         if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
           try {
             if (iter == 1
@@ -483,6 +484,8 @@ public class ProcessSystem extends SimulationBaseClass {
        * measurementDevices.get(i)) .getUnit(); }
        */
     } while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
+
+    System.out.println("Numer of run iterations: " + iter);
 
     for (int i = 0; i < unitOperations.size(); i++) {
       unitOperations.get(i).setCalculationIdentifier(id);

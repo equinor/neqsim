@@ -128,6 +128,7 @@ public class PHflash extends Flash {
         minTemperature = system.getTemperature();
       }
     } while (((Math.abs(error) + Math.abs(erorOld)) > 1e-8 || iterations < 3) && iterations < 200);
+    System.out.println("solveQ iterations: " + iterations);
     return 1.0 / nyTemp;
   }
 

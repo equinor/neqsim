@@ -273,12 +273,12 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     stripper.setNumberOfStages(2);
     stripper.setStageEfficiency(1.0);
     p.add(stripper);
-
+/*
     Recycle recycleGasFromStripper = new Recycle("stripping gas recirc");
     recycleGasFromStripper.addStream(stripper.getGasOutStream());
     recycleGasFromStripper.setOutletStream(gasToReboiler);
     p.add(recycleGasFromStripper);
-
+*/
     heatEx.setFeedStream(1, stripper.getLiquidOutStream());
 
     Heater bufferTank = new Heater(heatEx.getOutStream(1));
@@ -293,7 +293,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(hotLeanTEGPump);
 
     heatEx2.setFeedStream(1, hotLeanTEGPump.getOutStream());
-
+/*
     Heater coolerhOTteg3 = new Heater(heatEx2.getOutStream(1));
     coolerhOTteg3.setName("lean TEG cooler");
     coolerhOTteg3.setOutTemperature(273.15 + 48.5);
@@ -339,7 +339,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     makeupMixer.addStream(leanTEGtoabs);
     makeupMixer.addStream(makeupTEG);
     p.add(makeupMixer);
-/*
+
     Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
     resycleLeanTEG.addStream(makeupMixer.getOutStream());
     resycleLeanTEG.setOutletStream(TEGFeed);

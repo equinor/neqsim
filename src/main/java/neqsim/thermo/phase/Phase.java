@@ -1238,7 +1238,7 @@ public abstract class Phase implements PhaseInterface {
     refPhase = new PhaseInterface[numberOfComponents];
     for (int i = 0; i < numberOfComponents; i++) {
       try {
-        refPhase[i] = this.getClass().getDeclaredConstructor().newInstance();
+        //refPhase[i] = this.getClass().getDeclaredConstructor().newInstance();//reflectionDebug
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }

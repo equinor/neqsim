@@ -237,7 +237,7 @@ public class ComponentSolid extends ComponentSrk {
     try {
       // if ((!isTBPfraction && !isPlusFraction)
       // || neqsim.util.database.NeqSimDataBase.createTemporaryTables()) {
-      refPhase = phase.getClass().getDeclaredConstructor().newInstance();
+      //refPhase = phase.getClass().getDeclaredConstructor().newInstance(); //reflectionDebug
       refPhase.setTemperature(273.0);
       refPhase.setPressure(1.0);
       try {
