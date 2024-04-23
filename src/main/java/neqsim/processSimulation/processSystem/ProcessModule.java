@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
+import neqsim.processSimulation.util.report.Report;
 
 /**
  * A class representing a process module class that can contain unit operations and other modules.
@@ -259,5 +260,15 @@ public class ProcessModule extends SimulationBaseClass {
 
   public ArrayList<String[]> getReport() {
     return null;
+  }
+
+
+  /**
+   * {@inheritDoc}
+   * 
+   * @return a String
+   */
+  public String getReport_json() {
+    return new Report(this).json();
   }
 }
