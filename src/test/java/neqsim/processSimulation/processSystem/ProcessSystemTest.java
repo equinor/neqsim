@@ -575,7 +575,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
 
   @Test
-  public void runTEGProcessTest3() {
+  public void testRun_step() {
     neqsim.thermo.system.SystemInterface feedGas =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     feedGas.addComponent("nitrogen", 0.245);
@@ -885,53 +885,25 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     dryFeedGasMidgard.setFlowRate(11.1, "MSm3/day");
     operations.run_step();
     dryFeedGasMidgard.setFlowRate(12.3, "MSm3/day");
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     dryFeedGasMidgard.setFlowRate(13.5, "MSm3/day");
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     dryFeedGasMidgard.setFlowRate(10.0, "MSm3/day");
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
     operations.run_step();
-    System.out.println(dehydratedGas.getFluid().getComponent("water").getx());
-    /*
-     * System.out.println("flowo " + hotLeanTEGPump.getOutletStream().getFlowRate("kg/hr"));
-     * System.out.println("makeup " + makeupTEG.getFlowRate("kg/hr")); System.out.println("mixo " +
-     * coolerhOTteg3.getOutletStream().getFlowRate("kg/hr")); System.out.println("leantoresirc " +
-     * leanTEGtoabs.getFlowRate("kg/hr")); // operations.run(); System.out.println("flowo " +
-     * hotLeanTEGPump.getOutletStream().getFlowRate("kg/hr")); System.out.println("makeup " +
-     * makeupTEG.getFlowRate("kg/hr")); System.out.println("mixo " +
-     * coolerhOTteg3.getOutletStream().getFlowRate("kg/hr")); System.out.println("leantoresirc " +
-     * leanTEGtoabs.getFlowRate("kg/hr"));
-     */
     assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
         1e-6);
   }
