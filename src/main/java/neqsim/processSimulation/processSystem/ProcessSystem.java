@@ -491,6 +491,38 @@ public class ProcessSystem extends SimulationBaseClass {
     setCalculationIdentifier(id);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public void run_step(UUID id) {
+    for (int i = 0; i < unitOperations.size(); i++) {
+      try {
+        // if (unitOperations.get(i).needRecalculation()) {
+        unitOperations.get(i).run(id);
+        // }
+      } catch (Exception ex) {
+        // String error = ex.getMessage();
+        logger.error(ex.getMessage(), ex);
+      }
+    }
+    for (int i = 0; i < unitOperations.size(); i++) {
+      unitOperations.get(i).setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+  }
+
+  /*
+   * signalDB = new String[1000][1 + 3 * measurementDevices.size()];
+   *
+   * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for (int i = 0; i <
+   * measurementDevices.size(); i++) { signalDB[timeStepNumber][0] = Double.toString(time);
+   * signalDB[timeStepNumber][3 * i + 1] = ((MeasurementDeviceInterface) measurementDevices.get(i))
+   * .getName(); signalDB[timeStepNumber][3 * i + 2] = Double
+   * .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
+   * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface) measurementDevices.get(i))
+   * .getUnit(); }
+   */
+
+
   /**
    * <p>
    * runTransient.

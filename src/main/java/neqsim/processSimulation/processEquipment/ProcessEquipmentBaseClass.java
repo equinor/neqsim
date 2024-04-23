@@ -9,6 +9,7 @@ package neqsim.processSimulation.processEquipment;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.UUID;
 import org.apache.commons.lang.SerializationUtils;
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
@@ -301,5 +302,10 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    */
   public String getReport_json() {
     return new Report(this).json();
+
+  /** {@inheritDoc} */
+  @Override
+  public void run_step(UUID id) {
+
   }
 }

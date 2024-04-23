@@ -260,5 +260,9 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     return new Report(this).json();
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public void run_step(UUID id) {
 
+  }
 }

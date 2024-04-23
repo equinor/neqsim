@@ -262,7 +262,6 @@ public class ProcessModule extends SimulationBaseClass {
     return null;
   }
 
-
   /**
    * {@inheritDoc}
    * 
@@ -270,5 +269,10 @@ public class ProcessModule extends SimulationBaseClass {
    */
   public String getReport_json() {
     return new Report(this).json();
+
+  /** {@inheritDoc} */
+  @Override
+  public void run_step(UUID id) {
+
   }
 }
