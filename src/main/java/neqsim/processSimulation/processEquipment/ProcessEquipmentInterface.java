@@ -222,4 +222,14 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * @return a String
    */
   public String toJson();
+
+  /**
+   * <p>
+   * getReport_json
+   * </p>
+   * Return results of simulation in json format
+   * 
+   * @return a String
+   */
+  public String getReport_json();
 }

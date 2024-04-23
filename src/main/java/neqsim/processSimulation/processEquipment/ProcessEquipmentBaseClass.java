@@ -15,6 +15,7 @@ import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.stream.EnergyStream;
+import neqsim.processSimulation.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -58,7 +59,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {}
+  public void displayResult() {
+  }
 
   /**
    * Create deep copy.
@@ -87,7 +89,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void setRegulatorOutSignal(double signal) {}
+  public void setRegulatorOutSignal(double signal) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -101,8 +104,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * Setter for the field <code>flowValveController</code>.
    * </p>
    *
-   * @param controller a {@link neqsim.processSimulation.controllerDevice.ControllerDeviceInterface}
-   *        object
+   * @param controller a
+   *                   {@link neqsim.processSimulation.controllerDevice.ControllerDeviceInterface}
+   *                   object
    */
   public void setFlowValveController(ControllerDeviceInterface controller) {
     this.flowValveController = controller;
@@ -122,7 +126,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void initMechanicalDesign() {}
+  public void initMechanicalDesign() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -153,7 +158,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * Getter for the field <code>energyStream</code>.
    * </p>
    *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.EnergyStream} object
+   * @return a
+   *         {@link neqsim.processSimulation.processEquipment.stream.EnergyStream}
+   *         object
    */
   public EnergyStream getEnergyStream() {
     return energyStream;
@@ -164,8 +171,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * Setter for the field <code>energyStream</code>.
    * </p>
    *
-   * @param energyStream a {@link neqsim.processSimulation.processEquipment.stream.EnergyStream}
-   *        object
+   * @param energyStream a
+   *                     {@link neqsim.processSimulation.processEquipment.stream.EnergyStream}
+   *                     object
    */
   public void setEnergyStream(EnergyStream energyStream) {
     setEnergyStream(true);
@@ -232,7 +240,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {}
+  public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
+  }
 
   public String conditionAnalysisMessage = "";
 
@@ -292,6 +301,15 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   @Override
   public String toJson() {
     return null;
+  }
+
+  /**
+   * {@inheritDoc}
+   * 
+   * @return a String
+   */
+  public String getReport_json() {
+    return new Report(this).json();
   }
 
   /** {@inheritDoc} */
