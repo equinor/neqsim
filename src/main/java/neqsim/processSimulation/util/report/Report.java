@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
@@ -20,9 +21,14 @@ public class Report {
   public static HashMap<String, String> json_reports = new HashMap<>();
   Gson gson = new Gson();
   ProcessSystem process;
+  ProcessEquipmentBaseClass processEquipment;
 
   public Report(ProcessSystem process) {
     this.process = process;
+  }
+
+  public Report(ProcessEquipmentBaseClass processEquipmentBaseClass) {
+    processEquipment = processEquipmentBaseClass;
   }
 
   public String json() {
