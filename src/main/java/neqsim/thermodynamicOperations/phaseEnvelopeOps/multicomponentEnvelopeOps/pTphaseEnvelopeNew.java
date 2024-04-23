@@ -75,6 +75,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
       outputToFile = true;
       fileName = name;
     }
+    /*
     mainFrame = new JFrame("Progress Bar");
     mainPanel = new JPanel();
     mainPanel.setSize(200, 100);
@@ -87,6 +88,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
     mainPanel.add(monitor);
     mainFrame.getContentPane().add(mainPanel);
     mainFrame.setVisible(true);
+    */
   }
 
   /** {@inheritDoc} */
@@ -272,7 +274,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
   public void printToFile(String name) {}
 
   /** {@inheritDoc} */
-  @Override
+  /*@Override
   public org.jfree.chart.JFreeChart getJFreeChart(String name) {
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(1);
@@ -287,7 +289,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
     graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
     return graph2.getChart();
   }
-
+*/
   /** {@inheritDoc} */
   @Override
   public double[][] getPoints(int i) {

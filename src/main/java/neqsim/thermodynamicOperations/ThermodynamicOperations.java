@@ -1626,6 +1626,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void OLGApropTable(double minTemp, double maxTemp, int temperatureSteps, double minPres,
       double maxPres, int pressureSteps, String filename, int TABtype) {
+    /*
     operation = new OLGApropertyTableGeneratorWaterStudents(system);
     ((OLGApropertyTableGeneratorWaterStudents) operation).setFileName(filename);
     ((OLGApropertyTableGeneratorWaterStudents) operation).setPressureRange(minPres, maxPres,
@@ -1633,6 +1634,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     ((OLGApropertyTableGeneratorWaterStudents) operation).setTemperatureRange(minTemp, maxTemp,
         temperatureSteps);
     getOperation().run();
+
+     */
   }
 
   /**
@@ -1651,6 +1654,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void OLGApropTablePH(double minEnthalpy, double maxEnthalpy, int enthalpySteps,
       double minPres, double maxPres, int pressureSteps, String filename, int TABtype) {
+
+    /*
     operation = new OLGApropertyTableGeneratorWaterStudentsPH(system);
     ((OLGApropertyTableGeneratorWaterStudentsPH) operation).setFileName(filename);
     ((OLGApropertyTableGeneratorWaterStudentsPH) operation).setPressureRange(minPres, maxPres,
@@ -1658,6 +1663,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     ((OLGApropertyTableGeneratorWaterStudentsPH) operation).setEnthalpyRange(minEnthalpy,
         maxEnthalpy, enthalpySteps);
     getOperation().run();
+
+     */
   }
 
   /**

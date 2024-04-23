@@ -33,8 +33,8 @@ import neqsim.util.exception.InvalidInputException;
  * This is the base class of the System classes.
  */
 public abstract class SystemThermo implements SystemInterface {
-  /** 
 
+   private static final int MAX_PHASES = 6;
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 

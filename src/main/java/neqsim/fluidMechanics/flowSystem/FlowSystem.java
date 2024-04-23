@@ -243,9 +243,11 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   }
 
   /** {@inheritDoc} */
+  /*
   @Override
+  /
   public FlowSystemVisualizationInterface getdisplay() {}
-
+*/
   /** {@inheritDoc} */
   @Override
   public void setNumberOfNodesInLeg(int numberOfNodesInLeg) {

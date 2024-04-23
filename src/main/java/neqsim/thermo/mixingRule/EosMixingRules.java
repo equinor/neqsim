@@ -23,7 +23,8 @@ import neqsim.thermo.phase.PhaseGEUnifacPSRK;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
-import neqsim.util.database.NeqSimDataBase;
+import neqsim.MathLib.matrix.*;
+//import neqsim.util.database.NeqSimDataBase;
 
 /**
  * <p>
@@ -82,8 +83,26 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
    * Constructor for EosMixingRules.
    * </p>
    */
-  public EosMixingRules() {}
-
+  /*
+  public EosMixingRules() {
+    intparam = new double[20][20];
+    intparamT = new double[20][20];
+    WSintparam = new double[20][20];
+    intparamij = new double[20][20];
+    intparamji = new double[20][20];
+    intparamTType = new int[20][20];
+    HVDij = new double[20][20];
+    HValpha = new double[20][20];
+    HVDijT = new double[20][20];
+    NRTLDij = new double[20][20];
+    NRTLalpha = new double[20][20];
+    NRTLDijT = new double[20][20];
+    wij = new double[20][20][20];
+    wijCalcOrFitted = new int[20][20];
+    classicOrHV = new String[20][20];
+    classicOrWS = new String[20][20];
+  }
+*/
   /** {@inheritDoc} */
   @Override
   public EosMixingRules clone() {
@@ -2490,10 +2509,11 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return new ClassicSRKT2();
     } else if (i == 10) {
       // return new ElectrolyteMixRule(phase, HValpha, HVgij, HVgii, classicOrHV,wij);}
-      org.ejml.simple.SimpleMatrix mat1 = new org.ejml.simple.SimpleMatrix(intparamij);
-      org.ejml.simple.SimpleMatrix mat2 = new org.ejml.simple.SimpleMatrix(intparamji);
-      org.ejml.simple.SimpleMatrix mat3 = new org.ejml.simple.SimpleMatrix(intparamT);
-      if (mat1.isIdentical(mat2, 1e-8)) {
+
+      SimpleMatrix mat1 = new SimpleMatrix(intparamij);
+      SimpleMatrix mat2 = new SimpleMatrix(intparamji);
+      SimpleMatrix mat3 = new SimpleMatrix(intparamT);
+      /*if (mat1.isIdentical(mat2, 1e-8)) {
         if (mat3.elementMaxAbs() < 1e-8) {
           mixingRuleName = "classic-CPA";
           return new ClassicSRK();
@@ -2504,6 +2524,9 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         mixingRuleName = "classic-CPA_Tx";
         return new ClassicSRKT2x();
       }
+      */
+      mixingRuleName = "classic-CPA_Tx";// remove
+      return new ClassicSRKT2x(); // remove
     } else {
       return new ClassicVdW();
     }
@@ -2549,10 +2572,10 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return new ClassicSRKT2();
     } else if (i == 10) {
       // return new ElectrolyteMixRule(phase, HValpha, HVgij, HVgii, classicOrHV,wij);}
-      org.ejml.simple.SimpleMatrix mat1 = new org.ejml.simple.SimpleMatrix(intparamij);
-      org.ejml.simple.SimpleMatrix mat2 = new org.ejml.simple.SimpleMatrix(intparamji);
-      org.ejml.simple.SimpleMatrix mat3 = new org.ejml.simple.SimpleMatrix(intparamT);
-      if (mat1.isIdentical(mat2, 1e-8)) {
+      SimpleMatrix mat1 = new SimpleMatrix(intparamij);
+      SimpleMatrix mat2 = new SimpleMatrix(intparamji);
+      SimpleMatrix mat3 = new SimpleMatrix(intparamT);
+      /*if (mat1.isIdentical(mat2, 1e-8)) {
         if (mat3.elementMaxAbs() < 1e-8) {
           mixingRuleName = "classic-CPA";
           return new ClassicSRK();
@@ -2560,9 +2583,13 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         mixingRuleName = "classic-CPA_T";
         return new ClassicSRKT2();
       } else {
+
+
         mixingRuleName = "classic-CPA_Tx";
         return new ClassicSRKT2x();
-      }
+      }*/
+      mixingRuleName = "classic-CPA_Tx"; // remove
+      return new ClassicSRKT2x(); // remove
     } else {
       return new ClassicVdW();
     }
@@ -2729,6 +2756,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
    * @param intType a {@link java.lang.String} object
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
+  /*
   public void displayInteractionCoefficients(String intType, PhaseInterface phase) {
     String[][] interactTable =
             new String[phase.getNumberOfComponents() + 1][phase.getNumberOfComponents() + 1];
@@ -2765,5 +2793,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     dialog.setSize(800, 600); // pack();
     // \\dialog.pack();
     dialog.setVisible(true);
+
   }
+
+ */
 }

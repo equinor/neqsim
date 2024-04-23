@@ -545,8 +545,8 @@ public class pTphaseEnvelope extends BaseOperation {
   /** {@inheritDoc} */
   @Override
   public void printToFile(String name) {}
+/*
 
-  /** {@inheritDoc} */
   @Override
   public org.jfree.chart.JFreeChart getJFreeChart(String name) {
     DecimalFormat nf = new DecimalFormat();
@@ -574,7 +574,11 @@ public class pTphaseEnvelope extends BaseOperation {
 
     graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
     return graph2.getChart();
+
+
   }
+  */
+
 
   /** {@inheritDoc} */
   @Override

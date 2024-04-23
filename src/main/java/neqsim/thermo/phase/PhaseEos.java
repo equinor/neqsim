@@ -11,6 +11,8 @@ package neqsim.thermo.phase;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
+import neqsim.thermo.mixingRule.EosMixingRulesDebug;
+import neqsim.thermo.mixingRule.EoxMixingRulesDebugMini;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
 
 /**
@@ -31,6 +33,8 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public double delta1 = 0;
   public double delta2 = 0;
   protected EosMixingRules mixSelect = null;
+  protected EoxMixingRulesDebugMini mixSelectDebugMini = null;
+  protected EosMixingRulesDebug mixSelectDebug = null;
   protected EosMixingRulesInterface mixRule = null;
   double uEOS = 0;
   double wEOS = 0;
@@ -58,6 +62,18 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    */
   public PhaseEos() {
     super();
+
+    //mixSelectDebugMini = new EoxMixingRulesDebugMini();
+
+    int delta1 = 1;
+    int delta2 = 1;
+
+    //mixSelectDebug = new EosMixingRulesDebug();
+
+    int delta3 = 1;
+    int delta4 = 1;
+    int delta5 = 1;
+
     mixSelect = new EosMixingRules();
     componentArray = new ComponentEosInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
     mixRule = mixSelect.getMixingRule(1);
@@ -70,10 +86,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     return mixRule;
   }
 
-  /** {@inheritDoc} */
+
   @Override
   public void displayInteractionCoefficients(String intType) {
-    mixSelect.displayInteractionCoefficients(intType, this);
+    //mixSelect.displayInteractionCoefficients(intType, this);
   }
 
   /** {@inheritDoc} */

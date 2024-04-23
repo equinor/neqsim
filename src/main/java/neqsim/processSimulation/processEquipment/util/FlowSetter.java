@@ -24,7 +24,7 @@ import neqsim.util.exception.InvalidInputException;
  */
 public class FlowSetter extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
-  private static final 
+  //private static final
   double[] pressure = new double[] {1.01325};
   double[] temperature = new double[] {15.0};
   String unitT = "C";

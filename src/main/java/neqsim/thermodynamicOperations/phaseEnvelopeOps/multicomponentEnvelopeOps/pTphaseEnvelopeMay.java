@@ -701,7 +701,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
   }
 
   /** {@inheritDoc} */
-  @Override
+  /*@Override
   public org.jfree.chart.JFreeChart getJFreeChart(String name) {
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(1);
@@ -713,7 +713,9 @@ public class pTphaseEnvelopeMay extends BaseOperation {
     String[] navn = {"bubble point", "dew point", "bubble point", "dew point"};
     String title = "PT-graph. TC=" + String.valueOf(nf.format(TC)) + "K, PC="
         + String.valueOf(nf.format(PC) + " bara");
+
     graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
     return graph2.getChart();
   }
+  */
 }

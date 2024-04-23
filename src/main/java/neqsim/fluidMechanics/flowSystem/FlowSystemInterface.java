@@ -76,7 +76,7 @@ public interface FlowSystemInterface {
    *         {@link neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualizationInterface}
    *         object
    */
-  public FlowSystemVisualizationInterface getDisplay();
+  //public FlowSystemVisualizationInterface getDisplay();
 
   /**
    * <p>

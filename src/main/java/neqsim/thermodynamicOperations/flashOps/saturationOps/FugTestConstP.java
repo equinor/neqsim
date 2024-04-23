@@ -146,16 +146,22 @@ public class FugTestConstP extends constantDutyTemperatureFlash
         String[] title = new String[2];
         title[0] = "Solid Fugacity";
         title[1] = "Fluid Fugacity";
-
+/*
         graph2b graffug = new graph2b(Fug, title, compName + " Fugacity  VS T, constant P= " + pres,
             "Temperature [K]", "Fugacity [bar]");
+
+
         graffug.setVisible(true);
+
+        */
+
         String[] title2 = new String[1];
         title2[0] = "Solid/Fluid";
-
+/*
         graph2b grafvapor = new graph2b(Fugrel, title2, compName + " Fugacity Ratio",
             "Temperature [K]", "Fsolid/Ffluid");
         grafvapor.setVisible(true);
+        */
       } // end solidcheck lokke
     } // end komponent lokke
   } // end run
