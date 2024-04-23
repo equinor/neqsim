@@ -260,4 +260,11 @@ public class ProcessModule extends SimulationBaseClass {
   public ArrayList<String[]> getReport() {
     return null;
   }
+
+
+  /** {@inheritDoc} */
+  @Override
+  public void run_step(UUID id) {
+
+  }
 }

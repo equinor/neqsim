@@ -249,4 +249,11 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   public String toJson() {
     return null;
   }
+
+
+  /** {@inheritDoc} */
+  @Override
+  public void run_step(UUID id) {
+
+  }
 }

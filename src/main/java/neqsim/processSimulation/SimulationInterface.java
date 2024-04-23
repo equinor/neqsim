@@ -85,6 +85,29 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
   public void run(UUID value);
 
   /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * In this method all thermodynamic and unit operations will be calculated in a steady state
+   * calculation. It does not solve resycles - only calculates one step.
+   * </p>
+   */
+  public default void run_step() {
+    run_step(UUID.randomUUID());
+  }
+
+  /**
+   * <p>
+   * run_step
+   * </p>
+   * In this method all thermodynamic and unit operations will be calculated in a steady state
+   * calculation. Sets calc identifier UUID. It does not solve resycles - only calculates one step
+   *
+   * @param value Calc identifier UUID to set.
+   */
+  public void run_step(UUID value);
+
+  /**
    * <p>
    * runTransient
    * </p>
