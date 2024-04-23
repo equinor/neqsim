@@ -128,4 +128,14 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
    * @return a boolean
    */
   public boolean solved();
+
+  /**
+   * <p>
+   * getReport_json
+   * </p>
+   * Return results of simulation in json format
+   * 
+   * @return a String
+   */
+  public String getReport_json();
 }

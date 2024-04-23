@@ -18,6 +18,7 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.RecycleController;
+import neqsim.processSimulation.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -943,6 +944,15 @@ public class ProcessSystem extends SimulationBaseClass {
         && Double.doubleToLongBits(timeStep) == Double.doubleToLongBits(other.timeStep)
         && timeStepNumber == other.timeStepNumber
         && Objects.equals(unitOperations, other.unitOperations);
+  }
+
+  /**
+   * {@inheritDoc}
+   * 
+   * @return a String
+   */
+  public String getReport_json() {
+    return new Report(this).json();
   }
 
   /*
