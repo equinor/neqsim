@@ -13,7 +13,7 @@ import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
-import neqsim.util.database.NeqSimDataBase;
+//import neqsim.util.database.NeqSimDataBase;
 
 /**
  * <p>
@@ -603,29 +603,34 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
 
     for (int k = 0; k < phase.getNumberOfComponents(); k++) {
       String component_name = phase.getComponents()[k].getComponentName();
-      java.sql.ResultSet dataSet = null;
+
+
+
 
       for (int l = k; l < phase.getNumberOfComponents(); l++) {
         if (k == l || phase.getComponent(l).getNumberOfAssociationSites() == 0
             || phase.getComponent(k).getNumberOfAssociationSites() == 0) {
         } else {
-          try (neqsim.util.database.NeqSimDataBase database =
-              new neqsim.util.database.NeqSimDataBase()) {
-            // database = new util.database.NeqSimDataBase();
-            if (NeqSimDataBase.createTemporaryTables()) {
-              dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='"
-                  + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName()
-                  + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='"
-                  + component_name + "')");
-            } else {
-              dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name
-                  + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='"
-                  + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name
-                  + "')");
-            }
-            if (dataSet.next()) {
-              assosSchemeType[k][l] =
-                  Integer.parseInt(dataSet.getString("cpaAssosiationType").trim());
+
+          neqsim.util.database.INTER objINTER = new neqsim.util.database.INTER();
+          String inter = component_name + "|" + phase.getComponents()[l].getComponentName();
+          if (objINTER.objDictionary.get(inter) == null) {
+            inter = phase.getComponents()[l].getComponentName() + "|" + component_name;
+          }
+
+          if (objINTER.objDictionary.get(inter) != null) {
+
+            assosSchemeType[k][l] = (int)Math.round(objINTER.objDictionary.get(inter).get("cpaAssosiationType"));
+            assosSchemeType[l][k] = assosSchemeType[k][l];
+
+            cpaBetaCross[k][l] = objINTER.objDictionary.get(inter).get("cpaBetaCross");
+            cpaBetaCross[l][k] = cpaBetaCross[k][l];
+
+            cpaEpsCross[k][l] = objINTER.objDictionary.get(inter).get("cpaEpsCross");
+            cpaEpsCross[l][k] = cpaEpsCross[k][l];
+
+            /*
+              assosSchemeType[k][l] = Integer.parseInt(dataSet.getString("cpaAssosiationType").trim());
               assosSchemeType[l][k] = assosSchemeType[k][l];
 
               cpaBetaCross[k][l] = Double.parseDouble(dataSet.getString("cpaBetaCross").trim());
@@ -633,11 +638,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
 
               cpaEpsCross[k][l] = Double.parseDouble(dataSet.getString("cpaEpsCross").trim());
               cpaEpsCross[l][k] = cpaEpsCross[k][l];
-            }
-            // System.out.println("ass scheme " + assosSchemeType[l][k]);
-            // System.out.println("cpaEpsCross[k][l] " + cpaEpsCross[k][l]);
-          } catch (Exception ex) {
-            
+              */
           }
         }
       }

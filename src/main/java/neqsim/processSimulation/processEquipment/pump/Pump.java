@@ -38,7 +38,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   public double isentropicEfficiency = 1.0;
   public boolean powerSet = false;
   private String pressureUnit = "bara";
-  private PumpChart pumpChart = new PumpChart();
+  //private PumpChart pumpChart = new PumpChart();
 
   /**
    * <p>
@@ -169,6 +169,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
       thermoOps.TPflash();
       thermoSystem.init(3);
     } else {
+      /*
       if (!pumpChart.isUsePumpChart() && calculateAsCompressor) {
         thermoSystem = inStream.getThermoSystem().clone();
         thermoSystem.setPressure(pressure, pressureUnit);
@@ -211,6 +212,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
         thermoOps.PHflash(hout, 0);
         thermoSystem.init(3);
       }
+      */
     }
 
     // double entropy= inletStream.getThermoSystem().getEntropy();
@@ -361,7 +363,9 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    *
    * @return a {@link neqsim.processSimulation.processEquipment.pump.PumpChart} object
    */
+  /*
   public PumpChart getPumpChart() {
     return pumpChart;
   }
+  */
 }

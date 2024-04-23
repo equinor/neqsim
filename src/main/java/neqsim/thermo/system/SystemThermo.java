@@ -26,7 +26,7 @@ import neqsim.thermo.phase.PhaseSolid;
 import neqsim.thermo.phase.PhaseSolidComplex;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PhaseWax;
-import neqsim.util.database.NeqSimDataBase;
+//import neqsim.util.database.NeqSimDataBase;
 import neqsim.util.exception.InvalidInputException;
 
 /**
@@ -291,11 +291,13 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     if (addForFirstTime) {
+      /*
       if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
         throw new RuntimeException(
                 new neqsim.util.exception.InvalidInputException(this, "addComponent", "componentName",
                         "with value " + componentName + " not found in database."));
       }
+      */
       if (moles < 0.0) {
         String msg = "is negative input for component: " + componentName;
         throw new RuntimeException(
@@ -357,11 +359,11 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void addComponent(String componentName, double moles, int phaseNumber) {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
-
+/*
     if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
       throw new RuntimeException("No component with name: " + componentName + " in database");
     }
-
+*/
     for (int p = 0; p < componentNames.size(); p++) {
       if (componentNames.get(p).equals(componentName)) {
         addComponent(p, moles, phaseNumber);
@@ -781,6 +783,7 @@ public abstract class SystemThermo implements SystemInterface {
   public void addSalt(String componentName, double value) {
     double val1 = 1e-20;
     double val2 = 1e-20;
+    /*
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
          java.sql.ResultSet dataSet = database
                  .getResultSet("SELECT * FROM compsalt WHERE SaltName='" + componentName + "'")) {
@@ -796,6 +799,7 @@ public abstract class SystemThermo implements SystemInterface {
     } catch (Exception ex) {
       
     }
+    */
   }
 
   /** {@inheritDoc} */
@@ -1583,7 +1587,7 @@ public abstract class SystemThermo implements SystemInterface {
     if (reset) {
       resetDatabase();
     }
-
+/*
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       String names = new String();
 
@@ -1613,6 +1617,7 @@ public abstract class SystemThermo implements SystemInterface {
     } catch (Exception ex) {
       
     }
+    */
   }
 
   /** {@inheritDoc} */
@@ -4178,6 +4183,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void resetDatabase() {
+    /*
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       if (NeqSimDataBase.createTemporaryTables()) {
         database.execute("delete FROM comptemp");
@@ -4186,6 +4192,7 @@ public abstract class SystemThermo implements SystemInterface {
     } catch (Exception ex) {
       
     }
+    */
   }
 
   // public String[] getResultArray1(){
@@ -4296,6 +4303,8 @@ public abstract class SystemThermo implements SystemInterface {
     // java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM
     // SYSTEMREPORT"));
     // double molarmass = 0.0, stddens = 0.0, boilp = 0.0;
+
+    /*
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       database.execute("delete FROM systemreport");
       int i = 0;
@@ -4364,6 +4373,8 @@ public abstract class SystemThermo implements SystemInterface {
     } catch (Exception ex) {
       
     }
+
+    */
   }
 
   /** {@inheritDoc} */
@@ -4720,11 +4731,13 @@ public abstract class SystemThermo implements SystemInterface {
       // if (tempModel.getCharacterization().characterize()) {
       // tempModel.addPlusFraction(6, 100);
       // }
+      /*
       if (NeqSimDataBase.createTemporaryTables()) {
         
         tempModel.createDatabase(true);
       }
-      
+
+      */
       tempModel.autoSelectMixingRule();
       if (model.equals("Electrolyte-ScRK-EOS")) { // ||
         // model.equals("Electrolyte-CPA-EOS-statoil"

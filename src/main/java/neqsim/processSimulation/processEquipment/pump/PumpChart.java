@@ -285,8 +285,8 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
         {78.0924334304045, 80.9353551568667, 80.7904437766234, 78.8639325223295, 75.2170936751143,
             70.3105081673411, 65.5507568533569, 61.0391468300337}};
 
-    pump1.getPumpChart().setCurves(chartConditions, speed, flow, head, efficiency);
-    pump1.getPumpChart().setHeadUnit("kJ/kg");
+    //pump1.getPumpChart().setCurves(chartConditions, speed, flow, head, efficiency);
+    //pump1.getPumpChart().setHeadUnit("kJ/kg");
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
