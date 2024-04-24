@@ -2,6 +2,7 @@ package neqsim.processSimulation.util.monitor;
 
 import java.util.HashMap;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -23,7 +24,11 @@ public class StreamResponse {
   public Double massflowGas;
   public Double massflowOil;
   public Double massflowAqueous;
-  public HashMap<String, Value> data = new HashMap<String, Value>();
+  public HashMap<String, HashMap<String, Value>> properties2 = new HashMap<String, HashMap<String, Value>>();
+
+  public HashMap<String, Value> conditions = new HashMap<String, Value>();
+  public HashMap<String, Value> properties = new HashMap<String, Value>();
+  public HashMap<String, Value> composition = new HashMap<String, Value>();
 
   /**
    * <p>
@@ -36,12 +41,26 @@ public class StreamResponse {
    */
   public StreamResponse(StreamInterface inputStream) {
 
-    name = inputStream.getName();
-
-    data.put("temperature",
+    properties2.put(inputStream.getName(), new HashMap<String, Value>());
+    properties2.get(inputStream.getName()).put("temperature",
         new Value(Double.toString(inputStream.getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
             neqsim.util.unit.Units.getSymbol("temperature")));
-    data.put("pressure",
+
+    if (inputStream.getFluid().hasPhaseType(PhaseType.GAS)) {
+      properties2.put("gas", new HashMap<String, Value>());
+      properties2.get("gas").put("temperature",
+          new Value(Double.toString(
+              inputStream.getFluid()
+                  .getPhase(PhaseType.GAS).getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+              neqsim.util.unit.Units.getSymbol("temperature")));
+    }
+
+    name = inputStream.getName();
+
+    conditions.put("temperature",
+        new Value(Double.toString(inputStream.getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+            neqsim.util.unit.Units.getSymbol("temperature")));
+    conditions.put("pressure",
         new Value(Double.toString(inputStream.getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
             neqsim.util.unit.Units.getSymbol("pressure")));
 
