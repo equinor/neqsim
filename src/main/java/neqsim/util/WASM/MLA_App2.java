@@ -17,7 +17,155 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPA;
 
+import neqsim.thermo.phase.PhaseSrkCPA;
+
+import org.teavm.interop.*;
+import org.teavm.jso.JSByRef;
+
 public class MLA_App2 {
+
+    private float[] internRes;
+    public int numRows;
+    public int numCols;
+
+    public MLA_App2( ) {
+
+        //this.matrix = new double[numRows][numCols];
+        //this.numRows = numRows;
+        //this.numCols = numCols;
+    }
+
+    @Export(name = "getRoot")
+    public MLA_App2 getRoot()
+    {
+        return this;
+    }
+
+    @Export(name = "getResult")
+    public float[] getResult()
+    {
+        return this.internRes;
+    }
+
+    @Export(name = "getResult2")
+    public static float[] getResult2()
+    {
+        return new float[] {1f,2f,3f,4f,10f};
+    }
+
+    @Export(name = "setTemperature5")
+    public float[] setTemperature5(float[] input)
+    {
+        internRes = input;
+        return input;
+    }
+
+    @Export(name = "setTemperature4")
+    public float[] setTemperature4(float[] input)
+    {
+
+        return input;
+    }
+    @Export(name = "setTemperature")
+    public float[] setTemperature(@JSByRef float[] input)
+    {
+
+        this.internRes = input;
+        return input;
+    }
+
+
+    @Export(name = "setTemperature2")
+    public static void setTemperature2(@JSByRef float[] input)
+    {
+
+    }
+
+    @Export(name = "setTemperature3")
+    public void setTemperature3()
+    {
+        float[] input0 = new float[] {13f,2f,3f,4f,30f};
+        this.internRes = input0;
+    }
+
+    @Export(name = "doCalc")
+    public static float[] doCalc(float[] input)
+    {
+		/*
+		float[] result = new float[input.length];
+		for (int i = 0; i < input.length; i++) {
+
+			result[i] = input[i] *4;
+		}
+
+		 */
+
+        return input;
+
+
+    }
+
+    @Export(name = "doCalc2")
+    public float[] doCalc2(float[] input)
+    {
+
+        float[] result = new float[input.length];
+        for (int i = 0; i < input.length; i++) {
+
+            result[i] = input[i] *4;
+
+        }
+
+        this.internRes = result;
+        return result;
+
+
+    }
+
+    @Export(name = "doCalc3")
+    public static float[] doCalc3(@JSByRef float[] input)
+    {
+
+        float[] result = new float[input.length];
+        for (int i = 0; i < input.length; i++) {
+
+            input[i] = input[i] *4;
+        }
+
+
+
+        return input;
+
+
+    }
+
+    @Export(name = "doCalc4")
+    public static float[] doCalc4(@JSByRef float[] input)
+    {
+
+        float[] result = new float[input.length];
+        for (int i = 0; i < input.length; i++) {
+
+            result[i] = input[i] *4;
+
+        }
+
+
+
+        return result;
+
+
+    }
+
+    @Export(name = "getMagicNumber")
+    public static void getMagicNumber(int range) {
+        int magicNumber = (range/2) + range%3;
+        setMagicNumber(magicNumber);
+    }
+
+    @Import(module = "env", name = "setMagicNumber")
+    private static native void setMagicNumber(int message);
+
 
     public static void main(String[] args) {
         System.out.println("Hello, Native World!");
@@ -27,8 +175,15 @@ public class MLA_App2 {
         long startTime000 = System.currentTimeMillis();
         ProcessSystem p = new ProcessSystem();
 
-        SystemInterface feedGas = new SystemSrkCPA();
+        //SystemInterface feedGas = new SystemSrkCPA();
+        SystemSrkCPA feedGas = new SystemSrkCPA();
+
+        PhaseSrkCPA debug = new PhaseSrkCPA();
+        //debug.Dmmy();
+        double a = debug.numberOfMolesInPhase;
         feedGas.addComponent("nitrogen", 0.245);
+
+        /*
         feedGas.addComponent("CO2", 3.4);
         feedGas.addComponent("methane", 85.7);
         feedGas.addComponent("ethane", 5.981);
@@ -59,6 +214,7 @@ public class MLA_App2 {
         coolingWater1.setTemperature(18.0, "C");
         coolingWater1.setPressure(7.5, "bara");
         p.add(coolingWater1);
+
 
         StreamInterface coolingWater2 = new Stream(coolingMedium.clone());
         coolingWater2.setName("cooling water 2");
@@ -265,12 +421,22 @@ public class MLA_App2 {
         stripper.setNumberOfStages(2);
         stripper.setStageEfficiency(1.0);
         p.add(stripper);
+
+
+        */
 /*
     Recycle recycleGasFromStripper = new Recycle("stripping gas recirc");
     recycleGasFromStripper.addStream(stripper.getGasOutStream());
     recycleGasFromStripper.setOutletStream(gasToReboiler);
     p.add(recycleGasFromStripper);
 */
+
+
+
+
+
+
+        /*
         heatEx.setFeedStream(1, stripper.getLiquidOutStream());
 
         Heater bufferTank = new Heater(heatEx.getOutStream(1));
@@ -285,6 +451,11 @@ public class MLA_App2 {
         p.add(hotLeanTEGPump);
 
         heatEx2.setFeedStream(1, hotLeanTEGPump.getOutStream());
+
+
+
+
+        */
 /*
     Heater coolerhOTteg3 = new Heater(heatEx2.getOutStream(1));
     coolerhOTteg3.setName("lean TEG cooler");
