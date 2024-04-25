@@ -2270,6 +2270,8 @@ public abstract class Phase implements PhaseInterface {
       return numberOfMolesInPhase * 3600.0 / 1000.0 * 2.205;
     } else if (flowunit.equals("lb/hr")) {
       return numberOfMolesInPhase * getMolarMass() * 60.0 * 2.20462262;
+    } else if (flowunit.equals("barrel/day")) {
+      return numberOfMolesInPhase * getMolarMass() * 60.0 * 2.20462262 * 0.068;
     } else {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
     }
