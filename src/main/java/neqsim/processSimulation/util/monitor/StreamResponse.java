@@ -114,8 +114,12 @@ public class StreamResponse {
         newdata.put(inputStream.getFluid().getPhase(j).getComponent(i).getComponentName(),
             new Value(Double.toString(inputStream.getFluid().getPhase(j).getComponent(i).getx()),
                 "mole fraction"));
+        newdata.put(inputStream.getFluid().getPhase(j).getComponent(i).getComponentName(),
+            new Value(Double.toString(inputStream.getFluid().getPhase(j).getWtFrac(i)),
+                "weight fraction"));
+        composition.put(inputStream.getFluid().getPhase(j).getPhaseTypeName(), newdata);
+
       }
-      composition.put(inputStream.getFluid().getPhase(j).getPhaseTypeName(), newdata);
     }
 
 
@@ -144,7 +148,9 @@ public class StreamResponse {
     properties.put(inputStream.getName(), newdata);
 
     newdata = new HashMap<String, Value>();
-    for (int i = 0; i < inputStream.getFluid().getNumberOfPhases(); i++) {
+    for (
+
+        int i = 0; i < inputStream.getFluid().getNumberOfPhases(); i++) {
       String name = inputStream.getFluid().getPhase(i).getPhaseTypeName();
       newdata.put("density",
           new Value(
