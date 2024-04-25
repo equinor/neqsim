@@ -20,6 +20,9 @@ import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
 
+//import java.util.concurrent.TimeUnit;
+
+
 /**
  * <p>
  * PhaseSrkCPA class.
@@ -535,8 +538,20 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     //super.addComponent(name, moles, molesInPhase, compNumber);
     //componentArray[compNumber] = new ComponentSrkCPA(name, moles, molesInPhase, compNumber);
+
+    double b = 0;
+    for (int i = 0; i < 100000000; i++) {
+
+      b++;
+    }
   }
 
+  public void addComponentWASM(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, moles, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentSrkCPA(name, moles, molesInPhase, compNumber);
+
+
+  }
   /** {@inheritDoc} */
   @Override
   public double getF() {

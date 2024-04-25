@@ -68,6 +68,7 @@ public class SystemSrkCPA extends SystemSrkEos {
       phaseArray[numberOfPhases - 1].setPressure(P);
       phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
     }
+
   }
 
   /** {@inheritDoc} */

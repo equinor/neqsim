@@ -13,7 +13,7 @@ import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.atomElement.Element;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
-import neqsim.util.database.NeqSimDataBase;
+//import neqsim.util.database.NeqSimDataBase;
 
 public abstract class Component implements ComponentInterface {
   private static final long serialVersionUID = 1000;
@@ -465,6 +465,7 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void insertComponentIntoDatabase(String databaseName) {
+    /*
     databaseName = "comptemp";
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       int isW = 0;
@@ -490,6 +491,7 @@ public abstract class Component implements ComponentInterface {
     } catch (Exception ex) {
       
     }
+    */
   }
 
   /** {@inheritDoc} */

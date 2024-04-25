@@ -31,6 +31,15 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   public void addComponent(String name, double moles, double molesInPhase, int compIndex);
 
+  public default void addComponent2(String name, double moles, double molesInPhase, int compIndex){
+
+  }
+
+  public default void addComponentWASM(String name, double moles, double molesInPhase, int compIndex){
+    System.out.println("addComponentWASM not implemented - please add.");
+
+  }
+
   /**
    * <p>
    * setMoleFractions.

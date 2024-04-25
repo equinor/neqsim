@@ -19,6 +19,7 @@ import neqsim.thermo.system.SystemSrkCPA;
 
 import neqsim.thermo.phase.PhaseSrkCPA;
 
+import neqsim.thermo.system.SystemSrkEos;
 import org.teavm.interop.*;
 import org.teavm.jso.JSByRef;
 
@@ -175,15 +176,18 @@ public class MLA_App2 {
         long startTime000 = System.currentTimeMillis();
         ProcessSystem p = new ProcessSystem();
 
-        //SystemInterface feedGas = new SystemSrkCPA();
-        SystemSrkCPA feedGas = new SystemSrkCPA();
+        SystemInterface feedGas = new SystemSrkCPA();
 
-        PhaseSrkCPA debug = new PhaseSrkCPA();
-        debug.addComponent("methane", 0.9, 0.1, 1);
-        double a = debug.numberOfMolesInPhase;
+        //SystemInterface feedGas = new SystemSrkEos();
+
+        //SystemSrkCPA feedGas = new SystemSrkCPA();
+
+        //PhaseSrkCPA debug = new PhaseSrkCPA();
+        //debug.addComponent("methane", 0.9, 0.1, 1);
+        //double a = debug.numberOfMolesInPhase;
         feedGas.addComponent("nitrogen", 0.245);
 
-        /*
+
         feedGas.addComponent("CO2", 3.4);
         feedGas.addComponent("methane", 85.7);
         feedGas.addComponent("ethane", 5.981);
@@ -196,7 +200,9 @@ public class MLA_App2 {
         feedGas.addComponent("benzene", 0.01);
         feedGas.addComponent("water", 0.0);
         feedGas.addComponent("TEG", 0.0);
+
         feedGas.setMixingRule(10);
+        /*
         feedGas.setMultiPhaseCheck(false);
         feedGas.init(0);
 
@@ -422,8 +428,8 @@ public class MLA_App2 {
         stripper.setStageEfficiency(1.0);
         p.add(stripper);
 
+*/
 
-        */
 /*
     Recycle recycleGasFromStripper = new Recycle("stripping gas recirc");
     recycleGasFromStripper.addStream(stripper.getGasOutStream());

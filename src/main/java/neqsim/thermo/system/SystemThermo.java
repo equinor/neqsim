@@ -306,17 +306,14 @@ public abstract class SystemThermo implements SystemInterface {
       // System.out.println("adding " + componentName);
       componentNames.add(componentName);
       for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-
-        //getPhase(i).
-        getPhase(i).addComponent(componentName, moles, moles, numberOfComponents);
-        getPhase(i).getCp0();
-        getPhase(i).addMoles(1,0.2);
-        getPhase(i).getComponent(1);
+        getPhase(i).addComponentWASM(componentName, moles, moles, numberOfComponents);
         getPhase(i).setAttractiveTerm(attractiveTermNumber);
       }
       numberOfComponents++;
     } else {
-      /*
+
+      System.out.println("addForFirstTime is false");
+/*
       for (PhaseInterface tmpPhase : phaseArray) {
         if (tmpPhase != null
                 && (tmpPhase.getComponent(componentName).getNumberOfMolesInPhase() + moles) < 0.0) {
@@ -332,7 +329,7 @@ public abstract class SystemThermo implements SystemInterface {
           tmpPhase.addMolesChemReac(index, moles, moles);
         }
       }
-      */
+*/
     }
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
   }
@@ -2798,7 +2795,9 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final PhaseInterface getPhase(int i) {
+    /*
     if (i < 0) {
+
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getPhase",
               "i", i + " is not valid, must be in the range 0-" + this.getNumberOfPhases()));
     } else if (i >= getNumberOfPhases() && phaseArray[phaseIndex[i]] == null) {
@@ -2806,6 +2805,7 @@ public abstract class SystemThermo implements SystemInterface {
               this.getClass() + ":getPhase - Can not return phase number " + i
                       + ". Current number of phases are " + getNumberOfPhases()));
     }
+    */
     return phaseArray[phaseIndex[i]];
   }
 
