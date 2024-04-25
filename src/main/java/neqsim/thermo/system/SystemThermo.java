@@ -306,11 +306,17 @@ public abstract class SystemThermo implements SystemInterface {
       // System.out.println("adding " + componentName);
       componentNames.add(componentName);
       for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+
+        //getPhase(i).
         getPhase(i).addComponent(componentName, moles, moles, numberOfComponents);
+        getPhase(i).getCp0();
+        getPhase(i).addMoles(1,0.2);
+        getPhase(i).getComponent(1);
         getPhase(i).setAttractiveTerm(attractiveTermNumber);
       }
       numberOfComponents++;
     } else {
+      /*
       for (PhaseInterface tmpPhase : phaseArray) {
         if (tmpPhase != null
                 && (tmpPhase.getComponent(componentName).getNumberOfMolesInPhase() + moles) < 0.0) {
@@ -326,6 +332,7 @@ public abstract class SystemThermo implements SystemInterface {
           tmpPhase.addMolesChemReac(index, moles, moles);
         }
       }
+      */
     }
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
   }
@@ -3958,6 +3965,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void readFluid(String fluidName) {
+    /*
     this.fluidName = fluidName;
     try {
       neqsim.util.database.NeqSimFluidDataBase database =
@@ -3988,13 +3996,17 @@ public abstract class SystemThermo implements SystemInterface {
     } catch (Exception ex) {
       
     }
+    */
   }
 
   /** {@inheritDoc} */
   @Override
   public SystemInterface readObject(int ID) {
-    java.sql.ResultSet rs = null;
+
     SystemThermo tempSystem = null;
+    /*
+    java.sql.ResultSet rs = null;
+
     neqsim.util.database.NeqSimBlobDatabase database =
         new neqsim.util.database.NeqSimBlobDatabase();
     try {
@@ -4023,7 +4035,7 @@ public abstract class SystemThermo implements SystemInterface {
         
       }
     }
-
+*/
     return tempSystem;
   }
 
@@ -4242,6 +4254,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void saveObject(int ID, String text) {
+    /*
     ByteArrayOutputStream fout = new ByteArrayOutputStream();
     try (ObjectOutputStream out = new ObjectOutputStream(fout)) {
       out.writeObject(this);
@@ -4263,13 +4276,7 @@ public abstract class SystemThermo implements SystemInterface {
       ps.setBlob(2, inpStream);
 
       ps.executeUpdate();
-      /*
-       * if (!text.isEmpty()) { ps = con.prepareStatement(
-       * "REPLACE INTO fluidinfo (ID, TEXT) VALUES (?,?)"); ps.setInt(1, ID); ps.setString(2, text);
-       * }
-       *
-       * ps.executeUpdate();
-       */
+
     } catch (Exception ex) {
       
     } finally {
@@ -4285,6 +4292,8 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
     // database.execute("INSERT INTO fluid_blobdb VALUES ('1'," + sqlString + ")");
+
+     */
   }
 
   /** {@inheritDoc} */

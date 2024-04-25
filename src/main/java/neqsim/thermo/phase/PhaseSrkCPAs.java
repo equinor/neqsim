@@ -27,6 +27,7 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
   /** {@inheritDoc} */
   @Override
   public PhaseSrkCPAs clone() {
+
     PhaseSrkCPAs clonedPhase = null;
     try {
       clonedPhase = (PhaseSrkCPAs) super.clone();

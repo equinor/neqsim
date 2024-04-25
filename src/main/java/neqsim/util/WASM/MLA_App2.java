@@ -179,7 +179,7 @@ public class MLA_App2 {
         SystemSrkCPA feedGas = new SystemSrkCPA();
 
         PhaseSrkCPA debug = new PhaseSrkCPA();
-        //debug.Dmmy();
+        debug.addComponent("methane", 0.9, 0.1, 1);
         double a = debug.numberOfMolesInPhase;
         feedGas.addComponent("nitrogen", 0.245);
 

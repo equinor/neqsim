@@ -129,6 +129,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
+
     boolean changedAssosiationStatus = false;
 
     if (initType == 0) {
@@ -257,6 +258,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       initCPAMatrix(initType);
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     }
+
   }
 
   /**
@@ -531,8 +533,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, moles, molesInPhase, compNumber);
-    componentArray[compNumber] = new ComponentSrkCPA(name, moles, molesInPhase, compNumber);
+    //super.addComponent(name, moles, molesInPhase, compNumber);
+    //componentArray[compNumber] = new ComponentSrkCPA(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
