@@ -82,6 +82,7 @@ public class MaterialPlateDesignStandard extends DesignStandard {
 
     neqsim.util.database.NeqSimProcessDesignDataBase database =
         new neqsim.util.database.NeqSimProcessDesignDataBase();
+    /*
     java.sql.ResultSet dataSet = null;
     try {
       try {
@@ -114,5 +115,6 @@ public class MaterialPlateDesignStandard extends DesignStandard {
         
       }
     }
+    */
   }
 }

@@ -39,7 +39,7 @@ public class Element implements ThermodynamicConstantsInterface {
 
     ArrayList<String> names = new ArrayList<String>();
     ArrayList<String> stocCoef = new ArrayList<String>();
-
+/*
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet =
             database.getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"))) {
@@ -61,6 +61,7 @@ public class Element implements ThermodynamicConstantsInterface {
     } catch (Exception ex) {
       
     }
+    */
   }
 
   /**
@@ -118,6 +119,7 @@ public class Element implements ThermodynamicConstantsInterface {
    */
   public static ArrayList<String> getAllElementComponentNames() {
     ArrayList<String> names = new ArrayList<String>();
+    /*
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM element"))) {
       dataSet.next();
@@ -127,6 +129,7 @@ public class Element implements ThermodynamicConstantsInterface {
     } catch (Exception ex) {
       
     }
+    */
 
     return names;
   }

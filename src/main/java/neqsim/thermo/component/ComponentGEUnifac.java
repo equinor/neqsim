@@ -57,7 +57,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
       
       return;
     }
-
+/*
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
@@ -81,6 +81,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     } catch (Exception ex) {
       
     }
+    */
   }
 
   /**

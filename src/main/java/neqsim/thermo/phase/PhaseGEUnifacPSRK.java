@@ -94,7 +94,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
             .getNumberOfUNIFACgroups()];
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
       for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
-        try (neqsim.util.database.NeqSimDataBase database =
+        /*try (neqsim.util.database.NeqSimDataBase database =
             new neqsim.util.database.NeqSimDataBase()) {
           java.sql.ResultSet dataSet = null;
           try {
@@ -117,6 +117,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
         } catch (Exception ex) {
           
         }
+        */
       }
     }
     
@@ -128,6 +129,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
    * </p>
    */
   public void calccij() {
+    /*
     cij = new double[((ComponentGEUnifac) getComponent(0))
         .getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0))
             .getNumberOfUNIFACgroups()];
@@ -158,6 +160,6 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
         }
       }
     }
-    
+    */
   }
 }

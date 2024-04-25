@@ -33,7 +33,7 @@ public class PipelineDesignStandard extends DesignStandard {
     // double maxAllowableStress = equipment.getMaterialDesignStandard().getDivisionClass();
     // double jointEfficiency =
     // equipment.getJointEfficiencyStandard().getJEFactor();
-
+/*
     neqsim.util.database.NeqSimProcessDesignDataBase database =
         new neqsim.util.database.NeqSimProcessDesignDataBase();
 
@@ -49,6 +49,7 @@ public class PipelineDesignStandard extends DesignStandard {
     } catch (Exception ex) {
       
     }
+    */
   }
 
   /**

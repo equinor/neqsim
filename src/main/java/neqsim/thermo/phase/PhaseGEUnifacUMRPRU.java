@@ -197,6 +197,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   /** {@inheritDoc} */
   @Override
   public void calcaij() {
+    /*
     java.sql.ResultSet dataSet = null;
 
     aij = new double[((ComponentGEUnifac) getComponent(0))
@@ -232,6 +233,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
         }
       }
     }
+    */
     // System.out.println("finished finding interaction coefficient...C_UMR");
   }
 
@@ -241,6 +243,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * </p>
    */
   public void calcbij() {
+    /*
     java.sql.ResultSet dataSet = null;
 
     bij = new double[((ComponentGEUnifac) getComponent(0))
@@ -268,6 +271,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
         
       }
     }
+    */
     // System.out.println("finished finding interaction coefficient...C_UMR");
   }
 
@@ -277,6 +281,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * </p>
    */
   public void calccij() {
+    /*
     java.sql.ResultSet dataSet = null;
 
     cij = new double[((ComponentGEUnifac) getComponent(0))
@@ -304,6 +309,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
         
       }
     }
+    */
     // System.out.println("finished finding interaction coefficient...C_UMR");
   }
 }

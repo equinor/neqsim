@@ -99,7 +99,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
             .getNumberOfUNIFACgroups()];
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
       for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
-        try (neqsim.util.database.NeqSimDataBase database =
+        /*try (neqsim.util.database.NeqSimDataBase database =
             new neqsim.util.database.NeqSimDataBase()) {
           java.sql.ResultSet dataSet = null;
           try {
@@ -124,6 +124,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
         } catch (Exception ex) {
           
         }
+        */
       }
     }
     

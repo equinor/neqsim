@@ -306,7 +306,7 @@ public abstract class SystemThermo implements SystemInterface {
       // System.out.println("adding " + componentName);
       componentNames.add(componentName);
       for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-        getPhase(i).addComponentWASM(componentName, moles, moles, numberOfComponents);
+        getPhase(i).addComponent(componentName, moles, moles, numberOfComponents);
         getPhase(i).setAttractiveTerm(attractiveTermNumber);
       }
       numberOfComponents++;

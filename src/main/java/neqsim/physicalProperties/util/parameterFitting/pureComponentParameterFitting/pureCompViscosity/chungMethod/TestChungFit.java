@@ -34,7 +34,7 @@ public class TestChungFit {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     // inserting samples from database
-
+/*
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet("SELECT * FROM purecomponentviscosity") // WHERE
                                                                                            // ComponentName='MDEA*'");
@@ -61,7 +61,7 @@ public class TestChungFit {
     } catch (Exception ex) {
       
     }
-
+*/
     SampleSet sampleSet = new SampleSet(sampleList);
     optim.setSampleSet(sampleSet);
 

@@ -81,7 +81,7 @@ public class Fittings implements Serializable {
      */
     public Fitting(String name) {
       this.fittingName = name;
-
+/*
       try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
           java.sql.ResultSet dataSet =
               database.getResultSet(("SELECT * FROM fittings WHERE name='" + name + "'"))) {
@@ -91,6 +91,7 @@ public class Fittings implements Serializable {
       } catch (Exception ex) {
         
       }
+      */
     }
 
     /**

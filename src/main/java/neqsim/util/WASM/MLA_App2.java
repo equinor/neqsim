@@ -16,6 +16,9 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPA;
+import neqsim.processSimulation.processEquipment.util.Calculator;
+import neqsim.processSimulation.processEquipment.mixer.Mixer;
+import neqsim.processSimulation.processEquipment.util.Recycle;
 
 import neqsim.thermo.phase.PhaseSrkCPA;
 
@@ -202,7 +205,7 @@ public class MLA_App2 {
         feedGas.addComponent("TEG", 0.0);
 
         feedGas.setMixingRule(10);
-        /*
+
         feedGas.setMultiPhaseCheck(false);
         feedGas.init(0);
 
@@ -428,7 +431,7 @@ public class MLA_App2 {
         stripper.setStageEfficiency(1.0);
         p.add(stripper);
 
-*/
+
 
 /*
     Recycle recycleGasFromStripper = new Recycle("stripping gas recirc");
@@ -442,7 +445,7 @@ public class MLA_App2 {
 
 
 
-        /*
+
         heatEx.setFeedStream(1, stripper.getLiquidOutStream());
 
         Heater bufferTank = new Heater(heatEx.getOutStream(1));
@@ -461,8 +464,8 @@ public class MLA_App2 {
 
 
 
-        */
-/*
+
+
     Heater coolerhOTteg3 = new Heater(heatEx2.getOutStream(1));
     coolerhOTteg3.setName("lean TEG cooler");
     coolerhOTteg3.setOutTemperature(273.15 + 48.5);
@@ -517,7 +520,7 @@ public class MLA_App2 {
     p.add(resycleLeanTEG);
 
     richGLycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
-*/
+
         p.run();
 
         long endTime000 = System.currentTimeMillis();

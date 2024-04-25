@@ -1,8 +1,8 @@
 package neqsim.util.database;
-
+/*
 import java.sql.Connection;
 import java.sql.Statement;
-
+*/
 
 
 /**
@@ -31,8 +31,8 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
   private static boolean h2IsInitialized = false;
   private static boolean h2IsInitalizing = false;
 
-  private Statement statement = null;
-  protected Connection databaseConnection = null;
+  //private Statement statement = null;
+  //protected Connection databaseConnection = null;
 
   /**
    * <p>
@@ -40,7 +40,7 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
    * </p>
    */
   public NeqSimContractDataBase() {
-    // Fill tables from csv-files if not initialized and not currently being initialized.
+    /*// Fill tables from csv-files if not initialized and not currently being initialized.
     if (dataBaseType == "H2fromCSV" && !h2IsInitialized && !h2IsInitalizing) {
       initH2DatabaseFromCSVfiles();
     }
@@ -53,6 +53,7 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
       
       throw new RuntimeException(ex);
     }
+    */
   }
 
   /**

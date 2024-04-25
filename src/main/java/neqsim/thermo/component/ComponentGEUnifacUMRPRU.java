@@ -63,6 +63,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
       }
       return;
     }
+    /*
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
@@ -89,6 +90,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     } catch (Exception ex) {
       
     }
+    */
     unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
     for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
       getUnifacGroup(i).calcXComp(this);

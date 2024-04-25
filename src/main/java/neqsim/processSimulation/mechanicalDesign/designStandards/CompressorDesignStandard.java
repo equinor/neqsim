@@ -31,7 +31,7 @@ public class CompressorDesignStandard extends DesignStandard {
 
     neqsim.util.database.NeqSimProcessDesignDataBase database =
         new neqsim.util.database.NeqSimProcessDesignDataBase();
-
+/*
     try (java.sql.ResultSet dataSet = database.getResultSet(
         ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Compressor' AND Company='"
             + standardName + "'"))) {
@@ -44,6 +44,7 @@ public class CompressorDesignStandard extends DesignStandard {
     } catch (Exception ex) {
       
     }
+    */
     // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
   }
 

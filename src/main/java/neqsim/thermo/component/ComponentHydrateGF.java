@@ -35,6 +35,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
 
     java.sql.ResultSet dataSet = null;
     if (!name.equals("default")) {
+      /*
       try (neqsim.util.database.NeqSimDataBase database =
           new neqsim.util.database.NeqSimDataBase()) {
         // System.out.println("reading GF hydrate parameters ..............");
@@ -67,6 +68,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
           
         }
       }
+      */
     }
   }
 

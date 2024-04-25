@@ -35,7 +35,7 @@ public class GasScrubberDesignStandard extends DesignStandard {
 
     neqsim.util.database.NeqSimProcessDesignDataBase database =
         new neqsim.util.database.NeqSimProcessDesignDataBase();
-    java.sql.ResultSet dataSet = null;
+    /*java.sql.ResultSet dataSet = null;
     try {
       try {
         dataSet = database.getResultSet(
@@ -70,6 +70,7 @@ public class GasScrubberDesignStandard extends DesignStandard {
         
       }
     }
+    */
   }
 
   /**

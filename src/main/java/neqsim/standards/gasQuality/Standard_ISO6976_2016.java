@@ -103,7 +103,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-        try {
+       /* try {
           dataSet =
               database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='"
                   + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
@@ -132,7 +132,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
               .add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
           
         }
-
+*/
         carbonNumber[i] = Integer.parseInt(dataSet.getString("numberOfCarbon"));
 
         Z0[i] = Double.parseDouble(dataSet.getString("Z0"));

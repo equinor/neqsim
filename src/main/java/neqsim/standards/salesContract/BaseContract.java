@@ -74,7 +74,7 @@ public class BaseContract implements ContractInterface {
   public BaseContract(SystemInterface system, String terminal, String country) {
     int numb = 0;
     this.setContractName(contractName);
-    try (
+    /*try (
         neqsim.util.database.NeqSimContractDataBase database =
             new neqsim.util.database.NeqSimContractDataBase();
         java.sql.ResultSet dataSet =
@@ -99,6 +99,7 @@ public class BaseContract implements ContractInterface {
     } finally {
       specificationsNumber = spesifications.size();
     }
+    */
   }
 
   /**

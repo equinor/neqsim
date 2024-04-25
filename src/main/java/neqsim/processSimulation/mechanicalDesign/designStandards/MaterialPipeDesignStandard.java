@@ -146,6 +146,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
 
     neqsim.util.database.NeqSimProcessDesignDataBase database =
         new neqsim.util.database.NeqSimProcessDesignDataBase();
+    /*
     try (java.sql.ResultSet dataSet =
         database.getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='"
             + specificationNumber + "' AND grade='" + grade + "'"))) {
@@ -159,6 +160,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
     } catch (Exception ex) {
       
     }
+    */
     // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
   }
 }

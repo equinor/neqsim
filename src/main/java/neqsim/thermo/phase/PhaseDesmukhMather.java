@@ -57,7 +57,7 @@ public class PhaseDesmukhMather extends PhaseGE {
     super.setMixingRule(type);
     this.aij = new double[numberOfComponents][numberOfComponents];
     this.bij = new double[numberOfComponents][numberOfComponents];
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+    /*try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       for (int k = 0; k < getNumberOfComponents(); k++) {
         String component_name = getComponents()[k].getComponentName();
 
@@ -95,6 +95,7 @@ public class PhaseDesmukhMather extends PhaseGE {
     } catch (Exception ex) {
       
     }
+    */
   }
 
   /** {@inheritDoc} */

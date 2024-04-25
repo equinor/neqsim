@@ -32,7 +32,7 @@ public class ComponentDesmukhMather extends ComponentGE {
    */
   public ComponentDesmukhMather(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
-    java.sql.ResultSet dataSet = null;
+    /*java.sql.ResultSet dataSet = null;
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       if (!name.equals("default")) {
@@ -51,6 +51,7 @@ public class ComponentDesmukhMather extends ComponentGE {
     } catch (Exception ex) {
       
     }
+    */
   }
 
   /** {@inheritDoc} */

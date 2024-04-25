@@ -55,7 +55,7 @@ public class SeparatorDesignStandard extends DesignStandard {
     super(name, equipmentInn);
     neqsim.util.database.NeqSimProcessDesignDataBase database =
         new neqsim.util.database.NeqSimProcessDesignDataBase();
-    java.sql.ResultSet dataSet = null;
+    /*java.sql.ResultSet dataSet = null;
     try {
       try {
         dataSet = database.getResultSet(
@@ -93,6 +93,7 @@ public class SeparatorDesignStandard extends DesignStandard {
         
       }
     }
+    */
   }
 
   /**

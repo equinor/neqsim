@@ -74,7 +74,7 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
       system.init(1);
       system.getChemicalReactionOperations().solveChemEq(phaseNumber, 1);
     }
-
+/*
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt")) {
       while (dataSet.next()) {
@@ -153,6 +153,7 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
     } catch (Exception ex) {
       
     }
+    */
 
     if (system.getPhase(phaseNumber).hasComponent("MEG")) {
       system.addComponent("MEG", numberOfMolesMEG * 0.9999, phaseNumber);

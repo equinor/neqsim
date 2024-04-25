@@ -46,7 +46,7 @@ public class ComponentBWRS extends ComponentSrk {
    */
   public ComponentBWRS(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
-
+/*
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
@@ -67,6 +67,7 @@ public class ComponentBWRS extends ComponentSrk {
     } catch (Exception ex) {
       
     }
+    */
   }
 
   /**

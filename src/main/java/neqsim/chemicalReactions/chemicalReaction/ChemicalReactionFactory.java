@@ -41,7 +41,7 @@ public final class ChemicalReactionFactory {
     double refT = 0;
     double rateFactor = 0;
     double activationEnergy = 0;
-
+/*
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet =
             database.getResultSet("SELECT * FROM reactiondata where name='" + name + "'")) {
@@ -77,7 +77,7 @@ public final class ChemicalReactionFactory {
       // TODO: improve warning message, probably table missing?
       
     }
-
+*/
     String[] nameArray = new String[names.size()];
     double[] stocCoefArray = new double[names.size()];
     for (int i = 0; i < names.size(); i++) {
@@ -94,6 +94,7 @@ public final class ChemicalReactionFactory {
    * @return Names of all chemical reactions in database.
    */
   public static String[] getChemicalReactionNames() {
+    /*
     ArrayList<String> nameList = new ArrayList<String>();
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database.getResultSet("SELECT name FROM REACTIONDATA")) {
@@ -104,7 +105,7 @@ public final class ChemicalReactionFactory {
     } catch (Exception ex) {
       
     }
-
-    return nameList.toArray(new String[0]);
+*/
+    return new String[0];
   }
 }

@@ -1,9 +1,9 @@
 package neqsim.util.database;
-
+/*
 import java.sql.Connection;
 import java.sql.Statement;
 
-
+*/
 
 /**
  * <p>
@@ -37,8 +37,8 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
   // "jdbc:ucanaccess://C:/Users/esol/OneDrive -
   // Equinor/programming/neqsimdatabase/MSAccess/NeqSimDataBase.mdb;memory=true";
 
-  private Statement statement = null;
-  protected Connection databaseConnection = null;
+  //private Statement statement = null;
+  //protected Connection databaseConnection = null;
 
   /**
    * <p>
@@ -46,6 +46,7 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
    * </p>
    */
   public NeqSimProcessDesignDataBase() {
+    /*
     // Fill tables from csv-files if not initialized and not currently being initialized.
     if (dataBaseType == "H2fromCSV" && !h2IsInitialized && !h2IsInitalizing) {
       initH2DatabaseFromCSVfiles();
@@ -59,6 +60,7 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
       
       throw new RuntimeException(ex);
     }
+    */
   }
 
   /**

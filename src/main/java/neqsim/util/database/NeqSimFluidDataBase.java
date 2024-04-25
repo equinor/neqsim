@@ -1,11 +1,12 @@
 package neqsim.util.database;
 
+/*
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
+*/
 
 
 /**
@@ -23,11 +24,11 @@ public class NeqSimFluidDataBase
   
 
   static boolean started = false;
-  protected Connection databaseConnection;
+  //protected Connection databaseConnection;
   /** Constant <code>useOnlineBase=false</code>. */
   public static boolean useOnlineBase = false;
   static int numb = 0;
-  Statement statement = null;
+  //Statement statement = null;
 
   /**
    * <p>
@@ -44,8 +45,8 @@ public class NeqSimFluidDataBase
           Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
         }
       }
-      databaseConnection = this.openConnection("FluidDatabase");
-      statement = databaseConnection.createStatement();
+      //databaseConnection = this.openConnection("FluidDatabase");
+      //statement = databaseConnection.createStatement();
     } catch (Exception ex) {
       
       
@@ -62,7 +63,7 @@ public class NeqSimFluidDataBase
    * @throws java.sql.SQLException if any.
    * @throws java.lang.ClassNotFoundException if any.
    */
-  public Connection openConnection(String database) throws SQLException, ClassNotFoundException {
+  /*public Connection openConnection(String database) throws SQLException, ClassNotFoundException {
     if (useOnlineBase) {
       Class.forName("org.gjt.mm.mysql.Driver");
       return DriverManager.getConnection("jdbc:mysql:" + database);
@@ -78,7 +79,7 @@ public class NeqSimFluidDataBase
       // return DriverManager.getConnection("jdbc:odbc:FluidDatabase");
     }
   }
-
+*/
   /**
    * <p>
    * getConnection.
@@ -86,8 +87,8 @@ public class NeqSimFluidDataBase
    *
    * @return a Connection object
    */
-  public Connection getConnection() {
-    return databaseConnection;
+  //public Connection getConnection() {
+    //return databaseConnection;
   }
 
   /**
@@ -99,7 +100,7 @@ public class NeqSimFluidDataBase
    * @param sqlString a {@link java.lang.String} object
    * @return a ResultSet object
    */
-  public ResultSet getResultSet(String database, String sqlString) {
+  /*public ResultSet getResultSet(String database, String sqlString) {
     try {
       ResultSet result = statement.executeQuery(sqlString);
       return result;
@@ -109,7 +110,7 @@ public class NeqSimFluidDataBase
     }
     return null;
   }
-
+*/
   /**
    * <p>
    * getResultSet.
@@ -118,10 +119,10 @@ public class NeqSimFluidDataBase
    * @param sqlString a {@link java.lang.String} object
    * @return a ResultSet object
    */
-  public ResultSet getResultSet(String sqlString) {
+  /*public ResultSet getResultSet(String sqlString) {
     return this.getResultSet("FluidDatabase", sqlString);
   }
-
+*/
   /**
    * <p>
    * execute.
@@ -129,7 +130,7 @@ public class NeqSimFluidDataBase
    *
    * @param sqlString a {@link java.lang.String} object
    */
-  public void execute(String sqlString) {
+  /*public void execute(String sqlString) {
     try {
       if (databaseConnection == null) {
         databaseConnection = this.openConnection("FluidDatabase");
@@ -141,4 +142,5 @@ public class NeqSimFluidDataBase
       
     }
   }
-}
+  */
+//}

@@ -54,7 +54,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     double actH;
     double[] K = new double[4];
     boolean useReaction = false;
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+    /*try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       if (system.getModelName().equals("Kent Eisenberg-model")) {
         // System.out.println("selecting Kent-Eisenberg reaction set");
@@ -114,6 +114,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     } catch (Exception ex) {
       
     }
+    */
   }
 
   /**

@@ -28,7 +28,7 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
    */
   public AbsorptionColumnDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
-
+/*
     java.sql.ResultSet dataSet = null;
     try (neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       dataSet = database.getResultSet(
@@ -43,6 +43,7 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
     } catch (Exception ex) {
       
     }
+    */
   }
 
   /**

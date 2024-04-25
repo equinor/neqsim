@@ -1,5 +1,5 @@
 package neqsim.util.database;
-
+/*
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -9,9 +9,9 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+*/
 
-
-import org.h2.jdbc.JdbcSQLSyntaxErrorException;
+//import org.h2.jdbc.JdbcSQLSyntaxErrorException;
 
 /**
  * <p>
@@ -46,8 +46,8 @@ public class NeqSimDataBase
   // "jdbc:ucanaccess://C:/Users/esol/OneDrive -
   // Equinor/programming/neqsimdatabase/MSAccess/NeqSimDataBase.mdb;memory=true";
 
-  private Statement statement = null;
-  protected Connection databaseConnection = null;
+  //private Statement statement = null;
+  //protected Connection databaseConnection = null;
 
   /**
    * <p>
@@ -58,8 +58,8 @@ public class NeqSimDataBase
     setDataBaseType(dataBaseType);
 
     try {
-      databaseConnection = this.openConnection();
-      statement = databaseConnection.createStatement();
+      //databaseConnection = this.openConnection();
+      //statement = databaseConnection.createStatement();
     } catch (Exception ex) {
       
       throw new RuntimeException(ex);
@@ -75,7 +75,7 @@ public class NeqSimDataBase
    * @throws java.sql.SQLException if any.
    * @throws java.lang.ClassNotFoundException if any.
    */
-  public Connection openConnection() throws SQLException, ClassNotFoundException {
+  /*public Connection openConnection() throws SQLException, ClassNotFoundException {
     javax.naming.InitialContext ctx = null;
     javax.sql.DataSource ds = null;
     try {
@@ -123,7 +123,7 @@ public class NeqSimDataBase
       }
     }
   }
-
+*/
   /**
    * <p>
    * getConnection.
@@ -131,10 +131,10 @@ public class NeqSimDataBase
    *
    * @return a Connection object
    */
-  public Connection getConnection() {
+  /*public Connection getConnection() {
     return databaseConnection;
   }
-
+*/
   /**
    * <p>
    * Getter for the field <code>statement</code>.
@@ -142,9 +142,11 @@ public class NeqSimDataBase
    *
    * @return a Statement object
    */
-  public Statement getStatement() {
+  /*public Statement getStatement() {
     return statement;
   }
+
+   */
 
   /**
    * <p>
@@ -153,9 +155,11 @@ public class NeqSimDataBase
    *
    * @param statement a Statement object
    */
-  public void setStatement(Statement statement) {
+  /*public void setStatement(Statement statement) {
     this.statement = statement;
   }
+
+   */
 
   /**
    * <p>
@@ -167,6 +171,7 @@ public class NeqSimDataBase
    *         are no results
    */
   public boolean execute(String sqlString) {
+    /*
     try {
       if (databaseConnection == null) {
         databaseConnection = this.openConnection();
@@ -179,6 +184,8 @@ public class NeqSimDataBase
       
       throw new RuntimeException(ex);
     }
+    */
+    return true;
   }
 
   /**
@@ -189,7 +196,7 @@ public class NeqSimDataBase
    * @param sqlString Query to execute.
    */
   public void executeQuery(String sqlString) {
-    try {
+    /*try {
       if (databaseConnection == null) {
         databaseConnection = this.openConnection();
         setStatement(databaseConnection.createStatement());
@@ -201,6 +208,7 @@ public class NeqSimDataBase
       
       throw new RuntimeException(ex);
     }
+    */
   }
 
   /**
@@ -208,10 +216,10 @@ public class NeqSimDataBase
    * Execute query using executeQuery and return ResultSet.
    * </p>
    *
-   * @param sqlString Query to execute.
+
    * @return a ResultSet object
    */
-  public ResultSet getResultSet(String sqlString) {
+  /*public ResultSet getResultSet(String sqlString) {
     try {
       return getStatement().executeQuery(sqlString);
     } catch (JdbcSQLSyntaxErrorException ex) {
@@ -225,15 +233,16 @@ public class NeqSimDataBase
       throw new RuntimeException(ex);
     }
   }
-
+*/
   @Override
   public void close() throws Exception {
-    if (databaseConnection != null) {
+    /*if (databaseConnection != null) {
       databaseConnection.close();
     }
     if (statement != null) {
       statement.close();
     }
+    */
   }
 
   /**
@@ -381,7 +390,7 @@ public class NeqSimDataBase
    * @return an array of {@link java.lang.String} objects
    */
   public static String[] getComponentNames() {
-    try (NeqSimDataBase database = new NeqSimDataBase();
+    /*try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet("SELECT name FROM comp ORDER BY ID")) {
       List<String> names = new ArrayList<>();
       while (dataSet.next()) {
@@ -391,6 +400,8 @@ public class NeqSimDataBase
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }
+    */
+    return new String[1];
   }
 
   /**
@@ -400,7 +411,7 @@ public class NeqSimDataBase
    * @return True if component is found.
    */
   public static boolean hasComponent(String name) {
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+    /*try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet =
             database.getResultSet("select count(*) from comp WHERE NAME='" + name + "'")) {
       dataSet.next();
@@ -413,6 +424,8 @@ public class NeqSimDataBase
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }
+    */
+    return true;
   }
 
   /**
@@ -422,6 +435,7 @@ public class NeqSimDataBase
    * @return True if component is found.
    */
   public static boolean hasTempComponent(String name) {
+    /*
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet =
             database.getResultSet("select count(*) from comptemp WHERE NAME='" + name + "'")) {
@@ -435,6 +449,8 @@ public class NeqSimDataBase
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }
+    */
+    return true;
   }
 
   /**
@@ -453,6 +469,7 @@ public class NeqSimDataBase
    * @param path Path to csv file to
    */
   public static void updateTable(String tableName, String path) {
+    /*
     URL url = NeqSimDataBase.class.getClassLoader().getResource(path);
     if (url == null) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("NeqSimDataBase",
@@ -466,6 +483,7 @@ public class NeqSimDataBase
     } catch (Exception ex) {
       
     }
+    */
   }
 
   /**

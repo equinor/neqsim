@@ -72,10 +72,11 @@ public class ComponentHydrate extends Component {
 
     reffug[0] = 10.0;
     reffug[1] = 1.0;
-
+/*
     java.sql.ResultSet dataSet = null;
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       if (!name.equals("default")) {
+
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
             dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
@@ -107,6 +108,7 @@ public class ComponentHydrate extends Component {
         
       }
     }
+    */
   }
 
   /**

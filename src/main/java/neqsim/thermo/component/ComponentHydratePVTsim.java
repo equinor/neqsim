@@ -33,7 +33,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
    */
   public ComponentHydratePVTsim(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
-
+/*
     java.sql.ResultSet dataSet = null;
 
     if (!name.equals("default")) {
@@ -71,7 +71,10 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
           
         }
       }
+
     }
+
+ */
   }
 
   /** {@inheritDoc} */
