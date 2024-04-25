@@ -53,6 +53,7 @@ public abstract class Phase implements PhaseInterface {
    * not known to the phase.
    */
   double beta = 1.0;
+
   /**
    * Number of moles in phase. <code>numberOfMolesInPhase = numberOfMolesInSystem*beta</code>. NB!
    * numberOfMolesInSystem is not known to the phase.
@@ -2265,6 +2266,10 @@ public abstract class Phase implements PhaseInterface {
       return numberOfMolesInPhase * 3600.0 * 24.0 * ThermodynamicConstantsInterface.R
           * ThermodynamicConstantsInterface.standardStateTemperature
           / ThermodynamicConstantsInterface.atm / 1.0e6;
+    } else if (flowunit.equals("lbmole/hr")) {
+      return numberOfMolesInPhase * 3600.0 / 1000.0 * 2.205;
+    } else if (flowunit.equals("lb/hr")) {
+      return numberOfMolesInPhase * getMolarMass() * 60.0 * 2.20462262;
     } else {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
     }
@@ -2303,5 +2308,11 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public double getIsobaricThermalExpansivity() {
     return getIsothermalCompressibility() * getdPdTVn();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getModelName() {
+    return thermoPropertyModelName;
   }
 }

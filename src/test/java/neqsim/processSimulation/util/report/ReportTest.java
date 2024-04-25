@@ -42,8 +42,8 @@ public class ReportTest {
 
     Report report = new Report(processOps);
     String obj = report.json();
-
-    neqsim.util.unit.Units.activateFieldUnits();
+    System.out.println(obj);
+    // neqsim.util.unit.Units.activateFieldUnits();
     String obj2 = report.json();
     // System.out.println(obj2);
   }
