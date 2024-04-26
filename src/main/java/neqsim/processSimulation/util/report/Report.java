@@ -19,11 +19,11 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
  * @version $Id: $Id
  */
 public class Report {
-  public static HashMap<String, List<String[]>> reports = new HashMap<>();
-  public static HashMap<String, String> json_reports = new HashMap<>();
+  private HashMap<String, List<String[]>> reports = new HashMap<>();
+  private HashMap<String, String> json_reports = new HashMap<>();
   Gson gson = new Gson();
-  ProcessSystem process;
-  ProcessEquipmentBaseClass processEquipment;
+  ProcessSystem process = null;
+  ProcessEquipmentBaseClass processEquipment = null;
 
   public Report(ProcessSystem process) {
     this.process = process;
@@ -38,12 +38,17 @@ public class Report {
   }
 
   public Report(ProcessModuleBaseClass processModuleBaseClass) {
-    //TODO Auto-generated constructor stub
-}
+    // TODO Auto-generated constructor stub
+  }
 
-public String json() {
-    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-      json_reports.put(unit.getName(), unit.toJson());
+  public String json() {
+    if (process != null) {
+      for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+        json_reports.put(unit.getName(), unit.toJson());
+      }
+    }
+    if (processEquipment != null) {
+      json_reports.put(processEquipment.getName(), processEquipment.toJson());
     }
     return new GsonBuilder().setPrettyPrinting().create().toJson(json_reports);
   }
