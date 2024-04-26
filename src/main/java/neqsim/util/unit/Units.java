@@ -83,7 +83,7 @@ public class Units {
           new UnitDescription("ft3/lbmole", "cubic foot per pound-mass-mole"));
       fieldUnits.put("mass flow", new UnitDescription("lb/hr", "lb/hr"));
       fieldUnits.put("molar flow", new UnitDescription("lbmole/hr", "lbmole/hr"));
-      fieldUnits.put("actual volume flow", new UnitDescription("barrel/day", "barrel/day"));
+      fieldUnits.put("volume flow", new UnitDescription("barrel/day", "barrel/day"));
 
       defaultUnits.putAll(activeUnits); // Makes a copy of activeUnits
     }

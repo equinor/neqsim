@@ -2305,6 +2305,12 @@ public abstract class SystemThermo implements SystemInterface {
       return totalNumberOfMoles * 60.0;
     } else if (flowunit.equals("mole/hr")) {
       return totalNumberOfMoles * 3600.0;
+    } else if (flowunit.equals("lbmole/hr")) {
+      return totalNumberOfMoles * 3600.0 / 1000.0 * 2.205;
+    } else if (flowunit.equals("lb/hr")) {
+      return totalNumberOfMoles * getMolarMass() * 60.0 * 2.20462262;
+    } else if (flowunit.equals("barrel/day")) {
+      return totalNumberOfMoles * getMolarMass() * 60.0 * 2.20462262 * 0.068;
     } else {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
     }
