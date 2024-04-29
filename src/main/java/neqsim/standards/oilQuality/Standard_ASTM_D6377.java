@@ -21,6 +21,9 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
 
   String unit = "bara";
   double RVP = 1.0;
+  double TVP = 1.0;
+  double referenceTemperature = 37.8;
+  String referenceTemperatureUnit = "C";
 
   /**
    * <p>
@@ -36,7 +39,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   /** {@inheritDoc} */
   @Override
   public void calculate() {
-    this.thermoSystem.setTemperature(273.15 + 37.8);
+    this.thermoSystem.setTemperature(referenceTemperature, "C");
     this.thermoSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
     this.thermoOps = new ThermodynamicOperations(thermoSystem);
     try {
@@ -45,7 +48,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
       logger.error(ex.getMessage(), ex);
     }
 
-    // double TVP = this.thermoSystem.getPressure();
+    TVP = this.thermoSystem.getPressure();
     double liquidVolume = thermoSystem.getVolume();
 
     this.thermoSystem.setPressure(0.9);
@@ -73,13 +76,36 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   /** {@inheritDoc} */
   @Override
   public double getValue(String returnParameter, java.lang.String returnUnit) {
-    return RVP;
+    if (returnParameter == "RVP") {
+      neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(RVP, "bara");
+      return presConversion.getValue(returnUnit);
+    }
+    if (returnParameter == "TVP") {
+      neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(TVP, "bara");
+      return presConversion.getValue(returnUnit);
+    } else {
+      return RVP;
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public double getValue(String returnParameter) {
     return RVP;
+  }
+
+  /**
+   * <p>
+   * setReferenceTemperature.
+   * </p>
+   *
+   * @param refTemp a double
+   * @param refTempUnit a {@link java.lang.String} object
+   */
+  public void setReferenceTemperature(double refTemp, String refTempUnit) {
+    neqsim.util.unit.TemperatureUnit tempConversion =
+        new neqsim.util.unit.TemperatureUnit(refTemp, refTempUnit);
+    referenceTemperature = tempConversion.getValue(refTemp, refTempUnit, "C");
   }
 
   /**

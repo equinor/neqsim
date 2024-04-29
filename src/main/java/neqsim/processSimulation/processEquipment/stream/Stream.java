@@ -15,6 +15,7 @@ import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.util.monitor.StreamResponse;
 import neqsim.standards.gasQuality.Standard_ISO6976;
+import neqsim.standards.oilQuality.Standard_ASTM_D6377;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -443,8 +444,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     return getFluid().calcResultTable();
   }
 
-
-
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
@@ -548,6 +547,29 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     } catch (Exception ex) {
     }
     return localSyst.getPressure();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getTVP(double referenceTemperature, String unit, String returnUnit) {
+    SystemInterface localSyst = getFluid().clone();
+    localSyst.setTemperature(referenceTemperature, unit);
+    ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
+    try {
+      ops.bubblePointPressureFlash(false);
+    } catch (Exception ex) {
+    }
+    return localSyst.getPressure(returnUnit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getRVP(double referenceTemperature, String unit, String returnUnit) {
+    SystemInterface localSyst = getFluid().clone();
+    Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(localSyst);
+    standard.setReferenceTemperature(referenceTemperature, unit);
+    standard.calculate();
+    return standard.getValue("RVP", returnUnit);
   }
 
   /** {@inheritDoc} */
