@@ -41,7 +41,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   /**
    * Constructor for Standard.
    *
-   * @param name name of standard
+   * @param name        name of standard
    * @param description description
    */
   public Standard(String name, String description) {
@@ -52,8 +52,8 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   /**
    * Constructor for Standard.
    *
-   * @param name name of standard
-   * @param thermoSyst input fluid
+   * @param name        name of standard
+   * @param thermoSyst  input fluid
    * @param description description of standard
    */
   public Standard(String name, String description, SystemInterface thermoSyst) {
@@ -161,7 +161,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
+    String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
     String[][] table = createTable(name);
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);

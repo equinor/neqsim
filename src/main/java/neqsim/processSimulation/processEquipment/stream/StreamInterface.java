@@ -131,6 +131,30 @@ public interface StreamInterface extends ProcessEquipmentInterface {
 
   /**
    * <p>
+   * TVP.
+   * </p>
+   *
+   * @param referenceTemperature a double
+   * @param unit a {@link java.lang.String} object
+   * @param returnUnit a {@link java.lang.String} object
+   * @return a double
+   */
+  public double getTVP(double referenceTemperature, String unit, String returnUnit);
+
+  /**
+   * <p>
+   * TVP.
+   * </p>
+   *
+   * @param referenceTemperature a double
+   * @param unit a {@link java.lang.String} object
+   * @param returnUnit a {@link java.lang.String} object
+   * @return a double
+   */
+  public double getRVP(double referenceTemperature, String unit, String returnUnit);
+
+  /**
+   * <p>
    * setFluid.
    * </p>
    *
