@@ -149,6 +149,7 @@ neqsim.processSimulation.processEquipment.valve
 neqsim.processSimulation.processSystem
 neqsim.processSimulation.processSystem.processModules
 neqsim.processSimulation.util.monitor
+neqsim.processSimulation.util.report
 neqsim.PVTsimulation.modelTuning
 neqsim.PVTsimulation.reservoirProperties
 neqsim.PVTsimulation.simulation
