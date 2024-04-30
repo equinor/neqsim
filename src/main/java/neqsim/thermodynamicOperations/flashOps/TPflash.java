@@ -91,7 +91,9 @@ public class TPflash extends Flash {
 
     double oldBeta = system.getBeta();
     try {
-      system.calcBeta();
+      // system.calcBeta();
+      RachfordRice racrice = new RachfordRice(system);
+      racrice.calcBeta();
     } catch (IsNaNException ex) {
       logger.warn("Not able to calculate beta. Value is NaN");
       system.setBeta(oldBeta);
