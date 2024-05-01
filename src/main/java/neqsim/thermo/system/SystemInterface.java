@@ -2571,4 +2571,19 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param newfile a boolean
    */
   public void write(String name, String filename, boolean newfile);
+
+  /**
+   * <p>
+   * getKvector - return vector of equilibrium constants
+   * </p>
+   */
+  public double[] getKvector();
+
+
+  /**
+   * <p>
+   * getzvector - return vector of total molar composition
+   * </p>
+   */
+  public double[] getzvector();
 }

@@ -28,51 +28,41 @@ public class RachfordRice {
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
-  public static double calcBeta(SystemInterface fluidinp)
-      throws neqsim.util.exception.IsNaNException,
+  public static double calcBeta(double[] K, double[] z) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    SystemInterface fluid = fluidinp;
-
-    ComponentInterface[] compArray = fluid.getPhase(0).getComponents();
 
     int i;
     double tolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
-
-
-    double nybeta = fluid.getBeta(0);
     double midler = 0;
     double minBeta = tolerance;
     double maxBeta = 1.0 - tolerance;
     double g0 = -1.0;
     double g1 = 1.0;
 
-    for (i = 0; i < fluid.getNumberOfComponents(); i++) {
-      midler = (compArray[i].getK() * compArray[i].getz() - 1.0) / (compArray[i].getK() - 1.0);
-      if ((midler > minBeta) && (compArray[i].getK() > 1.0)) {
+    for (i = 0; i < K.length; i++) {
+      midler = (K[i] * z[i] - 1.0) / (K[i] - 1.0);
+      if ((midler > minBeta) && (K[i] > 1.0)) {
         minBeta = midler;
       }
-      midler = (1.0 - compArray[i].getz()) / (1.0 - compArray[i].getK());
-      if ((midler < maxBeta) && (compArray[i].getK() < 1.0)) {
+      midler = (1.0 - z[i]) / (1.0 - K[i]);
+      if ((midler < maxBeta) && (K[i] < 1.0)) {
         maxBeta = midler;
       }
-      g0 += compArray[i].getz() * compArray[i].getK();
-      g1 += -compArray[i].getz() / compArray[i].getK();
+      g0 += z[i] * K[i];
+      g1 += -z[i] / K[i];
     }
 
     if (g0 < 0) {
-      fluid.setBeta(tolerance);
       return tolerance;
     }
     if (g1 > 0) {
-      fluid.setBeta(1.0 - tolerance);
       return 1.0 - tolerance;
     }
 
-    nybeta = (minBeta + maxBeta) / 2.0;
+    double nybeta = (minBeta + maxBeta) / 2.0;
     double gtest = 0.0;
-    for (i = 0; i < fluid.getNumberOfComponents(); i++) {
-      gtest += compArray[i].getz() * (compArray[i].getK() - 1.0)
-          / (1.0 - nybeta + nybeta * compArray[i].getK());
+    for (i = 0; i < K.length; i++) {
+      gtest += z[i] * (K[i] - 1.0) / (1.0 - nybeta + nybeta * K[i]);
     }
 
     if (gtest >= 0) {
@@ -99,12 +89,11 @@ public class RachfordRice {
         deriv = 0.0;
         gbeta = 0.0;
 
-        for (i = 0; i < fluid.getNumberOfComponents(); i++) {
-          double temp1 = (compArray[i].getK() - 1.0);
+        for (i = 0; i < K.length; i++) {
+          double temp1 = (K[i] - 1.0);
           double temp2 = 1.0 + temp1 * nybeta;
-          deriv += -(compArray[i].getz() * temp1 * temp1) / (temp2 * temp2);
-          gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0)
-              / (1.0 + (compArray[i].getK() - 1.0) * nybeta);
+          deriv += -(z[i] * temp1 * temp1) / (temp2 * temp2);
+          gbeta += z[i] * (K[i] - 1.0) / (1.0 + (K[i] - 1.0) * nybeta);
         }
 
         if (gbeta >= 0) {
@@ -124,11 +113,9 @@ public class RachfordRice {
         deriv = 0.0;
         gbeta = 0.0;
 
-        for (i = 0; i < fluid.getNumberOfComponents(); i++) {
-          deriv -= (compArray[i].getz() * (compArray[i].getK() - 1.0) * (1.0 - compArray[i].getK()))
-              / Math.pow((betal + (1 - betal) * compArray[i].getK()), 2);
-          gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0)
-              / (betal + (-betal + 1.0) * compArray[i].getK());
+        for (i = 0; i < K.length; i++) {
+          deriv -= (z[i] * (K[i] - 1.0) * (1.0 - K[i])) / Math.pow((betal + (1 - betal) * K[i]), 2);
+          gbeta += z[i] * (K[i] - 1.0) / (betal + (-betal + 1.0) * K[i]);
         }
 
         if (gbeta < 0) {
@@ -155,13 +142,12 @@ public class RachfordRice {
       nybeta = 1.0 - tolerance;
     }
 
-    fluid.setBeta(nybeta);
-
     if (iterations >= maxIterations) {
-      throw new neqsim.util.exception.TooManyIterationsException(fluid, "calcBeta", maxIterations);
+      throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(), "calcBeta",
+          maxIterations);
     }
     if (Double.isNaN(nybeta)) {
-      throw new neqsim.util.exception.IsNaNException(fluid, "calcBeta", "beta");
+      throw new neqsim.util.exception.IsNaNException(new RachfordRice(), "calcBeta", "beta");
     }
     return nybeta;
   }

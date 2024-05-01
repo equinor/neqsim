@@ -5021,4 +5021,24 @@ public abstract class SystemThermo implements SystemInterface {
     file.setValues(table);
     file.createFile();
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[] getKvector() {
+    double[] K = new double[this.getNumberOfComponents()];
+    for (int i = 0; i < this.getNumberOfComponents(); i++) {
+      K[i] = this.getPhase(0).getComponent(i).getK();
+    }
+    return K;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[] getzvector() {
+    double[] z = new double[this.getNumberOfComponents()];
+    for (int i = 0; i < this.getNumberOfComponents(); i++) {
+      z[i] = this.getPhase(0).getComponent(i).getz();
+    }
+    return z;
+  }
 }
