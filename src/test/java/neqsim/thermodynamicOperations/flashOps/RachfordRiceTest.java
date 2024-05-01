@@ -17,4 +17,18 @@ public class RachfordRiceTest {
     }
 
   }
+
+  @Test
+  void testCalcBetaMethod2() {
+
+    double[] z = new double[] {0.7, 0.3};
+    double[] K = new double[] {2.0, 0.01};
+
+    try {
+      Assertions.assertEquals(0.407070707, RachfordRice.calcBeta(K, z), 1e-6);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+  }
 }
