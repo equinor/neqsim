@@ -353,7 +353,7 @@ public abstract class Flash extends BaseOperation {
       }
     } else {
       try {
-        system.calcBeta();
+        system.setBeta(RachfordRice.calcBeta(system.getKvector(), system.getzvector()));
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }

@@ -91,7 +91,7 @@ public class TPflash extends Flash {
 
     double oldBeta = system.getBeta();
     try {
-      system.calcBeta();
+      system.setBeta(RachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (IsNaNException ex) {
       logger.warn("Not able to calculate beta. Value is NaN");
       system.setBeta(oldBeta);
@@ -133,7 +133,7 @@ public class TPflash extends Flash {
     }
     double oldBeta = system.getBeta();
     try {
-      system.calcBeta();
+      system.setBeta(RachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (Exception ex) {
       if (system.getBeta() > 1.0 - betaTolerance || system.getBeta() < betaTolerance) {
         system.setBeta(oldBeta);
@@ -178,7 +178,7 @@ public class TPflash extends Flash {
       system.getPhase(1).getComponents()[i].setK(Math.exp(lnK[i]));
     }
     try {
-      system.calcBeta();
+      system.setBeta(RachfordRice.calcBeta(system.getKvector(), system.getzvector()));
       system.calc_x_y();
       system.init(1);
     } catch (Exception ex) {
@@ -249,7 +249,7 @@ public class TPflash extends Flash {
 
     // Calculates phase fractions and initial composition based on Wilson K-factors
     try {
-      system.calcBeta();
+      system.setBeta(RachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
