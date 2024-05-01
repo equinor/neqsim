@@ -25,8 +25,7 @@ public class RachfordRice {
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
-  public static double calcBeta2(double[] K, double[] z)
-      throws neqsim.util.exception.IsNaNException,
+  public static double calcBeta(double[] K, double[] z) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
 
     int i;
@@ -160,7 +159,8 @@ public class RachfordRice {
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
-  public static double calcBeta(double[] K, double[] z) throws neqsim.util.exception.IsNaNException,
+  public static double calcBeta2(double[] K, double[] z)
+      throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
 
     double tolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
