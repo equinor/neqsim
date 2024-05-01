@@ -18,6 +18,8 @@ public class RachfordRice {
    * <p>
    * calcBeta. For gas liquid systems.
    * </p>
+   * 
+   * Method based on Michelsen Mollerup, 2001
    *
    * @return Beta Mole fraction of gas phase
    * @throws neqsim.util.exception.IsNaNException if any.
@@ -150,7 +152,8 @@ public class RachfordRice {
 
   /**
    * <p>
-   * calcBeta. For gas liquid systems.
+   * calcBeta. For gas liquid systems. Method based on Avoiding round-off error in the Rachford–Rice
+   * equation, Nielsen, Lia, 2023
    * </p>
    *
    * @return Beta Mole fraction of gas phase
