@@ -143,21 +143,14 @@ public class StreamResponse {
             inputStream.getFluid().getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
         neqsim.util.unit.Units.getSymbol("volume flow")));
     properties.put(inputStream.getName(), newdata);
-
-
-    properties.put(inputStream.getName(), newdata);
-
-    newdata = new HashMap<String, Value>();
-    for (
-
-        int i = 0; i < inputStream.getFluid().getNumberOfPhases(); i++) {
+    for (int i = 0; i < inputStream.getFluid().getNumberOfPhases(); i++) {
+      newdata = new HashMap<String, Value>();
       String name = inputStream.getFluid().getPhase(i).getPhaseTypeName();
       newdata.put("density",
           new Value(
               Double.toString(inputStream.getFluid().getPhase(name)
                   .getDensity(neqsim.util.unit.Units.getSymbol("density"))),
               neqsim.util.unit.Units.getSymbol("density")));
-
       newdata.put("molar mass",
           new Value(
               Double.toString(inputStream.getFluid().getPhase(name)
@@ -169,8 +162,6 @@ public class StreamResponse {
               Double.toString(inputStream.getFluid().getPhase(name)
                   .getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
               neqsim.util.unit.Units.getSymbol("volume flow")));
-      properties.put(inputStream.getName(), newdata);
-
       properties.put(name, newdata);
     }
 
