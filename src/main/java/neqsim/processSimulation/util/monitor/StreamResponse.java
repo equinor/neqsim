@@ -23,20 +23,18 @@ public class StreamResponse {
   public Double massflowGas;
   public Double massflowOil;
   public Double massflowAqueous;
-  public HashMap<String, HashMap<String, Value>> properties =
-      new HashMap<String, HashMap<String, Value>>();
-  public HashMap<String, HashMap<String, Value>> conditions =
-      new HashMap<String, HashMap<String, Value>>();
-  public HashMap<String, HashMap<String, Value>> composition =
-      new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> properties = new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> conditions = new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> composition = new HashMap<String, HashMap<String, Value>>();
 
   /**
    * <p>
    * Constructor for StreamResponse.
    * </p>
    *
-   * @param inputStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
+   * @param inputStream a
+   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *                    object
    */
   public StreamResponse(StreamInterface inputStream) {
 
@@ -101,7 +99,7 @@ public class StreamResponse {
       conditions.put(name, newdata);
     }
 
-
+    name = inputStream.getName();
     newdata = new HashMap<String, Value>();
     for (int i = 0; i < inputStream.getFluid().getNumberOfComponents(); i++) {
       newdata.put(inputStream.getFluid().getComponent(i).getComponentName(), new Value(
@@ -119,10 +117,9 @@ public class StreamResponse {
             new Value(Double.toString(inputStream.getFluid().getPhase(j).getWtFrac(i)),
                 "weight fraction"));
       }
-      composition.put(inputStream.getFluid().getPhase(j).getPhaseTypeName(), newdata);
+      composition.put(inputStream.getFluid().getPhase(j).getPhaseTypeName(), newdata2);
+      composition.put(inputStream.getFluid().getPhase(j).getPhaseTypeName() + "_wt", newdata);
     }
-
-
 
     newdata = new HashMap<String, Value>();
 
@@ -197,5 +194,6 @@ public class StreamResponse {
    * print.
    * </p>
    */
-  public void print() {}
+  public void print() {
+  }
 }
