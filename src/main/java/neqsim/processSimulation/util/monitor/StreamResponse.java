@@ -110,16 +110,16 @@ public class StreamResponse {
     composition.put(name, newdata);
     for (int j = 0; j < inputStream.getFluid().getNumberOfPhases(); j++) {
       newdata = new HashMap<String, Value>();
+      HashMap<String, Value> newdata2 = new HashMap<String, Value>();
       for (int i = 0; i < inputStream.getFluid().getNumberOfComponents(); i++) {
-        newdata.put(inputStream.getFluid().getPhase(j).getComponent(i).getComponentName(),
+        newdata2.put(inputStream.getFluid().getPhase(j).getComponent(i).getComponentName(),
             new Value(Double.toString(inputStream.getFluid().getPhase(j).getComponent(i).getx()),
                 "mole fraction"));
         newdata.put(inputStream.getFluid().getPhase(j).getComponent(i).getComponentName(),
             new Value(Double.toString(inputStream.getFluid().getPhase(j).getWtFrac(i)),
                 "weight fraction"));
-        composition.put(inputStream.getFluid().getPhase(j).getPhaseTypeName(), newdata);
-
       }
+      composition.put(inputStream.getFluid().getPhase(j).getPhaseTypeName(), newdata);
     }
 
 
