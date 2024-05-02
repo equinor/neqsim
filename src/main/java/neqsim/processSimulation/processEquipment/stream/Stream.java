@@ -608,6 +608,26 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
   /** {@inheritDoc} */
   @Override
+  public double getGCV(String unit, double refTVolume, double refTCombustion) {
+    Standard_ISO6976 standard =
+        new Standard_ISO6976(getFluid().clone(), refTVolume, refTCombustion, unit);
+    standard.setReferenceState("real");
+    standard.calculate();
+    return standard.getValue("GCV") * 1.0e3;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getWI(String unit, double refTVolume, double refTCombustion) {
+    Standard_ISO6976 standard =
+        new Standard_ISO6976(getFluid().clone(), refTVolume, refTCombustion, unit);
+    standard.setReferenceState("real");
+    standard.calculate();
+    return standard.getValue("WI") * 1.0e3;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double LCV() {
     Standard_ISO6976 standard = new Standard_ISO6976(getFluid().clone(), 0, 15.55, "volume");
     standard.setReferenceState("real");

@@ -246,6 +246,30 @@ public interface StreamInterface extends ProcessEquipmentInterface {
 
   /**
    * <p>
+   * getGCV.
+   * </p>
+   * 
+   * @param unit a String
+   * @param refTVolume a double in Celcius
+   * @param refTCombustion a double in Celcius
+   * @return a double
+   */
+  public double getGCV(String unit, double refTVolume, double refTCombustion);
+
+  /**
+   * <p>
+   * getWI.
+   * </p>
+   * 
+   * @param unit a String
+   * @param refTVolume a double in Celcius
+   * @param refTCombustion a double in Celcius
+   * @return a double
+   */
+  public double getWI(String unit, double refTVolume, double refTCombustion);
+
+  /**
+   * <p>
    * LCV.
    * </p>
    *
