@@ -26,18 +26,20 @@ public class StreamResponse {
   public Double massflowGas;
   public Double massflowOil;
   public Double massflowAqueous;
-  public HashMap<String, HashMap<String, Value>> properties = new HashMap<String, HashMap<String, Value>>();
-  public HashMap<String, HashMap<String, Value>> conditions = new HashMap<String, HashMap<String, Value>>();
-  public HashMap<String, HashMap<String, Value>> composition = new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> properties =
+      new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> conditions =
+      new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> composition =
+      new HashMap<String, HashMap<String, Value>>();
 
   /**
    * <p>
    * Constructor for StreamResponse.
    * </p>
    *
-   * @param inputStream a
-   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *                    object
+   * @param inputStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
    */
   public StreamResponse(StreamInterface inputStream) {
 
@@ -150,8 +152,6 @@ public class StreamResponse {
               Double.toString(inputStream.getFluid().getPhase(name)
                   .getDensity(neqsim.util.unit.Units.getSymbol("density"))),
               neqsim.util.unit.Units.getSymbol("density")));
-      newdata.put("relative density", new Value(Double.toString(inputStream.getFluid()
-          .getPhase(name).getDensity(neqsim.util.unit.Units.getSymbol("density")) / 1000.0), "-"));
       newdata.put("molar mass",
           new Value(
               Double.toString(inputStream.getFluid().getPhase(name)
@@ -180,6 +180,9 @@ public class StreamResponse {
                   Double.toString(
                       inputStream.getRVP(37.8, "C", neqsim.util.unit.Units.getSymbol("pressure"))),
                   neqsim.util.unit.Units.getSymbol("pressure")));
+          newdata.put("relative density", new Value(
+              Double.toString(inputStream.getFluid().getPhase(name).getDensity("kg/m3") / 1000.0),
+              "-"));
         } catch (Exception e) {
           logger.error(e.getMessage());
         }
@@ -193,6 +196,8 @@ public class StreamResponse {
                 Double.toString(inputStream.getFluid().getPhase(name)
                     .getFlowRate(neqsim.util.unit.Units.getSymbol("standard volume flow"))),
                 neqsim.util.unit.Units.getSymbol("standard volume flow")));
+        newdata.put("relative density",
+            new Value(Double.toString(inputStream.getFluid().getMolarMass("gr/mol") / 28.96), "-"));
       }
       properties.put(name, newdata);
     }
@@ -229,6 +234,5 @@ public class StreamResponse {
    * print.
    * </p>
    */
-  public void print() {
-  }
+  public void print() {}
 }
