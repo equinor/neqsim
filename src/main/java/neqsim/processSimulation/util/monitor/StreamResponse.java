@@ -26,20 +26,18 @@ public class StreamResponse {
   public Double massflowGas;
   public Double massflowOil;
   public Double massflowAqueous;
-  public HashMap<String, HashMap<String, Value>> properties =
-      new HashMap<String, HashMap<String, Value>>();
-  public HashMap<String, HashMap<String, Value>> conditions =
-      new HashMap<String, HashMap<String, Value>>();
-  public HashMap<String, HashMap<String, Value>> composition =
-      new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> properties = new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> conditions = new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> composition = new HashMap<String, HashMap<String, Value>>();
 
   /**
    * <p>
    * Constructor for StreamResponse.
    * </p>
    *
-   * @param inputStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
+   * @param inputStream a
+   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *                    object
    */
   public StreamResponse(StreamInterface inputStream) {
 
@@ -190,6 +188,11 @@ public class StreamResponse {
             Double.toString(inputStream.getGCV("volume", 15.0, 15.0) / 1e6), "MJ/Sm3 @15C,15C"));
         newdata.put("WI", new Value(Double.toString(inputStream.getWI("volume", 15.0, 15.0) / 1e6),
             "MJ/Sm3 @15C,15C"));
+        newdata.put("standard flow rate",
+            new Value(
+                Double.toString(inputStream.getFluid().getPhase(name)
+                    .getFlowRate(neqsim.util.unit.Units.getSymbol("standard volume flow"))),
+                neqsim.util.unit.Units.getSymbol("standard volume flow")));
       }
       properties.put(name, newdata);
     }
@@ -226,5 +229,6 @@ public class StreamResponse {
    * print.
    * </p>
    */
-  public void print() {}
+  public void print() {
+  }
 }

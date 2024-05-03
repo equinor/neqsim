@@ -30,10 +30,9 @@ public class Units {
   private static HashMap<String, UnitDescription> siUnits = new HashMap<>();
   private static HashMap<String, UnitDescription> fieldUnits = new HashMap<>();
 
-  private static String[] pressureUnits =
-      new String[] {"Pa", "bara", "barg", "psi", "psig", "psia"};
-  private static String[] temperatureUnits = new String[] {"K", "C", "F", "R"};
-  private static String[] molarVolumeUnits = new String[] {"mol/m3", "litre/m3", "ft3/lbmole"};
+  private static String[] pressureUnits = new String[] { "Pa", "bara", "barg", "psi", "psig", "psia" };
+  private static String[] temperatureUnits = new String[] { "K", "C", "F", "R" };
+  private static String[] molarVolumeUnits = new String[] { "mol/m3", "litre/m3", "ft3/lbmole" };
 
   public Units() {
     if (activeUnits.size() == 0) {
@@ -57,6 +56,7 @@ public class Units {
       activeUnits.put("mass flow", new UnitDescription("kg/hr", "kg per hour"));
       activeUnits.put("molar flow", new UnitDescription("mole/hr", "mole per hour"));
       activeUnits.put("volume flow", new UnitDescription("m3/hr", "cubic metre per hour"));
+      activeUnits.put("standard volume flow", new UnitDescription("Sm3/hr", "standard cubic metre per hour"));
 
       siUnits.putAll(activeUnits); // Makes a copy of activeUnits
       siUnits.put("temperature", new UnitDescription("K", "Kelvin"));
