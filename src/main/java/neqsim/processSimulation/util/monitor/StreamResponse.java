@@ -1,6 +1,8 @@
 package neqsim.processSimulation.util.monitor;
 
 import java.util.HashMap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
@@ -12,6 +14,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public class StreamResponse {
+  static Logger logger = LogManager.getLogger(StreamResponse.class);
   public String name;
   public Fluid fluid;
   public Double temperature;
@@ -23,18 +26,20 @@ public class StreamResponse {
   public Double massflowGas;
   public Double massflowOil;
   public Double massflowAqueous;
-  public HashMap<String, HashMap<String, Value>> properties = new HashMap<String, HashMap<String, Value>>();
-  public HashMap<String, HashMap<String, Value>> conditions = new HashMap<String, HashMap<String, Value>>();
-  public HashMap<String, HashMap<String, Value>> composition = new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> properties =
+      new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> conditions =
+      new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> composition =
+      new HashMap<String, HashMap<String, Value>>();
 
   /**
    * <p>
    * Constructor for StreamResponse.
    * </p>
    *
-   * @param inputStream a
-   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *                    object
+   * @param inputStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
    */
   public StreamResponse(StreamInterface inputStream) {
 
@@ -133,7 +138,6 @@ public class StreamResponse {
         Double.toString(
             inputStream.getFluid().getMolarMass(neqsim.util.unit.Units.getSymbol("Molar Mass"))),
         neqsim.util.unit.Units.getSymbol("Molar Mass")));
-    properties.put(inputStream.getName(), newdata);
 
     newdata.put("flow rate", new Value(
         Double.toString(
@@ -148,6 +152,8 @@ public class StreamResponse {
               Double.toString(inputStream.getFluid().getPhase(name)
                   .getDensity(neqsim.util.unit.Units.getSymbol("density"))),
               neqsim.util.unit.Units.getSymbol("density")));
+      newdata.put("relative density", new Value(Double.toString(inputStream.getFluid()
+          .getPhase(name).getDensity(neqsim.util.unit.Units.getSymbol("density")) / 1000.0), "-"));
       newdata.put("molar mass",
           new Value(
               Double.toString(inputStream.getFluid().getPhase(name)
@@ -159,6 +165,32 @@ public class StreamResponse {
               Double.toString(inputStream.getFluid().getPhase(name)
                   .getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
               neqsim.util.unit.Units.getSymbol("volume flow")));
+
+      if (name.equals("oil")) {
+        try {
+          newdata.put("TVP",
+              new Value(
+                  Double.toString(
+                      inputStream.getTVP(37.8, "C", neqsim.util.unit.Units.getSymbol("pressure"))),
+                  neqsim.util.unit.Units.getSymbol("pressure")));
+        } catch (Exception e) {
+          logger.error(e.getMessage());
+        }
+        try {
+          newdata.put("RVP",
+              new Value(
+                  Double.toString(
+                      inputStream.getRVP(37.8, "C", neqsim.util.unit.Units.getSymbol("pressure"))),
+                  neqsim.util.unit.Units.getSymbol("pressure")));
+        } catch (Exception e) {
+          logger.error(e.getMessage());
+        }
+      } else if (name.equals("gas")) {
+        newdata.put("GCV", new Value(
+            Double.toString(inputStream.getGCV("volume", 15.0, 15.0) / 1e6), "MJ/Sm3 @15C,15C"));
+        newdata.put("WI", new Value(Double.toString(inputStream.getGCV("volume", 15.0, 15.0) / 1e6),
+            "MJ/Sm3 @15C,15C"));
+      }
       properties.put(name, newdata);
     }
 
@@ -194,6 +226,5 @@ public class StreamResponse {
    * print.
    * </p>
    */
-  public void print() {
-  }
+  public void print() {}
 }
