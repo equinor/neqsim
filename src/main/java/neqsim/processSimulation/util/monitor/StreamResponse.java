@@ -188,7 +188,7 @@ public class StreamResponse {
       } else if (name.equals("gas")) {
         newdata.put("GCV", new Value(
             Double.toString(inputStream.getGCV("volume", 15.0, 15.0) / 1e6), "MJ/Sm3 @15C,15C"));
-        newdata.put("WI", new Value(Double.toString(inputStream.getGCV("volume", 15.0, 15.0) / 1e6),
+        newdata.put("WI", new Value(Double.toString(inputStream.getWI("volume", 15.0, 15.0) / 1e6),
             "MJ/Sm3 @15C,15C"));
       }
       properties.put(name, newdata);
