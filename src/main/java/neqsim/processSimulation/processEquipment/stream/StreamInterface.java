@@ -7,6 +7,7 @@
 package neqsim.processSimulation.processEquipment.stream;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
+import neqsim.standards.gasQuality.Standard_ISO6976;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -267,6 +268,19 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * @return a double
    */
   public double getWI(String unit, double refTVolume, double refTCombustion);
+
+  /**
+   * <p>
+   * getWI.
+   * </p>
+   * 
+   * @param unit a String
+   * @param refTVolume a double in Celcius
+   * @param refTCombustion a double in Celcius
+   * @return a Standard_ISO6976
+   */
+  public Standard_ISO6976 getISO6976(String unit, double refTVolume, double refTCombustion);
+
 
   /**
    * <p>

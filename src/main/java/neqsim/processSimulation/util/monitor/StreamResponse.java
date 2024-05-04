@@ -4,6 +4,7 @@ import java.util.HashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.standards.gasQuality.Standard_ISO6976;
 
 /**
  * <p>
@@ -187,9 +188,11 @@ public class StreamResponse {
           logger.error(e.getMessage());
         }
       } else if (name.equals("gas")) {
+        Standard_ISO6976 standard = inputStream.getISO6976("volume", 15.0, 15.0);
+        standard.calculate();
         newdata.put("GCV", new Value(
-            Double.toString(inputStream.getGCV("volume", 15.0, 15.0) / 1e6), "MJ/Sm3 @15C,15C"));
-        newdata.put("WI", new Value(Double.toString(inputStream.getWI("volume", 15.0, 15.0) / 1e6),
+            Double.toString(standard.getValue("SuperiorCalorificValue") / 1e3), "MJ/Sm3 @15C,15C"));
+        newdata.put("WI", new Value(Double.toString(standard.getValue("SuperiorWobbeIndex") / 1e3),
             "MJ/Sm3 @15C,15C"));
         newdata.put("standard flow rate",
             new Value(
@@ -197,7 +200,7 @@ public class StreamResponse {
                     .getFlowRate(neqsim.util.unit.Units.getSymbol("standard volume flow"))),
                 neqsim.util.unit.Units.getSymbol("standard volume flow")));
         newdata.put("relative density",
-            new Value(Double.toString(inputStream.getFluid().getMolarMass("gr/mol") / 28.96), "-"));
+            new Value(Double.toString(standard.getValue("RelativeDensity") / 1e3), "[-]"));
       }
       properties.put(name, newdata);
     }
