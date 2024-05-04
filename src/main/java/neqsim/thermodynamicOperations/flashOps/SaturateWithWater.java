@@ -37,17 +37,20 @@ public class SaturateWithWater extends QfuncFlash {
   @Override
   public void run() {
     if (!system.getPhase(0).hasComponent("water")) {
-      system.addComponent("water", system.getTotalNumberOfMoles());
-      system.createDatabase(true);
+      system.addComponent("water", system.getTotalNumberOfMoles() / 100.0);
       system.setMixingRule(system.getMixingRule());
-      if (system.doMultiPhaseCheck()) {
-        system.setMultiPhaseCheck(true);
-      }
-      system.init(0);
     }
-    double dn = 1.0;
-    int i = 0;
 
+    boolean changedMultiPhase = false;
+    if (system.doMultiPhaseCheck() == false) {
+      system.setMultiPhaseCheck(true);
+      changedMultiPhase = true;
+    }
+
+
+    if (system.getComponent("water").getNumberOfmoles() < system.getTotalNumberOfMoles() / 2.0) {
+      system.addComponent("water", system.getTotalNumberOfMoles());
+    }
     this.tpFlash = new TPflash(system);
     tpFlash.run();
     boolean hasAq = false;
@@ -56,32 +59,37 @@ public class SaturateWithWater extends QfuncFlash {
     }
     double lastdn = 0.0;
     if (system.hasPhaseType(PhaseType.AQUEOUS)) {
-      lastdn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase();
+      lastdn = system.getPhase(PhaseType.AQUEOUS).getNumberOfMolesInPhase();
     } else {
-      lastdn = system.getPhase(0).getNumberOfMolesInPhase() / 100.0;
+      lastdn = system.getPhase(0).getNumberOfMolesInPhase();
     }
-
+    double dn = 1.0;
+    int i = 0;
     do {
       i++;
-
-      if (!hasAq) {
-        system.addComponent("water", lastdn * 0.5);
-        lastdn *= 0.8;
+      if (system.getNumberOfPhases() == 1 && hasAq) {
+        lastdn = -system.getComponent("water").getNumberOfmoles() * 0.1;
+      } else if (!hasAq) {
+        lastdn = Math.abs(lastdn) * 1.05;
       } else {
-        lastdn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase();
-        dn = lastdn / system.getNumberOfMoles();
-        system.addComponent("water", -lastdn);
+        lastdn =
+            -system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase() * 0.9;
       }
+      dn = lastdn / system.getNumberOfMoles();
+      system.addComponent("water", lastdn);
       tpFlash.run();
-      // system.display();
-      hasAq = system.hasPhaseType("aqueous");
-    } while ((i < 50 && Math.abs(dn) > 1e-7) || !hasAq && i <= 50);
+      hasAq = system.hasPhaseType(PhaseType.AQUEOUS);
+    } while (Math.abs(dn) > 1e-7 && i <= 50);
     if (i == 50) {
       logger.error("could not find solution - in water saturate : dn  " + dn);
     }
-    // logger.info("i " + i + " dn " + dn);
-    system.removePhase(system.getNumberOfPhases() - 1);
-    tpFlash.run();
+    if (system.hasPhaseType(PhaseType.AQUEOUS)) {
+      system.removePhase(system.getNumberOfPhases() - 1);
+      tpFlash.run();
+    }
+    if (changedMultiPhase) {
+      system.setMultiPhaseCheck(false);
+    }
   }
 
   /**
@@ -116,7 +124,7 @@ public class SaturateWithWater extends QfuncFlash {
       // testSystem.display();
       // testSystem.addComponent("water", 1);
       // testOps.saturateWithWater();
-      testSystem.display();
+      // testSystem.display();
       // testOps.TPflash();
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
