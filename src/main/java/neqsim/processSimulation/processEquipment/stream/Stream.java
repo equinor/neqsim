@@ -613,7 +613,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         new Standard_ISO6976(getFluid().clone(), refTVolume, refTCombustion, unit);
     standard.setReferenceState("real");
     standard.calculate();
-    return standard.getValue("GCV") * 1.0e3;
+    return standard.getValue("SuperiorCalorificValue") * 1.0e3;
   }
 
   /** {@inheritDoc} */
@@ -623,8 +623,18 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         new Standard_ISO6976(getFluid().clone(), refTVolume, refTCombustion, unit);
     standard.setReferenceState("real");
     standard.calculate();
-    return standard.getValue("WI") * 1.0e3;
+    return standard.getValue("SuperiorWobbeIndex") * 1.0e3;
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public Standard_ISO6976 getISO6976(String unit, double refTVolume, double refTCombustion) {
+    Standard_ISO6976 standard =
+        new Standard_ISO6976(getFluid().clone(), refTVolume, refTCombustion, unit);
+    standard.setReferenceState("real");
+    return standard;
+  }
+
 
   /** {@inheritDoc} */
   @Override
