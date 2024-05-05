@@ -18,12 +18,13 @@ public class BasePVTsimulation implements SimulationInterface {
   public ThermodynamicOperations thermoOps = null;
   private double pressure;
   public double[] pressures = {381.5, 338.9, 290.6, 242.3, 194.1, 145.8, 145.8, 97.5, 49.3};
-  public double temperature = 289.0;
+  public double temperature = Double.NaN;
   double[][] experimentalData = null;
   double saturationVolume = 0;
   double saturationPressure = 0;
   double saturationTemperature;
   double Zsaturation = 0;
+  String temperatureUnit = "K";
   public LevenbergMarquardt optimizer = new LevenbergMarquardt();
 
   /**
@@ -127,6 +128,19 @@ public class BasePVTsimulation implements SimulationInterface {
    */
   public void setTemperature(double temperature) {
     this.temperature = temperature;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>temperature</code>.
+   * </p>
+   *
+   * @param temperature the temperature to set
+   * @param temperatureUnit the unit of temperature as string
+   */
+  public void setTemperature(double temperature, String temperatureUnit) {
+    this.temperature = temperature;
+    this.temperatureUnit = temperatureUnit;
   }
 
   /**
