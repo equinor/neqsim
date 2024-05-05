@@ -87,6 +87,13 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     saturationPressure = getThermoSystem().getPressure();
     Zsaturation = getThermoSystem().getZ();
     saturationConditionFound = true;
+
+    getThermoSystem().initPhysicalProperties();
+    saturationVolume = getThermoSystem().getPhase(0).getMass()
+        / getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    saturationPressure = getThermoSystem().getPressure();
+    Zsaturation = getThermoSystem().getZ();
+    saturationConditionFound = true;
   }
 
   /** {@inheritDoc} */
@@ -116,7 +123,9 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     viscosity = new double[pressures.length];
     viscosityOil = new double[pressures.length];
     gasExpensionFactor = new double[pressures.length];
-    getThermoSystem().setTemperature(temperature);
+    if (!Double.isNaN(temperature)) {
+      getThermoSystem().setTemperature(temperature, temperatureUnit);
+    }
     if (!saturationConditionFound) {
       calcSaturationConditions();
       try {
@@ -152,10 +161,10 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       density[i] = getThermoSystem().getPhase(0).getDensity("kg/m3");
       gasVolume[i] = getThermoSystem().getPhase(0).getNumberOfMolesInPhase()
           * getThermoSystem().getPhase(0).getMolarMass() / density[i]; // getThermoSystem().getPhase(0).getVolume();
-      gasStandardVolume[i] = getThermoSystem().getPhase(0).getVolume()
-          * getThermoSystem().getPhase(0).getPressure()
-          / ThermodynamicConstantsInterface.referencePressure
-          / getThermoSystem().getPhase(0).getZ() * 288.15 / getThermoSystem().getTemperature();
+      gasStandardVolume[i] =
+          getThermoSystem().getPhase(0).getVolume() * getThermoSystem().getPhase(0).getPressure()
+              / ThermodynamicConstantsInterface.referencePressure
+              / getThermoSystem().getPhase(0).getZ() * 288.15 / getThermoSystem().getTemperature();
       Bg[i] = gasVolume[i] * 1e5 / gasStandardVolume[i];
       Zgas[i] = getThermoSystem().getPhase(0).getZ();
       if (getThermoSystem().getNumberOfPhases() == 1) {

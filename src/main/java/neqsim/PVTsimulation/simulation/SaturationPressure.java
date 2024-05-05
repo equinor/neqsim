@@ -31,6 +31,11 @@ public class SaturationPressure extends BasePVTsimulation {
    * @return a double
    */
   public double calcSaturationPressure() {
+
+    if (!Double.isNaN(temperature)) {
+      getThermoSystem().setTemperature(temperature, temperatureUnit);
+    }
+
     boolean isMultiPhaseCheckChanged = false;
     if (!getThermoSystem().doMultiPhaseCheck()) {
       isMultiPhaseCheckChanged = true;
