@@ -7,6 +7,7 @@ import neqsim.PVTsimulation.util.parameterfitting.CVDFunction;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -110,7 +111,9 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     liquidRelativeVolume = new double[pressures.length];
     cummulativeMolePercDepleted = new double[pressures.length];
     double totalNumberOfMoles = getThermoSystem().getTotalNumberOfMoles();
-    getThermoSystem().setTemperature(temperature);
+    if (!Double.isNaN(temperature)) {
+      getThermoSystem().setTemperature(temperature, temperatureUnit);
+    }
 
     for (int i = 0; i < pressures.length; i++) {
       getThermoSystem().setPressure(pressures[i]);
@@ -121,9 +124,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       }
       // getThermoSystem().display();
       totalVolume[i] = getThermoSystem().getVolume();
-      System.out.println("volume " + totalVolume[i]);
-      cummulativeMolePercDepleted[i] =
-          100.0 - getThermoSystem().getTotalNumberOfMoles() / totalNumberOfMoles * 100;
+      cummulativeMolePercDepleted[i] = 0.0;;
       if (getThermoSystem().getNumberOfPhases() > 1) {
         if (!saturationConditionFound) {
           calcSaturationConditions();
@@ -136,13 +137,13 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         }
 
         // if (totalVolume[i] > saturationVolume) {
-        liquidVolume[i] = getThermoSystem().getPhase(1).getVolume();
+        liquidVolume[i] = getThermoSystem().getPhase(PhaseType.OIL).getVolume();
         liquidVolumeRelativeToVsat[i] = liquidVolume[i] / saturationVolume;
         Zgas[i] = getThermoSystem().getPhase(0).getZ();
         Zmix[i] = getThermoSystem().getZ();
         if (getThermoSystem().getNumberOfPhases() > 1) {
           liquidRelativeVolume[i] =
-              getThermoSystem().getPhase("oil").getVolume() / saturationVolume * 100;
+              getThermoSystem().getPhase(PhaseType.OIL).getVolume() / saturationVolume * 100;
         }
 
         double volumeCorrection = getThermoSystem().getVolume() - saturationVolume;
@@ -167,6 +168,9 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       relativeVolume[i] = totalVolume[i] / saturationVolume;
       System.out.println("rel volume " + relativeVolume[i]);
     }
+    for (int i = 0; i < pressures.length; i++) {
+      System.out.println("liq rel volume " + liquidRelativeVolume[i]);
+    }
     System.out.println("test finished");
   }
 
@@ -188,7 +192,9 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
         SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
 
-        tempSystem.setTemperature(temperature);
+        if (!Double.isNaN(temperature)) {
+          getThermoSystem().setTemperature(temperature, temperatureUnit);
+        }
         tempSystem.setPressure(pressures[i]);
         // thermoOps.TPflash();
         // tempSystem.display();
