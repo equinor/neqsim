@@ -37,8 +37,9 @@ public class ConstantMassExpansionTest {
         new double[] {400, 300.0, 250.0, 200.0, 100.0});
     double[][] expData = {{0.95, 0.99, 1.12, 1.9}};
     CMEsim.setExperimentalData(expData);
+    CMEsim.setTemperature(73.9, "C");
     // CMEsim.runTuning();
     CMEsim.runCalc();
-    assertEquals(2.300467604746, CMEsim.getRelativeVolume()[4], 0.001);
+    assertEquals(2.64129620195, CMEsim.getRelativeVolume()[4], 0.001);
   }
 }
