@@ -87,6 +87,13 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     saturationPressure = getThermoSystem().getPressure();
     Zsaturation = getThermoSystem().getZ();
     saturationConditionFound = true;
+
+    getThermoSystem().initPhysicalProperties();
+    saturationVolume = getThermoSystem().getPhase(0).getMass()
+        / getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    saturationPressure = getThermoSystem().getPressure();
+    Zsaturation = getThermoSystem().getZ();
+    saturationConditionFound = true;
   }
 
   /** {@inheritDoc} */
