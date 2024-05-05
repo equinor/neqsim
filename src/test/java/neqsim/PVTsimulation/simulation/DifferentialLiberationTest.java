@@ -54,6 +54,7 @@ public class DifferentialLiberationTest {
     assertEquals(1.689644811955, differentialLiberation.getBo()[0], 0.001);
     assertEquals(212.366545704, differentialLiberation.getRs()[0], 0.001);
     assertEquals(677.27184, differentialLiberation.getOilDensity()[0], 0.001);
+    assertEquals(1.7616805, differentialLiberation.getBo()[pressures.length - 9], 0.001);
     assertEquals(1.312174206633, differentialLiberation.getBo()[pressures.length - 2], 0.001);
     assertEquals(55.1339349, differentialLiberation.getRs()[pressures.length - 2], 0.001);
     assertEquals(0.0556167850, differentialLiberation.getBg()[pressures.length - 2], 0.001);
