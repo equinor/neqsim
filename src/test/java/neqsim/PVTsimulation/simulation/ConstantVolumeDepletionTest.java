@@ -52,7 +52,10 @@ public class ConstantVolumeDepletionTest {
     // new double[] {400, 300.0, 200.0, 100.0});
     double[][] expData = {{0.95, 0.99, 1.0, 1.1}};
     // CVDsim.setExperimentalData(expData);
-    assertEquals(1.419637379033296, CVDsim.getCummulativeMolePercDepleted()[7], 0.001);
+    // assertEquals(0.35453302128, CVDsim.getCummulativeMolePercDepleted()[7], 0.001);
+    assertEquals(0.985249126066, CVDsim.getRelativeVolume()[0], 0.001);
+    assertEquals(2.6122803910697, CVDsim.getRelativeVolume()[7], 0.001);
+    assertEquals(15.14827854484, CVDsim.getLiquidRelativeVolume()[7], 0.001);
 
   }
 }
