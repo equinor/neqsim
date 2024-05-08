@@ -24,8 +24,7 @@
 				"ms-vscode.test-adapter-converter",
 				"shengchen.vscode-checkstyle",
 				"mechatroner.rainbow-csv",
-				"redhat.vscode-xml",
-				"eamodio.gitlens"
+				"redhat.vscode-xml"
 			],
 			"settings": {
 				"java.configuration.updateBuildConfiguration": "interactive",
