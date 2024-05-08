@@ -110,7 +110,9 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     liquidRelativeVolume = new double[pressures.length];
     cummulativeMolePercDepleted = new double[pressures.length];
     double totalNumberOfMoles = getThermoSystem().getTotalNumberOfMoles();
-    getThermoSystem().setTemperature(temperature);
+    if (!Double.isNaN(temperature)) {
+      getThermoSystem().setTemperature(temperature, temperatureUnit);
+    }
 
     for (int i = 0; i < pressures.length; i++) {
       getThermoSystem().setPressure(pressures[i]);
@@ -119,11 +121,9 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }
-      // getThermoSystem().display();
+      getThermoSystem().initPhysicalProperties();
+
       totalVolume[i] = getThermoSystem().getVolume();
-      System.out.println("volume " + totalVolume[i]);
-      cummulativeMolePercDepleted[i] =
-          100.0 - getThermoSystem().getTotalNumberOfMoles() / totalNumberOfMoles * 100;
       if (getThermoSystem().getNumberOfPhases() > 1) {
         if (!saturationConditionFound) {
           calcSaturationConditions();
@@ -134,27 +134,23 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
             logger.error(ex.getMessage(), ex);
           }
         }
+        cummulativeMolePercDepleted[i] =
+            100 - getThermoSystem().getTotalNumberOfMoles() / totalNumberOfMoles * 100;
 
         // if (totalVolume[i] > saturationVolume) {
         liquidVolume[i] = getThermoSystem().getPhase(1).getVolume();
         liquidVolumeRelativeToVsat[i] = liquidVolume[i] / saturationVolume;
         Zgas[i] = getThermoSystem().getPhase(0).getZ();
         Zmix[i] = getThermoSystem().getZ();
-        if (getThermoSystem().getNumberOfPhases() > 1) {
-          liquidRelativeVolume[i] =
-              getThermoSystem().getPhase("oil").getVolume() / saturationVolume * 100;
-        }
+        liquidRelativeVolume[i] = liquidVolume[i] / saturationVolume * 100;
 
-        double volumeCorrection = getThermoSystem().getVolume() - saturationVolume;
-        double test = volumeCorrection / getThermoSystem().getPhase(0).getMolarVolume();
+        double volumeCorrection = totalVolume[i] - saturationVolume;
+        double test = volumeCorrection / getThermoSystem().getPhase(0).getVolume();
 
         for (int j = 0; j < getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
           try {
             double change =
-                (test * getThermoSystem().getPhase(0).getComponent(j).getx() < getThermoSystem()
-                    .getPhase(0).getComponent(j).getNumberOfMolesInPhase())
-                        ? test * getThermoSystem().getPhase(0).getComponent(j).getx()
-                        : test * getThermoSystem().getPhase(0).getComponent(j).getx();
+                test * getThermoSystem().getPhase(0).getComponent(j).getNumberOfMolesInPhase();
             getThermoSystem().addComponent(j, -change);
           } catch (Exception e) {
             logger.debug(e.getMessage());
@@ -165,9 +161,13 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
     for (int i = 0; i < pressures.length; i++) {
       relativeVolume[i] = totalVolume[i] / saturationVolume;
-      System.out.println("rel volume " + relativeVolume[i]);
+      liquidVolumeRelativeToVsat[i] = liquidVolume[i] / saturationVolume;
+      // System.out.println("rel volume " + relativeVolume[i]);
     }
-    System.out.println("test finished");
+    for (int i = 0; i < pressures.length; i++) {
+      // System.out.println("liq rel volume " + liquidRelativeVolume[i]);
+    }
+    // System.out.println("test finished");
   }
 
   /**
@@ -188,7 +188,9 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
         SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
 
-        tempSystem.setTemperature(temperature);
+        if (!Double.isNaN(temperature)) {
+          getThermoSystem().setTemperature(temperature, temperatureUnit);
+        }
         tempSystem.setPressure(pressures[i]);
         // thermoOps.TPflash();
         // tempSystem.display();
