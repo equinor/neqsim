@@ -164,10 +164,16 @@ public class EclipseFluidReadWrite {
             fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
                 ThermodynamicConstantsInterface.referencePressure);
           } else if (EOS.contains("PR")) {
+            String corr = br.readLine().replace("/", "");
+            if (corr.equals("PRCORR")) {
+              fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
+                  ThermodynamicConstantsInterface.referencePressure);
+            } else {
+              fluid = new neqsim.thermo.system.SystemPrEos(288.15,
+                  ThermodynamicConstantsInterface.referencePressure);
+            }
+          } else {
             fluid = new neqsim.thermo.system.SystemPrEos(288.15,
-                ThermodynamicConstantsInterface.referencePressure);
-          } else if (EOS.contains("PR78")) {
-            fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
                 ThermodynamicConstantsInterface.referencePressure);
           }
         }
