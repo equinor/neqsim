@@ -1,16 +1,12 @@
 package neqsim.thermo.system;
 
-import neqsim.thermo.phase.PhaseHydrate;
-import neqsim.thermo.phase.PhasePrEos;
-import neqsim.thermo.phase.PhasePureComponentSolid;
-
 /**
  * This class defines a thermodynamic system using the Peng Robinson v. 1978 equation of state
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class SystemPrEos1978 extends SystemEos {
+public class SystemPrEos1978 extends SystemPrEos {
   private static final long serialVersionUID = 1000;
 
   /**
@@ -45,29 +41,8 @@ public class SystemPrEos1978 extends SystemEos {
    */
   public SystemPrEos1978(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    attractiveTermNumber = 13;
-    modelName = "PR1978-EOS";
-
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePrEos();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
-
-    if (solidPhaseCheck) {
-      setNumberOfPhases(5);
-      phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
-      phaseArray[numberOfPhases - 1].setTemperature(T);
-      phaseArray[numberOfPhases - 1].setPressure(P);
-      phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
-    }
-
-    if (hydrateCheck) {
-      phaseArray[numberOfPhases - 1] = new PhaseHydrate();
-      phaseArray[numberOfPhases - 1].setTemperature(T);
-      phaseArray[numberOfPhases - 1].setPressure(P);
-      phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
-    }
+    attractiveTermNumber = 6;
+    modelName = "PR78-EoS";
   }
 
   /** {@inheritDoc} */
