@@ -165,9 +165,9 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
     for (int i = 0; i < pressures.length; i++) {
       relativeVolume[i] = totalVolume[i] / saturationVolume;
-      System.out.println("rel volume " + relativeVolume[i]);
+      // System.out.println("rel volume " + relativeVolume[i]);
     }
-    System.out.println("test finished");
+    // System.out.println("test finished");
   }
 
   /**

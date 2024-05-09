@@ -89,14 +89,14 @@ public class TestNeqsim {
         + stream1.getThermoSystem().getWtFraction(1) * DensityOil
         + stream1.getThermoSystem().getWtFraction(2) * Densityliquid;
     // operations.run();
-    System.out.println("work " + compressor1.getTotalWork() + " density " + Density1 + " Cp "
-        + Cpone + " SPEED OF SOUND " + stream1.getThermoSystem().getPhase(0).getSoundSpeed());
+    // System.out.println("work " + compressor1.getTotalWork() + " density " + Density1 + " Cp "
+    // + Cpone + " SPEED OF SOUND " + stream1.getThermoSystem().getPhase(0).getSoundSpeed());
 
     compressor1.solveEfficiency(390.15);
     compressor1.getOutletStream().displayResult();
-    System.out.println("Hvap " + stream1.getThermoSystem().getHeatOfVaporization() + " POLI "
-        + compressor1.getPolytropicEfficiency() + " dentity "
-        + stream1.getThermoSystem().getDensity() + " cp " + stream1.getThermoSystem().getCp());
+    // System.out.println("Hvap " + stream1.getThermoSystem().getHeatOfVaporization() + " POLI "
+    // + compressor1.getPolytropicEfficiency() + " dentity "
+    // + stream1.getThermoSystem().getDensity() + " cp " + stream1.getThermoSystem().getCp());
     stream1.getThermoSystem().display();
 
     double massFlowGas = stream1.getThermoSystem().getPhase(0).getBeta()

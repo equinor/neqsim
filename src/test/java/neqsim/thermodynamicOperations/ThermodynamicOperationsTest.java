@@ -410,7 +410,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
       ArrayList<Double> fractions = (ArrayList<Double>) inputData.get("fractions");
 
       if (compNames == null) {
-        System.out.println("Skips test " + test.toString());
+        // System.out.println("Skips test " + test.toString());
         /*
          * for (int k = 0; k < fractions.size(); k++) { fluid.addComponent(k, fractions.get(k)); }
          */
