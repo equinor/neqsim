@@ -2,7 +2,7 @@ package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePureComponentSolid;
-import neqsim.thermo.phase.PhaseSrkCPAs;
+import neqsim.thermo.phase.PhaseSrkCPASalt;
 
 /**
  * This class defines a thermodynamic system using the CPA-EOS of Equinor equation of state.
@@ -39,12 +39,12 @@ public class SystemSrkCPASalt extends SystemSrkCPAs {
    */
   public SystemSrkCPASalt(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    modelName = "CPAs-SRK-EOS-statoil";
+    modelName = "CPAs-SRK-EOS-statoil Salt modified";
     attractiveTermNumber = 15;
 
     // Recreates phases created in super constructor SystemSrkCPAs
     for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseSrkCPAs();
+      phaseArray[i] = new PhaseSrkCPASalt();
       phaseArray[i].setTemperature(T);
       phaseArray[i].setPressure(P);
     }
@@ -67,10 +67,10 @@ public class SystemSrkCPASalt extends SystemSrkCPAs {
 
   /** {@inheritDoc} */
   @Override
-  public SystemSrkCPAstatoil clone() {
-    SystemSrkCPAstatoil clonedSystem = null;
+  public SystemSrkCPASalt clone() {
+    SystemSrkCPASalt clonedSystem = null;
     try {
-      clonedSystem = (SystemSrkCPAstatoil) super.clone();
+      clonedSystem = (SystemSrkCPASalt) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
