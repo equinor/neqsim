@@ -2,7 +2,6 @@ package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOp
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -42,7 +41,7 @@ class PTPhaseEnvelopeTest {
             12.501491987760147, 15.075672692089958, 18.51283799420178, 23.330378296334104,
             29.71319711031059, 37.25532259549197, 43.660805656603934, 45.75836660678656,
             46.42490219574348, 46.83203503669948, 46.869568345957006, 46.903557772489435};
-    System.out.println(Arrays.toString(dewPointPressures));
+    // System.out.println(Arrays.toString(dewPointPressures));
     assertArrayEquals(expectedDewPointPressures, dewPointPressures, 10E-10);
   }
 

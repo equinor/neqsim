@@ -142,8 +142,8 @@ class Degasser {
     heater_TP_setter_test_stream.setOutPressure(5.9061164855957 - 0.01, "bara");
     heater_TP_setter_test_stream.setOutTemperature(79.8487854003906, "C");
     heater_TP_setter_test_stream.run();
-    System.out.println("Gas out from degasser " + heater_TP_setter_test_stream.getOutStream()
-        .getFluid().getPhase("gas").getFlowRate("kg/hr"));
+    //System.out.println("Gas out from degasser " + heater_TP_setter_test_stream.getOutStream()
+    //    .getFluid().getPhase("gas").getFlowRate("kg/hr"));
     heater_TP_setter_test_stream.getOutStream().getThermoSystem().prettyPrint();
 
     neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_test_stream2 =
@@ -153,8 +153,8 @@ class Degasser {
     heater_TP_setter_test_stream2.setOutTemperature(79.8487854003906, "C");
     heater_TP_setter_test_stream2.run();
 
-    System.out.println("Gas out from degasser2 " + heater_TP_setter_test_stream2.getOutStream()
-        .getFluid().getPhase("gas").getFlowRate("kg/hr"));
+    //System.out.println("Gas out from degasser2 " + heater_TP_setter_test_stream2.getOutStream()
+    //    .getFluid().getPhase("gas").getFlowRate("kg/hr"));
   }
 
   private int findComponentIndex(String[] componentNames, String componentName) {

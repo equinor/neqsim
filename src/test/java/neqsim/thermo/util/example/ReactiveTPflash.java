@@ -67,7 +67,7 @@ public class ReactiveTPflash {
     } catch (Exception ex) {
     }
     testSystem.display();
-    System.out.println("pH " + testSystem.getPhase(1).getpH());
+    // System.out.println("pH " + testSystem.getPhase(1).getpH());
     logger.info("pH " + testSystem.getPhase(1).getpH());
     logger.info(
         "activity coefficiet water " + testSystem.getPhase("aqueous").getActivityCoefficient(2));

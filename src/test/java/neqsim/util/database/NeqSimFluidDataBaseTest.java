@@ -18,7 +18,7 @@ public class NeqSimFluidDataBaseTest {
     try (ResultSet dataSet =
         database.getResultSet("FluidDatabase", "SELECT * FROM comp where name='water'")) {
       dataSet.next();
-      System.out.println("dataset " + dataSet.getString("molarmass"));
+      // System.out.println("dataset " + dataSet.getString("molarmass"));
       failed = false;
     } catch (Exception ex) {
       System.out.println("failed");

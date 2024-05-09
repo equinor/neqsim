@@ -182,13 +182,13 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         viscosity[i] = Double.NaN;
         isoThermalCompressibility[i] = Double.NaN;
       }
-      System.out.println("pressure " + getThermoSystem().getPressure() + " relative volume "
-          + relativeVolume[i] + " liquid rel vol " + liquidRelativeVolume[i] + " Zgas " + Zgas[i]
-          + " Yfactor " + getYfactor()[i] + " isoCompfactor " + getIsoThermalCompressibility()[i]);
+      // System.out.println("pressure " + getThermoSystem().getPressure() + " relative volume "
+      // + relativeVolume[i] + " liquid rel vol " + liquidRelativeVolume[i] + " Zgas " + Zgas[i]
+      // + " Yfactor " + getYfactor()[i] + " isoCompfactor " + getIsoThermalCompressibility()[i]);
     }
 
-    System.out.println("test finished");
-    System.out.println("test finished");
+    // System.out.println("test finished");
+    // System.out.println("test finished");
   }
 
   /**
