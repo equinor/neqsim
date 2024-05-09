@@ -30,9 +30,10 @@ public class Units {
   private static HashMap<String, UnitDescription> siUnits = new HashMap<>();
   private static HashMap<String, UnitDescription> fieldUnits = new HashMap<>();
 
-  private static String[] pressureUnits = new String[] { "Pa", "bara", "barg", "psi", "psig", "psia" };
-  private static String[] temperatureUnits = new String[] { "K", "C", "F", "R" };
-  private static String[] molarVolumeUnits = new String[] { "mol/m3", "litre/m3", "ft3/lbmole" };
+  private static String[] pressureUnits =
+      new String[] {"Pa", "bara", "barg", "psi", "psig", "psia"};
+  private static String[] temperatureUnits = new String[] {"K", "C", "F", "R"};
+  private static String[] molarVolumeUnits = new String[] {"mol/m3", "litre/m3", "ft3/lbmole"};
 
   public Units() {
     if (activeUnits.size() == 0) {
@@ -48,15 +49,16 @@ public class Units {
       activeUnits.put("JT coefficient", new UnitDescription("C/bar", "Celsius per bar"));
       activeUnits.put("speed of sound", new UnitDescription("m/sec", "meter per second"));
       activeUnits.put("Heat Capacity (Cv)",
-          new UnitDescription("kJ/kg*K", "kilo joule per kg and Kelvin"));
+          new UnitDescription("kJ/kgK", "kilo joule per kg and Kelvin"));
       activeUnits.put("Heat Capacity (Cp)",
-          new UnitDescription("kJ/kg*K", "kilo joule per kg and Kelvin"));
+          new UnitDescription("kJ/kgK", "kilo joule per kg and Kelvin"));
       activeUnits.put("Molar Mass", new UnitDescription("kg/mol", "kilo gram per kilo mole"));
       activeUnits.put("molar volume", new UnitDescription("m3/mol", "cubic metre per mole"));
       activeUnits.put("mass flow", new UnitDescription("kg/hr", "kg per hour"));
       activeUnits.put("molar flow", new UnitDescription("mole/hr", "mole per hour"));
       activeUnits.put("volume flow", new UnitDescription("m3/hr", "cubic metre per hour"));
-      activeUnits.put("standard volume flow", new UnitDescription("Sm3/hr", "standard cubic metre per hour"));
+      activeUnits.put("standard volume flow",
+          new UnitDescription("Sm3/hr", "standard cubic metre per hour"));
 
       siUnits.putAll(activeUnits); // Makes a copy of activeUnits
       siUnits.put("temperature", new UnitDescription("K", "Kelvin"));
