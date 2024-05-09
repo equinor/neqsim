@@ -149,13 +149,13 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> ACF = new ArrayList<Double>();
       ArrayList<Double> MW = new ArrayList<Double>();
       ArrayList<Double> SSHIFT = new ArrayList<Double>();
+      ArrayList<Double> SSHIFTS = new ArrayList<Double>();
       ArrayList<Double> TBOIL = new ArrayList<Double>();
       ArrayList<Double> VCRIT = new ArrayList<Double>();
       ArrayList<Double> PARACHOR = new ArrayList<Double>();
       ArrayList<Double> ZI = new ArrayList<Double>();
       ArrayList<Double> BIC = new ArrayList<Double>();
       String EOS;
-      boolean shiftisset = false;
       while ((st = br.readLine()) != null) {
 
         // System.out.println("EOS " +EOS );
@@ -234,8 +234,7 @@ public class EclipseFluidReadWrite {
             VCRIT.add(Double.parseDouble(st));
           }
         }
-        if (st.equals("SSHIFT") && !shiftisset) {
-          shiftisset = true;
+        if (st.equals("SSHIFT")) {
           while ((st = br.readLine().replace("/", "")) != null) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
@@ -283,6 +282,20 @@ public class EclipseFluidReadWrite {
             }
             addedComps++;
             list.clear();
+          }
+        }
+        if (st.equals("SSHIFTS")) {
+          String line;
+          while ((line = br.readLine()) != null) {
+            st = line.replace("/", "");
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+            try {
+              SSHIFTS.add(Double.parseDouble(st));
+            } catch (NumberFormatException e) {
+              System.out.println("Error parsing double value: " + e.getMessage());
+            }
           }
         }
       }
@@ -339,7 +352,11 @@ public class EclipseFluidReadWrite {
           fluid.getPhase(i).getComponent(name).setNormalBoilingPoint(TBOIL.get(counter));
           fluid.getPhase(i).getComponent(name).setCriticalVolume(VCRIT.get(counter));
           fluid.getPhase(i).getComponent(name).setParachorParameter(PARACHOR.get(counter));
-          fluid.getPhase(i).getComponent(name).setVolumeCorrectionConst(SSHIFT.get(counter));
+          if (SSHIFTS.size() > 0) {
+            fluid.getPhase(i).getComponent(name).setVolumeCorrectionConst(SSHIFTS.get(counter));
+          } else {
+            fluid.getPhase(i).getComponent(name).setVolumeCorrectionConst(SSHIFT.get(counter));
+          }
           fluid.getPhase(i).getComponent(name).setRacketZ(0.29056 - 0.08775 * ACF.get(counter));
         }
         if (fluid.getPhase(0).getComponent(name).isIsTBPfraction()) {
