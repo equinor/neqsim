@@ -41,15 +41,14 @@ public class DifferentialLiberationTest {
     satPresSim.setTemperature(97.5, "C");
     satPresSim.run();
     assertEquals(190.7882175445, satPresSim.getThermoSystem().getPressure(), 0.1);
-    tempSystem.prettyPrint();
+    // tempSystem.prettyPrint();
 
-    double[] pressures = new double[] {351.4, 323.2, 301.5, 275.9, 250.1, 226.1, 205.9, 179.1,
-        154.6, 132.1, 109.0, 78.6, 53.6, 22.0, 1.0};
+    double[] pressures = new double[] { 351.4, 323.2, 301.5, 275.9, 250.1, 226.1, 205.9, 179.1,
+        154.6, 132.1, 109.0, 78.6, 53.6, 22.0, 1.0 };
     DifferentialLiberation differentialLiberation = new DifferentialLiberation(tempSystem);
     differentialLiberation.setPressures(pressures);
     differentialLiberation.setTemperature(97.5, "C");
     differentialLiberation.runCalc();
-
 
     assertEquals(1.689644811955, differentialLiberation.getBo()[0], 0.001);
     assertEquals(212.366545704, differentialLiberation.getRs()[0], 0.001);

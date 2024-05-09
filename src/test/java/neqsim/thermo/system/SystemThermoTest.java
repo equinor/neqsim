@@ -35,14 +35,15 @@ class SystemThermoTest extends neqsim.NeqSimTest {
    */
   @Test
   public void testCp() {
-    testSystem = new neqsim.thermo.system.SystemPrEos(273.15 + 40.0, 1.0);
+    neqsim.thermo.system.SystemPrEos testSystem =
+        new neqsim.thermo.system.SystemPrEos(273.15 + 40.0, 1.0);
     testSystem.addComponent("methane", 10.01);
-    testSystem.addComponent("nC20", 10.68);
+    testSystem.addTBPfraction("C20", 10.68, 0.3, 0.85);
     testSystem.setMixingRule("classic");
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    assertEquals(2.274301427480528, testSystem.getPhase(0).getCp("kJ/kgK"), 1e-6);
+    assertEquals(2.0188664689245, testSystem.getPhase(1).getCp("kJ/kgK"), 1e-6);
   }
 
   /**
