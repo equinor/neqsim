@@ -155,8 +155,9 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> ZI = new ArrayList<Double>();
       ArrayList<Double> BIC = new ArrayList<Double>();
       String EOS;
-
+      boolean shiftisset = false;
       while ((st = br.readLine()) != null) {
+
         // System.out.println("EOS " +EOS );
         if (st.trim().equals("EOS")) {
           EOS = br.readLine().replace("/", "");
@@ -233,7 +234,8 @@ public class EclipseFluidReadWrite {
             VCRIT.add(Double.parseDouble(st));
           }
         }
-        if (st.equals("SSHIFT")) {
+        if (st.equals("SSHIFT") && !shiftisset) {
+          shiftisset = true;
           while ((st = br.readLine().replace("/", "")) != null) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
@@ -318,11 +320,13 @@ public class EclipseFluidReadWrite {
           fluid.addComponent(name, ZI.get(counter));
         } else if (TC.get(counter) >= 00.0) {
           name = names.get(counter);
-          fluid.addTBPfraction(name, ZI.get(counter), MW.get(counter) / 1000.0, 0.9);
+          double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
+          fluid.addTBPfraction(name, ZI.get(counter), MW.get(counter) / 1000.0, stddensity);
           name = name + "_PC";
         } else {
           name = names.get(counter);
-          fluid.addTBPfraction(name, ZI.get(counter), MW.get(counter) / 1000.0, 0.9);
+          double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
+          fluid.addTBPfraction(name, ZI.get(counter), MW.get(counter) / 1000.0, stddensity);
           name = name + "_PC";
           // fluid.changeComponentName(name+"_PC", names.get(counter));
         }
@@ -336,6 +340,7 @@ public class EclipseFluidReadWrite {
           fluid.getPhase(i).getComponent(name).setCriticalVolume(VCRIT.get(counter));
           fluid.getPhase(i).getComponent(name).setParachorParameter(PARACHOR.get(counter));
           fluid.getPhase(i).getComponent(name).setVolumeCorrectionConst(SSHIFT.get(counter));
+          fluid.getPhase(i).getComponent(name).setRacketZ(0.29056 - 0.08775 * ACF.get(counter));
         }
         if (fluid.getPhase(0).getComponent(name).isIsTBPfraction()) {
           fluid.changeComponentName(name, names.get(counter).replaceAll("_PC", "") + pseudoName);
