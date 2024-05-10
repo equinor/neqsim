@@ -1010,7 +1010,7 @@ public abstract class Phase implements PhaseInterface {
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0 * 0.2388;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
     }
     return refCp * conversionFactor;
   }
@@ -1043,7 +1043,8 @@ public abstract class Phase implements PhaseInterface {
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0 * 0.2388;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
+
     }
     return refCv * conversionFactor;
   }
@@ -2081,7 +2082,8 @@ public abstract class Phase implements PhaseInterface {
         conversionFactor = 1000.0;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
+
     }
     return conversionFactor * getVolume() / 1.0e5;
   }
@@ -2154,7 +2156,7 @@ public abstract class Phase implements PhaseInterface {
         conversionFactor = 3.280839895;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
     }
     return refVel * conversionFactor;
   }

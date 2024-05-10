@@ -2217,13 +2217,13 @@ public abstract class SystemThermo implements SystemInterface {
       normalLiquidDensity += getComponent(i).getNormalLiquidDensity() * getComponent(i).getz()
           * getComponent(i).getMolarMass() / molarMass;
     }
-    if (unit.equals("gr/cm3")) {
-      return normalLiquidDensity;
-    } else if (unit.equals("kg/m3")) {
-      return normalLiquidDensity * 1000.0;
-    } else {
-      logger.error("unit not supported: " + unit);
-      return normalLiquidDensity;
+    switch (unit) {
+      case "gr/cm3":
+        return normalLiquidDensity;
+      case "kg/m3":
+        return normalLiquidDensity * 1000.0;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
     }
   }
 
@@ -2325,7 +2325,7 @@ public abstract class SystemThermo implements SystemInterface {
         conversionFactor = 1.8 * 1.0 / 14.503773773;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
     }
     return JTcoef * conversionFactor;
   }
@@ -2509,7 +2509,13 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < numberOfPhases; i++) {
       volume += beta[phaseIndex[i]] * getPhase(i).getMolarVolume(unit);
     }
-    return volume;
+    switch (unit) {
+      case "m3/mol":
+        return volume*1e-5;
+      case "litre/mol":
+        return volume*1e-2;
+    default:
+      throw new RuntimeException("unit not supported " + unit);
   }
 
   /** {@inheritDoc} */
@@ -2683,7 +2689,7 @@ public abstract class SystemThermo implements SystemInterface {
         return getVolumeFraction(phaseNumber) * getPhase(phaseNumber).getDensity("kg/m3")
             / getDensity("kg/m3");
       default:
-        return getBeta(phaseNumber);
+        throw new RuntimeException("unit not supported " + unit);
     }
   }
 
@@ -2867,7 +2873,8 @@ public abstract class SystemThermo implements SystemInterface {
         conversionFactor = 3.280839895;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
+
     }
     return refVel * conversionFactor;
   }
