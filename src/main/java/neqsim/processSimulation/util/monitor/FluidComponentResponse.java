@@ -4,6 +4,7 @@ import java.util.HashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -59,7 +60,7 @@ public class FluidComponentResponse {
    */
   public FluidComponentResponse(String fluidname, SystemInterface inputFluid) {
     this(fluidname);
-
+    inputFluid.init(0);
     name = fluidname;
 
     HashMap<String, Value> newdata = new HashMap<String, Value>();
@@ -67,7 +68,12 @@ public class FluidComponentResponse {
     for (int i = 0; i < inputFluid.getNumberOfComponents(); i++) {
       String name = inputFluid.getPhase(0).getComponent(i).getComponentName();
       ComponentInterface component = inputFluid.getPhase(0).getComponent(i);
+      PhaseInterface phase = inputFluid.getPhase(0);
       newdata = new HashMap<String, Value>();
+      newdata.put("Acentric Factor",
+          new Value(Double.toString(component.getAcentricFactor()), "-"));
+      newdata.put("Mole Fraction", new Value(Double.toString(component.getz()), "-"));
+      newdata.put("Weigth Fraction", new Value(Double.toString(phase.getWtFrac(i)), "-"));
       newdata.put("Critical Temperature",
           new Value(
               Double.toString(component.getTC(neqsim.util.unit.Units.getSymbol("temperature"))),
