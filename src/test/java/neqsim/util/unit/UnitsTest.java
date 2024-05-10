@@ -1,6 +1,5 @@
 package neqsim.util.unit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -25,6 +24,8 @@ public class UnitsTest {
     neqsim.util.unit.Units.activateFieldUnits();
     testSystem.createTable("results");
     neqsim.util.unit.Units.activateSIUnits();
+    testSystem.createTable("results");
+    neqsim.util.unit.Units.activateMetricUnits();
     testSystem.createTable("results");
   }
 
