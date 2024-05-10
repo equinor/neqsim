@@ -17,7 +17,6 @@ import neqsim.standards.gasQuality.Standard_ISO6976;
 public class StreamResponse {
   static Logger logger = LogManager.getLogger(StreamResponse.class);
   public String name;
-  public Fluid fluid;
   public Double temperature;
   public Double pressure;
   public Double volumeFlow;

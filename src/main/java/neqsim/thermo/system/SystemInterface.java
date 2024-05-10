@@ -2586,4 +2586,11 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    */
   public double[] getzvector();
+
+  /**
+   * <p>
+   * toJson - return String with json inormation of fluid
+   * </p>
+   */
+  public String toJson();
 }
