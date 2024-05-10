@@ -4,7 +4,6 @@ import java.util.HashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.util.NamedBaseClass;
 
 /**
  * <p>
@@ -14,10 +13,10 @@ import neqsim.util.NamedBaseClass;
  * @author asmund
  * @version $Id: $Id
  */
-public class FluidResponse extends NamedBaseClass {
+public class FluidResponse {
   private static final long serialVersionUID = 1L;
   static Logger logger = LogManager.getLogger(FluidResponse.class);
-
+  public String name;
   public HashMap<String, HashMap<String, Value>> properties =
       new HashMap<String, HashMap<String, Value>>();
   public HashMap<String, HashMap<String, Value>> composition =
@@ -51,8 +50,8 @@ public class FluidResponse extends NamedBaseClass {
    *
    * @param name name of fluid
    */
-  public FluidResponse(String name) {
-    super(name);
+  public FluidResponse(String nameinp) {
+    this.name = nameinp;
   }
 
   /**
