@@ -2942,6 +2942,7 @@ public abstract class SystemThermo implements SystemInterface {
     double conversionFactor = 1.0;
     switch (unit) {
       case "W/mK":
+      case "J/sec-m-K":
         conversionFactor = 1.0;
         break;
       case "W/cmK":
