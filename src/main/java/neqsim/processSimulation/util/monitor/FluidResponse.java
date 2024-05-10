@@ -48,7 +48,7 @@ public class FluidResponse {
   /**
    * Constructor for Fluid.
    *
-   * @param name name of fluid
+   * @param nameinp name of fluid
    */
   public FluidResponse(String nameinp) {
     this.name = nameinp;
