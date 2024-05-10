@@ -62,6 +62,9 @@ public class Units {
           new UnitDescription("Sm3/hr", "standard cubic metre per hour"));
 
       metricUnits.putAll(activeUnits);
+      metricUnits.put("Molar Mass", new UnitDescription("gr/mol", "gr/mol"));
+      metricUnits.put("molar volume", new UnitDescription("cm3/mol", "cm3/mol"));
+      metricUnits.put("viscosity", new UnitDescription("Pas", "Pascal per second"));
 
       siUnits.putAll(activeUnits); // Makes a copy of activeUnits
       siUnits.put("temperature", new UnitDescription("K", "Kelvin"));

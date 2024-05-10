@@ -616,6 +616,9 @@ public abstract class Phase implements PhaseInterface {
       case "m3/mol":
         conversionFactor = 1.0;
         break;
+      case "cm3/mol":
+        conversionFactor = 1e6;
+        break;
       case "litre/mol":
         conversionFactor = 1000.0;
         break;
