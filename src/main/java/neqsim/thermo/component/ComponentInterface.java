@@ -961,6 +961,15 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
+   * getNormalLiquidDensity.
+   * </p>
+   * 
+   * @param unit i String with unit of return return a double
+   */
+  public double getNormalLiquidDensity(String unit);
+
+  /**
+   * <p>
    * Getter for property <code>componentName</code>.
    * </p>
    *
@@ -2245,4 +2254,27 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     c.put("O2", "oxygen");
     return c;
   }
+
+  /**
+   * <p>
+   * getTC.
+   * </p>
+   *
+   * @param unit Unit of return temperature
+   * @return a double of critical temperature
+   */
+  public double getTC(String unit);
+
+  /**
+   *
+   * <p>
+   * getPC.
+   * </p>
+   *
+   * @param unit Unit of return temperature
+   * @return a double of critical temperature
+   */
+  public double getPC(String unit);
+
+
 }

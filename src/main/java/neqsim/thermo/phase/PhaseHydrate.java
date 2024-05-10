@@ -126,4 +126,10 @@ public class PhaseHydrate extends Phase {
       }
     }
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSoundSpeed() {
+    return Double.NaN;
+  }
 }

@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
@@ -1546,10 +1547,10 @@ public abstract class SystemThermo implements SystemInterface {
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 14][0] = "Thermal Conductivity";
       table[getPhases()[0].getNumberOfComponents() + 14][i + 2] =
-          nf.format(getPhase(i).getThermalConductivity(units.getSymbol("thermal concdutivity")),
+          nf.format(getPhase(i).getThermalConductivity(units.getSymbol("thermal conductivity")),
               buf, test).toString();
       table[getPhases()[0].getNumberOfComponents() + 14][6] =
-          units.getSymbol("thermal concdutivity");
+          units.getSymbol("thermal conductivity");
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 15][0] = "Surface Tension";
@@ -2217,13 +2218,13 @@ public abstract class SystemThermo implements SystemInterface {
       normalLiquidDensity += getComponent(i).getNormalLiquidDensity() * getComponent(i).getz()
           * getComponent(i).getMolarMass() / molarMass;
     }
-    if (unit.equals("gr/cm3")) {
-      return normalLiquidDensity;
-    } else if (unit.equals("kg/m3")) {
-      return normalLiquidDensity * 1000.0;
-    } else {
-      logger.error("unit not supported: " + unit);
-      return normalLiquidDensity;
+    switch (unit) {
+      case "gr/cm3":
+        return normalLiquidDensity;
+      case "kg/m3":
+        return normalLiquidDensity * 1000.0;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
     }
   }
 
@@ -2325,7 +2326,7 @@ public abstract class SystemThermo implements SystemInterface {
         conversionFactor = 1.8 * 1.0 / 14.503773773;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
     }
     return JTcoef * conversionFactor;
   }
@@ -2683,7 +2684,7 @@ public abstract class SystemThermo implements SystemInterface {
         return getVolumeFraction(phaseNumber) * getPhase(phaseNumber).getDensity("kg/m3")
             / getDensity("kg/m3");
       default:
-        return getBeta(phaseNumber);
+        throw new RuntimeException("unit not supported " + unit);
     }
   }
 
@@ -2867,7 +2868,8 @@ public abstract class SystemThermo implements SystemInterface {
         conversionFactor = 3.280839895;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
+
     }
     return refVel * conversionFactor;
   }
@@ -2941,6 +2943,7 @@ public abstract class SystemThermo implements SystemInterface {
     double conversionFactor = 1.0;
     switch (unit) {
       case "W/mK":
+      case "J/sec-m-K":
         conversionFactor = 1.0;
         break;
       case "W/cmK":
@@ -5040,5 +5043,19 @@ public abstract class SystemThermo implements SystemInterface {
       z[i] = this.getPhase(0).getComponent(i).getz();
     }
     return z;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create()
+        .toJson(new neqsim.processSimulation.util.monitor.FluidResponse(this));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toCompJson() {
+    return new GsonBuilder().create()
+        .toJson(new neqsim.processSimulation.util.monitor.FluidComponentResponse(this));
   }
 }

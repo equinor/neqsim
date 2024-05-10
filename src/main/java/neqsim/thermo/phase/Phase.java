@@ -616,6 +616,9 @@ public abstract class Phase implements PhaseInterface {
       case "m3/mol":
         conversionFactor = 1.0;
         break;
+      case "cm3/mol":
+        conversionFactor = 1e6;
+        break;
       case "litre/mol":
         conversionFactor = 1000.0;
         break;
@@ -1010,7 +1013,7 @@ public abstract class Phase implements PhaseInterface {
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0 * 0.2388;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
     }
     return refCp * conversionFactor;
   }
@@ -1043,7 +1046,8 @@ public abstract class Phase implements PhaseInterface {
         conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0 * 0.2388;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
+
     }
     return refCv * conversionFactor;
   }
@@ -1236,6 +1240,7 @@ public abstract class Phase implements PhaseInterface {
     double conversionFactor = 1.0;
     switch (unit) {
       case "W/mK":
+      case "J/sec-m-K":
         conversionFactor = 1.0;
         break;
       case "W/cmK":
@@ -2081,7 +2086,8 @@ public abstract class Phase implements PhaseInterface {
         conversionFactor = 1000.0;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
+
     }
     return conversionFactor * getVolume() / 1.0e5;
   }
@@ -2134,9 +2140,7 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getSoundSpeed() {
-    throw new UnsupportedOperationException("Unimplemented method 'getSoundSpeed'");
-  }
+  public abstract double getSoundSpeed();
 
   /** {@inheritDoc} */
   @Override
@@ -2145,6 +2149,7 @@ public abstract class Phase implements PhaseInterface {
     double conversionFactor = 1.0;
     switch (unit) {
       case "m/s":
+      case "m/sec":
         conversionFactor = 1.0;
         break;
       case "km/hr":
@@ -2154,7 +2159,7 @@ public abstract class Phase implements PhaseInterface {
         conversionFactor = 3.280839895;
         break;
       default:
-        break;
+        throw new RuntimeException("unit not supported " + unit);
     }
     return refVel * conversionFactor;
   }

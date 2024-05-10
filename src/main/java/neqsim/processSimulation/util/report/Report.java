@@ -9,6 +9,7 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processSystem.ProcessModule;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 import neqsim.processSimulation.processSystem.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
@@ -24,9 +25,14 @@ public class Report {
   Gson gson = new Gson();
   ProcessSystem process = null;
   ProcessEquipmentBaseClass processEquipment = null;
+  SystemInterface fluid = null;
 
   public Report(ProcessSystem process) {
     this.process = process;
+  }
+
+  public Report(SystemInterface fluid) {
+    this.fluid = fluid;
   }
 
   public Report(ProcessEquipmentBaseClass processEquipmentBaseClass) {
@@ -50,7 +56,12 @@ public class Report {
     if (processEquipment != null) {
       json_reports.put(processEquipment.getName(), processEquipment.toJson());
     }
+    if (fluid != null) {
+      json_reports.put(fluid.getFluidName(), fluid.toJson());
+    }
     return new GsonBuilder().setPrettyPrinting().create().toJson(json_reports);
   }
+
+
 
 }
