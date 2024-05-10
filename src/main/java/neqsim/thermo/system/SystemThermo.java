@@ -1546,10 +1546,10 @@ public abstract class SystemThermo implements SystemInterface {
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 14][0] = "Thermal Conductivity";
       table[getPhases()[0].getNumberOfComponents() + 14][i + 2] =
-          nf.format(getPhase(i).getThermalConductivity(units.getSymbol("thermal concdutivity")),
+          nf.format(getPhase(i).getThermalConductivity(units.getSymbol("thermal conductivity")),
               buf, test).toString();
       table[getPhases()[0].getNumberOfComponents() + 14][6] =
-          units.getSymbol("thermal concdutivity");
+          units.getSymbol("thermal conductivity");
 
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 15][0] = "Surface Tension";

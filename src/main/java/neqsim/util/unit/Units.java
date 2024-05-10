@@ -27,6 +27,7 @@ public class Units {
 
   public static HashMap<String, UnitDescription> activeUnits = new HashMap<>();
   public static HashMap<String, UnitDescription> defaultUnits = new HashMap<>();
+  public static HashMap<String, UnitDescription> metricUnits = new HashMap<>();
   private static HashMap<String, UnitDescription> siUnits = new HashMap<>();
   private static HashMap<String, UnitDescription> fieldUnits = new HashMap<>();
 
@@ -44,7 +45,7 @@ public class Units {
       activeUnits.put("density", new UnitDescription("kg/m3", "kg per cubic meter"));
       activeUnits.put("viscosity", new UnitDescription("kg/msec", "kg per meter and second"));
       activeUnits.put("surface tension", new UnitDescription("N/m", "newton per meter"));
-      activeUnits.put("thermal concdutivity",
+      activeUnits.put("thermal conductivity",
           new UnitDescription("W/mK", "watts per meter and Kelvin"));
       activeUnits.put("JT coefficient", new UnitDescription("C/bar", "Celsius per bar"));
       activeUnits.put("speed of sound", new UnitDescription("m/sec", "meter per second"));
@@ -60,12 +61,16 @@ public class Units {
       activeUnits.put("standard volume flow",
           new UnitDescription("Sm3/hr", "standard cubic metre per hour"));
 
+      metricUnits.putAll(activeUnits);
+
       siUnits.putAll(activeUnits); // Makes a copy of activeUnits
       siUnits.put("temperature", new UnitDescription("K", "Kelvin"));
       siUnits.put("pressure", new UnitDescription("Pa", "Pascal"));
       siUnits.put("enthalpy", new UnitDescription("J/mol", "Joule per mole"));
-      siUnits.put("density", new UnitDescription("mol/m3", "mol per cubic meter"));
+      siUnits.put("density", new UnitDescription("kg/m3", "kg per cubic meter"));
       siUnits.put("JT coefficient", new UnitDescription("K/Pa", "Kelvin per Pascal"));
+      siUnits.put("thermal conductivity",
+          new UnitDescription("J/sec-m-K", "Joule per second meter and Kelvin"));
 
       fieldUnits.putAll(activeUnits); // Makes a copy of activeUnits
       fieldUnits.put("temperature", new UnitDescription("F", "Fahrenheit"));
@@ -75,7 +80,7 @@ public class Units {
       fieldUnits.put("Molar Mass", new UnitDescription("lbm/lbmol", "pound-mass per pound-mole"));
       fieldUnits.put("Heat Capacity (Cv)", new UnitDescription("btu/lbmole-F", "Btu/lbmole-F"));
       fieldUnits.put("Heat Capacity (Cp)", new UnitDescription("btu/lbmole-F", "Btu/lbmole-F"));
-      fieldUnits.put("thermal concdutivity", new UnitDescription("Btu/hr-ft-F", "Btu/hr-ft-F"));
+      fieldUnits.put("thermal conductivity", new UnitDescription("Btu/hr-ft-F", "Btu/hr-ft-F"));
       fieldUnits.put("viscosity", new UnitDescription("cP", "centypoise"));
       fieldUnits.put("entropy", new UnitDescription("btu/lb-F", "btu/lb-F"));
       fieldUnits.put("JT coefficient",
@@ -103,6 +108,13 @@ public class Units {
       new Units();
     }
     activeUnits = new HashMap<>(fieldUnits);
+  }
+
+  public static void activateMetricUnits() {
+    if (activeUnits.size() == 0) {
+      new Units();
+    }
+    activeUnits = new HashMap<>(metricUnits);
   }
 
   public static void activateDefaultUnits() {
