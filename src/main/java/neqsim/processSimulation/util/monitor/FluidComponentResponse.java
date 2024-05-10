@@ -56,12 +56,13 @@ public class FluidComponentResponse {
    * Constructor for FluidComponentResponse.
    *
    * @param fluidname name of fluid
-   * @param inputFluid input fluid
+   * @param fluid input fluid
    */
-  public FluidComponentResponse(String fluidname, SystemInterface inputFluid) {
+  public FluidComponentResponse(String fluidname, SystemInterface fluid) {
     this(fluidname);
-    inputFluid.init(0);
     name = fluidname;
+    SystemInterface inputFluid = fluid.clone();
+    inputFluid.init(0);
 
     HashMap<String, Value> newdata = new HashMap<String, Value>();
 
