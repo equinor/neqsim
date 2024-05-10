@@ -887,27 +887,29 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     dryFeedGasMidgard.setFlowRate(12.3, "MSm3/day");
     operations.run_step();
     dryFeedGasMidgard.setFlowRate(13.5, "MSm3/day");
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
+
+    operations.setRunInSteps(true);
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
     dryFeedGasMidgard.setFlowRate(10.0, "MSm3/day");
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
     assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
         1e-6);
 
-    operations.setRunInSteps(true);
+
     operations.run();
     operations.run();
     operations.run();

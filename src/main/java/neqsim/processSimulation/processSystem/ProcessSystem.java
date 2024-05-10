@@ -44,8 +44,6 @@ public class ProcessSystem extends SimulationBaseClass {
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
 
-
-
   /**
    * <p>
    * Constructor for ProcessSystem.
