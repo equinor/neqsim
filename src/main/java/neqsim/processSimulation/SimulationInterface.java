@@ -69,9 +69,26 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
    * </p>
    */
   @Override
-  public default void run() {
-    run(UUID.randomUUID());
-  }
+  public void run();
+
+  /**
+   * <p>
+   * setRunInSteps
+   * </p>
+   * 
+   * @param setRunSteps boolean set if run in steps
+   */
+  public void setRunInSteps(boolean setRunSteps);
+
+  /**
+   * <p>
+   * isRunInSteps.
+   * </p>
+   * 
+   * @return boolean
+   */
+  @Override
+  public boolean isRunInSteps();
 
   /**
    * <p>

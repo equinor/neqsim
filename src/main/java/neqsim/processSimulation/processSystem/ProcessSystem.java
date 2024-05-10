@@ -44,6 +44,8 @@ public class ProcessSystem extends SimulationBaseClass {
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
 
+
+
   /**
    * <p>
    * Constructor for ProcessSystem.
@@ -403,6 +405,16 @@ public class ProcessSystem extends SimulationBaseClass {
     Thread processThread = new Thread(this);
     processThread.start();
     return processThread;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run() {
+    if (isRunInSteps()) {
+      run_step(UUID.randomUUID());
+    } else {
+      run(UUID.randomUUID());
+    }
   }
 
   /** {@inheritDoc} */
@@ -986,6 +998,8 @@ public class ProcessSystem extends SimulationBaseClass {
   public String getReport_json() {
     return new Report(this).json();
   }
+
+
 
   /*
    * @XmlRootElement private class Report extends Object{ public Double name; public

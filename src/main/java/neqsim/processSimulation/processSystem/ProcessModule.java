@@ -12,10 +12,8 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.util.report.Report;
 
 /**
- * A class representing a process module class that can contain unit operations
- * and other modules.
- * Module will be runnning until all recycles in this module are solved. If no
- * recycle in the module
+ * A class representing a process module class that can contain unit operations and other modules.
+ * Module will be runnning until all recycles in this module are solved. If no recycle in the module
  * then run only once.
  *
  * @author [seros]
@@ -56,8 +54,7 @@ public class ProcessModule extends SimulationBaseClass {
   /**
    * Add an unit operation to the process module.
    *
-   * @param processSystem the process system that contains the unit operations to
-   *                      be added.
+   * @param processSystem the process system that contains the unit operations to be added.
    */
 
   public void add(ProcessSystem processSystem) {
@@ -86,8 +83,7 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * Get the list of operations index. The operations index is used to follow the
-   * correct order of
+   * Get the list of operations index. The operations index is used to follow the correct order of
    * calculations.
    *
    * @return the list of operations index
@@ -108,8 +104,7 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * Get the list of module index. The module index is used to follow the correct
-   * order of
+   * Get the list of module index. The module index is used to follow the correct order of
    * calculations.
    *
    * @return the list of module index
@@ -203,13 +198,11 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * Returns the unit with the given name from the list of added unit operations
-   * and list of added
+   * Returns the unit with the given name from the list of added unit operations and list of added
    * modules.
    *
    * @param name the name of the unit to retrieve
-   * @return the unit with the given name, or {@code null} if no such unit is
-   *         found
+   * @return the unit with the given name, or {@code null} if no such unit is found
    */
   public Object getUnit(String name) {
     for (ProcessSystem processSystem : addedUnitOperations) {
@@ -229,13 +222,11 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * Returns the unit with the given name from the list of added unit operations
-   * and list of added
+   * Returns the unit with the given name from the list of added unit operations and list of added
    * modules.
    *
    * @param name the name of the unit to retrieve
-   * @return the unit with the given name, or {@code null} if no such unit is
-   *         found
+   * @return the unit with the given name, or {@code null} if no such unit is found
    */
   public Object getMeasurementDevice(String name) {
     for (ProcessSystem processSystem : addedUnitOperations) {
