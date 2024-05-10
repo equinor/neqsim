@@ -57,7 +57,7 @@ public class FluidResponse {
   /**
    * Constructor for Fluid.
    *
-   * @param name name of fluid
+   * @param fluidname name of fluid
    * @param inputFluid input fluid
    */
   public FluidResponse(String fluidname, SystemInterface inputFluid) {
