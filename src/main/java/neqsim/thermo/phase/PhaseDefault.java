@@ -85,4 +85,10 @@ public class PhaseDefault extends Phase {
     }
     return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSoundSpeed() {
+    return Double.NaN;
+  }
 }

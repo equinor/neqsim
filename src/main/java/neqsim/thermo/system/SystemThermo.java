@@ -2509,14 +2509,7 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < numberOfPhases; i++) {
       volume += beta[phaseIndex[i]] * getPhase(i).getMolarVolume(unit);
     }
-    switch (unit) {
-      case "m3/mol":
-        return volume * 1e-5;
-      case "litre/mol":
-        return volume * 1e-2;
-      default:
-        throw new RuntimeException("unit not supported " + unit);
-    }
+    return volume;
   }
 
   /** {@inheritDoc} */

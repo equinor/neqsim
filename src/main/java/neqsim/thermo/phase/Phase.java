@@ -2136,9 +2136,7 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getSoundSpeed() {
-    throw new UnsupportedOperationException("Unimplemented method 'getSoundSpeed'");
-  }
+  public abstract double getSoundSpeed();
 
   /** {@inheritDoc} */
   @Override
@@ -2147,6 +2145,7 @@ public abstract class Phase implements PhaseInterface {
     double conversionFactor = 1.0;
     switch (unit) {
       case "m/s":
+      case "m/sec":
         conversionFactor = 1.0;
         break;
       case "km/hr":

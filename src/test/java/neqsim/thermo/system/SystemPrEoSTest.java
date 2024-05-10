@@ -40,7 +40,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
   @DisplayName("test molarVolume calculation as well as unit conerters")
   public void testMolarVolume() {
     neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
+        new neqsim.thermo.system.SystemPrEos(298.0, 1.0);
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
     testSystem.addComponent("methane", 0.68);
