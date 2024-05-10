@@ -15,7 +15,7 @@ public class ThreePhaseSeparatorResponse {
   public String name;
   public Double gasLoadFactor;
   public Double massflow;
-  public Fluid gasFluid, oilFluid;
+  public FluidResponse gasFluid, oilFluid;
 
   /**
    * <p>
@@ -28,8 +28,8 @@ public class ThreePhaseSeparatorResponse {
     name = inputSeparator.getName();
     massflow = inputSeparator.getFluid().getFlowRate("kg/hr");
     gasLoadFactor = inputSeparator.getGasLoadFactor();
-    oilFluid = new Fluid(inputSeparator.getOilOutStream().getFluid());
-    gasFluid = new Fluid(inputSeparator.getGasOutStream().getFluid());
+    oilFluid = new FluidResponse(inputSeparator.getOilOutStream().getFluid());
+    gasFluid = new FluidResponse(inputSeparator.getGasOutStream().getFluid());
   }
 
   /**
@@ -43,7 +43,7 @@ public class ThreePhaseSeparatorResponse {
     name = inputSeparator.getName();
     massflow = inputSeparator.getFluid().getFlowRate("kg/hr");
     gasLoadFactor = inputSeparator.getGasLoadFactor();
-    oilFluid = new Fluid(inputSeparator.getLiquidOutStream().getFluid());
-    gasFluid = new Fluid(inputSeparator.getGasOutStream().getFluid());
+    oilFluid = new FluidResponse(inputSeparator.getLiquidOutStream().getFluid());
+    gasFluid = new FluidResponse(inputSeparator.getGasOutStream().getFluid());
   }
 }

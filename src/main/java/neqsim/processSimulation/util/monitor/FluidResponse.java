@@ -1,7 +1,6 @@
 package neqsim.processSimulation.util.monitor;
 
 import java.util.HashMap;
-import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
@@ -15,18 +14,9 @@ import neqsim.util.NamedBaseClass;
  * @author asmund
  * @version $Id: $Id
  */
-public class Fluid extends NamedBaseClass {
+public class FluidResponse extends NamedBaseClass {
   private static final long serialVersionUID = 1L;
-  static Logger logger = LogManager.getLogger(Fluid.class);
-  public Double volumeFlow;
-  public Double molarMass;
-  public Double massDensity;
-  public Double massflow;
-
-  public Map<String, Double> compProp;
-
-  public Map<String, Map<String, Double>> definedComponent;
-  public Map<String, Map<String, Double>> oilComponent;
+  static Logger logger = LogManager.getLogger(FluidResponse.class);
 
   public HashMap<String, HashMap<String, Value>> properties =
       new HashMap<String, HashMap<String, Value>>();
@@ -41,7 +31,7 @@ public class Fluid extends NamedBaseClass {
    * </p>
    */
   @Deprecated
-  public Fluid() {
+  public FluidResponse() {
     this("Fluid");
   }
 
@@ -52,7 +42,7 @@ public class Fluid extends NamedBaseClass {
    *
    * @param inputFluid a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public Fluid(SystemInterface inputFluid) {
+  public FluidResponse(SystemInterface inputFluid) {
     this(inputFluid.getFluidName(), inputFluid);
   }
 
@@ -61,10 +51,8 @@ public class Fluid extends NamedBaseClass {
    *
    * @param name name of fluid
    */
-  public Fluid(String name) {
+  public FluidResponse(String name) {
     super(name);
-    this.definedComponent = new HashMap<>();
-    this.oilComponent = new HashMap<>();
   }
 
   /**
@@ -73,7 +61,7 @@ public class Fluid extends NamedBaseClass {
    * @param name name of fluid
    * @param inputFluid input fluid
    */
-  public Fluid(String fluidname, SystemInterface inputFluid) {
+  public FluidResponse(String fluidname, SystemInterface inputFluid) {
     this(fluidname);
 
     name = inputFluid.getFluidName();
@@ -191,28 +179,6 @@ public class Fluid extends NamedBaseClass {
               neqsim.util.unit.Units.getSymbol("volume flow")));
       properties.put(name, newdata);
     }
-
-    for (int i = 0; i < inputFluid.getNumberOfComponents(); i++) {
-      compProp = new HashMap<>();
-      if (inputFluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
-        compProp.put("molFraction", inputFluid.getPhase(0).getComponent(i).getz());
-        compProp.put("molarMass", inputFluid.getPhase(0).getComponent(i).getMolarMass());
-        compProp.put("normalLiquidDensity",
-            inputFluid.getPhase(0).getComponent(i).getNormalLiquidDensity());
-        oilComponent.put(inputFluid.getPhase(0).getComponent(i).getComponentName(), compProp);
-      } else {
-        compProp.put("molFraction", inputFluid.getPhase(0).getComponent(i).getz());
-        compProp.put("massFlow", inputFluid.getPhase(0).getComponent(i).getFlowRate("kg/hr"));
-        definedComponent.put(
-            inputFluid.getPhase(0).getComponent(i).getComponentName().replaceAll("-", ""),
-            compProp);
-      }
-    }
-
-    molarMass = inputFluid.getMolarMass();
-    massDensity = inputFluid.getDensity("kg/m3");
-    massflow = inputFluid.getFlowRate("kg/hr");
-    volumeFlow = inputFluid.getFlowRate("m3/hr");
   }
 
   /**
@@ -220,19 +186,16 @@ public class Fluid extends NamedBaseClass {
    */
   SystemInterface getNeqSimFluid() {
     SystemInterface tempFluid = new neqsim.thermo.system.SystemSrkEos();
-
-    definedComponent.keySet().forEach(key -> {
-      tempFluid.addComponent(key, definedComponent.get(key).get("molFraction"));
-    });
-
-    oilComponent.keySet().forEach(key -> {
-      tempFluid.addTBPfraction(key, definedComponent.get(key).get("molFraction"),
-          definedComponent.get(key).get("molarMass"),
-          definedComponent.get(key).get("normalLiquidDensity"));
-    });
-
-    tempFluid.setMixingRule(2);
-
+    /*
+     * definedComponent.keySet().forEach(key -> { tempFluid.addComponent(key,
+     * definedComponent.get(key).get("molFraction")); });
+     * 
+     * oilComponent.keySet().forEach(key -> { tempFluid.addTBPfraction(key,
+     * definedComponent.get(key).get("molFraction"), definedComponent.get(key).get("molarMass"),
+     * definedComponent.get(key).get("normalLiquidDensity")); });
+     * 
+     * tempFluid.setMixingRule(2);
+     */
     return tempFluid;
   }
 
