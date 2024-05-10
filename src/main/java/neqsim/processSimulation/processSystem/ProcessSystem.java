@@ -987,6 +987,8 @@ public class ProcessSystem extends SimulationBaseClass {
     return new Report(this).json();
   }
 
+
+
   /*
    * @XmlRootElement private class Report extends Object{ public Double name; public
    * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();

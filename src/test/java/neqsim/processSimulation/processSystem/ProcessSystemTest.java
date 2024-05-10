@@ -887,24 +887,53 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     dryFeedGasMidgard.setFlowRate(12.3, "MSm3/day");
     operations.run_step();
     dryFeedGasMidgard.setFlowRate(13.5, "MSm3/day");
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
+    ProcessSystem ops2 = operations.copy();
+    operations.setRunInSteps(true);
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    ProcessSystem ops3 = operations.copy();
+    operations.run();
+    operations.run();
     dryFeedGasMidgard.setFlowRate(10.0, "MSm3/day");
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
-    operations.run_step();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
     assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
         1e-6);
+
+
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
+        1e-6);
+
+
+
+    // run as time step as thread
+    Thread thread = operations.runAsThread();
+    Thread thread2 = ops2.runAsThread();
+    Thread thread3 = ops3.runAsThread();
+    try {
+      thread.join();
+      thread2.join();
+      thread3.join();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+
   }
+
+
 }

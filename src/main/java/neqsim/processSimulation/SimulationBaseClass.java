@@ -19,6 +19,7 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
   protected UUID calcIdentifier;
   protected boolean calculateSteadyState = true;
   protected double time = 0;
+  private boolean runInSteps = false;
 
   /**
    * <p>
@@ -80,4 +81,31 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
     }
     this.time = this.time + dt;
   }
+
+  /**
+   * <p>
+   * setRunInSteps
+   * </p>
+   * 
+   * @param setRunSteps boolean set if run in steps
+   */
+  @Override
+  public void setRunInSteps(boolean setRunSteps) {
+    runInSteps = setRunSteps;
+  }
+
+  /**
+   * <p>
+   * isRunInSteps.
+   * </p>
+   * 
+   * @return boolean
+   */
+  @Override
+  public boolean isRunInSteps() {
+    return runInSteps;
+  }
+
+
+
 }

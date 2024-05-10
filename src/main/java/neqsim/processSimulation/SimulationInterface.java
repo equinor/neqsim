@@ -61,28 +61,45 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
   public void increaseTime(double dt);
 
   /**
-   * {@inheritDoc}
-   *
    * <p>
-   * In this method all thermodynamic and unit operations will be calculated in a steady state
-   * calculation. Sets calc identifier UUID.
+   * setRunInSteps
    * </p>
+   * 
+   * @param setRunSteps boolean set if run in steps
    */
-  @Override
-  public default void run() {
-    run(UUID.randomUUID());
-  }
+  public void setRunInSteps(boolean setRunSteps);
+
+  /**
+   * <p>
+   * isRunInSteps.
+   * </p>
+   * 
+   * @return boolean
+   */
+  public boolean isRunInSteps();
 
   /**
    * <p>
    * run
    * </p>
-   * In this method all thermodynamic and unit operations will be calculated in a steady state
-   * calculation. Sets calc identifier UUID.
    *
-   * @param value Calc identifier UUID to set.
+   * @param id UUID
    */
-  public void run(UUID value);
+  public void run(UUID id);
+
+  /**
+   * <p>
+   * run
+   * </p>
+   *
+   */
+  public default void run() {
+    if (isRunInSteps()) {
+      run_step(UUID.randomUUID());
+    } else {
+      run(UUID.randomUUID());
+    }
+  }
 
   /**
    * {@inheritDoc}
