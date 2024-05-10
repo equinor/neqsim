@@ -2511,11 +2511,12 @@ public abstract class SystemThermo implements SystemInterface {
     }
     switch (unit) {
       case "m3/mol":
-        return volume*1e-5;
+        return volume * 1e-5;
       case "litre/mol":
-        return volume*1e-2;
-    default:
-      throw new RuntimeException("unit not supported " + unit);
+        return volume * 1e-2;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
+    }
   }
 
   /** {@inheritDoc} */
