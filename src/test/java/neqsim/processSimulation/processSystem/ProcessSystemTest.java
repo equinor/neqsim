@@ -906,5 +906,15 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.run_step();
     assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
         1e-6);
+
+    operations.setRunInSteps(true);
+    operations.run();
+    operations.run();
+    operations.run();
+    operations.run();
+    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
+        1e-6);
+
+
   }
 }

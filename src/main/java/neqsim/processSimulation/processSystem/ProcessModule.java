@@ -274,6 +274,6 @@ public class ProcessModule extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run_step(UUID id) {
-
+    run(id);
   }
 }

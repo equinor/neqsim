@@ -409,16 +409,6 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
-    if (isRunInSteps()) {
-      run_step(UUID.randomUUID());
-    } else {
-      run(UUID.randomUUID());
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void run(UUID id) {
     boolean hasResycle = false;
     // boolean hasAdjuster = false;
