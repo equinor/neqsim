@@ -658,6 +658,14 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public final double getTC(String unit) {
+    neqsim.util.unit.TemperatureUnit tempConversion =
+        new neqsim.util.unit.TemperatureUnit(criticalTemperature, "K");
+    return tempConversion.getValue(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public final void setTC(double val) {
     criticalTemperature = val;
   }
@@ -684,6 +692,14 @@ public abstract class Component implements ComponentInterface {
   @Override
   public final double getPC() {
     return criticalPressure;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final double getPC(String unit) {
+    neqsim.util.unit.PressureUnit presConversion =
+        new neqsim.util.unit.PressureUnit(criticalPressure, "bara");
+    return presConversion.getValue(unit);
   }
 
   /** {@inheritDoc} */
@@ -749,6 +765,31 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double getNormalLiquidDensity() {
     return normalLiquidDensity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getNormalLiquidDensity(String unit) {
+    double refDensity = normalLiquidDensity * 1e3; // density in kg/m3
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "kg/m3":
+        conversionFactor = 1.0;
+        break;
+      case "lb/ft3":
+        conversionFactor = 0.0624279606;
+        break;
+      case "kg/Sm3":
+        return getMolarMass() * ThermodynamicConstantsInterface.atm
+            / ThermodynamicConstantsInterface.R
+            / ThermodynamicConstantsInterface.standardStateTemperature;
+      case "mol/m3":
+        conversionFactor = 1.0 / getMolarMass();
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
+    }
+    return refDensity * conversionFactor;
   }
 
   /** {@inheritDoc} */

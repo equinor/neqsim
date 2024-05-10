@@ -2593,4 +2593,12 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    */
   public String toJson();
+
+  /**
+   * <p>
+   * toCompJson - return String with json inormation of pure component properties of fluid
+   * </p>
+   */
+  public String toCompJson();
+
 }
