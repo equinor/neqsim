@@ -134,6 +134,29 @@ public class StreamResponse {
         Double.toString(
             inputStream.getFluid().getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
         neqsim.util.unit.Units.getSymbol("volume flow")));
+
+    newdata.put("heat capacity (Cp)", new Value(
+        Double.toString(
+            inputStream.getFluid().getCp(neqsim.util.unit.Units.getSymbol("Heat Capacity (Cp)"))),
+        neqsim.util.unit.Units.getSymbol("Heat Capacity (Cp)")));
+
+    newdata.put("heat capacity (Cv)", new Value(
+        Double.toString(
+            inputStream.getFluid().getCv(neqsim.util.unit.Units.getSymbol("Heat Capacity (Cv)"))),
+        neqsim.util.unit.Units.getSymbol("Heat Capacity (Cv)")));
+
+    newdata.put("enthalpy",
+        new Value(
+            Double.toString(
+                inputStream.getFluid().getEnthalpy(neqsim.util.unit.Units.getSymbol("enthalpy"))),
+            neqsim.util.unit.Units.getSymbol("enthalpy")));
+
+    newdata.put("entropy",
+        new Value(
+            Double.toString(
+                inputStream.getFluid().getEntropy(neqsim.util.unit.Units.getSymbol("entropy"))),
+            neqsim.util.unit.Units.getSymbol("entropy")));
+
     properties.put(inputStream.getName(), newdata);
     for (int i = 0; i < inputStream.getFluid().getNumberOfPhases(); i++) {
       newdata = new HashMap<String, Value>();
@@ -154,6 +177,30 @@ public class StreamResponse {
               Double.toString(inputStream.getFluid().getPhase(name)
                   .getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
               neqsim.util.unit.Units.getSymbol("volume flow")));
+
+      newdata.put("heat capacity (Cp)",
+          new Value(
+              Double.toString(inputStream.getFluid().getPhase(name)
+                  .getCp(neqsim.util.unit.Units.getSymbol("Heat Capacity (Cp)"))),
+              neqsim.util.unit.Units.getSymbol("Heat Capacity (Cp)")));
+
+      newdata.put("heat capacity (Cv)",
+          new Value(
+              Double.toString(inputStream.getFluid().getPhase(name)
+                  .getCv(neqsim.util.unit.Units.getSymbol("Heat Capacity (Cv)"))),
+              neqsim.util.unit.Units.getSymbol("Heat Capacity (Cv)")));
+
+      newdata.put("enthalpy",
+          new Value(
+              Double.toString(inputStream.getFluid().getPhase(name)
+                  .getEnthalpy(neqsim.util.unit.Units.getSymbol("enthalpy"))),
+              neqsim.util.unit.Units.getSymbol("enthalpy")));
+
+      newdata.put("entropy",
+          new Value(
+              Double.toString(inputStream.getFluid().getPhase(name)
+                  .getEntropy(neqsim.util.unit.Units.getSymbol("entropy"))),
+              neqsim.util.unit.Units.getSymbol("entropy")));
 
       if (name.equals("oil")) {
         try {
@@ -190,7 +237,7 @@ public class StreamResponse {
                     .getFlowRate(neqsim.util.unit.Units.getSymbol("standard volume flow"))),
                 neqsim.util.unit.Units.getSymbol("standard volume flow")));
         newdata.put("relative density",
-            new Value(Double.toString(standard.getValue("RelativeDensity") / 1e3), "[-]"));
+            new Value(Double.toString(standard.getValue("RelativeDensity")), "[-]"));
       }
       properties.put(name, newdata);
     }
