@@ -257,7 +257,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
    * @return a String
    */
   public String getReport_json() {
-    return new Report(this).json();
+    return new Report(this).generateJsonReport();
   }
 
   /** {@inheritDoc} */

@@ -41,10 +41,9 @@ public class ReportTest {
     processOps.run();
 
     Report report = new Report(processOps);
-    String obj = report.json();
-    //System.out.println(obj);
+    String obj = report.generateJsonReport();
     neqsim.util.unit.Units.activateFieldUnits();
-    String obj2 = report.json();
+    String obj2 = report.generateJsonReport();
     // System.out.println(obj2);
     neqsim.util.unit.Units.activateSIUnits();
     // reporting from process Object
