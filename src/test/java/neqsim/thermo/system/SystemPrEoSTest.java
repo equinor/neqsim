@@ -172,12 +172,16 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
     testSystem.addComponent("methane", 0.68);
     testSystem.addComponent("ethane", 0.1);
     testSystem.setMixingRule("classic");
+    testSystem.useVolumeCorrection(true);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
     testSystem.getKappa();
     testSystem.getPhase("gas").getKappa();
     assertEquals(testSystem.getKappa(), testSystem.getPhase("gas").getKappa(), 1e-5);
+    assertEquals(0.817374332, testSystem.getZ(), 1e-6);
+    assertEquals(0.833031816, testSystem.getZvolcorr(), 1e-6);
+    assertEquals(0.833031816, testSystem.getPhase("gas").getZvolcorr(), 1e-6);
   }
 
   /**

@@ -405,6 +405,13 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getZvolcorr() {
+    return getPressure("Pa") * getMolarMass() / neqsim.thermo.ThermodynamicConstantsInterface.R
+        / temperature / getDensity("kg/m3");
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setPressure(double pres) {
     this.pressure = pres;
   }

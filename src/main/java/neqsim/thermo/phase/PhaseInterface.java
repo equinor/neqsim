@@ -2028,4 +2028,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return String model name
    */
   public String getModelName();
+
+  /**
+   * method to return Z volume corrected gas compressibility
+   *
+   * @return double Z volume corrected
+   */
+  public double getZvolcorr();
 }
