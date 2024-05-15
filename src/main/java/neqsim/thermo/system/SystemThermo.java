@@ -3065,7 +3065,7 @@ public abstract class SystemThermo implements SystemInterface {
     return Z;
   }
 
-  /** {@inheritDoc} */get
+  /** {@inheritDoc} */
   @Override
   public double getZvolcorr() {
     return getPressure("Pa") * getMolarMass() / neqsim.thermo.ThermodynamicConstantsInterface.R
