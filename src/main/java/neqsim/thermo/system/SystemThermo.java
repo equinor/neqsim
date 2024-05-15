@@ -1493,7 +1493,7 @@ public abstract class SystemThermo implements SystemInterface {
       buf = new StringBuffer();
       table[getPhases()[0].getNumberOfComponents() + 5][0] = "Z factor";
       table[getPhases()[0].getNumberOfComponents() + 5][i + 2] =
-          nf.format(getPhase(i).getZ(), buf, test).toString();
+          nf.format(getPhase(i).getZvolcorr(), buf, test).toString();
       table[getPhases()[0].getNumberOfComponents() + 5][6] = "[-]";
 
       buf = new StringBuffer();
@@ -3063,6 +3063,13 @@ public abstract class SystemThermo implements SystemInterface {
       Z += beta[phaseIndex[i]] * getPhase(i).getZ();
     }
     return Z;
+  }
+
+  /** {@inheritDoc} */get
+  @Override
+  public double getZvolcorr() {
+    return getPressure("Pa") * getMolarMass() / neqsim.thermo.ThermodynamicConstantsInterface.R
+        / getTemperature() / getDensity("kg/m3");
   }
 
   /**
