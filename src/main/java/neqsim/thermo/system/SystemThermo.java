@@ -2401,7 +2401,6 @@ public abstract class SystemThermo implements SystemInterface {
       case "kg":
         conversionFactor = 1.0;
         break;
-
       case "gr":
         conversionFactor = 1000.0;
         break;

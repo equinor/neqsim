@@ -22,7 +22,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class Report {
-  Gson gson = new Gson();
   ProcessSystem process = null;
   ProcessEquipmentBaseClass processEquipment = null;
   SystemInterface fluid = null;
