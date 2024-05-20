@@ -873,6 +873,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         && Objects.equals(waterSystem, other.waterSystem);
   }
 
+  public StreamInterface getFeedStream() {
+    return new Stream(getName(), getThermoSystem());
+  }
+
   /** {@inheritDoc} */
   @Override
   public String toJson() {
