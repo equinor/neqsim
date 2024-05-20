@@ -1,7 +1,6 @@
 package neqsim.processSimulation.util.report;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -23,8 +22,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class Report {
-  private HashMap<String, List<String[]>> reports = new HashMap<>();
-  private HashMap<String, String> json_reports = new HashMap<>();
   Gson gson = new Gson();
   ProcessSystem process = null;
   ProcessEquipmentBaseClass processEquipment = null;
@@ -65,17 +62,13 @@ public class Report {
       json_reports.put(fluid.getFluidName(), fluid.toJson());
     }
 
-    // Create a Gson instance
-    Gson gson = new Gson();
-    JsonParser jsonParser = new JsonParser();
-
     // Create a JsonObject to hold the parsed nested JSON objects
     JsonObject finalJsonObject = new JsonObject();
 
     // Iterate through the entries of the json_reports map
     for (Map.Entry<String, String> entry : json_reports.entrySet()) {
-      // Parse each value as a separate JSON object
-      JsonObject nestedJsonObject = jsonParser.parse(entry.getValue()).getAsJsonObject();
+      // Parse each value as a separate JSON object using the static parseString method
+      JsonObject nestedJsonObject = JsonParser.parseString(entry.getValue()).getAsJsonObject();
       // Update the final JsonObject with the parsed JSON object
       finalJsonObject.add(entry.getKey(), nestedJsonObject);
     }
@@ -85,5 +78,3 @@ public class Report {
     return prettyGson.toJson(finalJsonObject);
   }
 }
-
-
