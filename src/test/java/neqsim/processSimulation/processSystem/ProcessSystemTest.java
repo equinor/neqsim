@@ -920,7 +920,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
 
 
-    // run as time step as thread
+    // run simulations simulatanious as time step as thread
     Thread thread = operations.runAsThread();
     Thread thread2 = ops2.runAsThread();
     Thread thread3 = ops3.runAsThread();
