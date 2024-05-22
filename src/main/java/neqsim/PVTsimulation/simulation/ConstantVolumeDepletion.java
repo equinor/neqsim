@@ -110,7 +110,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     liquidRelativeVolume = new double[pressures.length];
     cummulativeMolePercDepleted = new double[pressures.length];
     double totalNumberOfMoles = getThermoSystem().getTotalNumberOfMoles();
-    getThermoSystem().setTemperature(temperature);
+    getThermoSystem().setTemperature(temperature, temperatureUnit);
 
     for (int i = 0; i < pressures.length; i++) {
       getThermoSystem().setPressure(pressures[i]);
@@ -121,7 +121,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       }
       // getThermoSystem().display();
       totalVolume[i] = getThermoSystem().getVolume();
-      System.out.println("volume " + totalVolume[i]);
+      // System.out.println("volume " + totalVolume[i]);
       cummulativeMolePercDepleted[i] =
           100.0 - getThermoSystem().getTotalNumberOfMoles() / totalNumberOfMoles * 100;
       if (getThermoSystem().getNumberOfPhases() > 1) {
@@ -167,6 +167,11 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       relativeVolume[i] = totalVolume[i] / saturationVolume;
       // System.out.println("rel volume " + relativeVolume[i]);
     }
+    try {
+      thermoOps.TPflash();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
+    }
     // System.out.println("test finished");
   }
 
@@ -188,7 +193,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
         SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
 
-        tempSystem.setTemperature(temperature);
+        tempSystem.setTemperature(temperature, temperatureUnit);
         tempSystem.setPressure(pressures[i]);
         // thermoOps.TPflash();
         // tempSystem.display();
@@ -275,7 +280,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     tempSystem.init(1);
 
     ConstantVolumeDepletion CVDsim = new ConstantVolumeDepletion(tempSystem);
-    CVDsim.setTemperature(315.0);
+    CVDsim.setTemperature(315.0, "K");
     CVDsim.setPressures(new double[] {400, 300.0, 200.0, 150.0, 100.0, 50.0});
     CVDsim.runCalc();
     CVDsim.setTemperaturesAndPressures(new double[] {313, 313, 313, 313},
