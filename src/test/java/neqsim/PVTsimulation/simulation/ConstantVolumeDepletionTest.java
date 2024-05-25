@@ -1,11 +1,14 @@
 package neqsim.PVTsimulation.simulation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.io.File;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class ConstantVolumeDepletionTest {
+
   @Test
   void testRunCalc() {
     SystemInterface tempSystem = new SystemSrkEos(298.0, 211.0);
@@ -39,5 +42,42 @@ public class ConstantVolumeDepletionTest {
     double[][] expData = {{0.95, 0.99, 1.0, 1.1}};
     CVDsim.setExperimentalData(expData);
     assertEquals(1.419637379033296, CVDsim.getRelativeVolume()[4], 0.001);
+  }
+
+  @Test
+  void testRunEclipseInput() {
+
+    File file = new File("src/test/java/neqsim/PVTsimulation/simulation");
+    String fileFluid1 = file.getAbsolutePath() + "/EclipseModel.e300";
+    SystemInterface fluid1 = neqsim.thermo.util.readwrite.EclipseFluidReadWrite.read(fileFluid1);
+    // TODO: check why not working with multiphase
+    // fluid1.setMultiPhaseCheck(true);
+    fluid1.setTemperature(90.0, "C");
+
+    SaturationPressure satPres = new SaturationPressure(fluid1);
+    satPres.run();
+    assertEquals(199.4580707, fluid1.getPressure("bara"), 0.01);
+
+    ConstantVolumeDepletion CVDsim = new ConstantVolumeDepletion(fluid1);
+    CVDsim.setTemperature(315.0);
+    CVDsim.setPressures(new double[] {400, 300.0, 200.0, 150.0, 100.0, 50.0});
+    CVDsim.runCalc();
+    CVDsim.getThermoSystem().initPhysicalProperties("density");
+    double gasdens = CVDsim.getThermoSystem().getPhase("gas").getDensity("kg/m3");
+    double oildens = CVDsim.getThermoSystem().getPhase("oil").getDensity("kg/m3");
+
+    SystemInterface gasFluid = CVDsim.getThermoSystem().phaseToSystem("gas");
+    gasFluid.initPhysicalProperties("density");
+
+    assertEquals(gasdens, gasFluid.getDensity("kg/m3"), 0.01);
+
+    SystemInterface oilFluid = CVDsim.getThermoSystem().phaseToSystem("oil");
+    ThermodynamicOperations ops = new ThermodynamicOperations(oilFluid);
+    ops.TPflash();
+    oilFluid.initPhysicalProperties("density");
+
+    assertEquals(oildens, oilFluid.getDensity("kg/m3"), 0.01);
+
+
   }
 }
