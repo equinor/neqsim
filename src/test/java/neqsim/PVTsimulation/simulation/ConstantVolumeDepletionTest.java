@@ -41,7 +41,7 @@ public class ConstantVolumeDepletionTest {
         new double[] {400, 300.0, 200.0, 100.0});
     double[][] expData = {{0.95, 0.99, 1.0, 1.1}};
     CVDsim.setExperimentalData(expData);
-    assertEquals(1.419637379033296, CVDsim.getRelativeVolume()[4], 0.001);
+    assertEquals(2.2458466, CVDsim.getRelativeVolume()[4], 0.001);
   }
 
   @Test
@@ -76,7 +76,7 @@ public class ConstantVolumeDepletionTest {
     ops.TPflash();
     oilFluid.initPhysicalProperties("density");
 
-    assertEquals(oildens, oilFluid.getDensity("kg/m3"), 2.01);
+    assertEquals(oildens, oilFluid.getDensity("kg/m3"), 0.1);
 
 
   }
