@@ -113,7 +113,9 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     double volumeCorrection = 0.0;
     cummulativeMolePercDepleted = new double[pressures.length];
     double totalNumberOfMoles = getThermoSystem().getTotalNumberOfMoles();
-    getThermoSystem().setTemperature(temperature, temperatureUnit);
+    if (!Double.isNaN(temperature)) {
+      getThermoSystem().setTemperature(temperature, temperatureUnit);
+    }
 
     for (int i = 0; i < pressures.length; i++) {
       getThermoSystem().setPressure(pressures[i]);
