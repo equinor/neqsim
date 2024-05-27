@@ -60,7 +60,8 @@ public class ConstantVolumeDepletionTest {
 
     ConstantVolumeDepletion CVDsim = new ConstantVolumeDepletion(fluid1);
     CVDsim.setTemperature(90.0, "C");
-    CVDsim.setPressures(new double[] {220., 185.94064077, 151.88128153, 117.8219223});
+    CVDsim.setPressures(
+        new double[] {200.0, 154.0, 139.0, 127.0, 117.0, 108.0, 91.0, 82.0, 62.0, 38.0});
     CVDsim.runCalc();
     CVDsim.getThermoSystem().initPhysicalProperties("density");
     double gasdens = CVDsim.getThermoSystem().getPhase("gas").getDensity("kg/m3");
@@ -68,7 +69,7 @@ public class ConstantVolumeDepletionTest {
 
     SystemInterface gasFluid = CVDsim.getThermoSystem().phaseToSystem("gas");
     gasFluid.initPhysicalProperties("density");
-    // gasFluid.prettyPrint();
+
     assertEquals(gasdens, gasFluid.getDensity("kg/m3"), 0.01);
 
     SystemInterface oilFluid = CVDsim.getThermoSystem().phaseToSystem("oil");
