@@ -168,6 +168,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
             logger.debug(e.getMessage());
           }
         }
+        getThermoSystem().init(0);
         for (int j = 0; j < getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
           try {
             getThermoSystem().addComponent(j, -change[j]);
