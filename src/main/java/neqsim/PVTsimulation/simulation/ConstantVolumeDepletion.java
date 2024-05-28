@@ -178,7 +178,13 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         }
         // getThermoSystem().init(0);
         // getThermoSystem().init(1);
-      }
+      } else {
+        Zgas[i] = getThermoSystem().getPhase(0).getZvolcorr();
+        Zmix[i] = getThermoSystem().getZvolcorr();
+        liquidRelativeVolume[i] = Double.NaN; 
+        liquidVolume[i] = Double.NaN; 
+        liquidVolumeRelativeToVsat[i] = Double.NaN; 
+        cummulativeMolePercDepleted[i] = 0.0;
     }
 
     for (int i = 0; i < pressures.length; i++) {
