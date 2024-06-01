@@ -18,8 +18,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class ReservoirTPsim extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
 
-  SystemInterface reservoirFluid = null;
-  StreamInterface outStream = null;
+  private SystemInterface reservoirFluid = null;
+  private StreamInterface outStream = null;
 
   private double pressure = 100.0;
   private double temperature = 100.0;
@@ -45,19 +45,20 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    reservoirFluid.setTemperature(temperature, tUnit);
-    reservoirFluid.setPressure(pressure, pUnit);
-    reservoirFluid.setTotalFlowRate(flowRate, flowUnit);
+    SystemInterface fluid1 = ((SystemInterface) reservoirFluid).clone();
+    fluid1.setTemperature(temperature, tUnit);
+    fluid1.setPressure(pressure, pUnit);
+    fluid1.setTotalFlowRate(flowRate, flowUnit);
 
-    ThermodynamicOperations operations = new ThermodynamicOperations(reservoirFluid);
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid1);
     operations.TPflash();
 
-    if (prodPhaseName.equals("gas") && reservoirFluid.hasPhaseType("gas")) {
-      outStream = new Stream(getName() + "_gas", reservoirFluid.phaseToSystem("gas"));
-    } else if (prodPhaseName.equals("oil") && reservoirFluid.hasPhaseType("oil")) {
-      outStream = new Stream(getName() + "_oil", reservoirFluid.phaseToSystem("oil"));
+    if (prodPhaseName.equals("gas") && fluid1.hasPhaseType("gas")) {
+      outStream.setFluid(fluid1.phaseToSystem("gas"));
+    } else if (prodPhaseName.equals("oil") && fluid1.hasPhaseType("oil")) {
+      outStream.setFluid(fluid1.phaseToSystem("oil"));
     } else {
-      outStream = new Stream(getName() + "_" + prodPhaseName, reservoirFluid.phaseToSystem(1));
+      outStream.setFluid(fluid1.phaseToSystem(1));
     }
 
   }

@@ -4460,15 +4460,15 @@ public abstract class SystemThermo implements SystemInterface {
   public final void setMixingRule(int type) {
     mixingRule = type;
     if (numberOfPhases < 4) {
-      resetPhysicalProperties(); // initPhysicalProperties();
+      resetPhysicalProperties();
     }
     for (int i = 0; i < maxNumberOfPhases; i++) {
       if (isPhase(i)) {
         getPhase(i).setMixingRule(type);
         getPhase(i).initPhysicalProperties();
-        // getPhase(i).getPhysicalProperties().getMixingRule().initMixingRules(getPhase(i));
       }
     }
+    init(0);
   }
 
   /** {@inheritDoc} */

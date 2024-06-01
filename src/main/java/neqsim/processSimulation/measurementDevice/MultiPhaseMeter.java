@@ -110,6 +110,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
    * @return Measured value
    */
   public double getMeasuredValue(String measurement, String unit) {
+    stream.getFluid().prettyPrint();
     if (measurement.equals("mass rate")) {
       return stream.getFlowRate(unit);
     }
