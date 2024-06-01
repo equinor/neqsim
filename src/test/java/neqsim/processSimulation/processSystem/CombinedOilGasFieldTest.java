@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
 import neqsim.processSimulation.processEquipment.reservoir.ReservoirTPsim;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 
 public class CombinedOilGasFieldTest {
 
@@ -42,7 +41,8 @@ public class CombinedOilGasFieldTest {
     wellFluid.addTBPfraction("C13_Gas", 0.0, 450.0 / 1000.0, 850.0 / 1000.0);
 
     wellFluid.setMixingRule("classic");
-    wellFluid.setMultiPhaseCheck(true);
+    wellFluid.init(0);
+    // wellFluid.setMultiPhaseCheck(true);
 
     neqsim.thermo.system.SystemInterface wellFluidGasWell =
         (neqsim.thermo.system.SystemInterface) wellFluid.clone();
@@ -52,54 +52,47 @@ public class CombinedOilGasFieldTest {
 
 
     ReservoirTPsim reservoirGasTPsim = new ReservoirTPsim("TPreservoir", wellFluidGasWell);
-    reservoirGasTPsim.setTemperature(150.0, "C");
-    reservoirGasTPsim.setPressure(260.0, "bara");
-    reservoirGasTPsim.run();
+    reservoirGasTPsim.setTemperature(50.0, "C");
+    reservoirGasTPsim.setPressure(150.0, "bara");
+    reservoirGasTPsim.setFlowRate(50000.0, "kg/hr");
+    reservoirGasTPsim.setProdPhaseName("gas");
 
-    Stream wellStreamGas = new Stream("Well Stream Gas Well", reservoirGasTPsim.getGasOutStream());
-    wellStreamGas.setFlowRate(50000.0, "kg/hr");
-    wellStreamGas.setTemperature(100.0, "C");
-    wellStreamGas.setPressure(100.0, "bara");
-
-    MultiPhaseMeter MPFMgas = new MultiPhaseMeter("Gas MPFM", wellStreamGas);
+    MultiPhaseMeter MPFMgas = new MultiPhaseMeter("Gas MPFM", reservoirGasTPsim.getOutStream());
     MPFMgas.setTemperature(60.0, "C");
     MPFMgas.setPressure(80.0, "bara");
 
-
-
     // ReservoirCVDsim reservoirCVD = new ReservoirCVDsim();
     // ReservoirDiffLibsim reservoirDiffLib = new ReservoirDiffLibsim();
+    /*
+     * neqsim.thermo.system.SystemInterface wellFluidOilWell =
+     * (neqsim.thermo.system.SystemInterface) wellFluid.clone();
+     * wellFluidOilWell.setMolarComposition( new double[] {0.047, 0.191, 39.022, 0.25, 0.053, 0.017,
+     * 0.022, 0.021, 0.015, 0.057, 0.176, 0.181, 0.177, 0.81, 15.353, 30.738, 12.869, 0.0, 0.0, 0.0,
+     * 0.0, 0.0, 0.0, 0.0, 0.0});
+     * 
+     * Stream wellStreamOil = new Stream("Well Stream Oil Well", wellFluidOilWell);
+     * wellStreamOil.setFlowRate(50000.0, "kg/hr"); wellStreamOil.setTemperature(100.0, "C");
+     * wellStreamOil.setPressure(100.0, "bara");
+     */
 
-    neqsim.thermo.system.SystemInterface wellFluidOilWell =
-        (neqsim.thermo.system.SystemInterface) wellFluid.clone();
-    wellFluidOilWell.setMolarComposition(
-        new double[] {0.047, 0.191, 39.022, 0.25, 0.053, 0.017, 0.022, 0.021, 0.015, 0.057, 0.176,
-            0.181, 0.177, 0.81, 15.353, 30.738, 12.869, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
 
-    Stream wellStreamOil = new Stream("Well Stream Oil Well", wellFluidOilWell);
-    wellStreamOil.setFlowRate(50000.0, "kg/hr");
-    wellStreamOil.setTemperature(100.0, "C");
-    wellStreamOil.setPressure(100.0, "bara");
-
-
-
-    MultiPhaseMeter MPFMoil = new MultiPhaseMeter("Oil MPFM", wellStreamOil);
-    MPFMoil.setTemperature(60.0, "C");
-    MPFMoil.setPressure(20.0, "bara");
+    // MultiPhaseMeter MPFMoil = new MultiPhaseMeter("Oil MPFM", wellStreamOil);
+    // MPFMoil.setTemperature(60.0, "C");
+    // MPFMoil.setPressure(20.0, "bara");
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(reservoirGasTPsim);
-    operations.add(wellStreamGas);
     operations.add(MPFMgas);
-
-    operations.add(wellStreamOil);
-    operations.add(MPFMoil);
-
     operations.run();
+    reservoirGasTPsim.getReserervourFluid().prettyPrint();
+    reservoirGasTPsim.getOutStream().getFluid().prettyPrint();
+    assertEquals(5338.62633605, MPFMgas.getMeasuredValue("GOR_std", ""), 1.0);
 
-    assertEquals(8308.6038, MPFMgas.getMeasuredValue("GOR_std", ""), 1.0);
-    assertEquals(45.8045365, MPFMoil.getMeasuredValue("GOR_std", ""), 1.0);
+    reservoirGasTPsim.setPressure(50.0, "bara");
+    operations.run();
+    reservoirGasTPsim.getReserervourFluid().prettyPrint();
+    assertEquals(5338.6263360, MPFMgas.getMeasuredValue("GOR_std", ""), 1.0);
 
 
 

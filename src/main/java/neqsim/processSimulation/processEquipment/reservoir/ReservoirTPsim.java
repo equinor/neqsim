@@ -19,11 +19,12 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
 
   SystemInterface reservoirFluid = null;
-  StreamInterface gasOutStream = null;
-  StreamInterface oilOutStream = null;
+  StreamInterface outStream = null;
 
   private double pressure = 100.0;
   private double temperature = 100.0;
+  private double flowRate = 100.0;
+  private String flowUnit = "kg/hr";
   private String tUnit = "K";
   private String pUnit = "bar";
 
@@ -36,6 +37,7 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
   public ReservoirTPsim(String name, SystemInterface reservoirFluid) {
     super(name);
     this.reservoirFluid = reservoirFluid;
+    outStream = new Stream(getName() + "_out", reservoirFluid.clone());
   }
 
 
@@ -45,47 +47,29 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
   public void run(UUID id) {
     reservoirFluid.setTemperature(temperature, tUnit);
     reservoirFluid.setPressure(pressure, pUnit);
+    reservoirFluid.setTotalFlowRate(flowRate, flowUnit);
 
     ThermodynamicOperations operations = new ThermodynamicOperations(reservoirFluid);
     operations.TPflash();
 
-    if (reservoirFluid.hasPhaseType("gas")) {
-      gasOutStream = new Stream(getName() + "_gas", reservoirFluid.phaseToSystem("gas"));
+    if (prodPhaseName.equals("gas") && reservoirFluid.hasPhaseType("gas")) {
+      outStream = new Stream(getName() + "_gas", reservoirFluid.phaseToSystem("gas"));
+    } else if (prodPhaseName.equals("oil") && reservoirFluid.hasPhaseType("oil")) {
+      outStream = new Stream(getName() + "_oil", reservoirFluid.phaseToSystem("oil"));
+    } else {
+      outStream = new Stream(getName() + "_" + prodPhaseName, reservoirFluid.phaseToSystem(1));
     }
 
-    if (reservoirFluid.hasPhaseType("oil")) {
-      oilOutStream = new Stream(getName() + "_oil", reservoirFluid.phaseToSystem("oil"));
-    }
-
   }
 
-  public StreamInterface getGasOutStream() {
-    return gasOutStream;
+  public StreamInterface getOutStream() {
+    return outStream;
   }
-
-  public StreamInterface getOilOutStream() {
-    return oilOutStream;
-  }
-
-
-  public double getPressure() {
-    return pressure;
-  }
-
-
 
   public void setPressure(double reservoirPressure, String pUnit) {
     this.pressure = reservoirPressure;
     this.pUnit = pUnit;
   }
-
-
-
-  public double getReservoirTemperature() {
-    return temperature;
-  }
-
-
 
   public void setTemperature(double reservoirTemperature, String tUnit) {
     this.temperature = reservoirTemperature;
@@ -98,6 +82,11 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
 
   public void setProdPhaseName(String prodPhaseName) {
     this.prodPhaseName = prodPhaseName;
+  }
+
+  public void setFlowRate(double flowRate, String flowUnit) {
+    this.flowRate = flowRate;
+    this.flowUnit = flowUnit;
   }
 
 
