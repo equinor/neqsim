@@ -4468,7 +4468,6 @@ public abstract class SystemThermo implements SystemInterface {
         getPhase(i).initPhysicalProperties();
       }
     }
-    init(0);
   }
 
   /** {@inheritDoc} */

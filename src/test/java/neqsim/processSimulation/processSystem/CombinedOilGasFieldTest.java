@@ -41,6 +41,7 @@ public class CombinedOilGasFieldTest {
     wellFluid.addTBPfraction("C13_Gas", 0.0, 450.0 / 1000.0, 850.0 / 1000.0);
 
     wellFluid.setMixingRule("classic");
+    wellFluid.init(0);
 
     neqsim.thermo.system.SystemInterface wellFluidGasWell =
         (neqsim.thermo.system.SystemInterface) wellFluid.clone();
