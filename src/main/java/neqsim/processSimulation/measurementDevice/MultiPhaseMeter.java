@@ -254,13 +254,13 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       double GOR_via_corrected_volume = tempFluid.getPhase("gas").getCorrectedVolume()
           / tempFluid.getPhase("oil").getCorrectedVolume();
 
-      //System.out.println("Stream 2 (results inside MPM) " + " GOR sm3/sm3 " + GOR_in_sm3_sm3
-      //    + " GOR Corrected by volume " + GOR_via_corrected_volume);
+      // System.out.println("Stream 2 (results inside MPM) " + " GOR sm3/sm3 " + GOR_in_sm3_sm3
+      // + " GOR Corrected by volume " + GOR_via_corrected_volume);
 
-      //System.out.println("Stream 2 (results inside MPM) getPhase(gas).getCorrectedVolume() "
-      //    + tempFluid.getPhase("gas").getCorrectedVolume());
-      //System.out.println("Stream 2 (results inside MPM) getPhase(oil).getCorrectedVolume() "
-      //    + tempFluid.getPhase("oil").getCorrectedVolume());
+      // System.out.println("Stream 2 (results inside MPM) getPhase(gas).getCorrectedVolume() "
+      // + tempFluid.getPhase("gas").getCorrectedVolume());
+      // System.out.println("Stream 2 (results inside MPM) getPhase(oil).getCorrectedVolume() "
+      // + tempFluid.getPhase("oil").getCorrectedVolume());
 
       // GOR_via_corrected_volume and GOR_in_sm3_sm3 should not be so different ?
       return tempFluid.getPhase("gas").getCorrectedVolume()
