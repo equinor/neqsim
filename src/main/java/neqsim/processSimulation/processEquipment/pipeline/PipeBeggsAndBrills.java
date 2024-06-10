@@ -35,6 +35,9 @@ public class PipeBeggsAndBrills extends Pipeline {
   // Inside diameter of the pipe [m]
   private double insideDiameter = Double.NaN;
 
+  // Thickness diameter of the pipe [m]
+  private double pipeThickness = Double.NaN;
+
   // Roughness of the pipe wall [m]
   private double pipeWallRoughness = 1e-5;
 
@@ -227,6 +230,30 @@ public class PipeBeggsAndBrills extends Pipeline {
   public void setDiameter(double diameter) {
     insideDiameter = diameter;
   }
+
+  /**
+   * <p>
+   * setThickness.
+   * </p>
+   *
+   * @param pipeThickness the thickness to set
+   */
+  public void setThickness(double pipeThickness) {
+    this.pipeThickness = pipeThickness;
+  }
+
+
+  /**
+   * <p>
+   * getThickness.
+   * </p>
+   *
+   */
+  public double getThickness() {
+    return this.pipeThickness;
+  }
+
+
 
   /**
    * <p>

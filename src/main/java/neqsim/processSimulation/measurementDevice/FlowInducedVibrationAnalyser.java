@@ -1,0 +1,171 @@
+package neqsim.processSimulation.measurementDevice;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills;
+
+/**
+ * <p>
+ * FlowInducedVibrationAnalyser class.
+ * </p>
+ *
+ * @author SEROS
+ * @version $Id: $Id
+ */
+public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
+  private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(WaterDewPointAnalyser.class);
+
+  private double supportDistance = 3;
+
+  private Boolean calcSupportArrangement = false;
+
+  private String supportArrangement = "Stiff"; // Consult with a mechanical engineer regarding
+                                               // either the support distance or
+  // natural frequency of vibrations, especially if measurements have been taken
+
+  private String method = "LOF"; // Likelihood of failure
+  private PipeBeggsAndBrills pipe;
+  private Boolean segmentSet = false;
+  private int segment;
+
+
+  /**
+   * <p>
+   * Constructor for WaterDewPointAnalyser.
+   * </p>
+   *
+   * @param pipe a {@link neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills}
+   *        object
+   */
+  public FlowInducedVibrationAnalyser(PipeBeggsAndBrills pipe) {
+    this("Pipeline Flow Induced Vibration Analyzer", pipe);
+  }
+
+  /**
+   * <p>
+   * Constructor for FlowInducedVibrationAnalyser.
+   * </p>
+   *
+   * @param name Name of FlowInducedVibrationAnalyser
+   * @param pipe a {@link neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills}
+   *        object
+   */
+  public FlowInducedVibrationAnalyser(String name, PipeBeggsAndBrills pipe) {
+    super(name, "pipe");
+    this.pipe = pipe;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void displayResult() {
+    try {
+    } finally {
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMeasuredValue(String unit) {
+    if (method.equals("LOF")) {
+      if (!segmentSet) {
+        segment = pipe.getNumberOfIncrements();
+      }
+      double mixDensity = pipe.getSegmentMixtureDensity(segment);
+      double mixVelocity = pipe.getSegmentMixtureSuperficialVelocity(segment);
+      double gasVelocity = pipe.getSegmentGasSuperficialVelocity(segment);
+      double GVF = gasVelocity / mixVelocity;
+      double FVF = 1.0;
+      if (GVF > 0.88) {
+        if (GVF > 0.99) {
+          FVF = Math.sqrt(pipe.getSegmentMixtureViscosity(segment) / Math.sqrt(0.001));
+        } else {
+          FVF = -27.882 * GVF * GVF + 45.545 * GVF - 17.495;
+        }
+      }
+      double externalDiamater = (pipe.getDiameter() + 2 * pipe.getThickness()) * 1000;// mm
+      double alpha = 0.0;
+      double betta = 0.0;
+      if (supportArrangement == "Stiff") {
+        alpha = 446187 + 646 * externalDiamater
+            + 9.17E-4 * externalDiamater * externalDiamater * externalDiamater;
+        betta = 0.1 * Math.log(externalDiamater) - 1.3739;
+      } else if (supportArrangement == "Medium stiff") {
+        alpha = 283921 + 370 * externalDiamater;
+        betta = 0.1106 * Math.log(externalDiamater) - 1.501;
+      } else if (supportArrangement == "Medium") {
+        alpha = 150412 + 209 * externalDiamater;
+        betta = 0.0815 * Math.log(externalDiamater) - 1.3269;
+      } else {
+        alpha = 41.21 * Math.log(externalDiamater) + 49397;
+        betta = 0.0815 * Math.log(externalDiamater) - 1.3842;
+      }
+      double diameterOverThickness = pipe.getDiameter() / pipe.getThickness();
+      double Fv = alpha * Math.pow(diameterOverThickness, betta);
+      double LOF = mixDensity * mixVelocity * mixVelocity * FVF / Fv;
+      return LOF;
+    }
+    return 0.0;
+  }
+
+
+  /**
+   * <p>
+   * Getter for the field <code>method</code>.
+   * </p>
+   *
+   * @return a {@link java.lang.String} object
+   */
+  public String getMethod() {
+    return method;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>method</code>.
+   * </p>
+   *
+   * @param method a {@link java.lang.String} object
+   */
+  public void setMethod(String method) {
+    this.method = method;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>segment</code>.
+   * </p>
+   *
+   * @param segment a {@link java.lang.Double} object
+   */
+  public void setSegment(int segment) {
+    this.segment = segment;
+    this.segmentSet = true;
+  }
+
+  /**
+   * <p>
+   * Setter for the support arrangement <code>supportArrangement</code>.
+   * </p>
+   *
+   * @param segment a {@link java.lang.Double} object
+   */
+  public void setSupportArrangement(String arrangement) {
+    this.supportArrangement = arrangement;
+  }
+
+
+  /**
+   * <p>
+   * Setter for the support distance <code></code>.
+   * </p>
+   *
+   * @param distance a {@link java.lang.Double} object
+   */
+  public void setSupportDistance(Double distance) {
+    this.supportDistance = distance;
+  }
+
+
+
+}
