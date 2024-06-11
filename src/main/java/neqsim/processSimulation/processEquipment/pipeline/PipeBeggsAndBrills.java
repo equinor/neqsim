@@ -136,6 +136,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   private List<Double> mixtureViscosityProfile;
   private List<Double> mixtureDensityProfile;
+  private List<Double> liquidDensityProfile;
 
   private List<Double> liquidHoldupProfile;
   private List<Double> mixtureReynoldsNumber;
@@ -204,7 +205,7 @@ public class PipeBeggsAndBrills extends Pipeline {
       if (dataSet.next()) {
         this.pipeThickness = Double.parseDouble(dataSet.getString(pipeSpecification)) / 1000;
         this.insideDiameter =
-            (Double.parseDouble(dataSet.getString("OD")) - 2 * this.pipeThickness) / 1000;
+            (Double.parseDouble(dataSet.getString("OD"))) / 1000 - 2 * this.pipeThickness;
       }
     } catch (NumberFormatException e) {
       // TODO Auto-generated catch block
@@ -637,24 +638,30 @@ public class PipeBeggsAndBrills extends Pipeline {
               + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
           muNoSlip = mixtureLiquidViscosity * inputVolumeFractionLiquid
               + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+          liquidDensityProfile.add(mixtureLiquidDensity * 16.01846);
+        } else {
+          rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
+              + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
+          muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
+              + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+          liquidDensityProfile.add((system.getPhase(1).getDensity("lb/ft3")) * 16.01846);
         }
-        rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
-            + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
-        muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
-            + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
       } else {
         rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
             + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
         muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
             + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+        liquidDensityProfile.add((system.getPhase(1).getDensity("lb/ft3")) * 16.01846);
       }
     } else {
       if (system.hasPhaseType("gas")) {
         rhoNoSlip = (system.getPhase(0).getDensity("lb/ft3"));
         muNoSlip = (system.getPhase(0).getViscosity("cP"));
+        liquidDensityProfile.add(0.0);
       } else {
         rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3"));
         muNoSlip = (system.getPhase(1).getViscosity("cP"));
+        liquidDensityProfile.add(rhoNoSlip * 16.01846);
       }
     }
 
@@ -714,6 +721,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
     mixtureViscosityProfile = new ArrayList<>();
     mixtureDensityProfile = new ArrayList<>();
+    liquidDensityProfile = new ArrayList<>();
     liquidHoldupProfile = new ArrayList<>();
     mixtureReynoldsNumber = new ArrayList<>();
 
@@ -1017,6 +1025,12 @@ public class PipeBeggsAndBrills extends Pipeline {
     return new ArrayList<>(mixtureDensityProfile);
   }
 
+
+  public List<Double> getLiquidDensityProfile() {
+    return new ArrayList<>(liquidDensityProfile);
+  }
+
+
   /**
    * @return list of hold-up
    */
@@ -1111,6 +1125,20 @@ public class PipeBeggsAndBrills extends Pipeline {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
   }
+
+
+  /**
+   * @param index segment number
+   * @return Double
+   */
+  public Double getSegmentLiquidDensity(int index) {
+    if (index >= 0 && index <= liquidDensityProfile.size()) {
+      return liquidDensityProfile.get(index);
+    } else {
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
+    }
+  }
+
 
   /**
    * @param index segment number

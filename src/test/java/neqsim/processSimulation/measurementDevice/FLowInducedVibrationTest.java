@@ -16,6 +16,10 @@ public class FLowInducedVibrationTest extends neqsim.NeqSimTest {
   static FlowInducedVibrationAnalyser flowInducedVibrationAnalyser;
   static FlowInducedVibrationAnalyser flowInducedVibrationAnalyser2;
   static FlowInducedVibrationAnalyser flowInducedVibrationAnalyser3;
+  static FlowInducedVibrationAnalyser flowInducedVibrationAnalyserFRMS;
+  static FlowInducedVibrationAnalyser flowInducedVibrationAnalyserFRMS2;
+  static FlowInducedVibrationAnalyser flowInducedVibrationAnalyserFRMS3;
+
 
   /**
    * @throws java.lang.Exception
@@ -125,6 +129,9 @@ public class FLowInducedVibrationTest extends neqsim.NeqSimTest {
         new FlowInducedVibrationAnalyser("Flow Induced Vibrations Analyzer 1", pipe);
     flowInducedVibrationAnalyser.setMethod("LOF");
 
+    flowInducedVibrationAnalyserFRMS =
+        new FlowInducedVibrationAnalyser("Flow Induced Vibrations Analyzer FRMS", pipe);
+    flowInducedVibrationAnalyserFRMS.setMethod("FRMS");
 
     PipeBeggsAndBrills pipe2 = new PipeBeggsAndBrills(pipe.getOutStream());
     pipe2.setPipeWallRoughness(1e-6);
@@ -137,6 +144,9 @@ public class FLowInducedVibrationTest extends neqsim.NeqSimTest {
         new FlowInducedVibrationAnalyser("Flow Induced Vibrations Analyzer 2", pipe2);
     flowInducedVibrationAnalyser2.setMethod("LOF");
 
+    flowInducedVibrationAnalyserFRMS2 =
+        new FlowInducedVibrationAnalyser("Flow Induced Vibrations Analyzer FRMS 2", pipe2);
+    flowInducedVibrationAnalyserFRMS2.setMethod("FRMS");
 
     PipeBeggsAndBrills pipe3 = new PipeBeggsAndBrills(pipe2.getOutStream());
     pipe3.setPipeWallRoughness(1e-6);
@@ -149,29 +159,49 @@ public class FLowInducedVibrationTest extends neqsim.NeqSimTest {
         new FlowInducedVibrationAnalyser("Flow Induced Vibrations Analyzer 3", pipe3);
     flowInducedVibrationAnalyser3.setMethod("LOF");
 
+    flowInducedVibrationAnalyserFRMS3 =
+        new FlowInducedVibrationAnalyser("Flow Induced Vibrations Analyzer FRMS 3", pipe3);
+    flowInducedVibrationAnalyserFRMS3.setMethod("FRMS");
+
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(pipe);
     operations.add(flowInducedVibrationAnalyser);
+    operations.add(flowInducedVibrationAnalyserFRMS);
     operations.add(pipe2);
     operations.add(flowInducedVibrationAnalyser2);
+    operations.add(flowInducedVibrationAnalyserFRMS2);
     operations.add(pipe3);
     operations.add(flowInducedVibrationAnalyser3);
+    operations.add(flowInducedVibrationAnalyserFRMS3);
     operations.run();
 
     double LOF = ((FlowInducedVibrationAnalyser) operations
         .getMeasurementDevice("Flow Induced Vibrations Analyzer 1")).getMeasuredValue();
-    Assertions.assertEquals(LOF, 0.041, 0.05);
+    Assertions.assertEquals(LOF, 0.161, 0.05);
 
     double LOF2 = ((FlowInducedVibrationAnalyser) operations
         .getMeasurementDevice("Flow Induced Vibrations Analyzer 2")).getMeasuredValue();
-    Assertions.assertEquals(LOF2, 0.100, 0.05);
+    Assertions.assertEquals(LOF2, 0.1545, 0.05);
 
     double LOF3 = ((FlowInducedVibrationAnalyser) operations
         .getMeasurementDevice("Flow Induced Vibrations Analyzer 3")).getMeasuredValue();
     Assertions.assertEquals(LOF3, 0.00585, 0.05);
+
+    double FRMS = ((FlowInducedVibrationAnalyser) operations
+        .getMeasurementDevice("Flow Induced Vibrations Analyzer FRMS")).getMeasuredValue();
+    Assertions.assertEquals(FRMS, 176, 5);
+
+    double FRMS2 = ((FlowInducedVibrationAnalyser) operations
+        .getMeasurementDevice("Flow Induced Vibrations Analyzer FRMS 2")).getMeasuredValue();
+    Assertions.assertEquals(FRMS2, 144, 5);
+
+    double FRMS3 = ((FlowInducedVibrationAnalyser) operations
+        .getMeasurementDevice("Flow Induced Vibrations Analyzer FRMS 3")).getMeasuredValue();
+    Assertions.assertEquals(FRMS3, 87.74, 5);
+
   }
 
 

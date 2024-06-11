@@ -28,6 +28,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   private PipeBeggsAndBrills pipe;
   private Boolean segmentSet = false;
   private int segment;
+  private double FRMSConstant = 6.7;
 
 
   /**
@@ -67,14 +68,14 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   /** {@inheritDoc} */
   @Override
   public double getMeasuredValue(String unit) {
+    if (!segmentSet) {
+      segment = pipe.getNumberOfIncrements();
+    }
+    double mixDensity = pipe.getSegmentMixtureDensity(segment);
+    double mixVelocity = pipe.getSegmentMixtureSuperficialVelocity(segment);
+    double gasVelocity = pipe.getSegmentGasSuperficialVelocity(segment);
+    double GVF = gasVelocity / mixVelocity;
     if (method.equals("LOF")) {
-      if (!segmentSet) {
-        segment = pipe.getNumberOfIncrements();
-      }
-      double mixDensity = pipe.getSegmentMixtureDensity(segment);
-      double mixVelocity = pipe.getSegmentMixtureSuperficialVelocity(segment);
-      double gasVelocity = pipe.getSegmentGasSuperficialVelocity(segment);
-      double GVF = gasVelocity / mixVelocity;
       double FVF = 1.0;
       if (GVF > 0.88) {
         if (GVF > 0.99) {
@@ -104,8 +105,15 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
       double Fv = alpha * Math.pow(diameterOverThickness, betta);
       double LOF = mixDensity * mixVelocity * mixVelocity * FVF / Fv;
       return LOF;
+    } else if (method == "FRMS") {
+      if (GVF < 0.8) {
+        return GVF;
+      } else {
+        return 1 + 5 * (1 - GVF) * Math.pow(pipe.getDiameter(), 1.6) * FRMSConstant
+            * Math.pow(pipe.getSegmentLiquidDensity(segment), 0.6) * Math.pow(mixVelocity, 1.2);
+      }
     }
-    return 0.0;
+    return Double.NaN;
   }
 
 
@@ -141,6 +149,11 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   public void setSegment(int segment) {
     this.segment = segment;
     this.segmentSet = true;
+  }
+
+
+  public void setFRMSConstant(double frms) {
+    this.FRMSConstant = frms;
   }
 
   /**
