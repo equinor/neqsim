@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   private static final long serialVersionUID = 1001;
 
   int iteration;
+
+  private double nominalDiameter;
+
+  private Boolean PipeSpecSet = false;
 
   // Inlet pressure of the pipeline (initialization)
   private double inletPressure = Double.NaN;
@@ -54,7 +59,7 @@ public class PipeBeggsAndBrills extends Pipeline {
   private double mixtureFroudeNumber;
 
   // Specification of the pipe
-  private String pipeSpecification = "AP02";
+  private String pipeSpecification = "LD201";
 
   // Ref. Beggs and Brills
   private double A;
@@ -184,12 +189,31 @@ public class PipeBeggsAndBrills extends Pipeline {
    * Setter for the field <code>pipeSpecification</code>.
    * </p>
    *
-   * @param nominalDiameter a double
+   * @param nominalDiameter a double in inch
    * @param pipeSec a {@link java.lang.String} object
    */
   public void setPipeSpecification(double nominalDiameter, String pipeSec) {
-    pipeSpecification = pipeSec;
-    insideDiameter = nominalDiameter / 1000.0;
+    this.pipeSpecification = pipeSec;
+    this.nominalDiameter = nominalDiameter;
+    this.PipeSpecSet = true;
+
+    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+    java.sql.ResultSet dataSet =
+        database.getResultSet("SELECT * FROM pipedata where Size='" + nominalDiameter + "'");
+    try {
+      if (dataSet.next()) {
+        this.pipeThickness = Double.parseDouble(dataSet.getString(pipeSpecification)) / 1000;
+        this.insideDiameter =
+            (Double.parseDouble(dataSet.getString("OD")) - 2 * this.pipeThickness) / 1000;
+      }
+    } catch (NumberFormatException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+
   }
 
   /** {@inheritDoc} */
@@ -675,6 +699,7 @@ public class PipeBeggsAndBrills extends Pipeline {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+
     iteration = 0;
 
     pressureProfile = new ArrayList<>();

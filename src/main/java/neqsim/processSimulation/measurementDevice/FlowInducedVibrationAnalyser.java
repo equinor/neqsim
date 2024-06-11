@@ -100,7 +100,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
         alpha = 41.21 * Math.log(externalDiamater) + 49397;
         betta = 0.0815 * Math.log(externalDiamater) - 1.3842;
       }
-      double diameterOverThickness = pipe.getDiameter() / pipe.getThickness();
+      double diameterOverThickness = externalDiamater / (1000 * pipe.getThickness());
       double Fv = alpha * Math.pow(diameterOverThickness, betta);
       double LOF = mixDensity * mixVelocity * mixVelocity * FVF / Fv;
       return LOF;
