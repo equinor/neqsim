@@ -161,7 +161,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
    * Setter for the support arrangement <code>supportArrangement</code>.
    * </p>
    *
-   * @param segment a {@link java.lang.Double} object
+   * @param arrangement a {@link java.lang.String} object
    */
   public void setSupportArrangement(String arrangement) {
     this.supportArrangement = arrangement;
