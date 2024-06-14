@@ -91,39 +91,35 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
   @Test
   void testSolveTransient() {
     testInit();
+    pipe.solveSteadyState(10);
     // transient solver
     double[] times = {0, 10000, 20000}; // , 30000, 40000, 50000}; //, 60000, 70000, 80000,
     // 90000};
     pipe.getTimeSeries().setTimes(times);
-
-    SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(285.15, 200.0);
-    testSystem.addComponent("methane", 0.9);
-    testSystem.addComponent("ethane", 0.1);
-
-    SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos(315.15, 200.0);
-    testSystem2.addComponent("methane", 26000.0);
-    testSystem2.addComponent("ethane", 1.10);
+    SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos(285.15, 200.0);
+    testSystem2.addComponent("methane", 0.9);
+    testSystem2.addComponent("ethane", 0.1);
+    testSystem2.createDatabase(true);
     testSystem2.init(0);
     testSystem2.init(3);
     testSystem2.initPhysicalProperties();
+    testSystem2.setTotalFlowRate(80.0, "MSm3/day");
 
-    SystemInterface testSystem3 = new neqsim.thermo.system.SystemSrkEos(285.15, 200.0);
-    testSystem3.addComponent("methane", 29000.0);
-    testSystem3.addComponent("ethane", 1221.10);
-    testSystem3.init(0);
-
-    SystemInterface[] systems = {testSystem, testSystem2, testSystem2}; // , testSystem2,
+    SystemInterface[] systems = {testSystem2, testSystem2}; // ,
+                                                            // testSystem2,
     // testSystem2,
     // testSystem2}; //,testSystem2,testSystem2,testSystem2,testSystem2,testSystem2};
     pipe.getTimeSeries().setInletThermoSystems(systems);
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(10);
-    // double[] outletFlowRates = {0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-    // 0.01, 0.01, 0.01};
+    // double[] outletFlowRates = {0.01, 0.01, 0.01};// , 0.01, 0.01, 0.01, 0.01, 0.01,
+    // 0.01, 0.01, 0.01};s
     // pipe.getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
-
-    // pipe.solveTransient(20);
+    // System.out.println("pressure " +
+    // pipe.getTimeSeries().getThermoSystem()[1].getPressure("bara");
+    pipe.solveTransient(20);
+    System.out.println("pressure " + pipe.getNode(10).getBulkSystem().getPressure("bara"));
     // pipe.getDisplay().displayResult("composition");
-    // pipe.getDisplay().displayResult("pressure");
+    pipe.getDisplay().displayResult("pressure");
     // pipe.getDisplay().displayResult("composition");
     // pipe.getDisplay(1).displayResult();
   }
