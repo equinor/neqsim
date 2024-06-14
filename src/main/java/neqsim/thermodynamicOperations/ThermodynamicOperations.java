@@ -59,6 +59,7 @@ import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.CricondenThermFlash;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.HPTphaseEnvelope;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.pTphaseEnvelope;
+import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.pTphaseEnvelopeHCwater;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves.pLoadingCurve2;
 import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudents;
 import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudentsPH;
@@ -1608,6 +1609,18 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   public void calcPTphaseEnvelopeNew() {
     // double phasefraction = 1.0 - 1e-10;
     // operation = new pTphaseEnvelope(system, fileName, phasefraction, 1.0);
+    getOperation().run();
+  }
+
+  /**
+   * <p>
+   * calcPTphaseEnvelopeHCwater.
+   * </p>
+   */
+  public void calcPTphaseEnvelopeHCwater() {
+    operation = new pTphaseEnvelopeHCwater(system, fileName, (1.0 - 1e-10), 1.0, false);
+    // thisThread = new Thread(operation);
+    // thisThread.start();
     getOperation().run();
   }
 
