@@ -26,7 +26,7 @@ public class NeqSimUnit extends TwoPortEquipment {
   private String equipment = "pipeline";
   String flowPattern = "stratified";
   private double length = 1.0;
-  public int numberOfNodes = 100;
+  public int numberOfNodes = 10;
   private double ID = 0.5;
   private double outerTemperature = 283.15;
   public double interfacialArea = 0.0;
@@ -88,11 +88,11 @@ public class NeqSimUnit extends TwoPortEquipment {
   public void runDroplet() {
     PipeData pipe1 = new PipeData(getID(), 0.00025);
     FlowNodeInterface test = new DropletFlowNode(thermoSystem, pipe1);
-    test.setInterphaseModelType(1);
+    test.setInterphaseModelType(0);
     test.setLengthOfNode(getLength() / (numberOfNodes * 1.0));
     test.getGeometry().getSurroundingEnvironment().setTemperature(getOuterTemperature());
 
-    test.getFluidBoundary().setHeatTransferCalc(false);
+    test.getFluidBoundary().setHeatTransferCalc(true);
     test.getFluidBoundary().setMassTransferCalc(true);
     double length = 0;
     test.initFlowCalc();
