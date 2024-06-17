@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processSystem;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,7 @@ import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPA;
+import neqsim.thermo.util.empiric.BukacekWaterInGas;
 
 public class MLA_bug_test extends neqsim.NeqSimTest {
   Logger logger = LogManager.getLogger(MLA_bug_test.class);
@@ -348,6 +350,15 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     } catch (Exception ex) {
       logger.error("Something failed");
     }
-    System.out.println("water in gas "+ dehydratedGas.getFluid().getComponent("water").getx());
+    // System.out.println("water in gas " + dehydratedGas.getFluid().getComponent("water").getx());
+
+    assertEquals(-19.1886678,
+        p.getMeasurementDevice("water dew point analyser3").getMeasuredValue("C"), 1e-2);
+  }
+
+  @Test
+  public void testBukacekWaterInGas() {
+    assertEquals(-36.485388110,
+        BukacekWaterInGas.waterDewPointTemperature(8.2504356945e-6, 70.0) - 273.15, 1e-2);
   }
 }
