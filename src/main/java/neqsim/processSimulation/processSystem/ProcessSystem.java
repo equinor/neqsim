@@ -203,9 +203,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @return a {@link java.lang.Object} object
+   * @return a {@link MeasurementDeviceInterface} object
    */
-  public Object getMeasurementDevice(String name) {
+  public MeasurementDeviceInterface getMeasurementDevice(String name) {
     for (int i = 0; i < measurementDevices.size(); i++) {
       if (measurementDevices.get(i).getName().equals(name)) {
         return measurementDevices.get(i);
