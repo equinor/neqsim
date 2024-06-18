@@ -522,6 +522,8 @@ public class NeqSimDataBase
       updateTable("UNIFACInterParamC_UMRMC");
       updateTable("MBWR32param");
       updateTable("COMPSALT");
+      updateTable("PIPEDATA");
+
       // TODO: missing tables: ionicData, reactiondatakenteisenberg,
       // purecomponentvapourpressures,
       // binarysystemviscosity, binaryliquiddiffusioncoefficientdata,

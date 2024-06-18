@@ -1,0 +1,168 @@
+package neqsim.processSimulation.processEquipment.util;
+
+import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
+import neqsim.processSimulation.processEquipment.mixer.Mixer;
+import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
+import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
+
+/**
+ * <p>
+ * Adjuster class.
+ * </p>
+ *
+ * @author Even Solbraa
+ * @version $Id: $Id
+ */
+public class FlowRateAdjuster extends ProcessEquipmentBaseClass {
+  private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Adjuster.class);
+
+  StreamInterface adjustedStream;
+  StreamInterface outletStream;
+
+  public double desiredGasFlow;
+  public double desiredOilFlow;
+  public double desiredWaterFlow;
+  private String unit;
+
+  ProcessEquipmentInterface adjustedEquipment = null;
+  ProcessEquipmentInterface targetEquipment = null;
+
+  String adjustedVariable = "";
+  String adjustedVariableUnit = "";
+  double maxAdjustedValue = 1e10;
+  double minAdjustedValue = -1e10;
+  String targetVariable = "";
+  String targetPhase = "";
+  String targetComponent = "";
+
+  double targetValue = 0.0;
+  String targetUnit = "";
+  private double tolerance = 1e-6;
+  double inputValue = 0.0;
+  double oldInputValue = 0.0;
+  private double error = 1e6;
+  private double oldError = 1.0e6;
+
+  int iterations = 0;
+  private boolean activateWhenLess = false;
+
+  /**
+   * <p>
+   * Constructor for FlowRateAdjuster.
+   * </p>
+   */
+  @Deprecated
+  public FlowRateAdjuster() {
+    this("FlowRateAdjuster");
+  }
+
+  /**
+   * <p>
+   * Constructor for FlowRateAdjuster.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
+  public FlowRateAdjuster(String name) {
+    super(name);
+  }
+
+  /**
+   * <p>
+   * setAdjustedVariable.
+   * </p>
+   *
+   */
+  public void setAdjustedStream(StreamInterface adjustedStream) {
+    this.adjustedStream = adjustedStream;
+  }
+
+  /**
+   * <p>
+   * setAdjustedVariable.
+   * </p>
+   *
+   */
+  public void setAdjustedFlowRates(Double desiredGasFlow, Double desiredOilFlow,
+      Double desiredWaterFlow, String unit) {
+    this.desiredGasFlow = desiredGasFlow;
+    this.desiredOilFlow = desiredOilFlow;
+    this.desiredWaterFlow = desiredWaterFlow;
+    this.unit = unit;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run(UUID id) {
+    SystemInterface adjustedFluid = adjustedStream.getFluid();
+    ThermodynamicOperations thermoOps = new ThermodynamicOperations(adjustedFluid);
+    try {
+      thermoOps.TPflash();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
+    }
+
+    SystemInterface gasFluid = adjustedFluid.phaseToSystem("gas").clone();
+    SystemInterface oilFluid = adjustedFluid.phaseToSystem("oil").clone();
+    SystemInterface waterFluid = adjustedFluid.phaseToSystem("aqueous").clone();
+
+
+    gasFluid.initPhysicalProperties();
+    oilFluid.initPhysicalProperties();
+    waterFluid.initPhysicalProperties();
+
+    double oilDensity = oilFluid.getDensity("kg/m3");
+    double waterDensity = waterFluid.getDensity("kg/m3");
+
+    double temperature = adjustedStream.getTemperature("C");
+    double pressure = adjustedStream.getPressure("bara");
+
+    Stream gasStream = new Stream("Gas Stream", gasFluid);
+    gasStream.setTemperature(temperature, "C");
+    gasStream.setPressure(pressure, "bara");
+
+    Stream oilStream = new Stream("Oil Stream", oilFluid);
+    oilStream.setTemperature(temperature, "C");
+    oilStream.setPressure(pressure, "bara");
+
+    Stream waterStream = new Stream("Water Stream", waterFluid);
+    waterStream.setTemperature(temperature, "C");
+    waterStream.setPressure(pressure, "bara");
+
+    if (unit == "Sm3/hr") {
+      gasStream.setFlowRate(desiredGasFlow, unit);
+      oilStream.setFlowRate(desiredOilFlow * oilDensity, "kg/hr");
+      waterStream.setFlowRate(desiredWaterFlow * waterDensity, "kg/hr");
+    } else {
+      gasStream.setFlowRate(desiredGasFlow, unit);
+      oilStream.setFlowRate(desiredOilFlow, unit);
+      waterStream.setFlowRate(desiredWaterFlow, unit);
+    }
+    gasStream.run();
+    oilStream.run();
+    waterStream.run();
+
+    Mixer wellStramMixer = new StaticMixer("Stream mixer");
+    wellStramMixer.addStream(gasStream);
+    wellStramMixer.addStream(oilStream);
+    wellStramMixer.addStream(waterStream);
+    wellStramMixer.run();
+
+    outletStream = wellStramMixer.getOutletStream();
+
+    setCalculationIdentifier(id);
+  }
+
+
+  public StreamInterface getOutletStream() {
+    return outletStream;
+  }
+}

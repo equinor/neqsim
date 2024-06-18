@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +21,10 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   int iteration;
 
+  private double nominalDiameter;
+
+  private Boolean PipeSpecSet = false;
+
   // Inlet pressure of the pipeline (initialization)
   private double inletPressure = Double.NaN;
 
@@ -34,6 +39,9 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   // Inside diameter of the pipe [m]
   private double insideDiameter = Double.NaN;
+
+  // Thickness diameter of the pipe [m]
+  private double pipeThickness = Double.NaN;
 
   // Roughness of the pipe wall [m]
   private double pipeWallRoughness = 1e-5;
@@ -51,7 +59,7 @@ public class PipeBeggsAndBrills extends Pipeline {
   private double mixtureFroudeNumber;
 
   // Specification of the pipe
-  private String pipeSpecification = "AP02";
+  private String pipeSpecification = "LD201";
 
   // Ref. Beggs and Brills
   private double A;
@@ -128,6 +136,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   private List<Double> mixtureViscosityProfile;
   private List<Double> mixtureDensityProfile;
+  private List<Double> liquidDensityProfile;
 
   private List<Double> liquidHoldupProfile;
   private List<Double> mixtureReynoldsNumber;
@@ -181,12 +190,31 @@ public class PipeBeggsAndBrills extends Pipeline {
    * Setter for the field <code>pipeSpecification</code>.
    * </p>
    *
-   * @param nominalDiameter a double
+   * @param nominalDiameter a double in inch
    * @param pipeSec a {@link java.lang.String} object
    */
   public void setPipeSpecification(double nominalDiameter, String pipeSec) {
-    pipeSpecification = pipeSec;
-    insideDiameter = nominalDiameter / 1000.0;
+    this.pipeSpecification = pipeSec;
+    this.nominalDiameter = nominalDiameter;
+    this.PipeSpecSet = true;
+
+    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+    java.sql.ResultSet dataSet =
+        database.getResultSet("SELECT * FROM pipedata where Size='" + nominalDiameter + "'");
+    try {
+      if (dataSet.next()) {
+        this.pipeThickness = Double.parseDouble(dataSet.getString(pipeSpecification)) / 1000;
+        this.insideDiameter =
+            (Double.parseDouble(dataSet.getString("OD"))) / 1000 - 2 * this.pipeThickness;
+      }
+    } catch (NumberFormatException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+
   }
 
   /** {@inheritDoc} */
@@ -227,6 +255,30 @@ public class PipeBeggsAndBrills extends Pipeline {
   public void setDiameter(double diameter) {
     insideDiameter = diameter;
   }
+
+  /**
+   * <p>
+   * setThickness.
+   * </p>
+   *
+   * @param pipeThickness the thickness to set
+   */
+  public void setThickness(double pipeThickness) {
+    this.pipeThickness = pipeThickness;
+  }
+
+
+  /**
+   * <p>
+   * getThickness.
+   * </p>
+   *
+   */
+  public double getThickness() {
+    return this.pipeThickness;
+  }
+
+
 
   /**
    * <p>
@@ -586,24 +638,30 @@ public class PipeBeggsAndBrills extends Pipeline {
               + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
           muNoSlip = mixtureLiquidViscosity * inputVolumeFractionLiquid
               + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+          liquidDensityProfile.add(mixtureLiquidDensity * 16.01846);
+        } else {
+          rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
+              + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
+          muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
+              + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+          liquidDensityProfile.add((system.getPhase(1).getDensity("lb/ft3")) * 16.01846);
         }
-        rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
-            + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
-        muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
-            + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
       } else {
         rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
             + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
         muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
             + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+        liquidDensityProfile.add((system.getPhase(1).getDensity("lb/ft3")) * 16.01846);
       }
     } else {
       if (system.hasPhaseType("gas")) {
         rhoNoSlip = (system.getPhase(0).getDensity("lb/ft3"));
         muNoSlip = (system.getPhase(0).getViscosity("cP"));
+        liquidDensityProfile.add(0.0);
       } else {
         rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3"));
         muNoSlip = (system.getPhase(1).getViscosity("cP"));
+        liquidDensityProfile.add(rhoNoSlip * 16.01846);
       }
     }
 
@@ -648,6 +706,7 @@ public class PipeBeggsAndBrills extends Pipeline {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+
     iteration = 0;
 
     pressureProfile = new ArrayList<>();
@@ -662,6 +721,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
     mixtureViscosityProfile = new ArrayList<>();
     mixtureDensityProfile = new ArrayList<>();
+    liquidDensityProfile = new ArrayList<>();
     liquidHoldupProfile = new ArrayList<>();
     mixtureReynoldsNumber = new ArrayList<>();
 
@@ -965,6 +1025,12 @@ public class PipeBeggsAndBrills extends Pipeline {
     return new ArrayList<>(mixtureDensityProfile);
   }
 
+
+  public List<Double> getLiquidDensityProfile() {
+    return new ArrayList<>(liquidDensityProfile);
+  }
+
+
   /**
    * @return list of hold-up
    */
@@ -1059,6 +1125,20 @@ public class PipeBeggsAndBrills extends Pipeline {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
   }
+
+
+  /**
+   * @param index segment number
+   * @return Double
+   */
+  public Double getSegmentLiquidDensity(int index) {
+    if (index >= 0 && index <= liquidDensityProfile.size()) {
+      return liquidDensityProfile.get(index);
+    } else {
+      throw new IndexOutOfBoundsException("Index is out of bounds.");
+    }
+  }
+
 
   /**
    * @param index segment number
