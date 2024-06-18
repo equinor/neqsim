@@ -874,7 +874,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   public StreamInterface getFeedStream() {
-    return new Stream(getName(), getThermoSystem());
+    return inletStreamMixer.getOutletStream();
   }
 
   /** {@inheritDoc} */
