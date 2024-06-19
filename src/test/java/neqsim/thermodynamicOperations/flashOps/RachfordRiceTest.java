@@ -11,7 +11,8 @@ public class RachfordRiceTest {
     double[] K = new double[] {2.0, 0.01};
 
     try {
-      Assertions.assertEquals(0.407070707, RachfordRice.calcBeta(K, z), 1e-6);
+      RachfordRice rachfordRice = new RachfordRice();
+      Assertions.assertEquals(0.407070707, rachfordRice.calcBeta(K, z), 1e-6);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -25,7 +26,8 @@ public class RachfordRiceTest {
     double[] K = new double[] {2.0, 0.01};
 
     try {
-      Assertions.assertEquals(0.407070707, RachfordRice.calcBeta(K, z), 1e-6);
+      RachfordRice rachfordRice = new RachfordRice();
+      Assertions.assertEquals(0.407070707, rachfordRice.calcBeta(K, z), 1e-6);
     } catch (Exception e) {
       e.printStackTrace();
     }
