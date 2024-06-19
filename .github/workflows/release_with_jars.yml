@@ -61,7 +61,7 @@ jobs:
         run: mvn -B package --file pomJava8.xml
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*Java8.jar staging
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: jarfiles
           path: staging
@@ -86,7 +86,7 @@ jobs:
         run: mvn -B package --file pom.xml
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*.jar staging
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: jarfiles
           path: staging
@@ -113,7 +113,7 @@ jobs:
         run: cd target && find . -type f -name "neqsim-*.jar" -exec sh -c 'mv -f $0 ${0%.jar}-Java21.jar' {} \; && cd ..
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*Java21.jar staging
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: jarfiles
           path: staging
