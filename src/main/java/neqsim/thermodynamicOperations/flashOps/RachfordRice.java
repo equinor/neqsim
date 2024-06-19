@@ -6,13 +6,16 @@
 
 package neqsim.thermodynamicOperations.flashOps;
 
+import java.io.Serializable;
+
 /**
  * RachfordRice classes.
  *
  * @author Even Solbraa
  */
-public class RachfordRice {
+public class RachfordRice implements Serializable {
   private static final long serialVersionUID = 1000;
+  private double[] beta = new double[2];
 
   /**
    * <p>
@@ -25,7 +28,7 @@ public class RachfordRice {
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
-  public static double calcBeta(double[] K, double[] z) throws neqsim.util.exception.IsNaNException,
+  public double calcBeta(double[] K, double[] z) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
 
     int i;
@@ -138,6 +141,8 @@ public class RachfordRice {
     } else if (nybeta >= 1.0 - tolerance) {
       nybeta = 1.0 - tolerance;
     }
+    beta[0] = nybeta;
+    beta[1] = 1.0 - nybeta;
 
     if (iterations >= maxIterations) {
       throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(), "calcBeta",
@@ -159,8 +164,7 @@ public class RachfordRice {
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
-  public static double calcBeta2(double[] K, double[] z)
-      throws neqsim.util.exception.IsNaNException,
+  public double calcBeta2(double[] K, double[] z) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
 
     double tolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
@@ -269,6 +273,9 @@ public class RachfordRice {
       V = 1.0 - tolerance;
     }
 
+    beta[0] = V;
+    beta[1] = 1.0 - V;
+
     if (iter >= maxIterations) {
       throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(), "calcBeta",
           maxIterations);
@@ -278,6 +285,10 @@ public class RachfordRice {
     }
 
     return V;
+  }
+
+  public double[] getBeta() {
+    return beta;
   }
 
 }

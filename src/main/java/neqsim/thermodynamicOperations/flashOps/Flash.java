@@ -352,9 +352,15 @@ public abstract class Flash extends BaseOperation {
         this.solidPhaseFlash();
       }
     } else {
+      RachfordRice rachfordRice = new RachfordRice();
       try {
-        system.setBeta(RachfordRice.calcBeta(system.getKvector(), system.getzvector()));
+        system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
       } catch (Exception ex) {
+        if (!Double.isNaN(rachfordRice.getBeta()[0])) {
+          system.setBeta(rachfordRice.getBeta()[0]);
+        } else {
+          system.setBeta(Double.NaN);
+        }
         logger.error(ex.getMessage(), ex);
       }
       system.calc_x_y();
