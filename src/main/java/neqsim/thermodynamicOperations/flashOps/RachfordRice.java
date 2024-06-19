@@ -15,7 +15,7 @@ import java.io.Serializable;
  */
 public class RachfordRice implements Serializable {
   private static final long serialVersionUID = 1000;
-  double[] beta = new double[2];
+  private double[] beta = new double[2];
 
   /**
    * <p>
