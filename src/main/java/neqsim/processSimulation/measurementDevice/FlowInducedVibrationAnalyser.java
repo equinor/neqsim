@@ -87,14 +87,14 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
       double externalDiamater = (pipe.getDiameter() + 2 * pipe.getThickness()) * 1000;// mm
       double alpha = 0.0;
       double betta = 0.0;
-      if (supportArrangement == "Stiff") {
+      if (supportArrangement.equals("Stiff")) {
         alpha = 446187 + 646 * externalDiamater
             + 9.17E-4 * externalDiamater * externalDiamater * externalDiamater;
         betta = 0.1 * Math.log(externalDiamater) - 1.3739;
-      } else if (supportArrangement == "Medium stiff") {
+      } else if (supportArrangement.equals("Medium stiff")) {
         alpha = 283921 + 370 * externalDiamater;
         betta = 0.1106 * Math.log(externalDiamater) - 1.501;
-      } else if (supportArrangement == "Medium") {
+      } else if (supportArrangement.equals("Medium")) {
         alpha = 150412 + 209 * externalDiamater;
         betta = 0.0815 * Math.log(externalDiamater) - 1.3269;
       } else {
@@ -105,7 +105,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
       double Fv = alpha * Math.pow(diameterOverThickness, betta);
       double LOF = mixDensity * mixVelocity * mixVelocity * FVF / Fv;
       return LOF;
-    } else if (method == "FRMS") {
+    } else if (method.equals("FRMS")) {
       if (GVF < 0.8) {
         return GVF;
       } else {

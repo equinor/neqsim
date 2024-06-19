@@ -137,7 +137,7 @@ public class FlowRateAdjuster extends ProcessEquipmentBaseClass {
     waterStream.setTemperature(temperature, "C");
     waterStream.setPressure(pressure, "bara");
 
-    if (unit == "Sm3/hr") {
+    if (unit.equals("Sm3/hr")) {
       gasStream.setFlowRate(desiredGasFlow, unit);
       oilStream.setFlowRate(desiredOilFlow * oilDensity, "kg/hr");
       waterStream.setFlowRate(desiredWaterFlow * waterDensity, "kg/hr");
