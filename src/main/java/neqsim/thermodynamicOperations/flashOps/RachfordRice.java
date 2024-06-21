@@ -135,7 +135,7 @@ public class RachfordRice implements Serializable {
         nybeta = 1.0 - betal;
       }
       step = gbeta / deriv;
-    } while (Math.abs(step) >= 1.0e-10 && iterations < maxIterations);
+    } while (Math.abs(step) >= 1.5e-10 && iterations < maxIterations);
     if (nybeta <= tolerance) {
       nybeta = tolerance;
     } else if (nybeta >= 1.0 - tolerance) {
