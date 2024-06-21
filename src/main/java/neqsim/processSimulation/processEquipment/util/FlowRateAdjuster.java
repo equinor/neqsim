@@ -3,8 +3,8 @@ package neqsim.processSimulation.processEquipment.util;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
+import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -20,12 +20,11 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class FlowRateAdjuster extends ProcessEquipmentBaseClass {
+public class FlowRateAdjuster extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Adjuster.class);
 
-  StreamInterface adjustedStream;
-  StreamInterface outletStream;
+  String name = "Flow Rate Adjuster";
 
   public double desiredGasFlow;
   public double desiredOilFlow;
@@ -61,7 +60,7 @@ public class FlowRateAdjuster extends ProcessEquipmentBaseClass {
    */
   @Deprecated
   public FlowRateAdjuster() {
-    this("FlowRateAdjuster");
+    this("Flow Rate Adjuster");
   }
 
   /**
@@ -75,14 +74,8 @@ public class FlowRateAdjuster extends ProcessEquipmentBaseClass {
     super(name);
   }
 
-  /**
-   * <p>
-   * setAdjustedVariable.
-   * </p>
-   *
-   */
-  public void setAdjustedStream(StreamInterface adjustedStream) {
-    this.adjustedStream = adjustedStream;
+  public FlowRateAdjuster(String name, StreamInterface inStream) {
+    super(name, inStream);
   }
 
   /**
@@ -102,7 +95,7 @@ public class FlowRateAdjuster extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    SystemInterface adjustedFluid = adjustedStream.getFluid();
+    SystemInterface adjustedFluid = inStream.getFluid();
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(adjustedFluid);
     try {
       thermoOps.TPflash();
@@ -122,8 +115,8 @@ public class FlowRateAdjuster extends ProcessEquipmentBaseClass {
     double oilDensity = oilFluid.getDensity("kg/m3");
     double waterDensity = waterFluid.getDensity("kg/m3");
 
-    double temperature = adjustedStream.getTemperature("C");
-    double pressure = adjustedStream.getPressure("bara");
+    double temperature = inStream.getTemperature("C");
+    double pressure = inStream.getPressure("bara");
 
     Stream gasStream = new Stream("Gas Stream", gasFluid);
     gasStream.setTemperature(temperature, "C");
@@ -156,13 +149,10 @@ public class FlowRateAdjuster extends ProcessEquipmentBaseClass {
     wellStramMixer.addStream(waterStream);
     wellStramMixer.run();
 
-    outletStream = wellStramMixer.getOutletStream();
+    outStream.setThermoSystem(wellStramMixer.getOutletStream().getFluid());
+    outStream.run();
+    outStream.setCalculationIdentifier(id);
 
-    setCalculationIdentifier(id);
   }
 
-
-  public StreamInterface getOutletStream() {
-    return outletStream;
-  }
 }

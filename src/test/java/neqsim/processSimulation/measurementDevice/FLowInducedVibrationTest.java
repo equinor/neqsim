@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills;
 import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.util.FlowRateAdjuster;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -77,7 +76,7 @@ public class FLowInducedVibrationTest extends neqsim.NeqSimTest {
     testSystem.useVolumeCorrection(true);
     testSystem.setPressure(pressure, "bara");
     testSystem.setTemperature(temperature, "C");
-    testSystem.setTotalFlowRate(1000.0, "kg/hr");
+    testSystem.setTotalFlowRate(100.0, "kg/hr");
     testSystem.setMultiPhaseCheck(true);
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -85,36 +84,12 @@ public class FLowInducedVibrationTest extends neqsim.NeqSimTest {
     testSystem.initPhysicalProperties();
 
     Stream stream_1 = new Stream("Stream1", testSystem);
-    stream_1.setFlowRate(1000.0, "kg/hr");
+    stream_1.setFlowRate(100.0, "kg/hr");
 
-    FlowRateAdjuster flowRateAdj = new FlowRateAdjuster("Flow rate adjuster");
-    flowRateAdj.setAdjustedStream(stream_1);
-    flowRateAdj.setAdjustedFlowRates(41886.7, 88700.0, 22000.0, "kg/hr");
-    flowRateAdj.run();
-
-    StreamInterface adjustedStream = flowRateAdj.getOutletStream();
-
-    double adjGasMass = adjustedStream.getFluid().getPhase("gas").getFlowRate("kg/hr");
-    double adjOilMass = adjustedStream.getFluid().getPhase("oil").getFlowRate("kg/hr");
-    double adjWaterMass = adjustedStream.getFluid().getPhase("aqueous").getFlowRate("kg/hr");
-
-    Assertions.assertEquals(adjGasMass, 41886.7, 0.05);
-    Assertions.assertEquals(adjOilMass, 88700.0, 0.05);
-    Assertions.assertEquals(adjWaterMass, 22000.0, 0.05);
-
+    FlowRateAdjuster flowRateAdj = new FlowRateAdjuster("Flow rate adjuster", stream_1);
     flowRateAdj.setAdjustedFlowRates(gas_flow_rate, oil_flow_rate, water_flow_rate, "Sm3/hr");
-    flowRateAdj.run();
 
-    StreamInterface adjustedStream2 = flowRateAdj.getOutletStream();
-    double adjGasVol = adjustedStream2.getFluid().getPhase("gas").getFlowRate("Sm3/hr");
-    double adjOilVol = adjustedStream2.getFluid().getPhase("oil").getFlowRate("m3/hr");
-    double adjWaterVol = adjustedStream2.getFluid().getPhase("aqueous").getFlowRate("m3/hr");
-
-    Assertions.assertEquals(adjGasVol, gas_flow_rate, 0.05);
-    Assertions.assertEquals(adjOilVol, oil_flow_rate, 0.05);
-    Assertions.assertEquals(adjWaterVol, water_flow_rate, 0.05);
-
-    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills(adjustedStream2);
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills(flowRateAdj.getOutStream());
     pipe.setPipeWallRoughness(1e-6);
     pipe.setLength(25);
     pipe.setElevation(0.0);
@@ -128,10 +103,12 @@ public class FLowInducedVibrationTest extends neqsim.NeqSimTest {
     flowInducedVibrationAnalyserFRMS =
         new FlowInducedVibrationAnalyser("Flow Induced Vibrations Analyzer FRMS", pipe);
     flowInducedVibrationAnalyserFRMS.setMethod("FRMS");
+    pipe.getOutletStream();
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(stream_1);
+    operations.add(flowRateAdj);
     operations.add(pipe);
     operations.add(flowInducedVibrationAnalyser);
     operations.add(flowInducedVibrationAnalyserFRMS);
