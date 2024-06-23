@@ -22,7 +22,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class FlowRateAdjuster extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(Adjuster.class);
+  static Logger logger = LogManager.getLogger(FlowRateAdjuster.class);
 
   String name = "Flow Rate Adjuster";
 
