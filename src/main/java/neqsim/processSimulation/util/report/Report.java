@@ -2,6 +2,8 @@ package neqsim.processSimulation.util.report;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -22,6 +24,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class Report {
+  static Logger logger = LogManager.getLogger(Report.class);
   ProcessSystem process = null;
   ProcessEquipmentBaseClass processEquipment = null;
   SystemInterface fluid = null;
@@ -67,9 +70,13 @@ public class Report {
     // Iterate through the entries of the json_reports map
     for (Map.Entry<String, String> entry : json_reports.entrySet()) {
       // Parse each value as a separate JSON object using the static parseString method
-      JsonObject nestedJsonObject = JsonParser.parseString(entry.getValue()).getAsJsonObject();
-      // Update the final JsonObject with the parsed JSON object
-      finalJsonObject.add(entry.getKey(), nestedJsonObject);
+      try {
+        JsonObject nestedJsonObject = JsonParser.parseString(entry.getValue()).getAsJsonObject();
+        // Update the final JsonObject with the parsed JSON object
+        finalJsonObject.add(entry.getKey(), nestedJsonObject);
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+      }
     }
 
     // Convert the final JsonObject to a JSON string with pretty printing

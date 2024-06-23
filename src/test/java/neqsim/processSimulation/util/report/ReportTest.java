@@ -2,6 +2,7 @@ package neqsim.processSimulation.util.report;
 
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
+import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
@@ -34,10 +35,14 @@ public class ReportTest {
     ThrottlingValve valve = new ThrottlingValve("valve 1", separator.getLiquidOutStream());
     valve.setOutletPressure(1.0, "bara");
 
+    Mixer mixer1 = new Mixer("mixer 1");
+    mixer1.addStream(valve.getOutletStream());
+
     processOps.add(inletStream);
     processOps.add(separator);
     processOps.add(compressor);
     processOps.add(valve);
+    processOps.add(mixer1);
     processOps.run();
 
     Report report = new Report(processOps);
