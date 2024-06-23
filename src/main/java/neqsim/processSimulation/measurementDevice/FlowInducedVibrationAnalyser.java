@@ -53,7 +53,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
    *        object
    */
   public FlowInducedVibrationAnalyser(String name, PipeBeggsAndBrills pipe) {
-    super(name, "pipe");
+    super(name, pipe.getName() + " FIV analyser");
     this.pipe = pipe;
   }
 

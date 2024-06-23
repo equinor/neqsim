@@ -89,7 +89,7 @@ public class FLowInducedVibrationTest extends neqsim.NeqSimTest {
     FlowRateAdjuster flowRateAdj = new FlowRateAdjuster("Flow rate adjuster", stream_1);
     flowRateAdj.setAdjustedFlowRates(gas_flow_rate, oil_flow_rate, water_flow_rate, "Sm3/hr");
 
-    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills(flowRateAdj.getOutStream());
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipe1 ", flowRateAdj.getOutletStream());
     pipe.setPipeWallRoughness(1e-6);
     pipe.setLength(25);
     pipe.setElevation(0.0);
