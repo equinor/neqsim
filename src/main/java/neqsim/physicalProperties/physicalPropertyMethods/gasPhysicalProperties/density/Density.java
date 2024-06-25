@@ -61,20 +61,21 @@ public class Density extends GasPhysicalPropertyMethod
   /**
    * {@inheritDoc}
    *
-   * <p>
    * Returns the density of the phase. Unit: kg/m^3
-   * </p>
    */
   @Override
   public double calcDensity() {
-    double tempVar = 0;
-    if (gasPhase.getPhase().useVolumeCorrection()) {
-      for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
-        tempVar += gasPhase.getPhase().getComponents()[i].getx()
-            * gasPhase.getPhase().getComponents()[i].getVolumeCorrection();
+    double tempVar = 0.0;
+    if (liquidPhase.getPhase().useVolumeCorrection()) {
+      for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
+        tempVar += liquidPhase.getPhase().getComponents()[i].getx()
+            * (liquidPhase.getPhase().getComponents()[i].getVolumeCorrection()
+                + liquidPhase.getPhase().getComponents()[i].getVolumeCorrectionT()
+                    * (liquidPhase.getPhase().getTemperature() - 288.15));
       }
     }
-    return 1.0 / (gasPhase.getPhase().getMolarVolume() - tempVar)
-        * gasPhase.getPhase().getMolarMass() * 1e5;
+    // System.out.println("density correction tempvar " + tempVar);
+    return 1.0 / (liquidPhase.getPhase().getMolarVolume() - tempVar)
+        * liquidPhase.getPhase().getMolarMass() * 1.0e5;
   }
 }
