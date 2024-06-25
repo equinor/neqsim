@@ -76,6 +76,6 @@ public class Density extends GasPhysicalPropertyMethod
     }
     // System.out.println("density correction tempvar " + tempVar);
     return 1.0 / (gasPhase.getPhase().getMolarVolume() - tempVar)
-        * gasPhase.getliquidPhasePhase().getMolarMass() * 1.0e5;
+        * gasPhase.getPhase().getMolarMass() * 1.0e5;
   }
 }
