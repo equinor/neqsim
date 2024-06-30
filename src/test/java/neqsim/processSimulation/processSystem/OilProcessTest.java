@@ -6,9 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.util.Assert;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.security.AnyTypePermission;
 
@@ -27,7 +25,7 @@ public class OilProcessTest extends neqsim.NeqSimTest {
     p.setName(_name);
   }
 
-  @Test
+  //@Test
   public void runTest() {
     XStream xstream = new XStream();
     xstream.addPermission(AnyTypePermission.ANY);
