@@ -158,9 +158,6 @@ public class RachfordRice implements Serializable {
 
 
 
-
-  
-
   /**
    * <p>
    * calcBeta. For gas liquid systems. Method based on Avoiding round-off error in the Rachford–Rice
@@ -300,7 +297,6 @@ public class RachfordRice implements Serializable {
 
 
 
-
   /** {@inheritDoc} */
   public final double calcBetaS(SystemInterface system) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
@@ -308,18 +304,11 @@ public class RachfordRice implements Serializable {
 
     int i;
     double tolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
-    double deriv = 0.0;
-    double gbeta = 0.0;
-    double betal = 0;
-    double nybeta = 0;
-
     double midler = 0;
     double minBeta = tolerance;
     double maxBeta = 1.0 - tolerance;
     double g0 = -1.0;
     double g1 = 1.0;
-    nybeta = this.beta[0];
-    betal = 1.0 - nybeta;
 
     for (i = 0; i < system.getNumberOfComponents(); i++) {
       midler = (compArray[i].getK() * compArray[i].getz() - 1.0) / (compArray[i].getK() - 1.0);
@@ -345,18 +334,12 @@ public class RachfordRice implements Serializable {
       return this.beta[0];
     }
 
-    nybeta = (minBeta + maxBeta) / 2.0;
-    // System.out.println("guessed beta: " + nybeta + " maxbeta: " +maxBeta + "
-    // minbeta: " +minBeta );
-    betal = 1.0 - nybeta;
+    double nybeta = (minBeta + maxBeta) / 2.0;
 
-    // ' *l = 1.0-nybeta;
     double gtest = 0.0;
     for (i = 0; i < system.getNumberOfComponents(); i++) {
       gtest += compArray[i].getz() * (compArray[i].getK() - 1.0)
-          / (1.0 - nybeta + nybeta * compArray[i].getK()); // beta
-                                                          // =
-                                                          // nybeta
+          / (1.0 - nybeta + nybeta * compArray[i].getK());
     }
 
     if (gtest >= 0) {
@@ -373,12 +356,14 @@ public class RachfordRice implements Serializable {
 
     int iterations = 0;
     int maxIterations = 300;
-    // System.out.println("gtest: " + gtest);
     double step = 1.0;
+    double deriv = 0.0;
+    double gbeta = 0.0;
+    double betal = 1.0 - nybeta;
+
     do {
       iterations++;
       if (gtest >= 0) {
-        // oldbeta = nybeta;
         deriv = 0.0;
         gbeta = 0.0;
 
@@ -397,7 +382,6 @@ public class RachfordRice implements Serializable {
         }
         nybeta -= (gbeta / deriv);
 
-        // System.out.println("beta: " + maxBeta);
         if (nybeta > maxBeta) {
           nybeta = maxBeta;
         }
@@ -405,12 +389,7 @@ public class RachfordRice implements Serializable {
           nybeta = minBeta;
         }
 
-        /*
-        * if ((nybeta > maxBeta) || (nybeta < minBeta)) { // nybeta = 0.5 * (maxBeta + minBeta);
-        * gbeta = 1.0; }
-        */
       } else {
-        // oldbeta = betal;
         deriv = 0.0;
         gbeta = 0.0;
 
@@ -436,18 +415,11 @@ public class RachfordRice implements Serializable {
           betal = minBeta;
         }
 
-        /*
-        * if ((betal > maxBeta) || (betal < minBeta)) { gbeta = 1.0; { betal = 0.5 * (maxBeta +
-        * minBeta); } }
-        */
         nybeta = 1.0 - betal;
       }
       step = gbeta / deriv;
-      // System.out.println("step : " + step);
     } while (Math.abs(step) >= 1.0e-10 && iterations < maxIterations); // &&
-    // (Math.abs(nybeta)-Math.abs(maxBeta))>0.1);
 
-    // System.out.println("beta: " + nybeta + " iterations: " + iterations);
     if (nybeta <= tolerance) {
       // this.phase = 1;
       nybeta = tolerance;
@@ -467,17 +439,15 @@ public class RachfordRice implements Serializable {
     }
     if (Double.isNaN(beta[1])) {
       /*
-      * for (i = 0; i < numberOfComponents; i++) { System.out.println("K " + compArray[i].getK());
-      * System.out.println("z " + compArray[i].getz()); }
-      */
+       * for (i = 0; i < numberOfComponents; i++) { System.out.println("K " + compArray[i].getK());
+       * System.out.println("z " + compArray[i].getz()); }
+       */
       throw new neqsim.util.exception.IsNaNException(this, "calcBeta", "beta");
     }
     return this.beta[0];
   }
-  
+
 
 }
-
-
 
 
