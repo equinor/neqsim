@@ -7,6 +7,8 @@
 package neqsim.thermodynamicOperations.flashOps;
 
 import java.io.Serializable;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  * RachfordRice classes.
@@ -154,6 +156,8 @@ public class RachfordRice implements Serializable {
     return nybeta;
   }
 
+
+
   /**
    * <p>
    * calcBeta. For gas liquid systems. Method based on Avoiding round-off error in the Rachford–Rice
@@ -291,4 +295,159 @@ public class RachfordRice implements Serializable {
     return beta;
   }
 
+
+
+  /** {@inheritDoc} */
+  public final double calcBetaS(SystemInterface system) throws neqsim.util.exception.IsNaNException,
+      neqsim.util.exception.TooManyIterationsException {
+    ComponentInterface[] compArray = system.getPhase(0).getComponents();
+
+    int i;
+    double tolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+    double midler = 0;
+    double minBeta = tolerance;
+    double maxBeta = 1.0 - tolerance;
+    double g0 = -1.0;
+    double g1 = 1.0;
+
+    for (i = 0; i < system.getNumberOfComponents(); i++) {
+      midler = (compArray[i].getK() * compArray[i].getz() - 1.0) / (compArray[i].getK() - 1.0);
+      if ((midler > minBeta) && (compArray[i].getK() > 1.0)) {
+        minBeta = midler;
+      }
+      midler = (1.0 - compArray[i].getz()) / (1.0 - compArray[i].getK());
+      if ((midler < maxBeta) && (compArray[i].getK() < 1.0)) {
+        maxBeta = midler;
+      }
+      g0 += compArray[i].getz() * compArray[i].getK();
+      g1 += -compArray[i].getz() / compArray[i].getK();
+    }
+
+    if (g0 < 0) {
+      this.beta[1] = 1.0 - tolerance;
+      this.beta[0] = tolerance;
+      return this.beta[0];
+    }
+    if (g1 > 0) {
+      this.beta[1] = tolerance;
+      this.beta[0] = 1.0 - tolerance;
+      return this.beta[0];
+    }
+
+    double nybeta = (minBeta + maxBeta) / 2.0;
+
+    double gtest = 0.0;
+    for (i = 0; i < system.getNumberOfComponents(); i++) {
+      gtest += compArray[i].getz() * (compArray[i].getK() - 1.0)
+          / (1.0 - nybeta + nybeta * compArray[i].getK());
+    }
+
+    if (gtest >= 0) {
+      minBeta = nybeta;
+    } else {
+      maxBeta = nybeta;
+    }
+
+    if (gtest < 0) {
+      double minold = minBeta;
+      minBeta = 1.0 - maxBeta;
+      maxBeta = 1.0 - minold;
+    }
+
+    int iterations = 0;
+    int maxIterations = 300;
+    double step = 1.0;
+    double deriv = 0.0;
+    double gbeta = 0.0;
+    double betal = 1.0 - nybeta;
+
+    do {
+      iterations++;
+      if (gtest >= 0) {
+        deriv = 0.0;
+        gbeta = 0.0;
+
+        for (i = 0; i < system.getNumberOfComponents(); i++) {
+          double temp1 = (compArray[i].getK() - 1.0);
+          double temp2 = 1.0 + temp1 * nybeta;
+          deriv += -(compArray[i].getz() * temp1 * temp1) / (temp2 * temp2);
+          gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0)
+              / (1.0 + (compArray[i].getK() - 1.0) * nybeta);
+        }
+
+        if (gbeta >= 0) {
+          minBeta = nybeta;
+        } else {
+          maxBeta = nybeta;
+        }
+        nybeta -= (gbeta / deriv);
+
+        if (nybeta > maxBeta) {
+          nybeta = maxBeta;
+        }
+        if (nybeta < minBeta) {
+          nybeta = minBeta;
+        }
+
+      } else {
+        deriv = 0.0;
+        gbeta = 0.0;
+
+        for (i = 0; i < system.getNumberOfComponents(); i++) {
+          deriv -= (compArray[i].getz() * (compArray[i].getK() - 1.0) * (1.0 - compArray[i].getK()))
+              / Math.pow((betal + (1 - betal) * compArray[i].getK()), 2);
+          gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0)
+              / (betal + (-betal + 1.0) * compArray[i].getK());
+        }
+
+        if (gbeta < 0) {
+          minBeta = betal;
+        } else {
+          maxBeta = betal;
+        }
+
+        betal -= (gbeta / deriv);
+
+        if (betal > maxBeta) {
+          betal = maxBeta;
+        }
+        if (betal < minBeta) {
+          betal = minBeta;
+        }
+
+        nybeta = 1.0 - betal;
+      }
+      step = gbeta / deriv;
+    } while (Math.abs(step) >= 1.0e-10 && iterations < maxIterations); // &&
+
+    if (nybeta <= tolerance) {
+      // this.phase = 1;
+      nybeta = tolerance;
+    } else if (nybeta >= 1.0 - tolerance) {
+      // this.phase = 0;
+      nybeta = 1.0 - tolerance;
+      // superheated vapour
+    } else {
+      // this.phase = 2;
+    } // two-phase liquid-gas
+
+    this.beta[0] = nybeta;
+    this.beta[1] = 1.0 - nybeta;
+
+    if (iterations >= maxIterations) {
+      throw new neqsim.util.exception.TooManyIterationsException(this, "calcBeta", maxIterations);
+    }
+    if (Double.isNaN(beta[1])) {
+      /*
+       * for (i = 0; i < numberOfComponents; i++) { System.out.println("K " + compArray[i].getK());
+       * System.out.println("z " + compArray[i].getz()); }
+       */
+      throw new neqsim.util.exception.IsNaNException(this, "calcBeta", "beta");
+    }
+    return this.beta[0];
+  }
+
+
 }
+
+
