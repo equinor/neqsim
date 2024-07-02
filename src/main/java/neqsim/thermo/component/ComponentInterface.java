@@ -633,6 +633,17 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
+   * setMolarMass.
+   * </p>
+   * 
+   * @param molarMass a double
+   * 
+   * @param unit a String
+   */
+  public void setMolarMass(double molarMass, String unit);
+
+  /**
+   * <p>
    * calcActivity.
    * </p>
    *
@@ -770,12 +781,32 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
+   * setTC.
+   * </p>
+   *
+   * @param val a double
+   * @param unit a String
+   */
+  public void setTC(double val, String unit);
+
+  /**
+   * <p>
    * setPC.
    * </p>
    *
    * @param val a double
    */
   public void setPC(double val);
+
+  /**
+   * <p>
+   * setPC.
+   * </p>
+   *
+   * @param val a double
+   * @param unit a String
+   */
+  public void setPC(double val, String unit);
 
   /**
    * <p>
@@ -1211,6 +1242,14 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * @return molar mass in unit kg/mol
    */
   public double getMolarMass();
+
+  /**
+   * Get molar mass of component.
+   *
+   * @param unit a String
+   * @return molar mass in unit kg/mol
+   */
+  public double getMolarMass(String unit);
 
   /**
    * <p>

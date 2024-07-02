@@ -14,6 +14,8 @@ import neqsim.thermo.atomElement.Element;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
+import neqsim.util.unit.PressureUnit;
+import neqsim.util.unit.TemperatureUnit;
 
 public abstract class Component implements ComponentInterface {
   private static final long serialVersionUID = 1000;
@@ -85,7 +87,6 @@ public abstract class Component implements ComponentInterface {
   protected double criticalTemperature;
   protected double molarMass;
   protected double acentricFactor;
-
   protected double normalLiquidDensity = 0;
   protected double reducedPressure;
   protected double reducedTemperature;
@@ -672,8 +673,22 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public final void setTC(double val, String unit) {
+    TemperatureUnit inValue = new TemperatureUnit(val, unit);
+    criticalTemperature = inValue.getValue(val, unit, "K");
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public final void setPC(double val) {
     criticalPressure = val;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final void setPC(double val, String unit) {
+    PressureUnit inValue = new PressureUnit(val, unit);
+    criticalPressure = inValue.getValue(val, unit, "bara");
   }
 
   /** {@inheritDoc} */
@@ -790,6 +805,48 @@ public abstract class Component implements ComponentInterface {
         throw new RuntimeException("unit not supported " + unit);
     }
     return refDensity * conversionFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMolarMass(String unit) {
+    double refMolarMass = getMolarMass();
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "kg/mol":
+        conversionFactor = 1.0;
+        break;
+      case "gr/mol":
+        conversionFactor = 1000.0;
+        break;
+      case "lbm/lbmol":
+        conversionFactor = 1000.0;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
+    }
+    return refMolarMass * conversionFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setMolarMass(double value, String unit) {
+    double refMolarMass = value;
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "kg/mol":
+        conversionFactor = 1.0;
+        break;
+      case "gr/mol":
+        conversionFactor = 1000.0;
+        break;
+      case "lbm/lbmol":
+        conversionFactor = 1000.0;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
+    }
+    molarMass = refMolarMass * 1.0 / conversionFactor;
   }
 
   /** {@inheritDoc} */
