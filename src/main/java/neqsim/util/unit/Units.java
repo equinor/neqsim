@@ -141,7 +141,7 @@ public class Units {
     return activeUnits.get(name).symbolName;
   }
 
-  public void setUnit(String name, String symbol, String symbolName) {
+  public static void setUnit(String name, String symbol, String symbolName) {
     if (activeUnits.size() == 0) {
       new Units();
     }
