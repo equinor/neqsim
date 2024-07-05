@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class NewComponentTest extends neqsim.NeqSimTest {
@@ -94,5 +95,25 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     thermoSystem.getPhase(0).getComponent(0).setMolarMass(85.0, "lbm/lbmol");
     assertEquals(85.0, thermoSystem.getPhase(0).getComponent(0).getMolarMass("gr/mol"), 0.01);
 
+  }
+
+  @Test
+  public void volTransTtest() {
+    thermoSystem = new SystemPrEos(318.0, 20.01325);
+    thermoSystem.addComponent("CO2", 1.0);
+    thermoSystem.init(0);
+    thermoSystem.init(1);
+    thermoSystem.initPhysicalProperties("density");
+    assertEquals(36.68212551, thermoSystem.getDensity("kg/m3"), 0.01);
+
+    thermoSystem.getComponent("CO2").setVolumeCorrectionT(0.2);
+
+    thermoSystem.initPhysicalProperties("density");
+    assertEquals(37.6425616, thermoSystem.getDensity("kg/m3"), 0.01);
+
+    thermoSystem.getComponent("CO2").setRacketZ(0.3);
+
+    thermoSystem.initPhysicalProperties("density");
+    assertEquals(37.557573, thermoSystem.getDensity("kg/m3"), 0.01);
   }
 }
