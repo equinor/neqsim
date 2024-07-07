@@ -109,7 +109,8 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
         }
       } catch (Exception ex) {
         logger.warn("Failed to solve for molarVolume within the iteration limit.");
-        throw new RuntimeException(ex);
+        logger.error(ex.getMessage());
+        // throw new RuntimeException(ex);
         // logger.error("too many iterations in volume calc!", ex);
         // logger.info("moles " + numberOfMolesInPhase);
         // logger.info("molarVolume " + getMolarVolume());
@@ -191,21 +192,20 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * molarVolume2.
    * </p>
    *
-   * @param pressure a double
+   * @param pressure    a double
    * @param temperature a double
-   * @param A a double
-   * @param B a double
-   * @param pt the PhaseType of the phase.
+   * @param A           a double
+   * @param B           a double
+   * @param pt          the PhaseType of the phase.
    * @return a double
-   * @throws neqsim.util.exception.IsNaNException if any.
+   * @throws neqsim.util.exception.IsNaNException             if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double molarVolume2(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV =
-        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+    double BonV = pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     if (BonV < 0) {
       BonV = 0.0;
     }
@@ -288,9 +288,8 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV =
-        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+    double BonV = pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        : pressure * getB() / (numberOfMolesInPhase * temperature * R);
 
     if (BonV < 0) {
       BonV = 1.0e-4;
@@ -438,10 +437,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * calcAT.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -454,10 +453,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * calcATT.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -1199,8 +1198,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     }
 
     for (int i = 0; i < numberOfComponents; i++) {
-      matrix[i][numberOfComponents] =
-          (FBT + FBD * AT) * Bi[i] + FDT * Ai[i] + FD * componentArray[i].getAiT(); // dFdndT
+      matrix[i][numberOfComponents] = (FBT + FBD * AT) * Bi[i] + FDT * Ai[i] + FD * componentArray[i].getAiT(); // dFdndT
       matrix[numberOfComponents][i] = matrix[i][numberOfComponents];
 
       matrix[i][numberOfComponents + 1] = FnV + FBV * Bi[i] + FDV * Ai[i]; // dFdndV
