@@ -17,6 +17,14 @@ public class RachfordRiceTest {
       e.printStackTrace();
     }
 
+    try {
+      RachfordRice rachfordRice = new RachfordRice();
+      rachfordRice.setMethod("Nielsen2023");
+      Assertions.assertEquals(0.407070707, rachfordRice.calcBeta(K, z), 1e-6);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
   }
 
   @Test
