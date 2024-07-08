@@ -18,6 +18,37 @@ import neqsim.thermo.system.SystemInterface;
 public class RachfordRice implements Serializable {
   private static final long serialVersionUID = 1000;
   private double[] beta = new double[2];
+  private static String method = "Michelsen2001"; // alternative use Nielsen2023
+
+  public static String getMethod() {
+    return RachfordRice.method;
+  }
+
+  public static void setMethod(String method) {
+    RachfordRice.method = method;
+  }
+
+  /**
+   * <p>
+   * calcBeta. For gas liquid systems.
+   * </p>
+   * 
+   * Method used is defined in method String variable
+   *
+   * @return Beta Mole fraction of gas phase
+   * @throws neqsim.util.exception.IsNaNException if any.
+   * @throws neqsim.util.exception.TooManyIterationsException if any.
+   */
+  public double calcBeta(double[] K, double[] z) throws neqsim.util.exception.IsNaNException,
+      neqsim.util.exception.TooManyIterationsException {
+    if (method.equals("Michelsen2001")) {
+      return calcBetaMichelsen2001(K, z);
+    } else if (method.equals("Nielsen2023")) {
+      return calcBetaNielsen2023(K, z);
+    } else {
+      return calcBetaMichelsen2001(K, z);
+    }
+  }
 
   /**
    * <p>
@@ -30,7 +61,8 @@ public class RachfordRice implements Serializable {
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
-  public double calcBeta(double[] K, double[] z) throws neqsim.util.exception.IsNaNException,
+  public double calcBetaMichelsen2001(double[] K, double[] z)
+      throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
 
     int i;
@@ -156,19 +188,18 @@ public class RachfordRice implements Serializable {
     return nybeta;
   }
 
-
-
   /**
    * <p>
-   * calcBeta. For gas liquid systems. Method based on Avoiding round-off error in the Rachford–Rice
-   * equation, Nielsen, Lia, 2023
+   * calcBetaNielsen2023. For gas liquid systems. Method based on Avoiding round-off error in the
+   * Rachford–Rice equation, Nielsen, Lia, 2023
    * </p>
    *
    * @return Beta Mole fraction of gas phase
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
-  public double calcBeta2(double[] K, double[] z) throws neqsim.util.exception.IsNaNException,
+  public double calcBetaNielsen2023(double[] K, double[] z)
+      throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
 
     double tolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
@@ -294,8 +325,6 @@ public class RachfordRice implements Serializable {
   public double[] getBeta() {
     return beta;
   }
-
-
 
   /** {@inheritDoc} */
   public final double calcBetaS(SystemInterface system) throws neqsim.util.exception.IsNaNException,
@@ -447,7 +476,4 @@ public class RachfordRice implements Serializable {
     return this.beta[0];
   }
 
-
 }
-
-
