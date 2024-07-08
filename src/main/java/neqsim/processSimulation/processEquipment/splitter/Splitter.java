@@ -264,6 +264,14 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     }
   }
 
+  public double getSplitFactor(int i){
+    return splitFactor[i];
+  }
+
+  public double getSplitFactors(){
+    return splitFactor;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void displayResult() {}
