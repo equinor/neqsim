@@ -268,7 +268,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     return splitFactor[i];
   }
 
-  public double getSplitFactors(){
+  public double[] getSplitFactors(){
     return splitFactor;
   }
 
