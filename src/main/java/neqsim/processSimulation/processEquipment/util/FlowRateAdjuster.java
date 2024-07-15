@@ -116,14 +116,14 @@ public class FlowRateAdjuster extends TwoPortEquipment {
       logger.error(ex.getMessage(), ex);
     }
 
-    SystemInterface gasFluid = adjustedFluid.phaseToSystem("gas").clone();
-    SystemInterface oilFluid = adjustedFluid.phaseToSystem("oil").clone();
+    SystemInterface gasFluid = adjustedFluid.phaseToSystem(0).clone();
+    SystemInterface oilFluid = adjustedFluid.phaseToSystem(1).clone();
 
     double temperature = inStream.getTemperature("C");
     double pressure = inStream.getPressure("bara");
 
     if (desiredWaterFlow > 0.0){
-      SystemInterface waterFluid = adjustedFluid.phaseToSystem("aqueous").clone();
+      SystemInterface waterFluid = adjustedFluid.phaseToSystem(2).clone();
       waterFluid.initPhysicalProperties();
       waterDensity = waterFluid.getDensity("kg/m3");
 
