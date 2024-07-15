@@ -499,13 +499,19 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void addMolesChemReac(double dn, double totdn) {
     if (numberOfMoles + totdn < 0 || numberOfMolesInPhase + dn < 0) {
-      String msg = "will lead to negative number of moles of component in phase for component "
-          + getComponentName() + "  who has " + numberOfMolesInPhase
-          + " in phase  and chage request was " + dn;
-      neqsim.util.exception.InvalidInputException ex =
-          new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
-      throw new RuntimeException(ex);
-      // logger.error(ex.getMessage());
+      if (Math.abs(dn) < 1e-12){
+        dn = 0;
+        totdn = 0;
+      }
+      else{
+        String msg = "will lead to negative number of moles of component in phase for component "
+            + getComponentName() + "  who has " + numberOfMolesInPhase
+            + " in phase  and chage request was " + dn;
+        neqsim.util.exception.InvalidInputException ex =
+            new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
+        throw new RuntimeException(ex);
+        // logger.error(ex.getMessage());
+      }
     }
     numberOfMoles += totdn;
     numberOfMolesInPhase += dn;
