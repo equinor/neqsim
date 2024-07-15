@@ -52,6 +52,8 @@ public class FlowRateAdjuster extends TwoPortEquipment {
 
   int iterations = 0;
   private boolean activateWhenLess = false;
+  Stream waterStream;
+  double waterDensity;
 
   /**
    * <p>
@@ -92,6 +94,17 @@ public class FlowRateAdjuster extends TwoPortEquipment {
     this.unit = unit;
   }
 
+  /**
+   * <p>
+   * setAdjustedVariable.
+   * </p>
+   *
+   */
+  public void setAdjustedFlowRates(Double desiredGasFlow, Double desiredOilFlow, String unit){
+    this.setAdjustedFlowRates(desiredGasFlow, desiredOilFlow,
+    0.0, unit);
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -105,18 +118,25 @@ public class FlowRateAdjuster extends TwoPortEquipment {
 
     SystemInterface gasFluid = adjustedFluid.phaseToSystem("gas").clone();
     SystemInterface oilFluid = adjustedFluid.phaseToSystem("oil").clone();
-    SystemInterface waterFluid = adjustedFluid.phaseToSystem("aqueous").clone();
-
-
-    gasFluid.initPhysicalProperties();
-    oilFluid.initPhysicalProperties();
-    waterFluid.initPhysicalProperties();
-
-    double oilDensity = oilFluid.getDensity("kg/m3");
-    double waterDensity = waterFluid.getDensity("kg/m3");
 
     double temperature = inStream.getTemperature("C");
     double pressure = inStream.getPressure("bara");
+
+    if (desiredWaterFlow > 0.0){
+      SystemInterface waterFluid = adjustedFluid.phaseToSystem("aqueous").clone();
+      waterFluid.initPhysicalProperties();
+      waterDensity = waterFluid.getDensity("kg/m3");
+
+      waterStream = new Stream("Water Stream", waterFluid);
+      waterStream.setTemperature(temperature, "C");
+      waterStream.setPressure(pressure, "bara");
+
+    } 
+    gasFluid.initPhysicalProperties();
+    oilFluid.initPhysicalProperties();
+
+
+    double oilDensity = oilFluid.getDensity("kg/m3");
 
     Stream gasStream = new Stream("Gas Stream", gasFluid);
     gasStream.setTemperature(temperature, "C");
@@ -126,27 +146,31 @@ public class FlowRateAdjuster extends TwoPortEquipment {
     oilStream.setTemperature(temperature, "C");
     oilStream.setPressure(pressure, "bara");
 
-    Stream waterStream = new Stream("Water Stream", waterFluid);
-    waterStream.setTemperature(temperature, "C");
-    waterStream.setPressure(pressure, "bara");
-
     if (unit.equals("Sm3/hr")) {
       gasStream.setFlowRate(desiredGasFlow, unit);
       oilStream.setFlowRate(desiredOilFlow * oilDensity, "kg/hr");
-      waterStream.setFlowRate(desiredWaterFlow * waterDensity, "kg/hr");
+      if (desiredWaterFlow > 0.0){
+        waterStream.setFlowRate(desiredWaterFlow * waterDensity, "kg/hr");
+      }
     } else {
       gasStream.setFlowRate(desiredGasFlow, unit);
       oilStream.setFlowRate(desiredOilFlow, unit);
+      if (desiredWaterFlow > 0.0){
       waterStream.setFlowRate(desiredWaterFlow, unit);
+      }
     }
     gasStream.run();
     oilStream.run();
+    if (desiredWaterFlow > 0.0){
     waterStream.run();
+    }
 
     Mixer wellStramMixer = new StaticMixer("Stream mixer");
     wellStramMixer.addStream(gasStream);
     wellStramMixer.addStream(oilStream);
+    if (desiredWaterFlow > 0.0){
     wellStramMixer.addStream(waterStream);
+    }
     wellStramMixer.run();
 
     outStream.setThermoSystem(wellStramMixer.getOutletStream().getFluid());
