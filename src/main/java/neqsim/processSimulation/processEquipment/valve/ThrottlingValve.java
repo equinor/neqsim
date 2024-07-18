@@ -616,10 +616,32 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   /** {@inheritDoc} */
   @Override
+  public double getCv(String unit) {
+    if (unit.equals("US")) {
+      return Cv / 54.9;
+    } else {
+      return Cv;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setCv(double cv) {
     this.Cv = cv;
     valveCvSet = true;
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCv(double cv, String unit) {
+    if (unit.equals("US")) {
+      this.Cv = cv * 54.9;
+    } else {
+      this.Cv = cv;
+    }
+    valveCvSet = true;
+  }
+
 
   /** {@inheritDoc} */
   @Override

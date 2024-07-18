@@ -14,16 +14,17 @@ public class ThrottlingValveTest {
 
     Stream stream1 = new Stream("Stream1", testSystem2);
     stream1.setFlowRate(7000, "Sm3/hr");
-    stream1.setPressure(100.0, "bara");
+    stream1.setPressure(10.0, "bara");
     stream1.setTemperature(55.0, "C");
     stream1.run();
 
     ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
-    valve1.setOutletPressure(90.0);
+    valve1.setOutletPressure(5.0);
     valve1.setPercentValveOpening(100);
     valve1.run();
 
-    assertEquals(570.0941, valve1.getCv(), 1e-2);
+    assertEquals(48.2652, valve1.getCv("US"), 1e-2);
+    assertEquals(2649.7612, valve1.getCv("SI"), 1e-2);
 
   }
 
@@ -35,7 +36,7 @@ public class ThrottlingValveTest {
     testSystem2.setMixingRule(2);
 
     Stream stream1 = new Stream("Stream1", testSystem2);
-    stream1.setFlowRate(10000000, "kg/hr");
+    stream1.setFlowRate(1.0, "mole/sec");
     stream1.setPressure(100.0, "bara");
     stream1.setTemperature(55.0, "C");
     stream1.run();
@@ -45,7 +46,9 @@ public class ThrottlingValveTest {
     valve1.setPercentValveOpening(100);
     valve1.run();
 
-    assertEquals(1655.6774, valve1.getCv(), 1e-2);
+    assertEquals(1.0, stream1.getFlowRate("mole/sec"), 1e-2);
+    assertEquals(5.218742428, valve1.getCv("US"), 1e-2);
+    assertEquals(1655.6774, valve1.getCv("SI"), 1e-2);
 
   }
 }
