@@ -96,7 +96,7 @@ public class TVflash extends Flash {
       // + Math.abs((nyPres - oldPres) / (nyPres)) + " numberofphases "
       // + system.getNumberOfPhases());
       error = Math.abs(calcdQdV());
-    } while (Math.abs(error) > 1e-9 && iterations < 200 || iterations < 3);
+    } while (Math.abs(error) > 1e-9 && iterations < 200 && error < errorOld || iterations < 3);
     return nyPres;
   }
 
