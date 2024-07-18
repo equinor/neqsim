@@ -316,10 +316,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     double sineFactor = Math.sin(3417 / 30.0);
 
     // Calculate the mass flow rate
-    double massFlowRate = 0.0457 * Math.sqrt(Pus * rhous) * sineFactor
+    double massFlowRate = 0.0457 * Math.sqrt(Pus * 100.0 * rhous) * sineFactor
         * Math.sqrt((Pus - Pds) / Pus) * Cv * percentValveOpening / 100.0;
-
-
     return massFlowRate;
   }
 
@@ -343,8 +341,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     double sineFactor = Math.sin(3417 / 30.0);
 
     // Calculate the term that involves the mass flow rate, Cv, and percent valve opening
-    double flowTerm = (massFlowRate
-        / (0.0457 * Math.sqrt(Pus * rhous) * sineFactor * Cv * (percentValveOpening / 100.0)));
+    double flowTerm = (massFlowRate / (0.0457 * Math.sqrt(Pus * 100.0 * rhous) * sineFactor * Cv
+        * (percentValveOpening / 100.0)));
 
     // Square the flowTerm to eliminate the square root
     double flowTermSquared = flowTerm * flowTerm;
@@ -375,12 +373,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     // Sine of 3417 / 30.0
     double sineFactor = Math.sin(3417 / 30.0);
 
-    // Calculate the term that involves the mass flow rate, Pus, rhous, and percent valve opening
-    double term = massFlowRate
-        / (0.0457 * Math.sqrt(Pus * rhous) * sineFactor * (percentValveOpening / 100.0));
-
-    // Calculate the flow coefficient (Cv)
-    double Cv = term / Math.sqrt(1 - (Pds / Pus));
+    // Calculate Cv
+    double Cv = massFlowRate / (0.0457 * Math.sqrt(Pus * 100.0 * rhous) * sineFactor
+        * Math.sqrt((Pus - Pds) / Pus) * percentValveOpening / 100.0);
 
     return Cv;
   }
@@ -558,7 +553,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
     thermoSystem.initPhysicalProperties("density");
     outStream.setThermoSystem(thermoSystem);
-    
+
     if (gasValve) {
       molarFlow = calcmassflow(inStream.getThermoSystem().getPressure(),
           outStream.getThermoSystem().getPressure(), inStream.getFluid().getDensity("kg/m3"), Cv,
