@@ -11,14 +11,34 @@ public class Standard_ASTM_D6377Test {
     SystemInterface testSystem = new SystemSrkEos(273.15 + 2.0, 1.0);
     testSystem.addComponent("methane", 0.0006538);
     testSystem.addComponent("ethane", 0.006538);
-    testSystem.addComponent("propane", 0.006538);
-    testSystem.addComponent("n-pentane", 0.545);
+    testSystem.addComponent("propane", 0.06538);
+    testSystem.addComponent("n-pentane", 0.1545);
+    testSystem.addComponent("nC10", 0.545);
     testSystem.setMixingRule(2);
     testSystem.init(0);
     Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(testSystem);
     standard.setReferenceTemperature(37.8, "C");
     standard.calculate();
-    //Assertions.assertEquals(0.7298246193, standard.getValue("RVP", "bara"), 1e-3);
-    Assertions.assertEquals(1.8710732396722, standard.getValue("TVP", "bara"), 1e-3);
+    Assertions.assertEquals(0.94552559993, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(1.666298367, standard.getValue("TVP", "bara"), 1e-3);
+  }
+
+  @Test
+  void testCalculate2() {
+    SystemInterface testSystem = new SystemSrkEos(273.15 + 2.0, 1.0);
+    testSystem.addComponent("methane", 0.026538);
+    testSystem.addComponent("ethane", 0.16538);
+    testSystem.addComponent("propane", 0.26538);
+    testSystem.addComponent("n-pentane", 0.545);
+    testSystem.addComponent("nC10", 0.545);
+    testSystem.addTBPfraction("C11", 0.545, 145.0 / 1000.0, 0.82);
+    testSystem.setMixingRule(2);
+    testSystem.init(0);
+    testSystem.setPressure(100.0);
+    Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(testSystem);
+    standard.setReferenceTemperature(37.8, "C");
+    standard.calculate();
+    Assertions.assertEquals(3.017010, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(7.8448385024, standard.getValue("TVP", "bara"), 1e-3);
   }
 }

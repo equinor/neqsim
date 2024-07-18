@@ -75,8 +75,10 @@ public class TVflash extends Flash {
     double oldPres = system.getPressure();
     double nyPres = system.getPressure();
     double iterations = 1;
+    double error = 100.0, errorOld = 1000.0;
     do {
       iterations++;
+      errorOld = error;
       oldPres = nyPres;
       system.init(3);
       nyPres = oldPres - (iterations) / (iterations + 10.0) * calcdQdV() / calcdQdVV();
@@ -88,9 +90,11 @@ public class TVflash extends Flash {
       }
       system.setPressure(nyPres);
       tpFlash.run();
-      // System.out.println(" dQdv " + calcdQdV() + " new pressure " + nyPres + " error " +
-      // Math.abs((nyPres-oldPres)/(nyPres)) + " numberofphases "+system.getNumberOfPhases());
-    } while (Math.abs((nyPres - oldPres) / (nyPres)) > 1e-9 && iterations < 1000 || iterations < 3);
+      // System.out.println(" dQdv " + calcdQdV() + " new pressure " + nyPres + " error "
+      // + Math.abs((nyPres - oldPres) / (nyPres)) + " numberofphases "
+      // + system.getNumberOfPhases());
+      error = Math.abs(calcdQdV());
+    } while (Math.abs(error) > 1e-9 && iterations < 200 && error < errorOld || iterations < 3);
     return nyPres;
   }
 
