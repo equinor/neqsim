@@ -19,11 +19,11 @@ public class ThrottlingValveTest {
     stream1.run();
 
     ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
-    valve1.setOutletPressure(50.0);
+    valve1.setOutletPressure(90.0);
     valve1.setPercentValveOpening(100);
     valve1.run();
 
-    assertEquals(254.95386, valve1.getCv(), 1e-2);
+    assertEquals(570.0941, valve1.getCv(), 1e-2);
 
   }
 
