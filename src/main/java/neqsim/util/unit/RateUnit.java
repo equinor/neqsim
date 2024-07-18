@@ -103,6 +103,8 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
       factor = 1.0 / molarmass / 3600.0 * stddens;
     } else if (name.equals("idSm3/day")) {
       factor = 1.0 / molarmass / (3600.0 * 24.0) * stddens;
+    } else if (name.equals("gallons/min")) {
+      factor = 1.0 / molarmass / 60.0 * stddens / 10.0 * 3.78541178;
     } else {
       throw new RuntimeException(
           new InvalidInputException(this, "getConversionFactor", "unit", "not supported"));

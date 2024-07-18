@@ -8,6 +8,7 @@ import neqsim.processSimulation.mechanicalDesign.valve.ValveMechanicalDesign;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.util.monitor.ValveResponse;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -40,6 +41,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   private boolean acceptNegativeDP = true;
   ValveMechanicalDesign valveMechanicalDesign;
   boolean isCalcPressure = false;
+  private boolean gasValve = true;
+  private double Fp = 1.0;
 
   /**
    * <p>
@@ -179,6 +182,268 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
   }
 
+  /**
+   * Adjusts the flow coefficient (Cv) based on the percentage valve opening.
+   *
+   * @param Cv Flow coefficient in US gallons per minute (USG/min).
+   * @param percentValveOpening Percentage valve opening (0 to 100).
+   * @return Adjusted flow coefficient (Cv) in US gallons per minute (USG/min).
+   */
+  private static double adjustCv(double Cv, double percentValveOpening) {
+    return Cv * (percentValveOpening / 100);
+  }
+
+  /**
+   * Calculates the mass flow rate through a control valve for a liquid based on the given
+   * parameters.
+   *
+   * @param P1 Upstream pressure in bar.
+   * @param P2 Downstream pressure in bar.
+   * @param rho Density of the fluid in kilograms per cubic meter (kg/m³).
+   * @param Cv Flow coefficient in US gallons per minute (USG/min).
+   * @param Fp Piping geometry factor (dimensionless).
+   * @param percentValveOpening Percentage valve opening (0 to 100).
+   * @return Mass flow rate in kilograms per hour (kg/h).
+   */
+  public static double liquidValveMassFlow(double P1, double P2, double rho, double Cv, double Fp,
+      double percentValveOpening) {
+    // Equation unit conversion constant
+    final double N1 = 0.0865;
+
+    // Convert pressures from bar to Pascals directly in the code
+    double P1Pa = P1 * 100000;
+    double P2Pa = P2 * 100000;
+
+    // Adjust Cv based on the percentage valve opening
+    double adjustedCv = adjustCv(Cv, percentValveOpening);
+
+    // Clip Cv value to be non-negative
+    double clippedCv = Math.max(adjustedCv, 0);
+    // Calculate pressure difference and clip to be non-negative
+    double deltaP = Math.max(P1Pa - P2Pa, 0);
+    // Calculate mass flow rate
+    double massFlowRate = clippedCv * N1 * Fp * Math.sqrt(deltaP * rho);
+
+    return massFlowRate;
+  }
+
+  /**
+   * Calculates the percent valve opening given the mass flow rate through a valve, upstream
+   * pressure (P1), downstream pressure (P2), fluid density (rho), flow coefficient (Cv), and piping
+   * geometry factor (Fp).
+   *
+   * @param massFlowRate The mass flow rate through the valve in kg/hr.
+   * @param P1 The upstream pressure in bar.
+   * @param P2 The downstream pressure in bar.
+   * @param rho The density of the fluid in kilograms per cubic meter (kg/m³).
+   * @param Cv The flow coefficient of the valve in US gallons per minute (USG/min).
+   * @param Fp The piping geometry factor (dimensionless).
+   * @return The percent valve opening.
+   */
+  public static double calcPercentValveOpeningLiquid(double massFlowRate, double P1, double P2,
+      double rho, double Cv, double Fp) {
+    // Equation unit conversion constant
+    final double N1 = 0.0865;
+
+    // Convert pressures from bar to Pascals directly in the code
+    double P1Pa = P1 * 100000;
+    double P2Pa = P2 * 100000;
+
+    // Calculate pressure difference and clip to be non-negative
+    double deltaP = Math.max(P1Pa - P2Pa, 0);
+
+    // Calculate the denominator part of the equation
+    double denominator = Cv * N1 * Fp * Math.sqrt(deltaP * rho);
+
+    // Calculate percent valve opening
+    double percentValveOpening = (massFlowRate / denominator) * 100;
+
+    return percentValveOpening;
+  }
+
+  /**
+   * Calculates the downstream pressure (P2) through a control valve for a liquid based on the given
+   * parameters.
+   *
+   * @param P1 Upstream pressure in bar.
+   * @param m Mass flow rate in kilograms per hour (kg/h).
+   * @param rho Density of the fluid in kilograms per cubic meter (kg/m³).
+   * @param Cv Flow coefficient in US gallons per minute (USG/min).
+   * @param Fp Piping geometry factor (dimensionless).
+   * @param percentValveOpening Percentage valve opening (0 to 100).
+   * @return Downstream pressure in bar.
+   */
+  public static double liquidValvePout(double P1, double m, double rho, double Cv, double Fp,
+      double percentValveOpening) {
+    // Equation unit conversion constant
+    final double N1 = 0.0865;
+
+    // Convert upstream pressure from bar to Pascals directly in the code
+    double P1Pa = P1 * 100000;
+
+    // Adjust Cv based on the percentage valve opening
+    double adjustedCv = adjustCv(Cv, percentValveOpening);
+
+    // Clip Cv value to be non-negative
+    double clippedCv = Math.max(adjustedCv, 0);
+    // Calculate deltaP from mass flow rate
+    double deltaP = Math.pow(m / (clippedCv * N1 * Fp), 2) / rho;
+    // Calculate downstream pressure
+    double P2Pa = P1Pa - deltaP;
+
+    // Ensure downstream pressure is non-negative
+    P2Pa = Math.max(P2Pa, 0);
+
+    // Convert downstream pressure from Pascals to bar directly in the code
+    return P2Pa / 100000;
+  }
+
+  /**
+   * Calculates the flow coefficient (Cv) of a control valve for a liquid based on the given
+   * parameters.
+   *
+   * @param P1 Upstream pressure in bar.
+   * @param P2 Downstream pressure in bar.
+   * @param rho Density of the fluid in kilograms per cubic meter (kg/m³).
+   * @param m Mass flow rate in kilograms per hour (kg/h).
+   * @param Fp Piping geometry factor (dimensionless).
+   * @param percentValveOpening Percentage valve opening (0 to 100).
+   * @return Flow coefficient (Cv) in US gallons per minute (USG/min).
+   */
+  public static double liquidValveCv(double P1, double P2, double rho, double m, double Fp,
+      double percentValveOpening) {
+    // Equation unit conversion constant
+    final double N1 = 0.0865;
+
+    // Convert pressures from bar to Pascals directly in the code
+    double P1Pa = P1 * 100000;
+    double P2Pa = P2 * 100000;
+
+    // Calculate pressure difference and clip to be non-negative
+    double deltaP = Math.max(P1Pa - P2Pa, 0);
+    // Calculate flow coefficient
+    double Cv = m / (N1 * Fp * Math.sqrt(deltaP * rho));
+
+    // Adjust Cv based on the percentage valve opening
+    return Cv / (percentValveOpening / 100);
+  }
+
+
+
+  /**
+   * Calculates the mass flow rate through a valve given the upstream pressure (Pus), downstream
+   * pressure (Pds), fluid density (rhous), and flow coefficient (Cv).
+   *
+   * The calculation is based on the formula for mass flow through a valve.
+   *
+   * @param Pus The upstream pressure (Pus) in bara.
+   * @param Pds The downstream pressure (Pds) in bara.
+   * @param rhous The density of the fluid upstream of the valve in kg/m^3.
+   * @param Cv The flow coefficient of the valve.
+   * @param percentValveOpening Opening of valve in %
+   * @return The mass flow rate through the valve in kg/hr.
+   */
+  public double calcmassflow(double Pus, double Pds, double rhous, double Cv,
+      double percentValveOpening) {
+
+    // Sine of 3417 / 30.0
+    double sineFactor = Math.sin(3417 / 30.0);
+
+    // Calculate the mass flow rate
+    double massFlowRate = 0.0457 * Math.sqrt(Pus * 100.0 * rhous) * sineFactor
+        * Math.sqrt((Pus - Pds) / Pus) * Cv * percentValveOpening / 100.0;
+    return massFlowRate;
+  }
+
+  /**
+   * Calculates the downstream pressure (Pds) of a valve given the upstream pressure (Pus), fluid
+   * density (rhous), flow coefficient (Cv), mass flow rate, and the percent valve opening.
+   *
+   * The calculation is based on the formula for mass flow through a valve, rearranged to solve for
+   * Pds.
+   *
+   * @param Pus The upstream pressure (Pus) in bara.
+   * @param rhous The density of the fluid upstream of the valve in kg/m^3.
+   * @param Cv The flow coefficient of the valve.
+   * @param massFlowRate The mass flow rate through the valve in kg/hr.
+   * @param percentValveOpening Opening of valve in %
+   * @return The downstream pressure (Pds) in bara.
+   */
+  public double calcValvePout(double Pus, double rhous, double Cv, double massFlowRate,
+      double percentValveOpening) {
+    // Sine of 3417 / 30.0
+    double sineFactor = Math.sin(3417 / 30.0);
+
+    // Calculate the term that involves the mass flow rate, Cv, and percent valve opening
+    double flowTerm = (massFlowRate / (0.0457 * Math.sqrt(Pus * 100.0 * rhous) * sineFactor * Cv
+        * (percentValveOpening / 100.0)));
+
+    // Square the flowTerm to eliminate the square root
+    double flowTermSquared = flowTerm * flowTerm;
+
+    // Calculate Pds
+    double Pds = Pus * (1 - flowTermSquared);
+
+    return Pds;
+  }
+
+
+  /**
+   * Calculates the flow coefficient (Cv) of a valve given the upstream pressure (Pus), downstream
+   * pressure (Pds), fluid density (rhous), mass flow rate, and the percent valve opening.
+   *
+   * The calculation is based on the formula for mass flow through a valve, rearranged to solve for
+   * Cv.
+   *
+   * @param Pus The upstream pressure (Pus) in bara.
+   * @param Pds The downstream pressure (Pds) in bara.
+   * @param rhous The density of the fluid upstream of the valve in kg/m^3.
+   * @param massFlowRate The mass flow rate through the valve in kg/hr.
+   * @param percentValveOpening Opening of valve in %
+   * @return The flow coefficient (Cv) of the valve.
+   */
+  public double calcCv(double Pus, double Pds, double rhous, double massFlowRate,
+      double percentValveOpening) {
+    // Sine of 3417 / 30.0
+    double sineFactor = Math.sin(3417 / 30.0);
+
+    // Calculate Cv
+    double Cv = massFlowRate / (0.0457 * Math.sqrt(Pus * 100.0 * rhous) * sineFactor
+        * Math.sqrt((Pus - Pds) / Pus) * percentValveOpening / 100.0);
+
+    return Cv;
+  }
+
+  /**
+   * Calculates the percent valve opening given the upstream pressure (Pus), downstream pressure
+   * (Pds), fluid density (rhous), flow coefficient (Cv), and mass flow rate.
+   *
+   * The calculation is based on the formula for mass flow through a valve, rearranged to solve for
+   * percent valve opening.
+   *
+   * @param Pus The upstream pressure (Pus) in bara.
+   * @param Pds The downstream pressure (Pds) in bara.
+   * @param rhous The density of the fluid upstream of the valve in kg/m^3.
+   * @param Cv The flow coefficient of the valve.
+   * @param massFlowRate The mass flow rate through the valve in kg/hr.
+   * @return The percent valve opening.
+   */
+  public double calcPercentValveOpening(double Pus, double Pds, double rhous, double Cv,
+      double massFlowRate) {
+    // Sine of 3417 / 30.0
+    double sineFactor = Math.sin(3417 / 30.0);
+
+    // Calculate the term that involves the mass flow rate, Pus, rhous, and Cv
+    double term = massFlowRate / (0.0457 * Math.sqrt(Pus * 100 * rhous) * sineFactor * Cv);
+
+    // Calculate the percent valve opening
+    double percentValveOpening = term / Math.sqrt(1 - (Pds / Pus)) * 100.0;
+
+    return percentValveOpening;
+  }
+
+
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -188,11 +453,26 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoSystem.init(3);
     double enthalpy = thermoSystem.getEnthalpy();
+    inStream.getThermoSystem().initPhysicalProperties("density");
+    double outp = 0.0;
+
+    if (inStream.getThermoSystem().hasPhaseType(PhaseType.GAS)
+        && inStream.getThermoSystem().getVolumeFraction(0) > 0.9) {
+      setGasValve(true);
+    } else {
+      setGasValve(false);
+    }
 
     if (valveCvSet && isCalcPressure) {
-      double outp = (inStream.getThermoSystem().getPressure()
-          - Math.pow(inStream.getThermoSystem().getTotalNumberOfMoles() / Cv
-              / getPercentValveOpening() * 100.0, 2.0) * thermoSystem.getDensity());
+      if (gasValve) {
+        outp = calcValvePout(inStream.getThermoSystem().getPressure(),
+            inStream.getThermoSystem().getDensity("kg/m3"), Cv, inStream.getFlowRate("kg/hr"),
+            percentValveOpening);
+      } else {
+        outp =
+            liquidValvePout(inStream.getThermoSystem().getPressure(), inStream.getFlowRate("kg/hr"),
+                inStream.getThermoSystem().getDensity("kg/m3"), Cv, Fp, percentValveOpening);
+      }
       setOutletPressure(outp);
     }
 
@@ -225,22 +505,38 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       // If valve CV is not set, calculate it from inletstream flow, percent opening
       // and
       // differential pressure over valve.
-      Cv = inStream.getThermoSystem().getTotalNumberOfMoles() / (getPercentValveOpening() / 100.0
-          * Math.sqrt(
-              (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
-                  / thermoSystem.getDensity()));
+      if (gasValve) {
+        Cv = calcCv(inStream.getThermoSystem().getPressure(),
+            outStream.getThermoSystem().getPressure(), inStream.getFluid().getDensity("kg/m3"),
+            inStream.getFlowRate("kg/hr"), percentValveOpening);
+      } else {
+        Cv = liquidValveCv(inStream.getThermoSystem().getPressure(),
+            outStream.getThermoSystem().getPressure(), inStream.getFluid().getDensity("kg/m3"),
+            inStream.getFlowRate("kg/hr"), Fp, percentValveOpening);
+      }
       valveCvSet = true;
     }
+    if (gasValve) {
+      percentValveOpening = calcPercentValveOpening(inStream.getThermoSystem().getPressure(),
+          outStream.getThermoSystem().getPressure(), inStream.getFluid().getDensity("kg/m3"), Cv,
+          inStream.getFlowRate("kg/hr"));
 
-    percentValveOpening = inStream.getThermoSystem().getTotalNumberOfMoles() / (getCv()) * 100.0
-        / Math.sqrt(
-            (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
-                / thermoSystem.getDensity());
+    } else {
+      percentValveOpening = calcPercentValveOpeningLiquid(inStream.getFlowRate("kg/hr"),
+          inStream.getThermoSystem().getPressure(), outStream.getThermoSystem().getPressure(),
+          inStream.getFluid().getDensity("kg/m3"), Cv, Fp);
+    }
 
-    molarFlow = getCv() * getPercentValveOpening() / 100.0
-        * Math.sqrt(
-            (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
-                / thermoSystem.getDensity());
+    if (gasValve) {
+      molarFlow = calcmassflow(inStream.getThermoSystem().getPressure(),
+          outStream.getThermoSystem().getPressure(), inStream.getFluid().getDensity("kg/m3"), Cv,
+          percentValveOpening) / 3600.0 / inStream.getFluid().getMolarMass("kg/mol");
+    } else {
+      molarFlow = liquidValveMassFlow(inStream.getThermoSystem().getPressure(),
+          outStream.getThermoSystem().getPressure(), inStream.getFluid().getDensity("kg/m3"), Cv,
+          Fp, percentValveOpening) / 3600.0 / inStream.getFluid().getMolarMass("kg/mol");
+    }
+
     if (Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6) {
       molarFlow = inStream.getThermoSystem().getTotalNumberOfMoles();
     }
@@ -256,10 +552,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     outStream.setThermoSystem(thermoSystem.clone());
     outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
     outStream.getThermoSystem().init(3);
-    // outStream.run(id);
-    // Cv =
-    // inletStream.getThermoSystem().getTotalNumberOfMoles()/Math.sqrt(inletStream.getPressure()-outStream.getPressure());
-    // molarFlow = inletStream.getThermoSystem().getTotalNumberOfMoles();
     outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
@@ -301,11 +593,16 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
     thermoSystem.initPhysicalProperties("density");
     outStream.setThermoSystem(thermoSystem);
-    // if(getPercentValveOpening()<99){
-    molarFlow = getCv() * getPercentValveOpening() / 100.0
-        * Math.sqrt(
-            (inStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
-                / thermoSystem.getDensity());
+
+    if (gasValve) {
+      molarFlow = calcmassflow(inStream.getThermoSystem().getPressure(),
+          outStream.getThermoSystem().getPressure(), inStream.getFluid().getDensity("kg/m3"), Cv,
+          percentValveOpening) / 3600.0 / inStream.getFluid().getMolarMass("kg/mol");
+    } else {
+      molarFlow = liquidValveMassFlow(inStream.getThermoSystem().getPressure(),
+          outStream.getThermoSystem().getPressure(), inStream.getFluid().getDensity("kg/m3"), Cv,
+          Fp, percentValveOpening) / 3600.0 / inStream.getFluid().getMolarMass("kg/mol");
+    }
 
     try {
       inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
@@ -321,12 +618,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     } catch (Exception e) {
       logger.error(e.getMessage());
     }
-    // System.out.println("delta p valve " +
-    // (inletStream.getThermoSystem().getPressure() -
-    // outStream.getThermoSystem().getPressure()));
-    // System.out.println("total molar flow out " + molarFlow);
-    // System.out.println("Total volume flow " +
-    // outStream.getThermoSystem().getVolume());
     setCalculationIdentifier(id);
   }
 
@@ -365,10 +656,32 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   /** {@inheritDoc} */
   @Override
+  public double getCv(String unit) {
+    if (unit.equals("US")) {
+      return Cv / 54.9;
+    } else {
+      return Cv;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setCv(double cv) {
     this.Cv = cv;
     valveCvSet = true;
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCv(double cv, String unit) {
+    if (unit.equals("US")) {
+      this.Cv = cv * 54.9;
+    } else {
+      this.Cv = cv;
+    }
+    valveCvSet = true;
+  }
+
 
   /** {@inheritDoc} */
   @Override
@@ -479,5 +792,21 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new ValveResponse(this));
+  }
+
+  public boolean isGasValve() {
+    return gasValve;
+  }
+
+  public void setGasValve(boolean gasValve) {
+    this.gasValve = gasValve;
+  }
+
+  public double getFp() {
+    return Fp;
+  }
+
+  public void setFp(double fp) {
+    Fp = fp;
   }
 }

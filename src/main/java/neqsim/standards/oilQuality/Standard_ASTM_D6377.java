@@ -51,7 +51,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     TVP = this.thermoSystem.getPressure();
     double liquidVolume = thermoSystem.getVolume();
 
-    this.thermoSystem.setPressure(0.9);
+    this.thermoSystem.setPressure(TVP * 0.9);
     try {
       this.thermoOps.TVflash(liquidVolume * 4.0);
     } catch (Exception ex) {
