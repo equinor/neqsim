@@ -43,11 +43,13 @@ public class TVflash extends Flash {
    *
    * @return a double
    */
-  public double calcdQdVV() {
+  public double calcdQdVdP() {
     double dQdVV = 0.0;
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      dQdVV += 1.0 / (system.getPhase(i).getVolume() / system.getVolume()) * 1.0
-          / system.getPhase(i).getdPdVTn(); // *system.getPhase(i).getdVdP();system.getPhase(i).getVolume()/system.getVolume()*
+      dQdVV += 1.0 / system.getPhase(i).getdPdVTn();
+      // dQdVV += 1.0 / (system.getPhase(i).getVolume() / system.getVolume()) * 1.0
+      // / system.getPhase(i).getdPdVTn(); //
+      // *system.getPhase(i).getdVdP();system.getPhase(i).getVolume()/system.getVolume()*
     }
     return dQdVV;
   }
@@ -81,7 +83,7 @@ public class TVflash extends Flash {
       errorOld = error;
       oldPres = nyPres;
       system.init(3);
-      nyPres = oldPres - (iterations) / (iterations + 10.0) * calcdQdV() / calcdQdVV();
+      nyPres = oldPres - 1.0 / 10.0 * calcdQdV() / calcdQdVdP();
       if (nyPres <= 0.0) {
         nyPres = oldPres / 2.0;
       }
@@ -94,7 +96,7 @@ public class TVflash extends Flash {
       // + Math.abs((nyPres - oldPres) / (nyPres)) + " numberofphases "
       // + system.getNumberOfPhases());
       error = Math.abs(calcdQdV());
-    } while (Math.abs(error) > 1e-9 && iterations < 200 && error < errorOld || iterations < 3);
+    } while (Math.abs(error) > 1e-9 && iterations < 200 || iterations < 3);
     return nyPres;
   }
 

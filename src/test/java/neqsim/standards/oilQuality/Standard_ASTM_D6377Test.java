@@ -14,6 +14,7 @@ public class Standard_ASTM_D6377Test {
     testSystem.addComponent("propane", 0.06538);
     testSystem.addComponent("n-pentane", 0.1545);
     testSystem.addComponent("nC10", 0.545);
+    testSystem.setMultiPhaseCheck(true);
     testSystem.setMixingRule(2);
     testSystem.init(0);
     Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(testSystem);
