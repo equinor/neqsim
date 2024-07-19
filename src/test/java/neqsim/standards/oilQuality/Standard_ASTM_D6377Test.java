@@ -36,9 +36,16 @@ public class Standard_ASTM_D6377Test {
     testSystem.init(0);
     testSystem.setPressure(100.0);
     Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(testSystem);
+    standard.setMethodRVP("VPCR4");
     standard.setReferenceTemperature(37.8, "C");
     standard.calculate();
     Assertions.assertEquals(3.604002003478, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(7.8448385024, standard.getValue("TVP", "bara"), 1e-3);
+
+    standard.setMethodRVP("RVP_ASTM_D6377");
+    standard.setReferenceTemperature(37.8, "C");
+    standard.calculate();
+    Assertions.assertEquals(3.00573767, standard.getValue("RVP", "bara"), 1e-3);
     Assertions.assertEquals(7.8448385024, standard.getValue("TVP", "bara"), 1e-3);
   }
 }

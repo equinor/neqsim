@@ -24,6 +24,49 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   double TVP = 1.0;
   double referenceTemperature = 37.8;
   String referenceTemperatureUnit = "C";
+  String methodRVP = "VPCR4"; // RVP_ASTM_D6377 // RVP_ASTM_D323_73_79 //
+                              // RVP_ASTM_D323_82 // VPCR4_no_water // VPCR4
+
+  private double VPCR4_no_water = 0.0;
+  private double VPCR4 = 0.0;
+  private double RVP_ASTM_D6377 = 0.0;
+  private double RVP_ASTM_D323_73_79 = 0.0;
+  private double RVP_ASTM_D323_82 = 0.0;
+
+  /**
+   * Gets the method used for measuring Reid Vapor Pressure (RVP).
+   *
+   * The method can be one of the following:
+   * <ul>
+   * <li>RVP_ASTM_D6377</li>
+   * <li>RVP_ASTM_D323_73_79</li>
+   * <li>RVP_ASTM_D323_82</li>
+   * <li>VPCR4</li>
+   * </ul>
+   *
+   * @return the method used for RVP measurement.
+   */
+  public String getMethodRVP() {
+    return methodRVP;
+  }
+
+  /**
+   * Sets the method used for measuring Reid Vapor Pressure (RVP).
+   *
+   * The method should be one of the following:
+   * <ul>
+   * <li>RVP_ASTM_D6377</li>
+   * <li>RVP_ASTM_D323_73_79</li>
+   * <li>RVP_ASTM_D323_82</li>
+   * <li>VPCR4</li>
+   * </ul>
+   *
+   * @param methodRVP the method to set for RVP measurement.
+   */
+  public void setMethodRVP(String methodRVP) {
+    this.methodRVP = methodRVP;
+  }
+
 
   /**
    * <p>
@@ -59,31 +102,24 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
       logger.error(ex.getMessage(), ex);
     }
 
-    RVP = this.thermoSystem.getPressure();
-  }
+    VPCR4 = this.thermoSystem.getPressure();
+    RVP_ASTM_D6377 = 0.834 * VPCR4;
+    RVP_ASTM_D323_82 = (0.752 * (100.0 * this.thermoSystem.getPressure()) + 6.07) / 100.0;
 
-  // old method for RVP
-  public void calculate2() {
-    this.thermoSystem.setTemperature(referenceTemperature, "C");
-    this.thermoSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
-    this.thermoOps = new ThermodynamicOperations(thermoSystem);
+    SystemInterface fluid1 = this.thermoSystem.clone();
+    if (fluid1.hasComponent("water")) {
+      fluid1.removeComponent("water");
+      fluid1.init(0);
+    }
     try {
-      this.thermoOps.bubblePointPressureFlash(false);
+      // ASTM D323 -08 method is used for this property calculation. It is defined at the pressure
+      // at 100°F (37.8°C) at which 80% of the stream by volume is vapor at 100°F. In
+      this.thermoOps.TVfractionFlash(0.8);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-
-    TVP = this.thermoSystem.getPressure();
-    double liquidVolume = thermoSystem.getVolume();
-
-    this.thermoSystem.setPressure(TVP * 0.9);
-    try {
-      this.thermoOps.TVflash(liquidVolume * 4.0);
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-    }
-
-    RVP = (0.752 * (100.0 * this.thermoSystem.getPressure()) + 6.07) / 100.0;
+    VPCR4_no_water = this.thermoSystem.getPressure();
+    RVP_ASTM_D323_73_79 = VPCR4_no_water;
   }
 
   /** {@inheritDoc} */
@@ -102,11 +138,14 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   @Override
   public double getValue(String returnParameter, java.lang.String returnUnit) {
     if (returnParameter == "RVP") {
-      neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(RVP, "bara");
+      double RVPlocal = getValue("RVP");
+      neqsim.util.unit.PressureUnit presConversion =
+          new neqsim.util.unit.PressureUnit(RVPlocal, "bara");
       return presConversion.getValue(returnUnit);
     }
     if (returnParameter == "TVP") {
-      neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(TVP, "bara");
+      neqsim.util.unit.PressureUnit presConversion =
+          new neqsim.util.unit.PressureUnit(getValue("TVP"), "bara");
       return presConversion.getValue(returnUnit);
     } else {
       return RVP;
@@ -116,7 +155,27 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   /** {@inheritDoc} */
   @Override
   public double getValue(String returnParameter) {
-    return RVP;
+    if (returnParameter.equals("RVP")) {
+      switch (methodRVP) {
+        case "RVP_ASTM_D6377":
+          return RVP_ASTM_D6377;
+        case "RVP_ASTM_D323_73_79":
+          return RVP_ASTM_D323_73_79;
+        case "VPCR4":
+          return VPCR4;
+        case "RVP_ASTM_D323_82":
+          return RVP_ASTM_D323_82;
+        case "VPCR4_no_water":
+          return VPCR4_no_water;
+        default:
+          return VPCR4;
+      }
+    } else if (returnParameter.equals("TVP")) {
+      return TVP;
+    } else {
+      logger.error("returnParameter not supported.. " + returnParameter);
+      return 0.0;
+    }
   }
 
   /**
@@ -146,10 +205,14 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     testSystem.addComponent("ethane", 0.006538);
     testSystem.addComponent("propane", 0.006538);
     testSystem.addComponent("n-pentane", 0.545);
+    testSystem.addComponent("water", 0.00545);
     testSystem.setMixingRule(2);
     testSystem.init(0);
     Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(testSystem);
     standard.calculate();
     System.out.println("RVP " + standard.getValue("RVP", "bara"));
+    standard.setMethodRVP("RVP_ASTM_D323_73_79");
+    standard.calculate();
+    System.out.println("RVP_ASTM_D323_73_79 " + standard.getValue("RVP", "bara"));
   }
 }
