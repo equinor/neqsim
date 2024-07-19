@@ -49,6 +49,31 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     }
 
     TVP = this.thermoSystem.getPressure();
+
+    this.thermoSystem.setPressure(TVP * 0.9);
+    try {
+      // ASTM D323 -08 method is used for this property calculation. It is defined at the pressure
+      // at 100°F (37.8°C) at which 80% of the stream by volume is vapor at 100°F. In
+      this.thermoOps.TVfractionFlash(0.8);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
+    }
+
+    RVP = this.thermoSystem.getPressure();
+  }
+
+  // old method for RVP
+  public void calculate2() {
+    this.thermoSystem.setTemperature(referenceTemperature, "C");
+    this.thermoSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
+    this.thermoOps = new ThermodynamicOperations(thermoSystem);
+    try {
+      this.thermoOps.bubblePointPressureFlash(false);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
+    }
+
+    TVP = this.thermoSystem.getPressure();
     double liquidVolume = thermoSystem.getVolume();
 
     this.thermoSystem.setPressure(TVP * 0.9);

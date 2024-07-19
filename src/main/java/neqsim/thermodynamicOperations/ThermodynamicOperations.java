@@ -578,6 +578,18 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
   /**
    * <p>
+   * TVfractionFlash.
+   * </p>
+   *
+   * @param Vspec a double volume fraction of first/lightest phase
+   */
+  public void TVfractionFlash(double Vspec) {
+    operation = new neqsim.thermodynamicOperations.flashOps.TVfractionFlash(system, Vspec);
+    getOperation().run();
+  }
+
+  /**
+   * <p>
    * PVrefluxFlash.
    * </p>
    *
