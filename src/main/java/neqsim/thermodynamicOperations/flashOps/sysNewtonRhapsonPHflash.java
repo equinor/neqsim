@@ -117,8 +117,9 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
    */
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
-      fvec.set(i, 0, Math.log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient())
-          + Math.log(system.getPhases()[0].getComponents()[i].getx())
+      fvec.set(i, 0,
+          Math.log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient())
+              + Math.log(system.getPhases()[0].getComponents()[i].getx())
               - Math.log(system.getPhases()[1].getComponents()[i].getFugacityCoefficient())
               - Math.log(system.getPhases()[1].getComponents()[i].getx()));
     }
@@ -261,10 +262,12 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
       // u.equals(dx.timesEquals(1.0));
       fvec.print(10, 10);
       logger.info("iter: " + iter);
+      System.out.println("iter: " + iter);
+      System.out.println("temperature: " + system.getTemperature());
+      System.out.println("pressure: " + system.getPressure());
+
     } while (fvec.norm2() > 1.e-10 && iter < 1000); // && Double.isNaN(dx.norm2()));
-    logger.info("iter: " + iter);
-    logger.info("temperature: " + system.getTemperature());
-    logger.info("pressure: " + system.getPressure());
+
     init();
     return iter;
   }

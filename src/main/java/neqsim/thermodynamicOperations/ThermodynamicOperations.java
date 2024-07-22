@@ -237,6 +237,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param type a int
    */
   public void PHflash(double Hspec, int type) {
+    System.out.println("Enthalpy is (-1 iterations) " + system.getEnthalpy());
     if (system.getPhase(0).getNumberOfComponents() == 1) {
       operation = new PHflashSingleComp(system, Hspec, type);
     } else {

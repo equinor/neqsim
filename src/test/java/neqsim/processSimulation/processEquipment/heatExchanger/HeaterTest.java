@@ -2,8 +2,14 @@ package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.security.AnyTypePermission;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
@@ -34,6 +40,34 @@ public class HeaterTest {
     processOps.add(inletStream);
     processOps.add(heater1);
     processOps.run();
+  }
+
+  @Test
+  void testSavedHEX() {
+    XStream xstream = new XStream();
+    xstream.addPermission(AnyTypePermission.ANY);
+    // Specify the file path to read
+    Path filePath = Paths.get(
+        "/workspaces/neqsim/src/test/java/neqsim/processSimulation/processEquipment/heatExchanger/HEX.xml");
+    String xmlContents = "";
+    try {
+      xmlContents = Files.readString(filePath);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    // Deserialize from xml
+    neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger hexCopy =
+        (neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger) xstream
+            .fromXML(xmlContents);
+    hexCopy.setUAvalue(0.0);
+    // hexCopy.setFirstTime(true);
+    hexCopy.run();
+
+    System.out.println("Inlet Temperature " + hexCopy.getInStream(0).getTemperature("C"));
+    System.out.println("Outlet Temperature " + hexCopy.getOutStream(0).getTemperature("C"));
+    System.out.println("UA Value " + hexCopy.getUAvalue());
+    System.out.println("Duty " + hexCopy.getDuty());
   }
 
   @Test

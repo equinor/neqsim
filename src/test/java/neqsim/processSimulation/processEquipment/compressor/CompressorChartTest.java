@@ -1,12 +1,19 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.security.AnyTypePermission;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+
 
 public class CompressorChartTest {
   public Compressor comp1;
@@ -113,6 +120,50 @@ public class CompressorChartTest {
      * comp1.getCompressorChart().getStoneWallCurve().setCurve(chartConditions, stoneWallflow,
      * stoneWallHead);
      */
+  }
+
+  @Test
+  public void run_copy() {
+    XStream xstream = new XStream();
+    xstream.addPermission(AnyTypePermission.ANY);
+    // Specify the file path to read
+    Path filePath = Paths.get(
+        "/workspaces/neqsim/src/test/java/neqsim/processSimulation/processEquipment/compressor/first_stage_recompressor.xml");
+    String xmlContents = "";
+    try {
+      xmlContents = Files.readString(filePath);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    // Deserialize from xml
+    neqsim.processSimulation.processEquipment.compressor.Compressor compressorCopy =
+        (neqsim.processSimulation.processEquipment.compressor.Compressor) xstream
+            .fromXML(xmlContents);
+    compressorCopy.getCompressorChart().setHeadUnit("kJ/kg");
+    compressorCopy.setOutletPressure(7.2, "bara");
+    compressorCopy.generateCompressorCurves();
+    compressorCopy.run();
+
+
+    System.out.println("Efficiency " + compressorCopy.getPolytropicEfficiency());
+    System.out.println("Head " + compressorCopy.getPolytropicHead());
+    System.out.println("Pressure out " + compressorCopy.getPressure());
+    System.out.println("Temperature out " + compressorCopy.getOutletStream().getTemperature("C"));
+    System.out.println("Pressure in " + compressorCopy.getInletStream().getPressure());
+    System.out.println("Temperature in " + compressorCopy.getInletStream().getTemperature("C"));
+
+
+    compressorCopy.generateCompressorCurves();
+    compressorCopy.run();
+
+
+    System.out.println("Efficiency " + compressorCopy.getPolytropicEfficiency());
+    System.out.println("Head " + compressorCopy.getPolytropicHead());
+    System.out.println("Pressure out " + compressorCopy.getPressure());
+    System.out.println("Temperature out " + compressorCopy.getOutletStream().getTemperature("C"));
+    System.out.println("Pressure in " + compressorCopy.getInletStream().getPressure());
+    System.out.println("Temperature in " + compressorCopy.getInletStream().getTemperature("C"));
   }
 
   @Test

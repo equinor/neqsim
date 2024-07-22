@@ -49,7 +49,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public double polytropicEfficiency = 1.0;
   public boolean usePolytropicCalc = false;
   public boolean powerSet = false;
-  private CompressorChartInterface compressorChart = new CompressorChart();
+  private CompressorChartInterface compressorChart = new CompressorChartAlternativeMapLookup();
   private AntiSurge antiSurge = new AntiSurge();
   private double polytropicHead = 0;
   private double polytropicFluidHead = 0;

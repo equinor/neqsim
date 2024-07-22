@@ -33,10 +33,12 @@ public class PHflash extends Flash {
    * @param type a int
    */
   public PHflash(SystemInterface system, double Hspec, int type) {
+    System.out.println("Enthalpy is (-1 PH flash) " + system.getEnthalpy());
     this.system = system;
     this.tpFlash = new TPflash(system);
     this.Hspec = Hspec;
     this.type = type;
+    System.out.println("Enthalpy is (-1.1 PH flash) " + this.system.getEnthalpy());
   }
 
   /**
@@ -60,6 +62,8 @@ public class PHflash extends Flash {
    */
   public double calcdQdT() {
     double dQ = (system.getEnthalpy() - Hspec) / Math.abs(Hspec);
+    System.out.println("Current Enthalpy" + system.getEnthalpy());
+    System.out.println("Current Hspec" + Hspec);
     return dQ;
   }
 
@@ -71,6 +75,7 @@ public class PHflash extends Flash {
    * @return a double
    */
   public double solveQ() {
+    System.out.println("Enthalpy is (0.2 iterations) " + system.getEnthalpy());
     double oldTemp = 1.0 / system.getTemperature();
     double nyTemp = 1.0 / system.getTemperature();
     double iterations = 1;
@@ -79,10 +84,11 @@ public class PHflash extends Flash {
     double factor = 0.8;
     double newCorr = 1.0;
     system.init(2);
+
     boolean correctFactor = true;
     double maxTemperature = 1e10;
     double minTemperature = 0.0;
-
+    System.out.println("Enthalpy is (0.3 iterations) " + system.getEnthalpy());
     do {
       if (Math.abs(error) > Math.abs(erorOld) && factor > 0.1 && correctFactor) {
         factor *= 0.5;
@@ -90,6 +96,7 @@ public class PHflash extends Flash {
         factor = iterations / (iterations + 1.0) * 1.0;
       }
       iterations++;
+      System.out.println("Iterations " + iterations);
       oldTemp = nyTemp;
       newCorr = factor * calcdQdT() / calcdQdTT();
       nyTemp = oldTemp - newCorr;
@@ -121,7 +128,8 @@ public class PHflash extends Flash {
       system.init(2);
       erorOld = error;
       error = calcdQdT();
-
+      System.out.println(
+          "Current Temperature:" + system.getTemperature("C") + "; Error dQ:" + error + ";");
       if (error > 0 && system.getTemperature() > maxTemperature) {
         maxTemperature = system.getTemperature();
       } else if (error < 0 && system.getTemperature() < minTemperature) {
@@ -191,8 +199,9 @@ public class PHflash extends Flash {
   @Override
   public void run() {
     tpFlash.run();
-    // System.out.println("enthalpy start: " + system.getEnthalpy());
+    System.out.println("enthalpy start: " + system.getEnthalpy());
     if (type == 0) {
+      System.out.println("Enthalpy is (0.1 iterations) " + system.getEnthalpy());
       solveQ();
     } else {
       sysNewtonRhapsonPHflash secondOrderSolver =
@@ -200,8 +209,8 @@ public class PHflash extends Flash {
       secondOrderSolver.setSpec(Hspec);
       secondOrderSolver.solve(1);
     }
-    // System.out.println("enthalpy: " + system.getEnthalpy());
-    // System.out.println("Temperature: " + system.getTemperature());
+    System.out.println("enthalpy: " + system.getEnthalpy());
+    System.out.println("Temperature: " + system.getTemperature());
   }
 
   /** {@inheritDoc} */
