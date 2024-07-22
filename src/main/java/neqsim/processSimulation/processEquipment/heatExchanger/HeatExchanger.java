@@ -260,6 +260,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+
     if (getSpecification().equals("out stream")) {
       runSpecifiedStream(id);
     } else if (firstTime) {
@@ -278,6 +279,11 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
       // streamToCalculate = 1;
       // streamToSet = 0;
       // }
+      
+      // Make sure these streams to run because of the issues with enthalpy calculations if not run 
+      for (StreamInterface stream : inStream) {
+        stream.run();
+      }
 
       int streamToSet = 1;
       SystemInterface systemOut0 = inStream[streamToSet].getThermoSystem().clone();
