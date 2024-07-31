@@ -36,7 +36,7 @@ public class HXResponse {
    * Constructor for HXResponse.
    * </p>
    *
-   * @param inputHeatExchenger a
+   * @param inputHeatExchanger a
    *        {@link neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger} object
    */
   public HXResponse(HeatExchanger inputHeatExchanger) {
