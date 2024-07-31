@@ -47,8 +47,8 @@ public class ChemicalReaction extends NamedBaseClass
    *
    * @param name a {@link java.lang.String} object
    * @param names an array of {@link java.lang.String} objects
-   * @param stocCoefs an array of {@link double} objects
-   * @param K an array of {@link double} objects
+   * @param stocCoefs an array of type double
+   * @param K an array of type double
    * @param r a double
    * @param activationEnergy a double
    * @param refT a double
@@ -135,7 +135,7 @@ public class ChemicalReaction extends NamedBaseClass
    * Getter for the field <code>stocCoefs</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getStocCoefs() {
     return this.stocCoefs;
@@ -244,8 +244,8 @@ public class ChemicalReaction extends NamedBaseClass
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
-   * @param Amatrix an array of {@link double} objects
-   * @param chemRefPot an array of {@link double} objects
+   * @param Amatrix an array of type double
+   * @param chemRefPot an array of type double
    */
   public void initMoleNumbers(PhaseInterface phase, ComponentInterface[] components,
       double[][] Amatrix, double[] chemRefPot) {

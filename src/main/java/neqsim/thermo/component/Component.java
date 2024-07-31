@@ -1567,7 +1567,7 @@ public abstract class Component implements ComponentInterface {
    * Getter for the field <code>matiascopemanParamsPR</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public final double[] getMatiascopemanParamsPR() {
     return matiascopemanParamsPR;

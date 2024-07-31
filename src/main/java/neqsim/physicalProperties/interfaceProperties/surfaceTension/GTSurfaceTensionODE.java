@@ -346,10 +346,10 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
   /**
    * Residual function for the algebraic equilibrium equations.
    *
-   * @param mu an array of {@link double} objects
-   * @param dmu_drho an array of {@link double} objects
-   * @param f an array of {@link double} objects
-   * @param jac an array of {@link double} objects
+   * @param mu an array of type double
+   * @param dmu_drho an array of type double
+   * @param f an array of type double
+   * @param jac an array of type double
    */
   public void fjacfun(double[] mu, double[][] dmu_drho, double[] f, double[][] jac) {
     int i;

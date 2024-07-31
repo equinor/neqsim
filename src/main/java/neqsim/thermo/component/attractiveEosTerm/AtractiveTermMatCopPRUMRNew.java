@@ -36,7 +36,7 @@ public class AtractiveTermMatCopPRUMRNew extends AttractiveTermMatCopPRUMR {
    * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
-   * @param params an array of {@link double} objects
+   * @param params an array of type double
    */
   public AtractiveTermMatCopPRUMRNew(ComponentEosInterface component, double[] params) {
     this(component);

@@ -39,10 +39,10 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha an array of {@link double} objects
-   * @param Dij an array of {@link double} objects
+   * @param alpha an array of type double
+   * @param Dij an array of type double
    * @param mixRule an array of {@link String} objects
-   * @param intparam an array of {@link double} objects
+   * @param intparam an array of type double
    */
   public PhaseGENRTLmodifiedHV(PhaseInterface phase, double[][] alpha, double[][] Dij,
       String[][] mixRule, double[][] intparam) {
@@ -63,11 +63,11 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha an array of {@link double} objects
-   * @param Dij an array of {@link double} objects
-   * @param DijT an array of {@link double} objects
+   * @param alpha an array of type double
+   * @param Dij an array of type double
+   * @param DijT an array of type double
    * @param mixRule an array of {@link String} objects
-   * @param intparam an array of {@link double} objects
+   * @param intparam an array of type double
    */
   public PhaseGENRTLmodifiedHV(PhaseInterface phase, double[][] alpha, double[][] Dij,
       double[][] DijT, String[][] mixRule, double[][] intparam) {

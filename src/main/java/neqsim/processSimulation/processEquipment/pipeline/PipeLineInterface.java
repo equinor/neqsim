@@ -33,7 +33,7 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    * setHeightProfile.
    * </p>
    *
-   * @param heights an array of {@link double} objects
+   * @param heights an array of type double
    */
   public void setHeightProfile(double[] heights);
 
@@ -42,7 +42,7 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    * setLegPositions.
    * </p>
    *
-   * @param positions an array of {@link double} objects
+   * @param positions an array of type double
    */
   public void setLegPositions(double[] positions);
 
@@ -51,7 +51,7 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    * setPipeDiameters.
    * </p>
    *
-   * @param diameter an array of {@link double} objects
+   * @param diameter an array of type double
    */
   public void setPipeDiameters(double[] diameter);
 
@@ -60,7 +60,7 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    * setPipeWallRoughness.
    * </p>
    *
-   * @param rough an array of {@link double} objects
+   * @param rough an array of type double
    */
   public void setPipeWallRoughness(double[] rough);
 
@@ -69,7 +69,7 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    * setOuterTemperatures.
    * </p>
    *
-   * @param outerTemp an array of {@link double} objects
+   * @param outerTemp an array of type double
    */
   public void setOuterTemperatures(double[] outerTemp);
 

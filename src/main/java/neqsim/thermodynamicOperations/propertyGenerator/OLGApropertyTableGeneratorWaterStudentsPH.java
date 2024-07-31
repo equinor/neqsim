@@ -177,8 +177,8 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
    * calcBubP.
    * </p>
    *
-   * @param enthalpies an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param enthalpies an array of type double
+   * @return an array of type double
    */
   public double[] calcBubP(double[] enthalpies) {
     double[] bubP = new double[enthalpies.length];
@@ -203,8 +203,8 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
    * calcDewP.
    * </p>
    *
-   * @param enthalpies an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param enthalpies an array of type double
+   * @return an array of type double
    */
   public double[] calcDewP(double[] enthalpies) {
     double[] dewP = new double[enthalpies.length];
@@ -230,8 +230,8 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
    * calcBubT.
    * </p>
    *
-   * @param pressures an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param pressures an array of type double
+   * @return an array of type double
    */
   public double[] calcBubT(double[] pressures) {
     double[] bubTemps = new double[pressures.length];

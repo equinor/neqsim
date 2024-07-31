@@ -74,10 +74,10 @@ public class ChemEq implements java.io.Serializable {
    *
    * @param T a double
    * @param P a double
-   * @param A_matrix an array of {@link double} objects
-   * @param n_mol an array of {@link double} objects
-   * @param chem_ref an array of {@link double} objects
-   * @param b_element an array of {@link double} objects
+   * @param A_matrix an array of type double
+   * @param n_mol an array of type double
+   * @param chem_ref an array of type double
+   * @param b_element an array of type double
    */
   public ChemEq(double T, double P, double[][] A_matrix, double[] n_mol, double[] chem_ref,
       double[] b_element) {
@@ -116,7 +116,7 @@ public class ChemEq implements java.io.Serializable {
    * Constructor for ChemEq.
    * </p>
    *
-   * @param A_matrix an array of {@link double} objects
+   * @param A_matrix an array of type double
    */
   public ChemEq(double[][] A_matrix) {
     this.A_matrix = A_matrix;
@@ -129,7 +129,7 @@ public class ChemEq implements java.io.Serializable {
    *
    * @param T a double
    * @param P a double
-   * @param A_matrix an array of {@link double} objects
+   * @param A_matrix an array of type double
    */
   public ChemEq(double T, double P, double[][] A_matrix) {
     this.T = T;
@@ -286,7 +286,7 @@ public class ChemEq implements java.io.Serializable {
    * innerStep.
    * </p>
    *
-   * @param n_omega an array of {@link double} objects
+   * @param n_omega an array of type double
    * @param check a int
    * @param step a double
    * @return a double
@@ -322,8 +322,8 @@ public class ChemEq implements java.io.Serializable {
    *
    * @param T a double
    * @param P a double
-   * @param n_mol an array of {@link double} objects
-   * @param chem_ref an array of {@link double} objects
+   * @param n_mol an array of type double
+   * @param chem_ref an array of type double
    */
   public void solve(double T, double P, double[] n_mol, double[] chem_ref) {
     this.T = T;

@@ -28,9 +28,9 @@ public interface ComponentGEInterface extends ComponentInterface {
    * @param temperature a double
    * @param pressure a double
    * @param pt the PhaseType of the phase.
-   * @param HValpha an array of {@link double} objects
-   * @param HVgij an array of {@link double} objects
-   * @param intparam an array of {@link double} objects
+   * @param HValpha an array of {@link java.double} objects
+   * @param HVgij an array of type double
+   * @param intparam an array of type double
    * @param mixRule an array of {@link java.lang.String} objects
    * @return a double
    */

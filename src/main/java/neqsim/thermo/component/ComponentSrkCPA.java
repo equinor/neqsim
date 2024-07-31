@@ -573,7 +573,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   /**
    * Setter for property xsite.
    *
-   * @param xsiteOld an array of {@link double} objects
+   * @param xsiteOld an array of type double
    */
   public void setXsiteOld(double[] xsiteOld) {
     this.xsiteOld = xsiteOld;

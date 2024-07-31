@@ -2605,7 +2605,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
    * getSRKbinaryInteractionParameters.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getSRKbinaryInteractionParameters() {
     return intparam;

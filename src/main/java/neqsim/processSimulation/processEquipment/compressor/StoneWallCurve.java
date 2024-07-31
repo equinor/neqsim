@@ -42,8 +42,8 @@ public class StoneWallCurve implements java.io.Serializable {
    * Constructor for StoneWallCurve.
    * </p>
    *
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
+   * @param flow an array of type double
+   * @param head an array of type double
    */
   public StoneWallCurve(double[] flow, double[] head) {
     this.flow = flow;
@@ -55,9 +55,9 @@ public class StoneWallCurve implements java.io.Serializable {
    * setCurve.
    * </p>
    *
-   * @param chartConditions an array of {@link double} objects
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
+   * @param chartConditions an array of type double
+   * @param flow an array of type double
+   * @param head an array of type double
    */
   public void setCurve(double[] chartConditions, double[] flow, double[] head) {
     this.chartConditions = chartConditions;

@@ -96,7 +96,7 @@ public class DETAIL {
    * MolarMassDetail.
    * </p>
    *
-   * @param x an array of {@link double} objects
+   * @param x an array of type double
    * @param Mm a {@link org.netlib.util.doubleW} object
    */
   public void MolarMassDetail(double[] x, doubleW Mm) {
@@ -126,7 +126,7 @@ public class DETAIL {
    *
    * @param T a double
    * @param D a double
-   * @param x an array of {@link double} objects
+   * @param x an array of type double
    * @param P a {@link org.netlib.util.doubleW} object
    * @param Z a {@link org.netlib.util.doubleW} object
    */
@@ -175,7 +175,7 @@ public class DETAIL {
    *
    * @param T a double
    * @param P a double
-   * @param x an array of {@link double} objects
+   * @param x an array of type double
    * @param D a {@link org.netlib.util.doubleW} object
    * @param ierr a {@link org.netlib.util.intW} object
    * @param herr a {@link org.netlib.util.StringW} object
@@ -260,7 +260,7 @@ public class DETAIL {
    *
    * @param T a double
    * @param D a double
-   * @param x an array of {@link double} objects
+   * @param x an array of type double
    * @param P a {@link org.netlib.util.doubleW} object
    * @param Z a {@link org.netlib.util.doubleW} object
    * @param dPdD a {@link org.netlib.util.doubleW} object

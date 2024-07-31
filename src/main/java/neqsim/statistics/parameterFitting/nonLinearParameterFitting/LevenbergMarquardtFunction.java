@@ -53,7 +53,7 @@ public class LevenbergMarquardtFunction extends BaseFunction {
    * setFittingParams.
    * </p>
    *
-   * @param value an array of {@link double} objects
+   * @param value an array of type double
    */
   public void setFittingParams(double[] value) {
     System.arraycopy(value, 0, params, 0, value.length);

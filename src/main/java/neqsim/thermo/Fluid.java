@@ -75,7 +75,7 @@ public class Fluid {
    * </p>
    *
    * @param componentNames an array of {@link java.lang.String} objects
-   * @param flowrate an array of {@link double} objects
+   * @param flowrate an array of type double
    * @param unit a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -229,7 +229,7 @@ public class Fluid {
    * </p>
    *
    * @param componentNames an array of {@link java.lang.String} objects
-   * @param flowrate an array of {@link double} objects
+   * @param flowrate an array of type double
    * @param unit a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */

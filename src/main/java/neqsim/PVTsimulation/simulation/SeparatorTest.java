@@ -41,8 +41,8 @@ public class SeparatorTest extends BasePVTsimulation {
    * setSeparatorConditions.
    * </p>
    *
-   * @param temperature an array of {@link double} objects
-   * @param pressure an array of {@link double} objects
+   * @param temperature an array of type double
+   * @param pressure an array of type double
    */
   public void setSeparatorConditions(double[] temperature, double[] pressure) {
     this.pressure = pressure;

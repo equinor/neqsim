@@ -1006,9 +1006,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * calcImobilePhaseHydrateTemperature.
    * </p>
    *
-   * @param temperature an array of {@link double} objects
-   * @param pressure an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param temperature an array of type double
+   * @param pressure an array of type double
+   * @return an array of type double
    */
   public double[] calcImobilePhaseHydrateTemperature(double[] temperature, double[] pressure) {
     double[] hydTemps = new double[temperature.length];
@@ -1217,9 +1217,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * calcCricoP.
    * </p>
    *
-   * @param cricondenBar an array of {@link double} objects
-   * @param cricondenBarX an array of {@link double} objects
-   * @param cricondenBarY an array of {@link double} objects
+   * @param cricondenBar an array of type double
+   * @param cricondenBarX an array of type double
+   * @param cricondenBarY an array of type double
    */
   public void calcCricoP(double[] cricondenBar, double[] cricondenBarX, double[] cricondenBarY) {
     double phasefraction = 1.0 - 1e-10;
@@ -1235,9 +1235,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * calcCricoT.
    * </p>
    *
-   * @param cricondenTherm an array of {@link double} objects
-   * @param cricondenThermX an array of {@link double} objects
-   * @param cricondenThermY an array of {@link double} objects
+   * @param cricondenTherm an array of type double
+   * @param cricondenThermX an array of type double
+   * @param cricondenThermY an array of type double
    */
   public void calcCricoT(double[] cricondenTherm, double[] cricondenThermX,
       double[] cricondenThermY) {
@@ -1716,7 +1716,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * getData.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getData() {
     return getOperation().getPoints(0);
@@ -1832,7 +1832,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] get(String name) {
     return getOperation().get(name);
@@ -1899,7 +1899,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param data an array of {@link double} objects
+   * @param data an array of type double
    */
   public void addData(String name, double[][] data) {
     operation.addData(name, data);

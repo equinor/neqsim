@@ -497,7 +497,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
    *
    * @param i a int
    * @param m a double
-   * @param ab an array of {@link double} objects
+   * @param ab an array of type double
    * @return a double
    */
   public double getaSAFT(int i, double m, double[][] ab) {
@@ -511,7 +511,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
    *
    * @param i a int
    * @param m a double
-   * @param ab an array of {@link double} objects
+   * @param ab an array of type double
    * @return a double
    */
   public double getaSAFTdm(int i, double m, double[][] ab) {

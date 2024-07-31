@@ -1482,9 +1482,9 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
    * croeneckerProduct.
    * </p>
    *
-   * @param a an array of {@link double} objects
-   * @param b an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param a an array of type double
+   * @param b an array of type double
+   * @return an array of type double
    */
   public double[][] croeneckerProduct(double[][] a, double[][] b) {
     int aLength = a.length;

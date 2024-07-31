@@ -48,7 +48,7 @@ public class SwellingTest extends BasePVTsimulation {
    * setCummulativeMolePercentGasInjected.
    * </p>
    *
-   * @param gasInjected an array of {@link double} objects
+   * @param gasInjected an array of type double
    */
   public void setCummulativeMolePercentGasInjected(double[] gasInjected) {
     this.gasInjected = gasInjected;

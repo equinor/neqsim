@@ -105,7 +105,7 @@ public class Element implements ThermodynamicConstantsInterface {
   /**
    * Getter for property coefArray.
    *
-   * @return an array of {@link double} objects. Coefficient corresponding to nameArray.
+   * @return an array of type double. Coefficient corresponding to nameArray.
    */
   public double[] getElementCoefs() {
     return coefArray;

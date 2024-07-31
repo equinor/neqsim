@@ -35,7 +35,7 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
    * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
-   * @param params an array of {@link double} objects
+   * @param params an array of type double
    */
   public AttractiveTermSchwartzentruber(ComponentEosInterface component, double[] params) {
     this(component);
@@ -72,9 +72,11 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
     // parameters[0]*(1.0-temperature/component.getTC()) *
     // (1.0+parameters[1]*temperature/component.getTC()+parameters[2] *
     // Math.pow(temperature/component.getTC(),2.0)),2.0));
-    return Math.pow(1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))
-        - parameters[0] * (1.0 - temperature / getComponent().getTC())
-            * (1.0 + parameters[1] * temperature / getComponent().getTC()
+    return Math
+        .pow(
+            1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))
+                - parameters[0] * (1.0 - temperature / getComponent().getTC())
+                    * (1.0 + parameters[1] * temperature / getComponent().getTC()
                         + parameters[2] * Math.pow(temperature / getComponent().getTC(), 2.0)),
             2.0);
   }
@@ -150,8 +152,9 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
   /** {@inheritDoc} */
   @Override
   public double diffdiffalphaT(double temperature) {
-    return 2.0 * Math.pow(-m / Math.sqrt(temperature / getComponent().getTC())
-        / getComponent().getTC() / 2.0
+    return 2.0
+        * Math
+            .pow(-m / Math.sqrt(temperature / getComponent().getTC()) / getComponent().getTC() / 2.0
                 + parameters[0] / getComponent().getTC()
                     * (1.0 + parameters[1] * temperature / getComponent().getTC()
                         + parameters[2] * temperature * temperature
@@ -161,11 +164,11 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
                         / (getComponent().getTC() * getComponent().getTC())),
                 2.0)
         + 2.0
-            * (1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))
-                - parameters[0] * (1.0 - temperature / getComponent().getTC())
-                    * (1.0 + parameters[1] * temperature / getComponent().getTC()
-                        + parameters[2] * temperature * temperature
-                            / (getComponent().getTC() * getComponent().getTC())))
+            * (1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC())) - parameters[0]
+                * (1.0 - temperature / getComponent().getTC())
+                * (1.0 + parameters[1] * temperature / getComponent().getTC()
+                    + parameters[2] * temperature * temperature
+                        / (getComponent().getTC() * getComponent().getTC())))
             * (m / Math.sqrt(temperature * temperature * temperature
                 / (getComponent().getTC() * getComponent().getTC() * getComponent().getTC()))
                 / (getComponent().getTC() * getComponent().getTC()) / 4.0

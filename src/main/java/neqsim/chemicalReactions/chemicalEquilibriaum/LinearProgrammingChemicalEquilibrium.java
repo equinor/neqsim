@@ -56,7 +56,7 @@ public class LinearProgrammingChemicalEquilibrium
    * Constructor for LinearProgrammingChemicalEquilibrium.
    * </p>
    *
-   * @param chemRefPot an array of {@link double} objects
+   * @param chemRefPot an array of type double
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
    * @param elements an array of {@link java.lang.String} objects
    * @param operations a {@link neqsim.chemicalReactions.ChemicalReactionOperations} object
@@ -112,7 +112,7 @@ public class LinearProgrammingChemicalEquilibrium
    * calcA.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] calcA() {
     int A_size = components.length - operations.getReactionList().getChemicalReactionList().size();
@@ -151,7 +151,7 @@ public class LinearProgrammingChemicalEquilibrium
    * getA.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getA() {
     return Amatrix;
@@ -162,7 +162,7 @@ public class LinearProgrammingChemicalEquilibrium
    * getRefPot.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getRefPot() {
     return chemRefPot;
@@ -329,10 +329,10 @@ public class LinearProgrammingChemicalEquilibrium
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param bVector an array of {@link double} objects
+   * @param bVector an array of type double
    * @param inertMoles a double
    * @param phase a int
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] generateInitialEstimates(SystemInterface system, double[] bVector,
       double inertMoles, int phase) {

@@ -64,8 +64,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * Constructor for ChemicalEquilibrium.
    * </p>
    *
-   * @param A_matrix an array of {@link double} objects
-   * @param b_element an array of {@link double} objects
+   * @param A_matrix an array of type double
+   * @param b_element an array of type double
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
    * @param phase a int
@@ -377,7 +377,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * getMoles.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getMoles() {
     return n_mol;
@@ -482,7 +482,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * </p>
    *
    * @param i a int
-   * @param n_omega an array of {@link double} objects
+   * @param n_omega an array of type double
    * @param check a int
    * @param step a double
    * @param test a boolean

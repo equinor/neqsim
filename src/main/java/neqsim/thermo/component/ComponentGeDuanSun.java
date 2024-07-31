@@ -43,8 +43,8 @@ public class ComponentGeDuanSun extends ComponentGE {
    * @param temperature a double
    * @param pressure a double
    * @param pt the PhaseType of the phase.
-   * @param HValpha an array of {@link double} objects
-   * @param HVgij an array of {@link double} objects
+   * @param HValpha an array of type double
+   * @param HVgij an array of type double
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
@@ -76,8 +76,8 @@ public class ComponentGeDuanSun extends ComponentGE {
    * @param temperature a double
    * @param pressure a double
    * @param pt the PhaseType of the phase.
-   * @param HValpha an array of {@link double} objects
-   * @param HVgij an array of {@link double} objects
+   * @param HValpha an array of type double
+   * @param HVgij an array of type double
    * @return a double
    */
   public double getGammaNRTL(PhaseInterface phase, int numberOfComponents, double temperature,

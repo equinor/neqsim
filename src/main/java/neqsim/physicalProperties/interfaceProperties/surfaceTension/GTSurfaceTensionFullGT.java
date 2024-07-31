@@ -265,17 +265,17 @@ public class GTSurfaceTensionFullGT {
    * large 4. Iterate until convergence or max #iterations (N_Newton)
    * </p>
    *
-   * @param cij an array of {@link double} objects
+   * @param cij an array of type double
    * @param L a double
    * @param N_Newton a int
    * @param allowedRelChange a double
    * @param highOrder a boolean
    * @param directMethod a boolean
-   * @param rhomat an array of {@link double} objects
+   * @param rhomat an array of type double
    * @param sys a {@link neqsim.thermo.system.SystemInterface} object
    * @param ncomp a int
    * @param t a double
-   * @param mueq an array of {@link double} objects
+   * @param mueq an array of type double
    * @return sigma The surface tension [N/m]
    */
   public static double Newton(double[][] cij, double L, int N_Newton, double allowedRelChange,
@@ -428,12 +428,12 @@ public class GTSurfaceTensionFullGT {
    * directsolve. Solve linear system for Full Gradient method
    * </p>
    *
-   * @param rres an array of {@link double} objects
-   * @param JJ an array of {@link double} objects
-   * @param C an array of {@link double} objects
+   * @param rres an array of type double
+   * @param JJ an array of type double
+   * @param C an array of type double
    * @param H a double
    * @param Ngrid a int
-   * @param rhomat an array of {@link double} objects
+   * @param rhomat an array of type double
    * @param ncomp a int
    */
   public static void directsolve(double[][] rres, double[][][] JJ, double[][] C, double H,
@@ -524,10 +524,10 @@ public class GTSurfaceTensionFullGT {
    * </p>
    *
    * @param h a double
-   * @param rrho an array of {@link double} objects
-   * @param C an array of {@link double} objects
+   * @param rrho an array of type double
+   * @param C an array of type double
    * @param highOrder a boolean
-   * @param drhodz an array of {@link double} objects
+   * @param drhodz an array of type double
    * @param ncomp a int
    * @return sigma The surface tension [N/m]
    */
@@ -570,9 +570,9 @@ public class GTSurfaceTensionFullGT {
    * integrand. Used to adjust the domain size
    * </p>
    *
-   * @param z an array of {@link double} objects
-   * @param C an array of {@link double} objects
-   * @param drhodz an array of {@link double} objects
+   * @param z an array of type double
+   * @param C an array of type double
+   * @param drhodz an array of type double
    * @return Interface width (length scale) [nm]
    */
   public double calc_std_integral(double[] z, double[][] C, double[][] drhodz) {
@@ -612,10 +612,10 @@ public class GTSurfaceTensionFullGT {
    * @param sys a {@link neqsim.thermo.system.SystemInterface} object
    * @param ncomp a int
    * @param t a double
-   * @param mueq an array of {@link double} objects
-   * @param rho an array of {@link double} objects
-   * @param delta_mu an array of {@link double} objects
-   * @param dmu_drho an array of {@link double} objects
+   * @param mueq an array of type double
+   * @param rho an array of type double
+   * @param delta_mu an array of type double
+   * @param dmu_drho an array of type double
    */
   public static void delta_mu(SystemInterface sys, int ncomp, double t, double[] mueq, double[] rho,
       double[] delta_mu, double[][] dmu_drho) {
@@ -638,7 +638,7 @@ public class GTSurfaceTensionFullGT {
    * @param a start of range
    * @param b end of range
    * @param N number of values.
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public static double[] linspace(double a, double b, int N) {
     double[] x = new double[N];
@@ -687,10 +687,10 @@ public class GTSurfaceTensionFullGT {
    * @param sys a {@link neqsim.thermo.system.SystemInterface} object
    * @param ncomp a int
    * @param t a double
-   * @param rho_ph1 an array of {@link double} objects
-   * @param rho_ph2 an array of {@link double} objects
-   * @param mueq an array of {@link double} objects
-   * @param p0 an array of {@link double} objects
+   * @param rho_ph1 an array of type double
+   * @param rho_ph2 an array of type double
+   * @param mueq an array of type double
+   * @param p0 an array of type double
    * @param reltol a double
    */
   public static void initmu(SystemInterface sys, int ncomp, double t, double[] rho_ph1,

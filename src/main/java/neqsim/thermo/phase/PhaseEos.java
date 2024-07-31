@@ -1053,7 +1053,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * getdTVndSVnJaobiMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getdTVndSVnJaobiMatrix() {
     double[][] jacobiMatrix = new double[2 + numberOfComponents][2 + numberOfComponents];
@@ -1076,7 +1076,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * getGradientVector.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getGradientVector() {
     double[] gradientVector = new double[2 + numberOfComponents];
@@ -1090,7 +1090,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * getUSVHessianMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getUSVHessianMatrix() {
     double[][] jacobiMatrix = new double[2 + numberOfComponents][2 + numberOfComponents];
@@ -1113,7 +1113,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * dFdxMatrixSimple.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] dFdxMatrixSimple() {
     double[] matrix = new double[numberOfComponents + 2];
@@ -1144,7 +1144,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * dFdxMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] dFdxMatrix() {
     double[] matrix = new double[numberOfComponents + 2];
@@ -1163,7 +1163,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * dFdxdxMatrixSimple.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] dFdxdxMatrixSimple() {
     double[][] matrix = new double[numberOfComponents + 2][numberOfComponents + 2];
@@ -1212,7 +1212,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * dFdxdxMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] dFdxdxMatrix() {
     double[][] matrix = new double[numberOfComponents + 2][numberOfComponents + 2];

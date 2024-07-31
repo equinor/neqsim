@@ -122,8 +122,8 @@ public class NeqSimAGA8Detail {
     StringW herr = new StringW("");
     doubleW D = new doubleW(0.0);
     double pressure = phase.getPressure() * 100.0;
-    DETAIL.DensityDetail(phase.getTemperature(), pressure,
-    normalizedGERGComposition, D, ierr, herr);
+    DETAIL.DensityDetail(phase.getTemperature(), pressure, normalizedGERGComposition, D, ierr,
+        herr);
     return D.val;
   }
 
@@ -133,7 +133,7 @@ public class NeqSimAGA8Detail {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] propertiesDetail(PhaseInterface phase) {
     this.setPhase(phase);
@@ -147,7 +147,7 @@ public class NeqSimAGA8Detail {
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param properties an array of {@link java.lang.String} objects
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getProperties(PhaseInterface phase, String[] properties) {
     // double molarDens = getMolarDensity(phase);
@@ -178,7 +178,7 @@ public class NeqSimAGA8Detail {
    * propertiesDetail.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] propertiesDetail() {
     // int _x_offset = 0;
