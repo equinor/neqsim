@@ -34,19 +34,24 @@ public class HXResponse {
    * Constructor for HXResponse.
    * </p>
    *
-   * @param inputHeatExchenger a {@link neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger} object
+   * @param inputHeatExchenger a
+   *        {@link neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger} object
    */
   public HXResponse(HeatExchanger inputHeatExchenger) {
-    name = inputHeatExchenger.getName();
+    try {
+      name = inputHeatExchenger.getName();
 
-    feedTemperature1 = inputHeatExchenger.getInStream(0).getTemperature("C");
-    dischargeTemperature1 = inputHeatExchenger.getOutStream(0).getTemperature("C");
+      feedTemperature1 = inputHeatExchenger.getInStream(0).getTemperature("C");
+      dischargeTemperature1 = inputHeatExchenger.getOutStream(0).getTemperature("C");
 
-    feedTemperature2 = inputHeatExchenger.getInStream(1).getTemperature("C");
-    dischargeTemperature2 = inputHeatExchenger.getOutStream(1).getTemperature("C");
+      feedTemperature2 = inputHeatExchenger.getInStream(1).getTemperature("C");
+      dischargeTemperature2 = inputHeatExchenger.getOutStream(1).getTemperature("C");
 
-    HXthermalEfectiveness = inputHeatExchenger.getThermalEffectiveness();
+      HXthermalEfectiveness = inputHeatExchenger.getThermalEffectiveness();
 
-    dutyBalance = inputHeatExchenger.getHotColdDutyBalance();
+      dutyBalance = inputHeatExchenger.getHotColdDutyBalance();
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
   }
 }
