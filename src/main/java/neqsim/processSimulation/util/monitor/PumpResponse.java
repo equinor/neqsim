@@ -20,6 +20,7 @@ public class PumpResponse {
   // public Double polytropicHead;
   // public Double polytropicEfficiency;
   public Double power;
+  public Double duty;
   public Double suctionVolumeFlow;
   public Double internalVolumeFlow;
   public Double dischargeVolumeFlow;
@@ -52,6 +53,7 @@ public class PumpResponse {
     // polytropicHead = inputCompressor.getPolytropicFluidHead();
     // polytropicEfficiency =inputCompressor.getPolytropicEfficiency();
     power = inputPump.getPower("W"); // "kW");
+    duty = power;
     // speed = inputPump.getSpeed();
     // if(inputCompressor.getAntiSurge().isActive()){
     // internalVolumeFlow =
