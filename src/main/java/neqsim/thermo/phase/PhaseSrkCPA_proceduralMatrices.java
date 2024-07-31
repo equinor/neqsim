@@ -1031,7 +1031,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
    * calcRootVolFinder.
    * </p>
    *
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public double calcRootVolFinder(PhaseType pt) {
@@ -1247,7 +1247,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.

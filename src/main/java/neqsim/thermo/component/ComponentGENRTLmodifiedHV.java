@@ -53,7 +53,7 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @param HValpha an array of type double
    * @param HVgij an array of type double
    * @param HVgijT an array of type double

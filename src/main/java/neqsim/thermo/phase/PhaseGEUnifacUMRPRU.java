@@ -68,7 +68,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    */
   public void calcCommontemp(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure, PhaseType pt) {

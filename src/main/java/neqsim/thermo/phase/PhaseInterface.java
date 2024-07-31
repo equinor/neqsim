@@ -845,7 +845,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
