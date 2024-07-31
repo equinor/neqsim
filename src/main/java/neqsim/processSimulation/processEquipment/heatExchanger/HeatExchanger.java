@@ -633,6 +633,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new HXResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new HXResponse(this));
   }
 }
