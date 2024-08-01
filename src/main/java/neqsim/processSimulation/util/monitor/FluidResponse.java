@@ -88,7 +88,7 @@ public class FluidResponse {
         new Value(
             Double.toString(inputFluid.getEnthalpy(neqsim.util.unit.Units.getSymbol("enthalpy"))),
             neqsim.util.unit.Units.getSymbol("enthalpy")));
-    conditions.put(name, newdata);
+    conditions.put("overall", newdata);
 
     for (int i = 0; i < inputFluid.getNumberOfPhases(); i++) {
       String name = inputFluid.getPhase(i).getPhaseTypeName();
@@ -125,7 +125,7 @@ public class FluidResponse {
       newdata.put(inputFluid.getComponent(i).getComponentName(),
           new Value(Double.toString(inputFluid.getComponent(i).getz()), "mole fraction"));
     }
-    composition.put(name, newdata);
+    composition.put("overall", newdata);
     for (int j = 0; j < inputFluid.getNumberOfPhases(); j++) {
       newdata = new HashMap<String, Value>();
       HashMap<String, Value> newdata2 = new HashMap<String, Value>();
@@ -157,7 +157,7 @@ public class FluidResponse {
             Double
                 .toString(inputFluid.getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
             neqsim.util.unit.Units.getSymbol("volume flow")));
-    properties.put(inputFluid.getFluidName(), newdata);
+    properties.put("overall", newdata);
     for (int i = 0; i < inputFluid.getNumberOfPhases(); i++) {
       newdata = new HashMap<String, Value>();
       String name = inputFluid.getPhase(i).getPhaseTypeName();
