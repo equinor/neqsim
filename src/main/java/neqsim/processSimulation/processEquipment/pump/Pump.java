@@ -429,6 +429,19 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
   /**
    * <p>
+   * Setter for the field <code>pressure</code>.
+   * </p>
+   *
+   * @param pressure a double
+   * @param unit a {@link java.lang.String} object
+   */
+  public void setOutletPressure(double pressure, String unit) {
+    setOutletPressure(pressure);
+    pressureUnit = unit;
+  }
+
+  /**
+   * <p>
    * Setter for the field <code>speed</code>.
    * </p>
    *
