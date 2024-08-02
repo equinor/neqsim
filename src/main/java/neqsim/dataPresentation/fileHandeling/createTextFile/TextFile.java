@@ -70,7 +70,7 @@ public class TextFile implements java.io.Serializable {
    * Setter for the field <code>values</code>.
    * </p>
    *
-   * @param valuesloca an array of {@link double} objects
+   * @param valuesloca an array of type double
    */
   public void setValues(double[][] valuesloca) {
     values = new String[valuesloca[0].length][valuesloca.length];

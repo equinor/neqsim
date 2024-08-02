@@ -56,9 +56,9 @@ public class CricondenBarFlash extends pTphaseEnvelope {
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param name a {@link java.lang.String} object
    * @param phaseFraction a double
-   * @param cricondenBar an array of {@link double} objects
-   * @param cricondenBarX an array of {@link double} objects
-   * @param cricondenBarY an array of {@link double} objects
+   * @param cricondenBar an array of type double
+   * @param cricondenBarX an array of type double
+   * @param cricondenBarY an array of type double
    */
   public CricondenBarFlash(SystemInterface system, String name, double phaseFraction,
       double[] cricondenBar, double[] cricondenBarX, double[] cricondenBarY) {

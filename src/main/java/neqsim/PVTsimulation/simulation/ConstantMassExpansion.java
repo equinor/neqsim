@@ -396,8 +396,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
    * setTemperaturesAndPressures.
    * </p>
    *
-   * @param temperature an array of {@link double} objects
-   * @param pressure an array of {@link double} objects
+   * @param temperature an array of type double
+   * @param pressure an array of type double
    */
   public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
     this.pressures = pressure;

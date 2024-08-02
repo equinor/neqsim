@@ -38,7 +38,7 @@ public class DataSmoother {
    * Constructor for DataSmoothor.
    * </p>
    *
-   * @param nonSmoothedNumbers an array of {@link double} objects
+   * @param nonSmoothedNumbers an array of type double
    * @param nl a int
    * @param nr a int
    * @param ld a int
@@ -154,7 +154,7 @@ public class DataSmoother {
    * Getter for the field <code>smoothedNumbers</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getSmoothedNumbers() {
     return smoothedNumbers;

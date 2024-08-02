@@ -119,7 +119,7 @@ public class dataHandeling {
    * printToFile.
    * </p>
    *
-   * @param points an array of {@link double} objects
+   * @param points an array of type double
    * @param filename a {@link java.lang.String} object
    */
   public void printToFile(double[][] points, String filename) {

@@ -56,7 +56,7 @@ public class Manifold extends ProcessEquipmentBaseClass {
    * setSplitFactors.
    * </p>
    *
-   * @param splitFact an array of {@link double} objects
+   * @param splitFact an array of type double
    */
   public void setSplitFactors(double[] splitFact) {
     splitFactors = splitFact;

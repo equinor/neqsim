@@ -23,8 +23,8 @@ public class PropertyGenerator {
    * </p>
    *
    * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
-   * @param temperatures an array of {@link double} objects
-   * @param pressures an array of {@link double} objects
+   * @param temperatures an array of type double
+   * @param pressures an array of type double
    */
   public PropertyGenerator(SystemInterface fluid, double[] temperatures, double[] pressures) {
     this.fluid = fluid;

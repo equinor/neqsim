@@ -76,7 +76,7 @@ public class ComponentGEUniquac extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
@@ -103,7 +103,7 @@ public class ComponentGEUniquac extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
@@ -162,7 +162,7 @@ public class ComponentGEUniquac extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature,
@@ -181,7 +181,7 @@ public class ComponentGEUniquac extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,

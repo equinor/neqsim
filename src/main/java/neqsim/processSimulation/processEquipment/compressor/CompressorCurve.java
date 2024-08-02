@@ -35,9 +35,9 @@ public class CompressorCurve implements java.io.Serializable {
    * </p>
    *
    * @param speed a double
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
-   * @param polytropicEfficiency an array of {@link double} objects
+   * @param flow an array of type double
+   * @param head an array of type double
+   * @param polytropicEfficiency an array of type double
    */
   public CompressorCurve(double speed, double[] flow, double[] head,
       double[] polytropicEfficiency) {

@@ -55,9 +55,9 @@ public class CricondenThermFlash extends pTphaseEnvelope {
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param name a {@link java.lang.String} object
    * @param phaseFraction a double
-   * @param cricondenTherm an array of {@link double} objects
-   * @param cricondenThermX an array of {@link double} objects
-   * @param cricondenThermY an array of {@link double} objects
+   * @param cricondenTherm an array of type double
+   * @param cricondenThermX an array of type double
+   * @param cricondenThermY an array of type double
    */
   public CricondenThermFlash(SystemInterface system, String name, double phaseFraction,
       double[] cricondenTherm, double[] cricondenThermX, double[] cricondenThermY) {

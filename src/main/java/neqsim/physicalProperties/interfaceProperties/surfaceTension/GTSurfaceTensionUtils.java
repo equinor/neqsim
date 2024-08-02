@@ -30,10 +30,10 @@ public class GTSurfaceTensionUtils {
    * @param sys a {@link neqsim.thermo.system.SystemInterface} object
    * @param ncomp a int
    * @param t a double
-   * @param rho an array of {@link double} objects
-   * @param mu an array of {@link double} objects
-   * @param dmu_drho an array of {@link double} objects
-   * @param p an array of {@link double} objects
+   * @param rho an array of type double
+   * @param mu an array of type double
+   * @param dmu_drho an array of type double
+   * @param p an array of type double
    */
   public static void mufun(SystemInterface sys, int ncomp, double t, double[] rho, double[] mu,
       double[][] dmu_drho, double[] p) {

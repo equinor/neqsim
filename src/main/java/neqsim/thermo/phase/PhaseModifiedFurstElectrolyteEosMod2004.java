@@ -1723,7 +1723,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    * setFurstIonicCoefficient.
    * </p>
    *
-   * @param params an array of {@link double} objects
+   * @param params an array of type double
    */
   public void setFurstIonicCoefficient(double[] params) {}
 

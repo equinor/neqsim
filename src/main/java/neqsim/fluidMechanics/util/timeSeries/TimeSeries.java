@@ -40,7 +40,7 @@ public class TimeSeries implements java.io.Serializable {
    * Setter for the field <code>times</code>.
    * </p>
    *
-   * @param times an array of {@link double} objects
+   * @param times an array of type double
    */
   public void setTimes(double[] times) {
     this.timeSeries = times;
@@ -62,7 +62,7 @@ public class TimeSeries implements java.io.Serializable {
    * Setter for the field <code>outletMolarFlowRate</code>.
    * </p>
    *
-   * @param outletMolarFlowRate an array of {@link double} objects
+   * @param outletMolarFlowRate an array of type double
    */
   public void setOutletMolarFlowRate(double[] outletMolarFlowRate) {
     this.outletMolarFlowRate = outletMolarFlowRate;
@@ -73,7 +73,7 @@ public class TimeSeries implements java.io.Serializable {
    * Getter for the field <code>outletMolarFlowRates</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getOutletMolarFlowRates() {
     return this.outletMolarFlowRates;
@@ -136,7 +136,7 @@ public class TimeSeries implements java.io.Serializable {
    * getTimeStep.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getTimeStep() {
     return timeSteps;
@@ -147,7 +147,7 @@ public class TimeSeries implements java.io.Serializable {
    * getTime.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getTime() {
     return times;

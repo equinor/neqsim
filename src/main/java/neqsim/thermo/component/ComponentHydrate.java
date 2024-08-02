@@ -476,7 +476,7 @@ public class ComponentHydrate extends Component {
    * Getter for the field <code>dGfHydrate</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getDGfHydrate() {
     return dGfHydrate;
@@ -487,7 +487,7 @@ public class ComponentHydrate extends Component {
    * Setter for the field <code>dGfHydrate</code>.
    * </p>
    *
-   * @param dGfHydrate an array of {@link double} objects
+   * @param dGfHydrate an array of type double
    */
   public void setDGfHydrate(double[] dGfHydrate) {
     this.dGfHydrate = dGfHydrate;
@@ -510,7 +510,7 @@ public class ComponentHydrate extends Component {
    * Getter for the field <code>dHfHydrate</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getDHfHydrate() {
     return dHfHydrate;
@@ -533,7 +533,7 @@ public class ComponentHydrate extends Component {
    * Setter for the field <code>dHfHydrate</code>.
    * </p>
    *
-   * @param dHfHydrate an array of {@link double} objects
+   * @param dHfHydrate an array of type double
    */
   public void setDHfHydrate(double[] dHfHydrate) {
     this.dHfHydrate = dHfHydrate;
@@ -730,7 +730,7 @@ public class ComponentHydrate extends Component {
    * Getter for the field <code>cavprwat</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getCavprwat() {
     return cavprwat;

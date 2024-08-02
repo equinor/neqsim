@@ -59,11 +59,11 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param pt the PhaseType of the phase.
-   * @param WSalpha an array of {@link double} objects
-   * @param WSgij an array of {@link double} objects
-   * @param WSgijT an array of {@link double} objects
-   * @param intparam an array of {@link double} objects
+   * @param pt the PhaseType of the phase
+   * @param WSalpha an array of type double
+   * @param WSgij an array of type double
+   * @param WSgijT an array of type double
+   * @param intparam an array of type double
    * @param mixRule an array of {@link java.lang.String} objects
    * @return a double
    */

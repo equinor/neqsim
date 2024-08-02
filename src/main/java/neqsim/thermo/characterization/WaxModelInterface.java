@@ -30,7 +30,7 @@ public interface WaxModelInterface extends java.io.Serializable, Cloneable {
    * setWaxParameters.
    * </p>
    *
-   * @param parameters an array of {@link double} objects
+   * @param parameters an array of type double
    */
   public void setWaxParameters(double[] parameters);
 
@@ -39,7 +39,7 @@ public interface WaxModelInterface extends java.io.Serializable, Cloneable {
    * getWaxParameters.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getWaxParameters();
 
@@ -68,7 +68,7 @@ public interface WaxModelInterface extends java.io.Serializable, Cloneable {
    * setParameterWaxHeatOfFusion.
    * </p>
    *
-   * @param parameterWaxHeatOfFusion an array of {@link double} objects
+   * @param parameterWaxHeatOfFusion an array of type double
    */
   public void setParameterWaxHeatOfFusion(double[] parameterWaxHeatOfFusion);
 
@@ -84,7 +84,7 @@ public interface WaxModelInterface extends java.io.Serializable, Cloneable {
    * getParameterWaxHeatOfFusion.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getParameterWaxHeatOfFusion();
 
@@ -93,7 +93,7 @@ public interface WaxModelInterface extends java.io.Serializable, Cloneable {
    * getParameterWaxTriplePointTemperature.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getParameterWaxTriplePointTemperature();
 
@@ -102,7 +102,7 @@ public interface WaxModelInterface extends java.io.Serializable, Cloneable {
    * setParameterWaxTriplePointTemperature.
    * </p>
    *
-   * @param parameterWaxTriplePointTemperature an array of {@link double} objects
+   * @param parameterWaxTriplePointTemperature an array of type double
    */
   public void setParameterWaxTriplePointTemperature(double[] parameterWaxTriplePointTemperature);
 

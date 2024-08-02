@@ -180,7 +180,7 @@ public interface ComponentEosInterface extends ComponentInterface {
    * getDeltaEosParameters.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getDeltaEosParameters();
 

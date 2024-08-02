@@ -523,7 +523,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
    * calcFluxes2.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcFluxes2() {
     double sum = 0.0;

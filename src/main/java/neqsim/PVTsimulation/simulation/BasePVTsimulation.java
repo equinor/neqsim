@@ -45,7 +45,7 @@ public class BasePVTsimulation implements SimulationInterface {
    * Setter for the field <code>experimentalData</code>.
    * </p>
    *
-   * @param expData an array of {@link double} objects
+   * @param expData an array of type double
    */
   public void setExperimentalData(double[][] expData) {
     experimentalData = expData;

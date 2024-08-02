@@ -37,7 +37,7 @@ public class AttractiveTermTwuCoonParam extends AttractiveTermBaseClass {
    * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
-   * @param params an array of {@link double} objects
+   * @param params an array of type double
    */
   public AttractiveTermTwuCoonParam(ComponentEosInterface component, double[] params) {
     this(component);

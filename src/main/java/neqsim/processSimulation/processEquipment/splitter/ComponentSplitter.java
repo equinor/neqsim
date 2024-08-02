@@ -64,7 +64,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
    * setSplitFactors.
    * </p>
    *
-   * @param factors an array of {@link double} objects
+   * @param factors an array of type double
    */
   public void setSplitFactors(double[] factors) {
     splitFactor = factors;

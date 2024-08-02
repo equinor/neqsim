@@ -169,7 +169,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
    *
    * @param name a {@link java.lang.String} object
    * @param FCompNames an array of {@link java.lang.String} objects
-   * @param FCompTemp an array of {@link double} objects
+   * @param FCompTemp an array of type double
    */
   public void printToFile(String name, String[] FCompNames, double[] FCompTemp) {
     for (int n = 0; n < system.getPhases()[0].getNumberOfComponents(); n++) {

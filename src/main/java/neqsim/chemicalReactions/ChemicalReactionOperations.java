@@ -294,7 +294,7 @@ public class ChemicalReactionOperations
    * calcNVector.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcNVector() {
     double[] nvec = new double[components.length];
@@ -310,7 +310,7 @@ public class ChemicalReactionOperations
    * calcBVector.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcBVector() {
     Matrix tempA = new Matrix(Amatrix);
@@ -329,7 +329,7 @@ public class ChemicalReactionOperations
    * </p>
    *
    * @param phase a int
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcChemRefPot(int phase) {
     double[] referencePotentials = new double[components.length];

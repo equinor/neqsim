@@ -147,7 +147,7 @@ public interface FlowSystemInterface {
    * setLegHeights.
    * </p>
    *
-   * @param legHeights an array of {@link double} objects
+   * @param legHeights an array of type double
    */
   public void setLegHeights(double[] legHeights);
 
@@ -156,7 +156,7 @@ public interface FlowSystemInterface {
    * getLegHeights.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getLegHeights();
 
@@ -165,7 +165,7 @@ public interface FlowSystemInterface {
    * setLegPositions.
    * </p>
    *
-   * @param legPositions an array of {@link double} objects
+   * @param legPositions an array of type double
    */
   public void setLegPositions(double[] legPositions);
 
@@ -200,7 +200,7 @@ public interface FlowSystemInterface {
    * setLegOuterHeatTransferCoefficients.
    * </p>
    *
-   * @param coefs an array of {@link double} objects
+   * @param coefs an array of type double
    */
   public void setLegOuterHeatTransferCoefficients(double[] coefs);
 
@@ -209,7 +209,7 @@ public interface FlowSystemInterface {
    * setLegWallHeatTransferCoefficients.
    * </p>
    *
-   * @param coefs an array of {@link double} objects
+   * @param coefs an array of type double
    */
   public void setLegWallHeatTransferCoefficients(double[] coefs);
 
@@ -301,7 +301,7 @@ public interface FlowSystemInterface {
    * setLegOuterTemperatures.
    * </p>
    *
-   * @param temps an array of {@link double} objects
+   * @param temps an array of type double
    */
   public void setLegOuterTemperatures(double[] temps);
 

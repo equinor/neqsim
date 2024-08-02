@@ -13,20 +13,20 @@ public interface CompressorChartInterface extends Cloneable {
    * This method is used add a curve to the CompressorChart object.
    *
    * @param speed a double
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
-   * @param polytropicEfficiency an array of {@link double} objects
+   * @param flow an array of type double
+   * @param head an array of type double
+   * @param polytropicEfficiency an array of type double
    */
   public void addCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency);
 
   /**
    * This method is used add a set of curves to the CompressorChart object.
    *
-   * @param chartConditions an array of {@link double} objects
-   * @param speed an array of {@link double} objects
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
-   * @param polyEff an array of {@link double} objects
+   * @param chartConditions an array of type double
+   * @param speed an array of type double
+   * @param flow an array of type double
+   * @param head an array of type double
+   * @param polyEff an array of type double
    */
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] polyEff);

@@ -1138,7 +1138,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * calcRootVolFinder.
    * </p>
    *
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public double calcRootVolFinder(PhaseType pt) {
@@ -1220,7 +1220,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
@@ -1407,9 +1407,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * croeneckerProduct.
    * </p>
    *
-   * @param a an array of {@link double} objects
-   * @param b an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param a an array of type double
+   * @param b an array of type double
+   * @return an array of type double
    */
   public double[][] croeneckerProduct(double[][] a, double[][] b) {
     int aLength = a.length;
@@ -1449,7 +1449,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * @param totalNumberOfMoles a double
    * @param numberOfComponents a int
    * @param type a int
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @param beta a double
    */
   public void initOld2(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
@@ -2005,7 +2005,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.

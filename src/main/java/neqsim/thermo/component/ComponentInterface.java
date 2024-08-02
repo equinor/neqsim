@@ -535,7 +535,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] logfugcoefdN(PhaseInterface phase);
 
@@ -1550,7 +1550,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * getSchwartzentruberParams.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getSchwartzentruberParams();
 
@@ -1569,7 +1569,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * getTwuCoonParams.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getTwuCoonParams();
 
@@ -1693,7 +1693,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * getMatiascopemanParams.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getMatiascopemanParams();
 
@@ -1712,7 +1712,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * setMatiascopemanParams.
    * </p>
    *
-   * @param matiascopemanParams an array of {@link double} objects
+   * @param matiascopemanParams an array of type double
    */
   public void setMatiascopemanParams(double[] matiascopemanParams);
 
@@ -1961,7 +1961,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * getHenryCoefParameter.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getHenryCoefParameter();
 
@@ -1970,7 +1970,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * setHenryCoefParameter.
    * </p>
    *
-   * @param henryCoefParameter an array of {@link double} objects
+   * @param henryCoefParameter an array of type double
    */
   public void setHenryCoefParameter(double[] henryCoefParameter);
 
@@ -2000,7 +2000,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * getMatiascopemanSolidParams.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getMatiascopemanSolidParams();
 

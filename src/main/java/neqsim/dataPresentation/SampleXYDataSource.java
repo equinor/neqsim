@@ -36,7 +36,7 @@ public class SampleXYDataSource {
    * Constructor for SampleXYDataSource.
    * </p>
    *
-   * @param p an array of {@link double} objects
+   * @param p an array of type double
    * @param name an array of {@link java.lang.String} objects
    * @param title a {@link java.lang.String} object
    * @param xaxis a {@link java.lang.String} object

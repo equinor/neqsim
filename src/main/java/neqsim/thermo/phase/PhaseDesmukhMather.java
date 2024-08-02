@@ -121,7 +121,7 @@ public class PhaseDesmukhMather extends PhaseGE {
    * Setter for the field <code>aij</code>.
    * </p>
    *
-   * @param alpha an array of {@link double} objects
+   * @param alpha an array of type double
    */
   public void setAij(double[][] alpha) {
     for (int i = 0; i < alpha.length; i++) {
@@ -134,7 +134,7 @@ public class PhaseDesmukhMather extends PhaseGE {
    * Setter for the field <code>bij</code>.
    * </p>
    *
-   * @param Bij an array of {@link double} objects
+   * @param Bij an array of type double
    */
   public void setBij(double[][] Bij) {
     for (int i = 0; i < Bij.length; i++) {

@@ -88,7 +88,7 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
    * Setter for the field <code>composition</code>.
    * </p>
    *
-   * @param comps an array of {@link double} objects
+   * @param comps an array of type double
    * @param unit a {@link java.lang.String} object
    */
   public void setComposition(double[] comps, String unit) {

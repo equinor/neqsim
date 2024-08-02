@@ -355,7 +355,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseGEUnifac} object
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcQMixdN(PhaseGEUnifac phase) {
     setQMixdN(new double[phase.getNumberOfComponents()]);

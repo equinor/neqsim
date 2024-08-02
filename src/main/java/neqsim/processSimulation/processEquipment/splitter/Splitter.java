@@ -109,7 +109,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    * setSplitFactors.
    * </p>
    *
-   * @param splitFact an array of {@link double} objects
+   * @param splitFact an array of type double
    */
   public void setSplitFactors(double[] splitFact) {
     double sum = 0.0;
@@ -133,7 +133,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    * setFlowRates.
    * </p>
    *
-   * @param flowRates an array of {@link double} objects
+   * @param flowRates an array of type double
    * @param flowUnit a {@link java.lang.String} object
    */
   public void setFlowRates(double[] flowRates, String flowUnit) {

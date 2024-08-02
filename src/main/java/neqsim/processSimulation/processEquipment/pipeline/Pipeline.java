@@ -170,7 +170,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
    * setPipeOuterHeatTransferCoefficients.
    * </p>
    *
-   * @param heatCoefs an array of {@link double} objects
+   * @param heatCoefs an array of type double
    */
   public void setPipeOuterHeatTransferCoefficients(double[] heatCoefs) {
     if (heatCoefs.length != this.numberOfLegs + 1) {
@@ -187,7 +187,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
    * setPipeWallHeatTransferCoefficients.
    * </p>
    *
-   * @param heatCoefs an array of {@link double} objects
+   * @param heatCoefs an array of type double
    */
   public void setPipeWallHeatTransferCoefficients(double[] heatCoefs) {
     if (heatCoefs.length != this.numberOfLegs + 1) {

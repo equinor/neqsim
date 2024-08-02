@@ -1961,7 +1961,7 @@ public abstract class Phase implements PhaseInterface {
    * groupTBPfractions.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] groupTBPfractions() {
     double[] TPBfrac = new double[20];

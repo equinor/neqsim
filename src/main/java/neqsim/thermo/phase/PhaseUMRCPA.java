@@ -1138,7 +1138,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * calcRootVolFinder.
    * </p>
    *
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public double calcRootVolFinder(PhaseType pt) {
@@ -1220,7 +1220,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
@@ -1407,9 +1407,9 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * croeneckerProduct.
    * </p>
    *
-   * @param a an array of {@link double} objects
-   * @param b an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param a an array of type double
+   * @param b an array of type double
+   * @return an array of type double
    */
   public double[][] croeneckerProduct(double[][] a, double[][] b) {
     int aLength = a.length;
@@ -2005,7 +2005,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.

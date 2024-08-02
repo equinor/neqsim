@@ -24,7 +24,7 @@ public interface PhaseGEInterface {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param pt the PhaseType of the phase.
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
@@ -35,7 +35,7 @@ public interface PhaseGEInterface {
    * setAlpha.
    * </p>
    *
-   * @param alpha an array of {@link double} objects
+   * @param alpha an array of type double
    */
   public void setAlpha(double[][] alpha);
 
@@ -44,7 +44,7 @@ public interface PhaseGEInterface {
    * setDij.
    * </p>
    *
-   * @param Dij an array of {@link double} objects
+   * @param Dij an array of type double
    */
   public void setDij(double[][] Dij);
 
@@ -53,7 +53,7 @@ public interface PhaseGEInterface {
    * setDijT.
    * </p>
    *
-   * @param DijT an array of {@link double} objects
+   * @param DijT an array of type double
    */
   public void setDijT(double[][] DijT);
 }

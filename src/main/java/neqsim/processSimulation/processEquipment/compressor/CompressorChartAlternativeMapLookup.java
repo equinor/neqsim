@@ -168,8 +168,8 @@ public class CompressorChartAlternativeMapLookup
    * addSurgeCurve.
    * </p>
    *
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
+   * @param flow an array of type double
+   * @param head an array of type double
    */
   public void addSurgeCurve(double[] flow, double[] head) {
     surgeCurve = new SurgeCurve(flow, head);

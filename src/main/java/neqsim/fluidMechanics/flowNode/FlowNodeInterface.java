@@ -608,7 +608,7 @@ public interface FlowNodeInterface extends Cloneable {
    * setFluxes.
    * </p>
    *
-   * @param dn an array of {@link double} objects
+   * @param dn an array of type double
    */
   public void setFluxes(double[] dn);
 
