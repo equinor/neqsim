@@ -8,8 +8,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class dewPointPressureFlashTest {
   @Test
   void testRun() {
-
-
     SystemSrkEos fluid0_HC = new SystemSrkEos();
     fluid0_HC.addComponent("methane", 0.7);
     fluid0_HC.addComponent("ethane", 0.1);
@@ -27,6 +25,5 @@ public class dewPointPressureFlashTest {
       e.printStackTrace();
     }
     assertEquals(9.332383561, fluid0_HC.getPressure(), 1e-2);
-
   }
 }

@@ -256,7 +256,5 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void run_step(UUID id) {
-
-  }
+  public void run_step(UUID id) {}
 }

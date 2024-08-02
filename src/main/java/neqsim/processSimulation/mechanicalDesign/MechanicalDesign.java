@@ -1083,18 +1083,46 @@ public class MechanicalDesign implements java.io.Serializable {
     return costEstimate;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>defaultLiquidDensity</code>.
+   * </p>
+   *
+   * @param defaultLiqDens a double
+   */
   public void setDefaultLiquidDensity(double defaultLiqDens) {
     this.defaultLiquidDensity = defaultLiqDens;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>defaultLiquidDensity</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getDefaultLiquidDensity() {
     return defaultLiquidDensity;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>defaultLiquidViscosity</code>.
+   * </p>
+   *
+   * @param defaultLiqVisc a double
+   */
   public void setDefaultLiquidViscosity(double defaultLiqVisc) {
     this.defaultLiquidViscosity = defaultLiqVisc;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>defaultLiquidViscosity</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getDefaultLiquidViscosity() {
     return defaultLiquidViscosity;
   }

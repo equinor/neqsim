@@ -13,10 +13,8 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class SeparatorResponseTest {
-
   @Test
   void testWrite() {
-
     SystemSrkEos testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("n-heptane", 100.0);

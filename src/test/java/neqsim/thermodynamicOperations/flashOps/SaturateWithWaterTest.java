@@ -35,7 +35,6 @@ public class SaturateWithWaterTest {
     assertEquals(0.0029033655101811814, testSystem.getComponent("water").getz(), 1e-5);
   }
 
-
   @Test
   void testRun2() {
     SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 70.0, 150.0);

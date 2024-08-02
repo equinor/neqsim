@@ -522,7 +522,6 @@ public class ProcessSystem extends SimulationBaseClass {
    * .getUnit(); }
    */
 
-
   /**
    * <p>
    * runTransient.
@@ -974,8 +973,6 @@ public class ProcessSystem extends SimulationBaseClass {
   public String getReport_json() {
     return new Report(this).generateJsonReport();
   }
-
-
 
   /*
    * @XmlRootElement private class Report extends Object{ public Double name; public

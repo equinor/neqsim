@@ -25,9 +25,9 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
 
   /**
    * <p>
-   * Get a <code>initMechanicalDesign</code> for the equipment.
+   * Initialize a <code>initMechanicalDesign</code> for the equipment.
    * </p>
-   **/
+   */
   default void initMechanicalDesign() {}
 
   /**
@@ -135,7 +135,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
 
   /**
    * <p>
-   * getPressure.
+   * Getter for the field <code>pressure</code>.
    * </p>
    *
    * @return a double
@@ -144,7 +144,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
 
   /**
    * <p>
-   * getPressure.
+   * Getter for the field <code>pressure</code> converted to specified unit.
    * </p>
    *
    * @param unit a {@link java.lang.String} object
@@ -154,7 +154,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
 
   /**
    * <p>
-   * setPressure.
+   * Setter for the field <code>pressure</code>.
    * </p>
    *
    * @param pressure a double
@@ -228,7 +228,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * getReport_json
    * </p>
    * Return results of simulation in json format
-   * 
+   *
    * @return a String
    */
   public String getReport_json();

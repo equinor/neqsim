@@ -5,10 +5,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class FluidReportTest {
-
   @Test
   void testWrite() {
-
     SystemSrkEos testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("n-heptane", 100.0);
@@ -22,6 +20,5 @@ public class FluidReportTest {
     neqsim.util.unit.Units.activateFieldUnits();
     report = testSystem.toJson();
     // System.out.println(report);
-
   }
 }

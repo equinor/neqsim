@@ -78,7 +78,6 @@ public class RachfordRice implements Serializable {
   public double calcBetaMichelsen2001(double[] K, double[] z)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-
     int i;
     double tolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
     double midler = 0;
@@ -217,7 +216,6 @@ public class RachfordRice implements Serializable {
   public double calcBetaNielsen2023(double[] K, double[] z)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-
     double tolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
     double g0 = -1.0;
     double g1 = 1.0;
@@ -350,7 +348,9 @@ public class RachfordRice implements Serializable {
   }
 
   /**
-   * {@inheritDoc}
+   * <p>
+   * calcBetaS.
+   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @return a double
@@ -447,7 +447,6 @@ public class RachfordRice implements Serializable {
         if (nybeta < minBeta) {
           nybeta = minBeta;
         }
-
       } else {
         deriv = 0.0;
         gbeta = 0.0;
@@ -505,5 +504,4 @@ public class RachfordRice implements Serializable {
     }
     return this.beta[0];
   }
-
 }

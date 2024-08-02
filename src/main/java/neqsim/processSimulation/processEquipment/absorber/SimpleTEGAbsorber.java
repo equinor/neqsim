@@ -13,7 +13,6 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -423,13 +422,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     // getSolventOutStream().getFlowRate("kg/hr"));
   }
 
-  /**
-   * <p>
-   * getGasLoadFactor.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double getGasLoadFactor() {
     double intArea = 3.14 * getInternalDiameter() * getInternalDiameter() / 4.0;

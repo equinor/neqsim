@@ -114,7 +114,6 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     fluid.useVolumeCorrection(true);
     fluid.setMultiPhaseCheck(true);
 
-
     fluidOps = new ThermodynamicOperations(fluid);
     CalculationResult res2 = fluidOps.propertyFlash(Sp1, Sp2, 1, components, onlineFractions);
     Assertions.assertEquals(Sp1.size(), res2.calculationError.length);

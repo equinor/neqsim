@@ -118,12 +118,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     outStream[1].run();
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a {@link neqsim.processSimulation.mechanicalDesign.adsorber.AdsorberMechanicalDesign}
-   *         object
-   */
+  /** {@inheritDoc} */
   @Override
   public AdsorberMechanicalDesign getMechanicalDesign() {
     return new AdsorberMechanicalDesign(this);

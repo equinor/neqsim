@@ -428,7 +428,6 @@ public class TPmultiflash extends TPflash {
               useaccsubst = false;
             }
           }
-
         } else {
           SimpleMatrix f = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(), 1);
           SimpleMatrix df = null;
@@ -576,7 +575,9 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>stabilityAnalysis3.</p>
+   * <p>
+   * stabilityAnalysis3.
+   * </p>
    */
   public void stabilityAnalysis3() {
     double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
@@ -778,7 +779,6 @@ public class TPmultiflash extends TPflash {
               useaccsubst = false;
             }
           }
-
         } else {
           SimpleMatrix f = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(), 1);
           SimpleMatrix df = null;

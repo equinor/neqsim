@@ -157,7 +157,6 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> BIC = new ArrayList<Double>();
       String EOS;
       while ((st = br.readLine()) != null) {
-
         // System.out.println("EOS " +EOS );
         if (st.trim().equals("EOS")) {
           EOS = br.readLine().replace("/", "");

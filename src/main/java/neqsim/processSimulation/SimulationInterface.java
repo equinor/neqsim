@@ -160,7 +160,7 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
 
   /**
    * <p>
-   * solved.
+   * Returns whether or not the module has been solved.
    * </p>
    *
    * @return a boolean
@@ -169,7 +169,7 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
 
   /**
    * <p>
-   * getReport_json
+   * getReport_json.
    * </p>
    * Return results of simulation in json format
    *

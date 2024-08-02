@@ -30,7 +30,6 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   private int segment;
   private double FRMSConstant = 6.7;
 
-
   /**
    * <p>
    * Constructor for WaterDewPointAnalyser.
@@ -116,7 +115,6 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
     return Double.NaN;
   }
 
-
   /**
    * <p>
    * Getter for the field <code>method</code>.
@@ -151,9 +149,10 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
     this.segmentSet = true;
   }
 
-
   /**
-   * <p>setFRMSConstant.</p>
+   * <p>
+   * setFRMSConstant.
+   * </p>
    *
    * @param frms a double
    */
@@ -172,7 +171,6 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
     this.supportArrangement = arrangement;
   }
 
-
   /**
    * <p>
    * Setter for the support distance <code></code>.
@@ -183,7 +181,4 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   public void setSupportDistance(Double distance) {
     this.supportDistance = distance;
   }
-
-
-
 }

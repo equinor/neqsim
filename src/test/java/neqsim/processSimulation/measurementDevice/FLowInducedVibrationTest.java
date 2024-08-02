@@ -15,18 +15,14 @@ public class FLowInducedVibrationTest extends neqsim.NeqSimTest {
   static FlowInducedVibrationAnalyser flowInducedVibrationAnalyser;
   static FlowInducedVibrationAnalyser flowInducedVibrationAnalyserFRMS;
 
-
   /**
    * @throws java.lang.Exception
    */
   @BeforeAll
-  static void setUpBeforeClass() throws Exception {
-
-  }
+  static void setUpBeforeClass() throws Exception {}
 
   @Test
   public void testSetUnit() {
-
     double pressure = 58.3 + 1.01325; // bara of the separator
     double temperature = 90; // temperature of the separator
     double gas_flow_rate = 54559.25; // Sm3/hr
@@ -121,8 +117,5 @@ public class FLowInducedVibrationTest extends neqsim.NeqSimTest {
     double FRMS = ((FlowInducedVibrationAnalyser) operations
         .getMeasurementDevice("Flow Induced Vibrations Analyzer FRMS")).getMeasuredValue();
     Assertions.assertEquals(FRMS, 176, 5);
-
   }
-
-
 }

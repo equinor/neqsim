@@ -33,7 +33,6 @@ public class StreamResponse {
    *        object
    */
   public StreamResponse(StreamInterface inputStream) {
-
     name = inputStream.getName();
 
     HashMap<String, Value> newdata = new HashMap<String, Value>();

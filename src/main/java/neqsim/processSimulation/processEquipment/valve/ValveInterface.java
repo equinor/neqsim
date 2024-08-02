@@ -68,7 +68,7 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
    * <p>
    * getCv.
    * </p>
-   * 
+   *
    * @param unit can be SI or US SI is unit litre/minute US is gallons per minute
    * @return a double
    */

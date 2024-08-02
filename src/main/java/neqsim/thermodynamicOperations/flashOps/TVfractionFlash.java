@@ -78,7 +78,6 @@ public class TVfractionFlash extends Flash {
     double olddQdV = 0.0;
     double pressureStep = 1.0;
     do {
-
       iterations++;
       oldPres = nyPres;
       system.init(3);

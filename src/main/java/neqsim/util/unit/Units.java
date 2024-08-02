@@ -11,7 +11,6 @@ import java.util.HashMap;
  * @version $Id: $Id
  */
 public class Units {
-
   /**
    * Unit class nested within Units.
    */

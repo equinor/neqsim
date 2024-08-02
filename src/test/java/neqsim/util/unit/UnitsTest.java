@@ -4,8 +4,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class UnitsTest {
-
-
   @Test
   void testActivateUnits() {
     neqsim.thermo.system.SystemInterface testSystem =
@@ -28,5 +26,4 @@ public class UnitsTest {
     neqsim.util.unit.Units.activateMetricUnits();
     testSystem.createTable("results");
   }
-
 }
