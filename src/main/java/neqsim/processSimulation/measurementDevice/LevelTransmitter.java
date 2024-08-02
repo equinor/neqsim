@@ -47,9 +47,7 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
     System.out.println("measured level " + separator.getLiquidLevel());
   }
 
-  /**
-   * Get level as volume fraction.
-   */
+  /** {@inheritDoc} */
   @Override
   public double getMeasuredValue(String unit) {
     if (!unit.equalsIgnoreCase("")) {

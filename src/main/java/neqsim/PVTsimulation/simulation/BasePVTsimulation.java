@@ -121,7 +121,7 @@ public class BasePVTsimulation implements SimulationInterface {
 
   /**
    * <p>
-   * Setter for the field <code>temperature</code>.
+   * Setter for the field <code>temperature</code>. NB! Verify unit is correct.
    * </p>
    *
    * @param temperature the temperature to set
@@ -130,14 +130,8 @@ public class BasePVTsimulation implements SimulationInterface {
     this.temperature = temperature;
   }
 
-  /**
-   * <p>
-   * Setter for the field <code>temperature</code>.
-   * </p>
-   *
-   * @param temperature the temperature to set
-   * @param temperatureUnit the unit of temperature as string
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setTemperature(double temperature, String temperatureUnit) {
     this.temperature = temperature;
     this.temperatureUnit = temperatureUnit;

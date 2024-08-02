@@ -226,6 +226,7 @@ public class NeqSimDataBase
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void close() throws Exception {
     if (databaseConnection != null) {
@@ -438,7 +439,7 @@ public class NeqSimDataBase
   }
 
   /**
-   * Drops and re-creates table from contents in csv file.
+   * Drops and re-creates table from contents in default csv file.
    *
    * @param tableName Name of table to replace
    */
@@ -450,7 +451,7 @@ public class NeqSimDataBase
    * Drops and re-creates table from contents in csv file.
    *
    * @param tableName Name of table to replace
-   * @param path Path to csv file to
+   * @param path Path to csv file to get table data from
    */
   public static void updateTable(String tableName, String path) {
     URL url = NeqSimDataBase.class.getClassLoader().getResource(path);
@@ -487,6 +488,11 @@ public class NeqSimDataBase
     }
   }
 
+  /**
+   * <p>
+   * initH2DatabaseFromCSVfiles.
+   * </p>
+   */
   public static void initH2DatabaseFromCSVfiles() {
     h2IsInitalizing = true;
     neqsim.util.database.NeqSimDataBase.connectionString =

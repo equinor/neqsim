@@ -45,14 +45,7 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
     }
   }
 
-  /**
-   * Convert a value from one temperature unit to another.
-   *
-   * @param value the temperature value to convert
-   * @param fromUnit the unit of the input temperature
-   * @param toUnit the unit to convert the temperature to
-   * @return the converted temperature value
-   */
+  /** {@inheritDoc} */
   @Override
   public double getValue(double value, String fromUnit, String toUnit) {
     if (fromUnit.equals(toUnit)) {
@@ -84,10 +77,9 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
   }
 
   /**
-   * Convert a given temperature value from Kelvin to a specified unit.
+   * {@inheritDoc}
    *
-   * @param toUnit the target unit to convert the temperature to ("C", "F", "R")
-   * @return the converted temperature value in the target unit
+   * Convert a given temperature value from Kelvin to a specified unit.
    */
   @Override
   public double getValue(String toUnit) {
@@ -100,7 +92,7 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
         return invalue - 273.15;
       case "F":
         // Convert from Kelvin to Fahrenheit
-        return invalue * 9.0/5.0 - 459.67;
+        return invalue * 9.0 / 5.0 - 459.67;
       case "R":
         // Convert from Kelvin to Rankine
         return invalue * 9.0 / 5.0;

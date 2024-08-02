@@ -38,6 +38,9 @@ public abstract class constantDutyFlash implements ConstantDutyFlashInterface {
   double[] tm = { 1, 1 };
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
 
+  /**
+   * <p>Constructor for constantDutyFlash.</p>
+   */
   public constantDutyFlash() {
   }
 

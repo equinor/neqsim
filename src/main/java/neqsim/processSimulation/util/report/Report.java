@@ -19,7 +19,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * Report class.
  * </p>
- * 
+ *
  * @author even
  * @version $Id: $Id
  */
@@ -29,26 +29,56 @@ public class Report {
   ProcessEquipmentBaseClass processEquipment = null;
   SystemInterface fluid = null;
 
+  /**
+   * <p>Constructor for Report.</p>
+   *
+   * @param process a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+   */
   public Report(ProcessSystem process) {
     this.process = process;
   }
 
+  /**
+   * <p>Constructor for Report.</p>
+   *
+   * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public Report(SystemInterface fluid) {
     this.fluid = fluid;
   }
 
+  /**
+   * <p>Constructor for Report.</p>
+   *
+   * @param processEquipmentBaseClass a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass} object
+   */
   public Report(ProcessEquipmentBaseClass processEquipmentBaseClass) {
     processEquipment = processEquipmentBaseClass;
   }
 
+  /**
+   * <p>Constructor for Report.</p>
+   *
+   * @param processModule a {@link neqsim.processSimulation.processSystem.ProcessModule} object
+   */
   public Report(ProcessModule processModule) {
     // TODO Auto-generated constructor stub
   }
 
+  /**
+   * <p>Constructor for Report.</p>
+   *
+   * @param processModuleBaseClass a {@link neqsim.processSimulation.processSystem.ProcessModuleBaseClass} object
+   */
   public Report(ProcessModuleBaseClass processModuleBaseClass) {
     // TODO Auto-generated constructor stub
   }
 
+  /**
+   * <p>generateJsonReport.</p>
+   *
+   * @return a {@link java.lang.String} object
+   */
   public String generateJsonReport() {
     Map<String, String> json_reports = new HashMap<>();
 

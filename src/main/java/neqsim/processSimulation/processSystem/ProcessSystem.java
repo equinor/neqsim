@@ -203,7 +203,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @return a {@link MeasurementDeviceInterface} object
+   * @return a {@link neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface} object
    */
   public MeasurementDeviceInterface getMeasurementDevice(String name) {
     for (int i = 0; i < measurementDevices.size(); i++) {
@@ -566,13 +566,7 @@ public class ProcessSystem extends SimulationBaseClass {
     return true;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>time</code>.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double getTime() {
     return time;
@@ -756,13 +750,7 @@ public class ProcessSystem extends SimulationBaseClass {
     this.timeStep = timeStep;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>name</code>.
-   * </p>
-   *
-   * @return the name
-   */
+  /** {@inheritDoc} */
   @Override
   public String getName() {
     return name;
@@ -980,7 +968,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * @return a String
    */
   public String getReport_json() {

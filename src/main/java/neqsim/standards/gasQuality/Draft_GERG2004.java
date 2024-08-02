@@ -65,7 +65,7 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String returnParameter, java.lang.String returnUnit) {
+  public double getValue(String returnParameter, String returnUnit) {
     return 0.0;
   }
 

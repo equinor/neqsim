@@ -248,7 +248,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String returnParameter, java.lang.String returnUnit) {
+  public double getValue(String returnParameter, String returnUnit) {
     checkReferenceCondition();
 
     if (returnParameter.equals("GCV")) {

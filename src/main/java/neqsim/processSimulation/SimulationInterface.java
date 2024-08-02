@@ -40,21 +40,21 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
   public void setCalculateSteadyState(boolean steady);
 
   /**
-   * Getter for property time.
+   * Getter for the field <code>time</code>.
    *
    * @return Value of property time.
    */
   public double getTime();
 
   /**
-   * Setter for property time.
+   * Setter for field <code>time</code>.
    *
    * @param value Value to set.
    */
   public void setTime(double value);
 
   /**
-   * Method to increase parameter time by a given value.
+   * Method to increase field <code>time</code> by a given value.
    *
    * @param dt Value to increase time by.
    */
@@ -62,10 +62,10 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
 
   /**
    * <p>
-   * setRunInSteps
+   * setRunInSteps.
    * </p>
-   * 
-   * @param setRunSteps boolean set if run in steps
+   *
+   * @param setRunSteps boolean set true to run in steps
    */
   public void setRunInSteps(boolean setRunSteps);
 
@@ -73,14 +73,14 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
    * <p>
    * isRunInSteps.
    * </p>
-   * 
+   *
    * @return boolean
    */
   public boolean isRunInSteps();
 
   /**
    * <p>
-   * run
+   * run.
    * </p>
    *
    * @param id UUID
@@ -89,9 +89,8 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
 
   /**
    * <p>
-   * run
+   * run.
    * </p>
-   *
    */
   public default void run() {
     if (isRunInSteps()) {
@@ -102,12 +101,11 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
   }
 
   /**
-   * {@inheritDoc}
-   *
    * <p>
+   * run_step
+   * </p>
    * In this method all thermodynamic and unit operations will be calculated in a steady state
    * calculation. It does not solve resycles - only calculates one step.
-   * </p>
    */
   public default void run_step() {
     run_step(UUID.randomUUID());
@@ -174,7 +172,7 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
    * getReport_json
    * </p>
    * Return results of simulation in json format
-   * 
+   *
    * @return a String
    */
   public String getReport_json();

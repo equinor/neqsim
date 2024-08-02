@@ -627,13 +627,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     return flowPattern;
   }
 
-  /**
-   * <p>
-   * getMeasuredValue.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double getMeasuredValue(String unit) {
     if (!unit.equalsIgnoreCase("m3/sec")) {

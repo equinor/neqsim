@@ -152,6 +152,11 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
   }
 
 
+  /**
+   * <p>setFRMSConstant.</p>
+   *
+   * @param frms a double
+   */
   public void setFRMSConstant(double frms) {
     this.FRMSConstant = frms;
   }

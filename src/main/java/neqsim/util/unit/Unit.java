@@ -26,7 +26,7 @@ public interface Unit {
 
   /**
    * <p>
-   * getValue.
+   * Convert value from a specified unit to a specified unit.
    * </p>
    *
    * @param val a double

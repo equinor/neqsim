@@ -20,21 +20,35 @@ public class RachfordRice implements Serializable {
   private double[] beta = new double[2];
   private static String method = "Michelsen2001"; // alternative use Nielsen2023
 
+  /**
+   * <p>
+   * Getter for the field <code>method</code>.
+   * </p>
+   *
+   * @return a {@link java.lang.String} object
+   */
   public static String getMethod() {
     return RachfordRice.method;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>method</code>.
+   * </p>
+   *
+   * @param method a {@link java.lang.String} object
+   */
   public static void setMethod(String method) {
     RachfordRice.method = method;
   }
 
   /**
    * <p>
-   * calcBeta. For gas liquid systems.
+   * calcBeta. For gas liquid systems. Method used is defined in method String variable
    * </p>
-   * 
-   * Method used is defined in method String variable
    *
+   * @param K an array of type double
+   * @param z an array of type double
    * @return Beta Mole fraction of gas phase
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
@@ -52,11 +66,11 @@ public class RachfordRice implements Serializable {
 
   /**
    * <p>
-   * calcBeta. For gas liquid systems.
+   * calcBeta. For gas liquid systems. Method based on Michelsen Mollerup, 2001
    * </p>
-   * 
-   * Method based on Michelsen Mollerup, 2001
    *
+   * @param K an array of type double
+   * @param z an array of type double
    * @return Beta Mole fraction of gas phase
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
@@ -194,6 +208,8 @@ public class RachfordRice implements Serializable {
    * Rachford–Rice equation, Nielsen, Lia, 2023
    * </p>
    *
+   * @param K an array of type double
+   * @param z an array of type double
    * @return Beta Mole fraction of gas phase
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
@@ -322,11 +338,25 @@ public class RachfordRice implements Serializable {
     return V;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>beta</code>.
+   * </p>
+   *
+   * @return an array of type double
+   */
   public double[] getBeta() {
     return beta;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @return a double
+   * @throws neqsim.util.exception.IsNaNException if any.
+   * @throws neqsim.util.exception.TooManyIterationsException if any.
+   */
   public final double calcBetaS(SystemInterface system) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     ComponentInterface[] compArray = system.getPhase(0).getComponents();
