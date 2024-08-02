@@ -6,12 +6,11 @@ import java.util.HashMap;
  * <p>
  * Units class.
  * </p>
- * 
+ *
  * @author even
  * @version $Id: $Id
  */
 public class Units {
-
   /**
    * Unit class nested within Units.
    */
@@ -25,8 +24,11 @@ public class Units {
     }
   }
 
+  /** Constant <code>activeUnits</code> */
   public static HashMap<String, UnitDescription> activeUnits = new HashMap<>();
+  /** Constant <code>defaultUnits</code> */
   public static HashMap<String, UnitDescription> defaultUnits = new HashMap<>();
+  /** Constant <code>metricUnits</code> */
   public static HashMap<String, UnitDescription> metricUnits = new HashMap<>();
   private static HashMap<String, UnitDescription> siUnits = new HashMap<>();
   private static HashMap<String, UnitDescription> fieldUnits = new HashMap<>();
@@ -36,6 +38,11 @@ public class Units {
   private static String[] temperatureUnits = new String[] {"K", "C", "F", "R"};
   private static String[] molarVolumeUnits = new String[] {"mol/m3", "litre/m3", "ft3/lbmole"};
 
+  /**
+   * <p>
+   * Constructor for Units.
+   * </p>
+   */
   public Units() {
     if (activeUnits.size() == 0) {
       activeUnits.put("temperature", new UnitDescription("C", "Celsius"));
@@ -99,6 +106,11 @@ public class Units {
     }
   }
 
+  /**
+   * <p>
+   * activateSIUnits.
+   * </p>
+   */
   public static void activateSIUnits() {
     if (activeUnits.size() == 0) {
       new Units();
@@ -106,6 +118,11 @@ public class Units {
     activeUnits = new HashMap<>(siUnits);
   }
 
+  /**
+   * <p>
+   * activateFieldUnits.
+   * </p>
+   */
   public static void activateFieldUnits() {
     if (activeUnits.size() == 0) {
       new Units();
@@ -113,6 +130,11 @@ public class Units {
     activeUnits = new HashMap<>(fieldUnits);
   }
 
+  /**
+   * <p>
+   * activateMetricUnits.
+   * </p>
+   */
   public static void activateMetricUnits() {
     if (activeUnits.size() == 0) {
       new Units();
@@ -120,6 +142,11 @@ public class Units {
     activeUnits = new HashMap<>(metricUnits);
   }
 
+  /**
+   * <p>
+   * activateDefaultUnits.
+   * </p>
+   */
   public static void activateDefaultUnits() {
     if (activeUnits.size() == 0) {
       new Units();
@@ -127,6 +154,14 @@ public class Units {
     activeUnits = new HashMap<>(defaultUnits); // Reassign with a copy
   }
 
+  /**
+   * <p>
+   * getSymbol.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @return a {@link java.lang.String} object
+   */
   public static String getSymbol(String name) {
     if (activeUnits.size() == 0) {
       new Units();
@@ -134,6 +169,14 @@ public class Units {
     return activeUnits.get(name).symbol;
   }
 
+  /**
+   * <p>
+   * getSymbolName.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @return a {@link java.lang.String} object
+   */
   public static String getSymbolName(String name) {
     if (activeUnits.size() == 0) {
       new Units();
@@ -141,6 +184,15 @@ public class Units {
     return activeUnits.get(name).symbolName;
   }
 
+  /**
+   * <p>
+   * setUnit.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param symbol a {@link java.lang.String} object
+   * @param symbolName a {@link java.lang.String} object
+   */
   public static void setUnit(String name, String symbol, String symbolName) {
     if (activeUnits.size() == 0) {
       new Units();
@@ -152,14 +204,35 @@ public class Units {
     }
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>temperatureUnits</code>.
+   * </p>
+   *
+   * @return an array of {@link java.lang.String} objects
+   */
   public String[] getTemperatureUnits() {
     return temperatureUnits;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>pressureUnits</code>.
+   * </p>
+   *
+   * @return an array of {@link java.lang.String} objects
+   */
   public String[] getPressureUnits() {
     return pressureUnits;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>molarVolumeUnits</code>.
+   * </p>
+   *
+   * @return an array of {@link java.lang.String} objects
+   */
   public String[] getMolarVolumeUnits() {
     return molarVolumeUnits;
   }

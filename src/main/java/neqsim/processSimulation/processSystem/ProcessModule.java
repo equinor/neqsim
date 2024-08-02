@@ -56,7 +56,6 @@ public class ProcessModule extends SimulationBaseClass {
    *
    * @param processSystem the process system that contains the unit operations to be added.
    */
-
   public void add(ProcessSystem processSystem) {
     addedUnitOperations.add(processSystem);
     operationsIndex.add(unitIndex++);
@@ -67,7 +66,6 @@ public class ProcessModule extends SimulationBaseClass {
    *
    * @param module the process module to be added
    */
-
   public void add(ProcessModule module) {
     addedModules.add(module);
     modulesIndex.add(unitIndex++);
@@ -88,7 +86,6 @@ public class ProcessModule extends SimulationBaseClass {
    *
    * @return the list of operations index
    */
-
   public List<Integer> getOperationsIndex() {
     return operationsIndex;
   }
@@ -98,7 +95,6 @@ public class ProcessModule extends SimulationBaseClass {
    *
    * @return the list of added process modules
    */
-
   public List<ProcessModule> getAddedModules() {
     return addedModules;
   }
@@ -109,16 +105,11 @@ public class ProcessModule extends SimulationBaseClass {
    *
    * @return the list of module index
    */
-
   public List<Integer> getModulesIndex() {
     return modulesIndex;
   }
 
-  /**
-   * Run the current process module.
-   *
-   * @param id the UUID of the process module
-   */
+  /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     logger.info("Running module " + getName());
@@ -173,11 +164,7 @@ public class ProcessModule extends SimulationBaseClass {
     return true;
   }
 
-  /**
-   * Returns whether or not the module has been solved.
-   *
-   * @return true if the module has been solved, false otherwise
-   */
+  /** {@inheritDoc} */
 
   @Override
   public boolean solved() {
@@ -258,13 +245,20 @@ public class ProcessModule extends SimulationBaseClass {
     return copyModule;
   }
 
+  /**
+   * <p>
+   * getReport.
+   * </p>
+   *
+   * @return a {@link java.util.ArrayList} object
+   */
   public ArrayList<String[]> getReport() {
     return null;
   }
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * @return a String
    */
   public String getReport_json() {

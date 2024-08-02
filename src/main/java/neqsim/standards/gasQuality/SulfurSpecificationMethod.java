@@ -34,7 +34,7 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String returnParameter, java.lang.String returnUnit) {
+  public double getValue(String returnParameter, String returnUnit) {
     thermoSystem.init(0);
     if (returnParameter.equals("H2S")) {
       if (thermoSystem.getPhase(0).hasComponent("H2S")) {

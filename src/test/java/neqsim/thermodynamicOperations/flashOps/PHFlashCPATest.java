@@ -40,6 +40,4 @@ class PHFlashCPATest {
     testOps.PSflash(entropy);
     assertEquals(287.0197047, testSystem.getTemperature(), 1e-2);
   }
-
-
 }

@@ -22,7 +22,6 @@ import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
-  
   @Test
   public void runTEGProcessTest2() {
     neqsim.thermo.system.SystemInterface feedGas =

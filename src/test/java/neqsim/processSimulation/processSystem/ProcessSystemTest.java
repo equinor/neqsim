@@ -573,7 +573,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
         1e-6);
   }
 
-
   @Test
   public void testRun_step() {
     neqsim.thermo.system.SystemInterface feedGas =
@@ -910,15 +909,12 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
         1e-6);
 
-
     operations.run();
     operations.run();
     operations.run();
     operations.run();
     assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
         1e-6);
-
-
 
     // run as time step as thread
     Thread thread = operations.runAsThread();
@@ -931,9 +927,5 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     } catch (Exception e) {
       e.printStackTrace();
     }
-
-
   }
-
-
 }

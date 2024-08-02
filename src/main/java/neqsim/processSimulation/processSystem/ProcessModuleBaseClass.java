@@ -221,13 +221,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     return null;
   }
 
-  /**
-   * <p>
-   * getResultTable.
-   * </p>
-   *
-   * @return an array of {@link java.lang.String} objects
-   */
+  /** {@inheritDoc} */
   @Override
   public String[][] getResultTable() {
     return null;
@@ -253,7 +247,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * @return a String
    */
   public String getReport_json() {
@@ -262,7 +256,5 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void run_step(UUID id) {
-
-  }
+  public void run_step(UUID id) {}
 }

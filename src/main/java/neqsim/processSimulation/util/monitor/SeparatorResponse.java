@@ -38,7 +38,6 @@ public class SeparatorResponse {
     if (inputSeparator.getThermoSystem().hasPhaseType("gas")) {
       gas = new StreamResponse(inputSeparator.getGasOutStream());
     }
-
   }
 
   /**

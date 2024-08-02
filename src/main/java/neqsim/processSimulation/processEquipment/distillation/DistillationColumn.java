@@ -720,13 +720,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return internalDiameter;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>solved</code>.
-   * </p>
-   *
-   * @return a boolean
-   */
+  /** {@inheritDoc} */
   @Override
   public boolean solved() {
     return (err < 1e-4);

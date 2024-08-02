@@ -13,8 +13,6 @@ import neqsim.thermo.component.ComponentPR;
 public class PhasePrEos extends PhaseEos {
   private static final long serialVersionUID = 1000;
 
-
-
   /**
    * <p>
    * Constructor for PhasePrEos.

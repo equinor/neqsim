@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -252,11 +251,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     return enthalpy;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
+  /** {@inheritDoc} */
   @Override
   @Deprecated
   public StreamInterface getOutStream() {
@@ -543,13 +538,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     return downstreamProperty;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>outletStream</code>.
-   * </p>
-   *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
+  /** {@inheritDoc} */
   @Override
   public StreamInterface getOutletStream() {
     return outletStream;

@@ -82,30 +82,15 @@ public abstract class SimulationBaseClass extends NamedBaseClass implements Simu
     this.time = this.time + dt;
   }
 
-  /**
-   * <p>
-   * setRunInSteps
-   * </p>
-   * 
-   * @param setRunSteps boolean set if run in steps
-   */
+  /** {@inheritDoc} */
   @Override
   public void setRunInSteps(boolean setRunSteps) {
     runInSteps = setRunSteps;
   }
 
-  /**
-   * <p>
-   * isRunInSteps.
-   * </p>
-   * 
-   * @return boolean
-   */
+  /** {@inheritDoc} */
   @Override
   public boolean isRunInSteps() {
     return runInSteps;
   }
-
-
-
 }

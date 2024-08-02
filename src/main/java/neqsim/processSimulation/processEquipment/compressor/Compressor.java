@@ -135,25 +135,13 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     }
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a
-   *         {@link neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign}
-   *         object
-   */
+  /** {@inheritDoc} */
   @Override
   public CompressorMechanicalDesign getMechanicalDesign() {
     return new CompressorMechanicalDesign(this);
   }
 
-  /**
-   * <p>
-   * Create deep copy.
-   * </p>
-   *
-   * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
-   */
+  /** {@inheritDoc} */
   @Override
   public Compressor copy() {
     return (Compressor) super.copy();
@@ -200,13 +188,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     this.pressureUnit = unit;
   }
 
-  /**
-   * <p>
-   * getOutletPressure.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double getOutletPressure() {
     return pressure;
@@ -1010,6 +992,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     return getAntiSurge().isSurge();
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getDistanceToSurge() {
     return (getInletStream().getFlowRate("m3/hr")
@@ -1396,35 +1379,54 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         && useRigorousPolytropicMethod == other.useRigorousPolytropicMethod;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setMaximumSpeed(double maxSpeed) {
     this.maxspeed = maxSpeed;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setMinimumSpeed(double minspeed) {
     this.minspeed = minspeed;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getMaximumSpeed() {
     return maxspeed;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getMinimumSpeed() {
     return minspeed;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>compressionRatio</code>.
+   * </p>
+   *
+   * @param compRatio a double
+   */
   public void setCompressionRatio(double compRatio) {
     this.compressionRatio = compRatio;
     useCompressionRatio = true;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>compressionRatio</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getCompressionRatio() {
     return compressionRatio;
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new CompressorResponse(this));

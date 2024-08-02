@@ -23,7 +23,6 @@ public class ValveResponse {
    * @param valve a {@link neqsim.processSimulation.processEquipment.valve.ValveInterface} object
    */
   public ValveResponse(ValveInterface valve) {
-
     name = valve.getName();
 
     data.add(new String[] {"outlet temperature",

@@ -31,7 +31,6 @@ public class SaturationPressure extends BasePVTsimulation {
    * @return a double
    */
   public double calcSaturationPressure() {
-
     if (!Double.isNaN(temperature)) {
       getThermoSystem().setTemperature(temperature, temperatureUnit);
     }

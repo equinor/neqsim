@@ -902,16 +902,26 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Returns the critical temperature of the component.
    * </p>
    *
-   * @return The critical temperature of the component.
+   * @return The critical temperature of the component
    */
   public double getTC();
+
+  /**
+   * <p>
+   * Returns the critical temperature of the component.
+   * </p>
+   *
+   * @param unit Unit of return temperature
+   * @return The critical temperature of the component
+   */
+  public double getTC(String unit);
 
   /**
    * <p>
    * Getter for property NormalBoilingPoint.
    * </p>
    *
-   * @return The normal boiling point of the component.
+   * @return The normal boiling point of the component
    */
   public double getNormalBoilingPoint();
 
@@ -926,12 +936,22 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getPC.
+   * Returns the critical pressure of the component.
    * </p>
    *
-   * @return a double
+   * @return The critical pressure of the component
    */
   public double getPC();
+
+  /**
+   * <p>
+   * Returns the critical pressure of the component.
+   * </p>
+   *
+   * @param unit Unit of return pressure
+   * @return The critical pressure of the component
+   */
+  public double getPC(String unit);
 
   /**
    * <p>
@@ -2293,27 +2313,4 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     c.put("O2", "oxygen");
     return c;
   }
-
-  /**
-   * <p>
-   * getTC.
-   * </p>
-   *
-   * @param unit Unit of return temperature
-   * @return a double of critical temperature
-   */
-  public double getTC(String unit);
-
-  /**
-   *
-   * <p>
-   * getPC.
-   * </p>
-   *
-   * @param unit Unit of return temperature
-   * @return a double of critical temperature
-   */
-  public double getPC(String unit);
-
-
 }

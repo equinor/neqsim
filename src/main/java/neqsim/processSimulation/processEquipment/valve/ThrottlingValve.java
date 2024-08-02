@@ -328,13 +328,13 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     return Cv / (percentValveOpening / 100);
   }
 
-
-
   /**
    * Calculates the mass flow rate through a valve given the upstream pressure (Pus), downstream
    * pressure (Pds), fluid density (rhous), and flow coefficient (Cv).
    *
+   * <p>
    * The calculation is based on the formula for mass flow through a valve.
+   * </p>
    *
    * @param Pus The upstream pressure (Pus) in bara.
    * @param Pds The downstream pressure (Pds) in bara.
@@ -345,7 +345,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    */
   public double calcmassflow(double Pus, double Pds, double rhous, double Cv,
       double percentValveOpening) {
-
     // Sine of 3417 / 30.0
     double sineFactor = Math.sin(3417 / 30.0);
 
@@ -386,7 +385,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
     return Pds;
   }
-
 
   /**
    * Calculates the flow coefficient (Cv) of a valve given the upstream pressure (Pus), downstream
@@ -441,8 +439,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
     return percentValveOpening;
   }
-
-
 
   /** {@inheritDoc} */
   @Override
@@ -644,6 +640,13 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     setCalculationIdentifier(id);
   }
 
+  /**
+   * <p>
+   * setMinimumValveOpening.
+   * </p>
+   *
+   * @param minopen a double
+   */
   public void setMinimumValveOpening(double minopen) {
     minValveOpening = minopen;
   }
@@ -681,7 +684,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
     valveCvSet = true;
   }
-
 
   /** {@inheritDoc} */
   @Override
@@ -769,21 +771,25 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     this.acceptNegativeDP = acceptNegativeDP;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void initMechanicalDesign() {
     valveMechanicalDesign = new ValveMechanicalDesign(this);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a {@link neqsim.processSimulation.mechanicalDesign.valve.ValveMechanicalDesign} object
-   */
+  /** {@inheritDoc} */
   @Override
   public ValveMechanicalDesign getMechanicalDesign() {
     return valveMechanicalDesign;
   }
 
+  /**
+   * <p>
+   * setIsCalcOutPressure.
+   * </p>
+   *
+   * @param isSetPres a boolean
+   */
   public void setIsCalcOutPressure(boolean isSetPres) {
     isCalcPressure = isSetPres;
   }
@@ -794,18 +800,46 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     return new GsonBuilder().create().toJson(new ValveResponse(this));
   }
 
+  /**
+   * <p>
+   * isGasValve.
+   * </p>
+   *
+   * @return a boolean
+   */
   public boolean isGasValve() {
     return gasValve;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>gasValve</code>.
+   * </p>
+   *
+   * @param gasValve a boolean
+   */
   public void setGasValve(boolean gasValve) {
     this.gasValve = gasValve;
   }
 
+  /**
+   * <p>
+   * getFp.
+   * </p>
+   *
+   * @return a double
+   */
   public double getFp() {
     return Fp;
   }
 
+  /**
+   * <p>
+   * setFp.
+   * </p>
+   *
+   * @param fp a double
+   */
   public void setFp(double fp) {
     Fp = fp;
   }

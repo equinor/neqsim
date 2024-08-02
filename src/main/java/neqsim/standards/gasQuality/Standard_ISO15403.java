@@ -2,6 +2,13 @@ package neqsim.standards.gasQuality;
 
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * Standard_ISO15403 class.
+ * </p>
+ *
+ * @author ASMF
+ */
 public class Standard_ISO15403 extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1L;
 
@@ -56,7 +63,7 @@ public class Standard_ISO15403 extends neqsim.standards.Standard {
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String returnParameter, java.lang.String returnUnit) {
+  public double getValue(String returnParameter, String returnUnit) {
     return getValue(returnParameter);
   }
 

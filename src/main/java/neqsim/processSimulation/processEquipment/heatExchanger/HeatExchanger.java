@@ -262,7 +262,6 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-
     if (getSpecification().equals("out stream")) {
       runSpecifiedStream(id);
     } else if (firstTime) {

@@ -2,15 +2,29 @@ package neqsim.processSimulation.processEquipment.compressor;
 
 /**
  * Compressor chart generator.
+ *
+ * @author Even Solbraa
  */
 public class CompressorChartGenerator {
   Compressor compressor = null;
 
+  /**
+   * <p>
+   * Constructor for CompressorChartGenerator.
+   * </p>
+   *
+   * @param inpcompressor a {@link neqsim.processSimulation.processEquipment.compressor.Compressor}
+   *        object
+   */
   public CompressorChartGenerator(Compressor inpcompressor) {
     this.compressor = inpcompressor;
   }
 
   /**
+   * <p>
+   * generateCompressorChart.
+   * </p>
+   *
    * @param generationOption string to specify how to generate the compressor chart
    * @return a {@link neqsim.processSimulation.processEquipment.compressor.CompressorChart} object
    */

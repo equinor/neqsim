@@ -36,7 +36,9 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   /**
    * Gets the method used for measuring Reid Vapor Pressure (RVP).
    *
+   * <p>
    * The method can be one of the following:
+   * </p>
    * <ul>
    * <li>RVP_ASTM_D6377</li>
    * <li>RVP_ASTM_D323_73_79</li>
@@ -53,7 +55,9 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   /**
    * Sets the method used for measuring Reid Vapor Pressure (RVP).
    *
+   * <p>
    * The method should be one of the following:
+   * </p>
    * <ul>
    * <li>RVP_ASTM_D6377</li>
    * <li>RVP_ASTM_D323_73_79</li>
@@ -66,7 +70,6 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   public void setMethodRVP(String methodRVP) {
     this.methodRVP = methodRVP;
   }
-
 
   /**
    * <p>
@@ -136,7 +139,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String returnParameter, java.lang.String returnUnit) {
+  public double getValue(String returnParameter, String returnUnit) {
     if (returnParameter == "RVP") {
       double RVPlocal = getValue("RVP");
       neqsim.util.unit.PressureUnit presConversion =

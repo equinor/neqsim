@@ -27,7 +27,7 @@ public interface StandardInterface {
    * @param returnUnit a {@link java.lang.String} object
    * @return a double
    */
-  double getValue(java.lang.String returnParameter, java.lang.String returnUnit);
+  double getValue(String returnParameter, String returnUnit);
 
   /**
    * <p>
@@ -37,7 +37,7 @@ public interface StandardInterface {
    * @param returnParameter a {@link java.lang.String} object
    * @return a double
    */
-  double getValue(java.lang.String returnParameter);
+  double getValue(String returnParameter);
 
   /**
    * <p>

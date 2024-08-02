@@ -2582,7 +2582,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * getKvector - return vector of equilibrium constants.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getKvector();
 
@@ -2591,7 +2591,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * getzvector - return vector of total molar composition.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getzvector();
 

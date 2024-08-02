@@ -10,14 +10,18 @@ package neqsim.util;
  */
 public interface NamedInterface {
   /**
-   * Getter for property Name.
+   * <p>
+   * Getter for the field <code>name</code>.
+   * </p>
    *
    * @return a {@link java.lang.String} object
    */
   public String getName();
 
   /**
-   * Setter for property Name.
+   * <p>
+   * Setter for the field <code>name</code>.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

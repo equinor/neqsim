@@ -34,7 +34,7 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String componentName, java.lang.String returnUnit) {
+  public double getValue(String componentName, String returnUnit) {
     unit = returnUnit;
     if (returnUnit.equals("mol%")) {
       return 100 * thermoSystem.getPhase(0).getComponent(componentName).getz();

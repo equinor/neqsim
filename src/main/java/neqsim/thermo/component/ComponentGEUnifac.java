@@ -77,7 +77,6 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
           // System.out.println("comp " + name + " adding UNIFAC group " + p);
         }
       }
-
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }

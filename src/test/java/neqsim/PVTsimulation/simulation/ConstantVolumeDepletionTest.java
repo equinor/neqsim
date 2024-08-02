@@ -8,7 +8,6 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class ConstantVolumeDepletionTest {
-
   @Test
   void testRunCalc() {
     SystemInterface tempSystem = new SystemSrkEos(298.0, 211.0);
@@ -46,7 +45,6 @@ public class ConstantVolumeDepletionTest {
 
   @Test
   void testRunEclipseInput() {
-
     File file = new File("src/test/java/neqsim/PVTsimulation/simulation");
     String fileFluid1 = file.getAbsolutePath() + "/EclipseModel.e300";
     SystemInterface fluid1 = neqsim.thermo.util.readwrite.EclipseFluidReadWrite.read(fileFluid1);
@@ -78,7 +76,5 @@ public class ConstantVolumeDepletionTest {
     oilFluid.initPhysicalProperties("density");
 
     assertEquals(oildens, oilFluid.getDensity("kg/m3"), 0.1);
-
-
   }
 }

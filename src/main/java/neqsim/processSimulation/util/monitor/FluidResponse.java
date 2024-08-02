@@ -188,11 +188,11 @@ public class FluidResponse {
     /*
      * definedComponent.keySet().forEach(key -> { tempFluid.addComponent(key,
      * definedComponent.get(key).get("molFraction")); });
-     * 
+     *
      * oilComponent.keySet().forEach(key -> { tempFluid.addTBPfraction(key,
      * definedComponent.get(key).get("molFraction"), definedComponent.get(key).get("molarMass"),
      * definedComponent.get(key).get("normalLiquidDensity")); });
-     * 
+     *
      * tempFluid.setMixingRule(2);
      */
     return tempFluid;

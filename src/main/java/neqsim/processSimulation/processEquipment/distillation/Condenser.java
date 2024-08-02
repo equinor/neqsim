@@ -24,6 +24,13 @@ public class Condenser extends SimpleTray {
   boolean totalCondenser = false;
   Splitter mixedStreamSplitter = null;
 
+  /**
+   * <p>
+   * Setter for the field <code>totalCondenser</code>.
+   * </p>
+   *
+   * @param isTotalCondenser a boolean
+   */
   public void setTotalCondenser(boolean isTotalCondenser) {
     this.totalCondenser = isTotalCondenser;
   }
@@ -72,13 +79,7 @@ public class Condenser extends SimpleTray {
     return duty;
   }
 
-  /**
-   * <p>
-   * getGasOutStream.
-   * </p>
-   *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
-   */
+  /** {@inheritDoc} */
   @Override
   public StreamInterface getGasOutStream() {
     if (totalCondenser) {
@@ -100,11 +101,11 @@ public class Condenser extends SimpleTray {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * getLiquidOutStream.
    * </p>
-   *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
    */
   @Override
   public StreamInterface getLiquidOutStream() {

@@ -68,7 +68,7 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String returnParameter, java.lang.String returnUnit) {
+  public double getValue(String returnParameter, String returnUnit) {
     if (returnParameter.equals("hydrocarbondewpointTemperature")) {
       return dewPointTemperature;
     } else {

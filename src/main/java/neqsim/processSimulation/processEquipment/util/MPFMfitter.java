@@ -95,13 +95,7 @@ public class MPFMfitter extends TwoPortEquipment {
     }
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>pressure</code>.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double getPressure() {
     return pressure;
@@ -314,10 +308,24 @@ public class MPFMfitter extends TwoPortEquipment {
     this.fitAsGVF = fitAsGVF;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>referenceFluidPackage</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public SystemInterface getReferenceFluidPackage() {
     return referenceFluidPackage;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>referenceFluidPackage</code>.
+   * </p>
+   *
+   * @param referenceFluidPackage a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public void setReferenceFluidPackage(SystemInterface referenceFluidPackage) {
     this.referenceFluidPackage = referenceFluidPackage;
   }

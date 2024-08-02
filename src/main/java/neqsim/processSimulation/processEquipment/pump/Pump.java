@@ -473,6 +473,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
     return pumpChart;
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson() {
     return new GsonBuilder().serializeSpecialFloatingPointValues().create()

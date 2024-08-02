@@ -47,7 +47,6 @@ public class SaturateWithWater extends QfuncFlash {
       changedMultiPhase = true;
     }
 
-
     if (system.getComponent("water").getNumberOfmoles() < system.getTotalNumberOfMoles() / 2.0) {
       system.addComponent("water", system.getTotalNumberOfMoles());
     }

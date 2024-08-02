@@ -11,7 +11,6 @@ import neqsim.thermo.system.SystemSrkEos;
 public class MPFMfitterTest {
   @Test
   void testRun() {
-
     SystemInterface refFluid = new SystemSrkEos(338.15, 50.0);
     refFluid.addComponent("nitrogen", 1.205);
     refFluid.addComponent("CO2", 1.340);
@@ -41,7 +40,6 @@ public class MPFMfitterTest {
     testFluid.setMixingRule(2);
     testFluid.setMultiPhaseCheck(true);
     testFluid.init(0);
-
 
     Stream stream_1 = new Stream("Stream1", testFluid);
 

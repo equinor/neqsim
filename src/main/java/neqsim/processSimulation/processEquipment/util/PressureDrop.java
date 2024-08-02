@@ -36,6 +36,12 @@ public class PressureDrop extends ThrottlingValve {
     super(name);
   }
 
+  /**
+   * <p>Setter for the field <code>pressureDrop</code>.</p>
+   *
+   * @param pressureDrop a double
+   * @param unit a {@link java.lang.String} object
+   */
   public void setPressureDrop(double pressureDrop, String unit) {
     if (unit.equals("bara")) {
       this.pressureDrop = pressureDrop;

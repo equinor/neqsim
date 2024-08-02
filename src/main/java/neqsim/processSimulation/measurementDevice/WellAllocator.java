@@ -74,7 +74,6 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
    * @param unit Unit to get value in
    * @return Measured value
    */
-
   public double getMeasuredValue(String measurement, String unit) {
     int numberOfComps = stream.getThermoSystem().getNumberOfComponents();
     double[] splitFactors = new double[numberOfComps];

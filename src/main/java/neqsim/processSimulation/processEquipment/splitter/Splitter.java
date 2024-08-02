@@ -264,11 +264,26 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     }
   }
 
-  public double getSplitFactor(int i){
+  /**
+   * <p>
+   * Getter for the field <code>splitFactor</code>.
+   * </p>
+   *
+   * @param i a int
+   * @return a double
+   */
+  public double getSplitFactor(int i) {
     return splitFactor[i];
   }
 
-  public double[] getSplitFactors(){
+  /**
+   * <p>
+   * getSplitFactors.
+   * </p>
+   *
+   * @return an array of type double
+   */
+  public double[] getSplitFactors() {
     return splitFactor;
   }
 

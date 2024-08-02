@@ -4,10 +4,8 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class FluidCompinentReportTest {
-
   @Test
   void testWrite() {
-
     SystemSrkEos testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("n-heptane", 100.0);
@@ -19,6 +17,5 @@ public class FluidCompinentReportTest {
     neqsim.util.unit.Units.activateFieldUnits();
     report = testSystem.toCompJson();
     // System.out.println(report);
-
   }
 }

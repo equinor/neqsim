@@ -8,7 +8,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class bubblePointPressureFlashTest {
   @Test
   void testRun() {
-
     SystemSrkEos fluid0_HC = new SystemSrkEos();
     fluid0_HC.addComponent("methane", 0.7);
     fluid0_HC.addComponent("ethane", 0.1);

@@ -432,13 +432,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     getFluid().display(name);
   }
 
-  /**
-   * <p>
-   * getResultTable.
-   * </p>
-   *
-   * @return an array of {@link java.lang.String} objects
-   */
+  /** {@inheritDoc} */
   @Override
   public String[][] getResultTable() {
     return getFluid().calcResultTable();
@@ -634,7 +628,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     standard.setReferenceState("real");
     return standard;
   }
-
 
   /** {@inheritDoc} */
   @Override

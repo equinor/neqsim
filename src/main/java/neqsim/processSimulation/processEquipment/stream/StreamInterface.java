@@ -249,7 +249,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * <p>
    * getGCV.
    * </p>
-   * 
+   *
    * @param unit a String
    * @param refTVolume a double in Celcius
    * @param refTCombustion a double in Celcius
@@ -261,7 +261,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * <p>
    * getWI.
    * </p>
-   * 
+   *
    * @param unit a String
    * @param refTVolume a double in Celcius
    * @param refTCombustion a double in Celcius
@@ -273,14 +273,13 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * <p>
    * getWI.
    * </p>
-   * 
+   *
    * @param unit a String
    * @param refTVolume a double in Celcius
    * @param refTCombustion a double in Celcius
    * @return a Standard_ISO6976
    */
   public Standard_ISO6976 getISO6976(String unit, double refTVolume, double refTCombustion);
-
 
   /**
    * <p>

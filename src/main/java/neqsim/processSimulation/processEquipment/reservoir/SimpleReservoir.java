@@ -822,23 +822,33 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     return OGIP;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>time</code>.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double getTime() {
     return time;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>lowPressureLimit</code>.
+   * </p>
+   *
+   * @param value a double
+   * @param unit a {@link java.lang.String} object
+   */
   public void setLowPressureLimit(double value, String unit) {
     PressureUnit conver = new PressureUnit(value, unit);
     lowPressureLimit = conver.getValue("bara");
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>lowPressureLimit</code>.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
   public double getLowPressureLimit(String unit) {
     PressureUnit conver = new PressureUnit(lowPressureLimit, "bara");
     return conver.getValue(unit);
