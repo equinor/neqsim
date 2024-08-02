@@ -44,7 +44,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of type double
    * @param Dij an array of type double
-   * @param mixRule an array of {@link String} objects
+   * @param mixRule an array of {@link java.lang.String} objects
    * @param intparam an array of type double
    */
   public PhaseGEUnifacUMRPRU(PhaseInterface phase, double[][] alpha, double[][] Dij,
@@ -82,10 +82,20 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     }
   }
 
+  /**
+   * <p>getVCommontemp.</p>
+   *
+   * @return a double
+   */
   public double getVCommontemp() {
     return VCommontemp;
   }
 
+  /**
+   * <p>getFCommontemp.</p>
+   *
+   * @return a double
+   */
   public double getFCommontemp() {
     return FCommontemp;
   }
@@ -163,7 +173,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * getQmix.
    * </p>
    *
-   * @param name a {@link String} object
+   * @param name a {@link java.lang.String} object
    * @return a double
    */
   public double getQmix(String name) {
@@ -181,7 +191,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * getQmixdN.
    * </p>
    *
-   * @param name a {@link String} object
+   * @param name a {@link java.lang.String} object
    * @return an array of type double
    */
   public double[] getQmixdN(String name) {

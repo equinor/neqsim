@@ -17,6 +17,13 @@ import neqsim.util.database.NeqSimDataBase;
 import neqsim.util.unit.PressureUnit;
 import neqsim.util.unit.TemperatureUnit;
 
+/**
+ * <p>
+ * Abstract Component class.
+ * </p>
+ *
+ * @author Even Solbraa
+ */
 public abstract class Component implements ComponentInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Component.class);
@@ -499,11 +506,10 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void addMolesChemReac(double dn, double totdn) {
     if (numberOfMoles + totdn < 0 || numberOfMolesInPhase + dn < 0) {
-      if (Math.abs(dn) < 1e-12){
+      if (Math.abs(dn) < 1e-12) {
         dn = 0;
         totdn = 0;
-      }
-      else{
+      } else {
         String msg = "will lead to negative number of moles of component in phase for component "
             + getComponentName() + "  who has " + numberOfMolesInPhase
             + " in phase  and chage request was " + dn;
@@ -2285,13 +2291,7 @@ public abstract class Component implements ComponentInterface {
     return volumeCorrectionT;
   }
 
-  /**
-   * <p>
-   * getVolumeCorrection.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double getVolumeCorrection() {
     return 0.0;

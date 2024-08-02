@@ -635,9 +635,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * <p>
    * setMolarMass.
    * </p>
-   * 
+   *
    * @param molarMass a double
-   * 
    * @param unit a String
    */
   public void setMolarMass(double molarMass, String unit);
@@ -994,8 +993,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * <p>
    * getNormalLiquidDensity.
    * </p>
-   * 
+   *
    * @param unit i String with unit of return return a double
+   * @return a double
    */
   public double getNormalLiquidDensity(String unit);
 

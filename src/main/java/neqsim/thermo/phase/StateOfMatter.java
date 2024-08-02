@@ -2,6 +2,8 @@ package neqsim.thermo.phase;
 
 /**
  * States of matter, a way of relating the PhaseTypes to classical states of matter.
+ *
+ * @author ASMF
  */
 public enum StateOfMatter {
   GAS, LIQUID, SOLID;

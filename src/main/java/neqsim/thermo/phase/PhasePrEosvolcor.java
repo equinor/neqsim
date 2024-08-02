@@ -296,13 +296,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     // return -1.0 / (val2 * val2) + 1.0 / (val1 * val1);
   }
 
-  /**
-   * <p>
-   * gVVV.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double gVVV() {
     double val1 = numberOfMolesInPhase * getMolarVolume();
@@ -332,13 +326,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
     // return 1.0 / (R * loc_B * (delta1 - delta2)) * (-1.0 / (val1 * val1) + 1.0 / (val2 * val2));
   }
 
-  /**
-   * <p>
-   * fVVV.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double fVVV() {
     double val1 = numberOfMolesInPhase * molarVolume + getB() * delta1 + getC();

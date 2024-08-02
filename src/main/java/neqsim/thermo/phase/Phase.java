@@ -1276,7 +1276,7 @@ public abstract class Phase implements PhaseInterface {
    * </p>
    *
    * @param onlyPure a boolean
-   * @param name a {@link String} object
+   * @param name a {@link java.lang.String} object
    */
   public void initRefPhases(boolean onlyPure, String name) {
     refPhase = new PhaseInterface[numberOfComponents];
@@ -2294,7 +2294,7 @@ public abstract class Phase implements PhaseInterface {
    * Getter for the field <code>thermoPropertyModelName</code>.
    * </p>
    *
-   * @return a {@link String} object
+   * @return a {@link java.lang.String} object
    */
   public String getThermoPropertyModelName() {
     return thermoPropertyModelName;

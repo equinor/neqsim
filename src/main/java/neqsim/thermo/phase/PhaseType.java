@@ -5,6 +5,8 @@ import neqsim.util.exception.InvalidInputException;
 
 /**
  * Types of phases.
+ *
+ * @author ASMF
  */
 public enum PhaseType implements Serializable {
   LIQUID("liquid", 0), GAS("gas", 1), OIL("oil", 2), AQUEOUS("aqueous", 3), HYDRATE("hydrate",

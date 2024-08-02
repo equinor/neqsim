@@ -120,6 +120,7 @@ public class PhaseDuanSun extends PhaseGE {
     return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
   }
 
+  /** {@inheritDoc} */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws IsNaNException, TooManyIterationsException {

@@ -1129,7 +1129,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * method to return molar volume of the fluid: eventual volume correction included.
    *
    * @param unit Supported units are m3/mol, litre/mol
-   *
    * @return molar volume volume in unit
    */
   public double getMolarVolume(String unit);
@@ -2580,30 +2579,37 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * getKvector - return vector of equilibrium constants
+   * getKvector - return vector of equilibrium constants.
    * </p>
+   *
+   * @return an array of {@link double} objects
    */
   public double[] getKvector();
 
   /**
    * <p>
-   * getzvector - return vector of total molar composition
+   * getzvector - return vector of total molar composition.
    * </p>
+   *
+   * @return an array of {@link double} objects
    */
   public double[] getzvector();
 
   /**
    * <p>
-   * toJson - return String with json inormation of fluid
+   * toJson - return String with json inormation of fluid.
    * </p>
+   *
+   * @return a {@link java.lang.String} object
    */
   public String toJson();
 
   /**
    * <p>
-   * toCompJson - return String with json inormation of pure component properties of fluid
+   * toCompJson - return String with json inormation of pure component properties of fluid.
    * </p>
+   *
+   * @return a {@link java.lang.String} object
    */
   public String toCompJson();
-
 }
