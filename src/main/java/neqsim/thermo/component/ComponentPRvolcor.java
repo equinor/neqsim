@@ -102,7 +102,13 @@ public class ComponentPRvolcor extends ComponentPR {
     c = calcc();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * <p>
+   * getc.
+   * </p>
+   *
+   * @return a double
+   */
   public double getc() {
     return c;
   }

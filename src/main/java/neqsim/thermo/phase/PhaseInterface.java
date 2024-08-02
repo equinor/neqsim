@@ -260,7 +260,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * initPhysicalProperties.
    * </p>
    *
-   * @param type a {@link String} object
+   * @param type a {@link java.lang.String} object
    */
   public void initPhysicalProperties(String type);
 
@@ -452,7 +452,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * getFugacity.
    * </p>
    *
-   * @param compName a {@link String} object
+   * @param compName a {@link java.lang.String} object
    * @return a double
    */
   public double getFugacity(String compName);
@@ -608,7 +608,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * getWtFrac.
    * </p>
    *
-   * @param componentName a {@link String} object
+   * @param componentName a {@link java.lang.String} object
    * @return a double
    */
   public double getWtFrac(String componentName);
@@ -618,7 +618,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * setMixingRuleGEModel.
    * </p>
    *
-   * @param name a {@link String} object
+   * @param name a {@link java.lang.String} object
    */
   public void setMixingRuleGEModel(String name);
 
@@ -1846,7 +1846,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param alpha an array of type double
    * @param Dij an array of type double
    * @param DijT an array of type double
-   * @param mixRule an array of {@link String} objects
+   * @param mixRule an array of {@link java.lang.String} objects
    * @param intparam an array of type double
    */
   public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT,
@@ -1871,7 +1871,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * Getter for property phaseTypeName.
    * </p>
    *
-   * @return a {@link String} object
+   * @return a {@link java.lang.String} object
    */
   public default String getPhaseTypeName() {
     return getType().getDesc();
@@ -1882,7 +1882,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * Setter for property phaseTypeName.
    * </p>
    *
-   * @param phaseTypeName a {@link String} object
+   * @param phaseTypeName a {@link java.lang.String} object
    */
   public default void setPhaseTypeName(String phaseTypeName) {
     setType(PhaseType.byDesc(phaseTypeName));

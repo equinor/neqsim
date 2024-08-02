@@ -36,7 +36,7 @@ public class PhaseHydrate extends Phase {
    * Constructor for PhaseHydrate.
    * </p>
    *
-   * @param fluidModel a {@link String} object
+   * @param fluidModel a {@link java.lang.String} object
    */
   public PhaseHydrate(String fluidModel) {
     if (fluidModel.isEmpty()) {

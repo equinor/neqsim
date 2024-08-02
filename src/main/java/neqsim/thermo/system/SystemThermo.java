@@ -32,6 +32,8 @@ import neqsim.util.exception.InvalidInputException;
 
 /**
  * This is the base class of the System classes.
+ *
+ * @author Even Solbraa
  */
 public abstract class SystemThermo implements SystemInterface {
   /** Logger object for class. */
@@ -3074,12 +3076,7 @@ public abstract class SystemThermo implements SystemInterface {
         / getTemperature() / getDensity("kg/m3");
   }
 
-  /**
-   * Verify if system has a phase of a specific type.
-   *
-   * @param pt PhaseType to look for.
-   * @return True if system contains a phase of requested type.
-   */
+  /** {@inheritDoc} */
   @Override
   public boolean hasPhaseType(PhaseType pt) {
     for (int i = 0; i < numberOfPhases; i++) {

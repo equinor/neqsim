@@ -33,6 +33,10 @@ import neqsim.thermo.component.attractiveEosTerm.AttractiveTermUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * Abstract ComponentEos class.
+ * </p>
+ *
  * @author Even Solbraa
  */
 public abstract class ComponentEos extends Component implements ComponentEosInterface {

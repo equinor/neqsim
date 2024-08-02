@@ -36,7 +36,7 @@ public class PhaseGEWilson extends PhaseGE {
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of type double
    * @param Dij an array of type double
-   * @param mixRule an array of {@link String} objects
+   * @param mixRule an array of {@link java.lang.String} objects
    * @param intparam an array of type double
    */
   public PhaseGEWilson(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
@@ -110,6 +110,7 @@ public class PhaseGEWilson extends PhaseGE {
     return R * temperature * numberOfMolesInPhase * GE;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws IsNaNException, TooManyIterationsException {
