@@ -93,13 +93,7 @@ public class GORfitter extends TwoPortEquipment {
     }
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>pressure</code>.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double getPressure() {
     return pressure;

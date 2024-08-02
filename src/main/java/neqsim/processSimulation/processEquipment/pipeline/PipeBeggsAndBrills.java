@@ -214,7 +214,6 @@ public class PipeBeggsAndBrills extends Pipeline {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-
   }
 
   /** {@inheritDoc} */
@@ -267,18 +266,16 @@ public class PipeBeggsAndBrills extends Pipeline {
     this.pipeThickness = pipeThickness;
   }
 
-
   /**
    * <p>
    * getThickness.
    * </p>
    *
+   * @return a double
    */
   public double getThickness() {
     return this.pipeThickness;
   }
-
-
 
   /**
    * <p>
@@ -371,6 +368,11 @@ public class PipeBeggsAndBrills extends Pipeline {
     pressureDrop = pressureDrop * 1.48727E-05;
   }
 
+  /**
+   * <p>
+   * calculateMissingValue.
+   * </p>
+   */
   public void calculateMissingValue() {
     if (Double.isNaN(totalLength)) {
       totalLength = calculateLength();
@@ -420,7 +422,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * /**
    * <p>
    * calcFlowRegime.
    * </p>
@@ -706,7 +707,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-
     iteration = 0;
 
     pressureProfile = new ArrayList<>();
@@ -840,6 +840,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * Getter for the field <code>angle</code>.
+   * </p>
+   *
    * @return angle in degrees
    */
   public double getAngle() {
@@ -847,6 +851,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * Getter for the field <code>length</code>.
+   * </p>
+   *
    * @return total length of the pipe in m
    */
   public double getLength() {
@@ -854,6 +862,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * Getter for the field <code>elevation</code>.
+   * </p>
+   *
    * @return total elevation of the pipe in m
    */
   public double getElevation() {
@@ -941,6 +953,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * getSegmentPressureDrop.
+   * </p>
+   *
    * @param index segment number
    * @return Double
    */
@@ -953,6 +969,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * Getter for the field <code>temperatureProfile</code>.
+   * </p>
+   *
    * @return list of temperatures
    */
   public List<Double> getTemperatureProfile() {
@@ -960,6 +980,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * getSegmentTemperature.
+   * </p>
+   *
    * @param index segment number
    * @return Double
    */
@@ -972,6 +996,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * Getter for the field <code>flowRegimeProfile</code>.
+   * </p>
+   *
    * @return list of flow regime names
    */
   public List<String> getFlowRegimeProfile() {
@@ -979,6 +1007,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * getSegmentFlowRegime.
+   * </p>
+   *
    * @param index segment number
    * @return String
    */
@@ -991,6 +1023,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * Getter for the field <code>liquidSuperficialVelocityProfile</code>.
+   * </p>
+   *
    * @return list of liquid superficial velocity profile
    */
   public List<Double> getLiquidSuperficialVelocityProfile() {
@@ -998,6 +1034,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * Getter for the field <code>gasSuperficialVelocityProfile</code>.
+   * </p>
+   *
    * @return list of gas superficial velocities
    */
   public List<Double> getGasSuperficialVelocityProfile() {
@@ -1005,6 +1045,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * Getter for the field <code>mixtureSuperficialVelocityProfile</code>.
+   * </p>
+   *
    * @return list of mixture superficial velocity profile
    */
   public List<Double> getMixtureSuperficialVelocityProfile() {
@@ -1012,6 +1056,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * Getter for the field <code>mixtureViscosityProfile</code>.
+   * </p>
+   *
    * @return list of mixture viscosity
    */
   public List<Double> getMixtureViscosityProfile() {
@@ -1019,6 +1067,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * Getter for the field <code>mixtureDensityProfile</code>.
+   * </p>
+   *
    * @return list of density profile
    */
   public List<Double> getMixtureDensityProfile() {
@@ -1026,12 +1078,23 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
 
+  /**
+   * <p>
+   * Getter for the field <code>liquidDensityProfile</code>.
+   * </p>
+   *
+   * @return a {@link java.util.List} object
+   */
   public List<Double> getLiquidDensityProfile() {
     return new ArrayList<>(liquidDensityProfile);
   }
 
 
   /**
+   * <p>
+   * Getter for the field <code>liquidHoldupProfile</code>.
+   * </p>
+   *
    * @return list of hold-up
    */
   public List<Double> getLiquidHoldupProfile() {
@@ -1039,6 +1102,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * Getter for the field <code>mixtureReynoldsNumber</code>.
+   * </p>
+   *
    * @return list of reynold numbers
    */
   public List<Double> getMixtureReynoldsNumber() {
@@ -1046,6 +1113,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * Getter for the field <code>lengthProfile</code>.
+   * </p>
+   *
    * @return list of length profile
    */
   public List<Double> getLengthProfile() {
@@ -1053,6 +1124,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * Getter for the field <code>incrementsProfile</code>.
+   * </p>
+   *
    * @return list of increments profile
    */
   public List<Integer> getIncrementsProfile() {
@@ -1060,6 +1135,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * Getter for the field <code>elevationProfile</code>.
+   * </p>
+   *
    * @return list of elevation profile
    */
   public List<Double> getElevationProfile() {
@@ -1067,6 +1146,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * getSegmentLiquidSuperficialVelocity.
+   * </p>
+   *
    * @param index segment number
    * @return Double
    */
@@ -1079,6 +1162,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * getSegmentGasSuperficialVelocity.
+   * </p>
+   *
    * @param index segment number
    * @return Double
    */
@@ -1091,6 +1178,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * getSegmentMixtureSuperficialVelocity.
+   * </p>
+   *
    * @param index segment number
    * @return Double
    */
@@ -1103,6 +1194,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * getSegmentMixtureViscosity.
+   * </p>
+   *
    * @param index segment number
    * @return Double
    */
@@ -1115,6 +1210,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * getSegmentMixtureDensity.
+   * </p>
+   *
    * @param index segment number
    * @return Double
    */
@@ -1128,6 +1227,10 @@ public class PipeBeggsAndBrills extends Pipeline {
 
 
   /**
+   * <p>
+   * getSegmentLiquidDensity.
+   * </p>
+   *
    * @param index segment number
    * @return Double
    */
@@ -1141,6 +1244,10 @@ public class PipeBeggsAndBrills extends Pipeline {
 
 
   /**
+   * <p>
+   * getSegmentLiquidHoldup.
+   * </p>
+   *
    * @param index segment number
    * @return Double
    */
@@ -1153,6 +1260,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * getSegmentMixtureReynoldsNumber.
+   * </p>
+   *
    * @param index segment number
    * @return Double
    */
@@ -1165,6 +1276,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * getSegmentLength.
+   * </p>
+   *
    * @param index segment number
    * @return Double
    */
@@ -1177,6 +1292,10 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * <p>
+   * getSegmentElevation.
+   * </p>
+   *
    * @param index segment number
    * @return Double
    */

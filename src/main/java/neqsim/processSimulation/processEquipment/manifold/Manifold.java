@@ -47,6 +47,14 @@ public class Manifold extends ProcessEquipmentBaseClass {
     super(name);
   }
 
+  /**
+   * <p>
+   * addStream.
+   * </p>
+   *
+   * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
+   */
   public void addStream(StreamInterface newStream) {
     localmixer.addStream(newStream);
   }
@@ -64,7 +72,12 @@ public class Manifold extends ProcessEquipmentBaseClass {
     localsplitter.setSplitFactors(splitFactors);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * <p>getSplitStream.</p>
+   *
+   * @param i a int
+   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
   public StreamInterface getSplitStream(int i) {
     return localsplitter.getSplitStream(i);
   }
@@ -75,7 +88,7 @@ public class Manifold extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   **/
+   */
   public StreamInterface getMixedStream() {
     return localmixer.getOutletStream();
   }

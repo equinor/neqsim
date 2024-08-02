@@ -297,7 +297,6 @@ public class FlowSetter extends TwoPortEquipment {
       for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
         tempFluid.addComponent(i, moleChange[i]);
       }
-
     } while (error > ((StreamInterface) referenceProcess.getUnit("feed stream")).getFluid()
         .getTotalNumberOfMoles() / 1e6);
 
@@ -320,6 +319,15 @@ public class FlowSetter extends TwoPortEquipment {
     setCalculationIdentifier(id);
   }
 
+  /**
+   * <p>
+   * createReferenceProcess.
+   * </p>
+   *
+   * @param feedStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
+   * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+   */
   public ProcessSystem createReferenceProcess(StreamInterface feedStream) {
     ProcessSystem referenceProcess = new ProcessSystem();
 
@@ -386,10 +394,27 @@ public class FlowSetter extends TwoPortEquipment {
     return referenceProcess;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>referenceProcess</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+   */
   public ProcessSystem getReferenceProcess() {
     return referenceProcess;
   }
 
+  /**
+   * <p>
+   * setSeparationPT.
+   * </p>
+   *
+   * @param pressure an array of type double
+   * @param unitP a {@link java.lang.String} object
+   * @param temperature an array of type double
+   * @param unitT a {@link java.lang.String} object
+   */
   public void setSeparationPT(double[] pressure, String unitP, double[] temperature, String unitT) {
     this.pressure = pressure;
     this.unitP = unitP;

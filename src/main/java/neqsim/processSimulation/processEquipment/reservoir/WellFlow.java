@@ -95,10 +95,20 @@ public class WellFlow extends TwoPortEquipment {
     outStream.run();
   }
 
+  /**
+   * <p>Getter for the field <code>wellProductionIndex</code>.</p>
+   *
+   * @return a double
+   */
   public double getWellProductionIndex() {
     return wellProductionIndex;
   }
 
+  /**
+   * <p>Setter for the field <code>wellProductionIndex</code>.</p>
+   *
+   * @param wellProductionIndex a double
+   */
   public void setWellProductionIndex(double wellProductionIndex) {
     useWellProductionIndex = true;
     this.wellProductionIndex = wellProductionIndex;

@@ -92,13 +92,7 @@ public class GasTurbine extends TwoPortEquipment {
     super(name, inletStream);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a
-   *         {@link neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign}
-   *         object
-   */
+  /** {@inheritDoc} */
   @Override
   public CompressorMechanicalDesign getMechanicalDesign() {
     return new CompressorMechanicalDesign(this);
@@ -221,8 +215,8 @@ public class GasTurbine extends TwoPortEquipment {
         elementsH += thermoSystem.getComponent(i).getz()
             * thermoSystem.getComponent(i).getElements().getNumberOfElements("H");
       }
-
     }
+
     if (sumHC < 1e-100) {
       return 0.0;
     } else {

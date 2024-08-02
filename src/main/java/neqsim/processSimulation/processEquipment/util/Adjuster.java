@@ -353,6 +353,11 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     this.activateWhenLess = activateWhenLess;
   }
 
+  /**
+   * <p>Setter for the field <code>maxAdjustedValue</code>.</p>
+   *
+   * @param maxVal a double
+   */
   public void setMaxAdjustedValue(double maxVal) {
     maxAdjustedValue = maxVal;
     if (maxAdjustedValue < minAdjustedValue) {
@@ -360,6 +365,11 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
   }
 
+  /**
+   * <p>Setter for the field <code>minAdjustedValue</code>.</p>
+   *
+   * @param minVal a double
+   */
   public void setMinAdjustedValue(double minVal) {
     minAdjustedValue = minVal;
     if (minAdjustedValue > maxAdjustedValue) {
@@ -367,10 +377,20 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
   }
 
+  /**
+   * <p>Getter for the field <code>maxAdjustedValue</code>.</p>
+   *
+   * @return a double
+   */
   public double getMaxAdjustedValue() {
     return maxAdjustedValue;
   }
 
+  /**
+   * <p>Getter for the field <code>minAdjustedValue</code>.</p>
+   *
+   * @return a double
+   */
   public double getMinAdjustedValue() {
     return minAdjustedValue;
   }

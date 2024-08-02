@@ -30,17 +30,30 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
 
   private String prodPhaseName = "gas";
 
+  /**
+   * <p>
+   * getReserervourFluid.
+   * </p>
+   *
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public SystemInterface getReserervourFluid() {
     return reservoirFluid;
   }
 
+  /**
+   * <p>
+   * Constructor for ReservoirTPsim.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param reservoirFluid a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public ReservoirTPsim(String name, SystemInterface reservoirFluid) {
     super(name);
     this.reservoirFluid = reservoirFluid;
     outStream = new Stream(getName() + "_out", reservoirFluid.clone());
   }
-
-
 
   /** {@inheritDoc} */
   @Override
@@ -60,38 +73,77 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
     } else {
       outStream.setFluid(fluid1.phaseToSystem(1));
     }
-
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>outStream</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
   public StreamInterface getOutStream() {
     return outStream;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>pressure</code>.
+   * </p>
+   *
+   * @param reservoirPressure a double
+   * @param pUnit a {@link java.lang.String} object
+   */
   public void setPressure(double reservoirPressure, String pUnit) {
     this.pressure = reservoirPressure;
     this.pUnit = pUnit;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>temperature</code>.
+   * </p>
+   *
+   * @param reservoirTemperature a double
+   * @param tUnit a {@link java.lang.String} object
+   */
   public void setTemperature(double reservoirTemperature, String tUnit) {
     this.temperature = reservoirTemperature;
     this.tUnit = tUnit;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>prodPhaseName</code>.
+   * </p>
+   *
+   * @return a {@link java.lang.String} object
+   */
   public String getProdPhaseName() {
     return prodPhaseName;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>prodPhaseName</code>.
+   * </p>
+   *
+   * @param prodPhaseName a {@link java.lang.String} object
+   */
   public void setProdPhaseName(String prodPhaseName) {
     this.prodPhaseName = prodPhaseName;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>flowRate</code>.
+   * </p>
+   *
+   * @param flowRate a double
+   * @param flowUnit a {@link java.lang.String} object
+   */
   public void setFlowRate(double flowRate, String flowUnit) {
     this.flowRate = flowRate;
     this.flowUnit = flowUnit;
   }
-
-
-
 }
-
-

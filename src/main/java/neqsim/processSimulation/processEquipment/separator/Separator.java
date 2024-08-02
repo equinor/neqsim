@@ -115,17 +115,13 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     numberOfInputStreams++;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a {@link neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign}
-   *         object
-   */
+  /** {@inheritDoc} */
   @Override
   public SeparatorMechanicalDesign getMechanicalDesign() {
     return separatorMechanicalDesign;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void initMechanicalDesign() {
     separatorMechanicalDesign = new SeparatorMechanicalDesign(this);
@@ -473,12 +469,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     this.gasCarryunderFraction = gasCarryunderFraction;
   }
 
-  /**
-   * <p>
-   * Setter for the field <code>gasCarryunderFraction</code>.
-   * </p>
-   *
-   **/
+  /** {@inheritDoc} */
   @Override
   public void setLiquidLevel(double liquidlev) {
     liquidLevel = liquidlev;
@@ -873,6 +864,13 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         && Objects.equals(waterSystem, other.waterSystem);
   }
 
+  /**
+   * <p>
+   * getFeedStream.
+   * </p>
+   *
+   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
   public StreamInterface getFeedStream() {
     return inletStreamMixer.getOutletStream();
   }

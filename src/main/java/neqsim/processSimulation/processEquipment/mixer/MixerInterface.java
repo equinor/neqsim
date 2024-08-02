@@ -31,7 +31,7 @@ public interface MixerInterface extends ProcessEquipmentInterface {
 
   /**
    * <p>
-   * getOutStream.
+   * Getter for outlet stream object.
    * </p>
    *
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
@@ -40,7 +40,7 @@ public interface MixerInterface extends ProcessEquipmentInterface {
 
   /**
    * <p>
-   * getOutStream.
+   * Getter for outlet stream object.
    * </p>
    *
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
