@@ -75,11 +75,6 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     // resyc.getOutStream().displayResult();
   }
 
-  private void assertEqualse(double duty, double d, double e) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'assertEqualse'");
-  }
-
   @Test
   void testRun2() {
     Stream stream_Hot = new Stream("Stream1", testSystem);
@@ -107,18 +102,18 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
 
     operations.run();
     assertEquals(heatExchanger1.getDuty(), -9674.051890272862, 1e-1);
-    // heatExchanger1.setDe
-    heatExchanger1.setUseDeltaT(true);
-    heatExchanger1.run();
-    heatExchanger1.getInStream(0).getFluid().prettyPrint();
-    heatExchanger1.getInStream(1).getFluid().prettyPrint();
-    heatExchanger1.getOutStream(0).getFluid().prettyPrint();
-    heatExchanger1.getOutStream(1).getFluid().prettyPrint();
-    // operations.displayResult();
-    // heatExchanger1.getOutStream(0).displayResult();
-    // heatExchanger1.getOutStream(1).displayResult();
 
-    // heatExchanger1
+    heatExchanger1.setDeltaT(1.0);
+    heatExchanger1.run();
+
+    assertEquals(15780.77130, heatExchanger1.getUAvalue(), 1e-3);
+
+    heatExchanger1 = new neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger(
+        "heatEx", stream_Hot, stream_Cold);
+    heatExchanger1.setDeltaT(1.0);
+    heatExchanger1.run();
+
+    assertEquals(15780.77130, heatExchanger1.getUAvalue(), 1e-3);
 
   }
 }

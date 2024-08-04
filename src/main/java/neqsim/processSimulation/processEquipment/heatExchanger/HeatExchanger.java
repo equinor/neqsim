@@ -48,12 +48,6 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   private String flowArrangement = "concentric tube counterflow";
   private boolean useDeltaT = false;
 
-  public void setUseDeltaT(boolean useDeltaT) {
-    this.useDeltaT = useDeltaT;
-  }
-
-  private double deltaT = 1.0;
-
   /**
    * <p>
    * Constructor for HeatExchanger.
@@ -349,6 +343,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
       }
       duty = dEntalphy;
       hotColdDutyBalance = 1.0;
+
+      UAvalue = dEntalphy / (outStream[streamToSet].getThermoSystem().getTemperature()
+          - inStream[streamToSet].getThermoSystem().getTemperature());
     }
 
     setCalculationIdentifier(id);
@@ -743,4 +740,21 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     return new GsonBuilder().serializeSpecialFloatingPointValues().create()
         .toJson(new HXResponse(this));
   }
+
+
+  public void setUseDeltaT(boolean useDeltaT) {
+    this.useDeltaT = useDeltaT;
+  }
+
+  private double deltaT = 1.0;
+
+  public double getDeltaT() {
+    return deltaT;
+  }
+
+  public void setDeltaT(double deltaT) {
+    useDeltaT = true;
+    this.deltaT = deltaT;
+  }
+
 }
