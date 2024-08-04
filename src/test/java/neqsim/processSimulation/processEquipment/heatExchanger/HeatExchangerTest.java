@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.separator.Separator;
@@ -36,11 +37,17 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
   @Test
   void testRun1() {
     Stream stream_Hot = new Stream("Stream1", testSystem);
+    stream_Hot.setTemperature(100.0, "C");
+    stream_Hot.setFlowRate(1000.0, "kg/hr");
     Stream stream_Cold = new Stream("Stream2", testSystem.clone());
+    stream_Cold.setTemperature(20.0, "C");
+    stream_Cold.setFlowRate(310.0, "kg/hr");
 
-    HeatExchanger heatEx = new HeatExchanger("heatEx");
-    heatEx.setFeedStream(0, stream_Hot);
-    heatEx.setFeedStream(1, stream_Cold); // resyc.getOutStream());
+    HeatExchanger heatEx = new HeatExchanger("heatEx", stream_Hot, stream_Cold);
+    // heatEx.setFeedStream(0, stream_Hot);
+    // heatEx.setFeedStream(1, stream_Cold); // resyc.getOutStream());
+    heatEx.setGuessOutTemperature(80.0, "C");
+    heatEx.setUAvalue(1000);
 
     Separator sep = new Separator("sep", stream_Hot);
 
@@ -56,6 +63,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(stream_Hot);
+    operations.add(stream_Cold);
     operations.add(heatEx);
     operations.add(sep);
     operations.add(oilOutStream);
@@ -63,9 +71,13 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     operations.add(resyc);
 
     operations.run();
-
     // heatEx.getOutStream(0).displayResult();
     // resyc.getOutStream().displayResult();
+  }
+
+  private void assertEqualse(double duty, double d, double e) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'assertEqualse'");
   }
 
   @Test
@@ -94,8 +106,19 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     operations.add(heatExchanger1);
 
     operations.run();
+    assertEquals(heatExchanger1.getDuty(), -9674.051890272862, 1e-1);
+    // heatExchanger1.setDe
+    heatExchanger1.setUseDeltaT(true);
+    heatExchanger1.run();
+    heatExchanger1.getInStream(0).getFluid().prettyPrint();
+    heatExchanger1.getInStream(1).getFluid().prettyPrint();
+    heatExchanger1.getOutStream(0).getFluid().prettyPrint();
+    heatExchanger1.getOutStream(1).getFluid().prettyPrint();
     // operations.displayResult();
     // heatExchanger1.getOutStream(0).displayResult();
     // heatExchanger1.getOutStream(1).displayResult();
+
+    // heatExchanger1
+
   }
 }
