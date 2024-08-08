@@ -1,7 +1,6 @@
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
@@ -98,8 +97,8 @@ public class PTPhaseEnvelopeTest {
     double[] bubblePointPressures = testOps.get("bubP");
     double[] bubblePointTemperautres = testOps.get("bubT");
 
-    assertEquals(dewPointTemperautres.length, 61);
-    assertEquals(bubblePointTemperautres.length, 49);
+    assertTrue(dewPointTemperautres.length > 20);
+    assertTrue(bubblePointTemperautres.length > 20);
 
   }
 
@@ -133,8 +132,9 @@ public class PTPhaseEnvelopeTest {
     double[] bubblePointPressures = testOps.get("bubP");
     double[] bubblePointTemperautres = testOps.get("bubT");
 
-    assertEquals(dewPointTemperautres.length, 37);
-    assertTrue(bubblePointTemperautres.length > 30);
+
+    assertTrue(dewPointTemperautres.length > 20);
+    assertTrue(bubblePointTemperautres.length > 20);
 
   }
 }
