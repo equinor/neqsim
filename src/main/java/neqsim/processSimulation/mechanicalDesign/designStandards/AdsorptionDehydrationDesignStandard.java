@@ -29,34 +29,38 @@ public class AdsorptionDehydrationDesignStandard extends DesignStandard {
   public AdsorptionDehydrationDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
 
-    final neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase();
-    java.sql.ResultSet dataSet = null;
-    try {
+    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
+        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+      java.sql.ResultSet dataSet = null;
       try {
-        dataSet = database.getResultSet(
-            ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Adsorber Dehydration' AND Company='"
-                + standardName + "'"));
-        while (dataSet.next()) {
-          String specName = dataSet.getString("SPECIFICATION");
-          if (specName.equals("MolecularSieve3AWaterCapacity")) {
-            molecularSieveWaterCapacity = Double.parseDouble(dataSet.getString("MAXVALUE"));
+        try {
+          dataSet = database.getResultSet(
+              ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Adsorber Dehydration' AND Company='"
+                  + standardName + "'"));
+          while (dataSet.next()) {
+            String specName = dataSet.getString("SPECIFICATION");
+            if (specName.equals("MolecularSieve3AWaterCapacity")) {
+              molecularSieveWaterCapacity = Double.parseDouble(dataSet.getString("MAXVALUE"));
+            }
           }
+        } catch (Exception ex) {
+          logger.error(ex.getMessage(), ex);
         }
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
-      }
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
+      } finally {
+        try {
+          if (dataSet != null) {
+            dataSet.close();
+          }
+        } catch (Exception ex) {
+          System.out.println("error closing database.....GasScrubberDesignStandard");
+          logger.error(ex.getMessage(), ex);
         }
-      } catch (Exception ex) {
-        System.out.println("error closing database.....GasScrubberDesignStandard");
-        logger.error(ex.getMessage(), ex);
       }
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
   }
 

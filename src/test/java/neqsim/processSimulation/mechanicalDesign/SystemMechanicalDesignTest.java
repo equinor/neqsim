@@ -167,7 +167,7 @@ public class SystemMechanicalDesignTest {
     inlets.setFlowRate(15.0, "MSm3/day");
     inlets.run();
 
-    GasScrubber sep1 = new GasScrubber(inlets);
+    GasScrubber sep1 = new GasScrubber("scrubber1", inlets);
     sep1.run();
 
     GasScrubberMechanicalDesign sepMechDesign = new GasScrubberMechanicalDesign(sep1);

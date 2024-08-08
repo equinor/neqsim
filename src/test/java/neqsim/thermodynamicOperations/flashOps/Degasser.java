@@ -131,8 +131,7 @@ class Degasser {
 
     neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator test_separator =
         new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-            inlet_stream_test_sep);
-    test_separator.setName("TEST_SEPARATOR");
+            "TEST_SEPARATOR", inlet_stream_test_sep);
     test_separator.run();
     test_separator.getWaterOutStream().getThermoSystem().prettyPrint();
 
@@ -144,7 +143,7 @@ class Degasser {
     heater_TP_setter_test_stream.run();
     // System.out.println("Gas out from degasser " + heater_TP_setter_test_stream.getOutStream()
     // .getFluid().getPhase("gas").getFlowRate("kg/hr"));
-    heater_TP_setter_test_stream.getOutStream().getThermoSystem().prettyPrint();
+    heater_TP_setter_test_stream.getOutletStream().getThermoSystem().prettyPrint();
 
     neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_test_stream2 =
         new neqsim.processSimulation.processEquipment.heatExchanger.Heater(

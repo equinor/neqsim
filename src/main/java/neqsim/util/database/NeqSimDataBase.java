@@ -475,8 +475,7 @@ public class NeqSimDataBase
    * @param path Path to csv file to
    */
   public static void replaceTable(String tableName, String path) {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       database.execute("DROP TABLE IF EXISTS " + tableName);
       String sqlString = "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('" + path + "')";
       database.execute(sqlString);

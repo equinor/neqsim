@@ -253,7 +253,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     separator1.setInternalDiameter(0.8);
     separator1.setLiquidLevel(0.0);
 
-    Compressor compressor1 = new Compressor(separator1.getGasOutStream());
+    Compressor compressor1 = new Compressor("comp1", separator1.getGasOutStream());
     compressor1.setCalculateSteadyState(false);
     compressor1.setOutletPressure(100.0);
 
@@ -366,11 +366,11 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     valve1.setPercentValveOpening(50);
     valve1.setCalculateSteadyState(false);
 
-    Compressor compressor1 = new Compressor(valve1.getOutStream());
+    Compressor compressor1 = new Compressor("comp", valve1.getOutletStream());
     compressor1.setCalculateSteadyState(false);
     compressor1.setOutletPressure(100.0);
 
-    ThrottlingValve valve2 = new ThrottlingValve("valve_2", compressor1.getOutStream());
+    ThrottlingValve valve2 = new ThrottlingValve("valve_2", compressor1.getOutletStream());
     valve2.setOutletPressure(50.0);
     valve2.setPercentValveOpening(50);
     valve2.setCalculateSteadyState(false);
@@ -461,7 +461,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     separator1.setInternalDiameter(0.8);
     separator1.setLiquidLevel(0.0);
 
-    Compressor compressor1 = new Compressor(separator1.getGasOutStream());
+    Compressor compressor1 = new Compressor("comp1", separator1.getGasOutStream());
     compressor1.setCalculateSteadyState(false);
     compressor1.setOutletPressure(100.0);
 
@@ -595,7 +595,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     separator1.setInternalDiameter(0.8);
     separator1.setLiquidLevel(0.0);
 
-    Compressor compressor1 = new Compressor(separator1.getGasOutStream());
+    Compressor compressor1 = new Compressor("comp", separator1.getGasOutStream());
     compressor1.setCalculateSteadyState(false);
     compressor1.setOutletPressure(100.0);
     CompressorMonitor surgemonitor = new CompressorMonitor(compressor1);

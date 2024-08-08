@@ -80,39 +80,43 @@ public class MaterialPlateDesignStandard extends DesignStandard {
     specificationNumber = specNo;
     divisionClassNumber = divClassNo;
 
-    neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase();
-    java.sql.ResultSet dataSet = null;
-    try {
+    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
+        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+      java.sql.ResultSet dataSet = null;
       try {
-        dataSet =
-            database.getResultSet(("SELECT * FROM materialplateproperties WHERE materialName='"
-                + name + "' AND grade='" + grade + "' AND specificationNumber='" + specNo + "'"));
-        while (dataSet.next()) {
-          if (divClassNo == 1) {
-            divisionClass =
-                (Double.parseDouble(dataSet.getString("divisionClass1"))) * 0.00689475729; // MPa
-          } else {
-            divisionClass =
-                (Double.parseDouble(dataSet.getString("divisionClass2"))) * 0.00689475729; // MPa
+        try {
+          dataSet =
+              database.getResultSet(("SELECT * FROM materialplateproperties WHERE materialName='"
+                  + name + "' AND grade='" + grade + "' AND specificationNumber='" + specNo + "'"));
+          while (dataSet.next()) {
+            if (divClassNo == 1) {
+              divisionClass =
+                  (Double.parseDouble(dataSet.getString("divisionClass1"))) * 0.00689475729; // MPa
+            } else {
+              divisionClass =
+                  (Double.parseDouble(dataSet.getString("divisionClass2"))) * 0.00689475729; // MPa
+            }
           }
+        } catch (Exception ex) {
+          logger.error(ex.getMessage(), ex);
         }
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-      }
 
-      // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
+        // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
       } catch (Exception ex) {
-        System.out.println("error closing database.....GasScrubberDesignStandard");
         logger.error(ex.getMessage(), ex);
+      } finally {
+        try {
+          if (dataSet != null) {
+            dataSet.close();
+          }
+        } catch (Exception ex) {
+          System.out.println("error closing database.....GasScrubberDesignStandard");
+          logger.error(ex.getMessage(), ex);
+        }
       }
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
   }
 }

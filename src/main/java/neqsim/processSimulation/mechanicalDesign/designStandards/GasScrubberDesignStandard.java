@@ -33,42 +33,46 @@ public class GasScrubberDesignStandard extends DesignStandard {
   public GasScrubberDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
 
-    neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase();
-    java.sql.ResultSet dataSet = null;
-    try {
+    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
+        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+      java.sql.ResultSet dataSet = null;
       try {
-        dataSet = database.getResultSet(
-            ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Gas scrubber' AND Company='"
-                + standardName + "'"));
-        while (dataSet.next()) {
-          String specName = dataSet.getString("SPECIFICATION");
-          if (specName.equals("GasLoadFactor")) {
-            gasLoadFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
-          } else if (specName.equals("FlowDesignFactor")) {
-            designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MAXVALUE"));
-          } else if (specName.equals("LengthGasInetToHHLL")) {
-            designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
-          } else if (specName.equals("LengthMeshPadToDemistingCyclone")) {
-            designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
+        try {
+          dataSet = database.getResultSet(
+              ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Gas scrubber' AND Company='"
+                  + standardName + "'"));
+          while (dataSet.next()) {
+            String specName = dataSet.getString("SPECIFICATION");
+            if (specName.equals("GasLoadFactor")) {
+              gasLoadFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
+            } else if (specName.equals("FlowDesignFactor")) {
+              designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MAXVALUE"));
+            } else if (specName.equals("LengthGasInetToHHLL")) {
+              designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
+            } else if (specName.equals("LengthMeshPadToDemistingCyclone")) {
+              designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
+            }
           }
+        } catch (Exception ex) {
+          logger.error(ex.getMessage(), ex);
         }
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-      }
 
-      // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
+        // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
       } catch (Exception ex) {
-        System.out.println("error closing database.....GasScrubberDesignStandard");
         logger.error(ex.getMessage(), ex);
+      } finally {
+        try {
+          if (dataSet != null) {
+            dataSet.close();
+          }
+        } catch (Exception ex) {
+          System.out.println("error closing database.....GasScrubberDesignStandard");
+          logger.error(ex.getMessage(), ex);
+        }
       }
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
   }
 
