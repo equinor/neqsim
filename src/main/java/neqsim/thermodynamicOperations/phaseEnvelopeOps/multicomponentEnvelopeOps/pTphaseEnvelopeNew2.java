@@ -250,11 +250,7 @@ public class pTphaseEnvelopeNew2 extends BaseOperation {
 
             // new settings
             phaseFraction = 1.0 - phaseFraction;
-            if (bubblePointFirst) {
-              bubblePointFirst = false;
-            } else {
-              bubblePointFirst = true;
-            }
+            bubblePointFirst = !bubblePointFirst;
             run();
             /**/
             break;
