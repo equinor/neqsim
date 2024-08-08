@@ -59,6 +59,7 @@ import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.CricondenThermFlash;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.HPTphaseEnvelope;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.pTphaseEnvelope;
+import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.pTphaseEnvelopeNew2;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves.pLoadingCurve2;
 import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudents;
 import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudentsPH;
@@ -1539,6 +1540,23 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     getOperation().run();
   }
 
+  // public void dewPointPressureFlash(){
+  // constantDutyFlashInterface operation = new constantDutyPressureFlash(system);
+  // operation.setBeta((1-1e-7));
+  // operation.run();
+  // }
+  /**
+   * <p>
+   * calcPTphaseEnvelopeNew.
+   * </p>
+   */
+  public void calcPTphaseEnvelopeNew2() {
+    operation = new pTphaseEnvelopeNew2(system, fileName, (1.0 - 1e-10), 1.0, false);
+    // thisThread = new Thread(operation);
+    // thisThread.start();
+    getOperation().run();
+  }
+
   /**
    * <p>
    * calcPTphaseEnvelope.
@@ -2074,7 +2092,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         }
 
         if (hasOnlineFractions) {
-          // Assure that fraction is inserted for the correct component (in case of mismatch of
+          // Assure that fraction is inserted for the correct component (in case of
+          // mismatch of
           // component input and fluid component list)
           double[] fraction = new double[this.system.getNumberOfComponents()];
           // For all components defined in system
