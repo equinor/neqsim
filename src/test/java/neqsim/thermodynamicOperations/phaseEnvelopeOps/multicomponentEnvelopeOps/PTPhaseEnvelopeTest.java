@@ -78,7 +78,7 @@ public class PTPhaseEnvelopeTest {
     testSystem.setMixingRule("classic");
 
     testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeNew2();
+    testOps.calcPTphaseEnvelope2();
     double[] dewPointPressures = testOps.get("dewP");
     double[] dewPointTemperautres = testOps.get("dewT");
     double[] bubblePointPressures = testOps.get("bubP");
@@ -121,7 +121,7 @@ public class PTPhaseEnvelopeTest {
     testOps.TPflash();
     testSystem.initProperties();
 
-    testOps.calcPTphaseEnvelopeNew2();
+    testOps.calcPTphaseEnvelope2();
     double[] dewPointPressures = testOps.get("dewP");
     double[] dewPointTemperautres = testOps.get("dewT");
     double[] bubblePointPressures = testOps.get("bubP");
@@ -159,7 +159,7 @@ public class PTPhaseEnvelopeTest {
     fluid0_HC.addComponent("n-octane", 0.01);
     fluid0_HC.setMixingRule("HV", "UNIFAC_UMRPRU");
     testOps = new ThermodynamicOperations(fluid0_HC);
-    testOps.calcPTphaseEnvelopeNew2();
+    testOps.calcPTphaseEnvelope2();
     double[] dewPointPressures = testOps.get("dewP");
     double[] dewPointTemperautres = testOps.get("dewT");
     double[] bubblePointPressures = testOps.get("bubP");
