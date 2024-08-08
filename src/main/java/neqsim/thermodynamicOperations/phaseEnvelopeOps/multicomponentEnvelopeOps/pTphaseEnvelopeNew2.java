@@ -6,21 +6,16 @@
 
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * <p>
- * pTphaseEnvelope class.
+ * pTphaseEnvelopeNew2 class.
  * </p>
  *
  * @author asmund
@@ -28,16 +23,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class pTphaseEnvelopeNew2 extends BaseOperation {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(pTphaseEnvelope.class);
+  static Logger logger = LogManager.getLogger(pTphaseEnvelopeNew2.class);
 
   double maxPressure = 1000.0;
   double minPressure = 1.0;
-  double[][] copiedPoints = null;
-  graph2b graph2 = null;
   SystemInterface system;
   boolean bubblePointFirst = true;
   boolean calculatesDewPoint = true;
-  boolean hascopiedPoints = false;
   double[] cricondenTherm = new double[3];
   double[] cricondenBar = new double[3];
   double[] cricondenThermX = new double[100];
@@ -66,29 +58,16 @@ public class pTphaseEnvelopeNew2 extends BaseOperation {
   double[] deltalnK;
   double[] tm = {1, 1};
   double beta = 1e-5;
-  int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
-  JProgressBar monitor;
-  JFrame mainFrame;
+  int lowestGibbsEnergyPhase = 0;
   String fileName = "c:/file";
-  JPanel mainPanel;
   double temp = 0;
   double pres = 0;
   double startPres = 0;
-  double[][] points = new double[2][];
-  double[] pointsH;
-  double[][] pointsH2 = new double[4][];
-  double[] pointsV;
-  double[][] pointsV2 = new double[4][];
-  double[] pointsS;
-  double[][] pointsS2 = new double[4][];
-  public double[][] points2 = new double[4][];
-  double[][] points3 = new double[8][];
   boolean moreLines = false;
   boolean restart = true;
   int np = 0;
   // points[2] = new double[1000];
   int speceq = 0;
-  String[] navn = {"bubble point", "dew point", "bubble point", "dew point", "dew points"};
   int npfirst;
   int ncrfirst;
   double Tcfirst;
@@ -100,12 +79,33 @@ public class pTphaseEnvelopeNew2 extends BaseOperation {
   ArrayList<Double> bubblePointTemperature = new ArrayList<Double>();
   ArrayList<Double> bubblePointPressure = new ArrayList<Double>();
 
+  ArrayList<Double> bubblePointEnthalpy = new ArrayList<Double>();
+  ArrayList<Double> dewPointEnthalpy = new ArrayList<Double>();
+
+  ArrayList<Double> bubblePointEntropy = new ArrayList<Double>();
+  ArrayList<Double> dewPointEntropy = new ArrayList<Double>();
+
+  ArrayList<Double> bubblePointVolume = new ArrayList<Double>();
+  ArrayList<Double> dewPointVolume = new ArrayList<Double>();
+
   double[] cricondenThermfirst = new double[3];
   double[] cricondenBarfirst = new double[3];
   double[] cricondenThermXfirst = new double[100];
   double[] cricondenThermYfirst = new double[100];
   double[] cricondenBarXfirst = new double[100];
   double[] cricondenBarYfirst = new double[100];
+
+  double[] dewPointTemperatureArray;
+  double[] dewPointPressureArray;
+  double[] dewPointEnthalpyArray;
+  double[] dewPointVolumeArray;
+  double[] dewPointEntropyArray;
+
+  double[] bubblePointTemperatureArray;
+  double[] bubblePointPressureArray;
+  double[] bubblePointEnthalpyArray;
+  double[] bubblePointVolumeArray;
+  double[] bubblePointEntropyArray;
 
   /**
    * <p>
@@ -147,12 +147,6 @@ public class pTphaseEnvelopeNew2 extends BaseOperation {
   public void run() {
     speceq = 0; // initialization
     try {
-      points[0] = new double[10000]; // declarations for points
-      points[1] = new double[10000]; // declarations for points
-
-      pointsH = new double[10000]; // declarations for points
-      pointsV = new double[10000]; // declarations for points
-      pointsS = new double[10000]; // declarations for points
       system.init(0); // initialization
 
       // selects the most volatile and least volatile component based on Tc values
@@ -244,9 +238,7 @@ public class pTphaseEnvelopeNew2 extends BaseOperation {
 
           if (restart) {
             calculatesDewPoint = false;
-            restart = false;
-            // keep values
-            Tmin = points[0][np - 2];
+            restart = !restart;
             npfirst = np - 1;
             ncrfirst = nonLinSolver.getNpCrit();
             if (ncrfirst == 0) {
@@ -262,16 +254,6 @@ public class pTphaseEnvelopeNew2 extends BaseOperation {
             cricondenThermfirst = cricondenTherm;
             cricondenThermXfirst = cricondenThermX;
             cricondenThermYfirst = cricondenThermY;
-
-            hascopiedPoints = true;
-            copiedPoints = new double[5][np - 1];
-            for (int i = 0; i < np - 1; i++) {
-              copiedPoints[0][i] = points[0][i];
-              copiedPoints[1][i] = points[1][i];
-              copiedPoints[2][i] = pointsH[i];
-              copiedPoints[3][i] = pointsS[i];
-              copiedPoints[4][i] = pointsV[i];
-            }
 
             // new settings
             phaseFraction = 1.0 - phaseFraction;
@@ -349,7 +331,7 @@ public class pTphaseEnvelopeNew2 extends BaseOperation {
         if (system.getPressure() > maxPressure) {
           break;
         }
-        if (system.getTemperature() > Tmin && !restart) {
+        if (system.getTemperature() < Tmin) {
           break;
         }
 
@@ -358,186 +340,60 @@ public class pTphaseEnvelopeNew2 extends BaseOperation {
           if (calculatesDewPoint) {
             dewPointTemperature.add(system.getTemperature());
             dewPointPressure.add(system.getPressure());
+            dewPointEnthalpy
+                .add(system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase()
+                    / system.getPhase(1).getMolarMass() / 1e3);
+            dewPointVolume.add(system.getPhase(1).getDensity());
+            dewPointEntropy
+                .add(system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase()
+                    / system.getPhase(1).getMolarMass() / 1e3);
           } else {
             bubblePointTemperature.add(system.getTemperature());
             bubblePointPressure.add(system.getPressure());
+            bubblePointEnthalpy
+                .add(system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase()
+                    / system.getPhase(1).getMolarMass() / 1e3);
+            bubblePointVolume.add(system.getPhase(1).getDensity());
+            bubblePointEntropy
+                .add(system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase()
+                    / system.getPhase(1).getMolarMass() / 1e3);
           }
         }
-        // Keeps the calculated points
-        points[0][np - 1] = system.getTemperature();
-        points[1][np - 1] = system.getPressure();
-        pointsH[np - 1] =
-            system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase()
-                / system.getPhase(1).getMolarMass() / 1e3;
-        pointsV[np - 1] = system.getPhase(1).getDensity();
-        pointsS[np - 1] =
-            system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase()
-                / system.getPhase(1).getMolarMass() / 1e3;
       }
 
-      try {
-        int ncr = nonLinSolver.getNpCrit();
-        if (ncr == 0) {
-          ncr = np;
-        }
-        int ncr2 = np - ncr;
-        if (hascopiedPoints) {
-          // if it enters here the envelope crashed and restarted
-          // reallocate to have all values
-          points2 = new double[8][];
-          pointsH2 = new double[8][];
-          pointsS2 = new double[8][];
-          pointsV2 = new double[8][];
-        }
-
-        // points2 are plotted
-        points2[0] = new double[ncr + 1];
-        points2[1] = new double[ncr + 1];
-        pointsH2[0] = new double[ncr + 1];
-        pointsH2[1] = new double[ncr + 1];
-        pointsS2[0] = new double[ncr + 1];
-        pointsS2[1] = new double[ncr + 1];
-        pointsV2[0] = new double[ncr + 1];
-        pointsV2[1] = new double[ncr + 1];
-
-        if (ncr2 > 2) {
-          points2[2] = new double[ncr2 - 2];
-          points2[3] = new double[ncr2 - 2];
-          pointsH2[2] = new double[ncr2 - 2];
-          pointsH2[3] = new double[ncr2 - 2];
-          pointsS2[2] = new double[ncr2 - 2];
-          pointsS2[3] = new double[ncr2 - 2];
-          pointsV2[2] = new double[ncr2 - 2];
-          pointsV2[3] = new double[ncr2 - 2];
-        } else {
-          points2[2] = new double[0];
-          points2[3] = new double[0];
-          pointsH2[2] = new double[0];
-          pointsH2[3] = new double[0];
-          pointsS2[2] = new double[0];
-          pointsS2[3] = new double[0];
-          pointsV2[2] = new double[0];
-          pointsV2[3] = new double[0];
-        }
-
-        for (int i = 0; i < ncr; i++) {
-          // second branch up to critical point
-          points2[0][i] = points[0][i];
-          points2[1][i] = points[1][i];
-          pointsH2[1][i] = points[1][i];
-          pointsH2[0][i] = pointsH[i];
-          pointsS2[1][i] = points[1][i];
-          pointsS2[0][i] = pointsS[i];
-          pointsV2[1][i] = points[1][i];
-          pointsV2[0][i] = pointsV[i];
-        }
-        if (ncr2 > 2) {
-          for (int i = 1; i < (ncr2 - 2); i++) {
-            // second branch after the critical point
-            points2[2][i] = points[0][i + ncr - 1];
-            points2[3][i] = points[1][i + ncr - 1];
-            pointsH2[3][i] = points[1][i + ncr - 1];
-            pointsH2[2][i] = pointsH[i + ncr - 1];
-            pointsS2[3][i] = points[1][i + ncr - 1];
-            pointsS2[2][i] = pointsS[i + ncr - 1];
-            pointsV2[3][i] = points[1][i + ncr - 1];
-            pointsV2[2][i] = pointsV[i + ncr - 1];
-          }
-        }
-
-        if (hascopiedPoints) {
-          if (ncrfirst > npfirst) {
-            ncr = copiedPoints[0].length - 1;
-            ncr2 = npfirst - ncr;
-            npfirst = npfirst - 1;
-          } else {
-            ncr = ncrfirst;
-            ncr2 = npfirst - ncr;
-          }
-
-          points2[4] = new double[ncr + 1];
-          points2[5] = new double[ncr + 1];
-          pointsH2[4] = new double[ncr + 1];
-          pointsH2[5] = new double[ncr + 1];
-          pointsS2[4] = new double[ncr + 1];
-          pointsS2[5] = new double[ncr + 1];
-          pointsV2[4] = new double[ncr + 1];
-          pointsV2[5] = new double[ncr + 1];
-
-          if (ncr2 > 2) {
-            points2[6] = new double[ncr2 - 2];
-            points2[7] = new double[ncr2 - 2];
-            pointsH2[6] = new double[ncr2 - 2];
-            pointsH2[7] = new double[ncr2 - 2];
-            pointsS2[6] = new double[ncr2 - 2];
-            pointsS2[7] = new double[ncr2 - 2];
-            pointsV2[6] = new double[ncr2 - 2];
-            pointsV2[7] = new double[ncr2 - 2];
-          } else {
-            points2[6] = new double[0];
-            points2[7] = new double[0];
-            pointsH2[6] = new double[0];
-            pointsH2[7] = new double[0];
-            pointsS2[6] = new double[0];
-            pointsS2[7] = new double[0];
-            pointsV2[6] = new double[0];
-            pointsV2[7] = new double[0];
-          }
-
-          for (int i = 0; i < ncr; i++) {
-            // first branch up to the critical point
-            points2[4][i] = copiedPoints[0][i];
-            points2[5][i] = copiedPoints[1][i];
-            pointsH2[5][i] = copiedPoints[1][i];
-            pointsH2[4][i] = copiedPoints[2][i];
-            pointsS2[5][i] = copiedPoints[1][i];
-            pointsS2[4][i] = copiedPoints[3][i];
-            pointsV2[5][i] = copiedPoints[1][i];
-            pointsV2[4][i] = copiedPoints[4][i];
-          }
-          if (ncr2 > 2) {
-            for (int i = 1; i < (ncr2 - 2); i++) {
-              // first branch after the critical point
-              points2[6][i] = copiedPoints[0][i + ncr - 1];
-              points2[7][i] = copiedPoints[1][i + ncr - 1];
-              pointsH2[7][i] = copiedPoints[1][i + ncr - 1];
-              pointsH2[6][i] = copiedPoints[2][i + ncr - 1];
-              pointsS2[7][i] = copiedPoints[1][i + ncr - 1];
-              pointsS2[6][i] = copiedPoints[3][i + ncr - 1];
-              pointsV2[7][i] = copiedPoints[1][i + ncr - 1];
-              pointsV2[6][i] = copiedPoints[4][i + ncr - 1];
-            }
-          }
-        }
-
-        // critical point
-        system.setTemperature(system.getTC());
-        system.setPressure(system.getPC());
-
-        points2[0][ncr] = system.getTC();
-        points2[1][ncr] = system.getPC();
-        if (ncr2 > 2) {
-          points2[2][0] = system.getTC();
-          points2[3][0] = system.getPC();
-        }
-      } catch (Exception e2) {
-      }
-      /*
-       * try { if (outputToFile) { // update this String name1 = new String(); name1 = fileName +
-       * "Dew.nc"; file1 = new
-       * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
-       * file1.setOutputFileName(name1); file1.setXvalues(points2[2], "temp", "sec");
-       * file1.setYvalues(points2[3], "pres", "meter"); file1.createFile();
-       *
-       * String name2 = new String(); name2 = fileName + "Bub.nc"; file2 = new
-       * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
-       * file2.setOutputFileName(name2); file2.setXvalues(points2[0], "temp", "sec");
-       * file2.setYvalues(points2[1], "pres", "meter"); file2.createFile(); } } catch (Exception e3)
-       * { logger.error(ex.getMessage(), e3); }
-       */
+      system.setTemperature(system.getTC());
+      system.setPressure(system.getPC());
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
       throw ex;
+    }
+
+    dewPointTemperatureArray = new double[dewPointTemperature.size()];
+    dewPointPressureArray = new double[dewPointPressure.size()];
+    dewPointEnthalpyArray = new double[dewPointTemperature.size()];
+    dewPointVolumeArray = new double[dewPointPressure.size()];
+    dewPointEntropyArray = new double[dewPointPressure.size()];
+
+    bubblePointTemperatureArray = new double[bubblePointTemperature.size()];
+    bubblePointPressureArray = new double[bubblePointPressure.size()];
+    bubblePointEnthalpyArray = new double[bubblePointPressure.size()];
+    bubblePointVolumeArray = new double[bubblePointPressure.size()];
+    bubblePointEntropyArray = new double[bubblePointPressure.size()];
+
+    for (int i = 0; i < dewPointTemperature.size(); i++) {
+      dewPointTemperatureArray[i] = dewPointTemperature.get(i);
+      dewPointPressureArray[i] = dewPointPressure.get(i);
+      dewPointEnthalpyArray[i] = dewPointEnthalpy.get(i);
+      dewPointVolumeArray[i] = dewPointVolume.get(i);
+      dewPointEntropyArray[i] = dewPointEntropy.get(i);
+    }
+
+    for (int i = 0; i < bubblePointTemperature.size(); i++) {
+      bubblePointTemperatureArray[i] = bubblePointTemperature.get(i);
+      bubblePointPressureArray[i] = bubblePointPressure.get(i);
+      bubblePointEnthalpyArray[i] = bubblePointEnthalpy.get(i);
+      bubblePointEntropyArray[i] = bubblePointEntropy.get(i);
+      bubblePointVolumeArray[i] = bubblePointVolume.get(i);
     }
   }
 
@@ -559,177 +415,42 @@ public class pTphaseEnvelopeNew2 extends BaseOperation {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    DecimalFormat nf = new DecimalFormat();
-    nf.setMaximumFractionDigits(1);
-    nf.applyPattern("####.#");
-    if (bubblePointFirst) {
-      // bubble point side
-      navn[0] = "bubble point 2";
-      navn[1] = "dew point 2";
-      navn[2] = "dew point 1";
-      navn[3] = "bubble point 1";
-    } else {
-      // dew point side and does not crash
-      navn[0] = "dew point 2";
-      navn[1] = "bubble point 2";
-      navn[2] = "dew point 1";
-      navn[3] = "bubbl point 1";
-    }
-
-    double TC = system.getTC();
-    double PC = system.getPC();
-
-    String title =
-        "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-    String title3 =
-        "PH-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-    String title4 = "Density-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
-        + String.valueOf(nf.format(PC));
-    String title5 =
-        "PS-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-
-    graph2b graph3 = new graph2b(pointsH2, navn, title3, "Enthalpy [kJ/kg]", "Pressure [bara]");
-    graph3.setVisible(true);
-    // graph3.saveFigure(new String(util.util.FileSystemSettings.tempDir +
-    // "NeqSimTempFig4.png"));
-
-    graph2b graph4 = new graph2b(pointsV2, navn, title4, "Density [kg/m^3]", "Pressure [bara]");
-    graph4.setVisible(true);
-    // graph4.saveFigure(util.util.FileSystemSettings.tempDir +
-    // "NeqSimTempFig2.png");
-
-    graph2b graph5 = new graph2b(pointsS2, navn, title5, "Entropy [kJ/kg*K]", "Pressure [bara]");
-    graph5.setVisible(true);
-    // graph5.saveFigure(util.util.FileSystemSettings.tempDir +
-    // "NeqSimTempFig3.png");
-
-    graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
-    graph2.setVisible(true);
-    // graph2.saveFigure(util.util.FileSystemSettings.tempDir +
-    // "NeqSimTempFig1.png");
-
-    /*
-     * JDialog dialog = new JDialog(); Container dialogContentPane = dialog.getContentPane();
-     * dialogContentPane.setLayout(new FlowLayout()); JFreeChartPanel chartPanel =
-     * graph4.getChartPanel(); dialogContentPane.add(chartPanel); dialog.show();
-     */
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void printToFile(String name) {}
 
-  /** {@inheritDoc} */
-  @Override
-  public org.jfree.chart.JFreeChart getJFreeChart(String name) {
-    DecimalFormat nf = new DecimalFormat();
-    nf.setMaximumFractionDigits(1);
-    nf.applyPattern("####.#");
-    if (bubblePointFirst) {
-      // bubble point side
-      navn[0] = "bubble point 2";
-      navn[1] = "dew point 2";
-      navn[2] = "dew point 1";
-      navn[3] = "bubble point 1";
-    } else {
-      // dew point side and does not crash
-      navn[0] = "dew point";
-      navn[1] = "bubble point";
-      navn[2] = "dew point";
-      navn[3] = "bubbl point";
-    }
-
-    double TC = system.getTC();
-    double PC = system.getPC();
-
-    String title =
-        "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-
-    graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
-    return graph2.getChart();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double[][] getPoints(int i) {
-    return points2;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void addData(String name, double[][] data) {
-    double[][] localPoints = new double[points2.length + data.length][];
-    navn[localPoints.length / 2 - 1] = name;
-    System.arraycopy(points2, 0, localPoints, 0, points2.length);
-    System.arraycopy(data, 0, localPoints, points2.length, data.length);
-    points2 = localPoints;
-  }
 
   /** {@inheritDoc} */
   @Override
   public double[] get(String name) {
-    // Convert ArrayList<Double> to double[]
-    double[] dewPointTemperatureArray = new double[dewPointTemperature.size()];
-    double[] dewPointPressureArray = new double[dewPointPressure.size()];
-    for (int i = 0; i < dewPointTemperature.size(); i++) {
-      dewPointTemperatureArray[i] = dewPointTemperature.get(i);
-      dewPointPressureArray[i] = dewPointPressure.get(i);
-    }
-
-    double[] bubblePointTemperatureArray = new double[bubblePointTemperature.size()];
-    double[] bubblePointPressureArray = new double[bubblePointPressure.size()];
-    for (int i = 0; i < bubblePointTemperature.size(); i++) {
-      bubblePointTemperatureArray[i] = bubblePointTemperature.get(i);
-      bubblePointPressureArray[i] = bubblePointPressure.get(i);
-    }
-
-
-
     if (name.equals("dewT")) {
       return dewPointTemperatureArray;
     }
     if (name.equals("dewP")) {
       return dewPointPressureArray;
     }
-
-
     if (name.equals("bubT")) {
       return bubblePointTemperatureArray;
     }
     if (name.equals("bubP")) {
       return bubblePointPressureArray;
     }
-    // return points2[3];
-    if (name.equals("dewT2")) {
-      return points2[4];
-    }
-    if (name.equals("dewP2")) {
-      return points2[5];
-    }
-    if (name.equals("bubT2")) {
-      return points2[6];
-    }
-    if (name.equals("bubP2")) {
-      return points2[7];
-    }
+
     if (name.equals("dewH")) {
-      return pointsH2[2];
+      return dewPointEnthalpyArray;
     }
     if (name.equals("dewDens")) {
-      return pointsV2[2];
+      return dewPointVolumeArray;
     }
     if (name.equals("dewS")) {
-      return pointsS2[2];
+      return dewPointEntropyArray;
     }
     if (name.equals("bubH")) {
-      return pointsH2[0];
+      return bubblePointEnthalpyArray;
     }
     if (name.equals("bubDens")) {
-      return pointsV2[0];
+      return bubblePointVolumeArray;
     }
     if (name.equals("bubS")) {
-      return pointsS2[0];
+      return bubblePointEntropyArray;
     }
     if (name.equals("cricondentherm")) {
       return cricondenTherm;
@@ -884,5 +605,11 @@ public class pTphaseEnvelopeNew2 extends BaseOperation {
       Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc));
     }
     return Tstart;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void displayResult() {
+
   }
 }
