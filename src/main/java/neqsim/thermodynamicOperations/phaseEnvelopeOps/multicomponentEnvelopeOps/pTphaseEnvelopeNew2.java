@@ -286,11 +286,6 @@ public class pTphaseEnvelopeNew2 extends BaseOperation {
             nonLinSolver.calcCrit();
           }
         }
-        if (nonLinSolver.calcCP) {
-          nonLinSolver.calcCP = false;
-          nonLinSolver.npCrit = np;
-          nonLinSolver.calcCrit();
-        }
 
         // stores critondenbar and cricondentherm
         // HERE the new cricoT and crico P values will be called instead
