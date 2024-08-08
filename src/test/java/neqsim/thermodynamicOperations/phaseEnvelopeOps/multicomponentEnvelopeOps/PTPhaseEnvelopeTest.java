@@ -64,6 +64,36 @@ public class PTPhaseEnvelopeTest {
   }
 
   @Test
+  void testSimpleCase() {
+    testSystem.addComponent("nitrogen", 0.88);
+    testSystem.addComponent("CO2", 5.7);
+    testSystem.addComponent("methane", 86.89);
+    testSystem.addComponent("ethane", 3.59);
+    testSystem.addComponent("propane", 1.25);
+    testSystem.addComponent("i-butane", 0.19);
+    testSystem.addComponent("n-butane", 0.35);
+    testSystem.addComponent("i-pentane", 0.12);
+    testSystem.addComponent("n-pentane", 0.12);
+    testSystem.setMixingRule("classic");
+    testSystem.setMixingRule("classic");
+
+    testOps = new ThermodynamicOperations(testSystem);
+    testOps.calcPTphaseEnvelopeNew2();
+    double[] dewPointPressures = testOps.get("dewP");
+    double[] dewPointTemperautres = testOps.get("dewT");
+    double[] bubblePointPressures = testOps.get("bubP");
+    double[] bubblePointTemperautres = testOps.get("bubT");
+    double[] cricondenbar = testOps.get("cricondenbar");
+    double[] criticalPoint1 = testOps.get("criticalPoint1");
+
+
+    assertTrue(dewPointTemperautres.length > 20);
+    assertTrue(bubblePointTemperautres.length > 10);
+
+  }
+
+
+  @Test
   void testFailingCase1() {
     // testSystem.setTemperature(40, "C");
     // testSystem.setPressure(50, "bara");
