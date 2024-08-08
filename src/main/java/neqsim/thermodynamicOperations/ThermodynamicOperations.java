@@ -1550,7 +1550,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * calcPTphaseEnvelopeNew.
    * </p>
    */
-  public void calcPTphaseEnvelopeNew2() {
+  public void calcPTphaseEnvelope2() {
     operation = new pTphaseEnvelopeNew2(system, fileName, (1.0 - 1e-10), 1.0, false);
     // thisThread = new Thread(operation);
     // thisThread.start();
