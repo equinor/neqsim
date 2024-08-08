@@ -15,6 +15,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<sha1/>
 		<changelist/>
+		<checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
 	</properties>
 
 	<repositories>
@@ -117,7 +118,6 @@
 	  					<extensions>true</extensions>
 	  					<configuration>
 	   						<publishingServerId>central</publishingServerId>
-	   						<tokenAuth>true</tokenAuth>
 	   						<autoPublish>true</autoPublish>
 	  					</configuration>
 	 				</plugin>
@@ -138,7 +138,7 @@
 	 				<plugin>
 	  					<groupId>org.apache.maven.plugins</groupId>
 	  					<artifactId>maven-javadoc-plugin</artifactId>
-	  					<version>3.6.3</version>
+	  					<version>3.8.0</version>
 	  					<executions>
 	   						<execution>
 								<id>attach-javadoc</id>
@@ -148,7 +148,6 @@
 	   						</execution>
 						</executions>
 	  					<configuration>
-	   						<stylesheet>java</stylesheet>
 	   						<doclint>none</doclint>
 	  					</configuration>
 	 				</plugin>
@@ -333,6 +332,14 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>3.4.0</version>
+				<configuration>
+					<failsOnError>true</failsOnError>
+				</configuration>
+    		</plugin>  
 		</plugins>
 	</build>
 	<distributionManagement>
