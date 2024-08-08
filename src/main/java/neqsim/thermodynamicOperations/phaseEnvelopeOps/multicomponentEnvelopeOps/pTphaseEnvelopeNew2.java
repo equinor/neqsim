@@ -68,8 +68,6 @@ public class pTphaseEnvelopeNew2 extends BaseOperation {
   int np = 0;
   // points[2] = new double[1000];
   int speceq = 0;
-  int npfirst;
-  int ncrfirst;
   double Tcfirst;
   double Pcfirst;
   double Tmin = 0.0;
@@ -239,11 +237,6 @@ public class pTphaseEnvelopeNew2 extends BaseOperation {
           if (restart) {
             calculatesDewPoint = false;
             restart = !restart;
-            npfirst = np - 1;
-            ncrfirst = nonLinSolver.getNpCrit();
-            if (ncrfirst == 0) {
-              ncrfirst = npfirst;
-            }
             Tcfirst = system.getTC();
             Pcfirst = system.getPC();
 
