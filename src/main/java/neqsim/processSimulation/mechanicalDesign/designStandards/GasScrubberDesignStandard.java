@@ -37,24 +37,20 @@ public class GasScrubberDesignStandard extends DesignStandard {
         new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
-        try {
-          dataSet = database.getResultSet(
-              ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Gas scrubber' AND Company='"
-                  + standardName + "'"));
-          while (dataSet.next()) {
-            String specName = dataSet.getString("SPECIFICATION");
-            if (specName.equals("GasLoadFactor")) {
-              gasLoadFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
-            } else if (specName.equals("FlowDesignFactor")) {
-              designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MAXVALUE"));
-            } else if (specName.equals("LengthGasInetToHHLL")) {
-              designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
-            } else if (specName.equals("LengthMeshPadToDemistingCyclone")) {
-              designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
-            }
+        dataSet = database.getResultSet(
+            ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Gas scrubber' AND Company='"
+                + standardName + "'"));
+        while (dataSet.next()) {
+          String specName = dataSet.getString("SPECIFICATION");
+          if (specName.equals("GasLoadFactor")) {
+            gasLoadFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
+          } else if (specName.equals("FlowDesignFactor")) {
+            designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MAXVALUE"));
+          } else if (specName.equals("LengthGasInetToHHLL")) {
+            designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
+          } else if (specName.equals("LengthMeshPadToDemistingCyclone")) {
+            designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
           }
-        } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
         }
 
         // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));

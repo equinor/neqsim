@@ -57,27 +57,23 @@ public class SeparatorDesignStandard extends DesignStandard {
         new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
-        try {
-          dataSet = database.getResultSet(
-              ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Separator' AND Company='"
-                  + standardName + "'"));
-          while (dataSet.next()) {
-            String specName = dataSet.getString("SPECIFICATION");
-            if (specName.equals("GasLoadFactor")) {
-              gasLoadFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
-                  + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
-            }
-            if (specName.equals("Fg")) {
-              Fg = (Double.parseDouble(dataSet.getString("MAXVALUE"))
-                  + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
-            }
-            if (specName.equals("VolumetricDesignFactor")) {
-              volumetricDesignFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
-                  + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
-            }
+        dataSet = database.getResultSet(
+            ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Separator' AND Company='"
+                + standardName + "'"));
+        while (dataSet.next()) {
+          String specName = dataSet.getString("SPECIFICATION");
+          if (specName.equals("GasLoadFactor")) {
+            gasLoadFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
+                + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
           }
-        } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
+          if (specName.equals("Fg")) {
+            Fg = (Double.parseDouble(dataSet.getString("MAXVALUE"))
+                + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
+          }
+          if (specName.equals("VolumetricDesignFactor")) {
+            volumetricDesignFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
+                + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
+          }
         }
 
         // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
