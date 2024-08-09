@@ -73,9 +73,10 @@ public class ComponentHydrate extends Component {
     reffug[0] = 10.0;
     reffug[1] = 1.0;
 
-    java.sql.ResultSet dataSet = null;
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-      if (!name.equals("default")) {
+    if (!name.equals("default")) {
+      java.sql.ResultSet dataSet = null;
+      try (neqsim.util.database.NeqSimDataBase database =
+          new neqsim.util.database.NeqSimDataBase()) {
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
             dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
@@ -95,16 +96,16 @@ public class ComponentHydrate extends Component {
         lennardJonesEnergyParameterHydrate = Double.parseDouble(dataSet.getString("LJepsHYDRATE"));
         sphericalCoreRadiusHydrate =
             Double.parseDouble(dataSet.getString("SphericalCoreRadiusHYDRATE"));
-      }
-    } catch (Exception ex) {
-      logger.error("error in comp", ex);
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
       } catch (Exception ex) {
-        logger.error("error closing database.....", ex);
+        logger.error("error in comp", ex);
+      } finally {
+        try {
+          if (dataSet != null) {
+            dataSet.close();
+          }
+        } catch (Exception ex) {
+          logger.error("error closing database.....", ex);
+        }
       }
     }
   }
@@ -736,4 +737,3 @@ public class ComponentHydrate extends Component {
     return cavprwat;
   }
 }
-

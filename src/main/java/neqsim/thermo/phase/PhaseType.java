@@ -1,6 +1,5 @@
 package neqsim.thermo.phase;
 
-import java.io.Serializable;
 import neqsim.util.exception.InvalidInputException;
 
 /**
@@ -8,7 +7,7 @@ import neqsim.util.exception.InvalidInputException;
  *
  * @author ASMF
  */
-public enum PhaseType implements Serializable {
+public enum PhaseType {
   LIQUID("liquid", 0), GAS("gas", 1), OIL("oil", 2), AQUEOUS("aqueous", 3), HYDRATE("hydrate",
       4), WAX("wax", 5), SOLID("solid", 6), SOLIDCOMPLEX("solidComplex", 7);
 
