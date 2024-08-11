@@ -313,6 +313,74 @@ public class TBPfractionModel implements java.io.Serializable {
   }
 
   /**
+   * Lee-Kesler property estimation method
+   */
+  public class LeeKesler extends TBPBaseModel {
+    private static final long serialVersionUID = 1000;
+
+    @Override
+    public double calcTC(double molarMass, double density) {
+      return 100.0;
+    }
+
+    @Override
+    public double calcPC(double molarMass, double density) {
+      return 100.0;
+    }
+
+    @Override
+    public double calcm(double molarMass, double density) {
+      return 100.0;
+    }
+
+    @Override
+    public double calcTB(double molarMass, double density) {
+      return 100.0;
+    }
+
+    @Override
+    public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density) {
+      return 100.0;
+    }
+  }
+
+  /**
+   * Two property estimation method
+   */
+  public class TwoModel extends TBPBaseModel {
+    private static final long serialVersionUID = 1000;
+
+    @Override
+    public double calcTC(double molarMass, double density) {
+      double sg = density;
+      double TB = calcTB(molarMass, density);
+      double TC =
+          189.8 + 450.6 * sg + (0.4244 + 0.1174 * sg) * TB + (0.1441 - 1.0069 * sg) * 1e5 / TB;
+      return TC;
+    }
+
+    @Override
+    public double calcPC(double molarMass, double density) {
+      return 100.0;
+    }
+
+    @Override
+    public double calcm(double molarMass, double density) {
+      return 100.0;
+    }
+
+    @Override
+    public double calcTB(double molarMass, double density) {
+      return 100.0;
+    }
+
+    @Override
+    public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density) {
+      return 100.0;
+    }
+  }
+
+  /**
    * <p>
    * getModel.
    * </p>
@@ -334,6 +402,10 @@ public class TBPfractionModel implements java.io.Serializable {
       return new PedersenTBPModelPRHeavyOil();
     } else if (name.equals("RiaziDaubert")) {
       return new RiaziDaubert();
+    } else if (name.equals("Lee-Kesler")) {
+      return new LeeKesler();
+    } else if (name.equals("Two")) {
+      return new TwoModel();
     } else {
       // System.out.println("not a valid TBPModelName.................");
       return new PedersenTBPModelSRK();
