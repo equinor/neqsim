@@ -869,7 +869,9 @@ public abstract class SystemThermo implements SystemInterface {
       molarMass = 1000 * molarMass;
       TC = characterization.getTBPModel().calcTC(molarMass, density);
       PC = characterization.getTBPModel().calcPC(molarMass, density);
-      m = characterization.getTBPModel().calcm(molarMass, density);
+      if (characterization.getTBPModel().isCalcm()) {
+        m = characterization.getTBPModel().calcm(molarMass, density);
+      }
       acs = characterization.getTBPModel().calcAcentricFactor(molarMass, density);
       // TBPfractionCoefs[2][0]+TBPfractionCoefs[2][1]*molarMass+TBPfractionCoefs[2][2]*density+TBPfractionCoefs[2][3]*Math.pow(molarMass,2.0);
       TB = characterization.getTBPModel().calcTB(molarMass, density);

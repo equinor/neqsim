@@ -105,10 +105,21 @@ public class TBPfractionModel implements java.io.Serializable {
     }
 
     @Override
+    public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density) {
+      throw new RuntimeException("calcm() method not defined");
+    }
+
+    @Override
+    public double calcm(double molarMass, double density) {
+      throw new RuntimeException("calcm() method not defined");
+    }
+
+    @Override
     public boolean isCalcm() {
       return calcm;
     }
   }
+
 
   /**
    * PedersenTBPModelSRK
@@ -199,6 +210,7 @@ public class TBPfractionModel implements java.io.Serializable {
     }
   }
 
+
   public class PedersenTBPModelSRKHeavyOil extends PedersenTBPModelSRK {
     private static final long serialVersionUID = 1000;
 
@@ -214,6 +226,7 @@ public class TBPfractionModel implements java.io.Serializable {
       TBPfractionCoefOil = TBPfractionCoefsHeavyOil;
     }
   }
+
 
   public class PedersenTBPModelPR extends PedersenTBPModelSRK {
     private static final long serialVersionUID = 1000;
@@ -232,6 +245,7 @@ public class TBPfractionModel implements java.io.Serializable {
     }
   }
 
+
   public class PedersenTBPModelPRHeavyOil extends PedersenTBPModelPR {
     private static final long serialVersionUID = 1000;
 
@@ -245,6 +259,7 @@ public class TBPfractionModel implements java.io.Serializable {
       TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
     }
   }
+
 
   public class RiaziDaubert extends PedersenTBPModelSRK {
     private static final long serialVersionUID = 1000;
@@ -312,43 +327,53 @@ public class TBPfractionModel implements java.io.Serializable {
     }
   }
 
+
   /**
    * Lee-Kesler property estimation method
    */
   public class LeeKesler extends TBPBaseModel {
     private static final long serialVersionUID = 1000;
 
+    public LeeKesler() {
+      calcm = false;
+    }
+
     @Override
     public double calcTC(double molarMass, double density) {
-      return 100.0;
+      double sg = density;
+      double TB = calcTB(molarMass, density);
+      double TC =
+          189.8 + 450.6 * sg + (0.4244 + 0.1174 * sg) * TB + (0.1441 - 1.0069 * sg) * 1e5 / TB;
+      return TC;
     }
 
     @Override
     public double calcPC(double molarMass, double density) {
-      return 100.0;
+      double sg = density;
+      double TB = calcTB(molarMass, density);
+      double logpc =
+          3.3864 - 0.0566 / sg - ((0.43639 + 4.1216 / sg + 0.21343 / sg / sg) * 1e-3 * TB)
+              + ((0.47579 + 1.182 / sg + 0.15302 / sg / sg) * 1e-6 * TB * TB)
+              - ((2.4505 + 9.9099 / sg / sg) * 1e-10 * TB * TB * TB);
+      double PC = Math.exp(logpc) * 10;
+      return PC;
     }
 
-    @Override
-    public double calcm(double molarMass, double density) {
-      return 100.0;
-    }
-
-    @Override
-    public double calcTB(double molarMass, double density) {
-      return 100.0;
-    }
-
-    @Override
-    public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density) {
-      return 100.0;
+    public double calcAcentricFactor(double molarMass, double density) {
+      return super.calcAcentricFactorKeslerLee(molarMass, density);
     }
   }
+
 
   /**
    * Two property estimation method
    */
-  public class TwoModel extends TBPBaseModel {
+  public class TwuModel extends TBPBaseModel {
     private static final long serialVersionUID = 1000;
+
+    public TwuModel() {
+      calcm = false;
+    }
 
     @Override
     public double calcTC(double molarMass, double density) {
@@ -364,20 +389,6 @@ public class TBPfractionModel implements java.io.Serializable {
       return 100.0;
     }
 
-    @Override
-    public double calcm(double molarMass, double density) {
-      return 100.0;
-    }
-
-    @Override
-    public double calcTB(double molarMass, double density) {
-      return 100.0;
-    }
-
-    @Override
-    public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density) {
-      return 100.0;
-    }
   }
 
   /**
@@ -404,8 +415,8 @@ public class TBPfractionModel implements java.io.Serializable {
       return new RiaziDaubert();
     } else if (name.equals("Lee-Kesler")) {
       return new LeeKesler();
-    } else if (name.equals("Two")) {
-      return new TwoModel();
+    } else if (name.equals("Twu")) {
+      return new TwuModel();
     } else {
       // System.out.println("not a valid TBPModelName.................");
       return new PedersenTBPModelSRK();
