@@ -24,7 +24,8 @@
 				"ms-vscode.test-adapter-converter",
 				"shengchen.vscode-checkstyle",
 				"mechatroner.rainbow-csv",
-				"redhat.vscode-xml"
+				"redhat.vscode-xml",
+				"vscjava.vscode-java-test"
 			],
 			"settings": {
 				"java.configuration.updateBuildConfiguration": "interactive",
