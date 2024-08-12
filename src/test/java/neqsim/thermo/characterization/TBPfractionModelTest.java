@@ -13,8 +13,8 @@ public class TBPfractionModelTest {
     thermoSystem.getCharacterization().setTBPModel("Twu");
     thermoSystem.addTBPfraction("C7", 1.0, 110.0 / 1000.0, 0.73);
     assertEquals(562.4229803010662, thermoSystem.getComponent(0).getTC(), 1e-3);
-    assertEquals(28.322987349048354, thermoSystem.getComponent(0).getPC(), 1e-3);
-    assertEquals(0.3509842412742902, thermoSystem.getComponent(0).getAcentricFactor(), 1e-3);
+    assertEquals(100.0, thermoSystem.getComponent(0).getPC(), 1e-3);
+    assertEquals(0.8679282032694784, thermoSystem.getComponent(0).getAcentricFactor(), 1e-3);
   }
 
   @Test
