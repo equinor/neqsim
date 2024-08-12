@@ -40,25 +40,29 @@ public class DifferentialLiberationTest {
     SimulationInterface satPresSim = new SaturationPressure(tempSystem);
     satPresSim.setTemperature(97.5, "C");
     satPresSim.run();
-    assertEquals(190.7882175445, satPresSim.getThermoSystem().getPressure(), 0.1);
+    assertEquals(193.24093437194824, satPresSim.getThermoSystem().getPressure(), 0.1);
     // tempSystem.prettyPrint();
 
-    double[] pressures = new double[] { 351.4, 323.2, 301.5, 275.9, 250.1, 226.1, 205.9, 179.1,
-        154.6, 132.1, 109.0, 78.6, 53.6, 22.0, 1.0 };
+    double[] pressures = new double[] {351.4, 323.2, 301.5, 275.9, 250.1, 226.1, 205.9, 179.1,
+        154.6, 132.1, 109.0, 78.6, 53.6, 22.0, 1.0};
     DifferentialLiberation differentialLiberation = new DifferentialLiberation(tempSystem);
     differentialLiberation.setPressures(pressures);
     differentialLiberation.setTemperature(97.5, "C");
     differentialLiberation.runCalc();
 
     assertEquals(1.689644811955, differentialLiberation.getBo()[0], 0.001);
-    assertEquals(212.366545704, differentialLiberation.getRs()[0], 0.001);
-    assertEquals(677.27184, differentialLiberation.getOilDensity()[0], 0.001);
+    assertEquals(212.71942595049242
+    , differentialLiberation.getRs()[0], 0.001);
+    assertEquals(677.5970918499921
+    , differentialLiberation.getOilDensity()[0], 0.001);
     assertEquals(1.7616805, differentialLiberation.getBo()[pressures.length - 9], 0.001);
-    assertEquals(1.312174206633, differentialLiberation.getBo()[pressures.length - 2], 0.001);
-    assertEquals(55.1339349, differentialLiberation.getRs()[pressures.length - 2], 0.001);
+    assertEquals(1.3111545517, differentialLiberation.getBo()[pressures.length - 2], 0.001);
+    assertEquals(55.10252632079461
+    , differentialLiberation.getRs()[pressures.length - 2], 0.001);
     assertEquals(0.0556167850, differentialLiberation.getBg()[pressures.length - 2], 0.001);
     assertEquals(1.0533007759, differentialLiberation.getBo()[pressures.length - 1], 0.001);
     assertEquals(0.0, differentialLiberation.getRs()[pressures.length - 1], 0.001);
-    assertEquals(805.00070, differentialLiberation.getOilDensity()[pressures.length - 1], 0.001);
+    assertEquals(805.6468027140055
+    , differentialLiberation.getOilDensity()[pressures.length - 1], 0.001);
   }
 }

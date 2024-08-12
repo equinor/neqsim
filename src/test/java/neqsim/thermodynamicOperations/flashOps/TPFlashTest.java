@@ -135,7 +135,8 @@ class TPFlashTest {
     testOps = new ThermodynamicOperations(testSystem5);
     testOps.TPflash();
     testSystem5.initProperties();
-    assertEquals(0.27697023508525664, testSystem5.getBeta(), 1e-6);
+    assertEquals(0.2838675588923609
+    , testSystem5.getBeta(), 1e-6);
     assertEquals(3, testSystem5.getNumberOfPhases());
   }
 

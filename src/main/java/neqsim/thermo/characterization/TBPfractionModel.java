@@ -155,7 +155,7 @@ public class TBPfractionModel implements java.io.Serializable {
         TBPfractionCoefs = TBPfractionCoefsHeavyOil;
       }
 
-      return 0.01325 + Math.exp(TBPfractionCoefs[1][0]
+      return Math.exp(0.01325 + TBPfractionCoefs[1][0]
           + TBPfractionCoefs[1][1] * Math.pow(density, TBPfractionCoefs[1][4])
           + TBPfractionCoefs[1][2] / molarMass + TBPfractionCoefs[1][3] / Math.pow(molarMass, 2.0));
     }
@@ -173,26 +173,12 @@ public class TBPfractionModel implements java.io.Serializable {
 
     @Override
     public double calcTB(double molarMass, double density) {
-      if (molarMass < 90) {
-        return 273.15 + 84;
+      if (molarMass < 540) {
+        return 2E-06 * Math.pow(molarMass, 3) - 0.0035 * Math.pow(molarMass, 2) + 2.4003 * molarMass
+            + 171.74;
+      } else {
+        return 97.58 * Math.pow(molarMass, 0.3323) * Math.pow(density, 0.04609);
       }
-      if (molarMass < 107) {
-        return 273.15 + 116.6;
-      }
-      if (molarMass < 121) {
-        return 273.15 + 142.2;
-      }
-      if (molarMass < 134) {
-        return 273.15 + 165.8;
-      }
-      if (molarMass < 147) {
-        return 273.15 + 187.2;
-      }
-      if (molarMass < 161) {
-        return 273.15 + 208.3;
-      }
-
-      return 97.58 * Math.pow(molarMass, 0.3323) * Math.pow(density, 0.04609);
     }
 
     @Override

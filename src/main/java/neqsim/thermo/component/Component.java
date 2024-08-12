@@ -287,10 +287,10 @@ public abstract class Component implements ComponentInterface {
         AntoineC = Double.parseDouble(dataSet.getString("ANTOINEC")); // AX
         AntoineD = Double.parseDouble(dataSet.getString("ANTOINED"));
         AntoineE = Double.parseDouble(dataSet.getString("ANTOINEE"));
-
+        normalBoilingPoint = Double.parseDouble(dataSet.getString("normboil")) + 273.15;
         if (AntoineA == 0) {
           AntoineA = 1.0;
-          AntoineB = getNormalBoilingPoint();
+          AntoineB = getNormalBoilingPoint() - 273.15;
         }
 
         AntoineASolid = Double.parseDouble(dataSet.getString("ANTOINESolidA"));
@@ -298,7 +298,7 @@ public abstract class Component implements ComponentInterface {
         AntoineCSolid = Double.parseDouble(dataSet.getString("ANTOINESolidC"));
 
         debyeDipoleMoment = Double.parseDouble(dataSet.getString("dipolemoment"));
-        normalBoilingPoint = Double.parseDouble(dataSet.getString("normboil"));
+
         standardDensity = Double.parseDouble(dataSet.getString("stddens"));
         viscosityCorrectionFactor = Double.parseDouble(dataSet.getString("viscfact")); // BC
         racketZ = Double.parseDouble(dataSet.getString("racketZ")); // BE
@@ -1661,6 +1661,14 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double getNormalBoilingPoint() {
     return normalBoilingPoint;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getNormalBoilingPoint(String unit) {
+    neqsim.util.unit.TemperatureUnit tempConversion =
+        new neqsim.util.unit.TemperatureUnit(getNormalBoilingPoint(), "K");
+    return tempConversion.getValue(unit);
   }
 
   /** {@inheritDoc} */

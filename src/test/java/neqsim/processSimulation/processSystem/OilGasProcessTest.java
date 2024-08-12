@@ -117,7 +117,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
 
     operations.run();
 
-    assertEquals(17195.25050, seprator3rdStage.getGasOutStream().getFlowRate("kg/hr"), 1.1);
+    assertEquals(17105.52983567356, seprator3rdStage.getGasOutStream().getFlowRate("kg/hr"), 1.1);
 
     assertEquals(seprator3rdStage.getGasOutStream().getFlowRate("kg/hr"),
         coolerLP.getOutletStream().getFlowRate("kg/hr"), 1e-4);

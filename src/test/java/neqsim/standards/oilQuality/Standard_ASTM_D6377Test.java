@@ -39,13 +39,14 @@ public class Standard_ASTM_D6377Test {
     standard.setMethodRVP("VPCR4");
     standard.setReferenceTemperature(37.8, "C");
     standard.calculate();
-    Assertions.assertEquals(3.604002003478, standard.getValue("RVP", "bara"), 1e-3);
-    Assertions.assertEquals(7.8448385024, standard.getValue("TVP", "bara"), 1e-3);
+    Assertions.assertEquals(3.6145219653041623, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(7.867696779327479, standard.getValue("TVP", "bara"), 1e-3);
 
     standard.setMethodRVP("RVP_ASTM_D6377");
     standard.setReferenceTemperature(37.8, "C");
     standard.calculate();
-    Assertions.assertEquals(3.00573767, standard.getValue("RVP", "bara"), 1e-3);
-    Assertions.assertEquals(7.8448385024, standard.getValue("TVP", "bara"), 1e-3);
+    Assertions.assertEquals(3.014511319063671, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(7.867696779327479
+    , standard.getValue("TVP", "bara"), 1e-3);
   }
 }

@@ -921,16 +921,27 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Getter for property NormalBoilingPoint.
    * </p>
    *
-   * @return The normal boiling point of the component
+   * @return The normal boiling point of the component with unit Kelvin
    */
   public double getNormalBoilingPoint();
+
+  /**
+   * <p>
+   * Getter for property NormalBoilingPoint.
+   * </p>
+   * 
+   * @param unit Unit of return pressure
+   * 
+   * @return The normal boiling point of the component
+   */
+  public double getNormalBoilingPoint(String unit);
 
   /**
    * <p>
    * setNormalBoilingPoint.
    * </p>
    *
-   * @param normalBoilingPoint a double
+   * @param normalBoilingPoint a double with unit Kelvin
    */
   public void setNormalBoilingPoint(double normalBoilingPoint);
 
