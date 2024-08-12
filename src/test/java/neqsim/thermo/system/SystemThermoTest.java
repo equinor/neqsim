@@ -43,7 +43,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    assertEquals(2.0188664689245, testSystem.getPhase(1).getCp("kJ/kgK"), 1e-6);
+    assertEquals(2.00406932521, testSystem.getPhase(1).getCp("kJ/kgK"), 1e-6);
   }
 
   /**

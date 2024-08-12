@@ -34,10 +34,12 @@ public class TBPfractionModelTest {
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK");
     thermoSystem.addTBPfraction("C7", 1.0, 110.0 / 1000.0, 0.73);
-    assertEquals(554.3185637098962, thermoSystem.getComponent(0).getTC(), 1e-3);
-    assertEquals(26.007549082822628, thermoSystem.getComponent(0).getPC(), 1e-3);
+    assertEquals(281.1685637, thermoSystem.getComponent(0).getTC() - 273.15, 1e-3);
+    assertEquals(26.341015469211726
+    , thermoSystem.getComponent(0).getPC(), 1e-3);
     assertEquals(0.508241, thermoSystem.getComponent(0).getAcentricFactor(), 1e-3);
-    assertEquals(384.6714299777243, thermoSystem.getComponent(0).getCriticalVolume(), 1e-3);
+    assertEquals(426.46717439, thermoSystem.getComponent(0).getCriticalVolume(), 1e-3);
+    assertEquals(122.93500, thermoSystem.getComponent(0).getNormalBoilingPoint("C"), 1e-3);
   }
 
   @Test
@@ -46,10 +48,9 @@ public class TBPfractionModelTest {
     thermoSystem.getCharacterization().setTBPModel("PedersenPR");
     thermoSystem.addTBPfraction("C7", 1.0, 110.0 / 1000.0, 0.73);
     assertEquals(560.546, thermoSystem.getComponent(0).getTC(), 1e-3);
-    assertEquals(25.838137535018557, thermoSystem.getComponent(0).getPC(), 1e-3);
+    assertEquals(26.16934428134274, thermoSystem.getComponent(0).getPC(), 1e-3);
     assertEquals(0.3838836222383, thermoSystem.getComponent(0).getAcentricFactor(), 1e-3);
-    assertEquals(405.0890245138075, thermoSystem.getComponent(0).getCriticalVolume(), 1e-3);
+    assertEquals(444.07282144, thermoSystem.getComponent(0).getCriticalVolume(), 1e-3);
+    assertEquals(122.93500, thermoSystem.getComponent(0).getNormalBoilingPoint("C"), 1e-3);
   }
-
-
 }

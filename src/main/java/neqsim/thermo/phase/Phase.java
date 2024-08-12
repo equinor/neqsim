@@ -1967,7 +1967,7 @@ public abstract class Phase implements PhaseInterface {
     double[] TPBfrac = new double[20];
 
     for (int i = 0; i < getNumberOfComponents(); i++) {
-      double boilpoint = getComponent(i).getNormalBoilingPoint();
+      double boilpoint = getComponent(i).getNormalBoilingPoint("C");
 
       if (boilpoint >= 331.0) {
         TPBfrac[19] += getComponent(i).getx();

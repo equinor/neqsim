@@ -80,10 +80,11 @@ public class CombinedOilGasFieldTest {
     operations.add(reservoirGasTPsim);
     operations.add(MPFMgas);
     operations.run();
-    assertEquals(8760.096083, MPFMgas.getMeasuredValue("GOR_std", ""), 1.0);
+    assertEquals(8834.875493073961, MPFMgas.getMeasuredValue("GOR_std", ""), 1.0);
 
     reservoirGasTPsim.setPressure(150.0, "bara");
     operations.run();
-    assertEquals(14880.1810, MPFMgas.getMeasuredValue("GOR_std", ""), 1.0);
+    assertEquals(14937.606339690177
+    , MPFMgas.getMeasuredValue("GOR_std", ""), 1.0);
   }
 }

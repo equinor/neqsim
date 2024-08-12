@@ -24,6 +24,6 @@ public class ViscositySimTest {
     sepSim.setExperimentalData(expData);
     // sepSim.runTuning();
     sepSim.runCalc();
-    assertEquals(4.420762033045493E-4, sepSim.getOilViscosity()[0], 0.000001);
+    assertEquals(4.443002015621749E-4, sepSim.getOilViscosity()[0], 0.000001);
   }
 }

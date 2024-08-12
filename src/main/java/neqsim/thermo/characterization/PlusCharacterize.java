@@ -432,7 +432,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     ArrayList<String> list = new ArrayList<String>();
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       double boilpoint = system.getPhase(0).getComponent(i).getNormalBoilingPoint();
-      if (boilpoint >= 69.0) {
+      if (boilpoint >= 273.15 + 69.0) {
         list.add(system.getPhase(0).getComponent(i).getName());
       }
     }

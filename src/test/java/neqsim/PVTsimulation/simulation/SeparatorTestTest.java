@@ -45,6 +45,6 @@ public class SeparatorTestTest {
     sepSim.setSeparatorConditions(temps, pres);
     sepSim.runCalc();
 
-    assertEquals(1.1245991497229437, sepSim.getBofactor()[4], 0.0001);
+    assertEquals(1.1224612120760051, sepSim.getBofactor()[4], 0.0001);
   }
 }

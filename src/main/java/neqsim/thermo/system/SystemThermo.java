@@ -944,7 +944,7 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).getComponent(componentName).setMolarMass(molarMass);
       getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
       getPhase(i).getComponent(componentName).setNormalLiquidDensity(density);
-      getPhase(i).getComponent(componentName).setNormalBoilingPoint(TB - 273.15);
+      getPhase(i).getComponent(componentName).setNormalBoilingPoint(TB);
       getPhase(i).getComponent(componentName)
           .setAcentricFactor(refSystem.getPhase(0).getComponent(0).getAcentricFactor());
       getPhase(i).getComponent(componentName).setCriticalVolume(critVol);
@@ -1086,7 +1086,7 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).getComponent(componentName).setMolarMass(molarMass);
       getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
       getPhase(i).getComponent(componentName).setNormalLiquidDensity(density);
-      getPhase(i).getComponent(componentName).setNormalBoilingPoint(TB - 273.15);
+      getPhase(i).getComponent(componentName).setNormalBoilingPoint(TB);
       getPhase(i).getComponent(componentName)
           .setAcentricFactor(refSystem.getPhase(0).getComponent(0).getAcentricFactor());
       getPhase(i).getComponent(componentName).setCriticalVolume(critVol);
@@ -2552,7 +2552,7 @@ public abstract class SystemThermo implements SystemInterface {
     double[] bt = new double[numberOfComponents];
 
     for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
-      bt[compNumb] = getPhase(0).getComponent(compNumb).getNormalBoilingPoint() + 273.15;
+      bt[compNumb] = getPhase(0).getComponent(compNumb).getNormalBoilingPoint();
     }
     return bt;
   }

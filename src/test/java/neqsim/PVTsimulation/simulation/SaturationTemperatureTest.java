@@ -49,7 +49,7 @@ class SaturationTemperatureTest extends neqsim.NeqSimTest {
 
     SimulationInterface satPresSim = new SaturationTemperature(tempSystem);
     satPresSim.run();
-    assertEquals(tempSystem.getTemperature(), 380.3071922, 0.1);
+    assertEquals(tempSystem.getTemperature(), 380.127567672, 0.1);
   }
 
   /**
