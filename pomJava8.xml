@@ -10,7 +10,7 @@
 	<version>${revision}${sha1}${changelist}-Java8</version>
 
 	<properties>
-		<revision>2.5.31</revision>
+		<revision>2.5.32</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<sha1 />
