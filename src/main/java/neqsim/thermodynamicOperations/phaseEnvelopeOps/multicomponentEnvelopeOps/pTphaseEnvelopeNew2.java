@@ -21,7 +21,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author asmund
  * @version $Id: $Id
  */
-public class pTphaseEnvelopeNew2 extends pTphaseEnvelope {
+public class pTphaseEnvelopeNew2 extends BaseOperation {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(pTphaseEnvelopeNew2.class);
 
@@ -56,7 +56,7 @@ public class pTphaseEnvelopeNew2 extends pTphaseEnvelope {
   double[] lnKwil;
   double[] oldDeltalnK;
   double[] deltalnK;
-  double[] tm = { 1, 1 };
+  double[] tm = {1, 1};
   double beta = 1e-5;
   int lowestGibbsEnergyPhase = 0;
   String fileName = "c:/file";
@@ -110,19 +110,18 @@ public class pTphaseEnvelopeNew2 extends pTphaseEnvelope {
    * Constructor for pTphaseEnvelope.
    * </p>
    */
-  public pTphaseEnvelopeNew2() {
-  }
+  public pTphaseEnvelopeNew2() {}
 
   /**
    * <p>
    * Constructor for pTphaseEnvelope.
    * </p>
    *
-   * @param system        a {@link neqsim.thermo.system.SystemInterface} object
-   * @param name          a {@link java.lang.String} object
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param name a {@link java.lang.String} object
    * @param phaseFraction a double
-   * @param lowPres       a double
-   * @param bubfirst      a boolean
+   * @param lowPres a double
+   * @param bubfirst a boolean
    */
   public pTphaseEnvelopeNew2(SystemInterface system, String name, double phaseFraction,
       double lowPres, boolean bubfirst) {
@@ -215,8 +214,8 @@ public class pTphaseEnvelopeNew2 extends pTphaseEnvelope {
       system.setPressure(pres);
       system.setTemperature(temp);
 
-      sysNewtonRhapsonPhaseEnvelope nonLinSolver = new sysNewtonRhapsonPhaseEnvelope(system, 2,
-          system.getPhase(0).getNumberOfComponents());
+      sysNewtonRhapsonPhaseEnvelope nonLinSolver =
+          new sysNewtonRhapsonPhaseEnvelope(system, 2, system.getPhase(0).getNumberOfComponents());
       startPres = system.getPressure();
       nonLinSolver.setu();
 
@@ -400,8 +399,7 @@ public class pTphaseEnvelopeNew2 extends pTphaseEnvelope {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {
-  }
+  public void printToFile(String name) {}
 
   /** {@inheritDoc} */
   @Override
@@ -456,10 +454,10 @@ public class pTphaseEnvelopeNew2 extends pTphaseEnvelope {
       return cricondenBarY;
     }
     if (name.equals("criticalPoint1")) {
-      return new double[] { system.getTC(), system.getPC() };
+      return new double[] {system.getTC(), system.getPC()};
     }
     if (name.equals("criticalPoint2")) {
-      return new double[] { 0, 0 };
+      return new double[] {0, 0};
     } else {
       return null;
     }
@@ -495,7 +493,7 @@ public class pTphaseEnvelopeNew2 extends pTphaseEnvelope {
    * </p>
    *
    * @param beta a double
-   * @param P    a double
+   * @param P a double
    * @return a double
    */
   public double tempKWilson(double beta, double P) {
@@ -597,4 +595,11 @@ public class pTphaseEnvelopeNew2 extends pTphaseEnvelope {
   public void displayResult() {
 
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    return null;
+  }
+
 }
