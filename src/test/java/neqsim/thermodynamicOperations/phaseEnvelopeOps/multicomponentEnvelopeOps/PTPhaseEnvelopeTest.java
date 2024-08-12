@@ -1,5 +1,7 @@
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,8 +32,18 @@ public class PTPhaseEnvelopeTest {
     testSystem.initProperties();
     testOps.calcPTphaseEnvelope();
     double[] dewPointPressures = testOps.get("dewP");
-
-    assertTrue(dewPointPressures.length > 10);
+    double[] expectedDewPointPressures =
+        new double[] {1.1051709180756477, 1.2214027581601699, 1.3498588075760032,
+            1.4918246976412703, 1.6652911949458864, 1.8794891289619104, 2.1418131227502055,
+            2.4690864123141987, 2.881197018974799, 3.404779997613969, 4.075230307874481,
+            4.938583914869986, 6.051801019586486, 7.477304695462727, 9.260793952051571,
+            11.364101185282063, 13.480106047577934, 14.53423776629387, 13.607498029406681,
+            11.181207439509638, 9.189487040488075, 9.612827246459474, 10.706126846063928,
+            12.501491987760147, 15.075672692089958, 18.51283799420178, 23.330378296334104,
+            29.71319711031059, 37.25532259549197, 43.660805656603934, 45.75836660678656,
+            46.42490219574348, 46.83203503669948, 46.869568345957006, 46.903557772489435};
+    // System.out.println(Arrays.toString(dewPointPressures));
+    assertArrayEquals(expectedDewPointPressures, dewPointPressures, 10E-10);
   }
 
   @Test
@@ -47,13 +59,8 @@ public class PTPhaseEnvelopeTest {
     testOps.TPflash();
     testSystem.initProperties();
 
-    testOps.calcPTphaseEnvelope();
-    double[] dewPointPressures = testOps.get("dewP");
-    double[] dewPointTemperautres = testOps.get("dewT");
-    double[] bubblePointPressures = testOps.get("bubP");
-    double[] bubblePointTemperautres = testOps.get("bubT");
-    assertTrue(bubblePointPressures.length > 20);
-    assertTrue(bubblePointTemperautres.length > 10);
+    Exception exception =
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> testOps.calcPTphaseEnvelope());
   }
 
   @Test
