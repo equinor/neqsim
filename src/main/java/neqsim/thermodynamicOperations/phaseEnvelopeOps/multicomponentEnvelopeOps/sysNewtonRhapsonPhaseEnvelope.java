@@ -642,23 +642,15 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     } while (norm > 1.e-5);
 
     init();
-    findSpecEq();
 
-    // check density for direction
-    volold2 = volold;
-    volold = vol;
-    vol = system.getPhase(0).getMolarVolume();
     uold = u.copy();
 
-    if (volold < vol) {
-      /*
-       * volold=volold2; ds=-ds; u = uold.copy(); calcInc2(np); solve(np);
-       */
-    }
 
-    /*
-     * try { Matrix utest = u.copy(); } catch (Exception e0) { double nef = 0.; }
-     */
+  }
+
+  /*
+   * try { Matrix utest = u.copy(); } catch (Exception e0) { double nef = 0.; }
+   */
   }
 
   /**

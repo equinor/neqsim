@@ -58,7 +58,6 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.waterDewPointTemper
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.CricondenBarFlash;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.CricondenThermFlash;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.HPTphaseEnvelope;
-import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.pTphaseEnvelope;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.pTphaseEnvelopeNew2;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves.pLoadingCurve2;
 import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudents;
@@ -1534,7 +1533,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    */
   public void calcPTphaseEnvelope() {
-    operation = new pTphaseEnvelope(system, fileName, (1.0 - 1e-10), 1.0, false);
+    operation = new pTphaseEnvelopeNew2(system, fileName, (1.0 - 1e-10), 1.0, false);
     // thisThread = new Thread(operation);
     // thisThread.start();
     getOperation().run();
@@ -1570,7 +1569,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (bubfirst) {
       phasefraction = 1.0e-10;
     }
-    operation = new pTphaseEnvelope(system, fileName, phasefraction, lowPres, bubfirst);
+    operation = new pTphaseEnvelopeNew2(system, fileName, phasefraction, lowPres, bubfirst);
 
     // thisThread = new Thread(operation);
     // thisThread.start();
@@ -1585,7 +1584,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param lowPres a double
    */
   public void calcPTphaseEnvelope(double lowPres) {
-    operation = new pTphaseEnvelope(system, fileName, 1e-10, lowPres, true);
+    operation = new pTphaseEnvelopeNew2(system, fileName, 1e-10, lowPres, true);
     // thisThread = new Thread(operation);
     // thisThread.start();
     getOperation().run();
@@ -1603,7 +1602,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (bubfirst) {
       phasefraction = 1.0e-10;
     }
-    operation = new pTphaseEnvelope(system, fileName, phasefraction, 1.0, bubfirst);
+    operation = new pTphaseEnvelopeNew2(system, fileName, phasefraction, 1.0, bubfirst);
 
     // thisThread = new Thread(operation);
     // thisThread.start();
@@ -1623,7 +1622,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param phasefraction a double
    */
   public void calcPTphaseEnvelope(double lowPres, double phasefraction) {
-    operation = new pTphaseEnvelope(system, fileName, phasefraction, lowPres, true);
+    operation = new pTphaseEnvelopeNew2(system, fileName, phasefraction, lowPres, true);
 
     // thisThread = new Thread(operation);
     // thisThread.start();
