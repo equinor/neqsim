@@ -105,6 +105,16 @@ public class TBPfractionModel implements java.io.Serializable {
     }
 
     @Override
+    public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density) {
+      throw new RuntimeException("calcm() method not defined");
+    }
+
+    @Override
+    public double calcm(double molarMass, double density) {
+      throw new RuntimeException("calcm() method not defined");
+    }
+
+    @Override
     public boolean isCalcm() {
       return calcm;
     }
@@ -154,13 +164,11 @@ public class TBPfractionModel implements java.io.Serializable {
     public double calcm(double molarMass, double density) {
       if (molarMass < 1120) {
         TBPfractionCoefs = TBPfractionCoefOil;
-        return TBPfractionCoefs[2][0] + TBPfractionCoefs[2][1] * molarMass
-            + TBPfractionCoefs[2][2] * density + TBPfractionCoefs[2][3] * Math.pow(molarMass, 2.0);
       } else {
         TBPfractionCoefs = TBPfractionCoefsHeavyOil;
-        return TBPfractionCoefs[2][0] + TBPfractionCoefs[2][1] * Math.log(molarMass)
-            + TBPfractionCoefs[2][2] * density + TBPfractionCoefs[2][3] * Math.sqrt(molarMass);
       }
+      return TBPfractionCoefs[2][0] + TBPfractionCoefs[2][1] * molarMass
+          + TBPfractionCoefs[2][2] * density + TBPfractionCoefs[2][3] * Math.pow(molarMass, 2.0);
     }
 
     @Override
@@ -313,6 +321,167 @@ public class TBPfractionModel implements java.io.Serializable {
   }
 
   /**
+   * Lee-Kesler property estimation method
+   */
+  public class LeeKesler extends TBPBaseModel {
+    private static final long serialVersionUID = 1000;
+
+    public LeeKesler() {
+      calcm = false;
+    }
+
+    @Override
+    public double calcTC(double molarMass, double density) {
+      double sg = density;
+      double TB = calcTB(molarMass, density);
+      double TC =
+          189.8 + 450.6 * sg + (0.4244 + 0.1174 * sg) * TB + (0.1441 - 1.0069 * sg) * 1e5 / TB;
+      return TC;
+    }
+
+    @Override
+    public double calcPC(double molarMass, double density) {
+      double sg = density;
+      double TB = calcTB(molarMass, density);
+      double logpc =
+          3.3864 - 0.0566 / sg - ((0.43639 + 4.1216 / sg + 0.21343 / sg / sg) * 1e-3 * TB)
+              + ((0.47579 + 1.182 / sg + 0.15302 / sg / sg) * 1e-6 * TB * TB)
+              - ((2.4505 + 9.9099 / sg / sg) * 1e-10 * TB * TB * TB);
+      double PC = Math.exp(logpc) * 10;
+      return PC;
+    }
+
+    public double calcAcentricFactor(double molarMass, double density) {
+      return super.calcAcentricFactorKeslerLee(molarMass, density);
+    }
+  }
+
+  /**
+   * Two property estimation method
+   */
+  public class TwuModel extends TBPBaseModel {
+    private static final long serialVersionUID = 1000;
+
+    public TwuModel() {
+      calcm = false;
+    }
+
+    @Override
+    public double calcTC(double molarMass, double density) {
+      double sg = density;
+      double TB = calcTB(molarMass, density);
+      double MW = solveMW(TB);
+      double Tcnalkane = TB * 1.0 / (0.533272 + 0.343831e-3 * TB + 2.526167e-7 * TB * TB
+          - 1.65848e-10 * TB * TB * TB + 4.60774e24 * Math.pow(TB, -13));
+      double phi = 1.0 - TB / Tcnalkane;
+      double SGalkane =
+          0.843593 - 0.128624 * phi - 3.36159 * Math.pow(phi, 3) - 13749 * Math.pow(phi, 12);
+      double PCnalkane = Math.pow(0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi
+          + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
+      double VCnalkane = Math.pow(
+          (0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)), -8);
+      double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
+      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5)
+          + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
+      double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
+      return TC;
+    }
+
+    public double calculateTfunc(double MW_alkane, double TB) {
+      double phi = Math.log(MW_alkane);
+      return Math
+          .exp(5.1264 + 2.71579 * phi - 0.28659 * phi * phi - 39.8544 / phi - 0.122488 / phi / phi)
+          - 13.7512 * phi + 19.6197 * phi * phi - TB;
+    }
+
+    public double computeGradient(double MW_alkane, double TB) {
+      double delta = 1;
+      double TfuncPlus = calculateTfunc(MW_alkane + delta, TB);
+      double TfuncMinus = calculateTfunc(MW_alkane - delta, TB);
+      return (TfuncPlus - TfuncMinus) / (2 * delta);
+    }
+
+    public double solveMW(double TB) {
+      double MW_alkane = TB / (5.8 - 0.0052 * TB);
+      double tolerance = 1e-6;
+      double prevMW_alkane;
+      double error = 1.0;
+      int iter = 0;
+
+      do {
+        iter++;
+        prevMW_alkane = MW_alkane;
+        double gradient = computeGradient(MW_alkane, TB);
+        MW_alkane -= 0.5 * calculateTfunc(MW_alkane, TB) / gradient;
+        error = Math.abs(MW_alkane - prevMW_alkane);
+      } while (Math.abs(error) > tolerance && iter < 1000 || iter < 3);
+
+      return MW_alkane;
+    }
+
+    @Override
+    public double calcPC(double molarMass, double density) {
+      double sg = density;
+      double TB = calcTB(molarMass, density);
+      double MW = solveMW(TB);
+      double Tcnalkane = TB * 1.0 / (0.533272 + 0.343831e-3 * TB + 2.526167e-7 * TB * TB
+          - 1.65848e-10 * TB * TB * TB + 4.60774e24 * Math.pow(TB, -13));
+      double phi = 1.0 - TB / Tcnalkane;
+      double SGalkane =
+          0.843593 - 0.128624 * phi - 3.36159 * Math.pow(phi, 3) - 13749 * Math.pow(phi, 12);
+      double PCnalkane = Math.pow(0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi
+          + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
+      double VCnalkane = Math.pow(
+          (0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)), -8);
+      double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
+      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5)
+          + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
+      double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
+      double deltaSP = Math.exp(0.5 * (SGalkane - sg)) - 1.0;
+      double deltaSV = Math.exp(4.0 * (SGalkane * SGalkane - sg * sg)) - 1.0;
+      double fV = deltaSV
+          * (0.347776 * Math.pow(TB, -0.5) + (-0.182421 + 2.24890 * Math.pow(TB, -0.5)) * deltaSV);
+      double VC = VCnalkane * Math.pow(((1 + 2 * fV) / (1 - 2 * fV)), 2);
+      double fP = deltaSP * ((2.53262 - 34.4321 * Math.pow(TB, -0.5) - 0.00230193 * TB)
+          + (-11.4277 + 187.934 * Math.pow(TB, -0.5) + 0.00414963 * TB) * deltaSP);
+      double PC = PCnalkane * (TC / Tcnalkane) * (VCnalkane / VC)
+          * Math.pow(((1 + 2 * fP) / (1 - 2 * fP)), 2);
+      return PC * 10.0; // * 10 due to conversion MPa to bar
+    }
+
+    @Override
+    public double calcCriticalVolume(double molarMass, double density) {
+      double sg = density;
+      double TB = calcTB(molarMass, density);
+      double MW = solveMW(TB);
+      double Tcnalkane = TB * 1.0 / (0.533272 + 0.343831e-3 * TB + 2.526167e-7 * TB * TB
+          - 1.65848e-10 * TB * TB * TB + 4.60774e24 * Math.pow(TB, -13));
+      double phi = 1.0 - TB / Tcnalkane;
+      double SGalkane =
+          0.843593 - 0.128624 * phi - 3.36159 * Math.pow(phi, 3) - 13749 * Math.pow(phi, 12);
+      double PCnalkane = Math.pow(0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi
+          + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
+      double VCnalkane = Math.pow(
+          (0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)), -8);
+      double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
+      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5)
+          + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
+      double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
+      double deltaSP = Math.exp(0.5 * (SGalkane - sg)) - 1.0;
+      double deltaSV = Math.exp(4.0 * (SGalkane * SGalkane - sg * sg)) - 1.0;
+      double fV = deltaSV
+          * (0.347776 * Math.pow(TB, -0.5) + (-0.182421 + 2.24890 * Math.pow(TB, -0.5)) * deltaSV);
+      double VC = VCnalkane * Math.pow(((1 + 2 * fV) / (1 - 2 * fV)), 2);
+      double fP = deltaSP * ((2.53262 - 34.4321 * Math.pow(TB, -0.5) - 0.00230193 * TB)
+          + (-11.4277 + 187.934 * Math.pow(TB, -0.5) + 0.00414963 * TB) * deltaSP);
+      double PC = PCnalkane * (TC / Tcnalkane) * (VCnalkane / VC)
+          * Math.pow(((1 + 2 * fP) / (1 - 2 * fP)), 2);
+      return VC * 1e3; // m3/mol
+    }
+
+  }
+
+  /**
    * <p>
    * getModel.
    * </p>
@@ -334,6 +503,10 @@ public class TBPfractionModel implements java.io.Serializable {
       return new PedersenTBPModelPRHeavyOil();
     } else if (name.equals("RiaziDaubert")) {
       return new RiaziDaubert();
+    } else if (name.equals("Lee-Kesler")) {
+      return new LeeKesler();
+    } else if (name.equals("Twu")) {
+      return new TwuModel();
     } else {
       // System.out.println("not a valid TBPModelName.................");
       return new PedersenTBPModelSRK();
