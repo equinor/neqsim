@@ -1,5 +1,6 @@
 package neqsim.PVTsimulation.simulation;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -29,15 +30,15 @@ public class SlimTubeSimTest {
     oilSystem.addTBPfraction("C17", 0.17, 234.0 / 1000.0, 0.84);
     oilSystem.addTBPfraction("C18", 0.13, 251.0 / 1000.0, 0.844);
     oilSystem.addTBPfraction("C19", 0.13, 270.0 / 1000.0, 0.854);
-    oilSystem.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.88);
+    oilSystem.addPlusFraction("C20", 20.62, 381.0 / 1000.0, 0.88);
     oilSystem.getCharacterization().characterisePlusFraction();
     oilSystem.setMixingRule(2);
 
     SlimTubeSim sepSim = new SlimTubeSim(oilSystem, gasSystem);
-    sepSim.setTemperature(273.15 + 80);
+    sepSim.setTemperature(273.15 + 100);
     sepSim.setPressure(380.0);
-    sepSim.setNumberOfSlimTubeNodes(10);
-    // sepSim.run();
-    // assertEquals(242.3, sepSim.getPressures()[3], 0.001);
+    sepSim.setNumberOfSlimTubeNodes(40);
+    sepSim.run();
+    assertEquals(242.3, sepSim.getPressures()[3], 0.001);
   }
 }
