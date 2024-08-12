@@ -379,9 +379,42 @@ public class TBPfractionModel implements java.io.Serializable {
     public double calcTC(double molarMass, double density) {
       double sg = density;
       double TB = calcTB(molarMass, density);
+      double MW = solveMW(TB);
       double TC =
           189.8 + 450.6 * sg + (0.4244 + 0.1174 * sg) * TB + (0.1441 - 1.0069 * sg) * 1e5 / TB;
       return TC;
+    }
+
+    public double calculateTfunc(double MW_alkane, double TB) {
+      double phi = Math.log(MW_alkane);
+      return Math
+          .exp(5.1264 + 2.71579 * phi - 0.28659 * phi * phi - 39.8544 / phi - 0.122488 / phi / phi)
+          - 13.7512 * phi + 19.6197 * phi * phi - TB;
+    }
+
+    public double computeGradient(double MW_alkane, double TB) {
+      double delta = 1;
+      double TfuncPlus = calculateTfunc(MW_alkane + delta, TB);
+      double TfuncMinus = calculateTfunc(MW_alkane - delta, TB);
+      return (TfuncPlus - TfuncMinus) / (2 * delta);
+    }
+
+    public double solveMW(double TB) {
+      double MW_alkane = TB / (5.8 - 0.0052 * TB);
+      double tolerance = 1e-6;
+      double prevMW_alkane;
+      double error = 1.0;
+      int iter = 0;
+
+      do {
+        iter++;
+        prevMW_alkane = MW_alkane;
+        double gradient = computeGradient(MW_alkane, TB);
+        MW_alkane -= 0.5 * calculateTfunc(MW_alkane, TB) / gradient;
+        error = Math.abs(MW_alkane - prevMW_alkane);
+      } while (Math.abs(error) > tolerance && iter < 1000 || iter < 3);
+
+      return MW_alkane;
     }
 
     @Override
