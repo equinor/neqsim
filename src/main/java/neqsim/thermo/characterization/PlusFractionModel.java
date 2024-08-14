@@ -308,7 +308,9 @@ public class PlusFractionModel implements java.io.Serializable {
    * @return a {@link neqsim.thermo.characterization.PlusFractionModelInterface} object
    */
   public PlusFractionModelInterface getModel(String name) {
-    if (name.equals("heavyOil")) {
+    if (name.equals("Pedersen")) {
+      return new PedersenPlusModel();
+    } else if (name.equals("Pedersen Heavy Oil")) {
       return new PedersenHeavyOilPlusModel();
     } else {
       return new PedersenPlusModel();
