@@ -9,6 +9,7 @@
 	<packaging>jar</packaging>
 	<version>${revision}${sha1}${changelist}-Java8</version>
 
+	
 	<properties>
 		<revision>2.5.32</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
