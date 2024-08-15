@@ -14,6 +14,7 @@ import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProp
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.LBCViscosityMethod;
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodHeavyOil;
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodMod86;
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.SuperTrappViscosity;
 import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.conductivity.ChungConductivityMethod;
 import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.WilkeLeeDiffusivity;
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.AmineDiffusivity;
@@ -180,7 +181,10 @@ public abstract class PhysicalProperties
       viscosityCalc = new PFCTViscosityMethodMod86(this);
     } else if ("PFCT-Heavy-Oil".equals(model)) {
       viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
+    } else if ("SuperTrapp".equals(model)) {
+      viscosityCalc = new SuperTrappViscosity(this);
     }
+
   }
 
   /**
