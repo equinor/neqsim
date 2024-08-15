@@ -1,5 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
@@ -12,6 +14,7 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  */
 public class AbsorptionColumnDesignStandard extends DesignStandard {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(AbsorptionColumnDesignStandard.class);
 
   private double molecularSieveWaterCapacity = 20;
 
@@ -26,33 +29,19 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
   public AbsorptionColumnDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
 
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
-    try {
-      try {
-        dataSet = database.getResultSet(
-            ("SELECT * FROM technicalrequirements WHERE EQUIPMENTTYPE='Absorber' AND Company='"
-                + standardName + "'"));
-        while (dataSet.next()) {
-          String specName = dataSet.getString("SPECIFICATION");
-          if (specName.equals("MolecularSieve3AWaterCapacity")) {
-            molecularSieveWaterCapacity = Double.parseDouble(dataSet.getString("MAXVALUE"));
-          }
+    try (neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+      dataSet = database.getResultSet(
+          ("SELECT * FROM technicalrequirements WHERE EQUIPMENTTYPE='Absorber' AND Company='"
+              + standardName + "'"));
+      while (dataSet.next()) {
+        String specName = dataSet.getString("SPECIFICATION");
+        if (specName.equals("MolecularSieve3AWaterCapacity")) {
+          molecularSieveWaterCapacity = Double.parseDouble(dataSet.getString("MAXVALUE"));
         }
-      } catch (Exception e) {
-        e.printStackTrace();
       }
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
-      } catch (Exception e) {
-        System.out.println("error closing database.....GasScrubberDesignStandard");
-        e.printStackTrace();
-      }
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
   }
 

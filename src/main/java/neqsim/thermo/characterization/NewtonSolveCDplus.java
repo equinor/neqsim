@@ -15,14 +15,16 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class NewtonSolveCDplus implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(NewtonSolveCDplus.class);
+
   int iter = 0;
   Matrix Jac;
   Matrix fvec;
-  Matrix sol, dx;
+  Matrix sol;
+  Matrix dx;
   int numberOfComponents = 0;
   PlusCharacterize characterizeClass;
   // SystemInterface system = null;
-  static Logger logger = LogManager.getLogger(NewtonSolveCDplus.class);
 
   /**
    * <p>
@@ -60,7 +62,9 @@ public class NewtonSolveCDplus implements java.io.Serializable {
    * </p>
    */
   public void setfvec() {
-    double zSum = 0.0, mSum = 0.0, densSum = 0.0;
+    double zSum = 0.0;
+    double mSum = 0.0;
+    double densSum = 0.0;
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
         .getLastPlusFractionNumber(); i++) {
       double ztemp = Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * (i));
@@ -96,7 +100,8 @@ public class NewtonSolveCDplus implements java.io.Serializable {
     double tempJ = 0.0;
 
     for (int j = 0; j < 3; j++) {
-      double nTot = 0.0, nTot2 = 0.0;
+      double nTot = 0.0;
+      double nTot2 = 0.0;
       for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
           .getLastPlusFractionNumber(); i++) {
         nTot += Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
@@ -113,7 +118,11 @@ public class NewtonSolveCDplus implements java.io.Serializable {
     }
 
     for (int j = 0; j < 3; j++) {
-      double mTot1 = 0.0, mTot2 = 0.0, zSum2 = 0.0, zSum = 0.0, zSum3 = 0.0;
+      double mTot1 = 0.0;
+      double mTot2 = 0.0;
+      double zSum2 = 0.0;
+      double zSum = 0.0;
+      double zSum3 = 0.0;
       for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
           .getLastPlusFractionNumber(); i++) {
         mTot1 += (CharacteriseInterface.PVTsimMolarMass[i - 6] / 1000.0)
@@ -136,8 +145,15 @@ public class NewtonSolveCDplus implements java.io.Serializable {
     }
 
     for (int j = 0; j < 3; j++) {
-      double A = 0.0, B = 0.0, Bpow2 = 0.0, Ader1 = 0.0, Bder1 = 0.0, Ader2 = 0.0, Bder2 = 0.0,
-          Bder3 = 0.0, Bder4 = 0.0;
+      double A = 0.0;
+      double B = 0.0;
+      double Bpow2 = 0.0;
+      double Ader1 = 0.0;
+      double Bder1 = 0.0;
+      double Ader2 = 0.0;
+      double Bder2 = 0.0;
+      double Bder3 = 0.0;
+      double Bder4 = 0.0;
       for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
           .getLastPlusFractionNumber(); i++) {
         double M = CharacteriseInterface.PVTsimMolarMass[i - 6] / 1000.0;

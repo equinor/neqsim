@@ -3,6 +3,7 @@
  *
  * Created on 6. juni 2006, 15:24
  */
+
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -15,43 +16,41 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ESOL
  * @version $Id: $Id
  */
-public class TemperatureTransmitter extends MeasurementDeviceBaseClass {
-    private static final long serialVersionUID = 1000;
+public class TemperatureTransmitter extends StreamMeasurementDeviceBaseClass {
+  private static final long serialVersionUID = 1000;
 
-    protected int streamNumber = 0;
-    /** Constant <code>numberOfStreams=0</code> */
-    protected static int numberOfStreams = 0;
-    protected StreamInterface stream = null;
+  /**
+   * <p>
+   * Constructor for TemperatureTransmitter.
+   * </p>
+   *
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public TemperatureTransmitter(StreamInterface stream) {
+    this("Temperature Transmitter", stream);
+  }
 
-    public TemperatureTransmitter() {
-        name = "Temperature Transmitter";
-        unit = "K";
-    }
+  /**
+   * <p>
+   * Constructor for TemperatureTransmitter.
+   * </p>
+   *
+   * @param name Name of TemperatureTransmitter
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public TemperatureTransmitter(String name, StreamInterface stream) {
+    super(name, "K", stream);
+  }
 
-    /**
-     * <p>
-     * Constructor for TemperatureTransmitter.
-     * </p>
-     *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public TemperatureTransmitter(StreamInterface stream) {
-        this();
-        this.stream = stream;
-        numberOfStreams++;
-        streamNumber = numberOfStreams;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void displayResult() {
+    System.out.println("measured temperature " + getMeasuredValue());
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void displayResult() {
-        System.out.println("measured temperature " + getMeasuredValue());
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public double getMeasuredValue() {
-        return stream.getThermoSystem().getTemperature();
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double getMeasuredValue(String unit) {
+    return stream.getThermoSystem().getTemperature(unit);
+  }
 }

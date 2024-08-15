@@ -3,11 +3,14 @@
  *
  * Created on 1. februar 2001, 11:38
  */
+
 package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
 
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -18,6 +21,8 @@ import java.util.StringTokenizer;
  * @version $Id: $Id
  */
 public class DataReader implements DataReaderInterface {
+  static Logger logger = LogManager.getLogger(DataReader.class);
+
   protected String fileName;
   protected ArrayList<DataObject> sampleObjectList = new ArrayList<DataObject>();
 
@@ -63,9 +68,8 @@ public class DataReader implements DataReaderInterface {
         filepointer = file.getFilePointer();
         tokenizer.nextToken();
       } while (filepointer < length);
-    } catch (Exception e) {
-      String err = e.toString();
-      System.out.println(err);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -74,7 +78,7 @@ public class DataReader implements DataReaderInterface {
    * Getter for the field <code>sampleObjectList</code>.
    * </p>
    *
-   * @return a {@link java.util.ArrayList} of {@link DataObject}
+   * @return a {@link java.util.ArrayList} of {@link neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataObject}
    */
   public ArrayList<DataObject> getSampleObjectList() {
     return sampleObjectList;

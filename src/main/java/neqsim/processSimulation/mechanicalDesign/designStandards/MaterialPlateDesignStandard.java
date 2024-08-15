@@ -1,5 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
@@ -12,6 +14,7 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  */
 public class MaterialPlateDesignStandard extends DesignStandard {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(MaterialPlateDesignStandard.class);
 
   /**
    * <p>
@@ -77,10 +80,9 @@ public class MaterialPlateDesignStandard extends DesignStandard {
     specificationNumber = specNo;
     divisionClassNumber = divClassNo;
 
-    neqsim.util.database.NeqSimTechnicalDesignDatabase database =
-        new neqsim.util.database.NeqSimTechnicalDesignDatabase();
-    java.sql.ResultSet dataSet = null;
-    try {
+    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
+        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+      java.sql.ResultSet dataSet = null;
       try {
         dataSet =
             database.getResultSet(("SELECT * FROM materialplateproperties WHERE materialName='"
@@ -94,22 +96,23 @@ public class MaterialPlateDesignStandard extends DesignStandard {
                 (Double.parseDouble(dataSet.getString("divisionClass2"))) * 0.00689475729; // MPa
           }
         }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
 
-      // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
+        // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
+      } finally {
+        try {
+          if (dataSet != null) {
+            dataSet.close();
+          }
+        } catch (Exception ex) {
+          System.out.println("error closing database.....GasScrubberDesignStandard");
+          logger.error(ex.getMessage(), ex);
         }
-      } catch (Exception e) {
-        System.out.println("error closing database.....GasScrubberDesignStandard");
-        e.printStackTrace();
       }
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
   }
 }

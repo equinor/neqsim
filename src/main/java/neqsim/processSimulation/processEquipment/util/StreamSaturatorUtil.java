@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.util;
 
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -19,6 +20,9 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
 
   SystemInterface thermoSystem;
   private boolean multiPhase = true;
+  private double approachToSaturation = 1.0;
+
+  protected double oldInletFlowRate = 0.0;
 
   /**
    * <p>
@@ -35,7 +39,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
 
   /**
    * Constructor for StreamSaturatorUtil.
-   * 
+   *
    * @param name name of unit opeation
    * @param inStream input stream
    */
@@ -45,13 +49,13 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Setter for the field <code>inletStream</code>.
    * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
    */
+  @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
 
@@ -61,8 +65,25 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public boolean needRecalculation() {
+    if (outStream == null || inStream == null) {
+      return true;
+    }
+    if (inStream.getTemperature() == outStream.getTemperature()
+        && inStream.getPressure() == outStream.getPressure()
+        && Math.abs(inStream.getFlowRate("kg/hr") - oldInletFlowRate)
+            / inStream.getFlowRate("kg/hr") < 1e-3) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run(UUID id) {
     boolean changeBack = false;
+
     thermoSystem = inStream.getThermoSystem().clone();
     if (multiPhase && !thermoSystem.doMultiPhaseCheck()) {
       thermoSystem.setMultiPhaseCheck(true);
@@ -70,11 +91,25 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
     }
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoOps.saturateWithWater();
+
+    if (thermoSystem.getPhase(0).hasComponent("water") && approachToSaturation < 1.0) {
+      try {
+        thermoSystem.addComponent("water",
+            -thermoSystem.getComponent("water").getNumberOfmoles() * (1.0 - approachToSaturation));
+        thermoOps.TPflash();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+
     thermoSystem.init(3);
     if (changeBack) {
       thermoSystem.setMultiPhaseCheck(false);
     }
+
     outStream.setThermoSystem(thermoSystem);
+    oldInletFlowRate = inStream.getFlowRate("kg/hr");
+    setCalculationIdentifier(id);
   }
 
   /**
@@ -97,5 +132,16 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
    */
   public void setMultiPhase(boolean multiPhase) {
     this.multiPhase = multiPhase;
+  }
+
+  /**
+   * <p>
+   * setApprachToSaturation.
+   * </p>
+   *
+   * @param approachToSaturation a double
+   */
+  public void setApprachToSaturation(double approachToSaturation) {
+    this.approachToSaturation = approachToSaturation;
   }
 }

@@ -3,66 +3,152 @@
  *
  * Created on 8. april 2000, 23:28
  */
+
 package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.atomElement.Element;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
+import neqsim.util.unit.PressureUnit;
+import neqsim.util.unit.TemperatureUnit;
 
-abstract class Component implements ComponentInterface {
+/**
+ * <p>
+ * Abstract Component class.
+ * </p>
+ *
+ * @author Even Solbraa
+ */
+public abstract class Component implements ComponentInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Component.class);
 
   double[] surfTensInfluenceParam = {0.28367, -0.05164, -0.81594, 1.06810, -1.1147};
-  protected int index, componentNumber, attractiveTermNumber = 0, numberOfAssociationSites = 0;
-  protected double logFugacityCoefficient = 0.0, associationVolume = 0.0, associationEnergy = 0.0,
-      aCPA = 0.0, bCPA = 0.0, mCPA = 0.0, srkacentricFactor = 0.0;
-  protected String componentName = "default", referenceStateType = "solvent",
-      associationScheme = "0", antoineLiqVapPresType = null;
-  private String formulae = "", CASnumber = "";
+  /** Index number of Component in database. */
+  protected int index;
+  /** Index number of Component in Phase object component array. */
+  protected int componentNumber;
+  /** Name of component. */
+  protected String componentName = "default";
+
+  // TODO: what does "HC", "inert" and "Component" mean?
+  /**
+   * Type of component. Can be "normal", "TBP", "plus", "ion", but what does "HC", "inert" and
+   * "Component?" do?
+   */
+  private String componentType = "Component";
+
+  /** Mole fraction of Component in System. */
+  protected double z;
+  /** Mole fraction of Component in Phase. */
+  protected double x = 0;
+  /**
+   * Number of moles of Component in System. <code>numberOfMoles = totalNumberOfMoles * z</code>.
+   */
+  protected double numberOfMoles = 0.0;
+  /** Number of moles of Component in Phase. <code>totalNumberOfMoles * x * beta</code>. */
+  protected double numberOfMolesInPhase = 0.0;
+  protected double K;
+
+  protected int attractiveTermNumber = 0;
+  protected int numberOfAssociationSites = 0;
+  protected double associationVolume = 0.0;
+  protected double associationEnergy = 0.0;
+  protected double aCPA = 0.0;
+  protected double bCPA = 0.0;
+  protected double mCPA = 0.0;
+  protected double srkacentricFactor = 0.0;
+  // TODO: what are the available options here?
+  protected String referenceStateType = "solvent";
+  protected String associationScheme = "0";
+  protected String antoineLiqVapPresType = null;
+  private String formulae = "";
+  private String CASnumber = "";
   protected Element elements = null;
-  protected boolean isTBPfraction = false, isPlusFraction = false, isNormalComponent = true,
-      isIon = false;
+
+  protected boolean isTBPfraction = false;
+  protected boolean isPlusFraction = false;
+  protected boolean isNormalComponent = true;
+  protected boolean isIon = false;
+
   private boolean isHydrateFormer = false;
   private boolean waxFormer = false;
-  private String componentType = "Component";
-  protected double qPure = 0, voli = 1.0;
+  protected double qPure = 0;
+  protected double voli = 1.0;
   protected int calcActivity = 1;
+  /** Check for solid phase and do solid phase calculations. */
   protected boolean solidCheck = false;
-  protected double dqPuredT = 0, dqPuredTdT = 0;
+  protected double dqPuredT = 0;
+  protected double dqPuredTdT = 0;
   private double racketZCPA = 0;
   private double criticalCompressibilityFactor = 0.0;
-  private double volumeCorrectionConst = 0.0, volumeCorrectionT = 0.0, volumeCorrectionT_CPA = 0.0;
-  protected double criticalPressure, criticalTemperature, molarMass, acentricFactor,
-      numberOfMoles = 0.0, numberOfMolesInPhase = 0.0, normalLiquidDensity = 0;
-  protected double reducedPressure, reducedTemperature, fugacityCoefficient, debyeDipoleMoment = 0,
-      viscosityCorrectionFactor = 0, criticalVolume = 0, racketZ = 0;
-  protected double gibbsEnergyOfFormation = 0, criticalViscosity = 0.0;
-  protected double referencePotential = 0, viscosityFrictionK = 1.0;
+  private double volumeCorrectionConst = 0.0;
+  private double volumeCorrectionT = 0.0;
+  private double volumeCorrectionT_CPA = 0.0;
+  protected double criticalPressure;
+  protected double criticalTemperature;
+  protected double molarMass;
+  protected double acentricFactor;
+  protected double normalLiquidDensity = 0;
+  protected double reducedPressure;
+  protected double reducedTemperature;
+  protected double fugacityCoefficient;
+  protected double debyeDipoleMoment = 0;
+  protected double viscosityCorrectionFactor = 0;
+  protected double criticalVolume = 0;
+  protected double racketZ = 0;
+  protected double gibbsEnergyOfFormation = 0;
+  protected double criticalViscosity = 0.0;
+  protected double referencePotential = 0;
+  protected double viscosityFrictionK = 1.0;
   protected int liquidViscosityModel = 0;
   protected int ionicCharge = 0;
   private double referenceEnthalpy = 0.0;
-  protected double parachorParameter = 0.0, normalBoilingPoint = 0, sphericalCoreRadius = 0.384,
-      standardDensity = 0, AntoineASolid = 0.0, AntoineBSolid = 0.0, AntoineCSolid = 0.0;
+  protected double parachorParameter = 0.0;
+  protected double normalBoilingPoint = 0;
+  protected double sphericalCoreRadius = 0.384;
+  protected double standardDensity = 0;
+  protected double AntoineASolid = 0.0;
+  protected double AntoineBSolid = 0.0;
+  protected double AntoineCSolid = 0.0;
   protected double[] liquidViscosityParameter = new double[4];
   protected double[] liquidConductivityParameter = new double[3];
   protected double[] henryCoefParameter = new double[4];
   protected double[] dielectricParameter = new double[5];
-  protected double[] schwartzentruberParams = new double[3], matiascopemanParams = new double[3],
-      matiascopemanParamsPR = new double[3], TwuCoonParams = new double[3],
-      matiascopemanSolidParams = new double[3], matiascopemanParamsUMRPRU = new double[5];
-  protected double lennardJonesMolecularDiameter = 0, lennardJonesEnergyParameter = 0,
-      stokesCationicDiameter = 0, paulingAnionicDiameter = 0;
-  protected double K, z;
-  protected double x = 0;
+  protected double[] schwartzentruberParams = new double[3];
+  protected double[] matiascopemanParams = new double[3];
+  protected double[] matiascopemanParamsPR = new double[3];
+  protected double[] TwuCoonParams = new double[3];
+  protected double[] matiascopemanSolidParams = new double[3];
+  protected double[] matiascopemanParamsUMRPRU = new double[5];
+  protected double lennardJonesMolecularDiameter = 0;
+  protected double lennardJonesEnergyParameter = 0;
+  protected double stokesCationicDiameter = 0;
+  protected double paulingAnionicDiameter = 0;
+
   private int orginalNumberOfAssociationSites = 0;
-  protected double dfugdt = 0.1, dfugdp = 0.1;
-  protected double[] dfugdn = new double[MAX_NUMBER_OF_COMPONENTS];
-  public double[] dfugdx = new double[MAX_NUMBER_OF_COMPONENTS];
-  double AntoineA = 0, AntoineB = 0, AntoineC = 0, AntoineD = 0, AntoineE = 0;
+
+  /* Derivative of fugacity wrt temperature */
+  protected double dfugdt = 0.1;
+  /* Derivative of fugacity wrt pressure */
+  protected double dfugdp = 0.1;
+  /* Derivative of fugacity wrt mole fraction (of each ) */
+  protected double[] dfugdn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  /* Derivative of fugacity wrt temperature */
+  public double[] dfugdx = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+
+  // Parameters for Antoine equation
+  double AntoineA = 0;
+  double AntoineB = 0;
+  double AntoineC = 0;
+  double AntoineD = 0;
+  double AntoineE = 0;
+
   private double CpA = 100.0;
   private double CpB = 0;
   private double CpC = 0;
@@ -71,11 +157,16 @@ abstract class Component implements ComponentInterface {
   private double[] CpSolid = new double[5];
   private double[] CpLiquid = new double[5];
   private double heatOfFusion = 0.0;
-  double triplePointDensity = 10.0, triplePointPressure = 0.0;
+
+  double triplePointDensity = 10.0;
+  double triplePointPressure = 0.0;
   private double triplePointTemperature = 1000.0;
   double meltingPointTemperature = 110.0;
+
   private double idealGasEnthalpyOfFormation = 0.0;
-  double idealGasGibsEnergyOfFormation = 0.0, idealGasAbsoluteEntropy = 0.0;
+  double idealGasGibbsEnergyOfFormation = 0.0;
+  double idealGasAbsoluteEntropy = 0.0;
+
   double Hsub = 0.0;
   double[] solidDensityCoefs = new double[5];
   double[] liquidDensityCoefs = new double[5];
@@ -85,19 +176,18 @@ abstract class Component implements ComponentInterface {
   protected double epsikSAFT = 0;
   private double associationVolumeSAFT;
   private double associationEnergySAFT = 0;
-  static Logger logger = LogManager.getLogger(Component.class);
 
   /**
    * <p>
    * Constructor for Component.
    * </p>
    *
-   * @param number a int
-   * @param TC a double
-   * @param PC a double
-   * @param M a double
-   * @param a a double
-   * @param moles a double
+   * @param number a int. Not used.
+   * @param TC Critical temperature
+   * @param PC Critical pressure
+   * @param M Molar mass
+   * @param a Acentric factor
+   * @param moles Total number of moles of component.
    */
   public Component(int number, double TC, double PC, double M, double a, double moles) {
     criticalPressure = PC;
@@ -112,88 +202,48 @@ abstract class Component implements ComponentInterface {
    * Constructor for Component.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public Component(String component_name, double moles, double molesInPhase, int compnumber) {
-    createComponent(component_name, moles, molesInPhase, compnumber);
+  public Component(String name, double moles, double molesInPhase, int compIndex) {
+    createComponent(name, moles, molesInPhase, compIndex);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void insertComponentIntoDatabase(String databaseName) {
-    databaseName = "comptemp";
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    try {
-      int isW = 0;
-      if (isWaxFormer()) {
-        isW = 1;
-      }
-      if (NeqSimDataBase.createTemporaryTables()) {
-        database.execute("insert into comptemp VALUES (" + (1000 + componentNumber) + ", '"
-            + componentName + "', '00-00-0','" + getComponentType() + "', "
-            + (1000 + componentNumber) + ", 'HC', " + (molarMass * 1000.0) + ", "
-            + normalLiquidDensity + ", " + (getTC() - 273.15) + ", " + getPC() + ", "
-            + getAcentricFactor() + "," + (getNormalBoilingPoint() - 273.15)
-            + ", 39.948, 74.9, 'Classic', 0, " + getCpA() + ", " + getCpB() + ", " + getCpC() + ", "
-            + getCpD() + ", " + getCpE()
-            + ", 'log', 5.2012, 1936.281, -20.143, -1.23303, 1000, 1.8, 0.076, 0.0, 0.0, 2.52, 809.1, 0, 3, -24.71, 4210, 0.0453, -3.38e-005, -229000, -19.2905, 29814.5, -0.019678, 0.000132, -3.11e-007, 0, 'solvent', 0, 0, 0, 0, 0.0789, -1.16, 0, -0.384, 0.00525, -6.37e-006, 207, "
-            + getHeatOfFusion() + ", 1000, 0.00611, " + getTriplePointTemperature() + ", "
-            + getMeltingPointTemperature()
-            + ", -242000, 189, 53, -0.00784, 0, 0, 0, 5.46, 0.305, 647, 0.081, 0, 52100000, 0.32, -0.212, 0.258, 0, 0.999, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'no', "
-            + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT()
-            + ", 0, 0,0,0,0,0," + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
-      }
-      index = 1000 + componentNumber;
-      CASnumber = "00-00-0";
-    } catch (Exception e) {
-      logger.error("error in inserting to database", e);
-    } finally {
-      try {
-        if (database.getStatement() != null) {
-          database.getStatement().close();
-        }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
-        }
-      } catch (Exception e) {
-        logger.error("error closing database.....", e);
-      }
+  public void createComponent(String name, double moles, double molesInPhase, int compIndex) {
+    if (name == null) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "createComponent", "name", "can not be null"));
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void createComponent(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    component_name = ComponentInterface.getComponentName(component_name);
-    componentName = component_name;
+    if (name.trim() == "") {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "createComponent", "name", "can not be empty"));
+    }
+    name = ComponentInterface.getComponentNameFromAlias(name);
+    componentName = name;
     numberOfMoles = moles;
     numberOfMolesInPhase = molesInPhase;
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
-    try {
-      if (!component_name.equals("default")) {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+      if (!name.equals("default")) {
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
-            dataSet = database
-                .getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
+            dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
           } else {
-            dataSet =
-                database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+            dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           }
           dataSet.next();
           dataSet.getString("ID");
           // if(dataSet.isAfterLast()) dataSet.next();
-        } catch (Exception e) {
+        } catch (Exception ex) {
           try {
             dataSet.close();
             // logger.info("no parameters in tempcomp -- trying comp.. " +
-            // component_name);
-            dataSet =
-                database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+            // name);
+            dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
             dataSet.next();
           } catch (Exception e2) {
             throw new RuntimeException(e2);
@@ -237,10 +287,10 @@ abstract class Component implements ComponentInterface {
         AntoineC = Double.parseDouble(dataSet.getString("ANTOINEC")); // AX
         AntoineD = Double.parseDouble(dataSet.getString("ANTOINED"));
         AntoineE = Double.parseDouble(dataSet.getString("ANTOINEE"));
-
+        normalBoilingPoint = Double.parseDouble(dataSet.getString("normboil")) + 273.15;
         if (AntoineA == 0) {
           AntoineA = 1.0;
-          AntoineB = getNormalBoilingPoint();
+          AntoineB = getNormalBoilingPoint() - 273.15;
         }
 
         AntoineASolid = Double.parseDouble(dataSet.getString("ANTOINESolidA"));
@@ -248,7 +298,7 @@ abstract class Component implements ComponentInterface {
         AntoineCSolid = Double.parseDouble(dataSet.getString("ANTOINESolidC"));
 
         debyeDipoleMoment = Double.parseDouble(dataSet.getString("dipolemoment"));
-        normalBoilingPoint = Double.parseDouble(dataSet.getString("normboil"));
+
         standardDensity = Double.parseDouble(dataSet.getString("stddens"));
         viscosityCorrectionFactor = Double.parseDouble(dataSet.getString("viscfact")); // BC
         racketZ = Double.parseDouble(dataSet.getString("racketZ")); // BE
@@ -327,7 +377,7 @@ abstract class Component implements ComponentInterface {
 
         setIdealGasEnthalpyOfFormation(
             Double.parseDouble(dataSet.getString("EnthalpyOfFormation")));
-        idealGasGibsEnergyOfFormation = gibbsEnergyOfFormation;
+        idealGasGibbsEnergyOfFormation = gibbsEnergyOfFormation;
         idealGasAbsoluteEntropy = Double.parseDouble(dataSet.getString("AbsoluteEntropy"));
 
         for (int i = 0; i < 5; i++) {
@@ -399,23 +449,9 @@ abstract class Component implements ComponentInterface {
         waxFormer = Integer.parseInt(dataSet.getString("waxformer")) == 1;
         // System.out.println(componentName + " pure component parameters: ok...");
       }
-      componentNumber = compnumber;
-    } catch (Exception e) {
-      logger.error("error in comp", e);
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
-        if (database.getStatement() != null) {
-          database.getStatement().close();
-        }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
-        }
-      } catch (Exception e) {
-        logger.error("error closing database.....", e);
-      }
+      componentNumber = compIndex;
+    } catch (Exception ex) {
+      logger.error("error in comp", ex);
     }
 
     srkacentricFactor = acentricFactor;
@@ -425,12 +461,42 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public void insertComponentIntoDatabase(String databaseName) {
+    databaseName = "comptemp";
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+      int isW = 0;
+      if (isWaxFormer()) {
+        isW = 1;
+      }
+      index = 1000 + componentNumber;
+      if (NeqSimDataBase.createTemporaryTables()) {
+        database.execute("insert into " + databaseName + " VALUES (" + (1000 + componentNumber)
+            + ", '" + componentName + "', '00-00-0','" + getComponentType() + "', " + index
+            + ", 'HC', " + (molarMass * 1000.0) + ", " + normalLiquidDensity + ", "
+            + (getTC() - 273.15) + ", " + getPC() + ", " + getAcentricFactor() + ","
+            + (getNormalBoilingPoint() - 273.15) + ", 39.948, 74.9, 'Classic', 0, " + getCpA()
+            + ", " + getCpB() + ", " + getCpC() + ", " + getCpD() + ", " + getCpE()
+            + ", 'log', 5.2012, 1936.281, -20.143, -1.23303, 1000, 1.8, 0.076, 0.0, 0.0, 2.52, 809.1, 0, 3, -24.71, 4210, 0.0453, -3.38e-005, -229000, -19.2905, 29814.5, -0.019678, 0.000132, -3.11e-007, 0, 'solvent', 0, 0, 0, 0, 0.0789, -1.16, 0, -0.384, 0.00525, -6.37e-006, 207, "
+            + getHeatOfFusion() + ", 1000, 0.00611, " + getTriplePointTemperature() + ", "
+            + getMeltingPointTemperature()
+            + ", -242000, 189, 53, -0.00784, 0, 0, 0, 5.46, 0.305, 647, 0.081, 0, 52100000, 0.32, -0.212, 0.258, 0, 0.999, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'no', "
+            + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT()
+            + ", 0, 0,0,0,0,0," + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
+      }
+      CASnumber = "00-00-0";
+    } catch (Exception ex) {
+      logger.error("error in inserting to database", ex);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public Component clone() {
     Component clonedComponent = null;
     try {
       clonedComponent = (Component) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     return clonedComponent;
@@ -438,39 +504,23 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addMolesChemReac(double dn) {
-    numberOfMoles += dn;
-    numberOfMolesInPhase += dn;
-    if (numberOfMoles < 0) {
-      numberOfMoles = 0;
-    }
-    if (numberOfMolesInPhase < 0) {
-      numberOfMolesInPhase = 0;
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void addMolesChemReac(double dn, double totdn) {
+    if (numberOfMoles + totdn < 0 || numberOfMolesInPhase + dn < 0) {
+      if (Math.abs(dn) < 1e-12) {
+        dn = 0;
+        totdn = 0;
+      } else {
+        String msg = "will lead to negative number of moles of component in phase for component "
+            + getComponentName() + "  who has " + numberOfMolesInPhase
+            + " in phase  and chage request was " + dn;
+        neqsim.util.exception.InvalidInputException ex =
+            new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
+        throw new RuntimeException(ex);
+        // logger.error(ex.getMessage());
+      }
+    }
     numberOfMoles += totdn;
-
-    if (numberOfMoles < 0) {
-      numberOfMoles = 0;
-    }
-
     numberOfMolesInPhase += dn;
-    if (numberOfMolesInPhase < 0) {
-      numberOfMolesInPhase = 0;
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void addMoles(double dn) {
-    numberOfMolesInPhase += dn;
-    if (numberOfMolesInPhase < 0) {
-      numberOfMolesInPhase = 0;
-    }
   }
 
   /** {@inheritDoc} */
@@ -486,13 +536,12 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-
+      int initType) {
     if (totalNumberOfMoles == 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "init",
           "totalNumberOfMoles", "must be larger than 0"));
     }
-    if (type == 0) {
+    if (initType == 0) {
       K = Math.exp(Math.log(criticalPressure / pressure)
           + 5.373 * (1.0 + srkacentricFactor) * (1.0 - criticalTemperature / temperature));
       z = numberOfMoles / totalNumberOfMoles;
@@ -516,7 +565,7 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
-      int numberOfComponents, int type) {}
+      int numberOfComponents, int initType) {}
 
   /** {@inheritDoc} */
   @Override
@@ -574,7 +623,7 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final double getTripplePointDensity() {
+  public final double getTriplePointDensity() {
     return triplePointDensity;
   }
 
@@ -604,8 +653,8 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final double getIdealGasGibsEnergyOfFormation() {
-    return idealGasGibsEnergyOfFormation;
+  public final double getIdealGasGibbsEnergyOfFormation() {
+    return idealGasGibbsEnergyOfFormation;
   }
 
   /** {@inheritDoc} */
@@ -622,14 +671,36 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public final double getTC(String unit) {
+    neqsim.util.unit.TemperatureUnit tempConversion =
+        new neqsim.util.unit.TemperatureUnit(criticalTemperature, "K");
+    return tempConversion.getValue(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public final void setTC(double val) {
     criticalTemperature = val;
   }
 
   /** {@inheritDoc} */
   @Override
+  public final void setTC(double val, String unit) {
+    TemperatureUnit inValue = new TemperatureUnit(val, unit);
+    criticalTemperature = inValue.getValue(val, unit, "K");
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public final void setPC(double val) {
     criticalPressure = val;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final void setPC(double val, String unit) {
+    PressureUnit inValue = new PressureUnit(val, unit);
+    criticalPressure = inValue.getValue(val, unit, "bara");
   }
 
   /** {@inheritDoc} */
@@ -648,6 +719,14 @@ abstract class Component implements ComponentInterface {
   @Override
   public final double getPC() {
     return criticalPressure;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final double getPC(String unit) {
+    neqsim.util.unit.PressureUnit presConversion =
+        new neqsim.util.unit.PressureUnit(criticalPressure, "bara");
+    return presConversion.getValue(unit);
   }
 
   /** {@inheritDoc} */
@@ -717,6 +796,73 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getNormalLiquidDensity(String unit) {
+    double refDensity = normalLiquidDensity * 1e3; // density in kg/m3
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "kg/m3":
+        conversionFactor = 1.0;
+        break;
+      case "lb/ft3":
+        conversionFactor = 0.0624279606;
+        break;
+      case "kg/Sm3":
+        return getMolarMass() * ThermodynamicConstantsInterface.atm
+            / ThermodynamicConstantsInterface.R
+            / ThermodynamicConstantsInterface.standardStateTemperature;
+      case "mol/m3":
+        conversionFactor = 1.0 / getMolarMass();
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
+    }
+    return refDensity * conversionFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMolarMass(String unit) {
+    double refMolarMass = getMolarMass();
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "kg/mol":
+        conversionFactor = 1.0;
+        break;
+      case "gr/mol":
+        conversionFactor = 1000.0;
+        break;
+      case "lbm/lbmol":
+        conversionFactor = 1000.0;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
+    }
+    return refMolarMass * conversionFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setMolarMass(double value, String unit) {
+    double refMolarMass = value;
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "kg/mol":
+        conversionFactor = 1.0;
+        break;
+      case "gr/mol":
+        conversionFactor = 1000.0;
+        break;
+      case "lbm/lbmol":
+        conversionFactor = 1000.0;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
+    }
+    molarMass = refMolarMass * 1.0 / conversionFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getViscosityCorrectionFactor() {
     return viscosityCorrectionFactor;
   }
@@ -775,11 +921,7 @@ abstract class Component implements ComponentInterface {
     return liquidConductivityParameter[i];
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Units in m*e10
-   */
+  /** {@inheritDoc} */
   @Override
   public double getLennardJonesMolecularDiameter() {
     return lennardJonesMolecularDiameter;
@@ -797,38 +939,21 @@ abstract class Component implements ComponentInterface {
     return Hsub;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Calculates the pure comonent solid vapor pressure (bar) with the C-C equation, based on Hsub
-   * Should only be used in the valid temperature range below the triple point (specified in
-   * component database).
-   */
+  /** {@inheritDoc} */
   @Override
   public double getCCsolidVaporPressure(double temperature) {
     return triplePointPressure
         * (Math.exp(Hsub / R * (1.0 / getTriplePointTemperature() - 1.0 / temperature)));
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Calculates the DT of pure comonent solid vapor pressure (bar) with the C-C equation, based on
-   * Hsub Should only be used in the valid temperature range below the triple point (specified in
-   * component database).
-   */
+  /** {@inheritDoc} */
   @Override
   public double getCCsolidVaporPressuredT(double temperature) {
     return triplePointPressure * Hsub / R * (1.0 / (temperature * temperature))
         * (Math.exp(Hsub / R * (1.0 / getTriplePointTemperature() - 1.0 / temperature)));
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Calculates the pure component solid density in kg/liter Should only be used in the valid
-   * temperature range (specified in component database).
-   */
+  /** {@inheritDoc} */
   @Override
   public double getPureComponentSolidDensity(double temperature) {
     return molarMass * 1000.0
@@ -838,13 +963,7 @@ abstract class Component implements ComponentInterface {
             + solidDensityCoefs[4] * Math.pow(temperature, 4.0));
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Calculates the pure component liquid density in kg/liter Should only be used in the valid
-   * temperature range (specified in component database). This method seems to give bad results at
-   * the moment
-   */
+  /** {@inheritDoc} */
   @Override
   public double getPureComponentLiquidDensity(double temperature) {
     return molarMass * 1000.0
@@ -856,11 +975,7 @@ abstract class Component implements ComponentInterface {
     // Math.pow(1.0 - temperature / liquidDensityCoefs[2], liquidDensityCoefs[3]));
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Calculates the pure comonent heat of vaporization in J/mol
-   */
+  /** {@inheritDoc} */
   @Override
   public double getPureComponentHeatOfVaporization(double temperature) {
     return 1.0e-3 * heatOfVaporizationCoefs[0]
@@ -941,26 +1056,27 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {
-    fugacityCoefficient = 1.0;// this.fugcoef(phase, phase.getNumberOfComponents(),
-                              // phase.getTemperature(),
-                              // phase.getPressure());
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
+    fugacityCoefficient = 1.0;
+    // this.fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+    // phase.getPressure());
     return fugacityCoefficient;
   }
 
   /** {@inheritDoc} */
   @Override
   public double logfugcoefdT(PhaseInterface phase) {
-    dfugdt = 0.0;// this.fugcoefDiffTemp(phase, phase.getNumberOfComponents(),
-                 // phase.getTemperature(), phase.getPressure());
+    dfugdt = 0.0;
+    // this.fugcoefDiffTemp(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+    // phase.getPressure());
     return dfugdt;
   }
 
   /** {@inheritDoc} */
   @Override
   public double logfugcoefdP(PhaseInterface phase) {
-    dfugdp = 0.0;// this.fugcoefDiffPres(phase, phase.getNumberOfComponents(),
-                 // phase.getTemperature(), phase.getPressure());
+    dfugdp = 0.0;
+    // this.fugcoefDiffPres(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+    // phase.getPressure());
     return dfugdp;
   }
 
@@ -1106,18 +1222,6 @@ abstract class Component implements ComponentInterface {
     return voli;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public final double getChemicalPotentialdT(PhaseInterface phase) {
-    return -getEntropy(phase.getTemperature(), phase.getPressure()) / numberOfMolesInPhase;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public final double getChemicalPotentialdV(PhaseInterface phase) {
-    return getChemicalPotentialdP() * phase.getdPdVTn();
-  }
-
   /**
    * <p>
    * getChemicalPotentialdP.
@@ -1133,6 +1237,18 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public final double getChemicalPotentialdT(PhaseInterface phase) {
+    return -getEntropy(phase.getTemperature(), phase.getPressure()) / numberOfMolesInPhase;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final double getChemicalPotentialdV(PhaseInterface phase) {
+    return getChemicalPotentialdP() * phase.getdPdVTn();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setComponentNumber(int numb) {
     componentNumber = numb;
   }
@@ -1141,21 +1257,14 @@ abstract class Component implements ComponentInterface {
   @Override
   public double getAntoineVaporPressure(double temp) {
     if (antoineLiqVapPresType.equals("pow10")) {
-      return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC - 273.15))); // equation
-                                                                                 // and
-                                                                                 // parameter
-                                                                                 // from
-                                                                                 // properties
-                                                                                 // o liquids
-                                                                                 // and
-                                                                                 // gases
-                                                                                 // (poling
-                                                                                 // 5th ed)
+      // equation and parameter from properties o and gases (poling 5th ed)
+      return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC - 273.15)));
+    } else if (antoineLiqVapPresType.equals("pow10KPa")) {
+      // equation and parameter from properties o and gases (poling 5th ed)
+      return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC))) / 1.0e5;
     } else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
-      return Math.exp(AntoineA - (AntoineB / (temp + AntoineC))); // equation and parameter
-                                                                  // from properties o
-                                                                  // liquids and gases (poling
-                                                                  // 5th ed)
+      // equation and parameter from properties o and gases (poling 5th ed)
+      return Math.exp(AntoineA - (AntoineB / (temp + AntoineC)));
     } else if (Math.abs(AntoineE) > 1e-12) {
       return Math.exp(AntoineA + AntoineB / temp + AntoineC * Math.log(temp)
           + AntoineD * Math.pow(temp, AntoineE)) / 100000;
@@ -1187,7 +1296,8 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getAntoineVaporTemperature(double pres) {
-    double nyPres = 0, nyTemp = criticalTemperature * 0.7;
+    double nyPres = 0;
+    double nyTemp = criticalTemperature * 0.7;
     int iter = 0;
     do {
       iter++;
@@ -1342,15 +1452,14 @@ abstract class Component implements ComponentInterface {
   @Override
   public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
-    double temp1 = 0.0, temp2 = 0.0;
     double dp = phase.getPressure() / 1.0e5;
-    temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    final double temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setPressure(phase.getPressure() - dp);
-    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
+    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getBeta());
     phase.getComponents()[componentNumber].fugcoef(phase);
-    temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    final double temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setPressure(phase.getPressure() + dp);
-    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
+    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getBeta());
     phase.getComponents()[componentNumber].fugcoef(phase);
     dfugdp = (Math.log(temp1) - Math.log(temp2)) / dp;
     return dfugdp;
@@ -1360,16 +1469,15 @@ abstract class Component implements ComponentInterface {
   @Override
   public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
-    double temp1 = 0.0, temp2 = 0.0;
     double dt = phase.getTemperature() / 1.0e6;
-    temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    final double temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setTemperature(phase.getTemperature() - dt);
-    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getPhaseType(), phase.getBeta());
+    phase.init(numberOfMolesInPhase, numberOfComponents, 1, phase.getBeta());
     phase.getComponents()[componentNumber].fugcoef(phase);
-    temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
+    final double temp2 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     // phase.setTemperature(phase.getTemperature()+dt);
     // System.out.println("temp " + phase.getTemperature());
-    // phase.init(numberOfMolesInPhase, numberOfComponents, 1,phase.getPhaseType(),
+    // phase.init(numberOfMolesInPhase, numberOfComponents, 1,
     // phase.getBeta());
     // phase.getComponents()[componentNumber].fugcoef(phase, numberOfComponents,
     // phase.getTemperature(), phase.getPressure());
@@ -1423,12 +1531,6 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final double getLogFugacityCoefficient() {
-    return logFugacityCoefficient;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public final int getAttractiveTermNumber() {
     return attractiveTermNumber;
   }
@@ -1471,7 +1573,7 @@ abstract class Component implements ComponentInterface {
    * Getter for the field <code>matiascopemanParamsPR</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public final double[] getMatiascopemanParamsPR() {
     return matiascopemanParamsPR;
@@ -1505,7 +1607,6 @@ abstract class Component implements ComponentInterface {
   @Override
   public void setFugacityCoefficient(double val) {
     fugacityCoefficient = val;
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
   }
 
   /** {@inheritDoc} */
@@ -1560,6 +1661,14 @@ abstract class Component implements ComponentInterface {
   @Override
   public double getNormalBoilingPoint() {
     return normalBoilingPoint;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getNormalBoilingPoint(String unit) {
+    neqsim.util.unit.TemperatureUnit tempConversion =
+        new neqsim.util.unit.TemperatureUnit(getNormalBoilingPoint(), "K");
+    return tempConversion.getValue(unit);
   }
 
   /** {@inheritDoc} */
@@ -1690,7 +1799,7 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public boolean isHydrocarbon() {
-    return isIsTBPfraction() || isPlusFraction || componentType.equals("HC");
+    return isIsTBPfraction() || isPlusFraction || componentType.equalsIgnoreCase("HC");
   }
 
   /** {@inheritDoc} */
@@ -1734,7 +1843,7 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public boolean isInert() {
-    return componentType.equals("inert");
+    return componentType.equalsIgnoreCase("inert");
   }
 
   /** {@inheritDoc} */
@@ -1747,8 +1856,9 @@ abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public boolean isIsIon() {
-    if (componentType.equals("ion"))
+    if (componentType.equalsIgnoreCase("ion")) {
       setIsIon(true);
+    }
     return isIon;
   }
 
@@ -1779,8 +1889,8 @@ abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setSolidCheck(boolean solidCheck) {
-    this.solidCheck = solidCheck;
+  public void setSolidCheck(boolean checkForSolids) {
+    this.solidCheck = checkForSolids;
   }
 
   /** {@inheritDoc} */
@@ -1810,15 +1920,12 @@ abstract class Component implements ComponentInterface {
     return componentType;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Getter for property Henrys Coefficient. Unit is bar. ln H = C1 + C2/T + C3lnT + C4*T
-   */
+  /** {@inheritDoc} */
   @Override
   public double getHenryCoef(double temperature) {
     // System.out.println("henry " +
-    // Math.exp(henryCoefParameter[0]+henryCoefParameter[1]/temperature+henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature)*100*0.01802);
+    // Math.exp(henryCoefParameter[0]+henryCoefParameter[1] /
+    // temperature+henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature)*100*0.01802);
     return Math
         .exp(henryCoefParameter[0] + henryCoefParameter[1] / temperature
             + henryCoefParameter[2] * Math.log(temperature) + henryCoefParameter[3] * temperature)
@@ -2040,7 +2147,7 @@ abstract class Component implements ComponentInterface {
   @Override
   public void setComponentType(String componentType) {
     this.componentType = componentType;
-    if (componentType.equals("TBP")) {
+    if (componentType.equalsIgnoreCase("TBP")) {
       setIsTBPfraction(true);
     }
   }
@@ -2192,13 +2299,8 @@ abstract class Component implements ComponentInterface {
     return volumeCorrectionT;
   }
 
-  /**
-   * <p>
-   * getVolumeCorrection.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getVolumeCorrection() {
     return 0.0;
   }
@@ -2242,12 +2344,14 @@ abstract class Component implements ComponentInterface {
       return numberOfMolesInPhase * getMolarMass() * 60.0;
     } else if (flowunit.equals("kg/hr")) {
       return numberOfMolesInPhase * getMolarMass() * 3600.0;
-    } else if (flowunit.equals("m3/hr")) {
-      return getVoli() / 1.0e5 * 3600.0;
-    } else if (flowunit.equals("m3/min")) {
-      return getVoli() / 1.0e5 * 60.0;
+    } else if (flowunit.equals("tonnes/year")) {
+      return numberOfMolesInPhase * getMolarMass() * 3600.0 * 24.0 * 365.0 / 1000.0;
     } else if (flowunit.equals("m3/sec")) {
       return getVoli() / 1.0e5;
+    } else if (flowunit.equals("m3/min")) {
+      return getVoli() / 1.0e5 * 60.0;
+    } else if (flowunit.equals("m3/hr")) {
+      return getVoli() / 1.0e5 * 3600.0;
     } else if (flowunit.equals("mole/sec")) {
       return numberOfMolesInPhase;
     } else if (flowunit.equals("mole/min")) {

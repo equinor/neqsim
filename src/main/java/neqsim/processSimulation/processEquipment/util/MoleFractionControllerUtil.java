@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.util;
 
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -20,7 +21,9 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
   SystemInterface thermoSystem;
   ThermodynamicOperations thermoOps;
   String compName = null;
-  double moleFrac = 1.0, molesChange = 0.0, moleFractionReductionRatio = 0.0;
+  double moleFrac = 1.0;
+  double molesChange = 0.0;
+  double moleFractionReductionRatio = 0.0;
   boolean moleFractionReduction = false;
 
   /**
@@ -37,13 +40,13 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Setter for the field <code>inletStream</code>.
    * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
    */
+  @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
 
@@ -116,7 +119,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     // System.out.println("MoleFractionContollerUtil running..");
     thermoSystem = inStream.getThermoSystem().clone();
     if (thermoSystem.getPhase(0).hasComponent(compName)) {
@@ -128,10 +131,11 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
             (moleFractionReductionRatio) * thermoSystem.getPhase(0).getComponent(compName).getz();
       }
       double molesChange = deltaFrac * thermoSystem.getTotalNumberOfMoles();
-      thermoSystem.addComponent(compName, molesChange);// deltaFrac*thermoSystem.getTotalNumberOfMoles());
+      thermoSystem.addComponent(compName, molesChange); // deltaFrac*thermoSystem.getTotalNumberOfMoles());
       thermoOps.TPflash();
     }
     outStream.setThermoSystem(thermoSystem);
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */

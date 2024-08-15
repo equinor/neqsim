@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.separator;
 
+import java.util.UUID;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -38,9 +39,8 @@ public class Hydrocyclone extends Separator {
    * Constructor for Hydrocyclone.
    * </p>
    *
-   * @param inletStream a
-   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *                    object
+   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
    */
   @Deprecated
   public Hydrocyclone(StreamInterface inletStream) {
@@ -49,7 +49,7 @@ public class Hydrocyclone extends Separator {
 
   /**
    * Constructor for Hydrocyclone.
-   * 
+   *
    * @param name name of hydrosycolen
    */
   public Hydrocyclone(String name) {
@@ -61,10 +61,9 @@ public class Hydrocyclone extends Separator {
    * Constructor for Hydrocyclone.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
-   * @param inletStream a
-   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *                    object
+   * @param name a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
    */
   public Hydrocyclone(String name, StreamInterface inletStream) {
     super(name, inletStream);
@@ -85,9 +84,7 @@ public class Hydrocyclone extends Separator {
    * Getter for the field <code>waterOutStream</code>.
    * </p>
    *
-   * @return a
-   *         {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *         object
+   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public StreamInterface getWaterOutStream() {
     return waterOutStream;
@@ -98,9 +95,7 @@ public class Hydrocyclone extends Separator {
    * getOilOutStream.
    * </p>
    *
-   * @return a
-   *         {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *         object
+   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public StreamInterface getOilOutStream() {
     return liquidOutStream;
@@ -108,8 +103,8 @@ public class Hydrocyclone extends Separator {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
-    inletStreamMixer.run();
+  public void run(UUID id) {
+    inletStreamMixer.run(id);
     thermoSystem = inletStreamMixer.getOutletStream().getThermoSystem().clone();
 
     // double oilInWaterIn = 0.0001; //
@@ -137,10 +132,9 @@ public class Hydrocyclone extends Separator {
     } else {
       gasOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
     }
-    // //gasOutStream.run();
 
-    //// liquidSystem = thermoSystem.phaseToSystem(1);
-    //// liquidOutStream.setThermoSystem(liquidSystem);
+    // liquidSystem = thermoSystem.phaseToSystem(1);
+    // liquidOutStream.setThermoSystem(liquidSystem);
     if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
       liquidOutStream.setThermoSystemFromPhase(thermoSystem, "liquid");
       liquidOutStream.getFluid().init(2);
@@ -148,8 +142,9 @@ public class Hydrocyclone extends Separator {
       liquidOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
     }
     // sOutStream.setPressure(overflowPressure, "bara");
-    gasOutStream.run();
-    liquidOutStream.run();
+    gasOutStream.run(id);
+    liquidOutStream.run(id);
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */

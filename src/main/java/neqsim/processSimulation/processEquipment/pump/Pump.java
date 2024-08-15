@@ -4,12 +4,15 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.util.monitor.PumpResponse;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -65,7 +68,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
   /**
    * Constructor for Pump.
-   * 
+   *
    * @param name name of pump
    */
   public Pump(String name) {
@@ -153,7 +156,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public void run(UUID id) {
     // System.out.println("pump running..");
     inStream.getThermoSystem().init(3);
     double hinn = inStream.getThermoSystem().getEnthalpy();
@@ -168,7 +171,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
       thermoOps.TPflash();
       thermoSystem.init(3);
     } else {
-      if (calculateAsCompressor) {
+      if (!pumpChart.isUsePumpChart() && calculateAsCompressor) {
         thermoSystem = inStream.getThermoSystem().clone();
         thermoSystem.setPressure(pressure, pressureUnit);
         // System.out.println("entropy inn.." + entropy);
@@ -184,6 +187,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
         thermoOps = new ThermodynamicOperations(getThermoSystem());
         thermoOps.PHflash(hout, 0);
       } else if (pumpChart.isUsePumpChart()) {
+        thermoSystem = inStream.getThermoSystem().clone();
         double pumpHead = 0.0;
         pumpHead = getPumpChart().getHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
         isentropicEfficiency =
@@ -217,8 +221,10 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
     // thermoOps.PSflash(entropy);
     dH = thermoSystem.getEnthalpy() - hinn;
     outStream.setThermoSystem(thermoSystem);
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
 
-    // outStream.run();
+    // outStream.run(id);
   }
 
   /** {@inheritDoc} */
@@ -376,10 +382,11 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * @return a double
    */
   public double getOutTemperature() {
-    if (useOutTemperature)
+    if (useOutTemperature) {
       return outTemperature;
-    else
+    } else {
       return getThermoSystem().getTemperature();
+    }
   }
 
   /**
@@ -422,6 +429,19 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
   /**
    * <p>
+   * Setter for the field <code>pressure</code>.
+   * </p>
+   *
+   * @param pressure a double
+   * @param unit a {@link java.lang.String} object
+   */
+  public void setOutletPressure(double pressure, String unit) {
+    setOutletPressure(pressure);
+    pressureUnit = unit;
+  }
+
+  /**
+   * <p>
    * Setter for the field <code>speed</code>.
    * </p>
    *
@@ -451,5 +471,12 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    */
   public PumpChart getPumpChart() {
     return pumpChart;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new PumpResponse(this));
   }
 }

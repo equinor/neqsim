@@ -3,16 +3,19 @@
  *
  * Created on 6. juni 2006, 15:12
  */
+
 package neqsim.processSimulation.processEquipment;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.UUID;
 import org.apache.commons.lang.SerializationUtils;
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.stream.EnergyStream;
+import neqsim.processSimulation.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -35,6 +38,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   public HashMap<String, String> properties = new HashMap<String, String>();
   public EnergyStream energyStream = new EnergyStream();
   private boolean isSetEnergyStream = false;
+  protected boolean isSolved = false;
 
   /**
    * <p>
@@ -59,7 +63,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /**
    * Create deep copy.
-   * 
+   *
    * @return a deep copy of the unit operation/process equipment
    */
   public ProcessEquipmentInterface copy() {
@@ -119,6 +123,10 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public void initMechanicalDesign() {}
+
+  /** {@inheritDoc} */
+  @Override
   public String getSpecification() {
     return specification;
   }
@@ -138,7 +146,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    return true;
+    return isSolved;
   }
 
   /**
@@ -167,17 +175,6 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /**
    * <p>
-   * isSetEnergyStream.
-   * </p>
-   *
-   * @return a boolean
-   */
-  public boolean isSetEnergyStream() {
-    return isSetEnergyStream;
-  }
-
-  /**
-   * <p>
    * Setter for the field <code>energyStream</code>.
    * </p>
    *
@@ -187,15 +184,34 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     this.isSetEnergyStream = isSetEnergyStream;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getPressure() {
-    return 1.0;
+  /**
+   * <p>
+   * isSetEnergyStream.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isSetEnergyStream() {
+    return isSetEnergyStream;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setPressure(double pressure) {}
+  public double getPressure() {
+    return getFluid().getPressure();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getPressure(String unit) {
+    return getFluid().getPressure(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPressure(double pressure) {
+    getFluid().setPressure(pressure);
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -227,13 +243,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     return conditionAnalysisMessage;
   }
 
-  /**
-   * <p>
-   * getResultTable.
-   * </p>
-   *
-   * @return an array of {@link java.lang.String} objects
-   */
+  /** {@inheritDoc} */
+  @Override
   public String[][] getResultTable() {
     return null;
   }
@@ -252,12 +263,15 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     ProcessEquipmentBaseClass other = (ProcessEquipmentBaseClass) obj;
     return Objects.equals(conditionAnalysisMessage, other.conditionAnalysisMessage)
         && Objects.equals(controller, other.controller)
@@ -268,4 +282,23 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
         && Arrays.deepEquals(report, other.report)
         && Objects.equals(specification, other.specification);
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return null;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @return a String
+   */
+  public String getReport_json() {
+    return new Report(this).generateJsonReport();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run_step(UUID id) {}
 }

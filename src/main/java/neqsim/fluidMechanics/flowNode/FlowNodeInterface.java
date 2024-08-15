@@ -58,7 +58,7 @@ public interface FlowNodeInterface extends Cloneable {
    *
    * @return a double
    */
-  default public double getVelocity() {
+  public default double getVelocity() {
     return getVelocity(0);
   }
 
@@ -79,7 +79,7 @@ public interface FlowNodeInterface extends Cloneable {
    *
    * @return a {@link neqsim.util.util.DoubleCloneable} object
    */
-  default public DoubleCloneable getVelocityIn() {
+  public default DoubleCloneable getVelocityIn() {
     return getVelocityIn(0);
   }
 
@@ -100,7 +100,7 @@ public interface FlowNodeInterface extends Cloneable {
    *
    * @return a {@link neqsim.util.util.DoubleCloneable} object
    */
-  default public DoubleCloneable getVelocityOut() {
+  public default DoubleCloneable getVelocityOut() {
     return getVelocityOut(0);
   }
 
@@ -130,7 +130,7 @@ public interface FlowNodeInterface extends Cloneable {
    *
    * @return a double
    */
-  default public double getWallFrictionFactor() {
+  public default double getWallFrictionFactor() {
     return getWallFrictionFactor(0);
   }
 
@@ -183,7 +183,7 @@ public interface FlowNodeInterface extends Cloneable {
    *
    * @param vel a double
    */
-  default public void setVelocity(double vel) {
+  public default void setVelocity(double vel) {
     setVelocity(0, vel);
   }
 
@@ -236,7 +236,7 @@ public interface FlowNodeInterface extends Cloneable {
    *
    * @return a double
    */
-  default public double getReynoldsNumber() {
+  public default double getReynoldsNumber() {
     return getReynoldsNumber(0);
   }
 
@@ -261,7 +261,7 @@ public interface FlowNodeInterface extends Cloneable {
 
   /**
    * <p>
-   * Getter for property operations
+   * Getter for property operations.
    * </p>
    *
    * @return a {@link neqsim.thermodynamicOperations.ThermodynamicOperations} object
@@ -310,7 +310,7 @@ public interface FlowNodeInterface extends Cloneable {
    *
    * @param vel a double
    */
-  default public void setVelocityOut(double vel) {
+  public default void setVelocityOut(double vel) {
     setVelocityOut(0, vel);
   }
 
@@ -331,7 +331,7 @@ public interface FlowNodeInterface extends Cloneable {
    *
    * @param vel a {@link neqsim.util.util.DoubleCloneable} object
    */
-  default public void setVelocityOut(DoubleCloneable vel) {
+  public default void setVelocityOut(DoubleCloneable vel) {
     setVelocityOut(0, vel);
   }
 
@@ -503,7 +503,7 @@ public interface FlowNodeInterface extends Cloneable {
    *
    * @param vel a double
    */
-  default public void setVelocityIn(double vel) {
+  public default void setVelocityIn(double vel) {
     setVelocityIn(0, vel);
   }
 
@@ -524,7 +524,7 @@ public interface FlowNodeInterface extends Cloneable {
    *
    * @param vel a {@link neqsim.util.util.DoubleCloneable} object
    */
-  default public void setVelocityIn(DoubleCloneable vel) {
+  public default void setVelocityIn(DoubleCloneable vel) {
     setVelocityIn(0, vel);
   }
 
@@ -608,9 +608,9 @@ public interface FlowNodeInterface extends Cloneable {
    * setFluxes.
    * </p>
    *
-   * @param dn an array of {@link double} objects
+   * @param dn an array of type double
    */
-  public void setFluxes(double dn[]);
+  public void setFluxes(double[] dn);
 
   /**
    * <p>
@@ -712,10 +712,9 @@ public interface FlowNodeInterface extends Cloneable {
    * display.
    * </p>
    */
-  default public void display() {
+  public default void display() {
     display("");
   }
-
 
   /**
    * <p>
@@ -728,16 +727,16 @@ public interface FlowNodeInterface extends Cloneable {
 
   /**
    * Specify wall friction factor for phase 0. Set to null to reset.
-   * 
+   *
    * @param frictionFactor Friction factor to use for phase 0 or null to reset.
    */
-  default public void setWallFrictionFactor(double frictionFactor) {
+  public default void setWallFrictionFactor(double frictionFactor) {
     setWallFrictionFactor(0, frictionFactor);
   }
 
   /**
    * Specify wall friction factor for a given phase. Set to null to reset.
-   * 
+   *
    * @param phase Index to phase to set wall friction factor for.
    * @param frictionFactor Friction factor to use for a given phase or null to reset.
    */

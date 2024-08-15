@@ -1,5 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
@@ -12,6 +14,7 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  */
 public class MaterialPipeDesignStandard extends DesignStandard {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(MaterialPipeDesignStandard.class);
 
   /**
    * <p>
@@ -141,38 +144,25 @@ public class MaterialPipeDesignStandard extends DesignStandard {
     this.grade = grade;
     specificationNumber = specNo;
 
-    neqsim.util.database.NeqSimTechnicalDesignDatabase database =
-        new neqsim.util.database.NeqSimTechnicalDesignDatabase();
-    java.sql.ResultSet dataSet = null;
-    try {
-      try {
-        dataSet = database
-            .getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='"
-                + specificationNumber + "' AND grade='" + grade + "'"));
+    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
+        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+      try (java.sql.ResultSet dataSet =
+          database.getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='"
+              + specificationNumber + "' AND grade='" + grade + "'"))) {
         while (dataSet.next()) {
           minimumYeildStrength =
               (Double.parseDouble(dataSet.getString("minimumYeildStrength"))) * 0.00689475729;
-
           // design factor table has to be developed
           // Efactor table has to be implemented
           // temperatureDeratingFactor has to be implemented
         }
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
       }
-
       // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
     } catch (Exception e) {
+      // TODO Auto-generated catch block
       e.printStackTrace();
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
-      } catch (Exception e) {
-        System.out.println("error closing database.....GasScrubberDesignStandard");
-        e.printStackTrace();
-      }
     }
   }
 }

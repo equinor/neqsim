@@ -119,6 +119,8 @@ public class MechanicalDesign implements java.io.Serializable {
   public double moduleLength = 0.0;
   public Hashtable<String, DesignStandard> designStandard = new Hashtable<String, DesignStandard>();
   public UnitCostEstimateBaseClass costEstimate = null;
+  double defaultLiquidDensity = 1000.0;
+  double defaultLiquidViscosity = 0.001012;
 
   /**
    * <p>
@@ -424,7 +426,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * @return a double
    */
   public double getOuterDiameter() {
-    return 1.0;// processEquipment.getInternalDiameter();
+    return outerDiameter;
   }
 
   /**
@@ -1023,11 +1025,11 @@ public class MechanicalDesign implements java.io.Serializable {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = {"", "Volume", "Weight"};
-    String[][] table = new String[3][3];// createTable(getProcessEquipment().getName());
+    String[][] table = new String[3][3]; // createTable(getProcessEquipment().getName());
     table[1][0] = getProcessEquipment().getName();
     table[1][1] = Double.toString(getWeightTotal());
     table[1][2] = Double.toString(getVolumeTotal());
+    String[] names = {"", "Volume", "Weight"};
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
     dialogContentPane.add(scrollpane);
@@ -1079,6 +1081,50 @@ public class MechanicalDesign implements java.io.Serializable {
    */
   public UnitCostEstimateBaseClass getCostEstimate() {
     return costEstimate;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>defaultLiquidDensity</code>.
+   * </p>
+   *
+   * @param defaultLiqDens a double
+   */
+  public void setDefaultLiquidDensity(double defaultLiqDens) {
+    this.defaultLiquidDensity = defaultLiqDens;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>defaultLiquidDensity</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getDefaultLiquidDensity() {
+    return defaultLiquidDensity;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>defaultLiquidViscosity</code>.
+   * </p>
+   *
+   * @param defaultLiqVisc a double
+   */
+  public void setDefaultLiquidViscosity(double defaultLiqVisc) {
+    this.defaultLiquidViscosity = defaultLiqVisc;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>defaultLiquidViscosity</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getDefaultLiquidViscosity() {
+    return defaultLiquidViscosity;
   }
 
   /** {@inheritDoc} */

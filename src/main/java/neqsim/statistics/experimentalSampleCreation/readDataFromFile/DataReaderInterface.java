@@ -3,6 +3,7 @@
  *
  * Created on 1. februar 2001, 11:38
  */
+
 package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
 
 /**
@@ -14,10 +15,10 @@ package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
  * @version $Id: $Id
  */
 public interface DataReaderInterface {
-    /**
-     * <p>
-     * readData.
-     * </p>
-     */
-    public void readData();
+  /**
+   * <p>
+   * readData.
+   * </p>
+   */
+  public void readData();
 }

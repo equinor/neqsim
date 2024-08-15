@@ -28,13 +28,13 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * Constructor for ComponentSrkCPA.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentSrkCPA(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentSrkCPA(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     xsite = new double[numberOfAssociationSites];
     xsitedni = new double[numberOfAssociationSites][100];
     xsitedV = new double[numberOfAssociationSites];
@@ -106,8 +106,8 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     ComponentSrkCPA clonedComponent = null;
     try {
       clonedComponent = (ComponentSrkCPA) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
     clonedComponent.xsite = xsite.clone();
@@ -135,13 +135,6 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
       setRacketZ(getRacketZCPA());
       return super.getVolumeCorrection();
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
   }
 
   /** {@inheritDoc} */
@@ -338,7 +331,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
      * phase.getComponent(k).getNumberOfMolesInPhase() * tot3; }
      */
     // System.out.println("dFCPAdndV " + (xi - tot1 - tot4));
-    return xi + tempar[0] * calc_lngi(phase) + tempar[1] * calc_lngidV(phase);// - tot1 - tot4;
+    return xi + tempar[0] * calc_lngi(phase) + tempar[1] * calc_lngidV(phase); // - tot1 - tot4;
   }
 
   /**
@@ -359,7 +352,8 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
       xi += 1.0 / xsite[i] * xsitedT[i];
     }
 
-    double tot1 = 0.0, tot2 = 0.0;
+    double tot1 = 0.0;
+    double tot2 = 0.0;
     for (int k = 0; k < phase.getNumberOfComponents(); k++) {
       tot2 = 0.0;
       for (int i = 0; i < phase.getComponent(k).getNumberOfAssociationSites(); i++) {
@@ -511,7 +505,6 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
         + ((ComponentEosInterface) phase.getComponent(j)).getBi() * temp3 * (temp1 + temp2)) / temp1
         / temp1 / temp2 / temp2;
     return 2.0 * (getBij(j) * temp + getBi() * tempj);
-
   }
 
   /** {@inheritDoc} */
@@ -580,7 +573,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   /**
    * Setter for property xsite.
    *
-   * @param xsiteOld an array of {@link double} objects
+   * @param xsiteOld an array of type double
    */
   public void setXsiteOld(double[] xsiteOld) {
     this.xsiteOld = xsiteOld;
@@ -636,7 +629,8 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   /** {@inheritDoc} */
   @Override
   public double getSurfaceTenisionInfluenceParameter(double temperature) {
-    double AA = 0, BB = 0;
+    double AA = 0;
+    double BB = 0;
     if (componentName.equals("water")) {
       double TR = 1.0 - temperature / getTC();
       AA = -2.2367E-16;
@@ -647,8 +641,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
       double AAW2 = -1.3646E-16;
 
       return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AAW1 + AAW2 * TR + 0.5113e-16 * TR * TR);
-    } // old
-    else if (componentName.equals("water2")) { /// THis is the old method from
+    } else if (componentName.equals("water2")) { // THis is the old method from
       double TR = 1.0 - temperature / getTC();
       AA = -2.2367E-16;
       BB = 2.83732E-16;

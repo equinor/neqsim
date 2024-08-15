@@ -3,9 +3,11 @@
  *
  * Created on 18. juli 2000, 18:36
  */
+
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -23,24 +25,23 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
    * Constructor for ComponentGENRTLmodifiedHV.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentGENRTLmodifiedHV(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentGENRTLmodifiedHV(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam,
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
       String[][] mixRule) {
     double[][] HVgijT = new double[numberOfComponents][numberOfComponents];
-    return getGamma(phase, numberOfComponents, temperature, pressure, phasetype, HValpha, HVgij,
-        HVgijT, intparam, mixRule);
+    return getGamma(phase, numberOfComponents, temperature, pressure, pt, HValpha, HVgij, HVgijT,
+        intparam, mixRule);
   }
 
   /**
@@ -52,32 +53,70 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
-   * @param HValpha an array of {@link double} objects
-   * @param HVgij an array of {@link double} objects
-   * @param HVgijT an array of {@link double} objects
-   * @param intparam an array of {@link double} objects
+   * @param pt the PhaseType of the phase
+   * @param HValpha an array of type double
+   * @param HVgij an array of type double
+   * @param HVgijT an array of type double
+   * @param intparam an array of type double
    * @param mixRule an array of {@link java.lang.String} objects
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double[][] HValpha, double[][] HVgij, double[][] HVgijT,
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] HVgijT,
       double[][] intparam, String[][] mixRule) {
     int type = phase.getInitType();
-    double A = 0, B = 0, C = 0, D = 0, E = 0, F = 0, tau = 0, tau2 = 0, G = 0, G2 = 0, alpha = 0,
-        Dij = 0, Dji = 0, DijT = 0, DjiT = 0, gij = 0, gjj = 0, gji = 0, gii = 0;
-    int j, l;
-    double dAdT = 0, dBdT = 0, dCdT = 0, dCdTdT = 0, dDdT = 0, dDdTdT = 0, dBdTdT = 0;
+    double A = 0;
+    double B = 0;
+    double C = 0;
+    double D = 0;
+    double E = 0;
+    double F = 0;
+    double tau = 0;
+    double tau2 = 0;
+    double G = 0;
+    double G2 = 0;
+    double alpha = 0;
+    double Dij = 0;
+    double Dji = 0;
+    double DijT = 0;
+    double DjiT = 0;
+    double gij = 0;
+    double gjj = 0;
+    double gji = 0;
+    double gii = 0;
+    int j;
+    int l;
+    double dAdT = 0;
+    double dBdT = 0;
+    double dCdT = 0;
+    double dCdTdT = 0;
+    double dDdT = 0;
+    double dDdTdT = 0;
+    double dBdTdT = 0;
     // double dEdT;
     double dAdTdT = 0;
-    double dtaudt = 0, dtaudtdt = 0.0, dtau2dt = 0, dtau2dtdt = 0.0, dGdt = 0, dG2dt = 0,
-        dGdtdt = 0, dG2dtdt = 0.0;
+    double dtaudt = 0;
+    double dtaudtdt = 0.0;
+    double dtau2dt = 0;
+    double dtau2dtdt = 0.0;
+    double dGdt = 0;
+    double dG2dt = 0;
+    double dGdtdt = 0;
+    double dG2dtdt = 0.0;
     double[][] Gmatrix = new double[numberOfComponents][numberOfComponents];
     double[][] tauMatrix = new double[numberOfComponents][numberOfComponents];
     dlngammadn = new double[numberOfComponents];
     ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
-    double dA2dTetter = 0, dA2dTdTetter = 0, dA3dTetter = 0, dA3dTdTetter = 0.0, dA4dTetter = 0,
-        dA4dTdTetter = 0, dA5dTetter = 0, dA5dTdTetter = 0, dA6dTetter = 0, dA6dTdTetter = 0;
+    double dA2dTetter = 0;
+    double dA2dTdTetter = 0;
+    double dA3dTetter = 0;
+    double dA3dTdTetter = 0.0;
+    double dA4dTetter = 0;
+    double dA4dTdTetter = 0;
+    double dA5dTetter = 0;
+    double dA5dTdTetter = 0;
+    double dA6dTetter = 0;
+    double dA6dTdTetter = 0;
     // for(int w=0;w<3;w++){
     F = 0;
     // double dFdT = 0;
@@ -92,8 +131,16 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
     dA4dTetter = 0;
     dA5dTetter = 0;
     dA6dTetter = 0;
-    double dA2dT = 0, dA2dTdT = 0.0, dA3dT = 0, dA3dTdT = 0, dA4dT = 0, dA4dTdT = 0, dA5dT = 0,
-        dA5dTdT = 0, dA6dT = 0, dA6dTdT = 0.0;
+    double dA2dT = 0;
+    double dA2dTdT = 0.0;
+    double dA3dT = 0;
+    double dA3dTdT = 0;
+    double dA4dT = 0;
+    double dA4dTdT = 0;
+    double dA5dT = 0;
+    double dA5dTdT = 0;
+    double dA6dT = 0;
+    double dA6dTdT = 0.0;
     double deltaEOS =
         1.0 / (comp_Array[0].getDeltaEosParameters()[1] - comp_Array[0].getDeltaEosParameters()[0])
             * Math.log((1.0 + comp_Array[0].getDeltaEosParameters()[1])
@@ -394,11 +441,8 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
               * Gmatrix[componentNumber][f] / (sum * sum);
         }
         dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
-            - Etemp * Gmatrix[componentNumber][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;// E/(C*C)*dCdn[p]*(tau2-D/C)
-                                                                                          // +
-                                                                                          // E/C*(-dDdn[p]/C
-                                                                                          // +
-                                                                                          // D/(C*C)*dCdn[p]);
+            - Etemp * Gmatrix[componentNumber][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;
+        // E/(C*C)*dCdn[p]*(tau2-D/C) + E/C*(-dDdn[p]/C + D/(C*C)*dCdn[p]);
         dlngammadn[p] /= (nt);
       }
       // System.out.println("Dlngamdn: " + dlngammadn[p] + " x: " +

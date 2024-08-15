@@ -20,11 +20,17 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
   public CPAMixing cpaSelect = new CPAMixing();
   public CPAMixingInterface cpamix;
-  double hcpatot = 1.0, hcpatotdT = 0.0, hcpatotdTdT = 0.0;
+  double hcpatot = 1.0;
+  double hcpatotdT = 0.0;
+  double hcpatotdTdT = 0.0;
   int cpaon = 1;
-
   int totalNumberOfAccociationSites = 0;
-  double gcpav = 0.0, lngcpa = 0.0, gcpavv = 1.0, gcpavvv = 0.0, gcpa = 0.0;
+  double gcpav = 0.0;
+  double lngcpa = 0.0;
+  double gcpavv = 1.0;
+  double gcpavvv = 0.0;
+  double gcpa = 0.0;
+
   int[][][] selfAccociationScheme = null;
   int[][][][] crossAccociationScheme = null;
   static Logger logger = LogManager.getLogger(PhasePCSAFTa.class);
@@ -44,8 +50,8 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     PhasePCSAFTa clonedPhase = null;
     try {
       clonedPhase = (PhasePCSAFTa) super.clone();
-    } catch (Exception e) {
-      logger.error("Cloning failed.", e);
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
     // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
 
@@ -75,9 +81,9 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
-    if (type == 0) {
+    if (initType == 0) {
       selfAccociationScheme = new int[numberOfComponents][0][0];
       crossAccociationScheme = new int[numberOfComponents][numberOfComponents][0][0];
       for (int i = 0; i < numberOfComponents; i++) {
@@ -88,17 +94,15 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
       }
     }
     do {
-      super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     } while (!solveX());
   }
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(componentName, moles, molesInPhase, compNumber);
-    componentArray[compNumber] =
-        new ComponentPCSAFTa(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, moles, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentPCSAFTa(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -369,11 +373,12 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-        : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+    double BonV =
+        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     // double BonV = phase== 0 ? 0.99:1e-5;
 
     if (BonV < 0) {
@@ -383,7 +388,9 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
       BonV = 1.0 - 1.0e-6;
     }
     double BonVold = BonV;
-    double Btemp = 0, h = 0, dh = 0;
+    double Btemp = 0;
+    double h = 0;
+    double dh = 0;
     // double gvvv = 0, fvvv = 0, dhh = 0, d2 = 0;
     double d1 = 0;
     Btemp = getB();
@@ -410,7 +417,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
       d1 = -h / dh;
       // d2 = -dh / dhh;
-      BonV += d1;// (1.0+0.5*-1.0);
+      BonV += d1; // (1.0+0.5*-1.0);
       // if(Math.abs(d1/d2)<=1.0){
       // BonV += d1*(1.0+0.5*d1/d2);
       // } else if(d1/d2<-1){
@@ -447,12 +454,12 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     }
     if (Double.isNaN(getMolarVolume())) {
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
-      // if(phaseType==0)
+      // if(pt==0)
       // System.out.println("density " +
-      // getDensity());//"BonV: " + BonV + "
+      // getDensity()); //"BonV: " + BonV + "
       // "+" itert: " +
       // iterations +" " + " phase " +
-      // phaseType+ " " + h +
+      // pt+ " " + h +
       // " +dh + " B " + Btemp + " D " +
       // Dtemp + " gv" + gV()
       // + " fv " + fv() + " fvv" + fVV());

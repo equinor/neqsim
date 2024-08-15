@@ -1,62 +1,60 @@
 package neqsim.thermo.system;
 
 /**
- * This class defines a thermodynamic system using the Predictive SRK-EoS equation of state
- * 
+ * This class defines a thermodynamic system using the Predictive SRK-EoS equation of state.
+ *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemPsrkEos extends SystemSrkEos {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    public SystemPsrkEos() {
-        super();
-        modelName = "Predictive-SRK-EOS";
-        attractiveTermNumber = 4;
+  /**
+   * <p>
+   * Constructor for SystemPsrkEos.
+   * </p>
+   */
+  public SystemPsrkEos() {
+    this(298.15, 1.0, false);
+  }
+
+  /**
+   * <p>
+   * Constructor for SystemPsrkEos.
+   * </p>
+   *
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   */
+  public SystemPsrkEos(double T, double P) {
+    this(T, P, false);
+  }
+
+  /**
+   * <p>
+   * Constructor for SystemPsrkEos.
+   * </p>
+   *
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
+   */
+  public SystemPsrkEos(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
+    attractiveTermNumber = 4;
+    modelName = "Predictive-SRK-EOS";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public SystemPsrkEos clone() {
+    SystemPsrkEos clonedSystem = null;
+    try {
+      clonedSystem = (SystemPsrkEos) super.clone();
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
-    /**
-     * <p>
-     * Constructor for SystemPsrkEos.
-     * </p>
-     *
-     * @param T a double
-     * @param P a double
-     */
-    public SystemPsrkEos(double T, double P) {
-        super(T, P);
-        modelName = "Predictive-SRK-EOS";
-        attractiveTermNumber = 4;
-    }
-
-    /**
-     * <p>
-     * Constructor for SystemPsrkEos.
-     * </p>
-     *
-     * @param T a double
-     * @param P a double
-     * @param solidCheck a boolean
-     */
-    public SystemPsrkEos(double T, double P, boolean solidCheck) {
-        super(T, P, solidCheck);
-        attractiveTermNumber = 4;
-        modelName = "Predictive-SRK-EOS";
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public SystemPsrkEos clone() {
-        SystemPsrkEos clonedSystem = null;
-        try {
-            clonedSystem = (SystemPsrkEos) super.clone();
-        } catch (Exception e) {
-            logger.error("Cloning failed.", e);
-        }
-
-        // for(int i = 0; i < numberOfPhases; i++) {
-        // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-        // }
-
-        return clonedSystem;
-    }
+    return clonedSystem;
+  }
 }

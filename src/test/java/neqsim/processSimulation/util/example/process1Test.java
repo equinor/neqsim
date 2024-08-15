@@ -5,7 +5,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
-class process1Test {
+class process1Test extends neqsim.NeqSimTest {
     static neqsim.thermo.system.SystemInterface testSystem;
     static neqsim.processSimulation.processSystem.ProcessSystem operations;
 

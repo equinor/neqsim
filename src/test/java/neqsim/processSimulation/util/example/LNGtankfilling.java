@@ -6,6 +6,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.tank.Tank;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processEquipment.valve.ValveInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  * <p>LNGtankfilling class.</p>
@@ -60,7 +61,7 @@ public class LNGtankfilling {
         Stream stream_1 = new Stream("Methane Stream", testSystem);
 
         ValveInterface valve = new ThrottlingValve("valve", stream_1);
-        valve.setOutletPressure(1.01325 + 0.110);
+        valve.setOutletPressure(ThermodynamicConstantsInterface.referencePressure + 0.110);
 
         Tank tank = new neqsim.processSimulation.processEquipment.tank.Tank("tank");
         tank.addStream(valve.getOutletStream());
@@ -84,7 +85,7 @@ public class LNGtankfilling {
         // ControllerDeviceInterface pressureController = new ControllerDeviceBaseClass();
         // pressureController.setTransmitter(tankPressureTransmitter);
         // pressureController.setReverseActing(false);
-        // pressureController.setControllerSetPoint(1.01325+0.110);
+        // pressureController.setControllerSetPoint(ThermodynamicConstantsInterface.referencePressure+0.110);
         // pressureController.setControllerParameters(2.0,400,0);
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =

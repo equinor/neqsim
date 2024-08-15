@@ -1,62 +1,60 @@
 package neqsim.thermo.system;
 
 /**
- * This class defines a thermodynamic system using the SRK Two Coon equation of state
- * 
+ * This class defines a thermodynamic system using the SRK Two Coon equation of state.
+ *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemSrkTwuCoonEos extends SystemSrkEos {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    public SystemSrkTwuCoonEos() {
-        super();
-        modelName = "TwuCoonRK-EOS";
-        attractiveTermNumber = 11;
+  /**
+   * <p>
+   * Constructor for SystemSrkTwuCoonEos.
+   * </p>
+   */
+  public SystemSrkTwuCoonEos() {
+    this(298.15, 1.0, false);
+  }
+
+  /**
+   * <p>
+   * Constructor for SystemSrkTwuCoonEos.
+   * </p>
+   *
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   */
+  public SystemSrkTwuCoonEos(double T, double P) {
+    this(T, P, false);
+  }
+
+  /**
+   * <p>
+   * Constructor for SystemSrkTwuCoonEos.
+   * </p>
+   *
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
+   */
+  public SystemSrkTwuCoonEos(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
+    modelName = "TwuCoonRK-EOS";
+    attractiveTermNumber = 11;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public SystemSrkTwuCoonEos clone() {
+    SystemSrkTwuCoonEos clonedSystem = null;
+    try {
+      clonedSystem = (SystemSrkTwuCoonEos) super.clone();
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
     }
 
-    /**
-     * <p>
-     * Constructor for SystemSrkTwuCoonEos.
-     * </p>
-     *
-     * @param T a double
-     * @param P a double
-     */
-    public SystemSrkTwuCoonEos(double T, double P) {
-        super(T, P);
-        modelName = "TwuCoonRK-EOS";
-        attractiveTermNumber = 11;
-    }
-
-    /**
-     * <p>
-     * Constructor for SystemSrkTwuCoonEos.
-     * </p>
-     *
-     * @param T a double
-     * @param P a double
-     * @param solidCheck a boolean
-     */
-    public SystemSrkTwuCoonEos(double T, double P, boolean solidCheck) {
-        super(T, P, solidCheck);
-        modelName = "TwuCoonRK-EOS";
-        attractiveTermNumber = 11;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public SystemSrkTwuCoonEos clone() {
-        SystemSrkTwuCoonEos clonedSystem = null;
-        try {
-            clonedSystem = (SystemSrkTwuCoonEos) super.clone();
-        } catch (Exception e) {
-            logger.error("Cloning failed.", e);
-        }
-
-        // for(int i = 0; i < numberOfPhases; i++) {
-        // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-        // }
-
-        return clonedSystem;
-    }
+    return clonedSystem;
+  }
 }

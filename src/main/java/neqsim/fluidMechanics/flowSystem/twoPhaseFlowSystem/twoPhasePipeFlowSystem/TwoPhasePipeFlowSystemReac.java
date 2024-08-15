@@ -13,84 +13,81 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    /**
-     * <p>
-     * Constructor for TwoPhasePipeFlowSystemReac.
-     * </p>
-     */
-    public TwoPhasePipeFlowSystemReac() {}
+  /**
+   * <p>
+   * Constructor for TwoPhasePipeFlowSystemReac.
+   * </p>
+   */
+  public TwoPhasePipeFlowSystemReac() {}
 
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    public static void main(String[] args) {
-        // Initierer et nyt rorsystem
-        neqsim.fluidMechanics.flowSystem.FlowSystemInterface pipe =
-                new TwoPhasePipeFlowSystemReac();
+  /**
+   * <p>
+   * main.
+   * </p>
+   *
+   * @param args an array of {@link java.lang.String} objects
+   */
+  public static void main(String[] args) {
+    // Initierer et nyt rorsystem
+    neqsim.fluidMechanics.flowSystem.FlowSystemInterface pipe = new TwoPhasePipeFlowSystemReac();
 
-        SystemInterface testSystem = new SystemFurstElectrolyteEos(295.3, 50.01325);
-        testSystem.addComponent("methane", 50.11152187, "Nlitre/min", 0);
-        testSystem.addComponent("CO2", 50.11152181, "Nlitre/min", 0);
-        testSystem.addComponent("water", 0.5662204876, "kg/min", 1);
-        testSystem.addComponent("MDEA", 0.5662204876, "kg/min", 1);
+    SystemInterface testSystem = new SystemFurstElectrolyteEos(295.3, 50.01325);
+    testSystem.addComponent("methane", 50.11152187, "Nlitre/min", 0);
+    testSystem.addComponent("CO2", 50.11152181, "Nlitre/min", 0);
+    testSystem.addComponent("water", 0.5662204876, "kg/min", 1);
+    testSystem.addComponent("MDEA", 0.5662204876, "kg/min", 1);
 
-        testSystem.chemicalReactionInit();
-        testSystem.createDatabase(true);
-        testSystem.setMixingRule(4);
-        testSystem.setPhysicalPropertyModel(3);
-        // testOps.TPflash();
-        // testSystem.display();
+    testSystem.chemicalReactionInit();
+    testSystem.createDatabase(true);
+    testSystem.setMixingRule(4);
+    testSystem.setPhysicalPropertyModel(3);
+    // testOps.TPflash();
+    // testSystem.display();
 
-        // testSystem.setNumericDerivatives(true);
-        testSystem.initPhysicalProperties();
+    // testSystem.setNumericDerivatives(true);
+    testSystem.initPhysicalProperties();
 
-        pipe.setInletThermoSystem(testSystem); // setter termodyanmikken for rorsystemet
-        pipe.setNumberOfLegs(3); // deler inn roret i et gitt antall legger
-        pipe.setNumberOfNodesInLeg(10); // setter antall nodepunkter (beregningspunkter/grid) pr.
-                                        // leg
+    pipe.setInletThermoSystem(testSystem); // setter termodyanmikken for rorsystemet
+    pipe.setNumberOfLegs(3); // deler inn roret i et gitt antall legger
+    pipe.setNumberOfNodesInLeg(10); // setter antall nodepunkter (beregningspunkter/grid) pr.
+                                    // leg
 
-        double[] height = {0, 0, 0, 0, 0, 0};
-        double[] length = {0.0, 0.03, 0.07, 0.13, 2.5, 3.7};
-        double[] outerTemperature =
-                {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 275.0, 275.0, 275.0, 275.0};
+    double[] height = {0, 0, 0, 0, 0, 0};
+    double[] length = {0.0, 0.03, 0.07, 0.13, 2.5, 3.7};
+    double[] outerTemperature =
+        {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 275.0, 275.0, 275.0, 275.0};
 
-        pipe.setLegHeights(height); // setter inn hoyde for hver leg-ende
-        pipe.setLegPositions(length); // setter avstand til hver leg-ende
-        pipe.setLegOuterTemperatures(outerTemperature);
+    pipe.setLegHeights(height); // setter inn hoyde for hver leg-ende
+    pipe.setLegPositions(length); // setter avstand til hver leg-ende
+    pipe.setLegOuterTemperatures(outerTemperature);
 
-        neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface[] pipeGemometry =
-                new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[5]; // Deffinerer
-                                                                                // geometrien
-                                                                                // for
-                                                                                // roret
-        double[] pipeDiameter = {0.025, 0.025, 0.025, 0.025, 0.025};
-        for (int i = 0; i < pipeDiameter.length; i++) {
-            pipeGemometry[i] =
-                    new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData(pipeDiameter[i]);
-        }
-        pipe.setEquipmentGeometry(pipeGemometry); // setter inn rorgeometrien for hver leg
-        // utforer bergninger
-        pipe.createSystem();
-        pipe.setEquilibriumMassTransfer(false);
-        pipe.setEquilibriumHeatTransfer(false);
-        pipe.init();
-
-        pipe.solveSteadyState(2);
-        ThermodynamicOperations testOps =
-                new ThermodynamicOperations(pipe.getNode(2).getBulkSystem());
-        testOps.TPflash();
-
-        // pipe.calcFluxes();
-        // pipe.print();
-        pipe.getDisplay().createNetCdfFile("c:/temp5.nc");
-        // pipe.displayResult();
-        // testOps.TPflash();
-        // testOps.displayResult();
+    neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface[] pipeGemometry =
+        new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[5]; // Deffinerer
+                                                                        // geometrien
+                                                                        // for
+                                                                        // roret
+    double[] pipeDiameter = {0.025, 0.025, 0.025, 0.025, 0.025};
+    for (int i = 0; i < pipeDiameter.length; i++) {
+      pipeGemometry[i] =
+          new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData(pipeDiameter[i]);
     }
+    pipe.setEquipmentGeometry(pipeGemometry); // setter inn rorgeometrien for hver leg
+    // utforer beregninger
+    pipe.createSystem();
+    pipe.setEquilibriumMassTransfer(false);
+    pipe.setEquilibriumHeatTransfer(false);
+    pipe.init();
+
+    pipe.solveSteadyState(2);
+    ThermodynamicOperations testOps = new ThermodynamicOperations(pipe.getNode(2).getBulkSystem());
+    testOps.TPflash();
+
+    // pipe.calcFluxes();
+    // pipe.print();
+    // pipe.displayResult();
+    // testOps.TPflash();
+    // testOps.displayResult();
+  }
 }

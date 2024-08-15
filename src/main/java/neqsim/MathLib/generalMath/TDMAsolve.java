@@ -3,6 +3,7 @@
  *
  * Created on 4. desember 2000, 22:34
  */
+
 package neqsim.MathLib.generalMath;
 
 /**
@@ -13,36 +14,41 @@ package neqsim.MathLib.generalMath;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class TDMAsolve {
-    /**
-     * <p>
-     * solve.
-     * </p>
-     *
-     * @param a an array of {@link double} objects
-     * @param b an array of {@link double} objects
-     * @param c an array of {@link double} objects
-     * @param r an array of {@link double} objects
-     * @return an array of {@link double} objects
-     */
-    public static double[] solve(double a[], double b[], double c[], double r[]) {
-        int length = a.length;
-        double[] u = new double[length];
-        double bet = 0;
-        double gam[] = new double[length];
+public final class TDMAsolve {
+  /**
+   * Dummy constructor, not for use. Class is to be considered static.
+   */
+  private TDMAsolve() {}
 
-        bet = b[0];
-        u[0] = r[0] / bet;
+  /**
+   * <p>
+   * solve.
+   * </p>
+   *
+   * @param a an array of type double
+   * @param b an array of type double
+   * @param c an array of type double
+   * @param r an array of type double
+   * @return an array of type double
+   */
+  public static double[] solve(double[] a, double[] b, double[] c, double[] r) {
+    int length = a.length;
+    double[] u = new double[length];
+    double bet = 0;
+    double[] gam = new double[length];
 
-        for (int j = 1; j < length; j++) {
-            gam[j] = c[j - 1] / bet;
-            bet = b[j] - a[j] * gam[j];
-            u[j] = (r[j] - a[j] * u[j - 1]) / bet;
-        }
+    bet = b[0];
+    u[0] = r[0] / bet;
 
-        for (int j = (length - 2); j >= 0; j--) {
-            u[j] -= gam[j + 1] * u[j + 1];
-        }
-        return u;
+    for (int j = 1; j < length; j++) {
+      gam[j] = c[j - 1] / bet;
+      bet = b[j] - a[j] * gam[j];
+      u[j] = (r[j] - a[j] * u[j - 1]) / bet;
     }
+
+    for (int j = (length - 2); j >= 0; j--) {
+      u[j] -= gam[j + 1] * u[j + 1];
+    }
+    return u;
+  }
 }

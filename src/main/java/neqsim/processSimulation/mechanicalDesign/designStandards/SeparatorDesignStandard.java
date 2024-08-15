@@ -1,5 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
 
@@ -13,6 +15,7 @@ import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
  */
 public class SeparatorDesignStandard extends DesignStandard {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(SeparatorDesignStandard.class);
 
   /**
    * <p>
@@ -50,10 +53,9 @@ public class SeparatorDesignStandard extends DesignStandard {
    */
   public SeparatorDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
-    neqsim.util.database.NeqSimTechnicalDesignDatabase database =
-        new neqsim.util.database.NeqSimTechnicalDesignDatabase();
-    java.sql.ResultSet dataSet = null;
-    try {
+    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
+        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+      java.sql.ResultSet dataSet = null;
       try {
         dataSet = database.getResultSet(
             ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Separator' AND Company='"
@@ -73,22 +75,23 @@ public class SeparatorDesignStandard extends DesignStandard {
                 + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
           }
         }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
 
-      // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
+        // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
+      } finally {
+        try {
+          if (dataSet != null) {
+            dataSet.close();
+          }
+        } catch (Exception ex) {
+          System.out.println("error closing database.....GasScrubberDesignStandard");
+          logger.error(ex.getMessage(), ex);
         }
-      } catch (Exception e) {
-        System.out.println("error closing database.....GasScrubberDesignStandard");
-        e.printStackTrace();
       }
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
   }
 
@@ -150,10 +153,11 @@ public class SeparatorDesignStandard extends DesignStandard {
     // select correct residensetime from database
     // to be implmented
     if (name.equals("API12J")) {
-      if (dens < 0.85)
+      if (dens < 0.85) {
         retTime = 60.0;
-      else if (dens > 0.93)
+      } else if (dens > 0.93) {
         retTime = 180.0;
+      }
     }
     return retTime;
   }

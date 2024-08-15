@@ -3,6 +3,7 @@
  *
  * Created on 13. juni 2004, 23:56
  */
+
 package neqsim.standards;
 
 import java.awt.BorderLayout;
@@ -35,11 +36,12 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   protected SystemInterface thermoSystem;
   protected ThermodynamicOperations thermoOps;
   private String referenceState = "real"; // "ideal"real
+  private double referencePressure = 70.0;
 
   /**
    * Constructor for Standard.
-   * 
-   * @param name name of standard
+   *
+   * @param name        name of standard
    * @param description description
    */
   public Standard(String name, String description) {
@@ -49,9 +51,9 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
 
   /**
    * Constructor for Standard.
-   * 
-   * @param name name of standard
-   * @param thermoSyst input fluid
+   *
+   * @param name        name of standard
+   * @param thermoSyst  input fluid
    * @param description description of standard
    */
   public Standard(String name, String description, SystemInterface thermoSyst) {
@@ -109,16 +111,21 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   /** {@inheritDoc} */
   @Override
   public String[][] createTable(String name) {
+    if (thermoSystem == null) {
+      String[][] table = new String[0][6];
+      return table;
+    }
     thermoSystem.setNumberOfPhases(1);
-
     thermoSystem.createTable(name);
 
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(5);
     nf.applyPattern("#.#####E0");
-    String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
+
+    int rows = thermoSystem.getPhases()[0].getNumberOfComponents() + 30;
+    String[][] table = new String[rows][6];
     // String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
-    table[0][0] = "";// getPhases()[0].getPhaseTypeName();//"";
+    table[0][0] = ""; // getPhases()[0].getType(); //"";
 
     for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {
       for (int j = 0; j < 6; j++) {
@@ -126,7 +133,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
       }
     }
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
-      table[0][i + 1] = thermoSystem.getPhase(i).getPhaseTypeName();
+      table[0][i + 1] = thermoSystem.getPhase(i).getType().toString();
     }
 
     StringBuffer buf = new StringBuffer();
@@ -154,7 +161,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
+    String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
     String[][] table = createTable(name);
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
@@ -195,5 +202,17 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
    */
   public void setReferenceState(String referenceState) {
     this.referenceState = referenceState;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getReferencePressure() {
+    return referencePressure;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setReferencePressure(double referencePressure) {
+    this.referencePressure = referencePressure;
   }
 }

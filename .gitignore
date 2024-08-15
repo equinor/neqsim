@@ -69,6 +69,7 @@ nbdist/
 # End of https://www.gitignore.io/api/java,maven,netbeans
 /bin/
 src/main/java/neqsim/util/database/NeqSimDataBase2.java
+exportJacoco/
 
 neqsim.iml
 .classpath
@@ -81,3 +82,11 @@ test_*.ser
 
 #Intellij IDEA
 .idea
+
+# doxygen results
+html/
+latex/
+eclipse_dictionary.txt
+
+src/main/**/*.png
+src/main/**/*.gif

@@ -3,6 +3,7 @@
  *
  * Created on 4. februar 2001, 22:11
  */
+
 package neqsim.thermo.atomElement;
 
 import java.util.ArrayList;
@@ -19,79 +20,114 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * @version $Id: $Id
  */
 public class Element implements ThermodynamicConstantsInterface {
-    private static final long serialVersionUID = 1000;
-    String[] nameArray;
-    double[] coefArray;
-    static Logger logger = LogManager.getLogger(Element.class);
+  private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Element.class);
 
-    /**
-     * <p>
-     * Constructor for Element.
-     * </p>
-     */
-    public Element() {}
+  private String name;
+  private String[] nameArray;
+  private double[] coefArray;
 
-    /**
-     * <p>
-     * Constructor for Element.
-     * </p>
-     *
-     * @param name a {@link java.lang.String} object
-     */
-    public Element(String name) {
-        ArrayList<String> names = new ArrayList<String>();
-        ArrayList<String> stocCoef = new ArrayList<String>();
-        neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        try {
-            java.sql.ResultSet dataSet = database
-                    .getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"));
-            dataSet.next();
-            // System.out.println("comp name " + dataSet.getString("componentname"));
-            do {
-                names.add(dataSet.getString("atomelement").trim());
-                // System.out.println("name " + dataSet.getString("atomelement"));
-                stocCoef.add(dataSet.getString("number"));
-            } while (dataSet.next());
+  /**
+   * <p>
+   * Constructor for Element.
+   * </p>
+   *
+   * @param name Name of component.
+   */
+  public Element(String name) {
+    this.name = name;
 
-            nameArray = new String[names.size()];
-            coefArray = new double[nameArray.length];
-            for (int i = 0; i < nameArray.length; i++) {
-                coefArray[i] = Double.parseDouble(stocCoef.get(i));
-                nameArray[i] = names.get(i);
-            }
-            dataSet.close();
-            database.getConnection().close();
-        } catch (Exception e) {
-            try {
-                database.getConnection().close();
-            } catch (Exception ex) {
-                logger.error(ex);
-            }
-            String err = e.toString();
-            logger.error(err);
-            // System.out.println(err);
-        }
+    ArrayList<String> names = new ArrayList<String>();
+    ArrayList<String> stocCoef = new ArrayList<String>();
+
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet =
+            database.getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"))) {
+      if (!dataSet.next()) {
+        return;
+      }
+
+      do {
+        names.add(dataSet.getString("atomelement").trim());
+        stocCoef.add(dataSet.getString("number"));
+      } while (dataSet.next());
+
+      nameArray = new String[names.size()];
+      coefArray = new double[nameArray.length];
+      for (int i = 0; i < nameArray.length; i++) {
+        coefArray[i] = Double.parseDouble(stocCoef.get(i));
+        nameArray[i] = names.get(i);
+      }
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
+    }
+  }
+
+  /**
+   * Getter for property name.
+   *
+   * @return Component name.
+   */
+  public String getName() {
+    return this.name;
+  }
+
+  /**
+   * Getter for property nameArray.
+   *
+   * @return an array of {@link java.lang.String} objects. Names of Elements of component.
+   */
+  public String[] getElementNames() {
+    return nameArray;
+  }
+
+  /**
+   * GetNumberOfElements.
+   *
+   * @param elementName name of element
+   * @return NumberOfElements of a given type.
+   */
+  public double getNumberOfElements(String elementName) {
+    if (nameArray == null) {
+      neqsim.util.exception.InvalidInputException ex =
+          new neqsim.util.exception.InvalidInputException(this, "getNumberOfElements", elementName,
+              "component not in element database..");
+      throw new RuntimeException(ex);
+    }
+    for (int i = 0; i < nameArray.length; i++) {
+      if (nameArray[i].equals(elementName)) {
+        return coefArray[i];
+      }
+    }
+    return 0.0;
+  }
+
+  /**
+   * Getter for property coefArray.
+   *
+   * @return an array of type double. Coefficient corresponding to nameArray.
+   */
+  public double[] getElementCoefs() {
+    return coefArray;
+  }
+
+  /**
+   * Get all defined components.
+   *
+   * @return All element names in database.
+   */
+  public static ArrayList<String> getAllElementComponentNames() {
+    ArrayList<String> names = new ArrayList<String>();
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM element"))) {
+      dataSet.next();
+      do {
+        names.add(dataSet.getString("componentname").trim());
+      } while (dataSet.next());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
 
-    /**
-     * <p>
-     * getElementNames.
-     * </p>
-     *
-     * @return an array of {@link java.lang.String} objects
-     */
-    public String[] getElementNames() {
-        return nameArray;
-    }
-
-    /**
-     * <p>
-     * getElementCoefs.
-     * </p>
-     *
-     * @return an array of {@link double} objects
-     */
-    public double[] getElementCoefs() {
-        return coefArray;
-    }
+    return names;
+  }
 }

@@ -3,11 +3,15 @@
  *
  * Created on 15. mars 2001, 14:17
  */
+
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
+import java.util.UUID;
+import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.util.monitor.HeaterResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -31,6 +35,15 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   private String temperatureUnit = "K";
   private String pressureUnit = "bara";
   double coolingMediumTemperature = 278.15;
+
+  // Results from previous calculation
+  protected double lastTemperature = 0.0;
+  protected double lastPressure = 0.0;
+  protected double lastFlowRate = 0.0;
+  protected double lastOutPressure = 0.0;
+  protected double lastOutTemperature = 0.0;
+  protected double lastDuty = 0.0;
+  protected double lastPressureDrop = 0.0;
 
   /**
    * <p>
@@ -57,7 +70,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
 
   /**
    * Constructor for Heater.
-   * 
+   *
    * @param name name of heater
    */
   public Heater(String name) {
@@ -140,7 +153,25 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {
+  public boolean needRecalculation() {
+    if (inStream == null) {
+      return true;
+    }
+    if (inStream.getFluid().getTemperature() == lastTemperature
+        && inStream.getFluid().getPressure() == lastPressure
+        && Math.abs(inStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
+            / inStream.getFluid().getFlowRate("kg/hr") < 1e-6
+        && lastDuty == getDuty() && lastOutPressure == pressureOut
+        && lastOutTemperature == temperatureOut && getPressureDrop() == lastPressureDrop) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run(UUID id) {
     system = inStream.getThermoSystem().clone();
     system.init(3);
     double oldH = system.getEnthalpy();
@@ -155,7 +186,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     ThermodynamicOperations testOps = new ThermodynamicOperations(system);
     if (getSpecification().equals("out stream")) {
       getOutletStream().setFlowRate(getInletStream().getFlowRate("kg/sec"), "kg/sec");
-      getOutletStream().run();
+      getOutletStream().run(id);
       temperatureOut = getOutletStream().getTemperature();
       system = getOutletStream().getThermoSystem().clone();
     } else if (setTemperature) {
@@ -180,6 +211,28 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     // testOps.TPflash();
     // system.setTemperature(temperatureOut);
     getOutletStream().setThermoSystem(system);
+    lastTemperature = inStream.getFluid().getTemperature();
+    lastPressure = inStream.getFluid().getPressure();
+    lastFlowRate = inStream.getFluid().getFlowRate("kg/hr");
+    lastDuty = getDuty();
+    lastOutPressure = pressureOut;
+    lastOutTemperature = temperatureOut;
+    lastPressureDrop = pressureDrop;
+    setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (getCalculateSteadyState()) {
+      run(id);
+      increaseTime(dt);
+    } else {
+      inStream.setPressure(outStream.getPressure());
+      inStream.run();
+      run(id);
+      increaseTime(dt);
+    }
   }
 
   /** {@inheritDoc} */
@@ -294,14 +347,13 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   /** {@inheritDoc} */
   @Override
   public double getEntropyProduction(String unit) {
-    double entrop = 0.0;
-
-    inStream.run();
+    UUID id = UUID.randomUUID();
+    inStream.run(id);
     inStream.getFluid().init(3);
-    outStream.run();
+    outStream.run(id);
     outStream.getFluid().init(3);
 
-    entrop +=
+    double entrop =
         outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
 
     return entrop;
@@ -310,16 +362,19 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   /** {@inheritDoc} */
   @Override
   public double getExergyChange(String unit, double surroundingTemperature) {
-    double entrop = 0.0;
-
-    inStream.run();
+    UUID id = UUID.randomUUID();
+    inStream.run(id);
     inStream.getFluid().init(3);
-    outStream.run();
+    outStream.run(id);
     outStream.getFluid().init(3);
 
-    entrop += outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
+    return outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
         - inStream.getThermoSystem().getExergy(surroundingTemperature, unit);
+  }
 
-    return entrop;
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new HeaterResponse(this));
   }
 }

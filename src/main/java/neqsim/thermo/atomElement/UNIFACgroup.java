@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifac;
 
@@ -18,22 +19,26 @@ import neqsim.thermo.phase.PhaseGEUnifac;
  */
 public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<UNIFACgroup> {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(UNIFACgroup.class);
+
   double R = 0.0;
   double Q = 0.0;
   int n = 0;
   double xComp = 0.0;
-  double QComp = 0.0, QMix = 0.0;
-  public double[] QMixdN = null;// , xMixdN = null;
-  double[] lnGammaMixdn = new double[MAX_NUMBER_OF_COMPONENTS];
-  double lnGammaComp = 0.0, lnGammaMix = 0.0;
-  double lnGammaCompdT = 0.0, lnGammaMixdT = 0.0;
+  double QComp = 0.0;
+  double QMix = 0.0;
+  public double[] QMixdN = null; // , xMixdN = null;
+  double[] lnGammaMixdn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  double lnGammaComp = 0.0;
+  double lnGammaMix = 0.0;
+  double lnGammaCompdT = 0.0;
+  double lnGammaMixdT = 0.0;
   private double lnGammaCompdTdT = 0.0;
   private double lnGammaMixdTdT = 0.0;
   int groupIndex = 0;
   String groupName = "";
   int mainGroup = 0;
   int subGroup = 0;
-  static Logger logger = LogManager.getLogger(UNIFACgroup.class);
 
   /**
    * <p>
@@ -73,15 +78,14 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    * @param temp a int
    */
   public UNIFACgroup(int groupNumber, int temp) {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
         dataSet = database
             .getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
         dataSet.next();
         dataSet.getClob("name");
-      } catch (Exception e) {
+      } catch (Exception ex) {
         dataSet.close();
         dataSet = database
             .getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
@@ -93,17 +97,8 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
       mainGroup = Integer.parseInt(dataSet.getString("Main"));
       subGroup = Integer.parseInt(dataSet.getString("Secondary"));
       groupName = dataSet.getString("Name");
-      dataSet.close();
-      database.getConnection().close();
-    } catch (Exception e) {
-      try {
-        database.getConnection().close();
-      } catch (Exception ex) {
-        logger.error(ex);
-      }
-      String err = e.toString();
-      logger.error(err);
-      // System.out.println(err);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -215,6 +210,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     this.groupName = groupName;
   }
 
+  /** {@inheritDoc} */
   @Override
   public int compareTo(UNIFACgroup o) {
     if (o.getSubGroup() < getSubGroup()) {
@@ -241,13 +237,17 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
 
   /** {@inheritDoc} */
   // @Override
+  @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     UNIFACgroup other = (UNIFACgroup) obj;
     return subGroup == other.subGroup;
     /*
@@ -268,12 +268,11 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
      */
   }
 
-
   /**
    * Getter for property xComp.
    *
-   * @return Value of property xComp.
    * @param component a {@link neqsim.thermo.component.ComponentGEUnifac} object
+   * @return Value of property xComp.
    */
   public double calcXComp(ComponentGEUnifac component) {
     double temp = 0.0;
@@ -286,7 +285,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
   /*
    * public double calcXMix(PhaseGEUnifac phase) { double temp = 0.0, temp2 = 0.0, tempVal = 0.0;
-   * 
+   *
    * for (int j = 0; j < phase.getNumberOfComponents(); j++) { for (int i = 0; i <
    * ((ComponentGEUnifac) phase.getComponent(j)).getNumberOfUNIFACgroups(); i++) { tempVal =
    * phase.getComponent(j).getNumberOfMolesInPhase() * ((ComponentGEUnifac)
@@ -326,7 +325,10 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    */
   public double calcQMix(PhaseGEUnifac phase) {
     ComponentGEUnifac component;
-    double temp = 0.0, temp2 = 0.0, tempVar, numberOfMoles;
+    double temp = 0.0;
+    double temp2 = 0.0;
+    double tempVar;
+    double numberOfMoles;
     UNIFACgroup unifacGroup;
     int numberOfGrups = 0;
     for (int j = 0; j < phase.getNumberOfComponents(); j++) {
@@ -353,14 +355,19 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseGEUnifac} object
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcQMixdN(PhaseGEUnifac phase) {
     setQMixdN(new double[phase.getNumberOfComponents()]);
     ComponentGEUnifac component;
     UNIFACgroup unifacGroup;
     // calcXMixdN(phase);
-    double temp, temp2, tempVar, tempdn, temp2dn, tempVardn = 0.0;
+    double temp;
+    double temp2;
+    double tempVar;
+    double tempdn;
+    double temp2dn;
+    double tempVardn = 0.0;
     for (int k = 0; k < phase.getNumberOfComponents(); k++) {
       temp = 0.0;
       temp2 = 0.0;
@@ -403,7 +410,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
   /*
    * public double getXMixdN(int comp) { return xMixdN[comp]; }
-   * 
+   *
    * public void setXMixdN(double[] xMixdN) { this.xMixdN = xMixdN; }
    */
 

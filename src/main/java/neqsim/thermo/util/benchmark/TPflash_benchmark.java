@@ -23,12 +23,11 @@ public class TPflash_benchmark {
    * @param args an array of {@link java.lang.String} objects
    */
   public static void main(String args[]) {
-
     SystemInterface testSystem = new SystemSrkEos(303.15, 35.01325);
     // SystemInterface testSystem = new SystemSrkCPAstatoil(303.15, 10.0);
     // SystemInterface testSystem = new SystemUMRPRUMCEos(303.0, 10.0);
     // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(298.15,
-    // 1.01325);
+    // ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
     testSystem.addComponent("nitrogen", 0.0028941);
@@ -68,7 +67,7 @@ public class TPflash_benchmark {
     // testSystem.display();
     // SystemInterface testSystem2 =
     // testSystem.readObjectFromFile("c:/temp/test2.neqsim", "test2.neqsim");
-    /// testSystem2.init(3);
+    // testSystem2.init(3);
     // testSystem2.display();
     // testSystem2.init(0);
     // testSystem2.init(3);

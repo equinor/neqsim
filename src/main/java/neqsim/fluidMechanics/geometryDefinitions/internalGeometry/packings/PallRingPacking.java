@@ -3,6 +3,7 @@
  *
  * Created on 25. august 2001, 23:58
  */
+
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 
 /**
@@ -21,9 +22,8 @@ public class PallRingPacking extends Packing {
    * Constructor for PallRingPacking.
    * </p>
    */
-  @Deprecated
   public PallRingPacking() {
-    this("PallRingPacking");
+    super("PallRingPacking");
   }
 
   /**
@@ -31,22 +31,10 @@ public class PallRingPacking extends Packing {
    * Constructor for PallRingPacking.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   */
-  public PallRingPacking(String name) {
-    super(name);
-  }
-
-  /**
-   * <p>
-   * Constructor for PallRingPacking.
-   * </p>
-   *
-   * @param name a {@link java.lang.String} object
    * @param material a {@link java.lang.String} object
    * @param size a int
    */
-  public PallRingPacking(String name, String material, int size) {
-    super(name, material, size);
+  public PallRingPacking(String material, int size) {
+    super("PallRingPacking", material, size);
   }
 }

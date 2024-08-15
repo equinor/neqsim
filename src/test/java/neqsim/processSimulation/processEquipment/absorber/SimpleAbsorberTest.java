@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
-public class SimpleAbsorberTest extends neqsim.NeqSimTest{
+public class SimpleAbsorberTest extends neqsim.NeqSimTest {
   neqsim.thermo.system.SystemFurstElectrolyteEos testSystem;
 
   @BeforeEach
@@ -26,12 +26,12 @@ public class SimpleAbsorberTest extends neqsim.NeqSimTest{
             stream_Hot);
     absorber1.setAproachToEquilibrium(0.75);
 
-    // todo: Test is not well behaved
+    // TODO: Test is not well behaved
     /*
      * neqsim.processSimulation.processSystem.ProcessSystem operations = new
      * neqsim.processSimulation.processSystem.ProcessSystem(); operations.add(stream_Hot);
      * operations.add(absorber1);
-     * 
+     *
      * operations.run();
      */
     // operations.displayResult();

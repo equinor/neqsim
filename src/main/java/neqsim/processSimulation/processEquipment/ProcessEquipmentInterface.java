@@ -13,8 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface ProcessEquipmentInterface extends SimulationInterface, java.io.Serializable {
-
+public interface ProcessEquipmentInterface extends SimulationInterface {
   /**
    * <p>
    * reportResults.
@@ -26,12 +25,30 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
 
   /**
    * <p>
-   * getMechanicalDesign.
+   * Initialize a <code>initMechanicalDesign</code> for the equipment.
+   * </p>
+   */
+  default void initMechanicalDesign() {}
+
+  /**
+   * <p>
+   * Get a <code>mechanicalDesign</code> for the equipment.
    * </p>
    *
    * @return a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object
    */
   public MechanicalDesign getMechanicalDesign();
+
+  /**
+   * <p>
+   * Check if process module needs recalculating.
+   * </p>
+   *
+   * @return true or false
+   */
+  public default boolean needRecalculation() {
+    return true;
+  }
 
   /**
    * <p>
@@ -93,7 +110,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
-  default public SystemInterface getFluid() {
+  public default SystemInterface getFluid() {
     return getThermoSystem();
   }
 
@@ -118,7 +135,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
 
   /**
    * <p>
-   * getPressure.
+   * Getter for the field <code>pressure</code>.
    * </p>
    *
    * @return a double
@@ -127,7 +144,17 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
 
   /**
    * <p>
-   * setPressure.
+   * Getter for the field <code>pressure</code> converted to specified unit.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
+  public double getPressure(String unit);
+
+  /**
+   * <p>
+   * Setter for the field <code>pressure</code>.
    * </p>
    *
    * @param pressure a double
@@ -154,7 +181,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
   public String getConditionAnalysisMessage();
 
   /**
-   * method to return entropy production of the unit operation
+   * method to return entropy production of the unit operation.
    *
    * @param unit Supported units are J/K and kJ/K
    * @return entropy in specified unit
@@ -162,7 +189,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
   public double getEntropyProduction(String unit);
 
   /**
-   * Get exergy change production of the unit operation
+   * Get exergy change production of the unit operation.
    *
    * @param unit Supported units are J and kJ
    * @param surroundingTemperature The surrounding temperature in Kelvin
@@ -186,4 +213,23 @@ public interface ProcessEquipmentInterface extends SimulationInterface, java.io.
   /** {@inheritDoc} */
   @Override
   public int hashCode();
+
+  /**
+   * <p>
+   * toJson.
+   * </p>
+   *
+   * @return a String
+   */
+  public String toJson();
+
+  /**
+   * <p>
+   * getReport_json
+   * </p>
+   * Return results of simulation in json format
+   *
+   * @return a String
+   */
+  public String getReport_json();
 }
