@@ -28,7 +28,8 @@ public class PlusFractionModelTest {
     thermoSystem.addPlusFraction("C10", 11.0, 290.0 / 1000.0, 0.82);
 
     /*
-     * Specify that the Pedersen plus fraction model will be used for characterizing the plus
+     * Specify that the Pedersen plus fraction model will be used for characterizing
+     * the plus
      * component
      */
     thermoSystem.getCharacterization().setPlusFractionModel("Pedersen");
@@ -54,7 +55,6 @@ public class PlusFractionModelTest {
 
     assertEquals(0.76652495787, thermoSystem.getBeta(), 1e-4);
 
-
   }
 
   @Test
@@ -77,7 +77,8 @@ public class PlusFractionModelTest {
     thermoSystem.addPlusFraction("C10", 11.0, 590.0 / 1000.0, 0.90);
 
     /*
-     * Specify that the Pedersen heavy oil plus fraction model will be used for characterizing the
+     * Specify that the Pedersen heavy oil plus fraction model will be used for
+     * characterizing the
      * plus component
      */
     thermoSystem.getCharacterization().setPlusFractionModel("Pedersen Heavy Oil");
@@ -103,7 +104,6 @@ public class PlusFractionModelTest {
 
     assertEquals(0.767085187, thermoSystem.getBeta(), 1e-4);
 
-
   }
 
   @Test
@@ -115,9 +115,7 @@ public class PlusFractionModelTest {
     thermoSystem.addComponent("methane", 51.0);
     thermoSystem.addComponent("ethane", 1.0);
     thermoSystem.addComponent("propane", 1.0);
-
-    thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
-                                                                   // adding oil components
+    thermoSystem.getCharacterization().setTBPModel("PedersenSRK");
 
     thermoSystem.addTBPfraction("C6", 1.0, 90.0 / 1000.0, 0.7);
     thermoSystem.addTBPfraction("C7", 1.0, 110.0 / 1000.0, 0.73);
@@ -125,24 +123,18 @@ public class PlusFractionModelTest {
     thermoSystem.addTBPfraction("C9", 1.0, 140.0 / 1000.0, 0.79);
     thermoSystem.addPlusFraction("C10", 11.0, 290.0 / 1000.0, 0.82);
 
-    thermoSystem.getCharacterization().setLumpingModel("PVTlumpingModel"); // this is default
-                                                                           // lumping model in
-                                                                           // neqsim. Needs to be
-                                                                           // set before calling
-                                                                           // characterisePlusFraction()
+    thermoSystem.getCharacterization().setPlusFractionModel("Whitson Gamma Model"); // this is default
+  
+    // lumping model in
+    // neqsim. Needs to be
+    // set before calling
+    // characterisePlusFraction()
 
-    thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12); // specify
-                                                                                          // numer
-                                                                                          // of
-                                                                                          // lumped
-                                                                                          // components
-                                                                                          // (C6-C80
-                                                                                          // components)
+    thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12);
+
     thermoSystem.getCharacterization().characterisePlusFraction();
     assertEquals(16, thermoSystem.getNumberOfComponents());
 
   }
-
-
 
 }

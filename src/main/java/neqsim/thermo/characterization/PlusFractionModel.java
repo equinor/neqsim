@@ -299,6 +299,65 @@ public class PlusFractionModel implements java.io.Serializable {
     }
   }
 
+  class WhitsonGammaModel extends PedersenPlusModel {
+
+    private double gammaShape = 2.0; // Shape parameter (α)
+    private double gammaScale = 0.5; // Scale parameter (β)
+    public double[] zValues;
+    public double[] molarMasses;
+    public double[] densities;
+
+    public WhitsonGammaModel() {
+      name = "Whitson Gamma";
+    }
+
+    @Override
+    public void characterizePlusFraction(TBPModelInterface TBPModel) {
+      system.init(0);
+
+      // Implement the Gamma distribution for the plus fraction
+      zValues = new double[lastPlusFractionNumber];
+      molarMasses = new double[lastPlusFractionNumber];
+      densities = new double[lastPlusFractionNumber];
+
+      double sumZ = 0.0;
+
+      for (int i = firstPlusFractionNumber; i < lastPlusFractionNumber; i++) {
+        double fractionIndex = i - firstPlusFractionNumber + 1;
+        zValues[i] = Math.exp(-gammaShape * Math.log(fractionIndex) - fractionIndex / gammaScale);
+        molarMasses[i] =
+            MPlus * Math.pow(fractionIndex, gammaShape - 1) * Math.exp(-fractionIndex / gammaScale);
+        densities[i] = densPlus; // Simplified assumption, could be modeled differently
+
+        sumZ += zValues[i];
+      }
+
+      // Normalize z values to ensure sumZ equals zPlus
+      for (int i = firstPlusFractionNumber; i < lastPlusFractionNumber; i++) {
+        zValues[i] *= zPlus / sumZ;
+      }
+    }
+
+    public void setGammaParameters(double shape, double scale) {
+      this.gammaShape = shape;
+      this.gammaScale = scale;
+    }
+
+    @Override
+    public double[] getCoefs() {
+      return new double[] {gammaShape, gammaScale};
+    }
+
+    @Override
+    public double getCoef(int i) {
+      if (i == 0)
+        return gammaShape;
+      if (i == 1)
+        return gammaScale;
+      return 0;
+    }
+  }
+
   /**
    * <p>
    * getModel.
@@ -312,6 +371,8 @@ public class PlusFractionModel implements java.io.Serializable {
       return new PedersenPlusModel();
     } else if (name.equals("Pedersen Heavy Oil")) {
       return new PedersenHeavyOilPlusModel();
+    } else if (name.equals("Whitson Gamma Model")) {
+      return new WhitsonGammaModel();
     } else {
       return new PedersenPlusModel();
     }
