@@ -176,4 +176,64 @@ public class CompressorChartTest {
         "neqsim.util.exception.InvalidInputException: CompressorChart:setHeadUnit - Input headUnit does not support value doesNotExist",
         thrown.getMessage());
   }
+
+
+  @Test
+  void compressorTest() {
+    SystemInterface testFluid = new SystemSrkEos(298.15, 50.0);
+    testFluid.addComponent("nitrogen", 1.205);
+    testFluid.addComponent("CO2", 1.340);
+    testFluid.addComponent("methane", 87.974);
+    testFluid.addComponent("ethane", 5.258);
+    testFluid.addComponent("propane", 3.283);
+    testFluid.addComponent("i-butane", 0.082);
+    testFluid.addComponent("n-butane", 0.487);
+    testFluid.addComponent("i-pentane", 0.056);
+    testFluid.addComponent("n-pentane", 0.053);
+    testFluid.setMixingRule(2);
+    testFluid.setMultiPhaseCheck(true);
+
+    testFluid.setTemperature(24.0, "C");
+    testFluid.setPressure(80.0, "bara");
+    testFluid.setTotalFlowRate(12.0, "MSm3/day");
+
+    Stream stream_1 = new Stream("Stream1", testFluid);
+    stream_1.run();
+
+    double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};
+    double[] speed = new double[] {1000.0, 2000.0, 3000.0, 4000.0};
+    double[][] flow =
+        new double[][] {{4503.2, 6000.0, 7500.0, 8000.0}, {5330.2, 6200.0, 7500.0, 8000.0},
+            {5600.2, 7110.0, 7500.0, 8000.0}, {5830.2, 7200.0, 7800.0, 8300.0}};
+    double[][] head =
+        new double[][] {{9000.0, 8000.0, 7000.0, 6000.0}, {10000.0, 9500.0, 9000.0, 8000.0},
+            {10900.0, 10000.0, 9300.0, 8390.0}, {11200.0, 10500.0, 9800.0, 9000.0}};
+
+    double[][] polyEff = new double[][] {{90.0, 91.0, 89.0, 88.0}, {90.0, 91.0, 89.0, 88.0},
+        {90.0, 91.0, 89.0, 88.1}, {90.0, 91.0, 89.0, 88.1}};
+
+    double[] surgeFlow = new double[] {4503.0, 5330.2, 5600.0, 5830.0};
+    double[] surgeHead = new double[] {9000.0, 10000.0, 10900.0, 11200.0};
+
+    neqsim.processSimulation.processEquipment.compressor.Compressor compressor1 =
+        new neqsim.processSimulation.processEquipment.compressor.Compressor("comp1", false);
+    compressor1.setInletStream(stream_1);
+    compressor1.getCompressorChart().setCurves(chartConditions, speed, flow, head, polyEff);
+    compressor1.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeFlow,
+        surgeHead);
+    comp1.getAntiSurge().setSurgeControlFactor(1.0);
+    compressor1.setUsePolytropicCalc(true);
+    compressor1.getAntiSurge().setActive(true);
+    compressor1.setSpeed(1000);
+    compressor1.run();
+
+    Assertions.assertEquals(compressor1.getInletStream().getFlowRate("m3/hr"), 5448.41551, 1.0);
+    Assertions.assertEquals(compressor1.getPolytropicHead(), 6053.35464702455, 1.0);
+    Assertions.assertEquals(compressor1.getPolytropicEfficiency() * 100, 89.435464702455, 0.1);
+    Assertions.assertEquals(compressor1.getCompressorChart().getSurgeCurve()
+        .getSurgeFlow(compressor1.getPolytropicHead()), 295.5558, 1.0);
+    // print('surge flow ',
+    // compressor1.getCompressorChart().getSurgeCurve().getSurgeFlow(fluidhead))
+
+  }
 }
