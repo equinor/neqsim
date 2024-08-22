@@ -262,7 +262,7 @@ public class EclipseFluidReadWrite {
           kij = new double[names.size()][names.size()];
           int lengthLastLine = 0;
           List<String> list = new ArrayList<String>();
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = br.readLine().replace("/", "")) != null && addedComps < names.size() - 1) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
