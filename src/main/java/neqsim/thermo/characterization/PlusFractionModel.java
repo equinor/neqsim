@@ -227,9 +227,8 @@ public class PlusFractionModel implements java.io.Serializable {
         z[i] = Math.exp(getCoef(0) + getCoef(1) * i);
         M[i] = PVTsimMolarMass[i - 6] / 1000.0;
         dens[i] = getCoef(2) + getCoef(3) * Math.log(i);
-
-        // System.out.println("z,m,dens " + z[i] + " " + M[i] + " " + dens[i]);
       }
+        // System.out.println("z,m,dens " + z[i] + " " + M[i] + " " + dens[i]);
     }
 
     @Override
@@ -287,6 +286,11 @@ public class PlusFractionModel implements java.io.Serializable {
     public void setCoefs(double coef, int i) {
       this.coefs[i] = coef;
     }
+
+    @Override
+    public void setLastPlusFractionNumber(int fract) {
+      lastPlusFractionNumber = fract + 1;
+    }
   }
 
   private class PedersenHeavyOilPlusModel extends PedersenPlusModel {
@@ -301,35 +305,130 @@ public class PlusFractionModel implements java.io.Serializable {
 
   class WhitsonGammaModel extends PedersenPlusModel {
 
-    private double gammaShape = 2.0; // Shape parameter (α)
-    private double gammaScale = 0.5; // Scale parameter (β)
     public double[] zValues;
     public double[] molarMasses;
     public double[] densities;
+    public double eta = 90; //minimum molecular weight in C7+ 
+    public String model = "Whitson";
+    public double alfa = 1.0; 
+    public double betta = Double.NaN;
 
     public WhitsonGammaModel() {
       name = "Whitson Gamma";
     }
+  
+    public void setCalculationModel(String model){
+      this.model = model;
+    }
+
+    public void characterizePlusFractionWhitsonGamma(){
+
+    }
+
+    public double gamma(double X) {
+      double[] dataB = {-0.577191652, 0.988205891, -0.897056937,
+              0.918206857, -0.756704078, 0.482199394,
+              -0.193527818, 0.035868343};
+      double const_ = 1.0;
+      double XX = X;
+      if (X < 1.0) {
+          XX = X + 1.0;
+      }
+      while (XX >= 2.0) {
+          XX -= 1.0;
+      }
+      const_ = XX * const_;
+      XX -= 1.0;
+      double Y = 1.0;
+      for (int i = 1; i <= 8; i++) {
+          Y += dataB[i - 1] * XX * i;
+      }
+      double GAMMA = const_ * Y;
+      if (X < 1.0) {
+          GAMMA /= X;
+      }
+      return GAMMA;
+      }
+
+    public double[] P0P1(double MWB) {
+      double P0 = 0.0;
+      double P1 = 0.0;
+      if (MWB == eta) {
+          return new double[]{P0, P1};
+      }
+      double Y = (MWB - eta) / betta;
+      double Q = Math.exp(-Y) * Math.pow(Y, alfa) / gamma(alfa);
+      double TERM = 1.0 / alfa;
+      double S = TERM;
+      for (int j = 1; j <= 10000; j++) {
+          TERM *= Y / (alfa + j);
+          S += TERM;
+          if (Math.abs(TERM) <= 1e-8) {
+              P0 = Q * S;
+              P1 = Q * (S - 1.0 / alfa);
+              break;
+          }
+          
+      }
+      return new double[]{P0, P1};
+    }
+
+    public void densityUOP(){
+      // Calculates density of the C+ function with Watson or Universal Oil Products 
+      // characterization factor 
+      // Experience has shown, that the method is not very accurate for C20+
+      double Kw = 4.5579*Math.pow(MPlus*1000, 0.15178)*Math.pow(densPlus,-1.18241);
+      for (int i = firstPlusFractionNumber; i < lastPlusFractionNumber; i++) {
+        densities[i-1] = 6.0108*Math.pow(molarMasses[i-1], 0.17947)*Math.pow(Kw,-1.18241);
+      }
+    }
+
+    
 
     @Override
     public void characterizePlusFraction(TBPModelInterface TBPModel) {
       system.init(0);
+      double MWBU = Double.NaN; 
+      double MWBL = Double.NaN;
+      double sumZ = 0.0;
 
+      betta = (MPlus*1000 - eta)/alfa;
       // Implement the Gamma distribution for the plus fraction
       zValues = new double[lastPlusFractionNumber];
       molarMasses = new double[lastPlusFractionNumber];
       densities = new double[lastPlusFractionNumber];
+      
+      if (model.equals("Whitson")){
+        for (int i = firstPlusFractionNumber; i < lastPlusFractionNumber; i++) {
+          System.out.println(i);
+          if (i == 1){
+            MWBU = eta;
+          }
+          MWBL = MWBU; 
+          MWBU = MWBL + 14;
+          if (i == lastPlusFractionNumber){
+            MWBU = 10000.0;
+          }
+          double[] P0LP1L = P0P1(MWBL);
+          double P0L = P0LP1L[0];
+          double P1L = P0LP1L[1];
 
-      double sumZ = 0.0;
+          double[] P0UP1U = P0P1(MWBU);
+          double P0U = P0UP1U[0];
+          double P1U = P0UP1U[1];
 
-      for (int i = firstPlusFractionNumber; i < lastPlusFractionNumber; i++) {
-        double fractionIndex = i - firstPlusFractionNumber + 1;
-        zValues[i] = Math.exp(-gammaShape * Math.log(fractionIndex) - fractionIndex / gammaScale);
-        molarMasses[i] =
-            MPlus * Math.pow(fractionIndex, gammaShape - 1) * Math.exp(-fractionIndex / gammaScale);
-        densities[i] = densPlus; // Simplified assumption, could be modeled differently
+          double Z = P0U - P0L;
+          if (Z < 1E-15){
+            Z = 1E-15;
+          }
+          zValues[i] = Z*zPlus;
+          double MWAV = eta + alfa * betta * (P1U - P1L) / (P0U - P0L);
+          molarMasses[i] = MWAV/1000;
+          sumZ = sumZ + zValues[i];
+        }
+        densityUOP();
 
-        sumZ += zValues[i];
+
       }
 
       // Normalize z values to ensure sumZ equals zPlus
@@ -338,24 +437,41 @@ public class PlusFractionModel implements java.io.Serializable {
       }
     }
 
-    public void setGammaParameters(double shape, double scale) {
-      this.gammaShape = shape;
-      this.gammaScale = scale;
+    public void setGammaParameters(double shape, double minMW) {
+      this.alfa = shape;
+      this.eta = minMW;
     }
 
     @Override
     public double[] getCoefs() {
-      return new double[] {gammaShape, gammaScale};
+      return new double[] {alfa, eta};
     }
 
     @Override
     public double getCoef(int i) {
       if (i == 0)
-        return gammaShape;
+        return alfa;
       if (i == 1)
-        return gammaScale;
+        return eta;
       return 0;
     }
+
+    @Override
+    public double[] getZ() {
+      return zValues;
+    }
+
+    @Override
+    public double[] getM() {
+      return molarMasses;
+    }
+
+    @Override
+    public double[] getDens() {
+      return densities;
+    }
+
+
   }
 
   /**
