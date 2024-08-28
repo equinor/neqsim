@@ -1322,7 +1322,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
       throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "bubblePointPressureFlash", "Could not find solution - possible no dew point exists");
+          "bubblePointPressureFlash", "Could not find solution - possible no bubble point exists");
     }
   }
 
