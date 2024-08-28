@@ -110,7 +110,7 @@ public class Report {
     }
 
     // Convert the final JsonObject to a JSON string with pretty printing
-    Gson prettyGson = new GsonBuilder().setPrettyPrinting().create();
+    Gson prettyGson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return prettyGson.toJson(finalJsonObject);
   }
 }
