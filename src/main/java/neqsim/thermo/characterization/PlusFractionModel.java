@@ -400,7 +400,6 @@ public class PlusFractionModel implements java.io.Serializable {
       
       if (model.equals("Whitson")){
         for (int i = firstPlusFractionNumber; i < lastPlusFractionNumber; i++) {
-          System.out.println(i);
           if (i == 1){
             MWBU = eta;
           }
