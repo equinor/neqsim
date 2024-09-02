@@ -393,6 +393,7 @@ public class SolidFlash1 extends TPflash {
 
     system.setSolidPhaseCheck(true);
     if (checkAndAddSolidPhase() == 0) {
+      system.init(1);
       return;
     }
     if (system.getPhase(0).getNumberOfComponents() == 1) {
