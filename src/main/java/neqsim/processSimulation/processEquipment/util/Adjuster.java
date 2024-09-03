@@ -198,6 +198,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     double deviation = targetValue - targetValueCurrent;
 
     error = deviation;
+
     if (iterations < 2) {
       if (adjustedVariable.equals("mass flow")) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation,
@@ -220,9 +221,11 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       double newVal = error / derivate;
       if (inputValue - newVal > maxAdjustedValue) {
         newVal = inputValue - maxAdjustedValue;
+        error = tolerance * 0.9;
       }
       if (inputValue - newVal < minAdjustedValue) {
         newVal = inputValue - minAdjustedValue;
+        error = tolerance * 0.9;
       }
       if (adjustedVariable.equals("mass flow")) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
@@ -354,7 +357,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Setter for the field <code>maxAdjustedValue</code>.</p>
+   * <p>
+   * Setter for the field <code>maxAdjustedValue</code>.
+   * </p>
    *
    * @param maxVal a double
    */
@@ -366,7 +371,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Setter for the field <code>minAdjustedValue</code>.</p>
+   * <p>
+   * Setter for the field <code>minAdjustedValue</code>.
+   * </p>
    *
    * @param minVal a double
    */
@@ -378,7 +385,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Getter for the field <code>maxAdjustedValue</code>.</p>
+   * <p>
+   * Getter for the field <code>maxAdjustedValue</code>.
+   * </p>
    *
    * @return a double
    */
@@ -387,7 +396,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Getter for the field <code>minAdjustedValue</code>.</p>
+   * <p>
+   * Getter for the field <code>minAdjustedValue</code>.
+   * </p>
    *
    * @return a double
    */
