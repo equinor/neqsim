@@ -2,6 +2,7 @@ package neqsim.thermo.characterization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.characterization.PlusFractionModel.WhitsonGammaModel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -134,6 +135,15 @@ public class PlusFractionModelTest {
     ops.TPflash();
     // thermoSystem.prettyPrint();
     assertEquals(0.746485111, thermoSystem.getBeta(), 1e-4);
+
+    // illustration of how to set parameters for the gamma model
+    ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel())
+        .setGammaParameters(1.0, 90);
+    double shape = ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel())
+        .getGammaParameters()[0];
+    double minMW = ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel())
+        .getGammaParameters()[1];
+    assertEquals(90.0, minMW, 1e-4);
 
   }
 
