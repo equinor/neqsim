@@ -2,6 +2,7 @@ package neqsim.thermo.characterization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.characterization.PlusFractionModel.WhitsonGammaModel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -32,28 +33,26 @@ public class PlusFractionModelTest {
      * component
      */
     thermoSystem.getCharacterization().setPlusFractionModel("Pedersen");
-
     thermoSystem.getCharacterization().setLumpingModel("PVTlumpingModel"); // this is default
                                                                            // lumping model in
                                                                            // neqsim. Needs to be
                                                                            // set before calling
                                                                            // characterisePlusFraction()
 
-    thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12); // specify
-                                                                                          // numer
-                                                                                          // of
-                                                                                          // lumped
-                                                                                          // components
-                                                                                          // (C6-C80
-                                                                                          // components)
+    thermoSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(9); // specif
+                                                                                         // numer
+                                                                                         // of
+                                                                                         // lumped
+                                                                                         // components
+                                                                                         // (C6-C80
+                                                                                         // components)
     thermoSystem.getCharacterization().characterisePlusFraction();
-    assertEquals(16, thermoSystem.getNumberOfComponents());
+    assertEquals(17, thermoSystem.getNumberOfComponents());
 
     ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
     ops.TPflash();
-
+    // thermoSystem.prettyPrint();
     assertEquals(0.76652495787, thermoSystem.getBeta(), 1e-4);
-
 
   }
 
@@ -87,23 +86,22 @@ public class PlusFractionModelTest {
                                                                            // neqsim. Needs to be
                                                                            // set before calling
                                                                            // characterisePlusFraction()
-
-    thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12); // specify
-                                                                                          // numer
-                                                                                          // of
-                                                                                          // lumped
-                                                                                          // components
-                                                                                          // (C6-C80
-                                                                                          // components)
+    thermoSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(3);
+    thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(8);
+    // specify
+    // numer
+    // of
+    // lumped
+    // components
+    // (C6-C80
+    // components)
     thermoSystem.getCharacterization().characterisePlusFraction();
-    assertEquals(16, thermoSystem.getNumberOfComponents());
+    assertEquals(12, thermoSystem.getNumberOfComponents());
 
     ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
     ops.TPflash();
-
-    assertEquals(0.767085187, thermoSystem.getBeta(), 1e-4);
-
-
+    // thermoSystem.prettyPrint();
+    assertEquals(0.767272255056255, thermoSystem.getBeta(), 1e-4);
   }
 
   @Test
@@ -115,9 +113,7 @@ public class PlusFractionModelTest {
     thermoSystem.addComponent("methane", 51.0);
     thermoSystem.addComponent("ethane", 1.0);
     thermoSystem.addComponent("propane", 1.0);
-
-    thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
-                                                                   // adding oil components
+    thermoSystem.getCharacterization().setTBPModel("PedersenSRK");
 
     thermoSystem.addTBPfraction("C6", 1.0, 90.0 / 1000.0, 0.7);
     thermoSystem.addTBPfraction("C7", 1.0, 110.0 / 1000.0, 0.73);
@@ -125,24 +121,30 @@ public class PlusFractionModelTest {
     thermoSystem.addTBPfraction("C9", 1.0, 140.0 / 1000.0, 0.79);
     thermoSystem.addPlusFraction("C10", 11.0, 290.0 / 1000.0, 0.82);
 
-    thermoSystem.getCharacterization().setLumpingModel("PVTlumpingModel"); // this is default
-                                                                           // lumping model in
-                                                                           // neqsim. Needs to be
-                                                                           // set before calling
-                                                                           // characterisePlusFraction()
+    thermoSystem.getCharacterization().setPlusFractionModel("Whitson Gamma Model");
 
-    thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12); // specify
-                                                                                          // numer
-                                                                                          // of
-                                                                                          // lumped
-                                                                                          // components
-                                                                                          // (C6-C80
-                                                                                          // components)
+    // Add how to set parameters in the gamma model here
+
+    thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12);
+
     thermoSystem.getCharacterization().characterisePlusFraction();
+    thermoSystem.setMixingRule("classic");
     assertEquals(16, thermoSystem.getNumberOfComponents());
 
+    ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
+    ops.TPflash();
+    // thermoSystem.prettyPrint();
+    assertEquals(0.746485111, thermoSystem.getBeta(), 1e-4);
+
+    // illustration of how to set parameters for the gamma model
+    ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel())
+        .setGammaParameters(1.0, 90);
+    double shape = ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel())
+        .getGammaParameters()[0];
+    double minMW = ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel())
+        .getGammaParameters()[1];
+    assertEquals(90.0, minMW, 1e-4);
+
   }
-
-
 
 }
