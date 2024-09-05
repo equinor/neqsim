@@ -134,6 +134,11 @@ public class StreamResponse {
             inputStream.getFluid().getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
         neqsim.util.unit.Units.getSymbol("volume flow")));
 
+    newdata.put("ideal liquid flow rate", new Value(
+          Double.toString(
+              inputStream.getFluid().getFlowRate("idSm3/hr")),
+              "idSm3/hr"));
+
     newdata.put("heat capacity (Cp)", new Value(
         Double.toString(
             inputStream.getFluid().getCp(neqsim.util.unit.Units.getSymbol("Heat Capacity (Cp)"))),
