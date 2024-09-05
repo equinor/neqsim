@@ -221,11 +221,15 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       double newVal = error / derivate;
       if (inputValue - newVal > maxAdjustedValue) {
         newVal = inputValue - maxAdjustedValue;
-        error = tolerance * 0.9;
+        if (Math.abs(oldInputValue - inputValue) < 1e-10) {
+          error = tolerance * 0.9;
+        }
       }
       if (inputValue - newVal < minAdjustedValue) {
         newVal = inputValue - minAdjustedValue;
-        error = tolerance * 0.9;
+        if (Math.abs(oldInputValue - inputValue) < 1e-10) {
+          error = tolerance * 0.9;
+        }
       }
       if (adjustedVariable.equals("mass flow")) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
