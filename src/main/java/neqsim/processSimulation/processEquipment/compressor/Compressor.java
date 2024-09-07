@@ -37,7 +37,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   private double outTemperature = 298.15;
   private boolean useOutTemperature = false;
   private double compressionRatio = 2.0;
+  private double actualCompressionRatio = 2.0;
   private boolean useCompressionRatio = false;
+  private double maxOutletPressure = 10000.0;
+
+  private boolean isSetMaxOutletPressure = false;
   private CompressorPropertyProfile propertyProfile = new CompressorPropertyProfile();
   public double dH = 0.0;
   public double inletEnthalpy = 0;
@@ -349,7 +353,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     double fractionAntiSurge = 0.0;
     double kappa = 0.0;
     if (useCompressionRatio) {
-      setOutletPressure(presinn * compressionRatio);
+      double outpres = presinn * compressionRatio;
+      if (isSetMaxOutletPressure && outpres > maxOutletPressure) {
+        outpres = maxOutletPressure;
+      }
+      setOutletPressure(outpres);
     }
     if (useOutTemperature) {
       if (useRigorousPolytropicMethod) {
@@ -659,7 +667,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     polytropicFluidHead =
         getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0 * getPolytropicEfficiency();
     polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
-    compressionRatio = getOutletPressure() / presinn;
+    actualCompressionRatio = getOutletPressure() / presinn;
     setCalculationIdentifier(id);
   }
 
@@ -1431,4 +1439,26 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public String toJson() {
     return new GsonBuilder().create().toJson(new CompressorResponse(this));
   }
+
+  public double getMaxOutletPressure() {
+    return maxOutletPressure;
+  }
+
+  public void setMaxOutletPressure(double maxOutletPressure) {
+    this.maxOutletPressure = maxOutletPressure;
+    this.isSetMaxOutletPressure = true;
+  }
+
+  public boolean isSetMaxOutletPressure() {
+    return isSetMaxOutletPressure;
+  }
+
+  public void setSetMaxOutletPressure(boolean isSetMaxOutletPressure) {
+    this.isSetMaxOutletPressure = isSetMaxOutletPressure;
+  }
+
+  public double getActualCompressionRatio() {
+    return actualCompressionRatio;
+  }
+
 }
