@@ -37,6 +37,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   private double outTemperature = 298.15;
   private boolean useOutTemperature = false;
   private double compressionRatio = 2.0;
+  private double actualCompressionRatio = 2.0;
   private boolean useCompressionRatio = false;
   private double maxOutletPressure = 10000.0;
 
@@ -666,7 +667,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     polytropicFluidHead =
         getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0 * getPolytropicEfficiency();
     polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
-    compressionRatio = getOutletPressure() / presinn;
+    actualCompressionRatio = getOutletPressure() / presinn;
     setCalculationIdentifier(id);
   }
 
@@ -1454,6 +1455,10 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
   public void setSetMaxOutletPressure(boolean isSetMaxOutletPressure) {
     this.isSetMaxOutletPressure = isSetMaxOutletPressure;
+  }
+
+  public double getActualCompressionRatio() {
+    return actualCompressionRatio;
   }
 
 }
