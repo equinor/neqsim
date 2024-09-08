@@ -40,7 +40,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   private double actualCompressionRatio = 2.0;
   private boolean useCompressionRatio = false;
   private double maxOutletPressure = 10000.0;
-
   private boolean isSetMaxOutletPressure = false;
   private CompressorPropertyProfile propertyProfile = new CompressorPropertyProfile();
   public double dH = 0.0;
@@ -1453,7 +1452,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     return isSetMaxOutletPressure;
   }
 
-  public void setSetMaxOutletPressure(boolean isSetMaxOutletPressure) {
+  public void setIsSetMaxOutletPressure(boolean isSetMaxOutletPressure) {
     this.isSetMaxOutletPressure = isSetMaxOutletPressure;
   }
 
