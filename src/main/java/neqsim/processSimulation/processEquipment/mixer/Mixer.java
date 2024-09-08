@@ -15,7 +15,6 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -196,10 +195,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     for (int k = 0; k < streams.size(); k++) {
       streams.get(k).getThermoSystem().init(3);
       enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-      // System.out.println("total enthalpy k : " + ( ((Stream)
-      // streams.get(k)).getThermoSystem()).getEnthalpy());
     }
-    // System.out.println("total enthalpy of streams: " + enthalpy);
     return enthalpy;
   }
 
