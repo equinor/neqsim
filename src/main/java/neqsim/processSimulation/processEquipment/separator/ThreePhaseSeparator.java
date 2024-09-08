@@ -39,6 +39,8 @@ public class ThreePhaseSeparator extends Separator {
   double aqueousInOil = 0.00;
   String aqueousInOilSpec = "mole";
 
+  boolean useTempMultiPhaseCheck = false;
+
   /**
    * <p>
    * Constructor for ThreePhaseSeparator.
@@ -162,9 +164,15 @@ public class ThreePhaseSeparator extends Separator {
     inletStreamMixer.run(id);
     thermoSystem = inletStreamMixer.getOutletStream().getThermoSystem().clone();
 
-    thermoSystem.setMultiPhaseCheck(true);
+    if (!thermoSystem.doMultiPhaseCheck()) {
+      useTempMultiPhaseCheck = true;
+      thermoSystem.setMultiPhaseCheck(true);
+    }
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoOps.TPflash();
+    if (useTempMultiPhaseCheck) {
+      thermoSystem.setMultiPhaseCheck(false);
+    }
     // thermoSystem.display();
     thermoSystem.addPhaseFractionToPhase(gasInAqueous, gasInAqueousSpec, specifiedStream, "gas",
         "aqueous");
