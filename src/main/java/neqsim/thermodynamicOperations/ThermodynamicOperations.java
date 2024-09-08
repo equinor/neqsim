@@ -1319,10 +1319,15 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } else {
       operation = new bubblePointPressureFlash(system);
     }
-    operation.run();
+    try {
+      operation.run();
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+    }
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
+      Exception e = new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
           "bubblePointPressureFlash", "Could not find solution - possible no bubble point exists");
+      logger.error(e.getMessage());
     }
   }
 

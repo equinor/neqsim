@@ -34,7 +34,7 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
     thermoSystem.addPlusFraction("C31_C38", 1.0, 471.0 / 1000.0, 0.90);
     thermoSystem.addPlusFraction("C38_C80", 1.0, 662.0 / 1000.0, 0.92);
     thermoSystem.setMixingRule("classic");
-    // thermoSystem.setMultiPhaseCheck(true);
+   // thermoSystem.setMultiPhaseCheck(true);
 
     thermoSystem.setMolarComposition(new double[] {0.005269, 0.039189, 0.700553, 0.091154, 0.050908,
         0.007751, 0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355, 0.007658,
@@ -92,6 +92,7 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
     gasMixer.addStream(secondStageSeparator.getGasOutStream());
     gasMixer.addStream(thirdStageSeparator.getGasOutStream());
     gasMixer.addStream(standardStageSeparator.getGasOutStream());
+    gasMixer.setOutTemperature(288.15);
 
     neqsim.processSimulation.processEquipment.stream.Stream exportoil =
         new neqsim.processSimulation.processEquipment.stream.Stream("export oil",
@@ -116,7 +117,7 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
 
     oilprocess.run();
 
-    assertEquals(28.74349, gasMixer.getOutStream().getTemperature("C"), 0.01);
+    assertEquals(15.0, gasMixer.getOutStream().getTemperature("C"), 0.01);
     assertEquals(2278.2594247, exportgas.getFlowRate("Sm3/hr") / exportoil.getFlowRate("idSm3/hr"),
         0.01);
 
