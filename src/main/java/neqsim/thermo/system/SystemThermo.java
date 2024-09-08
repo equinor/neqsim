@@ -1998,6 +1998,8 @@ public abstract class SystemThermo implements SystemInterface {
         conversionFactor = 0.00094781712;
         break;
       case "kJ/kmol":
+        conversionFactor = 1.0 / getTotalNumberOfMoles()/1000.0;
+        break;
       case "J/mol":
         conversionFactor = 1.0 / getTotalNumberOfMoles();
         break;
@@ -2037,6 +2039,9 @@ public abstract class SystemThermo implements SystemInterface {
         break;
       case "J/molK":
         conversionFactor = 1.0 / getTotalNumberOfMoles();
+        break;
+      case "kJ/molK":
+        conversionFactor = 1.0 / getTotalNumberOfMoles()/1000.0;
         break;
       case "J/kgK":
         conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass();
