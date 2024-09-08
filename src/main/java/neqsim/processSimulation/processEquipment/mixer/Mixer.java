@@ -195,11 +195,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     for (int k = 0; k < streams.size(); k++) {
       streams.get(k).getThermoSystem().init(3);
       enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-      System.out.println("total enthalpy k : "
-          + (((neqsim.processSimulation.processEquipment.stream.StreamInterface) streams.get(k))
-              .getThermoSystem()).getEnthalpy());
     }
-    System.out.println("total enthalpy of streams: " + enthalpy);
     return enthalpy;
   }
 

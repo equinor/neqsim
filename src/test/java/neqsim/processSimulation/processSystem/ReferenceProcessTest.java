@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processSystem;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -33,7 +34,8 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
     thermoSystem.addPlusFraction("C31_C38", 1.0, 471.0 / 1000.0, 0.90);
     thermoSystem.addPlusFraction("C38_C80", 1.0, 662.0 / 1000.0, 0.92);
     thermoSystem.setMixingRule("classic");
-    
+    // thermoSystem.setMultiPhaseCheck(true);
+
     thermoSystem.setMolarComposition(new double[] {0.005269, 0.039189, 0.700553, 0.091154, 0.050908,
         0.007751, 0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355, 0.007658,
         0.003861, 0.003301, 0.002624, 0.001857, 0.001320, 0.001426, 0.001164, 0.000916});
@@ -113,9 +115,8 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
     oilprocess.add(exportgas);
 
     oilprocess.run();
-    thirdStageSeparator.getFluid().prettyPrint();
-    standardStageSeparator.run();
-    oilprocess.add(gasMixer);
+
+    assertEquals(28.74349, gasMixer.getOutStream().getTemperature("C"), 0.01);
 
   }
 
