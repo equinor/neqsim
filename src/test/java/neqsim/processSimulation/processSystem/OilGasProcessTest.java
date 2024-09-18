@@ -11,6 +11,7 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.splitter.Splitter;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.processEquipment.util.Calculator;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
@@ -185,6 +186,10 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     recycl.setOutletStream(recyclegasstream);
     recycl.run();
 
+    Calculator antisurgeCalculator = new Calculator("anti surge calculator");
+    antisurgeCalculator.addInputVariable(gascompressor);
+    antisurgeCalculator.setOutputVariable(gassplitter);
+
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(gas_from_separator);
@@ -195,6 +200,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     operations.add(gassplitter);
     operations.add(antisurgevalve);
     operations.add(recycl);
+    operations.add(antisurgeCalculator);
     operations.run();
 
     assertEquals(6.9999999, gassplitter.getSplitStream(0).getFlowRate("MSm3/day"), 1e-4);

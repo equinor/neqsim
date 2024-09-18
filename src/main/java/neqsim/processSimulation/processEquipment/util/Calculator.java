@@ -71,10 +71,22 @@ public class Calculator extends ProcessEquipmentBaseClass {
     return false;
   }
 
+  public void runAntiSurgeCalc(UUID id) {
+
+    for (int i = 0; i < inputVariable.size(); i++) {
+      // distance inputVariable.get;
+    }
+  }
+
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     double sum = 0.0;
+    if (name.equals("anti surge calculator")) {
+      runAntiSurgeCalc(id);
+      return;
+    }
 
     if (name.equals("MEG makeup calculator")) {
       for (int i = 0; i < inputVariable.size(); i++) {
