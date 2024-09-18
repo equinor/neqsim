@@ -2,9 +2,13 @@ package neqsim.processSimulation.processSystem;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
+import neqsim.processSimulation.processEquipment.compressor.Compressor;
+import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
+import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.pump.Pump;
 import neqsim.processSimulation.processEquipment.separator.Separator;
+import neqsim.processSimulation.processEquipment.splitter.Splitter;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
@@ -124,5 +128,79 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
 
     // System.out.println("recycle flow " + recycle1.getOutletStream().getFlowRate("kg/hr"));
     // valveLP1.getOutletStream().getFluid().prettyPrint();
+  }
+
+  @Test
+  public void runAntiSurgeProcess() throws InterruptedException {
+    SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);
+    thermoSystem.addComponent("nitrogen", 1.0);
+    thermoSystem.addComponent("CO2", 1.0);
+    thermoSystem.addComponent("methane", 51.0);
+    thermoSystem.addComponent("ethane", 1.0);
+    thermoSystem.setMixingRule("classic");
+
+    Stream gas_from_separator = new Stream("feed stream", thermoSystem);
+    gas_from_separator.setPressure(55.0, "bara");
+    gas_from_separator.setTemperature(30.0, "C");
+    gas_from_separator.setFlowRate(7.0, "MSm3/day");
+    gas_from_separator.run();
+
+    Stream recyclegasstream = gas_from_separator.clone();
+    recyclegasstream.setFlowRate(1.2, "MSm3/day");
+    recyclegasstream.run();
+
+    Mixer gasmixer = new Mixer("gas mixer");
+    gasmixer.addStream(gas_from_separator);
+    gasmixer.addStream(recyclegasstream);
+    gasmixer.run();
+
+    Compressor gascompressor = new Compressor("gas compressor");
+    gascompressor.setInletStream(gasmixer.getOutletStream());
+    gascompressor.setOutletPressure(90.0, "bara");
+    gascompressor.run();
+    gasmixer.run();
+
+    Cooler gascooler = new Cooler("gas cooler");
+    gascooler.setInletStream(gascompressor.getOutletStream());
+    gascooler.setOutTemperature(30.0, "C");
+    gascooler.run();
+
+    Separator gassep = new Separator("gas separator");
+    gassep.setInletStream(gascooler.getOutletStream());
+    gassep.run();
+
+    Splitter gassplitter = new Splitter("gas splitter");
+    gassplitter.setInletStream(gassep.getGasOutStream());
+    gassplitter.setFlowRates(new double[] {7.0, 1.2}, "MSm3/day");
+    gassplitter.run();
+
+
+    ThrottlingValve antisurgevalve = new ThrottlingValve("gas valve");
+    antisurgevalve.setInletStream(gassplitter.getSplitStream(1));
+    antisurgevalve.setOutletPressure(55.0, "bara");
+    antisurgevalve.run();
+
+    Recycle recycl = new Recycle("rec");
+    recycl.addStream(antisurgevalve.getOutletStream());
+    recycl.setOutletStream(recyclegasstream);
+    recycl.run();
+
+    neqsim.processSimulation.processSystem.ProcessSystem operations =
+        new neqsim.processSimulation.processSystem.ProcessSystem();
+    operations.add(gas_from_separator);
+    operations.add(recyclegasstream);
+    operations.add(gasmixer);
+    operations.add(gascooler);
+    operations.add(gassep);
+    operations.add(gassplitter);
+    operations.add(antisurgevalve);
+    operations.add(recycl);
+    operations.run();
+
+    assertEquals(6.9999999, gassplitter.getSplitStream(0).getFlowRate("MSm3/day"), 1e-4);
+    assertEquals(1.2, gassplitter.getSplitStream(1).getFlowRate("MSm3/day"), 1e-4);
+
+
+
   }
 }
