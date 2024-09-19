@@ -47,9 +47,9 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     thermoSystem.addPlusFraction("C38_C80", 1.0, 662.0 / 1000.0, 0.92);
     thermoSystem.setMixingRule("classic");
     thermoSystem.setMultiPhaseCheck(true);
-    thermoSystem.setMolarComposition(new double[] {0.034266, 0.005269, 0.039189, 0.700553, 0.091154,
+    thermoSystem.setMolarComposition(new double[] { 0.034266, 0.005269, 0.039189, 0.700553, 0.091154,
         0.050908, 0.007751, 0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355,
-        0.007658, 0.003861, 0.003301, 0.002624, 0.001857, 0.001320, 0.001426, 0.001164, 0.000916});
+        0.007658, 0.003861, 0.003301, 0.002624, 0.001857, 0.001320, 0.001426, 0.001164, 0.000916 });
     // thermoSystem.prettyPrint();
 
     Stream feedStream = new Stream("feed stream", thermoSystem);
@@ -57,9 +57,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     feedStream.setTemperature(25.5, "C");
     feedStream.setPressure(26.0, "bara");
 
-    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator1stStage =
-        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-            "1st stage separator", feedStream);
+    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator1stStage = new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
+        "1st stage separator", feedStream);
 
     ThrottlingValve valve1 = new ThrottlingValve("valve1", seprator1stStage.getLiquidOutStream());
     valve1.setOutletPressure(19.0);
@@ -67,9 +66,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     Heater oilHeater = new Heater("oil heater", valve1.getOutletStream());
     oilHeater.setOutTemperature(359.0);
 
-    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator2ndStage =
-        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-            "2nd stage separator", oilHeater.getOutletStream());
+    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator2ndStage = new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
+        "2nd stage separator", oilHeater.getOutletStream());
 
     ThrottlingValve valve2 = new ThrottlingValve("valve2", seprator2ndStage.getLiquidOutStream());
     valve2.setOutletPressure(2.7);
@@ -78,14 +76,12 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     recircstream1.setName("oilRecirc1");
     recircstream1.setFlowRate(1e-6, "kg/hr");
 
-    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator3rdStage =
-        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-            "3rd stage separator");
+    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator3rdStage = new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
+        "3rd stage separator");
     seprator3rdStage.addStream(valve2.getOutletStream());
     seprator3rdStage.addStream(recircstream1);
 
-    ThrottlingValve pipeloss1st =
-        new ThrottlingValve("pipeloss1st", seprator3rdStage.getGasOutStream());
+    ThrottlingValve pipeloss1st = new ThrottlingValve("pipeloss1st", seprator3rdStage.getGasOutStream());
     pipeloss1st.setOutletPressure(2.7 - 0.03);
 
     Heater coolerLP = new Heater("cooler LP", pipeloss1st.getOutletStream());
@@ -103,8 +99,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     recycle1.addStream(valveLP1.getOutletStream());
     recycle1.setOutletStream(recircstream1);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(feedStream);
     operations.add(seprator1stStage);
     operations.add(valve1);
@@ -127,7 +122,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     assertEquals(seprator3rdStage.getGasOutStream().getFlowRate("kg/hr"),
         coolerLP.getOutletStream().getFlowRate("kg/hr"), 1e-4);
 
-    // System.out.println("recycle flow " + recycle1.getOutletStream().getFlowRate("kg/hr"));
+    // System.out.println("recycle flow " +
+    // recycle1.getOutletStream().getFlowRate("kg/hr"));
     // valveLP1.getOutletStream().getFluid().prettyPrint();
   }
 
@@ -159,6 +155,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     gascompressor.setInletStream(gasmixer.getOutletStream());
     gascompressor.setOutletPressure(90.0, "bara");
     gascompressor.run();
+    gascompressor.generateCompressorCurves();
     gasmixer.run();
 
     Cooler gascooler = new Cooler("gas cooler");
@@ -172,9 +169,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
 
     Splitter gassplitter = new Splitter("gas splitter");
     gassplitter.setInletStream(gassep.getGasOutStream());
-    gassplitter.setFlowRates(new double[] {7.0, 1.2}, "MSm3/day");
+    gassplitter.setFlowRates(new double[] { 7.0, 1.2 }, "MSm3/day");
     gassplitter.run();
-
 
     ThrottlingValve antisurgevalve = new ThrottlingValve("gas valve");
     antisurgevalve.setInletStream(gassplitter.getSplitStream(1));
@@ -190,8 +186,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     antisurgeCalculator.addInputVariable(gascompressor);
     antisurgeCalculator.setOutputVariable(gassplitter);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(gas_from_separator);
     operations.add(recyclegasstream);
     operations.add(gasmixer);
@@ -205,8 +200,6 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
 
     assertEquals(6.9999999, gassplitter.getSplitStream(0).getFlowRate("MSm3/day"), 1e-4);
     assertEquals(1.2, gassplitter.getSplitStream(1).getFlowRate("MSm3/day"), 1e-4);
-
-
 
   }
 }
