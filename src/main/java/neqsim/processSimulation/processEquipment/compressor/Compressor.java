@@ -1002,6 +1002,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   /** {@inheritDoc} */
   @Override
   public double getDistanceToSurge() {
+    getCompressorChart().getSurgeCurve();
+    getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead());
     return (getInletStream().getFlowRate("m3/hr")
         - getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead()))
         / getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead());
