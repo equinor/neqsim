@@ -75,16 +75,16 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
   public void runAntiSurgeCalc(UUID id) {
     Compressor compressor = (Compressor) inputVariable.get(0);
-    double distToSurge =  compressor.getDistanceToSurge();
+    double distToSurge = compressor.getDistanceToSurge();
     double flowInAntiSurge = 1e-6;
     if (distToSurge < 0) {
       flowInAntiSurge = -distToSurge * compressor.getInletStream().getFlowRate("MSm3/day");
     }
 
     Splitter anitSurgeSplitter = (Splitter) outputVariable;
-
     anitSurgeSplitter.setFlowRates(new double[] {-1, flowInAntiSurge}, "MSm3/day");
-
+    anitSurgeSplitter.run();
+    anitSurgeSplitter.setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */
