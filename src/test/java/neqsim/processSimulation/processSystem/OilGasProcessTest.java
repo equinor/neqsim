@@ -212,11 +212,24 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     operations.add(recycl);
     operations.add(antisurgeCalculator);
     operations.run();
+    gascompressor.setOutletPressure(90.0);
 
-
-
+    gascompressor.getCompressorChart().setUseCompressorChart(false);
+    operations.run();
     assertEquals(6.9999999, gassplitter.getSplitStream(0).getFlowRate("MSm3/day"), 1e-4);
-    // assertEquals(1.2, gassplitter.getSplitStream(1).getFlowRate("MSm3/day"), 1e-4);
+    assertEquals(1e-6, gassplitter.getSplitStream(1).getFlowRate("MSm3/day"), 1e-4);
+    assertEquals(4685.039100, gascompressor.getCompressorChart().getSurgeCurve()
+        .getSurgeFlow(gascompressor.getPolytropicFluidHead()), 1e-4);
+    assertEquals(90.0, gascompressor.getOutletPressure(), 1e-4);
 
+
+
+    gas_from_separator.setFlowRate(2.0, "MSm3/day");
+    operations.run();
+    assertEquals(1.36857161, gassplitter.getSplitStream(1).getFlowRate("MSm3/day"), 1e-4);
+    assertEquals(1.99999997741, gassplitter.getSplitStream(0).getFlowRate("MSm3/day"), 1e-4);
+    assertEquals(4671.5920797, gascompressor.getCompressorChart().getSurgeCurve()
+        .getSurgeFlow(gascompressor.getPolytropicFluidHead()), 1e-4);
+    assertEquals(90.0, gascompressor.getOutletPressure(), 1e-4);
   }
 }
