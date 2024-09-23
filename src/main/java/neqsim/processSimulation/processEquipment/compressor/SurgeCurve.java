@@ -46,6 +46,7 @@ public class SurgeCurve implements java.io.Serializable {
   public SurgeCurve(double[] flow, double[] head) {
     this.flow = flow;
     this.head = head;
+    this.setCurve(null, flow, head);
   }
 
   /**
