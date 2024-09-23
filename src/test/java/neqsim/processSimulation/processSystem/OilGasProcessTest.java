@@ -3,6 +3,7 @@ package neqsim.processSimulation.processSystem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
+import neqsim.processSimulation.processEquipment.compressor.SurgeCurve;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -346,7 +347,14 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
         .getSurgeFlow(gascompressor.getPolytropicFluidHead()), 1e-4);
     assertEquals(90.0, gascompressor.getOutletPressure(), 1e-4);
 
-
-
+    double[] flows = new double[] {7044, 7560, 7760};
+    double[] head = new double[] {74, 80, 90};
+    SurgeCurve surg = new SurgeCurve(flows, head);
+    gascompressor.getCompressorChart().setSurgeCurve(surg);
+    operations.run();
+    assertEquals(6753.1900, gascompressor.getCompressorChart().getSurgeCurve()
+        .getSurgeFlow(gascompressor.getPolytropicFluidHead()), 1e-2);
+    assertEquals(5998.55269, gascompressor.getInletStream().getFlowRate("m3/hr"), 1e-4);
+    assertEquals(0.9071841061, gassplitter.getSplitStream(1).getFlowRate("MSm3/day"), 1e-4);
   }
 }
