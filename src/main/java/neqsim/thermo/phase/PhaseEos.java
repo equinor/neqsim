@@ -121,7 +121,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       Z = pressure * getMolarVolume() / (R * temperature);
       for (int i = 0; i < numberOfComponents; i++) {
         componentArray[i].Finit(this, temperature, pressure, totalNumberOfMoles, beta,
-            numberOfComponents, initType);
+            numberOfComponents, initType); 
       }
 
       f_loc = calcf();
@@ -135,8 +135,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       double sumHydrocarbons = 0.0;
       double sumAqueous = 0.0;
       for (int i = 0; i < numberOfComponents; i++) {
-        if (getComponent(i).isHydrocarbon() || getComponent(i).isInert()
-            || getComponent(i).isIsTBPfraction()) {
+        if ((getComponent(i).isHydrocarbon() || getComponent(i).isInert()
+            || getComponent(i).isIsTBPfraction())
+            && !getComponent(i).getName().equals("water")
+            && !getComponent(i).getName().equals("water_PC")) {
           sumHydrocarbons += getComponent(i).getx();
         } else {
           sumAqueous += getComponent(i).getx();
