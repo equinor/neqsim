@@ -151,7 +151,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
 
     gasInletScrubber = new Separator("HP gas scrubber", inletGasCooler.getOutletStream());
 
-    Recycle HPliquidRecycle = new Recycle("Resycle");
+    Recycle HPliquidRecycle = new Recycle("Recycle");
     double tolerance = 1e-10;
     HPliquidRecycle.setTolerance(tolerance);
     HPliquidRecycle.addStream(gasInletScrubber.getLiquidOutStream());
@@ -271,7 +271,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     operations.add(wellStream);
     operations.add(separationModule);
     // separationModule.getUnit("")
-    // ((Recycle) operations.getUnit("Resycle")).setTolerance(1e-9);
+    // ((Recycle) operations.getUnit("Recycle")).setTolerance(1e-9);
 
     operations.run();
 

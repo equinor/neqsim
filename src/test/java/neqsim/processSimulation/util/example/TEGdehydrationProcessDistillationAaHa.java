@@ -225,11 +225,11 @@ public class TEGdehydrationProcessDistillationAaHa {
     makeupMixer.addStream(leanTEGtoabs);
     makeupMixer.addStream(makeupTEG);
 
-    Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
-    resycleLeanTEG.addStream(makeupMixer.getOutletStream());
-    resycleLeanTEG.setOutletStream(TEGFeed);
-    resycleLeanTEG.setPriority(200);
-    resycleLeanTEG.setDownstreamProperty("flow rate");
+    Recycle recycleLeanTEG = new Recycle("lean TEG recycle");
+    recycleLeanTEG.addStream(makeupMixer.getOutletStream());
+    recycleLeanTEG.setOutletStream(TEGFeed);
+    recycleLeanTEG.setPriority(200);
+    recycleLeanTEG.setDownstreamProperty("flow rate");
 
     richGLycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
     // richGLycolHeater.isSetEnergyStream();
@@ -276,7 +276,7 @@ public class TEGdehydrationProcessDistillationAaHa {
     operations.add(makeupCalculator);
     operations.add(makeupTEG);
     operations.add(makeupMixer);
-    operations.add(resycleLeanTEG);
+    operations.add(recycleLeanTEG);
     return operations;
   }
 

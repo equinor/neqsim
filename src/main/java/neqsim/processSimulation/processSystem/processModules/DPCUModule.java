@@ -164,7 +164,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
      * Separator gasScrubber = new Separator("HC dew point control scrubber",
      * gasCooler.getOutStream());
      *
-     * Recycle HPliquidRecycle = new Recycle("Resycle"); double tolerance = 1e-2;
+     * Recycle HPliquidRecycle = new Recycle("Recycle"); double tolerance = 1e-2;
      * HPliquidRecycle.setTolerance(tolerance);
      * HPliquidRecycle.addStream(gasScrubber.getLiquidOutStream());
      * inletSeparator.addStream(HPliquidRecycle.getOutStream());

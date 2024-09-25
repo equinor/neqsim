@@ -198,13 +198,13 @@ public class OnshoreMEGprocess {
     makeupMixer.addStream(leanMEGtoMixer);
     makeupMixer.addStream(makeupMEG);
 
-    Stream streamToResycle = new Stream("streamToResycle", makeupMixer.getOutletStream());
+    Stream streamToRecycle = new Stream("streamToRecycle", makeupMixer.getOutletStream());
 
-    Recycle resycleLeanMEG = new Recycle("lean MEG resycle");
-    resycleLeanMEG.addStream(streamToResycle);
-    resycleLeanMEG.setOutletStream(MEGFeed);
-    // resycleLeanMEG.setPriority(200);
-    resycleLeanMEG.setDownstreamProperty("flow rate");
+    Recycle recycleLeanMEG = new Recycle("lean MEG recycle");
+    recycleLeanMEG.addStream(streamToRecycle);
+    recycleLeanMEG.setOutletStream(MEGFeed);
+    // recycleLeanMEG.setPriority(200);
+    recycleLeanMEG.setDownstreamProperty("flow rate");
 
     richMEGstreamHeater2.setEnergyStream(column.getCondenser().getEnergyStream());
 
@@ -250,12 +250,12 @@ public class OnshoreMEGprocess {
     operations.add(makeupCalculator);
     operations.add(makeupMEG);
     operations.add(makeupMixer);
-    operations.add(streamToResycle);
-    operations.add(resycleLeanMEG);
+    operations.add(streamToRecycle);
+    operations.add(recycleLeanMEG);
 
     // operations = ProcessSystem.open("c:/temp/onshoreMEGprocess.neqsim");
     operations.run();
-    System.out.println("MEG flow rate " + resycleLeanMEG.getFluid().getFlowRate("kg/hr"));
+    System.out.println("MEG flow rate " + recycleLeanMEG.getFluid().getFlowRate("kg/hr"));
 
     // presRedValve4.displayResult();
     // System.out.println(
@@ -268,7 +268,7 @@ public class OnshoreMEGprocess {
     System.out.println("MEG feed to column rate "
         + presRedValve4.getOutletStream().getFluid().getFlowRate("kg/hr"));
 
-    System.out.println("MEG flow rate " + resycleLeanMEG.getFluid().getFlowRate("kg/hr"));
+    System.out.println("MEG flow rate " + recycleLeanMEG.getFluid().getFlowRate("kg/hr"));
     System.out.println("Reboiler duty [kW] " + ((Reboiler) column.getReboiler()).getDuty() / 1.0e3);
     System.out
         .println("Condenser duty [kW] " + ((Condenser) column.getCondenser()).getDuty() / 1.0e3);
