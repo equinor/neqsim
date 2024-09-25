@@ -64,13 +64,27 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * add.
+   * Add to end.
    * </p>
    *
    * @param operation a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
    *        object
    */
   public void add(ProcessEquipmentInterface operation) {
+    // Add to end
+    add(this.getUnitOperations().size(), operation);
+  }
+
+  /**
+   * <p>
+   * Add to specific position.
+   * </p>
+   *
+   * @param position 0-based position
+   * @param operation a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
+   *        object
+   */
+  public void add(int position, ProcessEquipmentInterface operation) {
     ArrayList<ProcessEquipmentInterface> units = this.getUnitOperations();
 
     for (ProcessEquipmentInterface unit : units) {
@@ -89,30 +103,6 @@ public class ProcessSystem extends SimulationBaseClass {
 
     }
 
-    getUnitOperations().add(operation);
-    if (operation instanceof ModuleInterface) {
-      ((ModuleInterface) operation).initializeModule();
-    }
-  }
-
-  /**
-   * <p>
-   * add.
-   * </p>
-   *
-   * @param position a int
-   * @param operation a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
-   *        object
-   */
-  public void add(int position, ProcessEquipmentInterface operation) {
-    ArrayList<ProcessEquipmentInterface> units = this.getUnitOperations();
-
-    for (ProcessEquipmentInterface unit : units) {
-      if (unit == operation) {
-        return;
-      }
-    }
-
     getUnitOperations().add(position, operation);
     if (operation instanceof ModuleInterface) {
       ((ModuleInterface) operation).initializeModule();
@@ -121,7 +111,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * add.
+   * Add measurementdevice.
    * </p>
    *
    * @param measurementDevice a
@@ -133,7 +123,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * add.
+   * Add multiple process equipment to end.
    * </p>
    *
    * @param operations an array of
@@ -145,10 +135,10 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * getUnit.
+   * Get process equipmen by name.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name Name of
    * @return a {@link java.lang.Object} object
    */
   public Object getUnit(String name) {
@@ -187,10 +177,10 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * getMeasurementDevice.
+   * Get MeasureDevice by name.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name Name of measurement device
    * @return a {@link neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface} object
    */
   public MeasurementDeviceInterface getMeasurementDevice(String name) {
