@@ -148,7 +148,7 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     feedTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.00, 0.0, 0.0, 0.0, 1.0});
 
-    Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
+    Stream TEGFeed = new Stream("TEG feed", feedTEG);
     TEGFeed.setFlowRate(8923.576745846813, "kg/hr");
     TEGFeed.setTemperature(35.009563114341454, "C");
     TEGFeed.setPressure(39.67967207899729, "bara");
@@ -185,7 +185,7 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     feedWater.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.00, 0.0, 0.0, 1.0, 0.0});
 
-    Stream waterFeed = new Stream("lean TEG to absorber", feedWater);
+    Stream waterFeed = new Stream("water to absorber", feedWater);
     waterFeed.setFlowRate(0.0, "kg/hr");
     waterFeed.setTemperature(90, "C");
     waterFeed.setPressure(7.513533287063168, "bara");

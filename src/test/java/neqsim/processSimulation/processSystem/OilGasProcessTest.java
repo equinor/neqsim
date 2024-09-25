@@ -142,13 +142,13 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     thermoSystem.addComponent("ethane", 1.0);
     thermoSystem.setMixingRule("classic");
 
-    Stream gas_from_separator = new Stream("feed stream", thermoSystem);
+    Stream gas_from_separator = new Stream("gas from separator", thermoSystem);
     gas_from_separator.setPressure(55.0, "bara");
     gas_from_separator.setTemperature(30.0, "C");
     gas_from_separator.setFlowRate(7.0, "MSm3/day");
     gas_from_separator.run();
 
-    Stream recyclegasstream = gas_from_separator.clone();
+    Stream recyclegasstream = new Stream("recycle gas stream", gas_from_separator.clone());
     recyclegasstream.setFlowRate(1e-10, "MSm3/day");
     recyclegasstream.run();
 
@@ -262,7 +262,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     gas_from_separator.setTemperature(30.0, "C");
     gas_from_separator.setFlowRate(7.0, "MSm3/day");
 
-    Stream recyclegasstream = gas_from_separator.clone();
+    Stream recyclegasstream = new Stream("Recycle gas", gas_from_separator.clone());
     recyclegasstream.setFlowRate(1e-10, "MSm3/day");
 
     Mixer gasmixer = new Mixer("gas mixer");

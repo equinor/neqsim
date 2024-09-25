@@ -585,7 +585,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     valve1.setPercentValveOpening(20);
     valve1.setCalculateSteadyState(false);
 
-    Stream resycstream = stream1.clone();
+    Stream resycstream = new Stream("recycle stream", stream1.clone());
     resycstream.setFlowRate(0.01, "kg/hr");
 
     Separator separator1 = new Separator("separator_1");

@@ -62,7 +62,7 @@ class WellAllocatorTest extends neqsim.NeqSimTest {
 
     Stream stream_gasExp = new Stream("gasexp", sep1.getGasOutStream());
 
-    Stream stream_oilExp = new Stream("gasexp", sep1.getLiquidOutStream());
+    Stream stream_oilExp = new Stream("oilexp", sep1.getLiquidOutStream());
 
     WellAllocator wellAlloc = new WellAllocator("alloc", stream_1);
     wellAlloc.setExportGasStream(stream_gasExp);

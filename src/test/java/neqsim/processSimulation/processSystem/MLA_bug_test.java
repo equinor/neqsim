@@ -102,7 +102,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     waterDewPointAnalyserToAbsorber.setName("water dew point gas to absorber");
     p.add(waterDewPointAnalyserToAbsorber);
 
-    StreamInterface TEGFeed = new Stream("lean TEG to absorber", feedTEG);
+    StreamInterface TEGFeed = new Stream("TEG feed", feedTEG);
     TEGFeed.setFlowRate(5500.0, "kg/hr");
     TEGFeed.setTemperature(48.5, "C");
     TEGFeed.setPressure(85.0, "bara");

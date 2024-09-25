@@ -69,14 +69,14 @@ public class CompressorModule extends neqsim.NeqSimTest {
     ThrottlingValve valve1 = new ThrottlingValve("valve oil", oilHeater.getOutletStream());
     valve1.setOutletPressure(10.0, "bara");
 
-    StreamInterface recycleScrubberStream = feedStream.clone();
+    StreamInterface recycleScrubberStream = new Stream("Recycle stream", feedStream.clone());
     recycleScrubberStream.setFlowRate(1.0, "kg/hr");
 
     ThreePhaseSeparator secondStageSeparator =
-        new ThreePhaseSeparator("inlet separator", valve1.getOutletStream());
+        new ThreePhaseSeparator("2nd stage separator", valve1.getOutletStream());
     secondStageSeparator.addStream(recycleScrubberStream);
 
-    StreamInterface gasRecycleStream = feedStream.clone();
+    StreamInterface gasRecycleStream = new Stream("gas recycle stream", feedStream.clone());
     gasRecycleStream.setFlowRate(1.0, "kg/hr");
 
     Mixer gasmixer = new Mixer("gas recycle mixer");

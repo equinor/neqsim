@@ -106,7 +106,7 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     feedTEG.setMolarComposition(
         new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.99});
 
-    Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
+    Stream TEGFeed = new Stream("TEG feed", feedTEG);
     TEGFeed.setFlowRate(8000.0, "kg/hr");
     TEGFeed.setTemperature(40.0, "C");
     TEGFeed.setPressure(40.0, "bara");
@@ -147,7 +147,7 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
         new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0});
 
     double addedWaterRate = 0.0;
-    Stream waterFeed = new Stream("lean TEG to absorber", feedWater);
+    Stream waterFeed = new Stream("water to absorber", feedWater);
     waterFeed.setFlowRate(addedWaterRate, "kg/hr");
     waterFeed.setTemperature(90.0, "C");
     waterFeed.setPressure(7.0, "bara");
