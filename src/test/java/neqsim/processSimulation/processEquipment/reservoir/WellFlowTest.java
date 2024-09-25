@@ -70,7 +70,7 @@ public class WellFlowTest {
     wellflow.setWellProductionIndex(producxtionIndex);
 
     neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills pipe =
-        new neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills(
+        new neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills("pipe",
             wellflow.getOutletStream());
     pipe.setPipeWallRoughness(5e-6);
     pipe.setLength(170.0);
@@ -85,7 +85,7 @@ public class WellFlowTest {
     compressor.setCompressionRatio(2.0);
 
     neqsim.processSimulation.processEquipment.heatExchanger.Cooler intercooler =
-        new neqsim.processSimulation.processEquipment.heatExchanger.Cooler(
+        new neqsim.processSimulation.processEquipment.heatExchanger.Cooler("cooler",
             compressor.getOutletStream());
     intercooler.setOutTemperature(25.0, "C");
 
@@ -103,7 +103,7 @@ public class WellFlowTest {
     cooler1.setOutTemperature(30.0, "C");
 
     neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills pipeline =
-        new neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills(
+        new neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills("pipeline",
             cooler1.getOutletStream());
     pipeline.setPipeWallRoughness(50e-6);
     pipeline.setLength(50 * 1e3);
@@ -161,13 +161,13 @@ public class WellFlowTest {
     wellflow.setInletStream(producedGasStream);
     wellflow.setWellProductionIndex(10.000100751427403E-3);
 
-    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills(wellflow.getOutletStream());
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipe", wellflow.getOutletStream());
     pipe.setPipeWallRoughness(5e-6);
     pipe.setLength(300.0);
     pipe.setElevation(300);
     pipe.setDiameter(0.625);
 
-    PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills(pipe.getOutletStream());
+    PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills("pipeline", pipe.getOutletStream());
     pipeline.setPipeWallRoughness(5e-6);
     pipeline.setLength(60000.0);
     pipeline.setElevation(200);

@@ -42,7 +42,7 @@ public class destillation1 {
 
     Stream stream_1 = new Stream("Stream1", testSystem);
 
-    DistillationColumn column = new DistillationColumn(9, true, true);
+    DistillationColumn column = new DistillationColumn("distColumn", 9, true, true);
     column.addFeedStream(stream_1, 4);
     ((Reboiler) column.getReboiler()).setRefluxRatio(3.7);
     ((Condenser) column.getCondenser()).setRefluxRatio(10.7);

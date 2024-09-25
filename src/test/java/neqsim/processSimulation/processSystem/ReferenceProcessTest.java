@@ -34,57 +34,50 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
     thermoSystem.addPlusFraction("C31_C38", 1.0, 471.0 / 1000.0, 0.90);
     thermoSystem.addPlusFraction("C38_C80", 1.0, 662.0 / 1000.0, 0.92);
     thermoSystem.setMixingRule("classic");
-   // thermoSystem.setMultiPhaseCheck(true);
+    // thermoSystem.setMultiPhaseCheck(true);
 
     thermoSystem.setMolarComposition(new double[] {0.005269, 0.039189, 0.700553, 0.091154, 0.050908,
         0.007751, 0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355, 0.007658,
         0.003861, 0.003301, 0.002624, 0.001857, 0.001320, 0.001426, 0.001164, 0.000916});
 
     neqsim.processSimulation.processEquipment.stream.Stream wellStream =
-        new neqsim.processSimulation.processEquipment.stream.Stream(thermoSystem);
-    wellStream.setName("well stream");
+        new neqsim.processSimulation.processEquipment.stream.Stream("well stream", thermoSystem);
     wellStream.setTemperature(70.0, "C");
     wellStream.setPressure(90.0, "bara");
 
     neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator firstStageSeparator =
-        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(wellStream);
-    firstStageSeparator.setName("1st stage separator");
+        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
+            "1st stage separator", wellStream);
 
     neqsim.processSimulation.processEquipment.heatExchanger.Heater oilHeaterSecondStage =
         new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
-            firstStageSeparator.getOilOutStream());
-    oilHeaterSecondStage.setName("oil heater second stage");
+            "oil heater second stage", firstStageSeparator.getOilOutStream());
     oilHeaterSecondStage.setOutPressure(30.0);
     oilHeaterSecondStage.setOutTemperature(68.0, "C");
 
     neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator secondStageSeparator =
         new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-            oilHeaterSecondStage.getOutStream());
-    secondStageSeparator.setName("2nd stage separator");
+            "2nd stage separator", oilHeaterSecondStage.getOutStream());
 
     neqsim.processSimulation.processEquipment.heatExchanger.Heater oilHeaterThirdStage =
-        new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
+        new neqsim.processSimulation.processEquipment.heatExchanger.Heater("oil heater third stage",
             secondStageSeparator.getOilOutStream());
-    oilHeaterThirdStage.setName("oil heater third stage");
     oilHeaterThirdStage.setOutPressure(2.8);
     oilHeaterThirdStage.setOutTemperature(70.0, "C");
 
     neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator thirdStageSeparator =
         new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-            oilHeaterThirdStage.getOutStream());
-    thirdStageSeparator.setName("3rd stage separator");
+            "3rd stage separator", oilHeaterThirdStage.getOutStream());
 
     neqsim.processSimulation.processEquipment.heatExchanger.Heater oilHeaterStandardStage =
         new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
-            thirdStageSeparator.getOilOutStream());
-    oilHeaterStandardStage.setName("oil heater standard stage");
+            "oil heater standard stage", thirdStageSeparator.getOilOutStream());
     oilHeaterStandardStage.setOutPressure(1.01325);
     oilHeaterStandardStage.setOutTemperature(15.0, "C");
 
     neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator standardStageSeparator =
         new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-            oilHeaterStandardStage.getOutStream());
-    standardStageSeparator.setName("standard stage separator");
+            "standard stage separator", oilHeaterStandardStage.getOutStream());
 
     neqsim.processSimulation.processEquipment.mixer.Mixer gasMixer =
         new neqsim.processSimulation.processEquipment.mixer.Mixer("gas mixer");

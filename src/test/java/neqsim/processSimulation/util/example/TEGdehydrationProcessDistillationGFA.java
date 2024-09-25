@@ -271,8 +271,7 @@ public class TEGdehydrationProcessDistillationGFA {
     Stream gasToReboiler = strippingGas.clone();
     gasToReboiler.setName("gas to reboiler");
 
-    DistillationColumn column = new DistillationColumn(3, true, true);
-    column.setName("TEG regeneration column");
+    DistillationColumn column = new DistillationColumn("TEG regeneration column", 3, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
     column.getReboiler().setOutTemperature(273.15 + reboilerTemperature);
     column.getCondenser().setOutTemperature(273.15 + condenserTemperature);
