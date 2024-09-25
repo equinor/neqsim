@@ -7,19 +7,18 @@ import neqsim.thermo.phase.PhaseRK;
  * This class defines a thermodynamic system using the RK equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemRKEos extends SystemEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>
+   * Constructor for SystemRKEos.
+   * </p>
+   */
   public SystemRKEos() {
-    super();
-    modelName = "RK-EOS";
-    attractiveTermNumber = 5;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseRK();
-      phaseArray[i].setTemperature(298.15);
-      phaseArray[i].setPressure(1.0);
-    }
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -27,18 +26,11 @@ public class SystemRKEos extends SystemEos {
    * Constructor for SystemRKEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemRKEos(double T, double P) {
-    super(T, P);
-    attractiveTermNumber = 5;
-    modelName = "RK-EOS";
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseRK();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
+    this(T, P, false);
   }
 
   /**
@@ -46,16 +38,14 @@ public class SystemRKEos extends SystemEos {
    * Constructor for SystemRKEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemRKEos(double T, double P, boolean solidCheck) {
-    this(T, P);
+  public SystemRKEos(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     attractiveTermNumber = 5;
-    setNumberOfPhases(4);
     modelName = "RK-EOS";
-    solidPhaseCheck = solidCheck;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseRK();
@@ -64,7 +54,7 @@ public class SystemRKEos extends SystemEos {
     }
 
     if (solidPhaseCheck) {
-      // System.out.println("here first");
+      setNumberOfPhases(4);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);

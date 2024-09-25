@@ -9,13 +9,16 @@ package neqsim.thermodynamicOperations.flashOps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 
 /**
+ * Abstract base class for all flash classes.
+ *
  * @author Even Solbraa
  */
-abstract class Flash extends BaseOperation {
+public abstract class Flash extends BaseOperation {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Flash.class);
 
@@ -44,16 +47,10 @@ abstract class Flash extends BaseOperation {
   double[] tm;
   int lowestGibbsEnergyPhase = 0;
   sysNewtonRhapsonTPflash secondOrderSolver;
+  /** Set true to do solid phase check and calculations */
   protected boolean solidCheck = false;
   protected boolean stabilityCheck = false;
-  boolean findLowesGibsPhaseIsChecked = false;
-
-  /**
-   * <p>
-   * Constructor for Flash.
-   * </p>
-   */
-  public Flash() {}
+  protected boolean findLowestGibbsPhaseIsChecked = false;
 
   /**
    * <p>
@@ -63,7 +60,7 @@ abstract class Flash extends BaseOperation {
    * @return a int
    */
   public int findLowestGibbsEnergyPhase() {
-    if (!findLowesGibsPhaseIsChecked) {
+    if (!findLowestGibbsPhaseIsChecked) {
       minimumGibbsEnergySystem = system.clone();
       minimumGibbsEnergySystem.init(0);
       minimumGibbsEnergySystem.init(1);
@@ -74,7 +71,7 @@ abstract class Flash extends BaseOperation {
       } else {
         lowestGibbsEnergyPhase = 1;
       }
-      findLowesGibsPhaseIsChecked = true;
+      findLowestGibbsPhaseIsChecked = true;
     }
     return lowestGibbsEnergyPhase;
   }
@@ -94,7 +91,7 @@ abstract class Flash extends BaseOperation {
     double[] oldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
     double[] oldoldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
     double[][] Wi = new double[2][system.getPhases()[0].getNumberOfComponents()];
-    double[] sumw = new double[2];
+
     boolean secondOrderStabilityAnalysis = false;
     double[] oldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
     double[] oldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -115,9 +112,10 @@ abstract class Flash extends BaseOperation {
 
     SystemInterface clonedSystem = minimumGibbsEnergySystem;
     clonedSystem.setTotalNumberOfMoles(1.0);
+
+    double[] sumw = new double[2];
     sumw[1] = 0.0;
     sumw[0] = 0.0;
-
     for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
       sumw[1] += clonedSystem.getPhase(0).getComponent(i).getz()
           / clonedSystem.getPhase(0).getComponent(i).getK();
@@ -228,7 +226,7 @@ abstract class Flash extends BaseOperation {
               double kronDelt = (i == k) ? 1.5 : 0.0; // adding 0.5 to diagonal
               df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
                   * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k)); // *
-                                                                           // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                                                                            // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
             }
           }
 
@@ -242,7 +240,7 @@ abstract class Flash extends BaseOperation {
           // logger.info("err newton " + error[j]);
         }
 
-        // logger.info("norm f " + f.norm1());
+        logger.info("norm f " + f.norm1());
         // clonedSystem.display();
         sumw[j] = 0.0;
         for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -345,19 +343,25 @@ abstract class Flash extends BaseOperation {
       system.setNumberOfPhases(1);
 
       if (lowestGibbsEnergyPhase == 0) {
-        system.setPhaseType(0, 1);
+        system.setPhaseType(0, PhaseType.byValue(1));
       } else {
-        system.setPhaseType(0, 0);
+        system.setPhaseType(0, PhaseType.byValue(0));
       }
       system.init(1);
       if (solidCheck && !system.doMultiPhaseCheck()) {
         this.solidPhaseFlash();
       }
     } else {
+      RachfordRice rachfordRice = new RachfordRice();
       try {
-        system.calcBeta();
+        system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
       } catch (Exception ex) {
-        logger.error("error", ex);
+        if (!Double.isNaN(rachfordRice.getBeta()[0])) {
+          system.setBeta(rachfordRice.getBeta()[0]);
+        } else {
+          system.setBeta(Double.NaN);
+        }
+        logger.error(ex.getMessage(), ex);
       }
       system.calc_x_y();
       system.init(1);

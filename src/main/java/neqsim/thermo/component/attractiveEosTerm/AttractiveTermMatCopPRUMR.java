@@ -47,7 +47,7 @@ public class AttractiveTermMatCopPRUMR extends AttractiveTermPr {
    * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
-   * @param params an array of {@link double} objects
+   * @param params an array of type double
    */
   public AttractiveTermMatCopPRUMR(ComponentEosInterface component, double[] params) {
     this(component);
@@ -136,14 +136,14 @@ public class AttractiveTermMatCopPRUMR extends AttractiveTermPr {
 
     double Tr = temperature / getComponent().getTC();
     double TC = getComponent().getTC();
-    return 2.0 * Math.pow(-parameters[0] / Math.sqrt(Tr) / TC / 2.0
-        - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
+    return 2.0
+        * Math.pow(-parameters[0] / Math.sqrt(Tr) / TC / 2.0
+            - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
             - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC,
             2.0)
-        + 2.0
-            * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr))
-                + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
-                + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0))
+        + 2.0 * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr))
+            + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+            + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0))
             * (parameters[0] / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 4.0
                 + parameters[1] / temperature / TC / 2.0
                 + parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 2.0

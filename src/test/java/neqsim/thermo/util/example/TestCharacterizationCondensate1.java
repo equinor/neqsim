@@ -51,18 +51,18 @@ public class TestCharacterizationCondensate1 {
      */
     testSystem.addTBPfraction("C7", 5, 100.0 / 1000.0, 0.72);
     testSystem.addPlusFraction("C8", 50, 230.0 / 1000.0, 0.84);
-    //testSystem.addPlusFraction("C8", 34, 200.0 / 1000.0, 0.82);
+    // testSystem.addPlusFraction("C8", 34, 200.0 / 1000.0, 0.82);
     testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(12);
     testSystem.getCharacterization().characterisePlusFraction();
     /*
      * testSystem.getInterphaseProperties().setInterfacialTensionModel(0);
      */
-    System.out.println("number of components " + testSystem.getNumberOfComponents());
+    // System.out.println("number of components " + testSystem.getNumberOfComponents());
     testSystem.useVolumeCorrection(true);
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
     testSystem.setMultiPhaseCheck(true);
-    System.out.println("number of components " + testSystem.getNumberOfComponents());
+    // System.out.println("number of components " + testSystem.getNumberOfComponents());
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
     try {
@@ -80,7 +80,7 @@ public class TestCharacterizationCondensate1 {
       // testOps.hydrateFormationTemperature();
       // testOps.dewPointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     System.out.println("activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1));
     testSystem.display();

@@ -21,14 +21,8 @@ import neqsim.thermo.system.SystemInterface;
 public class dTPflash extends TPflash {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(dTPflash.class);
-  String[] flashComp = null;
 
-  /**
-   * <p>
-   * Constructor for dTPflash.
-   * </p>
-   */
-  public dTPflash() {}
+  String[] flashComp = null;
 
   /**
    * <p>

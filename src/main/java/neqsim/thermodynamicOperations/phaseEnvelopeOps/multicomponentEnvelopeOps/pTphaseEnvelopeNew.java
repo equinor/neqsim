@@ -47,20 +47,12 @@ public class pTphaseEnvelopeNew extends BaseOperation {
   double[][] pointsH2 = new double[4][];
   double[] pointsV = new double[10000];
 
-  ;
   double[][] pointsV2 = new double[4][];
   double[] pointsS = new double[10000];
   double[][] pointsS2 = new double[4][];
   public double[][] points2 = new double[4][];
   int np = 0;
   int speceq = 0;
-
-  /**
-   * <p>
-   * Constructor for pTphaseEnvelopeNew.
-   * </p>
-   */
-  public pTphaseEnvelopeNew() {}
 
   /**
    * <p>
@@ -260,14 +252,14 @@ public class pTphaseEnvelopeNew extends BaseOperation {
        * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
        * file1.setOutputFileName(name1); file1.setXvalues(points2[2], "temp", "sec");
        * file1.setYvalues(points2[3], "pres", "meter"); file1.createFile();
-       * 
+       *
        * String name2 = new String(); name2 = fileName + "Bub.nc"; file2 = new
        * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
        * file2.setOutputFileName(name2); file2.setXvalues(points2[0], "temp", "sec");
        * file2.setYvalues(points2[1], "pres", "meter"); file2.createFile(); }
        */
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 

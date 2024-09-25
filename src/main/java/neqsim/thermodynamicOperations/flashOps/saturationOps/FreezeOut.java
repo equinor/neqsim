@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -22,16 +23,10 @@ public class FreezeOut extends constantDutyTemperatureFlash
     implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(FreezeOut.class);
+
   public double[] FCompTemp = new double[10];
   public String[] FCompNames = new String[10];
   public boolean noFreezeFlash = true;
-
-  /**
-   * <p>
-   * Constructor for FreezeOut.
-   * </p>
-   */
-  public FreezeOut() {}
 
   /**
    * <p>
@@ -89,7 +84,7 @@ public class FreezeOut extends constantDutyTemperatureFlash
         SystemInterface testSystem2 = new SystemSrkSchwartzentruberEos(216, 1);
         ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
         testSystem2.addComponent(testSystem.getPhase(0).getComponent(k).getComponentName(), 1);
-        testSystem2.setPhaseType(0, 1);
+        testSystem2.setPhaseType(0, PhaseType.byValue(1));
         noFreezeliq = true;
         SolidFug = 0.0;
         FluidFug = 0.0;
@@ -170,8 +165,7 @@ public class FreezeOut extends constantDutyTemperatureFlash
           }
 
           testSystem.setTemperature(newTemp);
-        } // do lokke
-        while (((Math.abs(FugRatio - 1) >= 0.00001 && iterations < 100)) && noFreezeliq
+        } while (((Math.abs(FugRatio - 1) >= 0.00001 && iterations < 100)) && noFreezeliq
             && SolidForms);
         logger.info("noFreezeliq: " + noFreezeliq + " SolidForms: " + SolidForms);
 

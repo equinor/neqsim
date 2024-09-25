@@ -18,13 +18,13 @@ public class ComponentPR extends ComponentEos {
    * Constructor for ComponentPR.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentPR(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentPR(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
 
     a = .45724333333 * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     b = .077803333 * R * criticalTemperature / criticalPressure;
@@ -45,11 +45,11 @@ public class ComponentPR extends ComponentEos {
    * </p>
    *
    * @param number a int
-   * @param TC a double
-   * @param PC a double
-   * @param M a double
-   * @param a a double
-   * @param moles a double
+   * @param TC Critical temperature
+   * @param PC Critical pressure
+   * @param M Molar mass
+   * @param a Acentric factor
+   * @param moles Number of moles
    */
   public ComponentPR(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
@@ -66,13 +66,6 @@ public class ComponentPR extends ComponentEos {
     }
 
     return clonedComponent;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
   }
 
   /** {@inheritDoc} */
@@ -159,7 +152,7 @@ public class ComponentPR extends ComponentEos {
     if (componentName.equals("MEG")) {
       return 0.00000000000000000007101030813216131;
     }
-    return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB); /// Math.pow(ThermodynamicConstantsInterface.avagadroNumber,
-                                                                       /// 2.0 / 3.0);
+    return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB);
+    // Math.pow(ThermodynamicConstantsInterface.avagadroNumber, 2.0 / 3.0);
   }
 }

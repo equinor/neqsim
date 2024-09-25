@@ -10,10 +10,13 @@ package neqsim.thermo.system;
 public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>
+   * Constructor for SystemSrkTwuCoonStatoilEos.
+   * </p>
+   */
   public SystemSrkTwuCoonStatoilEos() {
-    super();
-    modelName = "TwuCoonStatoil-EOS";
-    attractiveTermNumber = 18;
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -21,13 +24,11 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
    * Constructor for SystemSrkTwuCoonStatoilEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemSrkTwuCoonStatoilEos(double T, double P) {
-    super(T, P);
-    modelName = "TwuCoonStatoil-EOS";
-    attractiveTermNumber = 18;
+    this(T, P, false);
   }
 
   /**
@@ -35,12 +36,12 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
    * Constructor for SystemSrkTwuCoonStatoilEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemSrkTwuCoonStatoilEos(double T, double P, boolean solidCheck) {
-    super(T, P, solidCheck);
+  public SystemSrkTwuCoonStatoilEos(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     modelName = "TwuCoonStatoil-EOS";
     attractiveTermNumber = 18;
   }
@@ -54,10 +55,6 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

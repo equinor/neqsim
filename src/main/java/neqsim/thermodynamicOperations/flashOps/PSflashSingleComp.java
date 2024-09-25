@@ -1,5 +1,6 @@
 package neqsim.thermodynamicOperations.flashOps;
 
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,13 +15,6 @@ public class PSflashSingleComp extends Flash {
   private static final long serialVersionUID = 1000;
 
   double Sspec = 0;
-
-  /**
-   * <p>
-   * Constructor for PSflashSingleComp.
-   * </p>
-   */
-  public PSflashSingleComp() {}
 
   /**
    * <p>
@@ -46,14 +40,14 @@ public class PSflashSingleComp extends Flash {
     if (system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
       try {
         bubOps.TPflash();
-        if (system.getPhase(0).getPhaseTypeName().equals("gas")) {
+        if (system.getPhase(0).getType() == PhaseType.GAS) {
           bubOps.dewPointTemperatureFlash();
         } else {
           bubOps.bubblePointTemperatureFlash();
         }
       } catch (Exception ex) {
         system.setTemperature(initTemp);
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
       }
     } else {
       bubOps.PSflash2(Sspec);

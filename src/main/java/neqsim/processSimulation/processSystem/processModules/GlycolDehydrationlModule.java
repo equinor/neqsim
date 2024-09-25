@@ -60,6 +60,13 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   double reboilerTemperature = 273.15 + 204.0;
   double regenerationPressure = 1.4;
 
+  /**
+   * <p>
+   * Constructor for GlycolDehydrationlModule.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public GlycolDehydrationlModule(String name) {
     super(name);
   }
@@ -167,7 +174,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
           leanGlycolMolarFlowRate * leanGlycolMolarFraction);
       this.leanTEGStreamToAbsorber.getThermoSystem().setTotalFlowRate(maxglycolFlowRate, "kg/hr");
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -196,7 +203,6 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
      * stripperColumn.addFeedStream(valveMP.getOutStream(), 3);
      * stripperColumn.setCondenserTemperature(273.15 + 80.0); ((Reboiler)
      * stripperColumn.getReboiler()).setRefluxRatio(11.7);
-     * 
      */
 
     Heater reboiler = new Heater("reboiler", valveMP.getOutletStream());
@@ -373,12 +379,14 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     gasStreamFromAbsorber = gasStreamToAbsorber.clone();
     // gasStreamFromAbsorber.getThermoSystem().addComponent("water", 1.0);
     gasStreamFromAbsorber.getThermoSystem().setTemperature(waterDewPontSpecification);
-    gasStreamFromAbsorber.run();
+
+    UUID id = UUID.randomUUID();
+    gasStreamFromAbsorber.run(id);
     double y1 = gasStreamFromAbsorber.getThermoSystem().getPhase(0).getComponent("water").getx();
     gasStreamFromAbsorber.getThermoSystem().setTemperature(waterDewPontSpecification - 10.0);
-    gasStreamFromAbsorber.run();
+    gasStreamFromAbsorber.run(id);
     double y0 = gasStreamFromAbsorber.getThermoSystem().getPhase(0).getComponent("water").getx();
-    gasStreamFromAbsorber.run();
+    gasStreamFromAbsorber.run(id);
     calcGlycolConcentration(y0);
 
     double Ea = (yN - y1) / (yN - y0);
@@ -396,7 +404,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
 
     gasStreamFromAbsorber.getThermoSystem().removePhase(1);
     gasStreamFromAbsorber.getThermoSystem().setTemperature(designGasFeedTemperature);
-    gasStreamFromAbsorber.run();
+    gasStreamFromAbsorber.run(id);
     /*
      * absorbtionColumn.setNumberOfTheoreticalStages( numberOfTheoreticalEquilibriumStages);
      * absorbtionColumn.getMechanicalDesign().setMaxDesignGassVolumeFlow(
@@ -410,7 +418,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         leanGlycolMolarFlowRate * (1.0 - leanGlycolMolarFraction));
     this.leanTEGStreamToAbsorber.getThermoSystem().addComponent("TEG",
         leanGlycolMolarFlowRate * leanGlycolMolarFraction);
-    this.leanTEGStreamToAbsorber.run();
+    this.leanTEGStreamToAbsorber.run(id);
   }
 
   /** {@inheritDoc} */

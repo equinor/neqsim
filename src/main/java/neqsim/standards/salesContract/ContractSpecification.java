@@ -20,15 +20,22 @@ import neqsim.util.NamedBaseClass;
 public class ContractSpecification extends NamedBaseClass {
   private static final long serialVersionUID = 1L;
   StandardInterface standard = null;
-  String description = "dew point temperature specification";
+  String specification = "dew point temperature specification";
   private String country = "";
   private String terminal = "";
   private double minValue = 0;
   private double maxValue = 0;
-  private double referenceTemperatureMeasurement = 0, referenceTemperatureCombustion = 0;
+  private double referenceTemperatureMeasurement = 0;
+  private double referenceTemperatureCombustion = 0;
   private double referencePressure = 0;
-  private String unit = "", comments = "";
+  private String unit = "";
+  private String comments = "";
 
+  /**
+   * <p>
+   * Constructor for ContractSpecification.
+   * </p>
+   */
   @Deprecated
   public ContractSpecification() {
     super("ContractSpecification");
@@ -40,7 +47,7 @@ public class ContractSpecification extends NamedBaseClass {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param description a {@link java.lang.String} object
+   * @param specification a {@link java.lang.String} object
    * @param country a {@link java.lang.String} object
    * @param terminal a {@link java.lang.String} object
    * @param standard a {@link neqsim.standards.StandardInterface} object
@@ -52,14 +59,14 @@ public class ContractSpecification extends NamedBaseClass {
    * @param referencePressure a double
    * @param comments a {@link java.lang.String} object
    */
-  public ContractSpecification(String name, String description, String country, String terminal,
+  public ContractSpecification(String name, String specification, String country, String terminal,
       StandardInterface standard, double minValue, double maxValue, String unit,
       double referenceTemperature, double referenceTemperatureComb, double referencePressure,
       String comments) {
     super(name);
     this.country = country;
     this.terminal = terminal;
-    this.description = description;
+    this.specification = specification;
     this.standard = standard;
     this.unit = unit;
     this.setReferenceTemperatureMeasurement(referenceTemperature);
@@ -89,21 +96,21 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * Getter for property description.
+   * Getter for property specification.
    *
-   * @return Value of property description.
+   * @return Value of property specification.
    */
-  public java.lang.String getDescription() {
-    return description;
+  public java.lang.String getSpecification() {
+    return specification;
   }
 
   /**
-   * Setter for property description.
+   * Setter for property specification.
    *
-   * @param description New value of property description.
+   * @param specification New value of property description.
    */
-  public void setDescription(java.lang.String description) {
-    this.description = description;
+  public void setSpecification(java.lang.String specification) {
+    this.specification = specification;
   }
 
   /**
@@ -197,7 +204,7 @@ public class ContractSpecification extends NamedBaseClass {
    * Getter for the field <code>referencePressure</code>.
    * </p>
    *
-   * @return a double
+   * @return Reference pressure in bara
    */
   public double getReferencePressure() {
     return referencePressure;
@@ -208,7 +215,7 @@ public class ContractSpecification extends NamedBaseClass {
    * Setter for the field <code>referencePressure</code>.
    * </p>
    *
-   * @param referencePressure a double
+   * @param referencePressure Reference pressure to set in in bara
    */
   public void setReferencePressure(double referencePressure) {
     this.referencePressure = referencePressure;

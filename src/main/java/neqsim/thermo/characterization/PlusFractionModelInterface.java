@@ -9,157 +9,159 @@ package neqsim.thermo.characterization;
  * @version $Id: $Id
  */
 public interface PlusFractionModelInterface extends java.io.Serializable {
-    /**
-     * <p>
-     * hasPlusFraction.
-     * </p>
-     *
-     * @return a boolean
-     */
-    public boolean hasPlusFraction();
+  /**
+   * <p>
+   * hasPlusFraction.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean hasPlusFraction();
 
-    /**
-     * <p>
-     * characterizePlusFraction.
-     * </p>
-     *
-     * @param model a {@link neqsim.thermo.characterization.TBPModelInterface} object
-     */
-    public void characterizePlusFraction(TBPModelInterface model);
+  /**
+   * <p>
+   * characterizePlusFraction.
+   * </p>
+   *
+   * @param model a {@link neqsim.thermo.characterization.TBPModelInterface} object
+   */
+  public void characterizePlusFraction(TBPModelInterface model);
 
-    /**
-     * <p>
-     * getFirstTBPFractionNumber.
-     * </p>
-     *
-     * @return a int
-     */
-    public int getFirstTBPFractionNumber();
+  /**
+   * <p>
+   * getFirstTBPFractionNumber.
+   * </p>
+   *
+   * @return a int
+   */
+  public int getFirstTBPFractionNumber();
 
-    /**
-     * <p>
-     * getFirstPlusFractionNumber.
-     * </p>
-     *
-     * @return a int
-     */
-    public int getFirstPlusFractionNumber();
+  /**
+   * <p>
+   * getFirstPlusFractionNumber.
+   * </p>
+   *
+   * @return a int
+   */
+  public int getFirstPlusFractionNumber();
 
-    /**
-     * <p>
-     * getMaxPlusMolarMass.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getMaxPlusMolarMass();
+  /**
+   * <p>
+   * getMaxPlusMolarMass.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getMaxPlusMolarMass();
 
-    /**
-     * <p>
-     * getName.
-     * </p>
-     *
-     * @return a {@link java.lang.String} object
-     */
-    public String getName();
+  /**
+   * <p>
+   * getName.
+   * </p>
+   *
+   * @return a {@link java.lang.String} object
+   */
+  public String getName();
 
-    /**
-     * <p>
-     * getLastPlusFractionNumber.
-     * </p>
-     *
-     * @return a int
-     */
-    public int getLastPlusFractionNumber();
+  /**
+   * <p>
+   * getLastPlusFractionNumber.
+   * </p>
+   *
+   * @return a int
+   */
+  public int getLastPlusFractionNumber();
 
-    /**
-     * <p>
-     * getPlusComponentNumber.
-     * </p>
-     *
-     * @return a int
-     */
-    public int getPlusComponentNumber();
+  public void setLastPlusFractionNumber(int fract);
 
-    /**
-     * <p>
-     * getNumberOfPlusPseudocomponents.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getNumberOfPlusPseudocomponents();
+  /**
+   * <p>
+   * getPlusComponentNumber.
+   * </p>
+   *
+   * @return a int
+   */
+  public int getPlusComponentNumber();
 
-    /**
-     * <p>
-     * getMPlus.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getMPlus();
+  /**
+   * <p>
+   * getNumberOfPlusPseudocomponents.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getNumberOfPlusPseudocomponents();
 
-    /**
-     * <p>
-     * getZPlus.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getZPlus();
+  /**
+   * <p>
+   * getMPlus.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getMPlus();
 
-    /**
-     * <p>
-     * getDensPlus.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getDensPlus();
+  /**
+   * <p>
+   * getZPlus.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getZPlus();
 
-    /**
-     * <p>
-     * getZ.
-     * </p>
-     *
-     * @return an array of {@link double} objects
-     */
-    public double[] getZ();
+  /**
+   * <p>
+   * getDensPlus.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getDensPlus();
 
-    /**
-     * <p>
-     * getM.
-     * </p>
-     *
-     * @return an array of {@link double} objects
-     */
-    public double[] getM();
+  /**
+   * <p>
+   * getZ.
+   * </p>
+   *
+   * @return an array of type double
+   */
+  public double[] getZ();
 
-    /**
-     * <p>
-     * getDens.
-     * </p>
-     *
-     * @return an array of {@link double} objects
-     */
-    public double[] getDens();
+  /**
+   * <p>
+   * getM.
+   * </p>
+   *
+   * @return an array of type double
+   */
+  public double[] getM();
 
-    /**
-     * <p>
-     * getCoefs.
-     * </p>
-     *
-     * @return an array of {@link double} objects
-     */
-    public double[] getCoefs();
+  /**
+   * <p>
+   * getDens.
+   * </p>
+   *
+   * @return an array of type double
+   */
+  public double[] getDens();
 
-    /**
-     * <p>
-     * getCoef.
-     * </p>
-     *
-     * @param i a int
-     * @return a double
-     */
-    public double getCoef(int i);
+  /**
+   * <p>
+   * getCoefs.
+   * </p>
+   *
+   * @return an array of type double
+   */
+  public double[] getCoefs();
+
+  /**
+   * <p>
+   * getCoef.
+   * </p>
+   *
+   * @param i a int
+   * @return a double
+   */
+  public double getCoef(int i);
 }

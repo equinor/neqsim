@@ -1,6 +1,8 @@
 package neqsim.PVTsimulation.simulation;
 
 import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.PVTsimulation.util.parameterfitting.WaxFunction;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
@@ -17,6 +19,8 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class WaxFractionSim extends BasePVTsimulation {
+  static Logger logger = LogManager.getLogger(WaxFractionSim.class);
+
   double[] temperature = null;
 
   double[] pressure = null;
@@ -48,8 +52,8 @@ public class WaxFractionSim extends BasePVTsimulation {
    * setTemperaturesAndPressures.
    * </p>
    *
-   * @param temperature an array of {@link double} objects
-   * @param pressure an array of {@link double} objects
+   * @param temperature an array of type double
+   * @param pressure an array of type double
    */
   public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
     this.pressure = pressure;
@@ -69,7 +73,6 @@ public class WaxFractionSim extends BasePVTsimulation {
       System.out.println("adding....");
 
       for (int i = 0; i < experimentalData[0].length; i++) {
-
         ArrayList<Double> guessArray = new ArrayList<Double>();
         for (int p = 0; p < 3; p++) {
           guessArray.add(getThermoSystem().getWaxModel().getWaxParameters()[p]);
@@ -103,7 +106,7 @@ public class WaxFractionSim extends BasePVTsimulation {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      System.out.println("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

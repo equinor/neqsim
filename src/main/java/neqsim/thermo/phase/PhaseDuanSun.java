@@ -1,6 +1,8 @@
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentGeDuanSun;
+import neqsim.util.exception.IsNaNException;
+import neqsim.util.exception.TooManyIterationsException;
 
 /**
  * <p>
@@ -30,11 +32,9 @@ public class PhaseDuanSun extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentGeDuanSun(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentGeDuanSun(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -63,8 +63,22 @@ public class PhaseDuanSun extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
+  public void setDijT(double[][] DijT) {
+    throw new UnsupportedOperationException("Unimplemented method 'setDijT'");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExcessGibbsEnergy() {
+    // double GE = getExcessGibbsEnergy(this, numberOfComponents, temperature,
+    // pressure, pt);
+    return GE;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+      double temperature, double pressure, PhaseType pt) {
     GE = 0;
     double salinity = 0.0;
     // double k=0.0;
@@ -92,12 +106,12 @@ public class PhaseDuanSun extends PhaseGE {
     for (int i = 0; i < numberOfComponents; i++) {
       // GE += phase.getComponents()[i].getx()*Math.log(((ComponentGeDuanSun)
       // componentArray[i]).getGammaNRTL(phase, numberOfComponents, temperature, pressure,
-      // phasetype, alpha, Dij));
+      // pt, alpha, Dij));
       GE += phase.getComponents()[i].getx() * Math.log(((ComponentGeDuanSun) componentArray[i])
-          .getGammaPitzer(phase, numberOfComponents, temperature, pressure, phasetype, salinity));
+          .getGammaPitzer(phase, numberOfComponents, temperature, pressure, pt, salinity));
     }
 
-    return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*
+    return R * temperature * numberOfMolesInPhase * GE;
   }
 
   /** {@inheritDoc} */
@@ -108,9 +122,8 @@ public class PhaseDuanSun extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy() {
-    // double GE = getExessGibbsEnergy(this, numberOfComponents, temperature,
-    // pressure, phaseType);
-    return GE;
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws IsNaNException, TooManyIterationsException {
+    throw new UnsupportedOperationException("Unimplemented method 'molarVolume'");
   }
 }

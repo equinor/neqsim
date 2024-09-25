@@ -2,6 +2,7 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -12,7 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author asmund
  * @version $Id: $Id
  */
-public abstract class constantDutyFlash implements constantDutyFlashInterface {
+public abstract class constantDutyFlash implements ConstantDutyFlashInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(constantDutyFlash.class);
 
@@ -29,21 +30,19 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
   double deviation = 0;
   double g0 = 0;
   double g1 = 0;
-  double lnOldOldK[];
-  double lnK[];
+  double[] lnOldOldK;
+  double[] lnK;
   double[] lnOldK;
-  double oldDeltalnK[];
-  double deltalnK[];
-  double[] tm = {1, 1};
-  double beta = 1e-5;
+  double[] oldDeltalnK;
+  double[] deltalnK;
+  double[] tm = { 1, 1 };
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
 
   /**
-   * <p>
-   * Constructor for constantDutyFlash.
-   * </p>
+   * <p>Constructor for constantDutyFlash.</p>
    */
-  public constantDutyFlash() {}
+  public constantDutyFlash() {
+  }
 
   /**
    * <p>
@@ -63,12 +62,6 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setBeta(double beta) {
-    this.beta = beta;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void run() {
     system.init(0);
     system.init(2);
@@ -83,7 +76,6 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
     double dxidt = 0;
     double Told = 0;
     do {
-      // system.setBeta(beta+0.65);
       system.init(2);
 
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
@@ -161,5 +153,6 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addData(String name, double[][] data) {}
+  public void addData(String name, double[][] data) {
+  }
 }

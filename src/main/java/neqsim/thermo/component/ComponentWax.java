@@ -1,12 +1,9 @@
-/*
- * SolidComponent.java
- *
- * Created on 18. august 2001, 12:45
- */
-
 package neqsim.thermo.component;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -18,33 +15,30 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentWax extends ComponentSolid {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentWax.class);
 
   /**
    * <p>
    * Constructor for ComponentWax.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentWax(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentWax(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Uses Claperyons equation to calculate the solid fugacity
-   */
+  /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase1) {
     if (!isWaxFormer()) {
       fugacityCoefficient = 1.0e50;
-      logFugacityCoefficient = Math.log(fugacityCoefficient);
-      return 1.0e50;
+      return fugacityCoefficient;
     }
+
     return fugcoef2(phase1);
   }
 
@@ -55,10 +49,10 @@ public class ComponentWax extends ComponentSolid {
       refPhase.setTemperature(phase1.getTemperature());
     } catch (Exception ex) {
       // System.out.println("compname " + componentName);
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     refPhase.setPressure(phase1.getPressure());
-    refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, 0, 1.0);
+    refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, PhaseType.byValue(0), 1.0);
     refPhase.getComponent(0).fugcoef(refPhase);
 
     double liquidPhaseFugacity =
@@ -79,11 +73,6 @@ public class ComponentWax extends ComponentSolid {
     // + presTerm);
 
     fugacityCoefficient = SolidFug / (phase1.getPressure() * getx());
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
     return fugacityCoefficient;
-
-    // getS
   }
-  // public double fugcoef(PhaseInterface phase, int numberOfComps, double temp,
-  // double pres){
 }

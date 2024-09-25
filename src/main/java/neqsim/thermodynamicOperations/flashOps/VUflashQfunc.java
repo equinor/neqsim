@@ -24,15 +24,9 @@ public class VUflashQfunc extends Flash {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(VUflashQfunc.class);
 
-  double Vspec = 0, Uspec = 0.0;
+  double Vspec = 0;
+  double Uspec = 0.0;
   Flash tpFlash;
-
-  /**
-   * <p>
-   * Constructor for VUflashQfunc.
-   * </p>
-   */
-  public VUflashQfunc() {}
 
   /**
    * <p>
@@ -113,8 +107,10 @@ public class VUflashQfunc extends Flash {
    * @return a double
    */
   public double solveQ() {
-    double oldPres = system.getPressure(), nyPres = system.getPressure(),
-        nyTemp = system.getTemperature(), oldTemp = system.getTemperature();
+    double oldPres = system.getPressure();
+    double nyPres = system.getPressure();
+    double nyTemp = system.getTemperature();
+    double oldTemp = system.getTemperature();
     double iterations = 1;
     // logger.info("Vspec: " + Vspec);
     // logger.info("Uspec: " + Uspec);
@@ -180,7 +176,7 @@ public class VUflashQfunc extends Flash {
       testOps.VUflash(volume, energy);
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

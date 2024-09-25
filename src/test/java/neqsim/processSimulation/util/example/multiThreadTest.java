@@ -130,12 +130,12 @@ public class multiThreadTest {
         processThread1.join(1000);
         processThread2.join(1000);
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
     }
     // } while (processThread1.isAlive()); // && processThread2.isAlive());
 
-    System.out.println("Time taken for simulation = " + (System.currentTimeMillis() - time));
+    logger.info("Time taken for simulation = " + (System.currentTimeMillis() - time));
 
     ((Compressor) operations.getUnit("comp1")).displayResult();
     ((Compressor) operations2.getUnit("comp22")).displayResult();

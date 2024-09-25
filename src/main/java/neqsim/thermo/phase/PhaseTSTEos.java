@@ -41,9 +41,8 @@ public class PhaseTSTEos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] = new ComponentTST(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentTST(name, moles, molesInPhase, compNumber);
   }
 }

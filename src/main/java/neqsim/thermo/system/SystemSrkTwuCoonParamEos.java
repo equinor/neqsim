@@ -4,14 +4,18 @@ package neqsim.thermo.system;
  * This class defines a thermodynamic system using the SRK Two Coon Param equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemSrkTwuCoonParamEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>
+   * Constructor for SystemSrkTwuCoonParamEos.
+   * </p>
+   */
   public SystemSrkTwuCoonParamEos() {
-    super();
-    modelName = "TwuCoonRKparam-EOS";
-    attractiveTermNumber = 12;
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -19,13 +23,11 @@ public class SystemSrkTwuCoonParamEos extends SystemSrkEos {
    * Constructor for SystemSrkTwuCoonParamEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemSrkTwuCoonParamEos(double T, double P) {
-    super(T, P);
-    modelName = "TwuCoonRKparam-EOS";
-    attractiveTermNumber = 12;
+    this(T, P, false);
   }
 
   /**
@@ -33,12 +35,12 @@ public class SystemSrkTwuCoonParamEos extends SystemSrkEos {
    * Constructor for SystemSrkTwuCoonParamEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemSrkTwuCoonParamEos(double T, double P, boolean solidCheck) {
-    super(T, P, solidCheck);
+  public SystemSrkTwuCoonParamEos(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     modelName = "TwuCoonRKparam-EOS";
     attractiveTermNumber = 12;
   }
@@ -52,10 +54,6 @@ public class SystemSrkTwuCoonParamEos extends SystemSrkEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

@@ -8,19 +8,18 @@ import neqsim.thermo.phase.PhaseSrkCPA;
  * This class defines a thermodynamic system using the CPA EoS equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
-
 public class SystemSrkCPA extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>
+   * Constructor for SystemSrkCPA.
+   * </p>
+   */
   public SystemSrkCPA() {
-    super();
-    modelName = "CPA-SRK-EOS";
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseSrkCPA();
-    }
-    this.useVolumeCorrection(true);
-    commonInitialization();
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -28,19 +27,11 @@ public class SystemSrkCPA extends SystemSrkEos {
    * Constructor for SystemSrkCPA.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemSrkCPA(double T, double P) {
-    super(T, P);
-    modelName = "CPA-SRK-EOS";
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseSrkCPA();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
-    this.useVolumeCorrection(true);
-    commonInitialization();
+    this(T, P, false);
   }
 
   /**
@@ -48,12 +39,14 @@ public class SystemSrkCPA extends SystemSrkEos {
    * Constructor for SystemSrkCPA.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemSrkCPA(double T, double P, boolean solidCheck) {
-    super(T, P, solidCheck);
+  public SystemSrkCPA(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
+
+    // Recreates phases created in super constructor SystemSrkEos
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseSrkCPA();
       phaseArray[i].setTemperature(T);
@@ -63,7 +56,6 @@ public class SystemSrkCPA extends SystemSrkEos {
     commonInitialization();
 
     if (solidPhaseCheck) {
-      // System.out.println("here first");
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);
@@ -71,12 +63,21 @@ public class SystemSrkCPA extends SystemSrkEos {
     }
 
     if (hydrateCheck) {
-      // System.out.println("here first");
       phaseArray[numberOfPhases - 1] = new PhaseHydrate();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);
       phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addComponent(String componentName, double moles) {
+    // if (componentName.equals("Ca++") || componentName.equals("Na+") ||
+    // componentName.equals("Cl-")) {
+    // componentName = "NaCl";
+    // }
+    super.addComponent(componentName, moles);
   }
 
   /** {@inheritDoc} */
@@ -88,10 +89,6 @@ public class SystemSrkCPA extends SystemSrkEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }
@@ -105,15 +102,5 @@ public class SystemSrkCPA extends SystemSrkEos {
     setImplementedCompositionDeriativesofFugacity(true);
     setImplementedPressureDeriativesofFugacity(true);
     setImplementedTemperatureDeriativesofFugacity(true);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void addComponent(String componentName, double moles) {
-    // if (componentName.equals("Ca++") || componentName.equals("Na+") ||
-    // componentName.equals("Cl-")) {
-    // componentName = "NaCl";
-    // }
-    super.addComponent(componentName, moles);
   }
 }

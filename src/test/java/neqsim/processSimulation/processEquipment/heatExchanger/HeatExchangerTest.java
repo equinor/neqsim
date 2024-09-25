@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.separator.Separator;
@@ -17,14 +18,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  * @since 2.2.3
  */
-public class HeatExchangerTest extends neqsim.NeqSimTest{
+public class HeatExchangerTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem;
-  static Stream gasStream;
+  Stream gasStream;
 
   @BeforeEach
-  static void setUp() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 60.0), 20.00);
+  void setUp() {
+    testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 60.0), 20.00);
     testSystem.addComponent("methane", 120.00);
     testSystem.addComponent("ethane", 120.0);
     testSystem.addComponent("n-heptane", 3.0);
@@ -35,13 +35,19 @@ public class HeatExchangerTest extends neqsim.NeqSimTest{
   }
 
   @Test
-  public static void test_Run1(String args[]) {
+  void testRun1() {
     Stream stream_Hot = new Stream("Stream1", testSystem);
-    Stream stream_Cold = new Stream("Stream1", testSystem.clone());
+    stream_Hot.setTemperature(100.0, "C");
+    stream_Hot.setFlowRate(1000.0, "kg/hr");
+    Stream stream_Cold = new Stream("Stream2", testSystem.clone());
+    stream_Cold.setTemperature(20.0, "C");
+    stream_Cold.setFlowRate(310.0, "kg/hr");
 
-    HeatExchanger heatEx = new HeatExchanger("heatEx");
-    heatEx.setFeedStream(0, stream_Hot);
-    heatEx.setFeedStream(1, stream_Cold); // resyc.getOutStream());
+    HeatExchanger heatEx = new HeatExchanger("heatEx", stream_Hot, stream_Cold);
+    // heatEx.setFeedStream(0, stream_Hot);
+    // heatEx.setFeedStream(1, stream_Cold); // resyc.getOutStream());
+    heatEx.setGuessOutTemperature(80.0, "C");
+    heatEx.setUAvalue(1000);
 
     Separator sep = new Separator("sep", stream_Hot);
 
@@ -57,6 +63,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest{
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(stream_Hot);
+    operations.add(stream_Cold);
     operations.add(heatEx);
     operations.add(sep);
     operations.add(oilOutStream);
@@ -64,13 +71,12 @@ public class HeatExchangerTest extends neqsim.NeqSimTest{
     operations.add(resyc);
 
     operations.run();
-
     // heatEx.getOutStream(0).displayResult();
     // resyc.getOutStream().displayResult();
   }
 
   @Test
-  public static void test_Run2(String args[]) {
+  void testRun2() {
     Stream stream_Hot = new Stream("Stream1", testSystem);
 
     neqsim.thermo.system.SystemInterface testSystem2 =
@@ -95,8 +101,19 @@ public class HeatExchangerTest extends neqsim.NeqSimTest{
     operations.add(heatExchanger1);
 
     operations.run();
-    // operations.displayResult();
-    // heatExchanger1.getOutStream(0).displayResult();
-    // heatExchanger1.getOutStream(1).displayResult();
+    assertEquals(heatExchanger1.getDuty(), -9674.051890272862, 1e-1);
+
+    heatExchanger1.setDeltaT(1.0);
+    heatExchanger1.run();
+
+    assertEquals(15780.77130, heatExchanger1.getUAvalue(), 1e-3);
+
+    heatExchanger1 = new neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger(
+        "heatEx", stream_Hot, stream_Cold);
+    heatExchanger1.setDeltaT(1.0);
+    heatExchanger1.run();
+
+    assertEquals(15780.77130, heatExchanger1.getUAvalue(), 1e-3);
+
   }
 }

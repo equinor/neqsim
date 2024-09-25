@@ -40,7 +40,9 @@ public class LGTSurfaceTension extends SurfaceTension {
   /**
    * {@inheritDoc}
    *
-   * Calculates the surfacetension using the Gradient Theory for mixtures Units: N/m
+   * <p>
+   * Using the Gradient Theory for mixtures Units: N/m
+   * </p>
    */
   @Override
   public double calcSurfaceTension(int interface1, int interface2) {
@@ -182,8 +184,8 @@ public class LGTSurfaceTension extends SurfaceTension {
         break;
       }
       surdenstemp +=
-          Math.sqrt(2.0 * kappa * mu_times_den[j]) * del_den_interface[referenceComponentNumber]; // *
-                                                                                                  // thermo.ThermodynamicConstantsInterface.avagadroNumber;
+          Math.sqrt(2.0 * kappa * mu_times_den[j]) * del_den_interface[referenceComponentNumber];
+      // thermo.ThermodynamicConstantsInterface.avagadroNumber;
       // System.out.println("surdenstemp " + surdenstemp + " kappa " + kappa + "
       // mu_times_den[j] " + mu_times_den[j] + " z " + z_step[j]);
     }
@@ -203,7 +205,7 @@ public class LGTSurfaceTension extends SurfaceTension {
    * </p>
    *
    * @param compnum a int
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getMolarDensity(int compnum) {
     double[] temp = new double[ite_step];
@@ -218,7 +220,7 @@ public class LGTSurfaceTension extends SurfaceTension {
    * getMolarDensityTotal.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getMolarDensityTotal() {
     double[] temp = new double[ite_step];
@@ -235,7 +237,7 @@ public class LGTSurfaceTension extends SurfaceTension {
    * getz.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getz() {
     return z_step;
@@ -246,7 +248,7 @@ public class LGTSurfaceTension extends SurfaceTension {
    * getPressure.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getPressure() {
     return pressure_interface;

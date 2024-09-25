@@ -15,19 +15,12 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  * @version $Id: $Id
  */
-public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
+public class WaterDewPointAnalyser extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(WaterDewPointAnalyser.class);
-  protected StreamInterface stream = null;
+
   private double referencePressure = 70.0;
   private String method = "Bukacek";
-
-  /**
-   * <p>
-   * Constructor for WaterDewPointAnalyser.
-   * </p>
-   */
-  public WaterDewPointAnalyser() {}
 
   /**
    * <p>
@@ -37,8 +30,19 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public WaterDewPointAnalyser(StreamInterface stream) {
-    this.stream = stream;
-    unit = "K";
+    this("WaterDewPointAnalyser", stream);
+  }
+
+  /**
+   * <p>
+   * Constructor for WaterDewPointAnalyser.
+   * </p>
+   *
+   * @param name Name of WaterDewPointAnalyser
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public WaterDewPointAnalyser(String name, StreamInterface stream) {
+    super(name, "K", stream);
     setConditionAnalysisMaxDeviation(1.0);
   }
 
@@ -47,17 +51,12 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
   public void displayResult() {
     try {
       // System.out.println("total water production [kg/dag]" +
-      // stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()*stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24);
+      // stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles() *
+      // stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24);
       // System.out.println("water in phase 1 (ppm) " +
       // stream.getThermoSystem().getPhase(0).getComponent("water").getx()*1e6);
     } finally {
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getMeasuredValue() {
-    return getMeasuredValue(unit);
   }
 
   /** {@inheritDoc} */
@@ -76,7 +75,7 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
       try {
         thermoOps.waterDewPointTemperatureMultiphaseFlash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
       return tempFluid.getTemperature(unit);
     } else {
@@ -88,7 +87,7 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
       try {
         thermoOps.waterDewPointTemperatureFlash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
       return tempFluid2.getTemperature(unit);
     }
@@ -99,7 +98,7 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
    * Getter for the field <code>referencePressure</code>.
    * </p>
    *
-   * @return a double
+   * @return Reference pressure in bara
    */
   public double getReferencePressure() {
     return referencePressure;
@@ -110,7 +109,7 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
    * Setter for the field <code>referencePressure</code>.
    * </p>
    *
-   * @param referencePressure a double
+   * @param referencePressure Reference pressure to set in in bara
    */
   public void setReferencePressure(double referencePressure) {
     this.referencePressure = referencePressure;

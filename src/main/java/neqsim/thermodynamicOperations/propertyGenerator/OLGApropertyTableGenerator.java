@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -24,10 +25,30 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
-  double[] pressures, temperatureLOG, temperatures, pressureLOG = null;
-  double[][] ROG = null, DROGDP, DROHLDP, DROGDT, DROHLDT;
-  double[][] ROL, CPG, CPHL, HG, HHL, TCG, TCHL, VISG, VISHL, SIGGHL, SEG, SEHL, RS;
-  double TC, PC;
+  double[] pressures;
+  double[] temperatureLOG;
+  double[] temperatures;
+  double[] pressureLOG = null;
+  double[][] ROG = null;
+  double[][] DROGDP;
+  double[][] DROHLDP;
+  double[][] DROGDT;
+  double[][] DROHLDT;
+  double[][] ROL;
+  double[][] CPG;
+  double[][] CPHL;
+  double[][] HG;
+  double[][] HHL;
+  double[][] TCG;
+  double[][] TCHL;
+  double[][] VISG;
+  double[][] VISHL;
+  double[][] SIGGHL;
+  double[][] SEG;
+  double[][] SEHL;
+  double[][] RS;
+  double TC;
+  double PC;
 
   /**
    * <p>
@@ -90,7 +111,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
       TC = thermoSystem.getTC() - 273.15;
       PC = thermoSystem.getPC() * 1e5;
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -123,7 +144,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         try {
           thermoOps.TPflash();
         } catch (Exception ex) {
-          logger.error("error", ex);
+          logger.error(ex.getMessage(), ex);
         }
         thermoSystem.init(3);
         thermoSystem.initPhysicalProperties();
@@ -141,7 +162,8 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         }
 
         if (!thermoSystem.hasPhaseType("gas")) {
-          thermoSystem.setPhaseType("oil", 1);
+          thermoSystem.setPhaseType(thermoSystem.getPhaseNumberOfPhase(PhaseType.OIL),
+              PhaseType.byValue(1));
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
 
@@ -150,7 +172,8 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         }
 
         if (!thermoSystem.hasPhaseType("oil")) {
-          thermoSystem.setPhaseType("gas", 1);
+          thermoSystem.setPhaseType(thermoSystem.getPhaseNumberOfPhase(PhaseType.GAS),
+              PhaseType.byValue(1));
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
 
@@ -159,7 +182,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         }
 
         if (!thermoSystem.hasPhaseType("aqueous")) {
-          thermoSystem.setPhaseType(1, 1);
+          thermoSystem.setPhaseType(1, PhaseType.byValue(1));
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
 
@@ -215,7 +238,6 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
   public void writeOLGAinpFile(String filename) {
     try (Writer writer = new BufferedWriter(
         new OutputStreamWriter(new FileOutputStream("c:/temp/filename.txt"), "utf-8"))) {
-
       writer.write("PRESSURE= (");
       for (int i = 0; i < pressures.length; i++) {
         thermoSystem.setPressure(pressures[i]);

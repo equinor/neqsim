@@ -60,12 +60,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
    */
   public WaxDepositionFlowNode(SystemInterface system, SystemInterface interphaseSystem,
       GeometryDefinitionInterface pipe) {
-    super(system, pipe);
-    this.flowNodeType = "wax deposition node";
-    this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-            this);
+    this(system, pipe);
   }
 
   /** {@inheritDoc} */
@@ -126,7 +121,8 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
   @SuppressWarnings("unused")
   public static void main(String[] args) {
     SystemInterface testSystem = new SystemSrkEos(273.15 + 40.0, 10.0);
-    // SystemInterface testSystem = new SystemSrkCPAstatoil(275.3, 1.01325);
+    // SystemInterface testSystem = new SystemSrkCPAstatoil(275.3,
+    // ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     PipeData pipe1 = new PipeData(0.203, 0.00025);
 
@@ -165,7 +161,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
 
     /*
      * double length = 0;
-     * 
+     *
      * double[][] temperatures2 = new double[3][1000]; int k = 0; for (int i = 0; i < 11; i++) {
      * length += test.getLengthOfNode(); test.initFlowCalc(); test.calcFluxes(); if (i > 1 && (i %
      * 1) == 0) { k++; test.display("length " + length); test.getBulkSystem().display("length " +
@@ -173,13 +169,12 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
      * //test.getFluidBoundary().display("length " + length); test.setLengthOfNode(0.000005 +
      * test.getLengthOfNode() / 2.0); temperatures2[0][k] = length; temperatures2[1][k] =
      * test.getGeometry().getTemperature(); test.getFluidBoundary().display("test"); }
-     * 
+     *
      * //test.getBulkSystem().display(); test.update(); test.getFluidBoundary().display("length " +
      * length); test.getInterphaseSystem().display("length " + length);
-     * 
-     * 
+     *
      * //test.getFluidBoundary().display("test"); }
-     * 
+     *
      * for (int i = 0; i < k; i++) { System.out.println("len temp  " + temperatures2[0][i] + " " +
      * temperatures2[1][i]); }
      */

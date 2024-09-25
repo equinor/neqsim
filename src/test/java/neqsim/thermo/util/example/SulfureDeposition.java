@@ -2,6 +2,7 @@ package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -86,7 +87,7 @@ public class SulfureDeposition {
      */
     // testSystem.addComponent("propane",1.05);
     // testSystem.addComponent("n-butane",0.06);
-    //// testSystem.addComponent("i-butane",0.6);
+    // testSystem.addComponent("i-butane",0.6);
     // testSystem.addComponent("n-pentane",0.01);
     // testSystem.addComponent("i-pentane",0.07);
     // testSystem.addComponent("benzene",79.9);
@@ -137,7 +138,7 @@ public class SulfureDeposition {
       logger.info("mol S8/mol gas (ppb) " + testSystem.getPhase(0).getComponent("S8").getx() * 1e9);
       logger.info("mg S8/Sm^3 gas " + testSystem.getPhase(0).getComponent("S8").getx()
           * testSystem.getPhase(0).getComponent("S8").getMolarMass() * 1e6
-          * (101325 / (8.315 * 288.15)));
+          * (101325 / (ThermodynamicConstantsInterface.R * 288.15)));
 
       logger.info("wt% S8 in gas " + testSystem.getPhase(0).getComponent("S8").getx()
           * testSystem.getPhase(0).getComponent("S8").getMolarMass()
@@ -153,8 +154,7 @@ public class SulfureDeposition {
           * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getMolarMass()
           * 1e6);
     } catch (Exception ex) {
-      logger.error("error", ex);
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
   }

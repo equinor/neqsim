@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.pipeline;
 
 import java.util.UUID;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -36,7 +35,10 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   double insideDiameter = 0.1;
   double velocity = 1.0;
   double pipeWallRoughness = 1e-5;
+
+  /** Elevation at pipe inlet in meters. */
   private double inletElevation = 0;
+  /** Elevation at pipe outlet in meters. */
   private double outletElevation = 0;
   double dH = 0.0;
   String flowPattern = "unknown";
@@ -65,7 +67,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
 
   /**
    * Constructor for AdiabaticTwoPhasePipe.
-   * 
+   *
    * @param name name of pipe
    */
   public AdiabaticTwoPhasePipe(String name) {
@@ -74,7 +76,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
 
   /**
    * Constructor for AdiabaticTwoPhasePipe.
-   * 
+   *
    * @param name name of pipe
    * @param inStream input stream
    */
@@ -156,11 +158,18 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   public double calcPressureOut() {
     double area = Math.PI / 4.0 * Math.pow(insideDiameter, 2.0);
     velocity = system.getFlowRate("m3/sec") / area;
+    double supGasVel = system.getPhase(0).getFlowRate("m3/sec") / area;
+    double supoilVel = system.getPhase(0).getFlowRate("m3/sec") / area;
+
     double reynoldsNumber = velocity * insideDiameter / system.getKinematicViscosity("m2/sec");
     double frictionFactor = calcWallFrictionFactor(reynoldsNumber);
-    double dp = 2.0 * frictionFactor * length * Math.pow(system.getFlowRate("kg/sec"), 2.0)
-        / insideDiameter / system.getDensity("kg/m3"); // * () *
-                                                      // neqsim.thermo.ThermodynamicConstantsInterface.R
+    // double dp = 2.0 * frictionFactor * length * Math.pow(system.getFlowRate("kg/sec"), 2.0)
+    // / insideDiameter / system.getDensity("kg/m3"); // * () *
+    // neqsim.thermo.ThermodynamicConstantsInterface.R
+    double dp = 6253000 * Math.pow(system.getFlowRate("kg/hr"), 2.0) * frictionFactor
+        / Math.pow(insideDiameter * 1000, 5.0) / system.getDensity("kg/m3") / 100.0 * 1000.0
+        * length;
+
     // / system.getMolarMass() * system.getTemperature() / Math.pow(insideDiameter,
     // 5.0);
     // \\System.out.println("friction fact" + frictionFactor + " velocity " +
@@ -231,21 +240,20 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         testOps = new ThermodynamicOperations(system);
         testOps.TPflash();
       }
-      do {
-        iter++;
-        oldPressure = system.getPressure();
-        system.initProperties();
-        double outP = calcPressureOut();
-        if (outP < 1e-10 || Double.isNaN(outP)) {
-          break;
-        }
-        system.setPressure(outP);
-        testOps = new ThermodynamicOperations(system);
-        testOps.TPflash();
-      } while (Math.abs(system.getPressure() - oldPressure) > 1e-2 && iter < 25);
+
+      system.initProperties();
+      double outP = calcPressureOut();
+      if (outP < 1e-10 || Double.isNaN(outP)) {
+        system.setPressure(0.001);
+        logger.debug("pressure too low in pipe....");
+      }
+      system.setPressure(outP);
+      testOps = new ThermodynamicOperations(system);
+      testOps.TPflash();
+
       if (system.getPressure() < pressureOutLimit) {
         iter = 0;
-        double outP = system.getPressure();
+        outP = system.getPressure();
         do {
           iter++;
           oldPressure = system.getNumberOfMoles();
@@ -276,6 +284,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         system.setTotalFlowRate(flowLimit, maxflowunit);
         system.init(1);
       }
+      // SetTotalFlowRate resets beta factors, but they are fixed in run below
       inStream.getThermoSystem().setTotalFlowRate(system.getFlowRate(maxflowunit), maxflowunit);
       inStream.run(id);
     } else {
@@ -311,6 +320,17 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   @Override
   public void displayResult() {
     system.display();
+  }
+
+  /**
+   * <p>getSuperficialVelocity.</p>
+   *
+   * @return a double
+   */
+  public double getSuperficialVelocity() {
+    return getInletStream().getThermoSystem().getFlowRate("kg/sec")
+        / getInletStream().getThermoSystem().getDensity("kg/m3")
+        / (Math.PI / 4.0 * Math.pow(insideDiameter, 2.0));
   }
 
   /** {@inheritDoc} */
@@ -364,7 +384,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    * @param diameter the diameter to set
    */
   public void setDiameter(double diameter) {
-    this.insideDiameter = diameter;
+    insideDiameter = diameter;
   }
 
   /**
@@ -431,39 +451,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    */
   public void setOutletElevation(double outletElevation) {
     this.outletElevation = outletElevation;
-  }
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param name an array of {@link java.lang.String} objects
-   */
-  public static void main(String[] name) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 100.00);
-    testSystem.addComponent("methane", 10.0, "MSm^3/day");
-    testSystem.addComponent("n-heptane", 5.0, "MSm^3/day");
-    testSystem.createDatabase(true);
-    testSystem.setMixingRule(2);
-    testSystem.init(0);
-
-    Stream stream_1 = new Stream("Stream1", testSystem);
-
-    AdiabaticTwoPhasePipe pipe = new AdiabaticTwoPhasePipe(stream_1);
-    pipe.setLength(100000.0);
-    pipe.setDiameter(0.5017112);
-    pipe.setPipeWallRoughness(10e-6);
-    // pipe.setOutPressure(112.0);
-
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
-    operations.add(stream_1);
-    operations.add(pipe);
-    operations.run();
-    pipe.displayResult();
-    System.out.println("flow " + pipe.getOutletStream().getFluid().getFlowRate("MSm3/day"));
   }
 
   /**

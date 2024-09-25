@@ -1,6 +1,8 @@
 package neqsim.processSimulation.processEquipment.distillation;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -17,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.Mixer
     implements TrayInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(SimpleTray.class);
 
   double heatInput = 0.0;
   private double temperature = Double.NaN;
@@ -129,7 +132,6 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
     ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
     if (streams.size() > 0) {
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().reInitPhaseType();
       mixedStream.getThermoSystem().init(0);
 
       mixStream();
@@ -165,6 +167,12 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
     setTemperature(mixedStream.getTemperature());
     mixedStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
+
+    if (mixedStream.getFluid().getNumberOfPhases() >= 3) {
+      System.out
+          .println("error...." + mixedStream.getFluid().getNumberOfPhases() + " phases on tray");
+      logger.warn("error...." + mixedStream.getFluid().getNumberOfPhases() + " phases on tray");
+    }
   }
 
   /**

@@ -13,21 +13,33 @@ import org.apache.logging.log4j.Logger;
  */
 public class Fluid {
   static Logger logger = LogManager.getLogger(Fluid.class);
+
   neqsim.thermo.system.SystemInterface fluid = null;
   private boolean hasWater = false;
   private boolean autoSelectModel = false;
   private String thermoModel = "srk";
   private String thermoMixingRule = "classic";
 
-  public Fluid() {
-  }
+  /**
+   * <p>
+   * Constructor for Fluid.
+   * </p>
+   */
+  public Fluid() {}
 
+  /**
+   * <p>
+   * Getter for the field <code>fluid</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public neqsim.thermo.system.SystemInterface getFluid() {
     return fluid;
   }
 
   /**
-   * 
+   *
    */
   private void setThermoModel() {
     if (thermoModel.equals("srk")) {
@@ -63,15 +75,15 @@ public class Fluid {
    * </p>
    *
    * @param componentNames an array of {@link java.lang.String} objects
-   * @param flowrate an array of {@link double} objects
+   * @param flowrate an array of type double
    * @param unit a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public neqsim.thermo.system.SystemInterface create2(String[] componentNames,
-      double[] flowrate, String unit) {
+  public neqsim.thermo.system.SystemInterface create2(String[] componentNames, double[] flowrate,
+      String unit) {
     setThermoModel();
     createFluid(componentNames, flowrate, unit);
-    if (isHasWater() == true) {
+    if (isHasWater()) {
       fluid.addComponent("water", 0.1);
     }
     fluid.createDatabase(true);
@@ -196,7 +208,7 @@ public class Fluid {
       return null;
     }
 
-    if (isHasWater() == true) {
+    if (isHasWater()) {
       fluid.addComponent("water", 0.1);
     }
     fluid.createDatabase(true);
@@ -217,13 +229,13 @@ public class Fluid {
    * </p>
    *
    * @param componentNames an array of {@link java.lang.String} objects
-   * @param flowrate an array of {@link double} objects
+   * @param flowrate an array of type double
    * @param unit a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
   public neqsim.thermo.system.SystemInterface createFluid(String[] componentNames,
       double[] flowrate, String unit) {
-      setThermoModel();
+    setThermoModel();
     if (componentNames.length != flowrate.length) {
       logger.error("component names and mole fractions need to be same length...");
     }
@@ -269,8 +281,7 @@ public class Fluid {
     fluid2.display();
     fluid2.getNumberOfComponents();
 
-    neqsim.thermo.system.SystemInterface fluid3 =
-    fluidCreator.create("black oil with water");
+    neqsim.thermo.system.SystemInterface fluid3 = fluidCreator.create("black oil with water");
     fluid3.display();
     fluid3.getNumberOfComponents();
   }
@@ -294,9 +305,7 @@ public class Fluid {
    * @param hasWater a boolean
    */
   public void setHasWater(boolean hasWater) {
-
     this.hasWater = hasWater;
-
   }
 
   /**
@@ -346,7 +355,7 @@ public class Fluid {
   /**
    * <p>
    * Getter for the field <code>thermoMixingRule</code>.
-   * </p>a
+   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -361,7 +370,7 @@ public class Fluid {
    *
    * @param thermoMixingRule a {@link java.lang.String} object
    */
-  public  void setThermoMixingRule(String thermoMixingRule) {
+  public void setThermoMixingRule(String thermoMixingRule) {
     this.thermoMixingRule = thermoMixingRule;
   }
 }

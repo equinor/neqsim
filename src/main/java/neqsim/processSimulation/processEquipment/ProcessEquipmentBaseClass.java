@@ -9,11 +9,13 @@ package neqsim.processSimulation.processEquipment;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.UUID;
 import org.apache.commons.lang.SerializationUtils;
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.stream.EnergyStream;
+import neqsim.processSimulation.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -36,6 +38,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   public HashMap<String, String> properties = new HashMap<String, String>();
   public EnergyStream energyStream = new EnergyStream();
   private boolean isSetEnergyStream = false;
+  protected boolean isSolved = false;
 
   /**
    * <p>
@@ -60,7 +63,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /**
    * Create deep copy.
-   * 
+   *
    * @return a deep copy of the unit operation/process equipment
    */
   public ProcessEquipmentInterface copy() {
@@ -120,6 +123,10 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public void initMechanicalDesign() {}
+
+  /** {@inheritDoc} */
+  @Override
   public String getSpecification() {
     return specification;
   }
@@ -139,7 +146,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    return true;
+    return isSolved;
   }
 
   /**
@@ -200,12 +207,11 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     return getFluid().getPressure(unit);
   }
 
-
-   /** {@inheritDoc} */
-   @Override
-   public void setPressure(double pressure) {
-     getFluid().setPressure(pressure);
-   }
+  /** {@inheritDoc} */
+  @Override
+  public void setPressure(double pressure) {
+    getFluid().setPressure(pressure);
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -237,13 +243,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     return conditionAnalysisMessage;
   }
 
-  /**
-   * <p>
-   * getResultTable.
-   * </p>
-   *
-   * @return an array of {@link java.lang.String} objects
-   */
+  /** {@inheritDoc} */
+  @Override
   public String[][] getResultTable() {
     return null;
   }
@@ -281,4 +282,23 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
         && Arrays.deepEquals(report, other.report)
         && Objects.equals(specification, other.specification);
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return null;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @return a String
+   */
+  public String getReport_json() {
+    return new Report(this).generateJsonReport();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run_step(UUID id) {}
 }

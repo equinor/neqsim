@@ -82,7 +82,7 @@ public class TestUMRPRU {
 
       // testOps.displayResult();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     // testSystem.saveObject(880);
     // testSystem.saveFluid(30, "Norne");
@@ -100,8 +100,8 @@ public class TestUMRPRU {
 
     double numCp = (ent1 - ent2) / 0.002;
 
-    System.out.println("Cp " + cp + " numCp " + numCp);
-    System.out.println("entropy " + testSystem.getPhase(1).getEntropy());
+    //System.out.println("Cp " + cp + " numCp " + numCp);
+    //System.out.println("entropy " + testSystem.getPhase(1).getEntropy());
 
     // thermo.ThermodynamicModelTest testModel = new
     // thermo.ThermodynamicModelTest(testSystem);

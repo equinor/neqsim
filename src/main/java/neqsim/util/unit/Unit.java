@@ -26,17 +26,7 @@ public interface Unit {
 
   /**
    * <p>
-   * getValue.
-   * </p>
-   *
-   * @param tounit a {@link java.lang.String} object
-   * @return a double
-   */
-  double getValue(String tounit);
-
-  /**
-   * <p>
-   * getValue.
+   * Convert value from a specified unit to a specified unit.
    * </p>
    *
    * @param val a double
@@ -45,4 +35,14 @@ public interface Unit {
    * @return a double
    */
   double getValue(double val, String fromunit, String tounit);
+
+  /**
+   * <p>
+   * Get process value in specified unit.
+   * </p>
+   *
+   * @param tounit Unit to get process value in.
+   * @return Value converted to the specified unit.
+   */
+  double getValue(String tounit);
 }

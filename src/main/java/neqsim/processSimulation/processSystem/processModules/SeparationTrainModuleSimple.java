@@ -39,6 +39,13 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
   double firstStageCompressorAfterCoolerTemperature = 273.15 + 30;
   double exportOilTemperature = 273.15 + 30;
 
+  /**
+   * <p>
+   * Constructor for SeparationTrainModuleSimple.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public SeparationTrainModuleSimple(String name) {
     super(name);
   }
@@ -294,16 +301,17 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
     ((ProcessEquipmentInterface) separationModule.getOperations().getUnit("2nd stage recompressor"))
         .getMechanicalDesign().displayResults();
 
-    operations.getSystemMechanicalDesign().runDesignCalculation();
-    operations.getSystemMechanicalDesign().getTotalPlotSpace();
-    System.out.println("Modules " + operations.getSystemMechanicalDesign().getTotalVolume());
+    // operations.getSystemMechanicalDesign().runDesignCalculation();
+    // operations.getSystemMechanicalDesign().getTotalPlotSpace();
+    // System.out.println("Modules " + operations.getSystemMechanicalDesign().getTotalVolume());
 
-    System.out
-        .println("Modules " + operations.getSystemMechanicalDesign().getTotalNumberOfModules());
-    System.out.println("Weight " + operations.getSystemMechanicalDesign().getTotalWeight());
-    System.out.println("Plot space " + operations.getSystemMechanicalDesign().getTotalPlotSpace());
-    System.out.println("CAPEX " + operations.getCostEstimator().getWeightBasedCAPEXEstimate());
-    System.out.println("CAPEX " + operations.getCostEstimator().getCAPEXestimate());
+    // System.out
+    // .println("Modules " + operations.getSystemMechanicalDesign().getTotalNumberOfModules());
+    // System.out.println("Weight " + operations.getSystemMechanicalDesign().getTotalWeight());
+    // System.out.println("Plot space " +
+    // operations.getSystemMechanicalDesign().getTotalPlotSpace());
+    // System.out.println("CAPEX " + operations.getCostEstimator().getWeightBasedCAPEXEstimate());
+    // System.out.println("CAPEX " + operations.getCostEstimator().getCAPEXestimate());
 
     /*
      * separationModule.getOutputStream("Inlet separator").displayResult();
@@ -330,8 +338,9 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
      * getPhase(0).getPhysicalProperties().getDensity() * 3600.0 + " m^3/hr");
      * System.out.println("Export gas flow " +
      * separationModule.getOutputStream("gas exit stream").getThermoSystem().
-     * getTotalNumberOfMoles() * 8.314 * (273.15 + 15.0) / 101325.0 * 3600.0 * 24 / 1.0e6 +
-     * " MSm^3/day"); System.out.println("oil/water heater duty " + ((Heater)
+     * getTotalNumberOfMoles() * ThermodynamicConstantsInterface.R * (273.15 + 15.0)
+     * /ThermodynamicConstantsInterface.atm * 3600.0 * 24 / 1.0e6 + " MSm^3/day");
+     * System.out.println("oil/water heater duty " + ((Heater)
      * separationModule.getOperations().getUnit("oil/water heater")).getEnergyInput( ) + " W");
      * System.out.println("Export oil cooler duty " + ((Cooler)
      * separationModule.getOperations().getUnit("export oil cooler")).getEnergyInput () + " W");

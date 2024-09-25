@@ -15,6 +15,7 @@ import neqsim.processSimulation.processEquipment.util.Calculator;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  * <p>
@@ -116,8 +117,7 @@ public class TEGdehydrationProcessDistillation3 {
     Stream gasToReboiler = strippingGas.clone();
     gasToReboiler.setName("gas to reboiler");
 
-    DistillationColumn column = new DistillationColumn(1, true, true);
-    column.setName("TEG regeneration column");
+    DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(richGLycolHeater2.getOutletStream(), 0);
     column.getReboiler().setOutTemperature(273.15 + 206.6);
     column.getCondenser().setOutTemperature(273.15 + 101.0);
@@ -236,15 +236,16 @@ public class TEGdehydrationProcessDistillation3 {
     // operations.run();
 
     operations.save("c:/temp/TEGprocess.neqsim");
-    /// operations = ProcessSystem.open("c:/temp/TEGprocess.neqsim");
+    // operations = ProcessSystem.open("c:/temp/TEGprocess.neqsim");
     // ((DistillationColumn)operations.getUnit("TEG regeneration
-    /// column")).setTopPressure(1.2);
+    // olumn")).setTopPressure(1.2);
     // operations.run();
     // ((DistillationColumn)operations.getUnit("TEG regeneration
-    /// column")).setNumberOfTrays(2);
-    System.out.println("water in wet gas  "
-        + ((Stream) operations.getUnit("water saturated feed gas")).getFluid().getPhase(0)
-            .getComponent("water").getz() * 1.0e6 * 0.01802 * 101325.0 / (8.314 * 288.15));
+    // column")).setNumberOfTrays(2);
+    System.out
+        .println("water in wet gas  " + ((Stream) operations.getUnit("water saturated feed gas"))
+            .getFluid().getPhase(0).getComponent("water").getz() * 1.0e6 * 0.01802
+            * ThermodynamicConstantsInterface.atm / (ThermodynamicConstantsInterface.R * 288.15));
     System.out.println("water in dry gas  " + ((Stream) operations.getUnit("dry gas from absorber"))
         .getFluid().getPhase(0).getComponent("water").getz() * 1.0e6);
     System.out.println("reboiler duty (KW) "
@@ -255,12 +256,14 @@ public class TEGdehydrationProcessDistillation3 {
 
     double waterInWetGasppm =
         waterSaturatedFeedGas.getFluid().getPhase(0).getComponent("water").getz() * 1.0e6;
-    double waterInWetGaskgMSm3 = waterInWetGasppm * 0.01802 * 101325.0 / (8.314 * 288.15);
+    double waterInWetGaskgMSm3 = waterInWetGasppm * 0.01802 * ThermodynamicConstantsInterface.atm
+        / (ThermodynamicConstantsInterface.R * 288.15);
     double TEGfeedwt = TEGFeed.getFluid().getPhase("aqueous").getWtFrac("TEG");
     double TEGfeedflw = TEGFeed.getFlowRate("kg/hr");
     double waterInDehydratedGasppm =
         dehydratedGas.getFluid().getPhase(0).getComponent("water").getz() * 1.0e6;
-    double waterInDryGaskgMSm3 = waterInDehydratedGasppm * 0.01802 * 101325.0 / (8.314 * 288.15);
+    double waterInDryGaskgMSm3 = waterInDehydratedGasppm * 0.01802
+        * ThermodynamicConstantsInterface.atm / (ThermodynamicConstantsInterface.R * 288.15);
     double richTEG2 = richTEG.getFluid().getPhase("aqueous").getWtFrac("TEG");
     System.out.println("reboiler duty (KW) " + ((Reboiler) column.getReboiler()).getDuty() / 1.0e3);
     System.out.println("flow rate from reboiler "

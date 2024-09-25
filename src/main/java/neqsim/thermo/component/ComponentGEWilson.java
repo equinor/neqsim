@@ -2,6 +2,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -19,33 +20,32 @@ public class ComponentGEWilson extends ComponentGE {
    * Constructor for ComponentGEWilson.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentGEWilson(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentGEWilson(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
   /**
    * <p>
-   * fugcoef.
+   * Calculate, set and return fugacity coefficient.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient
+   *        of.
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
-   * @return a double
+   * @param pt the PhaseType of the phase
+   * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
-    fugacityCoefficient =
-        (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
-            * this.getAntoineVaporPressure(temperature) / pressure);
+      double pressure, PhaseType pt) {
+    fugacityCoefficient = (this.getGamma(phase, numberOfComponents, temperature, pressure, pt)
+        * this.getAntoineVaporPressure(temperature) / pressure);
     return fugacityCoefficient;
   }
 
@@ -58,18 +58,18 @@ public class ComponentGEWilson extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
+      double pressure, PhaseType pt) {
     return getWilsonActivityCoefficient(phase);
   }
 
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam,
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
       String[][] mixRule) {
     return 0.0;
   }
@@ -111,14 +111,14 @@ public class ComponentGEWilson extends ComponentGE {
    * @return a double
    */
   public double getCharEnergyParamter(PhaseInterface phase1, int comp1, int comp2) {
-    double param1 = 0.0; // ((ComponentWaxWilson)
-                         // phase1.getComponent(comp1)).getWilsonInteractionEnergy(phase1);
-    double param2 = 0.0; // ((ComponentWaxWilson)
-                         // phase1.getComponent(comp2)).getWilsonInteractionEnergy(phase1);
+    double param1 = 0.0;
+    // ((ComponentWaxWilson) phase1.getComponent(comp1)).getWilsonInteractionEnergy(phase1);
+    double param2 = 0.0;
+    // ((ComponentWaxWilson) phase1.getComponent(comp2)).getWilsonInteractionEnergy(phase1);
     if (comp1 == comp2) {
       return 1.0;
     }
-    // this need to be corrected accordint to how to select energy of shortest
+    // this need to be corrected according to how to select energy of shortest
     // carbon molecule .....
     if (phase1.getComponent(comp1).getMolarMass() > phase1.getComponent(comp2).getMolarMass()) {
       param1 = ((ComponentGEWilson) phase1.getComponent(comp2)).getWilsonInteractionEnergy(phase1);

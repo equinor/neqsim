@@ -2,6 +2,8 @@ package neqsim.dataPresentation.fileHandeling.createTextFile;
 
 import java.io.File;
 import java.io.FileWriter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -13,6 +15,7 @@ import java.io.FileWriter;
  */
 public class TextFile implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(TextFile.class);
 
   String fileName = "c:/example.txt";
   String[][] values;
@@ -46,7 +49,7 @@ public class TextFile implements java.io.Serializable {
     try (FileWriter out = new FileWriter(new File(name))) {
       out.write("");
     } catch (Exception ex) {
-      System.out.println(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -67,7 +70,7 @@ public class TextFile implements java.io.Serializable {
    * Setter for the field <code>values</code>.
    * </p>
    *
-   * @param valuesloca an array of {@link double} objects
+   * @param valuesloca an array of type double
    */
   public void setValues(double[][] valuesloca) {
     values = new String[valuesloca[0].length][valuesloca.length];
@@ -101,8 +104,8 @@ public class TextFile implements java.io.Serializable {
       }
       out.flush();
     } catch (Exception ex) {
-      System.err.println("error writing file: " + ex.toString());
+      logger.error("error writing to file", ex);
     }
-    System.out.println("writing data to file: " + fileName + " ... ok");
+    System.out.println("writing data to file: " + fileName + " ... finished");
   }
 }

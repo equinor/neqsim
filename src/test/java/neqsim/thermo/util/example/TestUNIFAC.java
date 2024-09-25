@@ -50,13 +50,13 @@ public class TestUNIFAC {
     testSystem.init(0);
     testSystem.init(1);
     logger.info(testSystem.getPhase(1).getActivityCoefficient(0));
-    logger.info("gibbs " + testSystem.getPhase(1).getExessGibbsEnergy());
+    logger.info("gibbs " + testSystem.getPhase(1).getExcessGibbsEnergy());
     try {
       // testOps.bubblePointPressureFlash(false);
       testOps.dewPointPressureFlash();
       // testOps.bubblePointTemperatureFlash();
     } catch (Exception ex) {
-      logger.error(ex.toString(), ex);
+      logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
     logger.info(testSystem.getPhase(1).getActivityCoefficient(0));

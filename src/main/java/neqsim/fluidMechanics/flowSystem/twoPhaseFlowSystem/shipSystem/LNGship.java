@@ -8,6 +8,7 @@ import neqsim.standards.StandardInterface;
 import neqsim.standards.gasQuality.Standard_ISO6578;
 import neqsim.standards.gasQuality.Standard_ISO6976;
 import neqsim.standards.gasQuality.Standard_ISO6976_2016;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -22,6 +23,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class LNGship
     extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.TwoPhaseFlowSystem {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(LNGship.class);
 
   double[] temperature = null;
   double dailyBoilOffRatio = 0.005;
@@ -67,7 +69,6 @@ public class LNGship
   private String[][] resultTable = null;
   private boolean backCalculate = false;
   double endVolume = 0.0;
-  static Logger logger = LogManager.getLogger(LNGship.class);
 
   /**
    * <p>
@@ -97,11 +98,11 @@ public class LNGship
    */
   public void useStandardVersion(String isoName, String version) {
     if (version.equals("2016")) {
-      setStandardISO6976(new Standard_ISO6976(thermoSystem, getStandardISO6976().getVolRefT(),
+      setStandardISO6976(new Standard_ISO6976_2016(thermoSystem, getStandardISO6976().getVolRefT(),
           getStandardISO6976().getEnergyRefT(), "volume"));
       logger.info("using  ISO6976 version 2016");
     } else {
-      setStandardISO6976(new Standard_ISO6976_2016(thermoSystem, getStandardISO6976().getVolRefT(),
+      setStandardISO6976(new Standard_ISO6976(thermoSystem, getStandardISO6976().getVolRefT(),
           getStandardISO6976().getEnergyRefT(), "volume"));
       logger.info("using  ISO6976 version 1995");
     }
@@ -119,7 +120,7 @@ public class LNGship
         thermoOperations.bubblePointTemperatureFlash();
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     getThermoSystem().init(0);
 
@@ -150,16 +151,16 @@ public class LNGship
   /** {@inheritDoc} */
   @Override
   public void solveSteadyState(int type, UUID id) {
-    // todo: double[] times = {0.0}; ?
+    // TODO: double[] times = {0.0}; ?
     try {
       if (!isSetInitialTemperature()) {
         thermoOperations.bubblePointTemperatureFlash();
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     logger.info("temperature start " + getThermoSystem().getTemperature());
-    // todo: getTimeSeries().init(this);
+    // TODO: getTimeSeries().init(this);
     calcIdentifier = id;
   }
 
@@ -223,7 +224,7 @@ public class LNGship
             thermoOperations.bubblePointTemperatureFlash();
           }
         } catch (Exception ex) {
-          logger.error(ex.getMessage());
+          logger.error(ex.getMessage(), ex);
         }
         double[] xgas = new double[getThermoSystem().getPhase(0).getNumberOfComponents()];
 
@@ -305,8 +306,8 @@ public class LNGship
       double derrordn = (oldVolume - oldoldVolume) / (oldmolarBoilOffRate - oldoldmolarBoilOffRate);
       boilOffCorrection = (volume[numberOffTimeSteps - 1] - endVolume) / derrordn;
       if (iterations > 1) {
-        molarBoilOffRate += boilOffCorrection; // (volume[numberOffTimeSteps - 1] -
-                                               // endVolume) / derrordn;
+        molarBoilOffRate += boilOffCorrection;
+        // (volume[numberOffTimeSteps - 1] - endVolume) / derrordn;
       } else {
         molarBoilOffRate = molarBoilOffRate * volume[numberOffTimeSteps - 1] / endVolume;
       }
@@ -318,7 +319,7 @@ public class LNGship
       thermoOperations.bubblePointTemperatureFlash();
       calcIdentifier = id;
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -407,7 +408,8 @@ public class LNGship
     // thermo.system.SystemInterface testSystem = new
     // thermo.system.SystemGERG2004Eos(273.15 - 161.4, 1.0);
     neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(273.15 - 161.4, 1.013);
+        new neqsim.thermo.system.SystemSrkEos(273.15 - 161.4,
+            ThermodynamicConstantsInterface.referencePressure);
     /*
      * testSystem.addComponent("nitrogen", 0.0136); testSystem.addComponent("methane", 0.9186);
      * testSystem.addComponent("ethane", 0.0526); testSystem.addComponent("propane", 0.0115);

@@ -14,7 +14,7 @@ package neqsim.util.exception;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ThermoException extends java.lang.Exception {
+public abstract class ThermoException extends java.lang.Exception {
   private static final long serialVersionUID = 1000;
 
   /**
@@ -28,7 +28,7 @@ public class ThermoException extends java.lang.Exception {
 
   /**
    * Constructs an <code>ThermoException</code> with the specified detail message.
-   * 
+   *
    * @param className Class that exception is raised from
    * @param methodName Method that exception is raised from
    * @param msg specific error message

@@ -32,7 +32,7 @@ public class TPflashMethanolWaterPropane {
     /*
      * testSystem.addComponent("methane", 150.0e-2); testSystem.addComponent("propane", 150.0e-3);
      * testSystem.addComponent("methanol", 0.5); testSystem.addComponent("water", 0.5);
-     * 
+     *
      * testSystem.createDatabase(true); testSystem.setMixingRule(10);
      * testSystem.setMultiPhaseCheck(true);
      */
@@ -44,7 +44,7 @@ public class TPflashMethanolWaterPropane {
       // testOps.bubblePointPressureFlash(false);
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
     // testSystem.saveFluid(3019);
   }

@@ -21,6 +21,11 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit {
    * <p>
    * Constructor for TimeUnit.
    * </p>
+   *
+   * @param value Numeric value
+   * @param name Name of unit
    */
-  public TimeUnit() {}
+  public TimeUnit(double value, String name) {
+    super(value, name);
+  }
 }

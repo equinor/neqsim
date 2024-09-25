@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.mixer;
 
 import java.util.UUID;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -47,17 +48,17 @@ public class StaticPhaseMixer extends StaticMixer {
         System.out.println("adding: " + componentName);
         int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
         double[] moles = new double[numberOfPhases];
-        int[] phaseType = new int[numberOfPhases];
+        PhaseType[] phaseType = new PhaseType[numberOfPhases];
 
         // her maa man egentlig sjekke at phase typen er den samme !!! antar at begge er
         // to fase elle gass - tofase
         for (int p = 0; p < numberOfPhases; p++) {
           moles[p] = streams.get(k).getThermoSystem().getPhase(p).getComponents()[i]
               .getNumberOfMolesInPhase();
-          phaseType[p] = streams.get(k).getThermoSystem().getPhase(p).getPhaseType();
+          phaseType[p] = streams.get(k).getThermoSystem().getPhase(p).getType();
         }
         if (k == 1) {
-          phaseType[0] = 0;
+          phaseType[0] = PhaseType.LIQUID;
           mixedStream.getThermoSystem().getPhase(1)
               .setTemperature(streams.get(k).getThermoSystem().getTemperature());
         }
@@ -77,10 +78,10 @@ public class StaticPhaseMixer extends StaticMixer {
         if (gotComponent) {
           System.out.println("adding moles starting....");
           for (int p = 0; p < numberOfPhases; p++) {
-            if (phaseType[p] == 0) {
+            if (phaseType[p] == PhaseType.LIQUID) {
               System.out.println("adding liq");
               mixedStream.getThermoSystem().addComponent(index, moles[p], 1);
-            } else if (phaseType[p] == 1) {
+            } else if (phaseType[p] == PhaseType.GAS) {
               System.out.println("adding gas");
               mixedStream.getThermoSystem().addComponent(index, moles[p], 0);
             } else {

@@ -20,13 +20,6 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
    * <p>
    * Constructor for bubblePointTemperatureNoDer.
    * </p>
-   */
-  public bubblePointTemperatureNoDer() {}
-
-  /**
-   * <p>
-   * Constructor for bubblePointTemperatureNoDer.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -140,7 +133,10 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
       system
           .setTemperature(system.getTemperature() + 0.1 * system.getTemperature() * (1.0 - ytotal));
       // for (int i=0;i<system.getPhases()[1].getNumberOfComponents();i++){
-      // system.getPhases()[0].getComponents()[i].setx(system.getPhases()[0].getComponents()[i].getx()+0.5*(system.getPhases()[0].getComponents()[i].getK()*system.getPhases()[1].getComponents()[i].getx()*1.0/ytotal-system.getPhases()[0].getComponents()[i].getx()));
+      // system.getPhases()[0].getComponents()[i].setx(system.getPhases()[0].getComponents()[i].getx()
+      // + 0.5 *
+      // (system.getPhases()[0].getComponents()[i].getK()*system.getPhases()[1].getComponents()[i].getx()
+      // * 1.0 / ytotal-system.getPhases()[0].getComponents()[i].getx()));
       // }
       // logger.info("temperature " + system.getTemperature());
     } while ((((Math.abs(ytotal) - 1.0) > 1e-9)
@@ -155,7 +151,6 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
         && Math.abs(system.getPhases()[1].getComponents()[0].getFugacityCoefficient()
             / system.getPhases()[0].getComponents()[0].getFugacityCoefficient() - 1.0) < 1e-20) {
       setSuperCritical(true);
-      return;
     }
   }
 

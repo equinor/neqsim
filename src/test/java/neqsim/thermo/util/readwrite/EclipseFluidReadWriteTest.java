@@ -8,13 +8,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
- *
  */
-class EclipseFluidReadWriteTest {
-
+class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
 
   File file = new File("src/test/java/neqsim/thermo/util/readwrite");
+  String fileFluid1 = file.getAbsolutePath() + "/fluid1.e300";
+  String fileA1 = file.getAbsolutePath() + "/A-1.E300";
   String fileA13 = file.getAbsolutePath() + "/A-13.E300";
   String fileA17 = file.getAbsolutePath() + "/A-17.E300";
   String fileA19 = file.getAbsolutePath() + "/A-19.E300";
@@ -23,14 +23,12 @@ class EclipseFluidReadWriteTest {
    * @throws java.lang.Exception
    */
   @BeforeAll
-  static void setUpBeforeClass() throws Exception {
-
-  }
+  static void setUpBeforeClass() throws Exception {}
 
   /**
    * Test method for
    * {@link neqsim.thermo.util.readwrite.EclipseFluidReadWrite#read(java.lang.String)}.
-   * 
+   *
    * @throws IOException
    */
   @Test
@@ -54,7 +52,20 @@ class EclipseFluidReadWriteTest {
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
+  }
 
+  @Test
+  void testReadAndAddFluids2() throws IOException {
+    EclipseFluidReadWrite.pseudoName = "_A1";
+    testSystem = EclipseFluidReadWrite.read(fileA1);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(100.0, "bara");
+    testSystem.setTemperature(25.0, "C");
+    testOps.TPflash();
+
+    // neqsim.thermo.util.readwrite.TablePrinter.printTable((((PhaseEos
+    // )testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
   }
 
   @Test
@@ -76,4 +87,20 @@ class EclipseFluidReadWriteTest {
     testOps.TPflash();
   }
 
+  @Test
+  void testReadFluid1() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(fileFluid1);
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(50.0, "bara");
+    testSystem.setTemperature(50.0, "C");
+    testOps.TPflash();
+
+    // neqsim.thermo.util.readwrite.TablePrinter.printTable(
+    // (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
+
+    // for (int i = 0; i < testSystem.getNumberOfComponents(); i++) {
+    // System.out.println(testSystem.getComponent(i).getName() + " TC "
+    // + (testSystem.getComponent(i).getVolumeCorrectionConst()));
+    // }
+  }
 }

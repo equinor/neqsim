@@ -76,7 +76,7 @@ public class DewPointCurve {
       // testSystem.getPressure() * testSystem.getPhase(0).getZ() *
       // testSystem.getTemperature() / 288.15 + " mg/K/Sm^3");
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
 
     // testSystem.dewPointCondensationRate()
@@ -92,7 +92,6 @@ public class DewPointCurve {
      * testSystem.getPhase(1).getActivityCoefficientSymetric(i)); }
      * System.out.println("activity coeff " + testSystem.getPhase(1).getComponent(1).getName() + " "
      * + testSystem.getPhase(1).getActivityCoefficient(1, 0));
-     *
      */
   }
 }

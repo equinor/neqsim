@@ -2,6 +2,7 @@ package neqsim.thermo.util.empiric;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -53,7 +54,7 @@ public class DuanSun {
       double[] Tc = {304.2, 647.3};
       double[] Pc = {72.8, 217.6};
       double[] w = {0.225, 0.344};
-      double K12[][] = {{0.0, 0.2}, {0.2, 0.0}};
+      double[][] K12 = {{0.0, 0.2}, {0.2, 0.0}};
       double T = temperature;
       double S = salinity;
       // double[] x = {0.000554093, 1.0-0.000554093};
@@ -69,7 +70,7 @@ public class DuanSun {
       // System.out.println(SUMY);
       // System.out.println(y[0]);
 
-      double R = 8.314 * Math.pow(10.0, -2.0);
+      double R = ThermodynamicConstantsInterface.R * Math.pow(10.0, -2.0);
 
       // Calculate A and B of pure compound
       double[] Tr = {0.0, 0.0};
@@ -267,13 +268,13 @@ public class DuanSun {
 
       double VCO2INF = 0.0;
 
-      VCO2INF = (-159751499.972988 * Math.pow(10.0, -10.0))
-          + (101831855.926854 * Math.pow(10.0, -10)) * S
-          + (18075168.978622 * Math.pow(10.0, -11.0)) * T
-          - (787538191.939352 * Math.pow(10.0, -13.0)) * S * T
-          - (192886808.345857 * Math.pow(10.0, -11.0)) * (Math.pow(S, 2.0))
-          + 142830810.095592 * Math.pow(10.0, -15.0) * S * (Math.pow(T, 2.0))
-          + (123450785.102997 * Math.pow(10.0, -13.0)) * T * (Math.pow(S, 2.0))
+      VCO2INF =
+          (-159751499.972988 * Math.pow(10.0, -10.0)) + (101831855.926854 * Math.pow(10.0, -10)) * S
+              + (18075168.978622 * Math.pow(10.0, -11.0)) * T
+              - (787538191.939352 * Math.pow(10.0, -13.0)) * S * T
+              - (192886808.345857 * Math.pow(10.0, -11.0)) * (Math.pow(S, 2.0))
+              + 142830810.095592 * Math.pow(10.0, -15.0) * S * (Math.pow(T, 2.0))
+              + (123450785.102997 * Math.pow(10.0, -13.0)) * T * (Math.pow(S, 2.0))
               - (220053285.910771 * Math.pow(10.0, -16.0)) * (Math.pow(S, 2.0)) * (Math.pow(T, 2.0))
               - 35351000.350961 * Math.pow(10.0, -17.0) * (Math.pow(T, 3.0));
 
@@ -662,7 +663,7 @@ public class DuanSun {
       // fluid1.init(0);
       fluid1.display();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     // fluid1.setMolarComposition(new double[] {0.5, 0.5, 0.0, 0.0});
     fluid1.init(1);
@@ -671,7 +672,7 @@ public class DuanSun {
       // fluid1.init(0);
       fluid1.display();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     String fluidname = "" + "";
     fluid1.saveObjectToFile(fluidname, fluidname);

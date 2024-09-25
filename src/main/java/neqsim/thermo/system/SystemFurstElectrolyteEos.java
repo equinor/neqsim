@@ -3,7 +3,6 @@ package neqsim.thermo.system;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
- * 
  * This class defines a thermodynamic system using the electrolyte the Furst Electrolyte Eos.
  *
  * @author Even Solbraa
@@ -18,12 +17,7 @@ public class SystemFurstElectrolyteEos extends SystemSrkEos {
    * </p>
    */
   public SystemFurstElectrolyteEos() {
-    super();
-    modelName = "Electrolyte-ScRK-EOS";
-    attractiveTermNumber = 2;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseModifiedFurstElectrolyteEos();
-    }
+    this(298.15, 1.0);
   }
 
   /**
@@ -31,8 +25,8 @@ public class SystemFurstElectrolyteEos extends SystemSrkEos {
    * Constructor for SystemFurstElectrolyteEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemFurstElectrolyteEos(double T, double P) {
     super(T, P);
@@ -54,12 +48,6 @@ public class SystemFurstElectrolyteEos extends SystemSrkEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseModifiedFurstElectrolyteEos)
-    // phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

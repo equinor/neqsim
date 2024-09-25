@@ -1,6 +1,8 @@
 package neqsim.PVTsimulation.simulation;
 
 import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompViscosity.linearLiquidModel.ViscosityFunction;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
@@ -17,6 +19,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class ViscosityWaxOilSim extends BasePVTsimulation {
+  static Logger logger = LogManager.getLogger(ViscosityWaxOilSim.class);
+
   double[] temperature = null;
 
   double[] pressure = null;
@@ -49,8 +53,8 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
    * setTemperaturesAndPressures.
    * </p>
    *
-   * @param temperature an array of {@link double} objects
-   * @param pressure an array of {@link double} objects
+   * @param temperature an array of type double
+   * @param pressure an array of type double
    */
   public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
     this.pressure = pressure;
@@ -90,7 +94,7 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      System.out.println("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);

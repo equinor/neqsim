@@ -1,5 +1,6 @@
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
 
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -14,8 +15,12 @@ import neqsim.thermo.system.SystemSrkEos;
 public class PFCTViscosityMethodHeavyOil extends Viscosity {
   private static final long serialVersionUID = 1000;
 
-  // SystemInterface referenceSystem = new SystemBWRSEos(273.15, 1.01325);
-  SystemInterface referenceSystem = new SystemSrkEos(273.0, 1.01325);
+  // SystemInterface referenceSystem = new SystemBWRSEos(273.15,
+  // ThermodynamicConstantsInterface.referencePressure);
+  SystemInterface referenceSystem =
+      new SystemSrkEos(273.0, ThermodynamicConstantsInterface.referencePressure);
+
+  // todo: is this parameter required?
   int phaseTypeNumb = 1;
   double[] GVcoef = {-2.090975e5, 2.647269e5, -1.472818e5, 4.716740e4, -9.491872e3, 1.219979e3,
       -9.627993e1, 4.274152, -8.141531e-2};
@@ -115,6 +120,8 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
     referenceSystem.setPressure(phase.getPhase().getPressure()
         * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix);
     referenceSystem.init(1);
+
+    // todo: mixing phasetype and phase index?
     // double molDens = 1.0 /
     // referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 100.0;
     double molDens = 1.0 / referenceSystem.getLowestGibbsEnergyPhase().getMolarVolume() * 100.0;
@@ -184,6 +191,8 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
     // System.out.println("ref pres " + pres);
     referenceSystem.init(1);
     // referenceSystem.display();
+
+    // todo: mixing phasetype and phase index?
     // double molDens = 1.0 /
     // referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 100.0;
     double molDens = 1.0 / referenceSystem.getLowestGibbsEnergyPhase().getMolarVolume() * 100.0; // mol/dm^3
@@ -215,6 +224,9 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
     visRefE = (HTAN + 1.0) / 2.0;
 
     double viscRef2 = visRefE * Math.exp(viscRefJ[0] + viscRefJ[3] / temp) * (temp3 - 1.0);
+    if (Double.isNaN(viscRef2)) {
+      viscRef2 = 0.0;
+    }
 
     double temp4 = Math.pow(molDens, 0.1) * (viscRefK[1] + viscRefK[2] / Math.pow(temp, 3.0 / 2.0));
     double temp5 = redMolDens * Math.pow(molDens, 0.5)
@@ -222,11 +234,10 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
     double temp6 = Math.exp(temp4 + temp5);
     visRefG = (1.0 - HTAN) / 2.0;
     double viscRef3 = visRefG * Math.exp(viscRefK[0] + viscRefK[3] / temp) * (temp6 - 1.0);
-
-    // System.out.println("ref visc2 " + viscRef2);
-    // System.out.println("ref visc3 " + viscRef3);
+    if (Double.isNaN(viscRef3)) {
+      viscRef3 = 0.0;
+    }
     double refVisc = (viscRefO + viscRef1 + viscRef2 + viscRef3) / 1.0e7;
-    // System.out.println("ref visc " + refVisc);
     return refVisc;
   }
 }

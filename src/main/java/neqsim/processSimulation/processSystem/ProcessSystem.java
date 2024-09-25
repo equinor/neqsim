@@ -13,13 +13,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
-import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
-import neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.RecycleController;
+import neqsim.processSimulation.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -32,9 +31,10 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ProcessSystem extends SimulationBaseClass {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
   transient Thread thisThread;
-  String[][] signalDB = new String[1000][100];
+  String[][] signalDB = new String[10000][100];
   private double surroundingTemperature = 288.15;
   private int timeStepNumber = 0;
   private ArrayList<ProcessEquipmentInterface> unitOperations =
@@ -43,7 +43,6 @@ public class ProcessSystem extends SimulationBaseClass {
       new ArrayList<MeasurementDeviceInterface>(0);
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
-  static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
   /**
    * <p>
@@ -92,6 +91,41 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     getUnitOperations().add(operation);
+    if (operation instanceof ModuleInterface) {
+      ((ModuleInterface) operation).initializeModule();
+    }
+  }
+
+  /**
+   * <p>
+   * add.
+   * </p>
+   *
+   * @param position a int
+   * @param operation a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
+   *        object
+   */
+  public void add(int position, ProcessEquipmentInterface operation) {
+    ArrayList<ProcessEquipmentInterface> units = this.getUnitOperations();
+
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit == operation) {
+        return;
+      }
+    }
+
+    if (getAllUnitNames().contains(operation.getName())) {
+      String currClass = operation.getClass().getSimpleName();
+      int num = 1;
+      for (ProcessEquipmentInterface unit : units) {
+        if (unit.getClass().getSimpleName().equals(currClass)) {
+          num++;
+        }
+      }
+      operation.setName(currClass + Integer.toString(num));
+    }
+
+    getUnitOperations().add(position, operation);
     if (operation instanceof ModuleInterface) {
       ((ModuleInterface) operation).initializeModule();
     }
@@ -169,9 +203,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @return a {@link java.lang.Object} object
+   * @return a {@link neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface} object
    */
-  public Object getMeasurementDevice(String name) {
+  public MeasurementDeviceInterface getMeasurementDevice(String name) {
     for (int i = 0; i < measurementDevices.size(); i++) {
       if (measurementDevices.get(i).getName().equals(name)) {
         return measurementDevices.get(i);
@@ -398,19 +432,21 @@ public class ProcessSystem extends SimulationBaseClass {
       for (int i = 0; i < unitOperations.size(); i++) {
         if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
           try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run();
+            if (iter == 1 || unitOperations.get(i).needRecalculation()) {
+              unitOperations.get(i).run(id);
+            }
           } catch (Exception ex) {
             // String error = ex.getMessage();
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
           }
         }
         if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
             && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {
           try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run();
+            unitOperations.get(i).run(id);
           } catch (Exception ex) {
             // String error = ex.getMessage();
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
           }
         }
       }
@@ -437,25 +473,54 @@ public class ProcessSystem extends SimulationBaseClass {
 
       /*
        * signalDB = new String[1000][1 + 3 * measurementDevices.size()];
-       * 
+       *
        * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for (int i = 0; i
        * < measurementDevices.size(); i++) { signalDB[timeStepNumber][0] = Double.toString(time);
        * signalDB[timeStepNumber][3 * i + 1] = ((MeasurementDeviceInterface)
        * measurementDevices.get(i)) .getName(); signalDB[timeStepNumber][3 * i + 2] = Double
        * .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
        * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface)
-       * measurementDevices.get(i)) .getUnit();
-       * 
-       * }
+       * measurementDevices.get(i)) .getUnit(); }
        */
     } while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
 
     for (int i = 0; i < unitOperations.size(); i++) {
-      ((ProcessEquipmentInterface) unitOperations.get(i)).setCalculationIdentifier(id);
+      unitOperations.get(i).setCalculationIdentifier(id);
     }
 
     setCalculationIdentifier(id);
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run_step(UUID id) {
+    for (int i = 0; i < unitOperations.size(); i++) {
+      try {
+        // if (unitOperations.get(i).needRecalculation()) {
+        unitOperations.get(i).run(id);
+        // }
+      } catch (Exception ex) {
+        // String error = ex.getMessage();
+        logger.error(ex.getMessage(), ex);
+      }
+    }
+    for (int i = 0; i < unitOperations.size(); i++) {
+      unitOperations.get(i).setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+  }
+
+  /*
+   * signalDB = new String[1000][1 + 3 * measurementDevices.size()];
+   *
+   * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for (int i = 0; i <
+   * measurementDevices.size(); i++) { signalDB[timeStepNumber][0] = Double.toString(time);
+   * signalDB[timeStepNumber][3 * i + 1] = ((MeasurementDeviceInterface) measurementDevices.get(i))
+   * .getName(); signalDB[timeStepNumber][3 * i + 2] = Double
+   * .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
+   * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface) measurementDevices.get(i))
+   * .getUnit(); }
+   */
 
   /**
    * <p>
@@ -467,12 +532,11 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * runTransient.
    * </p>
-   *
-   * @param dt Delta time [s]
-   * @param id Calculation identifier
    */
   @Override
   public void runTransient(double dt, UUID id) {
@@ -495,18 +559,14 @@ public class ProcessSystem extends SimulationBaseClass {
     setCalculationIdentifier(id);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean solved() {
     return true;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>time</code>.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getTime() {
     return time;
   }
@@ -561,7 +621,7 @@ public class ProcessSystem extends SimulationBaseClass {
     try {
       thisThread.join();
     } catch (Exception ex) {
-      System.out.println("Thread did not finish");
+      logger.error("Thread did not finish", ex);
     }
     for (int i = 0; i < unitOperations.size(); i++) {
       unitOperations.get(i).displayResult();
@@ -584,7 +644,7 @@ public class ProcessSystem extends SimulationBaseClass {
     try {
       thisThread.join();
     } catch (Exception ex) {
-      System.out.println("Thread did not finish");
+      logger.error("Thread did not finish", ex);
     }
     for (int i = 0; i < measurementDevices.size(); i++) {
       System.out.println("Measurements Device Name: " + measurementDevices.get(i).getName());
@@ -609,8 +669,7 @@ public class ProcessSystem extends SimulationBaseClass {
       out.writeObject(this);
       logger.info("process file saved to:  " + filePath);
     } catch (Exception ex) {
-      logger.error(ex.toString());
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -629,7 +688,7 @@ public class ProcessSystem extends SimulationBaseClass {
       // logger.info("process file open ok: " + filePath);
     } catch (Exception ex) {
       // logger.error(ex.toString());
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     return null;
   }
@@ -690,48 +749,22 @@ public class ProcessSystem extends SimulationBaseClass {
     this.timeStep = timeStep;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>name</code>.
-   * </p>
-   *
-   * @return the name
-   */
+  /** {@inheritDoc} */
+  @Override
   public String getName() {
     return name;
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Setter for the field <code>name</code>.
    * </p>
-   *
-   * @param name the name to set
    */
+  @Override
   public void setName(String name) {
     this.name = name;
-  }
-
-  /**
-   * <p>
-   * Get a SystemMechanicalDesign object from processSystem.
-   * </p>
-   *
-   * @return a new SystemMechanicalDesign object
-   */
-  public SystemMechanicalDesign getSystemMechanicalDesign() {
-    return new SystemMechanicalDesign(this);
-  }
-
-  /**
-   * <p>
-   * Get a CostEstimateBaseClass object from processSystem.
-   * </p>
-   *
-   * @return a new CostEstimateBaseClass object
-   */
-  public CostEstimateBaseClass getCostEstimator() {
-    return new CostEstimateBaseClass(this);
   }
 
   /**
@@ -815,7 +848,13 @@ public class ProcessSystem extends SimulationBaseClass {
                 .getDuty();
       }
     }
-    return heat;
+    if (unit.equals("MW")) {
+      return heat / 1.0e6;
+    } else if (unit.equals("kW")) {
+      return heat / 1.0e3;
+    } else {
+      return heat;
+    }
   }
 
   /**
@@ -835,26 +874,13 @@ public class ProcessSystem extends SimulationBaseClass {
                 .getDuty();
       }
     }
-    return heat;
-  }
-
-  /**
-   * <p>
-   * getMechanicalWeight.
-   * </p>
-   *
-   * @param unit a {@link java.lang.String} object
-   * @return a double
-   */
-  public double getMechanicalWeight(String unit) {
-    double weight = 0.0;
-    for (int i = 0; i < unitOperations.size(); i++) {
-      unitOperations.get(i).getMechanicalDesign().calcDesign();
-      System.out.println("Name " + unitOperations.get(i).getName() + "  weight "
-          + unitOperations.get(i).getMechanicalDesign().getWeightTotal());
-      weight += unitOperations.get(i).getMechanicalDesign().getWeightTotal();
+    if (unit.equals("MW")) {
+      return heat / 1.0e6;
+    } else if (unit.equals("kW")) {
+      return heat / 1.0e3;
+    } else {
+      return heat;
     }
-    return weight;
   }
 
   /**
@@ -939,15 +965,24 @@ public class ProcessSystem extends SimulationBaseClass {
         && Objects.equals(unitOperations, other.unitOperations);
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @return a String
+   */
+  public String getReport_json() {
+    return new Report(this).generateJsonReport();
+  }
+
   /*
    * @XmlRootElement private class Report extends Object{ public Double name; public
    * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();
-   * 
+   *
    * Report(){ name= getName();
-   * 
+   *
    * for (int i = 0; i < unitOperations.size(); i++) {
    * unitOperationsReports.add(unitOperations.getReport()); } } }
-   * 
+   *
    * public Report getReport(){ return this.new Report(); }
    */
 }

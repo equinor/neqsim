@@ -26,6 +26,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class HPTphaseEnvelope extends BaseOperation {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(HPTphaseEnvelope.class);
 
   double[][] points = new double[10][10];
   SystemInterface system;
@@ -33,15 +34,10 @@ public class HPTphaseEnvelope extends BaseOperation {
   JProgressBar monitor;
   JFrame mainFrame;
   JPanel mainPanel;
-  double startPressure = 1, endPressure = 0, startTemperature = 160, endTemperature = 0;
-  static Logger logger = LogManager.getLogger(HPTphaseEnvelope.class);
-
-  /**
-   * <p>
-   * Constructor for HPTphaseEnvelope.
-   * </p>
-   */
-  public HPTphaseEnvelope() {}
+  double startPressure = 1;
+  double endPressure = 0;
+  double startTemperature = 160;
+  double endTemperature = 0;
 
   /**
    * <p>

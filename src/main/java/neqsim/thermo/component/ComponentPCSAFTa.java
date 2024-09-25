@@ -26,14 +26,13 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
    * Constructor for ComponentPCSAFTa.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentPCSAFTa(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentPCSAFTa(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     xsite = new double[numberOfAssociationSites];
     xsitedV = new double[numberOfAssociationSites];
     xsiteOld = new double[numberOfAssociationSites];
@@ -97,13 +96,6 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
     clonedComponent.xsitedT = xsitedT.clone();
     System.arraycopy(this.xsitedT, 0, clonedComponent.xsitedT, 0, xsitedT.length);
     return clonedComponent;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
   }
 
   /** {@inheritDoc} */
@@ -288,7 +280,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   /**
    * Setter for property xsite.
    *
-   * @param xsiteOld an array of {@link double} objects
+   * @param xsiteOld an array of type double
    */
   public void setXsiteOld(double[] xsiteOld) {
     this.xsiteOld = xsiteOld;

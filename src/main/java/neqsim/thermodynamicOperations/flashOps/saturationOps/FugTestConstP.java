@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -20,6 +21,7 @@ public class FugTestConstP extends constantDutyTemperatureFlash
     implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(FugTestConstP.class);
+
   public double temp = 0.0;
   public double pres = 0.0;
   public SystemInterface testSystem;
@@ -29,13 +31,6 @@ public class FugTestConstP extends constantDutyTemperatureFlash
   public int compNumber = 0;
   public String compName;
   public boolean compNameGiven = false;
-
-  /**
-   * <p>
-   * Constructor for FugTestConstP.
-   * </p>
-   */
-  public FugTestConstP() {}
 
   /**
    * <p>
@@ -75,7 +70,7 @@ public class FugTestConstP extends constantDutyTemperatureFlash
   public void initTestSystem2(int K) {
     this.testSystem2 = new SystemSrkSchwartzentruberEos(temp, pres);
     this.testSystem2.addComponent(compName, 1);
-    this.testSystem2.setPhaseType(0, 1);
+    this.testSystem2.setPhaseType(0, PhaseType.byValue(1));
     this.testOps2 = new ThermodynamicOperations(testSystem2);
   }
 

@@ -14,11 +14,10 @@ import neqsim.thermo.component.ComponentBWRS;
  */
 public class PhaseBWRSEos extends PhaseSrkEos {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhaseBWRSEos.class);
 
   int OP = 9;
   int OE = 6;
-
-  static Logger logger = LogManager.getLogger(PhaseBWRSEos.class);
 
   /**
    * <p>
@@ -44,27 +43,25 @@ public class PhaseBWRSEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(componentName, moles, molesInPhase, compNumber);
-
-    componentArray[compNumber] = new ComponentBWRS(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, moles, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentBWRS(name, moles, molesInPhase, compNumber);
     ((ComponentBWRS) componentArray[compNumber]).setRefPhaseBWRS(this);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
     double oldMolDens = 0;
-    if (type == 0) {
-      super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-      super.init(totalNumberOfMoles, numberOfComponents, 3, phase, beta);
+    if (initType == 0) {
+      super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, 3, pt, beta);
       return;
     }
     do {
       oldMolDens = getMolarDensity();
-      super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     } while (Math.abs((getMolarDensity() - oldMolDens) / oldMolDens) > 1e-10);
     getF();
     // calcPVT();
@@ -416,7 +413,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   @Override
   public double getF() {
     // System.out.println("F " + getFpol()*1e3+ " "+ getFexp()*1e3 + " super " +
-    // super.getF() + " phasetype " +getPhaseTypeName());
+    // super.getF() + " pt " +getType());
     return (getFpol() + getFexp()) * 1e3;
   }
 
@@ -432,17 +429,17 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     getComponent(0).addMoles(dn);
     numberOfMolesInPhase += dn;
 
-    init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
+    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
     double fold = getF();
     numberOfMolesInPhase -= 2 * dn;
     getComponent(0).addMoles(-2 * dn);
-    init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
+    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
     double fnew = getF();
     numberOfMolesInPhase += dn;
     getComponent(0).addMoles(dn);
-    init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
+    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
     // System.out.println("F " + getFpol()*1e3+ " "+ getFexp()*1e3 + " super " +
-    // super.getF() + " phasetype " +getPhaseTypeName());
+    // super.getF() + " pt " +getType());
     return (fold - fnew) / (2 * dn);
   }
 
@@ -451,19 +448,19 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   public double dFdT() {
     // double dv = temperature/1000.0;
     // temperature = temperature + dv;
-    // init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
+    // init(numberOfMolesInPhase, numberOfComponents, 3, pt.getValue(), 1.0);
     // double fold = getF();
     // temperature = temperature - 2*dv;
-    // init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
+    // init(numberOfMolesInPhase, numberOfComponents, 3, pt.getValue(), 1.0);
     // double fnew = getF();
     // temperature = temperature + dv;
-    // init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
+    // init(numberOfMolesInPhase, numberOfComponents, 3, pt.getValue(), 1.0);
     // System.out.println("dFdT " + ((fold-fnew)/(2*dv)) + " super " +
-    // (getFpoldT()+getFexpdT())*1e3+ " phasetype " +getPhaseTypeName());
+    // (getFpoldT()+getFexpdT())*1e3+ " pt " +getType());
     return (getFpoldT() + getFexpdT()) * 1e3; // (fold-fnew)/(2*dv);
 
     // // System.out.println("FT " + getFpoldT()*1e3+ " "+ getFexpdT()*1e3 + " super
-    // " + super.dFdT() + " phasetype " +getPhaseTypeName());
+    // " + super.dFdT() + " pt " +getType());
     // return (getFpoldT()+getFexpdT())*1e3;
   }
 
@@ -472,13 +469,13 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   public double dFdTdT() {
     double dv = temperature / 1000.0;
     temperature += dv;
-    init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
+    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
     double fold = dFdT();
     temperature -= 2 * dv;
-    init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
+    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
     double fnew = dFdT();
     temperature += dv;
-    init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
+    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
     return (fold - fnew) / (2 * dv);
   }
 
@@ -508,10 +505,10 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     // molarVolume = molarVolume + dv;
 
     // System.out.println("dFdV " + ((fold-fnew)/(2*dv)) + " super " + super.dFdV()+
-    // " phasetype " +getPhaseTypeName());
+    // " pt " +getType());
     // // return (fold-fnew)/(2*dv);
     // System.out.println("dFdV " + ((getFpoldV()+getFexpdV()))*1e3*1e-5 + " super "
-    // + super.dFdV()+ " phasetype " +getPhaseTypeName());
+    // + super.dFdV()+ " pt " +getType());
     // System.out.println("dFdV " + getFpoldV()+getFexpdV()*1e3*1e-5);
     return (getFpoldV() + getFexpdV()) * 1e3 * 1e-5;
   }
@@ -528,7 +525,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     setMolarVolume(getMolarVolume() + dv);
 
     // System.out.println("dFdV " + ((fold-fnew)/(2*dv)) + " super " + super.dFdV()+
-    // " phasetype " +getPhaseTypeName());
+    // " pt " +getType());
     return (fold - fnew) / (2 * dv);
     // return (getFpoldVdV()+getFexpdVdV())*1e3*1e-10;
   }
@@ -539,11 +536,12 @@ public class PhaseBWRSEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
+  public double molarVolume2(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-        : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+    double BonV =
+        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     double Btemp = getB();
     setMolarVolume(1.0 / BonV * Btemp); // numberOfMolesInPhase;
     int iterations = 0;

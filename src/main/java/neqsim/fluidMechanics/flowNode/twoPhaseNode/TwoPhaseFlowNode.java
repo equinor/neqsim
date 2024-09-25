@@ -60,7 +60,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     }
 
     // clonedSystem.molarMassTransferFlux = (double[])
-    // clonedSystem.molarMassTransferFlux.clone();;
+    // clonedSystem.molarMassTransferFlux.clone();
     // clonedSystem.molarMassTransfer = (double[])
     // clonedSystem.molarMassTransferFlux.clone();
     clonedSystem.fluidBoundary = fluidBoundary.clone();
@@ -94,10 +94,10 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   /** {@inheritDoc} */
   @Override
   public void initFlowCalc() {
-    this.init();
     initVelocity();
+    init();
 
-    phaseFraction[0] = 1.0 - 1.0e-10;
+    phaseFraction[0] = getBulkSystem().getBeta();
     phaseFraction[1] = 1.0 - phaseFraction[0];
     double f = 0;
 
@@ -148,10 +148,10 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         phaseFraction[0] -= phaseFraction[0] / step;
       }
       phaseFraction[1] = 1.0 - phaseFraction[0];
-      // System.out.println("f " + f + " iterations " + iterations + " beta " +
-      // phaseFraction[0]);
-    } while (Math.abs(f) > 1e-2 && iterations < 100);
-    // while(Math.abs((f-fOld)/f)>1e-8 && iterations<10000);
+      // System.out.println("f " + f + " iterations " + iterations + " beta " + phaseFraction[0]);
+    }
+    // while (Math.abs(f) > 1e-6 && iterations < 100);
+    while (Math.abs((f - fOld) / f) > 1e-8 && iterations < 100);
 
     if (iterations == 10000) {
       System.out.println("error in void init calc");
@@ -226,11 +226,15 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   public void updateMolarFlow() {
     for (int phase = 0; phase < 2; phase++) {
       for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-        getBulkSystem().getPhases()[phase].addMoles(i,
-            (getBulkSystem().getPhases()[phase].getComponents()[i].getx() * (molarFlowRate[phase]
-                - getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase())));
+        if (molarFlowRate[phase] > 1e-100) {
+          getBulkSystem().getPhases()[phase].addMoles(i,
+              (getBulkSystem().getPhases()[phase].getComponents()[i].getx() * (molarFlowRate[phase]
+                  - getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase())));
+        }
       }
     }
+    getBulkSystem().initBeta();
+    getBulkSystem().init_x_y();
     getBulkSystem().init(1);
   }
 
@@ -304,23 +308,25 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   public void update() {
     // System.out.println("reac heat " +
     // getBulkSystem().getChemicalReactionOperations().getDeltaReactionHeat());
-    double heatFluxGas = getFluidBoundary().getInterphaseHeatFlux(0); // getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(0,
-                                                                      // getPrandtlNumber(0),
-                                                                      // this) *
-                                                                      // (getInterphaseSystem().getPhase(0).getTemperature()
-                                                                      // -
-                                                                      // getBulkSystem().getPhase(0).getTemperature())
-                                                                      // *
-                                                                      // getInterphaseContactArea();
+    double heatFluxGas = getFluidBoundary().getInterphaseHeatFlux(0);
+    // getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(0,
+    // getPrandtlNumber(0),
+    // this) *
+    // (getInterphaseSystem().getPhase(0).getTemperature()
+    // -
+    // getBulkSystem().getPhase(0).getTemperature())
+    // *
+    // getInterphaseContactArea();
 
-    double heatFluxLiquid = getFluidBoundary().getInterphaseHeatFlux(1); // getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(1,
-                                                                         // getPrandtlNumber(1),
-                                                                         // this) *
-                                                                         // (getInterphaseSystem().getPhase(1).getTemperature()
-                                                                         // -
-                                                                         // getBulkSystem().getPhase(1).getTemperature())
-                                                                         // *
-                                                                         // getInterphaseContactArea();
+    double heatFluxLiquid = getFluidBoundary().getInterphaseHeatFlux(1);
+    // getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(1,
+    // getPrandtlNumber(1),
+    // this) *
+    // (getInterphaseSystem().getPhase(1).getTemperature()
+    // -
+    // getBulkSystem().getPhase(1).getTemperature())
+    // *
+    // getInterphaseContactArea();
     // System.out.println("heat flux local " + heatFluxLiquid);
     // double liquid_dT =
     // -this.flowDirection[1]*heatFlux/1000.0/getBulkSystem().getPhase(1).getCp();
@@ -392,5 +398,32 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       getBulkSystem().getChemicalReactionOperations().setSystem(getBulkSystem());
       getOperations().chemicalEquilibrium();
     }
+  }
+
+  /**
+   * <p>
+   * update.
+   * </p>
+   *
+   * @param deltaTime a double
+   */
+  public void update(double deltaTime) {
+    for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
+        .getNumberOfComponents(); componentNumber++) {
+      double liquidMolarRate =
+          getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
+
+      double gasMolarRate =
+          -getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
+
+      getBulkSystem().getPhase(0).addMoles(componentNumber,
+          this.flowDirection[0] * gasMolarRate * deltaTime);
+      getBulkSystem().getPhase(1).addMoles(componentNumber,
+          this.flowDirection[1] * liquidMolarRate * deltaTime);
+    }
+
+    getBulkSystem().initBeta();
+    getBulkSystem().init_x_y();
+    getBulkSystem().initProperties();
   }
 }

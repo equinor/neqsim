@@ -39,10 +39,10 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha an array of {@link double} objects
-   * @param Dij an array of {@link double} objects
+   * @param alpha an array of type double
+   * @param Dij an array of type double
    * @param mixRule an array of {@link java.lang.String} objects
-   * @param intparam an array of {@link double} objects
+   * @param intparam an array of type double
    */
   public PhaseGENRTLmodifiedHV(PhaseInterface phase, double[][] alpha, double[][] Dij,
       String[][] mixRule, double[][] intparam) {
@@ -63,11 +63,11 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha an array of {@link double} objects
-   * @param Dij an array of {@link double} objects
-   * @param DijT an array of {@link double} objects
+   * @param alpha an array of type double
+   * @param Dij an array of type double
+   * @param DijT an array of type double
    * @param mixRule an array of {@link java.lang.String} objects
-   * @param intparam an array of {@link double} objects
+   * @param intparam an array of type double
    */
   public PhaseGENRTLmodifiedHV(PhaseInterface phase, double[][] alpha, double[][] Dij,
       double[][] DijT, String[][] mixRule, double[][] intparam) {
@@ -85,11 +85,10 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] =
-        new ComponentGENRTLmodifiedHV(componentName, moles, molesInPhase, compNumber);
+        new ComponentGENRTLmodifiedHV(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -125,21 +124,21 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+      double temperature, double pressure, PhaseType pt) {
     GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (type == 0) {
-        GE += phase.getComponents()[i].getx() * Math
-            .log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents,
-                temperature, pressure, phasetype, alpha, Dij, intparam, mixRule));
+        GE += phase.getComponents()[i].getx()
+            * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase,
+                numberOfComponents, temperature, pressure, pt, alpha, Dij, intparam, mixRule));
       } else if (type == 1) {
         GE += phase.getComponents()[i].getx() * Math
             .log(((ComponentGENRTLmodifiedHV) componentArray[i]).getGamma(phase, numberOfComponents,
-                temperature, pressure, phasetype, alpha, Dij, DijT, intparam, mixRule));
+                temperature, pressure, pt, alpha, Dij, DijT, intparam, mixRule));
       }
     }
-    return (R * phase.getTemperature() * GE) * phase.getNumberOfMolesInPhase();
+    return R * phase.getTemperature() * phase.getNumberOfMolesInPhase() * GE;
   }
 
   /** {@inheritDoc} */
@@ -150,7 +149,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
       val +=
           getComponent(i).getNumberOfMolesInPhase() * (getComponent(i).getLogFugacityCoefficient()); // +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
     }
-    return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
+    return R * temperature * numberOfMolesInPhase * (val + Math.log(pressure));
   }
 
   /** {@inheritDoc} */

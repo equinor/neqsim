@@ -9,11 +9,11 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
  * <p> PhaseEnvelope class. Created on 27. september 2001, 10:21 Updated on May 2019 by Nefeli </p>
- * 
+ *
  * @author esol
- * 
+ *
  * @version $Id: $Id
- * 
+ *
  * @since 2.2.3
  */
 public class PhaseEnvelope {
@@ -35,9 +35,6 @@ public class PhaseEnvelope {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
     int sstms = 1;
-
-    System.out.println(sstms);
-
     if (sstms == 1) {
       // TEST SYSTEM 1
       testSystem.addComponent("methane", 90.465);
@@ -180,7 +177,7 @@ public class PhaseEnvelope {
 
       chart.createBufferedImage(640, 400, null);
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
       // testOps.displayResult();
     }
 
@@ -199,8 +196,8 @@ public class PhaseEnvelope {
       // testOps.calcCricoT( cricondenTherm, cricondenThermX , cricondenThermY) ;
       logger.info("Cricondentherm Direct " + testOps.get("cricondentherm")[0] + " "
           + testOps.get("cricondentherm")[1]);
-    } catch (Exception e333) {
-      logger.error("error", e333);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

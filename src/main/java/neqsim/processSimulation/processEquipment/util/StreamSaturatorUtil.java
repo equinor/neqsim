@@ -22,6 +22,8 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   private boolean multiPhase = true;
   private double approachToSaturation = 1.0;
 
+  protected double oldInletFlowRate = 0.0;
+
   /**
    * <p>
    * Constructor for StreamSaturatorUtil.
@@ -47,13 +49,13 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Setter for the field <code>inletStream</code>.
    * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
    */
+  @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
 
@@ -63,8 +65,25 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
+  public boolean needRecalculation() {
+    if (outStream == null || inStream == null) {
+      return true;
+    }
+    if (inStream.getTemperature() == outStream.getTemperature()
+        && inStream.getPressure() == outStream.getPressure()
+        && Math.abs(inStream.getFlowRate("kg/hr") - oldInletFlowRate)
+            / inStream.getFlowRate("kg/hr") < 1e-3) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     boolean changeBack = false;
+
     thermoSystem = inStream.getThermoSystem().clone();
     if (multiPhase && !thermoSystem.doMultiPhaseCheck()) {
       thermoSystem.setMultiPhaseCheck(true);
@@ -89,6 +108,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
     }
 
     outStream.setThermoSystem(thermoSystem);
+    oldInletFlowRate = inStream.getFlowRate("kg/hr");
     setCalculationIdentifier(id);
   }
 
@@ -114,7 +134,13 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
     this.multiPhase = multiPhase;
   }
 
-
+  /**
+   * <p>
+   * setApprachToSaturation.
+   * </p>
+   *
+   * @param approachToSaturation a double
+   */
   public void setApprachToSaturation(double approachToSaturation) {
     this.approachToSaturation = approachToSaturation;
   }

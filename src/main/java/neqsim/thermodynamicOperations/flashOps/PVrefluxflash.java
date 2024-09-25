@@ -21,13 +21,6 @@ public class PVrefluxflash extends Flash {
    * <p>
    * Constructor for PVrefluxflash.
    * </p>
-   */
-  public PVrefluxflash() {}
-
-  /**
-   * <p>
-   * Constructor for PVrefluxflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param refluxSpec a double
@@ -58,8 +51,9 @@ public class PVrefluxflash extends Flash {
       t_oldold = t_old;
       t_old = system.getTemperature();
 
-      f_func = refluxSpec - (1.0 / system.getBeta(refluxPhase) - 1.0); // system.getPhase(refluxPhase).getVolume()
-                                                                       // / system.getVolume();
+      f_func = refluxSpec - (1.0 / system.getBeta(refluxPhase) - 1.0);
+      // system.getPhase(refluxPhase).getVolume()
+      // / system.getVolume();
       df_func_dt = (f_func - f_func_old) / (t_old - t_oldold);
 
       // err = Math.abs(f_func);

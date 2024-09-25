@@ -1,5 +1,6 @@
 package neqsim.thermodynamicOperations.flashOps;
 
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,13 +15,6 @@ public class PHflashSingleComp extends Flash {
   private static final long serialVersionUID = 1000;
 
   double Hspec = 0;
-
-  /**
-   * <p>
-   * Constructor for PHflashSingleComp.
-   * </p>
-   */
-  public PHflashSingleComp() {}
 
   /**
    * <p>
@@ -46,14 +40,18 @@ public class PHflashSingleComp extends Flash {
     if (system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
       try {
         bubOps.TPflash();
-        if (system.getPhase(0).getPhaseTypeName().equals("gas")) {
-          bubOps.dewPointTemperatureFlash();
+        if (system.getPhase(0).getType() == PhaseType.GAS) {
+          try {
+            bubOps.dewPointTemperatureFlash();
+          } catch (Exception e) {
+            system.setTemperature(298.0);
+          }
         } else {
           bubOps.bubblePointTemperatureFlash();
         }
       } catch (Exception ex) {
         system.setTemperature(initTemp);
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
       }
     } else {
       bubOps.PHflash2(Hspec, 0);
@@ -68,11 +66,11 @@ public class PHflashSingleComp extends Flash {
 
     /*
      * double solidEnthalpy = 0.0;
-     * 
+     *
      * if (system.doSolidPhaseCheck()) { system.init(3, 3); solidEnthalpy =
      * system.getPhases()[3].getEnthalpy() / system.getPhases()[3].getNumberOfMolesInPhase()
      * system.getTotalNumberOfMoles();
-     * 
+     *
      * if (Hspec < liqEnthalpy && Hspec > solidEnthalpy) { double solidbeta = (Hspec - liqEnthalpy)
      * / (gasEnthalpy - liqEnthalpy); } }
      */

@@ -20,7 +20,7 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  */
 public class FluidBoundarySolver implements FluidBoundarySolverInterface {
   FluidBoundarySystemInterface boundary;
-  double xNew[][];
+  double[][] xNew;
   protected Matrix[] solMatrix;
   protected Matrix[] diffMatrix;
   protected double[] a;
@@ -71,7 +71,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
    *
    * @param boundary a
    *        {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySystem.FluidBoundarySystemInterface}
-   *        object
+   *        * object
    * @param reactive a boolean
    */
   public FluidBoundarySolver(FluidBoundarySystemInterface boundary, boolean reactive) {
@@ -166,8 +166,8 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
       boundary.getNode(i).getBulkSystem().getPhases()[1].initPhysicalProperties();
       boundary.getNode(i).getBulkSystem().getPhases()[1].getPhysicalProperties()
           .calcEffectiveDiffusionCoefficients();
-      /// if(reactive)
-      /// boundary.getNode(i).getBulkSystem().getChemicalReactionOperations().calcReacRates(1);
+      // if(reactive)
+      // boundary.getNode(i).getBulkSystem().getChemicalReactionOperations().calcReacRates(1);
     }
 
     a[0] = 0.0;
@@ -235,9 +235,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
   @Override
   public void solve() {
     // double d[];
-    int iter = 0;
-    int iterTop = 0;
-    double maxDiff = 0;
+
     // double maxDiffOld = 0;
     double diff = 0;
     xNew = new double[boundary.getNode(0).getBulkSystem().getPhases()[0]
@@ -249,6 +247,9 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
     System.out
         .println(" vol " + boundary.getNode(2).getBulkSystem().getPhases()[0].getMolarVolume());
 
+    int iter = 0;
+    int iterTop = 0;
+    double maxDiff = 0;
     do {
       // maxDiffOld = maxDiff;
       maxDiff = 0;

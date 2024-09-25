@@ -74,15 +74,17 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
    * Constructor for sysNewtonRhapsonPhaseEnvelope.
    * </p>
    */
-  public sysNewtonRhapsonPhaseEnvelope() {}
+  public sysNewtonRhapsonPhaseEnvelope() {
+  }
 
   /**
    * <p>
    * Constructor for sysNewtonRhapsonPhaseEnvelope.
    * </p>
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param numberOfPhases a int
+   * @param system             a {@link neqsim.thermo.system.SystemInterface}
+   *                           object
+   * @param numberOfPhases     a int
    * @param numberOfComponents a int
    */
   public sysNewtonRhapsonPhaseEnvelope(SystemInterface system, int numberOfPhases,
@@ -180,8 +182,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     int speceq2 = 0;
 
     for (int i = 0; i < numberOfComponents + 2; i++) {
-      double testVal =
-          Math.abs((Math.exp(u.get(i, 0)) - Math.exp(uold.get(i, 0))) / Math.exp(uold.get(i, 0)));
+      double testVal = Math.abs((Math.exp(u.get(i, 0)) - Math.exp(uold.get(i, 0))) / Math.exp(uold.get(i, 0)));
 
       // the most sensitive variable is calculated not by the difference,
       // but from the sensibility vector in the original Michelsen code
@@ -265,9 +266,8 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
           + system.getPhase(1).getComponents()[i].getK() * dxidlnk[i];
     }
     for (int i = 0; i < numberOfComponents; i++) {
-      double dlnxdlnK =
-          -1.0 / (1.0 + system.getBeta() * system.getPhase(0).getComponents()[i].getK()
-              - system.getBeta()) * system.getBeta() * system.getPhase(0).getComponents()[i].getK();
+      double dlnxdlnK = -1.0 / (1.0 + system.getBeta() * system.getPhase(0).getComponents()[i].getK()
+          - system.getBeta()) * system.getBeta() * system.getPhase(0).getComponents()[i].getK();
       double dlnydlnK = 1.0 - 1.0
           / (system.getPhase(0).getComponents()[i].getK() * system.getBeta() + 1 - system.getBeta())
           * system.getBeta() * system.getPhase(0).getComponents()[i].getK();
@@ -413,28 +413,6 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
       // calculate the dxds of the system
       dxds = Jac.solve(fvec);
 
-      // check for critical point
-
-      // check density
-      // double densV = system.getPhase(0).getDensity();
-      // double densL = system.getPhase(1).getDensity();
-      // check the proximity to the critical point by addind the lnKs and finding the
-      // highest
-      double Kvallc =
-          system.getPhase(0).getComponent(lc).getx() / system.getPhase(1).getComponent(lc).getx();
-      double Kvalhc =
-          system.getPhase(0).getComponent(hc).getx() / system.getPhase(1).getComponent(hc).getx();
-
-      if ((etterCP == false)) {
-        if (Kvallc < 1.05 && Kvalhc > 0.95) {
-          calcCP = true;
-          etterCP = true;
-          npCrit = np;
-          system.invertPhaseTypes();
-          // System.out.println("critical point");
-        }
-      }
-
       // manipulate stepsize according to the number of iterations of the previous
       // point
       if (iter > 6) {
@@ -563,7 +541,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
             + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
       }
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
 
     system.setTC(Math.exp(u.get(numberOfComponents, 0)));
@@ -665,37 +643,9 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     } while (norm > 1.e-5);
 
     init();
-    findSpecEq();
 
-    // check density for direction
-    volold2 = volold;
-    volold = vol;
-    vol = system.getPhase(0).getMolarVolume();
     uold = u.copy();
 
-    if (volold < vol) {
-      /*
-       * volold=volold2; ds=-ds; u = uold.copy(); calcInc2(np); solve(np);
-       */
-    }
-
-    /*
-     * try { Matrix utest = u.copy(); } catch (Exception e0) { double nef = 0.; }
-     */
   }
 
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  public static void main(String[] args) {
-    /*
-     * sysNewtonRhapson test=new sysNewtonRhapson(); double[] constants = new double[]{0.4,0.4};
-     * test.setx(constants); while (test.nonsol()>1.0e-8) { constants=test.getx();
-     * logger.info(constants[0]+" "+constants[1]); } test.nonsol(); constants=test.getf();
-     * logger.info(constants[0]+" "+constants[1]); System.exit(0);
-     */ }
 }

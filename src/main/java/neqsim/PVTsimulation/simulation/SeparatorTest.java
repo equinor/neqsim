@@ -1,5 +1,9 @@
 package neqsim.PVTsimulation.simulation;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -12,6 +16,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class SeparatorTest extends BasePVTsimulation {
+  static Logger logger = LogManager.getLogger(SeparatorTest.class);
+
   double[] temperature = null;
   double[] pressure = null;
   double[] Sm3gas, m3oil;
@@ -35,8 +41,8 @@ public class SeparatorTest extends BasePVTsimulation {
    * setSeparatorConditions.
    * </p>
    *
-   * @param temperature an array of {@link double} objects
-   * @param pressure an array of {@link double} objects
+   * @param temperature an array of type double
+   * @param pressure an array of type double
    */
   public void setSeparatorConditions(double[] temperature, double[] pressure) {
     this.pressure = pressure;
@@ -64,15 +70,16 @@ public class SeparatorTest extends BasePVTsimulation {
         m3oil[i] = getThermoSystem().getVolume();
       }
       if (getThermoSystem().getNumberOfPhases() > 1
-          && getThermoSystem().getPhase(0).getPhaseTypeName().equals("gas")) {
-        getThermoSystem().getPhase(0).setPressure(1.01325);
+          && getThermoSystem().getPhase(0).getType() == PhaseType.GAS) {
+        getThermoSystem().getPhase(0)
+            .setPressure(ThermodynamicConstantsInterface.referencePressure);
         getThermoSystem().getPhase(0).setTemperature(288.15);
         getThermoSystem().init(1);
         Sm3gas[i] = getThermoSystem().getPhase(0).getVolume();
         setThermoSystem(getThermoSystem().phaseToSystem(1));
       }
     }
-    getThermoSystem().setPressure(1.01325);
+    getThermoSystem().setPressure(ThermodynamicConstantsInterface.referencePressure);
     getThermoSystem().setTemperature(288.15);
     thermoOps.TPflash();
     oilVolumeStdCond = getThermoSystem().getPhase("oil").getVolume();
@@ -82,7 +89,7 @@ public class SeparatorTest extends BasePVTsimulation {
         GOR[i] = Sm3gas[i] / oilVolumeStdCond;
         Bofactor[i] = m3oil[i] / oilVolumeStdCond;
       }
-      System.out.println("GOR " + getGOR()[i] + " Bo " + Bofactor[i]);
+      logger.info("GOR " + getGOR()[i] + " Bo " + Bofactor[i]);
     }
   }
 
@@ -125,7 +132,8 @@ public class SeparatorTest extends BasePVTsimulation {
 
     SeparatorTest sepSim = new SeparatorTest(tempSystem);
     double[] temps = {313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15};
-    double[] pres = {500, 400, 200, 100, 50.0, 5.0, 1.01325};
+    double[] pres =
+        {500, 400, 200, 100, 50.0, 5.0, ThermodynamicConstantsInterface.referencePressure};
     sepSim.setSeparatorConditions(temps, pres);
     sepSim.runCalc();
   }

@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.adsorber;
 
 import java.util.UUID;
+
 import neqsim.processSimulation.mechanicalDesign.adsorber.AdsorberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -19,7 +20,6 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
 
   boolean setTemperature = false;
-  String name = new String();
   StreamInterface[] outStream = new Stream[2];
   StreamInterface[] inStream = new Stream[2];
   SystemInterface system;
@@ -57,8 +57,8 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     this("SimpleAdsorber");
     this.inStream[0] = inStream1;
     this.inStream[1] = inStream1;
-    outStream[0] = (Stream) inStream1.clone();
-    outStream[1] = (Stream) inStream1.clone();
+    outStream[0] = inStream1.clone();
+    outStream[1] = inStream1.clone();
 
     SystemInterface systemOut1 = inStream1.getThermoSystem().clone();
     outStream[0].setThermoSystem(systemOut1);
@@ -76,7 +76,11 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     outStream[1].run();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public SimpleAdsorber(String name) {
     super(name);
   }
@@ -94,8 +98,8 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     this(name);
     this.inStream[0] = inStream1;
     this.inStream[1] = inStream1;
-    outStream[0] = (Stream) inStream1.clone();
-    outStream[1] = (Stream) inStream1.clone();
+    outStream[0] = inStream1.clone();
+    outStream[1] = inStream1.clone();
     setName(name);
 
     SystemInterface systemOut1 = inStream1.getThermoSystem().clone();
@@ -114,6 +118,8 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     outStream[1].run();
   }
 
+  /** {@inheritDoc} */
+  @Override
   public AdsorberMechanicalDesign getMechanicalDesign() {
     return new AdsorberMechanicalDesign(this);
   }
@@ -188,7 +194,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     SystemInterface systemOut1 = inStream[1].getThermoSystem().clone();
     outStream[0].setThermoSystem(systemOut1);
     outStream[0].run(id);
-    outStream[1].run();
+    outStream[1].run(id);
 
     double error = 1e5;
     error = absorptionEfficiency - (outStream[1].getThermoSystem().getPhase(1).getComponent("CO2")
@@ -208,7 +214,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
       // outStream[1].getThermoSystem().addComponent("CO2",(20.0-outStream[1].getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfMolesInPhase()),0);
       outStream[1].getThermoSystem().addComponent("MDEA", -error * factor);
       outStream[1].getThermoSystem().addComponent("water", -error * 10.0 * factor);
-      outStream[1].run();
+      outStream[1].run(id);
       error = absorptionEfficiency - ((outStream[1].getThermoSystem().getPhase(1)
           .getComponent("CO2").getNumberOfMolesInPhase()
           + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-")

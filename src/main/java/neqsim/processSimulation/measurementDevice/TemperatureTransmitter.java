@@ -16,37 +16,41 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ESOL
  * @version $Id: $Id
  */
-public class TemperatureTransmitter extends MeasurementDeviceBaseClass {
-    private static final long serialVersionUID = 1000;
-    protected StreamInterface stream = null;
+public class TemperatureTransmitter extends StreamMeasurementDeviceBaseClass {
+  private static final long serialVersionUID = 1000;
 
-    public TemperatureTransmitter() {
-        name = "Temperature Transmitter";
-        unit = "K";
-    }
+  /**
+   * <p>
+   * Constructor for TemperatureTransmitter.
+   * </p>
+   *
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public TemperatureTransmitter(StreamInterface stream) {
+    this("Temperature Transmitter", stream);
+  }
 
-    /**
-     * <p>
-     * Constructor for TemperatureTransmitter.
-     * </p>
-     *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
-     */
-    public TemperatureTransmitter(StreamInterface stream) {
-        this();
-        this.stream = stream;
-    }
+  /**
+   * <p>
+   * Constructor for TemperatureTransmitter.
+   * </p>
+   *
+   * @param name Name of TemperatureTransmitter
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public TemperatureTransmitter(String name, StreamInterface stream) {
+    super(name, "K", stream);
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void displayResult() {
-        System.out.println("measured temperature " + getMeasuredValue());
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void displayResult() {
+    System.out.println("measured temperature " + getMeasuredValue());
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double getMeasuredValue() {
-        return stream.getThermoSystem().getTemperature();
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double getMeasuredValue(String unit) {
+    return stream.getThermoSystem().getTemperature(unit);
+  }
 }

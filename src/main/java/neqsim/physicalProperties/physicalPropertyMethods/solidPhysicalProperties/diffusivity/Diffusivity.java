@@ -58,7 +58,7 @@ public class Diffusivity extends
 
     properties.binaryDiffusionCoefficients = this.binaryDiffusionCoefficients.clone();
     for (int i = 0; i < solidPhase.getPhase().getNumberOfComponents(); i++) {
-      // todo: fails with indexerror if components has been added after construction of object
+      // TODO: fails with indexerror if components has been added after construction of object
       // getNumberOfComponents() > len(this.binaryDiffusionCoefficients)
       System.arraycopy(this.binaryDiffusionCoefficients[i], 0,
           properties.binaryDiffusionCoefficients[i], 0,
@@ -94,13 +94,13 @@ public class Diffusivity extends
   @Override
   public double getFickBinaryDiffusionCoefficient(int i, int j) {
     double nonIdealCorrection = 1.0;
-    return binaryDiffusionCoefficients[i][j] * nonIdealCorrection; // shuld be divided by non
-                                                                   // ideality factor
+    // shuld be divided by non ideality factor
+    return binaryDiffusionCoefficients[i][j] * nonIdealCorrection;
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throw new UnsupportedOperationException("Unimplemented method 'calcBinaryDiffusionCoefficient");
   }
 }

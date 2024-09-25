@@ -48,7 +48,7 @@ public class SwellingTest extends BasePVTsimulation {
    * setCummulativeMolePercentGasInjected.
    * </p>
    *
-   * @param gasInjected an array of {@link double} objects
+   * @param gasInjected an array of type double
    */
   public void setCummulativeMolePercentGasInjected(double[] gasInjected) {
     this.gasInjected = gasInjected;
@@ -67,7 +67,7 @@ public class SwellingTest extends BasePVTsimulation {
     try {
       thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     double orginalOilVolume = getThermoSystem().getVolume();
     double oilMoles = getThermoSystem().getTotalNumberOfMoles();
@@ -90,14 +90,14 @@ public class SwellingTest extends BasePVTsimulation {
       try {
         thermoOps.bubblePointPressureFlash(false);
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
       pressures[i] = getThermoSystem().getPressure();
       getRelativeOilVolume()[i] = getThermoSystem().getVolume() / orginalOilVolume;
     }
 
     for (int i = 0; i < getPressures().length; i++) {
-      System.out.println(
+      logger.info(
           "pressure " + getPressures()[i] + " relativeOil volume " + getRelativeOilVolume()[i]);
     }
   }

@@ -23,13 +23,6 @@ public class VSflash extends Flash {
    * <p>
    * Constructor for VSflash.
    * </p>
-   */
-  public VSflash() {}
-
-  /**
-   * <p>
-   * Constructor for VSflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Vspec a double
@@ -178,7 +171,7 @@ public class VSflash extends Flash {
       testOps.VSflash(volume, entropy);
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

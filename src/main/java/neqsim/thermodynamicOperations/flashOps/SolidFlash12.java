@@ -9,6 +9,7 @@ package neqsim.thermodynamicOperations.flashOps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -26,19 +27,12 @@ public class SolidFlash12 extends TPflash {
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
-  double dQdbeta[];
-  double Qmatrix[][];
-  double E[];
+  double[] dQdbeta;
+  double[][] Qmatrix;
+  double[] E;
   double Q = 0;
   int solidsNumber = 0;
   int solidIndex = 0;
-
-  /**
-   * <p>
-   * Constructor for SolidFlash12.
-   * </p>
-   */
-  public SolidFlash12() {}
 
   /**
    * <p>
@@ -191,7 +185,7 @@ public class SolidFlash12 extends TPflash {
    * </p>
    */
   public void solveBeta() {
-    double oldBeta[] = new double[system.getNumberOfPhases() - solidsNumber];
+    double[] oldBeta = new double[system.getNumberOfPhases() - solidsNumber];
     // double newBeta[] = new double[system.getNumberOfPhases() - solidsNumber];
     int iter = 0;
     Matrix ans = new Matrix(system.getNumberOfPhases() - solidsNumber, 1);
@@ -267,18 +261,19 @@ public class SolidFlash12 extends TPflash {
    * </p>
    */
   public void checkGibbs() {
-    double gibbs1 = 0, gibbs2 = 0;
+    double gibbs1 = 0;
+    double gibbs2 = 0;
     for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-      system.setPhaseType(i, 0);
+      system.setPhaseType(i, PhaseType.byValue(0));
       system.init(1);
       gibbs1 = system.getPhase(i).getGibbsEnergy();
-      system.setPhaseType(i, 1);
+      system.setPhaseType(i, PhaseType.byValue(1));
       system.init(1);
       gibbs2 = system.getPhase(i).getGibbsEnergy();
       if (gibbs1 < gibbs2) {
-        system.setPhaseType(i, 0);
+        system.setPhaseType(i, PhaseType.byValue(0));
       } else {
-        system.setPhaseType(i, 1);
+        system.setPhaseType(i, PhaseType.byValue(1));
       }
       system.init(1);
     }

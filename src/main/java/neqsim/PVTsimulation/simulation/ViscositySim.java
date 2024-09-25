@@ -1,6 +1,8 @@
 package neqsim.PVTsimulation.simulation;
 
 import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompViscosity.linearLiquidModel.ViscosityFunction;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
@@ -17,6 +19,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class ViscositySim extends BasePVTsimulation {
+  static Logger logger = LogManager.getLogger(ViscositySim.class);
+
   double[] temperature = null;
 
   double[] pressure = null;
@@ -45,8 +49,8 @@ public class ViscositySim extends BasePVTsimulation {
    * setTemperaturesAndPressures.
    * </p>
    *
-   * @param temperature an array of {@link double} objects
-   * @param pressure an array of {@link double} objects
+   * @param temperature an array of type double
+   * @param pressure an array of type double
    */
   public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
     this.pressure = pressure;
@@ -86,7 +90,7 @@ public class ViscositySim extends BasePVTsimulation {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      System.out.println("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);
@@ -165,11 +169,11 @@ public class ViscositySim extends BasePVTsimulation {
 
     double[][] expData = {{2e-4, 3e-4, 4e-4, 5e-4, 6e-4},};
     sepSim.setExperimentalData(expData);
-    sepSim.runTuning();
-    // sepSim.runCalc();
+    // sepSim.runTuning();
+    sepSim.runCalc();
     double a = sepSim.getGasViscosity()[0];
     double a2 = sepSim.getOilViscosity()[0];
-    sepSim.getThermoSystem().display();
+    // sepSim.getThermoSystem().display();
     // sepSim.tuneModel(exptemperatures, exppressures, expwaxFrations);
   }
 

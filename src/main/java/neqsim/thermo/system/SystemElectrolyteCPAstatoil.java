@@ -7,6 +7,7 @@ import neqsim.thermo.util.constants.FurstElectrolyteConstants;
  * This class defines a thermodynamic system using the electrolyte CPA EoS Statoil model.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
   private static final long serialVersionUID = 1000;
@@ -17,14 +18,7 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
    * </p>
    */
   public SystemElectrolyteCPAstatoil() {
-    super();
-    modelName = "Electrolyte-CPA-EOS-statoil";
-    attractiveTermNumber = 15;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseElectrolyteCPAstatoil();
-    }
-    FurstElectrolyteConstants.setFurstParams("electrolyteCPA");
-    this.useVolumeCorrection(true);
+    this(298.15, 1.0);
   }
 
   /**
@@ -32,8 +26,8 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
    * Constructor for SystemElectrolyteCPAstatoil.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemElectrolyteCPAstatoil(double T, double P) {
     super(T, P);
@@ -57,10 +51,6 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] =(PhaseElectrolyteCPA) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

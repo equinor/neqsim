@@ -2,6 +2,7 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUnifacUMRPRU;
 import neqsim.thermo.component.ComponentGEUniquac;
@@ -16,10 +17,13 @@ import neqsim.thermo.component.ComponentGEUniquac;
  */
 public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhaseGEUnifacUMRPRU.class);
+
   double[] Qmix = null;
   double[][] QmixdN = null;
   String[] gropuNames = null;
-  static Logger logger = LogManager.getLogger(PhaseGEUnifacUMRPRU.class);
+  double VCommontemp = 0.0;
+  double FCommontemp = 0.0;
 
   /**
    * <p>
@@ -28,7 +32,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    */
   public PhaseGEUnifacUMRPRU() {
     super();
-    componentArray = new ComponentGEUnifacUMRPRU[MAX_NUMBER_OF_COMPONENTS];
+    componentArray =
+        new ComponentGEUnifacUMRPRU[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**
@@ -37,10 +42,10 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha an array of {@link double} objects
-   * @param Dij an array of {@link double} objects
+   * @param alpha an array of type double
+   * @param Dij an array of type double
    * @param mixRule an array of {@link java.lang.String} objects
-   * @param intparam an array of {@link double} objects
+   * @param intparam an array of type double
    */
   public PhaseGEUnifacUMRPRU(PhaseInterface phase, double[][] alpha, double[][] Dij,
       String[][] mixRule, double[][] intparam) {
@@ -56,13 +61,50 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     this.setMixingRule(2);
   }
 
+  /**
+   * Calculate common temp.
+   *
+   * @param phase a PhaseInterface
+   * @param numberOfComponents a int
+   * @param temperature a double
+   * @param pressure a double
+   * @param pt the PhaseType of the phase
+   */
+  public void calcCommontemp(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure, PhaseType pt) {
+    FCommontemp = 0;
+    VCommontemp = 0;
+    ComponentGEUnifac[] compArray = (ComponentGEUnifac[]) phase.getcomponentArray();
+
+    for (int j = 0; j < numberOfComponents; j++) {
+      FCommontemp += (compArray[j].getQ() * compArray[j].getx());
+      VCommontemp += compArray[j].getx() * compArray[j].getR();
+    }
+  }
+
+  /**
+   * <p>getVCommontemp.</p>
+   *
+   * @return a double
+   */
+  public double getVCommontemp() {
+    return VCommontemp;
+  }
+
+  /**
+   * <p>getFCommontemp.</p>
+   *
+   * @return a double
+   */
+  public double getFCommontemp() {
+    return FCommontemp;
+  }
+
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentGEUnifacUMRPRU(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentGEUnifacUMRPRU(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -78,27 +120,22 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-      double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+      double temperature, double pressure, PhaseType pt) {
     double GE = 0.0;
-    ((ComponentGEUnifacUMRPRU) phase.getComponents()[0]).commonInit(phase, numberOfComponents,
-        temperature, pressure, phasetype);
+    calcCommontemp(phase, numberOfComponents, temperature, pressure, pt);
+    // ((ComponentGEUnifacUMRPRU) phase.getComponents()[0]).commonInit(phase, numberOfComponents,
+    // temperature, pressure, pt);
 
     initQmix();
-    if (getInitType() > 2)
+    if (getInitType() > 2) {
       initQmixdN();
+    }
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponents()[i].getx() * Math.log(((ComponentGEUniquac) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, phasetype));
+          .getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
-    return R * phase.getTemperature() * GE * phase.getNumberOfMolesInPhase();
+    return R * phase.getTemperature() * phase.getNumberOfMolesInPhase() * GE;
   }
 
   /**
@@ -142,8 +179,9 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   public double getQmix(String name) {
     // int test = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
     for (int i = 0; i < gropuNames.length; i++) {
-      if (name.equals(gropuNames[i]))
+      if (name.equals(gropuNames[i])) {
         return Qmix[i];
+      }
     }
     return 0.0;
   }
@@ -154,13 +192,14 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getQmixdN(String name) {
     // int test = ((ComponentGEUnifac) componentArray[0]).getUnifacGroups().length;
     for (int i = 0; i < gropuNames.length; i++) {
-      if (name.equals(gropuNames[i]))
+      if (name.equals(gropuNames[i])) {
         return QmixdN[i];
+      }
     }
     return QmixdN[0];
   }
@@ -168,7 +207,6 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   /** {@inheritDoc} */
   @Override
   public void calcaij() {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
 
     aij = new double[((ComponentGEUnifac) getComponent(0))
@@ -176,7 +214,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
             .getNumberOfUNIFACgroups()];
 
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
-      try {
+      try (neqsim.util.database.NeqSimDataBase database =
+          new neqsim.util.database.NeqSimDataBase()) {
         if (getPhase().getComponent(0).getAttractiveTermNumber() == 13) {
           dataSet = database.getResultSet(("SELECT * FROM unifacinterparama_umrmc WHERE MainGroup="
               + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
@@ -192,7 +231,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
         }
       } catch (Exception ex) {
-        logger.error(ex.toString(), ex);
+        logger.error(ex.getMessage(), ex);
       } finally {
         try {
           if (dataSet != null) {
@@ -203,16 +242,6 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
         }
       }
     }
-    try {
-      if (database.getStatement() != null) {
-        database.getStatement().close();
-      }
-      if (database.getConnection() != null) {
-        database.getConnection().close();
-      }
-    } catch (Exception ex) {
-      logger.error("error closing database.....", ex);
-    }
     // System.out.println("finished finding interaction coefficient...C_UMR");
   }
 
@@ -222,7 +251,6 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * </p>
    */
   public void calcbij() {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
 
     bij = new double[((ComponentGEUnifac) getComponent(0))
@@ -230,7 +258,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
             .getNumberOfUNIFACgroups()];
 
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
-      try {
+      try (neqsim.util.database.NeqSimDataBase database =
+          new neqsim.util.database.NeqSimDataBase()) {
         if (getPhase().getComponent(0).getAttractiveTermNumber() == 13) {
           dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb_umrmc WHERE MainGroup="
               + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
@@ -246,26 +275,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
         }
       } catch (Exception ex) {
-        logger.error(ex.toString(), ex);
-      } finally {
-        try {
-          if (dataSet != null) {
-            dataSet.close();
-          }
-        } catch (Exception ex) {
-          logger.error("err closing dataSet...", ex);
-        }
+        logger.error(ex.getMessage(), ex);
       }
-    }
-    try {
-      if (database.getStatement() != null) {
-        database.getStatement().close();
-      }
-      if (database.getConnection() != null) {
-        database.getConnection().close();
-      }
-    } catch (Exception ex) {
-      logger.error("error closing database.....", ex);
     }
     // System.out.println("finished finding interaction coefficient...C_UMR");
   }
@@ -276,7 +287,6 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * </p>
    */
   public void calccij() {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
 
     cij = new double[((ComponentGEUnifac) getComponent(0))
@@ -284,7 +294,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
             .getNumberOfUNIFACgroups()];
 
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
-      try {
+      try (neqsim.util.database.NeqSimDataBase database =
+          new neqsim.util.database.NeqSimDataBase()) {
         if (getPhase().getComponent(0).getAttractiveTermNumber() == 13) {
           dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc_umrmc WHERE MainGroup="
               + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
@@ -300,26 +311,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           // System.out.println("aij " + aij[i][j]);
         }
       } catch (Exception ex) {
-        logger.error(ex.toString(), ex);
-      } finally {
-        try {
-          if (dataSet != null) {
-            dataSet.close();
-          }
-        } catch (Exception ex) {
-          logger.error("err closing dataSet...", ex);
-        }
+        logger.error(ex.getMessage(), ex);
       }
-    }
-    try {
-      if (database.getStatement() != null) {
-        database.getStatement().close();
-      }
-      if (database.getConnection() != null) {
-        database.getConnection().close();
-      }
-    } catch (Exception ex) {
-      logger.error("error closing database.....", ex);
     }
     // System.out.println("finished finding interaction coefficient...C_UMR");
   }

@@ -3,21 +3,26 @@ package neqsim.thermo;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Used to generate fluids of type SystemInterface
- * <p>
- * FluidCreator class.
- * </p>
+ * Used to generate fluids of type SystemInterface.
  *
  * @author esol
  * @version $Id: $Id
  */
-public class FluidCreator {
-
+public final class FluidCreator {
+  /** Constant <code>hasWater=false</code>. */
   public static boolean hasWater = false;
+  /** Constant <code>autoSelectModel=false</code>. */
   public static boolean autoSelectModel = false;
+  /** Constant <code>thermoModel="srk"</code>. */
   public static String thermoModel = "srk";
+  /** Constant <code>thermoMixingRule="classic"</code>. */
   public static String thermoMixingRule = "classic";
-  
+
+  /**
+   * Dummy constructor, not for use. Class is to be considered static.
+   */
+  private FluidCreator() {}
+
   /**
    * Create SystemInterface.
    *

@@ -8,6 +8,7 @@ import neqsim.thermo.phase.PhaseTSTEos;
  * This class defines a thermodynamic system using the TST equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemTSTEos extends SystemEos {
   private static final long serialVersionUID = 1000;
@@ -20,14 +21,7 @@ public class SystemTSTEos extends SystemEos {
    * </p>
    */
   public SystemTSTEos() {
-    super();
-    modelName = "TST-EOS";
-    attractiveTermNumber = 14;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseTSTEos();
-      phaseArray[i].setTemperature(298.15);
-      phaseArray[i].setPressure(1.0);
-    }
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -35,18 +29,11 @@ public class SystemTSTEos extends SystemEos {
    * Constructor for SystemTSTEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemTSTEos(double T, double P) {
-    super(T, P);
-    modelName = "TST-EOS";
-    attractiveTermNumber = 14;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseTSTEos();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
+    this(T, P, false);
   }
 
   /**
@@ -54,16 +41,14 @@ public class SystemTSTEos extends SystemEos {
    * Constructor for SystemTSTEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemTSTEos(double T, double P, boolean solidCheck) {
-    this(T, P);
+  public SystemTSTEos(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     attractiveTermNumber = 14;
-    setNumberOfPhases(5);
     modelName = "TST-EOS";
-    solidPhaseCheck = solidCheck;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseTSTEos();
@@ -72,7 +57,7 @@ public class SystemTSTEos extends SystemEos {
     }
 
     if (solidPhaseCheck) {
-      // System.out.println("here first");
+      setNumberOfPhases(5);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);
@@ -80,7 +65,6 @@ public class SystemTSTEos extends SystemEos {
     }
 
     if (hydrateCheck) {
-      // System.out.println("here first");
       phaseArray[numberOfPhases - 1] = new PhaseHydrate();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);
@@ -97,11 +81,6 @@ public class SystemTSTEos extends SystemEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

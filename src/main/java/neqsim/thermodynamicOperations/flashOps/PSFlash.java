@@ -21,13 +21,6 @@ public class PSFlash extends QfuncFlash {
    * <p>
    * Constructor for PSFlash.
    * </p>
-   */
-  public PSFlash() {}
-
-  /**
-   * <p>
-   * Constructor for PSFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Sspec a double

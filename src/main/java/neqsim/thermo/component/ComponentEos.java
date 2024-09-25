@@ -8,6 +8,7 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.attractiveEosTerm.AtractiveTermMatCopPRUMRNew;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermCPAstatoil;
 import neqsim.thermo.component.attractiveEosTerm.AttractiveTermGERG;
@@ -32,9 +33,13 @@ import neqsim.thermo.component.attractiveEosTerm.AttractiveTermUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * Abstract ComponentEos class.
+ * </p>
+ *
  * @author Even Solbraa
  */
-abstract class ComponentEos extends Component implements ComponentEosInterface {
+public abstract class ComponentEos extends Component implements ComponentEosInterface {
   private static final long serialVersionUID = 1000;
 
   public double a = 1;
@@ -57,8 +62,8 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
 
   public double aDiffDiffT = 0;
 
-  public double[] Aij = new double[MAX_NUMBER_OF_COMPONENTS];
-  public double[] Bij = new double[MAX_NUMBER_OF_COMPONENTS];
+  public double[] Aij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  public double[] Bij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   protected double delta1 = 0;
 
   protected double delta2 = 0;
@@ -75,8 +80,8 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
 
   protected double bDerTn = 0;
 
-  protected double[] dAdndn = new double[MAX_NUMBER_OF_COMPONENTS];
-  protected double[] dBdndn = new double[MAX_NUMBER_OF_COMPONENTS];
+  protected double[] dAdndn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  protected double[] dBdndn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   private AttractiveTermInterface attractiveParameter;
   static Logger logger = LogManager.getLogger(ComponentEos.class);
 
@@ -85,13 +90,13 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
    * Constructor for ComponentEos.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentEos(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentEos(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
   /**
@@ -100,11 +105,11 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
    * </p>
    *
    * @param number a int
-   * @param TC a double
-   * @param PC a double
-   * @param M a double
-   * @param a a double
-   * @param moles a double
+   * @param TC Critical temperature
+   * @param PC Critical pressure
+   * @param M Molar mass
+   * @param a Acentric factor
+   * @param moles Number of moles
    */
   public ComponentEos(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
@@ -127,14 +132,14 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double temp, double pres, double totMoles, double beta, int type) {
-    super.init(temp, pres, totMoles, beta, type);
+  public void init(double temp, double pres, double totMoles, double beta, int initType) {
+    super.init(temp, pres, totMoles, beta, initType);
     a = calca();
     b = calcb();
     reducedTemperature = reducedTemperature(temp);
     reducedPressure = reducedPressure(pres);
     aT = a * alpha(temp);
-    if (type >= 2) {
+    if (initType >= 2) {
       aDiffT = diffaT(temp);
       aDiffDiffT = diffdiffaT(temp);
     }
@@ -143,10 +148,10 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
   /** {@inheritDoc} */
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
-      int numberOfComponents, int type) {
+      int numberOfComponents, int initType) {
     Bi = phase.calcBi(componentNumber, phase, temp, pres, numberOfComponents);
     Ai = phase.calcAi(componentNumber, phase, temp, pres, numberOfComponents);
-    if (type >= 2) {
+    if (initType >= 2) {
       AiT = phase.calcAiT(componentNumber, phase, temp, pres, numberOfComponents);
     }
     double totVol = phase.getMolarVolume() * phase.getNumberOfMolesInPhase();
@@ -155,7 +160,7 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
         / (-R * temp * phase.dFdVdV()
             - phase.getNumberOfMolesInPhase() * R * temp / (totVol * totVol));
 
-    if (type >= 3) {
+    if (initType >= 3) {
       for (int j = 0; j < numberOfComponents; j++) {
         Aij[j] = phase.calcAij(componentNumber, j, phase, temp, pres, numberOfComponents);
         Bij[j] = phase.calcBij(componentNumber, j, phase, temp, pres, numberOfComponents);
@@ -224,6 +229,8 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
   }
 
   /**
+   * Get reduced temperature.
+   *
    * @param temperature temperature of fluid
    * @return double reduced temperature T/TC
    */
@@ -232,6 +239,10 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
   }
 
   /**
+   * <p>
+   * Get reduced pressure.
+   * </p>
+   *
    * @param pressure pressure in unit bara
    * @return double
    */
@@ -337,8 +348,9 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
   public double fugcoef(PhaseInterface phase) {
     double temperature = phase.getTemperature();
     double pressure = phase.getPressure();
-    logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
-        - Math.log(pressure * phase.getMolarVolume() / (R * temperature));
+    double logFugacityCoefficient =
+        dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
+            - Math.log(pressure * phase.getMolarVolume() / (R * temperature));
     fugacityCoefficient = Math.exp(logFugacityCoefficient);
     return fugacityCoefficient;
   }
@@ -649,8 +661,8 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
     // double scale2 = getAttractiveTerm().alpha(temperature) * 1e-5 * Math.pow(b * 1e-5, 2.0 /
     // 3.0) * (AA * TR + BB);
     // System.out.println("scale2 " + scale2);
-    return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB); /// Math.pow(ThermodynamicConstantsInterface.avagadroNumber,
-                                                                       /// 2.0 / 3.0);
+    return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB);
+    // Math.pow(ThermodynamicConstantsInterface.avagadroNumber, // 2.0 / 3.0);
   }
 
   /**
@@ -737,8 +749,8 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
     return dFdNdN(compNumb2, phase, phase.getNumberOfComponents(), phase.getTemperature(),
         phase.getPressure())
         - dFdNdT(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure())
-            * 1.0 / phase.FTT(); // *
-    // phase.getComponent(compNumb2).getF;
+            * 1.0 / phase.FTT();
+    // * phase.getComponent(compNumb2).getF;
   }
 
   /**

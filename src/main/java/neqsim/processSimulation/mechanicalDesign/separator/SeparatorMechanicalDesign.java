@@ -25,9 +25,6 @@ import neqsim.processSimulation.processEquipment.separator.sectionType.Separator
  */
 public class SeparatorMechanicalDesign extends MechanicalDesign {
   private static final long serialVersionUID = 1000;
-
-  double wallThickness = 0.0;
-  private double outerDiameter = 0.0;
   double gasLoadFactor = 1.0;
   double volumeSafetyFactor = 1.0;
   double Fg = 1.0;
@@ -81,7 +78,6 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
                              // design")).getLiquidRetentionTime("API12J", this);
     } else {
       System.out.println("no separator process design specified......");
-      return;
     }
   }
 
@@ -163,11 +159,15 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     double materialsCost = 0.0;
     double gasDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0)
         .getPhysicalProperties().getDensity();
+
     double liqDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(1)
         .getPhysicalProperties().getDensity();
     double liqViscosity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(1)
         .getPhysicalProperties().getViscosity();
-
+    if (((SeparatorInterface) getProcessEquipment()).getThermoSystem().getNumberOfPhases() == 1) {
+      liqDensity = getDefaultLiquidDensity();
+      liqViscosity = getDefaultLiquidViscosity();
+    }
     maxDesignVolumeFlow = volumeSafetyFactor
         * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume()
         / 1e5;
@@ -187,12 +187,12 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     double sepratorLength = tantanLength + innerDiameter;
 
     if (sepratorLength / innerDiameter > 6 || sepratorLength / innerDiameter < 3) {
-      System.out
-          .println("Fg need to be modified ... L/D separator= " + sepratorLength / innerDiameter);
+      // System.out
+      // .println("Fg need to be modified ... L/D separator= " + sepratorLength / innerDiameter);
       tantanLength = innerDiameter * 5.0;
       sepratorLength = tantanLength + innerDiameter;
     }
-    System.out.println("inner Diameter " + innerDiameter);
+    // System.out.println("inner Diameter " + innerDiameter);
 
     // alternative design
     double bubbleDiameter = 250.0e-6;
@@ -211,12 +211,14 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     // sepLength = innerDiameter * 2.0;
     emptyVesselWeight = 0.032 * getWallThickness() * 1e3 * innerDiameter * 1e3 * tantanLength;
 
+    setOuterDiameter(innerDiameter + 2.0 * getWallThickness());
     for (SeparatorSection sep : separator.getSeparatorSections()) {
+      sep.setOuterDiameter(getOuterDiameter());
       sep.getMechanicalDesign().calcDesign();
       internalsWeight += sep.getMechanicalDesign().getTotalWeight();
     }
 
-    System.out.println("internal weight " + internalsWeight);
+    // System.out.println("internal weight " + internalsWeight);
 
     externalNozzelsWeight = 0.0; // need to be implemented
     double Wv = emptyVesselWeight + internalsWeight + externalNozzelsWeight;
@@ -230,15 +232,14 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     moduleHeight = innerDiameter * 2 + 1.0;
     // }
 
-    setOuterDiameter(innerDiameter + 2.0 * getWallThickness());
-
-    System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() + " m");
-    System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
-    System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-    System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength + " height "
-        + moduleHeight + " meter.");
-    System.out.println("mechanical price: " + materialsCost + " kNOK");
-
+    /*
+     * System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() +
+     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
+     * System.out.println("total skid weigth: " + totalSkidWeight + " kg");
+     * System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength +
+     * " height " + moduleHeight + " meter."); System.out.println("mechanical price: " +
+     * materialsCost + " kNOK");
+     */
     setWeigthVesselShell(emptyVesselWeight);
 
     // tantanLength = innerDiameter * 5;
@@ -273,29 +274,5 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);
     ((Separator) getProcessEquipment()).setSeparatorLength(tantanLength);
     // this method will be implemented to set calculated design...
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getOuterDiameter() {
-    return outerDiameter;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getWallThickness() {
-    return wallThickness;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setWallThickness(double wallThickness) {
-    this.wallThickness = wallThickness;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setOuterDiameter(double outerDiameter) {
-    this.outerDiameter = outerDiameter;
   }
 }

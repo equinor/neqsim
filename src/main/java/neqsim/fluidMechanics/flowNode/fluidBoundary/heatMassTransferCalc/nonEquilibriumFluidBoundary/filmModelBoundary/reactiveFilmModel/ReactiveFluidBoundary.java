@@ -30,13 +30,6 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
    * <p>
    * Constructor for ReactiveFluidBoundary.
    * </p>
-   */
-  public ReactiveFluidBoundary() {}
-
-  /**
-   * <p>
-   * Constructor for ReactiveFluidBoundary.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -530,7 +523,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
    * calcFluxes2.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcFluxes2() {
     double sum = 0.0;

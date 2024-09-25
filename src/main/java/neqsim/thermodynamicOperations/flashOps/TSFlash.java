@@ -28,13 +28,6 @@ public class TSFlash extends QfuncFlash {
    * <p>
    * Constructor for TSFlash.
    * </p>
-   */
-  public TSFlash() {}
-
-  /**
-   * <p>
-   * Constructor for TSFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Sspec a double
@@ -122,12 +115,12 @@ public class TSFlash extends QfuncFlash {
       testSystem.display();
 
       double Sspec = testSystem.getEntropy("kJ/kgK");
-      System.out.println("S spec " + Sspec);
+      logger.info("S spec " + Sspec);
       testSystem.setTemperature(293.15);
       testOps.TSflash(Sspec, "kJ/kgK");
       testSystem.display();
     } catch (Exception ex) {
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 }

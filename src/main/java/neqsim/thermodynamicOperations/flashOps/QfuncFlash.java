@@ -2,6 +2,7 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -25,7 +26,8 @@ public class QfuncFlash extends Flash {
    * Constructor for QfuncFlash.
    * </p>
    */
-  public QfuncFlash() {}
+  public QfuncFlash() {
+  }
 
   /**
    * <p>
@@ -33,8 +35,8 @@ public class QfuncFlash extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Hspec a double
-   * @param type a int
+   * @param Hspec  a double
+   * @param type   a int
    */
   public QfuncFlash(SystemInterface system, double Hspec, int type) {
     this.system = system;
@@ -93,8 +95,8 @@ public class QfuncFlash extends Flash {
   public void run() {
     tpFlash.run();
     logger.info("entropy: " + system.getEntropy());
-    sysNewtonRhapsonPHflash secondOrderSolver =
-        new sysNewtonRhapsonPHflash(system, 2, system.getPhases()[0].getNumberOfComponents(), type);
+    sysNewtonRhapsonPHflash secondOrderSolver = new sysNewtonRhapsonPHflash(system, 2,
+        system.getPhases()[0].getNumberOfComponents(), type);
     secondOrderSolver.setSpec(Hspec);
     secondOrderSolver.solve(1);
   }

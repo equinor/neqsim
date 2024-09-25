@@ -50,7 +50,7 @@ public class PhaseEnvelope {
     testSystem.addComponent("n-pentane", 0.0344);
     // testSystem.addComponent("c-C5", 0.0112);
     // testSystem.addComponent("22-dim-C4", 0.0022);
-    /// testSystem.addComponent("23-dim-C4", 0.0027);
+    // testSystem.addComponent("23-dim-C4", 0.0027);
     testSystem.addComponent("2-m-C5", 0.0341);
     testSystem.addComponent("3-m-C5", 0.0105);
     testSystem.addComponent("n-hexane", 0.0172);
@@ -109,10 +109,10 @@ public class PhaseEnvelope {
        * testOps.setRunAsThread(true); testOps.waterDewPointLine(10, 200); boolean isFinished =
        * testOps.waitAndCheckForFinishedCalculation(50000); double[][] waterData =
        * testOps.getData();
-       * 
+       *
        * testOps.hydrateEquilibriumLine(10, 200); isFinished =
        * testOps.waitAndCheckForFinishedCalculation(50000); double[][] hydData = testOps.getData();
-       * 
+       *
        * testSystem.addComponent("water",
        * -testSystem.getPhase(0).getComponent("water").getNumberOfmoles());
        */
@@ -139,7 +139,7 @@ public class PhaseEnvelope {
       // JFreeChart jfreeObj = testOps.getJfreeChart();
       // BufferedImage buf = jfreeObj.createBufferedImage(640, 400, null);
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
 
     // testSystem.display();

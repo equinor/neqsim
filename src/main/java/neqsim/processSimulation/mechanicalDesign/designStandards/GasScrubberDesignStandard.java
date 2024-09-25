@@ -33,10 +33,9 @@ public class GasScrubberDesignStandard extends DesignStandard {
   public GasScrubberDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
 
-    neqsim.util.database.NeqSimTechnicalDesignDatabase database =
-        new neqsim.util.database.NeqSimTechnicalDesignDatabase();
-    java.sql.ResultSet dataSet = null;
-    try {
+    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
+        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+      java.sql.ResultSet dataSet = null;
       try {
         dataSet = database.getResultSet(
             ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Gas scrubber' AND Company='"
@@ -45,33 +44,31 @@ public class GasScrubberDesignStandard extends DesignStandard {
           String specName = dataSet.getString("SPECIFICATION");
           if (specName.equals("GasLoadFactor")) {
             gasLoadFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
-          }
-          if (specName.equals("FlowDesignFactor")) {
+          } else if (specName.equals("FlowDesignFactor")) {
             designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MAXVALUE"));
-          }
-          if (specName.equals("LengthGasInetToHHLL")) {
+          } else if (specName.equals("LengthGasInetToHHLL")) {
             designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
-          }
-          if (specName.equals("LengthMeshPadToDemistingCyclone")) {
+          } else if (specName.equals("LengthMeshPadToDemistingCyclone")) {
             designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
           }
         }
-      } catch (Exception ex) {
-        logger.error(ex.getMessage());
-      }
 
-      // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-    } catch (Exception ex) {
-      logger.error(ex.getMessage());
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
+        // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
       } catch (Exception ex) {
-        System.out.println("error closing database.....GasScrubberDesignStandard");
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
+      } finally {
+        try {
+          if (dataSet != null) {
+            dataSet.close();
+          }
+        } catch (Exception ex) {
+          System.out.println("error closing database.....GasScrubberDesignStandard");
+          logger.error(ex.getMessage(), ex);
+        }
       }
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
   }
 

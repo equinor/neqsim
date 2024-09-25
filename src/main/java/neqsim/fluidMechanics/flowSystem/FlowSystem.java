@@ -5,7 +5,6 @@ import neqsim.fluidMechanics.flowLeg.FlowLegInterface;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.flowSolver.FlowSolverInterface;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
-import neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.FileWriterInterface;
 import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualizationInterface;
 import neqsim.fluidMechanics.util.timeSeries.TimeSeries;
 import neqsim.thermo.system.SystemInterface;
@@ -29,7 +28,6 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
 
   protected FlowNodeInterface[] flowNode;
   protected FlowLegInterface[] flowLeg;
-  protected FileWriterInterface[] fileWriter;
   protected String initFlowPattern = "annular";
   protected FlowSystemVisualizationInterface display;
   protected TimeSeries timeSeries = new TimeSeries();
@@ -83,7 +81,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
   public FlowSystem(SystemInterface system) {
-    System.out.println("Hei der");
+    this.setInletThermoSystem(system);
   }
 
   /** {@inheritDoc} */
@@ -252,12 +250,6 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
 
   /** {@inheritDoc} */
   @Override
-  public FileWriterInterface getFileWriter(int i) {
-    return fileWriter[i];
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void setNumberOfNodesInLeg(int numberOfNodesInLeg) {
     this.numberOfNodesInLeg = new int[this.getNumberOfLegs()];
     for (int i = 0; i < this.getNumberOfLegs(); i++) {
@@ -326,17 +318,6 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   /** {@inheritDoc} */
   @Override
   public void calcFluxes() {}
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param args an array of {@link java.lang.String} objects
-   */
-  public static void main(String[] args) {
-    System.out.println("Hei der!");
-  }
 
   /** {@inheritDoc} */
   @Override

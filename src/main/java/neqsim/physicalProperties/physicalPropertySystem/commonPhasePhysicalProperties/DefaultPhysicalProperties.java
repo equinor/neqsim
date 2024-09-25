@@ -1,5 +1,8 @@
 package neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties;
 
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.diffusivity.CorrespondingStatesDiffusivity;
+import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.FrictionTheoryViscosityMethod;
 import neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -12,47 +15,37 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class DefaultPhysicalProperties extends PhysicalProperties {
-    private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1000;
 
-    /**
-     * <p>
-     * Constructor for DefaultPhysicalProperties.
-     * </p>
-     */
-    public DefaultPhysicalProperties() {}
+  /**
+   * <p>
+   * Constructor for DefaultPhysicalProperties.
+   * </p>
+   */
+  public DefaultPhysicalProperties() {}
 
-    /**
-     * <p>
-     * Constructor for DefaultPhysicalProperties.
-     * </p>
-     *
-     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-     * @param binaryDiffusionCoefficientMethod a int
-     * @param multicomponentDiffusionMethod a int
-     */
-    public DefaultPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
-            int multicomponentDiffusionMethod) {
-        super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
-        conductivityCalc =
-                new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86(
-                        this);
+  /**
+   * <p>
+   * Constructor for DefaultPhysicalProperties.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param binaryDiffusionCoefficientMethod a int
+   * @param multicomponentDiffusionMethod a int
+   */
+  public DefaultPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
+      int multicomponentDiffusionMethod) {
+    super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
+    conductivityCalc = new PFCTConductivityMethodMod86(this);
 
-        // viscosityCalc = new
-        // physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethod(this);
-        // viscosityCalc = new
-        // physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodMod86(this);
-        // viscosityCalc = new
-        // physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.LBCViscosityMethod(this);
-        viscosityCalc =
-                new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.FrictionTheoryViscosityMethod(
-                        this);
-        diffusivityCalc =
-                new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.diffusivity.CorrespondingStatesDiffusivity(
-                        this);
-
-        densityCalc =
-                new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.density.Density(
-                        this);
-        this.init(phase);
-    }
+    // viscosityCalc = new PFCTViscosityMethod(this);
+    // viscosityCalc = new PFCTViscosityMethodMod86(this);
+    // viscosityCalc = new LBCViscosityMethod(this);
+    viscosityCalc = new FrictionTheoryViscosityMethod(this);
+    diffusivityCalc = new CorrespondingStatesDiffusivity(this);
+    densityCalc =
+        new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.density.Density(
+            this);
+    this.init(phase);
+  }
 }

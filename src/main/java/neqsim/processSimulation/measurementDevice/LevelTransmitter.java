@@ -19,17 +19,25 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
    * <p>
    * Constructor for LevelTransmitter.
    * </p>
+   *
+   * @param separator a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
    */
-  public LevelTransmitter() {}
+  public LevelTransmitter(Separator separator) {
+    this("LevelTransmitter", separator);
+  }
 
   /**
    * <p>
    * Constructor for LevelTransmitter.
    * </p>
    *
+   * @param name Name of LevelTransmitter
    * @param separator a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
    */
-  public LevelTransmitter(Separator separator) {
+  public LevelTransmitter(String name, Separator separator) {
+    super(name, "");
+    this.setMaximumValue(1);
+    this.setMinimumValue(0);
     this.separator = separator;
   }
 
@@ -41,7 +49,11 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public double getMeasuredValue() {
+  public double getMeasuredValue(String unit) {
+    if (!unit.equalsIgnoreCase("")) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "getMeasuredValue", "unit", "currently only supports \"\""));
+    }
     return separator.getLiquidLevel();
   }
 }

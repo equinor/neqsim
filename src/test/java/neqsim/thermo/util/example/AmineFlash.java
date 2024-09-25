@@ -2,6 +2,7 @@ package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -26,8 +27,10 @@ public class AmineFlash {
    * @param args an array of {@link java.lang.String} objects
    */
   public static void main(String args[]) {
-    SystemInterface testSystem = new SystemFurstElectrolyteEos(273.15 + 50, 1.01325);
-    // SystemInterface testSystem = new SystemElectrolyteCPA(273.15+40, 1.01325);
+    SystemInterface testSystem = new SystemFurstElectrolyteEos(273.15 + 50,
+        ThermodynamicConstantsInterface.referencePressure);
+    // SystemInterface testSystem = new SystemElectrolyteCPA(273.15+40,
+    // ThermodynamicConstantsInterface.referencePressure);
     double molMDEA = 0.1;
     double loading = 0.4;
     double density = 1088;
@@ -47,7 +50,7 @@ public class AmineFlash {
     try {
       testOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error("err " + ex.toString());
+      logger.error("err ", ex);
     }
     double molprMDEA = (molMDEA / (1.0 + 0.30 * molMDEA));
     logger.info("mol % MDEA " + molprMDEA);

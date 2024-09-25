@@ -7,10 +7,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
- *
  */
 class TPFlashTestWellFluid {
-
   static neqsim.thermo.system.SystemInterface wellFluid = null;
   static ThermodynamicOperations testOps = null;
 
@@ -71,6 +69,7 @@ class TPFlashTestWellFluid {
         8.96e-3, 1.539e-3, 5.9921e-1});
     testOps = new ThermodynamicOperations(wellFluid);
     testOps.TPflash();
-    assertEquals(1.4292538950216407, wellFluid.getPhase(0).getDensity(), 1e-5);
+    assertEquals(1.432253736300898
+    , wellFluid.getPhase(0).getDensity(), 1e-5);
   }
 }

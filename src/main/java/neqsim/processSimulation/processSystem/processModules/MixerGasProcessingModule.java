@@ -44,6 +44,11 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
   Pump oilPump;
   Cooler secondStageAfterCooler;
 
+  /**
+   * <p>Constructor for MixerGasProcessingModule.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public MixerGasProcessingModule(String name) {
     super(name);
   }

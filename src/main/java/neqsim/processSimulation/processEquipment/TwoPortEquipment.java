@@ -4,6 +4,9 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
  * Abstract class defining ProcessEquipment with one inlet and one outlet.
+ *
+ * @author ASMF
+ * @version $Id: $Id
  */
 public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
     implements TwoPortInterface {
@@ -78,6 +81,7 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   @Override
   public void setInletStream(StreamInterface stream) {
     this.inStream = stream;
+    this.outStream = inStream.clone();
   }
 
   /** {@inheritDoc} */
@@ -102,5 +106,11 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   @Override
   public void setOutletTemperature(double temperature) {
     this.outStream.setTemperature(temperature, "unit");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return null;
   }
 }

@@ -30,13 +30,6 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
    * <p>
    * Constructor for SolidComplexTemperatureCalc.
    * </p>
-   */
-  public SolidComplexTemperatureCalc() {}
-
-  /**
-   * <p>
-   * Constructor for SolidComplexTemperatureCalc.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

@@ -4,15 +4,18 @@ package neqsim.thermo.system;
  * This class defines a thermodynamic system using the UMR-PRU with MC paramters equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>
+   * Constructor for SystemUMRPRUMCEos.
+   * </p>
+   */
   public SystemUMRPRUMCEos() {
-    super();
-    setBmixType(1);
-    modelName = "UMR-PRU-MC-EoS";
-    attractiveTermNumber = 13;
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -20,20 +23,11 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
    * Constructor for SystemUMRPRUMCEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemUMRPRUMCEos(double T, double P) {
-    super(T, P);
-    setBmixType(1);
-    modelName = "UMR-PRU-MC-EoS";
-    attractiveTermNumber = 13;
-    CapeOpenProperties11 = new String[] {"speedOfSound", "jouleThomsonCoefficient",
-        "internalEnergy", "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy",
-        "fugacityCoefficient", "logFugacityCoefficient", "logFugacityCoefficient.Dtemperature",
-        "logFugacityCoefficient.Dpressure", "logFugacityCoefficient.Dmoles", "enthalpy",
-        "enthalpy.Dtemperature", "entropy", "heatCapacityCp", "heatCapacityCv", "density",
-        "volume"};
+    this(T, P, false);
   }
 
   /**
@@ -41,15 +35,14 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
    * Constructor for SystemUMRPRUMCEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemUMRPRUMCEos(double T, double P, boolean solidCheck) {
-    super(T, P, solidCheck);
-    setBmixType(1);
-    attractiveTermNumber = 13;
+  public SystemUMRPRUMCEos(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     modelName = "UMR-PRU-MC-EoS";
+    attractiveTermNumber = 13;
   }
 
   /** {@inheritDoc} */

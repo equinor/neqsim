@@ -15,14 +15,8 @@ import neqsim.thermo.system.SystemInterface;
 public class calcSaltSatauration extends constantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(calcSaltSatauration.class);
-  String saltName;
 
-  /**
-   * <p>
-   * Constructor for calcSaltSatauration.
-   * </p>
-   */
-  public calcSaltSatauration() {}
+  String saltName;
 
   /**
    * <p>
@@ -42,14 +36,13 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
   @Override
   public void run() {
     double ksp = 0.0;
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    java.sql.ResultSet dataSet =
-        database.getResultSet("SELECT * FROM compsalt WHERE SaltName='" + saltName + "'");
     double stoc1 = 1e-20;
     double stoc2 = 1e-20;
     String name1 = "";
     String name2 = "";
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet =
+            database.getResultSet("SELECT * FROM compsalt WHERE SaltName='" + saltName + "'")) {
       dataSet.next();
       name1 = dataSet.getString("ion1").trim();
       name2 = dataSet.getString("ion2").trim();
@@ -60,7 +53,7 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
       system.addComponent(name2, ksp / 100.0);
       system.createDatabase(true);
     } catch (Exception ex) {
-      logger.error("failed " + ex.toString());
+      logger.error("failed ", ex);
     }
 
     system.init(0);
@@ -76,7 +69,8 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
       double addnumb = 0.0;
       // logger.info("testing");
 
-      system.addComponent(name1, 0.001); // *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
+      system.addComponent(name1, 0.001);
+      // *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
       system.addComponent(name2, 0.001);
       // system.init(1);
       system.init(0);
@@ -88,7 +82,8 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
               .pow(system.getPhase(1).getComponent(name2).getx() / system.getPhase(1).getMolarMass()
                   * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0, stoc2);
 
-      system.addComponent(name1, -2 * 0.001); // *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
+      system.addComponent(name1, -2 * 0.001);
+      // *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
       system.addComponent(name2, -2 * 0.001);
       // system.init(1);
       system.init(0);
@@ -100,7 +95,8 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
               .pow(system.getPhase(1).getComponent(name2).getx() / system.getPhase(1).getMolarMass()
                   * system.getPhase(1).getPhysicalProperties().getDensity() / 1000.0, stoc2);
 
-      system.addComponent(name1, 0.001); // *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
+      system.addComponent(name1, 0.001);
+      // *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
       system.addComponent(name2, 0.001);
       // system.init(1);
       system.init(0);
@@ -117,7 +113,8 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
       err = (kspcalc - ksp);
       addnumb = -(err / diff);
       logger.info("kspcalc " + kspcalc + " err " + err + " add " + addnumb);
-      system.addComponent(name1, iter / 100.0 * addnumb); // *stoc1*constant*system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
+      system.addComponent(name1, iter / 100.0 * addnumb);
+      // * stoc1 *constant * system.getPhase(1).getComponent(name1).getNumberOfMolesInPhase());
       system.addComponent(name2, iter / 100.0 * addnumb);
       // system.init(1);
       system.init(0);

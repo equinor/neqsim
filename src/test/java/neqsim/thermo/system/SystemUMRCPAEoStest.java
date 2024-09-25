@@ -93,24 +93,24 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     testOps.TPflash();
     testSystem.init(3);
     testSystem.init(3);
-    System.out.println("molar volume gas+oil is " + testSystem.getMolarVolume());
-    System.out.println("molar volume gas is " + testSystem.getPhase(0).getMolarVolume());
-    System.out.println("fugacity of gas phase " + testSystem.getPhase(0).getFugacity(0));
-    System.out.println("residual enthalpy of gas phase is " + testSystem.getPhase(0).getHresTP());
-    System.out.println(
-        "isochoric heat capacity of gas phase is " + testSystem.getPhase(0).getCv("J/mol"));
-    System.out
-        .println("isobaric heat capacity of gas phase is " + testSystem.getPhase(0).getCp("J/mol"));
-    System.out
-        .println("internal energy of gas phase is " + testSystem.getPhase(0).getInternalEnergy());
-    System.out.println("molar volume liquid is " + testSystem.getPhase(1).getMolarVolume());
-    System.out.println("fugacity of gas phase " + testSystem.getPhase(1).getFugacity(0));
-    System.out.println("enthalpy of gas phase is " + testSystem.getPhase(1).getEnthalpy("J/mol"));
-    System.out.println(
-        "isochoric heat capacity of gas phase is " + testSystem.getPhase(1).getCv("J/mol"));
-    // ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    // testOps.TPflash();
-
+    /*
+     * System.out.println("molar volume gas+oil is " + testSystem.getMolarVolume());
+     * System.out.println("molar volume gas is " + testSystem.getPhase(0).getMolarVolume());
+     * System.out.println("fugacity of gas phase " + testSystem.getPhase(0).getFugacity(0));
+     * System.out.println("residual enthalpy of gas phase is " +
+     * testSystem.getPhase(0).getHresTP()); System.out.println(
+     * "isochoric heat capacity of gas phase is " + testSystem.getPhase(0).getCv("J/mol"));
+     * System.out .println("isobaric heat capacity of gas phase is " +
+     * testSystem.getPhase(0).getCp("J/mol")); System.out
+     * .println("internal energy of gas phase is " + testSystem.getPhase(0).getInternalEnergy());
+     * System.out.println("molar volume liquid is " + testSystem.getPhase(1).getMolarVolume());
+     * System.out.println("fugacity of gas phase " + testSystem.getPhase(1).getFugacity(0));
+     * System.out.println("enthalpy of gas phase is " +
+     * testSystem.getPhase(1).getEnthalpy("J/mol")); System.out.println(
+     * "isochoric heat capacity of gas phase is " + testSystem.getPhase(1).getCv("J/mol")); //
+     * ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem); //
+     * testOps.TPflash();
+     */
     // testSystem.initProperties();
     // assertEquals(0.9711401538454589, testSystem.getPhase(0).getZ(), 0.001);
   }
@@ -204,7 +204,7 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
    * <p>
    * checkPhaseEnvelope.
    * </p>
-   * 
+   *
    * @throws Exception
    */
   // @Test
@@ -222,8 +222,8 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.calcPTphaseEnvelope();
-      System.out.println("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
-          + testOps.get("cricondenbar")[1]);
+      // System.out.println("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
+      // + testOps.get("cricondenbar")[1]);
     } catch (Exception ex) {
       assertTrue(false);
       throw new Exception(ex);

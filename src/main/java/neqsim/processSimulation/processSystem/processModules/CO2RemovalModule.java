@@ -25,6 +25,11 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
 
   protected Separator inletSeparator = null;
 
+  /**
+   * <p>Constructor for CO2RemovalModule.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public CO2RemovalModule(String name) {
     super(name);
   }
@@ -58,7 +63,7 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
     }
     getOperations().run(id);
 
-    streamFromAbsorber = (Stream) inletSeparator.getGasOutStream().clone();
+    streamFromAbsorber = inletSeparator.getGasOutStream().clone();
     streamFromAbsorber.getThermoSystem().addComponent("CO2", -streamFromAbsorber.getThermoSystem()
         .getPhase(0).getComponent("CO2").getNumberOfMolesInPhase() * 0.99);
     streamFromAbsorber.getThermoSystem().addComponent("MEG", -streamFromAbsorber.getThermoSystem()
@@ -72,13 +77,13 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
   public void initializeStreams() {
     isInitializedStreams = true;
     try {
-      this.streamFromAbsorber = (Stream) this.streamToAbsorber.clone();
+      this.streamFromAbsorber = this.streamToAbsorber.clone();
       this.streamFromAbsorber.setName("Stream from ABsorber");
 
-      this.gasFromCO2Stripper = (Stream) this.streamToAbsorber.clone();
+      this.gasFromCO2Stripper = this.streamToAbsorber.clone();
       this.gasFromCO2Stripper.setName("Gas stream from Stripper");
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

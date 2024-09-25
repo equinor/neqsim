@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -37,7 +38,6 @@ public class WaterStripperColumn extends SimpleAbsorber {
   protected StreamInterface solventInStream;
   private StreamInterface gasOutStream;
   private StreamInterface solventOutStream;
-  protected String name = "mixer";
   protected StreamInterface outStream;
   private double waterDewPointTemperature = 263.15;
   private double dewPressure = 70.0;
@@ -70,9 +70,8 @@ public class WaterStripperColumn extends SimpleAbsorber {
   public void addStream(StreamInterface newStream) {
     streams.add(newStream);
     if (numberOfInputStreams == 0) {
-      mixedStream = (Stream) streams.get(0).clone();
+      mixedStream = streams.get(0).clone();
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().reInitPhaseType();
       mixedStream.getThermoSystem().init(0);
       mixedStream.getThermoSystem().init(3);
     }
@@ -89,8 +88,8 @@ public class WaterStripperColumn extends SimpleAbsorber {
    *        object
    */
   public void addGasInStream(StreamInterface newStream) {
-    gasInStream = (Stream) newStream;
-    gasOutStream = (Stream) newStream.clone();
+    gasInStream = newStream;
+    gasOutStream = newStream.clone();
     addStream(newStream);
   }
 
@@ -103,8 +102,8 @@ public class WaterStripperColumn extends SimpleAbsorber {
    *        object
    */
   public void addSolventInStream(StreamInterface newStream) {
-    solventInStream = (Stream) newStream;
-    solventOutStream = (Stream) newStream.clone();
+    solventInStream = newStream;
+    solventOutStream = newStream.clone();
     addStream(newStream);
     solventStreamNumber = streams.size() - 1;
   }
@@ -118,7 +117,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
    *        object
    */
   public void replaceSolventInStream(StreamInterface newStream) {
-    solventInStream = (Stream) newStream;
+    solventInStream = newStream;
     streams.set(solventStreamNumber, solventInStream);
   }
 
@@ -308,25 +307,24 @@ public class WaterStripperColumn extends SimpleAbsorber {
       double absorptionEffiency = 0.0;
       mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().reInitPhaseType();
       mixedStream.getThermoSystem().init(0);
       mixStream();
       double enthalpy = calcMixStreamEnthalpy();
-      //// System.out.println("temp guess " + guessTemperature());
+      // System.out.println("temp guess " + guessTemperature());
       mixedStream.getThermoSystem().setTemperature(guessTemperature());
       ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
       testOps.TPflash();
       testOps.PHflash(enthalpy, 0);
 
       if (mixedStream.getThermoSystem().getNumberOfPhases() == 1) {
-        if (mixedStream.getThermoSystem().getPhase(0).getPhaseTypeName().equals("aqueous")) {
+        if (mixedStream.getThermoSystem().getPhase(0).getType() == PhaseType.AQUEOUS) {
           SystemInterface tempSystem = mixedStream.getThermoSystem().clone();
           gasOutStream.setEmptyThermoSystem(tempSystem);
           gasOutStream.run(id);
           solventOutStream.setThermoSystem(tempSystem);
           solventOutStream.run(id);
         }
-        if (mixedStream.getThermoSystem().getPhase(0).getPhaseTypeName().equals("gas")) {
+        if (mixedStream.getThermoSystem().getPhase(0).getType() == PhaseType.GAS) {
           SystemInterface tempSystem = mixedStream.getThermoSystem().clone();
           solventOutStream.setEmptyThermoSystem(tempSystem);
           solventOutStream.run(id);
@@ -385,7 +383,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
       }
       setCalculationIdentifier(id);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
   }
 

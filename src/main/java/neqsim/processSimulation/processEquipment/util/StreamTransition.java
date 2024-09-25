@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.UUID;
+
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
@@ -107,12 +108,14 @@ public class StreamTransition extends TwoPortEquipment {
         new StreamTransition((StreamInterface) offshoreProcessoperations.getUnit("rich gas"),
             (StreamInterface) TEGprocess.getUnit("dry feed gas"));
 
-    offshoreProcessoperations.run();
-    trans.run();
+    UUID id = UUID.randomUUID();
+
+    offshoreProcessoperations.run(id);
+    trans.run(id);
     ((StreamInterface) offshoreProcessoperations.getUnit("rich gas")).displayResult();
     // ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
     trans.displayResult();
-    TEGprocess.run();
+    TEGprocess.run(id);
     ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
 
     // ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();

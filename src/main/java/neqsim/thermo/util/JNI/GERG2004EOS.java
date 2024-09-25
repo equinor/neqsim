@@ -371,7 +371,7 @@ public class GERG2004EOS {
    * @param c19 a double
    * @param c20 a double
    * @param IPHASE a int
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public static native double[] SFUGOTPX(double c1, double c2, double c3, double c4, double c5,
       double c6, double c7, double c8, double c9, double c10, double c11, double c12, double c13,
@@ -404,7 +404,7 @@ public class GERG2004EOS {
    * @param c19 a double
    * @param c20 a double
    * @param IPHASE a int
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public static native double[] SPHIOTPX(double c1, double c2, double c3, double c4, double c5,
       double c6, double c7, double c8, double c9, double c10, double c11, double c12, double c13,
@@ -470,7 +470,7 @@ public class GERG2004EOS {
    * @param c19 a double
    * @param c20 a double
    * @param IPHASE a int
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public static native double[] SALLOTPX(double c1, double c2, double c3, double c4, double c5,
       double c6, double c7, double c8, double c9, double c10, double c11, double c12, double c13,
@@ -487,7 +487,7 @@ public class GERG2004EOS {
    * </p>
    */
   public GERG2004EOS() {
-    // todo: does not work
+    // TODO: does not work
     System.loadLibrary("test2");
   }
 

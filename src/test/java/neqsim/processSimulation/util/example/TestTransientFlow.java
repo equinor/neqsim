@@ -71,9 +71,8 @@ public class TestTransientFlow {
     valve_3.setPercentValveOpening(50);
     // valve_3.setCv(10.0);
 
-    LevelTransmitter separatorLevelTransmitter = new LevelTransmitter(separator_1);
-    separatorLevelTransmitter.setName("separatorLEvelTransmitter1");
-    separatorLevelTransmitter.setUnit("meter");
+    LevelTransmitter separatorLevelTransmitter =
+        new LevelTransmitter("separatorLevelTransmitter1", separator_1);
     separatorLevelTransmitter.setMaximumValue(1.0);
     separatorLevelTransmitter.setMinimumValue(0.0);
 
@@ -123,11 +122,11 @@ public class TestTransientFlow {
      * // transient behaviour operations.setTimeStep(1.1); for(int i=0;i<50;i++){
      * operations.runTransient(); System.out.println("liquid level " + separator_1.getLiquidLevel()+
      * " PRESSURE " + separator_1.getGasOutStream().getPressure()); }
-     * 
+     *
      * operations.setTimeStep(30.0); for(int i=0;i<2000;i++){ operations.runTransient();
      * System.out.println("liquid level " + separator_1.getLiquidLevel()+ " PRESSURE " +
      * separator_1.getGasOutStream().getPressure()); } operations.displayResult();
-     * 
+     *
      * operations.displayResult();
      */
   }

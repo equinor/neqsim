@@ -19,6 +19,8 @@ import org.apache.commons.math3.optim.linear.NonNegativeConstraint;
 import org.apache.commons.math3.optim.linear.Relationship;
 import org.apache.commons.math3.optim.linear.SimplexSolver;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.thermo.component.ComponentInterface;
@@ -35,6 +37,7 @@ import neqsim.thermo.system.SystemInterface;
 public class LinearProgrammingChemicalEquilibrium
     implements neqsim.thermo.ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(LinearProgrammingChemicalEquilibrium.class);
 
   double[] xEts = null;
   double[][] Amatrix;
@@ -52,15 +55,8 @@ public class LinearProgrammingChemicalEquilibrium
    * <p>
    * Constructor for LinearProgrammingChemicalEquilibrium.
    * </p>
-   */
-  public LinearProgrammingChemicalEquilibrium() {}
-
-  /**
-   * <p>
-   * Constructor for LinearProgrammingChemicalEquilibrium.
-   * </p>
    *
-   * @param chemRefPot an array of {@link double} objects
+   * @param chemRefPot an array of type double
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
    * @param elements an array of {@link java.lang.String} objects
    * @param operations a {@link neqsim.chemicalReactions.ChemicalReactionOperations} object
@@ -116,7 +112,7 @@ public class LinearProgrammingChemicalEquilibrium
    * calcA.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] calcA() {
     int A_size = components.length - operations.getReactionList().getChemicalReactionList().size();
@@ -155,7 +151,7 @@ public class LinearProgrammingChemicalEquilibrium
    * getA.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getA() {
     return Amatrix;
@@ -166,7 +162,7 @@ public class LinearProgrammingChemicalEquilibrium
    * getRefPot.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getRefPot() {
     return chemRefPot;
@@ -206,50 +202,41 @@ public class LinearProgrammingChemicalEquilibrium
    * //System.out.println("Ans"); //Ans.print(10,8); //Print statements added by Neeraj
    * System.out.println("lagranges: "); lagrangeTemp.print(10,2); System.out.println("refpot: ");
    * mutemp.print(10,2); System.out.println("A: "); atemp.print(10,2);
-   * 
-   * 
+   *
    * Matrix rTemp = new Matrix(atemp.getRowDimension(),1); rTemp.set(0,0,inertMoles/bVector[0]);
    * for(int i=1;i<atemp.getRowDimension();i++){ rTemp.set(i,0, bVector[i]/bVector[0]); }
-   * 
+   *
    * // System.out.println("rMatTemp: "); // rTemp.print(10,5);
-   * 
-   * 
-   * 
+   *
    * Matrix zTemp = new Matrix(atemp.getRowDimension(),1); for(int
    * i=0;i<atemp.getRowDimension();i++){ //Neeraj -- Source of error //lagrange have very high +ve
    * values. So, their exp becomes infinity zTemp.set(i,0, Math.exp(lagrangeTemp.get(i,0))); }
-   * 
+   *
    * System.out.println("zMatTemp: "); //zTemp.print(10,5);
-   * 
-   * 
+   *
    * Matrix phiMatTemp = new Matrix(atemp.getRowDimension(),1);
    * //atemp.transpose().solve(mutemp.transpose()); for(int i=0;i<atemp.getRowDimension();i++) {
    * phiMatTemp.set(i,0,zTemp.get(i,0)); } for(int i=1;i<atemp.getRowDimension();i++){
    * phiMatTemp.set(0,0,phiMatTemp.get(0,0)*Math.pow(phiMatTemp.get(i,0),rTemp.get (i,0))); }
    * //System.out.println("phiMatTemp: "); //phiMatTemp.print(10,10);
-   * 
-   * 
-   * 
+   *
    * Matrix betaTemp = atemp.copy(); for(int j=0;j<atemp.getColumnDimension();j++){
    * betaTemp.set(0,j,1.0 + rTemp.get(0,0)*atemp.get(0,j)); }
-   * 
+   *
    * for(int i=1;i<atemp.getRowDimension();i++) { for(int j=0;j<atemp.getColumnDimension();j++){
    * betaTemp.set(i,j,atemp.get(i,j)-rTemp.get(i,0)*atemp.get(0,j)); } }
-   * 
+   *
    * // System.out.println("betaTemp: "); // betaTemp.print(10,10);
-   * 
-   * 
+   *
    * Matrix alphaTemp = betaTemp.copy(); for(int j=0;j<Amatrix[0].length;j++){
    * alphaTemp.set(0,j,atemp.get(0,j)); } // System.out.println("alphaTemp: ");
    * alphaTemp.print(10,10);
-   * 
-   * 
+   *
    * do{ double[] fVal = new double[atemp.getRowDimension()]; double[][] dfVal = new
    * double[atemp.getRowDimension()][atemp.getRowDimension()];
-   * 
+   *
    * //creates f-vlas
-   * 
-   * 
+   *
    * for(int i=0;i<atemp.getRowDimension();i++) { fVal[i]=0; for(int
    * j=0;j<atemp.getColumnDimension();j++){ double phiTemp = 1.0; for(int
    * k=0;k<atemp.getRowDimension();k++) { phiTemp =
@@ -257,50 +244,47 @@ public class LinearProgrammingChemicalEquilibrium
    * betaTemp.get(i,j)*Math.exp(-chemRefPot[j]/(R*system.getPhase(phase).
    * getTemperature()))*phiTemp; } // System.out.println("fval: " + fVal[i]); } fVal[0] = fVal[0] -
    * 1.0;
-   * 
+   *
    * for(int i=0;i<atemp.getRowDimension();i++){ for(int j=0;j<atemp.getRowDimension();j++) {
    * for(int k=0;k<atemp.getColumnDimension();k++){ double phiTemp = 1.0; for(int
    * p=0;p<atemp.getRowDimension();p++) { phiTemp =
    * phiTemp*Math.pow(phiMatTemp.get(p,0),alphaTemp.get(p,k)); } dfVal[i][j] +=
    * betaTemp.get(i,k)*alphaTemp.get(j,k)*Math.exp(-chemRefPot[k]/(R*system.
    * getPhase(phase).getTemperature()))*phiTemp; } } }
-   * 
-   * 
+   *
    * // System.out.println("solved: "); Matrix fMatrix = new Matrix(fVal,1); Matrix dfMatrix = new
    * Matrix(dfVal); solved = dfMatrix.solve(fMatrix.timesEquals(-1.0).transpose());
-   * 
+   *
    * //fMatrix.print(10,2); //dfMatrix.print(10,2); //System.out.println("solved: ");
    * //solved.print(10,6);
-   * 
+   *
    * for(int i=0;i<atemp.getRowDimension();i++) {
    * phiMatTemp.set(i,0,Math.exp(solved.get(i,0))*phiMatTemp.get(i,0)); }
    * //System.out.println("phiMatTemp: "); //phiMatTemp.print(10,10); }
    * while(Math.abs(solved.norm2())>1e-10);
-   * 
+   *
    * double temp=1.0; for(int i=1;i<atemp.getRowDimension();i++) { zTemp.set(i,0,
    * phiMatTemp.get(i,0)); temp = temp*Math.pow(zTemp.get(i,0),rTemp.get(i,0)); }
    * zTemp.set(0,0,phiMatTemp.get(0,0)/temp);
-   * 
+   *
    * xEts = new double[atemp.getColumnDimension()]; double sum=0; for(int
    * k=0;k<atemp.getColumnDimension();k++){ xEts[k] =
    * Math.exp(-chemRefPot[k]/(R*system.getPhase(0).getTemperature()));
    * //System.out.println("x check1: " + xEts[k]); for(int i=0;i<atemp.getRowDimension();i++) {
    * xEts[k] = xEts[k]*Math.pow(zTemp.get(i,0),atemp.get(i,k)); } sum += xEts[k];
    * //System.out.println("x check2: " + xEts[k]); } //System.out.println("sum: " + sum);
-   * 
+   *
    * double moles=0; for(int k=0;k<atemp.getColumnDimension();k++){ moles += xEts[k]*atemp.get(0,k);
    * } //Print added by Neeraj //System.out.println("mole tot " + moles); moles = 1.0/moles *
    * bVector[0];
-   * 
-   * 
+   *
    * double[] nEts = new double[atemp.getColumnDimension()]; double totm=0.0; for(int
    * k=0;k<atemp.getColumnDimension();k++){ nEts[k] = xEts[k]*moles;
    * //system.getPhases()[1].getNumberOfMolesInPhase(); totm += nEts[k];
    * //System.out.println("N check: " + "  comp " + components[k].getComponentName() + "  " +
    * nEts[k]); } //System.out.println("tot moles : " + system.getPhase(1).getNumberOfMolesInPhase()
    * + "  tot " +totm);
-   * 
-   * 
+   *
    * return nEts; }
    */
 
@@ -331,15 +315,11 @@ public class LinearProgrammingChemicalEquilibrium
    * btemp; Matrix mutemp = new
    * Matrix(chemRefPot,1).times(1.0/(R*system.getPhase(phase).getTemperature())). copy(); Matrix
    * ntemp; atemp = new Matrix(7,7); btemp = new Matrix(1,7); //for (i=0;i<4;i++) for (i=0;i<5;i++)
-   * { for (j=0;j<7;j++) atemp.set(i,j,Amatrix[i][j]); btemp.set(0,i,bVector[i]);
-   * 
-   * } atemp.set(5,4,1); atemp.set(6,5,1); //atemp.set(4,4,1); //atemp.set(5,5,1);
-   * //atemp.set(6,1,1); //atemp.print(5,1); //btemp.print(5,5); //mutemp.print(5,5); ntemp =
+   * { for (j=0;j<7;j++) atemp.set(i,j,Amatrix[i][j]); btemp.set(0,i,bVector[i]); }
+   * atemp.set(5,4,1); atemp.set(6,5,1); //atemp.set(4,4,1); //atemp.set(5,5,1); //atemp.set(6,1,1);
+   * //atemp.print(5,1); //btemp.print(5,5); //mutemp.print(5,5); ntemp =
    * atemp.solve(btemp.transpose()); ntemp.print(5,5); for (i=0;i<7;i++) n[i] = ntemp.get(i,0); int
-   * rank = atemp.rank(); return n;
-   * 
-   * 
-   * }
+   * rank = atemp.rank(); return n; }
    */
 
   // Method updated to use Apache Commons Math 3 by Marlene 07.12.18
@@ -349,10 +329,10 @@ public class LinearProgrammingChemicalEquilibrium
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param bVector an array of {@link double} objects
+   * @param bVector an array of type double
    * @param inertMoles a double
    * @param phase a int
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] generateInitialEstimates(SystemInterface system, double[] bVector,
       double inertMoles, int phase) {
@@ -381,11 +361,11 @@ public class LinearProgrammingChemicalEquilibrium
     PointValuePair optimal = null;
     try {
       optimal = solver.optimize(new MaxIter(1000), f, consSet, GoalType.MINIMIZE, nonneg);
-    } catch (NoFeasibleSolutionException exp) {
-      System.out.println("no feasible solution");
+    } catch (NoFeasibleSolutionException ex) {
+      logger.error("no feasible solution", ex);
       return null;
-    } catch (Exception exp) {
-      System.out.println("linear optimization failed");
+    } catch (Exception ex) {
+      logger.error("linear optimization failed", ex);
       return null;
     }
 

@@ -18,14 +18,13 @@ public class ComponentGERG2004 extends ComponentEos {
    * Constructor for ComponentGERG2004.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentGERG2004(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentGERG2004(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
   /**
@@ -34,11 +33,11 @@ public class ComponentGERG2004 extends ComponentEos {
    * </p>
    *
    * @param number a int
-   * @param TC a double
-   * @param PC a double
-   * @param M a double
-   * @param a a double
-   * @param moles a double
+   * @param TC Critical temperature
+   * @param PC Critical pressure
+   * @param M Molar mass
+   * @param a Acentric factor
+   * @param moles Number of moles
    */
   public ComponentGERG2004(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
@@ -55,13 +54,6 @@ public class ComponentGERG2004 extends ComponentEos {
     }
 
     return clonedComponent;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
   }
 
   /** {@inheritDoc} */

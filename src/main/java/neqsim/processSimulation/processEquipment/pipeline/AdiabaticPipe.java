@@ -61,7 +61,7 @@ public class AdiabaticPipe extends Pipeline {
 
   /**
    * Constructor for AdiabaticPipe.
-   * 
+   *
    * @param name name of pipe
    */
   public AdiabaticPipe(String name) {
@@ -70,14 +70,14 @@ public class AdiabaticPipe extends Pipeline {
 
   /**
    * Constructor for AdiabaticPipe.
-   * 
+   *
    * @param name name of pipe
    * @param inStream input stream
    */
   public AdiabaticPipe(String name, StreamInterface inStream) {
     this(name);
     this.inStream = inStream;
-    outStream = (Stream) inStream.clone();
+    outStream = inStream.clone();
   }
 
   /**
@@ -159,9 +159,9 @@ public class AdiabaticPipe extends Pipeline {
         * system.getTemperature() / Math.pow(insideDiameter, 5.0);
     // \\System.out.println("friction fact" + frictionFactor + " velocity " +
     // velocity + " reynolds number " + reynoldsNumber);
-    System.out.println("dp gravity "
-        + system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
-            * (inletElevation - outletElevation) / 1.0e5);
+    // System.out.println("dp gravity "
+    // + system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
+    // * (inletElevation - outletElevation) / 1.0e5);
     double dp_gravity =
         system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
             * (inletElevation - outletElevation);

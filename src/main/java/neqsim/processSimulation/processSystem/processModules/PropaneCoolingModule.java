@@ -19,7 +19,11 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  * @version $Id: $Id
  */
 public class PropaneCoolingModule extends ProcessModuleBaseClass {
-
+  /**
+   * <p>Constructor for PropaneCoolingModule.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public PropaneCoolingModule(String name) {
     super(name);
   }
@@ -107,7 +111,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     Heater condenser = new Heater("propane condenser", compressor1.getOutletStream());
     condenser.setPressureDrop(0.07);
     condenser.setSpecification("out stream");
-    condenser.setOutletStream((Stream) refrigerantStream);
+    condenser.setOutletStream(refrigerantStream);
 
     System.out.println("adding operations....");
     getOperations().add(refrigerantStream);

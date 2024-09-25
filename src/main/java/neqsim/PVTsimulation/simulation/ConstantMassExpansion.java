@@ -7,6 +7,7 @@ import neqsim.PVTsimulation.util.parameterfitting.CMEFunction;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -80,9 +81,16 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     } while (Math.abs(maxPres - minPres) > 1e-5);
     /*
      * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) {
-     * logger.error(ex.getMessage()); }
+     * logger.error(ex.getMessage(), ex); }
      */
     saturationVolume = getThermoSystem().getVolume();
+    saturationPressure = getThermoSystem().getPressure();
+    Zsaturation = getThermoSystem().getZ();
+    saturationConditionFound = true;
+
+    getThermoSystem().initPhysicalProperties();
+    saturationVolume = getThermoSystem().getPhase(0).getMass()
+        / getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
     saturationPressure = getThermoSystem().getPressure();
     Zsaturation = getThermoSystem().getZ();
     saturationConditionFound = true;
@@ -115,20 +123,22 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     viscosity = new double[pressures.length];
     viscosityOil = new double[pressures.length];
     gasExpensionFactor = new double[pressures.length];
-    getThermoSystem().setTemperature(temperature);
+    if (!Double.isNaN(temperature)) {
+      getThermoSystem().setTemperature(temperature, temperatureUnit);
+    }
     if (!saturationConditionFound) {
       calcSaturationConditions();
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
     }
     try {
       // getThermoSystem().setPressure(400);
       // thermoOps.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     saturationVolume = getThermoSystem().getVolume();
     saturationPressure = getThermoSystem().getPressure();
@@ -142,7 +152,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
       getThermoSystem().initPhysicalProperties();
       // getThermoSystem().display();
@@ -151,9 +161,10 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       density[i] = getThermoSystem().getPhase(0).getDensity("kg/m3");
       gasVolume[i] = getThermoSystem().getPhase(0).getNumberOfMolesInPhase()
           * getThermoSystem().getPhase(0).getMolarMass() / density[i]; // getThermoSystem().getPhase(0).getVolume();
-      gasStandardVolume[i] = getThermoSystem().getPhase(0).getVolume()
-          * getThermoSystem().getPhase(0).getPressure() / 1.01325
-          / getThermoSystem().getPhase(0).getZ() * 288.15 / getThermoSystem().getTemperature();
+      gasStandardVolume[i] =
+          getThermoSystem().getPhase(0).getVolume() * getThermoSystem().getPhase(0).getPressure()
+              / ThermodynamicConstantsInterface.referencePressure
+              / getThermoSystem().getPhase(0).getZ() * 288.15 / getThermoSystem().getTemperature();
       Bg[i] = gasVolume[i] * 1e5 / gasStandardVolume[i];
       Zgas[i] = getThermoSystem().getPhase(0).getZ();
       if (getThermoSystem().getNumberOfPhases() == 1) {
@@ -171,13 +182,13 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         viscosity[i] = Double.NaN;
         isoThermalCompressibility[i] = Double.NaN;
       }
-      System.out.println("pressure " + getThermoSystem().getPressure() + " relative volume "
-          + relativeVolume[i] + " liquid rel vol " + liquidRelativeVolume[i] + " Zgas " + Zgas[i]
-          + " Yfactor " + getYfactor()[i] + " isoCompfactor " + getIsoThermalCompressibility()[i]);
+      // System.out.println("pressure " + getThermoSystem().getPressure() + " relative volume "
+      // + relativeVolume[i] + " liquid rel vol " + liquidRelativeVolume[i] + " Zgas " + Zgas[i]
+      // + " Yfactor " + getYfactor()[i] + " isoCompfactor " + getIsoThermalCompressibility()[i]);
     }
 
-    System.out.println("test finished");
-    System.out.println("test finished");
+    // System.out.println("test finished");
+    // System.out.println("test finished");
   }
 
   /**
@@ -213,7 +224,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         sampleList.add(sample);
       }
     } catch (Exception ex) {
-      System.out.println("database error" + ex);
+      logger.error("database error", ex);
     }
 
     SampleSet sampleSet = new SampleSet(sampleList);
@@ -385,8 +396,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
    * setTemperaturesAndPressures.
    * </p>
    *
-   * @param temperature an array of {@link double} objects
-   * @param pressure an array of {@link double} objects
+   * @param temperature an array of type double
+   * @param pressure an array of type double
    */
   public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
     this.pressures = pressure;

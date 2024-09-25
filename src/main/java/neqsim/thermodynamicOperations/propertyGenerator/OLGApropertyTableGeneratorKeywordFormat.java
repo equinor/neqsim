@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -25,15 +26,45 @@ public class OLGApropertyTableGeneratorKeywordFormat
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
-  double stdPres = 1.01325, stdPresATM = 1, stdTemp = 288.15;
-  double[] molfracs, MW, dens;
+  double stdPres = ThermodynamicConstantsInterface.referencePressure;
+  double stdPresATM = 1;
+  double stdTemp = 288.15;
+  double[] molfracs;
+  double[] MW;
+  double[] dens;
   String[] components;
-  double GOR, GLR, stdGasDens, stdLiqDens;
-  double[] pressures, temperatureLOG, temperatures, pressureLOG = null;
+  double GOR;
+  double GLR;
+  double stdGasDens;
+  double stdLiqDens;
+  double[] pressures;
+  double[] temperatureLOG;
+  double[] temperatures;
+  double[] pressureLOG = null;
   double[][] ROG = null; // DROGDP, DROHLDP, DROGDT, DROHLDT;
-  double[] bubP, bubT, dewP, bubPLOG, dewPLOG, bubTLOG;
-  double[][] ROL, CPG, CPHL, HG, HHL, TCG, TCHL, VISG, VISHL, SIGGHL, SEG, SEHL, RS;
-  double TC, PC, TCLOG, PCLOG;
+  double[] bubP;
+  double[] bubT;
+  double[] dewP;
+  double[] bubPLOG;
+  double[] dewPLOG;
+  double[] bubTLOG;
+  double[][] ROL;
+  double[][] CPG;
+  double[][] CPHL;
+  double[][] HG;
+  double[][] HHL;
+  double[][] TCG;
+  double[][] TCHL;
+  double[][] VISG;
+  double[][] VISHL;
+  double[][] SIGGHL;
+  double[][] SEG;
+  double[][] SEHL;
+  double[][] RS;
+  double TC;
+  double PC;
+  double TCLOG;
+  double PCLOG;
   double[][][] props;
   int nProps;
   String[] names;
@@ -103,7 +134,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
       TC = thermoSystem.getTC() - 273.15;
       PC = thermoSystem.getPC() * 1e5;
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
 
     // thermoOps.ge
@@ -114,8 +145,8 @@ public class OLGApropertyTableGeneratorKeywordFormat
    * calcBubP.
    * </p>
    *
-   * @param temperatures an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param temperatures an array of type double
+   * @return an array of type double
    */
   public double[] calcBubP(double[] temperatures) {
     double[] bubP = new double[temperatures.length];
@@ -127,7 +158,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
         bubP[i] = thermoSystem.getPressure();
         bubPLOG[i] = bubP[i] * 1e5;
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         bubP[i] = 0;
       }
     }
@@ -139,8 +170,8 @@ public class OLGApropertyTableGeneratorKeywordFormat
    * calcDewP.
    * </p>
    *
-   * @param temperatures an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param temperatures an array of type double
+   * @return an array of type double
    */
   public double[] calcDewP(double[] temperatures) {
     double[] dewP = new double[temperatures.length];
@@ -152,7 +183,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
         dewP[i] = thermoSystem.getPressure();
         dewPLOG[i] = dewP[i] * 1e5;
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         dewP[i] = 0;
       }
     }
@@ -164,8 +195,8 @@ public class OLGApropertyTableGeneratorKeywordFormat
    * calcBubT.
    * </p>
    *
-   * @param pressures an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param pressures an array of type double
+   * @return an array of type double
    */
   public double[] calcBubT(double[] pressures) {
     double[] bubT = new double[pressures.length];
@@ -177,7 +208,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
         bubT[i] = thermoSystem.getTemperature();
         bubTLOG[i] = bubT[i] - 273.15;
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         bubT[i] = 0.0;
       }
     }
@@ -254,7 +285,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
         try {
           thermoOps.TPflash();
         } catch (Exception ex) {
-          logger.error("error", ex);
+          logger.error(ex.getMessage(), ex);
         }
         thermoSystem.init(3);
         thermoSystem.initPhysicalProperties();
@@ -397,18 +428,8 @@ public class OLGApropertyTableGeneratorKeywordFormat
     for (int i = 0; i < pressures.length; i++) {
       thermoSystem.setPressure(pressures[i]);
       for (int j = 0; j < temperatures.length; j++) {
-        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]); // +
-                                                                                         // "
-                                                                                         // ROG
-                                                                                         // "
-                                                                                         // +
-                                                                                         // ROG[i][j]
-                                                                                         // +
-                                                                                         // "
-                                                                                         // ROL
-                                                                                         // "
-                                                                                         // +
-                                                                                         // ROL[i][j]);
+        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]);
+        // + "ROG"+ROG[i][j]+"ROL" + ROL[i][j]);
       }
     }
     writeOLGAinpFile("");

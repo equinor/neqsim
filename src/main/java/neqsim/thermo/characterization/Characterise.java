@@ -14,6 +14,8 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class Characterise implements java.io.Serializable, Cloneable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(Characterise.class);
+
   SystemInterface system = null;
   TBPCharacterize TBPCharacterise = null;
   private TBPModelInterface TBPfractionModel = null;
@@ -23,8 +25,12 @@ public class Characterise implements java.io.Serializable, Cloneable {
   protected String TBPFractionModelName = "PedersenSRK";
   protected LumpingModel lumpingModelSelector = null;
   protected TBPfractionModel TBPfractionModelSelector;
-  static Logger logger = LogManager.getLogger(Characterise.class);
 
+  /**
+   * <p>
+   * Constructor for Characterise.
+   * </p>
+   */
   public Characterise() {}
 
   /**
@@ -150,7 +156,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
     if (plusFractionModel.hasPlusFraction()) {
       if (plusFractionModel.getMPlus() > plusFractionModel.getMaxPlusMolarMass()) {
         logger.error("plus fraction molar mass too heavy for " + plusFractionModel.getName());
-        plusFractionModel = plusFractionModelSelector.getModel("heavyOil");
+        plusFractionModel = plusFractionModelSelector.getModel("Pedersen Heavy Oil");
         logger.info("changing to " + plusFractionModel.getName());
       }
       plusFractionModel.characterizePlusFraction(TBPfractionModel);
@@ -159,17 +165,13 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /*
-   *
    * public boolean addPlusFraction(int start, int end) { plusFractionModel = new
    * PlusCharacterize(system); if (TBPCharacterise.hasPlusFraction()) {
    * TBPCharacterise.groupTBPfractions(); TBPCharacterise.generateTBPFractions(); return true; }
    * else { System.out.println("not able to generate pluss fraction"); return false; } }
    *
-   *
    * public boolean characterize2() { if (TBPCharacterise.groupTBPfractions()) {
    * TBPCharacterise.solve(); return true; } else { System.out.println("not able to generate pluss
    * fraction"); return false; } }
-   *
-   *
    */
 }

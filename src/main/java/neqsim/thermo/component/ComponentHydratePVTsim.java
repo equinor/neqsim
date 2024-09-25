@@ -3,6 +3,7 @@ package neqsim.thermo.component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
@@ -16,8 +17,8 @@ import neqsim.util.database.NeqSimDataBase;
 public class ComponentHydratePVTsim extends ComponentHydrate {
   private static final long serialVersionUID = 1000;
 
-  double Ak[][] = new double[2][2]; // [structure][cavitytype]
-  double Bk[][] = new double[2][2]; // [structure][cavitytype]
+  double[][] Ak = new double[2][2]; // [structure][cavitytype]
+  double[][] Bk = new double[2][2]; // [structure][cavitytype]
   static Logger logger = LogManager.getLogger(ComponentHydratePVTsim.class);
 
   /**
@@ -25,35 +26,31 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
    * Constructor for ComponentHydratePVTsim.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentHydratePVTsim(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentHydratePVTsim(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
 
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
     java.sql.ResultSet dataSet = null;
 
-    if (!component_name.equals("default")) {
-      try {
+    if (!name.equals("default")) {
+      try (neqsim.util.database.NeqSimDataBase database =
+          new neqsim.util.database.NeqSimDataBase()) {
         logger.info("reading hydrate parameters ..............");
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
-            dataSet = database
-                .getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
+            dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
           } else {
-            dataSet =
-                database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+            dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           }
           dataSet.next();
         } catch (Exception ex) {
           dataSet.close();
-          logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
-          dataSet =
-              database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+          logger.info("no parameters in tempcomp -- trying comp.. " + name);
+          dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           dataSet.next();
         }
         Ak[0][0] = Double.parseDouble(dataSet.getString("HydrateA1Small"));
@@ -70,20 +67,11 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
       } finally {
         try {
           dataSet.close();
-          database.getConnection().close();
         } catch (Exception ex2) {
-          logger.error("error closing comp hydrate database....." + component_name);
-          // logger.error(ex.getMessage());
+          logger.error("error closing comp hydrate database....." + name);
         }
       }
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double fugcoef(PhaseInterface phase) {
-    return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-        phase.getPressure());
   }
 
   /** {@inheritDoc} */
@@ -97,7 +85,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
       stableStructure = -1;
       refPhase.setTemperature(temp);
       refPhase.setPressure(pres);
-      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, 0, 1.0);
+      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, PhaseType.byValue(0), 1.0);
 
       double refWaterFugacityCoef = Math.log(refPhase.getComponent("water").fugcoef(refPhase));
 
@@ -127,7 +115,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
         if (componentName.equals("water")) {
           refPhase.setTemperature(temp);
           refPhase.setPressure(pres);
-          refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, 0, 1.0);
+          refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, PhaseType.byValue(0), 1.0);
 
           double refWaterFugacity = refPhase.getComponent("water").fugcoef(refPhase) * pres;
 
@@ -172,9 +160,8 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
       }
       fugacityCoefficient = maxFug;
     }
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
-    hydrateStructure = stableStructure;
 
+    hydrateStructure = stableStructure;
     return fugacityCoefficient;
   }
 

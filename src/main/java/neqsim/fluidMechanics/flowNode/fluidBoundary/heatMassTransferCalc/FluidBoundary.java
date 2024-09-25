@@ -65,13 +65,6 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
    * <p>
    * Constructor for FluidBoundary.
    * </p>
-   */
-  public FluidBoundary() {}
-
-  /**
-   * <p>
-   * Constructor for FluidBoundary.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -340,7 +333,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
         temp += bulkSystem.getPhase(phase).getComponent(j).getx()
             * binaryMassTransferCoefficient[phase][i][j];
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
       }
     }
     return temp;
@@ -427,7 +420,15 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     nf.setMaximumFractionDigits(5);
     nf.applyPattern("#.#####E0");
 
-    String[][] table = new String[bulkSystem.getPhases()[0].getNumberOfComponents() * 10][5];
+    int rows = 0;
+    if (bulkSystem == null) {
+      String[][] table = new String[0][5];
+      return table;
+    }
+
+    rows = bulkSystem.getPhases()[0].getNumberOfComponents() * 10;
+    String[][] table = new String[rows][5];
+
     // String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     table[0][0] = "";
     table[0][1] = "";

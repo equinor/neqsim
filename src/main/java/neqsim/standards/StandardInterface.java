@@ -27,7 +27,7 @@ public interface StandardInterface {
    * @param returnUnit a {@link java.lang.String} object
    * @return a double
    */
-  double getValue(java.lang.String returnParameter, java.lang.String returnUnit);
+  double getValue(String returnParameter, String returnUnit);
 
   /**
    * <p>
@@ -37,7 +37,7 @@ public interface StandardInterface {
    * @param returnParameter a {@link java.lang.String} object
    * @return a double
    */
-  double getValue(java.lang.String returnParameter);
+  double getValue(String returnParameter);
 
   /**
    * <p>
@@ -85,21 +85,21 @@ public interface StandardInterface {
 
   /**
    * <p>
-   * getName.
-   * </p>
-   *
-   * @return a {@link java.lang.String} object
-   */
-  public String getName();
-
-  /**
-   * <p>
    * setSalesContract.
    * </p>
    *
    * @param salesContract a {@link neqsim.standards.salesContract.ContractInterface} object
    */
   public void setSalesContract(ContractInterface salesContract);
+
+  /**
+   * <p>
+   * getName.
+   * </p>
+   *
+   * @return a {@link java.lang.String} object
+   */
+  public String getName();
 
   /**
    * <p>
@@ -164,4 +164,22 @@ public interface StandardInterface {
    * @param resultTable an array of {@link java.lang.String} objects
    */
   public void setResultTable(String[][] resultTable);
+
+  /**
+   * <p>
+   * Getter for the field <code>referencePressure</code>.
+   * </p>
+   *
+   * @return Reference pressure in bara
+   */
+  public double getReferencePressure();
+
+  /**
+   * <p>
+   * Setter for the field <code>referencePressure</code>.
+   * </p>
+   *
+   * @param referencePressure Reference pressure to set in in bara
+   */
+  public void setReferencePressure(double referencePressure);
 }

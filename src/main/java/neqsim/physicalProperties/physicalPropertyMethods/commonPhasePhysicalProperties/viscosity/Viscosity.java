@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * Abstract class for Viscosity property.
  *
  * @author Even Solbraa
  */
@@ -13,6 +14,7 @@ abstract class Viscosity extends
     neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Viscosity.class);
+
   public double[] pureComponentViscosity;
 
   /**
@@ -66,7 +68,12 @@ abstract class Viscosity extends
         pureComponentViscosity[i] = Math.pow(10,
             phase.getPhase().getComponents()[i].getLiquidViscosityParameter(0)
                 * (1.0 / phase.getPhase().getTemperature()
-                    - 1.0 / phase.getPhase().getComponents()[i].getLiquidViscosityParameter(1))); // phase.getPhase().getComponents()[i].getLiquidViscosityParameter(2)*phase.getPhase().getTemperature()+phase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)/phase.getPhase().getTemperature()+phase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)*Math.pow(phase.getPhase().getTemperature(),2));
+                    - 1.0 / phase.getPhase().getComponents()[i].getLiquidViscosityParameter(1)));
+        // phase.getPhase().getComponents()[i].getLiquidViscosityParameter(2) *
+        // phase.getPhase().getTemperature()+phase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)
+        // /
+        // phase.getPhase().getTemperature()+phase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)
+        // * Math.pow(phase.getPhase().getTemperature(),2));
       } else {
         // System.out.println("no pure component viscosity model defined for component "
         // + phase.getPhase().getComponents()[i].getComponentName());

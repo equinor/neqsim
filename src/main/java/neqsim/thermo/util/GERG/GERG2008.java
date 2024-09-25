@@ -14,67 +14,67 @@ import org.netlib.util.intW;
  */
 public class GERG2008 {
   // Variables containing the common parameters in the GERG-2008 equations
-   double RGERG;
-   int NcGERG = 21;
-   int MaxFlds = 21;
-   int MaxMdl = 10;
-   int MaxTrmM = 12;
-   int MaxTrmP = 24;
-   double epsilon = 1e-15;
-   int[][] intcoik = new int[MaxFlds + 1][MaxTrmP + 1];
-   int[][] coik = new int[MaxFlds + 1][MaxTrmP + 1];
-   int[][] doik = new int[MaxFlds + 1][MaxTrmP + 1];
-   int[][] dijk = new int[MaxMdl + 1][MaxTrmM + 1];
+  double RGERG;
+  int NcGERG = 21;
+  int MaxFlds = 21;
+  int MaxMdl = 10;
+  int MaxTrmM = 12;
+  int MaxTrmP = 24;
+  double epsilon = 1e-15;
+  int[][] intcoik = new int[MaxFlds + 1][MaxTrmP + 1];
+  int[][] coik = new int[MaxFlds + 1][MaxTrmP + 1];
+  int[][] doik = new int[MaxFlds + 1][MaxTrmP + 1];
+  int[][] dijk = new int[MaxMdl + 1][MaxTrmM + 1];
 
-   double Drold;
-   double Trold;
-   double Told;
-   double Trold2;
-   double[] xold = new double[MaxFlds + 1];
-   int[][] mNumb = new int[MaxFlds + 1][MaxFlds + 1];
-   int[] kpol = new int[MaxFlds + 1];
-   int[] kexp = new int[MaxFlds + 1];
-   int[] kpolij = new int[MaxMdl + 1];
-   int[] kexpij = new int[MaxMdl + 1];
+  double Drold;
+  double Trold;
+  double Told;
+  double Trold2;
+  double[] xold = new double[MaxFlds + 1];
+  int[][] mNumb = new int[MaxFlds + 1][MaxFlds + 1];
+  int[] kpol = new int[MaxFlds + 1];
+  int[] kexp = new int[MaxFlds + 1];
+  int[] kpolij = new int[MaxMdl + 1];
+  int[] kexpij = new int[MaxMdl + 1];
 
-   double[] Dc = new double[MaxFlds + 1];
-   double[] Tc = new double[MaxFlds + 1];
-   double[] MMiGERG = new double[MaxFlds + 1];
-   double[] Vc3 = new double[MaxFlds + 1];
-   double[] Tc2 = new double[MaxFlds + 1];
+  double[] Dc = new double[MaxFlds + 1];
+  double[] Tc = new double[MaxFlds + 1];
+  double[] MMiGERG = new double[MaxFlds + 1];
+  double[] Vc3 = new double[MaxFlds + 1];
+  double[] Tc2 = new double[MaxFlds + 1];
 
-   double[][] noik = new double[MaxFlds + 1][MaxTrmP + 1];
-   double[][] toik = new double[MaxFlds + 1][MaxTrmP + 1];
+  double[][] noik = new double[MaxFlds + 1][MaxTrmP + 1];
+  double[][] toik = new double[MaxFlds + 1][MaxTrmP + 1];
 
-   double[][] cijk = new double[MaxMdl + 1][MaxTrmM + 1];
+  double[][] cijk = new double[MaxMdl + 1][MaxTrmM + 1];
 
-   double[][] eijk = new double[MaxMdl + 1][MaxTrmM + 1];
-   double[][] gijk = new double[MaxMdl + 1][MaxTrmM + 1];
-   double[][] nijk = new double[MaxMdl + 1][MaxTrmM + 1];
-   double[][] tijk = new double[MaxMdl + 1][MaxTrmM + 1];
+  double[][] eijk = new double[MaxMdl + 1][MaxTrmM + 1];
+  double[][] gijk = new double[MaxMdl + 1][MaxTrmM + 1];
+  double[][] nijk = new double[MaxMdl + 1][MaxTrmM + 1];
+  double[][] tijk = new double[MaxMdl + 1][MaxTrmM + 1];
 
-   double[][] btij = new double[MaxFlds + 1][MaxFlds + 1];
-   double[][] bvij = new double[MaxFlds + 1][MaxFlds + 1];
-   double[][] gtij = new double[MaxFlds + 1][MaxFlds + 1];
-   double[][] gvij = new double[MaxFlds + 1][MaxFlds + 1];
+  double[][] btij = new double[MaxFlds + 1][MaxFlds + 1];
+  double[][] bvij = new double[MaxFlds + 1][MaxFlds + 1];
+  double[][] gtij = new double[MaxFlds + 1][MaxFlds + 1];
+  double[][] gvij = new double[MaxFlds + 1][MaxFlds + 1];
 
-   double[][] fij = new double[MaxFlds + 1][MaxFlds + 1];
-   double[][] th0i = new double[MaxFlds + 1][7 + 1];
-   double[][] n0i = new double[MaxFlds + 1][7 + 1];
+  double[][] fij = new double[MaxFlds + 1][MaxFlds + 1];
+  double[][] th0i = new double[MaxFlds + 1][7 + 1];
+  double[][] n0i = new double[MaxFlds + 1][7 + 1];
 
-   double[][] taup = new double[MaxFlds + 1][MaxTrmP + 1];
-   double[][] taupijk = new double[MaxFlds + 1][MaxTrmM + 1];
-   double dPdDsave;
+  double[][] taup = new double[MaxFlds + 1][MaxTrmP + 1];
+  double[][] taupijk = new double[MaxFlds + 1][MaxTrmM + 1];
+  double dPdDsave;
 
   /**
    * <p>
    * MolarMassGERG.
    * </p>
    *
-   * @param x an array of {@link double} objects
+   * @param x an array of type double
    * @param Mm a {@link org.netlib.util.doubleW} object
    */
-  public  void MolarMassGERG(double[] x, doubleW Mm) {
+  public void MolarMassGERG(double[] x, doubleW Mm) {
     // Sub MolarMassGERG(x, Mm)
 
     // Calculate molar mass of the mixture with the compositions contained in the
@@ -103,11 +103,11 @@ public class GERG2008 {
    *
    * @param T a double
    * @param D a double
-   * @param x an array of {@link double} objects
+   * @param x an array of type double
    * @param P a {@link org.netlib.util.doubleW} object
    * @param Z a {@link org.netlib.util.doubleW} object
    */
-  public  void PressureGERG(double T, double D, double[] x, doubleW P, doubleW Z) {
+  public void PressureGERG(double T, double D, double[] x, doubleW P, doubleW Z) {
     // Sub PressureGERG(T, D, x, P, Z)
 
     // Calculate pressure as a function of temperature and density. The derivative
@@ -151,12 +151,12 @@ public class GERG2008 {
    * @param iFlag a int
    * @param T a double
    * @param P a double
-   * @param x an array of {@link double} objects
+   * @param x an array of type double
    * @param D a {@link org.netlib.util.doubleW} object
    * @param ierr a {@link org.netlib.util.intW} object
    * @param herr a {@link org.netlib.util.StringW} object
    */
-  public  void DensityGERG(int iFlag, double T, double P, double[] x, doubleW D, intW ierr,
+  public void DensityGERG(int iFlag, double T, double P, double[] x, doubleW D, intW ierr,
       StringW herr) {
     // Sub DensityGERG(iFlag, T, P, x, D, ierr, herr)
 
@@ -334,7 +334,7 @@ public class GERG2008 {
    *
    * @param T a double
    * @param D a double
-   * @param x an array of {@link double} objects
+   * @param x an array of type double
    * @param P a {@link org.netlib.util.doubleW} object
    * @param Z a {@link org.netlib.util.doubleW} object
    * @param dPdD a {@link org.netlib.util.doubleW} object
@@ -352,9 +352,9 @@ public class GERG2008 {
    * @param Kappa a {@link org.netlib.util.doubleW} object
    * @param A a {@link org.netlib.util.doubleW} object
    */
-  public  void PropertiesGERG(double T, double D, double[] x, doubleW P, doubleW Z,
-      doubleW dPdD, doubleW d2PdD2, doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H, doubleW S,
-      doubleW Cv, doubleW Cp, doubleW W, doubleW G, doubleW JT, doubleW Kappa, doubleW A) {
+  public void PropertiesGERG(double T, double D, double[] x, doubleW P, doubleW Z, doubleW dPdD,
+      doubleW d2PdD2, doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv,
+      doubleW Cp, doubleW W, doubleW G, doubleW JT, doubleW Kappa, doubleW A) {
     // Sub PropertiesGERG(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv,
     // Cp, W, G, JT, Kappa, A)
 
@@ -456,7 +456,7 @@ public class GERG2008 {
    * @param Dr ...
    */
   // The following routines are low-level routines that should not be called outside of this code.
-   void ReducingParametersGERG(double[] x, doubleW Tr, doubleW Dr) {
+  void ReducingParametersGERG(double[] x, doubleW Tr, doubleW Dr) {
     // Private Sub ReducingParametersGERG(x, Tr, Dr)
 
     // Calculate reducing variables. Only need to call this if the composition has
@@ -521,7 +521,7 @@ public class GERG2008 {
    * @param x ...
    * @param a0 ...
    */
-   void Alpha0GERG(double T, double D, double[] x, doubleW[] a0) {
+  void Alpha0GERG(double T, double D, double[] x, doubleW[] a0) {
     // Private Sub Alpha0GERG(T, D, x, a0)
 
     // Calculate the ideal gas Helmholtz energy and its derivatives with respect to
@@ -601,7 +601,7 @@ public class GERG2008 {
    * @param x ....
    * @param ar ...
    */
-   void AlpharGERG(int itau, int idelta, double T, double D, double[] x, doubleW[][] ar) {
+  void AlpharGERG(int itau, int idelta, double T, double D, double[] x, doubleW[][] ar) {
     // Private Sub AlpharGERG(itau, idelta, T, D, x, ar)
 
     // Calculate dimensionless residual Helmholtz energy and its derivatives with
@@ -760,7 +760,7 @@ public class GERG2008 {
    * @param lntau ...
    * @param x ....
    */
-   void tTermsGERG(double lntau, double[] x) {
+  void tTermsGERG(double lntau, double[] x) {
     // Private Sub tTermsGERG(lntau, x)
 
     // Calculate temperature dependent parts of the GERG-2008 equation of state
@@ -808,7 +808,7 @@ public class GERG2008 {
    * @param Tcx temperature in Kelvin
    * @param Dcx density
    */
-   void PseudoCriticalPointGERG(double[] x, doubleW Tcx, doubleW Dcx) {
+  void PseudoCriticalPointGERG(double[] x, doubleW Tcx, doubleW Dcx) {
     // PseudoCriticalPointGERG(x, Tcx, Dcx)
 
     // Calculate a pseudo critical point as the mole fraction average of the
@@ -833,7 +833,7 @@ public class GERG2008 {
    * SetupGERG.
    * </p>
    */
-  public  void SetupGERG() {
+  public void SetupGERG() {
     // Initialize all the constants and parameters in the GERG-2008 model.
     // Some values are modified for calculations that do not depend on T, D, and x in order to
     // speed up the program.
@@ -845,6 +845,7 @@ public class GERG2008 {
     double T0;
 
     double d0;
+    // ThermodynamicConstantsInterface.R
     RGERG = 8.314472;
     Rs = 8.31451;
     Rsr = Rs / RGERG;
@@ -3195,7 +3196,6 @@ public class GERG2008 {
       n0i[i][2] = n0i[i][2] - T0;
       n0i[i][1] = n0i[i][1] - Math.log(d0);
     }
-    return;
 
     // Code to produce nearly exact values for n0(1) and n0(2)
     // This is not called in the current code, but included below to show how the values were
@@ -3249,14 +3249,14 @@ public class GERG2008 {
 
     test.MolarMassGERG(x, Mm);
 
-   // System.out.println("mol mass " + Mm.val);
+    // System.out.println("mol mass " + Mm.val);
 
-   test.PressureGERG(T, D.val, x, P, Z);
+    test.PressureGERG(T, D.val, x, P, Z);
 
-   System.out.println("pressure " + P.val);
-   System.out.println("Z " + Z.val);
+    System.out.println("pressure " + P.val);
+    System.out.println("Z " + Z.val);
 
-   test.DensityGERG(iFlag, T, P.val, x, D, ierr, herr);
+    test.DensityGERG(iFlag, T, P.val, x, D, ierr, herr);
     System.out.println("density " + D.val);
 
     doubleW dPdD = new doubleW(0.0d);
@@ -3276,20 +3276,20 @@ public class GERG2008 {
     doubleW JT = new doubleW(0.0d);
     doubleW Kappa = new doubleW(0.0d);
     doubleW PP = new doubleW(0.0d);
-    test.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G,
-        JT, Kappa, A);
+    test.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
+        Kappa, A);
 
     /*
      * // test.PressureGERG(400, 12.798286, x); String herr = ""; test.DensityGERG(0, T, P, x, ierr,
      * herr); double pres = test.P; double molarmass = test.Mm;
-     * 
+     *
      * // double dPdD=0.0, dPdD2=0.0, d2PdTD=0.0, dPdT=0.0, U=0.0, H=0.0, S=0.0, // Cv=0.0, Cp=0.0,
      * W=0.0, G=0.0, JT=0.0, Kappa=0.0, A=0.0;
-     * 
+     *
      * // void DensityGERG(const int iFlag, const double T, const double P, const //
      * std::vector<double> &x, double &D, int &ierr, std::string &herr) // test.DensityGERG(0, T, P,
      * x, ierr, herr);
-     * 
+     *
      * // Sub PropertiesGERG(T, D, x, P, Z, dPdD, dPdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, // W, G, JT,
      * Kappa) // test.PropertiesGERG(T, test.D, x);
      */
@@ -3319,6 +3319,6 @@ public class GERG2008 {
     System.out
         .println("Joule-Thomson coefficient [K/kPa]:  7.155629581480913E-05 != %0.16g\n" + JT.val);
     System.out
-        .println("Isentropic exponent:                2.683820255058032 != %0.16g\n" + Kappa.val);;
+        .println("Isentropic exponent:                2.683820255058032 != %0.16g\n" + Kappa.val);
   }
 }

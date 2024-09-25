@@ -10,7 +10,6 @@ import java.util.UUID;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.flowSolver.FlowSolverInterface;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
-import neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.FileWriterInterface;
 import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualizationInterface;
 import neqsim.fluidMechanics.util.timeSeries.TimeSeries;
 import neqsim.thermo.system.SystemInterface;
@@ -81,17 +80,6 @@ public interface FlowSystemInterface {
 
   /**
    * <p>
-   * getFileWriter.
-   * </p>
-   *
-   * @param i a int
-   * @return a {@link neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.FileWriterInterface}
-   *         object
-   */
-  public FileWriterInterface getFileWriter(int i);
-
-  /**
-   * <p>
    * getSolver.
    * </p>
    *
@@ -159,7 +147,7 @@ public interface FlowSystemInterface {
    * setLegHeights.
    * </p>
    *
-   * @param legHeights an array of {@link double} objects
+   * @param legHeights an array of type double
    */
   public void setLegHeights(double[] legHeights);
 
@@ -168,7 +156,7 @@ public interface FlowSystemInterface {
    * getLegHeights.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getLegHeights();
 
@@ -177,7 +165,7 @@ public interface FlowSystemInterface {
    * setLegPositions.
    * </p>
    *
-   * @param legPositions an array of {@link double} objects
+   * @param legPositions an array of type double
    */
   public void setLegPositions(double[] legPositions);
 
@@ -212,7 +200,7 @@ public interface FlowSystemInterface {
    * setLegOuterHeatTransferCoefficients.
    * </p>
    *
-   * @param coefs an array of {@link double} objects
+   * @param coefs an array of type double
    */
   public void setLegOuterHeatTransferCoefficients(double[] coefs);
 
@@ -221,7 +209,7 @@ public interface FlowSystemInterface {
    * setLegWallHeatTransferCoefficients.
    * </p>
    *
-   * @param coefs an array of {@link double} objects
+   * @param coefs an array of type double
    */
   public void setLegWallHeatTransferCoefficients(double[] coefs);
 
@@ -313,7 +301,7 @@ public interface FlowSystemInterface {
    * setLegOuterTemperatures.
    * </p>
    *
-   * @param temps an array of {@link double} objects
+   * @param temps an array of type double
    */
   public void setLegOuterTemperatures(double[] temps);
 

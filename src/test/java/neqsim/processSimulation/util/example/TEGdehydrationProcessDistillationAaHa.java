@@ -17,6 +17,7 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.SetPoint;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  * <p>
@@ -150,13 +151,12 @@ public class TEGdehydrationProcessDistillationAaHa {
     Stream gasToReboiler = strippingGas.clone();
     gasToReboiler.setName("gas to reboiler");
 
-    DistillationColumn column = new DistillationColumn(1, true, true);
-    column.setName("TEG regeneration column");
+    DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 0);
     column.getReboiler().setOutTemperature(273.15 + 201.0);
     column.getCondenser().setOutTemperature(273.15 + 92.0);
     column.getReboiler().addStream(gasToReboiler);
-    column.setTopPressure(1.01325);
+    column.setTopPressure(ThermodynamicConstantsInterface.referencePressure);
     column.setBottomPressure(1.02);
 
     Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());
@@ -298,14 +298,15 @@ public class TEGdehydrationProcessDistillationAaHa {
     // operations.save("c:/temp/TEGprocessAaHa.neqsim");
     // operations = ProcessSystem.open("c:/temp/TEGprocess.neqsim");
     // ((DistillationColumn)operations.getUnit("TEG regeneration
-    /// column")).setTopPressure(1.2);
+    // column")).setTopPressure(1.2);
     // operations.run();
     // ((DistillationColumn)operations.getUnit("TEG regeneration
-    /// column")).setNumberOfTrays(2);
+    // column")).setNumberOfTrays(2);
     /*
      * System.out.println("water in wet gas  " + ((Stream)
      * operations.getUnit("water saturated feed gas")).getFluid()
-     * .getPhase(0).getComponent("water").getz() * 1.0e6 * 0.01802 * 101325.0 / (8.314 * 288.15));
+     * .getPhase(0).getComponent("water").getz() * 1.0e6 * 0.01802
+     * *ThermodynamicConstantsInterface.atm / (ThermodynamicConstantsInterface.R * 288.15));
      * System.out.println("water in dry gas  " + ((Stream)
      * operations.getUnit("dry gas from absorber")).getFluid()
      * .getPhase(0).getComponent("water").getz() * 1.0e6); System.out.println("reboiler duty (KW) "
@@ -314,18 +315,20 @@ public class TEGdehydrationProcessDistillationAaHa {
      * System.out.println("wt lean TEG " + ((WaterStripperColumn)
      * operations.getUnit("TEG stripper"))
      * .getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG") * 100.0);
-     * 
+     *
      * double waterInWetGasppm =
      * waterSaturatedFeedGas.getFluid().getPhase(0).getComponent("water").getz() * 1.0e6; double
-     * waterInWetGaskgMSm3 = waterInWetGasppm * 0.01802 * 101325.0 / (8.314 * 288.15); double
-     * TEGfeedwt = TEGFeed.getFluid().getPhase("aqueous").getWtFrac("TEG"); double TEGfeedflw =
+     * waterInWetGaskgMSm3 = waterInWetGasppm * 0.01802 *ThermodynamicConstantsInterface.atm /
+     * (ThermodynamicConstantsInterface.R * 288.15); double TEGfeedwt =
+     * TEGFeed.getFluid().getPhase("aqueous").getWtFrac("TEG"); double TEGfeedflw =
      * TEGFeed.getFlowRate("kg/hr"); double waterInDehydratedGasppm =
      * dehydratedGas.getFluid().getPhase(0).getComponent("water").getz() * 1.0e6; double
-     * waterInDryGaskgMSm3 = waterInDehydratedGasppm * 0.01802 * 101325.0 / (8.314 * 288.15); double
-     * richTEG2 = richTEG.getFluid().getPhase("aqueous").getWtFrac("TEG"); double temp =
+     * waterInDryGaskgMSm3 = waterInDehydratedGasppm * 0.01802 *ThermodynamicConstantsInterface.atm
+     * / (ThermodynamicConstantsInterface.R * 288.15); double richTEG2 =
+     * richTEG.getFluid().getPhase("aqueous").getWtFrac("TEG"); double temp =
      * ((Stream)operations.getUnit("feed to TEG absorber")).getFluid().getPhase(0).
-     * getComponent("water").getz()*1.0e6*0.01802*101325.0/(8.314*288.15);
-     * System.out.println("reboiler duty (KW) " + ((Reboiler) column.getReboiler()).getDuty() /
+     * getComponent("water").getz()*1.0e6*0.01802*101325.0/(ThermodynamicConstantsInterface.R*288.15
+     * ); System.out.println("reboiler duty (KW) " + ((Reboiler) column.getReboiler()).getDuty() /
      * 1.0e3); System.out.println("flow rate from reboiler " + ((Reboiler)
      * column.getReboiler()).getLiquidOutStream().getFlowRate("kg/hr"));
      * System.out.println("flow rate from stripping column " +
@@ -333,22 +336,22 @@ public class TEGdehydrationProcessDistillationAaHa {
      * System.out.println("flow rate from pump2  " +
      * hotLeanTEGPump2.getOutStream().getFluid().getFlowRate("kg/hr"));
      * System.out.println("makeup TEG  " + makeupTEG.getFluid().getFlowRate("kg/hr"));
-     * 
+     *
      * TEGFeed.getFluid().display(); absorber.run();
-     * 
+     *
      * System.out.println("pump power " + hotLeanTEGPump.getDuty());
      * System.out.println("pump2 power " + hotLeanTEGPump2.getDuty());
      * System.out.println("wt lean TEG after reboiler " +
      * column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
      * System.out.println("temperature from pump " +
      * (hotLeanTEGPump2.getOutStream().getTemperature() - 273.15));
-     * 
+     *
      * System.out.println("flow rate from reboiler " + ((Reboiler)
      * column.getReboiler()).getLiquidOutStream().getFlowRate("kg/hr"));
      * System.out.println("flow rate from pump2  " +
      * hotLeanTEGPump2.getOutStream().getFluid().getFlowRate("kg/hr"));
      * System.out.println("flow rate to flare  " + gasToFlare.getFluid().getFlowRate("kg/hr"));
-     * 
+     *
      * System.out.println("condenser duty  " + ((Condenser) ((DistillationColumn)
      * operations.getUnit("TEG regeneration column")).getCondenser()) .getDuty() / 1.0e3);
      * System.out.println( "richGLycolHeaterCondenser duty  " +
@@ -356,17 +359,16 @@ public class TEGdehydrationProcessDistillationAaHa {
      * System.out.println("richGLycolHeaterCondenser temperature out  " +
      * richGLycolHeaterCondenser.getOutStream().getTemperature("C"));
      * richGLycolHeaterCondenser.run();
-     * 
+     *
      * hotLeanTEGPump.getOutStream().displayResult(); flashLiquid.displayResult();
-     * 
+     *
      * System.out.println("Temperature rich TEG out of reflux condenser " +
      * richGLycolHeaterCondenser.getOutStream().getTemperature("C")); heatEx.displayResult();
      * System.out.println("glycol out temperature " +
      * glycol_flash_valve2.getOutStream().getFluid().getTemperature("C"));
      * System.out.println("glycol out temperature2 " +heatEx2.getOutStream(0).getTemperature("C"));
      * System.out.println("glycol out temperature2 " +heatEx2.getOutStream(1).getTemperature("C"));
-     * 
-     * 
+     *
      * System.out.println("out water rate LP valve" +
      * glycol_flash_valve2.getOutStream().getFluid().getPhase(0).getComponent(
      * "water").getNumberOfmoles()); System.out.println("glycol out water rate reboil " +
@@ -376,29 +378,26 @@ public class TEGdehydrationProcessDistillationAaHa {
      * getNumberOfmoles()); System.out.println("recycle out water rate  "
      * +recycleGasFromStripper.getOutletStream().getFluid().getComponent("water").
      * getNumberOfmoles());
-     * 
+     *
      * System.out.println("water dew point of dry gas  " +
      * waterDewPointAnalyser.getMeasuredValue("C"));
-     * 
-     * 
+     *
      * System.out.println("hydrocarbons in lean TEG  " + (1.0-
      * stripper.getLiquidOutStream().getFluid().getPhase(0).getWtFrac("TEG")-
      * stripper.getLiquidOutStream().getFluid().getPhase(0).getWtFrac("water"))*1e6 + " mg/kg");
      * System.out.println("hydrocarbons in rich TEG  " + (1.0-
      * flashLiquid.getFluid().getPhase(0).getWtFrac("TEG")-flashLiquid.getFluid().
      * getPhase(0).getWtFrac("water"))*1e6 + " mg/kg");
-     * 
+     *
      * //double dewT = ((WaterDewPointAnalyser)operations.
      * getMeasurementDevice("water dew point analyser")).getMeasuredValue("C");
      * //waterDewPointAnalyser.setOnlineValue(measured, unit)
      * //waterDewPointAnalyser.setOnlineSignal(isOnlineSignal, plantName, transmitterame);
-     * 
-     * 
-     * 
+     *
      * //Heat echanger test
-     * 
+     *
      * //Sabe and Open copy of model
-     * 
+     *
      * ProcessSystem locoperations = operations.copy();
      * //((HeatExchanger)locoperations.getUnit("rich TEG heat exchanger 2")).
      * getInStream(0).setTemperature(298.15, "C");
@@ -413,8 +412,7 @@ public class TEGdehydrationProcessDistillationAaHa {
      * eff = ((HeatExchanger)locoperations.getUnit("rich TEG heat exchanger 2")).
      * getThermalEffectiveness(); System.out.println("eff " + eff); //store fouling factor in
      * dataframe
-     * 
-     * 
+     *
      * dehydratedGas.getFluid().display();
      */
 

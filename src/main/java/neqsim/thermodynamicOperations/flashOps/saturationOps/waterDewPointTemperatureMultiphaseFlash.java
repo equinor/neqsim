@@ -21,13 +21,6 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
    * <p>
    * Constructor for waterDewPointTemperatureMultiphaseFlash.
    * </p>
-   */
-  public waterDewPointTemperatureMultiphaseFlash() {}
-
-  /**
-   * <p>
-   * Constructor for waterDewPointTemperatureMultiphaseFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -53,8 +46,9 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
         }
         system.setTemperature(system.getTemperature() + dT);
       } else {
-        dT = -10.0; // system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase()
-                    // / system.getNumberOfMoles();
+        dT = -10.0;
+        // system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase() /
+        // system.getNumberOfMoles();
         system.setTemperature(system.getTemperature() + dT);
         // system.display();
       }

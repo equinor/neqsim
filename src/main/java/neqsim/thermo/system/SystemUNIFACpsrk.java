@@ -8,18 +8,18 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * This class defines a thermodynamic system using the UNIFAC for liquid and PSRK EoS for gas.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemUNIFACpsrk extends SystemEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>
+   * Constructor for SystemUNIFACpsrk.
+   * </p>
+   */
   public SystemUNIFACpsrk() {
-    super();
-    modelName = "UNIFAC-GE-model";
-    attractiveTermNumber = 0;
-    phaseArray[0] = new PhaseSrkEos();
-    for (int i = 1; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseGEUnifacPSRK();
-    }
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -27,21 +27,11 @@ public class SystemUNIFACpsrk extends SystemEos {
    * Constructor for SystemUNIFACpsrk.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemUNIFACpsrk(double T, double P) {
-    super(T, P);
-    attractiveTermNumber = 0;
-    modelName = "UNIFAC-GE-model";
-    phaseArray[0] = new PhaseSrkEos();
-    phaseArray[0].setTemperature(T);
-    phaseArray[0].setPressure(P);
-    for (int i = 1; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseGEUnifacPSRK();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
+    this(T, P, false);
   }
 
   /**
@@ -49,16 +39,15 @@ public class SystemUNIFACpsrk extends SystemEos {
    * Constructor for SystemUNIFACpsrk.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemUNIFACpsrk(double T, double P, boolean solidCheck) {
-    this(T, P);
+  public SystemUNIFACpsrk(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     attractiveTermNumber = 0;
-    setNumberOfPhases(4);
     modelName = "UNIFAC-GE-model";
-    solidPhaseCheck = solidCheck;
+    solidPhaseCheck = checkForSolids;
 
     phaseArray[0] = new PhaseSrkEos();
     phaseArray[0].setTemperature(T);
@@ -70,7 +59,7 @@ public class SystemUNIFACpsrk extends SystemEos {
     }
 
     if (solidPhaseCheck) {
-      // System.out.println("here first");
+      setNumberOfPhases(4);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);
@@ -87,10 +76,6 @@ public class SystemUNIFACpsrk extends SystemEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

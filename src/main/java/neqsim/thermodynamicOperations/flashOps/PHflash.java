@@ -27,13 +27,6 @@ public class PHflash extends Flash {
    * <p>
    * Constructor for PHflash.
    * </p>
-   */
-  public PHflash() {}
-
-  /**
-   * <p>
-   * Constructor for PHflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Hspec a double
@@ -89,7 +82,7 @@ public class PHflash extends Flash {
     boolean correctFactor = true;
     double maxTemperature = 1e10;
     double minTemperature = 0.0;
-    
+
     do {
       if (Math.abs(error) > Math.abs(erorOld) && factor > 0.1 && correctFactor) {
         factor *= 0.5;

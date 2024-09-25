@@ -62,11 +62,11 @@ public class WaxFlash {
       // testOps.TPflash();
       testSystem.display();
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     double waxVOlumeFrac = 0;
     if (testSystem.hasPhaseType("wax")) {
-      waxVOlumeFrac = testSystem.getWtFraction(testSystem.getPhaseIndexOfPhase("wax"));
+      waxVOlumeFrac = testSystem.getWtFraction(testSystem.getPhaseIndex("wax"));
     }
     // testSystem.getPhase("oil").getPhysicalProperties().getViscosityOfWaxyOil(waxVOlumeFrac,
     // 1000.0);

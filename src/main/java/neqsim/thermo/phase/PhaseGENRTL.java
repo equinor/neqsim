@@ -8,6 +8,8 @@ package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGeNRTL;
+import neqsim.util.exception.IsNaNException;
+import neqsim.util.exception.TooManyIterationsException;
 
 /**
  * <p>
@@ -41,10 +43,10 @@ public class PhaseGENRTL extends PhaseGE {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha an array of {@link double} objects
-   * @param Dij an array of {@link double} objects
+   * @param alpha an array of type double
+   * @param Dij an array of type double
    * @param mixRule an array of {@link java.lang.String} objects
-   * @param intparam an array of {@link double} objects
+   * @param intparam an array of type double
    */
   public PhaseGENRTL(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
       double[][] intparam) {
@@ -66,11 +68,9 @@ public class PhaseGENRTL extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] =
-        new ComponentGeNRTL(componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentGeNRTL(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -101,16 +101,30 @@ public class PhaseGENRTL extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
+  public void setDijT(double[][] DijT) {
+    throw new UnsupportedOperationException("Unimplemented method 'setDijT'");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExcessGibbsEnergy() {
+    // double GE = getExcessGibbsEnergy(this, numberOfComponents, temperature,
+    // pressure, pt);
+    return GE;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+      double temperature, double pressure, PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponents()[i].getx()
           * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents,
-              temperature, pressure, phasetype, alpha, Dij, intparam, mixRule));
+              temperature, pressure, pt, alpha, Dij, intparam, mixRule));
     }
 
-    return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*
+    return R * temperature * numberOfMolesInPhase * GE;
   }
 
   /** {@inheritDoc} */
@@ -121,9 +135,8 @@ public class PhaseGENRTL extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExessGibbsEnergy() {
-    // double GE = getExessGibbsEnergy(this, numberOfComponents, temperature,
-    // pressure, phaseType);
-    return GE;
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws IsNaNException, TooManyIterationsException {
+    throw new UnsupportedOperationException("Unimplemented method 'molarVolume'");
   }
 }

@@ -92,10 +92,10 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-    if (type == 0) {
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+    if (initType == 0) {
       electrolyteMixingRule = mixSelect.getElectrolyteMixingRule(this);
     }
   }
@@ -191,11 +191,10 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void addcomponent(String componentName, double moles, double molesInPhase,
-      int compNumber) {
-    super.addcomponent(molesInPhase);
-    componentArray[compNumber] = new neqsim.thermo.component.ComponentModifiedFurstElectrolyteEos(
-        componentName, moles, molesInPhase, compNumber);
+  public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
+    super.addComponent(name, molesInPhase, compNumber);
+    componentArray[compNumber] =
+        new ComponentModifiedFurstElectrolyteEos(name, moles, molesInPhase, compNumber);
   }
 
   /**
@@ -411,7 +410,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double calcGammaLRdV() {
-    if (phaseType == 1) {
+    if (pt == PhaseType.GAS) {
       return 0.0;
     }
     // return 0.0; // problem ved ren komponent
@@ -433,7 +432,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double calcShieldingParameter() {
-    // if(phaseType==1) return 0.0;
+    // if(pt==1) return 0.0;
     double df = 0;
     double f = 0;
     int ions = 0;
@@ -468,7 +467,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   }
 
   // public double calcShieldingParameter2(){
-  // if(phaseType==1) return 0.0;
+  // if(pt==1) return 0.0;
 
   // double df=0, f=0;
   // int ions=0;
@@ -498,12 +497,12 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     // double BonV = phase== 0 ?
     // 2.0/(2.0+temperature/getPseudoCriticalTemperature()):0.1*pressure*getB()/(numberOfMolesInPhase*temperature*R);
-    double BonV = phase == 0 ? 0.99 : 1e-5;
+    double BonV = pt == PhaseType.LIQUID ? 0.99 : 1e-5;
 
     if (BonV < 0) {
       BonV = 1.0e-6;
@@ -548,7 +547,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
         double hnew = h + d2 * -h / d1;
         if (Math.abs(hnew) > Math.abs(h)) {
           logger.info("volume correction needed....");
-          BonV = phase == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
               : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       }
@@ -574,8 +573,8 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
     }
 
-    // if(phaseType==0) System.out.println("density " + getDensity()); //"BonV: " +
-    // BonV + " "+" itert: " + iterations +" " + " phase " + phaseType+ " " + h + "
+    // if(pt==0) System.out.println("density " + getDensity()); //"BonV: " +
+    // BonV + " "+" itert: " + iterations +" " + " phase " + pt+ " " + h + "
     // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
     // + fVV());
 
@@ -798,7 +797,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    */
   public double dFLRdV() {
     return (FLRV() + dFdAlphaLR() * alphaLRdV) * 1e-5; // + FLRGammaLR()*gammLRdV +
-                                                      // 0*FLRXLR()*XLRdGammaLR()*gammLRdV)*1e-5;
+                                                       // 0*FLRXLR()*XLRdGammaLR()*gammLRdV)*1e-5;
   }
 
   /**
@@ -948,7 +947,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double XLRdGammaLR() {
-    // if(phaseType==1) return 0.0;
+    // if(pt==1) return 0.0;
     double ans = 0.0;
     double ans2 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
@@ -1425,7 +1424,8 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FBornTT() {
-    return 2.0 * (avagadroNumber * electronCharge * electronCharge
+    return 2.0
+        * (avagadroNumber * electronCharge * electronCharge
             / (4.0 * pi * vacumPermittivity * R * temperature * temperature * temperature))
         * (1.0 / getSolventDiElectricConstant() - 1.0) * bornX;
   }
@@ -1719,7 +1719,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * setFurstIonicCoefficient.
    * </p>
    *
-   * @param params an array of {@link double} objects
+   * @param params an array of type double
    */
   public void setFurstIonicCoefficient(double[] params) {}
 

@@ -26,13 +26,6 @@ public class PHflashGERG2008 extends Flash {
 
   /**
    * <p>
-   * Constructor for PHflashGERG2008.
-   * </p>
-   */
-  public PHflashGERG2008() {}
-
-  /**
-   * <p>
    * Constructor for PHflash.
    * </p>
    *

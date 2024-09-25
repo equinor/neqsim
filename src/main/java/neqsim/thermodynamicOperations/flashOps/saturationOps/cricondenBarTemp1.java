@@ -48,13 +48,6 @@ public class cricondenBarTemp1 implements java.io.Serializable {
    * <p>
    * Constructor for cricondenBarTemp1.
    * </p>
-   */
-  public cricondenBarTemp1() {}
-
-  /**
-   * <p>
-   * Constructor for cricondenBarTemp1.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -203,7 +196,7 @@ public class cricondenBarTemp1 implements java.io.Serializable {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] get(String name) {
     return new double[0];
@@ -231,7 +224,7 @@ public class cricondenBarTemp1 implements java.io.Serializable {
    * </p>
    *
    * @param i a int
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getPoints(int i) {
     return null;

@@ -8,6 +8,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the PR Gassem equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemPrGassemEos extends SystemPrEos {
   private static final long serialVersionUID = 1000;
@@ -18,14 +19,7 @@ public class SystemPrGassemEos extends SystemPrEos {
    * </p>
    */
   public SystemPrGassemEos() {
-    super();
-    modelName = "PR-Gassem-EOS";
-    attractiveTermNumber = 8;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePrEos();
-      phaseArray[i].setTemperature(298.15);
-      phaseArray[i].setPressure(1.0);
-    }
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -33,18 +27,11 @@ public class SystemPrGassemEos extends SystemPrEos {
    * Constructor for SystemPrGassemEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemPrGassemEos(double T, double P) {
-    super(T, P);
-    modelName = "PR-Gassem-EOS";
-    attractiveTermNumber = 8;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePrEos();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
+    this(T, P, false);
   }
 
   /**
@@ -52,17 +39,16 @@ public class SystemPrGassemEos extends SystemPrEos {
    * Constructor for SystemPrGassemEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemPrGassemEos(double T, double P, boolean solidCheck) {
-    this(T, P);
+  public SystemPrGassemEos(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     modelName = "PR-Gassem-EOS";
     attractiveTermNumber = 8;
-    setNumberOfPhases(5);
-    solidPhaseCheck = solidCheck;
 
+    // Recreates phases created in super constructor SystemPrEos
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePrEos();
       phaseArray[i].setTemperature(T);
@@ -70,7 +56,7 @@ public class SystemPrGassemEos extends SystemPrEos {
     }
 
     if (solidPhaseCheck) {
-      // System.out.println("here first");
+      setNumberOfPhases(5);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);
@@ -78,7 +64,6 @@ public class SystemPrGassemEos extends SystemPrEos {
     }
 
     if (hydrateCheck) {
-      // System.out.println("here first");
       phaseArray[numberOfPhases - 1] = new PhaseHydrate();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);
@@ -95,11 +80,6 @@ public class SystemPrGassemEos extends SystemPrEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

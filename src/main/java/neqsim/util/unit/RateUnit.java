@@ -9,6 +9,7 @@ package neqsim.util.unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * <p>
@@ -22,7 +23,9 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(RateUnit.class);
 
-  double molarmass = 0.0, stddens = 0.0, boilp = 0.0;
+  double molarmass = 0.0;
+  double stddens = 0.0;
+  double boilp = 0.0;
 
   /**
    * <p>
@@ -42,18 +45,6 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
     this.boilp = boilp;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getSIvalue() {
-    return getConversionFactor(inunit) / getConversionFactor("SI") * invalue;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(String tounit) {
-    return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
-  }
-
   /**
    * <p>
    * getConversionFactor.
@@ -64,9 +55,11 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
    */
   public double getConversionFactor(String name) {
     double mol_m3 = 0.0;
-    double mol_Sm3 = 101325.0 / (ThermodynamicConstantsInterface.R * standardStateTemperature);
+    double mol_Sm3 = ThermodynamicConstantsInterface.atm
+        / (ThermodynamicConstantsInterface.R * standardStateTemperature);
     if (boilp < 25) {
-      mol_m3 = 101325.0 / (ThermodynamicConstantsInterface.R * standardStateTemperature);
+      mol_m3 = ThermodynamicConstantsInterface.atm
+          / (ThermodynamicConstantsInterface.R * standardStateTemperature);
     } else {
       mol_m3 = 1.0 / (molarmass) * stddens * 1000;
     }
@@ -106,10 +99,29 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
       factor = 1.0e6 * mol_Sm3 / (3600.0 * 24.0);
     } else if (name.equals("MSm^3/hr") || name.equals("MSm3/hr")) {
       factor = 1.0e6 * mol_Sm3 / (3600.0);
+    } else if (name.equals("idSm3/hr")) {
+      factor = 1.0 / molarmass / 3600.0 * stddens;
+    } else if (name.equals("idSm3/day")) {
+      factor = 1.0 / molarmass / (3600.0 * 24.0) * stddens;
+    } else if (name.equals("gallons/min")) {
+      factor = 1.0 / molarmass / 60.0 * stddens / 10.0 * 3.78541178;
     } else {
-      logger.error("unit not supported " + name);
+      throw new RuntimeException(
+          new InvalidInputException(this, "getConversionFactor", "unit", "not supported"));
     }
 
     return factor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSIvalue() {
+    return getConversionFactor(inunit) / getConversionFactor("SI") * invalue;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(String tounit) {
+    return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
   }
 }

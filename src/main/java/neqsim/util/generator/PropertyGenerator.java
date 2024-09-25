@@ -23,8 +23,8 @@ public class PropertyGenerator {
    * </p>
    *
    * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
-   * @param temperatures an array of {@link double} objects
-   * @param pressures an array of {@link double} objects
+   * @param temperatures an array of type double
+   * @param pressures an array of type double
    */
   public PropertyGenerator(SystemInterface fluid, double[] temperatures, double[] pressures) {
     this.fluid = fluid;
@@ -129,7 +129,7 @@ public class PropertyGenerator {
       Z[i] = fluid.getZ();
       viscosity[i] = fluid.getViscosity("cP");
       enthalpy[i] = fluid.getEnthalpy("J/mol");
-      entropy[i] = fluid.getEnthalpy("J/molK");
+      entropy[i] = fluid.getEntropy("J/molK");
       Cp[i] = fluid.getCp("kJ/kgK");
       Cv[i] = fluid.getCp("kJ/kgK");
       density[i] = fluid.getDensity("kg/m3");

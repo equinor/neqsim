@@ -24,7 +24,7 @@ public class VLSolidTray extends SimpleTray {
    * <p>
    * Constructor for VLSolidTray.
    * </p>
-   * 
+   *
    * @param name name of tray
    */
   public VLSolidTray(String name) {
@@ -79,7 +79,6 @@ public class VLSolidTray extends SimpleTray {
     if (streams.size() > 0) {
       // mixedStream.getThermoSystem().setSolidPhaseCheck("CO2");
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().reInitPhaseType();
       mixedStream.getThermoSystem().init(0);
 
       mixStream();

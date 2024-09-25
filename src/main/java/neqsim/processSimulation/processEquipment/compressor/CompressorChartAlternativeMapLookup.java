@@ -23,8 +23,8 @@ import neqsim.thermo.system.SystemSrkEos;
 public class CompressorChartAlternativeMapLookup
     implements CompressorChartInterface, java.io.Serializable {
   private static final long serialVersionUID = 1000;
-
   static Logger logger = LogManager.getLogger(CompressorChart.class);
+
   ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
   ArrayList<Double> chartSpeeds = new ArrayList<Double>();
   private SurgeCurve surgeCurve = new SurgeCurve();
@@ -104,8 +104,8 @@ public class CompressorChartAlternativeMapLookup
       int pos = bisect_left(speedArray, speed);
       if (pos == 0) { // speed is lower than the lowest reference speed
         closestRefSpeeds.add(speedArray[0]);
-      } else if (pos == chartSpeeds.size()) { // speed is higher than the highest reference
-                                              // speed
+      } else if (pos == chartSpeeds.size()) {
+        // speed is higher than the highest reference speed
         closestRefSpeeds.add(speedArray[speedArray.length - 1]);
       } else { // speed is in between two reference speeds
         closestRefSpeeds.add(speedArray[pos - 1]);
@@ -168,8 +168,8 @@ public class CompressorChartAlternativeMapLookup
    * addSurgeCurve.
    * </p>
    *
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
+   * @param flow an array of type double
+   * @param head an array of type double
    */
   public void addSurgeCurve(double[] flow, double[] head) {
     surgeCurve = new SurgeCurve(flow, head);
@@ -191,7 +191,6 @@ public class CompressorChartAlternativeMapLookup
       }
     }
     String msg = "Does not match any speed in the chart.";
-    logger.error(msg);
     neqsim.util.exception.InvalidInputException ex =
         new neqsim.util.exception.InvalidInputException(this, "getCurveAtRefSpeed", "refSpeed",
             msg);
@@ -237,7 +236,8 @@ public class CompressorChartAlternativeMapLookup
   @Override
   public int getSpeed(double flow, double head) {
     int iter = 1;
-    double error = 1.0, derrordspeed = 1.0;
+    double error = 1.0;
+    double derrordspeed = 1.0;
     double newspeed = referenceSpeed;
     double newhead = 0.0;
     double oldspeed = newspeed + 1.0;
@@ -397,7 +397,7 @@ public class CompressorChartAlternativeMapLookup
             {52.3295, 51.0573, 49.5283, 46.3326, 42.3685, 37.2502, 31.4884, 25.598},
             {40.6578, 39.6416, 37.6008, 34.6603, 30.9503, 27.1116, 23.2713, 20.4546},
             {35.2705, 34.6359, 32.7228, 31.0645, 27.0985, 22.7482, 18.0113},
-            {32.192, 31.1756, 29.1329, 26.833, 23.8909, 21.3324, 18.7726, 16.3403},};
+            {32.192, 31.1756, 29.1329, 26.833, 23.8909, 21.3324, 18.7726, 16.3403}};
     double[][] polyEff = new double[][] {
         {77.2452238409573, 79.4154186459363, 80.737960012489, 80.5229826589649, 79.2210931638144,
             75.4719133864634, 69.6034181197298, 58.7322388482707},
@@ -428,7 +428,7 @@ public class CompressorChartAlternativeMapLookup
      * double[] surgeflow = new double[] { 453.2, 550.0, 700.0, 800.0 }; double[] surgehead = new
      * double[] { 6000.0, 7000.0, 8000.0, 10000.0 };
      * comp1.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeflow, surgehead);
-     * 
+     *
      * double[] stoneWallflow = new double[] { 923.2, 950.0, 980.0, 1000.0 }; double[] stoneWallHead
      * = new double[] { 6000.0, 7000.0, 8000.0, 10000.0 };
      * comp1.getCompressorChart().getStoneWallCurve().setCurve(chartConditions, stoneWallflow,
@@ -470,7 +470,12 @@ public class CompressorChartAlternativeMapLookup
   /** {@inheritDoc} */
   @Override
   public void setHeadUnit(String headUnit) {
-    this.headUnit = headUnit;
+    if (headUnit.equals("meter") || headUnit.equals("kJ/kg")) {
+      this.headUnit = headUnit;
+    } else {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "setHeadUnit", "headUnit", "does not support value " + headUnit));
+    }
   }
 
   /** {@inheritDoc} */
@@ -536,4 +541,10 @@ public class CompressorChartAlternativeMapLookup
   /** {@inheritDoc} */
   @Override
   public void plot() {}
+
+  /** {@inheritDoc} */
+  @Override
+  public double getFlow(double head, double speed, double guessFlow) {
+    return 0.0;
+  }
 }

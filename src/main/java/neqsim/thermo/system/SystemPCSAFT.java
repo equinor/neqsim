@@ -10,10 +10,11 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the PC-SAFT EoS equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemPCSAFT extends SystemSrkEos {
-  private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(SystemPCSAFT.class);
+  private static final long serialVersionUID = 1000;
 
   /**
    * <p>
@@ -21,16 +22,7 @@ public class SystemPCSAFT extends SystemSrkEos {
    * </p>
    */
   public SystemPCSAFT() {
-    super();
-    modelName = "PCSAFT-EOS";
-    attractiveTermNumber = 0;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePCSAFTRahmat();
-      phaseArray[i].setTemperature(298.15);
-      phaseArray[i].setPressure(1.0);
-    }
-    this.useVolumeCorrection(false);
-    commonInitialization();
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -38,20 +30,11 @@ public class SystemPCSAFT extends SystemSrkEos {
    * Constructor for SystemPCSAFT.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemPCSAFT(double T, double P) {
-    super(T, P);
-    modelName = "PCSAFT-EOS";
-    attractiveTermNumber = 0;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePCSAFTRahmat();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
-    this.useVolumeCorrection(false);
-    commonInitialization();
+    this(T, P, false);
   }
 
   /**
@@ -59,24 +42,25 @@ public class SystemPCSAFT extends SystemSrkEos {
    * Constructor for SystemPCSAFT.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemPCSAFT(double T, double P, boolean solidCheck) {
-    this(T, P);
+  public SystemPCSAFT(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     modelName = "PCSAFT-EOS";
     attractiveTermNumber = 0;
-    setNumberOfPhases(5);
-    solidPhaseCheck = solidCheck;
+
+    // Recreates phases created in super constructor SystemSrkEos
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePCSAFTRahmat();
       phaseArray[i].setTemperature(T);
       phaseArray[i].setPressure(P);
     }
     commonInitialization();
+
     if (solidPhaseCheck) {
-      // System.out.println("here first");
+      setNumberOfPhases(5);
       phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);
@@ -84,31 +68,12 @@ public class SystemPCSAFT extends SystemSrkEos {
     }
 
     if (hydrateCheck) {
-      // System.out.println("here first");
       phaseArray[numberOfPhases - 1] = new PhaseHydrate();
       phaseArray[numberOfPhases - 1].setTemperature(T);
       phaseArray[numberOfPhases - 1].setPressure(P);
       phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
     }
     this.useVolumeCorrection(false);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public SystemPCSAFT clone() {
-    SystemPCSAFT clonedSystem = null;
-    try {
-      clonedSystem = (SystemPCSAFT) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
-    }
-
-    // clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
-
-    return clonedSystem;
   }
 
   /** {@inheritDoc} */
@@ -134,6 +99,19 @@ public class SystemPCSAFT extends SystemSrkEos {
       logger.info("Saft parameters: m " + mSaft + " epsk " + epskSaftm / mSaft + " sigma "
           + Math.pow(msigm / mSaft, 1.0 / 3.0));
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public SystemPCSAFT clone() {
+    SystemPCSAFT clonedSystem = null;
+    try {
+      clonedSystem = (SystemPCSAFT) super.clone();
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
+    }
+
+    return clonedSystem;
   }
 
   /**

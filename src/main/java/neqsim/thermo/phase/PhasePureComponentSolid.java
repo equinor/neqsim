@@ -38,12 +38,4 @@ public class PhasePureComponentSolid extends PhaseSolid {
 
     return clonedPhase;
   }
-
-  /** {@inheritDoc} */
-  @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-      double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-    phaseTypeName = "solid";
-  }
 }

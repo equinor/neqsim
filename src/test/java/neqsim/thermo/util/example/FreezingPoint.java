@@ -2,6 +2,7 @@ package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -27,10 +28,12 @@ public class FreezingPoint {
    */
   public static void main(String[] args) {
     // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(260.15,19.00);
-    SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 - 1, 1.01325);
+    SystemInterface testSystem =
+        new SystemSrkCPAstatoil(273.15 - 1, ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
-    SystemInterface testSystem2 = new SystemSrkCPAstatoil(273.15 + 100, 1.01325);
+    SystemInterface testSystem2 =
+        new SystemSrkCPAstatoil(273.15 + 100, ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
 
     testSystem.addComponent("methane", 0.00882);
@@ -73,7 +76,7 @@ public class FreezingPoint {
       testOps2.bubblePointTemperatureFlash();
       testSystem2.display();
     } catch (Exception ex) {
-      logger.error(ex.toString(), ex);
+      logger.error(ex.getMessage(), ex);
     }
     logger.info("wt% methanol " + 100 * testSystem.getPhase(1).getComponent("methanol").getx()
         * testSystem.getPhase(1).getComponent("methanol").getMolarMass()

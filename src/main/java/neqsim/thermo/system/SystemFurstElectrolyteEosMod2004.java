@@ -18,12 +18,7 @@ public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
    * </p>
    */
   public SystemFurstElectrolyteEosMod2004() {
-    super();
-    modelName = "Electrolyte-ScRK-EOS";
-    attractiveTermNumber = 2;
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseModifiedFurstElectrolyteEosMod2004();
-    }
+    this(298.15, 1.0);
   }
 
   /**
@@ -54,12 +49,6 @@ public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseModifiedFurstElectrolyteEos)
-    // phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

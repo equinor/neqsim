@@ -23,13 +23,13 @@ public class ComponentCSPsrk extends ComponentSrk {
    * Constructor for ComponentCSPsrk.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentCSPsrk(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentCSPsrk(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
   /**
@@ -64,15 +64,15 @@ public class ComponentCSPsrk extends ComponentSrk {
   /** {@inheritDoc} */
   @Override
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
+      int initType) {
+    super.init(temperature, pressure, totalNumberOfMoles, beta, initType);
     h_scale_mix_i = Bi / (refPhaseBWRS.getRefBWRSPhase().getB()
         / refPhaseBWRS.getRefBWRSPhase().getNumberOfMolesInPhase());
 
     double termfi1 = Ai / refPhaseBWRS.getA();
     double termfi2 = h_scale_mix_i / refPhaseBWRS.getH_scale_mix();
-    double termfi3 = ((ComponentEosInterface) refPhaseBWRS.getRefBWRSPhase().getComponent(0))
-        .getaDiffT()
+    double termfi3 =
+        ((ComponentEosInterface) refPhaseBWRS.getRefBWRSPhase().getComponent(0)).getaDiffT()
             / ((ComponentEosInterface) refPhaseBWRS.getRefBWRSPhase().getComponent(0)).getaT()
             * refPhaseBWRS.getRefBWRSPhase().getTemperature()
             / refPhaseBWRS.getNumberOfMolesInPhase();

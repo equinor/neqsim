@@ -7,10 +7,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
- *
  */
 class PSFlashGERG2008Test {
-
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static ThermodynamicOperations testOps = null;
 
@@ -42,5 +40,4 @@ class PSFlashGERG2008Test {
     double gergEntropy2 = gergProps[8] * testSystem.getPhase(0).getNumberOfMolesInPhase();
     assertEquals(gergEntropy, gergEntropy2, Math.abs(gergEntropy2) / 1000.0);
   }
-
 }

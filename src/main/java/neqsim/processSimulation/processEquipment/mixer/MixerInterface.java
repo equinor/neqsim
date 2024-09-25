@@ -12,7 +12,7 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
- * MixerInterface interface.
+ * Interface for processEquipment with multiple inlet streams and a single outlet stream.
  * </p>
  *
  * @author esol
@@ -31,23 +31,23 @@ public interface MixerInterface extends ProcessEquipmentInterface {
 
   /**
    * <p>
-   * getOutStream.
+   * Getter for outlet stream object.
    * </p>
-   * 
+   *
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public StreamInterface getOutletStream();
 
   /**
    * <p>
-   * getOutStream.
+   * Getter for outlet stream object.
    * </p>
-   * 
-   * @deprecated use {@link #getOutletStream} instead
+   *
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   * @deprecated use {@link #getOutletStream} instead
    */
   @Deprecated
-  default public StreamInterface getOutStream() {
+  public default StreamInterface getOutStream() {
     return getOutletStream();
   }
 
@@ -65,6 +65,13 @@ public interface MixerInterface extends ProcessEquipmentInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface getThermoSystem();
-  
+
+  /**
+   * <p>
+   * removeInputStream.
+   * </p>
+   *
+   * @param i a int
+   */
   public void removeInputStream(int i);
 }

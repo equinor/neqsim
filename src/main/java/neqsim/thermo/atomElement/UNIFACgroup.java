@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifac;
 
@@ -18,6 +19,8 @@ import neqsim.thermo.phase.PhaseGEUnifac;
  */
 public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<UNIFACgroup> {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(UNIFACgroup.class);
+
   double R = 0.0;
   double Q = 0.0;
   int n = 0;
@@ -25,7 +28,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   double QComp = 0.0;
   double QMix = 0.0;
   public double[] QMixdN = null; // , xMixdN = null;
-  double[] lnGammaMixdn = new double[MAX_NUMBER_OF_COMPONENTS];
+  double[] lnGammaMixdn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   double lnGammaComp = 0.0;
   double lnGammaMix = 0.0;
   double lnGammaCompdT = 0.0;
@@ -36,7 +39,6 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   String groupName = "";
   int mainGroup = 0;
   int subGroup = 0;
-  static Logger logger = LogManager.getLogger(UNIFACgroup.class);
 
   /**
    * <p>
@@ -76,8 +78,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    * @param temp a int
    */
   public UNIFACgroup(int groupNumber, int temp) {
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    try {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
         dataSet = database
@@ -96,15 +97,8 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
       mainGroup = Integer.parseInt(dataSet.getString("Main"));
       subGroup = Integer.parseInt(dataSet.getString("Secondary"));
       groupName = dataSet.getString("Name");
-      dataSet.close();
-      database.getConnection().close();
     } catch (Exception ex) {
-      try {
-        database.getConnection().close();
-      } catch (Exception ex2) {
-        logger.error(ex2);
-      }
-      logger.error(ex.toString());
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -216,6 +210,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     this.groupName = groupName;
   }
 
+  /** {@inheritDoc} */
   @Override
   public int compareTo(UNIFACgroup o) {
     if (o.getSubGroup() < getSubGroup()) {
@@ -242,6 +237,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
 
   /** {@inheritDoc} */
   // @Override
+  @Override
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
@@ -289,7 +285,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
   /*
    * public double calcXMix(PhaseGEUnifac phase) { double temp = 0.0, temp2 = 0.0, tempVal = 0.0;
-   * 
+   *
    * for (int j = 0; j < phase.getNumberOfComponents(); j++) { for (int i = 0; i <
    * ((ComponentGEUnifac) phase.getComponent(j)).getNumberOfUNIFACgroups(); i++) { tempVal =
    * phase.getComponent(j).getNumberOfMolesInPhase() * ((ComponentGEUnifac)
@@ -359,7 +355,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseGEUnifac} object
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcQMixdN(PhaseGEUnifac phase) {
     setQMixdN(new double[phase.getNumberOfComponents()]);
@@ -414,7 +410,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
   /*
    * public double getXMixdN(int comp) { return xMixdN[comp]; }
-   * 
+   *
    * public void setXMixdN(double[] xMixdN) { this.xMixdN = xMixdN; }
    */
 

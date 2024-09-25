@@ -33,7 +33,8 @@ public class ModelTest {
         // SystemInterface testSystem = new SystemFurstElectrolyteEos(273.14 + 12,
         // 61.0);
         // SystemInterface testSystem = new SystemUMRPRUMCEos(300.0, 10.0);
-        // SystemInterface testSystem = new SystemSrkEos(298.15, 1.01325);
+        // SystemInterface testSystem = new SystemSrkEos(298.15,
+        // ThermodynamicConstantsInterface.referencePressure);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
         //testSystem.addComponent("methane", 100);
@@ -48,7 +49,7 @@ public class ModelTest {
         // testSystem.addComponent("Cl-", 0.1);
         // testSystem.addComponent("MEG", 2.1);
          testSystem.addComponent("methanol", 20);
-        /// testSystem.addComponent("MEG", 5.3);
+         // testSystem.addComponent("MEG", 5.3);
         // testSystem.addComponent("MEG", 10.0);
         // testSystem.addTBPfraction("C8", 10.1, 90.0 / 1000.0, 0.8);
         //testSystem.addComponent("MEG", 10.5);

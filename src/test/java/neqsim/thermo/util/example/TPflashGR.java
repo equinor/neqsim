@@ -99,7 +99,7 @@ public class TPflashGR {
       fluid1.initPhysicalProperties();
       enthalpy[i] = fluid1.getEnthalpy();
       entropy[i] = fluid1.getEntropy();
-      System.out.println("enthalpy " + enthalpy[i]);
+      logger.debug("enthalpy " + enthalpy[i]);
       fluid1.display();
     }
     /*

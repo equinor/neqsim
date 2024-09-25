@@ -1,6 +1,7 @@
 package neqsim.processSimulation.mechanicalDesign.separator;
 
 import neqsim.processSimulation.mechanicalDesign.designStandards.GasScrubberDesignStandard;
+import neqsim.processSimulation.mechanicalDesign.separator.sectionType.SepDesignSection;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
@@ -72,7 +73,9 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
         .getPhysicalProperties().getDensity();
     double liqDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(1)
         .getPhysicalProperties().getDensity();
-
+    if (((SeparatorInterface) getProcessEquipment()).getThermoSystem().getNumberOfPhases() == 1) {
+      liqDensity = getDefaultLiquidDensity();
+    }
     maxDesignVolumeFlow = volumeSafetyFactor
         * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume()
         / 1e5;
@@ -81,17 +84,21 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     innerDiameter = Math.sqrt(4.0 * getMaxDesignVolumeFlow()
         / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
     tantanLength = innerDiameter * 5.0;
-    System.out.println("inner Diameter " + innerDiameter);
+    // System.out.println("inner Diameter " + innerDiameter);
 
     // calculating from standard codes
     // sepLength = innerDiameter * 2.0;
     emptyVesselWeight = 0.032 * getWallThickness() * 1e3 * innerDiameter * 1e3 * tantanLength;
+
+    setOuterDiameter(innerDiameter + 2.0 * getWallThickness());
     for (SeparatorSection sep : separator.getSeparatorSections()) {
-      sep.getMechanicalDesign().calcDesign();
-      internalsWeight += sep.getMechanicalDesign().getTotalWeight();
+      sep.setOuterDiameter(getOuterDiameter());
+      SepDesignSection sect = sep.getMechanicalDesign();
+      sect.calcDesign();
+      internalsWeight += sect.getTotalWeight();
     }
 
-    System.out.println("internal weight " + internalsWeight);
+    // System.out.println("internal weight " + internalsWeight);
 
     externalNozzelsWeight = 0.0;
     double Wv = emptyVesselWeight + internalsWeight + externalNozzelsWeight;
@@ -104,17 +111,14 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     moduleLength = innerDiameter * 2.5;
     moduleLength = tantanLength * 1.5;
     moduleHeight = innerDiameter * 2;
-    // }
-
-    setOuterDiameter(innerDiameter + 2.0 * getWallThickness());
-
-    System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() + " m");
-    System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
-    System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-    System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength + " height "
-        + moduleHeight + " meter.");
-    System.out.println("mechanical price: " + materialsCost + " kNOK");
-
+    /*
+     * System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() +
+     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
+     * System.out.println("total skid weigth: " + totalSkidWeight + " kg");
+     * System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength +
+     * " height " + moduleHeight + " meter."); System.out.println("mechanical price: " +
+     * materialsCost + " kNOK");
+     */
     setWeigthVesselShell(emptyVesselWeight);
 
     tantanLength = innerDiameter * 5;

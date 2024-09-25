@@ -14,13 +14,14 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class LumpingModel implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(LumpingModel.class);
+
   int numberOfLumpedComponents = 7;
   int numberOfPseudocomponents = 7;
   private String[] lumpedComponentNames = null;
   double[] fractionOfHeavyEnd = null;
   String name = "";
   SystemInterface system = null;
-  static Logger logger = LogManager.getLogger(LumpingModel.class);
 
   /**
    * <p>
@@ -198,7 +199,7 @@ public class LumpingModel implements java.io.Serializable {
         neqsim.util.exception.ThermoException ex =
             new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
                 "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
         throw new RuntimeException(ex);
       }
       return fractionOfHeavyEnd[i];
@@ -305,6 +306,7 @@ public class LumpingModel implements java.io.Serializable {
         system.removeComponent(system.getPhase(0)
             .getComponent(charac.getPlusFractionModel().getPlusComponentNumber()).getName());
       }
+      system.init(0);
     }
 
     @Override
@@ -313,7 +315,7 @@ public class LumpingModel implements java.io.Serializable {
         neqsim.util.exception.ThermoException ex =
             new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
                 "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
         throw new RuntimeException(ex);
       }
       return fractionOfHeavyEnd[i];
@@ -397,18 +399,18 @@ public class LumpingModel implements java.io.Serializable {
         pseudoNumber++;
         String addName = "C" + Integer.toString(starti) + "-" + Integer.toString(i);
         getLumpedComponentNames()[k] = addName;
-        // System.out.println("adding " + addName);
+        //System.out.println("adding " + addName);
         fractionOfHeavyEnd[k] = zPlus[k] / molFracTot;
-
         system.addTBPfraction(addName, totalNumberOfMoles * zPlus[k], Maverage / zPlus[k],
             denstemp1 / denstemp2);
         k++;
-        starti = i + 1;
+        starti = i;
       }
       if (charac.getPlusFractionModel().hasPlusFraction()) {
         system.removeComponent(system.getPhase(0)
             .getComponent(charac.getPlusFractionModel().getPlusComponentNumber()).getName());
       }
+      system.init(0);
     }
 
     @Override
@@ -417,7 +419,7 @@ public class LumpingModel implements java.io.Serializable {
         neqsim.util.exception.ThermoException ex =
             new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
                 "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
-        logger.error(ex.getMessage());
+        logger.error(ex.getMessage(), ex);
         throw new RuntimeException(ex);
       }
       return fractionOfHeavyEnd[i];

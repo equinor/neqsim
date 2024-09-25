@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseDesmukhMather;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -24,58 +25,40 @@ public class ComponentDesmukhMather extends ComponentGE {
    * Constructor for ComponentDesmukhMather.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentDesmukhMather(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+  public ComponentDesmukhMather(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     java.sql.ResultSet dataSet = null;
 
-    try {
-      if (!component_name.equals("default")) {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+      if (!name.equals("default")) {
         try {
-          dataSet =
-              database.getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
+          dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
           dataSet.next();
           dataSet.getString("FORMULA");
         } catch (Exception ex) {
           dataSet.close();
-          logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
-          dataSet =
-              database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+          logger.info("no parameters in tempcomp -- trying comp.. " + name);
+          dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           dataSet.next();
         }
         deshMathIonicDiameter = Double.parseDouble(dataSet.getString("DeshMatIonicDiameter"));
       }
     } catch (Exception ex) {
       logger.error("error in comp", ex);
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
-        if (database.getStatement() != null) {
-          database.getStatement().close();
-        }
-        if (database.getConnection() != null) {
-          database.getConnection().close();
-        }
-      } catch (Exception ex) {
-        logger.error("error closing database.....", ex);
-      }
     }
   }
 
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam,
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
       String[][] mixRule) {
-    return getGamma(phase, numberOfComponents, temperature, pressure, phasetype);
+    return getGamma(phase, numberOfComponents, temperature, pressure, pt);
   }
 
   /**
@@ -87,11 +70,11 @@ public class ComponentDesmukhMather extends ComponentGE {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
+      double pressure, PhaseType pt) {
     double A = 1.174;
 
     double B = 3.32384e9;
@@ -135,13 +118,13 @@ public class ComponentDesmukhMather extends ComponentGE {
       fugacityCoefficient =
           gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
     } else if (ionicCharge == 0 && referenceStateType.equals("solute")) {
-      fugacityCoefficient = gamma * getHenryCoef(phase.getTemperature()) / phase.getPressure(); // sjekke
-                                                                                                // denne
+      // TODO: sjekk denne
+      fugacityCoefficient = gamma * getHenryCoef(phase.getTemperature()) / phase.getPressure();
     } else {
       fugacityCoefficient = 1e-15;
       // System.out.println("fug " + fugacityCoefficient);
     }
-    logFugacityCoefficient = Math.log(fugacityCoefficient);
+
     return fugacityCoefficient;
   }
 

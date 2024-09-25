@@ -4,14 +4,18 @@ package neqsim.thermo.system;
  * This class defines a thermodynamic system using the Predictive SRK-EoS equation of state.
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemPsrkEos extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
+  /**
+   * <p>
+   * Constructor for SystemPsrkEos.
+   * </p>
+   */
   public SystemPsrkEos() {
-    super();
-    modelName = "Predictive-SRK-EOS";
-    attractiveTermNumber = 4;
+    this(298.15, 1.0, false);
   }
 
   /**
@@ -19,13 +23,11 @@ public class SystemPsrkEos extends SystemSrkEos {
    * Constructor for SystemPsrkEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
    */
   public SystemPsrkEos(double T, double P) {
-    super(T, P);
-    modelName = "Predictive-SRK-EOS";
-    attractiveTermNumber = 4;
+    this(T, P, false);
   }
 
   /**
@@ -33,12 +35,12 @@ public class SystemPsrkEos extends SystemSrkEos {
    * Constructor for SystemPsrkEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
-   * @param solidCheck a boolean
+   * @param T The temperature in unit Kelvin
+   * @param P The pressure in unit bara (absolute pressure)
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemPsrkEos(double T, double P, boolean solidCheck) {
-    super(T, P, solidCheck);
+  public SystemPsrkEos(double T, double P, boolean checkForSolids) {
+    super(T, P, checkForSolids);
     attractiveTermNumber = 4;
     modelName = "Predictive-SRK-EOS";
   }
@@ -52,10 +54,6 @@ public class SystemPsrkEos extends SystemSrkEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

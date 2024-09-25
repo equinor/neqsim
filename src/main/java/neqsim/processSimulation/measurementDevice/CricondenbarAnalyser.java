@@ -14,17 +14,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  * @version $Id: $Id
  */
-public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
+public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(CricondenbarAnalyser.class);
-  protected StreamInterface stream = null;
-
-  /**
-   * <p>
-   * Constructor for CricondenbarAnalyser.
-   * </p>
-   */
-  public CricondenbarAnalyser() {}
 
   /**
    * <p>
@@ -34,8 +26,19 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
    * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public CricondenbarAnalyser(StreamInterface stream) {
-    this.stream = stream;
-    unit = "K";
+    this("CricondenbarAnalyser", stream);
+  }
+
+  /**
+   * <p>
+   * Constructor for CricondenbarAnalyser.
+   * </p>
+   *
+   * @param name Name of CricondenbarAnalyser
+   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public CricondenbarAnalyser(String name, StreamInterface stream) {
+    super(name, "K", stream);
     setConditionAnalysisMaxDeviation(1.0);
   }
 
@@ -53,12 +56,6 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public double getMeasuredValue() {
-    return getMeasuredValue(unit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getMeasuredValue(String unit) {
     SystemInterface tempFluid = stream.getThermoSystem().clone();
     tempFluid.removeComponent("water");
@@ -68,7 +65,7 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
       thermoOps.calcPTphaseEnvelope(false, 1.);
       thermoOps.waitAndCheckForFinishedCalculation(15000);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     return thermoOps.get("cricondenbar")[1];
   }
@@ -94,7 +91,7 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
     try {
       thermoOps.run();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     return thermoOps.getSaturationPressure();
   }

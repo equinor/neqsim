@@ -62,13 +62,6 @@ public class pLoadingCurve2 extends BaseOperation {
    * <p>
    * Constructor for pLoadingCurve2.
    * </p>
-   */
-  public pLoadingCurve2() {}
-
-  /**
-   * <p>
-   * Constructor for pLoadingCurve2.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

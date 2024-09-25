@@ -8,6 +8,8 @@ import java.io.Writer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
@@ -166,7 +168,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
       TC = thermoSystem.getTC() - 273.15;
       PC = thermoSystem.getPC() * 1e5;
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
   }
 
@@ -175,8 +177,8 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
    * calcBubP.
    * </p>
    *
-   * @param enthalpies an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param enthalpies an array of type double
+   * @return an array of type double
    */
   public double[] calcBubP(double[] enthalpies) {
     double[] bubP = new double[enthalpies.length];
@@ -187,7 +189,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
         thermoOps.bubblePointPressureFlash(false);
         bubP[i] = thermoSystem.getPressure();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         bubP[i] = 0;
         return bubP;
       }
@@ -201,8 +203,8 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
    * calcDewP.
    * </p>
    *
-   * @param enthalpies an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param enthalpies an array of type double
+   * @return an array of type double
    */
   public double[] calcDewP(double[] enthalpies) {
     double[] dewP = new double[enthalpies.length];
@@ -213,7 +215,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
         thermoOps.dewPointPressureFlashHC();
         dewP[i] = thermoSystem.getPressure();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         dewP[i] = 0;
         return dewP;
       }
@@ -228,8 +230,8 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
    * calcBubT.
    * </p>
    *
-   * @param pressures an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param pressures an array of type double
+   * @return an array of type double
    */
   public double[] calcBubT(double[] pressures) {
     double[] bubTemps = new double[pressures.length];
@@ -239,7 +241,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
         thermoOps.bubblePointTemperatureFlash();
         bubT[i] = thermoSystem.getPressure();
       } catch (Exception ex) {
-        logger.error("error", ex);
+        logger.error(ex.getMessage(), ex);
         bubT[i] = 0.0;
       }
     }
@@ -253,7 +255,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
    */
   public void initCalc() {
     double stdTemp = 288.15;
-    double stdPres = 1.01325;
+    double stdPres = ThermodynamicConstantsInterface.referencePressure;
     // double GOR, GLR;
     double[] molfracs = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
     double[] MW = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -349,7 +351,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
               + thermoSystem.getPressure());
 
           thermoSystem.display();
-          logger.error("error", ex);
+          logger.error(ex.getMessage(), ex);
         }
 
         /*
@@ -389,9 +391,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
                     + thermoSystem.getPhase("oil").getBeta()
                         * thermoSystem.getPhase("oil").getMolarMass());
           } else {
-            props[k][i][j] = 1.0; // thermoSystem.getPhase(phaseNumb).getBeta() *
-                                  // thermoSystem.getPhase(phaseNumb).getMolarMass() /
-                                  // thermoSystem.getMolarMass();
+            props[k][i][j] = 1.0;
+            // thermoSystem.getPhase(phaseNumb).getBeta() *
+            // thermoSystem.getPhase(phaseNumb).getMolarMass() / thermoSystem.getMolarMass();
           }
           names[k] = "GAS MASS FRACTION";
           units[k] = "-";
@@ -531,9 +533,9 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
           units[k] = "KG/M3-K";
           k++;
 
-          props[k][i][j] = 0.0; // thermoSystem.getPhase(phaseNumb).getBeta() *
-                                // thermoSystem.getPhase(phaseNumb).getMolarMass() /
-                                // thermoSystem.getMolarMass();
+          props[k][i][j] = 0.0;
+          // thermoSystem.getPhase(phaseNumb).getBeta() *
+          // thermoSystem.getPhase(phaseNumb).getMolarMass() / thermoSystem.getMolarMass();
           names[k] = "GAS MASS FRACTION";
           units[k] = "-";
           k++;
@@ -729,7 +731,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
           } while (k < 17); // names[k] = "GAS DENSITY";
           // units[k] = "KG/M3";
         } else {
-          oilSystem.setPhaseType(0, 0);
+          oilSystem.setPhaseType(0, PhaseType.byValue(0));
           // oilSystem.setTemperature(enthalpies[j]);
           oilSystem.setPressure(pressures[i]);
           oilSystem.init(3);
@@ -779,8 +781,8 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
           units[k] = "W/M-K";
           k++;
         } // setOilProperties();
-          // set gas properties
 
+        // set gas properties
         if (thermoSystem.hasPhaseType("aqueous") && acceptedFlash) {
           int phaseNumb = thermoSystem.getPhaseNumberOfPhase("aqueous");
           if (thermoSystem.hasPhaseType("gas")) {
@@ -923,14 +925,14 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
         } else {
           waterSystem.setTemperature(enthalpies[j]);
           waterSystem.setPressure(pressures[i]);
-          waterSystem.setPhaseType(0, 0);
+          waterSystem.setPhaseType(0, PhaseType.byValue(0));
           waterSystem.init(3);
           waterSystem.initPhysicalProperties();
 
           if (thermoSystem.getPhase(0).hasComponent("water")) {
             props[k][i][j] = thermoSystem.getPhase(0).getComponent("water").getz()
                 * thermoSystem.getPhase(0).getComponent("water").getMolarMass()
-                / thermoSystem.getPhase(0).getMolarMass();;
+                / thermoSystem.getPhase(0).getMolarMass();
           } else {
             props[k][i][j] = 0.0;
           }
@@ -1185,7 +1187,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
                * 3]) / (enthalpies[j - 1] - enthalpies[j - 3]) * (enthalpies[j] - enthalpies[j -
                * 1]))); if (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j] <
                * 10.0e-3) { props[k][i][j] = 25.0e-3; LWS=1; }
-               * 
+               *
                * if (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j] > 120.0e-3) {
                * props[k][i][j] = 80.0e-3; LWS=1; } }
                */
@@ -1220,7 +1222,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
                * / (pressures[i - 1] - pressures[i - 3]) * (pressures[i] - pressures[i - 1]))); if
                * (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j] < 10.0e-3) {
                * props[k][i][j] = 25.0e-3; LWS=1; }
-               * 
+               *
                * if (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j] > 120.0e-3) {
                * props[k][i][j] = 80.0e-3; LWS=1; } }
                */
@@ -1294,14 +1296,8 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
     for (int i = 0; i < pressures.length; i++) {
       thermoSystem.setPressure(pressures[i]);
       for (int j = 0; j < enthalpies.length; j++) {
-        logger.info("pressure " + pressureLOG[i] + " enthalpy " + enthalpiesLOG[j]); // + "
-                                                                                     // ROG "
-                                                                                     // +
-                                                                                     // ROG[i][j]
-                                                                                     // + "
-                                                                                     // ROL "
-                                                                                     // +
-                                                                                     // ROL[i][j]);
+        logger.info("pressure " + pressureLOG[i] + " enthalpy " + enthalpiesLOG[j]);
+        // + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
       }
     }
     writeOLGAinpFile(fileName);

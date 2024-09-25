@@ -30,7 +30,7 @@ public interface OperationInterface extends Runnable, java.io.Serializable {
    * </p>
    *
    * @param i a int
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getPoints(int i);
 
@@ -40,7 +40,7 @@ public interface OperationInterface extends Runnable, java.io.Serializable {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param data an array of {@link double} objects
+   * @param data an array of type double
    */
   public void addData(String name, double[][] data);
 
@@ -68,7 +68,7 @@ public interface OperationInterface extends Runnable, java.io.Serializable {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] get(String name);
 

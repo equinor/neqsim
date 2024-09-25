@@ -56,7 +56,7 @@ public class newtonRhapson implements java.io.Serializable {
    * setConstants.
    * </p>
    *
-   * @param constants an array of {@link double} objects
+   * @param constants an array of type double
    */
   public void setConstants(double[] constants) {
     System.arraycopy(constants, 0, polyConstants, 0, constants.length);

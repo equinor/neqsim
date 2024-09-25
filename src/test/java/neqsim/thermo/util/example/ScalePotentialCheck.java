@@ -80,7 +80,7 @@ public class ScalePotentialCheck {
       // testOps.display();
       logger.info(testOps.getResultTable());
     } catch (Exception ex) {
-      logger.error("error", ex);
+      logger.error(ex.getMessage(), ex);
     }
     logger.info("pH " + testSystem.getPhase("aqueous").getpH());
     // testSystem.display();

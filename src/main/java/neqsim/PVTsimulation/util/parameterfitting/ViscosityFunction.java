@@ -12,51 +12,51 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class ViscosityFunction extends LevenbergMarquardtFunction {
-    double molarMass = 0.0;
-    boolean includeWaxEmulsionViscosity = true;
+  double molarMass = 0.0;
+  boolean includeWaxEmulsionViscosity = true;
 
-    /**
-     * <p>
-     * Constructor for ViscosityFunction.
-     * </p>
-     */
-    public ViscosityFunction() {
-        params = new double[1];
+  /**
+   * <p>
+   * Constructor for ViscosityFunction.
+   * </p>
+   */
+  public ViscosityFunction() {
+    params = new double[1];
+  }
+
+  /**
+   * <p>
+   * Constructor for ViscosityFunction.
+   * </p>
+   *
+   * @param includeWax a boolean
+   */
+  public ViscosityFunction(boolean includeWax) {
+    params = new double[1];
+    includeWaxEmulsionViscosity = includeWax;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calcValue(double[] dependentValues) {
+    thermoOps.TPflash();
+    system.initPhysicalProperties();
+    double waxFraction = 0.0;
+    if (system.hasPhaseType("wax") && includeWaxEmulsionViscosity) {
+      waxFraction = system.getWtFraction(system.getPhaseNumberOfPhase("wax"));
+      return system.getPhase(0).getPhysicalProperties().getViscosityOfWaxyOil(waxFraction,
+          dependentValues[0]); // %wax
     }
+    // system.display();
+    return system.getPhase(0).getPhysicalProperties().getViscosity(); // %wax
+  }
 
-    /**
-     * <p>
-     * Constructor for ViscosityFunction.
-     * </p>
-     *
-     * @param includeWax a boolean
-     */
-    public ViscosityFunction(boolean includeWax) {
-        params = new double[1];
-        includeWaxEmulsionViscosity = includeWax;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void setFittingParams(int i, double value) {
+    params[i] = value;
 
-    /** {@inheritDoc} */
-    @Override
-    public double calcValue(double[] dependentValues) {
-        thermoOps.TPflash();
-        system.initPhysicalProperties();
-        double waxFraction = 0.0;
-        if (system.hasPhaseType("wax") && includeWaxEmulsionViscosity) {
-            waxFraction = system.getWtFraction(system.getPhaseNumberOfPhase("wax"));
-            return system.getPhase(0).getPhysicalProperties().getViscosityOfWaxyOil(waxFraction,
-                    dependentValues[0]); // %wax
-        }
-        // system.display();
-        return system.getPhase(0).getPhysicalProperties().getViscosity(); // %wax
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void setFittingParams(int i, double value) {
-        params[i] = value;
-
-        ((FrictionTheoryViscosityMethod) system.getPhase(0).getPhysicalProperties()
-                .getViscosityModel()).setTBPviscosityCorrection(value);
-    }
+    ((FrictionTheoryViscosityMethod) system.getPhase(0).getPhysicalProperties().getViscosityModel())
+        .setTBPviscosityCorrection(value);
+  }
 }

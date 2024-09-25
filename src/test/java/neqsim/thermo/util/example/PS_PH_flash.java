@@ -74,11 +74,10 @@ public class PS_PH_flash {
     double entropy = testSystem.getEntropy();
     /*
      * testSystem.setTemperature(273.15 + 0.0); testSystem.setPressure(100.0); try {
-     * testOps.TPflash(); // testOps.bubblePointTemperatureFlash(); } catch (Exception ex) {
-     * 
-     * } testSystem.init(2); testSystem.setPressure(100.0); // System.out.println("entropy spec" +
+     * testOps.TPflash(); // testOps.bubblePointTemperatureFlash(); } catch (Exception ex) { }
+     * testSystem.init(2); testSystem.setPressure(100.0); // System.out.println("entropy spec" +
      * entropy);
-     * 
+     *
      * // testSystem.setPressure(20.894745);
      */
     testSystem.setPressure(10.0);

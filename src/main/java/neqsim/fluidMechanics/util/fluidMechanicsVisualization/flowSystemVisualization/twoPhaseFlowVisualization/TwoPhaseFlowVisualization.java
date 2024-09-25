@@ -9,23 +9,23 @@ package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisuali
  * @version $Id: $Id
  */
 public class TwoPhaseFlowVisualization extends
-        neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualization {
-    /**
-     * <p>
-     * Constructor for TwoPhaseFlowVisualization.
-     * </p>
-     */
-    public TwoPhaseFlowVisualization() {}
+    neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualization {
+  /**
+   * <p>
+   * Constructor for TwoPhaseFlowVisualization.
+   * </p>
+   */
+  public TwoPhaseFlowVisualization() {}
 
-    /**
-     * <p>
-     * Constructor for TwoPhaseFlowVisualization.
-     * </p>
-     *
-     * @param nodes a int
-     * @param timeSteps a int
-     */
-    public TwoPhaseFlowVisualization(int nodes, int timeSteps) {
-        super(nodes, timeSteps);
-    }
+  /**
+   * <p>
+   * Constructor for TwoPhaseFlowVisualization.
+   * </p>
+   *
+   * @param nodes a int
+   * @param timeSteps a int
+   */
+  public TwoPhaseFlowVisualization(int nodes, int timeSteps) {
+    super(nodes, timeSteps);
+  }
 }

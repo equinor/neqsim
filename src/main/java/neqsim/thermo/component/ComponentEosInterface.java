@@ -17,366 +17,366 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public interface ComponentEosInterface extends ComponentInterface {
-    /**
-     * <p>
-     * aT.
-     * </p>
-     *
-     * @param temperature a double
-     * @return a double
-     */
-    double aT(double temperature);
+  /**
+   * <p>
+   * aT.
+   * </p>
+   *
+   * @param temperature a double
+   * @return a double
+   */
+  double aT(double temperature);
 
-    /**
-     * <p>
-     * diffaT.
-     * </p>
-     *
-     * @param temperature a double
-     * @return a double
-     */
-    public double diffaT(double temperature);
+  /**
+   * <p>
+   * diffaT.
+   * </p>
+   *
+   * @param temperature a double
+   * @return a double
+   */
+  public double diffaT(double temperature);
 
-    /**
-     * <p>
-     * diffdiffaT.
-     * </p>
-     *
-     * @param temperature a double
-     * @return a double
-     */
-    public double diffdiffaT(double temperature);
+  /**
+   * <p>
+   * diffdiffaT.
+   * </p>
+   *
+   * @param temperature a double
+   * @return a double
+   */
+  public double diffdiffaT(double temperature);
 
-    /**
-     * <p>
-     * getb.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getb();
+  /**
+   * <p>
+   * getb.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getb();
 
-    /**
-     * <p>
-     * getAiT.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getAiT();
+  /**
+   * <p>
+   * getAiT.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getAiT();
 
-    /**
-     * <p>
-     * geta.
-     * </p>
-     *
-     * @return a double
-     */
-    public double geta();
+  /**
+   * <p>
+   * geta.
+   * </p>
+   *
+   * @return a double
+   */
+  public double geta();
 
-    /**
-     * <p>
-     * getaDiffT.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getaDiffT();
+  /**
+   * <p>
+   * getaDiffT.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getaDiffT();
 
-    /**
-     * <p>
-     * getaDiffDiffT.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getaDiffDiffT();
+  /**
+   * <p>
+   * getaDiffDiffT.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getaDiffDiffT();
 
-    /**
-     * <p>
-     * getaT.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getaT();
+  /**
+   * <p>
+   * getaT.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getaT();
 
-    /**
-     * <p>
-     * getBij.
-     * </p>
-     *
-     * @param j a int
-     * @return a double
-     */
-    public double getBij(int j);
+  /**
+   * <p>
+   * getBij.
+   * </p>
+   *
+   * @param j a int
+   * @return a double
+   */
+  public double getBij(int j);
 
-    /**
-     * <p>
-     * getAij.
-     * </p>
-     *
-     * @param j a int
-     * @return a double
-     */
-    public double getAij(int j);
+  /**
+   * <p>
+   * getAij.
+   * </p>
+   *
+   * @param j a int
+   * @return a double
+   */
+  public double getAij(int j);
 
-    /**
-     * <p>
-     * getBi.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getBi();
+  /**
+   * <p>
+   * getBi.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getBi();
 
-    /**
-     * <p>
-     * getAi.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getAi();
+  /**
+   * <p>
+   * getAi.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getAi();
 
-    /**
-     * <p>
-     * calca.
-     * </p>
-     *
-     * @return a double
-     */
-    public double calca();
+  /**
+   * <p>
+   * calca.
+   * </p>
+   *
+   * @return a double
+   */
+  public double calca();
 
-    /**
-     * <p>
-     * calcb.
-     * </p>
-     *
-     * @return a double
-     */
-    public double calcb();
+  /**
+   * <p>
+   * calcb.
+   * </p>
+   *
+   * @return a double
+   */
+  public double calcb();
 
-    /**
-     * <p>
-     * getAder.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getAder();
+  /**
+   * <p>
+   * getAder.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getAder();
 
-    /**
-     * <p>
-     * setAder.
-     * </p>
-     *
-     * @param val a double
-     */
-    public void setAder(double val);
+  /**
+   * <p>
+   * setAder.
+   * </p>
+   *
+   * @param val a double
+   */
+  public void setAder(double val);
 
-    /**
-     * <p>
-     * getDeltaEosParameters.
-     * </p>
-     *
-     * @return an array of {@link double} objects
-     */
-    public double[] getDeltaEosParameters();
+  /**
+   * <p>
+   * getDeltaEosParameters.
+   * </p>
+   *
+   * @return an array of type double
+   */
+  public double[] getDeltaEosParameters();
 
-    /**
-     * <p>
-     * getdAdndn.
-     * </p>
-     *
-     * @param j a int
-     * @return a double
-     */
-    public double getdAdndn(int j);
+  /**
+   * <p>
+   * getdAdndn.
+   * </p>
+   *
+   * @param j a int
+   * @return a double
+   */
+  public double getdAdndn(int j);
 
-    /**
-     * <p>
-     * setdAdndn.
-     * </p>
-     *
-     * @param jComp a int
-     * @param val a double
-     */
-    public void setdAdndn(int jComp, double val);
+  /**
+   * <p>
+   * setdAdndn.
+   * </p>
+   *
+   * @param jComp a int
+   * @param val a double
+   */
+  public void setdAdndn(int jComp, double val);
 
-    /**
-     * <p>
-     * getdAdT.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getdAdT();
+  /**
+   * <p>
+   * getdAdT.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getdAdT();
 
-    /**
-     * <p>
-     * setdAdT.
-     * </p>
-     *
-     * @param val a double
-     */
-    public void setdAdT(double val);
+  /**
+   * <p>
+   * setdAdT.
+   * </p>
+   *
+   * @param val a double
+   */
+  public void setdAdT(double val);
 
-    /**
-     * <p>
-     * setdAdTdT.
-     * </p>
-     *
-     * @param val a double
-     */
-    public void setdAdTdT(double val);
+  /**
+   * <p>
+   * setdAdTdT.
+   * </p>
+   *
+   * @param val a double
+   */
+  public void setdAdTdT(double val);
 
-    /**
-     * <p>
-     * getBder.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getBder();
+  /**
+   * <p>
+   * getBder.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getBder();
 
-    /**
-     * <p>
-     * setBder.
-     * </p>
-     *
-     * @param val a double
-     */
-    public void setBder(double val);
+  /**
+   * <p>
+   * setBder.
+   * </p>
+   *
+   * @param val a double
+   */
+  public void setBder(double val);
 
-    /**
-     * <p>
-     * getdBdndn.
-     * </p>
-     *
-     * @param j a int
-     * @return a double
-     */
-    public double getdBdndn(int j);
+  /**
+   * <p>
+   * getdBdndn.
+   * </p>
+   *
+   * @param j a int
+   * @return a double
+   */
+  public double getdBdndn(int j);
 
-    /**
-     * <p>
-     * setdBdndn.
-     * </p>
-     *
-     * @param jComp a int
-     * @param val a double
-     */
-    public void setdBdndn(int jComp, double val);
+  /**
+   * <p>
+   * setdBdndn.
+   * </p>
+   *
+   * @param jComp a int
+   * @param val a double
+   */
+  public void setdBdndn(int jComp, double val);
 
-    /**
-     * <p>
-     * getdBdT.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getdBdT();
+  /**
+   * <p>
+   * getdBdT.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getdBdT();
 
-    /**
-     * <p>
-     * setdBdTdT.
-     * </p>
-     *
-     * @param val a double
-     */
-    public void setdBdTdT(double val);
+  /**
+   * <p>
+   * setdBdTdT.
+   * </p>
+   *
+   * @param val a double
+   */
+  public void setdBdTdT(double val);
 
-    /**
-     * <p>
-     * getdBdndT.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getdBdndT();
+  /**
+   * <p>
+   * getdBdndT.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getdBdndT();
 
-    /**
-     * <p>
-     * setdBdndT.
-     * </p>
-     *
-     * @param val a double
-     */
-    public void setdBdndT(double val);
+  /**
+   * <p>
+   * setdBdndT.
+   * </p>
+   *
+   * @param val a double
+   */
+  public void setdBdndT(double val);
 
-    /**
-     * <p>
-     * setdAdTdn.
-     * </p>
-     *
-     * @param val a double
-     */
-    public void setdAdTdn(double val);
+  /**
+   * <p>
+   * setdAdTdn.
+   * </p>
+   *
+   * @param val a double
+   */
+  public void setdAdTdn(double val);
 
-    /**
-     * <p>
-     * getdAdTdn.
-     * </p>
-     *
-     * @return a double
-     */
-    public double getdAdTdn();
+  /**
+   * <p>
+   * getdAdTdn.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getdAdTdn();
 
-    /**
-     * <p>
-     * dFdN.
-     * </p>
-     *
-     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-     * @param numberOfComponents a int
-     * @param temperature a double
-     * @param pressure a double
-     * @return a double
-     */
-    public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
-            double pressure);
+  /**
+   * <p>
+   * dFdN.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param numberOfComponents a int
+   * @param temperature a double
+   * @param pressure a double
+   * @return a double
+   */
+  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure);
 
-    /**
-     * <p>
-     * dFdNdT.
-     * </p>
-     *
-     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-     * @param numberOfComponents a int
-     * @param temperature a double
-     * @param pressure a double
-     * @return a double
-     */
-    public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-            double pressure);
+  /**
+   * <p>
+   * dFdNdT.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param numberOfComponents a int
+   * @param temperature a double
+   * @param pressure a double
+   * @return a double
+   */
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure);
 
-    /**
-     * <p>
-     * dFdNdV.
-     * </p>
-     *
-     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-     * @param numberOfComponents a int
-     * @param temperature a double
-     * @param pressure a double
-     * @return a double
-     */
-    public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-            double pressure);
+  /**
+   * <p>
+   * dFdNdV.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param numberOfComponents a int
+   * @param temperature a double
+   * @param pressure a double
+   * @return a double
+   */
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure);
 
-    /**
-     * <p>
-     * dFdNdN.
-     * </p>
-     *
-     * @param j a int
-     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-     * @param numberOfComponents a int
-     * @param temperature a double
-     * @param pressure a double
-     * @return a double
-     */
-    public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
-            double pressure);
+  /**
+   * <p>
+   * dFdNdN.
+   * </p>
+   *
+   * @param j a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param numberOfComponents a int
+   * @param temperature a double
+   * @param pressure a double
+   * @return a double
+   */
+  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure);
 }

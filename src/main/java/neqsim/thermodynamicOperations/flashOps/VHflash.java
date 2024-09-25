@@ -21,13 +21,6 @@ public class VHflash extends Flash {
    * <p>
    * Constructor for VHflash.
    * </p>
-   */
-  public VHflash() {}
-
-  /**
-   * <p>
-   * Constructor for VHflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Hspec a double
@@ -77,8 +70,9 @@ public class VHflash extends Flash {
         } else {
           // System.out.println("pres " + (system.getPressure()+0.1*dPdV*(newVol-Vspec)));
           system.setPressure(
-              system.getPressure() - 0.6 * 1.0 / system.getdVdPtn() * (newVol - Vspec)); // system.getdVdPtn()*(newVol-Vspec));
-                                                                                         // //dPdV*(newVol-Vspec));
+              system.getPressure() - 0.6 * 1.0 / system.getdVdPtn() * (newVol - Vspec));
+          // system.getdVdPtn()*(newVol-Vspec));
+          // //dPdV*(newVol-Vspec));
         }
         // pNew = system.getPressure();
         // dPdV = (pOld - pOldOld) / (newVol - oldVol);

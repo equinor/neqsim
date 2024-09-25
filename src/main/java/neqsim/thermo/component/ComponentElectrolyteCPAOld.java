@@ -16,6 +16,7 @@ import neqsim.thermo.phase.PhaseInterface;
 public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyteEos
     implements ComponentCPAInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentElectrolyteCPAOld.class);
 
   int cpaon = 1;
 
@@ -24,21 +25,19 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
   double[] xsiteOld = new double[0];
   double[] xsitedV = new double[0];
   double[] xsitedT = new double[0];
-  static Logger logger = LogManager.getLogger(ComponentElectrolyteCPAOld.class);
 
   /**
    * <p>
    * Constructor for ComponentElectrolyteCPAOld.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentElectrolyteCPAOld(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentElectrolyteCPAOld(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     xsite = new double[numberOfAssociationSites];
     xsitedV = new double[numberOfAssociationSites];
     xsiteOld = new double[numberOfAssociationSites];
@@ -113,13 +112,6 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     clonedComponent.xsitedT = xsitedT.clone();
     System.arraycopy(this.xsitedT, 0, clonedComponent.xsitedT, 0, xsitedT.length);
     return clonedComponent;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
   }
 
   /** {@inheritDoc} */
@@ -278,8 +270,8 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     return 2.0 * getBi() * (10.0)
         / ((8.0 * phase.getTotalVolume() - phase.getB())
             * (4.0 * phase.getTotalVolume() - phase.getB()))
-        - 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB()) * (32
-            * Math.pow(phase.getTotalVolume(), 2.0)
+        - 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
+            * (32 * Math.pow(phase.getTotalVolume(), 2.0)
                 - 12.0 * phase.getTotalVolume() * phase.getB() + Math.pow(phase.getB(), 2.0))
             / Math.pow(((8.0 * phase.getTotalVolume() - phase.getB())
                 * (4.0 * phase.getTotalVolume() - phase.getB())), 2.0);
@@ -385,7 +377,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
   /**
    * Setter for property xsite.
    *
-   * @param xsiteOld an array of {@link double} objects
+   * @param xsiteOld an array of type double
    */
   public void setXsiteOld(double[] xsiteOld) {
     this.xsiteOld = xsiteOld;
