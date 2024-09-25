@@ -437,8 +437,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     strippingGas.setTemperature(180.0, "C");
     strippingGas.setPressure(feedPressureStripGas, "bara");
 
-    Stream gasToReboiler = (Stream) strippingGas.clone();
-    gasToReboiler.setName("gas to reboiler");
+    Stream gasToReboiler = new Stream("gas to reboiler", strippingGas.clone());
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
@@ -755,8 +754,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     strippingGas.setTemperature(180.0, "C");
     strippingGas.setPressure(feedPressureStripGas, "bara");
 
-    Stream gasToReboiler = (Stream) strippingGas.clone();
-    gasToReboiler.setName("gas to reboiler");
+    Stream gasToReboiler = new Stream("gas to reboiler", strippingGas.clone());
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);

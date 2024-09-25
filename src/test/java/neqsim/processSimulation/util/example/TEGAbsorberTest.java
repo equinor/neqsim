@@ -87,15 +87,12 @@ public class TEGAbsorberTest {
     mix.addStream(reboiler.getOutletStream());
     mix.addStream(mixStream);
 
-    StreamInterface ReboilLiqStream = mix.getOutletStream();
-    ReboilLiqStream.setName("ReboilLiqStream");
+    StreamInterface ReboilLiqStream = new Stream("ReboilLiqStream", mix.getOutletStream());
 
-    // Stream ReboilGasStream = reboiler.getOutStream();
-    // ReboilLiqStream.setName("ReboilLiqStream");
+    // Stream ReboilGasStream = new Stream("ReboilLiqStream",reboiler.getOutStream());
 
     // processSimulation.processEquipment.absorber.SimpleGlycolAbsorber TEGabsorber = new
-    // processSimulation.processEquipment.absorber.SimpleGlycolAbsorber(gasStreamIn);
-    // TEGabsorber.setName("TEGabsorber");
+    // processSimulation.processEquipment.absorber.SimpleGlycolAbsorber("TEGabsorber",gasStreamIn);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
