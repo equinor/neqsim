@@ -42,29 +42,6 @@ public class ThreePhaseSeparator extends Separator {
   boolean useTempMultiPhaseCheck = false;
 
   /**
-   * <p>
-   * Constructor for ThreePhaseSeparator.
-   * </p>
-   */
-  @Deprecated
-  public ThreePhaseSeparator() {
-    this("ThreePhaseSeparator");
-  }
-
-  /**
-   * <p>
-   * Constructor for ThreePhaseSeparator.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public ThreePhaseSeparator(StreamInterface inletStream) {
-    this("ThreePhaseSeparator", inletStream);
-  }
-
-  /**
    * Constructor for ThreePhaseSeparator.
    *
    * @param name name of separator

@@ -43,30 +43,6 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   private PumpChart pumpChart = new PumpChart();
 
   /**
-   * <p>
-   * Constructor for Pump.
-   * </p>
-   */
-  @Deprecated
-  public Pump() {
-    super("Pump");
-  }
-
-  /**
-   * <p>
-   * Constructor for Pump.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Pump(StreamInterface inletStream) {
-    this();
-    setInletStream(inletStream);
-  }
-
-  /**
    * Constructor for Pump.
    *
    * @param name name of pump
@@ -86,13 +62,6 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    */
   public Pump(String name, StreamInterface inletStream) {
     super(name, inletStream);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setInletStream(StreamInterface stream) {
-    this.inStream = stream;
-    this.outStream = stream.clone();
   }
 
   /** {@inheritDoc} */

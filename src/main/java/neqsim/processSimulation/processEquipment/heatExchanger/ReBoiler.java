@@ -25,29 +25,6 @@ public class ReBoiler extends TwoPortEquipment {
    * <p>
    * Constructor for ReBoiler.
    * </p>
-   */
-  @Deprecated
-  public ReBoiler() {
-    super("ReBoiler");
-  }
-
-  /**
-   * <p>
-   * Constructor for ReBoiler.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public ReBoiler(StreamInterface inStream) {
-    this("ReBoiler", inStream);
-  }
-
-  /**
-   * <p>
-   * Constructor for ReBoiler.
-   * </p>
    *
    * @param name name of reboiler
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}

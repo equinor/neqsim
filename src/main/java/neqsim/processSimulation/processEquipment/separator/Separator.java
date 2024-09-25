@@ -75,31 +75,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /**
    * Constructor for Separator.
-   */
-  @Deprecated
-  public Separator() {
-    super("Separator");
-    setCalculateSteadyState(false);
-  }
-
-  /**
-   * Constructor for Separator.
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Separator(StreamInterface inletStream) {
-    this("Separator", inletStream);
-  }
-
-  /**
-   * Constructor for Separator.
    *
    * @param name Name of separator
    */
   public Separator(String name) {
     super(name);
+    setCalculateSteadyState(false);
   }
 
   /**

@@ -65,42 +65,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   private String polytropicMethod = "detailed";
 
   /**
-   * <p>
-   * Constructor for Compressor.
-   * </p>
-   */
-  @Deprecated
-  public Compressor() {
-    this("Compressor");
-  }
-
-  /**
-   * <p>
-   * Constructor for Compressor.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Compressor(StreamInterface inletStream) {
-    this();
-    setInletStream(inletStream);
-  }
-
-  /**
-   * <p>
-   * Constructor for Compressor.
-   * </p>
-   *
-   * @param interpolateMapLookup a boolean
-   */
-  @Deprecated
-  public Compressor(boolean interpolateMapLookup) {
-    this("Compressor", interpolateMapLookup);
-  }
-
-  /**
    * Constructor for Compressor.
    *
    * @param name Name of compressor

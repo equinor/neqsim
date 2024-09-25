@@ -54,16 +54,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    * <p>
    * Constructor for SimpleReservoir.
    * </p>
-   */
-  @Deprecated
-  public SimpleReservoir() {
-    this("SimpleReservoir");
-  }
-
-  /**
-   * <p>
-   * Constructor for SimpleReservoir.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

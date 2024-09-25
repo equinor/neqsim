@@ -45,16 +45,6 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * <p>
    * Constructor for Adjuster.
    * </p>
-   */
-  @Deprecated
-  public Adjuster() {
-    this("Adjuster");
-  }
-
-  /**
-   * <p>
-   * Constructor for Adjuster.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -326,7 +316,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     testSystem.setMixingRule(2);
 
     Stream stream_1 = new Stream("Stream1", testSystem);
-    Adjuster adjuster1 = new Adjuster();
+    Adjuster adjuster1 = new Adjuster("adjuster");
     adjuster1.setAdjustedVariable(stream_1, "molarFlow");
     adjuster1.setTargetVariable(stream_1, "gasVolumeFlow", 10.0, "MSm3/day", "");
 

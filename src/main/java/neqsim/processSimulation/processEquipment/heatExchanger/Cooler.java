@@ -17,29 +17,6 @@ public class Cooler extends Heater {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
-   * Constructor for Cooler.
-   * </p>
-   */
-  @Deprecated
-  public Cooler() {
-    super();
-  }
-
-  /**
-   * <p>
-   * Constructor for Cooler.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Cooler(StreamInterface inStream) {
-    super(inStream);
-  }
-
-  /**
    * Constructor for Cooler.
    *
    * @param name name of cooler

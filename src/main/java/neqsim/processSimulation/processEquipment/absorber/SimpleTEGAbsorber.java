@@ -47,14 +47,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * <p>
    * Constructor for SimpleTEGAbsorber.
    * </p>
-   */
-  @Deprecated
-  public SimpleTEGAbsorber() {}
-
-  /**
-   * <p>
-   * Constructor for SimpleTEGAbsorber.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

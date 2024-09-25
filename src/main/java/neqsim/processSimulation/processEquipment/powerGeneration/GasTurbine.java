@@ -70,20 +70,6 @@ public class GasTurbine extends TwoPortEquipment {
    * Constructor for GasTurbine.
    * </p>
    *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public GasTurbine(StreamInterface inletStream) {
-    this();
-    setInletStream(inletStream);
-  }
-
-  /**
-   * <p>
-   * Constructor for GasTurbine.
-   * </p>
-   *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object

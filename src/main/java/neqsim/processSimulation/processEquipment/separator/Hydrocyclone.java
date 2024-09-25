@@ -25,29 +25,6 @@ public class Hydrocyclone extends Separator {
   StreamInterface waterOutStream = new Stream("waterOutStream", waterSystem);
 
   /**
-   * <p>
-   * Constructor for Hydrocyclone.
-   * </p>
-   */
-  @Deprecated
-  public Hydrocyclone() {
-    this("Hydrocyclone");
-  }
-
-  /**
-   * <p>
-   * Constructor for Hydrocyclone.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Hydrocyclone(StreamInterface inletStream) {
-    this("Hydrocyclone", inletStream);
-  }
-
-  /**
    * Constructor for Hydrocyclone.
    *
    * @param name name of hydrosycolen

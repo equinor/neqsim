@@ -46,29 +46,6 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   protected double lastPressureDrop = 0.0;
 
   /**
-   * <p>
-   * Constructor for Heater.
-   * </p>
-   */
-  @Deprecated
-  public Heater() {
-    super("Heater");
-  }
-
-  /**
-   * <p>
-   * Constructor for Heater.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Heater(StreamInterface inStream) {
-    this("Heater", inStream);
-  }
-
-  /**
    * Constructor for Heater.
    *
    * @param name name of heater

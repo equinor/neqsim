@@ -17,29 +17,6 @@ public class SafetyValve extends ThrottlingValve {
   private double fullOpenPressure = 10.0;
 
   /**
-   * <p>
-   * Constructor for SafetyValve.
-   * </p>
-   */
-  @Deprecated
-  public SafetyValve() {
-    this("SafetyValve");
-  }
-
-  /**
-   * <p>
-   * Constructor for SafetyValve.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public SafetyValve(StreamInterface inletStream) {
-    this("SafetyValve", inletStream);
-  }
-
-  /**
    * Constructor for SafetyValve.
    *
    * @param name name of valve

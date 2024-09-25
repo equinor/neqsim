@@ -25,14 +25,6 @@ public class StaticNeqMixer extends StaticMixer {
    * <p>
    * Constructor for StaticNeqMixer.
    * </p>
-   */
-  @Deprecated
-  public StaticNeqMixer() {}
-
-  /**
-   * <p>
-   * Constructor for StaticNeqMixer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

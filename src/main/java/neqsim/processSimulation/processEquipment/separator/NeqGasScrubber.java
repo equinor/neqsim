@@ -33,29 +33,6 @@ public class NeqGasScrubber extends Separator {
   ArrayList<SeparatorSection> scrubberSection = null;
 
   /**
-   * <p>
-   * Constructor for NeqGasScrubber.
-   * </p>
-   */
-  @Deprecated
-  public NeqGasScrubber() {
-    this("NeqGasScrubber");
-  }
-
-  /**
-   * <p>
-   * Constructor for NeqGasScrubber.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public NeqGasScrubber(StreamInterface inletStream) {
-    this("NeqGasScrubber", inletStream);
-  }
-
-  /**
    * Constructor for NeqGasScrubber.
    *
    * @param name name of unit operation

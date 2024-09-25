@@ -146,27 +146,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   private List<Integer> incrementsProfile;
 
   /**
-   * <p>
-   * Constructor for PipeBeggsAndBrills.
-   * </p>
-   */
-  @Deprecated
-  public PipeBeggsAndBrills() {}
-
-  /**
-   * <p>
-   * Constructor for PipeBeggsAndBrills.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public PipeBeggsAndBrills(StreamInterface inStream) {
-    this("PipeBeggsAndBrills", inStream);
-  }
-
-  /**
    * Constructor for PipeBeggsAndBrills.
    *
    * @param name name of pipe
