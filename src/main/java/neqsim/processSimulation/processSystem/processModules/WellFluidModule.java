@@ -40,7 +40,9 @@ public class WellFluidModule extends ProcessModuleBaseClass {
   double exportOilTemperature = 273.15 + 30;
 
   /**
-   * <p>Constructor for WellFluidModule.</p>
+   * <p>
+   * Constructor for WellFluidModule.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -253,7 +255,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     operations.add(wellStream);
     operations.add(separationModule);
     // separationModule.getUnit("")
-    // ((Recycle) operations.getUnit("Resycle")).setTolerance(1e-9);
+    // ((Recycle) operations.getUnit("Recycle")).setTolerance(1e-9);
 
     operations.run();
   }

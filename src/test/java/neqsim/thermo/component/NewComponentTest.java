@@ -94,7 +94,6 @@ public class NewComponentTest extends neqsim.NeqSimTest {
 
     thermoSystem.getPhase(0).getComponent(0).setMolarMass(85.0, "lbm/lbmol");
     assertEquals(85.0, thermoSystem.getPhase(0).getComponent(0).getMolarMass("gr/mol"), 0.01);
-
   }
 
   @Test

@@ -69,19 +69,19 @@ public class CompressorModule extends neqsim.NeqSimTest {
     ThrottlingValve valve1 = new ThrottlingValve("valve oil", oilHeater.getOutletStream());
     valve1.setOutletPressure(10.0, "bara");
 
-    StreamInterface resycleScrubberStream = feedStream.clone();
-    resycleScrubberStream.setFlowRate(1.0, "kg/hr");
+    StreamInterface recycleScrubberStream = feedStream.clone();
+    recycleScrubberStream.setFlowRate(1.0, "kg/hr");
 
     ThreePhaseSeparator secondStageSeparator =
         new ThreePhaseSeparator("inlet separator", valve1.getOutletStream());
-    secondStageSeparator.addStream(resycleScrubberStream);
+    secondStageSeparator.addStream(recycleScrubberStream);
 
-    StreamInterface gasResycleStream = feedStream.clone();
-    gasResycleStream.setFlowRate(1.0, "kg/hr");
+    StreamInterface gasRecycleStream = feedStream.clone();
+    gasRecycleStream.setFlowRate(1.0, "kg/hr");
 
     Mixer gasmixer = new Mixer("gas recycle mixer");
     gasmixer.addStream(secondStageSeparator.getGasOutStream());
-    gasmixer.addStream(gasResycleStream);
+    gasmixer.addStream(gasRecycleStream);
 
     // Setting up compressor module
     Compressor seccondStageCompressor =
@@ -107,11 +107,11 @@ public class CompressorModule extends neqsim.NeqSimTest {
 
     Recycle recycle2 = new Recycle("recycle 2");
     recycle2.addStream(recycleValve.getOutletStream());
-    recycle2.setOutletStream(gasResycleStream);
+    recycle2.setOutletStream(gasRecycleStream);
 
     Recycle recycle1 = new Recycle("recycle 1");
     recycle1.addStream(scrubber1.getLiquidOutStream());
-    recycle1.setOutletStream(resycleScrubberStream);
+    recycle1.setOutletStream(recycleScrubberStream);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -119,9 +119,9 @@ public class CompressorModule extends neqsim.NeqSimTest {
     operations.add(inletSeparator);
     operations.add(oilHeater);
     operations.add(valve1);
-    operations.add(resycleScrubberStream);
+    operations.add(recycleScrubberStream);
     operations.add(secondStageSeparator);
-    operations.add(gasResycleStream);
+    operations.add(gasRecycleStream);
     operations.add(gasmixer);
     operations.add(seccondStageCompressor);
     operations.add(afterCooler);
@@ -134,8 +134,7 @@ public class CompressorModule extends neqsim.NeqSimTest {
 
     operations.run();
 
-    assertEquals(2046.8012652616517
-    , resycleScrubberStream.getFlowRate("kg/hr"), 0.1);
+    assertEquals(2046.8012652616517, recycleScrubberStream.getFlowRate("kg/hr"), 0.1);
 
     neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
         new neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator(
@@ -158,6 +157,5 @@ public class CompressorModule extends neqsim.NeqSimTest {
 
     assertTrue(seccondStageCompressor.isSurge(seccondStageCompressor.getPolytropicFluidHead(),
         seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
-
   }
 }

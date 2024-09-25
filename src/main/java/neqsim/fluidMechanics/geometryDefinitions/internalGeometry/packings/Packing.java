@@ -37,14 +37,14 @@ public abstract class Packing extends NamedBaseClass implements PackingInterface
     super(name);
     try (neqsim.util.database.NeqSimProcessDesignDataBase database =
         new neqsim.util.database.NeqSimProcessDesignDataBase()) {
-      System.out.println("init packing");
+      // System.out.println("init packing");
       java.sql.ResultSet dataSet =
           database.getResultSet(("SELECT * FROM packing WHERE name='" + name + "'"));
       dataSet.next();
       size = 1e-3 * Double.parseDouble(dataSet.getString("size")); // C
       surfaceAreaPrVolume = Double.parseDouble(dataSet.getString("surfaceAreaPrVolume"));
       voidFractionPacking = Double.parseDouble(dataSet.getString("voidFraction"));
-      System.out.println("packing ok");
+      // System.out.println("packing ok");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -61,7 +61,8 @@ public abstract class Packing extends NamedBaseClass implements PackingInterface
    */
   public Packing(String name, String material, int size) {
     super(name);
-    try (neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
+        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       System.out.println("init packing");
       java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM packing WHERE name='"
           + name + "' AND size=" + size + " AND material='" + material + "'"));

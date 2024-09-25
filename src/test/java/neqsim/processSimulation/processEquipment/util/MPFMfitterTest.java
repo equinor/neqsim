@@ -65,6 +65,5 @@ public class MPFMfitterTest {
     operations.run();
 
     Assertions.assertEquals(8.95393178, multiPhaseMeter2.getMeasuredValue("GOR", ""), 1e-3);
-
   }
 }

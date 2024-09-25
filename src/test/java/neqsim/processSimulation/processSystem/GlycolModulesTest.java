@@ -190,13 +190,13 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     waterFeed.setTemperature(90, "C");
     waterFeed.setPressure(7.513533287063168, "bara");
 
-    Separator flashSep = new Separator("degasing separator", heatEx2.getOutStream());
+    Separator flashSep = new Separator("degassing separator", heatEx2.getOutStream());
     flashSep.setInternalDiameter(1.2);
 
-    Stream flashGas = new Stream("gas from degasing separator", flashSep.getGasOutStream());
+    Stream flashGas = new Stream("gas from degassing separator", flashSep.getGasOutStream());
 
     Stream flashLiquid =
-        new Stream("liquid from degasing separator", flashSep.getLiquidOutStream());
+        new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());
 
     Filter filter = new Filter("TEG fine filter", flashLiquid);
     filter.setDeltaP(0.0, "bara");
@@ -296,11 +296,11 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
 
     Stream leanTEGtoabs = new Stream("lean TEG to absorber", coolerhOTteg3.getOutStream());
 
-    Recycle resycleLeanTEG = new Recycle("lean TEG recycle");
-    resycleLeanTEG.addStream(leanTEGtoabs);
-    resycleLeanTEG.setOutletStream(TEGFeed);
-    resycleLeanTEG.setPriority(200);
-    resycleLeanTEG.setDownstreamProperty("flow rate");
+    Recycle recycleLeanTEG = new Recycle("lean TEG recycle");
+    recycleLeanTEG.addStream(leanTEGtoabs);
+    recycleLeanTEG.setOutletStream(TEGFeed);
+    recycleLeanTEG.setPriority(200);
+    recycleLeanTEG.setDownstreamProperty("flow rate");
 
     neqsim.processSimulation.processSystem.ProcessSystem operations1 =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -362,7 +362,7 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     operations4.add(hotLeanTEGPump);
     operations4.add(coolerhOTteg3);
     operations4.add(leanTEGtoabs);
-    operations4.add(resycleLeanTEG);
+    operations4.add(recycleLeanTEG);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations5 =
         new neqsim.processSimulation.processSystem.ProcessSystem();

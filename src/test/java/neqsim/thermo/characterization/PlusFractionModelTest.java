@@ -53,7 +53,6 @@ public class PlusFractionModelTest {
     ops.TPflash();
     // thermoSystem.prettyPrint();
     assertEquals(0.76652495787, thermoSystem.getBeta(), 1e-4);
-
   }
 
   @Test
@@ -144,7 +143,5 @@ public class PlusFractionModelTest {
     double minMW = ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel())
         .getGammaParameters()[1];
     assertEquals(90.0, minMW, 1e-4);
-
   }
-
 }

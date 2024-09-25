@@ -321,9 +321,7 @@ public class PlusFractionModel implements java.io.Serializable {
       this.model = model;
     }
 
-    public void characterizePlusFractionWhitsonGamma() {
-
-    }
+    public void characterizePlusFractionWhitsonGamma() {}
 
     public double gamma(double X) {
       double[] dataB = {-0.577191652, 0.988205891, -0.897056937, 0.918206857, -0.756704078,
@@ -367,7 +365,6 @@ public class PlusFractionModel implements java.io.Serializable {
           P1 = Q * (S - 1.0 / alfa);
           break;
         }
-
       }
       return new double[] {P0, P1};
     }
@@ -381,8 +378,6 @@ public class PlusFractionModel implements java.io.Serializable {
         densities[i - 1] = 6.0108 * Math.pow(molarMasses[i - 1], 0.17947) * Math.pow(Kw, -1.18241);
       }
     }
-
-
 
     @Override
     public void characterizePlusFraction(TBPModelInterface TBPModel) {
@@ -425,8 +420,6 @@ public class PlusFractionModel implements java.io.Serializable {
           sumZ = sumZ + zValues[i];
         }
         densityUOP();
-
-
       }
 
       // Normalize z values to ensure sumZ equals zPlus
@@ -472,8 +465,6 @@ public class PlusFractionModel implements java.io.Serializable {
     public double[] getDens() {
       return densities;
     }
-
-
   }
 
   /**

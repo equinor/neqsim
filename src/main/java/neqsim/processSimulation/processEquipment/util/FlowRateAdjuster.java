@@ -135,7 +135,6 @@ public class FlowRateAdjuster extends TwoPortEquipment {
       waterStream = new Stream("Water Stream", waterFluid);
       waterStream.setTemperature(temperature, "C");
       waterStream.setPressure(pressure, "bara");
-
     }
     gasFluid.initPhysicalProperties();
     oilFluid.initPhysicalProperties();

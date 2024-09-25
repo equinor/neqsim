@@ -311,7 +311,6 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     }
 
     setCalculationIdentifier(id);
-
   }
 
   /** {@inheritDoc} */
@@ -703,7 +702,6 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         .toJson(new HXResponse(this));
   }
 
-
   public void setUseDeltaT(boolean useDeltaT) {
     this.useDeltaT = useDeltaT;
   }
@@ -718,5 +716,4 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     useDeltaT = true;
     this.deltaT = deltaT;
   }
-
 }

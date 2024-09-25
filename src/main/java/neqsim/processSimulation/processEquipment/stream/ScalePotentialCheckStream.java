@@ -21,39 +21,6 @@ public class ScalePotentialCheckStream extends Stream {
   protected SystemInterface reactiveThermoSystem;
 
   /**
-   * <p>
-   * Constructor for ScalePotentialCheckStream.
-   * </p>
-   */
-  @Deprecated
-  public ScalePotentialCheckStream() {
-    super("ScalePotentialCheckStream");
-  }
-
-  /**
-   * <p>
-   * Constructor for ScalePotentialCheckStream.
-   * </p>
-   *
-   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-   */
-  public ScalePotentialCheckStream(SystemInterface thermoSystem) {
-    super("ScalePotentialCheckStream", thermoSystem);
-  }
-
-  /**
-   * <p>
-   * Constructor for ScalePotentialCheckStream.
-   * </p>
-   *
-   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
-  @Deprecated
-  public ScalePotentialCheckStream(StreamInterface stream) {
-    super("ScalePotentialCheckStream", stream);
-  }
-
-  /**
    * Constructor for ScalePotentialCheckStream.
    *
    * @param name name of unit operation

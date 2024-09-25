@@ -114,6 +114,5 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     heatExchanger1.run();
 
     assertEquals(15780.77130, heatExchanger1.getUAvalue(), 1e-3);
-
   }
 }

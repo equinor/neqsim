@@ -35,7 +35,6 @@ class TPsolidFlash {
     // + testSystem.getPhase(1).getComponent("S8").getFlowRate("kg/hr"))
     // / (testSystem.getPhase(0).getFlowRate("kg/hr")
     // + testSystem.getPhase(1).getFlowRate("kg/hr")));
-
   }
 
   @Test
@@ -76,14 +75,15 @@ class TPsolidFlash {
     ThermodynamicOperations thermoops = new ThermodynamicOperations(testSystem);
     thermoops.TPflash();
     // thermoops.TPSolidflash();
-    //testSystem.prettyPrint();
+    // testSystem.prettyPrint();
     assertEquals(3, testSystem.getNumberOfPhases());
     assertTrue(testSystem.hasPhaseType(PhaseType.SOLID));
 
-    //System.out.println(
-    //    "kg S8 per MSm3 gas " + (testSystem.getPhase(0).getComponent("S8").getFlowRate("kg/hr")
-    //        + testSystem.getPhase(1).getComponent("S8").getFlowRate("kg/hr")));
-    //System.out.println("m3 oil per MSm3 " + (testSystem.getPhase(PhaseType.OIL).getFlowRate("m3/hr")
-    //    * 24 / testSystem.getPhase(PhaseType.GAS).getFlowRate("MSm3/day")));
+    // System.out.println(
+    // "kg S8 per MSm3 gas " + (testSystem.getPhase(0).getComponent("S8").getFlowRate("kg/hr")
+    // + testSystem.getPhase(1).getComponent("S8").getFlowRate("kg/hr")));
+    // System.out.println("m3 oil per MSm3 " +
+    // (testSystem.getPhase(PhaseType.OIL).getFlowRate("m3/hr")
+    // * 24 / testSystem.getPhase(PhaseType.GAS).getFlowRate("MSm3/day")));
   }
 }
