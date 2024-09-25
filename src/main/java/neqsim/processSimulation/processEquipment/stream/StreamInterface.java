@@ -174,12 +174,23 @@ public interface StreamInterface extends ProcessEquipmentInterface {
 
   /**
    * <p>
-   * clone.
+   * Clone object.
    * </p>
    *
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
    */
   public StreamInterface clone();
+
+  /**
+   * <p>
+   * Clone object and set a new name.
+   * </p>
+   *
+   * @param name Name of cloned object
+   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
+  public StreamInterface clone(String name);
+
 
   /**
    * <p>

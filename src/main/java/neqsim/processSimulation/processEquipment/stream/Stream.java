@@ -18,6 +18,7 @@ import neqsim.standards.gasQuality.Standard_ISO6976;
 import neqsim.standards.oilQuality.Standard_ASTM_D6377;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * <p>
@@ -168,6 +169,23 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     return clonedSystem;
+  }
+
+  /**
+   * Clone Stream object and give it a new name.
+   *
+   * @param name Name to set for the cloned object
+   * @return Cloned Stream object
+   */
+  @Override
+  public Stream clone(String name) {
+    if (this.getName() == name) {
+      throw new RuntimeException(
+          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+    }
+    Stream s = this.clone();
+    s.setName(name);
+    return s;
   }
 
   /** {@inheritDoc} */

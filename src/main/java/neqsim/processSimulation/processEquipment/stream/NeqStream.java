@@ -4,6 +4,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * <p>
@@ -62,6 +63,23 @@ public class NeqStream extends Stream {
     thermoSystem = thermoSystem.clone();
 
     return clonedStream;
+  }
+
+  /**
+   * Clone NeqStream object and give it a new name.
+   *
+   * @param name Name to set for the cloned object
+   * @return Cloned NeqStream object
+   */
+  @Override
+  public NeqStream clone(String name) {
+    if (this.getName() == name) {
+      throw new RuntimeException(
+          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+    }
+    NeqStream s = this.clone();
+    s.setName(name);
+    return s;
   }
 
   /** {@inheritDoc} */

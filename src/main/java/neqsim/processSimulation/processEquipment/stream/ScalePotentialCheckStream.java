@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * <p>
@@ -61,6 +62,23 @@ public class ScalePotentialCheckStream extends Stream {
       ex.printStackTrace();
     }
     return clonedSystem;
+  }
+
+  /**
+   * Clone ScalePotentialCheckStream object and give it a new name.
+   *
+   * @param name Name to set for the cloned object
+   * @return Cloned ScalePotentialCheckStream object
+   */
+  @Override
+  public ScalePotentialCheckStream clone(String name) {
+    if (this.getName() == name) {
+      throw new RuntimeException(
+          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+    }
+    ScalePotentialCheckStream s = this.clone();
+    s.setName(name);
+    return s;
   }
 
   /** {@inheritDoc} */
