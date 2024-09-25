@@ -22,28 +22,6 @@ public class TwoPhasePipeLine extends Pipeline {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
-   * Constructor for TwoPhasePipeLine.
-   * </p>
-   */
-  @Deprecated
-  public TwoPhasePipeLine() {
-    this("TwoPhasePipeLine");
-  }
-
-  /**
-   * <p>
-   * Constructor for TwoPhasePipeLine.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
-   */
-  @Deprecated
-  public TwoPhasePipeLine(StreamInterface inStream) {
-    this("TwoPhasePipeLine", inStream);
-  }
-
-  /**
    * Constructor for TwoPhasePipeLine.
    *
    * @param name name of pipeline

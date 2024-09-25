@@ -45,27 +45,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   String pipeSpecification = "AP02";
 
   /**
-   * <p>
-   * Constructor for AdiabaticTwoPhasePipe.
-   * </p>
-   */
-  @Deprecated
-  public AdiabaticTwoPhasePipe() {}
-
-  /**
-   * <p>
-   * Constructor for AdiabaticTwoPhasePipe.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public AdiabaticTwoPhasePipe(StreamInterface inStream) {
-    this("AdiabaticTwoPhasePipe", inStream);
-  }
-
-  /**
    * Constructor for AdiabaticTwoPhasePipe.
    *
    * @param name name of pipe
@@ -323,7 +302,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   }
 
   /**
-   * <p>getSuperficialVelocity.</p>
+   * <p>
+   * getSuperficialVelocity.
+   * </p>
    *
    * @return a double
    */

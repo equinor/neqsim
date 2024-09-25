@@ -21,29 +21,6 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
   double momentum = 0;
 
   /**
-   * <p>
-   * Constructor for IncompressiblePipeFlow.
-   * </p>
-   */
-  @Deprecated
-  public IncompressiblePipeFlow() {
-    super("IncompressiblePipeFlow");
-  }
-
-  /**
-   * <p>
-   * Constructor for IncompressiblePipeFlow.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public IncompressiblePipeFlow(StreamInterface inStream) {
-    this("IncompressiblePipeFlow", inStream);
-  }
-
-  /**
    * Constructor for IncompressiblePipeFlow.
    *
    * @param name name of pipeline
@@ -159,13 +136,13 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     testSystem.initPhysicalProperties();
     Stream stream_1 = new Stream("Stream1", testSystem);
 
-    IncompressiblePipeFlow pipe = new IncompressiblePipeFlow(stream_1);
+    IncompressiblePipeFlow pipe = new IncompressiblePipeFlow("pipe1", stream_1);
     pipe.setLength(1000.0);
     pipe.setDiameter(0.25);
     pipe.setPipeWallRoughness(2e-5);
     pipe.addFittingFromDatabase("Standard elbow (R=1.5D), 90deg");
 
-    IncompressiblePipeFlow pipe2 = new IncompressiblePipeFlow(pipe.getOutletStream());
+    IncompressiblePipeFlow pipe2 = new IncompressiblePipeFlow("pipe2", pipe.getOutletStream());
     pipe2.setLength(1000.0);
     pipe2.setDiameter(0.25);
     pipe2.setPipeWallRoughness(2e-5);

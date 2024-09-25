@@ -19,29 +19,6 @@ public class NeqHeater extends Heater {
   double dH = 0.0;
 
   /**
-   * <p>
-   * Constructor for NeqHeater.
-   * </p>
-   */
-  @Deprecated
-  public NeqHeater() {
-    this("NeqHeater");
-  }
-
-  /**
-   * <p>
-   * Constructor for NeqHeater.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public NeqHeater(StreamInterface inStream) {
-    this("NeqHeater", inStream);
-  }
-
-  /**
    * Constructor for NeqHeater.
    *
    * @param name name of heater

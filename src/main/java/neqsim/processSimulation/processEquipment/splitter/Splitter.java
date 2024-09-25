@@ -35,29 +35,6 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   String flowUnit = "mole/sec";
 
   /**
-   * <p>
-   * Constructor for Splitter.
-   * </p>
-   */
-  public Splitter() {
-    super("Splitter");
-  }
-
-  /**
-   * <p>
-   * Constructor for Splitter.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Splitter(StreamInterface inletStream) {
-    this();
-    this.setInletStream(inletStream);
-  }
-
-  /**
    * Constructor for Splitter.
    *
    * @param name name of splitter

@@ -41,16 +41,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
    * <p>
    * Constructor for Mixer.
    * </p>
-   */
-  @Deprecated
-  public Mixer() {
-    super("Mixer");
-  }
-
-  /**
-   * <p>
-   * Constructor for Mixer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

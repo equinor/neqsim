@@ -59,16 +59,6 @@ public class FlowRateAdjuster extends TwoPortEquipment {
    * <p>
    * Constructor for FlowRateAdjuster.
    * </p>
-   */
-  @Deprecated
-  public FlowRateAdjuster() {
-    this("Flow Rate Adjuster");
-  }
-
-  /**
-   * <p>
-   * Constructor for FlowRateAdjuster.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

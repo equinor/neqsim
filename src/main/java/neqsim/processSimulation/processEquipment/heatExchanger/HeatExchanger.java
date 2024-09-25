@@ -49,44 +49,6 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   private boolean useDeltaT = false;
 
   /**
-   * <p>
-   * Constructor for HeatExchanger.
-   * </p>
-   */
-  @Deprecated
-  public HeatExchanger() {
-    this("HeatExchanger");
-  }
-
-  /**
-   * <p>
-   * Constructor for HeatExchanger.
-   * </p>
-   *
-   * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public HeatExchanger(StreamInterface inStream1) {
-    this("HeatExchanger", inStream1);
-  }
-
-  /**
-   * <p>
-   * Constructor for HeatExchanger.
-   * </p>
-   *
-   * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   * @param inStream2 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public HeatExchanger(StreamInterface inStream1, StreamInterface inStream2) {
-    this("HeatExchanger", inStream1, inStream2);
-  }
-
-  /**
    * Constructor for HeatExchanger.
    *
    * @param name name of heat exchanger

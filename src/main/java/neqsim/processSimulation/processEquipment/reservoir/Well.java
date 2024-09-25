@@ -18,19 +18,9 @@ public class Well extends NamedBaseClass {
   private static final long serialVersionUID = 1000;
 
   private StreamInterface stream = null;
-  double x, y, z;
-
-  /**
-   * <p>
-   * Constructor for Well.
-   * </p>
-   *
-   * @deprecated use {@link #Well(String)} instead
-   */
-  @Deprecated
-  public Well() {
-    this("Well");
-  }
+  double x;
+  double y;
+  double z;
 
   /**
    * <p>
