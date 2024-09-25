@@ -25,6 +25,5 @@ public class dewPointTemperatureFlashTest {
       e.printStackTrace();
     }
     assertEquals(1.7007677589821242, fluid0_HC.getTemperature("C"), 1e-2);
-
   }
 }

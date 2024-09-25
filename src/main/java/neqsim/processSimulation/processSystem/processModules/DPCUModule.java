@@ -1,6 +1,8 @@
 package neqsim.processSimulation.processSystem.processModules;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.distillation.Condenser;
 import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
@@ -28,16 +30,29 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  */
 public class DPCUModule extends ProcessModuleBaseClass {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ProcessModuleBaseClass.class);
 
-  StreamInterface ethaneOvhComp, gasDistColumnExit, liquidDistColumnExit, feedStream, gasExitStream,
-      oilExitStream, glycolFeedStream, glycolExitStream;
+  StreamInterface ethaneOvhComp;
+  StreamInterface gasDistColumnExit;
+  StreamInterface liquidDistColumnExit;
+  StreamInterface feedStream;
+  StreamInterface gasExitStream;
+  StreamInterface oilExitStream;
+  StreamInterface glycolFeedStream;
+  StreamInterface glycolExitStream;
+
   Separator glycolScrubber;
   Separator inletSeparator;
-  double inletSepTemperature = 50.00, pressureAfterRedValve = 55.0; // bar'
-  double gasScrubberTemperature = 30.00, firstStageOutPressure = 110.0,
-      glycolScrubberTemperature = 20.0, secondStageOutPressure = 200.0; // bar
-  double glycolInjectionRate = 10.0, exportGasTemperature = 273.15 + 30.0,
-      liquidPumpPressure = 150.0; // m^3/hr
+  double inletSepTemperature = 50.00;
+  double pressureAfterRedValve = 55.0;
+  double gasScrubberTemperature = 30.00;
+  double firstStageOutPressure = 110.0;
+  double glycolScrubberTemperature = 20.0;
+  double secondStageOutPressure = 200.0;
+  double glycolInjectionRate = 10.0;
+  double exportGasTemperature = 273.15 + 30.0;
+  double liquidPumpPressure = 150.0;
+
   Separator LTseparator;
   HeatExchanger heatExchanger1;
   ThrottlingValve valve1;
@@ -62,9 +77,10 @@ public class DPCUModule extends ProcessModuleBaseClass {
   public void addInputStream(String streamName, StreamInterface stream) {
     if (streamName.equals("feed stream")) {
       this.feedStream = stream;
-    }
-    if (streamName.equals("glycol feed stream")) {
+    } else if (streamName.equals("glycol feed stream")) {
       this.glycolFeedStream = stream;
+    } else {
+      logger.info("Stream name " + streamName + "not used.");
     }
   }
 

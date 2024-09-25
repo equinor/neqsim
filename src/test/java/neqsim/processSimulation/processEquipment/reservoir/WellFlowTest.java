@@ -96,7 +96,6 @@ public class WellFlowTest {
     compressor2.setPolytropicEfficiency(0.6);
     compressor2.setCompressionRatio(2.0);
 
-
     neqsim.processSimulation.processEquipment.heatExchanger.Heater cooler1 =
         new neqsim.processSimulation.processEquipment.heatExchanger.Heater("cooler 1",
             compressor2.getOutletStream());
@@ -120,7 +119,6 @@ public class WellFlowTest {
     adjuster.setMaxAdjustedValue(max_gas_production);
     adjuster.setMinAdjustedValue(1.0);
 
-
     neqsim.processSimulation.processSystem.ProcessSystem process =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     process.add(reservoirOps);
@@ -136,7 +134,6 @@ public class WellFlowTest {
 
     System.out
         .println("gas production " + reservoirOps.getGasProdution("Sm3/day") / 1e6 + " MSm3/day");
-
   }
 
   @Test

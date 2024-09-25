@@ -45,7 +45,6 @@ class PressureUnitTest extends neqsim.NeqSimTest {
     assertEquals(159.54151180, fluid.getPressure("psi"), 1e-4);
     assertEquals(159.54151180, fluid.getPressure("psia"), 1e-4);
     assertEquals(144.841511503000, fluid.getPressure("psig"), 1e-4);
-
   }
 }
 

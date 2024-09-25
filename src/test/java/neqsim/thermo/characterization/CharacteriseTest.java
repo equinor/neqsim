@@ -42,7 +42,6 @@ public class CharacteriseTest extends neqsim.NeqSimTest {
     // thermoSystem.prettyPrint();
   }
 
-
   @Test
   void testCharacterisePlusFractionGAMMA() {
     thermoSystem = new SystemSrkEos(298.0, 10.0);
@@ -59,12 +58,10 @@ public class CharacteriseTest extends neqsim.NeqSimTest {
 
     thermoSystem.setPressure(1, "bara");
 
-
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoOps.TPflash();
 
     thermoSystem.initProperties();
     // thermoSystem.prettyPrint();
   }
-
 }

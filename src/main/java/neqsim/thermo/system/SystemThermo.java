@@ -1998,7 +1998,7 @@ public abstract class SystemThermo implements SystemInterface {
         conversionFactor = 0.00094781712;
         break;
       case "kJ/kmol":
-        conversionFactor = 1.0 / getTotalNumberOfMoles()/1000.0;
+        conversionFactor = 1.0 / getTotalNumberOfMoles() / 1000.0;
         break;
       case "J/mol":
         conversionFactor = 1.0 / getTotalNumberOfMoles();
@@ -2041,7 +2041,7 @@ public abstract class SystemThermo implements SystemInterface {
         conversionFactor = 1.0 / getTotalNumberOfMoles();
         break;
       case "kJ/molK":
-        conversionFactor = 1.0 / getTotalNumberOfMoles()/1000.0;
+        conversionFactor = 1.0 / getTotalNumberOfMoles() / 1000.0;
         break;
       case "J/kgK":
         conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass();
@@ -2880,7 +2880,6 @@ public abstract class SystemThermo implements SystemInterface {
         break;
       default:
         throw new RuntimeException("unit not supported " + unit);
-
     }
     return refVel * conversionFactor;
   }

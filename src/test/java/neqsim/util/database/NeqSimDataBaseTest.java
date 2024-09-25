@@ -50,7 +50,6 @@ public class NeqSimDataBaseTest extends NeqSimTest {
       failed = false;
     } catch (Exception ex) {
       System.out.println(ex.getMessage());
-      System.out.println("DB test failed ");
     }
     // Assertions.assertTrue(testHasMethane, "Methane component found in database");
     Assertions.assertEquals(16.04, molmass, 0.1);

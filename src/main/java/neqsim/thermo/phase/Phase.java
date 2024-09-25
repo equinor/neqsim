@@ -566,7 +566,6 @@ public abstract class Phase implements PhaseInterface {
   public double calcAij(int compNumb, int j, PhaseInterface phase, double temperature,
       double pressure, int numbcomp) {
     throw new UnsupportedOperationException("Unimplemented method 'calcAij'");
-
   }
 
   /** {@inheritDoc} */
@@ -1054,7 +1053,6 @@ public abstract class Phase implements PhaseInterface {
         break;
       default:
         throw new RuntimeException("unit not supported " + unit);
-
     }
     return refCv * conversionFactor;
   }
@@ -2094,7 +2092,6 @@ public abstract class Phase implements PhaseInterface {
         break;
       default:
         throw new RuntimeException("unit not supported " + unit);
-
     }
     return conversionFactor * getVolume() / 1.0e5;
   }

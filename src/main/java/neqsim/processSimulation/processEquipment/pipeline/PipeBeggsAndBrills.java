@@ -1056,7 +1056,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     return new ArrayList<>(mixtureDensityProfile);
   }
 
-
   /**
    * <p>
    * Getter for the field <code>liquidDensityProfile</code>.
@@ -1067,7 +1066,6 @@ public class PipeBeggsAndBrills extends Pipeline {
   public List<Double> getLiquidDensityProfile() {
     return new ArrayList<>(liquidDensityProfile);
   }
-
 
   /**
    * <p>
@@ -1204,7 +1202,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
   }
 
-
   /**
    * <p>
    * getSegmentLiquidDensity.
@@ -1220,7 +1217,6 @@ public class PipeBeggsAndBrills extends Pipeline {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
   }
-
 
   /**
    * <p>

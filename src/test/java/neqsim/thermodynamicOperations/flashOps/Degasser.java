@@ -60,25 +60,15 @@ class Degasser {
     testOps.TPflash();
 
     double[] intParameter = {-0.24, // "CO2"
-
         -0.721, // "methane"
-
         0.11, // "ethane"
-
         0.205, // "propane"
-
         0.081, // "i-butane"
-
         0.17, // "n-butane"
-
         0.051, // "i-pentane"
-
         0.1135, // "n-pentane"
-
         0.0832, // "n-hexane"
-
         0.0535 // "n-heptane"
-
     };
 
     String[] componentNames = fluid1.getComponentNames();
@@ -195,6 +185,5 @@ class Degasser {
      * System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " +
      * VD02Separator.getGasOutStream().getFlowRate("kg/hr"));
      */
-
   }
 }

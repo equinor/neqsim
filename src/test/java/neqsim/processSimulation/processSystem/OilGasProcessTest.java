@@ -168,7 +168,6 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
             gascompressor);
     gascompressor.setCompressorChart(compchartgenerator.generateCompressorChart("mid range"));
 
-
     Cooler gascooler = new Cooler("gas cooler");
     gascooler.setInletStream(gascompressor.getOutletStream());
     gascooler.setOutTemperature(30.0, "C");
@@ -247,8 +246,6 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     assertEquals(4037.5356388, gascompressor.getCompressorChart().getSurgeCurve()
         .getSurgeFlow(gascompressor.getPolytropicFluidHead()), 1e-4);
     assertEquals(96.609347, gascompressor.getOutletPressure(), 1e-4);
-
-
   }
 
   @Test
@@ -296,8 +293,6 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     recycl.setOutletStream(recyclegasstream);
     recycl.setFlowAccuracy(1e-15);
 
-
-
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
     operations.add(gas_from_separator);
@@ -323,7 +318,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     Calculator antisurgeCalculator = new Calculator("anti surge calculator");
     antisurgeCalculator.addInputVariable(gascompressor);
     antisurgeCalculator.setOutputVariable(gassplitter);
-    
+
     operations.add(antisurgeCalculator);
 
     operations.run();
