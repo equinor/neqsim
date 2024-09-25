@@ -49,7 +49,7 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
-			<version>5.10.1</version>
+			<version>5.11.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -194,7 +194,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.8.0</version>
+				<version>3.10.0</version>
 				<configuration>
 					<show>private</show>
 					<nohelp>true</nohelp>
@@ -210,11 +210,11 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.3.1</version>
+				<version>3.5.0</version>
 			</plugin>
 			<plugin>
 				<artifactId>maven-failsafe-plugin</artifactId>
-				<version>3.3.1</version>
+				<version>3.5.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.jacoco</groupId>
