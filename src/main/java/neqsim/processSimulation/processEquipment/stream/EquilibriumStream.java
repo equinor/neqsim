@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * <p>
@@ -52,6 +53,23 @@ public class EquilibriumStream extends Stream {
 
     thermoSystem = thermoSystem.clone();
     return clonedStream;
+  }
+
+  /**
+   * Clone Equilibriumstream object and give it a new name.
+   *
+   * @param name Name to set for the cloned object
+   * @return Cloned EquilibriumStream object
+   */
+  @Override
+  public EquilibriumStream clone(String name) {
+    if (this.getName() == name) {
+      throw new RuntimeException(
+          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+    }
+    EquilibriumStream s = this.clone();
+    s.setName(name);
+    return s;
   }
 
   /** {@inheritDoc} */
