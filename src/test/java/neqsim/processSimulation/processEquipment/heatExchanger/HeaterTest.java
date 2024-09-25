@@ -46,6 +46,5 @@ public class HeaterTest {
     assertTrue(((Heater) processOps.getUnit("heater 1")).needRecalculation());
     processOps.run();
     assertFalse(((Heater) processOps.getUnit("heater 1")).needRecalculation());
-
   }
 }

@@ -163,7 +163,6 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
                     .getPhase(0).getComponent(j).getNumberOfMolesInPhase())
                         ? test * getThermoSystem().getPhase(0).getComponent(j).getx()
                         : 0.0;
-
           } catch (Exception e) {
             logger.debug(e.getMessage());
           }

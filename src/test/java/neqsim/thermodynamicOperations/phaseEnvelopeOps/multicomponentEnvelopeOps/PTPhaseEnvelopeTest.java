@@ -79,19 +79,16 @@ public class PTPhaseEnvelopeTest {
 
     testOps = new ThermodynamicOperations(testSystem);
     testOps.calcPTphaseEnvelope2();
-    double[] dewPointPressures = testOps.get("dewP");
-    double[] dewPointTemperautres = testOps.get("dewT");
-    double[] bubblePointPressures = testOps.get("bubP");
-    double[] bubblePointTemperautres = testOps.get("bubT");
-    double[] cricondenbar = testOps.get("cricondenbar");
-    double[] criticalPoint1 = testOps.get("criticalPoint1");
+    // double[] dewPointPressures = testOps.get("dewP");
+    double[] dewPointTemperatures = testOps.get("dewT");
+    // double[] bubblePointPressures = testOps.get("bubP");
+    double[] bubblePointTemperatures = testOps.get("bubT");
+    // double[] cricondenbar = testOps.get("cricondenbar");
+    // double[] criticalPoint1 = testOps.get("criticalPoint1");
 
-
-    assertTrue(dewPointTemperautres.length > 20);
-    assertTrue(bubblePointTemperautres.length > 10);
-
+    assertTrue(dewPointTemperatures.length > 20);
+    assertTrue(bubblePointTemperatures.length > 10);
   }
-
 
   @Test
   void testFailingCase1() {
@@ -122,17 +119,15 @@ public class PTPhaseEnvelopeTest {
     testSystem.initProperties();
 
     testOps.calcPTphaseEnvelope2();
-    double[] dewPointPressures = testOps.get("dewP");
-    double[] dewPointTemperautres = testOps.get("dewT");
-    double[] bubblePointPressures = testOps.get("bubP");
-    double[] bubblePointTemperautres = testOps.get("bubT");
-    double[] cricondenbar = testOps.get("cricondenbar");
-    double[] criticalPoint1 = testOps.get("criticalPoint1");
+    // double[] dewPointPressures = testOps.get("dewP");
+    double[] dewPointTemperatures = testOps.get("dewT");
+    // double[] bubblePointPressures = testOps.get("bubP");
+    double[] bubblePointTemperatures = testOps.get("bubT");
+    // double[] cricondenbar = testOps.get("cricondenbar");
+    // double[] criticalPoint1 = testOps.get("criticalPoint1");
 
-
-    assertTrue(dewPointTemperautres.length > 20);
-    assertTrue(bubblePointTemperautres.length > 10);
-
+    assertTrue(dewPointTemperatures.length > 20);
+    assertTrue(bubblePointTemperatures.length > 10);
   }
 
   @Test
@@ -161,18 +156,17 @@ public class PTPhaseEnvelopeTest {
     testOps = new ThermodynamicOperations(fluid0_HC);
     testOps.calcPTphaseEnvelope2();
     double[] dewPointPressures = testOps.get("dewP");
-    double[] dewPointTemperautres = testOps.get("dewT");
+    double[] dewPointTemperatures = testOps.get("dewT");
     double[] bubblePointPressures = testOps.get("bubP");
-    double[] bubblePointTemperautres = testOps.get("bubT");
+    double[] bubblePointTemperatures = testOps.get("bubT");
     double[] bubblePointEnthalpies = testOps.get("bubH");
     double[] bubblePointVolumes = testOps.get("bubDens");
-    double[] cricondenbar = testOps.get("cricondenbar");
-    double[] criticalPoint1 = testOps.get("criticalPoint1");
+    // double[] cricondenbar = testOps.get("cricondenbar");
+    // double[] criticalPoint1 = testOps.get("criticalPoint1");
 
-    assertTrue(dewPointTemperautres.length > 20);
-    assertTrue(bubblePointTemperautres.length > 20);
+    assertTrue(dewPointTemperatures.length > 20);
+    assertTrue(bubblePointTemperatures.length > 20);
     assertTrue(bubblePointEnthalpies.length > 20);
     assertTrue(bubblePointVolumes.length > 20);
-
   }
 }

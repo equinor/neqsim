@@ -157,6 +157,5 @@ public class CompressorModule extends neqsim.NeqSimTest {
 
     assertTrue(seccondStageCompressor.isSurge(seccondStageCompressor.getPolytropicFluidHead(),
         seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
-
   }
 }

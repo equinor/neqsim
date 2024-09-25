@@ -48,7 +48,6 @@ class TemperatureUnitTest extends neqsim.NeqSimTest {
     assertEquals(77.4499999999, fluid.getTemperature("F"), 1e-4);
     assertEquals(537.12, fluid.getTemperature("R"), 1e-4);
     assertEquals(298.4, fluid.getTemperature("K"), 1e-4);
-
   }
 }
 

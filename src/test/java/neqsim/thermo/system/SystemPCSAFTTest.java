@@ -17,6 +17,5 @@ public class SystemPCSAFTTest {
     System.out.println("test");
     double cp = testSystem.getCp();
     assertEquals(208.85116193406583, cp, 0.1);
-
   }
 }

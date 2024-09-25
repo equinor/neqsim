@@ -464,7 +464,6 @@ public class TBPfractionModel implements java.io.Serializable {
           * Math.pow(((1 + 2 * fP) / (1 - 2 * fP)), 2);
       return VC * 1e3; // m3/mol
     }
-
   }
 
   /**

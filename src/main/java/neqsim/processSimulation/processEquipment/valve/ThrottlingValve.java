@@ -516,7 +516,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       percentValveOpening = calcPercentValveOpening(inStream.getThermoSystem().getPressure(),
           outStream.getThermoSystem().getPressure(), inStream.getFluid().getDensity("kg/m3"), Cv,
           inStream.getFlowRate("kg/hr"));
-
     } else {
       percentValveOpening = calcPercentValveOpeningLiquid(inStream.getFlowRate("kg/hr"),
           inStream.getThermoSystem().getPressure(), outStream.getThermoSystem().getPressure(),

@@ -25,7 +25,6 @@ public class ThrottlingValveTest {
 
     assertEquals(48.2652, valve1.getCv("US"), 1e-2);
     assertEquals(2649.7612, valve1.getCv("SI"), 1e-2);
-
   }
 
   @Test
@@ -51,6 +50,5 @@ public class ThrottlingValveTest {
     assertEquals(100.0, valve1.getPercentValveOpening(), 1e-2);
     assertEquals(100, stream1.getFlowRate("kg/hr"), 1e-2);
     assertEquals(3.015805897362369E-4, valve1.getCv("US"), 1e-2);
-
   }
 }

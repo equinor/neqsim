@@ -592,14 +592,11 @@ public class pTphaseEnvelopeNew2 extends BaseOperation {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-
-  }
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override
   public org.jfree.chart.JFreeChart getJFreeChart(String name) {
     return null;
   }
-
 }
