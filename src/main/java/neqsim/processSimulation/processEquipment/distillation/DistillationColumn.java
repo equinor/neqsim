@@ -55,12 +55,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Constructor for DistillationColumn.
    * </p>
    *
-   * @param numberOfTraysLocal a int
-   * @param hasReboiler a boolean
-   * @param hasCondenser a boolean
+   * @param name Name of distillation column
+   * @param numberOfTraysLocal Number of SimpleTrays to add
+   * @param hasReboiler Set true to add reboiler
+   * @param hasCondenser Set true to add Condenser
    */
-  public DistillationColumn(int numberOfTraysLocal, boolean hasReboiler, boolean hasCondenser) {
-    super("DistillationColumn");
+  public DistillationColumn(String name, int numberOfTraysLocal, boolean hasReboiler,
+      boolean hasCondenser) {
+    super(name);
     this.hasReboiler = hasReboiler;
     this.hasCondenser = hasCondenser;
     distoperations = new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -568,7 +570,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     testSystem.display();
     Stream stream_1 = new Stream("Stream1", testSystem);
 
-    DistillationColumn column = new DistillationColumn(5, true, true);
+    DistillationColumn column = new DistillationColumn("distColumn", 5, true, true);
     column.addFeedStream(stream_1, 3);
     // column.getReboiler().setHeatInput(520000.0);
     ((Reboiler) column.getReboiler()).setRefluxRatio(0.5);
