@@ -19,38 +19,6 @@ public class EquilibriumStream extends Stream {
   static Logger logger = LogManager.getLogger(EquilibriumStream.class);
 
   /**
-   * <p>
-   * Constructor for EquilibriumStream.
-   * </p>
-   */
-  @Deprecated
-  public EquilibriumStream() {}
-
-  /**
-   * <p>
-   * Constructor for EquilibriumStream.
-   * </p>
-   *
-   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-   */
-  @Deprecated
-  public EquilibriumStream(SystemInterface thermoSystem) {
-    super(thermoSystem);
-  }
-
-  /**
-   * <p>
-   * Constructor for EquilibriumStream.
-   * </p>
-   *
-   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
-  @Deprecated
-  public EquilibriumStream(StreamInterface stream) {
-    this("EquilibriumStream", stream.getThermoSystem());
-  }
-
-  /**
    * Constructor for EquilibriumStream.
    *
    * @param name name of stream

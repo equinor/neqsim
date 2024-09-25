@@ -45,40 +45,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   protected double lastFlowRate = 0.0;
 
   /**
-   * <p>
-   * Constructor for Stream.
-   * </p>
-   */
-  @Deprecated
-  public Stream() {
-    super("Stream");
-  }
-
-  /**
-   * <p>
-   * Constructor for Stream.
-   * </p>
-   *
-   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
-  @Deprecated
-  public Stream(StreamInterface stream) {
-    this("Stream", stream);
-  }
-
-  /**
-   * <p>
-   * Constructor for Stream.
-   * </p>
-   *
-   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-   */
-  @Deprecated
-  public Stream(SystemInterface thermoSystem) {
-    this("Stream", thermoSystem);
-  }
-
-  /**
    * Constructor for Stream.
    *
    * @param name name of stream

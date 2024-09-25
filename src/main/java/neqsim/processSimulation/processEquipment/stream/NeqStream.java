@@ -18,40 +18,6 @@ public class NeqStream extends Stream {
   static Logger logger = LogManager.getLogger(NeqStream.class);
 
   /**
-   * <p>
-   * Constructor for NeqStream.
-   * </p>
-   */
-  @Deprecated
-  public NeqStream() {
-    super("NeqStream");
-  }
-
-  /**
-   * <p>
-   * Constructor for NeqStream.
-   * </p>
-   *
-   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-   */
-  @Deprecated
-  public NeqStream(SystemInterface thermoSystem) {
-    super(thermoSystem);
-  }
-
-  /**
-   * <p>
-   * Constructor for NeqStream.
-   * </p>
-   *
-   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
-  @Deprecated
-  public NeqStream(StreamInterface stream) {
-    super(stream);
-  }
-
-  /**
    * Constructor for NeqStream.
    *
    * @param name name of stream
