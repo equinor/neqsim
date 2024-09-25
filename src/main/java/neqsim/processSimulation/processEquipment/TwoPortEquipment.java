@@ -31,8 +31,7 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
    */
   public TwoPortEquipment(String name, StreamInterface stream) {
     this(name);
-    this.inStream = stream;
-    this.outStream = stream.clone();
+    this.setInletStream(stream);
   }
 
   /** {@inheritDoc} */
