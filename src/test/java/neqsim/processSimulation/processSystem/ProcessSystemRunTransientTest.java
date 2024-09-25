@@ -70,6 +70,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     separator1.setInternalDiameter(1.0);
     separator1.setSeparatorLength(2.5);
     separator1.setLiquidLevel(0.5);
+    separator1.setCalculateSteadyState(true);
 
     ThrottlingValve valve2 = new ThrottlingValve("valve_2", separator1.getLiquidOutStream());
     valve2.setOutletPressure(1.0);
