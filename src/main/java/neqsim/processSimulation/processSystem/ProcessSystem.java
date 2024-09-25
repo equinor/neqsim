@@ -75,19 +75,18 @@ public class ProcessSystem extends SimulationBaseClass {
 
     for (ProcessEquipmentInterface unit : units) {
       if (unit == operation) {
+        logger.info("Equipment " + operation.getName() + " is already included in ProcessSystem");
         return;
       }
     }
 
     if (getAllUnitNames().contains(operation.getName())) {
-      String currClass = operation.getClass().getSimpleName();
-      int num = 1;
-      for (ProcessEquipmentInterface unit : units) {
-        if (unit.getClass().getSimpleName().equals(currClass)) {
-          num++;
-        }
-      }
-      operation.setName(currClass + Integer.toString(num));
+      ProcessEquipmentInterface existing =
+          (ProcessEquipmentInterface) this.getUnit(operation.getName());
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("ProcessSystem",
+          "add", "operation", "- Process equipment of type " + existing.getClass().getSimpleName()
+              + " named " + operation.getName() + " already included in ProcessSystem"));
+
     }
 
     getUnitOperations().add(operation);
@@ -112,17 +111,6 @@ public class ProcessSystem extends SimulationBaseClass {
       if (unit == operation) {
         return;
       }
-    }
-
-    if (getAllUnitNames().contains(operation.getName())) {
-      String currClass = operation.getClass().getSimpleName();
-      int num = 1;
-      for (ProcessEquipmentInterface unit : units) {
-        if (unit.getClass().getSimpleName().equals(currClass)) {
-          num++;
-        }
-      }
-      operation.setName(currClass + Integer.toString(num));
     }
 
     getUnitOperations().add(position, operation);
