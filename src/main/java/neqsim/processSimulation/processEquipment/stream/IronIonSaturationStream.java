@@ -27,40 +27,6 @@ public class IronIonSaturationStream extends Stream {
   protected SystemInterface reactiveThermoSystem;
 
   /**
-   * <p>
-   * Constructor for IronIonSaturationStream.
-   * </p>
-   */
-  @Deprecated
-  public IronIonSaturationStream() {
-    this("IronIonSaturationStream");
-  }
-
-  /**
-   * <p>
-   * Constructor for IronIonSaturationStream.
-   * </p>
-   *
-   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-   */
-  @Deprecated
-  public IronIonSaturationStream(SystemInterface thermoSystem) {
-    this("IronIonSaturationStream", thermoSystem);
-  }
-
-  /**
-   * <p>
-   * Constructor for IronIonSaturationStream.
-   * </p>
-   *
-   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
-  @Deprecated
-  public IronIonSaturationStream(StreamInterface stream) {
-    this("IronIonSaturationStream", stream);
-  }
-
-  /**
    * Constructor for IronIonSaturationStream.
    *
    * @param name name of stream
