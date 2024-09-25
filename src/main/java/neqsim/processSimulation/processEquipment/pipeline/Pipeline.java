@@ -52,29 +52,6 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
    * <p>
    * Constructor for Pipeline.
    * </p>
-   */
-  @Deprecated
-  public Pipeline() {
-    this("Pipeline");
-  }
-
-  /**
-   * <p>
-   * Constructor for Pipeline.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Pipeline(StreamInterface inStream) {
-    this("Pipeline", inStream);
-  }
-
-  /**
-   * <p>
-   * Constructor for Pipeline.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

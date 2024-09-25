@@ -12,7 +12,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -45,14 +44,6 @@ public class WaterStripperColumn extends SimpleAbsorber {
   private double kwater = 1e-4;
 
   int solventStreamNumber = 0;
-
-  /**
-   * <p>
-   * Constructor for WaterStripperColumn.
-   * </p>
-   */
-  @Deprecated
-  public WaterStripperColumn() {}
 
   /**
    * <p>

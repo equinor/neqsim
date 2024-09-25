@@ -9,7 +9,6 @@ package neqsim.processSimulation.processEquipment.pipeline;
 import java.util.UUID;
 import neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
@@ -21,16 +20,6 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class OnePhasePipeLine extends Pipeline {
   private static final long serialVersionUID = 1000;
-
-  /**
-   * <p>
-   * Constructor for OnePhasePipeLine.
-   * </p>
-   */
-  @Deprecated
-  public OnePhasePipeLine() {
-    this("OnePhasePipeLine");
-  }
 
   /**
    * <p>
@@ -78,7 +67,8 @@ public class OnePhasePipeLine extends Pipeline {
     setCalculationIdentifier(oldid);
     pipe.solveSteadyState(10, id);
     // pipe.print();
-    outStream.setThermoSystem(pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem().clone());
+    outStream
+        .setThermoSystem(pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem().clone());
     outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }

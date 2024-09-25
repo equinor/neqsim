@@ -21,28 +21,6 @@ public class GasScrubber extends Separator {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
-   * Constructor for GasScrubber.
-   * </p>
-   */
-  @Deprecated
-  public GasScrubber() {
-    this("GasScrubber");
-  }
-
-  /**
-   * <p>
-   * Constructor for GasScrubber.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
-   */
-  @Deprecated
-  public GasScrubber(StreamInterface inletStream) {
-    this("GasScrubber", inletStream);
-  }
-
-  /**
    * Constructor for GasScrubber.
    *
    * @param name name of gas scrubber

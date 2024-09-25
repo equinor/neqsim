@@ -34,28 +34,6 @@ public class GasScrubberSimple extends Separator {
   StreamInterface liquidOutStream;
 
   /**
-   * <p>
-   * Constructor for GasScrubberSimple.
-   * </p>
-   */
-  @Deprecated
-  public GasScrubberSimple() {
-    this("GasScrubberSimple");
-  }
-
-  /**
-   * <p>
-   * Constructor for GasScrubberSimple.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
-   */
-  @Deprecated
-  public GasScrubberSimple(StreamInterface inletStream) {
-    this("GasScrubberSimple", inletStream);
-  }
-
-  /**
    * Constructor for GasScrubberSimple.
    *
    * @param name name of scrubber

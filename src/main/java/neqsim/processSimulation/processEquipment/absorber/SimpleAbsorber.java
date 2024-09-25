@@ -1,7 +1,6 @@
 package neqsim.processSimulation.processEquipment.absorber;
 
 import java.util.UUID;
-
 import neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -32,28 +31,6 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   private double NTU = 2.0;
   private double stageEfficiency = 0.25;
   private double fsFactor = 0.0;
-
-  /**
-   * <p>
-   * Constructor for SimpleAbsorber.
-   * </p>
-   */
-  @Deprecated
-  public SimpleAbsorber() {
-    this("SimpleAbsorber");
-  }
-
-  /**
-   * <p>
-   * Constructor for SimpleAbsorber.
-   * </p>
-   *
-   * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
-   */
-  @Deprecated
-  public SimpleAbsorber(StreamInterface inStream1) {
-    this("SimpleAbsorber", inStream1);
-  }
 
   /**
    * <p>

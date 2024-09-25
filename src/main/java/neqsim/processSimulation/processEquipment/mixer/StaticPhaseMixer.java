@@ -18,14 +18,6 @@ public class StaticPhaseMixer extends StaticMixer {
    * <p>
    * Constructor for StaticPhaseMixer.
    * </p>
-   */
-  @Deprecated
-  public StaticPhaseMixer() {}
-
-  /**
-   * <p>
-   * Constructor for StaticPhaseMixer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

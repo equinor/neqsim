@@ -23,19 +23,6 @@ public class SimpleFlowLine extends TwoPortEquipment {
   AdiabaticTwoPhasePipe pipeline;
 
   /**
-   * <p>
-   * Constructor for SimpleFlowLine.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public SimpleFlowLine(StreamInterface inStream) {
-    this("SimpleFlowLine", inStream);
-  }
-
-  /**
    * Constructor for SimpleFlowLine.
    *
    * @param name Name of SimpleFlowLine object

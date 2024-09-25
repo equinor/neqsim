@@ -17,29 +17,6 @@ public class Expander extends Compressor implements ExpanderInterface {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
-   * Constructor for Expander.
-   * </p>
-   */
-  @Deprecated
-  public Expander() {
-    super();
-  }
-
-  /**
-   * <p>
-   * Constructor for Expander.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Expander(StreamInterface inletStream) {
-    super(inletStream);
-  }
-
-  /**
    * Constructor for Expander.
    *
    * @param name name of unit operation

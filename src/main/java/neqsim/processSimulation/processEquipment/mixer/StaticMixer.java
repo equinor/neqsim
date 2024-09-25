@@ -24,14 +24,6 @@ public class StaticMixer extends Mixer {
    * <p>
    * Constructor for StaticMixer.
    * </p>
-   */
-  @Deprecated
-  public StaticMixer() {}
-
-  /**
-   * <p>
-   * Constructor for StaticMixer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

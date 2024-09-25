@@ -17,29 +17,9 @@ public class SimpleTPoutPipeline extends Pipeline {
   private static final long serialVersionUID = 1000;
 
   boolean setTemperature = false;
-  protected double temperatureOut = 0, pressureOut = 0.0;
+  protected double temperatureOut = 0;
+  protected double pressureOut = 0.0;
   double dH = 0.0;
-
-  /**
-   * <p>
-   * Constructor for SimpleTPoutPipeline.
-   * </p>
-   */
-  @Deprecated
-  public SimpleTPoutPipeline() {}
-
-  /**
-   * <p>
-   * Constructor for SimpleTPoutPipeline.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public SimpleTPoutPipeline(StreamInterface inStream) {
-    this("SimpleTPoutPipeline", inStream);
-  }
 
   /**
    * Constructor for SimpleTPoutPipeline.

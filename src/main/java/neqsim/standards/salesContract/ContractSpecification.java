@@ -35,16 +35,6 @@ public class ContractSpecification extends NamedBaseClass {
    * <p>
    * Constructor for ContractSpecification.
    * </p>
-   */
-  @Deprecated
-  public ContractSpecification() {
-    super("ContractSpecification");
-  }
-
-  /**
-   * <p>
-   * Constructor for ContractSpecification.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param specification a {@link java.lang.String} object

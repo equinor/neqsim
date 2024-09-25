@@ -1,7 +1,6 @@
 package neqsim.processSimulation.processEquipment.adsorber;
 
 import java.util.UUID;
-
 import neqsim.processSimulation.mechanicalDesign.adsorber.AdsorberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -33,48 +32,6 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   private double HTU = 0.85;
   private double NTU = 2.0;
   private double stageEfficiency = 0.25;
-
-  /**
-   * <p>
-   * Constructor for SimpleAdsorber.
-   * </p>
-   */
-  @Deprecated
-  public SimpleAdsorber() {
-    this("SimpleAdsorber");
-  }
-
-  /**
-   * <p>
-   * Constructor for SimpleAdsorber.
-   * </p>
-   *
-   * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public SimpleAdsorber(StreamInterface inStream1) {
-    this("SimpleAdsorber");
-    this.inStream[0] = inStream1;
-    this.inStream[1] = inStream1;
-    outStream[0] = inStream1.clone();
-    outStream[1] = inStream1.clone();
-
-    SystemInterface systemOut1 = inStream1.getThermoSystem().clone();
-    outStream[0].setThermoSystem(systemOut1);
-
-    double molCO2 = inStream1.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
-    System.out.println("mol CO2 " + molCO2);
-    SystemInterface systemOut0 = inStream1.getThermoSystem().clone();
-    systemOut0.init(0);
-    systemOut0.addComponent("MDEA", molCO2 * absorptionEfficiency);
-    systemOut0.addComponent("water", molCO2 * absorptionEfficiency * 10.0);
-    systemOut0.chemicalReactionInit();
-    systemOut0.createDatabase(true);
-    systemOut0.setMixingRule(4);
-    outStream[1].setThermoSystem(systemOut0);
-    outStream[1].run();
-  }
 
   /**
    * {@inheritDoc}

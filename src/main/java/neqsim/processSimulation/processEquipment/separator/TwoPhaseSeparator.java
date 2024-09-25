@@ -28,29 +28,6 @@ public class TwoPhaseSeparator extends Separator {
   StreamInterface liquidOutStream;
 
   /**
-   * <p>
-   * Constructor for TwoPhaseSeparator.
-   * </p>
-   */
-  @Deprecated
-  public TwoPhaseSeparator() {
-    this("TwoPhaseSeparator");
-  }
-
-  /**
-   * <p>
-   * Constructor for TwoPhaseSeparator.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public TwoPhaseSeparator(StreamInterface inletStream) {
-    this("TwoPhaseSeparator", inletStream);
-  }
-
-  /**
    * Constructor for TwoPhaseSeparator.
    *
    * @param name name of separator
