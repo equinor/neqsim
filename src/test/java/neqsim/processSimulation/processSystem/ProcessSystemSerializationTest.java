@@ -256,11 +256,11 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
 
     Stream leanTEGtoabs = new Stream("lean TEG to absorber", coolerhOTteg3.getOutletStream());
 
-    Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
-    resycleLeanTEG.addStream(leanTEGtoabs);
-    resycleLeanTEG.setOutletStream(TEGFeed);
-    resycleLeanTEG.setPriority(200);
-    resycleLeanTEG.setDownstreamProperty("flow rate");
+    Recycle recycleLeanTEG = new Recycle("lean TEG recycle");
+    recycleLeanTEG.addStream(leanTEGtoabs);
+    recycleLeanTEG.setOutletStream(TEGFeed);
+    recycleLeanTEG.setPriority(200);
+    recycleLeanTEG.setDownstreamProperty("flow rate");
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -321,7 +321,7 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     operations.add(makeupMixer);
     operations.add(coolerhOTteg3);
     operations.add(leanTEGtoabs);
-    operations.add(resycleLeanTEG);
+    operations.add(recycleLeanTEG);
 
     // Check that process can run
     operations.run();

@@ -630,7 +630,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     SetPoint pressureset =
         new SetPoint("HP pump set", recycleValve, "pressure", separator1.getGasOutStream());
 
-    Recycle recycle = new Recycle("resycle 1");
+    Recycle recycle = new Recycle("recycle 1");
     recycle.addStream(recycleValve.getOutletStream());
     recycle.setOutletStream(resycstream);
     recycle.setFlowAccuracy(1e-4);

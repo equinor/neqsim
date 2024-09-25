@@ -115,8 +115,8 @@ public class TEGdehydrationProcess2 {
 
     Stream liquidRegenReflux = new Stream("liquidRegenReflux", sepRegen.getLiquidOutStream());
 
-    Recycle resycle2 = new Recycle("reflux resycle");
-    resycle2.addStream(liquidRegenReflux);
+    Recycle recycle2 = new Recycle("reflux recycle");
+    recycle2.addStream(liquidRegenReflux);
 
     Heater coolerRegenGas = new Heater("coolerRegenGas", sepRegen.getGasOutStream());
     coolerRegenGas.setOutTemperature(273.15 + 35.5);
@@ -144,8 +144,8 @@ public class TEGdehydrationProcess2 {
     stripper.setNumberOfStages(10);
     stripper.setStageEfficiency(0.5);
 
-    Recycle resycle3 = new Recycle("gas stripper resycle");
-    resycle3.addStream(stripper.getGasOutStream());
+    Recycle recycle3 = new Recycle("gas stripper recycle");
+    recycle3.addStream(stripper.getGasOutStream());
 
     Pump hotLeanTEGPump = new Pump("hot lean TEG pump", stripper.getSolventOutStream());
     hotLeanTEGPump.setOutletPressure(20.0);
@@ -184,8 +184,8 @@ public class TEGdehydrationProcess2 {
     makeupMixer.addStream(leanTEGtoabs);
     makeupMixer.addStream(makeupTEG);
 
-    Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
-    resycleLeanTEG.addStream(makeupMixer.getOutletStream());
+    Recycle recycleLeanTEG = new Recycle("lean TEG recycle");
+    recycleLeanTEG.addStream(makeupMixer.getOutletStream());
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -210,7 +210,7 @@ public class TEGdehydrationProcess2 {
     operations.add(sepregenGasCooler);
     operations.add(sepRegen);
     operations.add(liquidRegenReflux);
-    operations.add(resycle2);
+    operations.add(recycle2);
 
     operations.add(coolerRegenGas);
     operations.add(sepregenGas);
@@ -220,7 +220,7 @@ public class TEGdehydrationProcess2 {
     operations.add(strippingGas);
     operations.add(stripper);
 
-    operations.add(resycle3);
+    operations.add(recycle3);
     operations.add(hotLeanTEGPump);
     operations.add(coolerhOTteg);
     operations.add(coolerhOTteg2);
@@ -230,16 +230,16 @@ public class TEGdehydrationProcess2 {
     operations.add(makeupCalculator);
     operations.add(makeupTEG);
     operations.add(makeupMixer);
-    operations.add(resycleLeanTEG);
+    operations.add(recycleLeanTEG);
 
     operations.run();
     richGLycolHeater2.getOutletStream().getFluid().display();
     System.out.println("Energy reboiler " + heaterToReboiler.getDuty());
     mixerTOreboiler.addStream(liquidRegenReflux);
-    mixerTOreboiler.addStream(resycle3.getOutletStream());
+    mixerTOreboiler.addStream(recycle3.getOutletStream());
 
     operations.run();
-    absorber.replaceSolventInStream(resycleLeanTEG.getOutletStream());
+    absorber.replaceSolventInStream(recycleLeanTEG.getOutletStream());
     operations.run();
     // richGLycolHeater2.getOutStream().getFluid().display();
 

@@ -408,14 +408,14 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    boolean hasResycle = false;
+    boolean hasRecycle = false;
     // boolean hasAdjuster = false;
 
     // Initializing recycle controller
     recycleController.clear();
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
-        hasResycle = true;
+        hasRecycle = true;
         recycleController.addRecycle((Recycle) unitOperations.get(i));
       }
       if (unitOperations.get(i).getClass().getSimpleName().equals("Adjuster")) {
@@ -482,7 +482,7 @@ public class ProcessSystem extends SimulationBaseClass {
        * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface)
        * measurementDevices.get(i)) .getUnit(); }
        */
-    } while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
+    } while ((!isConverged || (iter < 2 && hasRecycle)) && iter < 100);
 
     for (int i = 0; i < unitOperations.size(); i++) {
       unitOperations.get(i).setCalculationIdentifier(id);

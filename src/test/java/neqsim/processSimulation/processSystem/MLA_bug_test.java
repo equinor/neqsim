@@ -175,16 +175,16 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     heatEx2.setUAvalue(2224.0);
     p.add(heatEx2);
 
-    Separator flashSep = new Separator("degasing separator", heatEx2.getOutStream(0));
+    Separator flashSep = new Separator("degassing separator", heatEx2.getOutStream(0));
     flashSep.setInternalDiameter(1.2);
     p.add(flashSep);
 
     StreamInterface flashGas =
-        new Stream("gas from degasing separator", flashSep.getGasOutStream());
+        new Stream("gas from degassing separator", flashSep.getGasOutStream());
     p.add(flashGas);
 
     StreamInterface flashLiquid =
-        new Stream("liquid from degasing separator", flashSep.getLiquidOutStream());
+        new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());
     p.add(flashLiquid);
 
     Filter fineFilter = new Filter("TEG fine filter", flashLiquid);
@@ -313,12 +313,12 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     makeupMixer.addStream(makeupTEG);
     p.add(makeupMixer);
 
-    Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
-    resycleLeanTEG.addStream(makeupMixer.getOutStream());
-    resycleLeanTEG.setOutletStream(TEGFeed);
-    resycleLeanTEG.setPriority(200);
-    resycleLeanTEG.setDownstreamProperty("flow rate");
-    p.add(resycleLeanTEG);
+    Recycle recycleLeanTEG = new Recycle("lean TEG recycle");
+    recycleLeanTEG.addStream(makeupMixer.getOutStream());
+    recycleLeanTEG.setOutletStream(TEGFeed);
+    recycleLeanTEG.setPriority(200);
+    recycleLeanTEG.setDownstreamProperty("flow rate");
+    p.add(recycleLeanTEG);
 
     richGLycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
 
