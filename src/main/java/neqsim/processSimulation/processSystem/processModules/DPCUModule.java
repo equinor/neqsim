@@ -129,7 +129,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
     valve1 = new ThrottlingValve("valve1", LTseparator.getLiquidOutStream());
     valve1.setOutletPressure(30.0);
 
-    distColumn = new DistillationColumn(10, true, true);
+    distColumn = new DistillationColumn("distColumn", 10, true, true);
     distColumn.addFeedStream(valve1.getOutletStream(), 2);
     // distColumn.setCondenserTemperature(273.15 - 72.0);
     // distColumn.setReboilerTemperature(273.0+40.0);
