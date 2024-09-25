@@ -85,7 +85,7 @@ public class FlowSetterTest {
 
     StreamInterface feedStream = flowset.getOutletStream();
 
-    ThreePhaseSeparator separator = new ThreePhaseSeparator(feedStream);
+    ThreePhaseSeparator separator = new ThreePhaseSeparator("sep", feedStream);
 
     StreamInterface gasFromSepStream = separator.getGasOutStream();
 

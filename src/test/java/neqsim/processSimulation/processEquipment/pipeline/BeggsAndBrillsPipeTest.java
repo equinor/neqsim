@@ -68,7 +68,7 @@ public class BeggsAndBrillsPipeTest {
     Stream stream_1 = new Stream("Stream1", testSystem);
     stream_1.setFlowRate(massFlowRate, "kg/hr");
 
-    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills(stream_1);
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipe1", stream_1);
     pipe.setPipeWallRoughness(5e-6);
     pipe.setLength(10.0);
     pipe.setAngle(0);
@@ -166,7 +166,7 @@ public class BeggsAndBrillsPipeTest {
     Stream stream_1 = new Stream("Stream1", testSystem);
     stream_1.setFlowRate(massFlowRate, "kg/hr");
 
-    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills(stream_1);
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipe1", stream_1);
     pipe.setPipeWallRoughness(0);
     pipe.setLength(410.0);
     pipe.setElevation(300);
@@ -229,7 +229,7 @@ public class BeggsAndBrillsPipeTest {
     Stream stream_1 = new Stream("Stream1", testSystem);
     stream_1.setFlowRate(massFlowRate, "kg/hr");
 
-    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills(stream_1);
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipe1", stream_1);
     pipe.setPipeWallRoughness(0);
     pipe.setLength(1500.0);
     pipe.setElevation(-1000);
@@ -284,7 +284,7 @@ public class BeggsAndBrillsPipeTest {
     Stream stream_2 = new Stream("Stream1", testSystem2);
     stream_2.setFlowRate(massFlowRate, "kg/hr");
 
-    PipeBeggsAndBrills pipe2 = new PipeBeggsAndBrills(stream_2);
+    PipeBeggsAndBrills pipe2 = new PipeBeggsAndBrills("pipe2", stream_2);
     pipe2.setPipeWallRoughness(0);
     pipe2.setLength(1500.0);
     pipe2.setElevation(-1000);
@@ -323,7 +323,7 @@ public class BeggsAndBrillsPipeTest {
     Stream stream_3 = new Stream("Stream1", testSystem3);
     stream_3.setFlowRate(massFlowRate, "kg/hr");
 
-    PipeBeggsAndBrills pipe3 = new PipeBeggsAndBrills(stream_3);
+    PipeBeggsAndBrills pipe3 = new PipeBeggsAndBrills("pipe3", stream_3);
     pipe3.setPipeWallRoughness(0);
     pipe3.setLength(10000.0);
     pipe3.setElevation(1500);

@@ -170,8 +170,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     valve3.setCalculateSteadyState(false);
     valve3.setMinimumValveOpening(1.0);
 
-    LevelTransmitter separatorLevelTransmitter = new LevelTransmitter(separator1);
-    separatorLevelTransmitter.setName("separatorLevelTransmitter1");
+    LevelTransmitter separatorLevelTransmitter =
+        new LevelTransmitter("separatorLevelTransmitter1", separator1);
     separatorLevelTransmitter.setMaximumValue(0.8);
     separatorLevelTransmitter.setMinimumValue(0.2);
 

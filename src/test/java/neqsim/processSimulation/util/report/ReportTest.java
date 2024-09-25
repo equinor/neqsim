@@ -20,8 +20,7 @@ public class ReportTest {
 
     ProcessSystem processOps = new ProcessSystem();
 
-    Stream inletStream = new Stream("inletStream", testSystem);
-    inletStream.setName("feed stream");
+    Stream inletStream = new Stream("feed stream", testSystem);
     inletStream.setPressure(10.0, "bara");
     inletStream.setTemperature(20.0, "C");
     inletStream.setFlowRate(100.0, "kg/hr");

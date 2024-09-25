@@ -13,13 +13,14 @@ public class AdjusterTest {
     fluid1.setMixingRule("classic");
 
     neqsim.processSimulation.processEquipment.stream.Stream stream1 =
-        new neqsim.processSimulation.processEquipment.stream.Stream(fluid1.clone());
+        new neqsim.processSimulation.processEquipment.stream.Stream("light oil", fluid1.clone());
     stream1.setFlowRate(1.5, "MSm3/day");
     stream1.setPressure(bottomholepressure, "bara");
     stream1.setTemperature(75.0, "C");
 
     neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills flowline1 =
-        new neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills(stream1);
+        new neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills("flowline",
+            stream1);
     flowline1.setDiameter(0.25);
     flowline1.setPipeWallRoughness(15e-6);
     flowline1.setLength(1200);
@@ -54,13 +55,14 @@ public class AdjusterTest {
     fluid1.setMixingRule("classic");
 
     neqsim.processSimulation.processEquipment.stream.Stream stream1 =
-        new neqsim.processSimulation.processEquipment.stream.Stream(fluid1.clone());
+        new neqsim.processSimulation.processEquipment.stream.Stream("light oil", fluid1.clone());
     stream1.setFlowRate(4.0, "MSm3/day");
     stream1.setPressure(170, "bara");
     stream1.setTemperature(75.0, "C");
 
     neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills flowline1 =
-        new neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills(stream1);
+        new neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills("flowline",
+            stream1);
     flowline1.setDiameter(0.25);
     flowline1.setPipeWallRoughness(15e-6);
     flowline1.setLength(1200);

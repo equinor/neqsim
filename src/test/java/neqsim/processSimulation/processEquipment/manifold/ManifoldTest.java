@@ -17,15 +17,13 @@ public class ManifoldTest {
     SystemSrkEos testSystem2 = testSystem.clone();
     testSystem2.setMolarComposition(new double[] {0.1, 0.4, 0.4});
 
-    Stream inletStream = new Stream("inletStream", testSystem);
-    inletStream.setName("inlet stream");
+    Stream inletStream = new Stream("inlet stream", testSystem);
     inletStream.setPressure(10.0, "bara");
     inletStream.setTemperature(20.0, "C");
     inletStream.setFlowRate(3.0, "MSm3/day");
     inletStream.run();
 
-    Stream inletStream2 = new Stream("inletStream", testSystem2);
-    inletStream2.setName("inlet stream");
+    Stream inletStream2 = new Stream("inlet stream", testSystem2);
     inletStream2.setPressure(10.0, "bara");
     inletStream2.setTemperature(20.0, "C");
     inletStream2.setFlowRate(2.0, "MSm3/day");
@@ -55,14 +53,12 @@ public class ManifoldTest {
 
     ProcessSystem processOps = new ProcessSystem();
 
-    Stream inletStream = new Stream("inletStream", testSystem);
-    inletStream.setName("inlet stream");
+    Stream inletStream = new Stream("inlet stream", testSystem);
     inletStream.setPressure(10.0, "bara");
     inletStream.setTemperature(20.0, "C");
     inletStream.setFlowRate(3.0, "MSm3/day");
 
-    Stream inletStream2 = new Stream("inletStream", testSystem2);
-    inletStream2.setName("inlet stream");
+    Stream inletStream2 = new Stream("inlet stream", testSystem2);
     inletStream2.setPressure(10.0, "bara");
     inletStream2.setTemperature(20.0, "C");
     inletStream2.setFlowRate(2.0, "MSm3/day");
