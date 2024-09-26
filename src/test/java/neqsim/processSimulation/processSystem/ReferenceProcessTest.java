@@ -113,7 +113,5 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
     assertEquals(15.0, gasMixer.getOutStream().getTemperature("C"), 0.01);
     assertEquals(2278.2594247, exportgas.getFlowRate("Sm3/hr") / exportoil.getFlowRate("idSm3/hr"),
         0.01);
-
   }
-
 }

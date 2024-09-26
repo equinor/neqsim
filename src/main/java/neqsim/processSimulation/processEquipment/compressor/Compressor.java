@@ -1425,5 +1425,4 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public double getActualCompressionRatio() {
     return actualCompressionRatio;
   }
-
 }
