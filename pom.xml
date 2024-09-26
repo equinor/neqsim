@@ -21,24 +21,24 @@
 	</properties>
 	<licenses>
 	  <license>
-	    <name>Apache License, Version 2.0</name>
-	    <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-	    <distribution>repo</distribution>
-	    <comments>A business-friendly OSS license</comments>
+		<name>Apache License, Version 2.0</name>
+		<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		<distribution>repo</distribution>
+		<comments>A business-friendly OSS license</comments>
 	  </license>
 	</licenses>
 	<developers>
-	    	<developer>
+		<developer>
 			<name>Even Solbraa</name>
 			<email>esolbraa@gmail.com</email>
 			<organization>com.equinor</organization>
-		    	<organizationUrl>https://github.com/equinor/neqsim</organizationUrl>
-    		</developer>
+			<organizationUrl>https://github.com/equinor/neqsim</organizationUrl>
+		</developer>
 	</developers>
 	<scm>
-	    <connection>scm:git:git://github.com/equinor/neqsim.git</connection>
-	    <developerConnection>scm:git:ssh://github.com/equinor/neqsim.git</developerConnection>
-	    <url>https://github.com/equinor/neqsim</url>
+		<connection>scm:git:git://github.com/equinor/neqsim.git</connection>
+		<developerConnection>scm:git:ssh://github.com/equinor/neqsim.git</developerConnection>
+		<url>https://github.com/equinor/neqsim</url>
 	</scm>
 	<repositories>
 		<repository>
@@ -197,58 +197,58 @@
   		</profile>
  	</profiles>
 	<build>
-			<plugins>
-				<plugin>
-					<groupId>org.sonatype.plugins</groupId>
-					<artifactId>nexus-staging-maven-plugin</artifactId>
-					<version>1.6.7</version>
-					<extensions>true</extensions>
-					<configuration>
-					    <serverId>ossrh</serverId>
-					    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-					    <autoReleaseAfterClose>true</autoReleaseAfterClose>
-					</configuration>
-			    	</plugin>
-			    <plugin>
+		<plugins>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.7</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
 				<version>2.2.1</version>
 				<executions>
-				    <execution>
+					<execution>
 					<id>attach-sources</id>
 					<goals>
-					    <goal>jar-no-fork</goal>
+						<goal>jar-no-fork</goal>
 					</goals>
-				    </execution>
+					</execution>
 				</executions>
-			    </plugin>
-			    <plugin>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>2.9.1</version>
 				<executions>
-				    <execution>
+					<execution>
 					<id>attach-javadocs</id>
 					<goals>
-					    <goal>jar</goal>
+						<goal>jar</goal>
 					</goals>
-				    </execution>
+					</execution>
 				</executions>
-			    </plugin>
-			    <plugin>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
 				<version>1.5</version>
 				<executions>
-				    <execution>
+					<execution>
 					<id>sign-artifacts</id>
 					<phase>verify</phase>
 					<goals>
-					    <goal>sign</goal>
+						<goal>sign</goal>
 					</goals>
-				    </execution>
+					</execution>
 				</executions>
-			    </plugin>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
@@ -411,7 +411,7 @@
 				<configuration>
 					<failsOnError>true</failsOnError>
 				</configuration>
-    		</plugin>  
+			</plugin>  
 		</plugins>
 	</build>
 	<distributionManagement>
@@ -425,10 +425,10 @@
 	<snapshotRepository>
 			<id>ossrh</id>
 			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-	    	</snapshotRepository>
-	    	<repository>
+			</snapshotRepository>
+			<repository>
 			<id>ossrh</id>
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-	    	</repository>
+			</repository>
 	</distributionManagement>
 </project>
