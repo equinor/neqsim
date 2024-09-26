@@ -31,8 +31,8 @@
 		<developer>
 			<name>Even Solbraa</name>
 			<email>esolbraa@gmail.com</email>
-			<organization>com.equinor</organization>
-			<organizationUrl>https://github.com/equinor/neqsim</organizationUrl>
+			<organization>Equinor</organization>
+			<organizationUrl>https://github.com/equinor</organizationUrl>
 		</developer>
 	</developers>
 	<scm>
