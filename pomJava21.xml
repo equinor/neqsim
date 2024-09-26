@@ -6,6 +6,9 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.equinor.neqsim</groupId>
 	<artifactId>neqsim</artifactId>
+	<name>NeqSim</name>
+	<description>NeqSim is a library for calculation of fluid behavior, phase equilibrium and process simulation.</description>
+	<url>https://github.com/equinor/neqsim</url>
 	<packaging>jar</packaging>
 	<version>${revision}${sha1}${changelist}</version>
 
@@ -16,6 +19,21 @@
 		<sha1/>
 		<changelist/>
 	</properties>
+	<licenses>
+		<license>
+	  		<name>The Apache Software License, Version 2.0</name>
+	  		<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+	  		<distribution>repo</distribution>
+		</license>
+  	</licenses>
+	<developers>
+		<developer>
+			<name>Even Solbraa</name>
+			<email>esolbraa@gmail.com</email>
+			<organization>Equinor</organization>
+			<organizationUrl>https://github.com/equinor</organizationUrl>
+		</developer>
+	</developers>
 
 	<repositories>
 		<repository>
