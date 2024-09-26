@@ -74,7 +74,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
     try {
       if (getNumberOfInputStreams() == 0) {
-        mixedStream = streams.get(0).clone(); // cloning the first stream
+        mixedStream = streams.get(0).clone(this.getName() + " mixed stream");
         // mixedStream.getThermoSystem().setNumberOfPhases(2);
         // mixedStream.getThermoSystem().init(0);
         // mixedStream.getThermoSystem().init(3);

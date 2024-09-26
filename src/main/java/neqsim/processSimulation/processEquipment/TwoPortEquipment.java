@@ -80,7 +80,7 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   @Override
   public void setInletStream(StreamInterface stream) {
     this.inStream = stream;
-    this.outStream = inStream.clone();
+    this.outStream = inStream.clone(this.getName() + " out stream");
   }
 
   /** {@inheritDoc} */

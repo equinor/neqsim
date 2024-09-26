@@ -86,8 +86,8 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   @Override
   public void setName(String name) {
     super.setName(name);
-    // outStream[0].setName(name + "_Sout1");
-    // outStream[1].setName(name + "_Sout2");
+    outStream[0].setName(name + "_Sout1");
+    outStream[1].setName(name + "_Sout2");
   }
 
   /**
