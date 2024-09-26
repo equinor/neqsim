@@ -8,8 +8,8 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.ojalgo.matrix.Primitive64Matrix;
-import org.ojalgo.matrix.Primitive64Matrix.Factory;
+import org.ojalgo.matrix.MatrixR064;
+import org.ojalgo.matrix.MatrixR064.Factory;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.SparseStore;
 import neqsim.thermo.component.ComponentCPAInterface;
@@ -78,7 +78,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
   // DenseMatrix64F(getTotalNumberOfAccociationSites(),
   // 1);
   MatrixStore<Double> hessianInvers2 = null;
-  final Factory mtrxFactory = Primitive64Matrix.FACTORY;
+  final Factory mtrxFactory = MatrixR064.FACTORY;
 
   // private transient SimpleMatrix KlkTVMatrix = null, KlkTTMatrix = null,
   // KlkTMatrix = null, udotTimesmMatrix = null, mVector = null, udotMatrix =
@@ -145,44 +145,44 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
 
       // had to remove if below - dont understand why.. Even
       // if (getTotalNumberOfAccociationSites() != oldTotalNumberOfAccociationSites) {
-      mVector2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
-      KlkMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
+      mVector2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(), 1);
+      KlkMatrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(),
           getTotalNumberOfAccociationSites());
-      KlkVMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
+      KlkVMatrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(),
           getTotalNumberOfAccociationSites());
-      KlkVVMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
+      KlkVVMatrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(),
           getTotalNumberOfAccociationSites());
-      KlkVVVMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
+      KlkVVVMatrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(),
           getTotalNumberOfAccociationSites());
-      hessianMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
+      hessianMatrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(),
           getTotalNumberOfAccociationSites());
-      KlkTMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
+      KlkTMatrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(),
           getTotalNumberOfAccociationSites());
-      KlkTTMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
+      KlkTTMatrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(),
           getTotalNumberOfAccociationSites());
-      KlkTVMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
+      KlkTVMatrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(),
           getTotalNumberOfAccociationSites());
-      corr2Matrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
-      corr3Matrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
-      corr4Matrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
+      corr2Matrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(), 1);
+      corr3Matrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(), 1);
+      corr4Matrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(), 1);
       Klkni =
           new double[numberOfComponents][getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
-      ksiMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
-      uMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
-      udotMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
+      ksiMatrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(), 1);
+      uMatrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(), 1);
+      udotMatrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(), 1);
       moleculeNumber = new int[getTotalNumberOfAccociationSites()];
       assSiteNumber = new int[getTotalNumberOfAccociationSites()];
       gvector = new double[getTotalNumberOfAccociationSites()][1];
-      udotTimesmMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
+      udotTimesmMatrix2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(), 1);
       delta = new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
       deltaNog = new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
       deltadT = new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
       deltadTdT =
           new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
-      QMatksiksiksi2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
+      QMatksiksiksi2 = SparseStore.R064.make(getTotalNumberOfAccociationSites(), 1);
       // }
       udotTimesmiMatrix2 =
-          SparseStore.PRIMITIVE64.make(getNumberOfComponents(), getTotalNumberOfAccociationSites());
+          SparseStore.R064.make(getNumberOfComponents(), getTotalNumberOfAccociationSites());
 
       oldTotalNumberOfAccociationSites = getTotalNumberOfAccociationSites();
 

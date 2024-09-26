@@ -42,6 +42,17 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
   /**
    * <p>
+   * Constructor for Recycle.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
+  public Recycle(String name) {
+    super(name);
+  }
+
+  /**
+   * <p>
    * Setter for the field <code>compositionAccuracy</code>.
    * </p>
    *
@@ -75,32 +86,11 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
   /**
    * <p>
-   * Constructor for Recycle.
-   * </p>
-   */
-  @Deprecated
-  public Recycle() {
-    this("Recycle");
-  }
-
-  /**
-   * <p>
    * resetIterations.
    * </p>
    */
   public void resetIterations() {
     iterations = 0;
-  }
-
-  /**
-   * <p>
-   * Constructor for Recycle.
-   * </p>
-   *
-   * @param name a {@link java.lang.String} object
-   */
-  public Recycle(String name) {
-    super(name);
   }
 
   /** {@inheritDoc} */

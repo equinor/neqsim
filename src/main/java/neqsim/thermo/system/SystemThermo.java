@@ -2652,9 +2652,9 @@ public abstract class SystemThermo implements SystemInterface {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getPhase",
           "i", i + " is not valid, must be in the range 0-" + this.getNumberOfPhases()));
     } else if (i >= getNumberOfPhases() && phaseArray[phaseIndex[i]] == null) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
-          this.getClass() + ":getPhase - Can not return phase number " + i
-              + ". Current number of phases are " + getNumberOfPhases()));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getPhase",
+          "i", " - Can not return phase number " + i + ". Current number of phases are "
+              + getNumberOfPhases()));
     }
     return phaseArray[phaseIndex[i]];
   }

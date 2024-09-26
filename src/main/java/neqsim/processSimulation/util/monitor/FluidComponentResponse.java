@@ -16,21 +16,10 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class FluidComponentResponse {
-  private static final long serialVersionUID = 1L;
   static Logger logger = LogManager.getLogger(FluidComponentResponse.class);
   public String name;
   public HashMap<String, HashMap<String, Value>> properties =
       new HashMap<String, HashMap<String, Value>>();
-
-  /**
-   * <p>
-   * Constructor for FluidComponentResponse.
-   * </p>
-   */
-  @Deprecated
-  public FluidComponentResponse() {
-    this("Fluid");
-  }
 
   /**
    * <p>

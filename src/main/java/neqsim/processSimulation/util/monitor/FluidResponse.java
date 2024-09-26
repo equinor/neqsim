@@ -26,16 +26,6 @@ public class FluidResponse {
 
   /**
    * <p>
-   * Constructor for Fluid.
-   * </p>
-   */
-  @Deprecated
-  public FluidResponse() {
-    this("Fluid");
-  }
-
-  /**
-   * <p>
    * Constructor for Fluid. Sets name of inputFluid as name.
    * </p>
    *

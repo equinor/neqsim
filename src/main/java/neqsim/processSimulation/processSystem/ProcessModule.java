@@ -36,13 +36,6 @@ public class ProcessModule extends SimulationBaseClass {
   private boolean solved = false;
 
   /**
-   * Default constructor that sets the name to "Default Module Name".
-   */
-  public ProcessModule() {
-    this("Default Module Name");
-  }
-
-  /**
    * Constructor that takes a name as a parameter.
    *
    * @param name the name of the process module
