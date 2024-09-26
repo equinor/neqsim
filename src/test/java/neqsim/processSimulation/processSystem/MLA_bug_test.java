@@ -96,10 +96,9 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(feedToAbsorber);
 
     WaterDewPointAnalyser waterDewPointAnalyserToAbsorber =
-        new WaterDewPointAnalyser(feedToAbsorber);
+        new WaterDewPointAnalyser("water dew point gas to absorber", feedToAbsorber);
     waterDewPointAnalyserToAbsorber.setMethod("multiphase");
     waterDewPointAnalyserToAbsorber.setReferencePressure(85.0);
-    waterDewPointAnalyserToAbsorber.setName("water dew point gas to absorber");
     p.add(waterDewPointAnalyserToAbsorber);
 
     StreamInterface TEGFeed = new Stream("TEG feed", feedTEG);
@@ -144,9 +143,9 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
         new Stream("pipelineSetTP stream", pipelineSetTP.getOutStream());
     p.add(pipelineSetTPStream);
 
-    WaterDewPointAnalyser waterDewPointAnalyser3 = new WaterDewPointAnalyser(dehydratedGasSetWater);
+    WaterDewPointAnalyser waterDewPointAnalyser3 =
+        new WaterDewPointAnalyser("water dew point analyser3", dehydratedGasSetWater);
     waterDewPointAnalyser3.setReferencePressure(70.0);
-    waterDewPointAnalyser3.setName("water dew point analyser3");
     p.add(waterDewPointAnalyser3);
 
     StreamInterface dehydratedGas = new Stream("dry gas from absorber", absorber.getGasOutStream());
@@ -155,13 +154,12 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     StreamInterface richTEG = new Stream("rich TEG from absorber", absorber.getLiquidOutStream());
     p.add(richTEG);
 
-    WaterDewPointAnalyser waterDewPointAnalyser2 = new WaterDewPointAnalyser(dehydratedGas);
+    WaterDewPointAnalyser waterDewPointAnalyser2 =
+        new WaterDewPointAnalyser("water dew point analyser", dehydratedGas);
     waterDewPointAnalyser2.setReferencePressure(70.0);
-    waterDewPointAnalyser2.setName("water dew point analyser");
     p.add(waterDewPointAnalyser2);
 
-    ThrottlingValve glycol_flash_valve = new ThrottlingValve(richTEG);
-    glycol_flash_valve.setName("Rich TEG HP flash valve");
+    ThrottlingValve glycol_flash_valve = new ThrottlingValve("Rich TEG HP flash valve", richTEG);
     glycol_flash_valve.setOutletPressure(4.8);
     p.add(glycol_flash_valve);
 
@@ -210,8 +208,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     strippingGas.setPressure(1.2, "bara");
     p.add(strippingGas);
 
-    StreamInterface gasToReboiler = strippingGas.clone();
-    gasToReboiler.setName("gas to reboiler");
+    StreamInterface gasToReboiler = strippingGas.clone("gas to reboiler");
     p.add(gasToReboiler);
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
