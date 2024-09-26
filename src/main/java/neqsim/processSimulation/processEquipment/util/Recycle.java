@@ -143,14 +143,14 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     streams.add(newStream);
 
     if (numberOfInputStreams == 0) {
-      mixedStream = streams.get(0).clone();
+      mixedStream = streams.get(0).clone(this.getName() + " mixed stream");
       // mixedStream.getThermoSystem().setNumberOfPhases(2);
       // mixedStream.getThermoSystem().init(0);
       // mixedStream.getThermoSystem().init(3);
     }
     mixedStream.setEmptyThermoSystem(streams.get(0).getThermoSystem());
     numberOfInputStreams++;
-    lastIterationStream = mixedStream.clone();
+    lastIterationStream = mixedStream.clone(this.getName() + " last iteration stream");
   }
 
   /**
