@@ -15,13 +15,6 @@ public class AmineViscosity extends Viscosity {
    * <p>
    * Constructor for AmineViscosity.
    * </p>
-   */
-  public AmineViscosity() {}
-
-  /**
-   * <p>
-   * Constructor for AmineViscosity.
-   * </p>
    *
    * @param liquidPhase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

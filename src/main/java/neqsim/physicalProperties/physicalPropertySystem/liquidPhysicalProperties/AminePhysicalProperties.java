@@ -27,13 +27,6 @@ public class AminePhysicalProperties extends LiquidPhysicalProperties {
    * <p>
    * Constructor for AminePhysicalProperties.
    * </p>
-   */
-  public AminePhysicalProperties() {}
-
-  /**
-   * <p>
-   * Constructor for AminePhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int

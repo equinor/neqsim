@@ -44,13 +44,6 @@ public class PFCTViscosityMethod extends Viscosity {
    * <p>
    * Constructor for PFCTViscosityMethod.
    * </p>
-   */
-  public PFCTViscosityMethod() {}
-
-  /**
-   * <p>
-   * Constructor for PFCTViscosityMethod.
-   * </p>
    *
    * @param phase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

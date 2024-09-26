@@ -19,13 +19,6 @@ abstract class Viscosity extends
    * <p>
    * Constructor for Viscosity.
    * </p>
-   */
-  public Viscosity() {}
-
-  /**
-   * <p>
-   * Constructor for Viscosity.
-   * </p>
    *
    * @param gasPhase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

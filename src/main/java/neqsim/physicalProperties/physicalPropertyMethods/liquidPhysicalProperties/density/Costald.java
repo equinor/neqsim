@@ -27,13 +27,6 @@ public class Costald extends
    * <p>
    * Constructor for Costald.
    * </p>
-   */
-  public Costald() {}
-
-  /**
-   * <p>
-   * Constructor for Costald.
-   * </p>
    *
    * @param liquidPhase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

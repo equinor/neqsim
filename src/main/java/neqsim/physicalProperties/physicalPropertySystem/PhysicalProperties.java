@@ -54,13 +54,6 @@ public abstract class PhysicalProperties
    * <p>
    * Constructor for PhysicalProperties.
    * </p>
-   */
-  public PhysicalProperties() {}
-
-  /**
-   * <p>
-   * Constructor for PhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */

@@ -15,13 +15,6 @@ public class SiddiqiLucasMethod extends Diffusivity {
    * <p>
    * Constructor for SiddiqiLucasMethod.
    * </p>
-   */
-  public SiddiqiLucasMethod() {}
-
-  /**
-   * <p>
-   * Constructor for SiddiqiLucasMethod.
-   * </p>
    *
    * @param liquidPhase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

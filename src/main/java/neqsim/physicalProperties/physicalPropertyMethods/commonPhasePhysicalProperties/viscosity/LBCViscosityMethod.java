@@ -21,13 +21,6 @@ public class LBCViscosityMethod extends Viscosity {
    * <p>
    * Constructor for LBCViscosityMethod.
    * </p>
-   */
-  public LBCViscosityMethod() {}
-
-  /**
-   * <p>
-   * Constructor for LBCViscosityMethod.
-   * </p>
    *
    * @param phase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

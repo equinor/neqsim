@@ -29,13 +29,6 @@ public class GasPhysicalProperties
    * <p>
    * Constructor for GasPhysicalProperties.
    * </p>
-   */
-  public GasPhysicalProperties() {}
-
-  /**
-   * <p>
-   * Constructor for GasPhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int

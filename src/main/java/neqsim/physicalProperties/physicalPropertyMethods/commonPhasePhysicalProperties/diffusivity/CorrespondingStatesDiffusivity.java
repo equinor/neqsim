@@ -13,14 +13,8 @@ import neqsim.thermo.phase.PhaseType;
 public class CorrespondingStatesDiffusivity extends Diffusivity {
   private static final long serialVersionUID = 1000;
 
-  double[][] binaryDiffusionCoefficients, binaryLennardJonesOmega;
-
-  /**
-   * <p>
-   * Constructor for CorrespondingStatesDiffusivity.
-   * </p>
-   */
-  public CorrespondingStatesDiffusivity() {}
+  double[][] binaryDiffusionCoefficients;
+  double[][] binaryLennardJonesOmega;
 
   /**
    * <p>
