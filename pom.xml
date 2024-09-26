@@ -6,6 +6,9 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.equinor.neqsim</groupId>
 	<artifactId>neqsim</artifactId>
+	<name>NeqSim</name>
+	<description>NeqSim is a library for calculation of fluid behavior, phase equilibrium and process simulation.</description>
+	<url>https://github.com/equinor/neqsim</url>
 	<packaging>jar</packaging>
 	<version>${revision}${sha1}${changelist}</version>
 
@@ -17,6 +20,21 @@
 		<changelist/>
 		<checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
 	</properties>
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+		  	<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		  	<distribution>repo</distribution>
+		</license>
+	  </licenses>
+	<developers>
+		<developer>
+			<name>Even Solbraa</name>
+			<email>esolbraa@gmail.com</email>
+			<organization>Equinor</organization>
+			<organizationUrl>https://github.com/equinor</organizationUrl>
+		</developer>
+	</developers>
 
 	<repositories>
 		<repository>
@@ -107,74 +125,74 @@
 		</dependency>
 	</dependencies>
 	<profiles>
-  		<profile>
-   			<id>release</id>
-   			<build>
+		  <profile>
+			   <id>release</id>
+			   <build>
 				<plugins>
-	 				<plugin>
-	  					<groupId>org.sonatype.central</groupId>
-	  					<artifactId>central-publishing-maven-plugin</artifactId>
-	  					<version>0.6.0</version>
-	  					<extensions>true</extensions>
-	  					<configuration>
-	   						<publishingServerId>central</publishingServerId>
-	   						<autoPublish>true</autoPublish>
-	  					</configuration>
-	 				</plugin>
-	 				<plugin>
-	  					<groupId>org.apache.maven.plugins</groupId>
-	  					<artifactId>maven-source-plugin</artifactId>
-	  					<version>3.3.0</version>
-	  					<executions>
-	   						<execution>
+					 <plugin>
+						  <groupId>org.sonatype.central</groupId>
+						  <artifactId>central-publishing-maven-plugin</artifactId>
+						  <version>0.6.0</version>
+						  <extensions>true</extensions>
+						  <configuration>
+							   <publishingServerId>central</publishingServerId>
+							   <autoPublish>true</autoPublish>
+						  </configuration>
+					 </plugin>
+					 <plugin>
+						  <groupId>org.apache.maven.plugins</groupId>
+						  <artifactId>maven-source-plugin</artifactId>
+						  <version>3.3.0</version>
+						  <executions>
+							   <execution>
 								<id>attach-sources</id>
 								<phase>verify</phase>
 								<goals>
-		 							<goal>jar-no-fork</goal>
+									 <goal>jar-no-fork</goal>
 								</goals>
-	   						</execution>
-	  					</executions>
-	 				</plugin>
-	 				<plugin>
-	  					<groupId>org.apache.maven.plugins</groupId>
-	  					<artifactId>maven-javadoc-plugin</artifactId>
-	  					<version>3.10.0</version>
-	  					<executions>
-	   						<execution>
+							   </execution>
+						  </executions>
+					 </plugin>
+					 <plugin>
+						  <groupId>org.apache.maven.plugins</groupId>
+						  <artifactId>maven-javadoc-plugin</artifactId>
+						  <version>3.10.0</version>
+						  <executions>
+							   <execution>
 								<id>attach-javadoc</id>
 								<goals>
-		 							<goal>jar</goal>
+									 <goal>jar</goal>
 								</goals>
-	   						</execution>
+							   </execution>
 						</executions>
-	  					<configuration>
-	   						<doclint>none</doclint>
-	  					</configuration>
-	 				</plugin>
-	 				<plugin>
-	  					<groupId>org.apache.maven.plugins</groupId>
-	  					<artifactId>maven-gpg-plugin</artifactId>
-	  					<version>3.2.6</version>
-	  					<executions>
-	   						<execution>
+						  <configuration>
+							   <doclint>none</doclint>
+						  </configuration>
+					 </plugin>
+					 <plugin>
+						  <groupId>org.apache.maven.plugins</groupId>
+						  <artifactId>maven-gpg-plugin</artifactId>
+						  <version>3.2.6</version>
+						  <executions>
+							   <execution>
 								<id>sign-artifacts</id>
 								<phase>verify</phase>
 								<goals>
-		 							<goal>sign</goal>
+									 <goal>sign</goal>
 								</goals>
-	   						</execution>
-	  					</executions>
-	  					<configuration>
-	   						<gpgArguments>
+							   </execution>
+						  </executions>
+						  <configuration>
+							   <gpgArguments>
 								<arg>--pinentry-mode</arg>
 								<arg>loopback</arg>
-	   						</gpgArguments>
-	  					</configuration>
-	 				</plugin>
+							   </gpgArguments>
+						  </configuration>
+					 </plugin>
 				</plugins>
-   			</build>
-  		</profile>
- 	</profiles>
+			   </build>
+		  </profile>
+	 </profiles>
 	<build>
 		<plugins>
 			<plugin>
@@ -339,7 +357,7 @@
 				<configuration>
 					<failsOnError>true</failsOnError>
 				</configuration>
-    		</plugin>  
+			</plugin>  
 		</plugins>
 	</build>
 	<distributionManagement>
