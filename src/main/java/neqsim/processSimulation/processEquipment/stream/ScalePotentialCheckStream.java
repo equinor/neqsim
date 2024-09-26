@@ -84,7 +84,7 @@ public class ScalePotentialCheckStream extends Stream {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    System.out.println("start flashing stream... " + streamNumber);
+    logger.info("start flashing stream... " + streamNumber);
     if (stream != null) {
       thermoSystem = this.stream.getThermoSystem().clone();
     }
@@ -96,8 +96,8 @@ public class ScalePotentialCheckStream extends Stream {
     thermoOps.TPflash();
     reactiveThermoSystem.init(3);
 
-    System.out.println("number of phases: " + reactiveThermoSystem.getNumberOfPhases());
-    System.out.println("beta: " + reactiveThermoSystem.getBeta());
+    logger.info("number of phases: " + reactiveThermoSystem.getNumberOfPhases());
+    logger.info("beta: " + reactiveThermoSystem.getBeta());
     setCalculationIdentifier(id);
   }
 

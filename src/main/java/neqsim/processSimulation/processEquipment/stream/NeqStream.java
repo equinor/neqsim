@@ -85,7 +85,7 @@ public class NeqStream extends Stream {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    System.out.println("start flashing stream... " + streamNumber);
+    logger.info("start flashing stream... " + streamNumber);
     if (stream != null) {
       thermoSystem = this.stream.getThermoSystem().clone();
     }
@@ -94,8 +94,8 @@ public class NeqStream extends Stream {
     this.thermoSystem.init(3);
     // thermoOps = new ThermodynamicOperations(thermoSystem);
     // thermoOps.TPflash();
-    System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
-    System.out.println("beta: " + thermoSystem.getBeta());
+    logger.info("number of phases: " + thermoSystem.getNumberOfPhases());
+    logger.info("beta: " + thermoSystem.getBeta());
     setCalculationIdentifier(id);
   }
 }
