@@ -135,7 +135,7 @@ class ComponentSplitterTest {
     inletStream.setTemperature(25.0, "C");
     inletStream.setFlowRate(5.0, "MSm3/day");
 
-    Stream streamresycl = new Stream("recycle stream", inletStream.clone());
+    Stream streamresycl = inletStream.clone("recycle stream");
 
     Mixer mixer1 = new Mixer("mixer 1");
     mixer1.addStream(inletStream);
