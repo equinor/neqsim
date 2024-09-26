@@ -126,7 +126,6 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    // todo: why not refStream.clone("new stream")?
     outStream = new Stream("new stram", refStream.getFluid().clone());
 
     if (setFlowRate) {
