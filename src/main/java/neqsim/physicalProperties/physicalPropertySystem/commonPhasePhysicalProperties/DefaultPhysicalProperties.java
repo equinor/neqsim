@@ -21,13 +21,6 @@ public class DefaultPhysicalProperties extends PhysicalProperties {
    * <p>
    * Constructor for DefaultPhysicalProperties.
    * </p>
-   */
-  public DefaultPhysicalProperties() {}
-
-  /**
-   * <p>
-   * Constructor for DefaultPhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int

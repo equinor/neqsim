@@ -48,12 +48,6 @@ public class FrictionTheoryViscosityMethod extends Viscosity
   // {-7.9024e-2,3.72408e-5,-5.65610e-9}};
 
   // protected double kaprr_fconst = 1.37290e-8;
-  /**
-   * <p>
-   * Constructor for FrictionTheoryViscosityMethod.
-   * </p>
-   */
-  public FrictionTheoryViscosityMethod() {}
 
   /**
    * <p>

@@ -25,13 +25,6 @@ public class NaturalGasPhysicalProperties extends GasPhysicalProperties {
    * <p>
    * Constructor for NaturalGasPhysicalProperties.
    * </p>
-   */
-  public NaturalGasPhysicalProperties() {}
-
-  /**
-   * <p>
-   * Constructor for NaturalGasPhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int

@@ -18,13 +18,6 @@ public class SolidPhysicalProperties extends PhysicalProperties {
    * <p>
    * Constructor for SolidPhysicalProperties.
    * </p>
-   */
-  public SolidPhysicalProperties() {}
-
-  /**
-   * <p>
-   * Constructor for SolidPhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */

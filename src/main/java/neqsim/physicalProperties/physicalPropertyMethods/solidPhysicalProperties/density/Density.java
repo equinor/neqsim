@@ -27,13 +27,6 @@ public class Density extends
    * <p>
    * Constructor for Density.
    * </p>
-   */
-  public Density() {}
-
-  /**
-   * <p>
-   * Constructor for Density.
-   * </p>
    *
    * @param liquidPhase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

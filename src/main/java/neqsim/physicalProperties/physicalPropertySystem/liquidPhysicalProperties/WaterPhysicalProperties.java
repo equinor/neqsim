@@ -27,13 +27,6 @@ public class WaterPhysicalProperties extends LiquidPhysicalProperties {
    * <p>
    * Constructor for WaterPhysicalProperties.
    * </p>
-   */
-  public WaterPhysicalProperties() {}
-
-  /**
-   * <p>
-   * Constructor for WaterPhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int

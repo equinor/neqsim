@@ -31,13 +31,6 @@ public class LiquidPhysicalProperties
    * <p>
    * Constructor for LiquidPhysicalProperties.
    * </p>
-   */
-  public LiquidPhysicalProperties() {}
-
-  /**
-   * <p>
-   * Constructor for LiquidPhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int
