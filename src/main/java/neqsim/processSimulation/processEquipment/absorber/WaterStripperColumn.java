@@ -12,6 +12,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -343,6 +344,10 @@ public class WaterStripperColumn extends SimpleAbsorber {
         // System.out.println("mole water to move " + molesWaterToMove);
 
         StreamInterface stream = mixedStream.clone();
+<<<<<<< HEAD
+=======
+        // stream.setName("test");
+>>>>>>> 34d887962 (wip)
         stream.getThermoSystem().addComponent("water", molesWaterToMove, 0);
         stream.getThermoSystem().addComponent("water", -molesWaterToMove, 1);
         stream.getThermoSystem().initBeta();

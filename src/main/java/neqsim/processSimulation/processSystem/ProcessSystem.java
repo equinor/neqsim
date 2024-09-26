@@ -735,10 +735,6 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * {@inheritDoc}
-   *
-   * <p>
-   * Setter for the field <code>name</code>.
-   * </p>
    */
   @Override
   public void setName(String name) {
