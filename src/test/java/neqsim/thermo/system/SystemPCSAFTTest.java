@@ -14,7 +14,6 @@ public class SystemPCSAFTTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
     ops.TPflash();
     testSystem.initProperties();
-    System.out.println("test");
     double cp = testSystem.getCp();
     assertEquals(208.85116193406583, cp, 0.1);
   }
