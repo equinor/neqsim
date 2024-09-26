@@ -9,7 +9,7 @@
   },
   "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
   "java.saveActions.organizeImports": true,
-  "java.checkstyle.version": "10.15.0",
+  "java.checkstyle.version": "10.18.1",
   "java.checkstyle.configuration": "${workspaceFolder}/checkstyle_neqsim.xml",
   "java.debug.settings.hotCodeReplace": "never",
   "[xml]": {
