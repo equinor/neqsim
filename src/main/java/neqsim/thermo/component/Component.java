@@ -515,7 +515,7 @@ public abstract class Component implements ComponentInterface {
             + " in phase  and chage request was " + dn;
         neqsim.util.exception.InvalidInputException ex =
             new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
-        throw new RuntimeException(ex);
+        // throw new RuntimeException(ex);
         // logger.error(ex.getMessage());
       }
     }

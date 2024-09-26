@@ -146,14 +146,14 @@ public class StirredCellNode extends TwoPhaseFlowNode {
       getBulkSystem().getPhases()[0].addMoles(componentNumber, gasMolarRate);
       getBulkSystem().getPhases()[1].addMoles(componentNumber, liquidMolarRate);
     }
-    // getBulkSystem().initBeta();
+    getBulkSystem().initBeta();
     getBulkSystem().init_x_y();
     getBulkSystem().init(1);
 
     if (bulkSystem.isChemicalSystem()) {
       getOperations().chemicalEquilibrium();
+      getBulkSystem().init(1);
     }
-    getBulkSystem().init(1);
   }
 
   /** {@inheritDoc} */
