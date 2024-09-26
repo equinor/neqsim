@@ -19,6 +19,7 @@ import neqsim.processSimulation.processEquipment.pump.Pump;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.splitter.Splitter;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.tank.Tank;
 import neqsim.processSimulation.processEquipment.util.Calculator;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
@@ -116,16 +117,30 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  public void testAddUnitsWithNoName() {
-    Separator sep = new Separator("Separator");
+  public void testAddUnitsWithDuplicateName() {
+    String name = "TestSeparator";
+    Separator sep = new Separator(name);
     p.add(sep);
-    sep = new Separator("Separator");
-    p.add(sep);
-    Assertions.assertEquals(2, p.size());
-    p.removeUnit("Separator2");
-    Assertions.assertEquals(1, p.size());
-    p.removeUnit("Separator");
+
+    RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> {
+      p.add(new Separator(name));
+    });
+    Assertions.assertEquals(
+        "neqsim.util.exception.InvalidInputException: ProcessSystem:add - Input operation - Process equipment of type Separator named "
+            + name + " already included in ProcessSystem",
+        thrown.getMessage());
+    p.removeUnit(name);
     Assertions.assertEquals(0, p.size());
+    p.add(new Tank(name));
+    Assertions.assertEquals(1, p.size());
+
+    RuntimeException thrown2 = Assertions.assertThrows(RuntimeException.class, () -> {
+      p.add(new Separator(name));
+    });
+    Assertions.assertEquals(
+        "neqsim.util.exception.InvalidInputException: ProcessSystem:add - Input operation - Process equipment of type Tank named "
+            + name + " already included in ProcessSystem",
+        thrown2.getMessage());
   }
 
   @Test
@@ -134,11 +149,13 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     p.add(sep);
     Separator sep2 = new Separator("Separator2");
     p.add(sep2);
+    Assertions.assertEquals(2, p.size());
 
     Assertions.assertEquals(0, p.getUnitNumber("Separator"));
     Assertions.assertEquals(1, p.getUnitNumber("Separator2"));
 
     p.removeUnit("Separator");
+    Assertions.assertEquals(1, p.size());
     p.add(sep);
 
     Assertions.assertEquals(0, p.getUnitNumber("Separator2"));
@@ -420,8 +437,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     strippingGas.setTemperature(180.0, "C");
     strippingGas.setPressure(feedPressureStripGas, "bara");
 
-    Stream gasToReboiler = (Stream) strippingGas.clone();
-    gasToReboiler.setName("gas to reboiler");
+    Stream gasToReboiler = strippingGas.clone("gas to reboiler");
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
@@ -738,8 +754,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     strippingGas.setTemperature(180.0, "C");
     strippingGas.setPressure(feedPressureStripGas, "bara");
 
-    Stream gasToReboiler = (Stream) strippingGas.clone();
-    gasToReboiler.setName("gas to reboiler");
+    Stream gasToReboiler = strippingGas.clone("gas to reboiler");
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
