@@ -75,8 +75,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     ThrottlingValve valve2 = new ThrottlingValve("valve2", seprator2ndStage.getLiquidOutStream());
     valve2.setOutletPressure(2.7);
 
-    StreamInterface recircstream1 = valve2.getOutletStream().clone();
-    recircstream1.setName("oilRecirc1");
+    StreamInterface recircstream1 = valve2.getOutletStream().clone("oilRecirc1");
     recircstream1.setFlowRate(1e-6, "kg/hr");
 
     neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator3rdStage =
@@ -148,7 +147,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     gas_from_separator.setFlowRate(7.0, "MSm3/day");
     gas_from_separator.run();
 
-    Stream recyclegasstream = new Stream("recycle gas stream", gas_from_separator.clone());
+    Stream recyclegasstream = gas_from_separator.clone("recycle gas stream");
     recyclegasstream.setFlowRate(1e-10, "MSm3/day");
     recyclegasstream.run();
 
@@ -262,7 +261,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     gas_from_separator.setTemperature(30.0, "C");
     gas_from_separator.setFlowRate(7.0, "MSm3/day");
 
-    Stream recyclegasstream = new Stream("Recycle gas", gas_from_separator.clone());
+    Stream recyclegasstream = gas_from_separator.clone("Recycle gas");
     recyclegasstream.setFlowRate(1e-10, "MSm3/day");
 
     Mixer gasmixer = new Mixer("gas mixer");

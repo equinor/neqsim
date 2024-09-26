@@ -114,8 +114,7 @@ public class TEGdehydrationProcessDistillation3 {
     strippingGas.setTemperature(80.0, "C");
     strippingGas.setPressure(1.23, "bara");
 
-    Stream gasToReboiler = strippingGas.clone();
-    gasToReboiler.setName("gas to reboiler");
+    Stream gasToReboiler = strippingGas.clone("gas to reboiler");
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(richGLycolHeater2.getOutletStream(), 0);

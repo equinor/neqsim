@@ -195,8 +195,8 @@ public class TEGdehydrationProcessDistillationGFA {
         new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser =
-        new HydrateEquilibriumTemperatureAnalyser(waterSaturatedFeedGas);
-    hydrateTAnalyser.setName("hydrate temperature analyser");
+        new HydrateEquilibriumTemperatureAnalyser("hydrate temperature analyser",
+            waterSaturatedFeedGas);
 
     neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
     feedTEG.setMolarComposition(
@@ -224,15 +224,13 @@ public class TEGdehydrationProcessDistillationGFA {
 
     Stream richTEG = new Stream("rich TEG from absorber", absorber.getSolventOutStream());
 
-    WaterDewPointAnalyser waterDewPointAnalyser2 = new WaterDewPointAnalyser(dehydratedGas);
-    waterDewPointAnalyser2.setName("water dew point analyser2");
+    WaterDewPointAnalyser waterDewPointAnalyser2 =
+        new WaterDewPointAnalyser("water dew point analyser2", dehydratedGas);
 
     HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser =
-        new HydrateEquilibriumTemperatureAnalyser(dehydratedGas);
-    waterDewPointAnalyser.setName("water dew point analyser");
+        new HydrateEquilibriumTemperatureAnalyser("water dew point analyser", dehydratedGas);
 
-    ThrottlingValve glycol_flash_valve = new ThrottlingValve("Flash valve", richTEG);
-    glycol_flash_valve.setName("Rich TEG HP flash valve");
+    ThrottlingValve glycol_flash_valve = new ThrottlingValve("Rich TEG HP flash valve", richTEG);
     glycol_flash_valve.setOutletPressure(flashDrumPressure);
 
     Heater richGLycolHeaterCondenser =
@@ -257,8 +255,7 @@ public class TEGdehydrationProcessDistillationGFA {
     heatEx.setUAvalue(UAvalueRichTEGHeatExchanger_2);
 
     ThrottlingValve glycol_flash_valve2 =
-        new ThrottlingValve("LP flash valve", heatEx.getOutStream(0));
-    glycol_flash_valve2.setName("Rich TEG LP flash valve");
+        new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0));
     glycol_flash_valve2.setOutletPressure(reboilerPressure);
 
     neqsim.thermo.system.SystemInterface stripGas = feedGas.clone();
@@ -268,8 +265,7 @@ public class TEGdehydrationProcessDistillationGFA {
     strippingGas.setTemperature(strippingGasFeedTemperature, "C");
     strippingGas.setPressure(reboilerPressure, "bara");
 
-    Stream gasToReboiler = strippingGas.clone();
-    gasToReboiler.setName("gas to reboiler");
+    Stream gasToReboiler = strippingGas.clone("gas to reboiler");
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 3, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
@@ -286,7 +282,7 @@ public class TEGdehydrationProcessDistillationGFA {
 
     Stream gasToFlare = new Stream("gas to flare", sepregenGas.getGasOutStream());
 
-    Stream liquidToTrreatment = new Stream("water to treatment", sepregenGas.getLiquidOutStream());
+    Stream liquidToTreatment = new Stream("water to treatment", sepregenGas.getLiquidOutStream());
 
     WaterStripperColumn stripper = new WaterStripperColumn("TEG stripper");
     stripper.addSolventInStream(column.getLiquidOutStream());
@@ -334,7 +330,7 @@ public class TEGdehydrationProcessDistillationGFA {
     makeupCalculator.addInputVariable(dehydratedGas);
     makeupCalculator.addInputVariable(flashGas);
     makeupCalculator.addInputVariable(gasToFlare);
-    makeupCalculator.addInputVariable(liquidToTrreatment);
+    makeupCalculator.addInputVariable(liquidToTreatment);
     makeupCalculator.setOutputVariable(makeupTEG);
 
     StaticMixer makeupMixer = new StaticMixer("makeup mixer");
@@ -378,7 +374,7 @@ public class TEGdehydrationProcessDistillationGFA {
     operations.add(coolerRegenGas);
     operations.add(sepregenGas);
     operations.add(gasToFlare);
-    operations.add(liquidToTrreatment);
+    operations.add(liquidToTreatment);
     operations.add(strippingGas);
     operations.add(stripper);
     operations.add(recycleGasFromStripper);

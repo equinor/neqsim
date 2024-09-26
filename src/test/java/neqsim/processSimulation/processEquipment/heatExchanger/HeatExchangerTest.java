@@ -50,7 +50,6 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     heatEx.setUAvalue(1000);
 
     Separator sep = new Separator("sep", stream_Hot);
-
     Stream oilOutStream = new Stream("oilOutStream", sep.getLiquidOutStream());
 
     ThrottlingValve valv1 = new ThrottlingValve("valv1", oilOutStream);

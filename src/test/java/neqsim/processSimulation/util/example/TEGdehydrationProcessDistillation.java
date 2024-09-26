@@ -107,8 +107,7 @@ public class TEGdehydrationProcessDistillation {
     heatEx.setUAvalue(600.0);
 
     ThrottlingValve glycol_flash_valve2 =
-        new ThrottlingValve("LP flash valve", heatEx.getOutStream(0));
-    glycol_flash_valve2.setName("Rich TEG LP flash valve");
+        new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0));
     glycol_flash_valve2.setOutletPressure(1.23);
 
     neqsim.thermo.system.SystemInterface stripGas = feedGas.clone();
@@ -120,8 +119,7 @@ public class TEGdehydrationProcessDistillation {
     strippingGas.setTemperature(80.0, "C");
     strippingGas.setPressure(1.23, "bara");
 
-    Stream gasToReboiler = strippingGas.clone();
-    gasToReboiler.setName("gas to reboiler");
+    Stream gasToReboiler = strippingGas.clone("gas to reboiler");
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 0);

@@ -216,8 +216,7 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     strippingGas.setTemperature(185.4402968739743, "C");
     strippingGas.setPressure(1.1714901511485545, "bara");
 
-    Stream gasToReboiler = (Stream) (strippingGas).clone();
-    gasToReboiler.setName("gas to reboiler");
+    Stream gasToReboiler = strippingGas.clone("gas to reboiler");
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 2, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutStream(), 1);
