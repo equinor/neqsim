@@ -106,8 +106,7 @@ public class OffshoreProcess3 {
 
     ThreePhaseSeparator lpseparator =
         new ThreePhaseSeparator("3rd stage separator", valvempValve.getOutletStream());
-    Stream stableOilStream = (Stream) lpseparator.getOilOutStream();
-    stableOilStream.setName("stable oil");
+    Stream stableOilStream = new Stream("stable oil", lpseparator.getOilOutStream());
 
     Compressor lpcompressor =
         new Compressor("1st stage recompressor", lpseparator.getGasOutStream());
@@ -129,9 +128,9 @@ public class OffshoreProcess3 {
      * coolingWater.setFlowRate(500900.2, "kg/hr"); coolingWater.setTemperature(10.0, "C");
      * coolingWater.setPressure(10.0, "bara");
      *
-     * HeatExchanger heatEx = new HeatExchanger(lpcompressor.getOutStream());
-     * heatEx.setName("LP heat Exchanger"); heatEx.setGuessOutTemperature(273.15+40.0);
-     * heatEx.setUAvalue(45000.0); heatEx.setFeedStream(1, coolingWater);
+     * HeatExchanger heatEx = new HeatExchanger("LP heat Exchanger",lpcompressor.getOutStream());
+     * heatEx.setGuessOutTemperature(273.15+40.0); heatEx.setUAvalue(45000.0);
+     * heatEx.setFeedStream(1, coolingWater);
      */
 
     Cooler lpHeatExchanger =

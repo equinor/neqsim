@@ -54,15 +54,13 @@ public class TestSlugcatcher {
         new ThreePhaseSeparator("Separator 1", valve1.getOutletStream());
     Stream stream_2 = new Stream("stream_2", separator2.getGasOutStream());
 
-    VolumeFlowTransmitter volumeTransmitter3 =
-        new VolumeFlowTransmitter(separator2.getGasOutStream());
+    VolumeFlowTransmitter volumeTransmitter3 = new VolumeFlowTransmitter(
+        "Gas Volume FLow From Slug Catcher", separator2.getGasOutStream());
     volumeTransmitter3.setMeasuredPhaseNumber(0);
-    volumeTransmitter3.setName("Gas Volume FLow From Slug Catcher");
 
-    VolumeFlowTransmitter volumeTransmitter4 =
-        new VolumeFlowTransmitter(separator2.getWaterOutStream());
+    VolumeFlowTransmitter volumeTransmitter4 = new VolumeFlowTransmitter(
+        "Water Volume FLow From Slug Catcher", separator2.getWaterOutStream());
     volumeTransmitter4.setMeasuredPhaseNumber(0);
-    volumeTransmitter4.setName("Water Volume FLow From Slug Catcher");
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();

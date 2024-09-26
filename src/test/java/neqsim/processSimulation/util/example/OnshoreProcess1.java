@@ -300,10 +300,10 @@ public class OnshoreProcess1 {
       MeasurementDeviceInterface reservoirTemperaturTransmitter =
           new TemperatureTransmitter(stream_1);
       MeasurementDeviceInterface reservoirPressureTransmitter = new PressureTransmitter(stream_1);
-      WaterContentAnalyser waterAnalyser = new WaterContentAnalyser(separator.getGasOutStream());
-      waterAnalyser.setName("Snohvit Total Water Analyser");
-      MolarMassAnalyser molarMassAnalyser = new MolarMassAnalyser(separator.getGasOutStream());
-      molarMassAnalyser.setName("Snohvit molar mass analyser");
+      WaterContentAnalyser waterAnalyser =
+          new WaterContentAnalyser("Snohvit Total Water Analyser", separator.getGasOutStream());
+      MolarMassAnalyser molarMassAnalyser =
+          new MolarMassAnalyser("Snohvit molar mass analyser", separator.getGasOutStream());
       StreamInterface stream_2 = separator.getGasOutStream();
       stream_2.setName("Gas From Snohvit Reservoir");
 
@@ -322,10 +322,10 @@ public class OnshoreProcess1 {
       // Albatross reservoir stream
       Stream stream_3 = new Stream("Stream2", testSystem2);
       Separator separator2 = new Separator("Separator 2", stream_3);
-      WaterContentAnalyser waterAnalyser2 = new WaterContentAnalyser(separator2.getGasOutStream());
-      waterAnalyser2.setName("Albatross Total Water Analyser");
-      MolarMassAnalyser molarMassAnalyser2 = new MolarMassAnalyser(separator2.getGasOutStream());
-      molarMassAnalyser2.setName("Albatross molar mass analyser");
+      WaterContentAnalyser waterAnalyser2 =
+          new WaterContentAnalyser("Albatross Total Water Analyser", separator2.getGasOutStream());
+      MolarMassAnalyser molarMassAnalyser2 =
+          new MolarMassAnalyser("Albatross molar mass analyser", separator2.getGasOutStream());
 
       StreamInterface stream_4 = separator2.getGasOutStream();
       stream_4.setName("Gas From Albatross Reservoir");
@@ -338,8 +338,8 @@ public class OnshoreProcess1 {
       mixer1.addStream(valve1.getOutletStream());
       mixer1.addStream(valve2.getOutletStream());
 
-      WaterContentAnalyser waterAnalyser3 = new WaterContentAnalyser(mixer1.getOutletStream());
-      waterAnalyser3.setName("Total Water Analyser");
+      WaterContentAnalyser waterAnalyser3 =
+          new WaterContentAnalyser("Total Water Analyser", mixer1.getOutletStream());
 
       // Pipeline
       SimpleTPoutPipeline pipeLine1 =
@@ -358,43 +358,38 @@ public class OnshoreProcess1 {
       ThreePhaseSeparator slugCatcher =
           new ThreePhaseSeparator("slugCatcher", pipeLine1.getOutletStream());
 
-      VolumeFlowTransmitter volumeTransmitter2 =
-          new VolumeFlowTransmitter(slugCatcher.getOilOutStream());
+      VolumeFlowTransmitter volumeTransmitter2 = new VolumeFlowTransmitter(
+          "Condensate Volume Flow From Slug Catcher", slugCatcher.getOilOutStream());
       volumeTransmitter2.setMeasuredPhaseNumber(0);
-      volumeTransmitter2.setName("Condensate Volume Flow From Slug Catcher");
 
-      VolumeFlowTransmitter volumeTransmitter1 =
-          new VolumeFlowTransmitter(slugCatcher.getWaterOutStream());
+      VolumeFlowTransmitter volumeTransmitter1 = new VolumeFlowTransmitter(
+          "MEG Volume FLow From Slug Catcher", slugCatcher.getWaterOutStream());
       volumeTransmitter1.setMeasuredPhaseNumber(0);
-      volumeTransmitter1.setName("MEG Volume FLow From Slug Catcher");
 
-      VolumeFlowTransmitter volumeTransmitter3 =
-          new VolumeFlowTransmitter(slugCatcher.getGasOutStream());
+      VolumeFlowTransmitter volumeTransmitter3 = new VolumeFlowTransmitter(
+          "Gas Volume FLow From Slug Catcher", slugCatcher.getGasOutStream());
       volumeTransmitter3.setMeasuredPhaseNumber(0);
-      volumeTransmitter3.setName("Gas Volume FLow From Slug Catcher");
 
-      // Stream stream_5 = new Stream(slugCatcher.getWaterOutStream());
-      // stream_5.setName("MEG stream from slugcatcher");
+      // Stream stream_5 = new Stream("MEG stream from
+      // slugcatcher",slugCatcher.getWaterOutStream());
 
       Heater condensateheater1 = new Heater("Condensate heater1", slugCatcher.getOilOutStream());
       condensateheater1.setdT(23.4);
 
-      // Heater gasHeater = new Heater(slugCatcher.getGasOutStream());
-      // gasHeater.setName("Gas heater after slugcatcher");
+      // Heater gasHeater = new Heater("Gas heater after slugcatcher",
+      // slugCatcher.getGasOutStream());
       // gasHeater.setdT(30.0);
 
       ThreePhaseSeparator condensateSeparator =
           new ThreePhaseSeparator("condensateSeparator", condensateheater1.getOutletStream());
 
-      // Heater MEGheater1 = new Heater(stream_5);
-      // MEGheater1.setName("MEG heater1");
+      // Heater MEGheater1 = new Heater("MEG heater1",stream_5);
       // MEGheater1.setdT(23.4);
 
       // SnohvitCO2RemovalModule co2Module = new SnohvitCO2RemovalModule();
       // co2Module.addInputStream("streamToAbsorber", gasHeater.getOutStream());
 
-      // Heater MEGheater2 = new Heater(MEGheater1.getOutStream());
-      // MEGheater2.setName("MEG heater2");
+      // Heater MEGheater2 = new Heater("MEG heater2", MEGheater1.getOutStream());
       // MEGheater2.setdT(20.0);
 
       // ThrottlingValve valve3 = new ThrottlingValve("MEG flash valve 1",
@@ -405,11 +400,9 @@ public class OnshoreProcess1 {
       // separator", valve3.getOutStream());
 
       // VolumeFlowTransmitter volumeTransmitter5= new
-      // VolumeFlowTransmitter(separator3.getGasOutStream());
-      // volumeTransmitter5.setName("MEG Valve 1 Gas Volume FLow");
+      // VolumeFlowTransmitter("MEG Valve 1 Gas Volume FLow",separator3.getGasOutStream());
 
-      // Heater MEGheater3 = new Heater(separator3.getWaterOutStream());
-      // MEGheater3.setName("MEG heater3");
+      // Heater MEGheater3 = new Heater("MEG heater3", separator3.getWaterOutStream());
       // MEGheater3.setdT(-35.0);
 
       // ThrottlingValve valve4 = new ThrottlingValve("MEG flash valve 2",
@@ -431,13 +424,10 @@ public class OnshoreProcess1 {
       // GasHeater.setdT(-35.0);
 
       // CO2-removal
-      // Stream streamToCO2removal = new Stream(slugCatcher.getGasOutStream());
-      // streamToCO2removal.setName("Gas to CO2 removal");
+      // Stream streamToCO2removal = new Stream("Gas to CO2 removal",slugCatcher.getGasOutStream());
       // VolumeFlowTransmitter volumeTransmitter_StreamToCO2removal = new
-      // VolumeFlowTransmitter(streamToCO2removal);
+      // VolumeFlowTransmitter("Stream to CO2 removal Volume FLow",streamToCO2removal);
       // volumeTransmitter_StreamToCO2removal.setUnit("Nm^3/day");
-      // volumeTransmitter_StreamToCO2removal.setName("Stream to CO2 removal
-      // Volume FLow");
 
       neqsim.processSimulation.processSystem.ProcessSystem operations =
           new neqsim.processSimulation.processSystem.ProcessSystem();
