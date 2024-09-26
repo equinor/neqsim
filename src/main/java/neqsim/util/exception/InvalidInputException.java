@@ -12,16 +12,6 @@ public class InvalidInputException extends neqsim.util.exception.ThermoException
   private static final long serialVersionUID = 1000;
 
   /**
-   * Constructs an <code>InvalidInputException</code> with the specified detail message.
-   *
-   * @param msg the detail message.
-   */
-  @Deprecated
-  public InvalidInputException(String msg) {
-    super(msg);
-  }
-
-  /**
    * Constructs an <code>InvalidInputException</code> with a default message like:
    *
    * Input " + inputName + " was invalid.

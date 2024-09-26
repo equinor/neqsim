@@ -439,7 +439,7 @@ public abstract class Phase implements PhaseInterface {
       double beta) {
     if (totalNumberOfMoles <= 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "init",
-          "totalNumberOfMoles", "must be larger than zero."));
+          "totalNumberOfMoles", "must be larger than or equal to zero."));
     }
 
     this.beta = beta;

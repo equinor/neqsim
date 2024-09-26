@@ -39,28 +39,6 @@ public class FlowSetter extends TwoPortEquipment {
 
   ProcessSystem referenceProcess = null;
 
-  @Deprecated
-  /**
-   * <p>
-   * Constructor for FlowSetter.
-   * </p>
-   */
-  public FlowSetter() {
-    super("Flow Setter");
-  }
-
-  /**
-   * <p>
-   * Constructor for FlowSetter.
-   * </p>
-   *
-   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
-  @Deprecated
-  public FlowSetter(StreamInterface stream) {
-    this("Flow Setter", stream);
-  }
-
   /**
    * <p>
    * Constructor for FlowSetter.

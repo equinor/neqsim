@@ -12,16 +12,6 @@ public class IsNaNException extends neqsim.util.exception.ThermoException {
   private static final long serialVersionUID = 1000;
 
   /**
-   * Constructs an <code>IsNaNException</code> with the specified detail message.
-   *
-   * @param msg the detail message.
-   */
-  @Deprecated
-  public IsNaNException(String msg) {
-    super(msg);
-  }
-
-  /**
    * Constructs an <code>IsNaNException</code> with a detailed message.
    *
    * @param className Class that exception is raised from
