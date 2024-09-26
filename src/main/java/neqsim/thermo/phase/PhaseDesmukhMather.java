@@ -4,6 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentDesmukhMather;
 import neqsim.thermo.component.ComponentGEInterface;
+import neqsim.util.exception.IsNaNException;
+import neqsim.util.exception.TooManyIterationsException;
 
 /**
  * <p>
@@ -33,18 +35,17 @@ public class PhaseDesmukhMather extends PhaseGE {
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, molesInPhase);
+    super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentDesmukhMather(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, initType, phase, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     if (initType != 0) {
-      setType(phase);
-      // phaseTypeName = phase == 0 ? "liquid" : "gas";
+      setType(pt);
     }
     setMolarVolume(0.980e-3 * getMolarMass() * 1e5);
     Z = pressure * getMolarVolume() / (R * temperature);
@@ -96,43 +97,10 @@ public class PhaseDesmukhMather extends PhaseGE {
     }
   }
 
-  /**
-   * <p>
-   * Setter for the field <code>aij</code>.
-   * </p>
-   *
-   * @param alpha an array of {@link double} objects
-   */
-  public void setAij(double[][] alpha) {
-    for (int i = 0; i < alpha.length; i++) {
-      System.arraycopy(aij[i], 0, this.aij[i], 0, alpha[0].length);
-    }
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>bij</code>.
-   * </p>
-   *
-   * @param Dij an array of {@link double} objects
-   */
-  public void setBij(double[][] Dij) {
-    for (int i = 0; i < Dij.length; i++) {
-      System.arraycopy(bij[i], 0, this.bij[i], 0, Dij[0].length);
-    }
-  }
-
-  /**
-   * <p>
-   * getBetaDesMatij.
-   * </p>
-   *
-   * @param i a int
-   * @param j a int
-   * @return a double
-   */
-  public double getBetaDesMatij(int i, int j) {
-    return aij[i][j] + bij[i][j] * temperature;
+  /** {@inheritDoc} */
+  @Override
+  public void setAlpha(double[][] alpha) {
+    throw new UnsupportedOperationException("Unimplemented method 'setAlpha'");
   }
 
   /**
@@ -146,6 +114,57 @@ public class PhaseDesmukhMather extends PhaseGE {
    */
   public double getAij(int i, int j) {
     return aij[i][j];
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>aij</code>.
+   * </p>
+   *
+   * @param alpha an array of type double
+   */
+  public void setAij(double[][] alpha) {
+    for (int i = 0; i < alpha.length; i++) {
+      System.arraycopy(aij[i], 0, this.aij[i], 0, alpha[0].length);
+    }
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>bij</code>.
+   * </p>
+   *
+   * @param Bij an array of type double
+   */
+  public void setBij(double[][] Bij) {
+    for (int i = 0; i < Bij.length; i++) {
+      System.arraycopy(bij[i], 0, this.bij[i], 0, Bij[0].length);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDij(double[][] Dij) {
+    throw new UnsupportedOperationException("Unimplemented method 'setDij'");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDijT(double[][] DijT) {
+    throw new UnsupportedOperationException("Unimplemented method 'setDijT'");
+  }
+
+  /**
+   * <p>
+   * getBetaDesMatij.
+   * </p>
+   *
+   * @param i a int
+   * @param j a int
+   * @return a double
+   */
+  public double getBetaDesMatij(int i, int j) {
+    return aij[i][j] + bij[i][j] * temperature;
   }
 
   /**
@@ -171,21 +190,20 @@ public class PhaseDesmukhMather extends PhaseGE {
   @Override
   public double getExcessGibbsEnergy() {
     // double GE = getExcessGibbsEnergy(this, numberOfComponents, temperature,
-    // pressure, phaseType);
+    // pressure, pt);
     return GE;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
+      double temperature, double pressure, PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponents()[i].getx() * Math.log(((ComponentDesmukhMather) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, phasetype));
+          .getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
-    // System.out.println("ge " + GE);
-    return R * temperature * numberOfMolesInPhase * GE; // phase.getNumberOfMolesInPhase()*
+    return R * temperature * numberOfMolesInPhase * GE;
   }
 
   /** {@inheritDoc} */
@@ -262,5 +280,12 @@ public class PhaseDesmukhMather extends PhaseGE {
       }
     }
     return molesMass / moles;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws IsNaNException, TooManyIterationsException {
+    throw new UnsupportedOperationException("Unimplemented method 'molarVolume'");
   }
 }

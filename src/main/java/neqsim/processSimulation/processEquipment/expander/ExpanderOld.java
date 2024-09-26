@@ -33,29 +33,6 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
   double pressure = 0.0;
 
   /**
-   * <p>
-   * Constructor for ExpanderOld.
-   * </p>
-   */
-  @Deprecated
-  public ExpanderOld() {
-    this("ExpanderOld");
-  }
-
-  /**
-   * <p>
-   * Constructor for ExpanderOld.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public ExpanderOld(StreamInterface inletStream) {
-    this("ExpanderOld", inletStream);
-  }
-
-  /**
    * Constructor for ExpanderOld.
    *
    * @param name name of expander
@@ -74,7 +51,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
    *        object
    */
   public ExpanderOld(String name, StreamInterface inletStream) {
-    super(name);
+    this(name);
     setInletStream(inletStream);
   }
 

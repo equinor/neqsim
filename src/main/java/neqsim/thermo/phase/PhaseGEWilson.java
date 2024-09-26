@@ -1,6 +1,9 @@
 package neqsim.thermo.phase;
 
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEWilson;
+import neqsim.util.exception.IsNaNException;
+import neqsim.util.exception.TooManyIterationsException;
 
 /**
  * <p>
@@ -22,7 +25,7 @@ public class PhaseGEWilson extends PhaseGE {
    */
   public PhaseGEWilson() {
     super();
-    componentArray = new ComponentGEWilson[MAX_NUMBER_OF_COMPONENTS];
+    componentArray = new ComponentGEWilson[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**
@@ -31,10 +34,10 @@ public class PhaseGEWilson extends PhaseGE {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha an array of {@link double} objects
-   * @param Dij an array of {@link double} objects
-   * @param mixRule an array of {@link String} objects
-   * @param intparam an array of {@link double} objects
+   * @param alpha an array of type double
+   * @param Dij an array of type double
+   * @param mixRule an array of {@link java.lang.String} objects
+   * @param intparam an array of type double
    */
   public PhaseGEWilson(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
       double[][] intparam) {
@@ -51,8 +54,26 @@ public class PhaseGEWilson extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
+  public void setAlpha(double[][] alpha) {
+    throw new UnsupportedOperationException("Unimplemented method 'setAlpha'");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDij(double[][] Dij) {
+    throw new UnsupportedOperationException("Unimplemented method 'setDij'");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDijT(double[][] DijT) {
+    throw new UnsupportedOperationException("Unimplemented method 'setDijT'");
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, molesInPhase);
+    super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentGEWilson(name, moles, molesInPhase, compNumber);
   }
 
@@ -72,14 +93,14 @@ public class PhaseGEWilson extends PhaseGE {
   @Override
   public double getExcessGibbsEnergy() {
     // GE = getExcessGibbsEnergy(this, numberOfComponents, temperature, pressure,
-    // phaseType);
+    // pt);
     return GE;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
+      double temperature, double pressure, PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponents()[i].getx()
@@ -87,5 +108,12 @@ public class PhaseGEWilson extends PhaseGE {
     }
 
     return R * temperature * numberOfMolesInPhase * GE;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws IsNaNException, TooManyIterationsException {
+    throw new UnsupportedOperationException("Unimplemented method 'molarVolume'");
   }
 }

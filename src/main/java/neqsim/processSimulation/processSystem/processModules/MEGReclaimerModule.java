@@ -39,7 +39,9 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
   double reclaimerPressure = 0.17;
 
   /**
-   * <p>Constructor for MEGReclaimerModule.</p>
+   * <p>
+   * Constructor for MEGReclaimerModule.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -73,14 +75,10 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
   public void initializeStreams() {
     isInitializedStreams = true;
     try {
-      this.streamToWaterRemoval = (Stream) this.streamToReclaimer.clone();
-      this.streamToWaterRemoval.setName("Desalted MEG stream");
-
-      this.streamFromBoosterCompressor = (Stream) this.streamToReclaimer.clone();
-      this.streamFromBoosterCompressor.setName("Stream from Booster Compressor");
-
-      this.streamWithWaste = (Stream) this.streamToReclaimer.clone();
-      this.streamWithWaste.setName("Reclaimer Waste Stream");
+      this.streamToWaterRemoval = this.streamToReclaimer.clone("Desalted MEG stream");
+      this.streamFromBoosterCompressor =
+          this.streamToReclaimer.clone("Stream from Booster Compressor");
+      this.streamWithWaste = this.streamToReclaimer.clone("Reclaimer Waste Stream");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }

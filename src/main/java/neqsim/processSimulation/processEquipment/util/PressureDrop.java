@@ -14,7 +14,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * </p>
  * The pressure drop unit is used to simulate pressure drops in process plant. The proessure drop is
  * simulated using a constant enthalpy flash.
- * 
+ *
  * @author esol
  * @version $Id: $Id
  */
@@ -29,13 +29,19 @@ public class PressureDrop extends ThrottlingValve {
    * <p>
    * Constructor for PressureDrop.
    * </p>
-   * 
+   *
    * @param name the name of the pressure drop unit
    */
   public PressureDrop(String name) {
     super(name);
   }
 
+  /**
+   * <p>Setter for the field <code>pressureDrop</code>.</p>
+   *
+   * @param pressureDrop a double
+   * @param unit a {@link java.lang.String} object
+   */
   public void setPressureDrop(double pressureDrop, String unit) {
     if (unit.equals("bara")) {
       this.pressureDrop = pressureDrop;
@@ -73,5 +79,4 @@ public class PressureDrop extends ThrottlingValve {
 
     outStream.setFluid(thermoSystem);
   }
-
 }

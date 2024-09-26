@@ -12,9 +12,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.util.monitor.CompressorResponse;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -34,11 +36,18 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public SystemInterface thermoSystem;
   private double outTemperature = 298.15;
   private boolean useOutTemperature = false;
+  private double compressionRatio = 2.0;
+  private double actualCompressionRatio = 2.0;
+  private boolean useCompressionRatio = false;
+  private double maxOutletPressure = 10000.0;
+  private boolean isSetMaxOutletPressure = false;
   private CompressorPropertyProfile propertyProfile = new CompressorPropertyProfile();
   public double dH = 0.0;
   public double inletEnthalpy = 0;
   public double pressure = 0.0;
-  private int speed = 3000;
+  private double speed = 3000;
+  private double maxspeed = 30000;
+  private double minspeed = 0;
   public double isentropicEfficiency = 1.0;
   public double polytropicEfficiency = 1.0;
   public boolean usePolytropicCalc = false;
@@ -54,42 +63,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   private boolean useGERG2008 = false;
   private String pressureUnit = "bara";
   private String polytropicMethod = "detailed";
-
-  /**
-   * <p>
-   * Constructor for Compressor.
-   * </p>
-   */
-  @Deprecated
-  public Compressor() {
-    this("Compressor");
-  }
-
-  /**
-   * <p>
-   * Constructor for Compressor.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Compressor(StreamInterface inletStream) {
-    this();
-    setInletStream(inletStream);
-  }
-
-  /**
-   * <p>
-   * Constructor for Compressor.
-   * </p>
-   *
-   * @param interpolateMapLookup a boolean
-   */
-  @Deprecated
-  public Compressor(boolean interpolateMapLookup) {
-    this("Compressor", interpolateMapLookup);
-  }
 
   /**
    * Constructor for Compressor.
@@ -129,25 +102,14 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     }
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a
-   *         {@link neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign}
-   *         object
-   */
+  /** {@inheritDoc} */
   @Override
   public CompressorMechanicalDesign getMechanicalDesign() {
     return new CompressorMechanicalDesign(this);
   }
 
-  /**
-   * <p>
-   * Create deep copy.
-   * </p>
-   *
-   * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
-   */
+  /** {@inheritDoc} */
+  @Override
   public Compressor copy() {
     return (Compressor) super.copy();
   }
@@ -193,13 +155,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     this.pressureUnit = unit;
   }
 
-  /**
-   * <p>
-   * getOutletPressure.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getOutletPressure() {
     return pressure;
   }
@@ -358,6 +315,13 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     double orginalMolarFLow = thermoSystem.getTotalNumberOfMoles();
     double fractionAntiSurge = 0.0;
     double kappa = 0.0;
+    if (useCompressionRatio) {
+      double outpres = presinn * compressionRatio;
+      if (isSetMaxOutletPressure && outpres > maxOutletPressure) {
+        outpres = maxOutletPressure;
+      }
+      setOutletPressure(outpres);
+    }
     if (useOutTemperature) {
       if (useRigorousPolytropicMethod) {
         solveEfficiency(outTemperature);
@@ -473,9 +437,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           polytropicFluidHead = polytropicHead;
           polytropicHeadMeter = polytropicHead * 1000.0 / 9.81;
         }
-        double pressureRatio = Math.pow((polytropicFluidHead * 1000.0
-            + (n / (n - 1.0) * z_inlet * 8.314 * (temperature_inlet) / MW))
-            / (n / (n - 1.0) * z_inlet * 8.314 * (temperature_inlet) / MW), n / (n - 1.0));
+        double pressureRatio = Math.pow((polytropicFluidHead * 1000.0 + (n / (n - 1.0) * z_inlet
+            * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
+            / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet)
+                / MW),
+            n / (n - 1.0));
         setOutletPressure(thermoSystem.getPressure() * pressureRatio);
         if (getAntiSurge().isActive()) {
           logger.info("surge flow "
@@ -664,7 +630,51 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     polytropicFluidHead =
         getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0 * getPolytropicEfficiency();
     polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
+    actualCompressionRatio = getOutletPressure() / presinn;
+    setCalculationIdentifier(id);
+  }
 
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (getCalculateSteadyState()) {
+      run(id);
+      increaseTime(dt);
+      return;
+    }
+    runController(dt, id);
+
+    inStream.getThermoSystem().init(3);
+    outStream.getThermoSystem().init(3);
+    double head = (outStream.getThermoSystem().getEnthalpy("kJ/kg")
+        - inStream.getThermoSystem().getEnthalpy("kJ/kg"));
+    double guessFlow = inStream.getFluid().getFlowRate("m3/hr");
+    double actualFlowRateNew = getCompressorChart().getFlow(head, getSpeed(), guessFlow);
+    if (actualFlowRateNew < 0.0 || Double.isNaN(actualFlowRateNew)) {
+      logger.error(
+          "actual flow rate is negative or NaN and would lead to failure of calculation: actual flow rate "
+              + actualFlowRateNew);
+    }
+    inStream.setFlowRate(actualFlowRateNew, "Am3/hr");
+
+    inStream.getThermoSystem().init(3);
+    inStream.getThermoSystem().initPhysicalProperties("density");
+    inStream.run(id);
+    inStream.getThermoSystem().init(3);
+
+    outStream.setFlowRate(inStream.getFlowRate("kg/hr"), "kg/hr");
+    outStream.run();
+    outStream.getThermoSystem().init(3);
+
+    inletEnthalpy = inStream.getFluid().getEnthalpy();
+    thermoSystem = outStream.getThermoSystem().clone();
+    thermoSystem.initPhysicalProperties("density");
+
+    polytropicEfficiency =
+        compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0;
+    polytropicFluidHead = head * polytropicEfficiency;
+    dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
+        * inStream.getThermoSystem().getTotalNumberOfMoles();
     setCalculationIdentifier(id);
   }
 
@@ -953,6 +963,16 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     return getAntiSurge().isSurge();
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double getDistanceToSurge() {
+    getCompressorChart().getSurgeCurve();
+    getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead());
+    return (getInletStream().getFlowRate("m3/hr")
+        - getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead()))
+        / getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead());
+  }
+
   /**
    * <p>
    * isStoneWall.
@@ -983,9 +1003,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * Getter for the field <code>speed</code>.
    * </p>
    *
-   * @return a int
+   * @return a double
    */
-  public int getSpeed() {
+  public double getSpeed() {
     return speed;
   }
 
@@ -996,7 +1016,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    *
    * @param speed a int
    */
-  public void setSpeed(int speed) {
+  public void setSpeed(double speed) {
     this.speed = speed;
   }
 
@@ -1254,6 +1274,29 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     this.propertyProfile = propertyProfile;
   }
 
+  /**
+   * <p>
+   * runController.
+   * </p>
+   *
+   * @param dt a double
+   * @param id Calculation identifier
+   */
+  public void runController(double dt, UUID id) {
+    if (hasController && getController().isActive()) {
+      getController().runTransient(this.speed, dt, id);
+      this.speed = getController().getResponse();
+      if (this.speed > maxspeed) {
+        this.speed = maxspeed;
+      }
+      if (this.speed < minspeed) {
+        this.speed = minspeed;
+      }
+      // System.out.println("valve opening " + this.percentValveOpening + " %");
+    }
+    setCalculationIdentifier(id);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int hashCode() {
@@ -1307,5 +1350,79 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         && useOutTemperature == other.useOutTemperature
         && usePolytropicCalc == other.usePolytropicCalc
         && useRigorousPolytropicMethod == other.useRigorousPolytropicMethod;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setMaximumSpeed(double maxSpeed) {
+    this.maxspeed = maxSpeed;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setMinimumSpeed(double minspeed) {
+    this.minspeed = minspeed;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaximumSpeed() {
+    return maxspeed;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMinimumSpeed() {
+    return minspeed;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>compressionRatio</code>.
+   * </p>
+   *
+   * @param compRatio a double
+   */
+  public void setCompressionRatio(double compRatio) {
+    this.compressionRatio = compRatio;
+    useCompressionRatio = true;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>compressionRatio</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getCompressionRatio() {
+    return compressionRatio;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new CompressorResponse(this));
+  }
+
+  public double getMaxOutletPressure() {
+    return maxOutletPressure;
+  }
+
+  public void setMaxOutletPressure(double maxOutletPressure) {
+    this.maxOutletPressure = maxOutletPressure;
+    this.isSetMaxOutletPressure = true;
+  }
+
+  public boolean isSetMaxOutletPressure() {
+    return isSetMaxOutletPressure;
+  }
+
+  public void setIsSetMaxOutletPressure(boolean isSetMaxOutletPressure) {
+    this.isSetMaxOutletPressure = isSetMaxOutletPressure;
+  }
+
+  public double getActualCompressionRatio() {
+    return actualCompressionRatio;
   }
 }

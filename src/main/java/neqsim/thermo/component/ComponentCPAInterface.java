@@ -16,7 +16,7 @@ public interface ComponentCPAInterface extends ComponentEosInterface {
    * getXsite.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getXsite();
 
@@ -25,7 +25,7 @@ public interface ComponentCPAInterface extends ComponentEosInterface {
    * getXsiteOld.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getXsiteOld();
 
@@ -34,7 +34,7 @@ public interface ComponentCPAInterface extends ComponentEosInterface {
    * getXsitedT.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getXsitedT();
 
@@ -43,7 +43,7 @@ public interface ComponentCPAInterface extends ComponentEosInterface {
    * getXsitedTdT.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getXsitedTdT();
 
@@ -83,7 +83,7 @@ public interface ComponentCPAInterface extends ComponentEosInterface {
    * getXsitedV.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getXsitedV();
 

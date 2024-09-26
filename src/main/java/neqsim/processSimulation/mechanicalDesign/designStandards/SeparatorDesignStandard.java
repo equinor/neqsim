@@ -53,10 +53,9 @@ public class SeparatorDesignStandard extends DesignStandard {
    */
   public SeparatorDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
-    neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase();
-    java.sql.ResultSet dataSet = null;
-    try {
+    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
+        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+      java.sql.ResultSet dataSet = null;
       try {
         dataSet = database.getResultSet(
             ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Separator' AND Company='"
@@ -76,22 +75,23 @@ public class SeparatorDesignStandard extends DesignStandard {
                 + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
           }
         }
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-      }
 
-      // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
+        // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
       } catch (Exception ex) {
-        System.out.println("error closing database.....GasScrubberDesignStandard");
         logger.error(ex.getMessage(), ex);
+      } finally {
+        try {
+          if (dataSet != null) {
+            dataSet.close();
+          }
+        } catch (Exception ex) {
+          System.out.println("error closing database.....GasScrubberDesignStandard");
+          logger.error(ex.getMessage(), ex);
+        }
       }
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
   }
 

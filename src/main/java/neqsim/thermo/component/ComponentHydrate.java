@@ -2,7 +2,9 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
@@ -32,8 +34,7 @@ public class ComponentHydrate extends Component {
   // double[] dHfHydrate = {-292714.5, -292016.0};
   double[] dGfHydrate = {-235557, -235614};
   double[] dHfHydrate = {-291786, -292016};
-  double[] reffug =
-      new double[neqsim.thermo.ThermodynamicConstantsInterface.MAX_NUMBER_OF_COMPONENTS];
+  double[] reffug = new double[neqsim.thermo.ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   private double sphericalCoreRadiusHydrate = 0.0;
   private double lennardJonesEnergyParameterHydrate = 0.0;
   private double lennardJonesMolecularDiameterHydrate = 0.0;
@@ -44,14 +45,13 @@ public class ComponentHydrate extends Component {
    * Constructor for ComponentHydrate.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentHydrate(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentHydrate(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     coordNumb[0][0] = 20.0;
     coordNumb[0][1] = 24.0;
     cavRadius[0][0] = 3.95;
@@ -73,24 +73,22 @@ public class ComponentHydrate extends Component {
     reffug[0] = 10.0;
     reffug[1] = 1.0;
 
-    java.sql.ResultSet dataSet = null;
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-      if (!component_name.equals("default")) {
+    if (!name.equals("default")) {
+      java.sql.ResultSet dataSet = null;
+      try (neqsim.util.database.NeqSimDataBase database =
+          new neqsim.util.database.NeqSimDataBase()) {
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
-            dataSet = database
-                .getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
+            dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
           } else {
-            dataSet =
-                database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+            dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           }
           dataSet.next();
           dataSet.getString("FORMULA");
         } catch (Exception ex) {
           dataSet.close();
-          logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
-          dataSet =
-              database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+          logger.info("no parameters in tempcomp -- trying comp.. " + name);
+          dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
           dataSet.next();
         }
         lennardJonesMolecularDiameterHydrate =
@@ -98,16 +96,16 @@ public class ComponentHydrate extends Component {
         lennardJonesEnergyParameterHydrate = Double.parseDouble(dataSet.getString("LJepsHYDRATE"));
         sphericalCoreRadiusHydrate =
             Double.parseDouble(dataSet.getString("SphericalCoreRadiusHYDRATE"));
-      }
-    } catch (Exception ex) {
-      logger.error("error in comp", ex);
-    } finally {
-      try {
-        if (dataSet != null) {
-          dataSet.close();
-        }
       } catch (Exception ex) {
-        logger.error("error closing database.....", ex);
+        logger.error("error in comp", ex);
+      } finally {
+        try {
+          if (dataSet != null) {
+            dataSet.close();
+          }
+        } catch (Exception ex) {
+          logger.error("error closing database.....", ex);
+        }
       }
     }
   }
@@ -224,8 +222,10 @@ public class ComponentHydrate extends Component {
     if (type == -1) {
       return getSolidVaporPressure(temperature);
     } else {
-      return Math.exp(getEmptyHydrateVapourPressureConstant(type, 0)
-          + getEmptyHydrateVapourPressureConstant(type, 1) / temperature) * 1.01325;
+      return Math
+          .exp(getEmptyHydrateVapourPressureConstant(type, 0)
+              + getEmptyHydrateVapourPressureConstant(type, 1) / temperature)
+          * ThermodynamicConstantsInterface.referencePressure;
     }
   }
 
@@ -477,7 +477,7 @@ public class ComponentHydrate extends Component {
    * Getter for the field <code>dGfHydrate</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getDGfHydrate() {
     return dGfHydrate;
@@ -488,7 +488,7 @@ public class ComponentHydrate extends Component {
    * Setter for the field <code>dGfHydrate</code>.
    * </p>
    *
-   * @param dGfHydrate an array of {@link double} objects
+   * @param dGfHydrate an array of type double
    */
   public void setDGfHydrate(double[] dGfHydrate) {
     this.dGfHydrate = dGfHydrate;
@@ -508,6 +508,17 @@ public class ComponentHydrate extends Component {
 
   /**
    * <p>
+   * Getter for the field <code>dHfHydrate</code>.
+   * </p>
+   *
+   * @return an array of type double
+   */
+  public double[] getDHfHydrate() {
+    return dHfHydrate;
+  }
+
+  /**
+   * <p>
    * Setter for the field <code>dHfHydrate</code>.
    * </p>
    *
@@ -520,21 +531,10 @@ public class ComponentHydrate extends Component {
 
   /**
    * <p>
-   * Getter for the field <code>dHfHydrate</code>.
-   * </p>
-   *
-   * @return an array of {@link double} objects
-   */
-  public double[] getDHfHydrate() {
-    return dHfHydrate;
-  }
-
-  /**
-   * <p>
    * Setter for the field <code>dHfHydrate</code>.
    * </p>
    *
-   * @param dHfHydrate an array of {@link double} objects
+   * @param dHfHydrate an array of type double
    */
   public void setDHfHydrate(double[] dHfHydrate) {
     this.dHfHydrate = dHfHydrate;
@@ -657,7 +657,7 @@ public class ComponentHydrate extends Component {
       refPhase.setTemperature(273.0);
       refPhase.setPressure(1.0);
       refPhase.addComponent("water", 10.0, 10.0, 0);
-      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, 1, 1.0);
+      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, PhaseType.byValue(1), 1.0);
     } catch (Exception ex) {
       logger.error("error occured", ex);
     }
@@ -684,17 +684,20 @@ public class ComponentHydrate extends Component {
   // Math.exp(par1_struc1*Math.log(temperature)+par2_struc1/temperature+par3_struc1+par4_struc1*temperature)/1.0e5;
   // }
   // if(type==1){
-  // return Math.exp(par1_struc2+par2_struc2/temperature)*1.01325;
+  // return
+  // Math.exp(par1_struc2+par2_struc2/temperature)*ThermodynamicConstantsInterface.referencePressure;
   // } else return 0.0;
   // }
 
   // public double getEmptyHydrateStructureVapourPressure(int type, double
   // temperature){
   // if(type==0){
-  // return Math.exp(par1_struc1+par2_struc1/temperature)*1.01325;
+  // return
+  // Math.exp(par1_struc1+par2_struc1/temperature)*ThermodynamicConstantsInterface.referencePressure;
   // }
   // if(type==1){
-  // return Math.exp(par1_struc2+par2_struc2/temperature)*1.01325;
+  // return
+  // Math.exp(par1_struc2+par2_struc2/temperature)*ThermodynamicConstantsInterface.referencePressure;
   // } else return 0.0;
   // }
 
@@ -728,10 +731,9 @@ public class ComponentHydrate extends Component {
    * Getter for the field <code>cavprwat</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getCavprwat() {
     return cavprwat;
   }
 }
-

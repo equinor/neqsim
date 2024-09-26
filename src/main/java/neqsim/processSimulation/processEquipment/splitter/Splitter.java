@@ -4,6 +4,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -32,29 +33,6 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   double[] splitFactor = new double[1];
   double[] flowRates;
   String flowUnit = "mole/sec";
-
-  /**
-   * <p>
-   * Constructor for Splitter.
-   * </p>
-   */
-  public Splitter() {
-    super("Splitter");
-  }
-
-  /**
-   * <p>
-   * Constructor for Splitter.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Splitter(StreamInterface inletStream) {
-    this();
-    this.setInletStream(inletStream);
-  }
 
   /**
    * Constructor for Splitter.
@@ -108,7 +86,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    * setSplitFactors.
    * </p>
    *
-   * @param splitFact an array of {@link double} objects
+   * @param splitFact an array of type double
    */
   public void setSplitFactors(double[] splitFact) {
     double sum = 0.0;
@@ -132,7 +110,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    * setFlowRates.
    * </p>
    *
-   * @param flowRates an array of {@link double} objects
+   * @param flowRates an array of type double
    * @param flowUnit a {@link java.lang.String} object
    */
   public void setFlowRates(double[] flowRates, String flowUnit) {
@@ -186,7 +164,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       splitStream = new Stream[splitNumber];
       try {
         for (int i = 0; i < splitNumber; i++) {
-          splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
+          splitStream[i] = new Stream("Split Stream_" + i, inletStream.getThermoSystem().clone());
         }
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
@@ -239,6 +217,51 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     }
 
     setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (getCalculateSteadyState()) {
+      run(id);
+      increaseTime(dt);
+    } else {
+      Mixer mixer = new Mixer("tmpMixer");
+      for (int i = 0; i < splitStream.length; i++) {
+        splitStream[i].setPressure(inletStream.getPressure());
+        splitStream[i].setTemperature(inletStream.getTemperature("C"), "C");
+        splitStream[i].run();
+        mixer.addStream(splitStream[i]);
+      }
+      mixer.run();
+
+      inletStream.setThermoSystem(mixer.getThermoSystem());
+      inletStream.run();
+      setCalculationIdentifier(id);
+    }
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>splitFactor</code>.
+   * </p>
+   *
+   * @param i a int
+   * @return a double
+   */
+  public double getSplitFactor(int i) {
+    return splitFactor[i];
+  }
+
+  /**
+   * <p>
+   * getSplitFactors.
+   * </p>
+   *
+   * @return an array of type double
+   */
+  public double[] getSplitFactors() {
+    return splitFactor;
   }
 
   /** {@inheritDoc} */

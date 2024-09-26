@@ -38,18 +38,17 @@ public class TVflash extends Flash {
 
   /**
    * <p>
-   * calcdQdVV.
+   * calcdQdVP.
    * </p>
    *
    * @return a double
    */
-  public double calcdQdVV() {
-    double dQdVV = 0.0;
+  public double calcdQdVdP() {
+    double dQdVP = 0.0;
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      dQdVV += 1.0 / (system.getPhase(i).getVolume() / system.getVolume()) * 1.0
-          / system.getPhase(i).getdPdVTn(); // *system.getPhase(i).getdVdP();system.getPhase(i).getVolume()/system.getVolume()*
+      dQdVP += 1.0 / system.getPhase(i).getdPdVTn();
     }
-    return dQdVV;
+    return dQdVP;
   }
 
   /**
@@ -75,22 +74,41 @@ public class TVflash extends Flash {
     double oldPres = system.getPressure();
     double nyPres = system.getPressure();
     double iterations = 1;
+    double error = 100.0;
+    double numericdQdVdP = 0.0;
+    double dQdV = 0.0;
+    double olddQdV = 0.0;
+    double pressureStep = 1.0;
     do {
       iterations++;
       oldPres = nyPres;
       system.init(3);
-      nyPres = oldPres - (iterations) / (iterations + 10.0) * calcdQdV() / calcdQdVV();
+      double dQDVdP = calcdQdVdP();
+
+      numericdQdVdP = (calcdQdV() - olddQdV) / pressureStep;
+
+      if (iterations < 5) {
+        nyPres = oldPres - 1.0 / 10.0 * calcdQdV() / dQDVdP;
+      } else {
+        nyPres = oldPres - 1.0 * calcdQdV() / numericdQdVdP;
+      }
       if (nyPres <= 0.0) {
-        nyPres = oldPres / 2.0;
+        nyPres = oldPres * 0.9;
       }
       if (nyPres >= oldPres * 2) {
         nyPres = oldPres * 2.0;
       }
+      pressureStep = nyPres - oldPres;
+
+      olddQdV = calcdQdV();
       system.setPressure(nyPres);
       tpFlash.run();
-      // System.out.println(" dQdv " + calcdQdV() + " new pressure " + nyPres + " error " +
-      // Math.abs((nyPres-oldPres)/(nyPres)) + " numberofphases "+system.getNumberOfPhases());
-    } while (Math.abs((nyPres - oldPres) / (nyPres)) > 1e-9 && iterations < 1000 || iterations < 3);
+      error = Math.abs(calcdQdV()) / system.getVolume();
+      // System.out.println("error " + error + "iteration " + iterations + " dQdv " + calcdQdV()
+      // + " new pressure " + nyPres + " error " + Math.abs((nyPres - oldPres) / (nyPres))
+      // + " numberofphases " + system.getNumberOfPhases() + " dQDVdP " + dQDVdP + " dQDVdPnumeric"
+      // + numericdQdVdP);
+    } while ((error > 1e-9 && iterations < 200) || iterations < 3);
     return nyPres;
   }
 

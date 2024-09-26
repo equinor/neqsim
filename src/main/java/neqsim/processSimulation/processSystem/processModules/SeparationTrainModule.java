@@ -151,7 +151,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
 
     gasInletScrubber = new Separator("HP gas scrubber", inletGasCooler.getOutletStream());
 
-    Recycle HPliquidRecycle = new Recycle("Resycle");
+    Recycle HPliquidRecycle = new Recycle("Recycle");
     double tolerance = 1e-10;
     HPliquidRecycle.setTolerance(tolerance);
     HPliquidRecycle.addStream(gasInletScrubber.getLiquidOutStream());
@@ -271,7 +271,7 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     operations.add(wellStream);
     operations.add(separationModule);
     // separationModule.getUnit("")
-    // ((Recycle) operations.getUnit("Resycle")).setTolerance(1e-9);
+    // ((Recycle) operations.getUnit("Recycle")).setTolerance(1e-9);
 
     operations.run();
 
@@ -342,8 +342,9 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
      * getPhase(0).getPhysicalProperties().getDensity() * 3600.0 + " m^3/hr");
      * System.out.println("Export gas flow " +
      * separationModule.getOutputStream("gas exit stream").getThermoSystem().
-     * getTotalNumberOfMoles() * 8.314 * (273.15 + 15.0) / 101325.0 * 3600.0 * 24 / 1.0e6 +
-     * " MSm^3/day"); System.out.println("oil/water heater duty " + ((Heater)
+     * getTotalNumberOfMoles() * ThermodynamicConstantsInterface.R * (273.15 + 15.0)
+     * /ThermodynamicConstantsInterface.atm * 3600.0 * 24 / 1.0e6 + " MSm^3/day");
+     * System.out.println("oil/water heater duty " + ((Heater)
      * separationModule.getOperations().getUnit("oil/water heater")).getEnergyInput( ) + " W");
      * System.out.println("Export oil cooler duty " + ((Cooler)
      * separationModule.getOperations().getUnit("export oil cooler")).getEnergyInput () + " W");

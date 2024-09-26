@@ -7,7 +7,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-
+import neqsim.processSimulation.processEquipment.compressor.Compressor;
+import neqsim.processSimulation.processEquipment.splitter.Splitter;
 
 /**
  * <p>
@@ -72,10 +73,28 @@ public class Calculator extends ProcessEquipmentBaseClass {
     return false;
   }
 
+  public void runAntiSurgeCalc(UUID id) {
+    Compressor compressor = (Compressor) inputVariable.get(0);
+    double distToSurge = compressor.getDistanceToSurge();
+    double flowInAntiSurge = 1e-6;
+    if (distToSurge < 0) {
+      flowInAntiSurge = -distToSurge * compressor.getInletStream().getFlowRate("MSm3/day");
+    }
+
+    Splitter anitSurgeSplitter = (Splitter) outputVariable;
+    anitSurgeSplitter.setFlowRates(new double[] {-1, flowInAntiSurge}, "MSm3/day");
+    anitSurgeSplitter.run();
+    anitSurgeSplitter.setCalculationIdentifier(id);
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     double sum = 0.0;
+    if (name.equals("anti surge calculator")) {
+      runAntiSurgeCalc(id);
+      return;
+    }
 
     if (name.equals("MEG makeup calculator")) {
       for (int i = 0; i < inputVariable.size(); i++) {

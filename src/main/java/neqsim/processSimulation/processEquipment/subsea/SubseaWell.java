@@ -21,7 +21,8 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
 public class SubseaWell extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
 
-  public double height = 1000.0, length = 1200.0;
+  public double height = 1000.0;
+  public double length = 1200.0;
   AdiabaticTwoPhasePipe pipeline;
 
   /**
@@ -29,14 +30,13 @@ public class SubseaWell extends TwoPortEquipment {
    * Constructor for SubseaWell.
    * </p>
    *
+   * @param name Name of well
    * @param instream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object
    */
-  @Deprecated
-  public SubseaWell(StreamInterface instream) {
-    super("SubseaWell");
-    this.inStream = instream;
-    setOutletStream(instream.clone());
+  public SubseaWell(String name, StreamInterface instream) {
+    super(name);
+    setInletStream(instream);
     pipeline = new AdiabaticTwoPhasePipe("pipeline", instream);
   }
 
@@ -61,17 +61,17 @@ public class SubseaWell extends TwoPortEquipment {
     /*
      * System.out.println("stary P " ); SystemInterface fluidIn = (inStream.getFluid()).clone();
      * fluidIn.initProperties();
-     * 
+     *
      * double density = fluidIn.getDensity("kg/m3");
-     * 
+     *
      * double deltaP = density*height*neqsim.thermo.ThermodynamicConstantsInterface.gravity/1.0e5;
-     * 
+     *
      * System.out.println("density " +density + " delta P " + deltaP);
-     * 
+     *
      * fluidIn.setPressure(fluidIn.getPressure("bara")-deltaP);
-     * 
+     *
      * ThermodynamicOperations ops = new ThermodynamicOperations(fluidIn); ops.TPflash();
-     * 
+     *
      * getOutStream().setFluid(fluidIn);
      */
     setCalculationIdentifier(id);
@@ -118,7 +118,8 @@ public class SubseaWell extends TwoPortEquipment {
     System.out
         .println("total produced  " + reservoirOps.getProductionTotal("MSm3 oe") + " MSm3 oe");
 
-    SubseaWell well1 = new SubseaWell(reservoirOps.getOilProducer("oilproducer_1").getStream());
+    SubseaWell well1 =
+        new SubseaWell("oilproducer_1", reservoirOps.getOilProducer("oilproducer_1").getStream());
     well1.getPipeline().setDiameter(0.3);
     well1.getPipeline().setLength(5500.0);
     well1.getPipeline().setInletElevation(-1000.0);

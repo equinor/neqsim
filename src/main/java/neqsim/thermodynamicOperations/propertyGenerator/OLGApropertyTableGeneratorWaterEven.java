@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -132,8 +133,8 @@ public class OLGApropertyTableGeneratorWaterEven
    * calcBubP.
    * </p>
    *
-   * @param temperatures an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param temperatures an array of type double
+   * @return an array of type double
    */
   public double[] calcBubP(double[] temperatures) {
     double[] bubP = new double[temperatures.length];
@@ -157,8 +158,8 @@ public class OLGApropertyTableGeneratorWaterEven
    * calcDewP.
    * </p>
    *
-   * @param temperatures an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param temperatures an array of type double
+   * @return an array of type double
    */
   public double[] calcDewP(double[] temperatures) {
     double[] dewP = new double[temperatures.length];
@@ -182,8 +183,8 @@ public class OLGApropertyTableGeneratorWaterEven
    * calcBubT.
    * </p>
    *
-   * @param pressures an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param pressures an array of type double
+   * @return an array of type double
    */
   public double[] calcBubT(double[] pressures) {
     double[] bubTemps = new double[pressures.length];
@@ -207,7 +208,7 @@ public class OLGApropertyTableGeneratorWaterEven
    */
   public void initCalc() {
     double stdTemp = 288.15;
-    double stdPres = 1.01325;
+    double stdPres = ThermodynamicConstantsInterface.referencePressure;
     // double GOR, GLR;
     double[] molfracs = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
     double[] MW = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -414,9 +415,9 @@ public class OLGApropertyTableGeneratorWaterEven
          * { aMatrix.set(ii, 0, 1.0); aMatrix.set(ii, 1, pressures[i - ii]); aMatrix.set(ii, 2,
          * pressures[i - ii] * pressures[i - ii]); aMatrix.set(ii, 3, pressures[i - ii] *
          * pressures[i - ii] * pressures[i - ii]); }
-         * 
+         *
          * for (int jj = 0; jj < 9; jj++) { Matrix xg = XMatrixgas.getMatrix(jj, jj, 0, 3);
-         * 
+         *
          * try { xcoef[jj] = aMatrix.solve(xg.transpose()); } catch (Exception ex) {
          * logger.error(ex.getMessage(),e); } // logger.info("xcoef " + j); // xcoef.print(10, 10);
          * //logger.info("dss: " +ds * dxds.get(speceq, 0)); // specVal = xcoef.get(0, 0) + sny *

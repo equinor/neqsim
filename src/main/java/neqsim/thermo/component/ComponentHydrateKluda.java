@@ -2,6 +2,7 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -14,6 +15,7 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentHydrateKluda extends Component {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ComponentHydrateKluda.class);
 
   double par1_struc1 = 17.44;
   double par2_struc1 = -6003.9;
@@ -25,21 +27,19 @@ public class ComponentHydrateKluda extends Component {
   double[][] cavNumb = new double[2][2]; // [structure][cavitytype]
   double[][] cavprwat = new double[2][2]; // [structure][cavitytype]
   double[] reffug = new double[20];
-  static Logger logger = LogManager.getLogger(ComponentHydrateKluda.class);
 
   /**
    * <p>
    * Constructor for ComponentHydrateKluda.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentHydrateKluda(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentHydrateKluda(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     coordNumb[0][0][0] = 20.0;
     coordNumb[0][0][1] = 24.0;
     cavRadius[0][0][0] = 3.906;
@@ -65,13 +65,6 @@ public class ComponentHydrateKluda extends Component {
     cavNumb[1][1] = 8.0;
     cavprwat[1][0] = 2.0 / 17.0;
     cavprwat[1][1] = 1.0 / 17.0;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double fugcoef(PhaseInterface phase) {
-    return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-        phase.getPressure());
   }
 
   /**
@@ -178,7 +171,8 @@ public class ComponentHydrateKluda extends Component {
           + par4_struc1 * temperature) / 1.0e5;
     }
     if (type == 1) {
-      return Math.exp(par1_struc2 + par2_struc2 / temperature) * 1.01325;
+      return Math.exp(par1_struc2 + par2_struc2 / temperature)
+          * ThermodynamicConstantsInterface.referencePressure;
     } else {
       return 0.0;
     }

@@ -30,7 +30,7 @@ public class SlimTubeSimTest {
     oilSystem.addTBPfraction("C17", 0.17, 234.0 / 1000.0, 0.84);
     oilSystem.addTBPfraction("C18", 0.13, 251.0 / 1000.0, 0.844);
     oilSystem.addTBPfraction("C19", 0.13, 270.0 / 1000.0, 0.854);
-    oilSystem.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.88);
+    oilSystem.addPlusFraction("C20", 20.62, 381.0 / 1000.0, 0.88);
     oilSystem.getCharacterization().characterisePlusFraction();
     oilSystem.setMixingRule(2);
 

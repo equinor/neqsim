@@ -67,7 +67,7 @@ public class SurfaceTension extends InterfaceProperties implements SurfaceTensio
    */
   public int getComponentWithHighestBoilingpoint() {
     int compNumb = 0;
-    double boilPoint = -273.15;
+    double boilPoint = 0;
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       if (system.getPhase(0).getComponent(i).getNormalBoilingPoint() > boilPoint) {
         compNumb = i;

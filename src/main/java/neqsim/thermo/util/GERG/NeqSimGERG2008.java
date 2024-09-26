@@ -134,7 +134,7 @@ public class NeqSimGERG2008 {
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] propertiesGERG(PhaseInterface phase) {
     this.setPhase(phase);
@@ -148,7 +148,7 @@ public class NeqSimGERG2008 {
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param properties an array of {@link java.lang.String} objects
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getProperties(PhaseInterface phase, String[] properties) {
     double[] allProperties = propertiesGERG();
@@ -180,7 +180,7 @@ public class NeqSimGERG2008 {
    * propertiesGERG.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] propertiesGERG() {
     doubleW p = new doubleW(0.0);
@@ -310,7 +310,7 @@ public class NeqSimGERG2008 {
             notNormalizedGERGComposition[14] += phase.getComponent(i).getx();
           }
           break;
-      };
+      }
     }
     normalizeComposition();
   }

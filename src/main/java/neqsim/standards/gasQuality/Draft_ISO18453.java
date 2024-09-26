@@ -71,7 +71,7 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String returnParameter, java.lang.String returnUnit) {
+  public double getValue(String returnParameter, String returnUnit) {
     if (returnParameter.equals("dewPointTemperature")) {
       return dewPointTemperature;
     } else {

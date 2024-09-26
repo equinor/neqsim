@@ -41,7 +41,11 @@ public class PHflashSingleComp extends Flash {
       try {
         bubOps.TPflash();
         if (system.getPhase(0).getType() == PhaseType.GAS) {
-          bubOps.dewPointTemperatureFlash();
+          try {
+            bubOps.dewPointTemperatureFlash();
+          } catch (Exception e) {
+            system.setTemperature(298.0);
+          }
         } else {
           bubOps.bubblePointTemperatureFlash();
         }
@@ -62,11 +66,11 @@ public class PHflashSingleComp extends Flash {
 
     /*
      * double solidEnthalpy = 0.0;
-     * 
+     *
      * if (system.doSolidPhaseCheck()) { system.init(3, 3); solidEnthalpy =
      * system.getPhases()[3].getEnthalpy() / system.getPhases()[3].getNumberOfMolesInPhase()
      * system.getTotalNumberOfMoles();
-     * 
+     *
      * if (Hspec < liqEnthalpy && Hspec > solidEnthalpy) { double solidbeta = (Hspec - liqEnthalpy)
      * / (gasEnthalpy - liqEnthalpy); } }
      */

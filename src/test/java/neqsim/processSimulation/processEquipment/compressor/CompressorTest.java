@@ -216,15 +216,14 @@ class CompressorTest extends neqsim.NeqSimTest {
     compressor1.setUsePolytropicCalc(true);
     compressor1.setUseGERG2008(true);
     compressor1.run();
-    double head = compressor1.getPolytropicHead("kJ/kg");
-    logger.info("gerg power " + compressor1.getPower() + " W");
+    // double head = compressor1.getPolytropicHead("kJ/kg");
+    // logger.info("gerg power " + compressor1.getPower() + " W");
     // assertEquals(compressor1.getPolytropicHead("kJ/kg"), 89.464626, 0.01);
     compressor1.setUseGERG2008(false);
     compressor1.run();
-    double head2 = compressor1.getPolytropicHead("kJ/kg");
-    logger.info("gerg power " + compressor1.getPower() + " W");
+    // double head2 = compressor1.getPolytropicHead("kJ/kg");
+    // logger.info("gerg power " + compressor1.getPower() + " W");
     assertEquals(compressor1.getPolytropicHead("kJ/kg"), 94.32923841459161, 0.01);
-
   }
 
   /**

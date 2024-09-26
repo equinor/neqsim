@@ -4,7 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
+/**
+ * <p>
+ * CombustionEmissionsCalculator class.
+ * </p>
+ *
+ * @author Even Solbraa
+ */
 public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseClass {
+  private static final long serialVersionUID = 1L;
 
   // Composition of natural gas (in mole percent)
   private static final Map<String, Double> NATURAL_GAS_COMPOSITION = new HashMap<>();
@@ -36,6 +44,11 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
     super(name, "kg/hr", stream);
   }
 
+  /**
+   * <p>
+   * setComponents.
+   * </p>
+   */
   public void setComponents() {
     NATURAL_GAS_COMPOSITION.clear();
     CO2_EMISSIONS_FACTORS.clear();
@@ -70,6 +83,15 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
         * stream.getFluid().getFlowRate(unit);
   }
 
+  /**
+   * <p>
+   * calculateCO2Emissions.
+   * </p>
+   *
+   * @param composition a {@link java.util.Map} object
+   * @param emissionsFactors a {@link java.util.Map} object
+   * @return a double
+   */
   public static double calculateCO2Emissions(Map<String, Double> composition,
       Map<String, Double> emissionsFactors) {
     double totalEmissions = 0.0;

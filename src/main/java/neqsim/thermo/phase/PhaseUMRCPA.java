@@ -119,11 +119,11 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
     boolean changedAssosiationStatus = false;
 
-    if (type == 0) {
+    if (initType == 0) {
       activeAccosComp = new int[numberOfComponents];
       for (int i = 0; i < numberOfComponents; i++) {
         if (componentArray[i].getNumberOfmoles() < 1e-50) {
@@ -226,28 +226,28 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     if (cpamix == null) {
       cpamix = cpaSelect.getMixingRule(1, this);
     }
-    if (type > 0) {
+    if (initType > 0) {
       calcDelta();
     }
 
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
 
-    if (type > 0 && isConstantPhaseVolume()) {
+    if (initType > 0 && isConstantPhaseVolume()) {
       solveX();
-      super.init(totalNumberOfMoles, numberOfComponents, 1, phase, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, 1, pt, beta);
       gcpa = calc_g();
       gcpav = calc_lngV();
       gcpavv = calc_lngVV();
       gcpavvv = calc_lngVVV();
     }
 
-    if (type > 0) {
+    if (initType > 0) {
       hcpatot = calc_hCPA();
     }
 
-    if (type > 1) {
-      initCPAMatrix(type);
-      super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    if (initType > 1) {
+      initCPAMatrix(initType);
+      super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     }
   }
 
@@ -679,11 +679,12 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B, int phasetype)
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV = phasetype == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-        : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+    double BonV =
+        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
 
     if (BonV < 0) {
       BonV = 1.0e-8;
@@ -744,11 +745,11 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       } else if (d1 / d2 < -1) {
         BonV += 0.5 * d1;
       } else if (d1 > d2) {
-        return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
+        return molarVolumeChangePhase(pressure, temperature, A, B, pt);
         // BonV += d2;
         // double hnew = h + d2 * dh;
         // if (Math.abs(hnew) > Math.abs(h)) {
-        // BonV = phasetype == 1 ? 2.0 / (2.0 + temperature /
+        // BonV = pt == 1 ? 2.0 / (2.0 + temperature /
         // getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase *
         // temperature * R);
         // }
@@ -763,7 +764,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
           // System.out.println(iterations + " BonV " + BonV);
           BonV = (BonVold + BonV) / 2.0;
         } else {
-          return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
+          return molarVolumeChangePhase(pressure, temperature, A, B, pt);
         }
       }
 
@@ -771,19 +772,17 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         if (iterations < 10) {
           BonV = (BonVold + BonV) / 2.0;
         } else {
-          return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
+          return molarVolumeChangePhase(pressure, temperature, A, B, pt);
         }
       }
       /*
        * if (BonV > 0.9999) { if (iterations < 10) { BonV = (BonVold + BonV) / 2.0; } else { // BonV
-       * = calcRootVolFinder(phasetype); // BonV = molarVolumeChangePhase(pressure, temperature, A,
-       * B, phasetype); // BonV = 0.9999; // BonV = phasetype == 1 ? 2.0 / (2.0 + temperature /
+       * = calcRootVolFinder(pt); // BonV = molarVolumeChangePhase(pressure, temperature, A, B, pt);
+       * // BonV = 0.9999; // BonV = pt == 1 ? 2.0 / (2.0 + temperature /
        * getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature *
-       * R); }
-       * 
-       * } else if (BonV < 0) { if (iterations < 10) { BonV = Math.abs(BonVold + BonV) / 2.0; } else
-       * { // BonV = calcRootVolFinder(phasetype); // return molarVolumeChangePhase(pressure,
-       * temperature, A, B, phasetype); // BonV = phasetype == 1 ? 2.0 / (2.0 + temperature /
+       * R); } } else if (BonV < 0) { if (iterations < 10) { BonV = Math.abs(BonVold + BonV) / 2.0;
+       * } else { // BonV = calcRootVolFinder(pt); // return molarVolumeChangePhase(pressure,
+       * temperature, A, B, pt); // BonV = pt == 1 ? 2.0 / (2.0 + temperature /
        * getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature *
        * R); } }
        */
@@ -797,8 +796,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     // if (Math.abs(h) > 1e-12) {
     // System.out.println("h failed " + h + " Z" + Z + " iterations " + iterations +
     // " BonV " + BonV);
-    // return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
-    // return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
+    // return molarVolumeChangePhase(pressure, temperature, A, B, pt);
+    // return molarVolumeChangePhase(pressure, temperature, A, B, pt);
     // }
     // System.out.println("Z" + Z + " iterations " + iterations + " BonV " + BonV);
     // System.out.println("pressure " + Z*R*temperature/getMolarVolume());
@@ -1139,17 +1138,17 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * calcRootVolFinder.
    * </p>
    *
-   * @param phase a int
+   * @param pt the PhaseType of the phase
    * @return a double
    */
-  public double calcRootVolFinder(int phase) {
+  public double calcRootVolFinder(PhaseType pt) {
     double solvedBonVHigh = 0.0;
     double solvedBonVlow = 1.0;
     double oldh = 1;
     // double[][] matrix = new double[2][2000];
     double BonV = 1.0 - 1e-10;
     try {
-      // molarVolume(pressure, temperature, A, B, phaseType);
+      // molarVolume(pressure, temperature, A, B, pt);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -1182,12 +1181,12 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       if (Math.signum(h) * Math.signum(oldh) < 0 && i > 2) {
         if (solvedBonVlow < 1e-3) {
           solvedBonVlow = (BonV + BonVold) / 2.0;
-          if (phase == 1) {
+          if (pt == PhaseType.GAS) {
             break;
           }
         } else {
           solvedBonVHigh = (BonV + BonVold) / 2.0;
-          if (phase == 0) {
+          if (pt == PhaseType.LIQUID) {
             break;
           }
         }
@@ -1205,7 +1204,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     // file.setValues(matrix);
     // file.setOutputFileName("D:/temp/temp2.txt");
     // file.createFile();
-    if (phase == 1) {
+    if (pt == PhaseType.GAS) {
       return solvedBonVlow;
     } else {
       return solvedBonVHigh;
@@ -1221,17 +1220,17 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param phasetype a int
+   * @param pt the PhaseType of the phase
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double molarVolumeChangePhase(double pressure, double temperature, double A, double B,
-      int phasetype) throws neqsim.util.exception.IsNaNException,
+      PhaseType pt) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+    double BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
         : pressure * getB() / (numberOfMolesInPhase * temperature * R);
-    // double BonV = calcRootVolFinder(phasetype);
+    // double BonV = calcRootVolFinder(pt);
     // double BonVInit = BonV;
     if (BonV < 0) {
       BonV = 1.0e-8;
@@ -1293,7 +1292,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         BonV += d2;
         double hnew = h + d2 * dh;
         if (Math.abs(hnew) > Math.abs(h)) {
-          BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
               : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       } else {
@@ -1307,7 +1306,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         if (iterations < 3) {
           BonV = (BonVold + BonV) / 2.0;
         } else {
-          BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
               : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       }
@@ -1316,7 +1315,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         if (iterations < 3) {
           BonV = Math.abs(BonVold + BonV) / 2.0;
         } else {
-          BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
               : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       }
@@ -1329,8 +1328,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     } while ((Math.abs((BonV - BonVold) / BonV) > 1.0e-10) && iterations < 100);
 
     /*
-     * if (Math.abs(h) > 1e-8) { if (phasetype == 0) { molarVolume(pressure, temperature, A, B, 1);
-     * } else { molarVolume(pressure, temperature, A, B, 0); } return getMolarVolume(); }
+     * if (Math.abs(h) > 1e-8) { if (pt == 0) { molarVolume(pressure, temperature, A, B, 1); } else
+     * { molarVolume(pressure, temperature, A, B, 0); } return getMolarVolume(); }
      */
     // System.out.println("Z" + Z + " iterations " + iterations + " BonV " + BonV);
     // System.out.println("pressure " + Z*R*temperature/getMolarVolume());
@@ -1408,9 +1407,9 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * croeneckerProduct.
    * </p>
    *
-   * @param a an array of {@link double} objects
-   * @param b an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param a an array of type double
+   * @param b an array of type double
+   * @return an array of type double
    */
   public double[][] croeneckerProduct(double[][] a, double[][] b) {
     int aLength = a.length;
@@ -1450,10 +1449,10 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * @param totalNumberOfMoles a double
    * @param numberOfComponents a int
    * @param type a int
-   * @param phase a int
+   * @param pt a int
    * @param beta a double
    */
-  public void initOld2(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
+  public void initOld2(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType pt,
       double beta) {
     // type = 0 start init, type = 1 gi ny betingelser
     if (type == 0) {
@@ -1531,11 +1530,11 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       cpamix = cpaSelect.getMixingRule(1, this);
     }
 
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
     if (type > 0 && isConstantPhaseVolume()) {
       calcDelta();
       solveX();
-      super.init(totalNumberOfMoles, numberOfComponents, 1, phase, beta);
+      super.init(totalNumberOfMoles, numberOfComponents, 1, pt, beta);
       gcpa = calc_g();
       // lngcpa = Math.log(gcpa);
       setGcpav(calc_lngV());
@@ -1556,10 +1555,10 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
+  public double molarVolume2(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    Z = phase == 0 ? 1.0 : 1.0e-5;
+    Z = pt == PhaseType.LIQUID ? 1.0 : 1.0e-5;
     setMolarVolume(Z * R * temperature / pressure);
     // super.molarVolume(pressure,temperature, A, B, phase);
     int iterations = 0;
@@ -2006,21 +2005,22 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param phasetype a int
+   * @param pt the PhaseType of the phase
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double molarVolumeOld(double pressure, double temperature, double A, double B,
-      int phasetype) throws neqsim.util.exception.IsNaNException,
+      PhaseType pt) throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV = phasetype == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-        : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+    double BonV =
+        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     // if (pressure > 1000) {
     // BonV = 0.9999;
     // }
 
-    // double calcRooBonVtVolFinder = calcRootVolFinder(phasetype);
+    // double calcRooBonVtVolFinder = calcRootVolFinder(pt);
     // BonV = calcRooBonVtVolFinder;
     // double BonVInit = BonV;
     if (BonV < 0) {
@@ -2084,7 +2084,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         BonV += d2;
         double hnew = h + d2 * dh;
         if (Math.abs(hnew) > Math.abs(h)) {
-          BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
               : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       } else {
@@ -2098,9 +2098,9 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         if (iterations < 3) {
           BonV = (BonVold + BonV) / 2.0;
         } else {
-          // return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
+          // return molarVolumeChangePhase(pressure, temperature, A, B, pt);
           // BonV = 0.9999;
-          // BonV = phasetype == 1 ? 2.0 / (2.0 + temperature /
+          // BonV = pt == 1 ? 2.0 / (2.0 + temperature /
           // getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase *
           // temperature * R);
         }
@@ -2108,8 +2108,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         if (iterations < 3) {
           BonV = Math.abs(BonVold + BonV) / 2.0;
         } else {
-          // return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
-          // BonV = phasetype == 1 ? 2.0 / (2.0 + temperature /
+          // return molarVolumeChangePhase(pressure, temperature, A, B, pt);
+          // BonV = pt == 1 ? 2.0 / (2.0 + temperature /
           // getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase *
           // temperature * R);
         }
@@ -2122,7 +2122,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     if (Math.abs(h) > 1e-12) {
       // System.out.println("h failed " + "Z" + Z + " iterations " + iterations + "
       // BonV " + BonV);
-      // return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
+      // return molarVolumeChangePhase(pressure, temperature, A, B, pt);
     }
     // System.out.println("Z" + Z + " iterations " + iterations + " BonV " + BonV);
     // System.out.println("pressure " + Z*R*temperature/getMolarVolume());

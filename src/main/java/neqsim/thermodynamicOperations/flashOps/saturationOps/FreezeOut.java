@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -83,7 +84,7 @@ public class FreezeOut extends constantDutyTemperatureFlash
         SystemInterface testSystem2 = new SystemSrkSchwartzentruberEos(216, 1);
         ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
         testSystem2.addComponent(testSystem.getPhase(0).getComponent(k).getComponentName(), 1);
-        testSystem2.setPhaseType(0, 1);
+        testSystem2.setPhaseType(0, PhaseType.byValue(1));
         noFreezeliq = true;
         SolidFug = 0.0;
         FluidFug = 0.0;

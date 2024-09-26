@@ -244,7 +244,7 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String returnParameter, java.lang.String returnUnit) {
+  public double getValue(String returnParameter, String returnUnit) {
     return LNGdensity;
   }
 

@@ -20,7 +20,9 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  */
 public class PropaneCoolingModule extends ProcessModuleBaseClass {
   /**
-   * <p>Constructor for PropaneCoolingModule.</p>
+   * <p>
+   * Constructor for PropaneCoolingModule.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -82,11 +84,11 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
   /** {@inheritDoc} */
   @Override
   public void initializeModule() {
-    UUID id = UUID.randomUUID();
     isInitializedModule = true;
 
     refrigerantStream.getThermoSystem().setTemperature(condenserTemperature);
     ((Stream) refrigerantStream).setSpecification("bubT");
+    UUID id = UUID.randomUUID();
     refrigerantStream.run(id);
 
     ThrottlingValve JTvalve = new ThrottlingValve("JTvalve", refrigerantStream);
@@ -111,7 +113,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     Heater condenser = new Heater("propane condenser", compressor1.getOutletStream());
     condenser.setPressureDrop(0.07);
     condenser.setSpecification("out stream");
-    condenser.setOutletStream((Stream) refrigerantStream);
+    condenser.setOutletStream(refrigerantStream);
 
     System.out.println("adding operations....");
     getOperations().add(refrigerantStream);

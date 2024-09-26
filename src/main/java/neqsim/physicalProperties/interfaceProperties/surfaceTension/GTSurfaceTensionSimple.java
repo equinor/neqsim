@@ -328,7 +328,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
    * </p>
    *
    * @param compnum a int
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getMolarDensity(int compnum) {
     double[] temp = new double[ite_step];
@@ -343,7 +343,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
    * getMolarDensityTotal.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getMolarDensityTotal() {
     double[] temp = new double[ite_step];
@@ -360,7 +360,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
    * getz.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getz() {
     return z_step;
@@ -371,7 +371,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
    * getPressure.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getPressure() {
     return pressure_interface;

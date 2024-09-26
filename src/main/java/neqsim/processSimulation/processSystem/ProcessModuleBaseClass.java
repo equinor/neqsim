@@ -11,6 +11,7 @@ import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
+import neqsim.processSimulation.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -220,13 +221,8 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     return null;
   }
 
-  /**
-   * <p>
-   * getResultTable.
-   * </p>
-   *
-   * @return an array of {@link java.lang.String} objects
-   */
+  /** {@inheritDoc} */
+  @Override
   public String[][] getResultTable() {
     return null;
   }
@@ -238,7 +234,27 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
    * getPressure.
    * </p>
    */
+  @Override
   public double getPressure(String unit) {
     return 1.0;
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return null;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @return a String
+   */
+  public String getReport_json() {
+    return new Report(this).generateJsonReport();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run_step(UUID id) {}
 }

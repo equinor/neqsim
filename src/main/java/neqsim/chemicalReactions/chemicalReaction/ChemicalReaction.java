@@ -45,24 +45,10 @@ public class ChemicalReaction extends NamedBaseClass
    * Constructor for ChemicalReaction.
    * </p>
    *
-   * @deprecated use
-   *             {@link #ChemicalReaction(String, String[], double[], double[], double, double, double)}
-   *             instead
-   */
-  @Deprecated
-  public ChemicalReaction() {
-    super("ChemicalReaction");
-  }
-
-  /**
-   * <p>
-   * Constructor for ChemicalReaction.
-   * </p>
-   *
    * @param name a {@link java.lang.String} object
    * @param names an array of {@link java.lang.String} objects
-   * @param stocCoefs an array of {@link double} objects
-   * @param K an array of {@link double} objects
+   * @param stocCoefs an array of type double
+   * @param K an array of type double
    * @param r a double
    * @param activationEnergy a double
    * @param refT a double
@@ -71,7 +57,6 @@ public class ChemicalReaction extends NamedBaseClass
       double activationEnergy, double refT) {
     /*
      * this.names = names; this.stocCoefs = stocCoefs; this.K = K;
-     * 
      */
     super(name);
     this.names = new String[names.length];
@@ -147,28 +132,10 @@ public class ChemicalReaction extends NamedBaseClass
 
   /**
    * <p>
-   * getK.
-   * </p>
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
-   */
-  public double getK(PhaseInterface phase) {
-    double temperature = phase.getTemperature();
-    lnK = K[0] + K[1] / (temperature) + K[2] * Math.log(temperature) + K[3] * temperature;
-    if (shiftSignK) {
-      lnK = -lnK;
-    }
-    // System.out.println("K " + Math.exp(lnK));
-    return Math.exp(lnK);
-  }
-
-  /**
-   * <p>
    * Getter for the field <code>stocCoefs</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getStocCoefs() {
     return this.stocCoefs;
@@ -277,8 +244,8 @@ public class ChemicalReaction extends NamedBaseClass
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
-   * @param Amatrix an array of {@link double} objects
-   * @param chemRefPot an array of {@link double} objects
+   * @param Amatrix an array of type double
+   * @param chemRefPot an array of type double
    */
   public void initMoleNumbers(PhaseInterface phase, ComponentInterface[] components,
       double[][] Amatrix, double[] chemRefPot) {
@@ -409,12 +376,12 @@ public class ChemicalReaction extends NamedBaseClass
           test = false;
         }
       }
-      if (test == false) {
+      if (!test) {
         break;
       }
     }
 
-    if (test == false) {
+    if (!test) {
       for (int j = 0; j < productNames.length; j++) {
         for (int i = 0; i < names.length; i++) {
           if (names[i].equals(productNames[j])) {
@@ -424,7 +391,7 @@ public class ChemicalReaction extends NamedBaseClass
             test = false;
           }
         }
-        if (test == false) {
+        if (!test) {
           break;
         }
       }
@@ -480,6 +447,24 @@ public class ChemicalReaction extends NamedBaseClass
    */
   public double[] getK() {
     return this.K;
+  }
+
+  /**
+   * <p>
+   * getK.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @return a double
+   */
+  public double getK(PhaseInterface phase) {
+    double temperature = phase.getTemperature();
+    lnK = K[0] + K[1] / (temperature) + K[2] * Math.log(temperature) + K[3] * temperature;
+    if (shiftSignK) {
+      lnK = -lnK;
+    }
+    // System.out.println("K " + Math.exp(lnK));
+    return Math.exp(lnK);
   }
 
   /**

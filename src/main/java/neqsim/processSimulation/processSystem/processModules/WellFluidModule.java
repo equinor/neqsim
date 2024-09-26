@@ -10,6 +10,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  * <p>
@@ -32,14 +33,16 @@ public class WellFluidModule extends ProcessModuleBaseClass {
 
   double gasfactor = 0.1;
 
-  double thirdstagePressure = 1.01325;
+  double thirdstagePressure = ThermodynamicConstantsInterface.referencePressure;
   double separationTemperature = 273.15 + 15;
   double exitGasScrubberTemperature = 273.15 + 30;
   double firstStageCompressorAfterCoolerTemperature = 273.15 + 30;
   double exportOilTemperature = 273.15 + 30;
 
   /**
-   * <p>Constructor for WellFluidModule.</p>
+   * <p>
+   * Constructor for WellFluidModule.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -243,7 +246,8 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     separationModule.addInputStream("feed stream", wellStream);
     separationModule.setSpecification("Second stage pressure", 15.0);
     separationModule.setSpecification("separation temperature", 273.15 + 15.0);
-    separationModule.setSpecification("Third stage pressure", 1.01325);
+    separationModule.setSpecification("Third stage pressure",
+        ThermodynamicConstantsInterface.referencePressure);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -251,7 +255,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     operations.add(wellStream);
     operations.add(separationModule);
     // separationModule.getUnit("")
-    // ((Recycle) operations.getUnit("Resycle")).setTolerance(1e-9);
+    // ((Recycle) operations.getUnit("Recycle")).setTolerance(1e-9);
 
     operations.run();
   }

@@ -200,8 +200,8 @@ public class TEGdehydrationProcessDistillationJS {
         new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser =
-        new HydrateEquilibriumTemperatureAnalyser(waterSaturatedFeedGas);
-    hydrateTAnalyser.setName("hydrate temperature analyser");
+        new HydrateEquilibriumTemperatureAnalyser("hydrate temperature analyser",
+            waterSaturatedFeedGas);
 
     neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
     feedTEG.setMolarComposition(
@@ -230,10 +230,8 @@ public class TEGdehydrationProcessDistillationJS {
     Stream richTEG = new Stream("rich TEG from absorber", absorber.getSolventOutStream());
 
     HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser =
-        new HydrateEquilibriumTemperatureAnalyser(dehydratedGas);
-    waterDewPointAnalyser.setName("water dew point analyser");
-    ThrottlingValve glycol_flash_valve = new ThrottlingValve("Flash valve", richTEG);
-    glycol_flash_valve.setName("Rich TEG HP flash valve");
+        new HydrateEquilibriumTemperatureAnalyser("water dew point analyser", dehydratedGas);
+    ThrottlingValve glycol_flash_valve = new ThrottlingValve("Rich TEG HP flash valve", richTEG);
     glycol_flash_valve.setOutletPressure(flashDrumPressure);
 
     Heater richGLycolHeaterCondenser =
@@ -263,8 +261,7 @@ public class TEGdehydrationProcessDistillationJS {
     heatEx.setUAvalue(UAvalueRichTEGHeatExchanger_2);
 
     ThrottlingValve glycol_flash_valve2 =
-        new ThrottlingValve("LP flash valve", heatEx.getOutStream(0));
-    glycol_flash_valve2.setName("Rich TEG LP flash valve");
+        new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0));
     glycol_flash_valve2.setOutletPressure(reboilerPressure);
 
     neqsim.thermo.system.SystemInterface stripGas = feedGas.clone();
@@ -274,11 +271,9 @@ public class TEGdehydrationProcessDistillationJS {
     strippingGas.setTemperature(strippingGasFeedTemperature, "C");
     strippingGas.setPressure(reboilerPressure, "bara");
 
-    Stream gasToReboiler = strippingGas.clone();
-    gasToReboiler.setName("gas to reboiler");
+    Stream gasToReboiler = strippingGas.clone("gas to reboiler");
 
-    DistillationColumn column = new DistillationColumn(1, true, true);
-    column.setName("TEG regeneration column");
+    DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 0);
     column.getReboiler().setOutTemperature(273.15 + reboilerTemperature);
     column.getCondenser().setOutTemperature(273.15 + condenserTemperature);
@@ -348,11 +343,11 @@ public class TEGdehydrationProcessDistillationJS {
     makeupMixer.addStream(leanTEGtoabs);
     makeupMixer.addStream(makeupTEG);
 
-    Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
-    resycleLeanTEG.addStream(makeupMixer.getOutletStream());
-    resycleLeanTEG.setOutletStream(TEGFeed);
-    resycleLeanTEG.setPriority(200);
-    resycleLeanTEG.setDownstreamProperty("flow rate");
+    Recycle recycleLeanTEG = new Recycle("lean TEG recycle");
+    recycleLeanTEG.addStream(makeupMixer.getOutletStream());
+    recycleLeanTEG.setOutletStream(TEGFeed);
+    recycleLeanTEG.setPriority(200);
+    recycleLeanTEG.setDownstreamProperty("flow rate");
 
     richGLycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
     // richGLycolHeater.isSetEnergyStream();
@@ -399,7 +394,7 @@ public class TEGdehydrationProcessDistillationJS {
     operations.add(makeupCalculator);
     operations.add(makeupTEG);
     operations.add(makeupMixer);
-    operations.add(resycleLeanTEG);
+    operations.add(recycleLeanTEG);
 
     return operations;
   }

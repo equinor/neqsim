@@ -41,8 +41,7 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemSrkTwuCoonStatoilEos(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     modelName = "TwuCoonStatoil-EOS";
     attractiveTermNumber = 18;
   }
@@ -56,10 +55,6 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

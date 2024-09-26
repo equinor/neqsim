@@ -91,8 +91,8 @@ public class BaseContract implements ContractInterface {
             Double.parseDouble(dataSet.getString("MAXVALUE")), dataSet.getString("UNIT"),
             Double.parseDouble(dataSet.getString("ReferenceTdegC")),
             Double.parseDouble(dataSet.getString("ReferenceTdegC")), referencePressure, ""));// dataSet.getString("Comments"));
-        System.out.println(dataSet.getString("Comments"));
-        System.out.println("specification added..." + numb);
+        // System.out.println(dataSet.getString("Comments"));
+        // System.out.println("specification added..." + numb);
       }
     } catch (Exception ex) {
       logger.error("error in comp", ex);

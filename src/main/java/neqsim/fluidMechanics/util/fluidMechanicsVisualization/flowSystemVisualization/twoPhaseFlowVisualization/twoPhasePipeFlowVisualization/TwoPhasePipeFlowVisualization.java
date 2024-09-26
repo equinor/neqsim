@@ -175,7 +175,7 @@ public class TwoPhasePipeFlowVisualization extends
    * file.setYvalues(interfaceTemperaturePoint[0][0], "gas interface temperature", "sec");
    * file.setYvalues(interfaceTemperaturePoint[1][0], "liquid interface temperature", "sec");
    * file.setYvalues(interphaseContactLength[0][0], "interphase contact length", "sec");
-   * 
+   *
    * for (int p = 0; p < flowNodes[0][0].getNumberOfComponents(); p++) { String comp =
    * "component molefraction " + p; file.setYvalues(bulkComposition[0][p][0], ("gas " + comp + p),
    * "sec"); file.setYvalues(bulkComposition[1][p][0], ("liquid " + comp + p), "sec");

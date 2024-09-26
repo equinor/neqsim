@@ -31,7 +31,7 @@ public interface DiffusivityInterface extends ThermodynamicConstantsInterface,
    *
    * @param binaryDiffusionCoefficientMethod a int
    * @param multicomponentDiffusionMethod a int
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod);

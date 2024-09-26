@@ -1,8 +1,9 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import java.util.UUID;
-
+import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.util.monitor.HeaterResponse;
 
 /**
  * <p>
@@ -14,29 +15,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  */
 public class Cooler extends Heater {
   private static final long serialVersionUID = 1000;
-
-  /**
-   * <p>
-   * Constructor for Cooler.
-   * </p>
-   */
-  @Deprecated
-  public Cooler() {
-    super();
-  }
-
-  /**
-   * <p>
-   * Constructor for Cooler.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Cooler(StreamInterface inStream) {
-    super(inStream);
-  }
 
   /**
    * Constructor for Cooler.
@@ -75,5 +53,11 @@ public class Cooler extends Heater {
         - inStream.getThermoSystem().getEntropy(unit);
 
     return entrop;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new HeaterResponse(this));
   }
 }

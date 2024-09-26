@@ -5,7 +5,6 @@ import neqsim.fluidMechanics.flowLeg.FlowLegInterface;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.flowSolver.FlowSolverInterface;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
-import neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.FileWriterInterface;
 import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualizationInterface;
 import neqsim.fluidMechanics.util.timeSeries.TimeSeries;
 import neqsim.thermo.system.SystemInterface;
@@ -29,7 +28,6 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
 
   protected FlowNodeInterface[] flowNode;
   protected FlowLegInterface[] flowLeg;
-  protected FileWriterInterface[] fileWriter;
   protected String initFlowPattern = "annular";
   protected FlowSystemVisualizationInterface display;
   protected TimeSeries timeSeries = new TimeSeries();
@@ -248,12 +246,6 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   @Override
   public FlowSystemVisualizationInterface getDisplay() {
     return display;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public FileWriterInterface getFileWriter(int i) {
-    return fileWriter[i];
   }
 
   /** {@inheritDoc} */

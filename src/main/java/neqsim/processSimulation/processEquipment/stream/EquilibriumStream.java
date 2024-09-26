@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * <p>
@@ -17,38 +18,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class EquilibriumStream extends Stream {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(EquilibriumStream.class);
-
-  /**
-   * <p>
-   * Constructor for EquilibriumStream.
-   * </p>
-   */
-  @Deprecated
-  public EquilibriumStream() {}
-
-  /**
-   * <p>
-   * Constructor for EquilibriumStream.
-   * </p>
-   *
-   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-   */
-  @Deprecated
-  public EquilibriumStream(SystemInterface thermoSystem) {
-    super(thermoSystem);
-  }
-
-  /**
-   * <p>
-   * Constructor for EquilibriumStream.
-   * </p>
-   *
-   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
-  @Deprecated
-  public EquilibriumStream(StreamInterface stream) {
-    this("EquilibriumStream", stream.getThermoSystem());
-  }
 
   /**
    * Constructor for EquilibriumStream.
@@ -86,14 +55,31 @@ public class EquilibriumStream extends Stream {
     return clonedStream;
   }
 
+  /**
+   * Clone Equilibriumstream object and give it a new name.
+   *
+   * @param name Name to set for the cloned object
+   * @return Cloned EquilibriumStream object
+   */
+  @Override
+  public EquilibriumStream clone(String name) {
+    if (this.getName() == name) {
+      throw new RuntimeException(
+          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+    }
+    EquilibriumStream s = this.clone();
+    s.setName(name);
+    return s;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    System.out.println("start flashing stream... " + streamNumber);
+    logger.info("start flashing stream... " + streamNumber);
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoOps.TPflash();
-    System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
-    System.out.println("beta: " + thermoSystem.getBeta());
+    logger.info("number of phases: " + thermoSystem.getNumberOfPhases());
+    logger.info("beta: " + thermoSystem.getBeta());
     setCalculationIdentifier(id);
   }
 }

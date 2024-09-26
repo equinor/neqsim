@@ -40,13 +40,21 @@ public class Manifold extends ProcessEquipmentBaseClass {
    * <p>
    * Constructor for Splitter with name as input.
    * </p>
-   * 
+   *
    * @param name name of manifold
    */
   public Manifold(String name) {
     super(name);
   }
 
+  /**
+   * <p>
+   * addStream.
+   * </p>
+   *
+   * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
+   */
   public void addStream(StreamInterface newStream) {
     localmixer.addStream(newStream);
   }
@@ -56,7 +64,7 @@ public class Manifold extends ProcessEquipmentBaseClass {
    * setSplitFactors.
    * </p>
    *
-   * @param splitFact an array of {@link double} objects
+   * @param splitFact an array of type double
    */
   public void setSplitFactors(double[] splitFact) {
     splitFactors = splitFact;
@@ -64,19 +72,23 @@ public class Manifold extends ProcessEquipmentBaseClass {
     localsplitter.setSplitFactors(splitFactors);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * <p>getSplitStream.</p>
+   *
+   * @param i a int
+   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+   */
   public StreamInterface getSplitStream(int i) {
     return localsplitter.getSplitStream(i);
   }
-
 
   /**
    * <p>
    * getMixedStream.
    * </p>
-   * 
+   *
    * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   **/
+   */
   public StreamInterface getMixedStream() {
     return localmixer.getOutletStream();
   }
@@ -88,5 +100,4 @@ public class Manifold extends ProcessEquipmentBaseClass {
     localsplitter.setInletStream(localmixer.getOutletStream());
     localsplitter.run();
   }
-
 }

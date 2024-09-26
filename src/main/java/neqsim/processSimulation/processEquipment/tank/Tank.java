@@ -1,7 +1,6 @@
 package neqsim.processSimulation.processEquipment.tank;
 
 import java.util.UUID;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -47,36 +46,13 @@ public class Tank extends ProcessEquipmentBaseClass {
   private double liquidLevel = liquidVolume / (liquidVolume + gasVolume);
 
   /**
-   * <p>
-   * Constructor for Tank.
-   * </p>
-   */
-  @Deprecated
-  public Tank() {
-    super("Tank");
-    setCalculateSteadyState(false);
-  }
-
-  /**
-   * <p>
-   * Constructor for Tank.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Tank(StreamInterface inletStream) {
-    this("Tank", inletStream);
-  }
-
-  /**
    * Constructor for Tank.
    *
    * @param name name of tank
    */
   public Tank(String name) {
     super(name);
+    setCalculateSteadyState(false);
   }
 
   /**
@@ -89,7 +65,7 @@ public class Tank extends ProcessEquipmentBaseClass {
    *        object
    */
   public Tank(String name, StreamInterface inletStream) {
-    super(name);
+    this(name);
     setInletStream(inletStream);
   }
 
@@ -122,7 +98,7 @@ public class Tank extends ProcessEquipmentBaseClass {
    */
   public void addStream(StreamInterface newStream) {
     if (numberOfInputStreams == 0) {
-      setInletStream((Stream) newStream);
+      setInletStream(newStream);
     } else {
       inletStreamMixer.addStream(newStream);
     }

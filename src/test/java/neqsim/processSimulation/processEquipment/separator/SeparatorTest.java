@@ -11,7 +11,6 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 
 /**
  * @author ESOL
- *
  */
 class SeparatorTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
@@ -50,10 +49,10 @@ class SeparatorTest extends neqsim.NeqSimTest {
   @Test
   public void testFlow() {
     LevelTransmitter lt = new LevelTransmitter("levelTransmitter", sep);
-    Assertions.assertEquals(0.05263157894736842, lt.getMeasuredValue(), 1e-12);
+    Assertions.assertEquals(0.5, lt.getMeasuredValue(), 1e-12);
     ((StreamInterface) processOps.getUnit("inlet stream")).setFlowRate(0.01, "MSm3/day");
     processOps.run();
-    Assertions.assertEquals(0.052631578947368494, lt.getMeasuredValue(), 1e-12);
+    Assertions.assertEquals(0.5, lt.getMeasuredValue(), 1e-12);
     Assertions.assertEquals(lt.getMeasuredValue() * 100, lt.getMeasuredPercentValue(), 1e-12);
   }
 

@@ -27,13 +27,7 @@ public class ManwaySection extends SeparatorSection {
     super(name, type, sep);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a
-   *         {@link neqsim.processSimulation.mechanicalDesign.separator.sectionType.MechManwaySection}
-   *         object
-   */
+  /** {@inheritDoc} */
   @Override
   public MechManwaySection getMechanicalDesign() {
     return new MechManwaySection(this);

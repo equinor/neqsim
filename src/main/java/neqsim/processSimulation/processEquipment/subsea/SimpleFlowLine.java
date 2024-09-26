@@ -23,20 +23,6 @@ public class SimpleFlowLine extends TwoPortEquipment {
   AdiabaticTwoPhasePipe pipeline;
 
   /**
-   * <p>
-   * Constructor for SimpleFlowLine.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public SimpleFlowLine(StreamInterface inStream) {
-    this("SimpleFlowLine", inStream);
-
-  }
-
-  /**
    * Constructor for SimpleFlowLine.
    *
    * @param name Name of SimpleFlowLine object
@@ -45,8 +31,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
    */
   public SimpleFlowLine(String name, StreamInterface inStream) {
     super(name);
-    this.inStream = inStream;
-    setOutletStream(inStream.clone());
+    setInletStream(inStream);
     pipeline = new AdiabaticTwoPhasePipe("pipeline", inStream);
   }
 
@@ -76,21 +61,21 @@ public class SimpleFlowLine extends TwoPortEquipment {
 
     /*
      * System.out.println("stary P " );
-     * 
+     *
      * SystemInterface fluidIn = (inStream.getFluid()).clone(); fluidIn.initProperties();
-     * 
+     *
      * double density = fluidIn.getDensity("kg/m3");
-     * 
+     *
      * double deltaP = density*getHeight()*neqsim.thermo.ThermodynamicConstantsInterface.gravity/1.
      * 0e5;
-     * 
+     *
      * System.out.println("density " +density + " delta P " + deltaP);
-     * 
+     *
      * fluidIn.setPressure(fluidIn.getPressure("bara")-deltaP);
      * fluidIn.setTemperature(outletTemperature);
-     * 
+     *
      * ThermodynamicOperations ops = new ThermodynamicOperations(fluidIn); ops.TPflash();
-     * 
+     *
      * getOutletStream().setFluid(fluidIn);
      */
     setCalculationIdentifier(id);

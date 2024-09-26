@@ -1,15 +1,23 @@
 {
-    "java.configuration.updateBuildConfiguration": "interactive",
-    "[java]": {
-        "editor.defaultFormatter": "redhat.java",
-        "editor.formatOnSave": true,
-    },
-    "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
-    "java.saveActions.organizeImports": true,
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "[java]": {
+    "editor.defaultFormatter": "redhat.java",
+    "editor.formatOnSave": true,
     "editor.tabSize": 2,
     "editor.insertSpaces": true,
-    "editor.detectIndentation": false,
-    "java.checkstyle.version": "10.9.3",
-    "java.checkstyle.configuration": "${workspaceFolder}/checkstyle_neqsim.xml",
-    "java.debug.settings.hotCodeReplace": "never"
+    "editor.detectIndentation": false
+  },
+  "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
+  "java.saveActions.organizeImports": true,
+  "java.checkstyle.version": "10.18.1",
+  "java.checkstyle.configuration": "${workspaceFolder}/checkstyle_neqsim.xml",
+  "java.debug.settings.hotCodeReplace": "never",
+  "[xml]": {
+    "editor.tabSize": 4,
+    "editor.insertSpaces": false
+  },
+  "[json]": {
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true
+  }
 }

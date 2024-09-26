@@ -15,7 +15,6 @@ package neqsim.MathLib.generalMath;
  * @version $Id: $Id
  */
 public final class TDMAsolve {
-
   /**
    * Dummy constructor, not for use. Class is to be considered static.
    */
@@ -26,11 +25,11 @@ public final class TDMAsolve {
    * solve.
    * </p>
    *
-   * @param a an array of {@link double} objects
-   * @param b an array of {@link double} objects
-   * @param c an array of {@link double} objects
-   * @param r an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param a an array of type double
+   * @param b an array of type double
+   * @param c an array of type double
+   * @param r an array of type double
+   * @return an array of type double
    */
   public static double[] solve(double[] a, double[] b, double[] c, double[] r) {
     int length = a.length;

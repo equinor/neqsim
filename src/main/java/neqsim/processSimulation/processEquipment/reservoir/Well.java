@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.reservoir;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.NamedBaseClass;
@@ -17,19 +18,9 @@ public class Well extends NamedBaseClass {
   private static final long serialVersionUID = 1000;
 
   private StreamInterface stream = null;
-  double x, y, z;
-
-  /**
-   * <p>
-   * Constructor for Well.
-   * </p>
-   *
-   * @deprecated use {@link #Well(String)} instead
-   */
-  @Deprecated
-  public Well() {
-    this("Well");
-  }
+  double x;
+  double y;
+  double z;
 
   /**
    * <p>
@@ -74,7 +65,7 @@ public class Well extends NamedBaseClass {
   public double getGOR() {
     SystemInterface locStream = (stream.getFluid()).clone();
     locStream.setTemperature(288.15);
-    locStream.setPressure(1.01325);
+    locStream.setPressure(ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
     ops.TPflash();
     double GOR = Double.NaN;
@@ -94,7 +85,7 @@ public class Well extends NamedBaseClass {
   public double getStdGasProduction() {
     SystemInterface locStream = (stream.getFluid()).clone();
     locStream.setTemperature(288.15);
-    locStream.setPressure(1.01325);
+    locStream.setPressure(ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
     ops.TPflash();
     double volume = 0;
@@ -114,7 +105,7 @@ public class Well extends NamedBaseClass {
   public double getStdOilProduction() {
     SystemInterface locStream = (stream.getFluid()).clone();
     locStream.setTemperature(288.15);
-    locStream.setPressure(1.01325);
+    locStream.setPressure(ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
     ops.TPflash();
     double volume = 0;
@@ -134,7 +125,7 @@ public class Well extends NamedBaseClass {
   public double getStdWaterProduction() {
     SystemInterface locStream = (stream.getFluid()).clone();
     locStream.setTemperature(288.15);
-    locStream.setPressure(1.01325);
+    locStream.setPressure(ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations ops = new ThermodynamicOperations(locStream);
     ops.TPflash();
     double volume = 0;

@@ -15,7 +15,6 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -37,16 +36,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   protected StreamInterface mixedStream;
   private boolean isSetOutTemperature = false;
   private double outTemperature = Double.NaN;
-
-  /**
-   * <p>
-   * Constructor for Mixer.
-   * </p>
-   */
-  @Deprecated
-  public Mixer() {
-    super("Mixer");
-  }
 
   /**
    * <p>
@@ -85,7 +74,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
     try {
       if (getNumberOfInputStreams() == 0) {
-        mixedStream = (Stream) streams.get(0).clone(); // cloning the first stream
+        mixedStream = streams.get(0).clone(this.getName() + " mixed stream");
         // mixedStream.getThermoSystem().setNumberOfPhases(2);
         // mixedStream.getThermoSystem().init(0);
         // mixedStream.getThermoSystem().init(3);
@@ -196,10 +185,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     for (int k = 0; k < streams.size(); k++) {
       streams.get(k).getThermoSystem().init(3);
       enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-      // System.out.println("total enthalpy k : " + ( ((Stream)
-      // streams.get(k)).getThermoSystem()).getEnthalpy());
     }
-    // System.out.println("total enthalpy of streams: " + enthalpy);
     return enthalpy;
   }
 

@@ -2,7 +2,6 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -30,8 +29,7 @@ public class TPflash extends Flash {
    * Constructor for TPflash.
    * </p>
    */
-  public TPflash() {
-  }
+  public TPflash() {}
 
   /**
    * <p>
@@ -57,7 +55,7 @@ public class TPflash extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param checkForSolids Set true to check for solid phase and do solid phase calculations.
+   * @param checkForSolids Set true to do solid phase check and calculations
    */
   public TPflash(SystemInterface system, boolean checkForSolids) {
     this(system);
@@ -92,8 +90,11 @@ public class TPflash extends Flash {
     }
 
     double oldBeta = system.getBeta();
+
+    RachfordRice rachfordRice = new RachfordRice();
     try {
-      system.calcBeta();
+      system.setBeta(rachfordRice.calcBetaS(system));
+      //system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (IsNaNException ex) {
       logger.warn("Not able to calculate beta. Value is NaN");
       system.setBeta(oldBeta);
@@ -134,13 +135,16 @@ public class TPflash extends Flash {
       system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
     }
     double oldBeta = system.getBeta();
+    RachfordRice rachfordRice = new RachfordRice();
     try {
-      system.calcBeta();
+      system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (Exception ex) {
+      system.setBeta(rachfordRice.getBeta()[0]);
       if (system.getBeta() > 1.0 - betaTolerance || system.getBeta() < betaTolerance) {
         system.setBeta(oldBeta);
       }
-      logger.info("temperature " + system.getTemperature() + " pressure " + system.getPressure());
+      // logger.info("temperature " + system.getTemperature() + " pressure " +
+      // system.getPressure());
       logger.error(ex.getMessage(), ex);
     }
 
@@ -180,7 +184,8 @@ public class TPflash extends Flash {
       system.getPhase(1).getComponents()[i].setK(Math.exp(lnK[i]));
     }
     try {
-      system.calcBeta();
+      RachfordRice rachfordRice = new RachfordRice();
+      system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
       system.calc_x_y();
       system.init(1);
     } catch (Exception ex) {
@@ -251,7 +256,8 @@ public class TPflash extends Flash {
 
     // Calculates phase fractions and initial composition based on Wilson K-factors
     try {
-      system.calcBeta();
+      RachfordRice rachfordRice = new RachfordRice();
+      system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -364,12 +370,12 @@ public class TPflash extends Flash {
 
     // Checks if gas or oil is the most stable phase
     double gasgib = system.getPhase(0).getGibbsEnergy();
-    system.setPhaseType(0, 0);
+    system.setPhaseType(0, PhaseType.byValue(0));
     system.init(1, 0);
     double liqgib = system.getPhase(0).getGibbsEnergy();
 
     if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
-      system.setPhaseType(0, 1);
+      system.setPhaseType(0, PhaseType.byValue(1));
     }
     system.init(1);
 
@@ -461,18 +467,18 @@ public class TPflash extends Flash {
       // Checks if gas or oil is the most stable phase
       if (system.getPhase(0).getType() == PhaseType.GAS) {
         gasgib = system.getPhase(0).getGibbsEnergy();
-        system.setPhaseType(0, 0);
+        system.setPhaseType(0, PhaseType.byValue(0));
         system.init(1, 0);
         liqgib = system.getPhase(0).getGibbsEnergy();
       } else {
         liqgib = system.getPhase(0).getGibbsEnergy();
-        system.setPhaseType(0, 1);
+        system.setPhaseType(0, PhaseType.byValue(1));
         system.init(1, 0);
         gasgib = system.getPhase(0).getGibbsEnergy();
       }
 
       if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
-        system.setPhaseType(0, 1);
+        system.setPhaseType(0, PhaseType.byValue(1));
       }
 
       system.init(1);

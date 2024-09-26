@@ -58,7 +58,12 @@ public class SimpleReservoirTest {
     for (int i = 0; i < 10; i++) {
       reservoirOps.runTransient(deltaTime);
     }
-    Assertions.assertEquals(352.274030, reservoirOps.getReservoirFluid().getPressure("bara"), 0.1);
+    Assertions.assertEquals(355.19330033985693
+    , reservoirOps.getReservoirFluid().getPressure("bara"), 0.1);
     Assertions.assertEquals(11.698, reservoirOps.getWaterProdution("Sm3/day"), 0.1);
+
+    reservoirOps.setLowPressureLimit(52.0e5, "Pa");
+    Assertions.assertEquals(52.0, reservoirOps.getLowPressureLimit("bara"), 0.1);
+    Assertions.assertEquals(52.0e5, reservoirOps.getLowPressureLimit("Pa"), 0.1);
   }
 }

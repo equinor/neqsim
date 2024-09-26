@@ -4,11 +4,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
 import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDesign;
+import neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign;
 import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 import neqsim.processSimulation.mechanicalDesign.valve.ValveMechanicalDesign;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticPipe;
 import neqsim.processSimulation.processEquipment.pump.Pump;
+import neqsim.processSimulation.processEquipment.separator.GasScrubber;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -76,8 +78,7 @@ public class SystemMechanicalDesignTest {
     ThrottlingValve valve2 = new ThrottlingValve("valve2", seprator2ndStage.getLiquidOutStream());
     valve2.setOutletPressure(2.7);
 
-    StreamInterface recircstream1 = valve2.getOutletStream().clone();
-    recircstream1.setName("oilRecirc1");
+    StreamInterface recircstream1 = valve2.getOutletStream().clone("oilRecirc1");
     recircstream1.setFlowRate(1e-6, "kg/hr");
 
     neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator3rdStage =
@@ -153,6 +154,32 @@ public class SystemMechanicalDesignTest {
   }
 
   @Test
+  void testRunDesignCalculationforGasScrubber() {
+    SystemInterface thermoSystem = new SystemSrkEos(298.0, 120.0);
+    thermoSystem.addComponent("nitrogen", 1.0);
+    thermoSystem.addComponent("methane", 99.0);
+    thermoSystem.setMixingRule("classic");
+
+    Stream inlets = new Stream("inlet stream", thermoSystem);
+    inlets.setTemperature(20.0, "C");
+    inlets.setPressure(120.0, "bara");
+    inlets.setFlowRate(15.0, "MSm3/day");
+    inlets.run();
+
+    GasScrubber sep1 = new GasScrubber("scrubber1", inlets);
+    sep1.run();
+
+    GasScrubberMechanicalDesign sepMechDesign = new GasScrubberMechanicalDesign(sep1);
+    sepMechDesign.setMaxOperationPressure(180);
+    sepMechDesign.calcDesign();
+    System.out.println("separator inner diameter " + sepMechDesign.innerDiameter);
+    System.out.println("separator weight vessel shell " + sepMechDesign.weigthVesselShell);
+    System.out.println("separator weight structual steel " + sepMechDesign.weightStructualSteel);
+    sep1.addSeparatorSection("first mesh", "meshpad");
+    sepMechDesign.calcDesign();
+  }
+
+  @Test
   void testRunDesignCalculationforValve() {
     ValveMechanicalDesign valve1MechDesign =
         new ValveMechanicalDesign((ThrottlingValve) operations.getUnit("valve1"));
@@ -162,7 +189,6 @@ public class SystemMechanicalDesignTest {
 
   @Test
   void testRunDesignForPipeline() {
-
     AdiabaticPipe pipe = new AdiabaticPipe("pipe1",
         ((neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator) operations
             .getUnit("1st stage separator")).getGasOutStream());

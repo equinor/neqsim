@@ -51,7 +51,7 @@ public class graph2b extends javax.swing.JFrame {
    * Constructor for graph2b.
    * </p>
    *
-   * @param points an array of {@link double} objects
+   * @param points an array of type double
    */
   public graph2b(double[][] points) {
     String[] seriesNames = new String[points.length];
@@ -97,7 +97,7 @@ public class graph2b extends javax.swing.JFrame {
    * Constructor for graph2b.
    * </p>
    *
-   * @param points an array of {@link double} objects
+   * @param points an array of type double
    * @param seriesNames an array of {@link java.lang.String} objects
    * @param tit a {@link java.lang.String} object
    * @param xaxis a {@link java.lang.String} object
@@ -139,8 +139,8 @@ public class graph2b extends javax.swing.JFrame {
    * Constructor for graph2b.
    * </p>
    *
-   * @param xpoints an array of {@link double} objects
-   * @param points an array of {@link double} objects
+   * @param xpoints an array of type double
+   * @param points an array of type double
    * @param seriesNames an array of {@link java.lang.String} objects
    * @param tit a {@link java.lang.String} object
    * @param xaxis a {@link java.lang.String} object

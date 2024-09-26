@@ -18,12 +18,13 @@ public class BasePVTsimulation implements SimulationInterface {
   public ThermodynamicOperations thermoOps = null;
   private double pressure;
   public double[] pressures = {381.5, 338.9, 290.6, 242.3, 194.1, 145.8, 145.8, 97.5, 49.3};
-  public double temperature = 289.0;
+  public double temperature = Double.NaN;
   double[][] experimentalData = null;
   double saturationVolume = 0;
   double saturationPressure = 0;
   double saturationTemperature;
   double Zsaturation = 0;
+  String temperatureUnit = "K";
   public LevenbergMarquardt optimizer = new LevenbergMarquardt();
 
   /**
@@ -44,7 +45,7 @@ public class BasePVTsimulation implements SimulationInterface {
    * Setter for the field <code>experimentalData</code>.
    * </p>
    *
-   * @param expData an array of {@link double} objects
+   * @param expData an array of type double
    */
   public void setExperimentalData(double[][] expData) {
     experimentalData = expData;
@@ -120,13 +121,20 @@ public class BasePVTsimulation implements SimulationInterface {
 
   /**
    * <p>
-   * Setter for the field <code>temperature</code>.
+   * Setter for the field <code>temperature</code>. NB! Verify unit is correct.
    * </p>
    *
    * @param temperature the temperature to set
    */
   public void setTemperature(double temperature) {
     this.temperature = temperature;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setTemperature(double temperature, String temperatureUnit) {
+    this.temperature = temperature;
+    this.temperatureUnit = temperatureUnit;
   }
 
   /**
@@ -169,7 +177,9 @@ public class BasePVTsimulation implements SimulationInterface {
   }
 
   /**
-   * <p>Getter for the field <code>saturationTemperature</code>.</p>
+   * <p>
+   * Getter for the field <code>saturationTemperature</code>.
+   * </p>
    *
    * @return the saturationTemperature
    */

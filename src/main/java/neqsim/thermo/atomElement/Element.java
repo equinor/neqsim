@@ -43,7 +43,6 @@ public class Element implements ThermodynamicConstantsInterface {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet =
             database.getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"))) {
-
       if (!dataSet.next()) {
         return;
       }
@@ -106,7 +105,7 @@ public class Element implements ThermodynamicConstantsInterface {
   /**
    * Getter for property coefArray.
    *
-   * @return an array of {@link double} objects. Coefficient corresponding to nameArray.
+   * @return an array of type double. Coefficient corresponding to nameArray.
    */
   public double[] getElementCoefs() {
     return coefArray;

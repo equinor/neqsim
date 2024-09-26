@@ -13,8 +13,8 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * @version $Id: $Id
  */
 public class SystemPCSAFT extends SystemSrkEos {
-  private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(SystemPCSAFT.class);
+  private static final long serialVersionUID = 1000;
 
   /**
    * <p>
@@ -47,11 +47,11 @@ public class SystemPCSAFT extends SystemSrkEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemPCSAFT(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     modelName = "PCSAFT-EOS";
     attractiveTermNumber = 0;
 
+    // Recreates phases created in super constructor SystemSrkEos
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePCSAFTRahmat();
       phaseArray[i].setTemperature(T);
@@ -78,24 +78,6 @@ public class SystemPCSAFT extends SystemSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public SystemPCSAFT clone() {
-    SystemPCSAFT clonedSystem = null;
-    try {
-      clonedSystem = (SystemPCSAFT) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
-    }
-
-    // clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
-
-    return clonedSystem;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void addTBPfraction(String componentName2, double numberOfMoles, double molarMass,
       double density) {
     // componentName = (componentName + "_" + getFluidName());
@@ -117,6 +99,19 @@ public class SystemPCSAFT extends SystemSrkEos {
       logger.info("Saft parameters: m " + mSaft + " epsk " + epskSaftm / mSaft + " sigma "
           + Math.pow(msigm / mSaft, 1.0 / 3.0));
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public SystemPCSAFT clone() {
+    SystemPCSAFT clonedSystem = null;
+    try {
+      clonedSystem = (SystemPCSAFT) super.clone();
+    } catch (Exception ex) {
+      logger.error("Cloning failed.", ex);
+    }
+
+    return clonedSystem;
   }
 
   /**

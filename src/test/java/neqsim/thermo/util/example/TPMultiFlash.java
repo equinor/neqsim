@@ -2,6 +2,7 @@ package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -98,7 +99,7 @@ public class TPMultiFlash {
           phase = 1;
         }
 
-        testSystem.setPhaseType(0, phase);
+        testSystem.setPhaseType(0, PhaseType.byValue(phase));
         testSystem.init(2, 0);
         testSystem.initPhysicalProperties();
       }

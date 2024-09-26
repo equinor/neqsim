@@ -94,7 +94,6 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   /** {@inheritDoc} */
   @Override
   public void initFlowCalc() {
-
     initVelocity();
     init();
 
@@ -401,6 +400,13 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     }
   }
 
+  /**
+   * <p>
+   * update.
+   * </p>
+   *
+   * @param deltaTime a double
+   */
   public void update(double deltaTime) {
     for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
         .getNumberOfComponents(); componentNumber++) {
@@ -419,6 +425,5 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     getBulkSystem().initBeta();
     getBulkSystem().init_x_y();
     getBulkSystem().initProperties();
-
   }
 }

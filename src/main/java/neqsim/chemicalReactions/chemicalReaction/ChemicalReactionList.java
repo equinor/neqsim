@@ -39,13 +39,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
 
   /**
    * <p>
-   * Constructor for ChemicalReactionList.
-   * </p>
-   */
-  public ChemicalReactionList() {}
-
-  /**
-   * <p>
    * readReactions.
    * </p>
    *
@@ -119,7 +112,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         }
       } while (dataSet.next());
     } catch (Exception ex) {
-      logger.error("could not add reacton: ", ex);
+      logger.error("could not add reaction: ", ex);
     }
   }
 
@@ -192,8 +185,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
-   * @param Amatrix an array of {@link double} objects
-   * @param chemRefPot an array of {@link double} objects
+   * @param Amatrix an array of type double
+   * @param chemRefPot an array of type double
    */
   public void initMoleNumbers(PhaseInterface phase, ComponentInterface[] components,
       double[][] Amatrix, double[] chemRefPot) {
@@ -236,7 +229,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] createReactionMatrix(PhaseInterface phase, ComponentInterface[] components) {
     Iterator<ChemicalReaction> e = chemicalReactionList.iterator();
@@ -279,7 +272,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] updateReferencePotentials(PhaseInterface phase, ComponentInterface[] components) {
     for (int i = 0; i < chemicalReactionList.size(); i++) {
@@ -294,7 +287,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * getReactionGMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getReactionGMatrix() {
     return reacGMatrix;
@@ -305,7 +298,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * getReactionMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getReactionMatrix() {
     return reacMatrix;
@@ -316,7 +309,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * calcReferencePotentials.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcReferencePotentials() {
     Matrix reacMatr = new Matrix(reacGMatrix);
@@ -383,7 +376,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * Getter for the field <code>reacMatrix</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getReacMatrix() {
     return tempReacMatrix;
@@ -394,7 +387,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * getStocMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getStocMatrix() {
     return tempStocMatrix;

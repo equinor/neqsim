@@ -38,10 +38,11 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemSrkCPAstatoil(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     modelName = "CPAs-SRK-EOS-statoil";
     attractiveTermNumber = 15;
+
+    // Recreates phases created in super constructor SystemSrkCPAs
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseSrkCPAs();
       phaseArray[i].setTemperature(T);
@@ -73,10 +74,6 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

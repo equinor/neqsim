@@ -1,8 +1,10 @@
 package neqsim.processSimulation.processEquipment.separator;
 
 import java.util.UUID;
+import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.util.monitor.SeparatorResponse;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -37,28 +39,7 @@ public class ThreePhaseSeparator extends Separator {
   double aqueousInOil = 0.00;
   String aqueousInOilSpec = "mole";
 
-  /**
-   * <p>
-   * Constructor for ThreePhaseSeparator.
-   * </p>
-   */
-  @Deprecated
-  public ThreePhaseSeparator() {
-    this("ThreePhaseSeparator");
-  }
-
-  /**
-   * <p>
-   * Constructor for ThreePhaseSeparator.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public ThreePhaseSeparator(StreamInterface inletStream) {
-    this("ThreePhaseSeparator", inletStream);
-  }
+  boolean useTempMultiPhaseCheck = false;
 
   /**
    * Constructor for ThreePhaseSeparator.
@@ -160,9 +141,15 @@ public class ThreePhaseSeparator extends Separator {
     inletStreamMixer.run(id);
     thermoSystem = inletStreamMixer.getOutletStream().getThermoSystem().clone();
 
-    thermoSystem.setMultiPhaseCheck(true);
+    if (!thermoSystem.doMultiPhaseCheck()) {
+      useTempMultiPhaseCheck = true;
+      thermoSystem.setMultiPhaseCheck(true);
+    }
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoOps.TPflash();
+    if (useTempMultiPhaseCheck) {
+      thermoSystem.setMultiPhaseCheck(false);
+    }
     // thermoSystem.display();
     thermoSystem.addPhaseFractionToPhase(gasInAqueous, gasInAqueousSpec, specifiedStream, "gas",
         "aqueous");
@@ -266,5 +253,11 @@ public class ThreePhaseSeparator extends Separator {
     return getWaterOutStream().getThermoSystem().getExergy(surroundingTemperature, unit)
         + getOilOutStream().getThermoSystem().getEntropy(unit)
         + getGasOutStream().getThermoSystem().getExergy(surroundingTemperature, unit) - entrop;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new SeparatorResponse(this));
   }
 }

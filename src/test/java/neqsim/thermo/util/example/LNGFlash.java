@@ -66,8 +66,6 @@ public class LNGFlash {
      * ThermodynamicOperations(testSystem); try { testOps.TPflash(); // testSystem.display(); //
      * testOps.freezingPointTemperatureFlash(); // testOps.calcWAT(); testSystem.display(); } catch
      * (Exception ex) { logger.error(ex.getMessage(),e); } }
-     * 
-     * 
      */
   }
 }

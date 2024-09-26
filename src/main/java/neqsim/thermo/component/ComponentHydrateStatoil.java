@@ -26,14 +26,13 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
    * Constructor for ComponentHydrateStatoil.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentHydrateStatoil(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentHydrateStatoil(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     coordNumb[0][0] = 20.0;
     coordNumb[0][1] = 24.0;
     cavRadius[0][0] = 3.95;
@@ -51,13 +50,6 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
     cavNumb[1][1] = 8.0;
     cavprwat[1][0] = 2.0 / 17.0;
     cavprwat[1][1] = 1.0 / 17.0;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double fugcoef(PhaseInterface phase) {
-    return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-        phase.getPressure());
   }
 
   /** {@inheritDoc} */

@@ -30,13 +30,6 @@ public abstract class NonEquilibriumFluidBoundary
    * <p>
    * Constructor for NonEquilibriumFluidBoundary.
    * </p>
-   */
-  public NonEquilibriumFluidBoundary() {}
-
-  /**
-   * <p>
-   * Constructor for NonEquilibriumFluidBoundary.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

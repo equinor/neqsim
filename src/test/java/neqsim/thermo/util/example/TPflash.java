@@ -48,7 +48,7 @@ public class TPflash {
      * testSystem.addTBPfraction("C10", 1.0, 225.5046 / 1000.0, 841.1014 / 1000.0);
      * testSystem.setMolarComposition(new double[] { 0.829, 0, 0.0007, 0.002, 0.0707, 0.0072,
      * 0.0051, 0.0019, 0.0062, 0.0048, 0.006, 0.0074, 0.0109, 0.0109, 0.0062, 0.031 });
-     * 
+     *
      * testSystem.setHeavyTBPfractionAsPlusFraction();
      * testSystem.getCharacterization().characterisePlusFraction();
      */

@@ -1,6 +1,7 @@
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  * <p>
@@ -58,13 +59,13 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
     } else if (unit.equals("Nm^3/day")) {
       return stream.getThermoSystem().getPhase(measuredPhaseNumber).getNumberOfMolesInPhase()
           * neqsim.thermo.ThermodynamicConstantsInterface.R
-          * neqsim.thermo.ThermodynamicConstantsInterface.normalStateTemperature / 101325.0 * 3600.0
-          * 24;
+          * neqsim.thermo.ThermodynamicConstantsInterface.normalStateTemperature
+          / ThermodynamicConstantsInterface.atm * 3600.0 * 24;
     } else if (unit.equals("Sm^3/day")) {
       return stream.getThermoSystem().getPhase(measuredPhaseNumber).getNumberOfMolesInPhase()
           * neqsim.thermo.ThermodynamicConstantsInterface.R
-          * neqsim.thermo.ThermodynamicConstantsInterface.standardStateTemperature / 101325.0
-          * 3600.0 * 24;
+          * neqsim.thermo.ThermodynamicConstantsInterface.standardStateTemperature
+          / ThermodynamicConstantsInterface.atm * 3600.0 * 24;
     } else {
       return stream.getThermoSystem().getPhase(measuredPhaseNumber).getNumberOfMolesInPhase()
           * stream.getThermoSystem().getPhase(measuredPhaseNumber).getMolarMass() / stream

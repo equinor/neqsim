@@ -103,7 +103,7 @@ public class PipeFlowVisualization extends
     }
     /*
      * try { System.out.println("points: " + points.length);
-     * 
+     *
      * if (pressurePoint.length > 1) { System.out.println("3D plot "); plot = new
      * neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot("title[0]", "title[1]", "title[2]");
      * ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setXYvals(150, 160,
@@ -138,7 +138,7 @@ public class PipeFlowVisualization extends
     }
     /*
      * try { System.out.println("points: " + points.length);
-     * 
+     *
      * if (pressurePoint.length > 1) { System.out.println("3D plot "); plot = new
      * neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot("title[0]", "title[1]", "title[2]");
      * ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setXYvals(150, 160,

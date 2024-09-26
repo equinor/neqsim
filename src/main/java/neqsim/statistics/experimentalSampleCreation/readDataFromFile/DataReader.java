@@ -60,7 +60,6 @@ public class DataReader implements DataReaderInterface {
         file.readLine();
       }
       do {
-        System.out.println("test");
         String s = file.readLine();
         tokenizer = new StringTokenizer(s);
         tokenizer.nextToken();
@@ -78,7 +77,8 @@ public class DataReader implements DataReaderInterface {
    * Getter for the field <code>sampleObjectList</code>.
    * </p>
    *
-   * @return a {@link java.util.ArrayList} of {@link neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataObject}
+   * @return a {@link java.util.ArrayList} of
+   *         {@link neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataObject}
    */
   public ArrayList<DataObject> getSampleObjectList() {
     return sampleObjectList;

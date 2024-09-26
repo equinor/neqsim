@@ -8,15 +8,17 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
 
 /**
+ * Abstract class PhaseEos.
  *
  * @author Even Solbraa
  */
-abstract class PhaseEos extends Phase implements PhaseEosInterface {
+public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(PhaseEos.class);
 
@@ -57,7 +59,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public PhaseEos() {
     super();
     mixSelect = new EosMixingRules();
-    componentArray = new ComponentEosInterface[MAX_NUMBER_OF_COMPONENTS];
+    componentArray = new ComponentEosInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
     mixRule = mixSelect.getMixingRule(1);
     // solver = new newtonRhapson();
   }
@@ -76,18 +78,18 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int type, PhaseType phase,
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
-    if (phase.getValue() > 1) {
-      phase = PhaseType.LIQUID;
+    if (pt != PhaseType.GAS) {
+      pt = PhaseType.LIQUID;
     }
     if (!mixingRuleDefined) {
       setMixingRule(1);
     }
 
-    super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
 
-    if (type != 0) {
+    if (initType != 0) {
       loc_B = calcB(this, temperature, pressure, numberOfComponents);
       loc_A = calcA(this, temperature, pressure, numberOfComponents);
     }
@@ -97,15 +99,16 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
       pressure = calcPressure();
     }
 
-    if (type != 0) {
+    if (initType != 0) {
       try {
         if (calcMolarVolume) {
           molarVolume = molarVolume(pressure, temperature,
               getA() / numberOfMolesInPhase / numberOfMolesInPhase, getB() / numberOfMolesInPhase,
-              phase.getValue());
+              pt);
         }
       } catch (Exception ex) {
-        logger.error("Failed to solve for molarVolume within the iteration limit.");
+        logger.warn("Failed to solve for molarVolume within the iteration limit.");
+        logger.error(ex.getMessage());
         throw new RuntimeException(ex);
         // logger.error("too many iterations in volume calc!", ex);
         // logger.info("moles " + numberOfMolesInPhase);
@@ -118,13 +121,13 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
       Z = pressure * getMolarVolume() / (R * temperature);
       for (int i = 0; i < numberOfComponents; i++) {
         componentArray[i].Finit(this, temperature, pressure, totalNumberOfMoles, beta,
-            numberOfComponents, type);
+            numberOfComponents, initType); 
       }
 
       f_loc = calcf();
       g = calcg();
 
-      if (type >= 2) {
+      if (initType >= 2) {
         loc_AT = calcAT(this, temperature, pressure, numberOfComponents);
         loc_ATT = calcATT(this, temperature, pressure, numberOfComponents);
       }
@@ -132,8 +135,10 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
       double sumHydrocarbons = 0.0;
       double sumAqueous = 0.0;
       for (int i = 0; i < numberOfComponents; i++) {
-        if (getComponent(i).isHydrocarbon() || getComponent(i).isInert()
-            || getComponent(i).isIsTBPfraction()) {
+        if ((getComponent(i).isHydrocarbon() || getComponent(i).isInert()
+            || getComponent(i).isIsTBPfraction())
+            && !getComponent(i).getName().equals("water")
+            && !getComponent(i).getName().equals("water_PC")) {
           sumHydrocarbons += getComponent(i).getx();
         } else {
           sumAqueous += getComponent(i).getx();
@@ -192,16 +197,17 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param phase a int
+   * @param pt the PhaseType of the phase
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
-  public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
+  public double molarVolume2(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-        : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+    double BonV =
+        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
     if (BonV < 0) {
       BonV = 0.0;
     }
@@ -281,11 +287,12 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-        : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+    double BonV =
+        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
 
     if (BonV < 0) {
       BonV = 1.0e-4;
@@ -334,7 +341,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         BonV += d2;
         double hnew = h + d2 * dh;
         if (Math.abs(hnew) > Math.abs(h)) {
-          BonV = phase == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
               : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       } else {
@@ -357,7 +364,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
       if (iterations > 150 && error > errorOld && !changeFase) {
         changeFase = true;
         BonVold = 10.0;
-        BonV = phase == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
       }
 
@@ -776,7 +783,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   // NYE metoder fredag 25.08.public double dFdN(PhaseInterface phase, int
-  // numberOfComponents, double temperature, double pressure, int phasetype){
+  // numberOfComponents, double temperature, double pressure, PhaseType pt){
   /** {@inheritDoc} */
   @Override
   public double FnV() {
@@ -1049,7 +1056,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * getdTVndSVnJaobiMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getdTVndSVnJaobiMatrix() {
     double[][] jacobiMatrix = new double[2 + numberOfComponents][2 + numberOfComponents];
@@ -1072,7 +1079,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * getGradientVector.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getGradientVector() {
     double[] gradientVector = new double[2 + numberOfComponents];
@@ -1086,7 +1093,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * getUSVHessianMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getUSVHessianMatrix() {
     double[][] jacobiMatrix = new double[2 + numberOfComponents][2 + numberOfComponents];
@@ -1109,7 +1116,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * dFdxMatrixSimple.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] dFdxMatrixSimple() {
     double[] matrix = new double[numberOfComponents + 2];
@@ -1140,7 +1147,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * dFdxMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] dFdxMatrix() {
     double[] matrix = new double[numberOfComponents + 2];
@@ -1159,7 +1166,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * dFdxdxMatrixSimple.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] dFdxdxMatrixSimple() {
     double[][] matrix = new double[numberOfComponents + 2][numberOfComponents + 2];
@@ -1209,7 +1216,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * dFdxdxMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] dFdxdxMatrix() {
     double[][] matrix = new double[numberOfComponents + 2][numberOfComponents + 2];

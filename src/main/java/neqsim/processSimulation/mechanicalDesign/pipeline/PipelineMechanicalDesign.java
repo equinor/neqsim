@@ -59,7 +59,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     /*
      * Pipeline pipeline = (Pipeline) getProcessEquipment(); double flow = ((AdiabaticPipe)
      * getProcessEquipment()).getOutStream().getThermoSystem().getVolume() / 1e5;
-     * 
+     *
      * double innerArea = Math.PI * innerDiameter * innerDiameter / 4.0; double gasVelocity = flow /
      * innerArea; double wallThickness = 0.0;
      */

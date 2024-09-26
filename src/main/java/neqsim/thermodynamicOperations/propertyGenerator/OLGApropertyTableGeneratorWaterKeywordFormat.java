@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -25,7 +26,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
-  double stdPres = 1.01325;
+  double stdPres = ThermodynamicConstantsInterface.referencePressure;
   double stdPresATM = 1;
   double stdTemp = 288.15;
   double[] molfracs;
@@ -146,8 +147,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
    * calcBubP.
    * </p>
    *
-   * @param temperatures an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param temperatures an array of type double
+   * @return an array of type double
    */
   public double[] calcBubP(double[] temperatures) {
     double[] bubP = new double[temperatures.length];
@@ -171,8 +172,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
    * calcDewP.
    * </p>
    *
-   * @param temperatures an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param temperatures an array of type double
+   * @return an array of type double
    */
   public double[] calcDewP(double[] temperatures) {
     double[] dewP = new double[temperatures.length];
@@ -196,8 +197,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
    * calcBubT.
    * </p>
    *
-   * @param pressures an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param pressures an array of type double
+   * @return an array of type double
    */
   public double[] calcBubT(double[] pressures) {
     double[] bubT = new double[pressures.length];

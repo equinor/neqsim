@@ -62,7 +62,7 @@ public class TBPCharacterize extends PlusCharacterize {
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       // if (system.getPhase(0).getComponent(i).getComponentType().equals("HC")) {
-      double boilpoint = system.getPhase(0).getComponent(i).getNormalBoilingPoint();
+      double boilpoint = system.getPhase(0).getComponent(i).getNormalBoilingPoint("C");
 
       if (boilpoint >= 331.0) {
         numb = 13;

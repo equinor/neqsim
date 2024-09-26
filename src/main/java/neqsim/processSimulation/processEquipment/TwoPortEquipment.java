@@ -31,8 +31,7 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
    */
   public TwoPortEquipment(String name, StreamInterface stream) {
     this(name);
-    this.inStream = stream;
-    this.outStream = stream.clone();
+    this.setInletStream(stream);
   }
 
   /** {@inheritDoc} */
@@ -81,6 +80,7 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   @Override
   public void setInletStream(StreamInterface stream) {
     this.inStream = stream;
+    this.outStream = inStream.clone(this.getName() + " out stream");
   }
 
   /** {@inheritDoc} */
@@ -105,5 +105,11 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   @Override
   public void setOutletTemperature(double temperature) {
     this.outStream.setTemperature(temperature, "unit");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return null;
   }
 }

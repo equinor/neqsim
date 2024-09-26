@@ -157,9 +157,9 @@ public class Pipe {
    * @return a double
    */
   public double getAngle(String unit) {
-    if (unit == "Degree") {
+    if (unit.equals("Degree")) {
       return this.angle;
-    } else if (unit == "Radian") {
+    } else if (unit.equals("Radian")) {
       return this.angle * pi / 180;
     }
     return this.angle;
@@ -175,5 +175,4 @@ public class Pipe {
   public double getArea() {
     return pi * Math.pow(this.internalDiameter, 2) / 4;
   }
-
 }

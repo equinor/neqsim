@@ -4,18 +4,37 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.equinor</groupId>
+	<groupId>com.equinor.neqsim</groupId>
 	<artifactId>neqsim</artifactId>
+	<name>NeqSim</name>
+	<description>NeqSim is a library for calculation of fluid behavior, phase equilibrium and process simulation.</description>
+	<url>https://github.com/equinor/neqsim</url>
 	<packaging>jar</packaging>
 	<version>${revision}${sha1}${changelist}</version>
 
 	<properties>
-		<revision>2.5.5</revision>
+		<revision>2.5.35</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<sha1 />
-		<changelist />
+		<sha1/>
+		<changelist/>
+		<checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
 	</properties>
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+		  	<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		  	<distribution>repo</distribution>
+		</license>
+	  </licenses>
+	<developers>
+		<developer>
+			<name>Even Solbraa</name>
+			<email>esolbraa@gmail.com</email>
+			<organization>Equinor</organization>
+			<organizationUrl>https://github.com/equinor</organizationUrl>
+		</developer>
+	</developers>
 
 	<repositories>
 		<repository>
@@ -29,7 +48,17 @@
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<version>2.2.220</version>
+			<version>2.3.232</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+			<version>2.24.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>2.24.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.thoughtworks.xstream</groupId>
@@ -37,19 +66,9 @@
 			<version>1.4.20</version>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-api</artifactId>
-			<version>2.20.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-core</artifactId>
-			<version>2.20.0</version>
-		</dependency>
-		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
-			<version>5.9.3</version>
+			<version>5.11.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -71,7 +90,7 @@
 		<dependency>
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-all</artifactId>
-			<version>0.43</version>
+			<version>0.43.1</version>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
@@ -86,7 +105,7 @@
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
-			<version>1.5.4</version>
+			<version>1.5.5</version>
 		</dependency>
 		<dependency>
 			<groupId>com.googlecode.matrix-toolkits-java</groupId>
@@ -96,22 +115,90 @@
 		<dependency>
 			<groupId>org.ojalgo</groupId>
 			<artifactId>ojalgo</artifactId>
-			<version>53.0.0</version>
+			<version>53.3.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
-			<version>2.9.0</version>
-			<scope>test</scope>
+			<version>2.11.0</version>
 		</dependency>
 	</dependencies>
+	<profiles>
+		  <profile>
+			   <id>release</id>
+			   <build>
+				<plugins>
+					 <plugin>
+						  <groupId>org.sonatype.central</groupId>
+						  <artifactId>central-publishing-maven-plugin</artifactId>
+						  <version>0.6.0</version>
+						  <extensions>true</extensions>
+						  <configuration>
+							   <publishingServerId>central</publishingServerId>
+							   <autoPublish>true</autoPublish>
+						  </configuration>
+					 </plugin>
+					 <plugin>
+						  <groupId>org.apache.maven.plugins</groupId>
+						  <artifactId>maven-source-plugin</artifactId>
+						  <version>3.3.0</version>
+						  <executions>
+							   <execution>
+								<id>attach-sources</id>
+								<phase>verify</phase>
+								<goals>
+									 <goal>jar-no-fork</goal>
+								</goals>
+							   </execution>
+						  </executions>
+					 </plugin>
+					 <plugin>
+						  <groupId>org.apache.maven.plugins</groupId>
+						  <artifactId>maven-javadoc-plugin</artifactId>
+						  <version>3.10.0</version>
+						  <executions>
+							   <execution>
+								<id>attach-javadoc</id>
+								<goals>
+									 <goal>jar</goal>
+								</goals>
+							   </execution>
+						</executions>
+						  <configuration>
+							   <doclint>none</doclint>
+						  </configuration>
+					 </plugin>
+					 <plugin>
+						  <groupId>org.apache.maven.plugins</groupId>
+						  <artifactId>maven-gpg-plugin</artifactId>
+						  <version>3.2.6</version>
+						  <executions>
+							   <execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									 <goal>sign</goal>
+								</goals>
+							   </execution>
+						  </executions>
+						  <configuration>
+							   <gpgArguments>
+								<arg>--pinentry-mode</arg>
+								<arg>loopback</arg>
+							   </gpgArguments>
+						  </configuration>
+					 </plugin>
+				</plugins>
+			   </build>
+		  </profile>
+	 </profiles>
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
-				<version>3.1.0</version>
+				<version>3.5.0</version>
 				<executions>
 					<execution>
 						<id>enforce-maven</id>
@@ -121,7 +208,7 @@
 						<configuration>
 							<rules>
 								<requireMavenVersion>
-									<version>3.3.9</version>
+									<version>3.8.8</version>
 								</requireMavenVersion>
 							</rules>
 						</configuration>
@@ -131,7 +218,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.3.0</version>
+				<version>3.4.2</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -143,7 +230,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>flatten-maven-plugin</artifactId>
-				<version>1.3.0</version>
+				<version>1.6.0</version>
 				<configuration>
 					<updatePomFile>true</updatePomFile>
 				</configuration>
@@ -167,7 +254,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.4.0</version>
+				<version>3.6.0</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -180,7 +267,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.10.1</version>
+				<version>3.13.0</version>
 				<configuration>
 					<release>11</release> <!-- Upgrade jdk version to 11 if you are having issues compiling -->
 					<encoding>${project.build.sourceEncoding}</encoding>
@@ -195,7 +282,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.4.1</version>
+				<version>3.10.0</version>
 				<configuration>
 					<show>private</show>
 					<nohelp>true</nohelp>
@@ -211,16 +298,16 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.0.0-M7</version>
+				<version>3.5.0</version>
 			</plugin>
 			<plugin>
 				<artifactId>maven-failsafe-plugin</artifactId>
-				<version>3.0.0-M7</version>
+				<version>3.5.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.8</version>
+				<version>0.8.12</version>
 				<configuration>
 					<excludes>
 						<exclude>neqsim/physicalProperties/util/parameterFitting/**/*</exclude>
@@ -253,7 +340,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.3.0</version>
+				<version>3.3.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -263,6 +350,14 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>3.5.0</version>
+				<configuration>
+					<failsOnError>true</failsOnError>
+				</configuration>
+			</plugin>  
 		</plugins>
 	</build>
 	<distributionManagement>

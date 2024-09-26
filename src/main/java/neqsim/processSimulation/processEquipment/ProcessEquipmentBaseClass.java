@@ -9,11 +9,13 @@ package neqsim.processSimulation.processEquipment;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.UUID;
 import org.apache.commons.lang.SerializationUtils;
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.stream.EnergyStream;
+import neqsim.processSimulation.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -241,13 +243,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     return conditionAnalysisMessage;
   }
 
-  /**
-   * <p>
-   * getResultTable.
-   * </p>
-   *
-   * @return an array of {@link java.lang.String} objects
-   */
+  /** {@inheritDoc} */
+  @Override
   public String[][] getResultTable() {
     return null;
   }
@@ -285,4 +282,23 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
         && Arrays.deepEquals(report, other.report)
         && Objects.equals(specification, other.specification);
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return null;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @return a String
+   */
+  public String getReport_json() {
+    return new Report(this).generateJsonReport();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run_step(UUID id) {}
 }

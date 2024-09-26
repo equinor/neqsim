@@ -40,12 +40,13 @@ public class SurgeCurve implements java.io.Serializable {
    * Constructor for SurgeCurve.
    * </p>
    *
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
+   * @param flow an array of type double
+   * @param head an array of type double
    */
   public SurgeCurve(double[] flow, double[] head) {
     this.flow = flow;
     this.head = head;
+    this.setCurve(null, flow, head);
   }
 
   /**
@@ -53,9 +54,9 @@ public class SurgeCurve implements java.io.Serializable {
    * setCurve.
    * </p>
    *
-   * @param chartConditions an array of {@link double} objects
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
+   * @param chartConditions an array of type double
+   * @param flow an array of type double
+   * @param head an array of type double
    */
   public void setCurve(double[] chartConditions, double[] flow, double[] head) {
     this.flow = flow;

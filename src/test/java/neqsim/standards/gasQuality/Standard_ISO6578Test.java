@@ -1,11 +1,28 @@
 package neqsim.standards.gasQuality;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class Standard_ISO6578Test extends neqsim.NeqSimTest {
+  SystemInterface testSystem;
+
+  @BeforeEach
+  void setUp() {
+    testSystem = new SystemSrkEos(273.15 - 160.0, 1.0);
+    testSystem.addComponent("nitrogen", 0.006538);
+    testSystem.addComponent("methane", 0.91863);
+    testSystem.addComponent("ethane", 0.058382);
+    testSystem.addComponent("propane", 0.011993);
+    // testSystem.addComponent("i-butane", 0.00);
+    testSystem.addComponent("n-butane", 0.003255);
+    testSystem.addComponent("i-pentane", 0.000657);
+    testSystem.addComponent("n-pentane", 0.000545);
+  }
+
   @Test
   void testCalculate() {
     SystemInterface testSystem = new SystemSrkEos(273.15 - 160.0, 1.0);
@@ -33,5 +50,15 @@ public class Standard_ISO6578Test extends neqsim.NeqSimTest {
     standard.calculate();
     Assertions.assertEquals(0.30930700620842033, standard.getCorrFactor1());
     // testSystem.display();
+  }
+
+  @Test
+  @Disabled
+  void testDisplay() {
+    Standard_ISO6578 s = new Standard_ISO6578(null);
+    s.display("test");
+
+    s = new Standard_ISO6578(testSystem);
+    s.display("test");
   }
 }

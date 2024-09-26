@@ -32,9 +32,9 @@ public class PumpCurve implements java.io.Serializable {
    * </p>
    *
    * @param speed a double
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
-   * @param efficiency an array of {@link double} objects
+   * @param flow an array of type double
+   * @param head an array of type double
+   * @param efficiency an array of type double
    */
   public PumpCurve(double speed, double[] flow, double[] head, double[] efficiency) {
     this.speed = speed;

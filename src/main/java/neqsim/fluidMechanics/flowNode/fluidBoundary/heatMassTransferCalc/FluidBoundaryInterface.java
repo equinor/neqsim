@@ -123,7 +123,7 @@ public interface FluidBoundaryInterface extends Cloneable {
    * calcFluxes.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcFluxes();
 

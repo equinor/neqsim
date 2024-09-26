@@ -44,10 +44,10 @@ public class SystemSrkCPAs extends SystemSrkCPA {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemSrkCPAs(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     modelName = "CPAs-SRK-EOS";
 
+    // Recreates phases created in super constructor SystemSrkCPA
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseSrkCPAsOld();
       phaseArray[i].setTemperature(T);
@@ -79,10 +79,6 @@ public class SystemSrkCPAs extends SystemSrkCPA {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

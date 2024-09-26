@@ -92,7 +92,6 @@ public class DewPointCurve {
      * testSystem.getPhase(1).getActivityCoefficientSymetric(i)); }
      * System.out.println("activity coeff " + testSystem.getPhase(1).getComponent(1).getName() + " "
      * + testSystem.getPhase(1).getActivityCoefficient(1, 0));
-     *
      */
   }
 }

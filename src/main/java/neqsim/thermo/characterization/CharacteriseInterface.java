@@ -120,7 +120,7 @@ public interface CharacteriseInterface {
    * getCoefs.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getCoefs();
 
@@ -166,7 +166,7 @@ public interface CharacteriseInterface {
    * getPlusCoefs.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getPlusCoefs();
 
@@ -185,7 +185,7 @@ public interface CharacteriseInterface {
    * setPlusCoefs.
    * </p>
    *
-   * @param plusCoefs an array of {@link double} objects
+   * @param plusCoefs an array of type double
    */
   public void setPlusCoefs(double[] plusCoefs);
 
@@ -239,7 +239,7 @@ public interface CharacteriseInterface {
    * setCoefs.
    * </p>
    *
-   * @param coefs an array of {@link double} objects
+   * @param coefs an array of type double
    */
   public void setCoefs(double[] coefs);
 

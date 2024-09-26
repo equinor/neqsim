@@ -30,13 +30,6 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
    * <p>
    * Constructor for ReactiveKrishnaStandartFilmModel.
    * </p>
-   */
-  public ReactiveKrishnaStandartFilmModel() {}
-
-  /**
-   * <p>
-   * Constructor for ReactiveKrishnaStandartFilmModel.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

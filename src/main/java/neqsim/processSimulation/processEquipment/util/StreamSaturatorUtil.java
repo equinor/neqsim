@@ -25,19 +25,6 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   protected double oldInletFlowRate = 0.0;
 
   /**
-   * <p>
-   * Constructor for StreamSaturatorUtil.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public StreamSaturatorUtil(StreamInterface inletStream) {
-    this("StreamSaturatorUtil", inletStream);
-  }
-
-  /**
    * Constructor for StreamSaturatorUtil.
    *
    * @param name name of unit opeation
@@ -55,6 +42,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
    * Setter for the field <code>inletStream</code>.
    * </p>
    */
+  @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
 

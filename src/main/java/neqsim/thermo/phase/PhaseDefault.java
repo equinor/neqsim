@@ -48,7 +48,7 @@ public class PhaseDefault extends Phase {
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
-    super.addComponent(name, moles);
+    super.addComponent(name, moles, compNumber);
     try {
       componentArray[compNumber] = defComponent.getClass().getDeclaredConstructor().newInstance();
     } catch (Exception ex) {
@@ -59,10 +59,10 @@ public class PhaseDefault extends Phase {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    return 1.0;
+    throw new UnsupportedOperationException("Unimplemented method 'molarVolume'");
   }
 
   /** {@inheritDoc} */
@@ -72,7 +72,7 @@ public class PhaseDefault extends Phase {
   /** {@inheritDoc} */
   @Override
   public double getMolarVolume() {
-    return 1.0;
+    throw new UnsupportedOperationException("Unimplemented method 'getMolarVolume'");
   }
 
   /** {@inheritDoc} */
@@ -84,5 +84,11 @@ public class PhaseDefault extends Phase {
           getComponent(i).getNumberOfMolesInPhase() * (getComponent(i).getLogFugacityCoefficient()); // +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
     }
     return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSoundSpeed() {
+    return Double.NaN;
   }
 }

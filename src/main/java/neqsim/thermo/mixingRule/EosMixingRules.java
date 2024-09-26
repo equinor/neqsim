@@ -22,6 +22,7 @@ import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifacPSRK;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
@@ -131,6 +132,13 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       }
       return intparam[i][j];
     }
+
+    @Override
+    public double[][] getBinaryInteractionParameters() {
+      return intparam;
+    }
+
+    public void prettyPrintKij() {}
 
     @Override
     public double getBinaryInteractionParameterT1(int i, int j) {
@@ -1004,7 +1012,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                   / (1.0 + compArray[0].getDeltaEosParameters()[0]));
       gePhase = new PhaseGENRTLmodifiedHV(orgPhase, HValpha, HVDij, mixRule, intparam);
       gePhase.getExcessGibbsEnergy(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-          phase.getPressure(), 1);
+          phase.getPressure(), PhaseType.byValue(1));
       gePhase.setProperties(phase);
     }
 
@@ -1018,7 +1026,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                   / (1.0 + compArray[0].getDeltaEosParameters()[0]));
       gePhase = new PhaseGENRTLmodifiedHV(orgPhase, HValpha, HVDij, HVDijT, mixRule, intparam);
       gePhase.getExcessGibbsEnergy(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-          phase.getPressure(), 1);
+          phase.getPressure(), PhaseType.byValue(1));
       gePhase.setProperties(phase);
     }
 
@@ -1083,7 +1091,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       }
       A = calcB(phase, temperature, pressure, numbcomp) * (A - phase.getNumberOfMolesInPhase()
           * gePhase.getExcessGibbsEnergy(phase, phase.getNumberOfComponents(),
-              phase.getTemperature(), phase.getPressure(), 0)
+              phase.getTemperature(), phase.getPressure(), PhaseType.byValue(0))
           / gePhase.getNumberOfMolesInPhase() / hwfc);
       Atot = A;
       return A;
@@ -1301,8 +1309,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       gePhase.setParams(phase, HValpha, HVDij, HVDijT, classicOrHV, intparam);
 
       if (mixingRuleGEModel.equals("NRTL")) {
-        gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure,
-            phase.getType().getValue());
+        gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure, phase.getType());
       } else {
         gePhase.init((phase.getNumberOfMolesInPhase() / phase.getBeta()),
             phase.getNumberOfComponents(), phase.getInitType(), phase.getType(), phase.getBeta());
@@ -1609,8 +1616,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       gePhase.setProperties(phase);
 
       if (mixingRuleGEModel.equals("NRTL")) {
-        gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure,
-            phase.getType().getValue());
+        gePhase.getExcessGibbsEnergy(phase, numbcomp, temperature, pressure, phase.getType());
       } else {
         gePhase.init(phase.getNumberOfMolesInPhase(), phase.getNumberOfComponents(), 3,
             phase.getType(), phase.getBeta());
@@ -2599,7 +2605,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
    * getSRKbinaryInteractionParameters.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getSRKbinaryInteractionParameters() {
     return intparam;

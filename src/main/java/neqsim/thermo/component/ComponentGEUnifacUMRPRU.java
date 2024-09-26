@@ -6,6 +6,7 @@ import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -38,16 +39,15 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * Constructor for ComponentGEUnifacUMRPRU.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentGEUnifacUMRPRU(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentGEUnifacUMRPRU(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     // System.out.println("finished reading UNIFAC ");
-    if (component_name.contains("_PC")) {
+    if (name.contains("_PC")) {
       double number = getMolarMass() / 0.014;
       int intNumb = (int) Math.round(number) - 2;
       unifacGroups.clear();
@@ -66,14 +66,14 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
-        dataSet = database
-            .getResultSet(("SELECT * FROM unifaccompumrpru WHERE Name='" + component_name + "'"));
+        dataSet =
+            database.getResultSet(("SELECT * FROM unifaccompumrpru WHERE Name='" + name + "'"));
         dataSet.next();
         // dataSet.getClob("name");
       } catch (Exception ex) {
         dataSet.close();
-        dataSet = database
-            .getResultSet(("SELECT * FROM unifaccompumrpru WHERE Name='" + component_name + "'"));
+        dataSet =
+            database.getResultSet(("SELECT * FROM unifaccompumrpru WHERE Name='" + name + "'"));
         dataSet.next();
         logger.error("Something went wrong. Closing database.", ex);
       }
@@ -82,7 +82,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         int temp = Integer.parseInt(dataSet.getString("sub" + Integer.toString(p)));
         if (temp > 0) {
           unifacGroups.add(new UNIFACgroup(p, temp));
-          // System.out.println("compUMR " + component_name + " adding UNIFAC group " +
+          // System.out.println("compUMR " + name + " adding UNIFAC group " +
           // p);
         }
       }
@@ -353,7 +353,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   /** {@inheritDoc} */
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, int phasetype) {
+      double pressure, PhaseType pt) {
     int initType = phase.getInitType();
     double lngammaCombinational;
     double lngammaResidual;
@@ -399,7 +399,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     lngamma = lngammaResidual + lngammaCombinational;
 
     if (Double.isNaN(lngamma)) {
-      logger.error("gamma NaN......");
+      logger.warn("gamma NaN......");
       lngamma = 0.0;
       gamma = 1.0;
       dlngammadt = 0;
@@ -519,22 +519,22 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param pt the PhaseType of the phase
    */
   public void calcGammaNumericalDerivatives(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, int phasetype) {
+      double temperature, double pressure, PhaseType pt) {
     phase.setInitType(1);
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       double dn = getNumberOfMolesInPhase() / 1e6;
       phase.addMoles(getComponentNumber(), dn);
       x = getNumberOfmoles() / getNumberOfMolesInPhase();
-      getGamma(phase, numberOfComponents, temperature, pressure, phasetype);
+      getGamma(phase, numberOfComponents, temperature, pressure, pt);
       double oldGamma = lngamma;
       phase.addMoles(getComponentNumber(), dn);
 
       x = getNumberOfmoles() / getNumberOfMolesInPhase();
 
-      getGamma(phase, numberOfComponents, temperature, pressure, phasetype);
+      getGamma(phase, numberOfComponents, temperature, pressure, pt);
 
       double dlnGammadn = (oldGamma - lngamma) / dn;
       // System.out.println("dlnGammadn " + dlnGammadn);

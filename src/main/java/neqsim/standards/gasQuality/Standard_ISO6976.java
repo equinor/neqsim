@@ -5,6 +5,7 @@ import java.text.FieldPosition;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -23,12 +24,13 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   // metering conditions
   ArrayList<String> componentsNotDefinedByStandard = new ArrayList<String>();
   double volRefT = 0;
-  double volRefP = 1.01325;
+  double volRefP = ThermodynamicConstantsInterface.referencePressure;
+  // ThermodynamicConstantsInterface.R
   double R = 8.314510;
   double molRefm3 = 0.0;
   // combustion conditions
   double energyRefT = 25;
-  double energyRefP = 1.01325;
+  double energyRefP = ThermodynamicConstantsInterface.referencePressure;
   String referenceType = "volume"; // mass volume molar
   String energyUnit = "KJ/Nm3";
   double energy = 1.0;
@@ -246,7 +248,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String returnParameter, java.lang.String returnUnit) {
+  public double getValue(String returnParameter, String returnUnit) {
     checkReferenceCondition();
 
     if (returnParameter.equals("GCV")) {
@@ -371,7 +373,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
    * </p>
    */
   public void checkReferenceCondition() {
-    Double[] validvalues = {0.0, 15.0, 15.55, 20.0};
+    Double[] validvalues = {0.0, 15.0, 15.55, 20.0, 25.0};
 
     if (!java.util.Arrays.stream(validvalues).anyMatch(Double.valueOf(energyRefT)::equals)) {
       energyRefT = 25.0;
@@ -415,7 +417,16 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(5);
     nf.applyPattern("#.#####E0");
-    String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
+
+    int rows = 0;
+    if (thermoSystem == null) {
+      String[][] table = new String[0][6];
+      return table;
+    }
+
+    rows = thermoSystem.getPhases()[0].getNumberOfComponents() + 30;
+    String[][] table = new String[rows][6];
+
     // String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
     table[0][0] = ""; // getPhases()[0].getType(); //"";
 

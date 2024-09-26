@@ -6,7 +6,6 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class PressureDropTest {
-
   @Test
   void testRun() {
     double pressure_inlet = 85.0;
@@ -17,8 +16,7 @@ public class PressureDropTest {
     neqsim.thermo.system.SystemInterface testSystem = new SystemSrkEos(298.0, 100.0);
     testSystem.addComponent("methane", 100.0);
 
-    Stream inletStream = new Stream("inletStream", testSystem);
-    inletStream.setName("inlet stream");
+    Stream inletStream = new Stream("inlet stream", testSystem);
     inletStream.setPressure(pressure_inlet, "bara");
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");

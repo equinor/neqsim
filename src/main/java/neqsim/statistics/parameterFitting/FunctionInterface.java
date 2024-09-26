@@ -22,7 +22,7 @@ public interface FunctionInterface extends Cloneable {
    * calcValue.
    * </p>
    *
-   * @param dependentValues an array of {@link double} objects
+   * @param dependentValues an array of type double
    * @return a double
    */
   public double calcValue(double[] dependentValues);
@@ -69,7 +69,7 @@ public interface FunctionInterface extends Cloneable {
    * getFittingParams.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getFittingParams();
 
@@ -87,7 +87,7 @@ public interface FunctionInterface extends Cloneable {
    * setInitialGuess.
    * </p>
    *
-   * @param guess an array of {@link double} objects
+   * @param guess an array of type double
    */
   public void setInitialGuess(double[] guess);
 
@@ -123,7 +123,7 @@ public interface FunctionInterface extends Cloneable {
    * getBounds.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] getBounds();
 
@@ -152,7 +152,7 @@ public interface FunctionInterface extends Cloneable {
    * setBounds.
    * </p>
    *
-   * @param bounds an array of {@link double} objects
+   * @param bounds an array of type double
    */
   public void setBounds(double[][] bounds);
 }

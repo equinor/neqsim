@@ -9,8 +9,10 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.util.monitor.PumpResponse;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -41,30 +43,6 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   private PumpChart pumpChart = new PumpChart();
 
   /**
-   * <p>
-   * Constructor for Pump.
-   * </p>
-   */
-  @Deprecated
-  public Pump() {
-    super("Pump");
-  }
-
-  /**
-   * <p>
-   * Constructor for Pump.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Pump(StreamInterface inletStream) {
-    this();
-    setInletStream(inletStream);
-  }
-
-  /**
    * Constructor for Pump.
    *
    * @param name name of pump
@@ -84,13 +62,6 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    */
   public Pump(String name, StreamInterface inletStream) {
     super(name, inletStream);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setInletStream(StreamInterface stream) {
-    this.inStream = stream;
-    this.outStream = stream.clone();
   }
 
   /** {@inheritDoc} */
@@ -169,7 +140,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
       thermoOps.TPflash();
       thermoSystem.init(3);
     } else {
-      if (calculateAsCompressor) {
+      if (!pumpChart.isUsePumpChart() && calculateAsCompressor) {
         thermoSystem = inStream.getThermoSystem().clone();
         thermoSystem.setPressure(pressure, pressureUnit);
         // System.out.println("entropy inn.." + entropy);
@@ -185,6 +156,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
         thermoOps = new ThermodynamicOperations(getThermoSystem());
         thermoOps.PHflash(hout, 0);
       } else if (pumpChart.isUsePumpChart()) {
+        thermoSystem = inStream.getThermoSystem().clone();
         double pumpHead = 0.0;
         pumpHead = getPumpChart().getHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
         isentropicEfficiency =
@@ -426,6 +398,19 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
   /**
    * <p>
+   * Setter for the field <code>pressure</code>.
+   * </p>
+   *
+   * @param pressure a double
+   * @param unit a {@link java.lang.String} object
+   */
+  public void setOutletPressure(double pressure, String unit) {
+    setOutletPressure(pressure);
+    pressureUnit = unit;
+  }
+
+  /**
+   * <p>
    * Setter for the field <code>speed</code>.
    * </p>
    *
@@ -455,5 +440,12 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    */
   public PumpChart getPumpChart() {
     return pumpChart;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new PumpResponse(this));
   }
 }

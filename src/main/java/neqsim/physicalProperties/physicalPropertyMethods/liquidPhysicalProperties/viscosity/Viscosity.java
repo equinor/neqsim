@@ -61,7 +61,6 @@ public class Viscosity extends
   public double calcViscosity() {
     double tempVar = 0;
     double tempVar2 = 0;
-    double viscosity = 0;
     this.calcPureComponentViscosity();
 
     // method og Grunberg and Nissan [87]
@@ -85,7 +84,7 @@ public class Viscosity extends
         // liquidPhase.getPhase().getComponents()[i].getx()*liquidPhase.getPhase().getComponents()[j].getx()*liquidPhase.getMixingRule().getViscosityGij(i,j);
       }
     }
-    viscosity = Math.exp(tempVar + tempVar2) / 1.0e3; // N-sek/m2
+    double viscosity = Math.exp(tempVar + tempVar2) / 1.0e3; // N-sek/m2
     return viscosity;
   }
 

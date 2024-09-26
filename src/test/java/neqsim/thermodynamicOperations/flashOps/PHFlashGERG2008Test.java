@@ -7,7 +7,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
- *
  */
 class PHFlashGERG2008Test {
   static neqsim.thermo.system.SystemInterface testSystem = null;
@@ -28,9 +27,6 @@ class PHFlashGERG2008Test {
     testSystem.initProperties();
   }
 
-  /**
-   * Test method for {@link neqsim.thermodynamicOperations.flashOps.PHFlashGERG2008#run()}.
-   */
   @Test
   void testRun() {
     double[] gergProps = testSystem.getPhase(0).getProperties_GERG2008();

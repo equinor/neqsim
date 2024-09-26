@@ -74,7 +74,7 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
            * Math.pow(system.getPhases()[0].getComponents()[k] .getFugacityCoefficient(), 2.0) +
            * system.getPhases()[1].getComponents()[k].getdfugdt() /
            * system.getPhases()[i].getComponents()[k] .getFugacityCoefficient());
-           * 
+           *
            * system.setTemperature(system.getTemperature() - funk/deriv);
            */
 

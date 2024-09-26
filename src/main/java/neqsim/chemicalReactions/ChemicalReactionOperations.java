@@ -56,18 +56,10 @@ public class ChemicalReactionOperations
    * <p>
    * Constructor for ChemicalReactionOperations.
    * </p>
-   */
-  public ChemicalReactionOperations() {}
-
-  /**
-   * <p>
-   * Constructor for ChemicalReactionOperations.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
   public ChemicalReactionOperations(SystemInterface system) {
-    initCalc = new LinearProgrammingChemicalEquilibrium();
     boolean newcomps = true;
     int old = system.getPhase(0).getNumberOfComponents();
     this.system = system;
@@ -293,7 +285,7 @@ public class ChemicalReactionOperations
    *
    * @return a boolean
    */
-  public boolean hasRections() {
+  public boolean hasReactions() {
     return components.length > 0;
   }
 
@@ -302,7 +294,7 @@ public class ChemicalReactionOperations
    * calcNVector.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcNVector() {
     double[] nvec = new double[components.length];
@@ -318,7 +310,7 @@ public class ChemicalReactionOperations
    * calcBVector.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcBVector() {
     Matrix tempA = new Matrix(Amatrix);
@@ -337,7 +329,7 @@ public class ChemicalReactionOperations
    * </p>
    *
    * @param phase a int
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcChemRefPot(int phase) {
     double[] referencePotentials = new double[components.length];
@@ -421,7 +413,7 @@ public class ChemicalReactionOperations
     // System.out.println("pressure1");
     calcChemRefPot(phase);
     // System.out.println("pressure2");
-    if (firsttime == true || type == 0) {
+    if (firsttime || type == 0) {
       try {
         // System.out.println("Calculating initial estimates");
         nVector = calcNVector();
@@ -448,6 +440,7 @@ public class ChemicalReactionOperations
         solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phase);
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
+        // todo: Will this crash below?
       }
       return solver.solve();
     }

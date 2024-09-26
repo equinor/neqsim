@@ -36,6 +36,13 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     this.processSystem = processSystem;
   }
 
+  /**
+   * <p>
+   * getProcess.
+   * </p>
+   *
+   * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+   */
   public ProcessSystem getProcess() {
     return processSystem;
   }

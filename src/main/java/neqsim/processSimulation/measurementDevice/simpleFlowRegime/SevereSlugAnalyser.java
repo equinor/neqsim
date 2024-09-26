@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -368,7 +369,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * @return a double
    */
   public double gasConst(FluidSevereSlug fluid) {
-    return 8.314 / fluid.getMolecularWeight() * (273.15 + temperature);
+    return ThermodynamicConstantsInterface.R / fluid.getMolecularWeight() * (273.15 + temperature);
   }
 
   // Declare the variables for resuts after creating an object Severe slug with required number of
@@ -457,7 +458,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       logger.debug("Could not find solution for stratified flow holdup");
     } else {
       holdUp = (gamma - 0.5 * Math.sin(2 * gamma)) / (pi);
-
     }
     return holdUp;
   }
@@ -627,13 +627,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     return flowPattern;
   }
 
-  /**
-   * <p>
-   * getMeasuredValue.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double getMeasuredValue(String unit) {
     if (!unit.equalsIgnoreCase("m3/sec")) {
@@ -753,7 +747,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     // inputStream.setFlowRate(0.00001, "MSm^3/day");
     // System.out.println(inputStream.getFlowRate("kg/sec"));
     // mySevereSlug4.getPredictedFlowRegime();
-
   }
 
   // To be implemented

@@ -3,6 +3,7 @@ package neqsim.thermodynamicOperations.flashOps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -336,16 +337,16 @@ public class SolidFlash1 extends TPflash {
     double gibbs1 = 0;
     double gibbs2 = 0;
     for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-      system.setPhaseType(i, 0);
+      system.setPhaseType(i, PhaseType.byValue(0));
       system.init(1);
       gibbs1 = system.getPhase(i).getGibbsEnergy();
-      system.setPhaseType(i, 1);
+      system.setPhaseType(i, PhaseType.byValue(1));
       system.init(1);
       gibbs2 = system.getPhase(i).getGibbsEnergy();
       if (gibbs1 < gibbs2) {
-        system.setPhaseType(i, 0);
+        system.setPhaseType(i, PhaseType.byValue(0));
       } else {
-        system.setPhaseType(i, 1);
+        system.setPhaseType(i, PhaseType.byValue(1));
       }
       system.init(1);
     }
@@ -392,6 +393,7 @@ public class SolidFlash1 extends TPflash {
 
     system.setSolidPhaseCheck(true);
     if (checkAndAddSolidPhase() == 0) {
+      system.init(1);
       return;
     }
     if (system.getPhase(0).getNumberOfComponents() == 1) {

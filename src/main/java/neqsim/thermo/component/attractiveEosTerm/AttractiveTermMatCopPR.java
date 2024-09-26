@@ -46,7 +46,7 @@ public class AttractiveTermMatCopPR extends AttractiveTermPr {
    * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
-   * @param params an array of {@link double} objects
+   * @param params an array of type double
    */
   public AttractiveTermMatCopPR(ComponentEosInterface component, double[] params) {
     this(component);
@@ -136,7 +136,8 @@ public class AttractiveTermMatCopPR extends AttractiveTermPr {
     double Tr = temperature / getComponent().getTC();
     double TC = getComponent().getTC();
     double rootTR = 1.0 - Math.sqrt(Tr);
-    return 2.0 * Math.pow(
+    return 2.0
+        * Math.pow(
             -parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * rootTR / Math.sqrt(Tr) / TC
                 - 3.0 / 2.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr) / TC,
             2.0)

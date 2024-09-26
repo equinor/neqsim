@@ -12,7 +12,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -50,14 +49,6 @@ public class WaterStripperColumn extends SimpleAbsorber {
    * <p>
    * Constructor for WaterStripperColumn.
    * </p>
-   */
-  @Deprecated
-  public WaterStripperColumn() {}
-
-  /**
-   * <p>
-   * Constructor for WaterStripperColumn.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -70,7 +61,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   public void addStream(StreamInterface newStream) {
     streams.add(newStream);
     if (numberOfInputStreams == 0) {
-      mixedStream = (Stream) streams.get(0).clone();
+      mixedStream = streams.get(0).clone(this.getName() + " mixed stream");
       mixedStream.getThermoSystem().setNumberOfPhases(2);
       mixedStream.getThermoSystem().init(0);
       mixedStream.getThermoSystem().init(3);
@@ -88,8 +79,8 @@ public class WaterStripperColumn extends SimpleAbsorber {
    *        object
    */
   public void addGasInStream(StreamInterface newStream) {
-    gasInStream = (Stream) newStream;
-    gasOutStream = (Stream) newStream.clone();
+    gasInStream = newStream;
+    gasOutStream = newStream.clone();
     addStream(newStream);
   }
 
@@ -102,8 +93,8 @@ public class WaterStripperColumn extends SimpleAbsorber {
    *        object
    */
   public void addSolventInStream(StreamInterface newStream) {
-    solventInStream = (Stream) newStream;
-    solventOutStream = (Stream) newStream.clone();
+    solventInStream = newStream;
+    solventOutStream = newStream.clone();
     addStream(newStream);
     solventStreamNumber = streams.size() - 1;
   }
@@ -117,7 +108,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
    *        object
    */
   public void replaceSolventInStream(StreamInterface newStream) {
-    solventInStream = (Stream) newStream;
+    solventInStream = newStream;
     streams.set(solventStreamNumber, solventInStream);
   }
 
@@ -352,7 +343,6 @@ public class WaterStripperColumn extends SimpleAbsorber {
         // System.out.println("mole water to move " + molesWaterToMove);
 
         StreamInterface stream = mixedStream.clone();
-        stream.setName("test");
         stream.getThermoSystem().addComponent("water", molesWaterToMove, 0);
         stream.getThermoSystem().addComponent("water", -molesWaterToMove, 1);
         stream.getThermoSystem().initBeta();

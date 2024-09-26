@@ -3,6 +3,7 @@ package neqsim.standards.gasQuality;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -10,7 +11,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
- *
  */
 class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
   static SystemInterface testSystem = null;
@@ -125,10 +125,17 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
      * StandardInterface standardUK = new UKspecifications_ICF_SI(testSystem);
      * standardUK.calculate(); logger.info("ICF " +
      * standardUK.getValue("IncompleteCombustionFactor", ""));
-     * 
+     *
      * logger.info("HID " + testSystem.getPhase(0).getComponent("methane").getHID(273.15 - 150.0));
      * logger.info("Hres " + testSystem.getPhase(0).getComponent("methane").getHresTP(273.15 -
      * 150.0));
      */
+  }
+
+  @Test
+  @Disabled
+  void testDisplay() {
+    Standard_ISO6976_2016 s = new Standard_ISO6976_2016(testSystem);
+    s.display("test");
   }
 }

@@ -41,7 +41,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   /**
    * Constructor for Standard.
    *
-   * @param name name of standard
+   * @param name        name of standard
    * @param description description
    */
   public Standard(String name, String description) {
@@ -52,8 +52,8 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   /**
    * Constructor for Standard.
    *
-   * @param name name of standard
-   * @param thermoSyst input fluid
+   * @param name        name of standard
+   * @param thermoSyst  input fluid
    * @param description description of standard
    */
   public Standard(String name, String description, SystemInterface thermoSyst) {
@@ -111,14 +111,19 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   /** {@inheritDoc} */
   @Override
   public String[][] createTable(String name) {
+    if (thermoSystem == null) {
+      String[][] table = new String[0][6];
+      return table;
+    }
     thermoSystem.setNumberOfPhases(1);
-
     thermoSystem.createTable(name);
 
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(5);
     nf.applyPattern("#.#####E0");
-    String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
+
+    int rows = thermoSystem.getPhases()[0].getNumberOfComponents() + 30;
+    String[][] table = new String[rows][6];
     // String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     table[0][0] = ""; // getPhases()[0].getType(); //"";
 
@@ -156,7 +161,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
+    String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
     String[][] table = createTable(name);
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
@@ -199,11 +204,15 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
     this.referenceState = referenceState;
   }
 
-  public void setReferencePressure(double referencePressure) {
-    this.referencePressure = referencePressure;
+  /** {@inheritDoc} */
+  @Override
+  public double getReferencePressure() {
+    return referencePressure;
   }
 
-  public double getReferencePressure(){
-    return referencePressure;
+  /** {@inheritDoc} */
+  @Override
+  public void setReferencePressure(double referencePressure) {
+    this.referencePressure = referencePressure;
   }
 }

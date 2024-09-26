@@ -35,4 +35,13 @@ public interface SeparatorInterface extends SimulationInterface {
    * @param diam a double
    */
   public void setInternalDiameter(double diam);
+
+  /**
+   * <p>
+   * Setter for the field <code>liquidLevel</code>.
+   * </p>
+   *
+   * @param liquidlev a double
+   */
+  public void setLiquidLevel(double liquidlev);
 }

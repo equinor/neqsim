@@ -44,11 +44,11 @@ public class SystemCSPsrkEos extends SystemSrkEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemCSPsrkEos(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     modelName = "CSPsrk-EOS";
     attractiveTermNumber = 0;
 
+    // Recreates phases created in super constructor SystemSrkEos
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseCSPsrkEos();
       phaseArray[i].setTemperature(T);

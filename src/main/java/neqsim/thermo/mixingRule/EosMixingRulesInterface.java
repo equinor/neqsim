@@ -275,6 +275,14 @@ public interface EosMixingRulesInterface extends Cloneable {
    */
   public PhaseInterface getGEPhase();
 
+  /**
+   * <p>
+   * getBinaryInteractionParameters.
+   * </p>
+   *
+   * @return an array of type double
+   */
+  public double[][] getBinaryInteractionParameters();
   // double calcA2(PhaseInterface phase, double temperature, double pressure, int
   // numbcomp);
   // double calcB2(PhaseInterface phase, double temperature, double pressure, int

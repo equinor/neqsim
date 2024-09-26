@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemSrkEos;
 public class ManifoldTest {
   @Test
   void testRun() {
-
     SystemSrkEos testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("ethane", 10.0);
@@ -18,15 +17,13 @@ public class ManifoldTest {
     SystemSrkEos testSystem2 = testSystem.clone();
     testSystem2.setMolarComposition(new double[] {0.1, 0.4, 0.4});
 
-    Stream inletStream = new Stream("inletStream", testSystem);
-    inletStream.setName("inlet stream");
+    Stream inletStream = new Stream("inlet stream", testSystem);
     inletStream.setPressure(10.0, "bara");
     inletStream.setTemperature(20.0, "C");
     inletStream.setFlowRate(3.0, "MSm3/day");
     inletStream.run();
 
-    Stream inletStream2 = new Stream("inletStream", testSystem2);
-    inletStream2.setName("inlet stream");
+    Stream inletStream2 = new Stream("inlet stream", testSystem2);
     inletStream2.setPressure(10.0, "bara");
     inletStream2.setTemperature(20.0, "C");
     inletStream2.setFlowRate(2.0, "MSm3/day");
@@ -46,7 +43,6 @@ public class ManifoldTest {
 
   @Test
   void testRun2() {
-
     SystemSrkEos testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("ethane", 10.0);
@@ -57,14 +53,12 @@ public class ManifoldTest {
 
     ProcessSystem processOps = new ProcessSystem();
 
-    Stream inletStream = new Stream("inletStream", testSystem);
-    inletStream.setName("inlet stream");
+    Stream inletStream = new Stream("inlet stream", testSystem);
     inletStream.setPressure(10.0, "bara");
     inletStream.setTemperature(20.0, "C");
     inletStream.setFlowRate(3.0, "MSm3/day");
 
-    Stream inletStream2 = new Stream("inletStream", testSystem2);
-    inletStream2.setName("inlet stream");
+    Stream inletStream2 = new Stream("inlet stream 2", testSystem2);
     inletStream2.setPressure(10.0, "bara");
     inletStream2.setTemperature(20.0, "C");
     inletStream2.setFlowRate(2.0, "MSm3/day");
@@ -88,8 +82,5 @@ public class ManifoldTest {
     assertEquals(stream1FromManifold.getFluid().getComponent(0).getx(),
         manifold1.getSplitStream(0).getFluid().getComponent(0).getx(), 1e-6);
     assertEquals(5.0, manifold1.getMixedStream().getFlowRate("MSm3/day"), 0.01);
-
-
-
   }
 }

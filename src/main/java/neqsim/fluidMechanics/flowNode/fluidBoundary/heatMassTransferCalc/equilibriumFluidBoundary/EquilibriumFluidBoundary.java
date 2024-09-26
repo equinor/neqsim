@@ -23,13 +23,6 @@ public class EquilibriumFluidBoundary
    * <p>
    * Constructor for EquilibriumFluidBoundary.
    * </p>
-   */
-  public EquilibriumFluidBoundary() {}
-
-  /**
-   * <p>
-   * Constructor for EquilibriumFluidBoundary.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */

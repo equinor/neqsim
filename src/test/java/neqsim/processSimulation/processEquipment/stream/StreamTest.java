@@ -11,7 +11,6 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * @author ESOL
- *
  */
 class StreamTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
@@ -28,8 +27,7 @@ class StreamTest extends neqsim.NeqSimTest {
     testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("methane", 100.0);
     processOps = new ProcessSystem();
-    Stream inletStream = new Stream("inletStream", testSystem);
-    inletStream.setName("inlet stream");
+    Stream inletStream = new Stream("inlet stream", testSystem);
     inletStream.setPressure(pressure_inlet, "bara");
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");

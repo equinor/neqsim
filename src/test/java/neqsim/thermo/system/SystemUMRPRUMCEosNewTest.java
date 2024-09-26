@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import neqsim.PVTsimulation.simulation.SaturationPressure;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
@@ -188,7 +189,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * <p>
    * checkPhaseEnvelope.
    * </p>
-   * 
+   *
    * @throws Exception
    */
   @Test
@@ -213,5 +214,61 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
       throw new Exception(ex);
     }
     assertEquals(testOps.get("cricondenbar")[1], 130.686140727503, 0.02);
+  }
+
+  /**
+   * <p>
+   * checkPhaseEnvelope2.
+   * </p>
+   *
+   * @throws Exception
+   */
+  @Test
+  @DisplayName("calculate phase envelope using UMR")
+  public void checkPhaseEnvelope2() throws Exception {
+    testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 10.0);
+    testSystem.addComponent("N2", 0.00675317857);
+    testSystem.addComponent("CO2", .02833662296);
+    testSystem.addComponent("methane", 0.8363194562);
+    testSystem.addComponent("ethane", 0.06934307324);
+    testSystem.addComponent("propane", 0.03645246567);
+    testSystem.addComponent("i-butane", 0.0052133558);
+    testSystem.addComponent("n-butane", 0.01013260919);
+    testSystem.addComponent("i-pentane", 0.00227310164);
+    testSystem.addComponent("n-pentane", 0.00224658464);
+    testSystem.addComponent("2-m-C5", 0.00049491);
+    testSystem.addComponent("3-m-C5", 0.00025783);
+    testSystem.addComponent("n-hexane", 0.00065099);
+    testSystem.addComponent("c-hexane", .00061676);
+    testSystem.addComponent("n-heptane", 0.00038552);
+    testSystem.addComponent("benzene", 0.00016852);
+    testSystem.addComponent("n-octane", 0.00007629);
+    testSystem.addComponent("c-C7", 0.0002401);
+    testSystem.addComponent("toluene", 0.0000993);
+    testSystem.addComponent("n-nonane", 0.00001943);
+    testSystem.addComponent("c-C8", 0.00001848);
+    testSystem.addComponent("m-Xylene", 0.00002216);
+    testSystem.addComponent("nC10", 0.00000905);
+    testSystem.addComponent("nC11", 0.000000001);
+    testSystem.addComponent("nC12", 0.000000001);
+
+    testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
+    testSystem.init(0);
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    try {
+      testOps.calcPTphaseEnvelope();
+      logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
+          + testOps.get("cricondenbar")[1]);
+    } catch (Exception ex) {
+      assertTrue(false);
+      throw new Exception(ex);
+    }
+    assertEquals((testOps.get("cricondenbar")[0] - 273.15), -11.09948347, 0.02);
+    assertEquals(testOps.get("cricondenbar")[1], 104.75329137038476, 0.02);
+
+    testSystem.setTemperature(-11.09948347, "C");
+    SaturationPressure satPresSim = new SaturationPressure(testSystem);
+    satPresSim.run();
+    assertEquals(satPresSim.getThermoSystem().getPressure(), 104.7532, 0.001);
   }
 }

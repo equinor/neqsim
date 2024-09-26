@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -144,14 +143,14 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     streams.add(newStream);
 
     if (numberOfInputStreams == 0) {
-      mixedStream = streams.get(0).clone();
+      mixedStream = streams.get(0).clone(this.getName() + " mixed stream");
       // mixedStream.getThermoSystem().setNumberOfPhases(2);
       // mixedStream.getThermoSystem().init(0);
       // mixedStream.getThermoSystem().init(3);
     }
     mixedStream.setEmptyThermoSystem(streams.get(0).getThermoSystem());
     numberOfInputStreams++;
-    lastIterationStream = mixedStream.clone();
+    lastIterationStream = mixedStream.clone(this.getName() + " last iteration stream");
   }
 
   /**
@@ -252,11 +251,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     return enthalpy;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
+  /** {@inheritDoc} */
+  @Override
   @Deprecated
   public StreamInterface getOutStream() {
     return mixedStream;
@@ -294,9 +290,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   public void run(UUID id) {
     iterations++;
     /*
-     * if(firstTime || iterations>maxIterations) { firstTime=false; return;
-     * 
-     * }
+     * if(firstTime || iterations>maxIterations) { firstTime=false; return; }
      */
     double enthalpy = 0.0;
 
@@ -336,7 +330,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     setErrorFlow(massBalanceCheck2());
     logger.debug("comp recycle error: " + getError());
     logger.debug("flow recycle error: " + getErrorFlow());
-    lastIterationStream = (Stream) mixedStream.clone();
+    lastIterationStream = mixedStream.clone();
     outletStream.setThermoSystem(mixedStream.getThermoSystem());
     outletStream.setCalculationIdentifier(id);
     logger.info(
@@ -544,13 +538,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     return downstreamProperty;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>outletStream</code>.
-   * </p>
-   *
-   * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
+  /** {@inheritDoc} */
+  @Override
   public StreamInterface getOutletStream() {
     return outletStream;
   }

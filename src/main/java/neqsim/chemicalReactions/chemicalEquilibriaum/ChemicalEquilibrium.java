@@ -3,6 +3,7 @@ package neqsim.chemicalReactions.chemicalEquilibriaum;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -24,7 +25,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   double d_n_t = 0;
   int NSPEC = 2;
   int NELE = 2;
-  double R = 8.314;
+  double R = ThermodynamicConstantsInterface.R;
   Matrix x_solve;
   double y_solve;
   double n_t = 0.0;
@@ -63,8 +64,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * Constructor for ChemicalEquilibrium.
    * </p>
    *
-   * @param A_matrix an array of {@link double} objects
-   * @param b_element an array of {@link double} objects
+   * @param A_matrix an array of type double
+   * @param b_element an array of type double
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
    * @param phase a int
@@ -268,7 +269,6 @@ public class ChemicalEquilibrium implements java.io.Serializable {
             phasenumb);
       }
 
-
       // changeMoles += n_mol[i] -
       // system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
       // .getNumberOfMolesInPhase();
@@ -377,7 +377,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * getMoles.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getMoles() {
     return n_mol;
@@ -482,7 +482,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * </p>
    *
    * @param i a int
-   * @param n_omega an array of {@link double} objects
+   * @param n_omega an array of type double
    * @param check a int
    * @param step a double
    * @param test a boolean
@@ -517,9 +517,9 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * public double step(){ double step=1.0; int i, check=0; double[] F = new double[NSPEC]; double[]
    * F_omega = new double[NSPEC]; double[] chem_pot = new double[NSPEC]; double[] n_omega = new
    * double[NSPEC];
-   * 
+   *
    * Matrix F_matrix, F_omega_matrix, fs_matrix, f_matrix, f_omega_matrix; double fs,f,f_omega;
-   * 
+   *
    * for(i = 0;i<NSPEC;i++){ n_omega[i] = n_mol[i]+d_n[i]; if (n_omega[i]<0){ check = i; return
    * step; } else { if(system.getPhase(phasenumb).getComponents()[components[i].
    * getComponentNumber()].getReferenceStateType().equals("solvent")){ F[i] =
@@ -537,18 +537,18 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * Math.log(n_omega[i]) - Math.log(n_t) + Math.log(activityVec[i]));
    * System.out.println("F "+activityVec[i]);
    * system.addComponent(components[i].getComponentNumber(), -d_n[i], phasenumb); calcRefPot(); } }
-   * 
+   *
    * F_matrix = new Matrix(F,1); //F_matrix.print(5,5); F_omega_matrix = new Matrix(F_omega,1);
-   * 
+   *
    * //F_matrix = F_matrix.minus((A_Jama_matrix.transpose().times(x_solve.getMatrix(0,NELE-1,0,
    * 0))).transpose()); //F_omega_matrix =
    * F_omega_matrix.minus((A_Jama_matrix.transpose().times(x_solve.getMatrix(0,
    * NELE-1,0,0))).transpose());
-   * 
+   *
    * fs_matrix = F_matrix.transpose().times(F_matrix); fs = (-1)*fs_matrix.get(0,0); f_matrix =
    * F_matrix.times(F_matrix.transpose()); f = 0.5*f_matrix.get(0,0); f_omega_matrix =
    * F_omega_matrix.times(F_omega_matrix.transpose()); f_omega = 0.5*f_omega_matrix.get(0,0);
-   * 
+   *
    * step = (-1)*fs/(2*(f_omega-f-fs)); //System.out.println("f "+f);
    * //System.out.println("f_omega "+f_omega); //System.out.println("fs "+fs);
    * //System.out.println("step " + step); //if (step > 0.5) step = 0.5; return step; }

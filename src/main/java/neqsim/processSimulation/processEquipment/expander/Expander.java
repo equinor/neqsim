@@ -17,29 +17,6 @@ public class Expander extends Compressor implements ExpanderInterface {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
-   * Constructor for Expander.
-   * </p>
-   */
-  @Deprecated
-  public Expander() {
-    super();
-  }
-
-  /**
-   * <p>
-   * Constructor for Expander.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Expander(StreamInterface inletStream) {
-    super(inletStream);
-  }
-
-  /**
    * Constructor for Expander.
    *
    * @param name name of unit operation
@@ -89,7 +66,6 @@ public class Expander extends Compressor implements ExpanderInterface {
       /*
        * HYSYS method double oldPolyt = 10.5; int iter = 0; do {
        *
-       *
        * iter++; double n = Math.log(thermoSystem.getPressure() / presinn) /
        * Math.log(thermoSystem.getDensity() / densInn); double k =
        * Math.log(thermoSystem.getPressure() / presinn) / Math.log(densOutIdeal / densInn); double
@@ -98,11 +74,9 @@ public class Expander extends Compressor implements ExpanderInterface {
        * 1.0); oldPolyt = polytropicEfficiency; polytropicEfficiency = factor *
        * isentropicEfficiency; dH = thermoSystem.getEnthalpy() - hinn; hout = hinn + dH /
        * polytropicEfficiency; thermoOps.PHflash(hout, 0); System.out.println(" factor " + factor +
-       * " n " + n + " k " + k + " polytropic effici " + polytropicEfficiency + " iter " + iter);
-       *
-       * } while (Math.abs((oldPolyt - polytropicEfficiency) / oldPolyt) > 1e-5 && iter < 500); //
+       * " n " + n + " k " + k + " polytropic effici " + polytropicEfficiency + " iter " + iter); }
+       * while (Math.abs((oldPolyt - polytropicEfficiency) / oldPolyt) > 1e-5 && iter < 500); //
        * polytropicEfficiency = isentropicEfficiency * ();
-       *
        */
     } else {
       getThermoSystem().setPressure(pressure);

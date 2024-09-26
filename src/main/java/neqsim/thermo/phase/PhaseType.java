@@ -1,16 +1,17 @@
 package neqsim.thermo.phase;
 
-import java.io.Serializable;
 import neqsim.util.exception.InvalidInputException;
 
 /**
  * Types of phases.
+ *
+ * @author ASMF
  */
-public enum PhaseType implements Serializable{
+public enum PhaseType {
   LIQUID("liquid", 0), GAS("gas", 1), OIL("oil", 2), AQUEOUS("aqueous", 3), HYDRATE("hydrate",
       4), WAX("wax", 5), SOLID("solid", 6), SOLIDCOMPLEX("solidComplex", 7);
 
-  /** Holder for old style integer phasetype. */
+  /** Holder for old style integer pt. */
   private final int value;
   /** Holder for old style string phasetypename. */
   private final String desc;
@@ -35,6 +36,7 @@ public enum PhaseType implements Serializable{
    *
    * @return Numeric index of phase type
    */
+  @Deprecated
   public int getValue() {
     return this.value;
   }

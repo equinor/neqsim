@@ -178,7 +178,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * setFittingParameters.
    * </p>
    *
-   * @param parameterVals an array of {@link double} objects
+   * @param parameterVals an array of type double
    */
   public void setFittingParameters(double[] parameterVals) {
     for (int i = 0; i < sampleSet.getLength(); i++) {
@@ -243,7 +243,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * calcAlphaMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] calcAlphaMatrix() {
     double[][] alpha = new double[sampleSet.getSample(0).getFunction()
@@ -268,7 +268,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * calcBetaMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcBetaMatrix() {
     double[] beta = new double[sampleSet.getSample(0).getFunction().getFittingParams().length];
@@ -287,7 +287,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * calcDerivatives.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[][] calcDerivatives() {
     dyda = new double[sampleSet.getLength()][sampleSet.getSample(0).getFunction()

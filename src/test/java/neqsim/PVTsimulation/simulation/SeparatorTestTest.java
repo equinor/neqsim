@@ -2,6 +2,7 @@ package neqsim.PVTsimulation.simulation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -39,10 +40,11 @@ public class SeparatorTestTest {
 
     SeparatorTest sepSim = new SeparatorTest(tempSystem);
     double[] temps = {313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15};
-    double[] pres = {500, 400, 200, 100, 50.0, 5.0, 1.01325};
+    double[] pres =
+        {500, 400, 200, 100, 50.0, 5.0, ThermodynamicConstantsInterface.referencePressure};
     sepSim.setSeparatorConditions(temps, pres);
     sepSim.runCalc();
 
-    assertEquals(1.1245991497229437, sepSim.getBofactor()[4], 0.0001);
+    assertEquals(1.1224612120760051, sepSim.getBofactor()[4], 0.0001);
   }
 }

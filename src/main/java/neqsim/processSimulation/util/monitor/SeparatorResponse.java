@@ -14,15 +14,7 @@ import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
 public class SeparatorResponse {
   public String name;
   public Double gasLoadFactor;
-  public Double massflow;
-  public Fluid gasFluid, liquidFluid, oilFluid, waterFluid;
-
-  /**
-   * <p>
-   * Constructor for SeparatorResponse.
-   * </p>
-   */
-  public SeparatorResponse() {}
+  public StreamResponse feed, gas, liquid, oil, water;
 
   /**
    * <p>
@@ -34,16 +26,17 @@ public class SeparatorResponse {
    */
   public SeparatorResponse(ThreePhaseSeparator inputSeparator) {
     name = inputSeparator.getName();
-    massflow = inputSeparator.getFluid().getFlowRate("kg/hr");
     gasLoadFactor = inputSeparator.getGasLoadFactor();
+
+    feed = new StreamResponse(inputSeparator.getFeedStream());
     if (inputSeparator.getThermoSystem().hasPhaseType("aqueous")) {
-      waterFluid = new Fluid(inputSeparator.getWaterOutStream().getFluid());
+      water = new StreamResponse(inputSeparator.getWaterOutStream());
     }
     if (inputSeparator.getThermoSystem().hasPhaseType("oil")) {
-      oilFluid = new Fluid(inputSeparator.getOilOutStream().getFluid());
+      oil = new StreamResponse(inputSeparator.getOilOutStream());
     }
     if (inputSeparator.getThermoSystem().hasPhaseType("gas")) {
-      gasFluid = new Fluid(inputSeparator.getGasOutStream().getFluid());
+      gas = new StreamResponse(inputSeparator.getGasOutStream());
     }
   }
 
@@ -57,20 +50,15 @@ public class SeparatorResponse {
    */
   public SeparatorResponse(Separator inputSeparator) {
     name = inputSeparator.getName();
-    massflow = inputSeparator.getFluid().getFlowRate("kg/hr");
     gasLoadFactor = inputSeparator.getGasLoadFactor();
-    if (inputSeparator.getThermoSystem().hasPhaseType("aqueous")) {
-      waterFluid = new Fluid(inputSeparator.getThermoSystem().phaseToSystem("aqueous"));
-    }
-    if (inputSeparator.getThermoSystem().hasPhaseType("oil")) {
-      oilFluid = new Fluid(inputSeparator.getThermoSystem().phaseToSystem("oil"));
+    feed = new StreamResponse(inputSeparator.getFeedStream());
+    if (inputSeparator.getThermoSystem().hasPhaseType("aqueous")
+        || inputSeparator.getThermoSystem().hasPhaseType("liquid")
+        || inputSeparator.getThermoSystem().hasPhaseType("oil")) {
+      liquid = new StreamResponse(inputSeparator.getLiquidOutStream());
     }
     if (inputSeparator.getThermoSystem().hasPhaseType("gas")) {
-      gasFluid = new Fluid(inputSeparator.getGasOutStream().getFluid());
-    }
-    if (inputSeparator.getThermoSystem().hasPhaseType("oil")
-        || inputSeparator.getThermoSystem().hasPhaseType("aqueous")) {
-      liquidFluid = new Fluid(inputSeparator.getLiquidOutStream().getFluid());
+      gas = new StreamResponse(inputSeparator.getGasOutStream());
     }
   }
 }

@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -20,7 +21,7 @@ public class GORfitter extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(GORfitter.class);
 
-  double pressure = 1.01325;
+  double pressure = ThermodynamicConstantsInterface.referencePressure;
   double temperature = 15.0;
   private String referenceConditions = "standard"; // "actual";
   private boolean fitAsGVF = false;
@@ -32,7 +33,9 @@ public class GORfitter extends TwoPortEquipment {
 
   @Deprecated
   /**
-   * <p>Constructor for GORfitter.</p>
+   * <p>
+   * Constructor for GORfitter.
+   * </p>
    */
   public GORfitter() {
     super("GOR fitter");
@@ -63,7 +66,9 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>getGFV.</p>
+   * <p>
+   * getGFV.
+   * </p>
    *
    * @return a double
    */
@@ -78,6 +83,7 @@ public class GORfitter extends TwoPortEquipment {
    * Setter for the field <code>inletStream</code>.
    * </p>
    */
+  @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
     try {
@@ -87,13 +93,8 @@ public class GORfitter extends TwoPortEquipment {
     }
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>pressure</code>.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getPressure() {
     return pressure;
   }
@@ -164,7 +165,7 @@ public class GORfitter extends TwoPortEquipment {
     }
     if (!getReferenceConditions().equals("actual")) {
       tempFluid.setTemperature(15.0, "C");
-      tempFluid.setPressure(1.01325, "bara");
+      tempFluid.setPressure(ThermodynamicConstantsInterface.referencePressure, "bara");
     }
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
     try {
@@ -210,6 +211,7 @@ public class GORfitter extends TwoPortEquipment {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
+    tempFluid.initProperties();
     outStream.setThermoSystem(tempFluid);
     if (!tempFluid.hasPhaseType("gas")) {
       GVF = 0.0;
@@ -261,7 +263,9 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>Getter for the field <code>referenceConditions</code>.</p>
+   * <p>
+   * Getter for the field <code>referenceConditions</code>.
+   * </p>
    *
    * @return the referenceConditions
    */
@@ -270,7 +274,9 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>Setter for the field <code>referenceConditions</code>.</p>
+   * <p>
+   * Setter for the field <code>referenceConditions</code>.
+   * </p>
    *
    * @param referenceConditions the referenceConditions to set
    */
@@ -279,7 +285,9 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>isFitAsGVF.</p>
+   * <p>
+   * isFitAsGVF.
+   * </p>
    *
    * @return the fitAsGVF
    */
@@ -288,7 +296,9 @@ public class GORfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>Setter for the field <code>fitAsGVF</code>.</p>
+   * <p>
+   * Setter for the field <code>fitAsGVF</code>.
+   * </p>
    *
    * @param fitAsGVF the fitAsGVF to set
    */

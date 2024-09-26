@@ -23,6 +23,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   ProcessEquipmentInterface targetEquipment = null;
 
   String adjustedVariable = "";
+  String adjustedVariableUnit = "";
+  double maxAdjustedValue = 1e10;
+  double minAdjustedValue = -1e10;
   String targetVariable = "";
   String targetPhase = "";
   String targetComponent = "";
@@ -42,21 +45,28 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * <p>
    * Constructor for Adjuster.
    * </p>
-   */
-  @Deprecated
-  public Adjuster() {
-    this("Adjuster");
-  }
-
-  /**
-   * <p>
-   * Constructor for Adjuster.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
   public Adjuster(String name) {
     super(name);
+  }
+
+  /**
+   * <p>
+   * setAdjustedVariable.
+   * </p>
+   *
+   * @param adjustedEquipment a
+   *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+   * @param adjstedVariable a {@link java.lang.String} object
+   * @param unit a string
+   */
+  public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment,
+      String adjstedVariable, String unit) {
+    this.adjustedEquipment = adjustedEquipment;
+    this.adjustedVariable = adjstedVariable;
+    this.adjustedVariableUnit = unit;
   }
 
   /**
@@ -144,6 +154,12 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
     if (adjustedVariable.equals("mass flow")) {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate("kg/hr");
+    } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
+      inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate(adjustedVariableUnit);
+    } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
+      inputValue = ((Stream) adjustedEquipment).getPressure(adjustedVariableUnit);
+    } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
+      inputValue = ((Stream) adjustedEquipment).getTemperature(adjustedVariableUnit);
     } else {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getNumberOfMoles();
     }
@@ -172,11 +188,20 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     double deviation = targetValue - targetValueCurrent;
 
     error = deviation;
-    logger.info("adjuster deviation " + deviation + " inputValue " + inputValue);
+
     if (iterations < 2) {
       if (adjustedVariable.equals("mass flow")) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation,
             "kg/hr");
+      } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(
+            inputValue + Math.signum(deviation) * inputValue / 100.0, adjustedVariableUnit);
+      } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).setPressure(inputValue + deviation / 10.0,
+            adjustedVariableUnit);
+      } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).setTemperature(inputValue + deviation / 10.0,
+            adjustedVariableUnit);
       } else {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation,
             "mol/sec");
@@ -184,9 +209,28 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     } else {
       double derivate = (error - oldError) / (inputValue - oldInputValue);
       double newVal = error / derivate;
+      if (inputValue - newVal > maxAdjustedValue) {
+        newVal = inputValue - maxAdjustedValue;
+        if (Math.abs(oldInputValue - inputValue) < 1e-10) {
+          error = tolerance * 0.9;
+        }
+      }
+      if (inputValue - newVal < minAdjustedValue) {
+        newVal = inputValue - minAdjustedValue;
+        if (Math.abs(oldInputValue - inputValue) < 1e-10) {
+          error = tolerance * 0.9;
+        }
+      }
       if (adjustedVariable.equals("mass flow")) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
             "kg/hr");
+      } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
+            adjustedVariableUnit);
+      } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).setPressure(inputValue - newVal, adjustedVariableUnit);
+      } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
+        ((Stream) adjustedEquipment).setTemperature(inputValue - newVal, adjustedVariableUnit);
       } else {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
             "mol/sec");
@@ -272,7 +316,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     testSystem.setMixingRule(2);
 
     Stream stream_1 = new Stream("Stream1", testSystem);
-    Adjuster adjuster1 = new Adjuster();
+    Adjuster adjuster1 = new Adjuster("adjuster");
     adjuster1.setAdjustedVariable(stream_1, "molarFlow");
     adjuster1.setTargetVariable(stream_1, "gasVolumeFlow", 10.0, "MSm3/day", "");
 
@@ -304,5 +348,55 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    */
   public void setActivateWhenLess(boolean activateWhenLess) {
     this.activateWhenLess = activateWhenLess;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>maxAdjustedValue</code>.
+   * </p>
+   *
+   * @param maxVal a double
+   */
+  public void setMaxAdjustedValue(double maxVal) {
+    maxAdjustedValue = maxVal;
+    if (maxAdjustedValue < minAdjustedValue) {
+      minAdjustedValue = maxAdjustedValue;
+    }
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>minAdjustedValue</code>.
+   * </p>
+   *
+   * @param minVal a double
+   */
+  public void setMinAdjustedValue(double minVal) {
+    minAdjustedValue = minVal;
+    if (minAdjustedValue > maxAdjustedValue) {
+      maxAdjustedValue = minAdjustedValue;
+    }
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>maxAdjustedValue</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getMaxAdjustedValue() {
+    return maxAdjustedValue;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>minAdjustedValue</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getMinAdjustedValue() {
+    return minAdjustedValue;
   }
 }

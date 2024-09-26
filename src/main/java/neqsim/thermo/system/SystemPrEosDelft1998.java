@@ -45,11 +45,11 @@ public class SystemPrEosDelft1998 extends SystemPrEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemPrEosDelft1998(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     modelName = "PR Delft1998 EOS";
     attractiveTermNumber = 7;
 
+    // Recreates phases created in super constructor SystemPrEos
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePrEos();
       phaseArray[i].setTemperature(T);
@@ -80,11 +80,6 @@ public class SystemPrEosDelft1998 extends SystemPrEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

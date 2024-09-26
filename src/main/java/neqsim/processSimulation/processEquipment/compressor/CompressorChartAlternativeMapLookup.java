@@ -168,8 +168,8 @@ public class CompressorChartAlternativeMapLookup
    * addSurgeCurve.
    * </p>
    *
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
+   * @param flow an array of type double
+   * @param head an array of type double
    */
   public void addSurgeCurve(double[] flow, double[] head) {
     surgeCurve = new SurgeCurve(flow, head);
@@ -428,7 +428,7 @@ public class CompressorChartAlternativeMapLookup
      * double[] surgeflow = new double[] { 453.2, 550.0, 700.0, 800.0 }; double[] surgehead = new
      * double[] { 6000.0, 7000.0, 8000.0, 10000.0 };
      * comp1.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeflow, surgehead);
-     * 
+     *
      * double[] stoneWallflow = new double[] { 923.2, 950.0, 980.0, 1000.0 }; double[] stoneWallHead
      * = new double[] { 6000.0, 7000.0, 8000.0, 10000.0 };
      * comp1.getCompressorChart().getStoneWallCurve().setCurve(chartConditions, stoneWallflow,
@@ -541,4 +541,10 @@ public class CompressorChartAlternativeMapLookup
   /** {@inheritDoc} */
   @Override
   public void plot() {}
+
+  /** {@inheritDoc} */
+  @Override
+  public double getFlow(double head, double speed, double guessFlow) {
+    return 0.0;
+  }
 }

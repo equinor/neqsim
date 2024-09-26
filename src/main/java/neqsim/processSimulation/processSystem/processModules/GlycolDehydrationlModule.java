@@ -1,10 +1,8 @@
 package neqsim.processSimulation.processSystem.processModules;
 
 import java.util.UUID;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
@@ -63,7 +61,9 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   double regenerationPressure = 1.4;
 
   /**
-   * <p>Constructor for GlycolDehydrationlModule.</p>
+   * <p>
+   * Constructor for GlycolDehydrationlModule.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -158,14 +158,9 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   public void initializeStreams() {
     isInitializedStreams = true;
     try {
-      this.gasStreamFromAbsorber = this.gasStreamToAbsorber.clone();
-      this.gasStreamFromAbsorber.setName("Stream from TEG Absorber");
-
-      this.gasFromStripper = this.gasStreamToAbsorber.clone();
-      this.gasFromStripper.setName("Gas stream from Stripper");
-
-      this.leanTEGStreamToAbsorber = this.gasStreamToAbsorber.clone();
-      this.leanTEGStreamToAbsorber.setName("lean TEG to absorber");
+      this.gasStreamFromAbsorber = this.gasStreamToAbsorber.clone("Stream from TEG Absorber");
+      this.gasFromStripper = this.gasStreamToAbsorber.clone("Gas stream from Stripper");
+      this.leanTEGStreamToAbsorber = this.gasStreamToAbsorber.clone("lean TEG to absorber");
 
       this.leanTEGStreamToAbsorber.getThermoSystem().setEmptyFluid();
       this.leanTEGStreamToAbsorber.getThermoSystem().addComponent("water",
@@ -203,7 +198,6 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
      * stripperColumn.addFeedStream(valveMP.getOutStream(), 3);
      * stripperColumn.setCondenserTemperature(273.15 + 80.0); ((Reboiler)
      * stripperColumn.getReboiler()).setRefluxRatio(11.7);
-     * 
      */
 
     Heater reboiler = new Heater("reboiler", valveMP.getOutletStream());

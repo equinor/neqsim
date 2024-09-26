@@ -53,7 +53,7 @@ public class ReadFluidData2 {
      * // // ""); // testSystem.addComponent("water", 1.0); testSystem.setMixingRule(2); //
      * testSystem.setMultiPhaseCheck(true); //testSystem.setMultiPhaseCheck(false);
      * ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-     * 
+     *
      * try { testOps.TPflash(); testSystem.display(); testOps.PSflash(-123.108602625942);
      * testSystem.display(); testSystem.setPressure(100.0); testOps.PSflash(-119.003271056256);
      * testSystem.display(); System.out.println("entropy " + testSystem.getEntropy());

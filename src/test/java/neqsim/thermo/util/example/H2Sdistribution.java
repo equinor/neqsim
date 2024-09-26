@@ -51,6 +51,6 @@ public class H2Sdistribution {
     } catch (Exception ex) {
     }
     testSystem.display();
-    System.out.println("pH " + testSystem.getPhase("aqueous").getpH());
+    // System.out.println("pH " + testSystem.getPhase("aqueous").getpH());
   }
 }

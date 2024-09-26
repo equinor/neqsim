@@ -3,6 +3,7 @@ package neqsim.thermo.component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -21,14 +22,13 @@ public class ComponentHydrateBallard extends ComponentHydrate {
    * Constructor for ComponentHydrateBallard.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentHydrateBallard(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentHydrateBallard(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     coordNumb[0][0] = 20.0;
     coordNumb[0][1] = 24.0;
     cavRadius[0][0] = 3.908;
@@ -50,18 +50,11 @@ public class ComponentHydrateBallard extends ComponentHydrate {
 
   /** {@inheritDoc} */
   @Override
-  public double fugcoef(PhaseInterface phase) {
-    return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-        phase.getPressure());
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
     if (componentName.equals("water")) {
       refPhase.setTemperature(temp);
       refPhase.setPressure(pres);
-      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, 0, 1.0);
+      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, PhaseType.byValue(0), 1.0);
       double refWaterFugacity = refPhase.getComponent("water").fugcoef(refPhase) * pres;
       double alphaWater = reffug[getComponentNumber()];
       double wateralphaRef = Math.log(refWaterFugacity / alphaWater);

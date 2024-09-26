@@ -3,14 +3,13 @@ package neqsim.processSimulation.processSystem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.SimulationBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
+import neqsim.processSimulation.util.report.Report;
 
 /**
  * A class representing a process module class that can contain unit operations and other modules.
@@ -18,9 +17,7 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
  * then run only once.
  *
  * @author [seros]
- * 
  * @version 1.0
- * 
  */
 public class ProcessModule extends SimulationBaseClass {
   private static final long serialVersionUID = 1000;
@@ -59,7 +56,6 @@ public class ProcessModule extends SimulationBaseClass {
    *
    * @param processSystem the process system that contains the unit operations to be added.
    */
-
   public void add(ProcessSystem processSystem) {
     addedUnitOperations.add(processSystem);
     operationsIndex.add(unitIndex++);
@@ -70,7 +66,6 @@ public class ProcessModule extends SimulationBaseClass {
    *
    * @param module the process module to be added
    */
-
   public void add(ProcessModule module) {
     addedModules.add(module);
     modulesIndex.add(unitIndex++);
@@ -91,7 +86,6 @@ public class ProcessModule extends SimulationBaseClass {
    *
    * @return the list of operations index
    */
-
   public List<Integer> getOperationsIndex() {
     return operationsIndex;
   }
@@ -101,7 +95,6 @@ public class ProcessModule extends SimulationBaseClass {
    *
    * @return the list of added process modules
    */
-
   public List<ProcessModule> getAddedModules() {
     return addedModules;
   }
@@ -112,16 +105,11 @@ public class ProcessModule extends SimulationBaseClass {
    *
    * @return the list of module index
    */
-
   public List<Integer> getModulesIndex() {
     return modulesIndex;
   }
 
-  /**
-   * Run the current process module.
-   *
-   * @param id the UUID of the process module
-   */
+  /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     logger.info("Running module " + getName());
@@ -156,7 +144,7 @@ public class ProcessModule extends SimulationBaseClass {
     for (ProcessSystem operation : addedUnitOperations) {
       for (ProcessEquipmentInterface unitOperation : operation.getUnitOperations()) {
         if (unitOperation instanceof Recycle) {
-          recycleModules.add((Recycle) unitOperation);
+          recycleModules.add(unitOperation);
         }
       }
     }
@@ -176,11 +164,7 @@ public class ProcessModule extends SimulationBaseClass {
     return true;
   }
 
-  /**
-   * Returns whether or not the module has been solved.
-   *
-   * @return true if the module has been solved, false otherwise
-   */
+  /** {@inheritDoc} */
 
   @Override
   public boolean solved() {
@@ -225,6 +209,30 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
+   * Returns the unit with the given name from the list of added unit operations and list of added
+   * modules.
+   *
+   * @param name the name of the unit to retrieve
+   * @return the unit with the given name, or {@code null} if no such unit is found
+   */
+  public Object getMeasurementDevice(String name) {
+    for (ProcessSystem processSystem : addedUnitOperations) {
+      Object unit = processSystem.getMeasurementDevice(name);
+      if (unit != null) {
+        return unit;
+      }
+    }
+
+    for (ProcessModule processModule : addedModules) {
+      Object unit = processModule.getMeasurementDevice(name);
+      if (unit != null) {
+        return unit;
+      }
+    }
+    return null; // no unit found with the given name
+  }
+
+  /**
    * <p>
    * Create deep copy.
    * </p>
@@ -235,5 +243,31 @@ public class ProcessModule extends SimulationBaseClass {
     byte[] bytes = SerializationUtils.serialize(this);
     ProcessModule copyModule = (ProcessModule) SerializationUtils.deserialize(bytes);
     return copyModule;
+  }
+
+  /**
+   * <p>
+   * getReport.
+   * </p>
+   *
+   * @return a {@link java.util.ArrayList} object
+   */
+  public ArrayList<String[]> getReport() {
+    return null;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @return a String
+   */
+  public String getReport_json() {
+    return new Report(this).generateJsonReport();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run_step(UUID id) {
+    run(id);
   }
 }

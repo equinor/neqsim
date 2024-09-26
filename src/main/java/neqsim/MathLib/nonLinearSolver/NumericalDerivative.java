@@ -8,6 +8,7 @@ package neqsim.MathLib.nonLinearSolver;
 
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -96,11 +97,11 @@ public final class NumericalDerivative implements java.io.Serializable {
    * @param numberOfComponents a int
    * @param temperature a double
    * @param pressure a double
-   * @param phasetype a int
+   * @param pt the PhaseType of the phase
    * @return a double
    */
   public static double fugcoefDiffTemp(ComponentInterface component, PhaseInterface phase,
-      int numberOfComponents, double temperature, double pressure, int phasetype) {
+      int numberOfComponents, double temperature, double pressure, PhaseType pt) {
     double ans = 0.000001;
     // double errt, fac, hh, err = 0.00000000000001;
     // double h = temperature / 50;

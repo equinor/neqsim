@@ -52,29 +52,6 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
    * <p>
    * Constructor for Pipeline.
    * </p>
-   */
-  @Deprecated
-  public Pipeline() {
-    this("Pipeline");
-  }
-
-  /**
-   * <p>
-   * Constructor for Pipeline.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Pipeline(StreamInterface inStream) {
-    this("Pipeline", inStream);
-  }
-
-  /**
-   * <p>
-   * Constructor for Pipeline.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -95,18 +72,13 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
     super(name, inStream);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void initMechanicalDesign() {
     pipelineMechanicalDesign = new PipelineMechanicalDesign(this);
   }
 
-
-  /**
-   * {@inheritDoc}
-   *
-   * @return a {@link neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDesign}
-   *         object
-   */
+  /** {@inheritDoc} */
   @Override
   public PipelineMechanicalDesign getMechanicalDesign() {
     return pipelineMechanicalDesign;
@@ -171,7 +143,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
    * setPipeOuterHeatTransferCoefficients.
    * </p>
    *
-   * @param heatCoefs an array of {@link double} objects
+   * @param heatCoefs an array of type double
    */
   public void setPipeOuterHeatTransferCoefficients(double[] heatCoefs) {
     if (heatCoefs.length != this.numberOfLegs + 1) {
@@ -188,7 +160,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
    * setPipeWallHeatTransferCoefficients.
    * </p>
    *
-   * @param heatCoefs an array of {@link double} objects
+   * @param heatCoefs an array of type double
    */
   public void setPipeWallHeatTransferCoefficients(double[] heatCoefs) {
     if (heatCoefs.length != this.numberOfLegs + 1) {
@@ -249,7 +221,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    system = inStream.getThermoSystem();
+    system = inStream.getThermoSystem().clone();
     GeometryDefinitionInterface[] pipeGemometry = new PipeData[numberOfLegs + 1];
     for (int i = 0; i < pipeDiameters.length; i++) {
       pipeGemometry[i] = new PipeData(pipeDiameters[i], pipeWallRoughness[i]);
@@ -343,5 +315,17 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   public double getEntropyProduction(String unit) {
     return outStream.getThermoSystem().getEntropy(unit)
         - inStream.getThermoSystem().getEntropy(unit);
+  }
+
+  /**
+   * <p>
+   * getOutletPressure.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
+  public double getOutletPressure(String unit) {
+    return outStream.getPressure(unit);
   }
 }

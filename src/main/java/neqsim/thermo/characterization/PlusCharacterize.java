@@ -36,7 +36,9 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   SystemInterface system = null;
 
   /**
-   * <p>Constructor for PlusCharacterize.</p>
+   * <p>
+   * Constructor for PlusCharacterize.
+   * </p>
    */
   public PlusCharacterize() {}
 
@@ -334,17 +336,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     return firstPlusFractionNumber;
   }
 
-  /**
-   * Setter for property firstPlusFractionNumber.
-   *
-   * @param startPlus New value of property firstPlusFractionNumber.
-   * @deprecated use {@link #setFirstPlusFractionNumber(int firstPlusFractionNumber)} instead.
-   */
-  @Deprecated
-  public void setStartPlus(int startPlus) {
-    setFirstPlusFractionNumber(startPlus);
-  }
-
   /** {@inheritDoc} */
   @Override
   public double getMPlus() {
@@ -441,7 +432,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     ArrayList<String> list = new ArrayList<String>();
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       double boilpoint = system.getPhase(0).getComponent(i).getNormalBoilingPoint();
-      if (boilpoint >= 69.0) {
+      if (boilpoint >= 273.15 + 69.0) {
         list.add(system.getPhase(0).getComponent(i).getName());
       }
     }

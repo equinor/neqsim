@@ -124,12 +124,12 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     /*
      * LevenbergMarquardt optim = new LevenbergMarquardt(); TestFunction testFunction = new
      * TestFunction(); // optim.setFunction(testFunction);
-     * 
+     *
      * SampleValue[] sample = new SampleValue[3]; double sample1[] = { 6 }; sample[0] = new
      * SampleValue(8.5,0.1,sample1); double sample2[] = { 4 }; sample[1] = new
      * SampleValue(5.5,0.1,sample2); double sample3[] = { 4 }; sample[2] = new
      * SampleValue(5.51,0.1,sample3);
-     * 
+     *
      * SampleSet sampleSet = new SampleSet(sample); sampleSet =
      * sampleSet.createNewNormalDistributedSet(); optim.setSampleSet(sampleSet); optim.solve();
      * optim.runMonteCarloSimulation();

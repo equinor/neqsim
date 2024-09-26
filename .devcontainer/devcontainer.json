@@ -15,51 +15,40 @@
 			"NODE_VERSION": "lts/*"
 		}
 	},
-
 	// Set *default* container specific settings.json values on container create.
-	//"settings": { 
-	//	"java.home": "/docker-java-home"
-	//},
-  "settings": {
-      "java.configuration.updateBuildConfiguration": "interactive",
-      "[java]": {
-          "editor.defaultFormatter": "redhat.java",
-          "editor.formatOnSave": true,
-          "editor.tabSize": 2,
-          "editor.insertSpaces": true,
-          "editor.detectIndentation": false
-      },
-      "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
-      "java.saveActions.organizeImports": true,
-      "editor.tabSize": 2,
-      "editor.insertSpaces": true,
-      "editor.detectIndentation": false,
-      "java.checkstyle.version": "10.3",
-      "java.checkstyle.configuration": "${workspaceFolder}/checkstyle_neqsim.xml",
-    },
-
-	
-// Add the IDs of extensions you want installed when the container is created.
-"extensions": [
-	"vscjava.vscode-java-pack",
-	"ms-vscode.test-adapter-converter",
-	"shengchen.vscode-checkstyle",
-	"mechatroner.rainbow-csv",
-	"redhat.vscode-xml",
-	"eamodio.gitlens"
-]
-
-
-// Use 'forwardPorts' to make a list of ports inside the container available locally.
-// "forwardPorts": [],
-
-// Use 'postCreateCommand' to run commands after the container is created.
-//"postCreateCommand": "mvn package",
-
-// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-//"remoteUser": "vscode",
-//"features": {
-//	"github-cli": "latest"
-//}
+	"customizations": {
+		"vscode": {
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"vscjava.vscode-java-pack",
+				"ms-vscode.test-adapter-converter",
+				"shengchen.vscode-checkstyle",
+				"mechatroner.rainbow-csv",
+				"redhat.vscode-xml",
+				"vscjava.vscode-java-test"
+			],
+			"settings": {
+				"java.configuration.updateBuildConfiguration": "interactive",
+				"[java]": {
+					"editor.defaultFormatter": "redhat.java",
+					"editor.formatOnSave": true,
+					"editor.tabSize": 2,
+					"editor.insertSpaces": true,
+					"editor.detectIndentation": false
+				},
+				"java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
+				"java.saveActions.organizeImports": true,
+				"java.checkstyle.version": "10.18.1",
+				"java.checkstyle.configuration": "${workspaceFolder}/checkstyle_neqsim.xml",
+				"[xml]": {
+					"editor.tabSize": 4,
+					"editor.insertSpaces": false
+				},
+				"[json]": {
+					"editor.tabSize": 4,
+					"editor.insertSpaces": true
+				}
+			}
+		}
+	}
 }
-

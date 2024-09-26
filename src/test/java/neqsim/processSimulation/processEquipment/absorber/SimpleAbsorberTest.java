@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
-public class SimpleAbsorberTest extends neqsim.NeqSimTest{
+public class SimpleAbsorberTest extends neqsim.NeqSimTest {
   neqsim.thermo.system.SystemFurstElectrolyteEos testSystem;
 
   @BeforeEach
@@ -31,7 +31,7 @@ public class SimpleAbsorberTest extends neqsim.NeqSimTest{
      * neqsim.processSimulation.processSystem.ProcessSystem operations = new
      * neqsim.processSimulation.processSystem.ProcessSystem(); operations.add(stream_Hot);
      * operations.add(absorber1);
-     * 
+     *
      * operations.run();
      */
     // operations.displayResult();

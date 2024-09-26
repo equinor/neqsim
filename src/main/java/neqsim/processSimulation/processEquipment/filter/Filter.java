@@ -26,19 +26,6 @@ public class Filter extends TwoPortEquipment {
    * Constructor for Filter.
    * </p>
    *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Filter(StreamInterface inStream) {
-    this("Filter", inStream);
-  }
-
-  /**
-   * <p>
-   * Constructor for Filter.
-   * </p>
-   *
    * @param name name of filter
    * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
    *        object

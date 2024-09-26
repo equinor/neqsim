@@ -104,10 +104,7 @@
                                      or preceding-sibling::*[last()][self::LCURLY]]" />
     </module>
     <module name="WhitespaceAfter">
-      <property name="tokens" value="COMMA, SEMI, TYPECAST, LITERAL_IF, LITERAL_ELSE, LITERAL_RETURN,
-                    LITERAL_WHILE, LITERAL_DO, LITERAL_FOR, LITERAL_FINALLY, DO_WHILE, ELLIPSIS,
-                    LITERAL_SWITCH, LITERAL_SYNCHRONIZED, LITERAL_TRY, LITERAL_CATCH, LAMBDA,
-                    LITERAL_YIELD, LITERAL_CASE" />
+      <property name="tokens" value="COMMA, SEMI, TYPECAST, LITERAL_IF, LITERAL_ELSE, LITERAL_WHILE, LITERAL_DO, LITERAL_FOR, DO_WHILE" />
     </module>
     <module name="WhitespaceAround">
       <property name="allowEmptyConstructors" value="true" />
@@ -232,7 +229,7 @@
       <property name="braceAdjustment" value="2" />
       <property name="caseIndent" value="2" />
       <property name="throwsIndent" value="4" />
-      <property name="lineWrappingIndentation" value="4" />
+      <property name="lineWrappingIndentation" value="2" />
       <property name="arrayInitIndent" value="2" />
     </module>
     <module name="AbbreviationAsWordInName">
@@ -248,8 +245,8 @@
     <module name="CustomImportOrder">
       <property name="sortImportsInGroupAlphabetically" value="true" />
       <property name="separateLineBetweenGroups" value="true" />
-      <property name="specialImportsRegExp" value="neqsim*"/>
-      <property name="customImportOrderRules" value="STATIC###THIRD_PARTY_PACKAGE" />
+      <property name="specialImportsRegExp" value="neqsim.*"/>
+      <property name="customImportOrderRules" value="STATIC###SPECIAL_IMPORTS###STANDARD_JAVA_PACKAGE###THIRD_PARTY_PACKAGE" />
       <property name="tokens" value="IMPORT, STATIC_IMPORT, PACKAGE_DEF" />
     </module>
     <module name="MethodParamPad">

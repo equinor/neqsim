@@ -44,8 +44,7 @@ public class SystemDesmukhMather extends SystemEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemDesmukhMather(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     attractiveTermNumber = 0;
     modelName = "Desmukh-Mather-model";
 

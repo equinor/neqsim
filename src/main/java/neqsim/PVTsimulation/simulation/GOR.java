@@ -1,5 +1,6 @@
 package neqsim.PVTsimulation.simulation;
 
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -40,8 +41,8 @@ public class GOR extends BasePVTsimulation {
    * setTemperaturesAndPressures.
    * </p>
    *
-   * @param temperature an array of {@link double} objects
-   * @param pressure an array of {@link double} objects
+   * @param temperature an array of type double
+   * @param pressure an array of type double
    */
   public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
     this.pressure = pressure;
@@ -70,14 +71,15 @@ public class GOR extends BasePVTsimulation {
       }
       if (getThermoSystem().getNumberOfPhases() > 1
           && getThermoSystem().getPhase(0).getType() == PhaseType.GAS) {
-        getThermoSystem().getPhase(0).setPressure(1.01325);
+        getThermoSystem().getPhase(0)
+            .setPressure(ThermodynamicConstantsInterface.referencePressure);
         getThermoSystem().getPhase(0).setTemperature(288.15);
         getThermoSystem().init(1);
         Sm3gas[i] = getThermoSystem().getPhase(0).getVolume();
         // setThermoSystem(getThermoSystem().phaseToSystem(1));
       }
     }
-    getThermoSystem().setPressure(1.01325);
+    getThermoSystem().setPressure(ThermodynamicConstantsInterface.referencePressure);
     getThermoSystem().setTemperature(288.15);
     thermoOps.TPflash();
     oilVolumeStdCond = getThermoSystem().getPhase("oil").getVolume();
@@ -130,7 +132,8 @@ public class GOR extends BasePVTsimulation {
 
     GOR sepSim = new GOR(tempSystem);
     double[] temps = {313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15};
-    double[] pres = {500, 400, 200, 100, 50.0, 5.0, 1.01325};
+    double[] pres =
+        {500, 400, 200, 100, 50.0, 5.0, ThermodynamicConstantsInterface.referencePressure};
     sepSim.setTemperaturesAndPressures(temps, pres);
     sepSim.runCalc();
   }

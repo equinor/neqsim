@@ -64,7 +64,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
    * setSplitFactors.
    * </p>
    *
-   * @param factors an array of {@link double} objects
+   * @param factors an array of type double
    */
   public void setSplitFactors(double[] factors) {
     splitFactor = factors;
@@ -83,7 +83,8 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
     splitStream = new Stream[2];
     try {
       for (int i = 0; i < splitStream.length; i++) {
-        splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
+        // todo: why not inletStream.clone("Split Stream_" + i)
+        splitStream[i] = new Stream("Split Stream_" + i, inletStream.getThermoSystem().clone());
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);

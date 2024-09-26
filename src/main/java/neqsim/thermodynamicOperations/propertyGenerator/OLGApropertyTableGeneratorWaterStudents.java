@@ -8,6 +8,8 @@ import java.io.Writer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
@@ -177,8 +179,8 @@ public class OLGApropertyTableGeneratorWaterStudents
    * calcBubP.
    * </p>
    *
-   * @param temperatures an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param temperatures an array of type double
+   * @return an array of type double
    */
   public double[] calcBubP(double[] temperatures) {
     double[] bubP = new double[temperatures.length];
@@ -203,8 +205,8 @@ public class OLGApropertyTableGeneratorWaterStudents
    * calcDewP.
    * </p>
    *
-   * @param temperatures an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param temperatures an array of type double
+   * @return an array of type double
    */
   public double[] calcDewP(double[] temperatures) {
     double[] dewP = new double[temperatures.length];
@@ -230,8 +232,8 @@ public class OLGApropertyTableGeneratorWaterStudents
    * calcBubT.
    * </p>
    *
-   * @param pressures an array of {@link double} objects
-   * @return an array of {@link double} objects
+   * @param pressures an array of type double
+   * @return an array of type double
    */
   public double[] calcBubT(double[] pressures) {
     double[] bubTemps = new double[pressures.length];
@@ -255,7 +257,7 @@ public class OLGApropertyTableGeneratorWaterStudents
    */
   public void initCalc() {
     double stdTemp = 288.15;
-    double stdPres = 1.01325;
+    double stdPres = ThermodynamicConstantsInterface.referencePressure;
     // double GOR, GLR;
     double[] molfracs = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
     double[] MW = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -730,7 +732,7 @@ public class OLGApropertyTableGeneratorWaterStudents
           } while (k < 17); // names[k] = "GAS DENSITY";
           // units[k] = "KG/M3";
         } else {
-          oilSystem.setPhaseType(0, 0);
+          oilSystem.setPhaseType(0, PhaseType.byValue(0));
           oilSystem.setTemperature(temperatures[j]);
           oilSystem.setPressure(pressures[i]);
           oilSystem.init(3);
@@ -930,7 +932,7 @@ public class OLGApropertyTableGeneratorWaterStudents
         } else {
           waterSystem.setTemperature(temperatures[j]);
           waterSystem.setPressure(pressures[i]);
-          waterSystem.setPhaseType(0, 0);
+          waterSystem.setPhaseType(0, PhaseType.byValue(0));
           waterSystem.init(3);
           waterSystem.initPhysicalProperties();
 
@@ -1200,7 +1202,7 @@ public class OLGApropertyTableGeneratorWaterStudents
                * (temperatures[j] - temperatures[j - 1]))); if
                * (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j] < 10.0e-3) {
                * props[k][i][j] = 25.0e-3; LWS=1; }
-               * 
+               *
                * if (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j] > 120.0e-3) {
                * props[k][i][j] = 80.0e-3; LWS=1; } }
                */
@@ -1235,7 +1237,7 @@ public class OLGApropertyTableGeneratorWaterStudents
                * / (pressures[i - 1] - pressures[i - 3]) * (pressures[i] - pressures[i - 1]))); if
                * (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j] < 10.0e-3) {
                * props[k][i][j] = 25.0e-3; LWS=1; }
-               * 
+               *
                * if (names[k].equals("LIQUID-WATER SURFACE TENSION") && props[k][i][j] > 120.0e-3) {
                * props[k][i][j] = 80.0e-3; LWS=1; } }
                */

@@ -1,0 +1,134 @@
+{
+  "resources":{
+  "includes":[{
+    "pattern":"\\QMETA-INF/log4j-provider.properties\\E"
+  }, {
+    "pattern":"\\QMETA-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.lang.System$LoggerFinder\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.net.spi.InetAddressResolverProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.sql.Driver\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.time.zone.ZoneRulesProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.apache.logging.log4j.core.util.ContextDataProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.apache.logging.log4j.core.util.WatchEventService\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.apache.logging.log4j.spi.Provider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.apache.logging.log4j.util.PropertySource\\E"
+  }, {
+    "pattern":"\\Qdata/AdsorptionParameters.csv\\E"
+  }, {
+    "pattern":"\\Qdata/COMP.csv\\E"
+  }, {
+    "pattern":"\\Qdata/COMPSALT.csv\\E"
+  }, {
+    "pattern":"\\Qdata/INTER.csv\\E"
+  }, {
+    "pattern":"\\Qdata/ISO6976constants.csv\\E"
+  }, {
+    "pattern":"\\Qdata/ISO6976constants2016.csv\\E"
+  }, {
+    "pattern":"\\Qdata/MBWR32param.csv\\E"
+  }, {
+    "pattern":"\\Qdata/PIPEDATA.csv\\E"
+  }, {
+    "pattern":"\\Qdata/REACTIONDATA.csv\\E"
+  }, {
+    "pattern":"\\Qdata/ReactionKSPdata.csv\\E"
+  }, {
+    "pattern":"\\Qdata/STOCCOEFDATA.csv\\E"
+  }, {
+    "pattern":"\\Qdata/UNIFACGroupParam.csv\\E"
+  }, {
+    "pattern":"\\Qdata/UNIFACInterParam.csv\\E"
+  }, {
+    "pattern":"\\Qdata/UNIFACInterParamA_UMR.csv\\E"
+  }, {
+    "pattern":"\\Qdata/UNIFACInterParamA_UMRMC.csv\\E"
+  }, {
+    "pattern":"\\Qdata/UNIFACInterParamB.csv\\E"
+  }, {
+    "pattern":"\\Qdata/UNIFACInterParamB_UMR.csv\\E"
+  }, {
+    "pattern":"\\Qdata/UNIFACInterParamB_UMRMC.csv\\E"
+  }, {
+    "pattern":"\\Qdata/UNIFACInterParamC.csv\\E"
+  }, {
+    "pattern":"\\Qdata/UNIFACInterParamC_UMR.csv\\E"
+  }, {
+    "pattern":"\\Qdata/UNIFACInterParamC_UMRMC.csv\\E"
+  }, {
+    "pattern":"\\Qdata/UNIFACcomp.csv\\E"
+  }, {
+    "pattern":"\\Qdata/UNIFACcompUMRPRU.csv\\E"
+  }, {
+    "pattern":"\\Qdata/element.csv\\E"
+  }, {
+    "pattern":"\\Qlog4j2-test.jsn\\E"
+  }, {
+    "pattern":"\\Qlog4j2-test.json\\E"
+  }, {
+    "pattern":"\\Qlog4j2-test.properties\\E"
+  }, {
+    "pattern":"\\Qlog4j2-test.xml\\E"
+  }, {
+    "pattern":"\\Qlog4j2-test.yaml\\E"
+  }, {
+    "pattern":"\\Qlog4j2-test.yml\\E"
+  }, {
+    "pattern":"\\Qlog4j2-test76ed5528.jsn\\E"
+  }, {
+    "pattern":"\\Qlog4j2-test76ed5528.json\\E"
+  }, {
+    "pattern":"\\Qlog4j2-test76ed5528.properties\\E"
+  }, {
+    "pattern":"\\Qlog4j2-test76ed5528.xml\\E"
+  }, {
+    "pattern":"\\Qlog4j2-test76ed5528.yaml\\E"
+  }, {
+    "pattern":"\\Qlog4j2-test76ed5528.yml\\E"
+  }, {
+    "pattern":"\\Qlog4j2.StatusLogger.properties\\E"
+  }, {
+    "pattern":"\\Qlog4j2.component.properties\\E"
+  }, {
+    "pattern":"\\Qlog4j2.jsn\\E"
+  }, {
+    "pattern":"\\Qlog4j2.json\\E"
+  }, {
+    "pattern":"\\Qlog4j2.properties\\E"
+  }, {
+    "pattern":"\\Qlog4j2.system.properties\\E"
+  }, {
+    "pattern":"\\Qlog4j2.xml\\E"
+  }, {
+    "pattern":"\\Qlog4j2.yaml\\E"
+  }, {
+    "pattern":"\\Qlog4j2.yml\\E"
+  }, {
+    "pattern":"\\Qlog4j276ed5528.jsn\\E"
+  }, {
+    "pattern":"\\Qlog4j276ed5528.json\\E"
+  }, {
+    "pattern":"\\Qlog4j276ed5528.properties\\E"
+  }, {
+    "pattern":"\\Qlog4j276ed5528.xml\\E"
+  }, {
+    "pattern":"\\Qlog4j276ed5528.yaml\\E"
+  }, {
+    "pattern":"\\Qlog4j276ed5528.yml\\E"
+  }, {
+    "pattern":"\\Qorg/h2/util/data.zip\\E"
+  }, {
+    "pattern":"jdk.jfr:\\Qjdk/jfr/internal/query/view.ini\\E"
+  }]},
+  "bundles":[{
+    "name":"sun.util.resources.cldr.CalendarData",
+    "locales":["und"]
+  }]
+}

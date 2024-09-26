@@ -3,6 +3,7 @@ package neqsim.processSimulation.measurementDevice;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -18,8 +19,8 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(MultiPhaseMeter.class);
 
-  double pressure = 10.0;
-  double temperature = 298.15;
+  double pressure = 1.01325;
+  double temperature = 288.15;
   String unitT;
   String unitP;
 
@@ -110,15 +111,15 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
    */
   public double getMeasuredValue(String measurement, String unit) {
     if (measurement.equals("mass rate")) {
-      return stream.getThermoSystem().getFlowRate(unit);
+      return stream.getFlowRate(unit);
     }
 
-    if (stream.getThermoSystem().getFlowRate("kg/hr") < 1e-10) {
+    if (stream.getFlowRate("kg/hr") < 1e-10) {
       return Double.NaN;
     }
 
     if (measurement.equals("GOR")) {
-      SystemInterface tempFluid = stream.getThermoSystem().clone();
+      SystemInterface tempFluid = stream.getFluid().clone();
       tempFluid.setTemperature(temperature, unitT);
       tempFluid.setPressure(pressure, unitP);
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
@@ -138,6 +139,60 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       tempFluid.initPhysicalProperties("density");
       return tempFluid.getPhase("gas").getCorrectedVolume()
           / tempFluid.getPhase("oil").getCorrectedVolume();
+    }
+    if (measurement.equals("Gas Flow Rate")) {
+      SystemInterface tempFluid = stream.getThermoSystem().clone();
+      tempFluid.setTemperature(temperature, unitT);
+      tempFluid.setPressure(pressure, unitP);
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
+      try {
+        thermoOps.TPflash();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
+        return Double.NaN;
+      }
+      // tempFluid.display();
+      if (!tempFluid.hasPhaseType("gas")) {
+        return Double.NaN;
+      }
+      tempFluid.initPhysicalProperties("density");
+      return tempFluid.getPhase("gas").getFlowRate(unit);
+    }
+    if (measurement.equals("Oil Flow Rate")) {
+      SystemInterface tempFluid = stream.getThermoSystem().clone();
+      tempFluid.setTemperature(temperature, unitT);
+      tempFluid.setPressure(pressure, unitP);
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
+      try {
+        thermoOps.TPflash();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
+        return Double.NaN;
+      }
+      // tempFluid.display();
+      if (!tempFluid.hasPhaseType("oil")) {
+        return Double.NaN;
+      }
+      tempFluid.initPhysicalProperties("density");
+      return tempFluid.getPhase("oil").getFlowRate(unit);
+    }
+    if (measurement.equals("Water Flow Rate")) {
+      SystemInterface tempFluid = stream.getThermoSystem().clone();
+      tempFluid.setTemperature(temperature, unitT);
+      tempFluid.setPressure(pressure, unitP);
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
+      try {
+        thermoOps.TPflash();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
+        return Double.NaN;
+      }
+      // tempFluid.display();
+      if (!tempFluid.hasPhaseType("aqueous")) {
+        return Double.NaN;
+      }
+      tempFluid.initPhysicalProperties("density");
+      return tempFluid.getPhase("aqueous").getFlowRate(unit);
     }
     if (measurement.equals("gasDensity") || measurement.equals("oilDensity")
         || measurement.equals("waterDensity")) {
@@ -176,8 +231,9 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       return 0.0;
     } else if (measurement.equals("GOR_std")) {
       SystemInterface tempFluid = stream.getThermoSystem().clone();
+
       tempFluid.setTemperature(15.0, "C");
-      tempFluid.setPressure(1.01325, "bara");
+      tempFluid.setPressure(ThermodynamicConstantsInterface.referencePressure, "bara");
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
       try {
         thermoOps.TPflash();
@@ -192,6 +248,21 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
         return Double.NaN;
       }
       tempFluid.initPhysicalProperties("density");
+
+      double GOR_in_sm3_sm3 = tempFluid.getPhase("gas").getFlowRate("Sm3/hr")
+          / tempFluid.getPhase("oil").getFlowRate("m3/hr");
+      double GOR_via_corrected_volume = tempFluid.getPhase("gas").getCorrectedVolume()
+          / tempFluid.getPhase("oil").getCorrectedVolume();
+
+      // System.out.println("Stream 2 (results inside MPM) " + " GOR sm3/sm3 " + GOR_in_sm3_sm3
+      // + " GOR Corrected by volume " + GOR_via_corrected_volume);
+
+      // System.out.println("Stream 2 (results inside MPM) getPhase(gas).getCorrectedVolume() "
+      // + tempFluid.getPhase("gas").getCorrectedVolume());
+      // System.out.println("Stream 2 (results inside MPM) getPhase(oil).getCorrectedVolume() "
+      // + tempFluid.getPhase("oil").getCorrectedVolume());
+
+      // GOR_via_corrected_volume and GOR_in_sm3_sm3 should not be so different ?
       return tempFluid.getPhase("gas").getCorrectedVolume()
           / tempFluid.getPhase("oil").getCorrectedVolume();
     } else {

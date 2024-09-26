@@ -3,6 +3,7 @@ package neqsim.thermo.component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -21,20 +22,21 @@ public class ComponentWonWax extends ComponentSolid {
    * Constructor for ComponentWonWax.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentWonWax(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentWonWax(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase1) {
     if (!isWaxFormer()) {
-      return 1.0e30;
+      fugacityCoefficient = 1.0e30;
+      return fugacityCoefficient;
     }
 
     return fugcoef2(phase1);
@@ -45,7 +47,7 @@ public class ComponentWonWax extends ComponentSolid {
   public double fugcoef2(PhaseInterface phase1) {
     refPhase.setTemperature(phase1.getTemperature());
     refPhase.setPressure(phase1.getPressure());
-    refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, 0, 1.0);
+    refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, PhaseType.byValue(0), 1.0);
     refPhase.getComponent(0).fugcoef(refPhase);
 
     double liquidPhaseFugacity =

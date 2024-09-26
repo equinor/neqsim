@@ -32,7 +32,7 @@ public interface MeasurementDeviceInterface extends NamedInterface, java.io.Seri
 
   /**
    * <p>
-   * getMeasuredValue.
+   * Get Measured value in specified unit.
    * </p>
    *
    * @param unit a {@link java.lang.String} object

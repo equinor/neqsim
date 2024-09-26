@@ -6,6 +6,7 @@
 
 package neqsim.thermo.component;
 
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePrEosvolcor;
 
@@ -21,7 +22,7 @@ public class ComponentPRvolcor extends ComponentPR {
   private static final long serialVersionUID = 1000;
   private double c;
   // private double calcc;
-  public double[] Cij = new double[MAX_NUMBER_OF_COMPONENTS];
+  public double[] Cij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   public double Ci = 0;
 
   /**
@@ -83,27 +84,31 @@ public class ComponentPRvolcor extends ComponentPR {
    * Constructor for ComponentPRvolcor.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentPRvolcor(String component_name, double moles, double molesInPhase,
-      int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentPRvolcor(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
     c = (0.1154 - 0.4406 * (0.29056 - 0.08775 * getAcentricFactor())) * R * criticalTemperature
         / criticalPressure;
-
   }
 
   /** {@inheritDoc} */
   @Override
-  public void init(double temp, double pres, double totMoles, double beta, int type) {
-    super.init(temp, pres, totMoles, beta, type);
+  public void init(double temp, double pres, double totMoles, double beta, int initType) {
+    super.init(temp, pres, totMoles, beta, initType);
     c = calcc();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * <p>
+   * getc.
+   * </p>
+   *
+   * @return a double
+   */
   public double getc() {
     return c;
   }
@@ -123,14 +128,14 @@ public class ComponentPRvolcor extends ComponentPR {
   /** {@inheritDoc} */
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
-      int numberOfComponents, int type) {
-    super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, type);
+      int numberOfComponents, int initType) {
+    super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, initType);
     Ci = ((PhasePrEosvolcor) phase).calcCi(componentNumber, phase, temp, pres, numberOfComponents);
-    if (type >= 2) {
+    if (initType >= 2) {
       ((PhasePrEosvolcor) phase).calcCiT(componentNumber, phase, temp, pres, numberOfComponents);
     }
 
-    if (type >= 3) {
+    if (initType >= 3) {
       for (int j = 0; j < numberOfComponents; j++) {
         Cij[j] = ((PhasePrEosvolcor) phase).calcCij(componentNumber, j, phase, temp, pres,
             numberOfComponents);

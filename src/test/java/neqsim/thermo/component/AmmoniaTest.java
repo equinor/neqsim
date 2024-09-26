@@ -3,6 +3,7 @@ package neqsim.thermo.component;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -15,7 +16,7 @@ public class AmmoniaTest extends neqsim.NeqSimTest {
    */
   @BeforeAll
   static void setUpBeforeClass() throws Exception {
-    thermoSystem = new SystemSrkEos(298.0, 1.01325);
+    thermoSystem = new SystemSrkEos(298.0, ThermodynamicConstantsInterface.referencePressure);
     thermoSystem.addComponent("ammonia", 1.0);
     thermoSystem.init(0);
   }

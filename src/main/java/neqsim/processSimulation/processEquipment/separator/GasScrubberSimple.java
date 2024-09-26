@@ -34,28 +34,6 @@ public class GasScrubberSimple extends Separator {
   StreamInterface liquidOutStream;
 
   /**
-   * <p>
-   * Constructor for GasScrubberSimple.
-   * </p>
-   */
-  @Deprecated
-  public GasScrubberSimple() {
-    this("GasScrubberSimple");
-  }
-
-  /**
-   * <p>
-   * Constructor for GasScrubberSimple.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
-   */
-  @Deprecated
-  public GasScrubberSimple(StreamInterface inletStream) {
-    this("GasScrubberSimple", inletStream);
-  }
-
-  /**
    * Constructor for GasScrubberSimple.
    *
    * @param name name of scrubber
@@ -78,13 +56,7 @@ public class GasScrubberSimple extends Separator {
     this.setOrientation("vertical");
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a
-   *         {@link neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign}
-   *         object
-   */
+  /** {@inheritDoc} */
   @Override
   public GasScrubberMechanicalDesign getMechanicalDesign() {
     return new GasScrubberMechanicalDesign(this);
@@ -97,6 +69,7 @@ public class GasScrubberSimple extends Separator {
    * Setter for the field <code>inletStream</code>.
    * </p>
    */
+  @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inletStream = inletStream;
 

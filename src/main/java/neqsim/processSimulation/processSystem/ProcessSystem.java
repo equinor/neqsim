@@ -18,6 +18,7 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.RecycleController;
+import neqsim.processSimulation.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -33,7 +34,7 @@ public class ProcessSystem extends SimulationBaseClass {
   static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
   transient Thread thisThread;
-  String[][] signalDB = new String[1000][100];
+  String[][] signalDB = new String[10000][100];
   private double surroundingTemperature = 288.15;
   private int timeStepNumber = 0;
   private ArrayList<ProcessEquipmentInterface> unitOperations =
@@ -63,33 +64,46 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * add.
+   * Add to end.
    * </p>
    *
    * @param operation a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
    *        object
    */
   public void add(ProcessEquipmentInterface operation) {
+    // Add to end
+    add(this.getUnitOperations().size(), operation);
+  }
+
+  /**
+   * <p>
+   * Add to specific position.
+   * </p>
+   *
+   * @param position 0-based position
+   * @param operation a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
+   *        object
+   */
+  public void add(int position, ProcessEquipmentInterface operation) {
     ArrayList<ProcessEquipmentInterface> units = this.getUnitOperations();
 
     for (ProcessEquipmentInterface unit : units) {
       if (unit == operation) {
+        logger.info("Equipment " + operation.getName() + " is already included in ProcessSystem");
         return;
       }
     }
 
     if (getAllUnitNames().contains(operation.getName())) {
-      String currClass = operation.getClass().getSimpleName();
-      int num = 1;
-      for (ProcessEquipmentInterface unit : units) {
-        if (unit.getClass().getSimpleName().equals(currClass)) {
-          num++;
-        }
-      }
-      operation.setName(currClass + Integer.toString(num));
+      ProcessEquipmentInterface existing =
+          (ProcessEquipmentInterface) this.getUnit(operation.getName());
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("ProcessSystem",
+          "add", "operation", "- Process equipment of type " + existing.getClass().getSimpleName()
+              + " named " + operation.getName() + " already included in ProcessSystem"));
+
     }
 
-    getUnitOperations().add(operation);
+    getUnitOperations().add(position, operation);
     if (operation instanceof ModuleInterface) {
       ((ModuleInterface) operation).initializeModule();
     }
@@ -97,7 +111,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * add.
+   * Add measurementdevice.
    * </p>
    *
    * @param measurementDevice a
@@ -109,7 +123,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * add.
+   * Add multiple process equipment to end.
    * </p>
    *
    * @param operations an array of
@@ -121,10 +135,10 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * getUnit.
+   * Get process equipmen by name.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name Name of
    * @return a {@link java.lang.Object} object
    */
   public Object getUnit(String name) {
@@ -163,13 +177,13 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * getMeasurementDevice.
+   * Get MeasureDevice by name.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @return a {@link java.lang.Object} object
+   * @param name Name of measurement device
+   * @return a {@link neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface} object
    */
-  public Object getMeasurementDevice(String name) {
+  public MeasurementDeviceInterface getMeasurementDevice(String name) {
     for (int i = 0; i < measurementDevices.size(); i++) {
       if (measurementDevices.get(i).getName().equals(name)) {
         return measurementDevices.get(i);
@@ -372,14 +386,14 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    boolean hasResycle = false;
+    boolean hasRecycle = false;
     // boolean hasAdjuster = false;
 
     // Initializing recycle controller
     recycleController.clear();
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
-        hasResycle = true;
+        hasRecycle = true;
         recycleController.addRecycle((Recycle) unitOperations.get(i));
       }
       if (unitOperations.get(i).getClass().getSimpleName().equals("Adjuster")) {
@@ -396,9 +410,8 @@ public class ProcessSystem extends SimulationBaseClass {
       for (int i = 0; i < unitOperations.size(); i++) {
         if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
           try {
-            if (iter == 1
-                || ((ProcessEquipmentInterface) unitOperations.get(i)).needRecalculation()) {
-              ((ProcessEquipmentInterface) unitOperations.get(i)).run(id);
+            if (iter == 1 || unitOperations.get(i).needRecalculation()) {
+              unitOperations.get(i).run(id);
             }
           } catch (Exception ex) {
             // String error = ex.getMessage();
@@ -408,7 +421,7 @@ public class ProcessSystem extends SimulationBaseClass {
         if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
             && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {
           try {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).run(id);
+            unitOperations.get(i).run(id);
           } catch (Exception ex) {
             // String error = ex.getMessage();
             logger.error(ex.getMessage(), ex);
@@ -438,25 +451,54 @@ public class ProcessSystem extends SimulationBaseClass {
 
       /*
        * signalDB = new String[1000][1 + 3 * measurementDevices.size()];
-       * 
+       *
        * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for (int i = 0; i
        * < measurementDevices.size(); i++) { signalDB[timeStepNumber][0] = Double.toString(time);
        * signalDB[timeStepNumber][3 * i + 1] = ((MeasurementDeviceInterface)
        * measurementDevices.get(i)) .getName(); signalDB[timeStepNumber][3 * i + 2] = Double
        * .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
        * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface)
-       * measurementDevices.get(i)) .getUnit();
-       * 
-       * }
+       * measurementDevices.get(i)) .getUnit(); }
        */
-    } while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
+    } while ((!isConverged || (iter < 2 && hasRecycle)) && iter < 100);
 
     for (int i = 0; i < unitOperations.size(); i++) {
-      ((ProcessEquipmentInterface) unitOperations.get(i)).setCalculationIdentifier(id);
+      unitOperations.get(i).setCalculationIdentifier(id);
     }
 
     setCalculationIdentifier(id);
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run_step(UUID id) {
+    for (int i = 0; i < unitOperations.size(); i++) {
+      try {
+        // if (unitOperations.get(i).needRecalculation()) {
+        unitOperations.get(i).run(id);
+        // }
+      } catch (Exception ex) {
+        // String error = ex.getMessage();
+        logger.error(ex.getMessage(), ex);
+      }
+    }
+    for (int i = 0; i < unitOperations.size(); i++) {
+      unitOperations.get(i).setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+  }
+
+  /*
+   * signalDB = new String[1000][1 + 3 * measurementDevices.size()];
+   *
+   * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for (int i = 0; i <
+   * measurementDevices.size(); i++) { signalDB[timeStepNumber][0] = Double.toString(time);
+   * signalDB[timeStepNumber][3 * i + 1] = ((MeasurementDeviceInterface) measurementDevices.get(i))
+   * .getName(); signalDB[timeStepNumber][3 * i + 2] = Double
+   * .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
+   * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface) measurementDevices.get(i))
+   * .getUnit(); }
+   */
 
   /**
    * <p>
@@ -501,13 +543,8 @@ public class ProcessSystem extends SimulationBaseClass {
     return true;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>time</code>.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getTime() {
     return time;
   }
@@ -690,24 +727,16 @@ public class ProcessSystem extends SimulationBaseClass {
     this.timeStep = timeStep;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>name</code>.
-   * </p>
-   *
-   * @return the name
-   */
+  /** {@inheritDoc} */
+  @Override
   public String getName() {
     return name;
   }
 
   /**
    * {@inheritDoc}
-   *
-   * <p>
-   * Setter for the field <code>name</code>.
-   * </p>
    */
+  @Override
   public void setName(String name) {
     this.name = name;
   }
@@ -910,15 +939,24 @@ public class ProcessSystem extends SimulationBaseClass {
         && Objects.equals(unitOperations, other.unitOperations);
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @return a String
+   */
+  public String getReport_json() {
+    return new Report(this).generateJsonReport();
+  }
+
   /*
    * @XmlRootElement private class Report extends Object{ public Double name; public
    * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();
-   * 
+   *
    * Report(){ name= getName();
-   * 
+   *
    * for (int i = 0; i < unitOperations.size(); i++) {
    * unitOperationsReports.add(unitOperations.getReport()); } } }
-   * 
+   *
    * public Report getReport(){ return this.new Report(); }
    */
 }

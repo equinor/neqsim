@@ -45,7 +45,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String returnParameter, java.lang.String returnUnit) {
+  public double getValue(String returnParameter, String returnUnit) {
     if (returnParameter.equals("PropaneNumber")) {
       return propaneNumber;
     }

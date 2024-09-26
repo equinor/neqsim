@@ -26,28 +26,6 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
     super(value, unit);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(double val, String fromunit, String tounit) {
-    invalue = val;
-    return getConversionFactor(fromunit) / getConversionFactor(tounit) * invalue;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(String tounit) {
-    if (tounit.equals("barg")) {
-      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
-          - ThermodynamicConstantsInterface.referencePressure;
-    }
-    if (inunit.equals("barg")) {
-      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
-          + ThermodynamicConstantsInterface.referencePressure;
-    } else {
-      return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
-    }
-  }
-
   /**
    * <p>
    * getConversionFactor.
@@ -69,13 +47,25 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
         conversionFactor = 1.0;
         break;
       case "psi":
-        conversionFactor = 0.06894757;
+        conversionFactor = 0.0689475729317831;
+        break;
+      case "psia":
+        conversionFactor = 0.0689475729317831;
+        break;
+      case "psig":
+        conversionFactor = 0.0689475729317831;
         break;
       case "Pa":
         conversionFactor = 1.0e-5;
         break;
+      case "kPa":
+        conversionFactor = 1.0e-2;
+        break;
       case "MPa":
         conversionFactor = 10.0;
+        break;
+      case "atm":
+        conversionFactor = 1.0;
         break;
       default:
         throw new RuntimeException(
@@ -83,5 +73,35 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
     }
 
     return conversionFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(double val, String fromunit, String tounit) {
+    invalue = val;
+    return getConversionFactor(fromunit) / getConversionFactor(tounit) * invalue;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(String tounit) {
+    if (tounit.equals("barg")) {
+      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
+          - ThermodynamicConstantsInterface.referencePressure;
+    } else if (tounit.equals("psig")) {
+      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue * 14.503773773
+          - 14.7;
+    } else if (inunit.equals("barg")) {
+      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
+          + ThermodynamicConstantsInterface.referencePressure;
+    } else if (tounit.equals("atm")) {
+      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
+          / ThermodynamicConstantsInterface.referencePressure;
+    } else if (inunit.equals("atm")) {
+      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
+          * ThermodynamicConstantsInterface.referencePressure;
+    } else {
+      return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
+    }
   }
 }

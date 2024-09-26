@@ -6,13 +6,11 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 public class DistillationColumnTest {
-
   /**
    * @throws java.lang.Exception
    */
   @Test
   public void DistillationColumnTest() throws Exception {
-
     neqsim.thermo.system.SystemInterface richTEG =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     richTEG.addComponent("nitrogen", 0.0003884521907420086);
@@ -69,8 +67,7 @@ public class DistillationColumnTest {
     gasToReboilerStream.setPressure(1.12, "bara");
     gasToReboilerStream.run();
 
-    DistillationColumn column = new DistillationColumn(1, true, true);
-    column.setName("TEG regeneration column");
+    DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(richTEGStream, 1);
     column.getReboiler().setOutTemperature(273.15 + 202);
     column.getCondenser().setOutTemperature(273.15 + 88.165861);
@@ -101,26 +98,22 @@ public class DistillationColumnTest {
             * column.getLiquidOutStream().getFluid().getComponent("water").getMolarMass()
             * column.getLiquidOutStream().getFluid().getComponent("water").getz();
 
-
     double totalWaterIn = waterFlowRateInColumn2 + waterFlowRateInColumnGasToReb;
     double totalWaterOut = waterFlowRateOutColumn + waterFlowRateOutColumnLeanTEG;
     /*
      * System.out.println("Column in is " + totalWaterIn + " kg/hr");
      * System.out.println("Column out is " + totalWaterOut + " kg/hr");
      * System.out.println("Column is solved  " + column.solved());
-     * 
-     * 
-     * 
+     *
      * System.out.println("Calc Water Flow rate via fluid component " + waterFlowRateInColumn);
      * System.out.println("Calc Water Flow rate via molar mass and flow rate total " +
      * waterFlowRateInColumn2 + " kg/hr");
-     * 
+     *
      * System.out .println("condenser temperature " +
      * column.getCondenser().getFluid().getTemperature("C")); System.out.println("condenser duty " +
      * ((Condenser) column.getCondenser()).getDuty());
      */
     assertEquals(totalWaterIn, totalWaterOut, 1.0);
-
   }
 
   /**
@@ -149,8 +142,7 @@ public class DistillationColumnTest {
 
     // gasToDeethanizerStream.getFluid().prettyPrint();
 
-    DistillationColumn column = new DistillationColumn(5, true, false);
-    column.setName("Deethanizer");
+    DistillationColumn column = new DistillationColumn("Deethanizer", 5, true, false);
     column.addFeedStream(gasToDeethanizerStream, 5);
     column.getReboiler().setOutTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
@@ -195,8 +187,7 @@ public class DistillationColumnTest {
 
     // gasToDebutanizerStream.getFluid().prettyPrint();
 
-    DistillationColumn column = new DistillationColumn(1, true, true);
-    column.setName("Deethanizer");
+    DistillationColumn column = new DistillationColumn("Deethanizer", 1, true, true);
     column.addFeedStream(gasToDebutanizerStream, 1);
     ((Condenser) column.getCondenser()).setRefluxRatio(0.1);
     ((Condenser) column.getCondenser()).setTotalCondenser(true);

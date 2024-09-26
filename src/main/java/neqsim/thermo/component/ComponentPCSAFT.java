@@ -38,13 +38,13 @@ public class ComponentPCSAFT extends ComponentSrk {
    * Constructor for ComponentPCSAFT.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentPCSAFT(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentPCSAFT(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
   /**
@@ -79,16 +79,16 @@ public class ComponentPCSAFT extends ComponentSrk {
   /** {@inheritDoc} */
   @Override
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int type) {
+      int initType) {
     setdSAFTi(getSigmaSAFTi() * (1.0 - 0.12 * Math.exp(-3.0 * getEpsikSAFT() / temperature)));
-    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
+    super.init(temperature, pressure, totalNumberOfMoles, beta, initType);
   }
 
   /** {@inheritDoc} */
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
-      int numberOfComponents, int type) {
-    super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, type);
+      int numberOfComponents, int initType) {
+    super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, initType);
     setDnSAFTdi(calcdnSAFTdi(phase, numberOfComponents, temp, pres));
     setDghsSAFTdi(calcdghsSAFTdi(phase, numberOfComponents, temp, pres));
     setDlogghsSAFTdi(1.0 / ((PhasePCSAFT) phase).getGhsSAFT() * getDghsSAFTdi());

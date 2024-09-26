@@ -11,6 +11,7 @@ import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -59,23 +60,9 @@ public class GasTurbine extends TwoPortEquipment {
     airThermoSystem.createDatabase(true);
     // airThermoSystem.display();
     airStream = new Stream("airStream", airThermoSystem);
-    airStream.setPressure(1.01325);
+    airStream.setPressure(ThermodynamicConstantsInterface.referencePressure);
     airStream.setTemperature(288.15, "K");
     airCompressor = new Compressor("airCompressor", airStream);
-  }
-
-  /**
-   * <p>
-   * Constructor for GasTurbine.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public GasTurbine(StreamInterface inletStream) {
-    this();
-    setInletStream(inletStream);
   }
 
   /**
@@ -91,13 +78,7 @@ public class GasTurbine extends TwoPortEquipment {
     super(name, inletStream);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a
-   *         {@link neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign}
-   *         object
-   */
+  /** {@inheritDoc} */
   @Override
   public CompressorMechanicalDesign getMechanicalDesign() {
     return new CompressorMechanicalDesign(this);
@@ -132,6 +113,7 @@ public class GasTurbine extends TwoPortEquipment {
    * Setter for the field <code>inletStream</code>.
    * </p>
    */
+  @Override
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
     try {
@@ -146,7 +128,7 @@ public class GasTurbine extends TwoPortEquipment {
   public void run(UUID id) {
     thermoSystem = inStream.getThermoSystem().clone();
     airStream.setFlowRate(thermoSystem.getFlowRate("mole/sec") * airGasRatio, "mole/sec");
-    airStream.setPressure(1.01325);
+    airStream.setPressure(ThermodynamicConstantsInterface.referencePressure);
     airStream.run(id);
 
     airCompressor.setInletStream(airStream);
@@ -181,7 +163,7 @@ public class GasTurbine extends TwoPortEquipment {
     locHeater.displayResult();
 
     Expander expander = new Expander("expander", locHeater.getOutletStream());
-    expander.setOutletPressure(1.01325);
+    expander.setOutletPressure(ThermodynamicConstantsInterface.referencePressure);
     expander.run(id);
 
     Cooler cooler1 = new Cooler("cooler1", expander.getOutletStream());
@@ -196,12 +178,11 @@ public class GasTurbine extends TwoPortEquipment {
   }
 
   /**
-   *
-   *
    * <p>
-   * calcIdealAirGasRatio
+   * Calculates ideal air fuel ratio [kg air/kg fuel].
    * </p>
-   * Calculates ideal air fuel ratio [kg air/kg fuel]
+   *
+   * @return ideal air fuel ratio [kg air/kg fuel]
    */
   public double calcIdealAirFuelRatio() {
     thermoSystem = inStream.getThermoSystem().clone();
@@ -220,8 +201,8 @@ public class GasTurbine extends TwoPortEquipment {
         elementsH += thermoSystem.getComponent(i).getz()
             * thermoSystem.getComponent(i).getElements().getNumberOfElements("H");
       }
-
     }
+
     if (sumHC < 1e-100) {
       return 0.0;
     } else {
@@ -235,5 +216,4 @@ public class GasTurbine extends TwoPortEquipment {
     double AFR = A * (32.0 + 3.76 * 28.0) / 1000.0 / molMassHC * wtFracHC;
     return AFR;
   }
-
 }

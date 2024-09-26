@@ -339,6 +339,7 @@ public abstract class PhysicalProperties
   }
 
   /** {@inheritDoc} */
+  @Override
   public double getDiffusionCoefficient(int i, int j) {
     return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(i, j);
   }

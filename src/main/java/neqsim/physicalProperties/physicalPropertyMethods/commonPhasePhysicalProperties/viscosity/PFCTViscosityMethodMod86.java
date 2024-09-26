@@ -1,5 +1,6 @@
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
 
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -14,8 +15,12 @@ import neqsim.thermo.system.SystemSrkEos;
 public class PFCTViscosityMethodMod86 extends Viscosity {
   private static final long serialVersionUID = 1000;
 
-  // SystemInterface referenceSystem = new SystemBWRSEos(273.15, 1.01325);
-  SystemInterface referenceSystem = new SystemSrkEos(273.0, 1.01325);
+  // SystemInterface referenceSystem = new SystemBWRSEos(273.15,
+  // ThermodynamicConstantsInterface.referencePressure);
+  SystemInterface referenceSystem =
+      new SystemSrkEos(273.0, ThermodynamicConstantsInterface.referencePressure);
+
+  // todo: is this parameter required?
   int phaseTypeNumb = 1;
   double[] GVcoef = {-2.090975e5, 2.647269e5, -1.472818e5, 4.716740e4, -9.491872e3, 1.219979e3,
       -9.627993e1, 4.274152, -8.141531e-2};
@@ -113,6 +118,7 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
     referenceSystem.setPressure(phase.getPhase().getPressure()
         * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix);
     referenceSystem.init(1);
+    // todo: mixing phasetype and phase index?
     // double molDens = 1.0 /
     // referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 100.0;
     double molDens = 1.0 / referenceSystem.getLowestGibbsEnergyPhase().getMolarVolume() * 100.0;
@@ -154,6 +160,7 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
     // System.out.println("ref pres " + pres);
     referenceSystem.init(1);
     // referenceSystem.display();
+    // todo: mixing phasetype and phase index?
     // double molDens = 1.0 /
     // referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 100.0;
     double molDens = 1.0 / referenceSystem.getLowestGibbsEnergyPhase().getMolarVolume() * 100.0; // mol/dm^3

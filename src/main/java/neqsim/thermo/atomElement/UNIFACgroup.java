@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifac;
 
@@ -27,7 +28,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   double QComp = 0.0;
   double QMix = 0.0;
   public double[] QMixdN = null; // , xMixdN = null;
-  double[] lnGammaMixdn = new double[MAX_NUMBER_OF_COMPONENTS];
+  double[] lnGammaMixdn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   double lnGammaComp = 0.0;
   double lnGammaMix = 0.0;
   double lnGammaCompdT = 0.0;
@@ -236,6 +237,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
 
   /** {@inheritDoc} */
   // @Override
+  @Override
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
@@ -283,7 +285,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
   /*
    * public double calcXMix(PhaseGEUnifac phase) { double temp = 0.0, temp2 = 0.0, tempVal = 0.0;
-   * 
+   *
    * for (int j = 0; j < phase.getNumberOfComponents(); j++) { for (int i = 0; i <
    * ((ComponentGEUnifac) phase.getComponent(j)).getNumberOfUNIFACgroups(); i++) { tempVal =
    * phase.getComponent(j).getNumberOfMolesInPhase() * ((ComponentGEUnifac)
@@ -353,7 +355,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseGEUnifac} object
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] calcQMixdN(PhaseGEUnifac phase) {
     setQMixdN(new double[phase.getNumberOfComponents()]);
@@ -408,7 +410,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
   /*
    * public double getXMixdN(int comp) { return xMixdN[comp]; }
-   * 
+   *
    * public void setXMixdN(double[] xMixdN) { this.xMixdN = xMixdN; }
    */
 

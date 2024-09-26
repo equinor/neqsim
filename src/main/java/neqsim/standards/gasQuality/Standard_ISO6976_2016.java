@@ -18,6 +18,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
 
   // metering conditions
 
+  // ThermodynamicConstantsInterface.R
   double R = 8.3144621;
 
   double Zmix0 = 1.0;
@@ -240,7 +241,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String returnParameter, java.lang.String returnUnit) {
+  public double getValue(String returnParameter, String returnUnit) {
     checkReferenceCondition();
     if (returnParameter.equals("GCV")) {
       returnParameter = "SuperiorCalorificValue";

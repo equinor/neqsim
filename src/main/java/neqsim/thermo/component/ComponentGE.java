@@ -12,10 +12,11 @@ import neqsim.thermo.phase.PhaseGE;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * Abstract class ComponentGE.
  *
  * @author Even Solbraa
  */
-abstract class ComponentGE extends Component implements ComponentGEInterface {
+public abstract class ComponentGE extends Component implements ComponentGEInterface {
   private static final long serialVersionUID = 1000;
 
   protected double gamma = 0;
@@ -32,13 +33,13 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
    * Constructor for ComponentGE.
    * </p>
    *
-   * @param component_name a {@link java.lang.String} object
-   * @param moles a double
-   * @param molesInPhase a double
-   * @param compnumber a int
+   * @param name Name of component.
+   * @param moles Total number of moles of component.
+   * @param molesInPhase Number of moles in phase.
+   * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentGE(String component_name, double moles, double molesInPhase, int compnumber) {
-    super(component_name, moles, molesInPhase, compnumber);
+  public ComponentGE(String name, double moles, double molesInPhase, int compIndex) {
+    super(name, moles, molesInPhase, compIndex);
   }
 
   /** {@inheritDoc} */

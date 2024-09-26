@@ -175,7 +175,7 @@ public class waterDegasserTest {
      * heater_TP_setter_main_stream.setOutTemperature(77.92657470703125, "C");
      * heater_TP_setter_main_stream.run();
      * System.out.println(heater_TP_setter_main_stream.getOutStream().getFlowRate( "kg/hr"));
-     * 
+     *
      * neqsim.thermo.system.SystemSrkCPAstatoil fluid_test_separator = new
      * neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
      * fluid_test_separator.addComponent("water", 0.15);
@@ -215,32 +215,31 @@ public class waterDegasserTest {
      * 036010742188/1000,608 .036010742188/(1000*0.642772477456171));
      * fluid_test_separator.setMixingRule(10); fluid_test_separator.setMultiPhaseCheck(true);
      * fluid_test_separator.init(0);
-     * 
+     *
      * neqsim.processSimulation.processEquipment.stream.Stream inlet_stream_test_sep = new
      * neqsim.processSimulation.processEquipment.stream.Stream(
      * "TEST_SEPARATOR_INLET,fluid_test_separator", fluid_test_separator);
      * inlet_stream_test_sep.setTemperature(39.92721557617188, "C");
      * inlet_stream_test_sep.setPressure(1.4343990154266357, "bara");
      * inlet_stream_test_sep.setFlowRate(472.5621656362427, "kg/hr"); inlet_stream_test_sep.run();
-     * 
+     *
      * neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator test_separator = new
-     * neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-     * inlet_stream_test_sep); test_separator.setName("TEST_SEPARATOR"); test_separator.run();
-     * 
+     * neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator("TEST_SEPARATOR",
+     * inlet_stream_test_sep); test_separator.run();
+     *
      * neqsim.processSimulation.processEquipment.heatExchanger.Heater heater_TP_setter_test_stream =
      * new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
      * "TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM", test_separator.getWaterOutStream());
      * heater_TP_setter_test_stream.setOutPressure(6.22176469039917, "bara");
      * heater_TP_setter_test_stream.setOutTemperature(77.92657470703125, "C");
      * heater_TP_setter_test_stream.run();
-     * 
+     *
      * neqsim.processSimulation.processEquipment.mixer.StaticMixer mixing_degasser = new
-     * neqsim.processSimulation.processEquipment.mixer.StaticMixer();
-     * mixing_degasser.setName("MIXING_BEFORE_THE_DEGASSER");
+     * neqsim.processSimulation.processEquipment.mixer.StaticMixer(MIXING_BEFORE_THE_DEGASSER);
      * mixing_degasser.addStream(heater_TP_setter_main_stream.getOutStream());
      * mixing_degasser.addStream(heater_TP_setter_test_stream.getOutStream());
      * mixing_degasser.run();
-     * 
+     *
      * System.out.println(mixing_degasser.getOutStream().getFlowRate("kg/hr")); // Should be arount
      * 33946.08070091751
      */

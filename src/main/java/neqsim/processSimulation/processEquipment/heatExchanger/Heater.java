@@ -7,10 +7,11 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import java.util.UUID;
-
+import com.google.gson.GsonBuilder;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processSimulation.util.monitor.HeaterResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -43,29 +44,6 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   protected double lastOutTemperature = 0.0;
   protected double lastDuty = 0.0;
   protected double lastPressureDrop = 0.0;
-
-  /**
-   * <p>
-   * Constructor for Heater.
-   * </p>
-   */
-  @Deprecated
-  public Heater() {
-    super("Heater");
-  }
-
-  /**
-   * <p>
-   * Constructor for Heater.
-   * </p>
-   *
-   * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public Heater(StreamInterface inStream) {
-    this("Heater", inStream);
-  }
 
   /**
    * Constructor for Heater.
@@ -155,7 +133,6 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   public boolean needRecalculation() {
     if (inStream == null) {
       return true;
-
     }
     if (inStream.getFluid().getTemperature() == lastTemperature
         && inStream.getFluid().getPressure() == lastPressure
@@ -219,6 +196,20 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     lastOutTemperature = temperatureOut;
     lastPressureDrop = pressureDrop;
     setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (getCalculateSteadyState()) {
+      run(id);
+      increaseTime(dt);
+    } else {
+      inStream.setPressure(outStream.getPressure());
+      inStream.run();
+      run(id);
+      increaseTime(dt);
+    }
   }
 
   /** {@inheritDoc} */
@@ -356,5 +347,11 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
 
     return outStream.getThermoSystem().getExergy(surroundingTemperature, unit)
         - inStream.getThermoSystem().getExergy(surroundingTemperature, unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new HeaterResponse(this));
   }
 }

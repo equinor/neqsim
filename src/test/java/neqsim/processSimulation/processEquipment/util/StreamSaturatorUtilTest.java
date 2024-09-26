@@ -21,8 +21,7 @@ public class StreamSaturatorUtilTest extends neqsim.NeqSimTest {
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("water", 1.0);
 
-    Stream inletStream = new Stream("inletStream", testSystem);
-    inletStream.setName("inlet stream");
+    Stream inletStream = new Stream("inlet stream", testSystem);
     inletStream.setPressure(pressure_inlet, "bara");
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
@@ -36,7 +35,6 @@ public class StreamSaturatorUtilTest extends neqsim.NeqSimTest {
     assertEquals(0.0012319218375683974,
         streamSaturator.getOutletStream().getFluid().getPhase(0).getComponent("water").getx(),
         1e-16);
-
   }
 
   @Test
@@ -68,8 +66,7 @@ public class StreamSaturatorUtilTest extends neqsim.NeqSimTest {
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("water", 1.0);
 
-    Stream inletStream = new Stream("inletStream", testSystem);
-    inletStream.setName("inlet stream");
+    Stream inletStream = new Stream("inlet stream", testSystem);
     inletStream.setPressure(pressure_inlet, "bara");
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");

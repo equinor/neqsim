@@ -40,8 +40,7 @@ public class SystemPrMathiasCopeman extends SystemPrEos {
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemPrMathiasCopeman(double T, double P, boolean checkForSolids) {
-    super(T, P);
-    this.solidPhaseCheck = checkForSolids;;
+    super(T, P, checkForSolids);
     attractiveTermNumber = 13;
     modelName = "Mathias-Copeman-PR-EOS";
   }
@@ -55,10 +54,6 @@ public class SystemPrMathiasCopeman extends SystemPrEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    // for(int i = 0; i < numberOfPhases; i++) {
-    // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-    // }
 
     return clonedSystem;
   }

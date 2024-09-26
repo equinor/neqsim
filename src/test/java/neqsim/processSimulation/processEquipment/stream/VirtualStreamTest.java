@@ -24,8 +24,7 @@ public class VirtualStreamTest {
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("ethane", 100.0);
     processOps = new ProcessSystem();
-    inletStream = new Stream("inletStream", testSystem);
-    inletStream.setName("inlet stream");
+    inletStream = new Stream("inlet stream", testSystem);
     inletStream.setPressure(pressure_inlet, "bara");
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");

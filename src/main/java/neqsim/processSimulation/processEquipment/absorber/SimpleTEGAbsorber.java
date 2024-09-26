@@ -13,7 +13,6 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -48,14 +47,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * <p>
    * Constructor for SimpleTEGAbsorber.
    * </p>
-   */
-  @Deprecated
-  public SimpleTEGAbsorber() {}
-
-  /**
-   * <p>
-   * Constructor for SimpleTEGAbsorber.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -68,7 +59,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   public void addStream(StreamInterface newStream) {
     streams.add(newStream);
     if (numberOfInputStreams == 0) {
-      mixedStream = (Stream) streams.get(0).clone();
+      mixedStream = streams.get(0).clone(this.getName() + " mixed stream");
       mixedStream.getThermoSystem().setNumberOfPhases(2);
       mixedStream.getThermoSystem().init(0);
       mixedStream.getThermoSystem().init(3);
@@ -87,8 +78,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    */
   public void addGasInStream(StreamInterface newStream) {
     // TODO: fail if gasInStream is not null?
-    gasInStream = (Stream) newStream;
-    gasOutStream = (Stream) newStream.clone();
+    gasInStream = newStream;
+    gasOutStream = newStream.clone();
     addStream(newStream);
   }
 
@@ -102,8 +93,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    */
   public void addSolventInStream(StreamInterface newStream) {
     // TODO: fail if solventInStream is not null?
-    solventInStream = (Stream) newStream;
-    solventOutStream = (Stream) newStream.clone();
+    solventInStream = newStream;
+    solventOutStream = newStream.clone();
     addStream(newStream);
     solventStreamNumber = streams.size() - 1;
   }
@@ -118,7 +109,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    */
   public void replaceSolventInStream(StreamInterface newStream) {
     // TODO: fails if solventStreamNumber is 0, i.e. no solventinstream set?
-    solventInStream = (Stream) newStream;
+    solventInStream = newStream;
     streams.set(solventStreamNumber, solventInStream);
   }
 
@@ -369,7 +360,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       // System.out.println("total moles water " +
       // mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles());
       StreamInterface newMixedStream = mixedStream.clone();
-      newMixedStream.setName("test");
       newMixedStream.getThermoSystem().addComponent("water", -molesWaterToMove, 0);
       newMixedStream.getThermoSystem().addComponent("water", molesWaterToMove, 1);
       newMixedStream.getThermoSystem().initBeta();
@@ -423,13 +413,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     // getSolventOutStream().getFlowRate("kg/hr"));
   }
 
-  /**
-   * <p>
-   * getGasLoadFactor.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getGasLoadFactor() {
     double intArea = 3.14 * getInternalDiameter() * getInternalDiameter() / 4.0;
     double vs = getGasOutStream().getThermoSystem().getFlowRate("m3/sec") / intArea;

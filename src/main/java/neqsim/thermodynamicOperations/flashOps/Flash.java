@@ -9,6 +9,7 @@ package neqsim.thermodynamicOperations.flashOps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 
@@ -17,7 +18,7 @@ import neqsim.thermodynamicOperations.BaseOperation;
  *
  * @author Even Solbraa
  */
-abstract class Flash extends BaseOperation {
+public abstract class Flash extends BaseOperation {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Flash.class);
 
@@ -46,7 +47,7 @@ abstract class Flash extends BaseOperation {
   double[] tm;
   int lowestGibbsEnergyPhase = 0;
   sysNewtonRhapsonTPflash secondOrderSolver;
-  /** Set true to check for solid phase and do solid phase calculations. */
+  /** Set true to do solid phase check and calculations */
   protected boolean solidCheck = false;
   protected boolean stabilityCheck = false;
   protected boolean findLowestGibbsPhaseIsChecked = false;
@@ -342,18 +343,24 @@ abstract class Flash extends BaseOperation {
       system.setNumberOfPhases(1);
 
       if (lowestGibbsEnergyPhase == 0) {
-        system.setPhaseType(0, 1);
+        system.setPhaseType(0, PhaseType.byValue(1));
       } else {
-        system.setPhaseType(0, 0);
+        system.setPhaseType(0, PhaseType.byValue(0));
       }
       system.init(1);
       if (solidCheck && !system.doMultiPhaseCheck()) {
         this.solidPhaseFlash();
       }
     } else {
+      RachfordRice rachfordRice = new RachfordRice();
       try {
-        system.calcBeta();
+        system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
       } catch (Exception ex) {
+        if (!Double.isNaN(rachfordRice.getBeta()[0])) {
+          system.setBeta(rachfordRice.getBeta()[0]);
+        } else {
+          system.setBeta(Double.NaN);
+        }
         logger.error(ex.getMessage(), ex);
       }
       system.calc_x_y();

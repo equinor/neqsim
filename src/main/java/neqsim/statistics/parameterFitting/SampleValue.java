@@ -48,7 +48,7 @@ public class SampleValue implements Cloneable {
    *
    * @param sampleValue a double
    * @param standardDeviation a double
-   * @param dependentValues an array of {@link double} objects
+   * @param dependentValues an array of type double
    */
   public SampleValue(double sampleValue, double standardDeviation, double[] dependentValues) {
     this.dependentValues = new double[dependentValues.length];
@@ -64,8 +64,8 @@ public class SampleValue implements Cloneable {
    *
    * @param sampleValue a double
    * @param standardDeviation a double
-   * @param dependentValues an array of {@link double} objects
-   * @param standardDeviations an array of {@link double} objects
+   * @param dependentValues an array of type double
+   * @param standardDeviations an array of type double
    */
   public SampleValue(double sampleValue, double standardDeviation, double[] dependentValues,
       double[] standardDeviations) {
@@ -165,7 +165,7 @@ public class SampleValue implements Cloneable {
    * Getter for the field <code>dependentValues</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of type double
    */
   public double[] getDependentValues() {
     return dependentValues;
@@ -188,7 +188,7 @@ public class SampleValue implements Cloneable {
    * Setter for the field <code>dependentValues</code>.
    * </p>
    *
-   * @param vals an array of {@link double} objects
+   * @param vals an array of type double
    */
   public void setDependentValues(double[] vals) {
     System.arraycopy(vals, 0, this.dependentValues, 0, dependentValues.length);
