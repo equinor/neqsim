@@ -4,7 +4,6 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.TwoPortEquipment;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 
@@ -35,15 +34,6 @@ public class WellFlow extends TwoPortEquipment {
    */
   public WellFlow(String name) {
     super(name);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setInletStream(StreamInterface stream) {
-    super.setInletStream(stream);
-    StreamInterface outStream = stream.clone();
-    outStream.setName("outStream");
-    super.setOutletStream(outStream);
   }
 
   /** {@inheritDoc} */
@@ -96,7 +86,9 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * <p>Getter for the field <code>wellProductionIndex</code>.</p>
+   * <p>
+   * Getter for the field <code>wellProductionIndex</code>.
+   * </p>
    *
    * @return a double
    */
@@ -105,7 +97,9 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * <p>Setter for the field <code>wellProductionIndex</code>.</p>
+   * <p>
+   * Setter for the field <code>wellProductionIndex</code>.
+   * </p>
    *
    * @param wellProductionIndex a double
    */
