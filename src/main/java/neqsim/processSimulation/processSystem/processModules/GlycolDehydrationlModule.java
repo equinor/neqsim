@@ -158,14 +158,9 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   public void initializeStreams() {
     isInitializedStreams = true;
     try {
-      this.gasStreamFromAbsorber = this.gasStreamToAbsorber.clone();
-      this.gasStreamFromAbsorber.setName("Stream from TEG Absorber");
-
-      this.gasFromStripper = this.gasStreamToAbsorber.clone();
-      this.gasFromStripper.setName("Gas stream from Stripper");
-
-      this.leanTEGStreamToAbsorber = this.gasStreamToAbsorber.clone();
-      this.leanTEGStreamToAbsorber.setName("lean TEG to absorber");
+      this.gasStreamFromAbsorber = this.gasStreamToAbsorber.clone("Stream from TEG Absorber");
+      this.gasFromStripper = this.gasStreamToAbsorber.clone("Gas stream from Stripper");
+      this.leanTEGStreamToAbsorber = this.gasStreamToAbsorber.clone("lean TEG to absorber");
 
       this.leanTEGStreamToAbsorber.getThermoSystem().setEmptyFluid();
       this.leanTEGStreamToAbsorber.getThermoSystem().addComponent("water",

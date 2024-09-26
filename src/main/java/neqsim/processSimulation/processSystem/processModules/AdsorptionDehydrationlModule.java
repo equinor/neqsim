@@ -37,7 +37,9 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
   double adsorbentFillingHeight = 3.0;
 
   /**
-   * <p>Constructor for AdsorptionDehydrationlModule.</p>
+   * <p>
+   * Constructor for AdsorptionDehydrationlModule.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -108,8 +110,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
       for (int i = 0; i < numberOfAdsorptionBeds; i++) {
         adsorber[i] = new SimpleAdsorber("SimpleAdsorber_" + i + 1, gasStreamToAdsorber);
       }
-      this.gasStreamFromAdsorber = this.gasStreamToAdsorber.clone();
-      this.gasStreamFromAdsorber.setName("Stream from Adsorber");
+      this.gasStreamFromAdsorber = this.gasStreamToAdsorber.clone("Stream from Adsorber");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -162,8 +163,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
 
     double qa = designFlow / (numberOfAdsorptionBeds - 1.0) / 1440.0
         * (ThermodynamicConstantsInterface.referencePressure / designAdsorptionPressure)
-        * (designAdsorptionTemperature / 288.15)
-        * tempStream.getThermoSystem().getPhase(0).getZ();
+        * (designAdsorptionTemperature / 288.15) * tempStream.getThermoSystem().getPhase(0).getZ();
     adsorberInternalDiameter = Math.sqrt(4.0 * qa / Math.PI / gasVelocity);
 
     double waterLoadingCycle = regenerationCycleTime * designFlow * 42.29489667
