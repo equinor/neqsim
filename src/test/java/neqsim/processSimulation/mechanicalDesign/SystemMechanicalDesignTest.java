@@ -78,8 +78,7 @@ public class SystemMechanicalDesignTest {
     ThrottlingValve valve2 = new ThrottlingValve("valve2", seprator2ndStage.getLiquidOutStream());
     valve2.setOutletPressure(2.7);
 
-    StreamInterface recircstream1 = valve2.getOutletStream().clone();
-    recircstream1.setName("oilRecirc1");
+    StreamInterface recircstream1 = valve2.getOutletStream().clone("oilRecirc1");
     recircstream1.setFlowRate(1e-6, "kg/hr");
 
     neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator3rdStage =
