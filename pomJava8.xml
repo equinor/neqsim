@@ -112,12 +112,6 @@
 			<version>1.0.4</version>
 		</dependency>
 		<dependency>
-			<groupId>org.ojalgo</groupId>
-			<artifactId>ojalgo</artifactId>
-			<version>48.4.2</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.10.1</version>
