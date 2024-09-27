@@ -5,8 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
-// import org.ejml.simple.SimpleMatrix;
-// import org.ejml.data.DenseMatrix64F;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingRule.CPAMixing;
@@ -22,95 +20,54 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
  */
 public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements PhaseCPAInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PhaseSrkCPA_proceduralMatrices.class);
 
   public CPAMixing cpaSelect = new CPAMixing();
   public CPAMixingInterface cpamix;
   double gcpavv = 0.0;
-
   double gcpavvv = 0.0;
-
   double gcpa = 0.0;
-
   double hcpatot = 1.0;
-
   double FCPA = 0.0;
-
   double dFCPAdTdV;
-
   double dFCPAdTdT = 0.0;
-
   double dFCPAdT = 0;
-
   double dFCPAdV = 0;
-
   double dFCPAdVdV = 0.0;
-
   double dFCPAdVdVdV = 0.0;
-
   private double gcpav = 0.0;
   int cpaon = 1;
-
   int oldTotalNumberOfAccociationSites = 0;
-
   private int totalNumberOfAccociationSites = 0;
   int[][][] selfAccociationScheme = null;
   int[][][][] crossAccociationScheme = null;
   int[] moleculeNumber = null;
-
   int[] assSiteNumber = null;
-
   private double[][] gvector = null;
-
   private double[][] delta = null;
-
   private double[][] deltaNog = null;
-
   private double[][] deltadT = null;
-
   private double[][] deltadTdT = null;
-
   private double[][][] Klkni = null;
   private DMatrixRMaj KlkTVMatrix = null;
-
   private DMatrixRMaj KlkTTMatrix = null;
-
   private DMatrixRMaj KlkTMatrix = null;
-
   private DMatrixRMaj udotTimesmMatrix = null;
-
   private DMatrixRMaj mVector = null;
-
   private DMatrixRMaj udotMatrix = null;
-
   private DMatrixRMaj uMatrix = null;
-
   private DMatrixRMaj QMatksiksiksi = null;
-
   private DMatrixRMaj KlkVVVMatrix = null;
-
   private DMatrixRMaj KlkVVMatrix = null;
-
   private DMatrixRMaj udotTimesmiMatrix = null;
-
   private DMatrixRMaj ksiMatrix = null;
-
   private DMatrixRMaj KlkMatrix = null;
-
   private DMatrixRMaj hessianMatrix = null;
-
   private DMatrixRMaj hessianInvers = null;
-
   private DMatrixRMaj KlkVMatrix = null;
-
   DMatrixRMaj corr2Matrix = null;
-
   DMatrixRMaj corr3Matrix = null;
-
   DMatrixRMaj corr4Matrix = null;
-
-  // DenseMatrix64F(getTotalNumberOfAccociationSites(),
-  // 1);
-  static Logger logger = LogManager.getLogger(PhaseSrkCPA_proceduralMatrices.class);
 
   /**
    * <p>
@@ -135,13 +92,6 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     // clonedPhase.cpamix = cpaSelect.getMixingRule(1, this);
 
     return clonedPhase;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setMixingRule(int type) {
-    super.setMixingRule(type);
-    cpamix = cpaSelect.getMixingRule(1, this);
   }
 
   /** {@inheritDoc} */
@@ -243,21 +193,6 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
       initCPAMatrix(initType);
       // hcpatotdT = calc_hCPAdT();
       // super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
-    }
-  }
-
-  /**
-   * <p>
-   * calcDelta.
-   * </p>
-   */
-  public void calcDelta() {
-    for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
-      for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
-        deltaNog[i][j] = cpamix.calcDeltaNog(assSiteNumber[i], assSiteNumber[j], moleculeNumber[i],
-            moleculeNumber[j], this, getTemperature(), getPressure(), numberOfComponents);
-        deltaNog[j][i] = deltaNog[i][j];
-      }
     }
   }
 
@@ -591,6 +526,28 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         temp2 += getComponent(compp).getNumberOfAssociationSites();
       }
       // assSites += getComponent(p).getNumberOfAssociationSites();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setMixingRule(int type) {
+    super.setMixingRule(type);
+    cpamix = cpaSelect.getMixingRule(1, this);
+  }
+
+  /**
+   * <p>
+   * calcDelta.
+   * </p>
+   */
+  public void calcDelta() {
+    for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
+      for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
+        deltaNog[i][j] = cpamix.calcDeltaNog(assSiteNumber[i], assSiteNumber[j], moleculeNumber[i],
+            moleculeNumber[j], this, getTemperature(), getPressure(), numberOfComponents);
+        deltaNog[j][i] = deltaNog[i][j];
+      }
     }
   }
 
