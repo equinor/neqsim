@@ -74,17 +74,15 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
    * Constructor for sysNewtonRhapsonPhaseEnvelope.
    * </p>
    */
-  public sysNewtonRhapsonPhaseEnvelope() {
-  }
+  public sysNewtonRhapsonPhaseEnvelope() {}
 
   /**
    * <p>
    * Constructor for sysNewtonRhapsonPhaseEnvelope.
    * </p>
    *
-   * @param system             a {@link neqsim.thermo.system.SystemInterface}
-   *                           object
-   * @param numberOfPhases     a int
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param numberOfPhases a int
    * @param numberOfComponents a int
    */
   public sysNewtonRhapsonPhaseEnvelope(SystemInterface system, int numberOfPhases,
@@ -182,7 +180,8 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     int speceq2 = 0;
 
     for (int i = 0; i < numberOfComponents + 2; i++) {
-      double testVal = Math.abs((Math.exp(u.get(i, 0)) - Math.exp(uold.get(i, 0))) / Math.exp(uold.get(i, 0)));
+      double testVal =
+          Math.abs((Math.exp(u.get(i, 0)) - Math.exp(uold.get(i, 0))) / Math.exp(uold.get(i, 0)));
 
       // the most sensitive variable is calculated not by the difference,
       // but from the sensibility vector in the original Michelsen code
@@ -266,8 +265,9 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
           + system.getPhase(1).getComponents()[i].getK() * dxidlnk[i];
     }
     for (int i = 0; i < numberOfComponents; i++) {
-      double dlnxdlnK = -1.0 / (1.0 + system.getBeta() * system.getPhase(0).getComponents()[i].getK()
-          - system.getBeta()) * system.getBeta() * system.getPhase(0).getComponents()[i].getK();
+      double dlnxdlnK =
+          -1.0 / (1.0 + system.getBeta() * system.getPhase(0).getComponents()[i].getK()
+              - system.getBeta()) * system.getBeta() * system.getPhase(0).getComponents()[i].getK();
       double dlnydlnK = 1.0 - 1.0
           / (system.getPhase(0).getComponents()[i].getK() * system.getBeta() + 1 - system.getBeta())
           * system.getBeta() * system.getPhase(0).getComponents()[i].getK();
@@ -645,7 +645,5 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     init();
 
     uold = u.copy();
-
   }
-
 }

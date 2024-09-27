@@ -21,32 +21,18 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
   double[] GVcoef = {-2.147621e5, 2.190461e5, -8.618097e4, 1.496099e4, -4.730660e2, -2.331178e2,
       3.778439e1, -2.320481, 5.311764e-2};
   double condRefA = -0.25276292;
-
   double condRefB = 0.33432859;
-
   double condRefC = 1.12;
-
   double condRefF = 168.0;
-
   double condRefE = 1.0;
-
   double condRefG = 0.0;
 
   double[] condRefJ = {-7.04036339907, 12.319512908, -8.8525979933e2, 72.835897919, 0.74421462902,
       -2.9706914540, 2.2209758501e3};
   double[] condRefK = {-8.55109, 12.5539, -1020.85, 238.394, 1.31563, -72.5759, 1411.6};
   double PCmix = 0.0;
-
   double TCmix = 0.0;
-
   double Mmix = 0.0;
-
-  /**
-   * <p>
-   * Constructor for PFCTConductivityMethodMod86.
-   * </p>
-   */
-  public PFCTConductivityMethodMod86() {}
 
   /**
    * <p>

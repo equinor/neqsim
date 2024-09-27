@@ -68,8 +68,8 @@ public class TEGdehydrationProcessDistillationAaHa {
         new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser =
-        new HydrateEquilibriumTemperatureAnalyser(waterSaturatedFeedGas);
-    hydrateTAnalyser.setName("hydrate temperature analyser");
+        new HydrateEquilibriumTemperatureAnalyser("hydrate temperature analyser",
+            waterSaturatedFeedGas);
 
     neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
     feedTEG.setMolarComposition(
@@ -97,13 +97,12 @@ public class TEGdehydrationProcessDistillationAaHa {
 
     Stream richTEG = new Stream("rich TEG from absorber", absorber.getSolventOutStream());
     /*
-     * WaterDewPointAnalyser waterDewPointAnalyser = new WaterDewPointAnalyser(dehydratedGas);
-     * waterDewPointAnalyser.setName("water dew point analyser");
+     * WaterDewPointAnalyser waterDewPointAnalyser = new
+     * WaterDewPointAnalyser("water dew point analyser", dehydratedGas);
      */
     HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser =
-        new HydrateEquilibriumTemperatureAnalyser(dehydratedGas);
+        new HydrateEquilibriumTemperatureAnalyser("water dew point analyser", dehydratedGas);
     waterDewPointAnalyser.setReferencePressure(70.0);
-    waterDewPointAnalyser.setName("water dew point analyser");
 
     ThrottlingValve glycol_flash_valve = new ThrottlingValve("Rich TEG HP flash valve", richTEG);
     glycol_flash_valve.setOutletPressure(5.5);
@@ -135,8 +134,7 @@ public class TEGdehydrationProcessDistillationAaHa {
     heatEx.setUAvalue(390.0);
 
     ThrottlingValve glycol_flash_valve2 =
-        new ThrottlingValve("LP flash valve", heatEx.getOutStream(0));
-    glycol_flash_valve2.setName("Rich TEG LP flash valve");
+        new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0));
     glycol_flash_valve2.setOutletPressure(1.23);
 
     neqsim.thermo.system.SystemInterface stripGas = feedGas.clone();
@@ -148,8 +146,7 @@ public class TEGdehydrationProcessDistillationAaHa {
     strippingGas.setTemperature(80.0, "C");
     strippingGas.setPressure(1.02, "bara");
 
-    Stream gasToReboiler = strippingGas.clone();
-    gasToReboiler.setName("gas to reboiler");
+    Stream gasToReboiler = strippingGas.clone("gas to reboiler");
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 0);
@@ -174,8 +171,8 @@ public class TEGdehydrationProcessDistillationAaHa {
     stripper.setNumberOfStages(4);
     stripper.setStageEfficiency(0.5);
     /*
-     * DistillationColumn stripper = new DistillationColumn(3, false, false);
-     * stripper.setName("TEG stripper"); stripper.addFeedStream(column.getLiquidOutStream(), 2);
+     * DistillationColumn stripper = new DistillationColumn("TEG stripper",3, false, false);
+     * stripper.addFeedStream(column.getLiquidOutStream(), 2);
      * stripper.getTray(0).addStream(strippingGas);
      */
     Recycle recycleGasFromStripper = new Recycle("stripping gas recirc");

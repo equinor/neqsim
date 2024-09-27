@@ -37,13 +37,6 @@ public class ChungViscosityMethod extends Viscosity {
    * <p>
    * Constructor for ChungViscosityMethod.
    * </p>
-   */
-  public ChungViscosityMethod() {}
-
-  /**
-   * <p>
-   * Constructor for ChungViscosityMethod.
-   * </p>
    *
    * @param gasPhase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
@@ -70,8 +63,9 @@ public class ChungViscosityMethod extends Viscosity {
     for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
       tempVar = 0;
       for (int j = 0; j < gasPhase.getPhase().getNumberOfComponents(); j++) {
-        tempVar2 = Math.pow(1.0 + Math.sqrt(pureComponentViscosity[i] / pureComponentViscosity[j])
-            * Math.pow(gasPhase.getPhase().getComponents()[j].getMolarMass()
+        tempVar2 = Math
+            .pow(1.0 + Math.sqrt(pureComponentViscosity[i] / pureComponentViscosity[j])
+                * Math.pow(gasPhase.getPhase().getComponents()[j].getMolarMass()
                     / gasPhase.getPhase().getComponents()[i].getMolarMass(), 0.25),
                 2.0)
             / Math.pow(8.0 * (1.0 + gasPhase.getPhase().getComponents()[i].getMolarMass()

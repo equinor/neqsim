@@ -20,13 +20,6 @@ abstract class Diffusivity extends
    * <p>
    * Constructor for Diffusivity.
    * </p>
-   */
-  public Diffusivity() {}
-
-  /**
-   * <p>
-   * Constructor for Diffusivity.
-   * </p>
    *
    * @param liquidPhase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

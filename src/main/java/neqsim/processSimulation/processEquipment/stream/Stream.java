@@ -18,6 +18,7 @@ import neqsim.standards.gasQuality.Standard_ISO6976;
 import neqsim.standards.oilQuality.Standard_ASTM_D6377;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * <p>
@@ -33,6 +34,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
   protected SystemInterface thermoSystem;
 
+  // todo: is streamNumber ever anything besides 0 and 1? consider removing along with
+  // numberOfStreams?
   protected int streamNumber = 0;
   /** Constant <code>numberOfStreams=0</code>. */
   protected static int numberOfStreams = 0;
@@ -54,10 +57,18 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
+   * <p>
    * Constructor for Stream.
+   * </p>
+   *
+   * <p>
+   * NB! This construct uses the input stream object internally, i.e., it is not cloned. Use
+   * <code>streamObject.clone(newName)</code> rather than
+   * <code>new Stream(newName,streamObject)</code>
+   * </p>
    *
    * @param name name of stream
-   * @param stream input stream
+   * @param stream Stream to use as internal Stream.
    */
   public Stream(String name, StreamInterface stream) {
     this(name);
@@ -71,8 +82,12 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * Constructor for Stream.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+   * <p>
+   * NB! This construct uses the input thermoSystem object internally, i.e., it is not cloned.
+   * </p>
+   *
+   * @param name name of stream
+   * @param thermoSystem System to use as internal System.
    */
   public Stream(String name, SystemInterface thermoSystem) {
     super(name);
@@ -107,7 +122,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   @Override
   public double getHydrateEquilibriumTemperature() {
     if (!getFluid().getPhase(0).hasComponent("water")) {
-      System.out.println("ny hydrate: no water in stream: " + name);
+      logger.info("no hydrate: no water in stream: " + name);
       return 0.0;
     }
     try {
@@ -170,6 +185,23 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     return clonedSystem;
   }
 
+  /**
+   * Clone Stream object and give it a new name.
+   *
+   * @param name Name to set for the cloned object
+   * @return Cloned Stream object
+   */
+  @Override
+  public Stream clone(String name) {
+    if (this.getName() == name) {
+      throw new RuntimeException(
+          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+    }
+    Stream s = this.clone();
+    s.setName(name);
+    return s;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getTemperature() {
@@ -180,18 +212,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   @Override
   public double getTemperature(String unit) {
     return getFluid().getTemperature(unit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getPressure() {
-    return getFluid().getPressure();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getPressure(String unit) {
-    return getFluid().getPressure(unit);
   }
 
   /** {@inheritDoc} */
@@ -233,8 +253,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         this.thermoSystem =
             thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("aqueous"));
       } else {
-        System.out.println("no phase of type " + phaseTypeName);
-        System.out.println("...returning empty system ");
+        logger.warn("no phase of type " + phaseTypeName);
+        logger.warn("...returning empty system ");
         setEmptyThermoSystem(thermoSystem);
       }
       return;
@@ -242,8 +262,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     if (thermoSystem.hasPhaseType(phaseTypeName)) {
       this.thermoSystem = thermoSystem.phaseToSystem(phaseTypeName);
     } else {
-      System.out.println("no phase of type " + phaseTypeName);
-      System.out.println("...returning empty system ");
+      logger.warn("no phase of type " + phaseTypeName);
+      logger.warn("...returning empty system ");
       setEmptyThermoSystem(thermoSystem);
     }
   }
@@ -314,7 +334,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    // System.out.println("start flashing stream... " + streamNumber);
+    // logger.info("start flashing stream... " + streamNumber);
     thermoSystem = getFluid().clone();
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -387,8 +407,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     if (stream != null) {
       stream.setFluid(thermoSystem);
     }
-    // System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
-    // System.out.println("beta: " + thermoSystem.getBeta());
+    // logger.info("number of phases: " + thermoSystem.getNumberOfPhases());
+    // logger.info("beta: " + thermoSystem.getBeta());
     setCalculationIdentifier(id);
   }
 
@@ -505,6 +525,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     try {
       ops.bubblePointPressureFlash(false);
     } catch (Exception ex) {
+      // todo: not swallow exception
     }
     return localSyst.getPressure();
   }
@@ -518,6 +539,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     try {
       ops.bubblePointPressureFlash(false);
     } catch (Exception ex) {
+      // todo: not swallow exception
     }
     return localSyst.getPressure(returnUnit);
   }
@@ -554,6 +576,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     // if(properties.containsKey(propertyName)) {
     // }
     // else
+
+    // todo: throw not implemented error
     return null;
   }
 
@@ -633,7 +657,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * @return a String object
    */
   public ArrayList<String[]> getReport() {
-    ArrayList<String[]> report = new ArrayList<String[]>();
     HashMap<String, String> gasprops = new HashMap<String, String>();
     ArrayList<String> phases = new ArrayList<String>();
 
@@ -650,8 +673,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       phases.add("aqueous");
     }
 
+    ArrayList<String[]> report = new ArrayList<String[]>();
     report.add(phases.toArray(new String[0]));
-
     report.add(new String[] {"temperature",
         Double.toString(getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
         neqsim.util.unit.Units.getSymbol("temperature")});

@@ -25,13 +25,6 @@ public class CO2waterPhysicalProperties
    * <p>
    * Constructor for CO2waterPhysicalProperties.
    * </p>
-   */
-  public CO2waterPhysicalProperties() {}
-
-  /**
-   * <p>
-   * Constructor for CO2waterPhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int

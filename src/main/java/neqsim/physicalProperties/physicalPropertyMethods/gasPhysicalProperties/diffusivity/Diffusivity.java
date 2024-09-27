@@ -26,13 +26,6 @@ public class Diffusivity extends
    * <p>
    * Constructor for Diffusivity.
    * </p>
-   */
-  public Diffusivity() {}
-
-  /**
-   * <p>
-   * Constructor for Diffusivity.
-   * </p>
    *
    * @param gasPhase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

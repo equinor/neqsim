@@ -25,13 +25,6 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements
    * <p>
    * Constructor for Diffusivity.
    * </p>
-   */
-  public Diffusivity() {}
-
-  /**
-   * <p>
-   * Constructor for Diffusivity.
-   * </p>
    *
    * @param phase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

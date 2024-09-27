@@ -27,13 +27,6 @@ public class Density extends GasPhysicalPropertyMethod
    * <p>
    * Constructor for Density.
    * </p>
-   */
-  public Density() {}
-
-  /**
-   * <p>
-   * Constructor for Density.
-   * </p>
    *
    * @param gasPhase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

@@ -48,10 +48,9 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     strippingGas.setTemperature(55.0, "C");
     strippingGas.setPressure(0.2, "barg");
 
-    Stream gasToReboiler = strippingGas.clone();
-    gasToReboiler.setName("gas to reboiler");
+    Stream gasToReboiler = strippingGas.clone("gas to reboiler");
 
-    Stream TEGtoRegenerator = new Stream("\"TEG to regenerator\"", feedTEG);
+    Stream TEGtoRegenerator = new Stream("TEG to regenerator", feedTEG);
     TEGtoRegenerator.setFlowRate(400.0, "kg/hr");
     TEGtoRegenerator.setTemperature(145.0, "C");
     TEGtoRegenerator.setPressure(0.2, "barg");

@@ -20,13 +20,12 @@
 		<checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
 	</properties>
 	<licenses>
-	  <license>
-		<name>Apache License, Version 2.0</name>
-		<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-		<distribution>repo</distribution>
-		<comments>A business-friendly OSS license</comments>
-	  </license>
-	</licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+		  	<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		  	<distribution>repo</distribution>
+		</license>
+	  </licenses>
 	<developers>
 		<developer>
 			<name>Even Solbraa</name>
@@ -116,86 +115,80 @@
 			<version>1.0.4</version>
 		</dependency>
 		<dependency>
-			<groupId>org.ojalgo</groupId>
-			<artifactId>ojalgo</artifactId>
-			<version>53.3.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.11.0</version>
 		</dependency>
 	</dependencies>
 	<profiles>
-  		<profile>
-   			<id>release</id>
-   			<build>
+		  <profile>
+			   <id>release</id>
+			   <build>
 				<plugins>
-	 				<plugin>
-	  					<groupId>org.sonatype.central</groupId>
-	  					<artifactId>central-publishing-maven-plugin</artifactId>
-	  					<version>0.6.0</version>
-	  					<extensions>true</extensions>
-	  					<configuration>
-	   						<publishingServerId>central</publishingServerId>
-	   						<autoPublish>true</autoPublish>
-	  					</configuration>
-	 				</plugin>
-	 				<plugin>
-	  					<groupId>org.apache.maven.plugins</groupId>
-	  					<artifactId>maven-source-plugin</artifactId>
-	  					<version>3.3.0</version>
-	  					<executions>
-	   						<execution>
+					 <plugin>
+						  <groupId>org.sonatype.central</groupId>
+						  <artifactId>central-publishing-maven-plugin</artifactId>
+						  <version>0.6.0</version>
+						  <extensions>true</extensions>
+						  <configuration>
+							   <publishingServerId>central</publishingServerId>
+							   <autoPublish>true</autoPublish>
+						  </configuration>
+					 </plugin>
+					 <plugin>
+						  <groupId>org.apache.maven.plugins</groupId>
+						  <artifactId>maven-source-plugin</artifactId>
+						  <version>3.3.0</version>
+						  <executions>
+							   <execution>
 								<id>attach-sources</id>
 								<phase>verify</phase>
 								<goals>
-		 							<goal>jar-no-fork</goal>
+									 <goal>jar-no-fork</goal>
 								</goals>
-	   						</execution>
-	  					</executions>
-	 				</plugin>
-	 				<plugin>
-	  					<groupId>org.apache.maven.plugins</groupId>
-	  					<artifactId>maven-javadoc-plugin</artifactId>
-	  					<version>3.10.0</version>
-	  					<executions>
-	   						<execution>
+							   </execution>
+						  </executions>
+					 </plugin>
+					 <plugin>
+						  <groupId>org.apache.maven.plugins</groupId>
+						  <artifactId>maven-javadoc-plugin</artifactId>
+						  <version>3.10.0</version>
+						  <executions>
+							   <execution>
 								<id>attach-javadoc</id>
 								<goals>
-		 							<goal>jar</goal>
+									 <goal>jar</goal>
 								</goals>
-	   						</execution>
+							   </execution>
 						</executions>
-	  					<configuration>
-	   						<doclint>none</doclint>
-	  					</configuration>
-	 				</plugin>
-	 				<plugin>
-	  					<groupId>org.apache.maven.plugins</groupId>
-	  					<artifactId>maven-gpg-plugin</artifactId>
-	  					<version>3.2.6</version>
-	  					<executions>
-	   						<execution>
+						  <configuration>
+							   <doclint>none</doclint>
+						  </configuration>
+					 </plugin>
+					 <plugin>
+						  <groupId>org.apache.maven.plugins</groupId>
+						  <artifactId>maven-gpg-plugin</artifactId>
+						  <version>3.2.6</version>
+						  <executions>
+							   <execution>
 								<id>sign-artifacts</id>
 								<phase>verify</phase>
 								<goals>
-		 							<goal>sign</goal>
+									 <goal>sign</goal>
 								</goals>
-	   						</execution>
-	  					</executions>
-	  					<configuration>
-	   						<gpgArguments>
+							   </execution>
+						  </executions>
+						  <configuration>
+							   <gpgArguments>
 								<arg>--pinentry-mode</arg>
 								<arg>loopback</arg>
-	   						</gpgArguments>
-	  					</configuration>
-	 				</plugin>
+							   </gpgArguments>
+						  </configuration>
+					 </plugin>
 				</plugins>
-   			</build>
-  		</profile>
- 	</profiles>
+			   </build>
+		  </profile>
+	 </profiles>
 	<build>
 		<plugins>
 			<plugin>

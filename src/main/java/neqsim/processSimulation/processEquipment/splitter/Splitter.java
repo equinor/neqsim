@@ -164,7 +164,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       splitStream = new Stream[splitNumber];
       try {
         for (int i = 0; i < splitNumber; i++) {
-          splitStream[i] = new Stream("Split Stream", inletStream.getThermoSystem().clone());
+          splitStream[i] = new Stream("Split Stream_" + i, inletStream.getThermoSystem().clone());
         }
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);

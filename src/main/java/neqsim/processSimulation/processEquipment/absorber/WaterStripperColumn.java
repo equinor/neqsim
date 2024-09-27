@@ -61,7 +61,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
   public void addStream(StreamInterface newStream) {
     streams.add(newStream);
     if (numberOfInputStreams == 0) {
-      mixedStream = streams.get(0).clone();
+      mixedStream = streams.get(0).clone(this.getName() + " mixed stream");
       mixedStream.getThermoSystem().setNumberOfPhases(2);
       mixedStream.getThermoSystem().init(0);
       mixedStream.getThermoSystem().init(3);
@@ -343,7 +343,6 @@ public class WaterStripperColumn extends SimpleAbsorber {
         // System.out.println("mole water to move " + molesWaterToMove);
 
         StreamInterface stream = mixedStream.clone();
-        stream.setName("test");
         stream.getThermoSystem().addComponent("water", molesWaterToMove, 0);
         stream.getThermoSystem().addComponent("water", -molesWaterToMove, 1);
         stream.getThermoSystem().initBeta();

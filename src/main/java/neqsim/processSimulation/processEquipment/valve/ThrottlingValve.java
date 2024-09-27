@@ -45,35 +45,13 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   private double Fp = 1.0;
 
   /**
-   * <p>
-   * Constructor for ThrottlingValve.
-   * </p>
-   */
-  public ThrottlingValve() {
-    this("ThrottlingValve");
-    setCalculateSteadyState(false);
-  }
-
-  /**
-   * <p>
-   * Constructor for ThrottlingValve.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public ThrottlingValve(StreamInterface inletStream) {
-    this("ThrottlingValve", inletStream);
-  }
-
-  /**
    * * Constructor for ThrottlingValve.
    *
    * @param name name of valve
    */
   public ThrottlingValve(String name) {
     super(name);
+    setCalculateSteadyState(false);
   }
 
   /**
@@ -86,7 +64,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    *        object
    */
   public ThrottlingValve(String name, StreamInterface inletStream) {
-    super(name);
+    this(name);
     setInletStream(inletStream);
   }
 
@@ -100,15 +78,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    */
   public double getDeltaPressure(String unit) {
     return inStream.getFluid().getPressure(unit) - thermoSystem.getPressure(unit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setInletStream(StreamInterface stream) {
-    super.setInletStream(stream);
-    StreamInterface outStream = stream.clone();
-    outStream.setName("outStream");
-    super.setOutletStream(outStream);
   }
 
   /** {@inheritDoc} */

@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * <p>
@@ -69,10 +70,27 @@ public class IronIonSaturationStream extends Stream {
     return clonedSystem;
   }
 
+  /**
+   * Clone IronIonSaturationStream object and give it a new name.
+   *
+   * @param name Name to set for the cloned object
+   * @return Cloned IronIonSaturationStream object
+   */
+  @Override
+  public IronIonSaturationStream clone(String name) {
+    if (this.getName() == name) {
+      throw new RuntimeException(
+          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+    }
+    IronIonSaturationStream s = this.clone();
+    s.setName(name);
+    return s;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    System.out.println("start flashing stream... " + streamNumber);
+    logger.info("start flashing stream... " + streamNumber);
     if (stream != null) {
       thermoSystem = this.stream.getThermoSystem().clone();
     }
@@ -88,16 +106,15 @@ public class IronIonSaturationStream extends Stream {
     thermoOps.TPflash();
     reactiveThermoSystem.display();
     try {
-      System.out
-          .println("aqueous phase number " + reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"));
+      logger.info("aqueous phase number " + reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"));
       thermoOps.addIonToScaleSaturation(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"),
           "FeCO3", "Fe++");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
     reactiveThermoSystem.display();
-    System.out.println("number of phases: " + reactiveThermoSystem.getNumberOfPhases());
-    System.out.println("beta: " + reactiveThermoSystem.getBeta());
+    logger.info("number of phases: " + reactiveThermoSystem.getNumberOfPhases());
+    logger.info("beta: " + reactiveThermoSystem.getBeta());
     setCalculationIdentifier(id);
   }
 

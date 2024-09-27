@@ -21,13 +21,6 @@ public class BaseTuningClass implements TuningInterface {
    * <p>
    * Constructor for BaseTuningClass.
    * </p>
-   */
-  public BaseTuningClass() {}
-
-  /**
-   * <p>
-   * Constructor for BaseTuningClass.
-   * </p>
    *
    * @param simulationClass a {@link neqsim.PVTsimulation.simulation.SimulationInterface} object
    */

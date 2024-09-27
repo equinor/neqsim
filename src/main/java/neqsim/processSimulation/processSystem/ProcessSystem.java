@@ -64,44 +64,23 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * add.
+   * Add to end.
    * </p>
    *
    * @param operation a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
    *        object
    */
   public void add(ProcessEquipmentInterface operation) {
-    ArrayList<ProcessEquipmentInterface> units = this.getUnitOperations();
-
-    for (ProcessEquipmentInterface unit : units) {
-      if (unit == operation) {
-        return;
-      }
-    }
-
-    if (getAllUnitNames().contains(operation.getName())) {
-      String currClass = operation.getClass().getSimpleName();
-      int num = 1;
-      for (ProcessEquipmentInterface unit : units) {
-        if (unit.getClass().getSimpleName().equals(currClass)) {
-          num++;
-        }
-      }
-      operation.setName(currClass + Integer.toString(num));
-    }
-
-    getUnitOperations().add(operation);
-    if (operation instanceof ModuleInterface) {
-      ((ModuleInterface) operation).initializeModule();
-    }
+    // Add to end
+    add(this.getUnitOperations().size(), operation);
   }
 
   /**
    * <p>
-   * add.
+   * Add to specific position.
    * </p>
    *
-   * @param position a int
+   * @param position 0-based position
    * @param operation a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
    *        object
    */
@@ -110,19 +89,18 @@ public class ProcessSystem extends SimulationBaseClass {
 
     for (ProcessEquipmentInterface unit : units) {
       if (unit == operation) {
+        logger.info("Equipment " + operation.getName() + " is already included in ProcessSystem");
         return;
       }
     }
 
     if (getAllUnitNames().contains(operation.getName())) {
-      String currClass = operation.getClass().getSimpleName();
-      int num = 1;
-      for (ProcessEquipmentInterface unit : units) {
-        if (unit.getClass().getSimpleName().equals(currClass)) {
-          num++;
-        }
-      }
-      operation.setName(currClass + Integer.toString(num));
+      ProcessEquipmentInterface existing =
+          (ProcessEquipmentInterface) this.getUnit(operation.getName());
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("ProcessSystem",
+          "add", "operation", "- Process equipment of type " + existing.getClass().getSimpleName()
+              + " named " + operation.getName() + " already included in ProcessSystem"));
+
     }
 
     getUnitOperations().add(position, operation);
@@ -133,7 +111,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * add.
+   * Add measurementdevice.
    * </p>
    *
    * @param measurementDevice a
@@ -145,7 +123,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * add.
+   * Add multiple process equipment to end.
    * </p>
    *
    * @param operations an array of
@@ -157,10 +135,10 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * getUnit.
+   * Get process equipmen by name.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name Name of
    * @return a {@link java.lang.Object} object
    */
   public Object getUnit(String name) {
@@ -199,10 +177,10 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * getMeasurementDevice.
+   * Get MeasureDevice by name.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name Name of measurement device
    * @return a {@link neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface} object
    */
   public MeasurementDeviceInterface getMeasurementDevice(String name) {
@@ -757,10 +735,6 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * {@inheritDoc}
-   *
-   * <p>
-   * Setter for the field <code>name</code>.
-   * </p>
    */
   @Override
   public void setName(String name) {

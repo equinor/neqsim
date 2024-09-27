@@ -57,7 +57,7 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
 
     neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator secondStageSeparator =
         new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-            "2nd stage separator", oilHeaterSecondStage.getOutStream());
+            "2nd stage separator", oilHeaterSecondStage.getOutletStream());
 
     neqsim.processSimulation.processEquipment.heatExchanger.Heater oilHeaterThirdStage =
         new neqsim.processSimulation.processEquipment.heatExchanger.Heater("oil heater third stage",
@@ -67,7 +67,7 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
 
     neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator thirdStageSeparator =
         new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-            "3rd stage separator", oilHeaterThirdStage.getOutStream());
+            "3rd stage separator", oilHeaterThirdStage.getOutletStream());
 
     neqsim.processSimulation.processEquipment.heatExchanger.Heater oilHeaterStandardStage =
         new neqsim.processSimulation.processEquipment.heatExchanger.Heater(
@@ -77,7 +77,7 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
 
     neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator standardStageSeparator =
         new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
-            "standard stage separator", oilHeaterStandardStage.getOutStream());
+            "standard stage separator", oilHeaterStandardStage.getOutletStream());
 
     neqsim.processSimulation.processEquipment.mixer.Mixer gasMixer =
         new neqsim.processSimulation.processEquipment.mixer.Mixer("gas mixer");
@@ -92,7 +92,7 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
             standardStageSeparator.getOilOutStream());
     neqsim.processSimulation.processEquipment.stream.Stream exportgas =
         new neqsim.processSimulation.processEquipment.stream.Stream("export gas",
-            gasMixer.getOutStream());
+            gasMixer.getOutletStream());
 
     neqsim.processSimulation.processSystem.ProcessSystem oilprocess =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -110,10 +110,8 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
 
     oilprocess.run();
 
-    assertEquals(15.0, gasMixer.getOutStream().getTemperature("C"), 0.01);
+    assertEquals(15.0, gasMixer.getOutletStream().getTemperature("C"), 0.01);
     assertEquals(2278.2594247, exportgas.getFlowRate("Sm3/hr") / exportoil.getFlowRate("idSm3/hr"),
         0.01);
-
   }
-
 }

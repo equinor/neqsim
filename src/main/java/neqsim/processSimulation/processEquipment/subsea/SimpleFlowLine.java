@@ -31,8 +31,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
    */
   public SimpleFlowLine(String name, StreamInterface inStream) {
     super(name);
-    this.inStream = inStream;
-    setOutletStream(inStream.clone());
+    setInletStream(inStream);
     pipeline = new AdiabaticTwoPhasePipe("pipeline", inStream);
   }
 

@@ -19,13 +19,6 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
    * <p>
    * Constructor for AmineDiffusivity.
    * </p>
-   */
-  public AmineDiffusivity() {}
-
-  /**
-   * <p>
-   * Constructor for AmineDiffusivity.
-   * </p>
    *
    * @param liquidPhase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

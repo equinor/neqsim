@@ -31,28 +31,6 @@ public class GORfitter extends TwoPortEquipment {
   String unitT = "C";
   String unitP = "bara";
 
-  @Deprecated
-  /**
-   * <p>
-   * Constructor for GORfitter.
-   * </p>
-   */
-  public GORfitter() {
-    super("GOR fitter");
-  }
-
-  /**
-   * <p>
-   * Constructor for GORfitter.
-   * </p>
-   *
-   * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
-   */
-  @Deprecated
-  public GORfitter(StreamInterface stream) {
-    this("GORfitter", stream);
-  }
-
   /**
    * <p>
    * Constructor for GORfitter.

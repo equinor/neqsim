@@ -15,13 +15,6 @@ public class CO2water extends Diffusivity {
    * <p>
    * Constructor for CO2water.
    * </p>
-   */
-  public CO2water() {}
-
-  /**
-   * <p>
-   * Constructor for CO2water.
-   * </p>
    *
    * @param liquidPhase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

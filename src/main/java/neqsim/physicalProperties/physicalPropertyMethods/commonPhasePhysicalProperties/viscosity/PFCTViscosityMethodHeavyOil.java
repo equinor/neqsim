@@ -44,13 +44,6 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
    * <p>
    * Constructor for PFCTViscosityMethodHeavyOil.
    * </p>
-   */
-  public PFCTViscosityMethodHeavyOil() {}
-
-  /**
-   * <p>
-   * Constructor for PFCTViscosityMethodHeavyOil.
-   * </p>
    *
    * @param phase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

@@ -31,13 +31,6 @@ public class Conductivity extends
    * <p>
    * Constructor for Conductivity.
    * </p>
-   */
-  public Conductivity() {}
-
-  /**
-   * <p>
-   * Constructor for Conductivity.
-   * </p>
    *
    * @param solidPhase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}

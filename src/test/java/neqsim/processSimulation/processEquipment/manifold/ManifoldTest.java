@@ -58,7 +58,7 @@ public class ManifoldTest {
     inletStream.setTemperature(20.0, "C");
     inletStream.setFlowRate(3.0, "MSm3/day");
 
-    Stream inletStream2 = new Stream("inlet stream", testSystem2);
+    Stream inletStream2 = new Stream("inlet stream 2", testSystem2);
     inletStream2.setPressure(10.0, "bara");
     inletStream2.setTemperature(20.0, "C");
     inletStream2.setFlowRate(2.0, "MSm3/day");

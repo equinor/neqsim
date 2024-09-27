@@ -17,13 +17,6 @@ public class WilkeLeeDiffusivity extends Diffusivity {
    * <p>
    * Constructor for WilkeLeeDiffusivity.
    * </p>
-   */
-  public WilkeLeeDiffusivity() {}
-
-  /**
-   * <p>
-   * Constructor for WilkeLeeDiffusivity.
-   * </p>
    *
    * @param gasPhase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
