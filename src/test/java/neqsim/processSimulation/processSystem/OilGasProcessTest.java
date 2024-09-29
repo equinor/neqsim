@@ -188,7 +188,6 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     Recycle recycl = new Recycle("rec");
     recycl.addStream(antisurgevalve.getOutletStream());
     recycl.setOutletStream(recyclegasstream);
-    recycl.setFlowAccuracy(1e-20);
     recycl.run();
 
     Calculator antisurgeCalculator = new Calculator("anti surge calculator");
@@ -221,7 +220,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
 
     gas_from_separator.setFlowRate(2.0, "MSm3/day");
     operations.run();
-    // assertEquals(4.00961638, gassplitter.getSplitStream(1).getFlowRate("MSm3/day"), 1e-4);
+    // assertEquals(4.00961638,
+    // gassplitter.getSplitStream(1).getFlowRate("MSm3/day"), 1e-4);
     assertEquals(2.005737385700, gassplitter.getSplitStream(0).getFlowRate("MSm3/day"), 1e-2);
     assertEquals(4157.46978573787, gascompressor.getCompressorChart().getSurgeCurve()
         .getSurgeFlow(gascompressor.getPolytropicFluidHead()), 1e-1);
@@ -295,7 +295,6 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     Recycle recycl = new Recycle("rec");
     recycl.addStream(antisurgevalve.getOutletStream());
     recycl.setOutletStream(recyclegasstream);
-    recycl.setFlowAccuracy(1e-15);
 
     neqsim.processSimulation.processSystem.ProcessSystem operations =
         new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -344,7 +343,6 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
         .getSurgeFlow(gascompressor.getPolytropicFluidHead()), 1e-2);
     assertEquals(4684.996901, gascompressor.getInletStream().getFlowRate("m3/hr"), 1e-1);
     assertEquals(90.0, gascompressor.getOutletPressure(), 1e-4);
-
 
     gas_from_separator.setFlowRate(9.0, "MSm3/day");
     operations.run();
