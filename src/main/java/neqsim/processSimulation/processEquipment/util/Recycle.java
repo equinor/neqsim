@@ -28,7 +28,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   protected StreamInterface mixedStream;
   StreamInterface lastIterationStream = null;
   private StreamInterface outletStream = null;
-  private double tolerance = 1e-4;
+  private double tolerance = 1e-2;
   private int priority = 100;
   private double error = 1e10;
   private double errorFlow = 1e10;
@@ -38,7 +38,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
   double compositionAccuracy = 1.0;
   double temperatureAccuracy = 1.0;
-  double flowAccuracy = 1.0;
+  double flowAccuracy = 1.0e-2;
 
   /**
    * <p>
@@ -354,7 +354,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
           Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"))
               / mixedStream.getFlowRate("kg/sec") * 100.0;
     }
-
     return abs_sum_errorFlow;
   }
 
