@@ -607,7 +607,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
       }
       double hout = hinn + dH;
       isentropicEfficiency = (newEnt - hinn) / dH;
-      // TODO: the polytropic efficiency calculation here need to be corrected, it is always larger
+      // TODO: the polytropic efficiency calculation here need to be corrected, it is
+      // always larger
       // than isentropic efficiency
       polytropicEfficiency = isentropicEfficiency;
       dH = hout - hinn;
@@ -966,11 +967,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   /** {@inheritDoc} */
   @Override
   public double getDistanceToSurge() {
-    getCompressorChart().getSurgeCurve();
-    getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead());
-    return (getInletStream().getFlowRate("m3/hr")
-        - getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead()))
-        / getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead());
+    return getInletStream().getFlowRate("m3/hr")
+        / getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead()) - 1;
   }
 
   /**

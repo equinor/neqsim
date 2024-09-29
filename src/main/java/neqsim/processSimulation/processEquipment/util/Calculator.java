@@ -75,13 +75,24 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
   public void runAntiSurgeCalc(UUID id) {
     Compressor compressor = (Compressor) inputVariable.get(0);
-    double distToSurge = compressor.getDistanceToSurge();
-    double flowInAntiSurge = 1e-6;
-    if (distToSurge < 0) {
-      flowInAntiSurge = -distToSurge * compressor.getInletStream().getFlowRate("MSm3/day");
-    }
 
     Splitter anitSurgeSplitter = (Splitter) outputVariable;
+    double distToSurge = compressor.getDistanceToSurge();
+    double flowInAntiSurge = anitSurgeSplitter.getSplitStream(1).getFlowRate("MSm3/day");
+    if (compressor.getDistanceToSurge() > 0) {
+      flowInAntiSurge = anitSurgeSplitter.getSplitStream(1).getFlowRate("MSm3/day")
+          - anitSurgeSplitter.getSplitStream(1).getFlowRate("MSm3/day") * distToSurge * 0.5;
+    } else if (compressor.getDistanceToSurge() < 0) {
+      flowInAntiSurge = anitSurgeSplitter.getSplitStream(1).getFlowRate("MSm3/day")
+          - distToSurge * compressor.getInletStream().getFlowRate("MSm3/day") * 0.8;
+      if (flowInAntiSurge > compressor.getInletStream().getFlowRate("MSm3/day")) {
+        flowInAntiSurge = compressor.getInletStream().getFlowRate("MSm3/day") * 0.99;
+      }
+    }
+    if (flowInAntiSurge < 1e-6) {
+      flowInAntiSurge = 1e-6;
+    }
+
     anitSurgeSplitter.setFlowRates(new double[] {-1, flowInAntiSurge}, "MSm3/day");
     anitSurgeSplitter.run();
     anitSurgeSplitter.setCalculationIdentifier(id);
