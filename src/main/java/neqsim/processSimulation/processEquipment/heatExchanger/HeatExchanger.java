@@ -500,6 +500,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
    * </p>
    *
    * @param guessOutTemperature a double
+   * @param unit a String
    */
   public void setGuessOutTemperature(double guessOutTemperature, String unit) {
     this.guessOutTemperature = guessOutTemperature;
