@@ -283,8 +283,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
      * if(firstTime || iterations>maxIterations) { firstTime=false; return; }
      */
     double enthalpy = 0.0;
-
-    logger.info("flow rate old in recycle " + outletStream.getFlowRate("kg/hr"));
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
     if (numberOfInputStreams == 1 && thermoSystem2.getFlowRate("kg/hr") < 1e-100) {
       setError(0);
@@ -318,13 +316,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     mixedStream.setCalculationIdentifier(id);
     setError(massBalanceCheck());
     setErrorFlow(massBalanceCheck2());
-    logger.debug("comp recycle error: " + getError());
-    logger.debug("flow recycle error: " + getErrorFlow());
     lastIterationStream = mixedStream.clone();
     outletStream.setThermoSystem(mixedStream.getThermoSystem());
     outletStream.setCalculationIdentifier(id);
-    logger.info(
-        "flow rate new in recycle " + outletStream.getFlowRate("kg/hr") + " iter " + iterations);
 
     // logger.info("enthalpy: " +
     // mixedStream.getThermoSystem().getEnthalpy());
