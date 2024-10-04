@@ -29,7 +29,6 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
    * </p>
    */
   public PhaseGENRTLmodifiedHV() {
-    super();
     mixRuleEos = mixSelect.getMixingRule(1);
   }
 

@@ -84,7 +84,6 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * </p>
    */
   public PhasePCSAFT() {
-    super();
   }
 
   /** {@inheritDoc} */

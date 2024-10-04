@@ -559,7 +559,6 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public double getTime(String unit) {
     if (unit.equals("sec")) {
-      return time;
     } else if (unit.equals("hr")) {
       return time / 3600.0;
     } else if (unit.equals("day")) {
@@ -944,6 +943,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @return a String
    */
+  @Override
   public String getReport_json() {
     return new Report(this).generateJsonReport();
   }

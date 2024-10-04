@@ -27,7 +27,6 @@ public class PhaseDuanSun extends PhaseGE {
    * </p>
    */
   public PhaseDuanSun() {
-    super();
   }
 
   /** {@inheritDoc} */

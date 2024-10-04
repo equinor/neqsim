@@ -3444,7 +3444,7 @@ public abstract class SystemThermo implements SystemInterface {
   public void initNumeric(int type, int phasen) {
     if (type < 2) {
       initAnalytic(type);
-    } else if (type >= 2) {
+    } else {
       double[][] gasfug = new double[2][getPhases()[0].getNumberOfComponents()];
       double[][] liqfug = new double[2][getPhases()[0].getNumberOfComponents()];
 

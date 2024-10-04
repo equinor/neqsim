@@ -77,7 +77,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
    * </p>
    */
   public PhaseElectrolyteCPA() {
-    super();
   }
 
   /** {@inheritDoc} */

@@ -1246,7 +1246,6 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
     public SRKHuronVidal2(PhaseInterface phase, double[][] HValpha, double[][] HVDij,
         String[][] mixRule) {
-      super();
       this.orgPhase = phase;
 
       if (mixingRuleGEModel.equals("NRTL")) {
@@ -1271,7 +1270,6 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
     public SRKHuronVidal2(PhaseInterface phase, double[][] HValpha, double[][] HVDij,
         double[][] HVDijT, String[][] mixRule) {
-      super();
       this.orgPhase = phase;
 
       if (mixingRuleGEModel.equals("NRTL")) {

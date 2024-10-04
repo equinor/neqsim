@@ -20,7 +20,6 @@ public class SolidPhysicalPropertyMethod
    * </p>
    */
   public SolidPhysicalPropertyMethod() {
-    super();
   }
 
   /**
@@ -34,7 +33,6 @@ public class SolidPhysicalPropertyMethod
    */
   public SolidPhysicalPropertyMethod(
       neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
-    super();
     this.solidPhase = solidPhase;
   }
 

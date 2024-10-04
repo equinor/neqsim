@@ -58,7 +58,7 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    SystemInterface fluid1 = ((SystemInterface) reservoirFluid).clone();
+    SystemInterface fluid1 = reservoirFluid.clone();
     fluid1.setTemperature(temperature, tUnit);
     fluid1.setPressure(pressure, pUnit);
     fluid1.setTotalFlowRate(flowRate, flowUnit);

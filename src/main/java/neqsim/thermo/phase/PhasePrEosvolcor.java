@@ -28,7 +28,6 @@ public class PhasePrEosvolcor extends PhasePrEos {
    * Creates new PhaseSrkEos.
    */
   public PhasePrEosvolcor() {
-    super();
     thermoPropertyModelName = "PR-EoS-volcorr";
   }
 

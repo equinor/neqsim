@@ -231,5 +231,6 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    *
    * @return a String
    */
+  @Override
   public String getReport_json();
 }

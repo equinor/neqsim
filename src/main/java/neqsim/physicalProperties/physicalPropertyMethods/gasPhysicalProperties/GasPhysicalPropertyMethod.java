@@ -23,7 +23,6 @@ public class GasPhysicalPropertyMethod
    * </p>
    */
   public GasPhysicalPropertyMethod() {
-    super();
   }
 
   /**
@@ -37,7 +36,6 @@ public class GasPhysicalPropertyMethod
    */
   public GasPhysicalPropertyMethod(
       neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
-    super();
     this.gasPhase = gasPhase;
     binaryMolecularDiameter = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase
         .getPhase().getNumberOfComponents()];

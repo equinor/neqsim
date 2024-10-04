@@ -31,7 +31,6 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * </p>
    */
   public PhaseGEUnifacUMRPRU() {
-    super();
     componentArray =
         new ComponentGEUnifacUMRPRU[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }

@@ -92,7 +92,6 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * </p>
    */
   public PhaseUMRCPA() {
-    super();
     thermoPropertyModelName = "UMR-CPA-EoS";
   }
 

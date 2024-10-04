@@ -25,7 +25,6 @@ public abstract class PhaseSolid extends PhaseSrkEos {
    * </p>
    */
   public PhaseSolid() {
-    super();
     setType(PhaseType.SOLID);
     calcMolarVolume = false;
   }

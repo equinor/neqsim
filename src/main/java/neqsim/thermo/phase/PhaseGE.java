@@ -35,7 +35,6 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
    * </p>
    */
   public PhaseGE() {
-    super();
     setType(PhaseType.LIQUID);
     componentArray = new ComponentGEInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
     useVolumeCorrection = false;

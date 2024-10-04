@@ -42,7 +42,7 @@ public class SaturateWithWater extends QfuncFlash {
     }
 
     boolean changedMultiPhase = false;
-    if (system.doMultiPhaseCheck() == false) {
+    if (!system.doMultiPhaseCheck()) {
       system.setMultiPhaseCheck(true);
       changedMultiPhase = true;
     }

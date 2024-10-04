@@ -305,6 +305,7 @@ public class PlusFractionModel implements java.io.Serializable {
 
   class WhitsonGammaModel extends PedersenPlusModel {
 
+    private static final long serialVersionUID = 1L;
     public double[] zValues;
     public double[] molarMasses;
     public double[] densities;

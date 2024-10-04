@@ -80,7 +80,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * </p>
    */
   public PhaseSrkCPA() {
-    super();
     thermoPropertyModelName = "SRK-CPA-EoS";
   }
 

@@ -23,7 +23,6 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
    * </p>
    */
   public PhaseGEUniquacmodifiedHV() {
-    super();
   }
 
   /** {@inheritDoc} */

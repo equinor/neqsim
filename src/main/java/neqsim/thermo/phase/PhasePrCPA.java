@@ -39,7 +39,6 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
    * </p>
    */
   public PhasePrCPA() {
-    super();
     cpamix = cpaSelect.getMixingRule(1);
   }
 

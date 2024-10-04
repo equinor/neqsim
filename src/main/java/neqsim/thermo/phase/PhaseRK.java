@@ -19,7 +19,6 @@ public class PhaseRK extends PhaseEos {
    * </p>
    */
   public PhaseRK() {
-    super();
     // mixRule = mixSelect.getMixingRule(2);
     uEOS = 1;
     wEOS = 0;

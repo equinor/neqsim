@@ -29,7 +29,6 @@ public class PhaseDesmukhMather extends PhaseGE {
    * </p>
    */
   public PhaseDesmukhMather() {
-    super();
   }
 
   /** {@inheritDoc} */

@@ -48,7 +48,6 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
    * </p>
    */
   public PhaseElectrolyteCPAOld() {
-    super();
   }
 
   /** {@inheritDoc} */

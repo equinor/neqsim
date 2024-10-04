@@ -28,7 +28,6 @@ public class PipeLeg extends FlowLeg {
    * </p>
    */
   public PipeLeg() {
-    super();
   }
 
   /** {@inheritDoc} */

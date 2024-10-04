@@ -32,7 +32,6 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
    * </p>
    */
   public PhaseGEUnifac() {
-    super();
     componentArray = new ComponentGEUnifac[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
