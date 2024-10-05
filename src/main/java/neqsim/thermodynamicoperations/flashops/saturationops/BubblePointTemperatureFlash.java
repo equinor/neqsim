@@ -1,8 +1,10 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
+import neqsim.thermo.system.SystemInterface;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.thermo.system.SystemInterface;
+
 
 /**
  * <p>
@@ -61,8 +63,8 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
                   / system.getPhases()[0].getComponents()[i].getFugacityCoefficient());
           system.getPhases()[1].getComponents()[i]
               .setK(system.getPhases()[0].getComponents()[i].getK());
-          system.getPhases()[0].getComponents()[i].setx(system.getPhases()[1].getComponents()[i]
-              .getx()
+          system.getPhases()[0].getComponents()[i]
+              .setx(system.getPhases()[1].getComponents()[i].getx()
                   * system.getPhases()[1].getComponents()[i].getFugacityCoefficient()
                   / system.getPhases()[0].getComponents()[i].getFugacityCoefficient());
         } while ((Math.abs(yold - system.getPhases()[1].getComponents()[i].getx()) > 1e-10)
