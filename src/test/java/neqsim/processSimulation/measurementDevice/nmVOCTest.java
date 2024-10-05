@@ -3,8 +3,9 @@ package neqsim.processSimulation.measurementDevice;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processSystem.ProcessSystem;
+import neqsim.processsimulation.measurementdevice.NMVOCAnalyser;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processsystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 

@@ -1,9 +1,9 @@
 package neqsim.statistics.parameterFitting.util.example;
 
 import java.util.ArrayList;
-import neqsim.statistics.parameterFitting.SampleSet;
-import neqsim.statistics.parameterFitting.SampleValue;
-import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
+import neqsim.statistics.parameterfitting.SampleSet;
+import neqsim.statistics.parameterfitting.SampleValue;
+import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
 
 /**
  * <p>

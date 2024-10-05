@@ -12,14 +12,14 @@ public class AdjusterTest {
     neqsim.thermo.system.SystemInterface fluid1 = neqsim.thermo.FluidCreator.create("light oil");
     fluid1.setMixingRule("classic");
 
-    neqsim.processSimulation.processEquipment.stream.Stream stream1 =
-        new neqsim.processSimulation.processEquipment.stream.Stream("light oil", fluid1.clone());
+    neqsim.processsimulation.processequipment.stream.Stream stream1 =
+        new neqsim.processsimulation.processequipment.stream.Stream("light oil", fluid1.clone());
     stream1.setFlowRate(1.5, "MSm3/day");
     stream1.setPressure(bottomholepressure, "bara");
     stream1.setTemperature(75.0, "C");
 
-    neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills flowline1 =
-        new neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills("flowline",
+    neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills flowline1 =
+        new neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills("flowline",
             stream1);
     flowline1.setDiameter(0.25);
     flowline1.setPipeWallRoughness(15e-6);
@@ -27,16 +27,16 @@ public class AdjusterTest {
     flowline1.setElevation(1200.0);
     flowline1.setNumberOfIncrements(20);
 
-    neqsim.processSimulation.processEquipment.util.Adjuster adjuster =
-        new neqsim.processSimulation.processEquipment.util.Adjuster("adjuster");
+    neqsim.processsimulation.processequipment.util.Adjuster adjuster =
+        new neqsim.processsimulation.processequipment.util.Adjuster("adjuster");
     adjuster.setTargetVariable(flowline1.getOutletStream(), "pressure", wellheadpressure, "bara");
     adjuster.setAdjustedVariable(stream1, "flow", "MSm3/day");
     adjuster.setMaxAdjustedValue(10.0);
     adjuster.setMinAdjustedValue(1);
     adjuster.setTolerance(1e-5);
 
-    neqsim.processSimulation.processSystem.ProcessSystem process =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem process =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     process.add(stream1);
     process.add(flowline1);
     process.add(adjuster);
@@ -54,14 +54,14 @@ public class AdjusterTest {
     neqsim.thermo.system.SystemInterface fluid1 = neqsim.thermo.FluidCreator.create("light oil");
     fluid1.setMixingRule("classic");
 
-    neqsim.processSimulation.processEquipment.stream.Stream stream1 =
-        new neqsim.processSimulation.processEquipment.stream.Stream("light oil", fluid1.clone());
+    neqsim.processsimulation.processequipment.stream.Stream stream1 =
+        new neqsim.processsimulation.processequipment.stream.Stream("light oil", fluid1.clone());
     stream1.setFlowRate(4.0, "MSm3/day");
     stream1.setPressure(170, "bara");
     stream1.setTemperature(75.0, "C");
 
-    neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills flowline1 =
-        new neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills("flowline",
+    neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills flowline1 =
+        new neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills("flowline",
             stream1);
     flowline1.setDiameter(0.25);
     flowline1.setPipeWallRoughness(15e-6);
@@ -69,16 +69,16 @@ public class AdjusterTest {
     flowline1.setElevation(1200.0);
     flowline1.setNumberOfIncrements(20);
 
-    neqsim.processSimulation.processEquipment.util.Adjuster adjuster =
-        new neqsim.processSimulation.processEquipment.util.Adjuster("adjuster");
+    neqsim.processsimulation.processequipment.util.Adjuster adjuster =
+        new neqsim.processsimulation.processequipment.util.Adjuster("adjuster");
     adjuster.setTargetVariable(flowline1.getOutletStream(), "pressure", wellheadpressure, "bara");
     adjuster.setAdjustedVariable(stream1, "pressure", "bara");
     adjuster.setMaxAdjustedValue(260.0);
     adjuster.setMinAdjustedValue(50.1);
     adjuster.setTolerance(1e-5);
 
-    neqsim.processSimulation.processSystem.ProcessSystem process =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem process =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     process.add(stream1);
     process.add(flowline1);
     process.add(adjuster);

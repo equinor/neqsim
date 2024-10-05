@@ -3,10 +3,11 @@ package neqsim.processSimulation.measurementDevice;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.processEquipment.pipeline.PipeBeggsAndBrills;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.FlowRateAdjuster;
-import neqsim.processSimulation.processSystem.ProcessSystem;
+import neqsim.processsimulation.measurementdevice.FlowInducedVibrationAnalyser;
+import neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.util.FlowRateAdjuster;
+import neqsim.processsimulation.processsystem.ProcessSystem;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -101,8 +102,8 @@ public class FLowInducedVibrationTest extends neqsim.NeqSimTest {
     flowInducedVibrationAnalyserFRMS.setMethod("FRMS");
     pipe.getOutletStream();
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(flowRateAdj);
     operations.add(pipe);

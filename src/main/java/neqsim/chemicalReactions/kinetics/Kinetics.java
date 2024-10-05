@@ -8,7 +8,7 @@ package neqsim.chemicalReactions.kinetics;
 
 import java.util.Iterator;
 import neqsim.chemicalReactions.ChemicalReactionOperations;
-import neqsim.chemicalReactions.chemicalReaction.ChemicalReaction;
+import neqsim.chemicalReactions.chemicalreaction.ChemicalReaction;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**

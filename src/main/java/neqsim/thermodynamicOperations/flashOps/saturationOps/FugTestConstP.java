@@ -2,7 +2,7 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.dataPresentation.JFreeChart.graph2b;
+import neqsim.datapresentation.jfreechart.graph2b;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;

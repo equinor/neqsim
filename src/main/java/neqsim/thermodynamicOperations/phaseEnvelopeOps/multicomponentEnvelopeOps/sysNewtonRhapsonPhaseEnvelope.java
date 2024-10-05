@@ -3,7 +3,7 @@ package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOp
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
-import neqsim.MathLib.nonLinearSolver.newtonRhapson;
+import neqsim.mathlib.nonlinearsolver.NewtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -55,7 +55,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   Matrix s = new Matrix(1, 4);
   Matrix xg;
   Matrix xcoef;
-  newtonRhapson solver;
+  NewtonRhapson solver;
   boolean etterCP = false;
   boolean etterCP2 = false;
   boolean calcCP = false;
@@ -97,7 +97,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     setu();
     uold = u.copy();
     findSpecEqInit();
-    solver = new newtonRhapson();
+    solver = new NewtonRhapson();
     solver.setOrder(3);
   }
 

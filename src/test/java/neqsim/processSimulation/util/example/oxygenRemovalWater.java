@@ -1,10 +1,10 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.mixer.Mixer;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.mixer.Mixer;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
@@ -48,8 +48,8 @@ public class oxygenRemovalWater {
         ThrottlingValve LP_valve = new ThrottlingValve("LPventil", heater1.getOutletStream());
         LP_valve.setOutletPressure(30.0e-3);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations =
-                new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processsimulation.processsystem.ProcessSystem operations =
+                new neqsim.processsimulation.processsystem.ProcessSystem();
         operations.add(stream_air);
         operations.add(stream_water);
         operations.add(mix);

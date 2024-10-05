@@ -11,9 +11,9 @@ import java.util.Iterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
-import neqsim.chemicalReactions.chemicalEquilibriaum.ChemicalEquilibrium;
-import neqsim.chemicalReactions.chemicalEquilibriaum.LinearProgrammingChemicalEquilibrium;
-import neqsim.chemicalReactions.chemicalReaction.ChemicalReactionList;
+import neqsim.chemicalReactions.chemicalequilibrium.ChemicalEquilibrium;
+import neqsim.chemicalReactions.chemicalequilibrium.LinearProgrammingChemicalEquilibrium;
+import neqsim.chemicalReactions.chemicalreaction.ChemicalReactionList;
 import neqsim.chemicalReactions.kinetics.Kinetics;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
@@ -476,7 +476,7 @@ public class ChemicalReactionOperations
    * Getter for the field <code>reactionList</code>.
    * </p>
    *
-   * @return a {@link neqsim.chemicalReactions.chemicalReaction.ChemicalReactionList} object
+   * @return a {@link neqsim.chemicalReactions.chemicalreaction.ChemicalReactionList} object
    */
   public ChemicalReactionList getReactionList() {
     return reactionList;

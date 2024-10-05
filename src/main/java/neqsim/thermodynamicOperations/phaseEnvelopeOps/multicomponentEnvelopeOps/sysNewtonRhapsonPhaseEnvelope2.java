@@ -6,7 +6,7 @@ import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.MathLib.nonLinearSolver.newtonRhapson;
+import neqsim.mathlib.nonlinearsolver.NewtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -47,7 +47,7 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
   RealMatrix s = new Array2DRowRealMatrix(1, 4);
   RealMatrix xg;
   RealMatrix xcoef;
-  newtonRhapson solver;
+  NewtonRhapson solver;
   boolean etterCP = false;
   boolean etterCP2 = false;
 
@@ -76,7 +76,7 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     setu();
     uold = u.copy();
     findSpecEqInit();
-    solver = new newtonRhapson();
+    solver = new NewtonRhapson();
     solver.setOrder(3);
   }
 

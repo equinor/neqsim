@@ -36,8 +36,8 @@ public class AttractiveTermPr1978 extends AttractiveTermPr {
   @Override
   public void setm(double val) {
     this.m = val;
-    neqsim.MathLib.nonLinearSolver.newtonRhapson solve =
-        new neqsim.MathLib.nonLinearSolver.newtonRhapson();
+    neqsim.mathlib.nonlinearsolver.NewtonRhapson solve =
+        new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
     solve.setOrder(2);
     double[] acentricConstants = {-0.26992, 1.54226, (0.37464 - this.m)};
     if (this.m > 0.49) {

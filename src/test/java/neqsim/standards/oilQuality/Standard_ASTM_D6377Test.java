@@ -2,6 +2,7 @@ package neqsim.standards.oilQuality;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import neqsim.standards.oilquality.Standard_ASTM_D6377;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 

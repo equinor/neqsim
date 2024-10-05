@@ -1,7 +1,7 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.stream.Stream;
 
 /**
  * <p>TestMechanicalDesign class.</p>
@@ -54,8 +54,8 @@ public class TestMechanicalDesign {
          * "manway"); sep.getSeparatorSection("top manway").getMechanicalDesign().setANSIclass(300)
          * ; sep.getSeparatorSection("top manway").getMechanicalDesign(). setNominalSize("DN 500");
          */
-        neqsim.processSimulation.processSystem.ProcessSystem operations =
-                new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processsimulation.processsystem.ProcessSystem operations =
+                new neqsim.processsimulation.processsystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(sep);
         operations.run();

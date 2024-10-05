@@ -49,8 +49,8 @@ public class AttractiveTermSrk extends AttractiveTermBaseClass {
   @Override
   public void setm(double val) {
     this.m = val;
-    neqsim.MathLib.nonLinearSolver.newtonRhapson solve =
-        new neqsim.MathLib.nonLinearSolver.newtonRhapson();
+    neqsim.mathlib.nonlinearsolver.NewtonRhapson solve =
+        new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
     solve.setOrder(2);
     double[] acentricConstants = {-0.176, 1.574, (0.48 - this.m)};
     solve.setConstants(acentricConstants);

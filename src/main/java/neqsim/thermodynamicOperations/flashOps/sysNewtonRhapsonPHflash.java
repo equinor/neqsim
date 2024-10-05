@@ -3,7 +3,7 @@ package neqsim.thermodynamicOperations.flashOps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
-import neqsim.MathLib.nonLinearSolver.newtonRhapson;
+import neqsim.mathlib.nonlinearsolver.NewtonRhapson;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -49,7 +49,7 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   Matrix s = new Matrix(1, 4);
   Matrix xg;
   Matrix xcoef;
-  newtonRhapson solver;
+  NewtonRhapson solver;
   boolean etterCP = false;
   boolean etterCP2 = false;
   double dVdT = 0;
@@ -79,7 +79,7 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     setu();
     uold = u.copy();
     // logger.info("Spec : " +speceq);
-    solver = new newtonRhapson();
+    solver = new NewtonRhapson();
     solver.setOrder(3);
   }
 

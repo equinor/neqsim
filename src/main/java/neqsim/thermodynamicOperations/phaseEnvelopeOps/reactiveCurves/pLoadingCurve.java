@@ -7,7 +7,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.dataPresentation.JFreeChart.graph2b;
+import neqsim.datapresentation.jfreechart.graph2b;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.OperationInterface;
 
@@ -148,7 +148,7 @@ public class pLoadingCurve implements OperationInterface {
   /** {@inheritDoc} */
   @Override
   public void printToFile(String name) {
-    neqsim.dataPresentation.dataHandeling printDat = new neqsim.dataPresentation.dataHandeling();
+    neqsim.datapresentation.dataHandeling printDat = new neqsim.datapresentation.dataHandeling();
     printDat.printToFile(points, name);
   }
 

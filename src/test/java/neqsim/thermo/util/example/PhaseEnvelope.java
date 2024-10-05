@@ -2,8 +2,8 @@ package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.PVTsimulation.simulation.SaturationPressure;
-import neqsim.PVTsimulation.simulation.SimulationInterface;
+import neqsim.pvtsimulation.simulation.SaturationPressure;
+import neqsim.pvtsimulation.simulation.SimulationInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;

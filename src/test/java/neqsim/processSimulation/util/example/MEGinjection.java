@@ -1,12 +1,12 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
-import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
-import neqsim.processSimulation.processEquipment.splitter.Splitter;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.Adjuster;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.mixer.StaticMixer;
+import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
+import neqsim.processsimulation.processequipment.splitter.Splitter;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.util.Adjuster;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 
 /**
  * <p>
@@ -78,8 +78,8 @@ public class MEGinjection {
     adjuster.setAdjustedVariable(MEGFeed, "mass flow");
     adjuster.setTargetVariable(mixerStream, "mass fraction", 0.6, "-", "aqueous", "MEG");
 
-    neqsim.processSimulation.processSystem.ProcessSystem MEGwelloperations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem MEGwelloperations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     MEGwelloperations.add(feedGasStream);
     MEGwelloperations.add(MEGFeed);
     MEGwelloperations.add(feedGasMEGmixer);
@@ -110,7 +110,7 @@ public class MEGinjection {
     MEGFeedOnshore.setTemperature(35.0, "C");
     MEGFeedOnshore.setPressure(80.0, "bara");
 
-    neqsim.processSimulation.processEquipment.splitter.Splitter MEGsplitter =
+    neqsim.processsimulation.processequipment.splitter.Splitter MEGsplitter =
         new Splitter("MEG splitter", MEGFeedOnshore);
     MEGsplitter.setSplitFactors(new double[] {0.1, 0.1, 0.8});
 
@@ -121,8 +121,8 @@ public class MEGinjection {
     ThrottlingValve DPvalve1 = new ThrottlingValve("DP valve 1", MEGmixer1.getOutletStream());
     DPvalve1.setOutletPressure(70.0);
 
-    neqsim.processSimulation.processSystem.ProcessSystem onshoreOperations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem onshoreOperations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     onshoreOperations.add(feedStream);
     onshoreOperations.add(onshoreChockeValve);
     onshoreOperations.add(slugCatcher);

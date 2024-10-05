@@ -11,8 +11,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.chemicalReactions.ChemicalReactionOperations;
-import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
-import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
+import neqsim.physicalproperties.interfaceproperties.InterfaceProperties;
+import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.characterization.Characterise;
@@ -4860,11 +4860,11 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void setStandard(String standardName) {
     if (standardName.equals("ISO1992")) {
-      this.standard = new neqsim.standards.gasQuality.Standard_ISO6976(this);
+      this.standard = new neqsim.standards.gasquality.Standard_ISO6976(this);
     } else if (standardName.equals("Draft_ISO18453")) {
-      this.standard = new neqsim.standards.gasQuality.Draft_ISO18453(this);
+      this.standard = new neqsim.standards.gasquality.Draft_ISO18453(this);
     } else {
-      this.standard = new neqsim.standards.gasQuality.Standard_ISO6976(this);
+      this.standard = new neqsim.standards.gasquality.Standard_ISO6976(this);
     }
   }
 
@@ -5028,8 +5028,8 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void write(String name, String filename, boolean newfile) {
     String[][] table = createTable(name);
-    neqsim.dataPresentation.fileHandeling.createTextFile.TextFile file =
-        new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
+    neqsim.datapresentation.filehandeling.createtextfile.TextFile file =
+        new neqsim.datapresentation.filehandeling.createtextfile.TextFile();
     if (newfile) {
       file.newFile(filename);
     }
@@ -5062,13 +5062,13 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public String toJson() {
     return new GsonBuilder().create()
-        .toJson(new neqsim.processSimulation.util.monitor.FluidResponse(this));
+        .toJson(new neqsim.processsimulation.util.monitor.FluidResponse(this));
   }
 
   /** {@inheritDoc} */
   @Override
   public String toCompJson() {
     return new GsonBuilder().create()
-        .toJson(new neqsim.processSimulation.util.monitor.FluidComponentResponse(this));
+        .toJson(new neqsim.processsimulation.util.monitor.FluidComponentResponse(this));
   }
 }

@@ -3,10 +3,11 @@ package neqsim.processSimulation.processEquipment.heatExchanger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.Recycle;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.processequipment.heatExchanger.HeatExchanger;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.util.Recycle;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -59,8 +60,8 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     resyc.addStream(valv1.getOutletStream());
     resyc.setOutletStream(stream_Cold);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_Hot);
     operations.add(stream_Cold);
     operations.add(heatEx);
@@ -89,12 +90,12 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
 
     Stream stream_Cold = new Stream("Stream2", testSystem2);
 
-    neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger heatExchanger1 =
-        new neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger("heatEx",
+    neqsim.processsimulation.processequipment.heatExchanger.HeatExchanger heatExchanger1 =
+        new neqsim.processsimulation.processequipment.heatExchanger.HeatExchanger("heatEx",
             stream_Hot, stream_Cold);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_Hot);
     operations.add(stream_Cold);
     operations.add(heatExchanger1);
@@ -107,7 +108,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
 
     assertEquals(15780.77130, heatExchanger1.getUAvalue(), 1e-3);
 
-    heatExchanger1 = new neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger(
+    heatExchanger1 = new neqsim.processsimulation.processequipment.heatExchanger.HeatExchanger(
         "heatEx", stream_Hot, stream_Cold);
     heatExchanger1.setDeltaT(1.0);
     heatExchanger1.run();

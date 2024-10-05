@@ -1,7 +1,7 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.separator.GasScrubberSimple;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processsimulation.processequipment.separator.GasScrubberSimple;
+import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -38,8 +38,8 @@ public class simpleGasScrubber {
     Stream stream_2 = new Stream("gas from scrubber", gasScrubber.getGasOutStream());
     Stream stream_3 = new Stream("liquid from scrubber", gasScrubber.getLiquidOutStream());
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(gasScrubber);
     operations.add(stream_2);

@@ -1,6 +1,6 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processsimulation.processequipment.stream.Stream;
 
 /**
  * <p>
@@ -33,8 +33,8 @@ public class expander1 {
 
         // neqsim.processSimulation.processEquipment.expander.Expander expander = new
         // neqsim.processSimulation.processEquipment.expander.Expander(stream_1);
-        neqsim.processSimulation.processEquipment.compressor.Compressor expander =
-                new neqsim.processSimulation.processEquipment.compressor.Compressor("expander",
+        neqsim.processsimulation.processequipment.compressor.Compressor expander =
+                new neqsim.processsimulation.processequipment.compressor.Compressor("expander",
                         stream_1);
 
         expander.setOutletPressure(80.0);
@@ -42,8 +42,8 @@ public class expander1 {
         expander.setIsentropicEfficiency(0.9);
         expander.setUsePolytropicCalc(true);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations =
-                new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processsimulation.processsystem.ProcessSystem operations =
+                new neqsim.processsimulation.processsystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(expander);
 

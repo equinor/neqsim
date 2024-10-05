@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import neqsim.standards.gasquality.Standard_ISO6976_2016;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -31,7 +32,7 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
   }
 
   /**
-   * Test method for {@link neqsim.standards.gasQuality.Standard_ISO6976#calculate()}.
+   * Test method for {@link neqsim.standards.gasquality.Standard_ISO6976#calculate()}.
    */
   @Test
   void testCalculate() {
@@ -46,7 +47,7 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
   }
 
   /**
-   * Test method for {@link neqsim.standards.gasQuality.Standard_ISO6976#calculate()} if wrong
+   * Test method for {@link neqsim.standards.gasquality.Standard_ISO6976#calculate()} if wrong
    * reference state is gven. Valid reference states should be 0, 15 and 20 C and 15F (15.55C). If
    * wrong reference state is given, the program should use standard conditions (15C).
    */
@@ -72,7 +73,7 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
   }
 
   /**
-   * Test method for {@link neqsim.standards.gasQuality.Standard_ISO6976#calculate()}.
+   * Test method for {@link neqsim.standards.gasquality.Standard_ISO6976#calculate()}.
    */
   @Test
   void testCalculateWithPSeudo() {

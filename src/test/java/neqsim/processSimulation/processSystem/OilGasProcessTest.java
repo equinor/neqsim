@@ -2,18 +2,18 @@ package neqsim.processSimulation.processSystem;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.processEquipment.compressor.Compressor;
-import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
-import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.mixer.Mixer;
-import neqsim.processSimulation.processEquipment.pump.Pump;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.splitter.Splitter;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.processSimulation.processEquipment.util.Calculator;
-import neqsim.processSimulation.processEquipment.util.Recycle;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.processequipment.compressor.Compressor;
+import neqsim.processsimulation.processequipment.heatExchanger.Cooler;
+import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.mixer.Mixer;
+import neqsim.processsimulation.processequipment.pump.Pump;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.splitter.Splitter;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.stream.StreamInterface;
+import neqsim.processsimulation.processequipment.util.Calculator;
+import neqsim.processsimulation.processequipment.util.Recycle;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -57,8 +57,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     feedStream.setTemperature(25.5, "C");
     feedStream.setPressure(26.0, "bara");
 
-    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator1stStage =
-        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
+    neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator seprator1stStage =
+        new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
             "1st stage separator", feedStream);
 
     ThrottlingValve valve1 = new ThrottlingValve("valve1", seprator1stStage.getLiquidOutStream());
@@ -67,8 +67,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     Heater oilHeater = new Heater("oil heater", valve1.getOutletStream());
     oilHeater.setOutTemperature(359.0);
 
-    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator2ndStage =
-        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
+    neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator seprator2ndStage =
+        new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
             "2nd stage separator", oilHeater.getOutletStream());
 
     ThrottlingValve valve2 = new ThrottlingValve("valve2", seprator2ndStage.getLiquidOutStream());
@@ -77,8 +77,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     StreamInterface recircstream1 = valve2.getOutletStream().clone("oilRecirc1");
     recircstream1.setFlowRate(1e-6, "kg/hr");
 
-    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator3rdStage =
-        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
+    neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator seprator3rdStage =
+        new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
             "3rd stage separator");
     seprator3rdStage.addStream(valve2.getOutletStream());
     seprator3rdStage.addStream(recircstream1);
@@ -102,8 +102,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     recycle1.addStream(valveLP1.getOutletStream());
     recycle1.setOutletStream(recircstream1);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(feedStream);
     operations.add(seprator1stStage);
     operations.add(valve1);
@@ -161,8 +161,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     gascompressor.run();
 
     double fluidh = gascompressor.getPolytropicFluidHead();
-    neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
-        new neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator(
+    neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator compchartgenerator =
+        new neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator(
             gascompressor);
     gascompressor.setCompressorChart(compchartgenerator.generateCompressorChart("mid range"));
 
@@ -194,8 +194,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     antisurgeCalculator.addInputVariable(gascompressor);
     antisurgeCalculator.setOutputVariable(gassplitter);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(gas_from_separator);
     operations.add(recyclegasstream);
     operations.add(gasmixer);
@@ -297,8 +297,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     recycl.setOutletStream(recyclegasstream);
     recycl.setFlowAccuracy(1e-2);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(gas_from_separator);
     operations.add(recyclegasstream);
     operations.add(gasmixer);
@@ -314,8 +314,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     double fluidh = gascompressor.getPolytropicFluidHead();
     double flowratetocompressor = gascompressor.getInletStream().getFlowRate("MSm3/day");
 
-    neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
-        new neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator(
+    neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator compchartgenerator =
+        new neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator(
             gascompressor);
     gascompressor.setCompressorChart(compchartgenerator.generateCompressorChart("mid range"));
     gascompressor.setOutletPressure(90.0);

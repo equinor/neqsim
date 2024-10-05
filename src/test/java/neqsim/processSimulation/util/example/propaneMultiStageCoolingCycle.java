@@ -1,10 +1,10 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.processequipment.heatExchanger.HeatExchanger;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.stream.StreamInterface;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 
 /**
  * <p>
@@ -112,8 +112,8 @@ public class propaneMultiStageCoolingCycle {
 
         Stream heatEx22stream = new Stream("heatEx22stream", heatEx22.getOutStream(0));
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations =
-                new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processsimulation.processsystem.ProcessSystem operations =
+                new neqsim.processsimulation.processsystem.ProcessSystem();
 
         operations.add(stream_Ethane);
         operations.add(stream_1);

@@ -2,8 +2,9 @@ package neqsim.processSimulation.processEquipment.util;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processsimulation.measurementdevice.MultiPhaseMeter;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.util.MPFMfitter;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -56,8 +57,8 @@ public class MPFMfitterTest {
     multiPhaseMeter2.setTemperature(90.0, "C");
     multiPhaseMeter2.setPressure(60.0, "bara");
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(MPFMfitter);
     operations.add(stream_2);

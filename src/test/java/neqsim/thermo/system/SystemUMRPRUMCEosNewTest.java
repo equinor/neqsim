@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import neqsim.PVTsimulation.simulation.SaturationPressure;
+import neqsim.pvtsimulation.simulation.SaturationPressure;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {

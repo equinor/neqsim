@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import neqsim.pvtsimulation.simulation.SaturationTemperature;
+import neqsim.pvtsimulation.simulation.SimulationInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
@@ -22,7 +24,7 @@ class SaturationTemperatureTest extends neqsim.NeqSimTest {
 
   /**
    * Test method for
-   * {@link neqsim.PVTsimulation.simulation.SaturationTemperature#calcSaturationTemperature()}.
+   * {@link neqsim.pvtsimulation.simulation.SaturationTemperature#calcSaturationTemperature()}.
    */
   @Test
   void testCalcSaturationTemperature() {

@@ -2,10 +2,10 @@ package neqsim.processSimulation.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.processSimulation.processEquipment.pipeline.AdiabaticPipe;
-import neqsim.processSimulation.processEquipment.separator.GasScrubberSimple;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processsimulation.processequipment.pipeline.AdiabaticPipe;
+import neqsim.processsimulation.processequipment.separator.GasScrubberSimple;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.stream.StreamInterface;
 
 /**
  * <p>
@@ -67,8 +67,8 @@ public class testGasScrubber {
 
     StreamInterface stream_3 = pipe.getOutletStream();
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(scrubber);
     operations.add(stream_2);

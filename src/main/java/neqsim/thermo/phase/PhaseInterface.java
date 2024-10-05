@@ -831,10 +831,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * getPhysicalProperties.
    * </p>
    *
-   * @return a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+   * @return a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
    *         object
    */
-  public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperties();
+  public neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface getPhysicalProperties();
 
   /**
    * <p>

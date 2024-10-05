@@ -3,23 +3,23 @@ package neqsim.processSimulation.processSystem;
 import org.junit.jupiter.api.Test;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.security.AnyTypePermission;
-import neqsim.processSimulation.measurementDevice.HydrateEquilibriumTemperatureAnalyser;
-import neqsim.processSimulation.measurementDevice.WaterDewPointAnalyser;
-import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
-import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
-import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
-import neqsim.processSimulation.processEquipment.filter.Filter;
-import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
-import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
-import neqsim.processSimulation.processEquipment.pump.Pump;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.splitter.Splitter;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.Calculator;
-import neqsim.processSimulation.processEquipment.util.Recycle;
-import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
+import neqsim.processsimulation.measurementdevice.WaterDewPointAnalyser;
+import neqsim.processsimulation.processequipment.absorber.SimpleTEGAbsorber;
+import neqsim.processsimulation.processequipment.absorber.WaterStripperColumn;
+import neqsim.processsimulation.processequipment.distillation.DistillationColumn;
+import neqsim.processsimulation.processequipment.filter.Filter;
+import neqsim.processsimulation.processequipment.heatExchanger.HeatExchanger;
+import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.mixer.StaticMixer;
+import neqsim.processsimulation.processequipment.pump.Pump;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.splitter.Splitter;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.util.Calculator;
+import neqsim.processsimulation.processequipment.util.Recycle;
+import neqsim.processsimulation.processequipment.util.StreamSaturatorUtil;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 
 public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
   @Test
@@ -261,8 +261,8 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     recycleLeanTEG.setPriority(200);
     recycleLeanTEG.setDownstreamProperty("flow rate");
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(dryFeedGasSmorbukk);
     operations.add(saturatedFeedGasSmorbukk);
     operations.add(waterSaturatedFeedGasSmorbukk);
@@ -332,8 +332,8 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     xstream.addPermission(AnyTypePermission.ANY);
 
     // Deserialize from xml
-    neqsim.processSimulation.processSystem.ProcessSystem operationsCopy =
-        (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xml);
+    neqsim.processsimulation.processsystem.ProcessSystem operationsCopy =
+        (neqsim.processsimulation.processsystem.ProcessSystem) xstream.fromXML(xml);
     operationsCopy.run();
   }
 }

@@ -2,7 +2,8 @@ package neqsim.processSimulation.processEquipment.pipeline;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills;
+import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -76,8 +77,8 @@ public class BeggsAndBrillsPipeTest {
     pipe.setNumberOfIncrements(20);
     pipe.setRunIsothermal(false);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(pipe);
     operations.run();
@@ -124,8 +125,8 @@ public class BeggsAndBrillsPipeTest {
     pipe.setNumberOfIncrements(50);
     pipe.setRunIsothermal(false);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(pipe);
     operations.run();
@@ -174,8 +175,8 @@ public class BeggsAndBrillsPipeTest {
     pipe.setNumberOfIncrements(10);
     pipe.setRunIsothermal(false);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(pipe);
     operations.run();
@@ -238,8 +239,8 @@ public class BeggsAndBrillsPipeTest {
     pipe.setRunIsothermal(false);
 
     // test with only water phase
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(pipe);
     operations.run();
@@ -292,8 +293,8 @@ public class BeggsAndBrillsPipeTest {
     pipe2.setNumberOfIncrements(10);
     pipe2.setRunIsothermal(false);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations2 =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations2 =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations2.add(stream_2);
     operations2.add(pipe2);
     operations2.run();
@@ -331,8 +332,8 @@ public class BeggsAndBrillsPipeTest {
     pipe3.setNumberOfIncrements(10);
     pipe3.setRunIsothermal(false);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations3 =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations3 =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations3.add(stream_3);
     operations3.add(pipe3);
     operations3.run();

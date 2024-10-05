@@ -2,10 +2,11 @@ package neqsim.processSimulation.processEquipment.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
-import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processsimulation.measurementdevice.MultiPhaseMeter;
+import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.stream.StreamInterface;
+import neqsim.processsimulation.processequipment.util.FlowSetter;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -40,8 +41,8 @@ public class FlowSetterTest {
     flowset.setGasFlowRate(multiPhaseMeter.getMeasuredValue("Gas Flow Rate", "Sm3/hr"), "Sm3/hr");
     flowset.setOilFlowRate(multiPhaseMeter.getMeasuredValue("Oil Flow Rate", "m3/hr"), "m3/hr");
     flowset.setWaterFlowRate(multiPhaseMeter.getMeasuredValue("Water Flow Rate", "m3/hr"), "m3/hr");
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(multiPhaseMeter);
     operations.add(flowset);
@@ -89,8 +90,8 @@ public class FlowSetterTest {
 
     StreamInterface gasFromSepStream = separator.getGasOutStream();
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(flowset);
     operations.add(separator);

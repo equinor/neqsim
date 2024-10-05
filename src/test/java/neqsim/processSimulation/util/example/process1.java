@@ -1,6 +1,6 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
@@ -49,16 +49,16 @@ public class process1 {
 
         Stream stream_1 = new Stream("Stream1", testSystem);
 
-        neqsim.processSimulation.processEquipment.compressor.Compressor compr =
-                new neqsim.processSimulation.processEquipment.compressor.Compressor("compr",
+        neqsim.processsimulation.processequipment.compressor.Compressor compr =
+                new neqsim.processsimulation.processequipment.compressor.Compressor("compr",
                         stream_1);
         compr.setOutletPressure(80.0);
         compr.setOutTemperature(345.0);
         compr.setUsePolytropicCalc(true);
         // compr.setNumberOfCompressorCalcSteps(10);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations =
-                new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processsimulation.processsystem.ProcessSystem operations =
+                new neqsim.processsimulation.processsystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(compr);
 
