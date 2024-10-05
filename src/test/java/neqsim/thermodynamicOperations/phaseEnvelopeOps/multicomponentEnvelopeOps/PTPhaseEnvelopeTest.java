@@ -18,7 +18,7 @@ public class PTPhaseEnvelopeTest {
 
   /**
    * Test method for
-   * {@link neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.pTphaseEnvelope}.
+   * {@link neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelope}.
    */
   @Test
   void testDewP() {

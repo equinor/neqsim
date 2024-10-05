@@ -95,7 +95,7 @@ public class QfuncFlash extends Flash {
   public void run() {
     tpFlash.run();
     logger.info("entropy: " + system.getEntropy());
-    sysNewtonRhapsonPHflash secondOrderSolver = new sysNewtonRhapsonPHflash(system, 2,
+    SysNewtonRhapsonPHflash secondOrderSolver = new SysNewtonRhapsonPHflash(system, 2,
         system.getPhases()[0].getNumberOfComponents(), type);
     secondOrderSolver.setSpec(Hspec);
     secondOrderSolver.solve(1);

@@ -2,7 +2,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.datapresentation.jfreechart.graph2b;
+import neqsim.datapresentation.jfreechart.Graph2b;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -17,7 +17,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author esol
  * @version $Id: $Id
  */
-public class FugTestConstP extends constantDutyTemperatureFlash
+public class FugTestConstP extends ConstantDutyTemperatureFlash
     implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(FugTestConstP.class);
@@ -147,13 +147,13 @@ public class FugTestConstP extends constantDutyTemperatureFlash
         title[0] = "Solid Fugacity";
         title[1] = "Fluid Fugacity";
 
-        graph2b graffug = new graph2b(Fug, title, compName + " Fugacity  VS T, constant P= " + pres,
+        Graph2b graffug = new Graph2b(Fug, title, compName + " Fugacity  VS T, constant P= " + pres,
             "Temperature [K]", "Fugacity [bar]");
         graffug.setVisible(true);
         String[] title2 = new String[1];
         title2[0] = "Solid/Fluid";
 
-        graph2b grafvapor = new graph2b(Fugrel, title2, compName + " Fugacity Ratio",
+        Graph2b grafvapor = new Graph2b(Fugrel, title2, compName + " Fugacity Ratio",
             "Temperature [K]", "Fsolid/Ffluid");
         grafvapor.setVisible(true);
       } // end solidcheck lokke

@@ -402,7 +402,7 @@ public class TPflash extends Flash {
         } else if (iterations >= newtonLimit && Math
             .abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) < 1e-5) {
           if (iterations == newtonLimit) {
-            secondOrderSolver = new sysNewtonRhapsonTPflash(system, 2,
+            secondOrderSolver = new SysNewtonRhapsonTPflash(system, 2,
                 system.getPhases()[0].getNumberOfComponents());
           }
           try {

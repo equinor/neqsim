@@ -11,7 +11,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  * @version $Id: $Id
  */
-public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
+public class WaterDewPointEquilibriumLine extends ConstantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
 
   double[][] hydratePoints = null;

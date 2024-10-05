@@ -41,26 +41,26 @@ import neqsim.thermodynamicoperations.flashops.saturationops.HydrateInhibitorwtF
 import neqsim.thermodynamicoperations.flashops.saturationops.SolidComplexTemperatureCalc;
 import neqsim.thermodynamicoperations.flashops.saturationops.WATcalc;
 import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointEquilibriumLine;
-import neqsim.thermodynamicoperations.flashops.saturationops.addIonToScaleSaturation;
-import neqsim.thermodynamicoperations.flashops.saturationops.bubblePointPressureFlash;
-import neqsim.thermodynamicoperations.flashops.saturationops.bubblePointPressureFlashDer;
-import neqsim.thermodynamicoperations.flashops.saturationops.bubblePointTemperatureNoDer;
-import neqsim.thermodynamicoperations.flashops.saturationops.calcSaltSatauration;
-import neqsim.thermodynamicoperations.flashops.saturationops.checkScalePotential;
-import neqsim.thermodynamicoperations.flashops.saturationops.constantDutyPressureFlash;
-import neqsim.thermodynamicoperations.flashops.saturationops.constantDutyTemperatureFlash;
-import neqsim.thermodynamicoperations.flashops.saturationops.cricondebarFlash;
-import neqsim.thermodynamicoperations.flashops.saturationops.dewPointPressureFlash;
-import neqsim.thermodynamicoperations.flashops.saturationops.dewPointTemperatureFlashDer;
-import neqsim.thermodynamicoperations.flashops.saturationops.freezingPointTemperatureFlash;
-import neqsim.thermodynamicoperations.flashops.saturationops.waterDewPointTemperatureFlash;
-import neqsim.thermodynamicoperations.flashops.saturationops.waterDewPointTemperatureMultiphaseFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.AddIonToScaleSaturation;
+import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlashDer;
+import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointTemperatureNoDer;
+import neqsim.thermodynamicoperations.flashops.saturationops.CalcSaltSatauration;
+import neqsim.thermodynamicoperations.flashops.saturationops.CheckScalePotential;
+import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyPressureFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyTemperatureFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.CricondebarFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.DewPointPressureFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlashDer;
+import neqsim.thermodynamicoperations.flashops.saturationops.FreezingPointTemperatureFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointTemperatureFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointTemperatureMultiphaseFlash;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.CricondenBarFlash;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.CricondenThermFlash;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.HPTphaseEnvelope;
-import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.pTphaseEnvelope;
-import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.pTphaseEnvelopeNew2;
-import neqsim.thermodynamicoperations.phaseenvelopeops.reactivecurves.pLoadingCurve2;
+import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelope;
+import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelopeNew2;
+import neqsim.thermodynamicoperations.phaseenvelopeops.reactivecurves.PloadingCurve2;
 import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterStudents;
 import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterStudentsPH;
 
@@ -725,7 +725,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws java.lang.Exception if any.
    */
   public void bubblePointTemperatureFlash() throws Exception {
-    ConstantDutyFlashInterface operation = new bubblePointTemperatureNoDer(system);
+    ConstantDutyFlashInterface operation = new BubblePointTemperatureNoDer(system);
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
       throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
@@ -742,7 +742,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws java.lang.Exception if any.
    */
   public void freezingPointTemperatureFlash() throws Exception {
-    operation = new freezingPointTemperatureFlash(system);
+    operation = new FreezingPointTemperatureFlash(system);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
@@ -760,7 +760,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws java.lang.Exception if any.
    */
   public void freezingPointTemperatureFlash(String phaseName) throws Exception {
-    operation = new freezingPointTemperatureFlash(system);
+    operation = new FreezingPointTemperatureFlash(system);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
@@ -777,7 +777,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws java.lang.Exception if any.
    */
   public void waterDewPointTemperatureFlash() throws Exception {
-    operation = new waterDewPointTemperatureFlash(system);
+    operation = new WaterDewPointTemperatureFlash(system);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
@@ -794,7 +794,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws java.lang.Exception if any.
    */
   public void waterDewPointTemperatureMultiphaseFlash() throws Exception {
-    operation = new waterDewPointTemperatureMultiphaseFlash(system);
+    operation = new WaterDewPointTemperatureMultiphaseFlash(system);
     getOperation().run();
   }
 
@@ -847,7 +847,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws java.lang.Exception if any.
    */
   public void calcSaltSaturation(String saltName) throws Exception {
-    operation = new calcSaltSatauration(system, saltName);
+    operation = new CalcSaltSatauration(system, saltName);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
@@ -864,7 +864,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws java.lang.Exception if any.
    */
   public void checkScalePotential(int phaseNumber) throws Exception {
-    operation = new checkScalePotential(system, phaseNumber);
+    operation = new CheckScalePotential(system, phaseNumber);
     getOperation().run();
     resultTable = getOperation().getResultTable();
     if (Double.isNaN(system.getTemperature())) {
@@ -885,7 +885,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void addIonToScaleSaturation(int phaseNumber, String scaleSaltName,
       String nameOfIonToBeAdded) throws Exception {
-    operation = new addIonToScaleSaturation(system, phaseNumber, scaleSaltName, nameOfIonToBeAdded);
+    operation = new AddIonToScaleSaturation(system, phaseNumber, scaleSaltName, nameOfIonToBeAdded);
     getOperation().run();
     resultTable = getOperation().getResultTable();
     if (Double.isNaN(system.getTemperature())) {
@@ -1179,7 +1179,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (structure == 0) {
       system.setSolidPhaseCheck("water");
       system.setHydrateCheck(true);
-      operation = new freezingPointTemperatureFlash(system);
+      operation = new FreezingPointTemperatureFlash(system);
     } else {
       operation = new HydrateFormationTemperatureFlash(system);
     }
@@ -1282,7 +1282,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public double calcCricondenBar() {
     system.init(0);
-    operation = new cricondebarFlash(system);
+    operation = new CricondebarFlash(system);
     // operation = new CricondenBarFlash(system);
 
     // operation = new cricondenBarTemp1(system);
@@ -1299,7 +1299,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void bubblePointPressureFlash() throws Exception {
     system.init(0);
-    ConstantDutyFlashInterface operation = new constantDutyPressureFlash(system);
+    ConstantDutyFlashInterface operation = new ConstantDutyPressureFlash(system);
     system.setBeta(1, 1.0 - 1e-10);
     system.setBeta(0, 1e-10);
     operation.run();
@@ -1320,9 +1320,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   public void bubblePointPressureFlash(boolean derivatives) throws Exception {
     ConstantDutyFlashInterface operation = null;
     if (derivatives) {
-      operation = new bubblePointPressureFlashDer(system);
+      operation = new BubblePointPressureFlashDer(system);
     } else {
-      operation = new bubblePointPressureFlash(system);
+      operation = new BubblePointPressureFlash(system);
     }
     try {
       operation.run();
@@ -1352,7 +1352,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (fraction > 1.0 - 1e-10) {
       fraction = 1.0 - 1.0e-10;
     }
-    ConstantDutyFlashInterface operation = new constantDutyPressureFlash(system);
+    ConstantDutyFlashInterface operation = new ConstantDutyPressureFlash(system);
     system.setBeta(1, 1.0 - fraction);
     system.setBeta(0, fraction);
     operation.run();
@@ -1379,7 +1379,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (fraction > 1.0 - 1e-10) {
       fraction = 1.0 - 1.0e-10;
     }
-    ConstantDutyFlashInterface operation = new constantDutyTemperatureFlash(system);
+    ConstantDutyFlashInterface operation = new ConstantDutyTemperatureFlash(system);
     system.setBeta(1, fraction);
     system.setBeta(0, fraction);
     operation.run();
@@ -1455,7 +1455,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void dewPointTemperatureFlash() throws Exception {
     ConstantDutyFlashInterface operation =
-        new neqsim.thermodynamicoperations.flashops.saturationops.dewPointTemperatureFlash(system);
+        new neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlash(system);
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
       throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
@@ -1473,9 +1473,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void dewPointTemperatureFlash(boolean derivatives) throws Exception {
     ConstantDutyFlashInterface operation =
-        new neqsim.thermodynamicoperations.flashops.saturationops.dewPointTemperatureFlash(system);
+        new neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlash(system);
     if (derivatives) {
-      operation = new dewPointTemperatureFlashDer(system);
+      operation = new DewPointTemperatureFlashDer(system);
     }
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
@@ -1513,7 +1513,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   public void dewPointPressureFlash() throws Exception {
     // try{
     system.init(0);
-    ConstantDutyFlashInterface operation = new dewPointPressureFlash(system);
+    ConstantDutyFlashInterface operation = new DewPointPressureFlash(system);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
       throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
@@ -1544,7 +1544,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    */
   public void calcPTphaseEnvelope() {
-    operation = new pTphaseEnvelope(system, fileName, (1.0 - 1e-10), 1.0, false);
+    operation = new PTphaseEnvelope(system, fileName, (1.0 - 1e-10), 1.0, false);
     // thisThread = new Thread(operation);
     // thisThread.start();
     getOperation().run();
@@ -1561,7 +1561,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    */
   public void calcPTphaseEnvelope2() {
-    operation = new pTphaseEnvelopeNew2(system, fileName, (1.0 - 1e-10), 1.0, false);
+    operation = new PTphaseEnvelopeNew2(system, fileName, (1.0 - 1e-10), 1.0, false);
     // thisThread = new Thread(operation);
     // thisThread.start();
     getOperation().run();
@@ -1580,7 +1580,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (bubfirst) {
       phasefraction = 1.0e-10;
     }
-    operation = new pTphaseEnvelope(system, fileName, phasefraction, lowPres, bubfirst);
+    operation = new PTphaseEnvelope(system, fileName, phasefraction, lowPres, bubfirst);
 
     // thisThread = new Thread(operation);
     // thisThread.start();
@@ -1595,7 +1595,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param lowPres a double
    */
   public void calcPTphaseEnvelope(double lowPres) {
-    operation = new pTphaseEnvelope(system, fileName, 1e-10, lowPres, true);
+    operation = new PTphaseEnvelope(system, fileName, 1e-10, lowPres, true);
     // thisThread = new Thread(operation);
     // thisThread.start();
     getOperation().run();
@@ -1613,7 +1613,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (bubfirst) {
       phasefraction = 1.0e-10;
     }
-    operation = new pTphaseEnvelope(system, fileName, phasefraction, 1.0, bubfirst);
+    operation = new PTphaseEnvelope(system, fileName, phasefraction, 1.0, bubfirst);
 
     // thisThread = new Thread(operation);
     // thisThread.start();
@@ -1633,7 +1633,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param phasefraction a double
    */
   public void calcPTphaseEnvelope(double lowPres, double phasefraction) {
-    operation = new pTphaseEnvelope(system, fileName, phasefraction, lowPres, true);
+    operation = new PTphaseEnvelope(system, fileName, phasefraction, lowPres, true);
 
     // thisThread = new Thread(operation);
     // thisThread.start();
@@ -1707,7 +1707,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    */
   public void calcPloadingCurve() {
-    operation = new pLoadingCurve2(system);
+    operation = new PloadingCurve2(system);
     // thisThread = new Thread(operation);
     // thisThread.start();
     getOperation().run();

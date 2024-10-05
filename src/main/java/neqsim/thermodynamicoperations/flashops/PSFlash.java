@@ -121,8 +121,8 @@ public class PSFlash extends QfuncFlash {
     if (type == 0) {
       solveQ();
     } else {
-      sysNewtonRhapsonPHflash secondOrderSolver =
-          new sysNewtonRhapsonPHflash(system, 2, system.getPhases()[0].getNumberOfComponents(), 1);
+      SysNewtonRhapsonPHflash secondOrderSolver =
+          new SysNewtonRhapsonPHflash(system, 2, system.getPhases()[0].getNumberOfComponents(), 1);
       secondOrderSolver.setSpec(Sspec);
       secondOrderSolver.solve(1);
     }

@@ -14,7 +14,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author asmund
  * @version $Id: $Id
  */
-public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
+public class HydrateInhibitorwtFlash extends ConstantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(HydrateInhibitorwtFlash.class);
 

@@ -19,7 +19,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author esol
  * @version $Id: $Id
  */
-public class FreezeOut extends constantDutyTemperatureFlash
+public class FreezeOut extends ConstantDutyTemperatureFlash
     implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(FreezeOut.class);

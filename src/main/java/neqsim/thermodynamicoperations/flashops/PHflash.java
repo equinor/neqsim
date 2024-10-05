@@ -195,8 +195,8 @@ public class PHflash extends Flash {
     if (type == 0) {
       solveQ();
     } else {
-      sysNewtonRhapsonPHflash secondOrderSolver =
-          new sysNewtonRhapsonPHflash(system, 2, system.getPhases()[0].getNumberOfComponents(), 0);
+      SysNewtonRhapsonPHflash secondOrderSolver =
+          new SysNewtonRhapsonPHflash(system, 2, system.getPhases()[0].getNumberOfComponents(), 0);
       secondOrderSolver.setSpec(Hspec);
       secondOrderSolver.solve(1);
     }

@@ -13,7 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author asmund
  * @version $Id: $Id
  */
-public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
+public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
 
