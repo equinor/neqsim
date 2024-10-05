@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.util.empiric.BukacekWaterInGas;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

@@ -3,7 +3,7 @@ package neqsim.processsimulation.processequipment.reservoir;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.NamedBaseClass;
 
 /**

@@ -18,7 +18,7 @@ import neqsim.processsimulation.processequipment.util.Recycle;
 import neqsim.processsimulation.processequipment.util.StreamSaturatorUtil;
 import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 import neqsim.thermo.phase.PhaseEosInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class GlycolModulesTest extends neqsim.NeqSimTest {
   @Test

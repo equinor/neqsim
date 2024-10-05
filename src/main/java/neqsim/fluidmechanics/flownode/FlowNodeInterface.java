@@ -264,9 +264,9 @@ public interface FlowNodeInterface extends Cloneable {
    * Getter for property operations.
    * </p>
    *
-   * @return a {@link neqsim.thermodynamicOperations.ThermodynamicOperations} object
+   * @return a {@link neqsim.thermodynamicoperations.ThermodynamicOperations} object
    */
-  public neqsim.thermodynamicOperations.ThermodynamicOperations getOperations();
+  public neqsim.thermodynamicoperations.ThermodynamicOperations getOperations();
 
   /**
    * <p>

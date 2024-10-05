@@ -117,8 +117,8 @@ public class TwoPhaseReactorFlowSystem
                                                            // SRK
                                                            // tilstandsligning
     // med trykk 305.3 K og 125 bar
-    neqsim.thermodynamicOperations.ThermodynamicOperations testOps =
-        new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem); // gjor
+    neqsim.thermodynamicoperations.ThermodynamicOperations testOps =
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(testSystem); // gjor
                                                                                 // termodyanmiske
                                                                                 // Flash
                                                                                 // rutiner

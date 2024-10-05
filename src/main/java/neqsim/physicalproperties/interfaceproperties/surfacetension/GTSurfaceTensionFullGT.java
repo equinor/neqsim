@@ -68,8 +68,8 @@ public class GTSurfaceTensionFullGT {
       }
     }
     if (hasAddedComp) {
-      neqsim.thermodynamicOperations.ThermodynamicOperations ops =
-          new neqsim.thermodynamicOperations.ThermodynamicOperations(this.sys);
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+          new neqsim.thermodynamicoperations.ThermodynamicOperations(this.sys);
       ops.TPflash();
     }
 

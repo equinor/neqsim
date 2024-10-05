@@ -4,7 +4,7 @@ import neqsim.processsimulation.processequipment.distillation.Condenser;
 import neqsim.processsimulation.processequipment.distillation.DistillationColumn;
 import neqsim.processsimulation.processequipment.distillation.Reboiler;
 import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

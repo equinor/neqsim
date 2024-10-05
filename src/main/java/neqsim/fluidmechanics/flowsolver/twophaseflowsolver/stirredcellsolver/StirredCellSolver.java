@@ -5,7 +5,7 @@ import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolve
 import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhasePipeFlowSolver;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

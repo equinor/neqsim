@@ -17,7 +17,7 @@ import neqsim.processsimulation.util.monitor.StreamResponse;
 import neqsim.standards.gasquality.Standard_ISO6976;
 import neqsim.standards.oilquality.Standard_ASTM_D6377;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.exception.InvalidInputException;
 
 /**

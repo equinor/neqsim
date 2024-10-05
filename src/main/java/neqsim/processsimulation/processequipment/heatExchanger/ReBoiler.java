@@ -4,7 +4,7 @@ import java.util.UUID;
 import neqsim.processsimulation.processequipment.TwoPortEquipment;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

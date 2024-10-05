@@ -9,7 +9,7 @@ import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.processsimulation.processequipment.util.FlowRateAdjuster;
 import neqsim.processsimulation.processsystem.ProcessSystem;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class FLowInducedVibrationTest extends neqsim.NeqSimTest {
   static ProcessSystem process1;

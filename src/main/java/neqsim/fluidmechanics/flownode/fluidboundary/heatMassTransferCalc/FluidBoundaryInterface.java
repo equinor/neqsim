@@ -9,7 +9,7 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc;
 import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel.enhancementFactor.EnhancementFactor;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>
@@ -114,7 +114,7 @@ public interface FluidBoundaryInterface extends Cloneable {
    * getBulkSystemOpertions.
    * </p>
    *
-   * @return a {@link neqsim.thermodynamicOperations.ThermodynamicOperations} object
+   * @return a {@link neqsim.thermodynamicoperations.ThermodynamicOperations} object
    */
   public ThermodynamicOperations getBulkSystemOpertions();
 

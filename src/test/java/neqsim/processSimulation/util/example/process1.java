@@ -1,7 +1,7 @@
 package neqsim.processSimulation.util.example;
 
 import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

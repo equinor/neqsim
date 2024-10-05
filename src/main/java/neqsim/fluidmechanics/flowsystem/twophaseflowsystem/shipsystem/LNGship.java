@@ -10,7 +10,7 @@ import neqsim.standards.gasquality.Standard_ISO6976;
 import neqsim.standards.gasquality.Standard_ISO6976_2016;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>
@@ -27,21 +27,21 @@ public class LNGship
 
   double[] temperature = null;
   double dailyBoilOffRatio = 0.005;
-  double totalTankVolume = 140000;
+  public double totalTankVolume = 140000;
   private double liquidDensity = 0.7;
-  int numberOffTimeSteps = 100;
+  public int numberOffTimeSteps = 100;
   private double initialTemperature = 111.0;
   private boolean setInitialTemperature = false;
   private neqsim.thermo.system.SystemInterface thermoSystem = null;
-  double initialNumberOffMoles;
+  public double initialNumberOffMoles;
   double molarBoilOffRate = 0.0;
-  double dailyBoilOffVolume = 0.0;
+  public double dailyBoilOffVolume = 0.0;
   private double endTime = 960; // 24.0 * 10;
   private Standard_ISO6976 standardISO6976 = null;
   StandardInterface standardDensity = null;
   double[] WI = null;
   double[] density = null;
-  double[] volume = null;
+  public double[] volume = null;
   double[] xmethane;
   double[] xethane;
   double[] xpropane;
@@ -64,11 +64,11 @@ public class LNGship
   double[] GCVmass;
   double[] totalEnergy;
   double[] time;
-  double[] tankTemperature = null;
+  public double[] tankTemperature = null;
   double timeStep = 0;
   private String[][] resultTable = null;
   private boolean backCalculate = false;
-  double endVolume = 0.0;
+  public double endVolume = 0.0;
 
   /**
    * <p>
@@ -407,9 +407,8 @@ public class LNGship
   public static void main(String[] args) {
     // thermo.system.SystemInterface testSystem = new
     // thermo.system.SystemGERG2004Eos(273.15 - 161.4, 1.0);
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(273.15 - 161.4,
-            ThermodynamicConstantsInterface.referencePressure);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(
+        273.15 - 161.4, ThermodynamicConstantsInterface.referencePressure);
     /*
      * testSystem.addComponent("nitrogen", 0.0136); testSystem.addComponent("methane", 0.9186);
      * testSystem.addComponent("ethane", 0.0526); testSystem.addComponent("propane", 0.0115);

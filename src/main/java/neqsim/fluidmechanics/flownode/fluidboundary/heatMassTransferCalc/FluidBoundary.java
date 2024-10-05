@@ -17,7 +17,7 @@ import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel.enhancementFactor.EnhancementFactor;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>
@@ -219,7 +219,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
    * getInterphaseOpertions.
    * </p>
    *
-   * @return a {@link neqsim.thermodynamicOperations.ThermodynamicOperations} object
+   * @return a {@link neqsim.thermodynamicoperations.ThermodynamicOperations} object
    */
   public ThermodynamicOperations getInterphaseOpertions() {
     return interphaseOps;

@@ -17,7 +17,7 @@ import javax.swing.JTable;
 import neqsim.standards.salescontract.BaseContract;
 import neqsim.standards.salescontract.ContractInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.NamedBaseClass;
 
 /**

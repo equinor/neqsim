@@ -8,7 +8,7 @@ import neqsim.processsimulation.processequipment.ProcessEquipmentBaseClass;
 import neqsim.processsimulation.processequipment.mixer.MixerInterface;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

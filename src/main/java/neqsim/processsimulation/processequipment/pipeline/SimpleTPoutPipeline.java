@@ -3,7 +3,7 @@ package neqsim.processsimulation.processequipment.pipeline;
 import java.util.UUID;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

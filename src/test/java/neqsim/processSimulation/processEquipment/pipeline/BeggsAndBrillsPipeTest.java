@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class BeggsAndBrillsPipeTest {
   @Test

@@ -17,7 +17,7 @@ import neqsim.fluidmechanics.flownode.fluidboundary.interphaseTransportCoefficie
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.util.DoubleCloneable;
 
 /**
@@ -605,7 +605,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
 
   /** {@inheritDoc} */
   @Override
-  public neqsim.thermodynamicOperations.ThermodynamicOperations getOperations() {
+  public neqsim.thermodynamicoperations.ThermodynamicOperations getOperations() {
     return operations;
   }
 
@@ -614,7 +614,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
    *
    * @param operations New value of property operations.
    */
-  public void setOperations(neqsim.thermodynamicOperations.ThermodynamicOperations operations) {
+  public void setOperations(neqsim.thermodynamicoperations.ThermodynamicOperations operations) {
     this.operations = operations;
   }
 

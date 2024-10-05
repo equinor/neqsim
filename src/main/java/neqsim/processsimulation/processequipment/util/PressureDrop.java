@@ -6,7 +6,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
 import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

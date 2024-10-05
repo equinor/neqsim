@@ -10,7 +10,7 @@ import neqsim.processsimulation.processequipment.stream.StreamInterface;
 import neqsim.processsimulation.util.monitor.ValveResponse;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

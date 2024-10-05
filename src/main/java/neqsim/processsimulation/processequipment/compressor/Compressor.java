@@ -19,7 +19,7 @@ import neqsim.processsimulation.processequipment.stream.StreamInterface;
 import neqsim.processsimulation.util.monitor.CompressorResponse;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

@@ -2,7 +2,7 @@ package neqsim.processsimulation.processequipment.distillation;
 
 import java.util.UUID;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

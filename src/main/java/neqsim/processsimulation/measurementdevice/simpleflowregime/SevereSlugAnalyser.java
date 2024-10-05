@@ -8,7 +8,7 @@ import neqsim.processsimulation.measurementdevice.MeasurementDeviceBaseClass;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>
@@ -105,13 +105,13 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   String flowPattern;
 
   // This constructor is used for the "default" values
-  SevereSlugAnalyser() {
+  public SevereSlugAnalyser() {
     super("SevereSlugAnalyser", "m3/sec");
   }
 
   // This constructor is used for the user input of superficial liquid and gas velocities,
   // and the rest will be the default values
-  SevereSlugAnalyser(double usl, double usg) {
+  public SevereSlugAnalyser(double usl, double usg) {
     this();
     this.setSuperficialLiquidVelocity(usl);
     this.setSuperficialGasVelocity(usg);
@@ -132,8 +132,8 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     this.setNumberOfTimeSteps(numberOfTimeSteps);
   }
 
-  SevereSlugAnalyser(SystemInterface fluid, Pipe pipe, double outletPressure, double temperature,
-      double simulationTime, int numberOfTimeSteps) {
+  public SevereSlugAnalyser(SystemInterface fluid, Pipe pipe, double outletPressure,
+      double temperature, double simulationTime, int numberOfTimeSteps) {
     this();
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
@@ -152,9 +152,9 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     this.setNumberOfTimeSteps(numberOfTimeSteps);
   }
 
-  SevereSlugAnalyser(Stream stream, double internalDiameter, double leftLength, double rightLength,
-      double angle, double outletPressure, double temperature, double simulationTime,
-      int numberOfTimeSteps) {
+  public SevereSlugAnalyser(Stream stream, double internalDiameter, double leftLength,
+      double rightLength, double angle, double outletPressure, double temperature,
+      double simulationTime, int numberOfTimeSteps) {
     this();
     pipe = new Pipe(internalDiameter, leftLength, rightLength, angle);
     streamS = stream;
@@ -175,19 +175,19 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
         numberOfTimeSteps);
   }
 
-  SevereSlugAnalyser(Stream stream, double internalDiameter, double leftLength, double rightLength,
-      double angle, double simulationTime, int numberOfTimeSteps) {
+  public SevereSlugAnalyser(Stream stream, double internalDiameter, double leftLength,
+      double rightLength, double angle, double simulationTime, int numberOfTimeSteps) {
     this(stream, internalDiameter, leftLength, rightLength, angle, stream.getPressure("Pa"),
         stream.getTemperature("C"), simulationTime, numberOfTimeSteps);
   }
 
-  SevereSlugAnalyser(Stream stream, double internalDiameter, double leftLength, double rightLength,
-      double angle) {
+  public SevereSlugAnalyser(Stream stream, double internalDiameter, double leftLength,
+      double rightLength, double angle) {
     this(stream, internalDiameter, leftLength, rightLength, angle, stream.getPressure("Pa"),
         stream.getTemperature("C"), 500.0, 50000);
   }
 
-  SevereSlugAnalyser(double outletPressure, double temperature, double simulationTime,
+  public SevereSlugAnalyser(double outletPressure, double temperature, double simulationTime,
       int numberOfTimeSteps) {
     this();
     this.setOutletPressure(outletPressure);

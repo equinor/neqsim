@@ -8,7 +8,7 @@ package neqsim.statistics.experimentalsamplecreation.samplecreator;
 
 import neqsim.statistics.experimentalequipmentdata.ExperimentalEquipmentData;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>
@@ -36,7 +36,7 @@ public class SampleCreator {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param thermoOps a {@link neqsim.thermodynamicOperations.ThermodynamicOperations} object
+   * @param thermoOps a {@link neqsim.thermodynamicoperations.ThermodynamicOperations} object
    */
   public SampleCreator(SystemInterface system, ThermodynamicOperations thermoOps) {
     this.system = system;

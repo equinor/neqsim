@@ -7,7 +7,7 @@
 package neqsim.processsimulation.processequipment.mixer;
 
 import java.util.UUID;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

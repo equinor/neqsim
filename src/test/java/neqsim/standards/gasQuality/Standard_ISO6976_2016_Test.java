@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.standards.gasquality.Standard_ISO6976_2016;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * @author ESOL

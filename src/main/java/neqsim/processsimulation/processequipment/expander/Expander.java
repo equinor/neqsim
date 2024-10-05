@@ -3,7 +3,7 @@ package neqsim.processsimulation.processequipment.expander;
 import java.util.UUID;
 import neqsim.processsimulation.processequipment.compressor.Compressor;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

@@ -53,8 +53,8 @@ public class LNGtankfilling {
         testSystem2.createDatabase(true);
         testSystem2.setMixingRule(2);
 
-        neqsim.thermodynamicOperations.ThermodynamicOperations ops =
-                new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem);
+        neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+                new neqsim.thermodynamicoperations.ThermodynamicOperations(testSystem);
         ops.TPflash();
         testSystem.display();
 
