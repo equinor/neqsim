@@ -1,7 +1,7 @@
 package neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhaseStirredCellNode;
 
 import org.junit.jupiter.api.Test;
-import neqsim.fluidMechanics.geometryDefinitions.stirredCell.StirredCell;
+import neqsim.fluidmechanics.geometrydefinitions.stirredcell.StirredCell;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 

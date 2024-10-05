@@ -6,7 +6,7 @@
 
 package neqsim.thermo.phase;
 
-import neqsim.thermo.mixingRule.EosMixingRulesInterface;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 
 /**
  * <p>
@@ -26,7 +26,7 @@ public interface PhaseEosInterface extends PhaseInterface {
    * getMixingRule.
    * </p>
    *
-   * @return a {@link neqsim.thermo.mixingRule.EosMixingRulesInterface} object
+   * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
    */
   public EosMixingRulesInterface getMixingRule();
 

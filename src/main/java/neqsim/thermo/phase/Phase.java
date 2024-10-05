@@ -2213,22 +2213,22 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getDensity_GERG2008() {
-    neqsim.thermo.util.GERG.NeqSimGERG2008 test = new neqsim.thermo.util.GERG.NeqSimGERG2008(this);
+    neqsim.thermo.util.gerg.NeqSimGERG2008 test = new neqsim.thermo.util.gerg.NeqSimGERG2008(this);
     return test.getDensity();
   }
 
   /** {@inheritDoc} */
   @Override
   public double[] getProperties_GERG2008() {
-    neqsim.thermo.util.GERG.NeqSimGERG2008 test = new neqsim.thermo.util.GERG.NeqSimGERG2008(this);
+    neqsim.thermo.util.gerg.NeqSimGERG2008 test = new neqsim.thermo.util.gerg.NeqSimGERG2008(this);
     return test.propertiesGERG();
   }
 
   /** {@inheritDoc} */
   @Override
   public double getDensity_AGA8() {
-    neqsim.thermo.util.GERG.NeqSimAGA8Detail test =
-        new neqsim.thermo.util.GERG.NeqSimAGA8Detail(this);
+    neqsim.thermo.util.gerg.NeqSimAGA8Detail test =
+        new neqsim.thermo.util.gerg.NeqSimAGA8Detail(this);
     return test.getDensity();
   }
 

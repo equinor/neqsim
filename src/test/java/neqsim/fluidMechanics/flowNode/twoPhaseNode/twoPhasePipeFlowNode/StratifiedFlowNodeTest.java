@@ -2,7 +2,7 @@ package neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
+import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;

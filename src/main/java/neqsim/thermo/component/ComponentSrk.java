@@ -1,7 +1,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermSrk;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermSrk;
 
 /**
  * <p>
