@@ -19,7 +19,6 @@ public class PhaseKentEisenberg extends PhaseGENRTL {
    * </p>
    */
   public PhaseKentEisenberg() {
-    super();
   }
 
   /** {@inheritDoc} */

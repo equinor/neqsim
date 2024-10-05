@@ -41,7 +41,6 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
    * </p>
    */
   public PhasePCSAFTa() {
-    super();
   }
 
   /** {@inheritDoc} */

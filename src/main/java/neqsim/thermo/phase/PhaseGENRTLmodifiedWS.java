@@ -20,7 +20,6 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
    * </p>
    */
   public PhaseGENRTLmodifiedWS() {
-    super();
   }
 
   /**

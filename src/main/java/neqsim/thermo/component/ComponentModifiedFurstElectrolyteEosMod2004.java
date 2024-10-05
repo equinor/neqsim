@@ -416,7 +416,6 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   public double calcSolventdiElectricdn(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
     if (getIonicCharge() != 0) {
-      return 0.0;
     }
     /*
      * double ans2 = 0.0; for (int i = 0; i < numberOfComponents; i++) { if
@@ -446,7 +445,6 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
     if (getIonicCharge() != 0
         || ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getComponents()[j]
             .getIonicCharge() != 0) {
-      return 0.0;
     }
     /*
      * double ans2 = 0.0; for (int i = 0; i < numberOfComponents; i++) { if
@@ -475,7 +473,6 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   public double calcSolventdiElectricdndT(PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
     if (getIonicCharge() != 0) {
-      return 0.0;
     }
     /*
      * double ans2 = 0.0; for (int i = 0; i < numberOfComponents; i++) { if

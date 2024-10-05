@@ -158,7 +158,6 @@ public class Pipe {
    */
   public double getAngle(String unit) {
     if (unit.equals("Degree")) {
-      return this.angle;
     } else if (unit.equals("Radian")) {
       return this.angle * pi / 180;
     }

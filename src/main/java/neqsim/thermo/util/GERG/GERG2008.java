@@ -313,7 +313,6 @@ public class GERG2008 {
                     "Calculation failed to converge in GERG method, ideal gas density returned.";
                 D.val = P / RGERG / T;
               }
-              return;
             }
             return; // Iteration converged
           }

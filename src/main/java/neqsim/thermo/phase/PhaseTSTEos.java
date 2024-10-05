@@ -19,7 +19,6 @@ public class PhaseTSTEos extends PhaseEos {
    * </p>
    */
   public PhaseTSTEos() {
-    super();
     uEOS = 2.5;
     wEOS = -1.5;
     delta1 = 1.0 + Math.sqrt(2.0);

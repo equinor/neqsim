@@ -21,7 +21,6 @@ public class LevenbergMarquardtBiasDev extends LevenbergMarquardt {
    * </p>
    */
   public LevenbergMarquardtBiasDev() {
-    super();
   }
 
   /** {@inheritDoc} */

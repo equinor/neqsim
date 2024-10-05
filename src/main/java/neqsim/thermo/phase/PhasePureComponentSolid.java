@@ -23,7 +23,6 @@ public class PhasePureComponentSolid extends PhaseSolid {
    * </p>
    */
   public PhasePureComponentSolid() {
-    super();
   }
 
   /** {@inheritDoc} */

@@ -92,7 +92,6 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    */
   public double getPower(String unit) {
     if (unit.equals("W")) {
-      return dH;
     } else if (unit.equals("kW")) {
       return dH / 1000.0;
     } else if (unit.equals("MW")) {

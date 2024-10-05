@@ -19,7 +19,6 @@ public class PhaseSrkCPAsOld extends PhaseSrkCPAs {
    * </p>
    */
   public PhaseSrkCPAsOld() {
-    super();
   }
 
   /** {@inheritDoc} */

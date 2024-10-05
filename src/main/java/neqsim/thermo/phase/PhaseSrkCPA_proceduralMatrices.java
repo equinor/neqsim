@@ -75,7 +75,6 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
    * </p>
    */
   public PhaseSrkCPA_proceduralMatrices() {
-    super();
   }
 
   /** {@inheritDoc} */

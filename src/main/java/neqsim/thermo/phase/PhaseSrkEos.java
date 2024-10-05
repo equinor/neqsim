@@ -25,7 +25,6 @@ public class PhaseSrkEos extends PhaseEos {
    * </p>
    */
   public PhaseSrkEos() {
-    super();
     // mixRule = mixSelect.getMixingRule(2);
     thermoPropertyModelName = "SRK-EoS";
     uEOS = 1;

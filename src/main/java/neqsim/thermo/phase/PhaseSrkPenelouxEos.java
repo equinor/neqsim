@@ -19,7 +19,6 @@ public class PhaseSrkPenelouxEos extends PhaseSrkEos {
    * </p>
    */
   public PhaseSrkPenelouxEos() {
-    super();
   }
 
   /** {@inheritDoc} */

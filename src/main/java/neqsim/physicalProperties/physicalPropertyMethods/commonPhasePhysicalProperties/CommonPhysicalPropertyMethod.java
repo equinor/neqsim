@@ -18,15 +18,6 @@ public class CommonPhysicalPropertyMethod
    * <p>
    * Constructor for CommonPhysicalPropertyMethod.
    * </p>
-   */
-  public CommonPhysicalPropertyMethod() {
-    super();
-  }
-
-  /**
-   * <p>
-   * Constructor for CommonPhysicalPropertyMethod.
-   * </p>
    *
    * @param phase a
    *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
@@ -34,7 +25,6 @@ public class CommonPhysicalPropertyMethod
    */
   public CommonPhysicalPropertyMethod(
       neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
-    super();
     this.phase = phase;
   }
 

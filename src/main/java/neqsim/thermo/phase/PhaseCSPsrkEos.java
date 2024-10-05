@@ -27,7 +27,6 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
    * </p>
    */
   public PhaseCSPsrkEos() {
-    super();
     refBWRSPhase = new PhaseBWRSEos();
     // refBWRSPhase = new PhaseSrkEos();
     refBWRSPhase.addComponent("methane", 1.0, 1.0, 0);

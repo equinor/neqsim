@@ -223,7 +223,6 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       }
       if (measurement.equals("waterDensity")) {
         if (!tempFluid.hasPhaseType("aqueous")) {
-          return 0.0;
         } else {
           return tempFluid.getPhase("aqueous").getDensity("kg/m3");
         }

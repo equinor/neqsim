@@ -705,7 +705,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
       // closer to bubble point get the lightest component
       initPc = system.getPhase(0).getComponents()[lc].getPC();
       initAc = system.getPhase(0).getComponents()[lc].getAcentricFactor();
-    } else if (beta > 0.5) {
+    } else {
       initTc = system.getPhase(0).getComponents()[hc].getTC();
       // closer to dew point get the heaviest component
       initPc = system.getPhase(0).getComponents()[hc].getPC();

@@ -57,7 +57,6 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * </p>
    */
   public PhaseEos() {
-    super();
     mixSelect = new EosMixingRules();
     componentArray = new ComponentEosInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
     mixRule = mixSelect.getMixingRule(1);
@@ -121,7 +120,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       Z = pressure * getMolarVolume() / (R * temperature);
       for (int i = 0; i < numberOfComponents; i++) {
         componentArray[i].Finit(this, temperature, pressure, totalNumberOfMoles, beta,
-            numberOfComponents, initType); 
+            numberOfComponents, initType);
       }
 
       f_loc = calcf();

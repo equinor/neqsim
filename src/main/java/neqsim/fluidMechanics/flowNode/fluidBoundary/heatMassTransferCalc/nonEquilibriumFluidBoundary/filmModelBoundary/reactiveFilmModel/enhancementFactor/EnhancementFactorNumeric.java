@@ -13,14 +13,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * @version $Id: $Id
  */
 public class EnhancementFactorNumeric extends EnhancementFactor {
-  /**
-   * <p>
-   * Constructor for EnhancementFactorNumeric.
-   * </p>
-   */
-  public EnhancementFactorNumeric() {
-    super();
-  }
 
   /**
    * <p>

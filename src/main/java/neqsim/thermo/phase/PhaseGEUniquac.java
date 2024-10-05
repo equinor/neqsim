@@ -35,7 +35,6 @@ public class PhaseGEUniquac extends PhaseGE {
    * </p>
    */
   public PhaseGEUniquac() {
-    super();
     componentArray = new ComponentGEInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
@@ -52,7 +51,6 @@ public class PhaseGEUniquac extends PhaseGE {
    */
   public PhaseGEUniquac(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
       double[][] intparam) {
-    super();
     componentArray = new ComponentGEUniquac[alpha[0].length];
     this.mixRule = mixRule;
     this.alpha = alpha;

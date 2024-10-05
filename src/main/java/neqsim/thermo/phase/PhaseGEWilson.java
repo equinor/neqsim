@@ -24,7 +24,6 @@ public class PhaseGEWilson extends PhaseGE {
    * </p>
    */
   public PhaseGEWilson() {
-    super();
     componentArray = new ComponentGEWilson[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
@@ -41,7 +40,6 @@ public class PhaseGEWilson extends PhaseGE {
    */
   public PhaseGEWilson(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
       double[][] intparam) {
-    super();
     componentArray = new ComponentGEWilson[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
       numberOfComponents++;

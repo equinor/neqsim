@@ -294,6 +294,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    *
    * @return a String
    */
+  @Override
   public String getReport_json() {
     return new Report(this).generateJsonReport();
   }

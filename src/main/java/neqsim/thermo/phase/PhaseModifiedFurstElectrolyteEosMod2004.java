@@ -63,7 +63,6 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    * </p>
    */
   public PhaseModifiedFurstElectrolyteEosMod2004() {
-    super();
     electrolyteMixingRule = mixSelect.getElectrolyteMixingRule(this);
   }
 

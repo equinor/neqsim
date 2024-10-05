@@ -25,7 +25,6 @@ public class PhaseBWRSEos extends PhaseSrkEos {
    * </p>
    */
   public PhaseBWRSEos() {
-    super();
   }
 
   /** {@inheritDoc} */

@@ -19,7 +19,6 @@ public class PhaseWax extends PhaseSolid {
    * </p>
    */
   public PhaseWax() {
-    super();
     setType(PhaseType.WAX);
   }
 

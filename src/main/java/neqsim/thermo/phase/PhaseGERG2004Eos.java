@@ -40,7 +40,6 @@ public class PhaseGERG2004Eos extends PhaseEos {
    * </p>
    */
   public PhaseGERG2004Eos() {
-    super();
     thermoPropertyModelName = "GERG-EoS 2008";
   }
 

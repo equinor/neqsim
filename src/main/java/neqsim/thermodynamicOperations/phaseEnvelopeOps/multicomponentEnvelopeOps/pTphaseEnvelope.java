@@ -793,7 +793,7 @@ public class pTphaseEnvelope extends BaseOperation {
         initTc = system.getPhase(0).getComponents()[lc].getTC();
         initPc = system.getPhase(0).getComponents()[lc].getPC();
         initAc = system.getPhase(0).getComponents()[lc].getAcentricFactor();
-      } else if (beta > 0.5) {
+      } else {
         // closer to dew point get the heaviest component
         initTc = system.getPhase(0).getComponents()[hc].getTC();
         initPc = system.getPhase(0).getComponents()[hc].getPC();

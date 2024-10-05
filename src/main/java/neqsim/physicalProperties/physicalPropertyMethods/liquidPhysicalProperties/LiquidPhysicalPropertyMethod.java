@@ -20,7 +20,6 @@ public class LiquidPhysicalPropertyMethod
    * </p>
    */
   public LiquidPhysicalPropertyMethod() {
-    super();
   }
 
   /**
@@ -34,7 +33,6 @@ public class LiquidPhysicalPropertyMethod
    */
   public LiquidPhysicalPropertyMethod(
       neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
-    super();
     this.liquidPhase = liquidPhase;
   }
 

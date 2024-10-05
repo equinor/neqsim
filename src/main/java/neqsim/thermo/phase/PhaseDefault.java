@@ -30,7 +30,6 @@ public class PhaseDefault extends Phase {
    * @param comp a {@link neqsim.thermo.component.ComponentInterface} object
    */
   public PhaseDefault(ComponentInterface comp) {
-    super();
     defComponent = comp;
   }
 

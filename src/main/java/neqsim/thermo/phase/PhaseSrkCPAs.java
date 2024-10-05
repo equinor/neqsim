@@ -21,7 +21,6 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
    * </p>
    */
   public PhaseSrkCPAs() {
-    super();
   }
 
   /** {@inheritDoc} */

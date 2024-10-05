@@ -47,7 +47,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    * </p>
    */
   public PhasePCSAFTRahmat() {
-    super();
   }
 
   /** {@inheritDoc} */

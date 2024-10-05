@@ -21,7 +21,6 @@ public class LevenbergMarquardtAbsDev extends LevenbergMarquardt {
    * </p>
    */
   public LevenbergMarquardtAbsDev() {
-    super();
   }
 
   /** {@inheritDoc} */
