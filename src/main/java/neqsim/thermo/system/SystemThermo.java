@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
-import neqsim.chemicalReactions.ChemicalReactionOperations;
+import neqsim.chemicalreactions.ChemicalReactionOperations;
 import neqsim.physicalproperties.interfaceproperties.InterfaceProperties;
 import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;

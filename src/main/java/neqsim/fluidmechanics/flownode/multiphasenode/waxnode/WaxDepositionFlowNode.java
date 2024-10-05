@@ -1,7 +1,7 @@
 package neqsim.fluidmechanics.flownode.multiphasenode.waxnode;
 
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
-import neqsim.fluidmechanics.flownode.fluidboundary.interphaseTransportCoefficient.interphaseTwoPhase.interphasePipeFlow.InterphaseStratifiedFlow;
+import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow;
 import neqsim.fluidmechanics.flownode.multiphasenode.MultiPhaseFlowNode;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
@@ -44,7 +44,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
     this.flowNodeType = "wax deposition node";
     this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
     this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
             this);
   }
 

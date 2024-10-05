@@ -11,9 +11,9 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.FluidBoundaryInterface;
-import neqsim.fluidmechanics.flownode.fluidboundary.interphaseTransportCoefficient.InterphaseTransportCoefficientBaseClass;
-import neqsim.fluidmechanics.flownode.fluidboundary.interphaseTransportCoefficient.InterphaseTransportCoefficientInterface;
+import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface;
+import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.InterphaseTransportCoefficientBaseClass;
+import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.InterphaseTransportCoefficientInterface;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -416,17 +416,17 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     if (i == 0) {
       // System.out.println("set equilibrium");
       this.fluidBoundary =
-          new neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.equilibriumFluidBoundary.EquilibriumFluidBoundary(
+          new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.equilibriumfluidboundary.EquilibriumFluidBoundary(
               this);
     } else {
       // System.out.println("set non equilibrium");
       if (bulkSystem.isChemicalSystem()) {
         this.fluidBoundary =
-            new neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel.ReactiveKrishnaStandartFilmModel(
+            new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveKrishnaStandartFilmModel(
                 this);
       } else {
         this.fluidBoundary =
-            new neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+            new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
                 this);
       }
     }

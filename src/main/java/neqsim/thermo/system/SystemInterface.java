@@ -1,6 +1,6 @@
 package neqsim.thermo.system;
 
-import neqsim.chemicalReactions.ChemicalReactionOperations;
+import neqsim.chemicalreactions.ChemicalReactionOperations;
 import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.characterization.WaxModelInterface;
@@ -609,7 +609,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * getChemicalReactionOperations.
    * </p>
    *
-   * @return a {@link neqsim.chemicalReactions.ChemicalReactionOperations} object
+   * @return a {@link neqsim.chemicalreactions.ChemicalReactionOperations} object
    */
   public ChemicalReactionOperations getChemicalReactionOperations();
 

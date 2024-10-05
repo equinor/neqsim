@@ -1,7 +1,7 @@
 package neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode;
 
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
-import neqsim.fluidmechanics.flownode.fluidboundary.interphaseTransportCoefficient.interphaseOnePhase.interphasePipeFlow.InterphasePipeFlow;
+import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphaseonephase.interphasepipeflow.InterphasePipeFlow;
 import neqsim.fluidmechanics.flownode.onephasenode.onePhaseFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;

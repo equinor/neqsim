@@ -1,7 +1,7 @@
 package neqsim.fluidmechanics.flownode.twophasenode.twophasestirredcellnode;
 
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
-import neqsim.fluidmechanics.flownode.fluidboundary.interphaseTransportCoefficient.interphaseTwoPhase.stirredCell.InterphaseStirredCellFlow;
+import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow;
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.stirredcell.StirredCell;
@@ -47,7 +47,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
     this.flowNodeType = "stirred cell";
     this.interphaseTransportCoefficient = new InterphaseStirredCellFlow(this);
     this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
             this);
   }
 
@@ -67,7 +67,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
     this.flowNodeType = "stirred cell";
     this.interphaseTransportCoefficient = new InterphaseStirredCellFlow(this);
     this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
             this);
   }
 

@@ -1,7 +1,7 @@
 package neqsim.fluidmechanics.flownode.twophasenode.twophasereactorflownode;
 
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
-import neqsim.fluidmechanics.flownode.fluidboundary.interphaseTransportCoefficient.interphaseTwoPhase.interphasePipeFlow.InterphaseStratifiedFlow;
+import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow;
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
@@ -44,7 +44,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
     this.flowNodeType = "stratified";
     this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
     this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
             this);
   }
 
@@ -64,7 +64,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
     this.flowNodeType = "stratified";
     this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
     this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
             this);
   }
 

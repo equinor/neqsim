@@ -1,7 +1,7 @@
 package neqsim.fluidmechanics.flownode.twophasenode.twophasereactorflownode;
 
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
-import neqsim.fluidmechanics.flownode.fluidboundary.interphaseTransportCoefficient.interphaseTwoPhase.interphaseReactorFlow.InterphasePackedBed;
+import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphaseReactorFlow.InterphasePackedBed;
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.reactor.ReactorData;
@@ -43,7 +43,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
     this.flowNodeType = "packed bed";
     this.interphaseTransportCoefficient = new InterphasePackedBed(this);
     this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
             this);
   }
 
@@ -63,7 +63,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
     this.flowNodeType = "packed bed";
     this.interphaseTransportCoefficient = new InterphasePackedBed(this);
     this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
             this);
   }
 

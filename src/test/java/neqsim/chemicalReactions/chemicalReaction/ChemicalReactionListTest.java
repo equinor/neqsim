@@ -3,7 +3,7 @@ package neqsim.chemicalReactions.chemicalReaction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import neqsim.chemicalReactions.chemicalreaction.ChemicalReactionList;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList;
 
 public class ChemicalReactionListTest {
   ChemicalReactionList test;

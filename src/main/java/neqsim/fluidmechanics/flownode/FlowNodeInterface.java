@@ -1,7 +1,7 @@
 package neqsim.fluidmechanics.flownode;
 
-import neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.FluidBoundaryInterface;
-import neqsim.fluidmechanics.flownode.fluidboundary.interphaseTransportCoefficient.InterphaseTransportCoefficientInterface;
+import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface;
+import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.InterphaseTransportCoefficientInterface;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.util.DoubleCloneable;
@@ -30,7 +30,7 @@ public interface FlowNodeInterface extends Cloneable {
    * </p>
    *
    * @return a
-   *         {@link neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.FluidBoundaryInterface}
+   *         {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
    *         object
    */
   public FluidBoundaryInterface getFluidBoundary();
@@ -351,7 +351,7 @@ public interface FlowNodeInterface extends Cloneable {
    * </p>
    *
    * @return a
-   *         {@link neqsim.fluidmechanics.flownode.fluidboundary.interphaseTransportCoefficient.InterphaseTransportCoefficientInterface}
+   *         {@link neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.InterphaseTransportCoefficientInterface}
    *         object
    */
   public InterphaseTransportCoefficientInterface getInterphaseTransportCoefficient();

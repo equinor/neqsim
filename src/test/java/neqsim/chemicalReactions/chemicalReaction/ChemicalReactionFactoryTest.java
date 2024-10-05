@@ -2,7 +2,7 @@ package neqsim.chemicalReactions.chemicalReaction;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.chemicalReactions.chemicalreaction.ChemicalReactionFactory;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionFactory;
 
 public class ChemicalReactionFactoryTest {
   @Test

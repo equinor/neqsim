@@ -1,7 +1,7 @@
 package neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode;
 
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
-import neqsim.fluidmechanics.flownode.fluidboundary.interphaseTransportCoefficient.interphaseTwoPhase.interphasePipeFlow.InterphaseDropletFlow;
+import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseDropletFlow;
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
@@ -44,7 +44,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
     this.flowNodeType = "droplet";
     this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
     this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
             this);
   }
 
@@ -64,7 +64,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
     this.flowNodeType = "stratified";
     this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
     this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
             this);
   }
 
