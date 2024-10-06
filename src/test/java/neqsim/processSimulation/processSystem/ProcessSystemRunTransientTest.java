@@ -4,21 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.SimulationInterface;
-import neqsim.processSimulation.controllerDevice.ControllerDeviceBaseClass;
-import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
-import neqsim.processSimulation.measurementDevice.CompressorMonitor;
-import neqsim.processSimulation.measurementDevice.LevelTransmitter;
-import neqsim.processSimulation.measurementDevice.PressureTransmitter;
-import neqsim.processSimulation.measurementDevice.VolumeFlowTransmitter;
-import neqsim.processSimulation.processEquipment.compressor.Compressor;
-import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.splitter.Splitter;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.Recycle;
-import neqsim.processSimulation.processEquipment.util.SetPoint;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.SimulationInterface;
+import neqsim.processsimulation.controllerdevice.ControllerDeviceBaseClass;
+import neqsim.processsimulation.controllerdevice.ControllerDeviceInterface;
+import neqsim.processsimulation.measurementdevice.CompressorMonitor;
+import neqsim.processsimulation.measurementdevice.LevelTransmitter;
+import neqsim.processsimulation.measurementdevice.PressureTransmitter;
+import neqsim.processsimulation.measurementdevice.VolumeFlowTransmitter;
+import neqsim.processsimulation.processequipment.compressor.Compressor;
+import neqsim.processsimulation.processequipment.heatExchanger.Cooler;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.splitter.Splitter;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.util.Recycle;
+import neqsim.processsimulation.processequipment.util.SetPoint;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.processsimulation.processsystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
@@ -289,8 +290,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
      */
     assertEquals(100.0, compressor1.getOutletStream().getPressure(), 0.01);
 
-    neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
-        new neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator(
+    neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator compchartgenerator =
+        new neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator(
             compressor1);
     compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
     compressor1.getCompressorChart().setUseCompressorChart(true);
@@ -394,8 +395,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     assertEquals(100.0, compressor1.getOutletStream().getPressure(), 0.01);
 
     // System.out.println("steady state with compressor curves.....");
-    neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
-        new neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator(
+    neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator compchartgenerator =
+        new neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator(
             compressor1);
     compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
     compressor1.getCompressorChart().setUseCompressorChart(true);
@@ -508,8 +509,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
      */
     assertEquals(100.0, compressor1.getOutletStream().getPressure(), 0.01);
 
-    neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
-        new neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator(
+    neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator compchartgenerator =
+        new neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator(
             compressor1);
     compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
     compressor1.getCompressorChart().setUseCompressorChart(true);
@@ -676,8 +677,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
      * " pres inn " + compressor1.getInletStream().getPressure() + " pres out " +
      * compressor1.getOutletStream().getPressure() + " distancetosurge ");
      */
-    neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator compchartgenerator =
-        new neqsim.processSimulation.processEquipment.compressor.CompressorChartGenerator(
+    neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator compchartgenerator =
+        new neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator(
             compressor1);
     compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
     compressor1.getCompressorChart().setUseCompressorChart(true);

@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class PTPhaseEnvelopeTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
@@ -18,7 +18,7 @@ public class PTPhaseEnvelopeTest {
 
   /**
    * Test method for
-   * {@link neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.pTphaseEnvelope}.
+   * {@link neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelope}.
    */
   @Test
   void testDewP() {

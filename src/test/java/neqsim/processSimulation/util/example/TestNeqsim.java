@@ -1,7 +1,7 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.compressor.Compressor;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processsimulation.processequipment.compressor.Compressor;
+import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -67,8 +67,8 @@ public class TestNeqsim {
     compressor1.setPolytropicEfficiency(0.64951);
     Stream stream2 = new Stream("stream2", compressor1.getOutletStream());
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream1);
     operations.add(compressor1);
     operations.add(stream2);

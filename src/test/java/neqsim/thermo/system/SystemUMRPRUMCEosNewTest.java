@@ -8,8 +8,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import neqsim.PVTsimulation.simulation.SaturationPressure;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.pvtsimulation.simulation.SaturationPressure;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   static Logger logger = LogManager.getLogger(SystemUMRPRUMCEosNewTest.class);

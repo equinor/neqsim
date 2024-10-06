@@ -3,7 +3,7 @@ package neqsim.thermo.util.example;
 import java.util.Arrays;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

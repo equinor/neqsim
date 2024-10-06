@@ -9,7 +9,7 @@ package neqsim.thermo.component;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.thermo.atomElement.UNIFACgroup;
+import neqsim.thermo.atomelement.UNIFACgroup;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -273,7 +273,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   /**
    * Getter for property unifacGroups.
    *
-   * @return an ArrayList of {@link neqsim.thermo.atomElement.UNIFACgroup} objects. Value of
+   * @return an ArrayList of {@link neqsim.thermo.atomelement.UNIFACgroup} objects. Value of
    *         property unifacGroups.
    */
   public ArrayList<UNIFACgroup> getUnifacGroups2() {
@@ -285,7 +285,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
    * Getter for the field <code>unifacGroups</code>.
    * </p>
    *
-   * @return an array of {@link neqsim.thermo.atomElement.UNIFACgroup} objects
+   * @return an array of {@link neqsim.thermo.atomelement.UNIFACgroup} objects
    */
   public UNIFACgroup[] getUnifacGroups() {
     return unifacGroupsArray;
@@ -297,9 +297,9 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
    * </p>
    *
    * @param i a int
-   * @return a {@link neqsim.thermo.atomElement.UNIFACgroup} object
+   * @return a {@link neqsim.thermo.atomelement.UNIFACgroup} object
    */
-  public neqsim.thermo.atomElement.UNIFACgroup getUnifacGroup2(int i) {
+  public neqsim.thermo.atomelement.UNIFACgroup getUnifacGroup2(int i) {
     return unifacGroups.get(i);
   }
 
@@ -309,9 +309,9 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
    * </p>
    *
    * @param i a int
-   * @return a {@link neqsim.thermo.atomElement.UNIFACgroup} object
+   * @return a {@link neqsim.thermo.atomelement.UNIFACgroup} object
    */
-  public neqsim.thermo.atomElement.UNIFACgroup getUnifacGroup(int i) {
+  public neqsim.thermo.atomelement.UNIFACgroup getUnifacGroup(int i) {
     return unifacGroupsArray[i];
   }
 

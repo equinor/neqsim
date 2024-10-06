@@ -2,7 +2,7 @@ package neqsim.physicalProperties.util.examples;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>TestSurfaceTension2 class.</p>

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseType;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

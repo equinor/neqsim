@@ -11,8 +11,8 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEInterface;
-import neqsim.thermo.mixingRule.EosMixingRules;
-import neqsim.thermo.mixingRule.EosMixingRulesInterface;
+import neqsim.thermo.mixingrule.EosMixingRules;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 
 /**
  * <p>

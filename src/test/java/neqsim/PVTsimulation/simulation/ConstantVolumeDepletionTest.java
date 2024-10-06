@@ -3,9 +3,11 @@ package neqsim.PVTsimulation.simulation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.File;
 import org.junit.jupiter.api.Test;
+import neqsim.pvtsimulation.simulation.ConstantVolumeDepletion;
+import neqsim.pvtsimulation.simulation.SaturationPressure;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class ConstantVolumeDepletionTest {
   @Test

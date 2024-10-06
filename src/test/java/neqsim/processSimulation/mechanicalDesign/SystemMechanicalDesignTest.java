@@ -2,25 +2,26 @@ package neqsim.processSimulation.mechanicalDesign;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
-import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDesign;
-import neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign;
-import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
-import neqsim.processSimulation.mechanicalDesign.valve.ValveMechanicalDesign;
-import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.pipeline.AdiabaticPipe;
-import neqsim.processSimulation.processEquipment.pump.Pump;
-import neqsim.processSimulation.processEquipment.separator.GasScrubber;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.processSimulation.processEquipment.util.Recycle;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.costestimation.CostEstimateBaseClass;
+import neqsim.processsimulation.mechanicaldesign.SystemMechanicalDesign;
+import neqsim.processsimulation.mechanicaldesign.pipeline.PipelineMechanicalDesign;
+import neqsim.processsimulation.mechanicaldesign.separator.GasScrubberMechanicalDesign;
+import neqsim.processsimulation.mechanicaldesign.separator.SeparatorMechanicalDesign;
+import neqsim.processsimulation.mechanicaldesign.valve.ValveMechanicalDesign;
+import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.pipeline.AdiabaticPipe;
+import neqsim.processsimulation.processequipment.pump.Pump;
+import neqsim.processsimulation.processequipment.separator.GasScrubber;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.stream.StreamInterface;
+import neqsim.processsimulation.processequipment.util.Recycle;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class SystemMechanicalDesignTest {
-  static neqsim.processSimulation.processSystem.ProcessSystem operations;
+  static neqsim.processsimulation.processsystem.ProcessSystem operations;
 
   @BeforeAll
   static void createProcess() {
@@ -61,8 +62,8 @@ public class SystemMechanicalDesignTest {
     feedStream.setTemperature(25.5, "C");
     feedStream.setPressure(26.0, "bara");
 
-    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator1stStage =
-        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
+    neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator seprator1stStage =
+        new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
             "1st stage separator", feedStream);
 
     ThrottlingValve valve1 = new ThrottlingValve("valve1", seprator1stStage.getLiquidOutStream());
@@ -71,8 +72,8 @@ public class SystemMechanicalDesignTest {
     Heater oilHeater = new Heater("oil heater", valve1.getOutletStream());
     oilHeater.setOutTemperature(359.0);
 
-    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator2ndStage =
-        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
+    neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator seprator2ndStage =
+        new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
             "2nd stage separator", oilHeater.getOutletStream());
 
     ThrottlingValve valve2 = new ThrottlingValve("valve2", seprator2ndStage.getLiquidOutStream());
@@ -81,8 +82,8 @@ public class SystemMechanicalDesignTest {
     StreamInterface recircstream1 = valve2.getOutletStream().clone("oilRecirc1");
     recircstream1.setFlowRate(1e-6, "kg/hr");
 
-    neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator seprator3rdStage =
-        new neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator(
+    neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator seprator3rdStage =
+        new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
             "3rd stage separator");
     seprator3rdStage.addStream(valve2.getOutletStream());
     seprator3rdStage.addStream(recircstream1);
@@ -106,7 +107,7 @@ public class SystemMechanicalDesignTest {
     recycle1.addStream(valveLP1.getOutletStream());
     recycle1.setOutletStream(recircstream1);
 
-    operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+    operations = new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(feedStream);
     operations.add(seprator1stStage);
     operations.add(valve1);
@@ -190,7 +191,7 @@ public class SystemMechanicalDesignTest {
   @Test
   void testRunDesignForPipeline() {
     AdiabaticPipe pipe = new AdiabaticPipe("pipe1",
-        ((neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator) operations
+        ((neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator) operations
             .getUnit("1st stage separator")).getGasOutStream());
     pipe.setDiameter(1.0);
     pipe.setLength(1000.0);

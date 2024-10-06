@@ -2,7 +2,8 @@ package neqsim.processSimulation.measurementDevice;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processsimulation.measurementdevice.CombustionEmissionsCalculator;
+import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 

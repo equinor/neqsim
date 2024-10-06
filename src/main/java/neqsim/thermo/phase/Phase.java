@@ -9,7 +9,7 @@ package neqsim.thermo.phase;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.physicalProperties.PhysicalPropertyHandler;
+import neqsim.physicalproperties.PhysicalPropertyHandler;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentInterface;
@@ -38,7 +38,7 @@ public abstract class Phase implements PhaseInterface {
   public int physicalPropertyType = 0;
 
   protected boolean useVolumeCorrection = true;
-  public neqsim.physicalProperties.PhysicalPropertyHandler physicalPropertyHandler = null;
+  public neqsim.physicalproperties.PhysicalPropertyHandler physicalPropertyHandler = null;
   protected double molarVolume = 1.0;
   protected double phaseVolume = 1.0;
 
@@ -424,7 +424,7 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperties() {
+  public neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface getPhysicalProperties() {
     if (physicalPropertyHandler == null) {
       initPhysicalProperties();
       return physicalPropertyHandler.getPhysicalProperty(this);
@@ -2213,22 +2213,22 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getDensity_GERG2008() {
-    neqsim.thermo.util.GERG.NeqSimGERG2008 test = new neqsim.thermo.util.GERG.NeqSimGERG2008(this);
+    neqsim.thermo.util.gerg.NeqSimGERG2008 test = new neqsim.thermo.util.gerg.NeqSimGERG2008(this);
     return test.getDensity();
   }
 
   /** {@inheritDoc} */
   @Override
   public double[] getProperties_GERG2008() {
-    neqsim.thermo.util.GERG.NeqSimGERG2008 test = new neqsim.thermo.util.GERG.NeqSimGERG2008(this);
+    neqsim.thermo.util.gerg.NeqSimGERG2008 test = new neqsim.thermo.util.gerg.NeqSimGERG2008(this);
     return test.propertiesGERG();
   }
 
   /** {@inheritDoc} */
   @Override
   public double getDensity_AGA8() {
-    neqsim.thermo.util.GERG.NeqSimAGA8Detail test =
-        new neqsim.thermo.util.GERG.NeqSimAGA8Detail(this);
+    neqsim.thermo.util.gerg.NeqSimAGA8Detail test =
+        new neqsim.thermo.util.gerg.NeqSimAGA8Detail(this);
     return test.getDensity();
   }
 

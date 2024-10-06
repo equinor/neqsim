@@ -1,6 +1,6 @@
 package neqsim.thermo.phase;
 
-import neqsim.thermo.mixingRule.CPAMixingInterface;
+import neqsim.thermo.mixingrule.CPAMixingInterface;
 
 /**
  * <p>
@@ -74,7 +74,7 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
    * getCpamix.
    * </p>
    *
-   * @return a {@link neqsim.thermo.mixingRule.CPAMixingInterface} object
+   * @return a {@link neqsim.thermo.mixingrule.CPAMixingInterface} object
    */
   public CPAMixingInterface getCpamix();
 }

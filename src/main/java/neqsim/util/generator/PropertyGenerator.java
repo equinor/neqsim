@@ -2,7 +2,7 @@ package neqsim.util.generator;
 
 import java.util.HashMap;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>

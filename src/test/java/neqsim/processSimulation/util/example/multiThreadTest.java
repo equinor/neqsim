@@ -2,15 +2,15 @@ package neqsim.processSimulation.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.processSimulation.processEquipment.compressor.Compressor;
-import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
-import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
-import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.processSimulation.processEquipment.util.Recycle;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.processsimulation.processequipment.compressor.Compressor;
+import neqsim.processsimulation.processequipment.heatExchanger.Cooler;
+import neqsim.processsimulation.processequipment.mixer.MixerInterface;
+import neqsim.processsimulation.processequipment.mixer.StaticMixer;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.stream.StreamInterface;
+import neqsim.processsimulation.processequipment.util.Recycle;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>
@@ -57,8 +57,8 @@ public class multiThreadTest {
     cooler1.setOutTemperature(283.15 + 30);
 
     // mixer.addStream(stream_2);
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(stream_2);
     operations.add(mixer);
@@ -104,8 +104,8 @@ public class multiThreadTest {
     mixer2.addStream(resyc.getOutletStream());
 
     // mixer2.addStream(stream_222);
-    neqsim.processSimulation.processSystem.ProcessSystem operations2 =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations2 =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations2.add(stream_22);
     operations2.add(mixer2);
     operations2.add(stream_32);

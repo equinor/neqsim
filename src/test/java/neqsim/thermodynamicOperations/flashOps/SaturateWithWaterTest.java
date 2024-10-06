@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SaturateWithWaterTest {
   static Logger logger = LogManager.getLogger(SaturateWithWaterTest.class);

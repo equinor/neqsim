@@ -5,8 +5,8 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentElectrolyteCPA;
 import neqsim.thermo.component.ComponentEosInterface;
-import neqsim.thermo.mixingRule.CPAMixing;
-import neqsim.thermo.mixingRule.CPAMixingInterface;
+import neqsim.thermo.mixingrule.CPAMixing;
+import neqsim.thermo.mixingrule.CPAMixingInterface;
 
 /**
  * <p>

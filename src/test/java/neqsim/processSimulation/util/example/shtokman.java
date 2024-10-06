@@ -1,8 +1,8 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.stream.StreamInterface;
 
 /**
  * <p>
@@ -43,12 +43,12 @@ public class shtokman {
     Separator separator = new Separator("Separator 1", stream_1);
     StreamInterface stream_2 = separator.getGasOutStream();
 
-    neqsim.processSimulation.processEquipment.heatExchanger.Heater heater =
-        new neqsim.processSimulation.processEquipment.heatExchanger.Heater("heater", stream_2);
+    neqsim.processsimulation.processequipment.heatExchanger.Heater heater =
+        new neqsim.processsimulation.processequipment.heatExchanger.Heater("heater", stream_2);
     heater.setOutTemperature(273.15 + 35);
     heater.setPressureDrop(134);
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(separator);
     operations.add(stream_2);

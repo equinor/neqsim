@@ -2,7 +2,7 @@ package neqsim.thermo.phase;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentGERG2004;
-import neqsim.thermo.util.JNI.GERG2004EOS;
+import neqsim.thermo.util.jni.GERG2004EOS;
 
 /**
  * <p>

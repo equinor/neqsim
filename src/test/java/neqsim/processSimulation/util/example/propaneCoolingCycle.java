@@ -1,11 +1,11 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.compressor.Compressor;
-import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
-import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.SetPoint;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.processequipment.compressor.Compressor;
+import neqsim.processsimulation.processequipment.heatExchanger.Cooler;
+import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.util.SetPoint;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 
 /**
  * <p>
@@ -61,8 +61,8 @@ public class propaneCoolingCycle {
         heater.setSpecification("out stream");
         heater.setOutletStream(stream_1);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations =
-                new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processsimulation.processsystem.ProcessSystem operations =
+                new neqsim.processsimulation.processsystem.ProcessSystem();
         operations.add(stream_1);
 
         operations.add(JTvalve);

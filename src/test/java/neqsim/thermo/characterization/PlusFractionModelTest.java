@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.characterization.PlusFractionModel.WhitsonGammaModel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class PlusFractionModelTest {
 

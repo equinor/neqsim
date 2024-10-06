@@ -1,7 +1,7 @@
 package neqsim.util.unit;
 
 import org.junit.jupiter.api.Test;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class UnitsTest {
   @Test

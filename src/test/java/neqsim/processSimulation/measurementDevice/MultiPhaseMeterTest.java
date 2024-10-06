@@ -2,7 +2,8 @@ package neqsim.processSimulation.measurementDevice;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processsimulation.measurementdevice.MultiPhaseMeter;
+import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -33,8 +34,8 @@ public class MultiPhaseMeterTest {
     multiPhaseMeter.setTemperature(90.0, "C");
     multiPhaseMeter.setPressure(60.0, "bara");
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(multiPhaseMeter);
     operations.run();

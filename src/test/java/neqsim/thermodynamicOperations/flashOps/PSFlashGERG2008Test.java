@@ -3,7 +3,7 @@ package neqsim.thermodynamicOperations.flashOps;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
@@ -28,7 +28,7 @@ class PSFlashGERG2008Test {
   }
 
   /**
-   * Test method for {@link neqsim.thermodynamicOperations.flashOps.PSFlashGERG2008#run()}.
+   * Test method for {@link neqsim.thermodynamicoperations.flashops.PSFlashGERG2008#run()}.
    */
   @Test
   void testRun() {

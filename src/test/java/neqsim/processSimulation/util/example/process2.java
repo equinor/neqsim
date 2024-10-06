@@ -1,14 +1,14 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
-import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.splitter.Splitter;
-import neqsim.processSimulation.processEquipment.splitter.SplitterInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.mixer.MixerInterface;
+import neqsim.processsimulation.processequipment.mixer.StaticMixer;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.splitter.Splitter;
+import neqsim.processsimulation.processequipment.splitter.SplitterInterface;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.stream.StreamInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>process2 class.</p>
@@ -53,8 +53,8 @@ public class process2 {
 
         mixer.addStream(stream_5);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations =
-                new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processsimulation.processsystem.ProcessSystem operations =
+                new neqsim.processsimulation.processsystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(heater);
         operations.add(mixer);

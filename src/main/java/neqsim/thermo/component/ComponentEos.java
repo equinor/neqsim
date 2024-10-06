@@ -9,27 +9,27 @@ package neqsim.thermo.component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicModelSettings;
-import neqsim.thermo.component.attractiveEosTerm.AtractiveTermMatCopPRUMRNew;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermCPAstatoil;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermGERG;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermMatCop;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermMatCopPR;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermMatCopPRUMR;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermMollerup;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermPr;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermPr1978;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermPrDanesh;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermPrDelft1998;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermPrGassem2001;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermRk;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermSchwartzentruber;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermSrk;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermTwu;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermTwuCoon;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermTwuCoonParam;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermTwuCoonStatoil;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermUMRPRU;
+import neqsim.thermo.component.attractiveeosterm.AtractiveTermMatCopPRUMRNew;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermCPAstatoil;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermGERG;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCop;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCopPR;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCopPRUMR;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermMollerup;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermPr;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermPr1978;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDanesh;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDelft1998;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrGassem2001;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermRk;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermSchwartzentruber;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermSrk;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwu;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoon;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonStatoil;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -758,7 +758,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * Getter for the field <code>attractiveParameter</code>.
    * </p>
    *
-   * @return a {@link neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface} object
+   * @return a {@link neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface} object
    */
   public AttractiveTermInterface getAttractiveParameter() {
     return attractiveParameter;
@@ -770,7 +770,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * </p>
    *
    * @param attractiveParameter a
-   *        {@link neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface} object
+   *        {@link neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface} object
    */
   public void setAttractiveParameter(AttractiveTermInterface attractiveParameter) {
     this.attractiveParameter = attractiveParameter;

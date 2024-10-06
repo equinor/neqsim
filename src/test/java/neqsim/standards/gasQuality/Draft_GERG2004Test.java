@@ -3,6 +3,7 @@ package neqsim.standards.gasQuality;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.standards.StandardInterface;
+import neqsim.standards.gasquality.Draft_GERG2004;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 

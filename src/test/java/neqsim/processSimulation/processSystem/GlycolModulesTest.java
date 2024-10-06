@@ -1,24 +1,24 @@
 package neqsim.processSimulation.processSystem;
 
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.measurementDevice.HydrateEquilibriumTemperatureAnalyser;
-import neqsim.processSimulation.measurementDevice.WaterDewPointAnalyser;
-import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
-import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
-import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
-import neqsim.processSimulation.processEquipment.filter.Filter;
-import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
-import neqsim.processSimulation.processEquipment.pump.Pump;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.splitter.Splitter;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.Calculator;
-import neqsim.processSimulation.processEquipment.util.Recycle;
-import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
+import neqsim.processsimulation.measurementdevice.WaterDewPointAnalyser;
+import neqsim.processsimulation.processequipment.absorber.SimpleTEGAbsorber;
+import neqsim.processsimulation.processequipment.absorber.WaterStripperColumn;
+import neqsim.processsimulation.processequipment.distillation.DistillationColumn;
+import neqsim.processsimulation.processequipment.filter.Filter;
+import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.mixer.StaticMixer;
+import neqsim.processsimulation.processequipment.pump.Pump;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.splitter.Splitter;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.util.Calculator;
+import neqsim.processsimulation.processequipment.util.Recycle;
+import neqsim.processsimulation.processequipment.util.StreamSaturatorUtil;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 import neqsim.thermo.phase.PhaseEosInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class GlycolModulesTest extends neqsim.NeqSimTest {
   @Test
@@ -301,8 +301,8 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     recycleLeanTEG.setPriority(200);
     recycleLeanTEG.setDownstreamProperty("flow rate");
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations1 =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations1 =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations1.add(dryFeedGasSmøbukk);
     operations1.add(saturatedFeedGasSmøbukk);
     operations1.add(waterSaturatedFeedGasSmøbukk);
@@ -318,8 +318,8 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     operations1.add(hydrateTAnalyser2);
     operations1.add(waterDewPointAnalyserToAbsorber);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations2 =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations2 =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     // Rec module TEG
     operations2.add(TEGFeed);
     operations2.add(feedToAbsorber);
@@ -336,8 +336,8 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     operations2.add(heatEx);
     operations2.add(strippingGas);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations3 =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations3 =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     // Rec module gas to rebo,0
     operations3.add(gasToReboiler);
     operations3.add(glycol_flash_valve2);
@@ -352,8 +352,8 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     operations3.add(recycleFlareGas);
     // Finish Rec Stripping gas
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations4 =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations4 =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations4.add(liquidToTreatment);
     operations4.add(makeupTEG);
     operations4.add(makeupCalculator);
@@ -363,34 +363,34 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     operations4.add(leanTEGtoabs);
     operations4.add(recycleLeanTEG);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations5 =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations5 =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     // Finish Rec Lean TEG l
     operations5.add(dehydratedGas);
     operations5.add(waterDewPointAnalyser);
     operations5.add(waterDewPointAnalyser2);
 
-    neqsim.processSimulation.processSystem.ProcessModule module1 =
-        new neqsim.processSimulation.processSystem.ProcessModule("Start process");
+    neqsim.processsimulation.processsystem.ProcessModule module1 =
+        new neqsim.processsimulation.processsystem.ProcessModule("Start process");
     module1.add(operations1);
     module1.add(operations2);
 
-    neqsim.processSimulation.processSystem.ProcessModule module2 =
-        new neqsim.processSimulation.processSystem.ProcessModule("Column recycle");
+    neqsim.processsimulation.processsystem.ProcessModule module2 =
+        new neqsim.processsimulation.processsystem.ProcessModule("Column recycle");
     module2.add(operations3);
 
-    neqsim.processSimulation.processSystem.ProcessModule module3 =
-        new neqsim.processSimulation.processSystem.ProcessModule("TEG recycle");
+    neqsim.processsimulation.processsystem.ProcessModule module3 =
+        new neqsim.processsimulation.processsystem.ProcessModule("TEG recycle");
     module3.add(operations2);
     module3.add(module2);
     module3.add(operations4);
 
-    neqsim.processSimulation.processSystem.ProcessModule module4 =
-        new neqsim.processSimulation.processSystem.ProcessModule("Finish Process");
+    neqsim.processsimulation.processsystem.ProcessModule module4 =
+        new neqsim.processsimulation.processsystem.ProcessModule("Finish Process");
     module4.add(operations5);
 
-    neqsim.processSimulation.processSystem.ProcessModule modules =
-        new neqsim.processSimulation.processSystem.ProcessModule("Modules wrapper");
+    neqsim.processsimulation.processsystem.ProcessModule modules =
+        new neqsim.processsimulation.processsystem.ProcessModule("Modules wrapper");
     modules.add(module1);
     modules.add(module2);
     modules.add(module3);

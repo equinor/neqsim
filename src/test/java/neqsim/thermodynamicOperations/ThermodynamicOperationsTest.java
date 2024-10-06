@@ -20,7 +20,8 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemProperties;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicOperations.ThermodynamicOperations.FlashType;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations.FlashType;
 
 public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   @Test
@@ -36,17 +37,17 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     String unitT = "C";
 
     ops.flash(FlashType.PT, P, T, unitP, unitT);
-    ops.system.init(2);
-    ops.system.initPhysicalProperties();
-    Double[] PTfluidProperties = ops.system.getProperties().getValues();
+    ops.getSystem().init(2);
+    ops.getSystem().initPhysicalProperties();
+    Double[] PTfluidProperties = ops.getSystem().getProperties().getValues();
 
     // Test that the operations are stable, i.e., do the same flash on the same system with the same
     // components and at the same conditions and assert that the result is the same.
-    ops.system.init(0);
+    ops.getSystem().init(0);
     ops.flash(FlashType.TP, T, P, unitT, unitP);
-    ops.system.init(2);
-    ops.system.initPhysicalProperties();
-    Double[] TPfluidProperties = ops.system.getProperties().getValues();
+    ops.getSystem().init(2);
+    ops.getSystem().initPhysicalProperties();
+    Double[] TPfluidProperties = ops.getSystem().getProperties().getValues();
 
     for (int k = 0; k < PTfluidProperties.length; k++) {
       Assertions.assertEquals(PTfluidProperties[k], TPfluidProperties[k]);
@@ -135,7 +136,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     thermoSystem.init(0);
 
     ThermodynamicOperations thermoOps =
-        new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem);
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(thermoSystem);
     List<Double> jP = Arrays.asList(new Double[] {10.0});
     List<Double> jT = Arrays.asList(new Double[] {280.0});
     CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
@@ -177,7 +178,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     thermoSystem.addComponents(components, fractions);
     thermoSystem.init(0);
     ThermodynamicOperations thermoOps =
-        new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem);
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(thermoSystem);
 
     double temp = 373.15;
     double press = 60.0 + ThermodynamicConstantsInterface.referencePressure;
@@ -218,7 +219,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     SystemInterface thermoSystem2 = new neqsim.thermo.system.SystemSrkEos(273.15, 0.0);
     thermoSystem2.addComponents(components, fractions2);
     ThermodynamicOperations thermoOps2 =
-        new neqsim.thermodynamicOperations.ThermodynamicOperations(thermoSystem2);
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(thermoSystem2);
     CalculationResult res2 = thermoOps2.propertyFlash(jP2, jT2, 1, null, onlineFractions2);
     // Assert no calculation failed
     for (String errorMessage : res.calculationError) {

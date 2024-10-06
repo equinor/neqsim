@@ -1,6 +1,6 @@
 package neqsim.statistics.parameterFitting.util.example;
 
-import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
+import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 
 /**
  * <p>TestFunction class.</p>

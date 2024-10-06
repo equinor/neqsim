@@ -1,12 +1,13 @@
 package neqsim.processSimulation.util.report;
 
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.processEquipment.compressor.Compressor;
-import neqsim.processSimulation.processEquipment.mixer.Mixer;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.processSimulation.processSystem.ProcessSystem;
+import neqsim.processsimulation.processequipment.compressor.Compressor;
+import neqsim.processsimulation.processequipment.mixer.Mixer;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.processsimulation.processsystem.ProcessSystem;
+import neqsim.processsimulation.util.report.Report;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class ReportTest {

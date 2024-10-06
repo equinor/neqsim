@@ -5,7 +5,7 @@ import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicModelSettings;
-import neqsim.thermo.atomElement.UNIFACgroup;
+import neqsim.thermo.atomelement.UNIFACgroup;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUniquac;
 
@@ -137,7 +137,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
    * </p>
    */
   public void checkGroups() {
-    ArrayList<neqsim.thermo.atomElement.UNIFACgroup> unifacGroups = new ArrayList<UNIFACgroup>();
+    ArrayList<neqsim.thermo.atomelement.UNIFACgroup> unifacGroups = new ArrayList<UNIFACgroup>();
 
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < ((ComponentGEUnifac) getComponent(i)).getNumberOfUNIFACgroups(); j++) {
@@ -159,7 +159,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     }
 
     for (int i = 0; i < numberOfComponents; i++) {
-      neqsim.thermo.atomElement.UNIFACgroup[] array =
+      neqsim.thermo.atomelement.UNIFACgroup[] array =
           ((ComponentGEUnifac) getComponent(i)).getUnifacGroups();
       java.util.Arrays.sort(array);
       ArrayList<UNIFACgroup> phaseList = new ArrayList<UNIFACgroup>(0);

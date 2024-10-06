@@ -1,7 +1,7 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processsimulation.processequipment.absorber.WaterStripperColumn;
+import neqsim.processsimulation.processequipment.stream.Stream;
 
 /**
  * <p>
@@ -60,8 +60,8 @@ public class TEGstripperProcess {
         stripper.setNumberOfStages(3);
         stripper.setStageEfficiency(0.5);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations =
-                new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processsimulation.processsystem.ProcessSystem operations =
+                new neqsim.processsimulation.processsystem.ProcessSystem();
         operations.add(dryFeedGas);
         operations.add(TEGFeed);
         operations.add(stripper);

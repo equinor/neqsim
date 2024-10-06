@@ -1,0 +1,64 @@
+package neqsim.processsimulation.util.monitor;
+
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
+
+/**
+ * <p>
+ * SeparatorResponse class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class SeparatorResponse {
+  public String name;
+  public Double gasLoadFactor;
+  public StreamResponse feed, gas, liquid, oil, water;
+
+  /**
+   * <p>
+   * Constructor for SeparatorResponse.
+   * </p>
+   *
+   * @param inputSeparator a
+   *        {@link neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator} object
+   */
+  public SeparatorResponse(ThreePhaseSeparator inputSeparator) {
+    name = inputSeparator.getName();
+    gasLoadFactor = inputSeparator.getGasLoadFactor();
+
+    feed = new StreamResponse(inputSeparator.getFeedStream());
+    if (inputSeparator.getThermoSystem().hasPhaseType("aqueous")) {
+      water = new StreamResponse(inputSeparator.getWaterOutStream());
+    }
+    if (inputSeparator.getThermoSystem().hasPhaseType("oil")) {
+      oil = new StreamResponse(inputSeparator.getOilOutStream());
+    }
+    if (inputSeparator.getThermoSystem().hasPhaseType("gas")) {
+      gas = new StreamResponse(inputSeparator.getGasOutStream());
+    }
+  }
+
+  /**
+   * <p>
+   * Constructor for SeparatorResponse.
+   * </p>
+   *
+   * @param inputSeparator a {@link neqsim.processsimulation.processequipment.separator.Separator}
+   *        object
+   */
+  public SeparatorResponse(Separator inputSeparator) {
+    name = inputSeparator.getName();
+    gasLoadFactor = inputSeparator.getGasLoadFactor();
+    feed = new StreamResponse(inputSeparator.getFeedStream());
+    if (inputSeparator.getThermoSystem().hasPhaseType("aqueous")
+        || inputSeparator.getThermoSystem().hasPhaseType("liquid")
+        || inputSeparator.getThermoSystem().hasPhaseType("oil")) {
+      liquid = new StreamResponse(inputSeparator.getLiquidOutStream());
+    }
+    if (inputSeparator.getThermoSystem().hasPhaseType("gas")) {
+      gas = new StreamResponse(inputSeparator.getGasOutStream());
+    }
+  }
+}

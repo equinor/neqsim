@@ -3,6 +3,7 @@ package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.packings.RachigRingPacking;
 
 public class RachigRingPackingTest {
   static RachigRingPacking rp;

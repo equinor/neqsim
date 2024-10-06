@@ -1,11 +1,11 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.controllerDevice.ControllerDeviceBaseClass;
-import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
-import neqsim.processSimulation.measurementDevice.VolumeFlowTransmitter;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.controllerdevice.ControllerDeviceBaseClass;
+import neqsim.processsimulation.controllerdevice.ControllerDeviceInterface;
+import neqsim.processsimulation.measurementdevice.VolumeFlowTransmitter;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 
 /**
  * <p>
@@ -61,8 +61,8 @@ public class TestTransientFlow2 {
     flowController.setControllerSetPoint(1.0);
     flowController.setControllerParameters(0.7, 300.0, 0.0);
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(valve_1);
     operations.add(separator_1);
