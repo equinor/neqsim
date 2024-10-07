@@ -2,7 +2,6 @@ package neqsim.standards.oilquality;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.standards.oilquality.Standard_ASTM_D6377;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -58,7 +57,6 @@ public class Standard_ASTM_D6377Test {
     testSystem.addComponent("nC12", 0.545);
     testSystem.addTBPfraction("C11", 0.545, 145.0 / 1000.0, 0.82);
     testSystem.setMixingRule(2);
-    testSystem.setMultiPhaseCheck(true);
     testSystem.init(0);
     testSystem.setPressure(100.0);
     Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(testSystem);
