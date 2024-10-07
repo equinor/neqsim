@@ -3,6 +3,7 @@ package neqsim.processsimulation.processsystem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.processsimulation.processequipment.compressor.Compressor;
 import neqsim.processsimulation.processequipment.heatExchanger.Cooler;
 import neqsim.processsimulation.processequipment.heatExchanger.Heater;
 import neqsim.processsimulation.processequipment.mixer.Mixer;
