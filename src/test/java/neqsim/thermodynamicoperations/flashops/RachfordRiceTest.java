@@ -2,7 +2,6 @@ package neqsim.thermodynamicoperations.flashops;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.thermodynamicoperations.flashops.RachfordRice;
 
 public class RachfordRiceTest {
   @Test
@@ -19,9 +18,9 @@ public class RachfordRiceTest {
 
     try {
       RachfordRice rachfordRice = new RachfordRice();
-      rachfordRice.setMethod("Nielsen2023");
+      RachfordRice.setMethod("Nielsen2023");
       Assertions.assertEquals(0.407070707, rachfordRice.calcBeta(K, z), 1e-6);
-      rachfordRice.setMethod("Michelsen2001");
+      RachfordRice.setMethod("Michelsen2001");
     } catch (Exception e) {
       e.printStackTrace();
     }
