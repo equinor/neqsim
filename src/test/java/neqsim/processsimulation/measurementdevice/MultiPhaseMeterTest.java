@@ -1,8 +1,7 @@
-package neqsim.processSimulation.measurementDevice;
+import neqsim.processsimulation.measurementdevice;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.measurementdevice.MultiPhaseMeter;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;

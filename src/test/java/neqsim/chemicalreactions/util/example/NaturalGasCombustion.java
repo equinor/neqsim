@@ -1,4 +1,4 @@
-package neqsim.chemicalReactions.util.example;
+package neqsim.chemicalreactions.util.example;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;

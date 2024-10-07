@@ -1,4 +1,4 @@
-package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.density;
+package neqsim.physicalProperties.physicalpropertymethods.liquidphysicalproperties.density;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;

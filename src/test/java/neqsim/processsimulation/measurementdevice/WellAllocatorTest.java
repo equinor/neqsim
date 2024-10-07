@@ -1,10 +1,9 @@
-package neqsim.processSimulation.measurementDevice;
+import neqsim.processsimulation.measurementdevice;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.measurementdevice.WellAllocator;
 import neqsim.processsimulation.processequipment.separator.Separator;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.processsimulation.util.monitor.WellAllocatorResponse;

@@ -1,8 +1,7 @@
-package neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode;
+package neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -30,15 +29,20 @@ public class StratifiedFlowNodeTest {
       test.calcFluxes();
       test.update();
       /*
-       * System.out.println( "flux methane " + test.getFluidBoundary().getInterphaseMolarFlux(0) +
+       * System.out.println( "flux methane " +
+       * test.getFluidBoundary().getInterphaseMolarFlux(0) +
        * " [mol/m2*sec]"); System.out.println( "flux nC10 " +
        * test.getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
-       * System.out.println("gas velocity " + test.getSuperficialVelocity(0) + " m/sec");
+       * System.out.println("gas velocity " + test.getSuperficialVelocity(0) +
+       * " m/sec");
        * System.out.println("liquid velocity " + test.getVelocity(1) + " m/sec");
        * System.out.println("liquid holdup " + test.getPhaseFraction(1) + "-");
-       * System.out.println("interface contact area " + test.getInterphaseContactLength(0) +
-       * "m2/m"); System.out.println("gas flow rate " + test.getMassFlowRate(0) * 60 * 60 +
-       * " kg/hr"); System.out.println("liquid flow rate " + test.getMassFlowRate(1) * 60 * 60 +
+       * System.out.println("interface contact area " +
+       * test.getInterphaseContactLength(0) +
+       * "m2/m"); System.out.println("gas flow rate " + test.getMassFlowRate(0) * 60 *
+       * 60 +
+       * " kg/hr"); System.out.println("liquid flow rate " + test.getMassFlowRate(1) *
+       * 60 * 60 +
        * " kg/hr");
        */
     }
@@ -64,9 +68,11 @@ public class StratifiedFlowNodeTest {
     test.calcFluxes();
 
     // System.out.println(
-    // "flux methane " + test.getFluidBoundary().getInterphaseMolarFlux(0) + " [mol/m2*sec]");
+    // "flux methane " + test.getFluidBoundary().getInterphaseMolarFlux(0) + "
+    // [mol/m2*sec]");
     // System.out.println(
-    // "flux nC10 " + test.getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
+    // "flux nC10 " + test.getFluidBoundary().getInterphaseMolarFlux(1) + "
+    // [mol/m2*sec]");
 
     SystemInterface gasPhase = testSystem.phaseToSystem("gas");
     SystemInterface oilPhase = testSystem.phaseToSystem("oil");
@@ -96,9 +102,11 @@ public class StratifiedFlowNodeTest {
     test2.calcFluxes();
 
     // System.out.println(
-    // "flux methane " + test2.getFluidBoundary().getInterphaseMolarFlux(0) + " [mol/m2*sec]");
+    // "flux methane " + test2.getFluidBoundary().getInterphaseMolarFlux(0) + "
+    // [mol/m2*sec]");
     // System.out.println(
-    // "flux nC10 " + test2.getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
+    // "flux nC10 " + test2.getFluidBoundary().getInterphaseMolarFlux(1) + "
+    // [mol/m2*sec]");
 
     oilPhase.addComponent(0, test2.getFluidBoundary().getInterphaseMolarFlux(0) * 100.0
         * test.getInterphaseContactArea());
@@ -126,9 +134,11 @@ public class StratifiedFlowNodeTest {
     test3.calcFluxes();
 
     // System.out.println(
-    // "flux methane " + test3.getFluidBoundary().getInterphaseMolarFlux(0) + " [mol/m2*sec]");
+    // "flux methane " + test3.getFluidBoundary().getInterphaseMolarFlux(0) + "
+    // [mol/m2*sec]");
     // System.out.println(
-    // "flux nC10 " + test3.getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
+    // "flux nC10 " + test3.getFluidBoundary().getInterphaseMolarFlux(1) + "
+    // [mol/m2*sec]");
   }
 
   @Test
@@ -193,18 +203,23 @@ public class StratifiedFlowNodeTest {
 
         // gasPhases[i + 1].prettyPrint();
         // System.out.println("time " + time + " node " + i + " mass oil "
-        // + oilPhases[i].getFlowRate("kg/hr") + " gas velocity " + nodes[i].getVelocity(0));
+        // + oilPhases[i].getFlowRate("kg/hr") + " gas velocity " +
+        // nodes[i].getVelocity(0));
       }
 
       // oilPhases[0].prettyPrint();
-      // System.out.println("flux methane " + nodes[0].getFluidBoundary().getInterphaseMolarFlux(0)
+      // System.out.println("flux methane " +
+      // nodes[0].getFluidBoundary().getInterphaseMolarFlux(0)
       // + " [mol/m2*sec]");
       // System.out.println(
-      // "flux nC10 " + nodes[0].getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
+      // "flux nC10 " + nodes[0].getFluidBoundary().getInterphaseMolarFlux(1) + "
+      // [mol/m2*sec]");
       // System.out.println("ethane gas "
-      // + nodes[0].getBulkSystem().getPhase(0).getComponent(1).getNumberOfMolesInPhase()
+      // +
+      // nodes[0].getBulkSystem().getPhase(0).getComponent(1).getNumberOfMolesInPhase()
       // + " liquid "
-      // + nodes[0].getBulkSystem().getPhase(1).getComponent(1).getNumberOfMolesInPhase());
+      // +
+      // nodes[0].getBulkSystem().getPhase(1).getComponent(1).getNumberOfMolesInPhase());
     }
 
     for (int time = 0; time < 20; time++) {
@@ -238,18 +253,23 @@ public class StratifiedFlowNodeTest {
 
         // gasPhases[i + 1].prettyPrint();
         // System.out.println("time " + time + " node " + i + " mass oil "
-        // + oilPhases[i].getFlowRate("kg/hr") + " gas velocity " + nodes[i].getVelocity(0));
+        // + oilPhases[i].getFlowRate("kg/hr") + " gas velocity " +
+        // nodes[i].getVelocity(0));
       }
 
       // oilPhases[0].prettyPrint();
-      // System.out.println("flux methane " + nodes[1].getFluidBoundary().getInterphaseMolarFlux(0)
+      // System.out.println("flux methane " +
+      // nodes[1].getFluidBoundary().getInterphaseMolarFlux(0)
       // + " [mol/m2*sec]");
       // System.out.println(
-      // "flux ethane " + nodes[0].getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
+      // "flux ethane " + nodes[0].getFluidBoundary().getInterphaseMolarFlux(1) + "
+      // [mol/m2*sec]");
       // System.out.println("ethane gas "
-      // + nodes[0].getBulkSystem().getPhase(0).getComponent(1).getNumberOfMolesInPhase()
+      // +
+      // nodes[0].getBulkSystem().getPhase(0).getComponent(1).getNumberOfMolesInPhase()
       // + " liquid "
-      // + nodes[0].getBulkSystem().getPhase(1).getComponent(1).getNumberOfMolesInPhase());
+      // +
+      // nodes[0].getBulkSystem().getPhase(1).getComponent(1).getNumberOfMolesInPhase());
     }
   }
 

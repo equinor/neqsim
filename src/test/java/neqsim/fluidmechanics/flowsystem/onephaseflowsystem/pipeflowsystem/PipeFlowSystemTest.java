@@ -1,10 +1,9 @@
-package neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem;
+package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 
 import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
-import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem;
 import neqsim.thermo.system.SystemInterface;
 
 public class PipeFlowSystemTest extends neqsim.NeqSimTest {
@@ -23,20 +22,16 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
     testSystem.initPhysicalProperties();
     testSystem.setTotalFlowRate(60.0, "MSm3/day");
 
-    double[] height = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    double[] diameter = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-    double[] roughness =
-        {1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5};
-    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
-    double[] wallHeacCoef = {15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0};
+    double[] height = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    double[] diameter = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
+    double[] roughness = { 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5 };
+    double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };
+    double[] wallHeacCoef = { 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0 };
 
-    double[] length =
-        {0, 10000, 50000, 150000, 200000, 400000, 500000, 600000, 650000, 700000, 740000};
-    double[] outerTemperature =
-        {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0};
+    double[] length = { 0, 10000, 50000, 150000, 200000, 400000, 500000, 600000, 650000, 700000, 740000 };
+    double[] outerTemperature = { 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0 };
 
-    neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface[] pipeGeometry =
-        new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData[height.length];
+    neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface[] pipeGeometry = new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData[height.length];
 
     for (int i = 0; i < height.length; i++) {
       pipeGeometry[i] = new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData();
@@ -84,7 +79,8 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
     }
 
     // logger.info("pressure out calc friction "
-    // + pipe.getNode(pipe.getFlowNodes().length - 1).getBulkSystem().getPressure() + " bara");
+    // + pipe.getNode(pipe.getFlowNodes().length - 1).getBulkSystem().getPressure()
+    // + " bara");
 
     // pipe.print();
   }
@@ -93,7 +89,7 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
   void testSolveTransient() {
     testInit();
     // transient solver
-    double[] times = {0, 10000, 20000}; // , 30000, 40000, 50000}; //, 60000, 70000, 80000,
+    double[] times = { 0, 10000, 20000 }; // , 30000, 40000, 50000}; //, 60000, 70000, 80000,
     // 90000};
     pipe.getTimeSeries().setTimes(times);
 
@@ -113,9 +109,10 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
     testSystem3.addComponent("ethane", 1221.10);
     testSystem3.init(0);
 
-    SystemInterface[] systems = {testSystem, testSystem2, testSystem2}; // , testSystem2,
+    SystemInterface[] systems = { testSystem, testSystem2, testSystem2 }; // , testSystem2,
     // testSystem2,
-    // testSystem2}; //,testSystem2,testSystem2,testSystem2,testSystem2,testSystem2};
+    // testSystem2};
+    // //,testSystem2,testSystem2,testSystem2,testSystem2,testSystem2};
     pipe.getTimeSeries().setInletThermoSystems(systems);
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(10);
     // double[] outletFlowRates = {0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,

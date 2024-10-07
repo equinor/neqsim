@@ -1,4 +1,4 @@
-package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
+package neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.viscosity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;

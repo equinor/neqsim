@@ -1,4 +1,4 @@
-package neqsim.physicalProperties.util.examples;
+package neqsim.physicalproperties.util.examples;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

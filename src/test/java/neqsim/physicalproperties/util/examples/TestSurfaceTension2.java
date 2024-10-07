@@ -1,4 +1,4 @@
-package neqsim.physicalProperties.util.examples;
+package neqsim.physicalproperties.util.examples;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;

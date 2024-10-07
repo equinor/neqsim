@@ -1,4 +1,4 @@
-package neqsim.processSimulation.processEquipment.adsorber;
+package neqsim.processsimulation.processequipment.adsorber;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -21,15 +21,16 @@ public class SimpleAdsorberTest extends neqsim.NeqSimTest {
   @Test
   void testRun() {
     Stream stream_Hot = new Stream("Stream1", testSystem);
-    neqsim.processsimulation.processequipment.adsorber.SimpleAdsorber adsorber1 =
-        new neqsim.processsimulation.processequipment.adsorber.SimpleAdsorber("adsorber",
-            stream_Hot);
+    neqsim.processsimulation.processequipment.adsorber.SimpleAdsorber adsorber1 = new neqsim.processsimulation.processequipment.adsorber.SimpleAdsorber(
+        "adsorber",
+        stream_Hot);
     adsorber1.setAproachToEquilibrium(0.75);
 
     // TODO: Test is not well behaved
     /*
      * neqsim.processSimulation.processSystem.ProcessSystem operations = new
-     * neqsim.processSimulation.processSystem.ProcessSystem(); operations.add(stream_Hot);
+     * neqsim.processSimulation.processSystem.ProcessSystem();
+     * operations.add(stream_Hot);
      * operations.add(adsorber1);
      *
      * operations.run();

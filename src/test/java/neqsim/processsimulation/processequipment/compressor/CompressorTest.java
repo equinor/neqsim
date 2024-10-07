@@ -1,4 +1,4 @@
-package neqsim.processSimulation.processEquipment.compressor;
+package neqsim.processsimulation.processequipment.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.File;
@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.compressor.Compressor;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.processsimulation.processsystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
@@ -99,7 +98,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     // logger.info("schultz compressor power " + compressor1.getPower() / 1e6
     // + " MW");
     assertEquals(compressor1.getPower() / 1e6, 4.668373797540108, 0.01);
-    // // "Test case for compressor Schultz method polytropic calculation should return
+    // // "Test case for compressor Schultz method polytropic calculation should
+    // return
     // approximate
     // 4.67 MW");
   }
@@ -118,7 +118,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     // logger.info("rigorous compressor power " + compressor1.getPower() /
     // 1e6 + " MW");
     assertEquals(compressor1.getPower() / 1e6, 4.655081035416562, 0.01);
-    // "Test case for rigorous polytropic compressor calculation should return approximate 4.66
+    // "Test case for rigorous polytropic compressor calculation should return
+    // approximate 4.66
     // MW");
   }
 
@@ -149,9 +150,9 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
     inletStream.run();
-    neqsim.processsimulation.processequipment.compressor.Compressor compressor1 =
-        new neqsim.processsimulation.processequipment.compressor.Compressor("Compressor1",
-            inletStream);
+    neqsim.processsimulation.processequipment.compressor.Compressor compressor1 = new neqsim.processsimulation.processequipment.compressor.Compressor(
+        "Compressor1",
+        inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setOutTemperature(358.0);
@@ -162,7 +163,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     // " kJ/kg");
     // logger.info("srk power " + compressor1.getPower() + " W");
     assertEquals(compressor1.getPolytropicEfficiency() * 100, 88.94871563458828, 0.1);
-    // "Test case for rigorous polytropic efficiency with SRK calculation should return approximate
+    // "Test case for rigorous polytropic efficiency with SRK calculation should
+    // return approximate
     // 88.948715 ");
   }
 
@@ -178,9 +180,9 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
     inletStream.run();
-    neqsim.processsimulation.processequipment.compressor.Compressor compressor1 =
-        new neqsim.processsimulation.processequipment.compressor.Compressor("Compressor1",
-            inletStream);
+    neqsim.processsimulation.processequipment.compressor.Compressor compressor1 = new neqsim.processsimulation.processequipment.compressor.Compressor(
+        "Compressor1",
+        inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setOutTemperature(358.0);
@@ -193,7 +195,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     // + " kJ/kg");
     // logger.info("gerg power " + compressor1.getPower() + " W");
     assertEquals(compressor1.getPolytropicEfficiency() * 100, 89.99367027631443, 0.01);
-    // "Test case for rigorous polytropic efficiency with GER2008 calculation should return
+    // "Test case for rigorous polytropic efficiency with GER2008 calculation should
+    // return
     // approximate 89.992296751");
   }
 
@@ -209,9 +212,9 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
     inletStream.run();
-    neqsim.processsimulation.processequipment.compressor.Compressor compressor1 =
-        new neqsim.processsimulation.processequipment.compressor.Compressor("Compressor1",
-            inletStream);
+    neqsim.processsimulation.processequipment.compressor.Compressor compressor1 = new neqsim.processsimulation.processequipment.compressor.Compressor(
+        "Compressor1",
+        inletStream);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setPolytropicEfficiency(0.56);
     compressor1.setUsePolytropicCalc(true);

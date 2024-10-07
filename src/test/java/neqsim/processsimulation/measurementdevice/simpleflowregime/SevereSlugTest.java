@@ -1,15 +1,13 @@
-package neqsim.processSimulation.measurementDevice.simpleFlowRegime;
+import neqsim.processsimulation.measurementdevice.simpleflowregime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.measurementdevice.simpleflowregime.SevereSlugAnalyser;
 import neqsim.processsimulation.processequipment.stream.Stream;
 
 public class SevereSlugTest {
   @Test
   void testCheckFlowRegime1() {
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 15.0), 10);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 15.0), 10);
     testSystem2.addComponent("methane", 0.00015, "MSm^3/day");
     testSystem2.addComponent("n-heptane", 0.0015, "MSm^3/day");
     testSystem2.addComponent("propane", 0.00015, "MSm^3/day");
@@ -24,4 +22,3 @@ public class SevereSlugTest {
     assertEquals(0.19085996383839476, mySevereSlug6.getMeasuredValue(), 1e-1, "");
   }
 }
-

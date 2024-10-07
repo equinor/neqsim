@@ -1,10 +1,9 @@
-package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.shipSystem;
+package neqsim.fluidMechanics.flowSystem.twophaseflowsystem.shipsystem;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.fluidmechanics.flowsystem.twophaseflowsystem.shipsystem.LNGship;
 import neqsim.thermo.system.SystemInterface;
 
 class LNGshipTest {

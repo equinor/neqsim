@@ -1,4 +1,4 @@
-package neqsim.chemicalReactions;
+package neqsim.chemicalreactions;
 
 import org.junit.jupiter.api.BeforeAll;
 import neqsim.thermo.system.SystemSrkEos;

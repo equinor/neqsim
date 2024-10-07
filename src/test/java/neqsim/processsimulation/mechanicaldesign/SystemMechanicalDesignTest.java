@@ -1,4 +1,4 @@
-package neqsim.processSimulation.mechanicalDesign;
+package neqsim.processsimulation.mechanicaldesign;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -52,9 +52,9 @@ public class SystemMechanicalDesignTest {
     thermoSystem.addPlusFraction("C38_C80", 1.0, 662.0 / 1000.0, 0.92);
     thermoSystem.setMixingRule("classic");
     thermoSystem.setMultiPhaseCheck(true);
-    thermoSystem.setMolarComposition(new double[] {0.034266, 0.005269, 0.039189, 0.700553, 0.091154,
+    thermoSystem.setMolarComposition(new double[] { 0.034266, 0.005269, 0.039189, 0.700553, 0.091154,
         0.050908, 0.007751, 0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355,
-        0.007658, 0.003861, 0.003301, 0.002624, 0.001857, 0.001320, 0.001426, 0.001164, 0.000916});
+        0.007658, 0.003861, 0.003301, 0.002624, 0.001857, 0.001320, 0.001426, 0.001164, 0.000916 });
     // thermoSystem.prettyPrint();
 
     Stream feedStream = new Stream("feed stream", thermoSystem);
@@ -62,9 +62,8 @@ public class SystemMechanicalDesignTest {
     feedStream.setTemperature(25.5, "C");
     feedStream.setPressure(26.0, "bara");
 
-    neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator seprator1stStage =
-        new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
-            "1st stage separator", feedStream);
+    neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator seprator1stStage = new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
+        "1st stage separator", feedStream);
 
     ThrottlingValve valve1 = new ThrottlingValve("valve1", seprator1stStage.getLiquidOutStream());
     valve1.setOutletPressure(19.0);
@@ -72,9 +71,8 @@ public class SystemMechanicalDesignTest {
     Heater oilHeater = new Heater("oil heater", valve1.getOutletStream());
     oilHeater.setOutTemperature(359.0);
 
-    neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator seprator2ndStage =
-        new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
-            "2nd stage separator", oilHeater.getOutletStream());
+    neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator seprator2ndStage = new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
+        "2nd stage separator", oilHeater.getOutletStream());
 
     ThrottlingValve valve2 = new ThrottlingValve("valve2", seprator2ndStage.getLiquidOutStream());
     valve2.setOutletPressure(2.7);
@@ -82,14 +80,12 @@ public class SystemMechanicalDesignTest {
     StreamInterface recircstream1 = valve2.getOutletStream().clone("oilRecirc1");
     recircstream1.setFlowRate(1e-6, "kg/hr");
 
-    neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator seprator3rdStage =
-        new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
-            "3rd stage separator");
+    neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator seprator3rdStage = new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
+        "3rd stage separator");
     seprator3rdStage.addStream(valve2.getOutletStream());
     seprator3rdStage.addStream(recircstream1);
 
-    ThrottlingValve pipeloss1st =
-        new ThrottlingValve("pipeloss1st", seprator3rdStage.getGasOutStream());
+    ThrottlingValve pipeloss1st = new ThrottlingValve("pipeloss1st", seprator3rdStage.getGasOutStream());
     pipeloss1st.setOutletPressure(2.7 - 0.03);
 
     Heater coolerLP = new Heater("cooler LP", pipeloss1st.getOutletStream());
@@ -146,8 +142,8 @@ public class SystemMechanicalDesignTest {
   void testRunDesignCalculationforSeparator() {
     // Test to run design calculation for a process unit (separator using the
     // SeparatorMechanicalDesign class)
-    SeparatorMechanicalDesign sepMechDesign =
-        new SeparatorMechanicalDesign((Separator) operations.getUnit("sepregenGas"));
+    SeparatorMechanicalDesign sepMechDesign = new SeparatorMechanicalDesign(
+        (Separator) operations.getUnit("sepregenGas"));
     sepMechDesign.calcDesign();
     System.out.println("separator inner diameter " + sepMechDesign.innerDiameter);
     System.out.println("separator weight vessel shell " + sepMechDesign.weigthVesselShell);
@@ -182,8 +178,7 @@ public class SystemMechanicalDesignTest {
 
   @Test
   void testRunDesignCalculationforValve() {
-    ValveMechanicalDesign valve1MechDesign =
-        new ValveMechanicalDesign((ThrottlingValve) operations.getUnit("valve1"));
+    ValveMechanicalDesign valve1MechDesign = new ValveMechanicalDesign((ThrottlingValve) operations.getUnit("valve1"));
     valve1MechDesign.calcDesign();
     System.out.println("valve total weight " + valve1MechDesign.getWeightTotal());
   }
