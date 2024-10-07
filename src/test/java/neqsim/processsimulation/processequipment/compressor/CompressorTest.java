@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.compressor.Compressor;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.processsimulation.processsystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
