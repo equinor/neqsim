@@ -44,8 +44,8 @@ public class TVfractionFlash extends Flash {
    * @return a double
    */
   public double calcdQdVdP() {
-    double dQdVP = 0.0;
-    dQdVP = 1.0 / system.getPhase(i).getdPdVTn() / system.getVolume();
+    double dQdVP = 1.0 / system.getPhase(0).getdPdVTn() / system.getVolume()
+        + system.getPhase(0).getVolume() / Math.pow(system.getVolume(), 2.0) * system.getdVdPtn();
     return dQdVP;
   }
 
@@ -71,7 +71,7 @@ public class TVfractionFlash extends Flash {
   public double solveQ() {
     double oldPres = system.getPressure();
     double nyPres = system.getPressure();
-    double iterations = 1;
+    int iterations = 0;
     double error = 100.0;
     double numericdQdVdP = 0.0;
     double dQdV = 0.0;
@@ -79,34 +79,24 @@ public class TVfractionFlash extends Flash {
     double pressureStep = 1.0;
     do {
       iterations++;
-      oldPres = nyPres;
       system.init(3);
-      double dQDVdP = calcdQdVdP();
+      oldPres = nyPres;
+      double dqdv = calcdQdV();
+      double dqdvdp = calcdQdVdP();
+      nyPres = oldPres - iterations / (iterations + 100.0) * dqdv / dqdvdp;
+      pressureStep = nyPres - oldPres;
 
-      numericdQdVdP = (calcdQdV() - olddQdV) / pressureStep;
-
-      if (iterations < 5) {
-        nyPres = oldPres - 1.0 / 10.0 * calcdQdV() / dQDVdP;
-      } else {
-        nyPres = oldPres - 1.0 * calcdQdV() / numericdQdVdP;
-      }
       if (nyPres <= 0.0) {
         nyPres = oldPres * 0.9;
       }
-      if (nyPres >= oldPres * 2) {
-        nyPres = oldPres * 2.0;
-      }
-      pressureStep = nyPres - oldPres;
-
-      olddQdV = calcdQdV();
       system.setPressure(nyPres);
       tpFlash.run();
-      error = Math.abs(calcdQdV()) / system.getVolume();
+
+      error = Math.abs(dqdv / Vfractionspec);
       // System.out.println("error " + error + "iteration " + iterations + " dQdv " + calcdQdV()
       // + " new pressure " + nyPres + " error " + Math.abs((nyPres - oldPres) / (nyPres))
-      // + " numberofphases " + system.getNumberOfPhases() + " dQDVdP " + dQDVdP + " dQDVdPnumeric"
-      // + numericdQdVdP);
-    } while ((error > 1e-9 && iterations < 200) || iterations < 3);
+      // + " numberofphases " + system.getNumberOfPhases());
+    } while ((error > 1e-6 && Math.abs(pressureStep) > 1e-6 && iterations < 200) || iterations < 6);
     return nyPres;
   }
 
@@ -114,6 +104,13 @@ public class TVfractionFlash extends Flash {
   @Override
   public void run() {
     tpFlash.run();
+    if (system.getNumberOfPhases() == 1) {
+      do {
+        system.setPressure(system.getPressure() * 0.9);
+        tpFlash.run();
+      } while (system.getNumberOfPhases() == 1);
+    }
+
     // System.out.println("enthalpy: " + system.getEnthalpy());
     solveQ();
 

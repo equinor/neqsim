@@ -1921,7 +1921,7 @@ public abstract class SystemThermo implements SystemInterface {
     double dPdV = 0.0;
     for (int i = 0; i < numberOfPhases; i++) {
       if (isPhase(i)) {
-        dPdV += getPhase(i).getdPdVTn() * getPhase(i).getVolume() / getVolume();
+        dPdV += getPhase(i).getdPdVTn(); // * getPhase(i).getVolume() / getVolume();
       }
     }
     return dPdV;

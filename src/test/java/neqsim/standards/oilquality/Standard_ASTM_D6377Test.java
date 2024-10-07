@@ -20,7 +20,7 @@ public class Standard_ASTM_D6377Test {
     Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(testSystem);
     standard.setReferenceTemperature(37.8, "C");
     standard.calculate();
-    Assertions.assertEquals(1.10455465, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(1.10445689545, standard.getValue("RVP", "bara"), 1e-3);
     Assertions.assertEquals(1.666298367, standard.getValue("TVP", "bara"), 1e-3);
   }
 
@@ -40,14 +40,38 @@ public class Standard_ASTM_D6377Test {
     standard.setMethodRVP("VPCR4");
     standard.setReferenceTemperature(37.8, "C");
     standard.calculate();
-    Assertions.assertEquals(3.6145219653041623, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(3.61452722, standard.getValue("RVP", "bara"), 1e-3);
     Assertions.assertEquals(7.867696779327479, standard.getValue("TVP", "bara"), 1e-3);
 
     standard.setMethodRVP("RVP_ASTM_D6377");
     standard.setReferenceTemperature(37.8, "C");
     standard.calculate();
-    Assertions.assertEquals(3.014511319063671, standard.getValue("RVP", "bara"), 1e-3);
-    Assertions.assertEquals(7.867696779327479
-    , standard.getValue("TVP", "bara"), 1e-3);
+    Assertions.assertEquals(3.01451570813, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(7.867696779327479, standard.getValue("TVP", "bara"), 1e-3);
+  }
+
+  @Test
+  void testCalculate3() {
+    SystemInterface testSystem = new SystemSrkEos(273.15 + 2.0, 1.0);
+    testSystem.addComponent("n-pentane", 0.545);
+    testSystem.addComponent("nC10", 0.545);
+    testSystem.addComponent("nC12", 0.545);
+    testSystem.addTBPfraction("C11", 0.545, 145.0 / 1000.0, 0.82);
+    testSystem.setMixingRule(2);
+    testSystem.setMultiPhaseCheck(true);
+    testSystem.init(0);
+    testSystem.setPressure(100.0);
+    Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(testSystem);
+    standard.setMethodRVP("VPCR4");
+    standard.setReferenceTemperature(37.8, "C");
+    standard.calculate();
+    Assertions.assertEquals(0.25505060, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(0.261765909821, standard.getValue("TVP", "bara"), 1e-3);
+
+    standard.setMethodRVP("RVP_ASTM_D6377");
+    standard.setReferenceTemperature(37.8, "C");
+    standard.calculate();
+    Assertions.assertEquals(0.2127122042, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(0.2617659098, standard.getValue("TVP", "bara"), 1e-3);
   }
 }
