@@ -3,8 +3,6 @@ package neqsim.pvtsimulation.simulation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.File;
 import org.junit.jupiter.api.Test;
-import neqsim.pvtsimulation.simulation.ConstantVolumeDepletion;
-import neqsim.pvtsimulation.simulation.SaturationPressure;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -44,12 +42,12 @@ public class ConstantVolumeDepletionTest {
     CVDsim.setExperimentalData(expData);
     assertEquals(2.198101313307043
 
-    , CVDsim.getRelativeVolume()[4], 0.001);
+        , CVDsim.getRelativeVolume()[4], 0.001);
   }
 
   @Test
   void testRunEclipseInput() {
-    File file = new File("src/test/java/neqsim/PVTsimulation/simulation");
+    File file = new File("src/test/java/neqsim/pvtsimulation/simulation");
     String fileFluid1 = file.getAbsolutePath() + "/EclipseModel.e300";
     SystemInterface fluid1 = neqsim.thermo.util.readwrite.EclipseFluidReadWrite.read(fileFluid1);
     // TODO: check why not working with multiphase

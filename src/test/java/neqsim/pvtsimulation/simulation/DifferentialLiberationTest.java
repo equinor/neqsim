@@ -2,9 +2,6 @@ package neqsim.pvtsimulation.simulation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
-import neqsim.pvtsimulation.simulation.DifferentialLiberation;
-import neqsim.pvtsimulation.simulation.SaturationPressure;
-import neqsim.pvtsimulation.simulation.SimulationInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 

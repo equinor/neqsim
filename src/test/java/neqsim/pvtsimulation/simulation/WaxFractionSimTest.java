@@ -2,7 +2,6 @@ package neqsim.pvtsimulation.simulation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
-import neqsim.pvtsimulation.simulation.WaxFractionSim;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
