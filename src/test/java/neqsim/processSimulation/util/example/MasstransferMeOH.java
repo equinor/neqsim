@@ -1,10 +1,10 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
-import neqsim.processSimulation.processEquipment.mixer.StaticPhaseMixer;
-import neqsim.processSimulation.processEquipment.separator.GasScrubber;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
+import neqsim.processsimulation.processequipment.mixer.StaticMixer;
+import neqsim.processsimulation.processequipment.mixer.StaticPhaseMixer;
+import neqsim.processsimulation.processequipment.separator.GasScrubber;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.util.StreamSaturatorUtil;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
@@ -59,8 +59,8 @@ public class MasstransferMeOH {
     mainMixer.addStream(waterSaturatedFeedGas);
     mainMixer.addStream(MeOHFeed);
 
-    neqsim.processSimulation.processEquipment.util.NeqSimUnit pipeline =
-        new neqsim.processSimulation.processEquipment.util.NeqSimUnit(mainMixer.getOutletStream(),
+    neqsim.processsimulation.processequipment.util.NeqSimUnit pipeline =
+        new neqsim.processsimulation.processequipment.util.NeqSimUnit(mainMixer.getOutletStream(),
             "pipeline", "stratified");
     pipeline.setLength(123.01);
 
@@ -68,8 +68,8 @@ public class MasstransferMeOH {
 
     Stream gasFromScrubber = new Stream("gasFromScrubber", scrubber.getGasOutStream());
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(dryFeedGas);
     operations.add(saturatedFeedGas);
     operations.add(waterSaturatedFeedGas);

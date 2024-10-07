@@ -1,25 +1,25 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
-import neqsim.processSimulation.measurementDevice.HydrateEquilibriumTemperatureAnalyser;
-import neqsim.processSimulation.measurementDevice.WaterDewPointAnalyser;
-import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
-import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
-import neqsim.processSimulation.processEquipment.distillation.Condenser;
-import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
-import neqsim.processSimulation.processEquipment.distillation.Reboiler;
-import neqsim.processSimulation.processEquipment.filter.Filter;
-import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
-import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
-import neqsim.processSimulation.processEquipment.pump.Pump;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.Calculator;
-import neqsim.processSimulation.processEquipment.util.Recycle;
-import neqsim.processSimulation.processEquipment.util.SetPoint;
-import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.conditionmonitor.ConditionMonitor;
+import neqsim.processsimulation.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
+import neqsim.processsimulation.measurementdevice.WaterDewPointAnalyser;
+import neqsim.processsimulation.processequipment.absorber.SimpleTEGAbsorber;
+import neqsim.processsimulation.processequipment.absorber.WaterStripperColumn;
+import neqsim.processsimulation.processequipment.distillation.Condenser;
+import neqsim.processsimulation.processequipment.distillation.DistillationColumn;
+import neqsim.processsimulation.processequipment.distillation.Reboiler;
+import neqsim.processsimulation.processequipment.filter.Filter;
+import neqsim.processsimulation.processequipment.heatExchanger.HeatExchanger;
+import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.mixer.StaticMixer;
+import neqsim.processsimulation.processequipment.pump.Pump;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.util.Calculator;
+import neqsim.processsimulation.processequipment.util.Recycle;
+import neqsim.processsimulation.processequipment.util.SetPoint;
+import neqsim.processsimulation.processequipment.util.StreamSaturatorUtil;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 
 /**
  * <p>
@@ -161,9 +161,9 @@ public class TEGdehydrationProcessDistillationGFA {
    * getProcess.
    * </p>
    *
-   * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+   * @return a {@link neqsim.processsimulation.processsystem.ProcessSystem} object
    */
-  public neqsim.processSimulation.processSystem.ProcessSystem getProcess() {
+  public neqsim.processsimulation.processsystem.ProcessSystem getProcess() {
     // Create the input fluid to the TEG process and saturate it with water at
     // scrubber conditions
     neqsim.thermo.system.SystemInterface feedGas =
@@ -195,8 +195,8 @@ public class TEGdehydrationProcessDistillationGFA {
         new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
     HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser =
-        new HydrateEquilibriumTemperatureAnalyser(waterSaturatedFeedGas);
-    hydrateTAnalyser.setName("hydrate temperature analyser");
+        new HydrateEquilibriumTemperatureAnalyser("hydrate temperature analyser",
+            waterSaturatedFeedGas);
 
     neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
     feedTEG.setMolarComposition(
@@ -224,15 +224,13 @@ public class TEGdehydrationProcessDistillationGFA {
 
     Stream richTEG = new Stream("rich TEG from absorber", absorber.getSolventOutStream());
 
-    WaterDewPointAnalyser waterDewPointAnalyser2 = new WaterDewPointAnalyser(dehydratedGas);
-    waterDewPointAnalyser2.setName("water dew point analyser2");
+    WaterDewPointAnalyser waterDewPointAnalyser2 =
+        new WaterDewPointAnalyser("water dew point analyser2", dehydratedGas);
 
     HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser =
-        new HydrateEquilibriumTemperatureAnalyser(dehydratedGas);
-    waterDewPointAnalyser.setName("water dew point analyser");
+        new HydrateEquilibriumTemperatureAnalyser("water dew point analyser", dehydratedGas);
 
-    ThrottlingValve glycol_flash_valve = new ThrottlingValve("Flash valve", richTEG);
-    glycol_flash_valve.setName("Rich TEG HP flash valve");
+    ThrottlingValve glycol_flash_valve = new ThrottlingValve("Rich TEG HP flash valve", richTEG);
     glycol_flash_valve.setOutletPressure(flashDrumPressure);
 
     Heater richGLycolHeaterCondenser =
@@ -257,8 +255,7 @@ public class TEGdehydrationProcessDistillationGFA {
     heatEx.setUAvalue(UAvalueRichTEGHeatExchanger_2);
 
     ThrottlingValve glycol_flash_valve2 =
-        new ThrottlingValve("LP flash valve", heatEx.getOutStream(0));
-    glycol_flash_valve2.setName("Rich TEG LP flash valve");
+        new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0));
     glycol_flash_valve2.setOutletPressure(reboilerPressure);
 
     neqsim.thermo.system.SystemInterface stripGas = feedGas.clone();
@@ -268,8 +265,7 @@ public class TEGdehydrationProcessDistillationGFA {
     strippingGas.setTemperature(strippingGasFeedTemperature, "C");
     strippingGas.setPressure(reboilerPressure, "bara");
 
-    Stream gasToReboiler = strippingGas.clone();
-    gasToReboiler.setName("gas to reboiler");
+    Stream gasToReboiler = strippingGas.clone("gas to reboiler");
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 3, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
@@ -286,7 +282,7 @@ public class TEGdehydrationProcessDistillationGFA {
 
     Stream gasToFlare = new Stream("gas to flare", sepregenGas.getGasOutStream());
 
-    Stream liquidToTrreatment = new Stream("water to treatment", sepregenGas.getLiquidOutStream());
+    Stream liquidToTreatment = new Stream("water to treatment", sepregenGas.getLiquidOutStream());
 
     WaterStripperColumn stripper = new WaterStripperColumn("TEG stripper");
     stripper.addSolventInStream(column.getLiquidOutStream());
@@ -334,7 +330,7 @@ public class TEGdehydrationProcessDistillationGFA {
     makeupCalculator.addInputVariable(dehydratedGas);
     makeupCalculator.addInputVariable(flashGas);
     makeupCalculator.addInputVariable(gasToFlare);
-    makeupCalculator.addInputVariable(liquidToTrreatment);
+    makeupCalculator.addInputVariable(liquidToTreatment);
     makeupCalculator.setOutputVariable(makeupTEG);
 
     StaticMixer makeupMixer = new StaticMixer("makeup mixer");
@@ -350,8 +346,8 @@ public class TEGdehydrationProcessDistillationGFA {
     richGLycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
     // richGLycolHeater.isSetEnergyStream();
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(dryFeedGas);
     operations.add(saturatedFeedGas);
     operations.add(waterSaturatedFeedGas);
@@ -378,7 +374,7 @@ public class TEGdehydrationProcessDistillationGFA {
     operations.add(coolerRegenGas);
     operations.add(sepregenGas);
     operations.add(gasToFlare);
-    operations.add(liquidToTrreatment);
+    operations.add(liquidToTreatment);
     operations.add(strippingGas);
     operations.add(stripper);
     operations.add(recycleGasFromStripper);
@@ -405,7 +401,7 @@ public class TEGdehydrationProcessDistillationGFA {
   @SuppressWarnings("unused")
   public static void main(String[] args) {
     TEGdehydrationProcessDistillationGFA tempClass = new TEGdehydrationProcessDistillationGFA();
-    neqsim.processSimulation.processSystem.ProcessSystem operations = tempClass.getProcess();
+    neqsim.processsimulation.processsystem.ProcessSystem operations = tempClass.getProcess();
     operations.run();
     // operations.run();
     // operations =

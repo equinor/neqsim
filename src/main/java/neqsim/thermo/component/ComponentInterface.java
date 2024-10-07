@@ -8,8 +8,8 @@ package neqsim.thermo.component;
 
 import java.util.LinkedHashMap;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import neqsim.thermo.atomElement.Element;
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface;
+import neqsim.thermo.atomelement.Element;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -929,9 +929,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * <p>
    * Getter for property NormalBoilingPoint.
    * </p>
-   * 
+   *
    * @param unit Unit of return pressure
-   * 
+   *
    * @return The normal boiling point of the component
    */
   public double getNormalBoilingPoint(String unit);
@@ -1393,7 +1393,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * getAttractiveTerm.
    * </p>
    *
-   * @return a {@link neqsim.thermo.component.attractiveEosTerm.AttractiveTermInterface} object
+   * @return a {@link neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface} object
    */
   public AttractiveTermInterface getAttractiveTerm();
 
@@ -1572,7 +1572,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * getElements.
    * </p>
    *
-   * @return a {@link neqsim.thermo.atomElement.Element} object
+   * @return a {@link neqsim.thermo.atomelement.Element} object
    */
   public Element getElements();
 

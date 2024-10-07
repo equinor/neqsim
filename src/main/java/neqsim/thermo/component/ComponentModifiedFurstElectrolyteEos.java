@@ -88,7 +88,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
         : b;
     a = ionicCharge != 0 ? 1.0e-35 : a;
     setAttractiveParameter(
-        new neqsim.thermo.component.attractiveEosTerm.AttractiveTermSchwartzentruber(this));
+        new neqsim.thermo.component.attractiveeosterm.AttractiveTermSchwartzentruber(this));
     lennardJonesMolecularDiameter =
         ionicCharge != 0 ? Math.pow((6.0 * b / 1.0e5) / (pi * avagadroNumber), 1.0 / 3.0) * 1e10
             : lennardJonesMolecularDiameter;

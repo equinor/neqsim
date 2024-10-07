@@ -25,7 +25,6 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
    * </p>
    */
   public PhaseElectrolyteCPAstatoil() {
-    super();
   }
 
   /** {@inheritDoc} */

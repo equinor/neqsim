@@ -50,7 +50,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
   double diElectricConstantdT = 0;
   double diElectricConstantdTdT = 0.0;
   double diElectricConstantdTdV = 0;
-  neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface electrolyteMixingRule;
+  neqsim.thermo.mixingrule.ElectrolyteMixingRulesInterface electrolyteMixingRule;
   double sr2On = 1.0;
   double lrOn = 1.0;
   double bornOn = 1.0;
@@ -63,7 +63,6 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    * </p>
    */
   public PhaseModifiedFurstElectrolyteEosMod2004() {
-    super();
     electrolyteMixingRule = mixSelect.getElectrolyteMixingRule(this);
   }
 
@@ -72,9 +71,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    * Getter for the field <code>electrolyteMixingRule</code>.
    * </p>
    *
-   * @return a {@link neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface} object
+   * @return a {@link neqsim.thermo.mixingrule.ElectrolyteMixingRulesInterface} object
    */
-  public neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface getElectrolyteMixingRule() {
+  public neqsim.thermo.mixingrule.ElectrolyteMixingRulesInterface getElectrolyteMixingRule() {
     return electrolyteMixingRule;
   }
 

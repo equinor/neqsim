@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
-import neqsim.chemicalReactions.ChemicalReactionOperations;
-import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
-import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
+import neqsim.chemicalreactions.ChemicalReactionOperations;
+import neqsim.physicalproperties.interfaceproperties.InterfaceProperties;
+import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.characterization.Characterise;
@@ -1270,7 +1270,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void calcKIJ(boolean ok) {
-    neqsim.thermo.mixingRule.EosMixingRules.calcEOSInteractionParameters = ok;
+    neqsim.thermo.mixingrule.EosMixingRules.calcEOSInteractionParameters = ok;
     for (int i = 0; i < numberOfPhases; i++) {
       ((PhaseEosInterface) getPhase(i)).getMixingRule().setCalcEOSInteractionParameters(ok);
     }
@@ -2652,9 +2652,9 @@ public abstract class SystemThermo implements SystemInterface {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getPhase",
           "i", i + " is not valid, must be in the range 0-" + this.getNumberOfPhases()));
     } else if (i >= getNumberOfPhases() && phaseArray[phaseIndex[i]] == null) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
-          this.getClass() + ":getPhase - Can not return phase number " + i
-              + ". Current number of phases are " + getNumberOfPhases()));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getPhase",
+          "i", " - Can not return phase number " + i + ". Current number of phases are "
+              + getNumberOfPhases()));
     }
     return phaseArray[phaseIndex[i]];
   }
@@ -3304,9 +3304,10 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < numberOfPhases; i++) {
       this.beta[phaseIndex[i]] = getPhase(i).getNumberOfMolesInPhase() / getTotalNumberOfMoles();
     }
-    if (this.getSumBeta() < 1.0 - ThermodynamicModelSettings.phaseFractionMinimumLimit
+    if (!isInitialized
+        && this.getSumBeta() < 1.0 - ThermodynamicModelSettings.phaseFractionMinimumLimit
         || this.getSumBeta() > 1.0 + ThermodynamicModelSettings.phaseFractionMinimumLimit) {
-      logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0");
+      logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0 ");
     }
   }
 
@@ -3444,7 +3445,7 @@ public abstract class SystemThermo implements SystemInterface {
   public void initNumeric(int type, int phasen) {
     if (type < 2) {
       initAnalytic(type);
-    } else if (type >= 2) {
+    } else {
       double[][] gasfug = new double[2][getPhases()[0].getNumberOfComponents()];
       double[][] liqfug = new double[2][getPhases()[0].getNumberOfComponents()];
 
@@ -4859,11 +4860,11 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void setStandard(String standardName) {
     if (standardName.equals("ISO1992")) {
-      this.standard = new neqsim.standards.gasQuality.Standard_ISO6976(this);
+      this.standard = new neqsim.standards.gasquality.Standard_ISO6976(this);
     } else if (standardName.equals("Draft_ISO18453")) {
-      this.standard = new neqsim.standards.gasQuality.Draft_ISO18453(this);
+      this.standard = new neqsim.standards.gasquality.Draft_ISO18453(this);
     } else {
-      this.standard = new neqsim.standards.gasQuality.Standard_ISO6976(this);
+      this.standard = new neqsim.standards.gasquality.Standard_ISO6976(this);
     }
   }
 
@@ -5027,8 +5028,8 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void write(String name, String filename, boolean newfile) {
     String[][] table = createTable(name);
-    neqsim.dataPresentation.fileHandeling.createTextFile.TextFile file =
-        new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
+    neqsim.datapresentation.filehandeling.createtextfile.TextFile file =
+        new neqsim.datapresentation.filehandeling.createtextfile.TextFile();
     if (newfile) {
       file.newFile(filename);
     }
@@ -5061,13 +5062,13 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public String toJson() {
     return new GsonBuilder().create()
-        .toJson(new neqsim.processSimulation.util.monitor.FluidResponse(this));
+        .toJson(new neqsim.processsimulation.util.monitor.FluidResponse(this));
   }
 
   /** {@inheritDoc} */
   @Override
   public String toCompJson() {
     return new GsonBuilder().create()
-        .toJson(new neqsim.processSimulation.util.monitor.FluidComponentResponse(this));
+        .toJson(new neqsim.processsimulation.util.monitor.FluidComponentResponse(this));
   }
 }

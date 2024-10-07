@@ -1,11 +1,11 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.mixer.Mixer;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.Recycle;
+import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.mixer.Mixer;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.util.Recycle;
 
 /**
  * <p>
@@ -30,7 +30,7 @@ public class simpleTopSideProcess2 {
     fluid.setPressure(5.0, "bara");
     Stream stream_inlet = new Stream("Stream1", fluid);
 
-    Mixer mixer_inlet = new neqsim.processSimulation.processEquipment.mixer.StaticMixer("Mixer HP");
+    Mixer mixer_inlet = new neqsim.processsimulation.processequipment.mixer.StaticMixer("Mixer HP");
     mixer_inlet.addStream(stream_inlet);
 
     ThreePhaseSeparator separator_inlet =
@@ -47,8 +47,8 @@ public class simpleTopSideProcess2 {
     recyleOp.addStream(scrubber.getLiquidOutStream());
     mixer_inlet.addStream(recyleOp.getOutletStream());
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_inlet);
     operations.add(mixer_inlet);
     operations.add(separator_inlet);

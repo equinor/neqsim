@@ -2,7 +2,8 @@ package neqsim.processSimulation.processEquipment.valve;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 
 public class ThrottlingValveTest {
   @Test

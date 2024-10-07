@@ -2,6 +2,7 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import neqsim.thermodynamicoperations.flashops.RachfordRice;
 
 public class RachfordRiceTest {
   @Test

@@ -1,11 +1,11 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.measurementDevice.PressureTransmitter;
-import neqsim.processSimulation.measurementDevice.TemperatureTransmitter;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.tank.Tank;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.processSimulation.processEquipment.valve.ValveInterface;
+import neqsim.processsimulation.measurementdevice.PressureTransmitter;
+import neqsim.processsimulation.measurementdevice.TemperatureTransmitter;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.tank.Tank;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.processsimulation.processequipment.valve.ValveInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
@@ -53,8 +53,8 @@ public class LNGtankfilling {
         testSystem2.createDatabase(true);
         testSystem2.setMixingRule(2);
 
-        neqsim.thermodynamicOperations.ThermodynamicOperations ops =
-                new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem);
+        neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+                new neqsim.thermodynamicoperations.ThermodynamicOperations(testSystem);
         ops.TPflash();
         testSystem.display();
 
@@ -63,7 +63,7 @@ public class LNGtankfilling {
         ValveInterface valve = new ThrottlingValve("valve", stream_1);
         valve.setOutletPressure(ThermodynamicConstantsInterface.referencePressure + 0.110);
 
-        Tank tank = new neqsim.processSimulation.processEquipment.tank.Tank("tank");
+        Tank tank = new neqsim.processsimulation.processequipment.tank.Tank("tank");
         tank.addStream(valve.getOutletStream());
         // tank.addStream(stream_2);
 
@@ -88,8 +88,8 @@ public class LNGtankfilling {
         // pressureController.setControllerSetPoint(ThermodynamicConstantsInterface.referencePressure+0.110);
         // pressureController.setControllerParameters(2.0,400,0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations =
-                new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processsimulation.processsystem.ProcessSystem operations =
+                new neqsim.processsimulation.processsystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(valve);
         operations.add(tank);

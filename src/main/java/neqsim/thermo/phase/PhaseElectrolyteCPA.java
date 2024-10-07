@@ -8,8 +8,8 @@ import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentElectrolyteCPA;
-import neqsim.thermo.mixingRule.CPAMixing;
-import neqsim.thermo.mixingRule.CPAMixingInterface;
+import neqsim.thermo.mixingrule.CPAMixing;
+import neqsim.thermo.mixingrule.CPAMixingInterface;
 
 /**
  * <p>
@@ -77,7 +77,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
    * </p>
    */
   public PhaseElectrolyteCPA() {
-    super();
   }
 
   /** {@inheritDoc} */

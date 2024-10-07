@@ -6,7 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
@@ -46,7 +46,7 @@ class WaxFlashTest {
   }
 
   /**
-   * Test method for {@link neqsim.thermodynamicOperations.flashOps.saturationOps.WATcalc#run()}.
+   * Test method for {@link neqsim.thermodynamicoperations.flashops.saturationops.WATcalc#run()}.
    */
   @Test
   void testRun() {

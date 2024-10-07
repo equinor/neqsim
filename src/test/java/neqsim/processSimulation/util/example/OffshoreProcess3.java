@@ -1,16 +1,16 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.compressor.Compressor;
-import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
-import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.mixer.Mixer;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.MoleFractionControllerUtil;
-import neqsim.processSimulation.processEquipment.util.Recycle;
-import neqsim.processSimulation.processEquipment.util.SetPoint;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.processequipment.compressor.Compressor;
+import neqsim.processsimulation.processequipment.heatExchanger.Cooler;
+import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.mixer.Mixer;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.util.MoleFractionControllerUtil;
+import neqsim.processsimulation.processequipment.util.Recycle;
+import neqsim.processsimulation.processequipment.util.SetPoint;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -106,8 +106,7 @@ public class OffshoreProcess3 {
 
     ThreePhaseSeparator lpseparator =
         new ThreePhaseSeparator("3rd stage separator", valvempValve.getOutletStream());
-    Stream stableOilStream = (Stream) lpseparator.getOilOutStream();
-    stableOilStream.setName("stable oil");
+    Stream stableOilStream = new Stream("stable oil", lpseparator.getOilOutStream());
 
     Compressor lpcompressor =
         new Compressor("1st stage recompressor", lpseparator.getGasOutStream());
@@ -129,9 +128,9 @@ public class OffshoreProcess3 {
      * coolingWater.setFlowRate(500900.2, "kg/hr"); coolingWater.setTemperature(10.0, "C");
      * coolingWater.setPressure(10.0, "bara");
      *
-     * HeatExchanger heatEx = new HeatExchanger(lpcompressor.getOutStream());
-     * heatEx.setName("LP heat Exchanger"); heatEx.setGuessOutTemperature(273.15+40.0);
-     * heatEx.setUAvalue(45000.0); heatEx.setFeedStream(1, coolingWater);
+     * HeatExchanger heatEx = new HeatExchanger("LP heat Exchanger",lpcompressor.getOutStream());
+     * heatEx.setGuessOutTemperature(273.15+40.0); heatEx.setUAvalue(45000.0);
+     * heatEx.setFeedStream(1, coolingWater);
      */
 
     Cooler lpHeatExchanger =
@@ -207,8 +206,8 @@ public class OffshoreProcess3 {
 
     Stream exportGas = new Stream("export gas", exportGasCompressorCooler2.getOutletStream());
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(wellStream);
     operations.add(inletTempControl);
     operations.add(valve);

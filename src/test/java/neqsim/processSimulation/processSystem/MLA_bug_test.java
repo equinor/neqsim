@@ -4,22 +4,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.measurementDevice.WaterDewPointAnalyser;
-import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
-import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
-import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
-import neqsim.processSimulation.processEquipment.filter.Filter;
-import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
-import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.mixer.Mixer;
-import neqsim.processSimulation.processEquipment.pump.Pump;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.processSimulation.processEquipment.util.Calculator;
-import neqsim.processSimulation.processEquipment.util.Recycle;
-import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.measurementdevice.WaterDewPointAnalyser;
+import neqsim.processsimulation.processequipment.absorber.SimpleTEGAbsorber;
+import neqsim.processsimulation.processequipment.absorber.WaterStripperColumn;
+import neqsim.processsimulation.processequipment.distillation.DistillationColumn;
+import neqsim.processsimulation.processequipment.filter.Filter;
+import neqsim.processsimulation.processequipment.heatExchanger.HeatExchanger;
+import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.mixer.Mixer;
+import neqsim.processsimulation.processequipment.pump.Pump;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.stream.StreamInterface;
+import neqsim.processsimulation.processequipment.util.Calculator;
+import neqsim.processsimulation.processequipment.util.Recycle;
+import neqsim.processsimulation.processequipment.util.StreamSaturatorUtil;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.processsimulation.processsystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPA;
 import neqsim.thermo.util.empiric.BukacekWaterInGas;
@@ -79,7 +80,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(saturatedFeedGas);
 
     StreamInterface waterSaturatedFeedGas =
-        new Stream("water saturated feed gas", saturatedFeedGas.getOutStream());
+        new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
     p.add(waterSaturatedFeedGas);
 
     SystemInterface feedTEG = feedGas.clone();
@@ -92,14 +93,13 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(feedTPsetterToAbsorber);
 
     StreamInterface feedToAbsorber =
-        new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutStream());
+        new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
     p.add(feedToAbsorber);
 
     WaterDewPointAnalyser waterDewPointAnalyserToAbsorber =
-        new WaterDewPointAnalyser(feedToAbsorber);
+        new WaterDewPointAnalyser("water dew point gas to absorber", feedToAbsorber);
     waterDewPointAnalyserToAbsorber.setMethod("multiphase");
     waterDewPointAnalyserToAbsorber.setReferencePressure(85.0);
-    waterDewPointAnalyserToAbsorber.setName("water dew point gas to absorber");
     p.add(waterDewPointAnalyserToAbsorber);
 
     StreamInterface TEGFeed = new Stream("TEG feed", feedTEG);
@@ -132,7 +132,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(coolerDehydGas);
 
     Separator sepDehydratedGasSetWater =
-        new Separator("dehyd gas separator", coolerDehydGas.getOutStream());
+        new Separator("dehyd gas separator", coolerDehydGas.getOutletStream());
     p.add(sepDehydratedGasSetWater);
 
     Heater pipelineSetTP = new Heater("pipelineSetTP", sepDehydratedGasSetWater.getGasOutStream());
@@ -141,12 +141,12 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(pipelineSetTP);
 
     StreamInterface pipelineSetTPStream =
-        new Stream("pipelineSetTP stream", pipelineSetTP.getOutStream());
+        new Stream("pipelineSetTP stream", pipelineSetTP.getOutletStream());
     p.add(pipelineSetTPStream);
 
-    WaterDewPointAnalyser waterDewPointAnalyser3 = new WaterDewPointAnalyser(dehydratedGasSetWater);
+    WaterDewPointAnalyser waterDewPointAnalyser3 =
+        new WaterDewPointAnalyser("water dew point analyser3", dehydratedGasSetWater);
     waterDewPointAnalyser3.setReferencePressure(70.0);
-    waterDewPointAnalyser3.setName("water dew point analyser3");
     p.add(waterDewPointAnalyser3);
 
     StreamInterface dehydratedGas = new Stream("dry gas from absorber", absorber.getGasOutStream());
@@ -155,22 +155,21 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     StreamInterface richTEG = new Stream("rich TEG from absorber", absorber.getLiquidOutStream());
     p.add(richTEG);
 
-    WaterDewPointAnalyser waterDewPointAnalyser2 = new WaterDewPointAnalyser(dehydratedGas);
+    WaterDewPointAnalyser waterDewPointAnalyser2 =
+        new WaterDewPointAnalyser("water dew point analyser", dehydratedGas);
     waterDewPointAnalyser2.setReferencePressure(70.0);
-    waterDewPointAnalyser2.setName("water dew point analyser");
     p.add(waterDewPointAnalyser2);
 
-    ThrottlingValve glycol_flash_valve = new ThrottlingValve(richTEG);
-    glycol_flash_valve.setName("Rich TEG HP flash valve");
+    ThrottlingValve glycol_flash_valve = new ThrottlingValve("Rich TEG HP flash valve", richTEG);
     glycol_flash_valve.setOutletPressure(4.8);
     p.add(glycol_flash_valve);
 
     Heater richGLycolHeaterCondenser =
-        new Heater("rich TEG preheater", glycol_flash_valve.getOutStream());
+        new Heater("rich TEG preheater", glycol_flash_valve.getOutletStream());
     p.add(richGLycolHeaterCondenser);
 
     HeatExchanger heatEx2 =
-        new HeatExchanger("rich TEG heat exchanger 1", richGLycolHeaterCondenser.getOutStream());
+        new HeatExchanger("rich TEG heat exchanger 1", richGLycolHeaterCondenser.getOutletStream());
     heatEx2.setGuessOutTemperature(273.15 + 62.0);
     heatEx2.setUAvalue(2224.0);
     p.add(heatEx2);
@@ -192,7 +191,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(fineFilter);
 
     HeatExchanger heatEx =
-        new HeatExchanger("lean/rich TEG heat-exchanger", fineFilter.getOutStream());
+        new HeatExchanger("lean/rich TEG heat-exchanger", fineFilter.getOutletStream());
     heatEx.setGuessOutTemperature(273.15 + 130.0);
     heatEx.setUAvalue(8316.0);
     p.add(heatEx);
@@ -210,12 +209,11 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     strippingGas.setPressure(1.2, "bara");
     p.add(strippingGas);
 
-    StreamInterface gasToReboiler = strippingGas.clone();
-    gasToReboiler.setName("gas to reboiler");
+    StreamInterface gasToReboiler = strippingGas.clone("gas to reboiler");
     p.add(gasToReboiler);
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
-    column.addFeedStream(glycol_flash_valve2.getOutStream(), 1);
+    column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
     column.getReboiler().setOutTemperature(273.15 + 197.5);
     column.getCondenser().setOutTemperature(273.15 + 80.0);
     column.getTray(1).addStream(gasToReboiler);
@@ -235,7 +233,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     overheadCondHX.setFeedStream(1, coolingWater1);
     p.add(overheadCondHX);
 
-    Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutStream());
+    Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutletStream());
     p.add(sepregenGas);
 
     StreamInterface gasToFlare = new Stream("gas to flare", sepregenGas.getGasOutStream());
@@ -263,12 +261,12 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     bufferTank.setOutTemperature(273.15 + 90.5);
     p.add(bufferTank);
 
-    Pump hotLeanTEGPump = new Pump("lean TEG LP pump", bufferTank.getOutStream());
+    Pump hotLeanTEGPump = new Pump("lean TEG LP pump", bufferTank.getOutletStream());
     hotLeanTEGPump.setOutletPressure(3.0);
     hotLeanTEGPump.setIsentropicEfficiency(0.75);
     p.add(hotLeanTEGPump);
 
-    heatEx2.setFeedStream(1, hotLeanTEGPump.getOutStream());
+    heatEx2.setFeedStream(1, hotLeanTEGPump.getOutletStream());
 
     Heater coolerhOTteg3 = new Heater("lean TEG cooler", heatEx2.getOutStream(1));
     coolerhOTteg3.setOutTemperature(273.15 + 48.5);
@@ -281,13 +279,13 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     coolerhOTteg3HX.setFeedStream(1, coolingWater2);
     p.add(coolerhOTteg3HX);
 
-    Pump hotLeanTEGPump2 = new Pump("lean TEG HP pump", coolerhOTteg3.getOutStream());
+    Pump hotLeanTEGPump2 = new Pump("lean TEG HP pump", coolerhOTteg3.getOutletStream());
     hotLeanTEGPump2.setOutletPressure(85.0);
     hotLeanTEGPump2.setIsentropicEfficiency(0.75);
     p.add(hotLeanTEGPump2);
 
     StreamInterface leanTEGtoabs =
-        new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutStream());
+        new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutletStream());
     p.add(leanTEGtoabs);
 
     SystemInterface pureTEG = feedGas.clone();
@@ -314,7 +312,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(makeupMixer);
 
     Recycle recycleLeanTEG = new Recycle("lean TEG recycle");
-    recycleLeanTEG.addStream(makeupMixer.getOutStream());
+    recycleLeanTEG.addStream(makeupMixer.getOutletStream());
     recycleLeanTEG.setOutletStream(TEGFeed);
     recycleLeanTEG.setPriority(200);
     recycleLeanTEG.setDownstreamProperty("flow rate");

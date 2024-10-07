@@ -6,10 +6,10 @@
 
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.measurementDevice.VolumeFlowTransmitter;
-import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processsimulation.measurementdevice.VolumeFlowTransmitter;
+import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
 
 /**
  * <p>
@@ -54,18 +54,16 @@ public class TestSlugcatcher {
         new ThreePhaseSeparator("Separator 1", valve1.getOutletStream());
     Stream stream_2 = new Stream("stream_2", separator2.getGasOutStream());
 
-    VolumeFlowTransmitter volumeTransmitter3 =
-        new VolumeFlowTransmitter(separator2.getGasOutStream());
+    VolumeFlowTransmitter volumeTransmitter3 = new VolumeFlowTransmitter(
+        "Gas Volume FLow From Slug Catcher", separator2.getGasOutStream());
     volumeTransmitter3.setMeasuredPhaseNumber(0);
-    volumeTransmitter3.setName("Gas Volume FLow From Slug Catcher");
 
-    VolumeFlowTransmitter volumeTransmitter4 =
-        new VolumeFlowTransmitter(separator2.getWaterOutStream());
+    VolumeFlowTransmitter volumeTransmitter4 = new VolumeFlowTransmitter(
+        "Water Volume FLow From Slug Catcher", separator2.getWaterOutStream());
     volumeTransmitter4.setMeasuredPhaseNumber(0);
-    volumeTransmitter4.setName("Water Volume FLow From Slug Catcher");
 
-    neqsim.processSimulation.processSystem.ProcessSystem operations =
-        new neqsim.processSimulation.processSystem.ProcessSystem();
+    neqsim.processsimulation.processsystem.ProcessSystem operations =
+        new neqsim.processsimulation.processsystem.ProcessSystem();
     operations.add(stream_1);
     operations.add(separator);
     operations.add(valve1);

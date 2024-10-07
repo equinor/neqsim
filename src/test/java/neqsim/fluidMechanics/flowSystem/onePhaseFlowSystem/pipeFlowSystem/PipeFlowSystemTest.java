@@ -3,7 +3,8 @@ package neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem;
 import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
+import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
+import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem;
 import neqsim.thermo.system.SystemInterface;
 
 public class PipeFlowSystemTest extends neqsim.NeqSimTest {
@@ -34,11 +35,11 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
     double[] outerTemperature =
         {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0};
 
-    neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface[] pipeGeometry =
-        new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[height.length];
+    neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface[] pipeGeometry =
+        new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData[height.length];
 
     for (int i = 0; i < height.length; i++) {
-      pipeGeometry[i] = new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData();
+      pipeGeometry[i] = new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData();
       pipeGeometry[i].setDiameter(diameter[i]);
       pipeGeometry[i].setInnerSurfaceRoughness(roughness[i]);
     }

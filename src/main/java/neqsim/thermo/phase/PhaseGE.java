@@ -11,8 +11,8 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEInterface;
-import neqsim.thermo.mixingRule.EosMixingRules;
-import neqsim.thermo.mixingRule.EosMixingRulesInterface;
+import neqsim.thermo.mixingrule.EosMixingRules;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 
 /**
  * <p>
@@ -35,7 +35,6 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
    * </p>
    */
   public PhaseGE() {
-    super();
     setType(PhaseType.LIQUID);
     componentArray = new ComponentGEInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
     useVolumeCorrection = false;

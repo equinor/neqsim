@@ -34,7 +34,6 @@ public class PhaseGENRTL extends PhaseGE {
    * </p>
    */
   public PhaseGENRTL() {
-    super();
   }
 
   /**
@@ -50,7 +49,6 @@ public class PhaseGENRTL extends PhaseGE {
    */
   public PhaseGENRTL(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
       double[][] intparam) {
-    super();
     componentArray = new ComponentGeNRTL[alpha[0].length];
     this.mixRule = mixRule;
     this.alpha = alpha;

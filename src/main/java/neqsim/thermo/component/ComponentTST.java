@@ -1,6 +1,6 @@
 package neqsim.thermo.component;
 
-import neqsim.thermo.component.attractiveEosTerm.AttractiveTermTwu;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwu;
 
 /**
  * <p>

@@ -17,7 +17,6 @@ public class PhaseSolidComplex extends PhaseSolid {
    * </p>
    */
   public PhaseSolidComplex() {
-    super();
     setType(PhaseType.SOLIDCOMPLEX);
   }
 

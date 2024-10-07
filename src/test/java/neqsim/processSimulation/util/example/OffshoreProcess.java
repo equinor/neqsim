@@ -1,14 +1,14 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.compressor.Compressor;
-import neqsim.processSimulation.processEquipment.mixer.Mixer;
-import neqsim.processSimulation.processEquipment.mixer.StaticPhaseMixer;
-import neqsim.processSimulation.processEquipment.pipeline.Pipeline;
-import neqsim.processSimulation.processEquipment.pipeline.TwoPhasePipeLine;
-import neqsim.processSimulation.processEquipment.separator.Separator;
-import neqsim.processSimulation.processEquipment.stream.NeqStream;
-import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.processsimulation.processequipment.compressor.Compressor;
+import neqsim.processsimulation.processequipment.mixer.Mixer;
+import neqsim.processsimulation.processequipment.mixer.StaticPhaseMixer;
+import neqsim.processsimulation.processequipment.pipeline.Pipeline;
+import neqsim.processsimulation.processequipment.pipeline.TwoPhasePipeLine;
+import neqsim.processsimulation.processequipment.separator.Separator;
+import neqsim.processsimulation.processequipment.stream.NeqStream;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processequipment.stream.StreamInterface;
 
 /**
  * <p>OffshoreProcess class.</p>
@@ -113,8 +113,8 @@ public class OffshoreProcess {
         pipe.setEquilibriumMassTransfer(false);
         pipe.setEquilibriumHeatTransfer(false);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations =
-                new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processsimulation.processsystem.ProcessSystem operations =
+                new neqsim.processsimulation.processsystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(separator);
         operations.add(stream_2);

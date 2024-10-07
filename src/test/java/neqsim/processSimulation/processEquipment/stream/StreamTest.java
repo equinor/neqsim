@@ -6,7 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.processSimulation.processSystem.ProcessSystem;
+import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.processsimulation.processsystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -51,7 +52,7 @@ class StreamTest extends neqsim.NeqSimTest {
       testSystem.initProperties();
     });
     Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:init - Input totalNumberOfMoles must be larger than zero.",
+        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:init - Input totalNumberOfMoles must be larger than or equal to zero.",
         thrown.getMessage());
   }
 

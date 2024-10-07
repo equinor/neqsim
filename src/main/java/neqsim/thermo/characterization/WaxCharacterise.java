@@ -260,7 +260,6 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
   public WaxModelInterface getModel(String name) {
     this.name = name;
     if (name.equals("PedersenWax")) {
-      return new PedersenWaxModel();
     }
     return new PedersenWaxModel();
   }

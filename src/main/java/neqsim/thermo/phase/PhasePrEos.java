@@ -19,7 +19,6 @@ public class PhasePrEos extends PhaseEos {
    * </p>
    */
   public PhasePrEos() {
-    super();
     thermoPropertyModelName = "PR-EoS";
     uEOS = 2;
     wEOS = -1;
