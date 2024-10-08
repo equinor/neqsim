@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.processsimulation.processequipment.absorber.WaterStripperColumn;
 import neqsim.processsimulation.processequipment.compressor.Compressor;
 import neqsim.processsimulation.processequipment.distillation.DistillationColumn;
-import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.heatexchanger.Heater;
 import neqsim.processsimulation.processequipment.mixer.Mixer;
 import neqsim.processsimulation.processequipment.separator.Separator;
 import neqsim.processsimulation.processequipment.stream.Stream;

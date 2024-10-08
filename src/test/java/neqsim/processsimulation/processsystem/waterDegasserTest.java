@@ -61,8 +61,8 @@ public class waterDegasserTest {
         new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
             "FIRST_SEPARATOR", inlet_stream_VA_01);
 
-    neqsim.processsimulation.processequipment.heatExchanger.Heater TP_setter_hydrocyclone =
-        new neqsim.processsimulation.processequipment.heatExchanger.Heater(
+    neqsim.processsimulation.processequipment.heatexchanger.Heater TP_setter_hydrocyclone =
+        new neqsim.processsimulation.processequipment.heatexchanger.Heater(
             "TP_SETTER_HYDROCYCLONE_AFTER_1ST_SEPARATOR", separator_VA_01.getWaterOutStream());
     TP_setter_hydrocyclone.setOutPressure(30.047772073489377, "bara");
 
@@ -71,8 +71,8 @@ public class waterDegasserTest {
             "HYDROCYCLONE_AFTER_THE_1ST_SEPARATOR", TP_setter_hydrocyclone.getOutletStream());
     // hydrocyclone_main.setEntrainment(0.0, "mole", "feed", "aqueous", "gas");
 
-    neqsim.processsimulation.processequipment.heatExchanger.Heater heater_TP_setter_main_stream =
-        new neqsim.processsimulation.processequipment.heatExchanger.Heater(
+    neqsim.processsimulation.processequipment.heatexchanger.Heater heater_TP_setter_main_stream =
+        new neqsim.processsimulation.processequipment.heatexchanger.Heater(
             "TP_SETTER_FOR_THE_DEGASSER_MAIN_STREAM", hydrocyclone_main.getWaterOutStream());
     heater_TP_setter_main_stream.setOutPressure(4.076956398010254, "bara");
     heater_TP_setter_main_stream.setOutTemperature(76.51406860351562, "C");
@@ -150,8 +150,8 @@ public class waterDegasserTest {
             "FIRST_SEPARATOR", inlet_stream_VA_01);
     separator_VA_01.run();
 
-    neqsim.processsimulation.processequipment.heatExchanger.Heater TP_setter_hydrocyclone =
-        new neqsim.processsimulation.processequipment.heatExchanger.Heater(
+    neqsim.processsimulation.processequipment.heatexchanger.Heater TP_setter_hydrocyclone =
+        new neqsim.processsimulation.processequipment.heatexchanger.Heater(
             "TP_SETTER_HYDROCYCLONE_AFTER_1ST_SEPARATOR", separator_VA_01.getWaterOutStream());
     TP_setter_hydrocyclone.setOutPressure(61.0700675688386, "bara");
     TP_setter_hydrocyclone.run();

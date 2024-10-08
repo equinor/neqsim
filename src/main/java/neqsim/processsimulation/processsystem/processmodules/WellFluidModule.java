@@ -1,8 +1,8 @@
 package neqsim.processsimulation.processsystem.processmodules;
 
 import java.util.UUID;
-import neqsim.processsimulation.processequipment.heatExchanger.Cooler;
-import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.heatexchanger.Cooler;
+import neqsim.processsimulation.processequipment.heatexchanger.Heater;
 import neqsim.processsimulation.processequipment.mixer.Mixer;
 import neqsim.processsimulation.processequipment.separator.Separator;
 import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;

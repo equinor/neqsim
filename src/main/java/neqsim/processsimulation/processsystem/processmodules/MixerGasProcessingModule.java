@@ -2,7 +2,7 @@ package neqsim.processsimulation.processsystem.processmodules;
 
 import java.util.UUID;
 import neqsim.processsimulation.processequipment.compressor.Compressor;
-import neqsim.processsimulation.processequipment.heatExchanger.Cooler;
+import neqsim.processsimulation.processequipment.heatexchanger.Cooler;
 import neqsim.processsimulation.processequipment.mixer.Mixer;
 import neqsim.processsimulation.processequipment.pump.Pump;
 import neqsim.processsimulation.processequipment.pump.PumpInterface;

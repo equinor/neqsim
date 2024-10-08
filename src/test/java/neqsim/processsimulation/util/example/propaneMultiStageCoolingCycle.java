@@ -1,6 +1,6 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.heatExchanger.HeatExchanger;
+import neqsim.processsimulation.processequipment.heatexchanger.HeatExchanger;
 import neqsim.processsimulation.processequipment.separator.Separator;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;

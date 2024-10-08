@@ -1,4 +1,4 @@
-package neqsim.processsimulation.processequipment.heatExchanger;
+package neqsim.processsimulation.processequipment.heatexchanger;
 
 /**
  * <p>

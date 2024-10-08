@@ -817,7 +817,7 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getClass().getSimpleName().equals("Cooler")) {
         heat +=
-            ((neqsim.processsimulation.processequipment.heatExchanger.Cooler) unitOperations.get(i))
+            ((neqsim.processsimulation.processequipment.heatexchanger.Cooler) unitOperations.get(i))
                 .getDuty();
       }
     }
@@ -843,7 +843,7 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getClass().getSimpleName().equals("Heater")) {
         heat +=
-            ((neqsim.processsimulation.processequipment.heatExchanger.Heater) unitOperations.get(i))
+            ((neqsim.processsimulation.processequipment.heatexchanger.Heater) unitOperations.get(i))
                 .getDuty();
       }
     }

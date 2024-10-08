@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.powerGeneration.GasTurbine;
+import neqsim.processsimulation.processequipment.powergeneration.GasTurbine;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 

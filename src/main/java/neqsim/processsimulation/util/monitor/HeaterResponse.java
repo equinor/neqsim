@@ -1,6 +1,6 @@
 package neqsim.processsimulation.util.monitor;
 
-import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.heatexchanger.Heater;
 
 /**
  * <p>
@@ -22,7 +22,7 @@ public class HeaterResponse {
    * Constructor for HeaterResponse.
    * </p>
    *
-   * @param inputHeater a {@link neqsim.processsimulation.processequipment.heatExchanger.Heater} object
+   * @param inputHeater a {@link neqsim.processsimulation.processequipment.heatexchanger.Heater} object
    */
   public HeaterResponse(Heater inputHeater) {
     name = inputHeater.getName();

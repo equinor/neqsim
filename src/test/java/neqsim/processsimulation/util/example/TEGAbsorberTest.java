@@ -1,7 +1,7 @@
 package neqsim.processsimulation.util.example;
 
 import neqsim.processsimulation.processequipment.absorber.SimpleTEGAbsorber;
-import neqsim.processsimulation.processequipment.heatExchanger.ReBoiler;
+import neqsim.processsimulation.processequipment.heatexchanger.ReBoiler;
 import neqsim.processsimulation.processequipment.mixer.Mixer;
 import neqsim.processsimulation.processequipment.separator.GasScrubberSimple;
 import neqsim.processsimulation.processequipment.separator.Separator;

@@ -4,7 +4,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processsimulation.processequipment.TwoPortEquipment;
-import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.heatexchanger.Heater;
 import neqsim.processsimulation.processequipment.mixer.Mixer;
 import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
 import neqsim.processsimulation.processequipment.stream.Stream;

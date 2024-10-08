@@ -3,7 +3,7 @@ package neqsim.processsimulation.util.example;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.processsimulation.processequipment.compressor.Compressor;
-import neqsim.processsimulation.processequipment.heatExchanger.Cooler;
+import neqsim.processsimulation.processequipment.heatexchanger.Cooler;
 import neqsim.processsimulation.processequipment.mixer.MixerInterface;
 import neqsim.processsimulation.processequipment.mixer.StaticMixer;
 import neqsim.processsimulation.processequipment.separator.Separator;

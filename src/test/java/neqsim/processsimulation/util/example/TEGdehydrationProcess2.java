@@ -2,7 +2,7 @@ package neqsim.processsimulation.util.example;
 
 import neqsim.processsimulation.processequipment.absorber.SimpleTEGAbsorber;
 import neqsim.processsimulation.processequipment.absorber.WaterStripperColumn;
-import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.heatexchanger.Heater;
 import neqsim.processsimulation.processequipment.mixer.Mixer;
 import neqsim.processsimulation.processequipment.mixer.StaticMixer;
 import neqsim.processsimulation.processequipment.pump.Pump;

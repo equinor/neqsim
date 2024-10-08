@@ -8,7 +8,7 @@ import neqsim.processsimulation.measurementdevice.PressureTransmitter;
 import neqsim.processsimulation.measurementdevice.TemperatureTransmitter;
 import neqsim.processsimulation.measurementdevice.VolumeFlowTransmitter;
 import neqsim.processsimulation.measurementdevice.WaterContentAnalyser;
-import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.heatexchanger.Heater;
 import neqsim.processsimulation.processequipment.mixer.Mixer;
 import neqsim.processsimulation.processequipment.pipeline.SimpleTPoutPipeline;
 import neqsim.processsimulation.processequipment.separator.Separator;

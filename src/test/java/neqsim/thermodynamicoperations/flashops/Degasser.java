@@ -125,8 +125,8 @@ class Degasser {
     test_separator.run();
     test_separator.getWaterOutStream().getThermoSystem().prettyPrint();
 
-    neqsim.processsimulation.processequipment.heatExchanger.Heater heater_TP_setter_test_stream =
-        new neqsim.processsimulation.processequipment.heatExchanger.Heater(
+    neqsim.processsimulation.processequipment.heatexchanger.Heater heater_TP_setter_test_stream =
+        new neqsim.processsimulation.processequipment.heatexchanger.Heater(
             "TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM", test_separator.getWaterOutStream());
     heater_TP_setter_test_stream.setOutPressure(5.9061164855957 - 0.01, "bara");
     heater_TP_setter_test_stream.setOutTemperature(79.8487854003906, "C");
@@ -135,8 +135,8 @@ class Degasser {
     // .getFluid().getPhase("gas").getFlowRate("kg/hr"));
     heater_TP_setter_test_stream.getOutletStream().getThermoSystem().prettyPrint();
 
-    neqsim.processsimulation.processequipment.heatExchanger.Heater heater_TP_setter_test_stream2 =
-        new neqsim.processsimulation.processequipment.heatExchanger.Heater(
+    neqsim.processsimulation.processequipment.heatexchanger.Heater heater_TP_setter_test_stream2 =
+        new neqsim.processsimulation.processequipment.heatexchanger.Heater(
             "TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM", test_separator.getWaterOutStream());
     heater_TP_setter_test_stream2.setOutPressure(5.9061164855957, "bara");
     heater_TP_setter_test_stream2.setOutTemperature(79.8487854003906, "C");
