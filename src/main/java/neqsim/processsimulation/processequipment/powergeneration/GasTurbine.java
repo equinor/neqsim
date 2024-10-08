@@ -1,4 +1,4 @@
-package neqsim.processsimulation.processequipment.powerGeneration;
+package neqsim.processsimulation.processequipment.powergeneration;
 
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
@@ -7,8 +7,8 @@ import neqsim.processsimulation.mechanicaldesign.compressor.CompressorMechanical
 import neqsim.processsimulation.processequipment.TwoPortEquipment;
 import neqsim.processsimulation.processequipment.compressor.Compressor;
 import neqsim.processsimulation.processequipment.expander.Expander;
-import neqsim.processsimulation.processequipment.heatExchanger.Cooler;
-import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.heatexchanger.Cooler;
+import neqsim.processsimulation.processequipment.heatexchanger.Heater;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;

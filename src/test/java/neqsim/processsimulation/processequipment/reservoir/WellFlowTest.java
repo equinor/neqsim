@@ -86,8 +86,8 @@ public class WellFlowTest {
     compressor.setPolytropicEfficiency(0.6);
     compressor.setCompressionRatio(2.0);
 
-    neqsim.processsimulation.processequipment.heatExchanger.Cooler intercooler =
-        new neqsim.processsimulation.processequipment.heatExchanger.Cooler("cooler",
+    neqsim.processsimulation.processequipment.heatexchanger.Cooler intercooler =
+        new neqsim.processsimulation.processequipment.heatexchanger.Cooler("cooler",
             compressor.getOutletStream());
     intercooler.setOutTemperature(25.0, "C");
 
@@ -98,8 +98,8 @@ public class WellFlowTest {
     compressor2.setPolytropicEfficiency(0.6);
     compressor2.setCompressionRatio(2.0);
 
-    neqsim.processsimulation.processequipment.heatExchanger.Heater cooler1 =
-        new neqsim.processsimulation.processequipment.heatExchanger.Heater("cooler 1",
+    neqsim.processsimulation.processequipment.heatexchanger.Heater cooler1 =
+        new neqsim.processsimulation.processequipment.heatexchanger.Heater("cooler 1",
             compressor2.getOutletStream());
     cooler1.setOutTemperature(30.0, "C");
 

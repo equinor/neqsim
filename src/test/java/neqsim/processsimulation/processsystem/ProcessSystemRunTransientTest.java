@@ -12,7 +12,7 @@ import neqsim.processsimulation.measurementdevice.LevelTransmitter;
 import neqsim.processsimulation.measurementdevice.PressureTransmitter;
 import neqsim.processsimulation.measurementdevice.VolumeFlowTransmitter;
 import neqsim.processsimulation.processequipment.compressor.Compressor;
-import neqsim.processsimulation.processequipment.heatExchanger.Cooler;
+import neqsim.processsimulation.processequipment.heatexchanger.Cooler;
 import neqsim.processsimulation.processequipment.separator.Separator;
 import neqsim.processsimulation.processequipment.splitter.Splitter;
 import neqsim.processsimulation.processequipment.stream.Stream;

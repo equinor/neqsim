@@ -8,7 +8,7 @@ import neqsim.processsimulation.mechanicaldesign.pipeline.PipelineMechanicalDesi
 import neqsim.processsimulation.mechanicaldesign.separator.GasScrubberMechanicalDesign;
 import neqsim.processsimulation.mechanicaldesign.separator.SeparatorMechanicalDesign;
 import neqsim.processsimulation.mechanicaldesign.valve.ValveMechanicalDesign;
-import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.heatexchanger.Heater;
 import neqsim.processsimulation.processequipment.pipeline.AdiabaticPipe;
 import neqsim.processsimulation.processequipment.pump.Pump;
 import neqsim.processsimulation.processequipment.separator.GasScrubber;

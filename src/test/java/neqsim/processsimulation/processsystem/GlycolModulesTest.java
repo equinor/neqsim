@@ -7,7 +7,7 @@ import neqsim.processsimulation.processequipment.absorber.SimpleTEGAbsorber;
 import neqsim.processsimulation.processequipment.absorber.WaterStripperColumn;
 import neqsim.processsimulation.processequipment.distillation.DistillationColumn;
 import neqsim.processsimulation.processequipment.filter.Filter;
-import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.heatexchanger.Heater;
 import neqsim.processsimulation.processequipment.mixer.StaticMixer;
 import neqsim.processsimulation.processequipment.pump.Pump;
 import neqsim.processsimulation.processequipment.separator.Separator;

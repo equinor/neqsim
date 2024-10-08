@@ -49,8 +49,8 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
         new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
             "1st stage separator", wellStream);
 
-    neqsim.processsimulation.processequipment.heatExchanger.Heater oilHeaterSecondStage =
-        new neqsim.processsimulation.processequipment.heatExchanger.Heater(
+    neqsim.processsimulation.processequipment.heatexchanger.Heater oilHeaterSecondStage =
+        new neqsim.processsimulation.processequipment.heatexchanger.Heater(
             "oil heater second stage", firstStageSeparator.getOilOutStream());
     oilHeaterSecondStage.setOutPressure(30.0);
     oilHeaterSecondStage.setOutTemperature(68.0, "C");
@@ -59,8 +59,8 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
         new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
             "2nd stage separator", oilHeaterSecondStage.getOutletStream());
 
-    neqsim.processsimulation.processequipment.heatExchanger.Heater oilHeaterThirdStage =
-        new neqsim.processsimulation.processequipment.heatExchanger.Heater("oil heater third stage",
+    neqsim.processsimulation.processequipment.heatexchanger.Heater oilHeaterThirdStage =
+        new neqsim.processsimulation.processequipment.heatexchanger.Heater("oil heater third stage",
             secondStageSeparator.getOilOutStream());
     oilHeaterThirdStage.setOutPressure(2.8);
     oilHeaterThirdStage.setOutTemperature(70.0, "C");
@@ -69,8 +69,8 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
         new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
             "3rd stage separator", oilHeaterThirdStage.getOutletStream());
 
-    neqsim.processsimulation.processequipment.heatExchanger.Heater oilHeaterStandardStage =
-        new neqsim.processsimulation.processequipment.heatExchanger.Heater(
+    neqsim.processsimulation.processequipment.heatexchanger.Heater oilHeaterStandardStage =
+        new neqsim.processsimulation.processequipment.heatexchanger.Heater(
             "oil heater standard stage", thirdStageSeparator.getOilOutStream());
     oilHeaterStandardStage.setOutPressure(1.01325);
     oilHeaterStandardStage.setOutTemperature(15.0, "C");

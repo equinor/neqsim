@@ -1,7 +1,7 @@
 package neqsim.processsimulation.util.example;
 
 import neqsim.processsimulation.processequipment.compressor.Compressor;
-import neqsim.processsimulation.processequipment.heatExchanger.Heater;
+import neqsim.processsimulation.processequipment.heatexchanger.Heater;
 import neqsim.processsimulation.processequipment.mixer.Mixer;
 import neqsim.processsimulation.processequipment.separator.GasScrubberSimple;
 import neqsim.processsimulation.processequipment.separator.Separator;

@@ -4,7 +4,7 @@
  * Created on 15. mars 2001, 14:17
  */
 
-package neqsim.processsimulation.processequipment.heatExchanger;
+package neqsim.processsimulation.processequipment.heatexchanger;
 
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
