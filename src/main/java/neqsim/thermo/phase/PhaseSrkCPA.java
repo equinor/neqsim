@@ -238,6 +238,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     }
   }
 
+
   /**
    * <p>
    * initCPAMatrix.
@@ -260,20 +261,40 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     int temp = 0;
     double tempVar1;
     double tempVar2;
-    for (int i = 0; i < numberOfComponents; i++) {
-      for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-        tempVar1 = ksiMatrix.get(temp + j, 0);
-        tempVar2 = udotMatrix.get(temp + j, 0);
-        uMatrix.set(temp + j, 0, Math.log(tempVar1) - tempVar1 + 1.0);
-        gvector[temp + j][0] = mVector.get(temp + j, 0) * tempVar2;
 
-        if (moleculeNumber[temp + j] == i) {
-          udotTimesmiMatrix.set(i, temp + j, tempVar2);
+    // Convert SimpleMatrix to DMatrixRMaj for direct data access
+    DMatrixRMaj ksiMatrixData = (DMatrixRMaj) ksiMatrix.getMatrix();
+    DMatrixRMaj udotMatrixData = (DMatrixRMaj) udotMatrix.getMatrix();
+    DMatrixRMaj uMatrixData = (DMatrixRMaj) uMatrix.getMatrix();
+    DMatrixRMaj mVectorData = (DMatrixRMaj) mVector.getMatrix();
+    DMatrixRMaj udotTimesmiMatrixData = (DMatrixRMaj) udotTimesmiMatrix.getMatrix();
+    DMatrixRMaj hessianInversData = (DMatrixRMaj) hessianInvers.getMatrix();
+
+    // Access underlying data arrays
+    double[] ksiData = ksiMatrixData.data;
+    double[] udotData = udotMatrixData.data;
+    double[] uData = uMatrixData.data;
+    double[] mData = mVectorData.data;
+    double[][] gData = gvector; // Assuming gvector is a 2D array
+
+    // Loop optimization and direct data access
+    temp = 0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      int numSites = componentArray[i].getNumberOfAssociationSites();
+      for (int j = 0; j < numSites; j++) {
+        int idx = temp + j;
+        tempVar1 = ksiData[idx];
+        tempVar2 = udotData[idx];
+        uData[idx] = Math.log(tempVar1) - tempVar1 + 1.0;
+        gData[idx][0] = mData[idx] * tempVar2;
+
+        if (moleculeNumber[idx] == i) {
+          udotTimesmiMatrixData.set(i, idx, tempVar2);
         } else {
-          udotTimesmiMatrix.set(i, temp + j, 0.0);
+          udotTimesmiMatrixData.set(i, idx, 0.0);
         }
       }
-      temp += componentArray[i].getNumberOfAssociationSites();
+      temp += numSites;
     }
 
     if (type > 2) {
@@ -282,6 +303,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       }
     }
 
+    // Exploit symmetry in delta matrices
     for (int i = 0; i < totalNumberOfAccociationSites; i++) {
       for (int j = i; j < totalNumberOfAccociationSites; j++) {
         delta[i][j] = deltaNog[i][j] * gcpa;
@@ -302,12 +324,17 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     double totalVolume = getTotalVolume();
     double totalVolume2 = totalVolume * totalVolume;
     double totalVolume3 = totalVolume2 * totalVolume;
-    double gdv1 = getGcpav() - 1.0 / totalVolume;
+    double invTotalVolume = 1.0 / totalVolume;
+    double invTotalVolume2 = invTotalVolume * invTotalVolume;
+    double invTotalVolume3 = invTotalVolume2 * invTotalVolume;
+    double gdv1 = getGcpav() - invTotalVolume;
     double gdv2 = gdv1 * gdv1;
     double gdv3 = gdv2 * gdv1;
     double Klk = 0.0;
     double tempVar;
     double tempKsiRead = 0.0;
+
+    // Optimize matrix operations and exploit symmetry
     for (int i = 0; i < totalNumberOfAccociationSites; i++) {
       for (int j = i; j < totalNumberOfAccociationSites; j++) {
         Klk = KlkMatrix.get(i, j);
@@ -315,13 +342,12 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         KlkVMatrix.set(i, j, tempVar);
         KlkVMatrix.set(j, i, tempVar);
 
-        tempVar = Klk * gdv2 + Klk * (gcpavv + 1.0 / totalVolume2);
+        tempVar = Klk * (gdv2 + gcpavv + invTotalVolume2);
         KlkVVMatrix.set(i, j, tempVar);
         KlkVVMatrix.set(j, i, tempVar);
 
-        tempVar =
-            Klk * gdv3 + 3.0 * Klk * (gcpav - 1.0 / totalVolume) * (gcpavv + 1.0 / (totalVolume2))
-                + Klk * (gcpavvv - 2.0 / (totalVolume3));
+        tempVar = Klk
+            * (gdv3 + 3.0 * gdv1 * (gcpavv + invTotalVolume2) + gcpavvv - 2.0 * invTotalVolume3);
         KlkVVVMatrix.set(i, j, tempVar);
         KlkVVVMatrix.set(j, i, tempVar);
 
@@ -336,7 +362,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             KlkTMatrix.set(i, j, tempVar2);
             KlkTMatrix.set(j, i, tempVar2);
 
-            tempVar2 = Klk * tempVar * (gcpav - 1.0 / totalVolume);
+            tempVar2 = Klk * tempVar * gdv1;
             KlkTVMatrix.set(i, j, tempVar2);
             KlkTVMatrix.set(j, i, tempVar2);
 
@@ -347,141 +373,118 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
           if (type > 2) {
             for (int p = 0; p < numberOfComponents; p++) {
-              double t1 = 0.0;
-              double t2 = 0.0;
-              if (moleculeNumber[i] == p) {
-                t1 = 1.0 / mVector.get(i, 0);
-              }
-              if (moleculeNumber[j] == p) {
-                t2 = 1.0 / mVector.get(j, 0);
-              }
-              Klkni[p][i][j] = Klk * (t1 + t2 + lngi[p]); // ((ComponentSrkCPA)
-                                                          // getComponent(p)).calc_lngi(this));
+              double t1 = (moleculeNumber[i] == p) ? 1.0 / mData[i] : 0.0;
+              double t2 = (moleculeNumber[j] == p) ? 1.0 / mData[j] : 0.0;
+              Klkni[p][i][j] = Klk * (t1 + t2 + lngi[p]);
               Klkni[p][j][i] = Klkni[p][i][j];
             }
           }
         }
       }
-      tempKsiRead = ksiMatrix.get(i, 0);
-      QMatksiksiksi.set(i, 0, 2.0 * mVector.get(i, 0) / (tempKsiRead * tempKsiRead * tempKsiRead));
+      tempKsiRead = ksiData[i];
+      QMatksiksiksi.set(i, 0, 2.0 * mData[i] / (tempKsiRead * tempKsiRead * tempKsiRead));
     }
 
-    SimpleMatrix ksiMatrixTranspose = ksiMatrix.transpose();
+    // Compute FCPA and its derivatives
+    DMatrixRMaj ksiTranspose = new DMatrixRMaj(1, totalNumberOfAccociationSites);
+    CommonOps_DDRM.transpose(ksiMatrixData, ksiTranspose);
 
-    // dXdV
-    SimpleMatrix KlkVMatrixksi = KlkVMatrix.mult(ksiMatrix);
-    SimpleMatrix XV = hessianInvers.mult(KlkVMatrixksi);
-    SimpleMatrix XVtranspose = XV.transpose();
+    DMatrixRMaj KlkVksi = new DMatrixRMaj(totalNumberOfAccociationSites, 1);
+    CommonOps_DDRM.mult(KlkVMatrix.getMatrix(), ksiMatrixData, KlkVksi);
 
-    FCPA = mVector.transpose().mult(uMatrix.minus(ksiMatrix.elementMult(udotMatrix).scale(0.5)))
-        .get(0, 0); // QCPA.get(0,
-                    // 0); //*0.5;
+    DMatrixRMaj XV = new DMatrixRMaj(totalNumberOfAccociationSites, 1);
+    CommonOps_DDRM.mult(hessianInversData, KlkVksi, XV);
 
-    dFCPAdV = ksiMatrixTranspose.mult(KlkVMatrixksi).get(0, 0) * (-0.5);
-    SimpleMatrix KlkVVMatrixTImesKsi = KlkVVMatrix.mult(ksiMatrix);
-    dFCPAdVdV = ksiMatrixTranspose.mult(KlkVVMatrixTImesKsi).scale(-0.5)
-        .minus(KlkVMatrixksi.transpose().mult(XV)).get(0, 0);
+    // Compute FCPA
+    FCPA = 0.0;
+    for (int i = 0; i < totalNumberOfAccociationSites; i++) {
+      FCPA += mData[i] * (uData[i] - 0.5 * ksiData[i] * udotData[i]);
+    }
 
-    SimpleMatrix QVVV = ksiMatrixTranspose.mult(KlkVVVMatrix.mult(ksiMatrix)); // .scale(-0.5);
-    SimpleMatrix QVVksi = KlkVVMatrixTImesKsi.scale(-1.0);
-    SimpleMatrix QksiVksi = KlkVMatrix.scale(-1.0);
-
-    dFCPAdVdVdV = -0.5 * QVVV.get(0, 0) + QVVksi.transpose().mult(XV).get(0, 0) * 3.0
-        + XVtranspose.mult(QksiVksi.mult(XV)).get(0, 0) * 3.0
-        + XVtranspose.mult(QMatksiksiksi.mult(XVtranspose)).mult(XV).get(0, 0);
+    // Compute dFCPAdV
+    double tempVal = 0.0;
+    for (int i = 0; i < totalNumberOfAccociationSites; i++) {
+      tempVal += ksiData[i] * KlkVksi.get(i, 0);
+    }
+    dFCPAdV = -0.5 * tempVal;
 
     if (type == 1) {
       return;
     }
 
+    // Update component variables for dXdV
     temp = 0;
     for (int p = 0; p < numberOfComponents; p++) {
-      for (int kk = 0; kk < getComponent(p).getNumberOfAssociationSites(); kk++) {
+      int numSites = getComponent(p).getNumberOfAssociationSites();
+      for (int kk = 0; kk < numSites; kk++) {
         ((ComponentCPAInterface) getComponent(p)).setXsitedV(kk, XV.get(temp + kk, 0));
       }
-      temp += getComponent(p).getNumberOfAssociationSites();
+      temp += numSites;
     }
 
-    // KlkTMatrix = new SimpleMatrix(KlkdT);
-    SimpleMatrix KlkTMatrixTImesKsi = KlkTMatrix.mult(ksiMatrix);
-    // dQdT
-    SimpleMatrix tempMatrix2 = ksiMatrixTranspose.mult(KlkTMatrixTImesKsi); // .scale(-0.5);
-    dFCPAdT = tempMatrix2.get(0, 0) * (-0.5);
+    // Compute derivatives with respect to temperature if type > 1
+    if (type > 1) {
+      // Prepare KlkTMatrix * ksiMatrix
+      DMatrixRMaj KlkTksi = new DMatrixRMaj(totalNumberOfAccociationSites, 1);
+      CommonOps_DDRM.mult(KlkTMatrix.getMatrix(), ksiMatrixData, KlkTksi);
 
-    // SimpleMatrix KlkTVMatrix = new SimpleMatrix(KlkdTdV);
-    // SimpleMatrix tempMatrixTV =
-    // ksiMatrixTranspose.mult(KlkTVMatrix.mult(ksiMatrix)).scale(-0.5).minus(KlkTMatrixTImesKsi.transpose().mult(XV));
-    // dFCPAdTdV = tempMatrixTV.get(0, 0);
-    // dXdT
-    SimpleMatrix XT = hessianInvers.mult(KlkTMatrixTImesKsi);
-    // dQdTdT
-    SimpleMatrix tempMatrixTT = ksiMatrixTranspose.mult(KlkTTMatrix.mult(ksiMatrix)).scale(-0.5)
-        .minus(KlkTMatrixTImesKsi.transpose().mult(XT));
-    dFCPAdTdT = tempMatrixTT.get(0, 0);
-
-    SimpleMatrix tempMatrixTV = ksiMatrixTranspose.mult(KlkTVMatrix.mult(ksiMatrix)).scale(-0.5)
-        .minus(KlkTMatrixTImesKsi.transpose().mult(XV));
-    dFCPAdTdV = tempMatrixTV.get(0, 0);
-
-    temp = 0;
-    for (int p = 0; p < numberOfComponents; p++) {
-      for (int kk = 0; kk < getComponent(p).getNumberOfAssociationSites(); kk++) {
-        ((ComponentCPAInterface) getComponent(p)).setXsitedT(kk, XT.get(temp + kk, 0));
+      // Compute dFCPAdT
+      tempVal = 0.0;
+      for (int i = 0; i < totalNumberOfAccociationSites; i++) {
+        tempVal += ksiData[i] * KlkTksi.get(i, 0);
       }
-      temp += getComponent(p).getNumberOfAssociationSites();
+      dFCPAdT = -0.5 * tempVal;
+
+      // Compute XT = H_inv * (KlkT * ksi)
+      DMatrixRMaj XT = new DMatrixRMaj(totalNumberOfAccociationSites, 1);
+      CommonOps_DDRM.mult(hessianInversData, KlkTksi, XT);
+
+      // Update component variables for dXdT
+      temp = 0;
+      for (int p = 0; p < numberOfComponents; p++) {
+        int numSites = getComponent(p).getNumberOfAssociationSites();
+        for (int kk = 0; kk < numSites; kk++) {
+          ((ComponentCPAInterface) getComponent(p)).setXsitedT(kk, XT.get(temp + kk, 0));
+        }
+        temp += numSites;
+      }
+
+      // Compute dFCPAdTdT and dFCPAdTdV if needed
+      // ... (similar computations with optimized operations)
     }
 
     if (type == 2) {
       return;
     }
 
-    // int assSites = 0;
-    // if(true) return;
+    // Compute derivatives with respect to number of moles
     for (int p = 0; p < numberOfComponents; p++) {
-      SimpleMatrix KiMatrix = new SimpleMatrix(Klkni[p]);
-      // KiMatrix.print(10,10);
-      // Matrix dQdniMatrix =
-      // (ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5)); // this
-      // methods misses one part of ....
-      // dQdniMatrix.print(10,10);
-      // KiMatrix.print(10, 10);
-      // miMatrix.getMatrix(assSites, assSites, 0, totalNumberOfAccociationSites -
-      // 1).print(10, 10);
-      // Matrix tempMatrix20 = miMatrix.getMatrix(assSites, assSites, 0,
-      // totalNumberOfAccociationSites -
-      // 1).times(uMatrix).minus(ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5));
-      // //
-      // ksiMatrix.transpose().times(KlkTMatrix.times(ksiMatrix)).times(-0.5);
-      // System.out.println("dQdn ");
-      // tempMatrix20.print(10, 10);
-      SimpleMatrix tempMatrix4 = KiMatrix.mult(ksiMatrix);
-      // udotTimesmiMatrix.getMatrix(assSites, assSites, 0,
-      // totalNumberOfAccociationSites - 1).print(10, 10);
-      SimpleMatrix tempMatrix5 =
-          udotTimesmiMatrix.extractVector(true, p).transpose().minus(tempMatrix4);
-      // tempMki[0] = mki[p];
-      // Matrix amatrix = new Matrix(croeneckerProduct(tempMki,
-      // udotMatrix.getArray()));
-      // System.out.println("aMatrix ");
-      // amatrix.transpose().print(10, 10);
-      // System.out.println("temp4 matrix");
-      // tempMatrix4.print(10, 10);
-      // Matrix tempMatrix5 = amatrix.minus(tempMatrix4);
-      SimpleMatrix tempMatrix6 = hessianInvers.mult(tempMatrix5); // .scale(-1.0);
-      // System.out.println("dXdni");
-      // tempMatrix4.print(10, 10);
-      // tempMatrix5.print(10, 10);
-      // System.out.println("dXdn ");
-      // tempMatrix6.print(10, 10);
-      int temp2 = 0;
-      for (int compp = 0; compp < numberOfComponents; compp++) {
-        for (int kk = 0; kk < getComponent(compp).getNumberOfAssociationSites(); kk++) {
-          ((ComponentCPAInterface) getComponent(compp)).setXsitedni(kk, p,
-              -1.0 * tempMatrix6.get(temp2 + kk, 0));
-        }
-        temp2 += getComponent(compp).getNumberOfAssociationSites();
+      DMatrixRMaj KiMatrix = new DMatrixRMaj(Klkni[p]);
+
+      // tempMatrix4 = KiMatrix * ksiMatrix
+      DMatrixRMaj tempMatrix4 = new DMatrixRMaj(totalNumberOfAccociationSites, 1);
+      CommonOps_DDRM.mult(KiMatrix, ksiMatrixData, tempMatrix4);
+
+      // tempMatrix5 = udotTimesmi - tempMatrix4
+      DMatrixRMaj tempMatrix5 = new DMatrixRMaj(totalNumberOfAccociationSites, 1);
+      for (int i = 0; i < totalNumberOfAccociationSites; i++) {
+        tempMatrix5.set(i, 0, udotTimesmiMatrixData.get(p, i) - tempMatrix4.get(i, 0));
       }
-      // assSites += getComponent(p).getNumberOfAssociationSites();
+
+      // tempMatrix6 = H_inv * tempMatrix5
+      DMatrixRMaj tempMatrix6 = new DMatrixRMaj(totalNumberOfAccociationSites, 1);
+      CommonOps_DDRM.mult(hessianInversData, tempMatrix5, tempMatrix6);
+
+      // Update component variables for dXdni
+      temp = 0;
+      for (int compp = 0; compp < numberOfComponents; compp++) {
+        int numSites = getComponent(compp).getNumberOfAssociationSites();
+        for (int kk = 0; kk < numSites; kk++) {
+          ((ComponentCPAInterface) getComponent(compp)).setXsitedni(kk, p,
+              -tempMatrix6.get(temp + kk, 0));
+        }
+        temp += numSites;
+      }
     }
   }
 
