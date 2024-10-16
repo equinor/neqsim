@@ -9,7 +9,6 @@ package neqsim.datapresentation.jfreechart;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import javax.swing.BorderFactory;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jfree.chart.ChartFactory;
@@ -275,10 +274,6 @@ public class Graph2b extends javax.swing.JFrame {
      */
     return null; // new DefaultCategoryDataset(data);
   }
-
-  private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_jButton1ActionPerformed
-    // Add your handling code here:
-  }// GEN-LAST:event_jButton1ActionPerformed
 
   /**
    * Exit the Application.
