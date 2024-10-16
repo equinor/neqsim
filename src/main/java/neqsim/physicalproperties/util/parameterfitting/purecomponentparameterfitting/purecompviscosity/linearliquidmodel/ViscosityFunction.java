@@ -4,7 +4,7 @@
  * Created on 24. januar 2001, 23:30
  */
 
-package neqsim.physicalproperties.util.parameterFitting.pureComponentParameterFitting.purecompviscosity.linearLiquidModel;
+package neqsim.physicalproperties.util.parameterfitting.purecomponentparameterfitting.purecompviscosity.linearliquidmodel;
 
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 
@@ -22,7 +22,8 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
    * Constructor for ViscosityFunction.
    * </p>
    */
-  public ViscosityFunction() {}
+  public ViscosityFunction() {
+  }
 
   /** {@inheritDoc} */
   @Override

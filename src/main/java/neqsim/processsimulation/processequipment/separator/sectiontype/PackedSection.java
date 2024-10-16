@@ -1,36 +1,31 @@
-package neqsim.processsimulation.processequipment.separator.sectionType;
+package neqsim.processsimulation.processequipment.separator.sectiontype;
 
-import neqsim.processsimulation.mechanicaldesign.separator.sectionType.MechVaneSection;
 import neqsim.processsimulation.processequipment.separator.Separator;
 
 /**
  * <p>
- * VaneSection class.
+ * PackedSection class.
  * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class VaneSection extends SeparatorSection {
+public class PackedSection extends SeparatorSection {
   private static final long serialVersionUID = 1000;
 
   /**
    * <p>
-   * Constructor for VaneSection.
+   * Constructor for PackedSection.
    * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param type a {@link java.lang.String} object
-   * @param sep a {@link neqsim.processsimulation.processequipment.separator.Separator} object
+   * @param sep  a
+   *             {@link neqsim.processsimulation.processequipment.separator.Separator}
+   *             object
    */
-  public VaneSection(String name, String type, Separator sep) {
+  public PackedSection(String name, String type, Separator sep) {
     super(name, type, sep);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public MechVaneSection getMechanicalDesign() {
-    return new MechVaneSection(this);
   }
 
   /** {@inheritDoc} */

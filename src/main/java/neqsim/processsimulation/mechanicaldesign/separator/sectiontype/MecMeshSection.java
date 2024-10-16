@@ -1,6 +1,6 @@
-package neqsim.processsimulation.mechanicaldesign.separator.sectionType;
+package neqsim.processsimulation.mechanicaldesign.separator.sectiontype;
 
-import neqsim.processsimulation.processequipment.separator.sectionType.SeparatorSection;
+import neqsim.processsimulation.processequipment.separator.sectiontype.SeparatorSection;
 
 /**
  * <p>
@@ -17,8 +17,8 @@ public class MecMeshSection extends SepDesignSection {
    * </p>
    *
    * @param separatorSection a
-   *        {@link neqsim.processsimulation.processequipment.separator.sectionType.SeparatorSection}
-   *        object
+   *                         {@link neqsim.processsimulation.processequipment.separator.sectiontype.SeparatorSection}
+   *                         object
    */
   public MecMeshSection(SeparatorSection separatorSection) {
     super(separatorSection);

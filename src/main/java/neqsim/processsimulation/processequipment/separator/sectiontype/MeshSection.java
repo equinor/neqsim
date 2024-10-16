@@ -1,36 +1,38 @@
-package neqsim.processsimulation.processequipment.separator.sectionType;
+package neqsim.processsimulation.processequipment.separator.sectiontype;
 
-import neqsim.processsimulation.mechanicaldesign.separator.sectionType.DistillationTraySection;
+import neqsim.processsimulation.mechanicaldesign.separator.sectiontype.MecMeshSection;
 import neqsim.processsimulation.processequipment.separator.Separator;
 
 /**
  * <p>
- * ValveSection class.
+ * MeshSection class.
  * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class ValveSection extends SeparatorSection {
+public class MeshSection extends SeparatorSection {
   private static final long serialVersionUID = 1000;
 
   /**
    * <p>
-   * Constructor for ValveSection.
+   * Constructor for MeshSection.
    * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param type a {@link java.lang.String} object
-   * @param sep a {@link neqsim.processsimulation.processequipment.separator.Separator} object
+   * @param sep  a
+   *             {@link neqsim.processsimulation.processequipment.separator.Separator}
+   *             object
    */
-  public ValveSection(String name, String type, Separator sep) {
+  public MeshSection(String name, String type, Separator sep) {
     super(name, type, sep);
   }
 
   /** {@inheritDoc} */
   @Override
-  public DistillationTraySection getMechanicalDesign() {
-    return new DistillationTraySection(this);
+  public MecMeshSection getMechanicalDesign() {
+    return new MecMeshSection(this);
   }
 
   /** {@inheritDoc} */

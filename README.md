@@ -105,17 +105,17 @@ NeqSim is built upon six base modules:
 >neqsim/thermo/: Main path for thermodynamic routines
 >neqsim/thermo/util/examples/: examples of use of Thermodynamic Models and Routines
 >
->neqsim/thermodynamicOperation: Main path for flash routines (TPflash, phase envelopes, etc.)
->neqsim/thermodynamicOperation/util/example/: examples of use of thermodynamic operations (eg. flash calculations etc.)
+>neqsim/thermodynamicoperation: Main path for flash routines (TPflash, phase envelopes, etc.)
+>neqsim/thermodynamicoperation/util/example/: examples of use of thermodynamic operations (eg. flash calculations etc.)
 >
->neqsim/physicalProperties: Main path for Physical Property methods
->neqsim/physicalProperties/util/examples/: Examples of use of physical properties calculations
+>neqsim/physicalproperties: Main path for Physical Property methods
+>neqsim/physicalproperties/util/examples/: Examples of use of physical properties calculations
 >
->neqsim/physicalProperties: Main path for Physical Property methods
->neqsim/physicalProperties/util/examples/: Examples of use of physical properties calculations
+>neqsim/physicalproperties: Main path for Physical Property methods
+>neqsim/physicalproperties/util/examples/: Examples of use of physical properties calculations
 >
->neqsim/processSimulation: Main path for Process Simulation Calculations
->neqsim/processSimulation/util/examples/: Examples of use of Process Simulation calculations
+>neqsim/processsimulation: Main path for Process Simulation Calculations
+>neqsim/processsimulation/util/examples/: Examples of use of Process Simulation calculations
 >
 >changelog.txt : History of what changed between each version.
 >license.txt: license document

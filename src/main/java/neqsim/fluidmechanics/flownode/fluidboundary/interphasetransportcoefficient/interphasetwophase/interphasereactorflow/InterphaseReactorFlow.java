@@ -1,4 +1,4 @@
-package neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphaseReactorFlow;
+package neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasereactorflow;
 
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.InterphaseTwoPhase;
@@ -17,7 +17,8 @@ public class InterphaseReactorFlow extends InterphaseTwoPhase {
    * Constructor for InterphaseReactorFlow.
    * </p>
    */
-  public InterphaseReactorFlow() {}
+  public InterphaseReactorFlow() {
+  }
 
   /**
    * <p>

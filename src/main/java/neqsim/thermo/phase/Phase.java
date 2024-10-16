@@ -461,7 +461,7 @@ public abstract class Phase implements PhaseInterface {
     // System.out.println("Physical properties: Default model");
     setPhysicalProperties(physicalPropertyType);
     // physicalProperty = new
-    // physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties(this,0,0);
+    // physicalproperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties(this,0,0);
   }
 
   /** {@inheritDoc} */

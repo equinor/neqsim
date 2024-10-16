@@ -1,6 +1,6 @@
-package neqsim.processsimulation.mechanicaldesign.separator.sectionType;
+package neqsim.processsimulation.mechanicaldesign.separator.sectiontype;
 
-import neqsim.processsimulation.processequipment.separator.sectionType.SeparatorSection;
+import neqsim.processsimulation.processequipment.separator.sectiontype.SeparatorSection;
 
 /**
  * <p>
@@ -17,8 +17,8 @@ public class MechVaneSection extends SepDesignSection {
    * </p>
    *
    * @param separatorSection a
-   *        {@link neqsim.processsimulation.processequipment.separator.sectionType.SeparatorSection}
-   *        object
+   *                         {@link neqsim.processsimulation.processequipment.separator.sectiontype.SeparatorSection}
+   *                         object
    */
   public MechVaneSection(SeparatorSection separatorSection) {
     super(separatorSection);
@@ -27,8 +27,7 @@ public class MechVaneSection extends SepDesignSection {
   /** {@inheritDoc} */
   @Override
   public void calcDesign() {
-    double vesselDiameter =
-        separatorSection.getOuterDiameter() * 1e3;
+    double vesselDiameter = separatorSection.getOuterDiameter() * 1e3;
     if (vesselDiameter <= 616) {
       totalWeight = 6.0;
     } else if (vesselDiameter <= 770) {

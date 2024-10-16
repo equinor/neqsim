@@ -3,7 +3,7 @@ package neqsim.processsimulation.processequipment.separator;
 import java.util.ArrayList;
 import java.util.UUID;
 import neqsim.processsimulation.mechanicaldesign.separator.GasScrubberMechanicalDesign;
-import neqsim.processsimulation.processequipment.separator.sectionType.SeparatorSection;
+import neqsim.processsimulation.processequipment.separator.sectiontype.SeparatorSection;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -47,9 +47,10 @@ public class NeqGasScrubber extends Separator {
    * Constructor for NeqGasScrubber.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
-   *        object
+   * @param name        a {@link java.lang.String} object
+   * @param inletStream a
+   *                    {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
+   *                    object
    */
   public NeqGasScrubber(String name, StreamInterface inletStream) {
     super(name, inletStream);
@@ -134,5 +135,6 @@ public class NeqGasScrubber extends Separator {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {}
+  public void displayResult() {
+  }
 }
