@@ -109,8 +109,12 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     super("SevereSlugAnalyser", "m3/sec");
   }
 
-  // This constructor is used for the user input of superficial liquid and gas velocities,
-  // and the rest will be the default values
+  /**
+   * Constructor for class SevereSlugAnalyser.
+   *
+   * @param usl Superficial liquid velocity
+   * @param usg Superficial gas velocity
+   */
   public SevereSlugAnalyser(double usl, double usg) {
     this();
     this.setSuperficialLiquidVelocity(usl);
@@ -121,17 +125,36 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   // outletPressure,
   // temperature, simulationTime, numberOfTimeSteps
   // and the rest will be the default values
+
+  /**
+   * Constructor for class SevereSlugAnalyser.
+   *
+   * @param usl Superficial liquid velocity
+   * @param usg Superficial gas velocity
+   * @param outletPressure
+   * @param temperature
+   * @param simulationTime
+   * @param numberOfTimeSteps
+   */
   SevereSlugAnalyser(double usl, double usg, double outletPressure, double temperature,
       double simulationTime, int numberOfTimeSteps) {
-    this();
-    this.setSuperficialLiquidVelocity(usl);
-    this.setSuperficialGasVelocity(usg);
+    this(usl, usg);
     this.setOutletPressure(outletPressure);
     this.setTemperature(temperature);
     this.setSimulationTime(simulationTime);
     this.setNumberOfTimeSteps(numberOfTimeSteps);
   }
 
+  /**
+   * Constructor for class SevereSlugAnalyser.
+   *
+   * @param fluid
+   * @param pipe
+   * @param outletPressure
+   * @param temperature
+   * @param simulationTime
+   * @param numberOfTimeSteps
+   */
   public SevereSlugAnalyser(SystemInterface fluid, Pipe pipe, double outletPressure,
       double temperature, double simulationTime, int numberOfTimeSteps) {
     this();
@@ -152,6 +175,19 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     this.setNumberOfTimeSteps(numberOfTimeSteps);
   }
 
+  /**
+   * Constructor for class SevereSlugAnalyser.
+   *
+   * @param stream
+   * @param internalDiameter
+   * @param leftLength
+   * @param rightLength
+   * @param angle
+   * @param outletPressure
+   * @param temperature
+   * @param simulationTime
+   * @param numberOfTimeSteps
+   */
   public SevereSlugAnalyser(Stream stream, double internalDiameter, double leftLength,
       double rightLength, double angle, double outletPressure, double temperature,
       double simulationTime, int numberOfTimeSteps) {
@@ -187,6 +223,14 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
         stream.getTemperature("C"), 500.0, 50000);
   }
 
+  /**
+   * Constructor for class SevereSlugAnalyser.
+   *
+   * @param outletPressure
+   * @param temperature
+   * @param simulationTime
+   * @param numberOfTimeSteps
+   */
   public SevereSlugAnalyser(double outletPressure, double temperature, double simulationTime,
       int numberOfTimeSteps) {
     this();
@@ -196,8 +240,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     this.setNumberOfTimeSteps(numberOfTimeSteps);
   }
 
-  // Encapsulation
-  // 1. Superficial Liquid Velocity Encapsulation
   /**
    * <p>
    * setSuperficialLiquidVelocity.
@@ -220,7 +262,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     return usl;
   }
 
-  // 2. Superficial Gas Velocity Encapsulation
   /**
    * <p>
    * setSuperficialGasVelocity.
@@ -288,7 +329,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     return outletPressure;
   }
 
-  // 4. Temperature Encapsulation
   /**
    * <p>
    * Setter for the field <code>temperature</code>.
@@ -311,7 +351,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     return temperature;
   }
 
-  // 5. Number of Time Steps Encapsulation
   /**
    * <p>
    * Setter for the field <code>numberOfTimeSteps</code>.
@@ -334,7 +373,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     return numberOfTimeSteps;
   }
 
-  // 6. Simulation Time Encapsulation
   /**
    * <p>
    * Setter for the field <code>simulationTime</code>.
@@ -357,10 +395,9 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     return simulationTime;
   }
 
-  // Method 1: Calculating the universal gas constant
   /**
    * <p>
-   * gasConst.
+   * Calculating the universal gas constant.
    * </p>
    *
    * @param fluid a
@@ -372,7 +409,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     return ThermodynamicConstantsInterface.R / fluid.getMolecularWeight() * (273.15 + temperature);
   }
 
-  // Declare the variables for resuts after creating an object Severe slug with required number of
+  // Declare the variables for results after creating an object Severe slug with required number of
   // steps.
 
   /**
