@@ -1,4 +1,4 @@
-package neqsim.physicalproperties.util.parameterfitting.purecomponentparameterfitting.purecompviscosity.chungMethod;
+package neqsim.physicalproperties.util.parameterfitting.purecomponentparameterfitting.purecompviscosity.chungmethod;
 
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 
