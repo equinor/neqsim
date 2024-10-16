@@ -19,7 +19,6 @@ import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.processsimulation.processequipment.util.Recycle;
 import neqsim.processsimulation.processequipment.util.SetPoint;
 import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
-import neqsim.processsimulation.processsystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
