@@ -97,6 +97,17 @@ public interface PhysicalPropertiesInterface extends Cloneable {
 
   /**
    * <p>
+   * getDiffusionCoefficient.
+   * </p>
+   *
+   * @param i a int
+   * @param j a int
+   * @return a double
+   */
+  public double getDiffusionCoefficient(int i, int j);
+
+  /**
+   * <p>
    * getConductivity.
    * </p>
    *
@@ -112,16 +123,6 @@ public interface PhysicalPropertiesInterface extends Cloneable {
    * @return a double
    */
   public double getKinematicViscosity();
-
-  /**
-   * <p>
-   * getEffectiveDiffusionCoefficient.
-   * </p>
-   *
-   * @param compName a {@link java.lang.String} object
-   * @return a double
-   */
-  public double getEffectiveDiffusionCoefficient(String compName);
 
   /**
    * <p>
@@ -189,14 +190,13 @@ public interface PhysicalPropertiesInterface extends Cloneable {
 
   /**
    * <p>
-   * getDiffusionCoefficient.
+   * getEffectiveDiffusionCoefficient.
    * </p>
    *
-   * @param i a int
-   * @param j a int
+   * @param compName a {@link java.lang.String} object
    * @return a double
    */
-  public double getDiffusionCoefficient(int i, int j);
+  public double getEffectiveDiffusionCoefficient(String compName);
 
   /**
    * <p>

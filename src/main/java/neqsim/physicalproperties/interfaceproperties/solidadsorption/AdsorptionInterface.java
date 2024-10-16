@@ -30,15 +30,6 @@ public interface AdsorptionInterface extends neqsim.thermo.ThermodynamicConstant
 
   /**
    * <p>
-   * setSolidMaterial.
-   * </p>
-   *
-   * @param solidM a {@link java.lang.String} object
-   */
-  public void setSolidMaterial(String solidM);
-
-  /**
-   * <p>
    * getSurfaceExcess.
    * </p>
    *
@@ -46,4 +37,13 @@ public interface AdsorptionInterface extends neqsim.thermo.ThermodynamicConstant
    * @return a double
    */
   public double getSurfaceExcess(String componentName);
+
+  /**
+   * <p>
+   * setSolidMaterial.
+   * </p>
+   *
+   * @param solidM a {@link java.lang.String} object
+   */
+  public void setSolidMaterial(String solidM);
 }
