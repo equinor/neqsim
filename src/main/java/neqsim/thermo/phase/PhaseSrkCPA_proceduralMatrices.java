@@ -74,8 +74,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
    * Constructor for PhaseSrkCPA_proceduralMatrices.
    * </p>
    */
-  public PhaseSrkCPA_proceduralMatrices() {
-  }
+  public PhaseSrkCPA_proceduralMatrices() {}
 
   /** {@inheritDoc} */
   @Override
@@ -1048,8 +1047,8 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     if (solvedBonVlow < 1e-3) {
       solvedBonVlow = solvedBonVHigh;
     }
-    // dataPresentation.fileHandeling.createTextFile.TextFile file = new
-    // dataPresentation.fileHandeling.createTextFile.TextFile();
+    // dataPresentation.filehandling.TextFile file = new
+    // dataPresentation.filehandling.TextFile();
     // file.setValues(matrix);
     // file.setOutputFileName("D:/temp/temp2.txt");
     // file.createFile();

@@ -151,7 +151,7 @@ public class PloadingCurve2 extends BaseOperation {
   /** {@inheritDoc} */
   @Override
   public void printToFile(String name) {
-    neqsim.datapresentation.DataHandeling printDat = new neqsim.datapresentation.DataHandeling();
+    neqsim.datapresentation.DataHandling printDat = new neqsim.datapresentation.DataHandling();
     printDat.printToFile(points, name);
   }
 

@@ -698,8 +698,8 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   /** {@inheritDoc} */
   @Override
   public void writeToTextFile(String name) {
-    neqsim.datapresentation.filehandeling.createtextfile.TextFile tempfile =
-        new neqsim.datapresentation.filehandeling.createtextfile.TextFile();
+    neqsim.datapresentation.filehandling.TextFile tempfile =
+        new neqsim.datapresentation.filehandling.TextFile();
     tempfile.setOutputFileName(name);
     tempfile.setValues(valTable);
     tempfile.createFile();

@@ -69,12 +69,6 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
     time++;
   }
 
-  /*
-   * public void createNetCdfFile(String name) { System.out.println("ok..."); for (int j = 0; j <
-   * time; j++) { for (int i = 0; i < flowNodes[j].length; i++) { System.out.println("time " + time
-   * + " pres " + flowNodes[j][i].getPressure(0)); } } }
-   */
-
   /** {@inheritDoc} */
   @Override
   public void setPoints() {}

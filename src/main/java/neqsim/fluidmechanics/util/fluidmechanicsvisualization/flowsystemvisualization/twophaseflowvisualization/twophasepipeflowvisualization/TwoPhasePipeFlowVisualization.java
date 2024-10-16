@@ -148,8 +148,8 @@ public class TwoPhasePipeFlowVisualization extends
   }
 
   // public void createNetCdfFile(String name){
-  // dataPresentation.fileHandeling.createNetCDF.NetCdf file = new
-  // dataPresentation.fileHandeling.createNetCDF.NetCdf();
+  // dataPresentation.filehandling.createNetCDF.NetCdf file = new
+  // dataPresentation.filehandling.createNetCDF.NetCdf();
   // file.setOutputFileName(name);
   // file.setXvalues(timeArray,"time","sec");
   // file.setYvalues(xPlace, "length","meter");
@@ -159,8 +159,8 @@ public class TwoPhasePipeFlowVisualization extends
 
   /*
    * public void createNetCdfFile(String name) { setPoints();
-   * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file = new
-   * neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
+   * neqsim.dataPresentation.filehandling.createNetCDF.netCDF2D.NetCdf2D file = new
+   * neqsim.dataPresentation.filehandling.createNetCDF.netCDF2D.NetCdf2D();
    * file.setOutputFileName(name); file.setXvalues(xPlace, "length", "meter");
    * file.setYvalues(pressurePoint[0][0], "gas pressure", "sec");
    * file.setYvalues(pressurePoint[1][0], "liquid pressure", "sec");

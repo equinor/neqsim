@@ -30,7 +30,7 @@ public class SolidFlash {
     // SystemInterface testSystem = new SystemSrkTwuCoonEos(273.15 - 165, 1.0);
     // SystemInterface testSystem = new SystemPrEos(91.617,1.1168013258);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    // dataHandeling output = new dataHandeling();
+    // DataHandling output = new DataHandling();
     // testSystem.addComponent("water", 1.0-0.1525);
     testSystem.addComponent("methane", 121.8);
     // testSystem.addComponent("ethane", 0.05);
