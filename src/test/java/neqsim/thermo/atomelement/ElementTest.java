@@ -3,7 +3,6 @@ package neqsim.thermo.atomelement;
 import java.util.ArrayList;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.thermo.atomelement.Element;
 
 public class ElementTest {
   @Test

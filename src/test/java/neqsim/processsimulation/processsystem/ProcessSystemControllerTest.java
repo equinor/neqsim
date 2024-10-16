@@ -11,7 +11,6 @@ import neqsim.processsimulation.measurementdevice.VolumeFlowTransmitter;
 import neqsim.processsimulation.processequipment.separator.Separator;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
-import neqsim.processsimulation.processsystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
@@ -32,12 +31,10 @@ public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void testGetTime() {
-  }
+  void testGetTime() {}
 
   @Test
-  void testGetTimeStep() {
-  }
+  void testGetTimeStep() {}
 
   private SystemInterface getTestSystem() {
     neqsim.thermo.system.SystemInterface testSystem =

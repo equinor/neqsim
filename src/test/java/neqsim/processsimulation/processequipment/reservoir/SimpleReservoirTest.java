@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.reservoir.SimpleReservoir;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
 
 public class SimpleReservoirTest {
@@ -59,8 +58,8 @@ public class SimpleReservoirTest {
     for (int i = 0; i < 10; i++) {
       reservoirOps.runTransient(deltaTime);
     }
-    Assertions.assertEquals(355.19330033985693
-    , reservoirOps.getReservoirFluid().getPressure("bara"), 0.1);
+    Assertions.assertEquals(355.19330033985693,
+        reservoirOps.getReservoirFluid().getPressure("bara"), 0.1);
     Assertions.assertEquals(11.698, reservoirOps.getWaterProdution("Sm3/day"), 0.1);
 
     reservoirOps.setLowPressureLimit(52.0e5, "Pa");

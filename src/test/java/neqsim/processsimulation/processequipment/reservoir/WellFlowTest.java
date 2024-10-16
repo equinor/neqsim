@@ -2,8 +2,6 @@ package neqsim.processsimulation.processequipment.reservoir;
 
 import org.junit.jupiter.api.Test;
 import neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills;
-import neqsim.processsimulation.processequipment.reservoir.SimpleReservoir;
-import neqsim.processsimulation.processequipment.reservoir.WellFlow;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
 import neqsim.processsimulation.processequipment.util.Adjuster;
 import neqsim.processsimulation.processequipment.valve.ThrottlingValve;

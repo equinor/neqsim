@@ -24,7 +24,6 @@ import neqsim.processsimulation.processequipment.util.Calculator;
 import neqsim.processsimulation.processequipment.util.Recycle;
 import neqsim.processsimulation.processequipment.util.StreamSaturatorUtil;
 import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
-import neqsim.processsimulation.processsystem.ProcessSystem;
 
 /**
  * Class for testing ProcessSystem class.
