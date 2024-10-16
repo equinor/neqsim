@@ -2612,4 +2612,24 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return a {@link java.lang.String} object
    */
   public String toCompJson();
+
+  /**
+   * <p>
+   * setForceSinglePhase - force the fluid to be single phase of type as spesified by phasetype
+   * input
+   * </p>
+   *
+   * @param phasetype a {@link neqsim.thermo.phase.PhaseType} object
+   */
+  public void setForceSinglePhase(PhaseType phasetype);
+
+  /**
+   * <p>
+   * setForceSinglePhase - force the fluid to be single phase of type as spesified by phasetype
+   * input. phasetypename can be GAS, OIL and AQUEOUS
+   * </p>
+   *
+   * @param phasetypename a {@link java.lang.String} object
+   */
+  public void setForceSinglePhase(String phasetypename);
 }
