@@ -1,4 +1,4 @@
-package neqsim.physicalproperties.util.parameterFitting.pureComponentParameterFitting.purecompinterfacetension;
+package neqsim.physicalproperties.util.parameterfitting.purecomponentparameterfitting.purecompinterfacetension;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;

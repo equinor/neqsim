@@ -1,4 +1,4 @@
-package neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphaseReactorFlow;
+package neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasereactorflow;
 
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 
@@ -19,7 +19,8 @@ public class InterphasePackedBed extends InterphaseReactorFlow
    * Constructor for InterphasePackedBed.
    * </p>
    */
-  public InterphasePackedBed() {}
+  public InterphasePackedBed() {
+  }
 
   /**
    * <p>
@@ -77,10 +78,9 @@ public class InterphasePackedBed extends InterphaseReactorFlow
     double massTrans = 0;
     if (phase == 1) {
       // massTrans = 0.0002;
-      redMassTrans =
-          0.0051 * Math.pow(node.getReynoldsNumber(phase), 0.67) * Math.pow(schmidtNumber, -0.5)
-              * Math.pow(node.getGeometry().getPacking().getSurfaceAreaPrVolume()
-                  * node.getGeometry().getPacking().getSize(), 0.4);
+      redMassTrans = 0.0051 * Math.pow(node.getReynoldsNumber(phase), 0.67) * Math.pow(schmidtNumber, -0.5)
+          * Math.pow(node.getGeometry().getPacking().getSurfaceAreaPrVolume()
+              * node.getGeometry().getPacking().getSize(), 0.4);
       massTrans = redMassTrans * Math.pow(
           node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity()
               * gravity,
@@ -88,10 +88,9 @@ public class InterphasePackedBed extends InterphaseReactorFlow
       System.out.println("mas trans liq " + massTrans);
     }
     if (phase == 0) {
-      redMassTrans =
-          3.6 * Math.pow(node.getReynoldsNumber(phase), 0.7) * Math.pow(schmidtNumber, 0.33)
-              * Math.pow(node.getGeometry().getPacking().getSurfaceAreaPrVolume()
-                  * node.getGeometry().getPacking().getSize(), -2.0);
+      redMassTrans = 3.6 * Math.pow(node.getReynoldsNumber(phase), 0.7) * Math.pow(schmidtNumber, 0.33)
+          * Math.pow(node.getGeometry().getPacking().getSurfaceAreaPrVolume()
+              * node.getGeometry().getPacking().getSize(), -2.0);
       massTrans = redMassTrans * node.getGeometry().getPacking().getSurfaceAreaPrVolume()
           * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity()
           / schmidtNumber;

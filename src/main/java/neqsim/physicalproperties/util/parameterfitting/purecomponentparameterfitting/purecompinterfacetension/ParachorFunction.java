@@ -1,4 +1,4 @@
-package neqsim.physicalproperties.util.parameterFitting.pureComponentParameterFitting.purecompinterfacetension;
+package neqsim.physicalproperties.util.parameterfitting.purecomponentparameterfitting.purecompinterfacetension;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -15,11 +15,11 @@ import com.google.gson.GsonBuilder;
 import neqsim.processsimulation.mechanicaldesign.separator.SeparatorMechanicalDesign;
 import neqsim.processsimulation.processequipment.ProcessEquipmentBaseClass;
 import neqsim.processsimulation.processequipment.mixer.Mixer;
-import neqsim.processsimulation.processequipment.separator.sectionType.ManwaySection;
-import neqsim.processsimulation.processequipment.separator.sectionType.MeshSection;
-import neqsim.processsimulation.processequipment.separator.sectionType.NozzleSection;
-import neqsim.processsimulation.processequipment.separator.sectionType.SeparatorSection;
-import neqsim.processsimulation.processequipment.separator.sectionType.ValveSection;
+import neqsim.processsimulation.processequipment.separator.sectiontype.ManwaySection;
+import neqsim.processsimulation.processequipment.separator.sectiontype.MeshSection;
+import neqsim.processsimulation.processequipment.separator.sectiontype.NozzleSection;
+import neqsim.processsimulation.processequipment.separator.sectiontype.SeparatorSection;
+import neqsim.processsimulation.processequipment.separator.sectiontype.ValveSection;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
 import neqsim.processsimulation.util.monitor.SeparatorResponse;
@@ -64,10 +64,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /** LiquidLevel as volume fraction of liquidvolume/(liquid + gas volume). */
   private double liquidLevel = 0.5;
-  double liquidVolume =
-      Math.PI * internalDiameter * internalDiameter / 4.0 * separatorLength * liquidLevel;
-  double gasVolume =
-      Math.PI * internalDiameter * internalDiameter / 4.0 * separatorLength * (1.0 - liquidLevel);
+  double liquidVolume = Math.PI * internalDiameter * internalDiameter / 4.0 * separatorLength * liquidLevel;
+  double gasVolume = Math.PI * internalDiameter * internalDiameter / 4.0 * separatorLength * (1.0 - liquidLevel);
   private double designLiquidLevelFraction = 0.8;
   ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
 
@@ -86,9 +84,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /**
    * Constructor for Separator.
    *
-   * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
-   *        object
+   * @param name        a {@link java.lang.String} object
+   * @param inletStream a
+   *                    {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
+   *                    object
    */
   public Separator(String name, StreamInterface inletStream) {
     this(name);
@@ -113,8 +112,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * setInletStream.
    * </p>
    *
-   * @param inletStream a {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a
+   *                    {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
+   *                    object
    */
   public void setInletStream(StreamInterface inletStream) {
     inletStreamMixer.addStream(inletStream);
@@ -132,8 +132,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * addStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
-   *        object
+   * @param newStream a
+   *                  {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
+   *                  object
    */
   public void addStream(StreamInterface newStream) {
     if (numberOfInputStreams == 0) {
@@ -149,7 +150,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * Getter for the field <code>liquidOutStream</code>.
    * </p>
    *
-   * @return a {@link neqsim.processsimulation.processequipment.stream.StreamInterface} object
+   * @return a
+   *         {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
+   *         object
    */
   public StreamInterface getLiquidOutStream() {
     return liquidOutStream;
@@ -160,7 +163,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * Getter for the field <code>gasOutStream</code>.
    * </p>
    *
-   * @return a {@link neqsim.processsimulation.processequipment.stream.StreamInterface} object
+   * @return a
+   *         {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
+   *         object
    */
   public StreamInterface getGasOutStream() {
     return gasOutStream;
@@ -171,7 +176,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * getGas.
    * </p>
    *
-   * @return a {@link neqsim.processsimulation.processequipment.stream.StreamInterface} object
+   * @return a
+   *         {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
+   *         object
    */
   public StreamInterface getGas() {
     return getGasOutStream();
@@ -182,7 +189,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * getLiquid.
    * </p>
    *
-   * @return a {@link neqsim.processsimulation.processequipment.stream.StreamInterface} object
+   * @return a
+   *         {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
+   *         object
    */
   public StreamInterface getLiquid() {
     return getLiquidOutStream();
@@ -231,8 +240,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       thermoSystem = thermoSystem2;
     } else {
       try {
-        liquidVolume =
-            Math.PI * internalDiameter * internalDiameter / 4.0 * separatorLength * liquidLevel;
+        liquidVolume = Math.PI * internalDiameter * internalDiameter / 4.0 * separatorLength * liquidLevel;
         gasVolume = Math.PI * internalDiameter * internalDiameter / 4.0 * separatorLength
             * (1.0 - liquidLevel);
         thermoSystem = thermoSystem2.clone();
@@ -315,8 +323,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       thermoSystem.init(0);
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         double dncomp = 0.0;
-        dncomp +=
-            inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
+        dncomp += inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
         double dniliq = 0.0;
         if (hasliq) {
           dniliq = -liquidOutStream.getThermoSystem().getComponent(i).getNumberOfmoles();
@@ -356,7 +363,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           * getSeparatorLength();
       gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
           * getInternalDiameter() * getSeparatorLength();
-      // System.out.println("gas volume " + gasVolume + " liq volime " + liquidVolume);
+      // System.out.println("gas volume " + gasVolume + " liq volime " +
+      // liquidVolume);
       setCalculationIdentifier(id);
     }
   }
@@ -587,8 +595,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public double getDeRatedGasLoadFactor(int phase) {
     thermoSystem.initPhysicalProperties();
     double derating = 1.0;
-    double surfaceTension =
-        thermoSystem.getInterphaseProperties().getSurfaceTension(phase - 1, phase);
+    double surfaceTension = thermoSystem.getInterphaseProperties().getSurfaceTension(phase - 1, phase);
     if (surfaceTension < 10.0e-3) {
       derating = 1.0 - 0.5 * (10.0e-3 - surfaceTension) / 10.0e-3;
     }
@@ -650,7 +657,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    *
    * @param i a int
    * @return a
-   *         {@link neqsim.processsimulation.processequipment.separator.sectionType.SeparatorSection}
+   *         {@link neqsim.processsimulation.processequipment.separator.sectiontype.SeparatorSection}
    *         object
    */
   public SeparatorSection getSeparatorSection(int i) {
@@ -664,7 +671,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    *
    * @param name a {@link java.lang.String} object
    * @return a
-   *         {@link neqsim.processsimulation.processequipment.separator.sectionType.SeparatorSection}
+   *         {@link neqsim.processsimulation.processequipment.separator.sectiontype.SeparatorSection}
    *         object
    */
   public SeparatorSection getSeparatorSection(String name) {
@@ -850,7 +857,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * getFeedStream.
    * </p>
    *
-   * @return a {@link neqsim.processsimulation.processequipment.stream.StreamInterface} object
+   * @return a
+   *         {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
+   *         object
    */
   public StreamInterface getFeedStream() {
     return inletStreamMixer.getOutletStream();
@@ -863,7 +872,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /*
-   * private class SeparatorReport extends Object{ public Double gasLoadFactor; SeparatorReport(){
+   * private class SeparatorReport extends Object{ public Double gasLoadFactor;
+   * SeparatorReport(){
    * gasLoadFactor = getGasLoadFactor(); } }
    *
    * public SeparatorReport getReport(){ return this.new SeparatorReport(); }

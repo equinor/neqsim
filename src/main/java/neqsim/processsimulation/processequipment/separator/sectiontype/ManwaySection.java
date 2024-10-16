@@ -1,6 +1,6 @@
-package neqsim.processsimulation.processequipment.separator.sectionType;
+package neqsim.processsimulation.processequipment.separator.sectiontype;
 
-import neqsim.processsimulation.mechanicaldesign.separator.sectionType.MechManwaySection;
+import neqsim.processsimulation.mechanicaldesign.separator.sectiontype.MechManwaySection;
 import neqsim.processsimulation.processequipment.separator.Separator;
 
 /**
@@ -21,7 +21,9 @@ public class ManwaySection extends SeparatorSection {
    *
    * @param name a {@link java.lang.String} object
    * @param type a {@link java.lang.String} object
-   * @param sep a {@link neqsim.processsimulation.processequipment.separator.Separator} object
+   * @param sep  a
+   *             {@link neqsim.processsimulation.processequipment.separator.Separator}
+   *             object
    */
   public ManwaySection(String name, String type, Separator sep) {
     super(name, type, sep);

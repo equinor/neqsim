@@ -1,4 +1,4 @@
-package neqsim.physicalproperties.util.parameterFitting.pureComponentParameterFitting.purecompviscosity.chungMethod;
+package neqsim.physicalproperties.util.parameterfitting.purecomponentparameterfitting.purecompviscosity.chungMethod;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -37,11 +37,11 @@ public class TestChungFit {
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet("SELECT * FROM purecomponentviscosity") // WHERE
-                                                                                           // ComponentName='MDEA*'");
+                                                                                          // ComponentName='MDEA*'");
     ) {
       while (dataSet.next()) {
         ChungFunction function = new ChungFunction();
-        double guess[] = {0.3211};
+        double guess[] = { 0.3211 };
         function.setInitialGuess(guess);
 
         SystemInterface testSystem = new SystemSrkEos(280, 0.001);
@@ -50,8 +50,8 @@ public class TestChungFit {
         testSystem.createDatabase(true);
         testSystem.init(0);
         testSystem.setMixingRule(2);
-        double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))};
-        double standardDeviation1[] = {0.1};
+        double sample1[] = { Double.parseDouble(dataSet.getString("Temperature")) };
+        double standardDeviation1[] = { 0.1 };
         SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("Viscosity")),
             0.001, sample1, standardDeviation1);
         sample.setFunction(function);
