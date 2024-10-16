@@ -14,10 +14,10 @@ public interface DensityInterface extends ThermodynamicConstantsInterface,
     neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyMethodInterface {
   /**
    * <p>
-   * calcDensity.
+   * Returns the density of the phase. Unit: kg/m^3
    * </p>
    *
-   * @return a double
+   * @return The density of the phase in kg/m^3.
    */
   public double calcDensity();
 

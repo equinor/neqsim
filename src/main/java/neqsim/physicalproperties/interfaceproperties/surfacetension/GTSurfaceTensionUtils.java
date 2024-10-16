@@ -19,13 +19,14 @@ public class GTSurfaceTensionUtils {
 
   /**
    * Calculate chemical potential, chemical potential derivative, and pressure.
-   *
+   * <p>
    * Note that the volume/pressure units used in NeqSim renders the number density incorrect by a
    * factor of 1e5. When selecting the volume to unity to avoid caring about volume derivatives when
    * using number density as the free variable, the mole number input to NeqSIM must be scaled by a
    * factor 1e-5. The chemical potential is unaffected by this as it is a intensive property. The
    * chemical potential derivative will scale inversely proportional with the mole numbers according
    * to the Euler homogeneity of the Gibbs energy function.
+   * </p>
    *
    * @param sys a {@link neqsim.thermo.system.SystemInterface} object
    * @param ncomp a int

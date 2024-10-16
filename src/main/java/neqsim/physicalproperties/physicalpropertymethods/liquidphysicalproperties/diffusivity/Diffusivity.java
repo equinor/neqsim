@@ -4,6 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * Diffusivity class.
+ *
  * @author Even Solbraa
  */
 abstract class Diffusivity extends

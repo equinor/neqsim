@@ -51,11 +51,7 @@ public class Density extends GasPhysicalPropertyMethod
     return properties;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Returns the density of the phase. Unit: kg/m^3
-   */
+  /** {@inheritDoc} */
   @Override
   public double calcDensity() {
     double tempVar = 0.0;

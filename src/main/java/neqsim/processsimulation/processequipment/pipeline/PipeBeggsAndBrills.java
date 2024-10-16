@@ -479,7 +479,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   /**
    * <p>
-   * calcHydrostaticPressureDifference
+   * calcHydrostaticPressureDifference.
    * </p>
    *
    * @return a double
@@ -809,7 +809,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   /**
    * <p>
-   * getNumberOfIncrements
+   * getNumberOfIncrements.
    * </p>
    *
    * @return a double
@@ -908,7 +908,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   /**
    * <p>
-   * getSegmentPressure
+   * getSegmentPressure.
    * </p>
    *
    * @param index segment number
@@ -923,9 +923,9 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * Get Pressure
+   * Get Pressure drop profile.
    *
-   * @return ArrayList of pressure drop profile
+   * @return ArrayList of pressure drop profile.
    */
   public List<Double> getPressureDropProfile() {
     return new ArrayList<>(pressureDropProfile);
