@@ -62,12 +62,15 @@ public class CompressorCurve implements java.io.Serializable {
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     CompressorCurve other = (CompressorCurve) obj;
     return Arrays.equals(flow, other.flow) && Arrays.equals(head, other.head)
         && Arrays.equals(polytropicEfficiency, other.polytropicEfficiency)
