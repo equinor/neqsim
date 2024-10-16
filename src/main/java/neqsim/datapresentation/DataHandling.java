@@ -5,27 +5,26 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DecimalFormat;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
- * dataHandeling class.
+ * DataHandling class.
  * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class DataHandeling {
-  static Logger logger = LogManager.getLogger(DataHandeling.class);
+public class DataHandling {
+  static Logger logger = LogManager.getLogger(DataHandling.class);
 
   /**
    * <p>
-   * Constructor for dataHandeling.
+   * Constructor for DataHandling.
    * </p>
    */
-  public DataHandeling() {}
+  public DataHandling() {}
 
   /**
    * Returns the number of items in the specified series.

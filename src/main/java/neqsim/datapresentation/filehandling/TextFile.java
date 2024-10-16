@@ -1,4 +1,4 @@
-package neqsim.datapresentation.filehandeling.createtextfile;
+package neqsim.datapresentation.filehandling;
 
 import java.io.File;
 import java.io.FileWriter;

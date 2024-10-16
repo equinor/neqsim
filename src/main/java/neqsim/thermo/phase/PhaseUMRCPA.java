@@ -1198,8 +1198,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     if (solvedBonVlow < 1e-3) {
       solvedBonVlow = solvedBonVHigh;
     }
-    // dataPresentation.fileHandeling.createTextFile.TextFile file = new
-    // dataPresentation.fileHandeling.createTextFile.TextFile();
+    // dataPresentation.filehandling.TextFile file = new
+    // dataPresentation.filehandling.TextFile();
     // file.setValues(matrix);
     // file.setOutputFileName("D:/temp/temp2.txt");
     // file.createFile();

@@ -697,8 +697,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param filename a {@link java.lang.String} object
    */
   public void printLogFile(String filename) {
-    neqsim.datapresentation.filehandeling.createtextfile.TextFile tempFile =
-        new neqsim.datapresentation.filehandeling.createtextfile.TextFile();
+    neqsim.datapresentation.filehandling.TextFile tempFile =
+        new neqsim.datapresentation.filehandling.TextFile();
     tempFile.setOutputFileName(filename);
     tempFile.setValues(signalDB);
     tempFile.createFile();

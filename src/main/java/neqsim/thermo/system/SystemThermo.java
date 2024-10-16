@@ -5028,8 +5028,8 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void write(String name, String filename, boolean newfile) {
     String[][] table = createTable(name);
-    neqsim.datapresentation.filehandeling.createtextfile.TextFile file =
-        new neqsim.datapresentation.filehandeling.createtextfile.TextFile();
+    neqsim.datapresentation.filehandling.TextFile file =
+        new neqsim.datapresentation.filehandling.TextFile();
     if (newfile) {
       file.newFile(filename);
     }
