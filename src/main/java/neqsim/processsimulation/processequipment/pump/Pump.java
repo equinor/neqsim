@@ -66,12 +66,6 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setOutletPressure(double pressure) {
-    this.pressure = pressure;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getEnergy() {
     return dH;
   }
@@ -393,6 +387,12 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   public void setPressure(double pressure, String unit) {
     setOutletPressure(pressure);
     pressureUnit = unit;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setOutletPressure(double pressure) {
+    this.pressure = pressure;
   }
 
   /**

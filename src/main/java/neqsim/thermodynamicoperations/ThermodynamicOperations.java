@@ -31,7 +31,19 @@ import neqsim.thermodynamicoperations.flashops.TVflash;
 import neqsim.thermodynamicoperations.flashops.VHflashQfunc;
 import neqsim.thermodynamicoperations.flashops.VUflashQfunc;
 import neqsim.thermodynamicoperations.flashops.dTPflash;
+import neqsim.thermodynamicoperations.flashops.saturationops.AddIonToScaleSaturation;
+import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlashDer;
+import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointTemperatureNoDer;
+import neqsim.thermodynamicoperations.flashops.saturationops.CalcSaltSatauration;
+import neqsim.thermodynamicoperations.flashops.saturationops.CheckScalePotential;
 import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyFlashInterface;
+import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyPressureFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyTemperatureFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.CricondebarFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.DewPointPressureFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlashDer;
+import neqsim.thermodynamicoperations.flashops.saturationops.FreezingPointTemperatureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HCdewPointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateEquilibriumLine;
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateFormationPressureFlash;
@@ -41,18 +53,6 @@ import neqsim.thermodynamicoperations.flashops.saturationops.HydrateInhibitorwtF
 import neqsim.thermodynamicoperations.flashops.saturationops.SolidComplexTemperatureCalc;
 import neqsim.thermodynamicoperations.flashops.saturationops.WATcalc;
 import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointEquilibriumLine;
-import neqsim.thermodynamicoperations.flashops.saturationops.AddIonToScaleSaturation;
-import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlash;
-import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlashDer;
-import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointTemperatureNoDer;
-import neqsim.thermodynamicoperations.flashops.saturationops.CalcSaltSatauration;
-import neqsim.thermodynamicoperations.flashops.saturationops.CheckScalePotential;
-import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyPressureFlash;
-import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyTemperatureFlash;
-import neqsim.thermodynamicoperations.flashops.saturationops.CricondebarFlash;
-import neqsim.thermodynamicoperations.flashops.saturationops.DewPointPressureFlash;
-import neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlashDer;
-import neqsim.thermodynamicoperations.flashops.saturationops.FreezingPointTemperatureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointTemperatureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointTemperatureMultiphaseFlash;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.CricondenBarFlash;
@@ -1550,23 +1550,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     getOperation().run();
   }
 
-  // public void dewPointPressureFlash(){
-  // constantDutyFlashInterface operation = new constantDutyPressureFlash(system);
-  // operation.setBeta((1-1e-7));
-  // operation.run();
-  // }
-  /**
-   * <p>
-   * calcPTphaseEnvelopeNew.
-   * </p>
-   */
-  public void calcPTphaseEnvelope2() {
-    operation = new PTphaseEnvelopeNew2(system, fileName, (1.0 - 1e-10), 1.0, false);
-    // thisThread = new Thread(operation);
-    // thisThread.start();
-    getOperation().run();
-  }
-
   /**
    * <p>
    * calcPTphaseEnvelope.
@@ -1635,6 +1618,18 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   public void calcPTphaseEnvelope(double lowPres, double phasefraction) {
     operation = new PTphaseEnvelope(system, fileName, phasefraction, lowPres, true);
 
+    // thisThread = new Thread(operation);
+    // thisThread.start();
+    getOperation().run();
+  }
+
+  /**
+   * <p>
+   * calcPTphaseEnvelopeNew.
+   * </p>
+   */
+  public void calcPTphaseEnvelope2() {
+    operation = new PTphaseEnvelopeNew2(system, fileName, (1.0 - 1e-10), 1.0, false);
     // thisThread = new Thread(operation);
     // thisThread.start();
     getOperation().run();

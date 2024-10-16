@@ -64,20 +64,6 @@ public class EnhancementFactor implements EnhancementFactorInterface {
     }
   }
 
-  /**
-   * <p>
-   * setOnesVec.
-   * </p>
-   *
-   * @param phase a int
-   */
-  public void setOnesVec(int phase) {
-    for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phase]
-        .getNumberOfComponents(); j++) {
-      enhancementVec[j] = 1.0;
-    }
-  }
-
   /** {@inheritDoc} */
   @Override
   public void calcEnhancementVec(int phase) {}
@@ -115,6 +101,21 @@ public class EnhancementFactor implements EnhancementFactorInterface {
   public void setEnhancementVec(double[] enhancementVec) {
     this.enhancementVec = enhancementVec;
   }
+
+  /**
+   * <p>
+   * setOnesVec.
+   * </p>
+   *
+   * @param phase a int
+   */
+  public void setOnesVec(int phase) {
+    for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phase]
+        .getNumberOfComponents(); j++) {
+      enhancementVec[j] = 1.0;
+    }
+  }
+
 
   /**
    * Getter for property hattaNumber.
