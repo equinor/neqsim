@@ -47,10 +47,9 @@ public class NeqGasScrubber extends Separator {
    * Constructor for NeqGasScrubber.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
-   * @param inletStream a
-   *                    {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
-   *                    object
+   * @param name a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
+   *        object
    */
   public NeqGasScrubber(String name, StreamInterface inletStream) {
     super(name, inletStream);
@@ -135,6 +134,5 @@ public class NeqGasScrubber extends Separator {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-  }
+  public void displayResult() {}
 }

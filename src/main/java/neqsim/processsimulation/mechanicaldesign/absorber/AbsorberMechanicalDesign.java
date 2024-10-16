@@ -30,9 +30,8 @@ public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
    * Constructor for AbsorberMechanicalDesign.
    * </p>
    *
-   * @param equipment a
-   *                  {@link neqsim.processsimulation.processequipment.ProcessEquipmentInterface}
-   *                  object
+   * @param equipment a {@link neqsim.processsimulation.processequipment.ProcessEquipmentInterface}
+   *        object
    */
   public AbsorberMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -46,8 +45,9 @@ public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
     if (getDesignStandard().containsKey("pressure vessel design code")) {
       System.out.println("pressure vessel code standard: "
           + getDesignStandard().get("pressure vessel design code").getStandardName());
-      wallThickness = ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
-          .calcWallThickness();
+      wallThickness =
+          ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
+              .calcWallThickness();
     } else {
       System.out.println("no pressure vessel code standard specified......");
       return;
@@ -65,10 +65,12 @@ public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
     if (getDesignStandard().containsKey("separator process design")) {
       System.out.println("separator process design: "
           + getDesignStandard().get("separator process design").getStandardName());
-      gasLoadFactor = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-          .getGasLoadFactor();
-      volumeSafetyFactor = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-          .getVolumetricDesignFactor();
+      gasLoadFactor =
+          ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
+              .getGasLoadFactor();
+      volumeSafetyFactor =
+          ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
+              .getVolumetricDesignFactor();
     } else {
       System.out.println("no separator process design specified......");
     }

@@ -35,9 +35,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * Constructor for SeparatorMechanicalDesign.
    * </p>
    *
-   * @param equipment a
-   *                  {@link neqsim.processsimulation.processequipment.ProcessEquipmentInterface}
-   *                  object
+   * @param equipment a {@link neqsim.processsimulation.processequipment.ProcessEquipmentInterface}
+   *        object
    */
   public SeparatorMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -57,8 +56,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     if (getDesignStandard().containsKey("pressure vessel design code")) {
       System.out.println("pressure vessel code standard: "
           + getDesignStandard().get("pressure vessel design code").getStandardName());
-      wallThickness = ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
-          .calcWallThickness();
+      wallThickness =
+          ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
+              .calcWallThickness();
     } else {
       System.out.println("no pressure vessel code standard specified......");
     }
@@ -66,11 +66,13 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     if (getDesignStandard().containsKey("separator process design")) {
       System.out.println("separator process design: "
           + getDesignStandard().get("separator process design").getStandardName());
-      gasLoadFactor = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-          .getGasLoadFactor();
+      gasLoadFactor =
+          ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
+              .getGasLoadFactor();
       Fg = ((SeparatorDesignStandard) getDesignStandard().get("separator process design")).getFg();
-      volumeSafetyFactor = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-          .getVolumetricDesignFactor();
+      volumeSafetyFactor =
+          ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
+              .getVolumetricDesignFactor();
       retentionTime = 120.0; // ((SeparatorDesignStandard)
                              // getDesignStandard().get("separator process
                              // design")).getLiquidRetentionTime("API12J", this);
@@ -86,7 +88,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = { "Name", "Value", "Unit" };
+    String[] names = {"Name", "Value", "Unit"};
     String[][] table = new String[16][3]; // createTable(getProcessEquipment().getName());
 
     table[1][0] = "Separator Inner Diameter";
@@ -195,7 +197,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     // alternative design
     double bubbleDiameter = 250.0e-6;
-    double bubVelocity = 9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity - gasDensity) / 18.0 / liqViscosity;
+    double bubVelocity =
+        9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity - gasDensity) / 18.0 / liqViscosity;
     double Ar = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getLiquidVolume()
         / 1e5 / bubVelocity;
     double Daim = Math.sqrt(Ar / 4.0);
@@ -231,15 +234,11 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     // }
 
     /*
-     * System.out.println("wall thickness: " + separator.getName() + " " +
-     * getWallThickness() +
-     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight +
-     * " kg");
+     * System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() +
+     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
      * System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-     * System.out.println("foot print: width:" + moduleWidth + " length " +
-     * moduleLength +
-     * " height " + moduleHeight + " meter.");
-     * System.out.println("mechanical price: " +
+     * System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength +
+     * " height " + moduleHeight + " meter."); System.out.println("mechanical price: " +
      * materialsCost + " kNOK");
      */
     setWeigthVesselShell(emptyVesselWeight);

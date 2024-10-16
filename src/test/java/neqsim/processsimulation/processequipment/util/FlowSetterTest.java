@@ -6,7 +6,6 @@ import neqsim.processsimulation.measurementdevice.MultiPhaseMeter;
 import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
-import neqsim.processsimulation.processequipment.util.FlowSetter;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 

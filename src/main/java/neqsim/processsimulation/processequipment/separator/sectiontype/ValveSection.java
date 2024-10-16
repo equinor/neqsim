@@ -21,9 +21,7 @@ public class ValveSection extends SeparatorSection {
    *
    * @param name a {@link java.lang.String} object
    * @param type a {@link java.lang.String} object
-   * @param sep  a
-   *             {@link neqsim.processsimulation.processequipment.separator.Separator}
-   *             object
+   * @param sep a {@link neqsim.processsimulation.processequipment.separator.Separator} object
    */
   public ValveSection(String name, String type, Separator sep) {
     super(name, type, sep);

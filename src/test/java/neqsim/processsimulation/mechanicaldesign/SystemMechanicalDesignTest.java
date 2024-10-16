@@ -3,7 +3,6 @@ package neqsim.processsimulation.mechanicaldesign;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.processsimulation.costestimation.CostEstimateBaseClass;
-import neqsim.processsimulation.mechanicaldesign.SystemMechanicalDesign;
 import neqsim.processsimulation.mechanicaldesign.pipeline.PipelineMechanicalDesign;
 import neqsim.processsimulation.mechanicaldesign.separator.GasScrubberMechanicalDesign;
 import neqsim.processsimulation.mechanicaldesign.separator.SeparatorMechanicalDesign;

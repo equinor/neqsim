@@ -20,7 +20,6 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemProperties;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermodynamicoperations.ThermodynamicOperations.FlashType;
 
 public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
