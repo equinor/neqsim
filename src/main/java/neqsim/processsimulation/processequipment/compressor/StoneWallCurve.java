@@ -99,6 +99,8 @@ public class StoneWallCurve implements java.io.Serializable {
   }
 
   /**
+   * Getter for property isActive.
+   *
    * @return boolean
    */
   boolean isActive() {
@@ -106,6 +108,8 @@ public class StoneWallCurve implements java.io.Serializable {
   }
 
   /**
+   * Setter for property isActive.
+   *
    * @param isActive true if stone wall curve should be used for compressor calculations
    */
   void setActive(boolean isActive) {
