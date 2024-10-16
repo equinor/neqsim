@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.processsimulation.measurementdevice.MultiPhaseMeter;
 import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.util.MPFMfitter;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;

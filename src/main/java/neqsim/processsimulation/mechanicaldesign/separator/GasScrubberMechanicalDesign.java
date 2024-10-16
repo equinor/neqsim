@@ -23,9 +23,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    * Constructor for GasScrubberMechanicalDesign.
    * </p>
    *
-   * @param equipment a
-   *                  {@link neqsim.processsimulation.processequipment.ProcessEquipmentInterface}
-   *                  object
+   * @param equipment a {@link neqsim.processsimulation.processequipment.ProcessEquipmentInterface}
+   *        object
    */
   public GasScrubberMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -39,10 +38,12 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     if (getDesignStandard().containsKey("gas scrubber process design")) {
       System.out.println("gas scrubber process design: "
           + getDesignStandard().get("gas scrubber process design").getStandardName());
-      gasLoadFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-          .getGasLoadFactor();
-      volumeSafetyFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-          .getVolumetricDesignFactor();
+      gasLoadFactor =
+          ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
+              .getGasLoadFactor();
+      volumeSafetyFactor =
+          ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
+              .getVolumetricDesignFactor();
     } else {
       System.out.println("no separator process design specified......");
     }
@@ -111,15 +112,11 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     moduleLength = tantanLength * 1.5;
     moduleHeight = innerDiameter * 2;
     /*
-     * System.out.println("wall thickness: " + separator.getName() + " " +
-     * getWallThickness() +
-     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight +
-     * " kg");
+     * System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() +
+     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
      * System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-     * System.out.println("foot print: width:" + moduleWidth + " length " +
-     * moduleLength +
-     * " height " + moduleHeight + " meter.");
-     * System.out.println("mechanical price: " +
+     * System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength +
+     * " height " + moduleHeight + " meter."); System.out.println("mechanical price: " +
      * materialsCost + " kNOK");
      */
     setWeigthVesselShell(emptyVesselWeight);

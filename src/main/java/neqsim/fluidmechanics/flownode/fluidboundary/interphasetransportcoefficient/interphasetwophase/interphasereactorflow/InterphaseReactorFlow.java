@@ -17,8 +17,7 @@ public class InterphaseReactorFlow extends InterphaseTwoPhase {
    * Constructor for InterphaseReactorFlow.
    * </p>
    */
-  public InterphaseReactorFlow() {
-  }
+  public InterphaseReactorFlow() {}
 
   /**
    * <p>

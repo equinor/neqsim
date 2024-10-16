@@ -13,7 +13,6 @@ import neqsim.processsimulation.processequipment.mixer.Mixer;
 import neqsim.processsimulation.processequipment.separator.Separator;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.processsimulation.processequipment.util.Recycle;
-import neqsim.processsimulation.processsystem.ProcessSystem;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**

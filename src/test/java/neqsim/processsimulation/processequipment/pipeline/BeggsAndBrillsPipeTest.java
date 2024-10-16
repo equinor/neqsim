@@ -2,7 +2,6 @@ package neqsim.processsimulation.processequipment.pipeline;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;

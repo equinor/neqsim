@@ -417,7 +417,9 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>Getter for the field <code>maxSpeedCurve</code>.</p>
+   * <p>
+   * Getter for the field <code>maxSpeedCurve</code>.
+   * </p>
    *
    * @return a double
    */
@@ -426,7 +428,9 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>Setter for the field <code>maxSpeedCurve</code>.</p>
+   * <p>
+   * Setter for the field <code>maxSpeedCurve</code>.
+   * </p>
    *
    * @param maxSpeedCurve a double
    */
@@ -435,7 +439,9 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>Getter for the field <code>minSpeedCurve</code>.</p>
+   * <p>
+   * Getter for the field <code>minSpeedCurve</code>.
+   * </p>
    *
    * @return a double
    */
@@ -444,7 +450,9 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * <p>Setter for the field <code>minSpeedCurve</code>.</p>
+   * <p>
+   * Setter for the field <code>minSpeedCurve</code>.
+   * </p>
    *
    * @param minSpeedCurve a double
    */

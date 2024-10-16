@@ -2,7 +2,6 @@ package neqsim.processsimulation.processequipment.pump;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.pump.PumpChart;
 
 public class PumpChartTest {
   @Test

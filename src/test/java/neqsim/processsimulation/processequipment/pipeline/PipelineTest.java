@@ -2,9 +2,6 @@ package neqsim.processsimulation.processequipment.pipeline;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.pipeline.AdiabaticPipe;
-import neqsim.processsimulation.processequipment.pipeline.OnePhasePipeLine;
-import neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills;
 import neqsim.processsimulation.processequipment.stream.Stream;
 
 public class PipelineTest {

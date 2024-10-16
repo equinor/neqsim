@@ -2,8 +2,6 @@ package neqsim.processsimulation.processequipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.distillation.Condenser;
-import neqsim.processsimulation.processequipment.distillation.DistillationColumn;
 import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
 
@@ -12,7 +10,7 @@ public class DistillationColumnTest {
    * @throws java.lang.Exception
    */
   @Test
-  public void DistillationColumnTest() throws Exception {
+  public void testRun() throws Exception {
     neqsim.thermo.system.SystemInterface richTEG =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     richTEG.addComponent("nitrogen", 0.0003884521907420086);
