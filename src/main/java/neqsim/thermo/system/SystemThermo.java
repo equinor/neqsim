@@ -5071,4 +5071,20 @@ public abstract class SystemThermo implements SystemInterface {
     return new GsonBuilder().create()
         .toJson(new neqsim.processsimulation.util.monitor.FluidComponentResponse(this));
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setForceSinglePhase(PhaseType phasetype) {
+    this.init(0);
+    this.setNumberOfPhases(1);
+    this.setMaxNumberOfPhases(1);
+    this.setForcePhaseTypes(true);
+    this.setPhaseType(0, phasetype);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setForceSinglePhase(String phasetype) {
+    setForceSinglePhase(PhaseType.byName(phasetype));
+  }
 }
