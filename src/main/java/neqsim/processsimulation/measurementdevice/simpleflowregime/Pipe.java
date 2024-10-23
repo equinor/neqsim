@@ -1,4 +1,3 @@
-// Create a Pipe Object
 package neqsim.processsimulation.measurementdevice.simpleflowregime;
 
 /**
@@ -10,33 +9,16 @@ package neqsim.processsimulation.measurementdevice.simpleflowregime;
  * @version $Id: $Id
  */
 public class Pipe {
-  private String name = "Default severe slug pipe";
+  private String name;
   private double internalDiameter = 0.05;
   private double leftLength = 167.0;
   private double rightLength = 7.7;
   private double angle = 2.0;
   final double pi = 3.1415926;
 
-  // Default Constructor:
-  Pipe() {
-    this.setName(name);
-    this.setInternalDiameter(internalDiameter);
-    this.setLeftLength(leftLength);
-    this.setRightLength(rightLength);
-    this.setAngle(angle);
-  }
-
   // User Defined pipe parameters including pipe name (constructor):
   Pipe(String name, double internalDiameter, double leftLength, double rightLength, double angle) {
     this.setName(name);
-    this.setInternalDiameter(internalDiameter);
-    this.setLeftLength(leftLength);
-    this.setRightLength(rightLength);
-    this.setAngle(angle);
-  }
-
-  // User Defined pipe parameters excluding pipe name (constructor):
-  Pipe(double internalDiameter, double leftLength, double rightLength, double angle) {
     this.setInternalDiameter(internalDiameter);
     this.setLeftLength(leftLength);
     this.setRightLength(rightLength);
@@ -153,15 +135,17 @@ public class Pipe {
    * Getter for the field <code>angle</code>.
    * </p>
    *
-   * @param unit a {@link java.lang.String} object
-   * @return a double
+   * @param unit Unit
+   * @return Angle in unit. Defaults to Degree
    */
   public double getAngle(String unit) {
     if (unit.equals("Degree")) {
+      return this.angle;
     } else if (unit.equals("Radian")) {
       return this.angle * pi / 180;
     }
-    return this.angle;
+    throw new RuntimeException(
+        new neqsim.util.exception.InvalidInputException(this, "getAngle", "unit"));
   }
 
   /**

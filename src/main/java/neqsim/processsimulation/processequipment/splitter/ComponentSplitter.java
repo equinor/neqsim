@@ -28,15 +28,6 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   double[] splitFactor = new double[1];
 
   /**
-   * <p>
-   * Constructor for Splitter.
-   * </p>
-   */
-  public ComponentSplitter() {
-    super("Component Splitter");
-  }
-
-  /**
    * Constructor for Splitter.
    *
    * @param name name of splitter

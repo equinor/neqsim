@@ -22,29 +22,21 @@ public class Manifold extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Manifold.class);
 
-  protected Mixer localmixer = new Mixer("local mixer");
-  protected Splitter localsplitter = new Splitter("local splitter");
+  protected Mixer localmixer = new Mixer("tmpName");
+  protected Splitter localsplitter = new Splitter("tmpName");
 
   double[] splitFactors = new double[1];
 
   /**
    * <p>
-   * Constructor for Splitter.
-   * </p>
-   */
-  public Manifold() {
-    super("Manifold");
-  }
-
-  /**
-   * <p>
-   * Constructor for Splitter with name as input.
+   * Constructor for Manifold with name as input.
    * </p>
    *
    * @param name name of manifold
    */
   public Manifold(String name) {
     super(name);
+    setName(name);
   }
 
   /**
@@ -73,7 +65,9 @@ public class Manifold extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>getSplitStream.</p>
+   * <p>
+   * getSplitStream.
+   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.processsimulation.processequipment.stream.StreamInterface} object
@@ -99,5 +93,13 @@ public class Manifold extends ProcessEquipmentBaseClass {
     localmixer.run(id);
     localsplitter.setInletStream(localmixer.getOutletStream());
     localsplitter.run();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setName(String name) {
+    super.setName(name);
+    localmixer.setName(name + "local mixer");
+    localsplitter.setName(name + "local splitter");
   }
 }

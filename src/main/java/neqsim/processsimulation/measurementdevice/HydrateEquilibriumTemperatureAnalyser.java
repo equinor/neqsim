@@ -25,22 +25,11 @@ public class HydrateEquilibriumTemperatureAnalyser extends StreamMeasurementDevi
    * Constructor for HydrateEquilibriumTemperatureAnalyser.
    * </p>
    *
-   * @param stream a {@link neqsim.processsimulation.processequipment.stream.StreamInterface} object
-   */
-  public HydrateEquilibriumTemperatureAnalyser(StreamInterface stream) {
-    this("HydrateEquilibriumTemperatureAnalyser", stream);
-  }
-
-  /**
-   * <p>
-   * Constructor for HydrateEquilibriumTemperatureAnalyser.
-   * </p>
-   *
    * @param name Name of HydrateEquilibriumTemperatureAnalyser
    * @param stream a {@link neqsim.processsimulation.processequipment.stream.StreamInterface} object
    */
   public HydrateEquilibriumTemperatureAnalyser(String name, StreamInterface stream) {
-    super("HydrateEquilibriumTemperatureAnalyser", "K", stream);
+    super(name, "K", stream);
     setConditionAnalysisMaxDeviation(1.0);
   }
 

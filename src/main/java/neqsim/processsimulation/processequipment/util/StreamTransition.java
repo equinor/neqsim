@@ -21,31 +21,6 @@ public class StreamTransition extends TwoPortEquipment {
    * <p>
    * Constructor for StreamTransition.
    * </p>
-   */
-  @Deprecated
-  public StreamTransition() {
-    super("StreamTransition");
-  }
-
-  /**
-   * <p>
-   * Constructor for StreamTransition.
-   * </p>
-   *
-   * @param inletStream a {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
-   *        object
-   * @param outletStream a {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
-   *        object
-   */
-  @Deprecated
-  public StreamTransition(StreamInterface inletStream, StreamInterface outletStream) {
-    this("StreamTransition", inletStream, outletStream);
-  }
-
-  /**
-   * <p>
-   * Constructor for StreamTransition.
-   * </p>
    *
    * @param name name of unit operation
    * @param inletStream a {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
@@ -104,7 +79,7 @@ public class StreamTransition extends TwoPortEquipment {
     ProcessSystem offshoreProcessoperations = ProcessSystem.open("c:/temp/offshorePro.neqsim");
     ProcessSystem TEGprocess = ProcessSystem.open("c:/temp//TEGprocessHX.neqsim");
     StreamTransition trans =
-        new StreamTransition((StreamInterface) offshoreProcessoperations.getUnit("rich gas"),
+        new StreamTransition("tmp", (StreamInterface) offshoreProcessoperations.getUnit("rich gas"),
             (StreamInterface) TEGprocess.getUnit("dry feed gas"));
 
     UUID id = UUID.randomUUID();

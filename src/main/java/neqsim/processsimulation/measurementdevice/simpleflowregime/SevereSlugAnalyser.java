@@ -36,10 +36,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   private double outletPressure = 100000.0;
   private double temperature = 20.0;
   private int numberOfTimeSteps = 20000;
-  private double internalDiameter = 0.0;
-  private double leftLength = 0.0;
-  private double rightLength = 0.0;
-  private double angle = 0.0;
 
   // These variables should not be changed by the user I guess.
   // But this can be done if the user has advanced knowledge about the problem.
@@ -104,41 +100,40 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
 
   String flowPattern;
 
-  // This constructor is used for the "default" values
-  public SevereSlugAnalyser() {
-    super("SevereSlugAnalyser", "m3/sec");
+  /**
+   * Constructor for class SevereSlugAnalyser.
+   *
+   * @param name Name of object
+   */
+  public SevereSlugAnalyser(String name) {
+    super(name, "m3/sec");
   }
 
   /**
    * Constructor for class SevereSlugAnalyser.
    *
+   * @param name Name of object
    * @param usl Superficial liquid velocity
    * @param usg Superficial gas velocity
    */
-  public SevereSlugAnalyser(double usl, double usg) {
-    this();
+  public SevereSlugAnalyser(String name, double usl, double usg) {
+    this(name);
     this.setSuperficialLiquidVelocity(usl);
     this.setSuperficialGasVelocity(usg);
   }
 
-  // This constructor is used for the user input of superficial liquid and gas velocities,
-  // outletPressure,
-  // temperature, simulationTime, numberOfTimeSteps
-  // and the rest will be the default values
-
   /**
    * Constructor for class SevereSlugAnalyser.
    *
-   * @param usl Superficial liquid velocity
-   * @param usg Superficial gas velocity
-   * @param outletPressure
-   * @param temperature
-   * @param simulationTime
-   * @param numberOfTimeSteps
+   * @param name Name of object
+   * @param outletPressure Pipe Outlet Pressure
+   * @param temperature Slug temperature.
+   * @param simulationTime Simulation time
+   * @param numberOfTimeSteps Number of simulation time steps to calculate
    */
-  SevereSlugAnalyser(double usl, double usg, double outletPressure, double temperature,
+  public SevereSlugAnalyser(String name, double outletPressure, double temperature,
       double simulationTime, int numberOfTimeSteps) {
-    this(usl, usg);
+    this(name);
     this.setOutletPressure(outletPressure);
     this.setTemperature(temperature);
     this.setSimulationTime(simulationTime);
@@ -148,16 +143,37 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   /**
    * Constructor for class SevereSlugAnalyser.
    *
-   * @param fluid
-   * @param pipe
-   * @param outletPressure
-   * @param temperature
-   * @param simulationTime
-   * @param numberOfTimeSteps
+   * @param name Name of object
+   * @param usl Superficial liquid velocity
+   * @param usg Superficial gas velocity
+   * @param outletPressure Pipe Outlet Pressure in Pa
+   * @param temperature Slug temperature.
+   * @param simulationTime Simulation time
+   * @param numberOfTimeSteps Number of simulation time steps to calculate
    */
-  public SevereSlugAnalyser(SystemInterface fluid, Pipe pipe, double outletPressure,
+  SevereSlugAnalyser(String name, double usl, double usg, double outletPressure, double temperature,
+      double simulationTime, int numberOfTimeSteps) {
+    this(name, usl, usg);
+    this.setOutletPressure(outletPressure);
+    this.setTemperature(temperature);
+    this.setSimulationTime(simulationTime);
+    this.setNumberOfTimeSteps(numberOfTimeSteps);
+  }
+
+  /**
+   * Constructor for class SevereSlugAnalyser.
+   *
+   * @param name Name of object
+   * @param fluid Fluid object. Used to calculate usl and usg
+   * @param pipe Pipe object
+   * @param outletPressure Pipe Outlet Pressure
+   * @param temperature Slug temperature.
+   * @param simulationTime Simulation time
+   * @param numberOfTimeSteps Number of simulation time steps to calculate
+   */
+  public SevereSlugAnalyser(String name, SystemInterface fluid, Pipe pipe, double outletPressure,
       double temperature, double simulationTime, int numberOfTimeSteps) {
-    this();
+    this(name, outletPressure, temperature, simulationTime, numberOfTimeSteps);
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
     fluid.initProperties();
@@ -169,30 +185,61 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
           + fluid.getPhase(2).getFlowRate("m3/sec") / pipe.getArea();
     }
     usg = fluid.getPhase(0).getFlowRate("m3/sec") / pipe.getArea();
-    this.setOutletPressure(outletPressure);
-    this.setTemperature(temperature);
-    this.setSimulationTime(simulationTime);
-    this.setNumberOfTimeSteps(numberOfTimeSteps);
   }
 
   /**
    * Constructor for class SevereSlugAnalyser.
    *
-   * @param stream
-   * @param internalDiameter
-   * @param leftLength
-   * @param rightLength
-   * @param angle
-   * @param outletPressure
-   * @param temperature
-   * @param simulationTime
-   * @param numberOfTimeSteps
+   * @param name Name of object
+   * @param stream Stream object
+   * @param internalDiameter pipe internal diameter
+   * @param leftLength pipe left length
+   * @param rightLength pipe right length
+   * @param angle pipe angle
    */
-  public SevereSlugAnalyser(Stream stream, double internalDiameter, double leftLength,
+  public SevereSlugAnalyser(String name, Stream stream, double internalDiameter, double leftLength,
+      double rightLength, double angle) {
+    this(name, stream, internalDiameter, leftLength, rightLength, angle, stream.getPressure("Pa"),
+        stream.getTemperature("C"), 500.0, 50000);
+  }
+
+  /**
+   * Constructor for class SevereSlugAnalyser.
+   *
+   * @param name Name of object
+   * @param stream Stream object
+   * @param internalDiameter pipe internal diameter
+   * @param leftLength pipe left length
+   * @param rightLength pipe right length
+   * @param angle pipe angle
+   * @param simulationTime Simulation time
+   * @param numberOfTimeSteps Number of simulation time steps to calculate
+   */
+  public SevereSlugAnalyser(String name, Stream stream, double internalDiameter, double leftLength,
+      double rightLength, double angle, double simulationTime, int numberOfTimeSteps) {
+    this(name, stream, internalDiameter, leftLength, rightLength, angle, stream.getPressure("Pa"),
+        stream.getTemperature("C"), simulationTime, numberOfTimeSteps);
+  }
+
+  /**
+   * Constructor for class SevereSlugAnalyser.
+   *
+   * @param name Name of object
+   * @param stream Stream object
+   * @param internalDiameter Pipe internal diameter
+   * @param leftLength Pipe left length
+   * @param rightLength Pipe right length
+   * @param angle Pipe angle
+   * @param outletPressure Pipe Outlet Pressure in Pa
+   * @param temperature Slug temperature.
+   * @param simulationTime Simulation time
+   * @param numberOfTimeSteps Number of simulation time steps to calculate
+   */
+  public SevereSlugAnalyser(String name, Stream stream, double internalDiameter, double leftLength,
       double rightLength, double angle, double outletPressure, double temperature,
       double simulationTime, int numberOfTimeSteps) {
-    this();
-    pipe = new Pipe(internalDiameter, leftLength, rightLength, angle);
+    this(name);
+    pipe = new Pipe("slugpipe", internalDiameter, leftLength, rightLength, angle);
     streamS = stream;
     SystemInterface fluid = stream.getThermoSystem();
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
@@ -207,37 +254,8 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     fluidSevereS = new FluidSevereSlug(fluid);
     usg = fluid.getPhase(0).getFlowRate("m3/sec") / pipe.getArea();
 
-    severeSlug = new SevereSlugAnalyser(usl, usg, outletPressure, temperature, simulationTime,
+    severeSlug = new SevereSlugAnalyser(name, usl, usg, outletPressure, temperature, simulationTime,
         numberOfTimeSteps);
-  }
-
-  public SevereSlugAnalyser(Stream stream, double internalDiameter, double leftLength,
-      double rightLength, double angle, double simulationTime, int numberOfTimeSteps) {
-    this(stream, internalDiameter, leftLength, rightLength, angle, stream.getPressure("Pa"),
-        stream.getTemperature("C"), simulationTime, numberOfTimeSteps);
-  }
-
-  public SevereSlugAnalyser(Stream stream, double internalDiameter, double leftLength,
-      double rightLength, double angle) {
-    this(stream, internalDiameter, leftLength, rightLength, angle, stream.getPressure("Pa"),
-        stream.getTemperature("C"), 500.0, 50000);
-  }
-
-  /**
-   * Constructor for class SevereSlugAnalyser.
-   *
-   * @param outletPressure
-   * @param temperature
-   * @param simulationTime
-   * @param numberOfTimeSteps
-   */
-  public SevereSlugAnalyser(double outletPressure, double temperature, double simulationTime,
-      int numberOfTimeSteps) {
-    this();
-    this.setOutletPressure(outletPressure);
-    this.setTemperature(temperature);
-    this.setSimulationTime(simulationTime);
-    this.setNumberOfTimeSteps(numberOfTimeSteps);
   }
 
   /**
@@ -312,7 +330,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * Setter for the field <code>outletPressure</code>.
    * </p>
    *
-   * @param outletPressure a double
+   * @param outletPressure Value in engineering unit Pa
    */
   public void setOutletPressure(double outletPressure) {
     this.outletPressure = outletPressure;
@@ -323,7 +341,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * Getter for the field <code>outletPressure</code>.
    * </p>
    *
-   * @return a double
+   * @return Get pressure in Pa
    */
   public double getOutletPressure() {
     return outletPressure;
@@ -684,8 +702,8 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     }
     fluidSevereS = new FluidSevereSlug(fluid);
     usg = fluid.getPhase(0).getFlowRate("m3/sec") / pipe.getArea();
-    severeSlug = new SevereSlugAnalyser(usl, usg, outletPressure, temperature, simulationTime,
-        numberOfTimeSteps);
+    severeSlug = new SevereSlugAnalyser("tmp", usl, usg, outletPressure, temperature,
+        simulationTime, numberOfTimeSteps);
     checkFlowRegime(fluidSevereS, pipe, severeSlug);
     return slugValue;
   }
@@ -717,7 +735,6 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * @return a {@link java.lang.String} object
    */
   public String getPredictedFlowRegime() {
-    logger.debug(angle);
     SystemInterface fluid = streamS.getThermoSystem();
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
@@ -735,8 +752,8 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
       }
       fluidSevereS = new FluidSevereSlug(fluid);
       usg = fluid.getPhase(0).getFlowRate("m3/sec") / pipe.getArea();
-      severeSlug = new SevereSlugAnalyser(usl, usg, outletPressure, temperature, simulationTime,
-          numberOfTimeSteps);
+      severeSlug = new SevereSlugAnalyser("tmp", usl, usg, outletPressure, temperature,
+          simulationTime, numberOfTimeSteps);
       checkFlowRegime(fluidSevereS, pipe, severeSlug);
     }
     return flowPattern;
@@ -778,7 +795,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
     testSystem.init(0);
     Stream inputStream = new Stream("inputStream", testSystem);
     SevereSlugAnalyser mySevereSlug4 =
-        new SevereSlugAnalyser(inputStream, 0.05, 167, 7.7, 2, 100000.0, 20.0, 200.0, 20000);
+        new SevereSlugAnalyser("tmp", inputStream, 0.05, 167, 7.7, 2, 100000.0, 20.0, 200.0, 20000);
     logger.debug(inputStream.getFlowRate("kg/sec"));
     mySevereSlug4.getPredictedFlowRegime();
     // inputStream.setFlowRate(0.00001, "MSm^3/day");
