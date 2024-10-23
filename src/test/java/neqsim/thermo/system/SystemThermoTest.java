@@ -131,7 +131,6 @@ class SystemThermoTest extends neqsim.NeqSimTest {
     testOps.TPflash();
     testSystem.initProperties();
 
-
     double density = testSystem.getDensity("kg/m3");
 
     testSystem.setForceSinglePhase(PhaseType.GAS);
@@ -144,7 +143,5 @@ class SystemThermoTest extends neqsim.NeqSimTest {
     testSystem.initProperties();
 
     assertEquals(density, testSystem.getDensity("kg/m3"), 1e-4);
-
-
   }
 }

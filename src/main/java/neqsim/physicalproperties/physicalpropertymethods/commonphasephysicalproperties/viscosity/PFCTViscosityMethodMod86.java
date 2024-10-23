@@ -56,14 +56,10 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
   /** {@inheritDoc} */
   @Override
   public double calcViscosity() {
-    double Pc0 = referenceSystem.getPhase(0).getComponent(0).getPC();
-    double Tc0 = referenceSystem.getPhase(0).getComponent(0).getTC();
-    double M0 = referenceSystem.getPhase(0).getComponent(0).getMolarMass() * 1e3;
+    final double Pc0 = referenceSystem.getPhase(0).getComponent(0).getPC();
+    final double Tc0 = referenceSystem.getPhase(0).getComponent(0).getTC();
+    final double M0 = referenceSystem.getPhase(0).getComponent(0).getMolarMass() * 1e3;
     double PCmix = 0.0;
-    double TCmix = 0.0;
-    double Mmix = 0.0;
-    double alfa0 = 1.0;
-    double alfaMix = 1.0;
     double tempTC1 = 0.0;
     double tempTC2 = 0.0;
     double tempPC1 = 0.0;
@@ -97,8 +93,9 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
       return 0.0;
     }
     PCmix = 8.0 * tempPC1 / (tempPC2 * tempPC2);
-    TCmix = tempTC1 / tempTC2;
-    Mmix = (Mmtemp + 1.304e-4 * (Math.pow(Mwtemp / Mmtemp, 2.303) - Math.pow(Mmtemp, 2.303))) * 1e3; // phase.getPhase().getMolarMass();
+    double TCmix = tempTC1 / tempTC2;
+    double Mmix =
+        (Mmtemp + 1.304e-4 * (Math.pow(Mwtemp / Mmtemp, 2.303) - Math.pow(Mmtemp, 2.303))) * 1e3; // phase.getPhase().getMolarMass();
 
     referenceSystem.setTemperature(phase.getPhase().getTemperature()
         * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix);
@@ -112,8 +109,8 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
     double critMolDens = 10.15; // 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
     double redDens = molDens / critMolDens;
 
-    alfaMix = 1.0 + 7.378e-3 * Math.pow(redDens, 1.847) * Math.pow(Mmix, 0.5173);
-    alfa0 = 1.0 + 7.378e-3 * Math.pow(redDens, 1.847)
+    double alfaMix = 1.0 + 7.378e-3 * Math.pow(redDens, 1.847) * Math.pow(Mmix, 0.5173);
+    double alfa0 = 1.0 + 7.378e-3 * Math.pow(redDens, 1.847)
         * Math.pow(referenceSystem.getMolarMass() * 1.0e3, 0.5173);
     // alfa0 = 1.0 + 8.374e-4 * Math.pow(redDens, 4.265);
     // System.out.println("func " + 7.475e-5*Math.pow(16.043, 0.8579));
