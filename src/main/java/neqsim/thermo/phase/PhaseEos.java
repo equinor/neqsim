@@ -99,22 +99,15 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     }
 
     if (initType != 0) {
-      try {
-        if (calcMolarVolume) {
+      if (calcMolarVolume) {
+        try {
           molarVolume = molarVolume(pressure, temperature,
               getA() / numberOfMolesInPhase / numberOfMolesInPhase, getB() / numberOfMolesInPhase,
               pt);
+        } catch (Exception ex) {
+          // reraise IsNaNException and TooManyIterationsException as RuntimeException
+          throw new RuntimeException(ex);
         }
-      } catch (Exception ex) {
-        logger.warn("Failed to solve for molarVolume within the iteration limit.");
-        logger.error(ex.getMessage());
-        throw new RuntimeException(ex);
-        // logger.error("too many iterations in volume calc!", ex);
-        // logger.info("moles " + numberOfMolesInPhase);
-        // logger.info("molarVolume " + getMolarVolume());
-        // logger.info("setting molar volume to ideal gas molar volume.............");
-        // setMolarVolume((R * temperature) / pressure);
-        // System.exit(0);
       }
 
       Z = pressure * getMolarVolume() / (R * temperature);
@@ -135,8 +128,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       double sumAqueous = 0.0;
       for (int i = 0; i < numberOfComponents; i++) {
         if ((getComponent(i).isHydrocarbon() || getComponent(i).isInert()
-            || getComponent(i).isIsTBPfraction())
-            && !getComponent(i).getName().equals("water")
+            || getComponent(i).isIsTBPfraction()) && !getComponent(i).getName().equals("water")
             && !getComponent(i).getName().equals("water_PC")) {
           sumHydrocarbons += getComponent(i).getx();
         } else {

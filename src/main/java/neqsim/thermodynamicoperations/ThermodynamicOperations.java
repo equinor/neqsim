@@ -150,7 +150,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void TPflash() {
     double flowRate = system.getTotalNumberOfMoles();
-    double minimumFlowRate = 1e-50;
     if (flowRate < 1e-5) {
       system.setTotalNumberOfMoles(1.0);
       system.init(1);
@@ -162,7 +161,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } else {
       run();
     }
+
     if (flowRate < 1e-5) {
+      final double minimumFlowRate = 1e-50;
       if (flowRate < minimumFlowRate) {
         system.setTotalNumberOfMoles(minimumFlowRate);
       } else {
@@ -1023,6 +1024,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     systemTemp = system.clone();
 
     for (int i = 0; i < temperature.length; i++) {
+      // todo: this function does not actually set hydTemps which is the returned variable
       /*
        * opsTemp = new ThermodynamicOperations(systemTemp);
        * systemTemp.setTemperature(temperature[i]); systemTemp.setPressure(pressure[i]);
