@@ -191,7 +191,6 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    */
   public StreamInterface clone(String name);
 
-
   /**
    * <p>
    * flashStream.
