@@ -249,11 +249,7 @@ public class ProcessModule extends SimulationBaseClass {
     return null;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a String
-   */
+  /** {@inheritDoc} */
   @Override
   public String getReport_json() {
     return new Report(this).generateJsonReport();

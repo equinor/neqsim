@@ -732,9 +732,7 @@ public class ProcessSystem extends SimulationBaseClass {
     return name;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void setName(String name) {
     this.name = name;
@@ -938,11 +936,7 @@ public class ProcessSystem extends SimulationBaseClass {
         && Objects.equals(unitOperations, other.unitOperations);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a String
-   */
+  /** {@inheritDoc} */
   @Override
   public String getReport_json() {
     return new Report(this).generateJsonReport();

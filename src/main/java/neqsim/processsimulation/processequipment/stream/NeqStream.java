@@ -65,12 +65,7 @@ public class NeqStream extends Stream {
     return clonedStream;
   }
 
-  /**
-   * Clone NeqStream object and give it a new name.
-   *
-   * @param name Name to set for the cloned object
-   * @return Cloned NeqStream object
-   */
+  /** {@inheritDoc} */
   @Override
   public NeqStream clone(String name) {
     if (this.getName() == name) {

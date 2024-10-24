@@ -64,12 +64,7 @@ public class ScalePotentialCheckStream extends Stream {
     return clonedSystem;
   }
 
-  /**
-   * Clone ScalePotentialCheckStream object and give it a new name.
-   *
-   * @param name Name to set for the cloned object
-   * @return Cloned ScalePotentialCheckStream object
-   */
+  /** {@inheritDoc} */
   @Override
   public ScalePotentialCheckStream clone(String name) {
     if (this.getName() == name) {
