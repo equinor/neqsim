@@ -100,7 +100,6 @@ public class ProcessSystem extends SimulationBaseClass {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("ProcessSystem",
           "add", "operation", "- Process equipment of type " + existing.getClass().getSimpleName()
               + " named " + operation.getName() + " already included in ProcessSystem"));
-
     }
 
     getUnitOperations().add(position, operation);

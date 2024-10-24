@@ -1,10 +1,8 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
-import neqsim.thermo.system.SystemInterface;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>

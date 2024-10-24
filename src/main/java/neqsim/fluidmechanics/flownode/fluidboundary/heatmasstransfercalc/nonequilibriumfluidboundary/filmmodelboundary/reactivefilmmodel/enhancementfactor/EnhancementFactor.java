@@ -116,7 +116,6 @@ public class EnhancementFactor implements EnhancementFactorInterface {
     }
   }
 
-
   /**
    * Getter for property hattaNumber.
    *
