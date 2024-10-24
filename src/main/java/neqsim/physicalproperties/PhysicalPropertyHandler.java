@@ -2,6 +2,7 @@ package neqsim.physicalproperties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyType;
 import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface;
 import neqsim.physicalproperties.physicalpropertysystem.commonphasephysicalproperties.DefaultPhysicalProperties;
 import neqsim.physicalproperties.physicalpropertysystem.gasphysicalproperties.GasPhysicalProperties;
@@ -44,36 +45,36 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param type 0 Orginal/default 1 Water 2 Glycol 3 Amine 4 CO2Water 6 Basic
+   * @param ppt PhysicalPropertyType enum object
    */
-  public void setPhysicalProperties(PhaseInterface phase, int type) {
-    switch (type) {
-      case 0: // Default
+  public void setPhysicalProperties(PhaseInterface phase, PhysicalPropertyType ppt) {
+    switch (ppt) {
+      case DEFAULT: // Default
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new WaterPhysicalProperties(phase, 0, 0);
         break;
-      case 1: // Water
+      case WATER: // Water
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new WaterPhysicalProperties(phase, 0, 0);
         break;
-      case 2: // Glycol
+      case GLYCOL: // Glycol
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new GlycolPhysicalProperties(phase, 0, 0);
         break;
-      case 3: // Amine
+      case AMINE: // Amine
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new AminePhysicalProperties(phase, 0, 0);
         break;
-      case 4: // CO2water
+      case CO2WATER:
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new CO2waterPhysicalProperties(phase, 0, 0);
         break;
-      case 6: // Basic?
+      case BASIC:
         gasPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
@@ -81,7 +82,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
       default:
         logger
             .error("error selecting physical properties model.\n Continue using default model...");
-        setPhysicalProperties(phase, 0);
+        setPhysicalProperties(phase, PhysicalPropertyType.DEFAULT);
         break;
     }
     solidPhysicalProperties = new SolidPhysicalProperties(phase);

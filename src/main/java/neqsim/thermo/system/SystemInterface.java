@@ -2,6 +2,7 @@ package neqsim.thermo.system;
 
 import neqsim.chemicalreactions.ChemicalReactionOperations;
 import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
+import neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyType;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
@@ -2435,9 +2436,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * Set the physical property model type for each phase of the System.
    *
-   * @param type 0 Orginal/default 1 Water 2 Glycol 3 Amine 4 CO2Water 6 Basic
+   * @param ppt PhysicalPropertyType enum object
    */
-  public void setPhysicalPropertyModel(int type);
+  public void setPhysicalPropertyModel(PhysicalPropertyType ppt);
 
   /**
    * method to set the pressure of a fluid (same pressure for all phases).
