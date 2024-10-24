@@ -97,7 +97,7 @@ public class ComponentHydrate extends Component {
         sphericalCoreRadiusHydrate =
             Double.parseDouble(dataSet.getString("SphericalCoreRadiusHYDRATE"));
       } catch (Exception ex) {
-        logger.error("error in comp", ex);
+        logger.error("error in comp");
       } finally {
         try {
           if (dataSet != null) {

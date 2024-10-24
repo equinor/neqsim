@@ -144,7 +144,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
             M[i] = this.thermoSystem.getPhase(0).getComponent(i).getMolarMass();
             dataSet.next();
           } catch (Exception ex2) {
-            logger.error(ex2.getMessage());
+            logger.error(ex2.getMessage(), ex2);
           }
           componentsNotDefinedByStandard
               .add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");

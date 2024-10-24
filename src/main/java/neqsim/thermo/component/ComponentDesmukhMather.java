@@ -49,7 +49,7 @@ public class ComponentDesmukhMather extends ComponentGE {
         deshMathIonicDiameter = Double.parseDouble(dataSet.getString("DeshMatIonicDiameter"));
       }
     } catch (Exception ex) {
-      logger.error("error in comp", ex);
+      logger.error("error in comp");
     }
   }
 

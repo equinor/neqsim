@@ -143,7 +143,7 @@ public class ComponentSolid extends ComponentSrk {
     try {
       refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, PhaseType.byValue(0), 1.0);
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error(ex.getMessage(), ex);
     }
     refPhase.getComponent(0).fugcoef(refPhase);
 

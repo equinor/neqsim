@@ -192,11 +192,12 @@ public class RachfordRice implements Serializable {
     beta[1] = 1.0 - nybeta;
 
     if (iterations >= maxIterations) {
-      throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(), "calcBeta",
-          maxIterations);
+      throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(),
+          "calcBetaMichelsen2001", maxIterations);
     }
     if (Double.isNaN(nybeta)) {
-      throw new neqsim.util.exception.IsNaNException(new RachfordRice(), "calcBeta", "beta");
+      throw new neqsim.util.exception.IsNaNException(new RachfordRice(), "calcBetaMichelsen2001",
+          "beta");
     }
     return nybeta;
   }
@@ -326,11 +327,12 @@ public class RachfordRice implements Serializable {
     beta[1] = 1.0 - V;
 
     if (iter >= maxIterations) {
-      throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(), "calcBeta",
-          maxIterations);
+      throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(),
+          "calcBetaNielsen2023", maxIterations);
     }
     if (Double.isNaN(V)) {
-      throw new neqsim.util.exception.IsNaNException(new RachfordRice(), "calcBeta", "beta");
+      throw new neqsim.util.exception.IsNaNException(new RachfordRice(), "calcBetaNielsen2023",
+          "beta");
     }
 
     return V;
@@ -493,14 +495,14 @@ public class RachfordRice implements Serializable {
     this.beta[1] = 1.0 - nybeta;
 
     if (iterations >= maxIterations) {
-      throw new neqsim.util.exception.TooManyIterationsException(this, "calcBeta", maxIterations);
+      throw new neqsim.util.exception.TooManyIterationsException(this, "calcBetaS", maxIterations);
     }
     if (Double.isNaN(beta[1])) {
       /*
        * for (i = 0; i < numberOfComponents; i++) { System.out.println("K " + compArray[i].getK());
        * System.out.println("z " + compArray[i].getz()); }
        */
-      throw new neqsim.util.exception.IsNaNException(this, "calcBeta", "beta");
+      throw new neqsim.util.exception.IsNaNException(this, "calcBetaS", "beta");
     }
     return this.beta[0];
   }

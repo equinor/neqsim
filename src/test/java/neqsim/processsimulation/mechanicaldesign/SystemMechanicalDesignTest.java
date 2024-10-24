@@ -132,13 +132,15 @@ public class SystemMechanicalDesignTest {
     SystemMechanicalDesign mecDesign = new SystemMechanicalDesign(operations);
     mecDesign.runDesignCalculation();
 
-    System.out.println("total process weight " + mecDesign.getTotalWeight() + " kg");
-    System.out.println("total process volume " + mecDesign.getTotalVolume() + " m3");
-    System.out.println("total plot space " + mecDesign.getTotalPlotSpace() + " m2");
-    System.out.println("separator inner diameter "
-        + ((Separator) operations.getUnit("sepregenGas")).getMechanicalDesign().innerDiameter);
-    System.out.println("valve weight "
-        + ((ThrottlingValve) operations.getUnit("valve1")).getMechanicalDesign().getWeightTotal());
+    /*
+     * System.out.println("total process weight " + mecDesign.getTotalWeight() + " kg");
+     * System.out.println("total process volume " + mecDesign.getTotalVolume() + " m3");
+     * System.out.println("total plot space " + mecDesign.getTotalPlotSpace() + " m2");
+     * System.out.println("separator inner diameter " + ((Separator)
+     * operations.getUnit("sepregenGas")).getMechanicalDesign().innerDiameter);
+     * System.out.println("valve weight " + ((ThrottlingValve)
+     * operations.getUnit("valve1")).getMechanicalDesign().getWeightTotal());
+     */
   }
 
   @Test
@@ -148,9 +150,11 @@ public class SystemMechanicalDesignTest {
     SeparatorMechanicalDesign sepMechDesign =
         new SeparatorMechanicalDesign((Separator) operations.getUnit("sepregenGas"));
     sepMechDesign.calcDesign();
-    System.out.println("separator inner diameter " + sepMechDesign.innerDiameter);
-    System.out.println("separator weight vessel shell " + sepMechDesign.weigthVesselShell);
-    System.out.println("separator weight structual steel " + sepMechDesign.weightStructualSteel);
+    /*
+     * System.out.println("separator inner diameter " + sepMechDesign.innerDiameter);
+     * System.out.println("separator weight vessel shell " + sepMechDesign.weigthVesselShell);
+     * System.out.println("separator weight structual steel " + sepMechDesign.weightStructualSteel);
+     */
   }
 
   @Test
@@ -172,9 +176,11 @@ public class SystemMechanicalDesignTest {
     GasScrubberMechanicalDesign sepMechDesign = new GasScrubberMechanicalDesign(sep1);
     sepMechDesign.setMaxOperationPressure(180);
     sepMechDesign.calcDesign();
-    System.out.println("separator inner diameter " + sepMechDesign.innerDiameter);
-    System.out.println("separator weight vessel shell " + sepMechDesign.weigthVesselShell);
-    System.out.println("separator weight structual steel " + sepMechDesign.weightStructualSteel);
+    /*
+     * System.out.println("separator inner diameter " + sepMechDesign.innerDiameter);
+     * System.out.println("separator weight vessel shell " + sepMechDesign.weigthVesselShell);
+     * System.out.println("separator weight structual steel " + sepMechDesign.weightStructualSteel);
+     */
     sep1.addSeparatorSection("first mesh", "meshpad");
     sepMechDesign.calcDesign();
   }
@@ -184,7 +190,7 @@ public class SystemMechanicalDesignTest {
     ValveMechanicalDesign valve1MechDesign =
         new ValveMechanicalDesign((ThrottlingValve) operations.getUnit("valve1"));
     valve1MechDesign.calcDesign();
-    System.out.println("valve total weight " + valve1MechDesign.getWeightTotal());
+    // System.out.println("valve total weight " + valve1MechDesign.getWeightTotal());
   }
 
   @Test
@@ -200,7 +206,7 @@ public class SystemMechanicalDesignTest {
 
     pipe.run();
 
-    System.out.println("out pressure " + pipe.getOutletStream().getPressure("bara"));
+    // System.out.println("out pressure " + pipe.getOutletStream().getPressure("bara"));
 
     PipelineMechanicalDesign pipeMechDesign = new PipelineMechanicalDesign(pipe);
     pipeMechDesign.setMaxOperationPressure(100.0);
@@ -210,7 +216,7 @@ public class SystemMechanicalDesignTest {
     pipeMechDesign.setCompanySpecificDesignStandards("Statoil");
     pipeMechDesign.calcDesign();
 
-    System.out.println("wall thickness " + pipeMechDesign.getWallThickness());
+    // System.out.println("wall thickness " + pipeMechDesign.getWallThickness());
   }
 
   @Test
@@ -221,6 +227,6 @@ public class SystemMechanicalDesignTest {
     CostEstimateBaseClass costEst = new CostEstimateBaseClass(mecDesign);
     costEst.getWeightBasedCAPEXEstimate();
 
-    System.out.println("weight based cost estmate " + costEst.getWeightBasedCAPEXEstimate());
+    // System.out.println("weight based cost estmate " + costEst.getWeightBasedCAPEXEstimate());
   }
 }

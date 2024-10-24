@@ -203,7 +203,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getStackTrace());
+        logger.error(ex.getMessage(), ex);
         return Double.NaN;
       }
       tempFluid.initPhysicalProperties();
@@ -237,7 +237,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getStackTrace());
+        logger.error(ex.getMessage(), ex);
         return Double.NaN;
       }
       if (!tempFluid.hasPhaseType("gas")) {

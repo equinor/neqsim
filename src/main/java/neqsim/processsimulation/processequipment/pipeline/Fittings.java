@@ -89,7 +89,7 @@ public class Fittings implements Serializable {
         LtoD = (Double.parseDouble(dataSet.getString("LtoD")));
         System.out.printf("LtoD " + LtoD);
       } catch (Exception ex) {
-        logger.error("error in comp", ex);
+        logger.error("error in fittings");
       }
     }
 

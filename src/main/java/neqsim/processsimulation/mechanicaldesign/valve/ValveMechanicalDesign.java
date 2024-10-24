@@ -33,9 +33,8 @@ public class ValveMechanicalDesign extends MechanicalDesign {
    * Constructor for ValveMechanicalDesign.
    * </p>
    *
-   * @param equipment a
-   *                  {@link neqsim.processsimulation.processequipment.ProcessEquipmentInterface}
-   *                  object
+   * @param equipment a {@link neqsim.processsimulation.processequipment.ProcessEquipmentInterface}
+   *        object
    */
   public ValveMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -50,7 +49,8 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     if (getDesignStandard().containsKey("valve design codes")) {
       System.out.println("valve code standard: "
           + getDesignStandard().get("valve design codes").getStandardName());
-      valveCvMax = ((ValveDesignStandard) getDesignStandard().get("valve design codes")).getValveCvMax();
+      valveCvMax =
+          ((ValveDesignStandard) getDesignStandard().get("valve design codes")).getValveCvMax();
     } else {
       System.out.println("no valve code standard specified......using default");
     }
@@ -78,7 +78,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = { "Name", "Value", "Unit" };
+    String[] names = {"Name", "Value", "Unit"};
 
     String[][] table = new String[16][3]; // createTable(getProcessEquipment().getName());
 

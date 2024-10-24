@@ -63,6 +63,7 @@ import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops
 import neqsim.thermodynamicoperations.phaseenvelopeops.reactivecurves.PloadingCurve2;
 import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterStudents;
 import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterStudentsPH;
+import neqsim.util.exception.IsNaNException;
 
 /**
  * <p>
@@ -79,7 +80,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   private OperationInterface operation = null;
 
   /**
-   * <p>Getter for the field <code>system</code>.</p>
+   * <p>
+   * Getter for the field <code>system</code>.
+   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -1302,9 +1305,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * bubblePointPressureFlash.
    * </p>
    *
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void bubblePointPressureFlash() throws Exception {
+  public void bubblePointPressureFlash() throws IsNaNException {
     system.init(0);
     ConstantDutyFlashInterface operation = new ConstantDutyPressureFlash(system);
     system.setBeta(1, 1.0 - 1e-10);
@@ -1322,9 +1325,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param derivatives a boolean
-   * @throws java.lang.Exception if any.
    */
-  public void bubblePointPressureFlash(boolean derivatives) throws Exception {
+  public void bubblePointPressureFlash(boolean derivatives) {
     ConstantDutyFlashInterface operation = null;
     if (derivatives) {
       operation = new BubblePointPressureFlashDer(system);
@@ -1334,12 +1336,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     try {
       operation.run();
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      logger.error(e.getMessage(), e);
     }
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      Exception e = new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
+      new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
           "bubblePointPressureFlash", "Could not find solution - possible no bubble point exists");
-      logger.error(e.getMessage());
     }
   }
 
@@ -1458,9 +1459,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * dewPointTemperatureFlash.
    * </p>
    *
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void dewPointTemperatureFlash() throws Exception {
+  public void dewPointTemperatureFlash() throws IsNaNException {
     ConstantDutyFlashInterface operation =
         new neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlash(system);
     operation.run();
@@ -1476,9 +1477,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param derivatives a boolean
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void dewPointTemperatureFlash(boolean derivatives) throws Exception {
+  public void dewPointTemperatureFlash(boolean derivatives) throws IsNaNException {
     ConstantDutyFlashInterface operation =
         new neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlash(system);
     if (derivatives) {
