@@ -126,7 +126,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
             M[i] = this.thermoSystem.getPhase(0).getComponent(i).getMolarMass();
             dataSet.next();
           } catch (Exception er) {
-            logger.error(er.toString());
+            logger.error(er.getMessage(), er);
           }
           componentsNotDefinedByStandard
               .add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");

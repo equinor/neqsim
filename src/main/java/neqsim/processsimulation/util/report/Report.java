@@ -30,7 +30,9 @@ public class Report {
   SystemInterface fluid = null;
 
   /**
-   * <p>Constructor for Report.</p>
+   * <p>
+   * Constructor for Report.
+   * </p>
    *
    * @param process a {@link neqsim.processsimulation.processsystem.ProcessSystem} object
    */
@@ -39,7 +41,9 @@ public class Report {
   }
 
   /**
-   * <p>Constructor for Report.</p>
+   * <p>
+   * Constructor for Report.
+   * </p>
    *
    * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -48,16 +52,21 @@ public class Report {
   }
 
   /**
-   * <p>Constructor for Report.</p>
+   * <p>
+   * Constructor for Report.
+   * </p>
    *
-   * @param processEquipmentBaseClass a {@link neqsim.processsimulation.processequipment.ProcessEquipmentBaseClass} object
+   * @param processEquipmentBaseClass a
+   *        {@link neqsim.processsimulation.processequipment.ProcessEquipmentBaseClass} object
    */
   public Report(ProcessEquipmentBaseClass processEquipmentBaseClass) {
     processEquipment = processEquipmentBaseClass;
   }
 
   /**
-   * <p>Constructor for Report.</p>
+   * <p>
+   * Constructor for Report.
+   * </p>
    *
    * @param processModule a {@link neqsim.processsimulation.processsystem.ProcessModule} object
    */
@@ -66,16 +75,21 @@ public class Report {
   }
 
   /**
-   * <p>Constructor for Report.</p>
+   * <p>
+   * Constructor for Report.
+   * </p>
    *
-   * @param processModuleBaseClass a {@link neqsim.processsimulation.processsystem.ProcessModuleBaseClass} object
+   * @param processModuleBaseClass a
+   *        {@link neqsim.processsimulation.processsystem.ProcessModuleBaseClass} object
    */
   public Report(ProcessModuleBaseClass processModuleBaseClass) {
     // TODO Auto-generated constructor stub
   }
 
   /**
-   * <p>generateJsonReport.</p>
+   * <p>
+   * generateJsonReport.
+   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -105,12 +119,13 @@ public class Report {
         // Update the final JsonObject with the parsed JSON object
         finalJsonObject.add(entry.getKey(), nestedJsonObject);
       } catch (Exception e) {
-        logger.error(e.getMessage());
+        logger.error(e.getMessage(), e);
       }
     }
 
     // Convert the final JsonObject to a JSON string with pretty printing
-    Gson prettyGson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    Gson prettyGson =
+        new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return prettyGson.toJson(finalJsonObject);
   }
 }

@@ -224,7 +224,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       try {
         liquidOutStream.getFluid().init(3);
       } catch (Exception e) {
-        logger.error(e.getMessage());
+        logger.error(e.getMessage(), e);
       }
     }
     if (getCalculateSteadyState()) {
@@ -301,7 +301,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         gasOutStream.getThermoSystem().init(3);
         liquidOutStream.getThermoSystem().init(3);
       } catch (Exception e) {
-        logger.error(e.getMessage());
+        logger.error(e.getMessage(), e);
       }
       boolean hasliq = false;
       double deliq = 0.0;

@@ -4917,8 +4917,8 @@ public abstract class SystemThermo implements SystemInterface {
     init(0);
     try {
       init(1);
-    } catch (Exception e) {
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
     double density = 0.0;
     if (flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("gallons/min")
