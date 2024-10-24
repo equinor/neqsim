@@ -67,7 +67,7 @@ public class TPflashTest {
     testSystem.createDatabase(true);
     testSystem.setMixingRule(10);
     // testSystem.setMultiPhaseCheck(true);
-    // testSystem.setPhysicalPropertyModel(6);
+    // testSystem.setPhysicalPropertyModel(PhysicalPropertyType.BASIC);
     // testSystem.initPhysicalProperties();
     // testSystem.getInterphaseProperties().setInterfacialTensionModel(3);
     // testSystem.useVolumeCorrection(true);
@@ -93,7 +93,7 @@ public class TPflashTest {
     // double a =
     // testSystem.getPhase("oil").getPhysicalProperties().getDiffusionCoefficient(0,
     // 1);
-    // testSystem.setPhysicalPropertyModel(6);
+    // testSystem.setPhysicalPropertyModel(PhysicalPropertyType.BASIC);
     // testSystem.getPhase(0).initPhysicalProperties("viscosity");
     double visc =
         testSystem.getPhase(1).getPhysicalProperties().getViscosityModel().calcViscosity();

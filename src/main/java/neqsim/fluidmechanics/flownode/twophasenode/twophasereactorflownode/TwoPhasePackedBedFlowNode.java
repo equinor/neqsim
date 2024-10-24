@@ -5,6 +5,7 @@ import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficie
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.reactor.ReactorData;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -232,7 +233,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
     testSystem.setMixingRule(4);
     testOps.TPflash();
     testSystem.addComponent("CO2", 2000.11152181, "Nlitre/min", 0);
-    testSystem.setPhysicalPropertyModel(3);
+    testSystem.setPhysicalPropertyModel(PhysicalPropertyModel.AMINE);
     testSystem.init_x_y();
     testSystem.getPhases()[1].setTemperature(313.0);
     testSystem.getPhases()[0].setTemperature(325.0);

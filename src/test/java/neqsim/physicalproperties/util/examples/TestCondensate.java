@@ -2,6 +2,7 @@ package neqsim.physicalproperties.util.examples;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -57,7 +58,7 @@ public class TestCondensate {
     testSystem.setMixingRule("classic");
     testSystem.init(0);
     testSystem.init(1);
-    testSystem.setPhysicalPropertyModel(6);
+    testSystem.setPhysicalPropertyModel(PhysicalPropertyModel.BASIC);
     try {
       testOps.TPflash();
     } catch (Exception ex) {

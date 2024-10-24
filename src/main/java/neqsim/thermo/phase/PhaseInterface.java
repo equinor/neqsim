@@ -8,6 +8,7 @@ package neqsim.thermo.phase;
 
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -98,13 +99,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return an array of type double
    */
   public double[] getMolarComposition();
-
-  /**
-   * <p>
-   * resetPhysicalProperties.
-   * </p>
-   */
-  public void resetPhysicalProperties();
 
   /**
    * method to return phase volume note: without Peneloux volume correction.
@@ -789,19 +783,65 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * setPhysicalProperties.
+   * getPhysicalProperties.
    * </p>
+   *
+   * @return a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public void setPhysicalProperties();
+  public PhysicalProperties getPhysicalProperties();
 
   /**
    * <p>
-   * specify the type model for the physical properties you want to use.
+   * resetPhysicalProperties.
+   * </p>
+   */
+  public void resetPhysicalProperties();
+
+  /**
+   * <p>
+   * Specify the type of the physical properties.
+   * </p>
+   */
+  public default void setPhysicalProperties() {
+    setPhysicalProperties(getPhysicalPropertyModel());
+  }
+
+  /**
+   * <p>
+   * Specify the type of the physical properties.
    * </p>
    *
-   * @param type 0 Orginal/default 1 Water 2 Glycol 3 Amine 4 CO2Water 6 Basic
+   * @param ppm PhysicalPropertyModel enum object
    */
-  public void setPhysicalProperties(int type);
+  public void setPhysicalProperties(PhysicalPropertyModel ppm);
+
+  /**
+   * <p>
+   * Getter for property ppm.
+   * </p>
+   *
+   * @return a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel} object
+   */
+  public PhysicalPropertyModel getPhysicalPropertyModel();
+
+  /**
+   * <p>
+   * Setter for property ppm.
+   * </p>
+   *
+   * @param ppm PhysicalPropertyModel enum object
+   */
+  public void setPpm(PhysicalPropertyModel ppm);
+
+  /**
+   * <p>
+   * setPhysicalPropertyModel.
+   * </p>
+   *
+   * @param ppm a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel}
+   *        object
+   */
+  public void setPhysicalPropertyModel(PhysicalPropertyModel ppm);
 
   /**
    * <p>
@@ -836,15 +876,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param temperature in unit Kelvin
    */
   public void setTemperature(double temperature);
-
-  /**
-   * <p>
-   * getPhysicalProperties.
-   * </p>
-   *
-   * @return a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
-   */
-  public PhysicalProperties getPhysicalProperties();
 
   /**
    * <p>
@@ -1828,24 +1859,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param refPhase an array of {@link neqsim.thermo.phase.PhaseInterface} objects
    */
   public void setRefPhase(neqsim.thermo.phase.PhaseInterface[] refPhase);
-
-  /**
-   * <p>
-   * Getter for property physicalPropertyType.
-   * </p>
-   *
-   * @return a int
-   */
-  public int getPhysicalPropertyType();
-
-  /**
-   * <p>
-   * Setter for property physicalPropertyType.
-   * </p>
-   *
-   * @param physicalPropertyType a int
-   */
-  public void setPhysicalPropertyType(int physicalPropertyType);
 
   /**
    * <p>

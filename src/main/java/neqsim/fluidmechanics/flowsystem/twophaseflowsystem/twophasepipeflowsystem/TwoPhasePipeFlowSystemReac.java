@@ -1,5 +1,6 @@
 package neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem;
 
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -42,7 +43,7 @@ public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
     testSystem.chemicalReactionInit();
     testSystem.createDatabase(true);
     testSystem.setMixingRule(4);
-    testSystem.setPhysicalPropertyModel(3);
+    testSystem.setPhysicalPropertyModel(PhysicalPropertyModel.AMINE);
     // testOps.TPflash();
     // testSystem.display();
 

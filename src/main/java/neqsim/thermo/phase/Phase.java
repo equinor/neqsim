@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.PhysicalPropertyHandler;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentInterface;
@@ -19,7 +20,19 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * Phase class.
+ * Abstract Phase class. All Phase classes shall subclass this class.
+ *
+ * <p>
+ * From wiki: A phase is a region of a space (a thermodynamic system), in neqsim named a
+ * SystemInterface, throughout which all physical properties of a material are essentially uniform.
+ * A SystemInterface can contain a single or multiple PhaseInterface objects.
+ *
+ * See PhaseType for the types of Phases that NeqSim is aware of. See also StateOfMatter.
+ *
+ * In NeqSim, there are multiple Phase classes, each representing a specific set of Equations Of
+ * State. Phases have corresponding Component classes and System classes to ensure same EoS is used
+ * throughout.
+ * </p>
  *
  * @author Even Solbraa
  */
@@ -37,10 +50,10 @@ public abstract class Phase implements PhaseInterface {
 
   private boolean constantPhaseVolume = false;
 
-  public int physicalPropertyType = 0;
+  private PhysicalPropertyModel ppm = PhysicalPropertyModel.DEFAULT;
+  public neqsim.physicalproperties.PhysicalPropertyHandler physicalPropertyHandler = null;
 
   protected boolean useVolumeCorrection = true;
-  public neqsim.physicalproperties.PhysicalPropertyHandler physicalPropertyHandler = null;
   protected double molarVolume = 1.0;
   protected double phaseVolume = 1.0;
 
@@ -64,7 +77,11 @@ public abstract class Phase implements PhaseInterface {
 
   private int initType = 0;
   int mixingRuleNumber = 0;
+
+  /** Temperature of phase. */
   double temperature = 0;
+
+  /** Pressure of phase. */
   double pressure = 0;
 
   protected PhaseInterface[] refPhase = null;
@@ -429,10 +446,8 @@ public abstract class Phase implements PhaseInterface {
   public PhysicalProperties getPhysicalProperties() {
     if (physicalPropertyHandler == null) {
       initPhysicalProperties();
-      return physicalPropertyHandler.getPhysicalProperty(this);
-    } else {
-      return physicalPropertyHandler.getPhysicalProperty(this);
     }
+    return physicalPropertyHandler.getPhysicalProperties(this);
   }
 
   /** {@inheritDoc} */
@@ -459,20 +474,25 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setPhysicalProperties() {
-    // System.out.println("Physical properties: Default model");
-    setPhysicalProperties(physicalPropertyType);
-    // physicalProperty = new
-    // physicalproperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties(this,0,0);
+  public void setPpm(PhysicalPropertyModel ppm) {
+    this.ppm = ppm;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setPhysicalProperties(int type) {
+  public PhysicalPropertyModel getPhysicalPropertyModel() {
+    // todo: still inconsistent
+    return this.ppm;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPhysicalPropertyModel(PhysicalPropertyModel ppm) {
+    setPpm(ppm);
     if (physicalPropertyHandler == null) {
       physicalPropertyHandler = new PhysicalPropertyHandler();
     }
-    physicalPropertyHandler.setPhysicalProperties(this, type);
+    physicalPropertyHandler.setPhysicalProperties(this, ppm);
   }
 
   /** {@inheritDoc} */
@@ -488,8 +508,8 @@ public abstract class Phase implements PhaseInterface {
       physicalPropertyHandler = new PhysicalPropertyHandler();
     }
 
-    if (physicalPropertyHandler.getPhysicalProperty(this) == null) {
-      setPhysicalProperties(physicalPropertyType);
+    if (physicalPropertyHandler.getPhysicalProperties(this) == null) {
+      setPhysicalPropertyModel(ppm);
     }
     getPhysicalProperties().init(this);
   }
@@ -500,17 +520,17 @@ public abstract class Phase implements PhaseInterface {
     if (physicalPropertyHandler == null) {
       physicalPropertyHandler = new PhysicalPropertyHandler();
     }
-    if (physicalPropertyHandler.getPhysicalProperty(this) == null) {
-      setPhysicalProperties(physicalPropertyType);
+
+    if (physicalPropertyHandler.getPhysicalProperties(this) == null) {
+      setPhysicalPropertyModel(ppm);
     }
     getPhysicalProperties().setPhase(this);
-
-    // if (physicalProperty == null || phaseTypeAtLastPhysPropUpdate != phaseType ||
-    // !phaseTypeNameAtLastPhysPropUpdate.equals(phaseTypeName)) {
-    // this.setPhysicalProperties();
-    // }
-    // physicalProperty.init(this, type);
     getPhysicalProperties().init(this, ppt);
+  }
+
+  /** {@inheritDoc} */
+  public void setPhysicalProperties(PhysicalPropertyModel ppm) {
+    physicalPropertyHandler.setPhysicalProperties(this, ppm);
   }
 
   /** {@inheritDoc} */
@@ -1909,18 +1929,6 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public void setRefPhase(neqsim.thermo.phase.PhaseInterface[] refPhase) {
     this.refPhase = refPhase;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public final int getPhysicalPropertyType() {
-    return physicalPropertyType;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setPhysicalPropertyType(int physicalPropertyType) {
-    this.physicalPropertyType = physicalPropertyType;
   }
 
   /** {@inheritDoc} */

@@ -31,7 +31,7 @@ public class ReactiveDesmukhMather {
     testSystem.chemicalReactionInit();
     testSystem.setMixingRule(2);
     testSystem.createDatabase(true);
-    // testSystem.setPhysicalPropertyModel(3);
+    // testSystem.setPhysicalPropertyModel(PhysicalPropertyModel.AMINE);
 
     ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
 
