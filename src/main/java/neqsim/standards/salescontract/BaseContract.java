@@ -95,7 +95,7 @@ public class BaseContract implements ContractInterface {
         // System.out.println("specification added..." + numb);
       }
     } catch (Exception ex) {
-      logger.error("error in comp", ex);
+      logger.error("error in comp");
     } finally {
       specificationsNumber = spesifications.size();
     }

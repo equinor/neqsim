@@ -59,12 +59,12 @@ public class ComponentHydrateGF extends ComponentHydrate {
         Bk[1][1] = Double.parseDouble(dataSet.getString("B2_LargeGF"));
         dataSet.close();
       } catch (Exception ex) {
-        logger.error("error in ComponentHydrateGF", ex);
+        logger.error("error in comp");
       } finally {
         try {
           dataSet.close();
         } catch (Exception ex) {
-          logger.error("error closing database.....", ex);
+          logger.error("error closing database.....");
         }
       }
     }

@@ -451,7 +451,7 @@ public abstract class Component implements ComponentInterface {
       }
       componentNumber = compIndex;
     } catch (Exception ex) {
-      logger.error("error in comp", ex);
+      logger.error("error in comp");
     }
 
     srkacentricFactor = acentricFactor;
