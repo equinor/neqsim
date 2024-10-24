@@ -289,11 +289,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     return null;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return a String
-   */
+  /** {@inheritDoc} */
   @Override
   public String getReport_json() {
     return new Report(this).generateJsonReport();

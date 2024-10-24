@@ -72,6 +72,11 @@ public interface PlusFractionModelInterface extends java.io.Serializable {
    */
   public int getLastPlusFractionNumber();
 
+  /**
+   * <p>setLastPlusFractionNumber.</p>
+   *
+   * @param fract a int
+   */
   public void setLastPlusFractionNumber(int fract);
 
   /**

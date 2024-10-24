@@ -1403,23 +1403,48 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     return new GsonBuilder().create().toJson(new CompressorResponse(this));
   }
 
+  /**
+   * <p>Getter for the field <code>maxOutletPressure</code>.</p>
+   *
+   * @return a double
+   */
   public double getMaxOutletPressure() {
     return maxOutletPressure;
   }
 
+  /**
+   * <p>Setter for the field <code>maxOutletPressure</code>.</p>
+   *
+   * @param maxOutletPressure a double
+   */
   public void setMaxOutletPressure(double maxOutletPressure) {
     this.maxOutletPressure = maxOutletPressure;
     this.isSetMaxOutletPressure = true;
   }
 
+  /**
+   * <p>isSetMaxOutletPressure.</p>
+   *
+   * @return a boolean
+   */
   public boolean isSetMaxOutletPressure() {
     return isSetMaxOutletPressure;
   }
 
+  /**
+   * <p>Setter for the field <code>isSetMaxOutletPressure</code>.</p>
+   *
+   * @param isSetMaxOutletPressure a boolean
+   */
   public void setIsSetMaxOutletPressure(boolean isSetMaxOutletPressure) {
     this.isSetMaxOutletPressure = isSetMaxOutletPressure;
   }
 
+  /**
+   * <p>Getter for the field <code>actualCompressionRatio</code>.</p>
+   *
+   * @return a double
+   */
   public double getActualCompressionRatio() {
     return actualCompressionRatio;
   }

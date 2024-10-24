@@ -931,7 +931,6 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param unit Unit of return pressure
-   *
    * @return The normal boiling point of the component
    */
   public double getNormalBoilingPoint(String unit);

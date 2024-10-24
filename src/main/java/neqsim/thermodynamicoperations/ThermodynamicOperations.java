@@ -78,6 +78,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   private Thread thermoOperationThread = new Thread();
   private OperationInterface operation = null;
 
+  /**
+   * <p>Getter for the field <code>system</code>.</p>
+   *
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public SystemInterface getSystem() {
     return system;
   }

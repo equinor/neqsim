@@ -185,12 +185,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     return clonedSystem;
   }
 
-  /**
-   * Clone Stream object and give it a new name.
-   *
-   * @param name Name to set for the cloned object
-   * @return Cloned Stream object
-   */
+  /** {@inheritDoc} */
   @Override
   public Stream clone(String name) {
     if (this.getName() == name) {
