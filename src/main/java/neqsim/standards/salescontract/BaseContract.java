@@ -72,7 +72,7 @@ public class BaseContract implements ContractInterface {
    * @param country a {@link java.lang.String} object
    */
   public BaseContract(SystemInterface system, String terminal, String country) {
-    int numb = 0;
+    // int numb = 0;
     this.setContractName(contractName);
     try (
         neqsim.util.database.NeqSimContractDataBase database =
@@ -81,7 +81,7 @@ public class BaseContract implements ContractInterface {
             database.getResultSet("SELECT * FROM gascontractspecifications WHERE TERMINAL='"
                 + terminal + "'" + " AND COUNTRY='" + country + "'")) {
       while (dataSet.next()) {
-        numb++;
+        // numb++;
         StandardInterface method = getMethod(system, dataSet.getString("METHOD"));
         double referencePressure = Double.parseDouble(dataSet.getString("ReferencePbar"));
         method.setReferencePressure(referencePressure);
@@ -90,7 +90,7 @@ public class BaseContract implements ContractInterface {
             dataSet.getString("TERMINAL"), Double.parseDouble(dataSet.getString("MINVALUE")),
             Double.parseDouble(dataSet.getString("MAXVALUE")), dataSet.getString("UNIT"),
             Double.parseDouble(dataSet.getString("ReferenceTdegC")),
-            Double.parseDouble(dataSet.getString("ReferenceTdegC")), referencePressure, ""));// dataSet.getString("Comments"));
+            Double.parseDouble(dataSet.getString("ReferenceTdegC")), referencePressure, "")); // dataSet.getString("Comments"));
         // System.out.println(dataSet.getString("Comments"));
         // System.out.println("specification added..." + numb);
       }
