@@ -19,7 +19,6 @@ public class simpleGasScrubber {
    *
    * @param args an array of {@link java.lang.String} objects
    */
-  @SuppressWarnings("unused")
   public static void main(String args[]) {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);

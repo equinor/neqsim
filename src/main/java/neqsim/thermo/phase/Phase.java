@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.PhysicalPropertyHandler;
+import neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyType;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentInterface;
@@ -35,7 +36,7 @@ public abstract class Phase implements PhaseInterface {
 
   private boolean constantPhaseVolume = false;
 
-  public int physicalPropertyType = 0;
+  public PhysicalPropertyType physicalPropertyType = PhysicalPropertyType.DEFAULT;
 
   protected boolean useVolumeCorrection = true;
   public neqsim.physicalproperties.PhysicalPropertyHandler physicalPropertyHandler = null;
@@ -466,11 +467,11 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setPhysicalProperties(int type) {
+  public void setPhysicalProperties(PhysicalPropertyType ppt) {
     if (physicalPropertyHandler == null) {
       physicalPropertyHandler = new PhysicalPropertyHandler();
     }
-    physicalPropertyHandler.setPhysicalProperties(this, type);
+    physicalPropertyHandler.setPhysicalProperties(this, ppt);
   }
 
   /** {@inheritDoc} */
@@ -1911,13 +1912,13 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final int getPhysicalPropertyType() {
+  public final PhysicalPropertyType getPhysicalPropertyType() {
     return physicalPropertyType;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setPhysicalPropertyType(int physicalPropertyType) {
+  public void setPhysicalPropertyType(PhysicalPropertyType physicalPropertyType) {
     this.physicalPropertyType = physicalPropertyType;
   }
 

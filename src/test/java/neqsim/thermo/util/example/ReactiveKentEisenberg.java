@@ -38,7 +38,7 @@ public class ReactiveKentEisenberg {
     testSystem.chemicalReactionInit();
     testSystem.createDatabase(true);
     testSystem.setMixingRule(4);
-    // testSystem.setPhysicalPropertyModel(3);
+    // testSystem.setPhysicalPropertyModel(PhysicalPropertyType.AMINE);
 
     ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
 

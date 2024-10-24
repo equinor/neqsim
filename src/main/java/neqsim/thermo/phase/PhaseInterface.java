@@ -6,6 +6,7 @@
 
 package neqsim.thermo.phase;
 
+import neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyType;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -790,7 +791,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    *
    * @param type 0 Orginal/default 1 Water 2 Glycol 3 Amine 4 CO2Water 6 Basic
    */
-  public void setPhysicalProperties(int type);
+  public void setPhysicalProperties(PhysicalPropertyType type);
 
   /**
    * <p>
@@ -1824,18 +1825,18 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * Getter for property physicalPropertyType.
    * </p>
    *
-   * @return a int
+   * @return a PhysicalPropertyType
    */
-  public int getPhysicalPropertyType();
+  public PhysicalPropertyType getPhysicalPropertyType();
 
   /**
    * <p>
    * Setter for property physicalPropertyType.
    * </p>
    *
-   * @param physicalPropertyType a int
+   * @param physicalPropertyType PhysicalPropertyType enum object
    */
-  public void setPhysicalPropertyType(int physicalPropertyType);
+  public void setPhysicalPropertyType(PhysicalPropertyType physicalPropertyType);
 
   /**
    * <p>

@@ -13,6 +13,7 @@ import com.google.gson.GsonBuilder;
 import neqsim.chemicalreactions.ChemicalReactionOperations;
 import neqsim.physicalproperties.interfaceproperties.InterfaceProperties;
 import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
+import neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyType;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.characterization.Characterise;
@@ -4792,9 +4793,9 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setPhysicalPropertyModel(int type) {
+  public void setPhysicalPropertyModel(PhysicalPropertyType ppt) {
     for (int i = 0; i < numberOfPhases; i++) {
-      getPhase(i).setPhysicalProperties(type);
+      getPhase(i).setPhysicalProperties(ppt);
     }
   }
 
