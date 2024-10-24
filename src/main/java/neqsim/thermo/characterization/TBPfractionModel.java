@@ -106,12 +106,13 @@ public class TBPfractionModel implements java.io.Serializable {
 
     @Override
     public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density) {
-      throw new RuntimeException("calcm() method not defined");
+      throw new RuntimeException(
+          new neqsim.util.exception.NotImplementedException(this, "calcRacketZ"));
     }
 
     @Override
     public double calcm(double molarMass, double density) {
-      throw new RuntimeException("calcm() method not defined");
+      throw new RuntimeException(new neqsim.util.exception.NotImplementedException(this, "calcm"));
     }
 
     @Override
