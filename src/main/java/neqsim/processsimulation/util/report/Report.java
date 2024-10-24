@@ -115,11 +115,17 @@ public class Report {
     for (Map.Entry<String, String> entry : json_reports.entrySet()) {
       // Parse each value as a separate JSON object using the static parseString method
       try {
-        JsonObject nestedJsonObject = JsonParser.parseString(entry.getValue()).getAsJsonObject();
+        String s = entry.getValue();
+        if (s == null) {
+          // Not necessary to log that an entry is null
+          continue;
+        }
+        JsonObject nestedJsonObject = JsonParser.parseString(s).getAsJsonObject();
+
         // Update the final JsonObject with the parsed JSON object
         finalJsonObject.add(entry.getKey(), nestedJsonObject);
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
       }
     }
 
