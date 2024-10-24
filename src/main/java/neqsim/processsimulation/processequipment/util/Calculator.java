@@ -73,6 +73,11 @@ public class Calculator extends ProcessEquipmentBaseClass {
     return false;
   }
 
+  /**
+   * <p>runAntiSurgeCalc.</p>
+   *
+   * @param id a {@link java.util.UUID} object
+   */
   public void runAntiSurgeCalc(UUID id) {
     Compressor compressor = (Compressor) inputVariable.get(0);
 

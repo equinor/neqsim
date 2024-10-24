@@ -703,16 +703,31 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         .toJson(new HXResponse(this));
   }
 
+  /**
+   * <p>Setter for the field <code>useDeltaT</code>.</p>
+   *
+   * @param useDeltaT a boolean
+   */
   public void setUseDeltaT(boolean useDeltaT) {
     this.useDeltaT = useDeltaT;
   }
 
   private double deltaT = 1.0;
 
+  /**
+   * <p>Getter for the field <code>deltaT</code>.</p>
+   *
+   * @return a double
+   */
   public double getDeltaT() {
     return deltaT;
   }
 
+  /**
+   * <p>Setter for the field <code>deltaT</code>.</p>
+   *
+   * @param deltaT a double
+   */
   public void setDeltaT(double deltaT) {
     useDeltaT = true;
     this.deltaT = deltaT;

@@ -87,11 +87,7 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
    */
   public void run(UUID id);
 
-  /**
-   * <p>
-   * run.
-   * </p>
-   */
+  /** {@inheritDoc} */
   @Override
   public default void run() {
     if (isRunInSteps()) {

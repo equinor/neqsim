@@ -70,12 +70,7 @@ public class IronIonSaturationStream extends Stream {
     return clonedSystem;
   }
 
-  /**
-   * Clone IronIonSaturationStream object and give it a new name.
-   *
-   * @param name Name to set for the cloned object
-   * @return Cloned IronIonSaturationStream object
-   */
+  /** {@inheritDoc} */
   @Override
   public IronIonSaturationStream clone(String name) {
     if (this.getName() == name) {

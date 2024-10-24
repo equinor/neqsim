@@ -55,12 +55,7 @@ public class EquilibriumStream extends Stream {
     return clonedStream;
   }
 
-  /**
-   * Clone Equilibriumstream object and give it a new name.
-   *
-   * @param name Name to set for the cloned object
-   * @return Cloned EquilibriumStream object
-   */
+  /** {@inheritDoc} */
   @Override
   public EquilibriumStream clone(String name) {
     if (this.getName() == name) {
