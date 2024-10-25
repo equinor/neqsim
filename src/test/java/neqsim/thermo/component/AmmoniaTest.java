@@ -15,7 +15,7 @@ public class AmmoniaTest extends neqsim.NeqSimTest {
    * @throws java.lang.Exception
    */
   @BeforeAll
-  static void setUpBeforeClass() throws Exception {
+  static void setUpBeforeClass() {
     thermoSystem = new SystemSrkEos(298.0, ThermodynamicConstantsInterface.referencePressure);
     thermoSystem.addComponent("ammonia", 1.0);
     thermoSystem.init(0);

@@ -731,14 +731,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * bubblePointTemperatureFlash.
    * </p>
    *
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void bubblePointTemperatureFlash() throws Exception {
+  public void bubblePointTemperatureFlash() throws IsNaNException {
     ConstantDutyFlashInterface operation = new BubblePointTemperatureNoDer(system);
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "bubblePointTemperatureFlash",
+      throw new neqsim.util.exception.IsNaNException(this, "bubblePointTemperatureFlash",
           "Could not find solution - possible no bubble point exists");
     }
   }
@@ -748,14 +747,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * freezingPointTemperatureFlash.
    * </p>
    *
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void freezingPointTemperatureFlash() throws Exception {
+  public void freezingPointTemperatureFlash() throws IsNaNException {
     operation = new FreezingPointTemperatureFlash(system);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "freezingPointTemperatureFlash",
+      throw new neqsim.util.exception.IsNaNException(this, "freezingPointTemperatureFlash",
           "Could not find solution - possible no freezing point exists");
     }
   }
@@ -766,14 +764,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param phaseName a {@link java.lang.String} object
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void freezingPointTemperatureFlash(String phaseName) throws Exception {
+  public void freezingPointTemperatureFlash(String phaseName) throws IsNaNException {
     operation = new FreezingPointTemperatureFlash(system);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "freezingPointTemperatureFlash",
+      throw new neqsim.util.exception.IsNaNException(this, "freezingPointTemperatureFlash",
           "Could not find solution - possible no freezing point exists");
     }
   }
@@ -783,14 +780,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * waterDewPointTemperatureFlash.
    * </p>
    *
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void waterDewPointTemperatureFlash() throws Exception {
+  public void waterDewPointTemperatureFlash() throws IsNaNException {
     operation = new WaterDewPointTemperatureFlash(system);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "waterDewPointTemperatureFlash",
+      throw new neqsim.util.exception.IsNaNException(this, "waterDewPointTemperatureFlash",
           "Could not find solution - possible no dew point exists");
     }
   }
@@ -800,9 +796,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * waterDewPointTemperatureMultiphaseFlash.
    * </p>
    *
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void waterDewPointTemperatureMultiphaseFlash() throws Exception {
+  public void waterDewPointTemperatureMultiphaseFlash() throws IsNaNException {
     operation = new WaterDewPointTemperatureMultiphaseFlash(system);
     getOperation().run();
   }
@@ -812,9 +808,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * waterPrecipitationTemperature.
    * </p>
    *
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void waterPrecipitationTemperature() throws Exception {
+  public void waterPrecipitationTemperature() throws IsNaNException {
     double lowTemperature = 0.0;
     dewPointTemperatureFlash();
 
@@ -841,8 +837,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     // TPflash();
 
     if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "waterPrecipitationTemperature",
+      throw new neqsim.util.exception.IsNaNException(this, "waterPrecipitationTemperature",
           "Could not find solution - possible no dew point exists");
     }
   }
@@ -853,14 +848,14 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param saltName a {@link java.lang.String} object
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void calcSaltSaturation(String saltName) throws Exception {
+  public void calcSaltSaturation(String saltName) throws IsNaNException {
     operation = new CalcSaltSatauration(system, saltName);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "calcSaltSaturation", "Could not find solution - possible no dew point exists");
+      throw new neqsim.util.exception.IsNaNException(this, "calcSaltSaturation",
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -870,15 +865,15 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param phaseNumber a int
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void checkScalePotential(int phaseNumber) throws Exception {
+  public void checkScalePotential(int phaseNumber) throws IsNaNException {
     operation = new CheckScalePotential(system, phaseNumber);
     getOperation().run();
     resultTable = getOperation().getResultTable();
     if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "checkScalePotential", "Could not find solution - possible no dew point exists");
+      throw new neqsim.util.exception.IsNaNException(this, "checkScalePotential",
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -890,16 +885,16 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param phaseNumber a int
    * @param scaleSaltName a {@link java.lang.String} object
    * @param nameOfIonToBeAdded a {@link java.lang.String} object
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
   public void addIonToScaleSaturation(int phaseNumber, String scaleSaltName,
-      String nameOfIonToBeAdded) throws Exception {
+      String nameOfIonToBeAdded) throws IsNaNException {
     operation = new AddIonToScaleSaturation(system, phaseNumber, scaleSaltName, nameOfIonToBeAdded);
     getOperation().run();
     resultTable = getOperation().getResultTable();
     if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "addIonToScaleSaturation", "Could not find solution - possible no dew point exists");
+      throw new neqsim.util.exception.IsNaNException(this, "addIonToScaleSaturation",
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -908,14 +903,14 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * hydrateFormationPressure.
    * </p>
    *
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void hydrateFormationPressure() throws Exception {
+  public void hydrateFormationPressure() throws IsNaNException {
     operation = new HydrateFormationPressureFlash(system);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "hydrateFormationPressure", "Could not find solution - possible no dew point exists");
+      throw new neqsim.util.exception.IsNaNException(this, "hydrateFormationPressure",
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -924,13 +919,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * calcWAT.
    * </p>
    *
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void calcWAT() throws Exception {
+  public void calcWAT() throws IsNaNException {
     operation = new WATcalc(system);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(), "calcWAT",
+      throw new neqsim.util.exception.IsNaNException(this, "calcWAT",
           "Could not find solution - possible no dew point exists");
     }
   }
@@ -983,14 +978,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * calcSolidComlexTemperature.
    * </p>
    *
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void calcSolidComlexTemperature() throws Exception {
+  public void calcSolidComlexTemperature() throws IsNaNException {
     operation = new SolidComplexTemperatureCalc(system);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "calcSolidComlexTemperature",
+      throw new neqsim.util.exception.IsNaNException(this, "calcSolidComlexTemperature",
           "error in WAT() - could not find solution - possible no dew point exists");
     }
   }
@@ -1002,16 +996,15 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    *
    * @param comp1 a {@link java.lang.String} object
    * @param comp2 a {@link java.lang.String} object
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void calcSolidComlexTemperature(String comp1, String comp2) throws Exception {
+  public void calcSolidComlexTemperature(String comp1, String comp2) throws IsNaNException {
     if (operation == null) {
       operation = new SolidComplexTemperatureCalc(system, comp1, comp2);
     }
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "calcSolidComlexTemperature",
+      throw new neqsim.util.exception.IsNaNException(this, "calcSolidComlexTemperature",
           "error in WAT() - could not find solution - possible no dew point exists");
     }
   }
@@ -1091,10 +1084,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    *
    * @param inhibitorName a {@link java.lang.String} object
    * @param hydEqTemperature a double
-   * @throws java.lang.Exception if any.
    */
-  public void hydrateInhibitorConcentration(String inhibitorName, double hydEqTemperature)
-      throws Exception {
+  public void hydrateInhibitorConcentration(String inhibitorName, double hydEqTemperature) {
     operation = new HydrateInhibitorConcentrationFlash(system, inhibitorName, hydEqTemperature);
     operation.run();
   }
@@ -1106,10 +1097,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    *
    * @param inhibitorName a {@link java.lang.String} object
    * @param wtfrac a double
-   * @throws java.lang.Exception if any.
    */
-  public void hydrateInhibitorConcentrationSet(String inhibitorName, double wtfrac)
-      throws Exception {
+  public void hydrateInhibitorConcentrationSet(String inhibitorName, double wtfrac) {
     operation = new HydrateInhibitorwtFlash(system, inhibitorName, wtfrac);
     operation.run();
   }
@@ -1120,9 +1109,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param initialTemperatureGuess a double
-   * @throws java.lang.Exception if any.
    */
-  public void hydrateFormationTemperature(double initialTemperatureGuess) throws Exception {
+  public void hydrateFormationTemperature(double initialTemperatureGuess) {
     system.setTemperature(initialTemperatureGuess);
     operation = new HydrateFormationTemperatureFlash(system);
     for (int i = 0; i < system.getPhase(4).getNumberOfComponents(); i++) {
@@ -1140,9 +1128,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * hydrateFormationTemperature.
    * </p>
    *
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void hydrateFormationTemperature() throws Exception {
+  public void hydrateFormationTemperature() throws IsNaNException {
     // guessing temperature
     double factor = 1.0;
     if (system.getPhase(0).hasComponent("methanol")) {
@@ -1182,9 +1170,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param structure a int
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void hydrateFormationTemperature(int structure) throws Exception {
+  public void hydrateFormationTemperature(int structure) throws IsNaNException {
     system.setTemperature(273.0 + 1.0);
     if (structure == 0) {
       system.setSolidPhaseCheck("water");
@@ -1204,8 +1192,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
 
     if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "hydrateFormationTemperature", "Could not find solution - possible no dew point exists");
+      throw new neqsim.util.exception.IsNaNException(this, "hydrateFormationTemperature",
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1216,10 +1204,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    *
    * @param minimumPressure a double
    * @param maximumPressure a double
-   * @throws java.lang.Exception if any.
    */
-  public void hydrateEquilibriumLine(double minimumPressure, double maximumPressure)
-      throws Exception {
+  public void hydrateEquilibriumLine(double minimumPressure, double maximumPressure) {
     operation = new HydrateEquilibriumLine(system, minimumPressure, maximumPressure);
     if (!isRunAsThread()) {
       getOperation().run();
@@ -1272,9 +1258,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    *
    * @param minimumPressure a double
    * @param maximumPressure a double
-   * @throws java.lang.Exception if any.
    */
-  public void waterDewPointLine(double minimumPressure, double maximumPressure) throws Exception {
+  public void waterDewPointLine(double minimumPressure, double maximumPressure) {
     operation = new WaterDewPointEquilibriumLine(system, minimumPressure, maximumPressure);
     if (!isRunAsThread()) {
       getOperation().run();
@@ -1314,8 +1299,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     system.setBeta(0, 1e-10);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "bubblePointPressureFlash", "Could not find solution - possible no dew point exists");
+      throw new neqsim.util.exception.IsNaNException(this, "bubblePointPressureFlash",
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1325,8 +1310,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param derivatives a boolean
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void bubblePointPressureFlash(boolean derivatives) {
+  public void bubblePointPressureFlash(boolean derivatives) throws IsNaNException {
     ConstantDutyFlashInterface operation = null;
     if (derivatives) {
       operation = new BubblePointPressureFlashDer(system);
@@ -1339,8 +1325,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       logger.error(e.getMessage(), e);
     }
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "bubblePointPressureFlash", "Could not find solution - possible no bubble point exists");
+      throw new neqsim.util.exception.IsNaNException(this, "bubblePointPressureFlash",
+          "Could not find solution - possible no bubble point exists");
     }
   }
 
@@ -1350,9 +1336,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param fraction a double
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void constantPhaseFractionPressureFlash(double fraction) throws Exception {
+  public void constantPhaseFractionPressureFlash(double fraction) throws IsNaNException {
     system.init(0);
     if (fraction < 1e-10) {
       fraction = 1e-10;
@@ -1365,8 +1351,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     system.setBeta(0, fraction);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "constantPhaseFractionPressureFlash",
+      throw new neqsim.util.exception.IsNaNException(this, "constantPhaseFractionPressureFlash",
           "Could not find solution - possible no dew point exists");
     }
   }
@@ -1377,9 +1362,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param fraction a double
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void constantPhaseFractionTemperatureFlash(double fraction) throws Exception {
+  public void constantPhaseFractionTemperatureFlash(double fraction) throws IsNaNException {
     system.init(0);
     if (fraction < 1e-10) {
       fraction = 1e-10;
@@ -1392,8 +1377,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     system.setBeta(0, fraction);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "constantPhaseFractionTemperatureFlash",
+      throw new neqsim.util.exception.IsNaNException(this, "constantPhaseFractionTemperatureFlash",
           "Could not find solution - possible no dew point exists");
     }
   }
@@ -1406,10 +1390,10 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param componentName a {@link java.lang.String} object
    * @param specification a {@link java.lang.String} object
    * @param spec a double
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
   public void dewPointMach(String componentName, String specification, double spec)
-      throws Exception {
+      throws IsNaNException {
     // int componentNumber =
     // system.getPhase(0).getComponent(componentName).getComponentNumber();
 
@@ -1418,8 +1402,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       dn = system.getNumberOfMoles() / 1.0e6;
       system.addComponent(componentName, dn);
     } else {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "dewPointMach", "Specified component is not present in mixture: " + componentName);
+      throw new neqsim.util.exception.IsNaNException(this, "dewPointMach",
+          "Specified component is not present in mixture: " + componentName);
     }
     double newTemperature = system.getTemperature();
     double oldTemperature = newTemperature;
@@ -1449,8 +1433,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
 
     if (Double.isNaN(system.getPressure())) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "dewPointMach", "Could not find solution - possible no dew point exists");
+      throw new neqsim.util.exception.IsNaNException(this, "dewPointMach",
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1466,8 +1450,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         new neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlash(system);
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "dewPointTemperatureFlash", "Could not find solution - possible no dew point exists");
+      throw new neqsim.util.exception.IsNaNException(this, "dewPointTemperatureFlash",
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1487,8 +1471,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "dewPointTemperatureFlash", "Could not find solution - possible no dew point exists");
+      throw new neqsim.util.exception.IsNaNException(this, "dewPointTemperatureFlash",
+          "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1497,16 +1481,16 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * dewPointPressureFlashHC.
    * </p>
    *
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void dewPointPressureFlashHC() throws Exception {
+  public void dewPointPressureFlashHC() throws IsNaNException {
     // try{
     system.init(0);
     ConstantDutyFlashInterface operation = new HCdewPointPressureFlash(system);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "dewPointPressureFlashHC", "Could not find solution - possible no dew point exists");
+      throw new neqsim.util.exception.IsNaNException(this, "dewPointPressureFlashHC",
+          "Could not find solution - possible no dew point exists");
     }
     // }
   }
@@ -1516,16 +1500,16 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * dewPointPressureFlash.
    * </p>
    *
-   * @throws java.lang.Exception if any.
+   * @throws neqsim.util.exception.IsNaNException if any.
    */
-  public void dewPointPressureFlash() throws Exception {
+  public void dewPointPressureFlash() throws IsNaNException {
     // try{
     system.init(0);
     ConstantDutyFlashInterface operation = new DewPointPressureFlash(system);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this.getClass().getSimpleName(),
-          "dewPointPressureFlash", "Could not find solution - possible no dew point exists");
+      throw new neqsim.util.exception.IsNaNException(this, "dewPointPressureFlash",
+          "Could not find solution - possible no dew point exists");
     }
     // }
   }

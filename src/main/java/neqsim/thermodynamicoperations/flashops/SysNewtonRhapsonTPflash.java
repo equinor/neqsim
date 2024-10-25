@@ -145,9 +145,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * </p>
    *
    * @return a double
-   * @throws java.lang.Exception if any.
    */
-  public double solve() throws Exception {
+  public double solve() {
     try {
       iter++;
       init();

@@ -161,17 +161,13 @@ public abstract class SystemThermo implements SystemInterface {
   public SystemThermo(double T, double P, boolean checkForSolids) {
     this();
     if (T < 0.0) {
-      neqsim.util.exception.InvalidInputException ex =
-          new neqsim.util.exception.InvalidInputException(this.getClass().getSimpleName(),
-              "SystemThermo", "T", "is negative");
-      throw new RuntimeException(ex);
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "SystemThermo", "T", "is negative"));
     }
 
     if (P < 0.0) {
-      neqsim.util.exception.InvalidInputException ex =
-          new neqsim.util.exception.InvalidInputException(this.getClass().getSimpleName(),
-              "SystemThermo", "P", "is negative");
-      throw new RuntimeException(ex);
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "SystemThermo", "P", "is negative"));
     }
 
     this.solidPhaseCheck = checkForSolids;
@@ -379,9 +375,8 @@ public abstract class SystemThermo implements SystemInterface {
     // Add new component
     if (moles < 0.0) {
       String msg = "Negative input number of moles.";
-      neqsim.util.exception.InvalidInputException ex =
-          new neqsim.util.exception.InvalidInputException(this, "addComponent", "moles", msg);
-      throw new RuntimeException(ex);
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException(this, "addComponent", "moles", msg));
     }
 
     componentNames.add(componentName);
@@ -4918,7 +4913,7 @@ public abstract class SystemThermo implements SystemInterface {
     try {
       init(1);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      logger.error(ex.getMessage());
     }
     double density = 0.0;
     if (flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("gallons/min")

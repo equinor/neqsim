@@ -19,7 +19,7 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
    * @throws java.lang.Exception
    */
   @BeforeAll
-  static void setUpBeforeClass() throws Exception {
+  static void setUpBeforeClass() {
     testSystem = new SystemSrkEos(273.15 + 20.0, 1.0);
     testSystem.addComponent("methane", 0.931819);
     testSystem.addComponent("ethane", 0.025618);

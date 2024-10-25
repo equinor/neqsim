@@ -16,7 +16,7 @@ public class nmVOCTest extends neqsim.NeqSimTest {
    * @throws java.lang.Exception
    */
   @BeforeAll
-  static void setUpBeforeClass() throws Exception {
+  static void setUpBeforeClass() {
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 100.0);
     thermoSystem.addComponent("water", 1.0);
     thermoSystem.addComponent("methane", 1.0);

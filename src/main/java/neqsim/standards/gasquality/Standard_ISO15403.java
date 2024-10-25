@@ -54,10 +54,8 @@ public class Standard_ISO15403 extends neqsim.standards.Standard {
     } else if (returnParameter.equals("NM")) {
       return NM;
     } else {
-      neqsim.util.exception.InvalidInputException ex =
-          new neqsim.util.exception.InvalidInputException(this, "getValue", "returnParameter",
-              "parameter not supported");
-      throw new RuntimeException(ex);
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getValue",
+          "returnParameter", "parameter not supported"));
     }
   }
 

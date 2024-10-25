@@ -1,7 +1,6 @@
 package neqsim.processsimulation.measurementdevice;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills;
 import neqsim.processsimulation.processequipment.stream.Stream;
@@ -14,12 +13,6 @@ public class FLowInducedVibrationTest extends neqsim.NeqSimTest {
   static ProcessSystem process1;
   static FlowInducedVibrationAnalyser flowInducedVibrationAnalyser;
   static FlowInducedVibrationAnalyser flowInducedVibrationAnalyserFRMS;
-
-  /**
-   * @throws java.lang.Exception
-   */
-  @BeforeAll
-  static void setUpBeforeClass() throws Exception {}
 
   @Test
   public void testSetUnit() {

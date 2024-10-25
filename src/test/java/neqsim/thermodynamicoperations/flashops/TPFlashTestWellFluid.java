@@ -16,7 +16,7 @@ class TPFlashTestWellFluid {
    * @throws java.lang.Exception
    */
   @BeforeEach
-  void setUp() throws Exception {
+  void setUp() {
     wellFluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 30.0, 65.00);
     wellFluid.addComponent("oxygen", 0.0);
     wellFluid.addComponent("H2S", 0.00008);
@@ -69,7 +69,6 @@ class TPFlashTestWellFluid {
         8.96e-3, 1.539e-3, 5.9921e-1});
     testOps = new ThermodynamicOperations(wellFluid);
     testOps.TPflash();
-    assertEquals(1.432253736300898
-    , wellFluid.getPhase(0).getDensity(), 1e-5);
+    assertEquals(1.432253736300898, wellFluid.getPhase(0).getDensity(), 1e-5);
   }
 }

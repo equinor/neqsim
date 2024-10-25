@@ -228,7 +228,7 @@ public class NeqSimDataBase
 
   /** {@inheritDoc} */
   @Override
-  public void close() throws Exception {
+  public void close() throws SQLException {
     if (databaseConnection != null) {
       databaseConnection.close();
     }

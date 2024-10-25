@@ -18,7 +18,7 @@ class Degasser {
    * @throws java.lang.Exception
    */
   @BeforeEach
-  void setUp() throws Exception {
+  void setUp() {
     testSystem = new neqsim.thermo.system.SystemPrEos(243.15, 300.0);
     testSystem.addComponent("methane", 90.0);
     testSystem.addComponent("ethane", 0.0);

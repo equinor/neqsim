@@ -22,7 +22,7 @@ class MixerTest {
    * @throws java.lang.Exception
    */
   @BeforeAll
-  static void setUpBeforeClass() throws Exception {
+  static void setUpBeforeClass() {
     testSystem = new SystemSrkEos(298.15, 1.0);
     testSystem.addComponent("water", 0.0);
     testSystem.addComponent("methane", 1.0);

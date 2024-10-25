@@ -16,7 +16,7 @@ class PSFlashGERG2008Test {
    * @throws java.lang.Exception
    */
   @BeforeEach
-  void setUp() throws Exception {
+  void setUp() {
     testSystem = new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
