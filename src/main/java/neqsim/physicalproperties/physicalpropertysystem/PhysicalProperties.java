@@ -248,8 +248,7 @@ public abstract class PhysicalProperties
   /** {@inheritDoc} */
   @Override
   public void init(PhaseInterface phase) {
-    this.phase = phase;
-    this.setPhases();
+    this.setPhase(phase);
     try {
       density = densityCalc.calcDensity();
       viscosity = viscosityCalc.calcViscosity();
@@ -270,14 +269,20 @@ public abstract class PhysicalProperties
   public void init(PhaseInterface phase, PhysicalPropertyType ppt) {
     switch (ppt) {
       case DENSITY:
+        densityCalc.setPhase(this);
         density = densityCalc.calcDensity();
         break;
       case VISCOSITY:
+        viscosityCalc.setPhase(this);
         viscosity = viscosityCalc.calcViscosity();
         break;
       case CONDUCTIVITY:
+        conductivityCalc.setPhase(this);
         conductivity = conductivityCalc.calcConductivity();
         break;
+      // case DIFFUSIVITY:
+      // diffusivityCalc.setPhase(this);
+      // diffusivity = diffusivityCalc.calcDiffusionCoefficients();
       default:
         init(phase);
         break;
