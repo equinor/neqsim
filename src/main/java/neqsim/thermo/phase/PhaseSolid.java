@@ -50,7 +50,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
       getDensityTemp();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      logger.error(ex.getMessage());
     }
     setType(PhaseType.SOLID);
   }
