@@ -11,13 +11,13 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
- * PhysicalPropertyMethod class.
+ * Abstract PhysicalPropertyMethod class.
  * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class PhysicalPropertyMethod implements PhysicalPropertyMethodInterface {
+public abstract class PhysicalPropertyMethod implements PhysicalPropertyMethodInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(PhysicalPropertyMethod.class);
 
@@ -44,13 +44,7 @@ public class PhysicalPropertyMethod implements PhysicalPropertyMethodInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setPhase(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase) {}
-
-  /** {@inheritDoc} */
-  @Override
   public void tuneModel(double val, double temperature, double pressure) {
     throw new UnsupportedOperationException("Unimplemented method 'tuneModel'");
   }
-  // should contain phase objects ++ get diffusivity methods .. more ?
 }
