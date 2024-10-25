@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.chemicalreactions.ChemicalReactionOperations;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.interfaceproperties.InterfaceProperties;
 import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -2096,21 +2097,21 @@ public abstract class SystemThermo implements SystemInterface {
     } else if (flowunit.equals("kg/day")) {
       return totalNumberOfMoles * getMolarMass() * 3600.0 * 24.0;
     } else if (flowunit.equals("m3/sec")) {
-      initPhysicalProperties("density");
+      initPhysicalProperties(PhysicalPropertyType.DENSITY);
       return totalNumberOfMoles * getMolarMass() / getDensity("kg/m3");
       // return getVolume() / 1.0e5;
     } else if (flowunit.equals("m3/min")) {
-      initPhysicalProperties("density");
+      initPhysicalProperties(PhysicalPropertyType.DENSITY);
       return totalNumberOfMoles * getMolarMass() * 60.0 / getDensity("kg/m3");
       // return getVolume() / 1.0e5 * 60.0;
     } else if (flowunit.equals("m3/hr")) {
       // return getVolume() / 1.0e5 * 3600.0;
-      initPhysicalProperties("density");
+      initPhysicalProperties(PhysicalPropertyType.DENSITY);
       return totalNumberOfMoles * getMolarMass() * 3600.0 / getDensity("kg/m3");
     } else if (flowunit.equals("idSm3/hr")) {
       return totalNumberOfMoles * getMolarMass() * 3600.0 / getIdealLiquidDensity("kg/m3");
     } else if (flowunit.equals("gallons/min")) {
-      initPhysicalProperties("density");
+      initPhysicalProperties(PhysicalPropertyType.DENSITY);
       return totalNumberOfMoles * getMolarMass() * 60.0 / getDensity("kg/m3") * 1000 / 3.78541178;
     } else if (flowunit.equals("Sm3/sec")) {
       return totalNumberOfMoles * ThermodynamicConstantsInterface.R
@@ -2686,7 +2687,7 @@ public abstract class SystemThermo implements SystemInterface {
       case "volume":
         return getVolumeFraction(phaseNumber);
       case "mass":
-        initPhysicalProperties("density");
+        initPhysicalProperties(PhysicalPropertyType.DENSITY);
         return getVolumeFraction(phaseNumber) * getPhase(phaseNumber).getDensity("kg/m3")
             / getDensity("kg/m3");
       default:
@@ -3548,17 +3549,10 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void initPhysicalProperties(String propertyName) {
+  public void initPhysicalProperties(PhysicalPropertyType ppt) {
     for (int i = 0; i < numberOfPhases; i++) {
-      getPhase(i).initPhysicalProperties(propertyName);
+      getPhase(i).initPhysicalProperties(ppt);
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void initProperties() {
-    initThermoProperties();
-    initPhysicalProperties();
   }
 
   /** {@inheritDoc} */
@@ -3697,7 +3691,7 @@ public abstract class SystemThermo implements SystemInterface {
 
     for (int i = 0; i < getNumberOfPhases(); i++) {
       if (getPhase(i).getPhysicalProperties() == null) {
-        getPhase(i).initPhysicalProperties("density");
+        getPhase(i).initPhysicalProperties(PhysicalPropertyType.DENSITY);
       }
       getPhase(i).getPhysicalProperties().setPhase(getPhase(i));
     }
@@ -3712,7 +3706,7 @@ public abstract class SystemThermo implements SystemInterface {
 
         try {
           if (change || getPhase(i).getPhysicalProperties() == null) {
-            getPhase(i).initPhysicalProperties("density");
+            getPhase(i).initPhysicalProperties(PhysicalPropertyType.DENSITY);
           }
         } catch (Exception ex) {
           logger.error(ex.getMessage(), ex);
@@ -4918,7 +4912,7 @@ public abstract class SystemThermo implements SystemInterface {
     double density = 0.0;
     if (flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("gallons/min")
         || flowunit.equals("Am3/sec")) {
-      initPhysicalProperties("density");
+      initPhysicalProperties(PhysicalPropertyType.DENSITY);
     }
 
     density = getPhase(0).getDensity("kg/m3");

@@ -3,6 +3,7 @@ package neqsim.thermo.component;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.system.SystemInterface;
@@ -95,17 +96,17 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     thermoSystem.addComponent("CO2", 1.0);
     thermoSystem.init(0);
     thermoSystem.init(1);
-    thermoSystem.initPhysicalProperties("density");
+    thermoSystem.initPhysicalProperties(PhysicalPropertyType.DENSITY);
     assertEquals(36.68212551, thermoSystem.getDensity("kg/m3"), 0.01);
 
     thermoSystem.getComponent("CO2").setVolumeCorrectionT(0.2);
 
-    thermoSystem.initPhysicalProperties("density");
+    thermoSystem.initPhysicalProperties(PhysicalPropertyType.DENSITY);
     assertEquals(37.6425616, thermoSystem.getDensity("kg/m3"), 0.01);
 
     thermoSystem.getComponent("CO2").setRacketZ(0.3);
 
-    thermoSystem.initPhysicalProperties("density");
+    thermoSystem.initPhysicalProperties(PhysicalPropertyType.DENSITY);
     assertEquals(37.557573, thermoSystem.getDensity("kg/m3"), 0.01);
   }
 }

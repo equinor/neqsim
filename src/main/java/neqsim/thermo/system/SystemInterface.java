@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 import neqsim.chemicalreactions.ChemicalReactionOperations;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.characterization.WaxModelInterface;
@@ -1724,22 +1725,34 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void initNumeric();
 
   /**
-   * Init physical properties for all phases and interfaces.
+   * Initialize / calculate all physical properties for all phases and interfaces.
    */
   public void initPhysicalProperties();
 
   /**
-   * Calculates physical properties of type propertyName.
+   * Initialize / calculate a specified physical properties for all phases and interfaces.
    *
-   * @param propertyName a {@link java.lang.String} object
+   * @param ppt PhysicalPropertyType enum object.
    */
-  public void initPhysicalProperties(String propertyName);
+  public void initPhysicalProperties(PhysicalPropertyType ppt);
+
+  /**
+   * Initialize / calculate a specified physical properties for all phases and interfaces.
+   *
+   * @param name Name of physical property.
+   */
+  public default void initPhysicalProperties(String name) {
+    initPhysicalProperties(PhysicalPropertyType.byName(name.toUpperCase()));
+  }
 
   /**
    * Calculates thermodynamic and physical properties of a fluid using initThermoProperties() and
    * initPhysicalProperties().
    */
-  public void initProperties();
+  public default void initProperties() {
+    initThermoProperties();
+    initPhysicalProperties();
+  }
 
   /**
    * <p>

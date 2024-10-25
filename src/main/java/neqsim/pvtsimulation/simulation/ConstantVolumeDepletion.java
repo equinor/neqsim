@@ -3,6 +3,7 @@ package neqsim.pvtsimulation.simulation;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.pvtsimulation.util.parameterfitting.CVDFunction;
 import neqsim.statistics.parameterfitting.SampleSet;
 import neqsim.statistics.parameterfitting.SampleValue;
@@ -88,7 +89,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
      * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) {
      * logger.error(ex.getMessage(), ex); }
      */
-    getThermoSystem().initPhysicalProperties("density");
+    getThermoSystem().initPhysicalProperties(PhysicalPropertyType.DENSITY);
     saturationVolume = getThermoSystem().getCorrectedVolume();
     saturationPressure = getThermoSystem().getPressure();
     Zsaturation = getThermoSystem().getZvolcorr();
@@ -124,7 +125,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }
-      getThermoSystem().initPhysicalProperties("density");
+      getThermoSystem().initPhysicalProperties(PhysicalPropertyType.DENSITY);
       // getThermoSystem().display();
       totalVolume[i] = getThermoSystem().getCorrectedVolume();
       // System.out.println("volume " + totalVolume[i]);
@@ -136,7 +137,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
           getThermoSystem().setPressure(pressures[i]);
           try {
             thermoOps.TPflash();
-            getThermoSystem().initPhysicalProperties("density");
+            getThermoSystem().initPhysicalProperties(PhysicalPropertyType.DENSITY);
           } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
           }

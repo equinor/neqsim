@@ -4,6 +4,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.processsimulation.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.processsimulation.processequipment.TwoPortEquipment;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
@@ -418,7 +419,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoSystem.init(3);
     double enthalpy = thermoSystem.getEnthalpy();
-    inStream.getThermoSystem().initPhysicalProperties("density");
+    inStream.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.DENSITY);
     double outp = 0.0;
 
     if (inStream.getThermoSystem().hasPhaseType(PhaseType.GAS)
@@ -555,7 +556,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     } else {
       thermoOps.PHflash(enthalpy, 0);
     }
-    thermoSystem.initPhysicalProperties("density");
+    thermoSystem.initPhysicalProperties(PhysicalPropertyType.DENSITY);
     outStream.setThermoSystem(thermoSystem);
 
     if (gasValve) {

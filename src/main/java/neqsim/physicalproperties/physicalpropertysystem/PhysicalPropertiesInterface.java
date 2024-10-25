@@ -6,6 +6,7 @@
 
 package neqsim.physicalproperties.physicalpropertysystem;
 
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -26,15 +27,6 @@ public interface PhysicalPropertiesInterface extends Cloneable {
    * @return a double
    */
   public double getPureComponentViscosity(int i);
-
-  /**
-   * <p>
-   * setDensityModel.
-   * </p>
-   *
-   * @param model a {@link java.lang.String} object
-   */
-  public void setDensityModel(String model);
 
   /**
    * <p>
@@ -144,12 +136,30 @@ public interface PhysicalPropertiesInterface extends Cloneable {
 
   /**
    * <p>
+   * calcDensity.
+   * </p>
+   *
+   * @return a double
+   */
+  public double calcDensity();
+
+  /**
+   * <p>
    * getDensity.
    * </p>
    *
    * @return a double
    */
   public double getDensity();
+
+  /**
+   * <p>
+   * setDensityModel.
+   * </p>
+   *
+   * @param model a {@link java.lang.String} object
+   */
+  public void setDensityModel(String model);
 
   /**
    * <p>
@@ -168,15 +178,6 @@ public interface PhysicalPropertiesInterface extends Cloneable {
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public void setPhase(PhaseInterface phase);
-
-  /**
-   * <p>
-   * calcDensity.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calcDensity();
 
   /**
    * <p>
@@ -228,7 +229,7 @@ public interface PhysicalPropertiesInterface extends Cloneable {
 
   /**
    * <p>
-   * Initialize / calculate all physical properties of object.
+   * Initialize / calculate all physical properties of phase.
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -237,13 +238,25 @@ public interface PhysicalPropertiesInterface extends Cloneable {
 
   /**
    * <p>
-   * init.
+   * Initialize / calculate a specific physical property of phase.
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param type a {@link java.lang.String} object
+   * @param ppt PhysicalPropertyType enum object.
    */
-  public void init(PhaseInterface phase, String type);
+  public void init(PhaseInterface phase, PhysicalPropertyType ppt);
+
+  /**
+   * <p>
+   * Initialize / calculate a specific physical property of phase.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param name Name of physical property.
+   */
+  public default void init(PhaseInterface phase, String name) {
+    init(phase, PhysicalPropertyType.byName(name.toUpperCase()));
+  }
 
   /**
    * <p>
