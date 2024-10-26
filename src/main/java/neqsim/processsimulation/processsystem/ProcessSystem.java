@@ -664,7 +664,6 @@ public class ProcessSystem extends SimulationBaseClass {
       return (ProcessSystem) objectinputstream.readObject();
       // logger.info("process file open ok: " + filePath);
     } catch (Exception ex) {
-      // logger.error(ex.toString());
       logger.error(ex.getMessage(), ex);
     }
     return null;

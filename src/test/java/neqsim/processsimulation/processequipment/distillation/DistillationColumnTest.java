@@ -10,7 +10,7 @@ public class DistillationColumnTest {
    * @throws java.lang.Exception
    */
   @Test
-  public void testRun() throws Exception {
+  public void testRun() {
     neqsim.thermo.system.SystemInterface richTEG =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     richTEG.addComponent("nitrogen", 0.0003884521907420086);
@@ -120,7 +120,7 @@ public class DistillationColumnTest {
    * @throws java.lang.Exception
    */
   @Test
-  public void deethanizerTest() throws Exception {
+  public void deethanizerTest() {
     neqsim.thermo.system.SystemInterface gasToDeethanizer =
         new neqsim.thermo.system.SystemSrkEos(216, 30.00);
     gasToDeethanizer.addComponent("nitrogen", 1.67366E-3);
@@ -165,7 +165,7 @@ public class DistillationColumnTest {
    * @throws java.lang.Exception
    */
   @Test
-  public void debutanizerTest() throws Exception {
+  public void debutanizerTest() {
     neqsim.thermo.system.SystemInterface gasToDbutanizer =
         new neqsim.thermo.system.SystemSrkEos(289.0, 11.00);
     gasToDbutanizer.addComponent("nitrogen", 3.09189E-7);

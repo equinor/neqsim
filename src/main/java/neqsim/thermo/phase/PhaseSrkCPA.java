@@ -956,7 +956,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     }
   }
 
-
   /**
    * <p>
    * Getter for the field <code>dFdNtemp</code>.

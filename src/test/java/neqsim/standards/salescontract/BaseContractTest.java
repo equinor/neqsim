@@ -18,7 +18,7 @@ class BaseContractTest extends neqsim.NeqSimTest {
    * @throws java.lang.Exception
    */
   @BeforeAll
-  static void testRunCheck() throws Exception {
+  static void testRunCheck() {
     testSystem = new SystemGERGwaterEos(273.15 - 5.0, 20.0);
     testSystem.addComponent("methane", 0.9);
     testSystem.addComponent("ethane", 0.04);

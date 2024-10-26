@@ -196,11 +196,9 @@ public class LumpingModel implements java.io.Serializable {
     @Override
     public double getFractionOfHeavyEnd(int i) {
       if (fractionOfHeavyEnd == null) {
-        neqsim.util.exception.ThermoException ex =
+        throw new RuntimeException(
             new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
-                "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
-        logger.error(ex.getMessage(), ex);
-        throw new RuntimeException(ex);
+                "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition"));
       }
       return fractionOfHeavyEnd[i];
     }
@@ -312,11 +310,9 @@ public class LumpingModel implements java.io.Serializable {
     @Override
     public double getFractionOfHeavyEnd(int i) {
       if (fractionOfHeavyEnd == null) {
-        neqsim.util.exception.ThermoException ex =
+        throw new RuntimeException(
             new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
-                "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
-        logger.error(ex.getMessage(), ex);
-        throw new RuntimeException(ex);
+                "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition"));
       }
       return fractionOfHeavyEnd[i];
     }
@@ -399,7 +395,7 @@ public class LumpingModel implements java.io.Serializable {
         pseudoNumber++;
         String addName = "C" + Integer.toString(starti) + "-" + Integer.toString(i);
         getLumpedComponentNames()[k] = addName;
-        //System.out.println("adding " + addName);
+        // System.out.println("adding " + addName);
         fractionOfHeavyEnd[k] = zPlus[k] / molFracTot;
         system.addTBPfraction(addName, totalNumberOfMoles * zPlus[k], Maverage / zPlus[k],
             denstemp1 / denstemp2);
@@ -416,11 +412,9 @@ public class LumpingModel implements java.io.Serializable {
     @Override
     public double getFractionOfHeavyEnd(int i) {
       if (fractionOfHeavyEnd == null) {
-        neqsim.util.exception.ThermoException ex =
+        throw new RuntimeException(
             new neqsim.util.exception.NotInitializedException(this, "getFractionOfHeavyEnd",
-                "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition");
-        logger.error(ex.getMessage(), ex);
-        throw new RuntimeException(ex);
+                "fractionOfHeavyEnd", "characterisePlusFraction or generateLumpedComposition"));
       }
       return fractionOfHeavyEnd[i];
     }

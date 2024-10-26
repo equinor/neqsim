@@ -22,7 +22,7 @@ class ComponentHydrateGFTest extends neqsim.NeqSimTest {
    * @throws java.lang.Exception
    */
   @BeforeAll
-  static void setUpBeforeClass() throws Exception {
+  static void setUpBeforeClass() {
     thermoSystem = new SystemSrkCPAstatoil(298.0, 100.0);
     thermoSystem.addComponent("methane", 11.0);
     thermoSystem.addComponent("CO2", 1.0);

@@ -451,7 +451,7 @@ public abstract class Component implements ComponentInterface {
       }
       componentNumber = compIndex;
     } catch (Exception ex) {
-      logger.error("error in comp", ex);
+      logger.error("error in comp");
     }
 
     srkacentricFactor = acentricFactor;
@@ -513,10 +513,8 @@ public abstract class Component implements ComponentInterface {
         String msg = "will lead to negative number of moles of component in phase for component "
             + getComponentName() + "  who has " + numberOfMolesInPhase
             + " in phase  and chage request was " + dn;
-        neqsim.util.exception.InvalidInputException ex =
-            new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
-        throw new RuntimeException(ex);
-        // logger.error(ex.getMessage());
+        throw new RuntimeException(
+            new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg));
       }
     }
     numberOfMoles += totdn;

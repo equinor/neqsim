@@ -39,7 +39,7 @@ class CompressorTest extends neqsim.NeqSimTest {
    * @throws java.lang.Exception if any.
    */
   @BeforeEach
-  public void setUp() throws Exception {
+  public void setUp() {
     testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("methane", 100.0);
     processOps = new ProcessSystem();
@@ -232,7 +232,7 @@ class CompressorTest extends neqsim.NeqSimTest {
    * </p>
    */
   @Test
-  public void testMultiPhaseCompression() throws Exception {
+  public void testMultiPhaseCompression() {
     SystemSrkEos testSystem = new SystemSrkEos(315.0, 10.0);
     testSystem.addComponent("nitrogen", 2.0);
     testSystem.addComponent("methane", 50.0);

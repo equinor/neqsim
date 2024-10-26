@@ -24,7 +24,7 @@ class ComponentSplitterTest {
   ProcessSystem processOps = null;
 
   @BeforeEach
-  public void setUpBeforeClass() throws Exception {
+  public void setUpBeforeClass() {
     testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("ethane", 10.0);

@@ -2,7 +2,6 @@ package neqsim.pvtsimulation.simulation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
@@ -14,12 +13,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  */
 class SaturationTemperatureTest extends neqsim.NeqSimTest {
-  /**
-   * @throws java.lang.Exception
-   */
-  @BeforeAll
-  static void setUpBeforeClass() throws Exception {}
-
   /**
    * Test method for
    * {@link neqsim.pvtsimulation.simulation.SaturationTemperature#calcSaturationTemperature()}.

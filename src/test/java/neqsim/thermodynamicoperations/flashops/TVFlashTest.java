@@ -23,7 +23,7 @@ class TVFlashTest {
    * @throws java.lang.Exception
    */
   @BeforeEach
-  void setUp() throws Exception {
+  void setUp() {
     testSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(293.15, 0.1);
     testSystem.addComponent("methane", 0.0);
     testSystem.addComponent("ethane", 0.0);

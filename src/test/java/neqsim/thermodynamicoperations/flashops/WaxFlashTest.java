@@ -22,7 +22,7 @@ class WaxFlashTest {
    * @throws java.lang.Exception
    */
   @BeforeEach
-  void setUp() throws Exception {
+  void setUp() {
     NeqSimDataBase.setCreateTemporaryTables(true);
     testSystem = new SystemSrkEos(273.0 + 30, 50.0);
     testSystem.addComponent("CO2", 0.018);

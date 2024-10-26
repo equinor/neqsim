@@ -2,7 +2,6 @@ package neqsim.processsimulation.measurementdevice;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.processsimulation.processequipment.separator.Separator;
 import neqsim.processsimulation.processequipment.stream.Stream;
@@ -15,12 +14,6 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 class WellAllocatorTest extends neqsim.NeqSimTest {
   static Logger logger = LogManager.getLogger(WellAllocatorTest.class);
-
-  /**
-   * @throws java.lang.Exception
-   */
-  @BeforeAll
-  static void setUpBeforeClass() throws Exception {}
 
   /**
    * Test method for

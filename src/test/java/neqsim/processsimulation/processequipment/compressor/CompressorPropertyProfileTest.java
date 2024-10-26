@@ -25,7 +25,7 @@ class CompressorPropertyProfileTest extends neqsim.NeqSimTest {
    * @throws java.lang.Exception if any.
    */
   @BeforeEach
-  public void setUp() throws Exception {
+  public void setUp() {
     testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("methane", 100.0);
     processOps = new ProcessSystem();

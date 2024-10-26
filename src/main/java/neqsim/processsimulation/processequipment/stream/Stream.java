@@ -567,13 +567,14 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * @return a {@link java.lang.Object} object
    */
   public Object getProperty(String propertyName, String unit, String phase, String component) {
+    throw new RuntimeException(
+        new neqsim.util.exception.NotImplementedException(this, "getProperty"));
     // getFluid().getProperties.containsKey(propertyName)) {
     // if(properties.containsKey(propertyName)) {
     // }
     // else
 
-    // todo: throw not implemented error
-    return null;
+    // return null;
   }
 
   /** {@inheritDoc} */

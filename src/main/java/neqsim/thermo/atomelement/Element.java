@@ -89,10 +89,8 @@ public class Element implements ThermodynamicConstantsInterface {
    */
   public double getNumberOfElements(String elementName) {
     if (nameArray == null) {
-      neqsim.util.exception.InvalidInputException ex =
-          new neqsim.util.exception.InvalidInputException(this, "getNumberOfElements", elementName,
-              "component not in element database..");
-      throw new RuntimeException(ex);
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "getNumberOfElements", elementName, "component not in element database.."));
     }
     for (int i = 0; i < nameArray.length; i++) {
       if (nameArray[i].equals(elementName)) {

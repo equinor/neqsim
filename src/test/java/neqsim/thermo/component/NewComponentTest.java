@@ -2,7 +2,6 @@ package neqsim.thermo.component;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseSrkEos;
@@ -12,12 +11,6 @@ import neqsim.thermo.system.SystemSrkEos;
 
 public class NewComponentTest extends neqsim.NeqSimTest {
   static SystemInterface thermoSystem = null;
-
-  /**
-   * @throws java.lang.Exception
-   */
-  @BeforeAll
-  static void setUpBeforeClass() throws Exception {}
 
   @Test
   public void createComponentTest() {

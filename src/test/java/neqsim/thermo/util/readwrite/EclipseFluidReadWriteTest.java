@@ -2,7 +2,6 @@ package neqsim.thermo.util.readwrite;
 
 import java.io.File;
 import java.io.IOException;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -18,12 +17,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   String fileA13 = file.getAbsolutePath() + "/A-13.E300";
   String fileA17 = file.getAbsolutePath() + "/A-17.E300";
   String fileA19 = file.getAbsolutePath() + "/A-19.E300";
-
-  /**
-   * @throws java.lang.Exception
-   */
-  @BeforeAll
-  static void setUpBeforeClass() throws Exception {}
 
   /**
    * Test method for
