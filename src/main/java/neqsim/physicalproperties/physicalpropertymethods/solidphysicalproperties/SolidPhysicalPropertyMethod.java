@@ -25,7 +25,7 @@ public abstract class SolidPhysicalPropertyMethod extends PhysicalPropertyMethod
    *        object
    */
   public SolidPhysicalPropertyMethod(PhysicalProperties solidPhase) {
-    setPhase(solidPhase);
+    super(solidPhase);
   }
 
   /** {@inheritDoc} */

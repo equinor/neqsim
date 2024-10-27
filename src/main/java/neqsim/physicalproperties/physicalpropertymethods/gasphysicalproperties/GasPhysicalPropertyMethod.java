@@ -28,7 +28,7 @@ public abstract class GasPhysicalPropertyMethod extends PhysicalPropertyMethod {
    *        object
    */
   public GasPhysicalPropertyMethod(PhysicalProperties gasPhase) {
-    this.gasPhase = gasPhase;
+    super(gasPhase);
     binaryMolecularDiameter = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase
         .getPhase().getNumberOfComponents()];
     binaryMolecularMass = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase
