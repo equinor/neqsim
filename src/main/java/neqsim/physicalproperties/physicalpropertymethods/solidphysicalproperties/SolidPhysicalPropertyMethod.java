@@ -1,6 +1,7 @@
 package neqsim.physicalproperties.physicalpropertymethods.solidphysicalproperties;
 
 import neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * <p>
@@ -20,13 +21,11 @@ public abstract class SolidPhysicalPropertyMethod extends PhysicalPropertyMethod
    * Constructor for SolidPhysicalPropertyMethod.
    * </p>
    *
-   * @param solidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
+   * @param solidPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties}
    *        object
    */
-  public SolidPhysicalPropertyMethod(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties solidPhase) {
-    setPhase(solidPhase);
+  public SolidPhysicalPropertyMethod(PhysicalProperties solidPhase) {
+    super(solidPhase);
   }
 
   /** {@inheritDoc} */

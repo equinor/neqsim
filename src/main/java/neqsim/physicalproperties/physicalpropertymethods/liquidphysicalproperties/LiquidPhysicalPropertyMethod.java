@@ -22,11 +22,10 @@ public abstract class LiquidPhysicalPropertyMethod extends PhysicalPropertyMetho
    * </p>
    *
    * @param liquidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
   public LiquidPhysicalPropertyMethod(PhysicalProperties liquidPhase) {
-    setPhase(liquidPhase);
+    super(liquidPhase);
   }
 
   /** {@inheritDoc} */

@@ -21,12 +21,11 @@ public abstract class CommonPhysicalPropertyMethod extends PhysicalPropertyMetho
    * Constructor for CommonPhysicalPropertyMethod.
    * </p>
    *
-   * @param phase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
+   * @param phase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties}
    *        object
    */
   public CommonPhysicalPropertyMethod(PhysicalProperties phase) {
-    this.phase = phase;
+    super(phase);
   }
 
   /** {@inheritDoc} */
