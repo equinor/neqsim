@@ -8,7 +8,7 @@ import neqsim.thermo.phase.PhaseInterface;
  *
  * @author Even Solbraa
  */
-abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterface {
+public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterface {
   private static final long serialVersionUID = 1000;
 
   int cpaon = 1;

@@ -2,16 +2,16 @@ package neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalpro
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.CommonPhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertymethods.methodinterface.ConductivityInterface;
 
 /**
- * Class for physical property Conductivity.
+ * Abstract class for Conductivity.
  *
  * @author Even Solbraa
  */
-abstract class Conductivity extends
-    neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.CommonPhysicalPropertyMethod
-    implements
-    neqsim.physicalproperties.physicalpropertymethods.methodinterface.ConductivityInterface {
+public abstract class Conductivity extends CommonPhysicalPropertyMethod
+    implements ConductivityInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Conductivity.class);
 

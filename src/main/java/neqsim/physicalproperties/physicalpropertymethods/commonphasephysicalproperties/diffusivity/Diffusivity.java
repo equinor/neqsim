@@ -3,6 +3,7 @@ package neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalpro
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.CommonPhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertymethods.methodinterface.DiffusivityInterface;
 
 /**
  * <p>
@@ -12,8 +13,7 @@ import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalprop
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Diffusivity extends CommonPhysicalPropertyMethod implements
-    neqsim.physicalproperties.physicalpropertymethods.methodinterface.DiffusivityInterface {
+public class Diffusivity extends CommonPhysicalPropertyMethod implements DiffusivityInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Diffusivity.class);
 

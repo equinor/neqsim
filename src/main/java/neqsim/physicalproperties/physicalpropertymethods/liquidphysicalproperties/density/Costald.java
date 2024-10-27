@@ -8,18 +8,18 @@ package neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperti
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.LiquidPhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertymethods.methodinterface.DensityInterface;
 
 /**
  * <p>
- * Costald Density Calculation class.
+ * Costald Density Calculation class for liquids.
  * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Costald extends
-    neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.LiquidPhysicalPropertyMethod
-    implements neqsim.physicalproperties.physicalpropertymethods.methodinterface.DensityInterface {
+public class Costald extends LiquidPhysicalPropertyMethod implements DensityInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Density.class);
 
@@ -34,7 +34,7 @@ public class Costald extends
    */
   public Costald(
       neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface liquidPhase) {
-    this.liquidPhase = liquidPhase;
+    super(liquidPhase);
   }
 
   /** {@inheritDoc} */

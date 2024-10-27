@@ -6,6 +6,7 @@ import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalpropertie
 import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.density.Density;
 import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.diffusivity.CO2water;
 import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.viscosity.Viscosity;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -16,8 +17,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class CO2waterPhysicalProperties
-    extends neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties {
+public class CO2waterPhysicalProperties extends PhysicalProperties {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(CO2waterPhysicalProperties.class);
 

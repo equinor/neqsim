@@ -1,5 +1,8 @@
 package neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties;
 
+import neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface;
+
 /**
  * <p>
  * CommonPhysicalPropertyMethod class.
@@ -8,8 +11,7 @@ package neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalpro
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class CommonPhysicalPropertyMethod
-    extends neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyMethod {
+public abstract class CommonPhysicalPropertyMethod extends PhysicalPropertyMethod {
   private static final long serialVersionUID = 1000;
 
   protected neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase;
@@ -23,15 +25,13 @@ public class CommonPhysicalPropertyMethod
    *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
    *        object
    */
-  public CommonPhysicalPropertyMethod(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase) {
+  public CommonPhysicalPropertyMethod(PhysicalPropertiesInterface phase) {
     this.phase = phase;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setPhase(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase) {
+  public void setPhase(PhysicalPropertiesInterface phase) {
     this.phase = phase;
   }
 }

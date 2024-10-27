@@ -9,6 +9,7 @@ package neqsim.physicalproperties.physicalpropertysystem;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.PhysicalPropertyType;
+import neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface;
 import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
 import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.diffusivity.CorrespondingStatesDiffusivity;
 import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod;
@@ -17,9 +18,13 @@ import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalprop
 import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodMod86;
 import neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties.conductivity.ChungConductivityMethod;
 import neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties.diffusivity.WilkeLeeDiffusivity;
+import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.density.Costald;
 import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.diffusivity.AmineDiffusivity;
 import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.diffusivity.SiddiqiLucasMethod;
 import neqsim.physicalproperties.physicalpropertymethods.methodinterface.ConductivityInterface;
+import neqsim.physicalproperties.physicalpropertymethods.methodinterface.DensityInterface;
+import neqsim.physicalproperties.physicalpropertymethods.methodinterface.DiffusivityInterface;
+import neqsim.physicalproperties.physicalpropertymethods.methodinterface.ViscosityInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -39,12 +44,11 @@ public abstract class PhysicalProperties
   protected PhaseInterface phase;
   protected int binaryDiffusionCoefficientMethod;
   protected int multicomponentDiffusionMethod;
-  private neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface mixingRule =
-      null;
-  public neqsim.physicalproperties.physicalpropertymethods.methodinterface.ConductivityInterface conductivityCalc;
-  public neqsim.physicalproperties.physicalpropertymethods.methodinterface.ViscosityInterface viscosityCalc;
-  public neqsim.physicalproperties.physicalpropertymethods.methodinterface.DiffusivityInterface diffusivityCalc;
-  public neqsim.physicalproperties.physicalpropertymethods.methodinterface.DensityInterface densityCalc;
+  private PhysicalPropertyMixingRuleInterface mixingRule = null;
+  public ConductivityInterface conductivityCalc;
+  public ViscosityInterface viscosityCalc;
+  public DiffusivityInterface diffusivityCalc;
+  public DensityInterface densityCalc;
   public double kinematicViscosity = 0;
   public double density = 0;
   public double viscosity = 0;
@@ -106,14 +110,13 @@ public abstract class PhysicalProperties
 
   /** {@inheritDoc} */
   @Override
-  public neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface getMixingRule() {
+  public PhysicalPropertyMixingRuleInterface getMixingRule() {
     return mixingRule;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRule(
-      neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface mixingRule) {
+  public void setMixingRule(PhysicalPropertyMixingRuleInterface mixingRule) {
     this.mixingRule = mixingRule;
   }
 
@@ -125,7 +128,7 @@ public abstract class PhysicalProperties
 
   /** {@inheritDoc} */
   @Override
-  public neqsim.physicalproperties.physicalpropertymethods.methodinterface.ViscosityInterface getViscosityModel() {
+  public ViscosityInterface getViscosityModel() {
     return viscosityCalc;
   }
 
@@ -137,9 +140,7 @@ public abstract class PhysicalProperties
           new neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.density.Density(
               this);
     } else if ("Costald".equals(model)) {
-      densityCalc =
-          new neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.density.Costald(
-              this);
+      densityCalc = new Costald(this);
     }
   }
 

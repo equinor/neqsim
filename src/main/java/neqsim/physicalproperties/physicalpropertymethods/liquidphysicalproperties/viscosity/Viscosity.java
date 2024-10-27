@@ -2,6 +2,8 @@ package neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperti
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.LiquidPhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertymethods.methodinterface.ViscosityInterface;
 
 /**
  * <p>
@@ -11,10 +13,7 @@ import org.apache.logging.log4j.Logger;
  * @author Even Solbraa
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
  */
-public class Viscosity extends
-    neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.LiquidPhysicalPropertyMethod
-    implements
-    neqsim.physicalproperties.physicalpropertymethods.methodinterface.ViscosityInterface {
+public class Viscosity extends LiquidPhysicalPropertyMethod implements ViscosityInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Viscosity.class);
 

@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
 import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -20,8 +21,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class GasPhysicalProperties
-    extends neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties {
+public class GasPhysicalProperties extends PhysicalProperties {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(GasPhysicalProperties.class);
 
@@ -52,7 +52,6 @@ public class GasPhysicalProperties
     densityCalc =
         new neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties.density.Density(
             this);
-    // this.init(phase);
   }
 
   /** {@inheritDoc} */

@@ -1,5 +1,6 @@
 package neqsim.physicalproperties.physicalpropertymethods.methodinterface;
 
+import neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyMethodInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
@@ -10,8 +11,8 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface DensityInterface extends ThermodynamicConstantsInterface,
-    neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyMethodInterface {
+public interface DensityInterface
+    extends ThermodynamicConstantsInterface, PhysicalPropertyMethodInterface {
   /**
    * <p>
    * Returns the density of the phase. Unit: kg/m^3

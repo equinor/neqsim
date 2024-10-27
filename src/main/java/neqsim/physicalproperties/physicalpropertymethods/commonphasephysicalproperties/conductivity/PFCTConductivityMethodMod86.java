@@ -6,7 +6,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * <p>
- * PFCTConductivityMethodMod86 class.
+ * PFCTConductivityMethodMod86 class extending conductivity for commonphase.
  * </p>
  *
  * @author esol

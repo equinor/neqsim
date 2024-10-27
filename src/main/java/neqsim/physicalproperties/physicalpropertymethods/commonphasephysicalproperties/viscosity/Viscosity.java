@@ -2,16 +2,15 @@ package neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalpro
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.CommonPhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertymethods.methodinterface.ViscosityInterface;
 
 /**
  * Abstract class for Viscosity property.
  *
  * @author Even Solbraa
  */
-abstract class Viscosity extends
-    neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.CommonPhysicalPropertyMethod
-    implements
-    neqsim.physicalproperties.physicalpropertymethods.methodinterface.ViscosityInterface {
+public abstract class Viscosity extends CommonPhysicalPropertyMethod implements ViscosityInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Viscosity.class);
 

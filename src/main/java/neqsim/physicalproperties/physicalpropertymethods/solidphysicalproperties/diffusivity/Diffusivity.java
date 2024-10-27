@@ -2,6 +2,8 @@ package neqsim.physicalproperties.physicalpropertymethods.solidphysicalpropertie
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertymethods.methodinterface.DiffusivityInterface;
+import neqsim.physicalproperties.physicalpropertymethods.solidphysicalproperties.SolidPhysicalPropertyMethod;
 
 /**
  * <p>
@@ -11,10 +13,7 @@ import org.apache.logging.log4j.Logger;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Diffusivity extends
-    neqsim.physicalproperties.physicalpropertymethods.solidphysicalproperties.SolidPhysicalPropertyMethod
-    implements
-    neqsim.physicalproperties.physicalpropertymethods.methodinterface.DiffusivityInterface {
+public class Diffusivity extends SolidPhysicalPropertyMethod implements DiffusivityInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Diffusivity.class);
 
