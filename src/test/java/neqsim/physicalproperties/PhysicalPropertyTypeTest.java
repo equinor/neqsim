@@ -2,6 +2,9 @@ package neqsim.physicalproperties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 
 public class PhysicalPropertyTypeTest {
   @Test
