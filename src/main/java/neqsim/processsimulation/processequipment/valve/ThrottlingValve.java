@@ -557,7 +557,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       thermoOps.PHflash(enthalpy, 0);
     }
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-    thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     outStream.setThermoSystem(thermoSystem);
 
     if (gasValve) {
