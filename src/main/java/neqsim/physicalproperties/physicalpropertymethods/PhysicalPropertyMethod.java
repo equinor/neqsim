@@ -8,6 +8,7 @@ package neqsim.physicalproperties.physicalpropertymethods;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * <p>
@@ -25,8 +26,12 @@ public abstract class PhysicalPropertyMethod implements PhysicalPropertyMethodIn
    * <p>
    * Constructor for PhysicalPropertyMethod.
    * </p>
+   *
+   * @param phase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public PhysicalPropertyMethod() {}
+  public PhysicalPropertyMethod(PhysicalProperties phase) {
+    setPhase(phase);
+  }
 
   /** {@inheritDoc} */
   @Override

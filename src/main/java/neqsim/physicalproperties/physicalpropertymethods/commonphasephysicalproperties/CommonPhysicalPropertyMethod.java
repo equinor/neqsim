@@ -25,7 +25,7 @@ public abstract class CommonPhysicalPropertyMethod extends PhysicalPropertyMetho
    *        object
    */
   public CommonPhysicalPropertyMethod(PhysicalProperties phase) {
-    this.phase = phase;
+    super(phase);
   }
 
   /** {@inheritDoc} */
