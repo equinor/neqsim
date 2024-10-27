@@ -36,7 +36,7 @@ public abstract class PhysicalProperties
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(PhysicalProperties.class);
 
-  public PhaseInterface phase;
+  protected PhaseInterface phase;
   protected int binaryDiffusionCoefficientMethod;
   protected int multicomponentDiffusionMethod;
   private neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface mixingRule =
@@ -59,7 +59,7 @@ public abstract class PhysicalProperties
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public PhysicalProperties(PhaseInterface phase) {
-    this.phase = phase;
+    setPhase(phase);
   }
 
   /**
@@ -73,7 +73,7 @@ public abstract class PhysicalProperties
    */
   public PhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
-    this.phase = phase;
+    this(phase);
     this.binaryDiffusionCoefficientMethod = binaryDiffusionCoefficientMethod;
     this.multicomponentDiffusionMethod = multicomponentDiffusionMethod;
   }
