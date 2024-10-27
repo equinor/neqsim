@@ -915,11 +915,18 @@ public abstract class SystemThermo implements SystemInterface {
       // //refSystem.initPhysicalProperties();
       // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();
       // sammenligne med API-standard for tetthet - og sette Penloux dt
+    } catch (RuntimeException ex) {
+      // todo: Should not swallow notimplementedexception
+      /*
+       * if (ex.getCause().getClass().equals(NotImplementedException.class)) { throw ex; }
+       */
+      logger.error(ex.getMessage());
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
 
     double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density);
+
     // 0.2918-0.0928*acs)*ThermodynamicConstantsInterface.R*TC/PC*10.0;
     addComponent(componentName, numberOfMoles, TC, PC, acs);
     double Kwatson = Math.pow(TB * 1.8, 1.0 / 3.0) / density;

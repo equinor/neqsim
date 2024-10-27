@@ -108,8 +108,10 @@ public class EclipseFluidReadWrite {
           fluid.addComponent(name + pseudoName, ZI.get(counter));
         }
       }
+    } catch (RuntimeException ex) {
+      logger.error(ex.getMessage());
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      logger.error(ex.getMessage());
     }
   }
 
