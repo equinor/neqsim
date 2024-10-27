@@ -77,6 +77,12 @@ public class PhaseGEWilson extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
+  public void setMixingRule(int type) {
+    super.setMixingRule(type);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getGibbsEnergy() {
     return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
   }

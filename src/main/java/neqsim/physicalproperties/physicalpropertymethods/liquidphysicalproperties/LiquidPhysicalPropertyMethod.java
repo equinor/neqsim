@@ -14,7 +14,7 @@ import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 public abstract class LiquidPhysicalPropertyMethod extends PhysicalPropertyMethod {
   private static final long serialVersionUID = 1000;
 
-  protected PhysicalProperties liquidPhase;
+  protected neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties liquidPhase;
 
   /**
    * <p>
@@ -22,10 +22,11 @@ public abstract class LiquidPhysicalPropertyMethod extends PhysicalPropertyMetho
    * </p>
    *
    * @param liquidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
+   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
+   *        object
    */
   public LiquidPhysicalPropertyMethod(PhysicalProperties liquidPhase) {
-    super(liquidPhase);
+    setPhase(liquidPhase);
   }
 
   /** {@inheritDoc} */

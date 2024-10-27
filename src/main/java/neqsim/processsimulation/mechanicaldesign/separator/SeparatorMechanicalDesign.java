@@ -158,10 +158,10 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     // double moduleWidth = 0.0, moduleHeight = 0.0, moduleLength = 0.0;
     double materialsCost = 0.0;
     double gasDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0)
-        .getDensity("kg/m3");
+        .getPhysicalProperties().getDensity();
 
     double liqDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(1)
-        .getDensity("kg/m3");
+        .getPhysicalProperties().getDensity();
     double liqViscosity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(1)
         .getPhysicalProperties().getViscosity();
     if (((SeparatorInterface) getProcessEquipment()).getThermoSystem().getNumberOfPhases() == 1) {

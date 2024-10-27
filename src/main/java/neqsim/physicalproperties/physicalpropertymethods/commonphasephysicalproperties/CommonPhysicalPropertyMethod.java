@@ -14,18 +14,19 @@ import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 public abstract class CommonPhysicalPropertyMethod extends PhysicalPropertyMethod {
   private static final long serialVersionUID = 1000;
 
-  protected PhysicalProperties phase;
+  protected neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties phase;
 
   /**
    * <p>
    * Constructor for CommonPhysicalPropertyMethod.
    * </p>
    *
-   * @param phase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties}
+   * @param phase a
+   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
    *        object
    */
   public CommonPhysicalPropertyMethod(PhysicalProperties phase) {
-    super(phase);
+    this.phase = phase;
   }
 
   /** {@inheritDoc} */
