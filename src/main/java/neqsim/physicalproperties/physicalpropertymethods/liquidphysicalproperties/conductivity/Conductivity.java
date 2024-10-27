@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.LiquidPhysicalPropertyMethod;
 import neqsim.physicalproperties.physicalpropertymethods.methodinterface.ConductivityInterface;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * <p>
@@ -32,11 +33,9 @@ public class Conductivity extends LiquidPhysicalPropertyMethod implements Conduc
    * </p>
    *
    * @param liquidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public Conductivity(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface liquidPhase) {
+  public Conductivity(PhysicalProperties liquidPhase) {
     super(liquidPhase);
     pureComponentConductivity = new double[liquidPhase.getPhase().getNumberOfComponents()];
   }

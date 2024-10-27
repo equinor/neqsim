@@ -1,6 +1,7 @@
 package neqsim.physicalproperties.physicalpropertymethods.solidphysicalproperties;
 
 import neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * <p>
@@ -13,26 +14,23 @@ import neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyMethod;
 public abstract class SolidPhysicalPropertyMethod extends PhysicalPropertyMethod {
   private static final long serialVersionUID = 1000;
 
-  protected neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface solidPhase;
+  protected PhysicalProperties solidPhase;
 
   /**
    * <p>
    * Constructor for SolidPhysicalPropertyMethod.
    * </p>
    *
-   * @param solidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
+   * @param solidPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties}
    *        object
    */
-  public SolidPhysicalPropertyMethod(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface solidPhase) {
+  public SolidPhysicalPropertyMethod(PhysicalProperties solidPhase) {
     setPhase(solidPhase);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setPhase(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase) {
-    this.solidPhase = phase;
+  public void setPhase(PhysicalProperties solidPhase) {
+    this.solidPhase = solidPhase;
   }
 }

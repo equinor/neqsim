@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertymethods.methodinterface.ConductivityInterface;
 import neqsim.physicalproperties.physicalpropertymethods.solidphysicalproperties.SolidPhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 import neqsim.thermo.phase.PhaseType;
 
 /**
@@ -31,12 +32,10 @@ public class Conductivity extends SolidPhysicalPropertyMethod implements Conduct
    * Constructor for Conductivity.
    * </p>
    *
-   * @param solidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
+   * @param solidPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties}
    *        object
    */
-  public Conductivity(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface solidPhase) {
+  public Conductivity(PhysicalProperties solidPhase) {
     super(solidPhase);
   }
 

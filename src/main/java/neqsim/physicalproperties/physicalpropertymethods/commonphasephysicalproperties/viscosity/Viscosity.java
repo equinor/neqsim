@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.CommonPhysicalPropertyMethod;
 import neqsim.physicalproperties.physicalpropertymethods.methodinterface.ViscosityInterface;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * Abstract class for Viscosity property.
@@ -21,12 +22,10 @@ public abstract class Viscosity extends CommonPhysicalPropertyMethod implements 
    * Constructor for Viscosity.
    * </p>
    *
-   * @param phase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
+   * @param phase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties}
    *        object
    */
-  public Viscosity(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase) {
+  public Viscosity(PhysicalProperties phase) {
     super(phase);
     pureComponentViscosity = new double[phase.getPhase().getNumberOfComponents()];
   }

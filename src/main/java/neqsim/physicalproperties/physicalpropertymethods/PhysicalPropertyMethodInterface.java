@@ -6,6 +6,8 @@
 
 package neqsim.physicalproperties.physicalpropertymethods;
 
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
+
 /**
  * <p>
  * PhysicalPropertyMethodInterface interface.
@@ -31,12 +33,9 @@ public interface PhysicalPropertyMethodInterface extends Cloneable, java.io.Seri
    * setPhase.
    * </p>
    *
-   * @param phase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   * @param phase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public void setPhase(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase);
+  public void setPhase(PhysicalProperties phase);
 
   /**
    * <p>

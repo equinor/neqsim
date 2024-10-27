@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertymethods.methodinterface.ViscosityInterface;
 import neqsim.physicalproperties.physicalpropertymethods.solidphysicalproperties.SolidPhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * <p>
@@ -25,12 +26,10 @@ public class Viscosity extends SolidPhysicalPropertyMethod implements ViscosityI
    * Constructor for Viscosity.
    * </p>
    *
-   * @param solidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
+   * @param solidPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties}
    *        object
    */
-  public Viscosity(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface solidPhase) {
+  public Viscosity(PhysicalProperties solidPhase) {
     super(solidPhase);
   }
 

@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.LiquidPhysicalPropertyMethod;
 import neqsim.physicalproperties.physicalpropertymethods.methodinterface.DensityInterface;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * <p>
@@ -29,11 +30,9 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
    * </p>
    *
    * @param liquidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public Costald(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface liquidPhase) {
+  public Costald(PhysicalProperties liquidPhase) {
     super(liquidPhase);
   }
 

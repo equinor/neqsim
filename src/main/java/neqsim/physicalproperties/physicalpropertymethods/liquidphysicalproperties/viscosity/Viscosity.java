@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.LiquidPhysicalPropertyMethod;
 import neqsim.physicalproperties.physicalpropertymethods.methodinterface.ViscosityInterface;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * <p>
@@ -25,11 +26,9 @@ public class Viscosity extends LiquidPhysicalPropertyMethod implements Viscosity
    * </p>
    *
    * @param liquidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public Viscosity(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface liquidPhase) {
+  public Viscosity(PhysicalProperties liquidPhase) {
     super(liquidPhase);
     pureComponentViscosity = new double[liquidPhase.getPhase().getNumberOfComponents()];
   }

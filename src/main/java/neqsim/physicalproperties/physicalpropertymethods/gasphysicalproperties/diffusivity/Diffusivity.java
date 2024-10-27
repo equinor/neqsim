@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties.GasPhysicalPropertyMethod;
 import neqsim.physicalproperties.physicalpropertymethods.methodinterface.DiffusivityInterface;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * <p>
@@ -26,12 +27,10 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
    * Constructor for Diffusivity.
    * </p>
    *
-   * @param gasPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
+   * @param gasPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties}
    *        object
    */
-  public Diffusivity(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface gasPhase) {
+  public Diffusivity(PhysicalProperties gasPhase) {
     super(gasPhase);
     binaryDiffusionCoefficients = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase
         .getPhase().getNumberOfComponents()];

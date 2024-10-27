@@ -1,5 +1,7 @@
 package neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.diffusivity;
 
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
+
 /**
  * <p>
  * CO2water class.
@@ -16,12 +18,9 @@ public class CO2water extends Diffusivity {
    * Constructor for CO2water.
    * </p>
    *
-   * @param liquidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   * @param liquidPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public CO2water(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface liquidPhase) {
+  public CO2water(PhysicalProperties liquidPhase) {
     super(liquidPhase);
   }
 

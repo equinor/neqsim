@@ -7,6 +7,7 @@
 package neqsim.thermo.phase;
 
 import neqsim.physicalproperties.PhysicalPropertyType;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -841,10 +842,9 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * getPhysicalProperties.
    * </p>
    *
-   * @return a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *         object
+   * @return a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface getPhysicalProperties();
+  public PhysicalProperties getPhysicalProperties();
 
   /**
    * <p>

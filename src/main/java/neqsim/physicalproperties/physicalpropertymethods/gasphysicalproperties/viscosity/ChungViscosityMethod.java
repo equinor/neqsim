@@ -6,6 +6,8 @@
 
 package neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties.viscosity;
 
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
+
 /**
  * <p>
  * ChungViscosityMethod class.
@@ -38,12 +40,9 @@ public class ChungViscosityMethod extends Viscosity {
    * Constructor for ChungViscosityMethod.
    * </p>
    *
-   * @param gasPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   * @param gasPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public ChungViscosityMethod(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface gasPhase) {
+  public ChungViscosityMethod(PhysicalProperties gasPhase) {
     super(gasPhase);
     pureComponentViscosity = new double[gasPhase.getPhase().getNumberOfComponents()];
     relativeViscosity = new double[gasPhase.getPhase().getNumberOfComponents()];

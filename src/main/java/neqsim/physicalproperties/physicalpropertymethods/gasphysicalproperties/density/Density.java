@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties.GasPhysicalPropertyMethod;
 import neqsim.physicalproperties.physicalpropertymethods.methodinterface.DensityInterface;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * <p>
@@ -28,13 +29,11 @@ public class Density extends GasPhysicalPropertyMethod implements DensityInterfa
    * Constructor for Density.
    * </p>
    *
-   * @param phase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
+   * @param gasPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties}
    *        object
    */
-  public Density(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase) {
-    super(phase);
+  public Density(PhysicalProperties gasPhase) {
+    super(gasPhase);
   }
 
   /** {@inheritDoc} */

@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.LiquidPhysicalPropertyMethod;
 import neqsim.physicalproperties.physicalpropertymethods.methodinterface.DiffusivityInterface;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * Diffusivity class.
@@ -23,11 +24,9 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
    * </p>
    *
    * @param liquidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public Diffusivity(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface liquidPhase) {
+  public Diffusivity(PhysicalProperties liquidPhase) {
     super(liquidPhase);
     binaryDiffusionCoefficients = new double[liquidPhase.getPhase()
         .getNumberOfComponents()][liquidPhase.getPhase().getNumberOfComponents()];

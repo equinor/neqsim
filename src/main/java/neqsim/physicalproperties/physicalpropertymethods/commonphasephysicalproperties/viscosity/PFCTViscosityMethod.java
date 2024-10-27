@@ -6,6 +6,7 @@
 
 package neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.viscosity;
 
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -45,12 +46,9 @@ public class PFCTViscosityMethod extends Viscosity {
    * Constructor for PFCTViscosityMethod.
    * </p>
    *
-   * @param phase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   * @param phase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public PFCTViscosityMethod(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase) {
+  public PFCTViscosityMethod(PhysicalProperties phase) {
     super(phase);
     referenceSystem.addComponent("methane", 10.0);
     referenceSystem.init(0);

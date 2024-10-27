@@ -2,6 +2,7 @@ package neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalpro
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * <p>
@@ -54,12 +55,9 @@ public class FrictionTheoryViscosityMethod extends Viscosity
    * Constructor for FrictionTheoryViscosityMethod.
    * </p>
    *
-   * @param phase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   * @param phase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public FrictionTheoryViscosityMethod(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase) {
+  public FrictionTheoryViscosityMethod(PhysicalProperties phase) {
     super(phase);
     pureComponentViscosity = new double[phase.getPhase().getNumberOfComponents()];
     Fc = new double[phase.getPhase().getNumberOfComponents()];

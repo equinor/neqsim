@@ -2,7 +2,7 @@ package neqsim.physicalproperties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 import neqsim.physicalproperties.physicalpropertysystem.commonphasephysicalproperties.DefaultPhysicalProperties;
 import neqsim.physicalproperties.physicalpropertysystem.gasphysicalproperties.GasPhysicalProperties;
 import neqsim.physicalproperties.physicalpropertysystem.liquidphysicalproperties.AminePhysicalProperties;
@@ -25,10 +25,10 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(PhysicalPropertyHandler.class);
 
-  private PhysicalPropertiesInterface gasPhysicalProperties = null;
-  private PhysicalPropertiesInterface oilPhysicalProperties = null;
-  private PhysicalPropertiesInterface aqueousPhysicalProperties = null;
-  private PhysicalPropertiesInterface solidPhysicalProperties = null;
+  private PhysicalProperties gasPhysicalProperties = null;
+  private PhysicalProperties oilPhysicalProperties = null;
+  private PhysicalProperties aqueousPhysicalProperties = null;
+  private PhysicalProperties solidPhysicalProperties = null;
   private neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRule mixingRule = null;
 
   /**
@@ -98,10 +98,9 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *         object
+   * @return a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public PhysicalPropertiesInterface getPhysicalProperty(PhaseInterface phase) {
+  public PhysicalProperties getPhysicalProperty(PhaseInterface phase) {
     switch (phase.getType()) {
       case GAS:
         return gasPhysicalProperties;

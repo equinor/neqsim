@@ -1,5 +1,7 @@
 package neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties.diffusivity;
 
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
+
 /**
  * <p>
  * WilkeLeeDiffusivity class.
@@ -20,12 +22,9 @@ public class WilkeLeeDiffusivity extends Diffusivity {
    * Constructor for WilkeLeeDiffusivity.
    * </p>
    *
-   * @param gasPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   * @param gasPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public WilkeLeeDiffusivity(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface gasPhase) {
+  public WilkeLeeDiffusivity(PhysicalProperties gasPhase) {
     super(gasPhase);
     binaryDiffusionCoefficients = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase
         .getPhase().getNumberOfComponents()];

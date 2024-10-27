@@ -1,5 +1,6 @@
 package neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.conductivity;
 
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -39,12 +40,9 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
    * Constructor for PFCTConductivityMethodMod86.
    * </p>
    *
-   * @param phase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   * @param phase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public PFCTConductivityMethodMod86(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase) {
+  public PFCTConductivityMethodMod86(PhysicalProperties phase) {
     super(phase);
     if (referenceSystem.getNumberOfMoles() < 1e-10) {
       referenceSystem.addComponent("methane", 10.0);
