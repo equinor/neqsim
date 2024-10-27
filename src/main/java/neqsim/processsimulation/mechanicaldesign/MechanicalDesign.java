@@ -280,7 +280,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * </p>
    */
   public void calcDesign() {
-    System.out.println("reading design paramters for: " + processEquipment.getName());
+    // System.out.println("reading design parameters for: " + processEquipment.getName());
     if (!hasSetCompanySpecificDesignStandards) {
       setCompanySpecificDesignStandards("default");
     }
@@ -293,7 +293,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * </p>
    */
   public void setDesign() {
-    System.out.println("reading design paramters for: " + processEquipment.getName());
+    // System.out.println("reading design parameters for: " + processEquipment.getName());
     readDesignSpecifications();
   }
 
