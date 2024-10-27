@@ -2,6 +2,7 @@ package neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalpro
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * <p>
@@ -22,12 +23,9 @@ public class LBCViscosityMethod extends Viscosity {
    * Constructor for LBCViscosityMethod.
    * </p>
    *
-   * @param phase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   * @param phase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public LBCViscosityMethod(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase) {
+  public LBCViscosityMethod(PhysicalProperties phase) {
     super(phase);
   }
 

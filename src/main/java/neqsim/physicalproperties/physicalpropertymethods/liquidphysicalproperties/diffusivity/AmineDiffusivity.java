@@ -2,6 +2,7 @@ package neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperti
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * <p>
@@ -20,12 +21,9 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
    * Constructor for AmineDiffusivity.
    * </p>
    *
-   * @param liquidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   * @param liquidPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public AmineDiffusivity(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface liquidPhase) {
+  public AmineDiffusivity(PhysicalProperties liquidPhase) {
     super(liquidPhase);
   }
 

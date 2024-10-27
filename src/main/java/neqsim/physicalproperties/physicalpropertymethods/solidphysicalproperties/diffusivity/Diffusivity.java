@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertymethods.methodinterface.DiffusivityInterface;
 import neqsim.physicalproperties.physicalpropertymethods.solidphysicalproperties.SolidPhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * <p>
@@ -25,12 +26,10 @@ public class Diffusivity extends SolidPhysicalPropertyMethod implements Diffusiv
    * Constructor for Diffusivity.
    * </p>
    *
-   * @param solidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
+   * @param solidPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties}
    *        object
    */
-  public Diffusivity(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface solidPhase) {
+  public Diffusivity(PhysicalProperties solidPhase) {
     super(solidPhase);
     binaryDiffusionCoefficients = new double[solidPhase.getPhase()
         .getNumberOfComponents()][solidPhase.getPhase().getNumberOfComponents()];

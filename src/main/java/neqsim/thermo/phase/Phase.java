@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.PhysicalPropertyHandler;
 import neqsim.physicalproperties.PhysicalPropertyType;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentInterface;
@@ -425,7 +426,7 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface getPhysicalProperties() {
+  public PhysicalProperties getPhysicalProperties() {
     if (physicalPropertyHandler == null) {
       initPhysicalProperties();
       return physicalPropertyHandler.getPhysicalProperty(this);

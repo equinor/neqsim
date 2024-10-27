@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.CommonPhysicalPropertyMethod;
 import neqsim.physicalproperties.physicalpropertymethods.methodinterface.ConductivityInterface;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * Abstract class for Conductivity.
@@ -22,12 +23,10 @@ public abstract class Conductivity extends CommonPhysicalPropertyMethod
    * Constructor for Conductivity.
    * </p>
    *
-   * @param phase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
+   * @param phase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties}
    *        object
    */
-  public Conductivity(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase) {
+  public Conductivity(PhysicalProperties phase) {
     super(phase);
   }
 

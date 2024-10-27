@@ -1,5 +1,7 @@
 package neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.diffusivity;
 
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
+
 /**
  * <p>
  * SiddiqiLucasMethod class.
@@ -16,12 +18,9 @@ public class SiddiqiLucasMethod extends Diffusivity {
    * Constructor for SiddiqiLucasMethod.
    * </p>
    *
-   * @param liquidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   * @param liquidPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public SiddiqiLucasMethod(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface liquidPhase) {
+  public SiddiqiLucasMethod(PhysicalProperties liquidPhase) {
     super(liquidPhase);
   }
 

@@ -1,5 +1,7 @@
 package neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties.conductivity;
 
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
+
 /**
  * <p>
  * ChungConductivityMethod class extending conductivity for gases.
@@ -18,12 +20,9 @@ public class ChungConductivityMethod extends Conductivity {
    * Constructor for ChungConductivityMethod.
    * </p>
    *
-   * @param gasPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   * @param gasPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public ChungConductivityMethod(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface gasPhase) {
+  public ChungConductivityMethod(PhysicalProperties gasPhase) {
     super(gasPhase);
     pureComponentConductivity = new double[gasPhase.getPhase().getNumberOfComponents()];
   }

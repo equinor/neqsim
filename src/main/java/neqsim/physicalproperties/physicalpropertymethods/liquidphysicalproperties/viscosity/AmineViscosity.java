@@ -1,5 +1,7 @@
 package neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.viscosity;
 
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
+
 /**
  * <p>
  * AmineViscosity class.
@@ -16,12 +18,9 @@ public class AmineViscosity extends Viscosity {
    * Constructor for AmineViscosity.
    * </p>
    *
-   * @param liquidPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   * @param liquidPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public AmineViscosity(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface liquidPhase) {
+  public AmineViscosity(PhysicalProperties liquidPhase) {
     super(liquidPhase);
   }
 

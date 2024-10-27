@@ -1,5 +1,6 @@
 package neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.diffusivity;
 
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 import neqsim.thermo.phase.PhaseType;
 
 /**
@@ -21,12 +22,9 @@ public class CorrespondingStatesDiffusivity extends Diffusivity {
    * Constructor for CorrespondingStatesDiffusivity.
    * </p>
    *
-   * @param phase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
-   *        object
+   * @param phase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public CorrespondingStatesDiffusivity(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase) {
+  public CorrespondingStatesDiffusivity(PhysicalProperties phase) {
     super(phase);
     binaryDiffusionCoefficients = new double[phase.getPhase().getNumberOfComponents()][phase
         .getPhase().getNumberOfComponents()];

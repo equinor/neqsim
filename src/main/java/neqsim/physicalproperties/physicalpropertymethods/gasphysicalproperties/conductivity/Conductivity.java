@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties.GasPhysicalPropertyMethod;
 import neqsim.physicalproperties.physicalpropertymethods.methodinterface.ConductivityInterface;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 
 /**
  * Abstract class Conductivity for gases.
@@ -28,12 +29,10 @@ public abstract class Conductivity extends GasPhysicalPropertyMethod
    * Constructor for Conductivity.
    * </p>
    *
-   * @param gasPhase a
-   *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
+   * @param gasPhase a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties}
    *        object
    */
-  public Conductivity(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface gasPhase) {
+  public Conductivity(PhysicalProperties gasPhase) {
     super(gasPhase);
   }
 
