@@ -13,6 +13,7 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.processsimulation.mechanicaldesign.compressor.CompressorMechanicalDesign;
 import neqsim.processsimulation.processequipment.TwoPortEquipment;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
@@ -296,7 +297,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
     thermoOps = new ThermodynamicOperations(getThermoSystem());
     getThermoSystem().init(3);
-    getThermoSystem().initPhysicalProperties("density");
+    getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double presinn = getThermoSystem().getPressure();
     double hinn = getThermoSystem().getEnthalpy();
     double densInn = getThermoSystem().getDensity();
@@ -338,7 +339,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           thermoOps.PSflashGERG2008(entropy);
         }
-        thermoSystem.initPhysicalProperties("density");
+        thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
         double densOutIsentropic = thermoSystem.getDensity("kg/m3");
         double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
         if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
@@ -351,7 +352,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         thermoSystem.setTemperature(outTemperature);
         thermoOps.TPflash();
         thermoSystem.init(2);
-        thermoSystem.initPhysicalProperties("density");
+        thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
         double outEnthalpy = thermoSystem.getEnthalpy();
         double densOut = thermoSystem.getDensity("kg/m3");
         if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
@@ -659,7 +660,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     inStream.setFlowRate(actualFlowRateNew, "Am3/hr");
 
     inStream.getThermoSystem().init(3);
-    inStream.getThermoSystem().initPhysicalProperties("density");
+    inStream.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     inStream.run(id);
     inStream.getThermoSystem().init(3);
 
@@ -669,7 +670,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
     inletEnthalpy = inStream.getFluid().getEnthalpy();
     thermoSystem = outStream.getThermoSystem().clone();
-    thermoSystem.initPhysicalProperties("density");
+    thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
     polytropicEfficiency =
         compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0;
@@ -1404,7 +1405,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * <p>Getter for the field <code>maxOutletPressure</code>.</p>
+   * <p>
+   * Getter for the field <code>maxOutletPressure</code>.
+   * </p>
    *
    * @return a double
    */
@@ -1413,7 +1416,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * <p>Setter for the field <code>maxOutletPressure</code>.</p>
+   * <p>
+   * Setter for the field <code>maxOutletPressure</code>.
+   * </p>
    *
    * @param maxOutletPressure a double
    */
@@ -1423,7 +1428,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * <p>isSetMaxOutletPressure.</p>
+   * <p>
+   * isSetMaxOutletPressure.
+   * </p>
    *
    * @return a boolean
    */
@@ -1432,7 +1439,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * <p>Setter for the field <code>isSetMaxOutletPressure</code>.</p>
+   * <p>
+   * Setter for the field <code>isSetMaxOutletPressure</code>.
+   * </p>
    *
    * @param isSetMaxOutletPressure a boolean
    */
@@ -1441,7 +1450,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * <p>Getter for the field <code>actualCompressionRatio</code>.</p>
+   * <p>
+   * Getter for the field <code>actualCompressionRatio</code>.
+   * </p>
    *
    * @return a double
    */

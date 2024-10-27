@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.PhysicalPropertyHandler;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentInterface;
@@ -494,7 +495,7 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void initPhysicalProperties(String type) {
+  public void initPhysicalProperties(PhysicalPropertyType ppt) {
     if (physicalPropertyHandler == null) {
       physicalPropertyHandler = new PhysicalPropertyHandler();
     }
@@ -508,7 +509,7 @@ public abstract class Phase implements PhaseInterface {
     // this.setPhysicalProperties();
     // }
     // physicalProperty.init(this, type);
-    getPhysicalProperties().init(this, type);
+    getPhysicalProperties().init(this, ppt);
   }
 
   /** {@inheritDoc} */
@@ -2242,16 +2243,16 @@ public abstract class Phase implements PhaseInterface {
     } else if (flowunit.equals("kg/hr")) {
       return numberOfMolesInPhase * getMolarMass() * 3600.0;
     } else if (flowunit.equals("m3/sec")) {
-      initPhysicalProperties("density");
+      initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return numberOfMolesInPhase * getMolarMass() / getDensity("kg/m3");
     } else if (flowunit.equals("m3/min")) {
-      initPhysicalProperties("density");
+      initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return numberOfMolesInPhase * getMolarMass() / getDensity("kg/m3") * 60.0;
     } else if (flowunit.equals("m3/hr")) {
-      initPhysicalProperties("density");
+      initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return numberOfMolesInPhase * getMolarMass() / getDensity("kg/m3") * 3600.0;
     } else if (flowunit.equals("ft3/sec")) {
-      initPhysicalProperties("density");
+      initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return numberOfMolesInPhase * getMolarMass() / getDensity("kg/m3") * Math.pow(3.2808399, 3);
     } else if (flowunit.equals("mole/sec")) {
       return numberOfMolesInPhase;

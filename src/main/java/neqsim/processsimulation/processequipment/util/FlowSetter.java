@@ -3,6 +3,7 @@ package neqsim.processsimulation.processequipment.util;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.processsimulation.processequipment.TwoPortEquipment;
 import neqsim.processsimulation.processequipment.heatexchanger.Heater;
 import neqsim.processsimulation.processequipment.mixer.Mixer;
@@ -250,9 +251,9 @@ public class FlowSetter extends TwoPortEquipment {
       ((StreamInterface) referenceProcess.getUnit("feed stream")).setFluid(tempFluid);
       referenceProcess.run();
       ((StreamInterface) referenceProcess.getUnit("gas")).getFluid()
-          .initPhysicalProperties("density");
+          .initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       ((StreamInterface) referenceProcess.getUnit("oil")).getFluid()
-          .initPhysicalProperties("density");
+          .initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
       double[] moleChange = new double[tempFluid.getNumberOfComponents()];
       for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {

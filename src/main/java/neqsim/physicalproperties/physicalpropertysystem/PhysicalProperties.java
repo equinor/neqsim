@@ -8,6 +8,7 @@ package neqsim.physicalproperties.physicalpropertysystem;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
 import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.diffusivity.CorrespondingStatesDiffusivity;
 import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod;
@@ -35,7 +36,7 @@ public abstract class PhysicalProperties
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(PhysicalProperties.class);
 
-  public PhaseInterface phase;
+  protected PhaseInterface phase;
   protected int binaryDiffusionCoefficientMethod;
   protected int multicomponentDiffusionMethod;
   private neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface mixingRule =
@@ -58,7 +59,7 @@ public abstract class PhysicalProperties
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public PhysicalProperties(PhaseInterface phase) {
-    this.phase = phase;
+    setPhase(phase);
   }
 
   /**
@@ -72,7 +73,7 @@ public abstract class PhysicalProperties
    */
   public PhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
-    this.phase = phase;
+    this(phase);
     this.binaryDiffusionCoefficientMethod = binaryDiffusionCoefficientMethod;
     this.multicomponentDiffusionMethod = multicomponentDiffusionMethod;
   }
@@ -227,14 +228,25 @@ public abstract class PhysicalProperties
 
   /**
    * <p>
-   * setPhases.
+   * Set phase information for all physical property calc methods, i.e., subclasses of
+   * physicalpropertymethods using setPhase(this). NB! Safe even if calc methods are null, e.g.,
+   * from constructors.
    * </p>
    */
   public void setPhases() {
-    conductivityCalc.setPhase(this);
-    densityCalc.setPhase(this);
-    viscosityCalc.setPhase(this);
-    diffusivityCalc.setPhase(this);
+    // Check for null to make it safe to call this function from subclass constructors.
+    if (conductivityCalc != null) {
+      conductivityCalc.setPhase(this);
+    }
+    if (densityCalc != null) {
+      densityCalc.setPhase(this);
+    }
+    if (viscosityCalc != null) {
+      viscosityCalc.setPhase(this);
+    }
+    if (diffusivityCalc != null) {
+      diffusivityCalc.setPhase(this);
+    }
   }
 
   /** {@inheritDoc} */
@@ -247,8 +259,7 @@ public abstract class PhysicalProperties
   /** {@inheritDoc} */
   @Override
   public void init(PhaseInterface phase) {
-    this.phase = phase;
-    this.setPhases();
+    this.setPhase(phase);
     try {
       density = densityCalc.calcDensity();
       viscosity = viscosityCalc.calcViscosity();
@@ -266,15 +277,26 @@ public abstract class PhysicalProperties
 
   /** {@inheritDoc} */
   @Override
-  public void init(PhaseInterface phase, String type) {
-    if (type.equalsIgnoreCase("density")) {
-      density = densityCalc.calcDensity();
-    } else if (type.equalsIgnoreCase("viscosity")) {
-      viscosity = viscosityCalc.calcViscosity();
-    } else if (type.equalsIgnoreCase("conductivity")) {
-      conductivity = conductivityCalc.calcConductivity();
-    } else {
-      init(phase);
+  public void init(PhaseInterface phase, PhysicalPropertyType ppt) {
+    switch (ppt) {
+      case MASS_DENSITY:
+        densityCalc.setPhase(this);
+        density = densityCalc.calcDensity();
+        break;
+      case DYNAMIC_VISCOSITY:
+        viscosityCalc.setPhase(this);
+        viscosity = viscosityCalc.calcViscosity();
+        break;
+      case THERMAL_CONDUCTIVITY:
+        conductivityCalc.setPhase(this);
+        conductivity = conductivityCalc.calcConductivity();
+        break;
+      // case DIFFUSIVITY:
+      // diffusivityCalc.setPhase(this);
+      // diffusivity = diffusivityCalc.calcDiffusionCoefficients();
+      default:
+        init(phase);
+        break;
     }
   }
 

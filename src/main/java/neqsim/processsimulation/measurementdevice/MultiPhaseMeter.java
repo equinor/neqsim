@@ -2,6 +2,7 @@ package neqsim.processsimulation.measurementdevice;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -136,7 +137,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       if (!tempFluid.hasPhaseType("oil")) {
         return Double.NaN;
       }
-      tempFluid.initPhysicalProperties("density");
+      tempFluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return tempFluid.getPhase("gas").getCorrectedVolume()
           / tempFluid.getPhase("oil").getCorrectedVolume();
     }
@@ -155,7 +156,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       if (!tempFluid.hasPhaseType("gas")) {
         return Double.NaN;
       }
-      tempFluid.initPhysicalProperties("density");
+      tempFluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return tempFluid.getPhase("gas").getFlowRate(unit);
     }
     if (measurement.equals("Oil Flow Rate")) {
@@ -173,7 +174,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       if (!tempFluid.hasPhaseType("oil")) {
         return Double.NaN;
       }
-      tempFluid.initPhysicalProperties("density");
+      tempFluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return tempFluid.getPhase("oil").getFlowRate(unit);
     }
     if (measurement.equals("Water Flow Rate")) {
@@ -191,7 +192,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       if (!tempFluid.hasPhaseType("aqueous")) {
         return Double.NaN;
       }
-      tempFluid.initPhysicalProperties("density");
+      tempFluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return tempFluid.getPhase("aqueous").getFlowRate(unit);
     }
     if (measurement.equals("gasDensity") || measurement.equals("oilDensity")
@@ -246,7 +247,7 @@ public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
       if (!tempFluid.hasPhaseType("oil")) {
         return Double.NaN;
       }
-      tempFluid.initPhysicalProperties("density");
+      tempFluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
       double GOR_in_sm3_sm3 = tempFluid.getPhase("gas").getFlowRate("Sm3/hr")
           / tempFluid.getPhase("oil").getFlowRate("m3/hr");

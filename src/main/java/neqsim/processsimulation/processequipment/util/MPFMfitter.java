@@ -3,6 +3,7 @@ package neqsim.processsimulation.processequipment.util;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.processsimulation.processequipment.TwoPortEquipment;
 import neqsim.processsimulation.processequipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -179,7 +180,7 @@ public class MPFMfitter extends TwoPortEquipment {
       outStream = inStream.clone();
       return;
     }
-    tempFluid.initPhysicalProperties("density");
+    tempFluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double currGOR = tempFluid.getPhase("gas").getCorrectedVolume()
         / tempFluid.getPhase("oil").getCorrectedVolume();
 

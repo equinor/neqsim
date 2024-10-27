@@ -6,6 +6,7 @@
 
 package neqsim.thermo.phase;
 
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -250,19 +251,28 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * initPhysicalProperties.
+   * Init / calculate all physical properties of phase.
    * </p>
    */
   public void initPhysicalProperties();
 
   /**
    * <p>
-   * initPhysicalProperties.
+   * Init / calculate specified physical property of phase.
    * </p>
    *
-   * @param type a {@link java.lang.String} object
+   * @param ppt PhysicalPropertyType enum object.
    */
-  public void initPhysicalProperties(String type);
+  public void initPhysicalProperties(PhysicalPropertyType ppt);
+
+  /**
+   * Initialize / calculate a specified physical properties for all phases and interfaces.
+   *
+   * @param name Name of physical property.
+   */
+  public default void initPhysicalProperties(String name) {
+    initPhysicalProperties(PhysicalPropertyType.byName(name));
+  }
 
   /**
    * <p>
