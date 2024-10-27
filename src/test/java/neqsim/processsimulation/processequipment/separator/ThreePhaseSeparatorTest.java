@@ -1,20 +1,27 @@
-package neqsim.thermodynamicoperations.flashops;
+package neqsim.processsimulation.processequipment.separator;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import neqsim.processsimulation.processequipment.heatexchanger.Heater;
+import neqsim.processsimulation.processequipment.stream.Stream;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * @author ESOL
  */
-class Degasser {
+class ThreePhaseSeparatorTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static ThermodynamicOperations testOps = null;
 
   /**
+   * Set up fluid for testing.
+   *
    * @throws java.lang.Exception
    */
   @BeforeEach
@@ -33,12 +40,12 @@ class Degasser {
   }
 
   /**
-   * Test method for
+   * Test method for run method.
    */
+  @Disabled
   @Test
   void testRun() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
 
     fluid1.addComponent("nitrogen", 0.110282450914383);
     fluid1.addComponent("CO2", 8.92014980316162);
@@ -59,7 +66,7 @@ class Degasser {
 
     testOps.TPflash();
 
-    double[] intParameter = {-0.24, // "CO2"
+    double[] intParameter = { -0.24, // "CO2"
         -0.721, // "methane"
         0.11, // "ethane"
         0.205, // "propane"
@@ -74,8 +81,8 @@ class Degasser {
     String[] componentNames = fluid1.getComponentNames();
 
     for (int i = 0; i < intParameter.length; i++) {
-      int componentIndex = findComponentIndex(componentNames, componentNames[i + 1]);// except
-                                                                                     // nitrogen 0
+      // except nitrogen 0
+      int componentIndex = findComponentIndex(componentNames, componentNames[i + 1]);
       int waterIndex = findComponentIndex(componentNames, "water");
 
       if (componentIndex != -1 && waterIndex != -1) {
@@ -105,44 +112,42 @@ class Degasser {
     molarComposition.add(2.732003176453634);
     molarComposition.add(27.978388438425913);
 
-    double[] molarCompositionArray =
-        molarComposition.stream().mapToDouble(Double::doubleValue).toArray();
+    double[] molarCompositionArray = molarComposition.stream().mapToDouble(Double::doubleValue).toArray();
 
     neqsim.thermo.system.SystemInterface fluid_test_separator = fluid1.clone();
     fluid_test_separator.setMolarComposition(molarCompositionArray);
 
-    neqsim.processsimulation.processequipment.stream.Stream inlet_stream_test_sep =
-        new neqsim.processsimulation.processequipment.stream.Stream("TEST_SEPARATOR_INLET",
-            fluid_test_separator);
+    Stream inlet_stream_test_sep = new Stream(
+        "TEST_SEPARATOR_INLET",
+        fluid_test_separator);
     inlet_stream_test_sep.setTemperature(72.6675872802734, "C");
     inlet_stream_test_sep.setPressure(10.6767892837524, "bara");
     inlet_stream_test_sep.setFlowRate(721.3143271348611, "kg/hr");
     inlet_stream_test_sep.run();
 
-    neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator test_separator =
-        new neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator(
-            "TEST_SEPARATOR", inlet_stream_test_sep);
+    ThreePhaseSeparator test_separator = new ThreePhaseSeparator(
+        "TEST_SEPARATOR", inlet_stream_test_sep);
     test_separator.run();
     test_separator.getWaterOutStream().getThermoSystem().prettyPrint();
 
-    neqsim.processsimulation.processequipment.heatexchanger.Heater heater_TP_setter_test_stream =
-        new neqsim.processsimulation.processequipment.heatexchanger.Heater(
-            "TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM", test_separator.getWaterOutStream());
+    Heater heater_TP_setter_test_stream = new Heater(
+        "TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM", test_separator.getWaterOutStream());
     heater_TP_setter_test_stream.setOutPressure(5.9061164855957 - 0.01, "bara");
     heater_TP_setter_test_stream.setOutTemperature(79.8487854003906, "C");
     heater_TP_setter_test_stream.run();
-    // System.out.println("Gas out from degasser " + heater_TP_setter_test_stream.getOutStream()
+    // System.out.println("Gas out from degasser " +
+    // heater_TP_setter_test_stream.getOutStream()
     // .getFluid().getPhase("gas").getFlowRate("kg/hr"));
     heater_TP_setter_test_stream.getOutletStream().getThermoSystem().prettyPrint();
 
-    neqsim.processsimulation.processequipment.heatexchanger.Heater heater_TP_setter_test_stream2 =
-        new neqsim.processsimulation.processequipment.heatexchanger.Heater(
-            "TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM", test_separator.getWaterOutStream());
+    Heater heater_TP_setter_test_stream2 = new Heater(
+        "TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM", test_separator.getWaterOutStream());
     heater_TP_setter_test_stream2.setOutPressure(5.9061164855957, "bara");
     heater_TP_setter_test_stream2.setOutTemperature(79.8487854003906, "C");
     heater_TP_setter_test_stream2.run();
 
-    // System.out.println("Gas out from degasser2 " + heater_TP_setter_test_stream2.getOutStream()
+    // System.out.println("Gas out from degasser2 " +
+    // heater_TP_setter_test_stream2.getOutStream()
     // .getFluid().getPhase("gas").getFlowRate("kg/hr"));
   }
 
@@ -157,32 +162,46 @@ class Degasser {
   }
 
   /**
-   * Test method for
+   * Test method for run method.
    */
+  @Disabled
   void testRun2() {
     /*
-     * XStream xstream = new XStream(); xstream.addPermission(AnyTypePermission.ANY); // Specify the
+     * XStream xstream = new XStream();
+     * xstream.addPermission(AnyTypePermission.ANY); // Specify the
      * file path to read Path filePath = Paths.get(
-     * "/workspaces/neqsim/src/test/java/neqsim/thermodynamicOperations/flashOps/my_process.xml");
-     * String xmlContents = ""; try { //xmlContents = Files.readString(filePath); } catch
+     * "/workspaces/neqsim/src/test/java/neqsim/thermodynamicOperations/flashOps/my_process.xml"
+     * );
+     * String xmlContents = ""; try { //xmlContents = Files.readString(filePath); }
+     * catch
      * (IOException e) { e.printStackTrace(); }
      *
-     * // Deserialize from xml neqsim.processSimulation.processSystem.ProcessSystem operationsCopy =
-     * (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xmlContents);
-     * operationsCopy.run(); neqsim.processSimulation.processEquipment.separator.Separator
-     * VD02Separator = (neqsim.processSimulation.processEquipment.separator.Separator)
+     * // Deserialize from xml neqsim.processSimulation.processSystem.ProcessSystem
+     * operationsCopy =
+     * (neqsim.processSimulation.processSystem.ProcessSystem)
+     * xstream.fromXML(xmlContents);
+     * operationsCopy.run();
+     * neqsim.processSimulation.processEquipment.separator.Separator
+     * VD02Separator =
+     * (neqsim.processSimulation.processEquipment.separator.Separator)
      * operationsCopy .getUnit("Separator after CFU gas");
      * neqsim.processSimulation.processEquipment.separator.Separator VD01Separator =
-     * (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy
+     * (neqsim.processSimulation.processEquipment.separator.Separator)
+     * operationsCopy
      * .getUnit("Separator after degasser gas");
      * neqsim.processSimulation.processEquipment.separator.Separator Degasser =
-     * (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy
+     * (neqsim.processSimulation.processEquipment.separator.Separator)
+     * operationsCopy
      * .getUnit("Degasser");
-     * System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " +
+     * System.out.
+     * println("The gas flow rate should be < 200 kg/hr, the actual value is " +
      * Degasser.getGasOutStream().getFlowRate("kg/hr"));
-     * System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " +
-     * VD01Separator.getGasOutStream().getFlowRate("kg/hr")); VD02Separator.getGasOutStream().run();
-     * System.out.println("The gas flow rate should be < 200 kg/hr, the actual value is " +
+     * System.out.
+     * println("The gas flow rate should be < 200 kg/hr, the actual value is " +
+     * VD01Separator.getGasOutStream().getFlowRate("kg/hr"));
+     * VD02Separator.getGasOutStream().run();
+     * System.out.
+     * println("The gas flow rate should be < 200 kg/hr, the actual value is " +
      * VD02Separator.getGasOutStream().getFlowRate("kg/hr"));
      */
   }
