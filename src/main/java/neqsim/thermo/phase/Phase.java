@@ -1212,6 +1212,9 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getViscosity() {
+    if (getPhysicalProperties() == null) {
+      initPhysicalProperties(PhysicalPropertyType.DYNAMIC_VISCOSITY);
+    }
     return getPhysicalProperties().getViscosity();
   }
 
@@ -1237,6 +1240,9 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getThermalConductivity() {
+    if (getPhysicalProperties() == null) {
+      initPhysicalProperties(PhysicalPropertyType.THERMAL_CONDUCTIVITY);
+    }
     return getPhysicalProperties().getConductivity();
   }
 
@@ -1643,13 +1649,23 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getDensity() {
+    /*
+     * if (getPhysicalProperties() == null) {
+     * initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY); }
+     * 
+     * return getPhysicalProperties().getDensity();
+     */
     return 1.0 / getMolarVolume() * getMolarMass() * 1.0e5;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getDensity(String unit) {
-    double refDensity = getPhysicalProperties().getDensity(); // density in kg/m3
+    // double refDensity = getDensity(); // density in kg/m3
+    if (getPhysicalProperties() == null) {
+      initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+    }
+    double refDensity = getPhysicalProperties().getDensity();
     double conversionFactor = 1.0;
     switch (unit) {
       case "kg/m3":
