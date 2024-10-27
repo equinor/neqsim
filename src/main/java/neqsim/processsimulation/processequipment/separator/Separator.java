@@ -238,8 +238,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
             * (1.0 - liquidLevel);
         thermoSystem = thermoSystem2.clone();
         thermoSystem.init(1);
-        thermoSystem.initPhysicalProperties(PhysicalPropertyType.DENSITY);
-        thermoSystem2.initPhysicalProperties(PhysicalPropertyType.DENSITY);
+        thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+        thermoSystem2.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
         for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
           double relFact = 1.0;
           if (thermoSystem.getPhase(j).getPhaseTypeName().equals("gas")) {
@@ -255,7 +255,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
         ops.TPflash();
         thermoSystem.init(3);
-        thermoSystem.initPhysicalProperties(PhysicalPropertyType.DENSITY);
+        thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
         if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
           liquidLevel = thermoSystem.getPhase(1).getVolume("m3") / (liquidVolume + gasVolume);
           liquidVolume = getLiquidLevel() * 3.14 / 4.0 * getInternalDiameter()
@@ -297,7 +297,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     } else {
       inletStreamMixer.run(id);
       thermoSystem.init(3);
-      thermoSystem.initPhysicalProperties(PhysicalPropertyType.DENSITY);
+      thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       try {
         gasOutStream.getThermoSystem().init(3);
         liquidOutStream.getThermoSystem().init(3);
@@ -328,7 +328,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       }
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
       thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J");
-      thermoSystem.initPhysicalProperties(PhysicalPropertyType.DENSITY);
+      thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
       if (thermoSystem.hasPhaseType("gas")) {
         gasOutStream.getFluid()

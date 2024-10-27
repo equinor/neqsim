@@ -41,7 +41,8 @@ public class CompressorChartGenerator {
     double minSpeed = refspeed / 2.0;
     double maxSpeed = refspeed * 2.0;
 
-    compressor.getInletStream().getFluid().initPhysicalProperties(PhysicalPropertyType.DENSITY);
+    compressor.getInletStream().getFluid()
+        .initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double refflow = compressor.getInletStream().getFlowRate("m3/hr");
     double[][] flow = new double[1][3];
     flow[0][0] = refflow * 0.7;

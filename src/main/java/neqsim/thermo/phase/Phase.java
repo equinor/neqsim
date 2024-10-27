@@ -2243,16 +2243,16 @@ public abstract class Phase implements PhaseInterface {
     } else if (flowunit.equals("kg/hr")) {
       return numberOfMolesInPhase * getMolarMass() * 3600.0;
     } else if (flowunit.equals("m3/sec")) {
-      initPhysicalProperties(PhysicalPropertyType.DENSITY);
+      initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return numberOfMolesInPhase * getMolarMass() / getDensity("kg/m3");
     } else if (flowunit.equals("m3/min")) {
-      initPhysicalProperties(PhysicalPropertyType.DENSITY);
+      initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return numberOfMolesInPhase * getMolarMass() / getDensity("kg/m3") * 60.0;
     } else if (flowunit.equals("m3/hr")) {
-      initPhysicalProperties(PhysicalPropertyType.DENSITY);
+      initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return numberOfMolesInPhase * getMolarMass() / getDensity("kg/m3") * 3600.0;
     } else if (flowunit.equals("ft3/sec")) {
-      initPhysicalProperties(PhysicalPropertyType.DENSITY);
+      initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return numberOfMolesInPhase * getMolarMass() / getDensity("kg/m3") * Math.pow(3.2808399, 3);
     } else if (flowunit.equals("mole/sec")) {
       return numberOfMolesInPhase;

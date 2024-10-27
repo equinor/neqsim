@@ -180,7 +180,7 @@ public class MPFMfitter extends TwoPortEquipment {
       outStream = inStream.clone();
       return;
     }
-    tempFluid.initPhysicalProperties(PhysicalPropertyType.DENSITY);
+    tempFluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double currGOR = tempFluid.getPhase("gas").getCorrectedVolume()
         / tempFluid.getPhase("oil").getCorrectedVolume();
 

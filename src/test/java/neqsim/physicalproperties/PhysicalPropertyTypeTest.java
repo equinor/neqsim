@@ -9,16 +9,17 @@ import neqsim.thermo.system.SystemPrEos;
 public class PhysicalPropertyTypeTest {
   @Test
   void testByName() {
-    assertEquals(PhysicalPropertyType.byName("DENSITY"), PhysicalPropertyType.DENSITY);
-    assertEquals(PhysicalPropertyType.byName("density"), PhysicalPropertyType.DENSITY);
-    assertEquals(PhysicalPropertyType.byName("VISCOSITY"), PhysicalPropertyType.VISCOSITY);
-    assertEquals(PhysicalPropertyType.byName("CONDUCTIVITY"), PhysicalPropertyType.CONDUCTIVITY);
+    assertEquals(PhysicalPropertyType.byName("DENSITY"), PhysicalPropertyType.MASS_DENSITY);
+    assertEquals(PhysicalPropertyType.byName("density"), PhysicalPropertyType.MASS_DENSITY);
+    assertEquals(PhysicalPropertyType.byName("VISCOSITY"), PhysicalPropertyType.DYNAMIC_VISCOSITY);
+    assertEquals(PhysicalPropertyType.byName("CONDUCTIVITY"),
+        PhysicalPropertyType.THERMAL_CONDUCTIVITY);
   }
 
   @Test
   void testValueOf() {
-    assertEquals(PhysicalPropertyType.DENSITY, PhysicalPropertyType.valueOf("DENSITY"));
-    assertEquals(PhysicalPropertyType.DENSITY,
+    assertEquals(PhysicalPropertyType.MASS_DENSITY, PhysicalPropertyType.valueOf("DENSITY"));
+    assertEquals(PhysicalPropertyType.MASS_DENSITY,
         PhysicalPropertyType.valueOf("density".toUpperCase()));
 
     SystemInterface thermoSystem = new SystemPrEos(318.0, 20.01325);

@@ -419,7 +419,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoSystem.init(3);
     double enthalpy = thermoSystem.getEnthalpy();
-    inStream.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.DENSITY);
+    inStream.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double outp = 0.0;
 
     if (inStream.getThermoSystem().hasPhaseType(PhaseType.GAS)
@@ -556,7 +556,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     } else {
       thermoOps.PHflash(enthalpy, 0);
     }
-    thermoSystem.initPhysicalProperties(PhysicalPropertyType.DENSITY);
+    thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     outStream.setThermoSystem(thermoSystem);
 
     if (gasValve) {

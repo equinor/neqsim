@@ -3,13 +3,13 @@ package neqsim.physicalproperties;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * Types of PhysicalProperties, e.g. density, viscosity, conductivity.
+ * Types of PhysicalProperties, e.g. mass density, dynamic viscosity, thermal conductivity.
  *
  * @author ASMF
  */
 
 public enum PhysicalPropertyType {
-  DENSITY, VISCOSITY, CONDUCTIVITY;
+  MASS_DENSITY, DYNAMIC_VISCOSITY, THERMAL_CONDUCTIVITY;
 
   // We know we'll never mutate this, so we can keep
   // a local copy for fast lookup in byName

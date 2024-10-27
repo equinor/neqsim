@@ -268,15 +268,15 @@ public abstract class PhysicalProperties
   @Override
   public void init(PhaseInterface phase, PhysicalPropertyType ppt) {
     switch (ppt) {
-      case DENSITY:
+      case MASS_DENSITY:
         densityCalc.setPhase(this);
         density = densityCalc.calcDensity();
         break;
-      case VISCOSITY:
+      case DYNAMIC_VISCOSITY:
         viscosityCalc.setPhase(this);
         viscosity = viscosityCalc.calcViscosity();
         break;
-      case CONDUCTIVITY:
+      case THERMAL_CONDUCTIVITY:
         conductivityCalc.setPhase(this);
         conductivity = conductivityCalc.calcConductivity();
         break;

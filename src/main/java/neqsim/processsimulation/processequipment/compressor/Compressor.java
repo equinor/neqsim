@@ -297,7 +297,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
     thermoOps = new ThermodynamicOperations(getThermoSystem());
     getThermoSystem().init(3);
-    getThermoSystem().initPhysicalProperties(PhysicalPropertyType.DENSITY);
+    getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double presinn = getThermoSystem().getPressure();
     double hinn = getThermoSystem().getEnthalpy();
     double densInn = getThermoSystem().getDensity();
@@ -339,7 +339,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           thermoOps.PSflashGERG2008(entropy);
         }
-        thermoSystem.initPhysicalProperties(PhysicalPropertyType.DENSITY);
+        thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
         double densOutIsentropic = thermoSystem.getDensity("kg/m3");
         double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
         if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
@@ -352,7 +352,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         thermoSystem.setTemperature(outTemperature);
         thermoOps.TPflash();
         thermoSystem.init(2);
-        thermoSystem.initPhysicalProperties(PhysicalPropertyType.DENSITY);
+        thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
         double outEnthalpy = thermoSystem.getEnthalpy();
         double densOut = thermoSystem.getDensity("kg/m3");
         if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
@@ -660,7 +660,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     inStream.setFlowRate(actualFlowRateNew, "Am3/hr");
 
     inStream.getThermoSystem().init(3);
-    inStream.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.DENSITY);
+    inStream.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     inStream.run(id);
     inStream.getThermoSystem().init(3);
 
@@ -670,7 +670,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
     inletEnthalpy = inStream.getFluid().getEnthalpy();
     thermoSystem = outStream.getThermoSystem().clone();
-    thermoSystem.initPhysicalProperties(PhysicalPropertyType.DENSITY);
+    thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
     polytropicEfficiency =
         compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0;
