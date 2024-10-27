@@ -22,9 +22,21 @@ public enum PhysicalPropertyType {
    * @return PhysicalPropertyType object
    */
   public static PhysicalPropertyType byName(String name) {
+    // suport old names
+    name = name.toUpperCase();
+    if (name.equals("DENSITY")) {
+      name = "MASS_DENSITY";
+    }
+    if (name.equals("VISCOSITY")) {
+      name = "DYNAMIC_VISCOSITY";
+    }
+    if (name.equals("CONDUCTIVITY")) {
+      name = "THERMAL_CONDUCTIVITY";
+    }
+
     // todo: consider replacing this function with built-in valueOf
     for (PhysicalPropertyType pt : copyOfValues) {
-      if (pt.name().equals(name.toUpperCase())) {
+      if (pt.name().equals(name)) {
         return pt;
       }
     }

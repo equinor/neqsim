@@ -1742,7 +1742,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param name Name of physical property.
    */
   public default void initPhysicalProperties(String name) {
-    initPhysicalProperties(PhysicalPropertyType.byName(name.toUpperCase()));
+    initPhysicalProperties(PhysicalPropertyType.byName(name));
   }
 
   /**

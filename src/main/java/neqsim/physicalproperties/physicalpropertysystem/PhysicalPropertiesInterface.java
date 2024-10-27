@@ -255,7 +255,7 @@ public interface PhysicalPropertiesInterface extends Cloneable {
    * @param name Name of physical property.
    */
   public default void init(PhaseInterface phase, String name) {
-    init(phase, PhysicalPropertyType.byName(name.toUpperCase()));
+    init(phase, PhysicalPropertyType.byName(name));
   }
 
   /**

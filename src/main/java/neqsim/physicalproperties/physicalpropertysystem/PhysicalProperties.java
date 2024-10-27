@@ -232,10 +232,19 @@ public abstract class PhysicalProperties
    * </p>
    */
   public void setPhases() {
-    conductivityCalc.setPhase(this);
-    densityCalc.setPhase(this);
-    viscosityCalc.setPhase(this);
-    diffusivityCalc.setPhase(this);
+    // Check for null to make it safe to call this function from subclass constructors.
+    if (conductivityCalc != null) {
+      conductivityCalc.setPhase(this);
+    }
+    if (densityCalc != null) {
+      densityCalc.setPhase(this);
+    }
+    if (viscosityCalc != null) {
+      viscosityCalc.setPhase(this);
+    }
+    if (diffusivityCalc != null) {
+      diffusivityCalc.setPhase(this);
+    }
   }
 
   /** {@inheritDoc} */
