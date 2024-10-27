@@ -228,7 +228,9 @@ public abstract class PhysicalProperties
 
   /**
    * <p>
-   * setPhases.
+   * Set phase information for all physical property calc methods, i.e., subclasses of
+   * physicalpropertymethods using setPhase(this). NB! Safe even if calc methods are null, e.g.,
+   * from constructors.
    * </p>
    */
   public void setPhases() {

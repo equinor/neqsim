@@ -163,7 +163,7 @@ public interface PhysicalPropertiesInterface extends Cloneable {
 
   /**
    * <p>
-   * getPhase.
+   * Getter for property <code>phase</code>.
    * </p>
    *
    * @return a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -172,7 +172,8 @@ public interface PhysicalPropertiesInterface extends Cloneable {
 
   /**
    * <p>
-   * setPhase.
+   * Setter for property <code>phase</code>. Will also set the phase for all physicalpropertymethods
+   * using setPhases. Safe to call from constructor.
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
