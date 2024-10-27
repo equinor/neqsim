@@ -2,7 +2,7 @@ package neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties.
 
 /**
  * <p>
- * ChungConductivityMethod class.
+ * ChungConductivityMethod class extending conductivity for gases.
  * </p>
  *
  * @author Even Solbraa

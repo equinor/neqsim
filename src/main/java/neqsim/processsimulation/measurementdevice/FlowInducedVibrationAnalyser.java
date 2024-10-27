@@ -162,7 +162,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
 
   /**
    * <p>
-   * Setter for the support arrangement <code>supportArrangement</code>.
+   * Setter for the <code>supportArrangement</code>.
    * </p>
    *
    * @param arrangement a {@link java.lang.String} object
@@ -173,7 +173,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
 
   /**
    * <p>
-   * Setter for the support distance <code></code>.
+   * Setter for the <code>supportDistance</code>.
    * </p>
    *
    * @param distance a {@link java.lang.Double} object

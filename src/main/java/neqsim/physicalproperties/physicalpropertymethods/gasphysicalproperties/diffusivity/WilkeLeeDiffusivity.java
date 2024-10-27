@@ -11,7 +11,9 @@ package neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties.
 public class WilkeLeeDiffusivity extends Diffusivity {
   private static final long serialVersionUID = 1000;
 
-  double[][] binaryDiffusionCoefficients, binaryLennardJonesOmega;
+  double[][] binaryDiffusionCoefficients;
+
+  double[][] binaryLennardJonesOmega;
 
   /**
    * <p>
@@ -38,8 +40,14 @@ public class WilkeLeeDiffusivity extends Diffusivity {
     // if(method==? then)
     // remember this is the Fick's diffusion coefficients
     // to get the Maxwell-Stefan coefficient - multiply by gamma
-    double A2 = 1.06036, B2 = 0.15610, C2 = 0.19300, D2 = 0.47635, E2 = 1.03587, F2 = 1.52996,
-        G2 = 1.76474, H2 = 3.89411;
+    double A2 = 1.06036;
+    double B2 = 0.15610;
+    double C2 = 0.19300;
+    double D2 = 0.47635;
+    double E2 = 1.03587;
+    double F2 = 1.52996;
+    double G2 = 1.76474;
+    double H2 = 3.89411;
     double tempVar2 = gasPhase.getPhase().getTemperature() / binaryEnergyParameter[i][j];
     binaryLennardJonesOmega[i][j] = A2 / Math.pow(tempVar2, B2) + C2 / Math.exp(D2 * tempVar2)
         + E2 / Math.exp(F2 * tempVar2) + G2 / Math.exp(H2 * tempVar2);

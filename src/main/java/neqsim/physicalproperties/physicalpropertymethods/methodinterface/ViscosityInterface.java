@@ -1,5 +1,7 @@
 package neqsim.physicalproperties.physicalpropertymethods.methodinterface;
 
+import neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyMethodInterface;
+
 /**
  * <p>
  * ViscosityInterface interface.
@@ -8,8 +10,7 @@ package neqsim.physicalproperties.physicalpropertymethods.methodinterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface ViscosityInterface
-    extends neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyMethodInterface {
+public interface ViscosityInterface extends PhysicalPropertyMethodInterface {
   /**
    * <p>
    * calcViscosity.

@@ -2,16 +2,15 @@ package neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperti
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.LiquidPhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertymethods.methodinterface.DiffusivityInterface;
 
 /**
  * Diffusivity class.
  *
  * @author Even Solbraa
  */
-abstract class Diffusivity extends
-    neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.LiquidPhysicalPropertyMethod
-    implements
-    neqsim.physicalproperties.physicalpropertymethods.methodinterface.DiffusivityInterface {
+abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements DiffusivityInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Diffusivity.class);
 

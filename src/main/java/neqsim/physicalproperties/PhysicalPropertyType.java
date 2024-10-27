@@ -7,12 +7,12 @@ import neqsim.util.exception.InvalidInputException;
  *
  * @author ASMF
  */
-
 public enum PhysicalPropertyType {
   MASS_DENSITY, DYNAMIC_VISCOSITY, THERMAL_CONDUCTIVITY;
 
   // We know we'll never mutate this, so we can keep
   // a local copy for fast lookup in byName
+  /** Constant <code>copyOfValues</code> */
   private static final PhysicalPropertyType[] copyOfValues = values();
 
   /**

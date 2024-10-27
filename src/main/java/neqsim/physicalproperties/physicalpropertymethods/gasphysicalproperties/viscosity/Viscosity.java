@@ -2,16 +2,15 @@ package neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties.
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties.GasPhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertymethods.methodinterface.ViscosityInterface;
 
 /**
- * * Abstract class for Viscosity property.
+ * Abstract class for Viscosity property.
  *
  * @author Even Solbraa
  */
-abstract class Viscosity extends
-    neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties.GasPhysicalPropertyMethod
-    implements
-    neqsim.physicalproperties.physicalpropertymethods.methodinterface.ViscosityInterface {
+public abstract class Viscosity extends GasPhysicalPropertyMethod implements ViscosityInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Viscosity.class);
 

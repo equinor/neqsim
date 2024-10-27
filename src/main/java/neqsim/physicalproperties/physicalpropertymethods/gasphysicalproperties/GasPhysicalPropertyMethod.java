@@ -1,5 +1,8 @@
 package neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties;
 
+import neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface;
+
 /**
  * <p>
  * GasPhysicalPropertyMethod class.
@@ -8,8 +11,7 @@ package neqsim.physicalproperties.physicalpropertymethods.gasphysicalproperties;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class GasPhysicalPropertyMethod
-    extends neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyMethod {
+public abstract class GasPhysicalPropertyMethod extends PhysicalPropertyMethod {
   private static final long serialVersionUID = 1000;
 
   protected neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface gasPhase;
@@ -21,21 +23,12 @@ public class GasPhysicalPropertyMethod
    * <p>
    * Constructor for GasPhysicalPropertyMethod.
    * </p>
-   */
-  public GasPhysicalPropertyMethod() {
-  }
-
-  /**
-   * <p>
-   * Constructor for GasPhysicalPropertyMethod.
-   * </p>
    *
    * @param gasPhase a
    *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
    *        object
    */
-  public GasPhysicalPropertyMethod(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface gasPhase) {
+  public GasPhysicalPropertyMethod(PhysicalPropertiesInterface gasPhase) {
     this.gasPhase = gasPhase;
     binaryMolecularDiameter = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase
         .getPhase().getNumberOfComponents()];

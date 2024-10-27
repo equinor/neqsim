@@ -8,18 +8,18 @@ package neqsim.physicalproperties.physicalpropertymethods.solidphysicalpropertie
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertymethods.methodinterface.DensityInterface;
+import neqsim.physicalproperties.physicalpropertymethods.solidphysicalproperties.SolidPhysicalPropertyMethod;
 
 /**
  * <p>
- * Density class.
+ * Density class for solids.
  * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Density extends
-    neqsim.physicalproperties.physicalpropertymethods.solidphysicalproperties.SolidPhysicalPropertyMethod
-    implements neqsim.physicalproperties.physicalpropertymethods.methodinterface.DensityInterface {
+public class Density extends SolidPhysicalPropertyMethod implements DensityInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Density.class);
 
@@ -28,13 +28,13 @@ public class Density extends
    * Constructor for Density.
    * </p>
    *
-   * @param liquidPhase a
+   * @param phase a
    *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
    *        object
    */
   public Density(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface liquidPhase) {
-    this.solidPhase = liquidPhase;
+      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase) {
+    super(phase);
   }
 
   /** {@inheritDoc} */

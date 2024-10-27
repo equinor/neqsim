@@ -1,5 +1,8 @@
 package neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties;
 
+import neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface;
+
 /**
  * <p>
  * LiquidPhysicalPropertyMethod class.
@@ -8,19 +11,10 @@ package neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperti
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class LiquidPhysicalPropertyMethod
-    extends neqsim.physicalproperties.physicalpropertymethods.PhysicalPropertyMethod {
+public abstract class LiquidPhysicalPropertyMethod extends PhysicalPropertyMethod {
   private static final long serialVersionUID = 1000;
 
   protected neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface liquidPhase;
-
-  /**
-   * <p>
-   * Constructor for LiquidPhysicalPropertyMethod.
-   * </p>
-   */
-  public LiquidPhysicalPropertyMethod() {
-  }
 
   /**
    * <p>
@@ -31,15 +25,13 @@ public class LiquidPhysicalPropertyMethod
    *        {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface}
    *        object
    */
-  public LiquidPhysicalPropertyMethod(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface liquidPhase) {
-    this.liquidPhase = liquidPhase;
+  public LiquidPhysicalPropertyMethod(PhysicalPropertiesInterface liquidPhase) {
+    setPhase(liquidPhase);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setPhase(
-      neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertiesInterface phase) {
+  public void setPhase(PhysicalPropertiesInterface phase) {
     this.liquidPhase = phase;
   }
 }

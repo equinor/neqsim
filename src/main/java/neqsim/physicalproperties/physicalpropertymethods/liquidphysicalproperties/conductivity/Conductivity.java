@@ -8,19 +8,18 @@ package neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperti
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.LiquidPhysicalPropertyMethod;
+import neqsim.physicalproperties.physicalpropertymethods.methodinterface.ConductivityInterface;
 
 /**
  * <p>
- * Conductivity class.
+ * Conductivity class for liquids.
  * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Conductivity extends
-    neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.LiquidPhysicalPropertyMethod
-    implements
-    neqsim.physicalproperties.physicalpropertymethods.methodinterface.ConductivityInterface {
+public class Conductivity extends LiquidPhysicalPropertyMethod implements ConductivityInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(Conductivity.class);
 

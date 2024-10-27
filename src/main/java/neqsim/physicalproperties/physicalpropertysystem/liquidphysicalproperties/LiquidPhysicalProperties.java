@@ -12,6 +12,7 @@ import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalprop
 import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
 import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.density.Density;
 import neqsim.physicalproperties.physicalpropertymethods.liquidphysicalproperties.diffusivity.SiddiqiLucasMethod;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -22,8 +23,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class LiquidPhysicalProperties
-    extends neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties {
+public class LiquidPhysicalProperties extends PhysicalProperties {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(LiquidPhysicalProperties.class);
 
