@@ -7,8 +7,8 @@
 package neqsim.thermo.phase;
 
 import neqsim.physicalproperties.PhysicalPropertyType;
-import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
-import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel;
+import neqsim.physicalproperties.system.PhysicalProperties;
+import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -786,7 +786,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * getPhysicalProperties.
    * </p>
    *
-   * @return a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
+   * @return a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
   public PhysicalProperties getPhysicalProperties();
 
@@ -820,7 +820,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * Getter for property ppm.
    * </p>
    *
-   * @return a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel} object
+   * @return a {@link neqsim.physicalproperties.system.PhysicalPropertyModel} object
    */
   public PhysicalPropertyModel getPhysicalPropertyModel();
 
@@ -838,8 +838,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * setPhysicalPropertyModel.
    * </p>
    *
-   * @param ppm a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel}
-   *        object
+   * @param ppm a {@link neqsim.physicalproperties.system.PhysicalPropertyModel} object
    */
   public void setPhysicalPropertyModel(PhysicalPropertyModel ppm);
 

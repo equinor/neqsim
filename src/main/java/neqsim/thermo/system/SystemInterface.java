@@ -3,7 +3,7 @@ package neqsim.thermo.system;
 import neqsim.chemicalreactions.ChemicalReactionOperations;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
-import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel;
+import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;

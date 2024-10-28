@@ -2,16 +2,16 @@ package neqsim.physicalproperties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
-import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel;
-import neqsim.physicalproperties.physicalpropertysystem.commonphasephysicalproperties.DefaultPhysicalProperties;
-import neqsim.physicalproperties.physicalpropertysystem.gasphysicalproperties.GasPhysicalProperties;
-import neqsim.physicalproperties.physicalpropertysystem.liquidphysicalproperties.AminePhysicalProperties;
-import neqsim.physicalproperties.physicalpropertysystem.liquidphysicalproperties.CO2waterPhysicalProperties;
-import neqsim.physicalproperties.physicalpropertysystem.liquidphysicalproperties.GlycolPhysicalProperties;
-import neqsim.physicalproperties.physicalpropertysystem.liquidphysicalproperties.LiquidPhysicalProperties;
-import neqsim.physicalproperties.physicalpropertysystem.liquidphysicalproperties.WaterPhysicalProperties;
-import neqsim.physicalproperties.physicalpropertysystem.solidphysicalproperties.SolidPhysicalProperties;
+import neqsim.physicalproperties.system.PhysicalProperties;
+import neqsim.physicalproperties.system.PhysicalPropertyModel;
+import neqsim.physicalproperties.system.commonphasephysicalproperties.DefaultPhysicalProperties;
+import neqsim.physicalproperties.system.gasphysicalproperties.GasPhysicalProperties;
+import neqsim.physicalproperties.system.liquidphysicalproperties.AminePhysicalProperties;
+import neqsim.physicalproperties.system.liquidphysicalproperties.CO2waterPhysicalProperties;
+import neqsim.physicalproperties.system.liquidphysicalproperties.GlycolPhysicalProperties;
+import neqsim.physicalproperties.system.liquidphysicalproperties.LiquidPhysicalProperties;
+import neqsim.physicalproperties.system.liquidphysicalproperties.WaterPhysicalProperties;
+import neqsim.physicalproperties.system.solidphysicalproperties.SolidPhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -99,7 +99,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
+   * @return a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
   public PhysicalProperties getPhysicalProperties(PhaseInterface phase) {
     switch (phase.getType()) {

@@ -5,7 +5,7 @@ import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficie
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.reactor.ReactorData;
-import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel;
+import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
