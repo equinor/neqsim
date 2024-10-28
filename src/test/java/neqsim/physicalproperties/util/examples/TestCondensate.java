@@ -2,7 +2,7 @@ package neqsim.physicalproperties.util.examples;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel;
+import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;

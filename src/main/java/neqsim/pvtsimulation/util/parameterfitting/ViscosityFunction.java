@@ -1,6 +1,6 @@
 package neqsim.pvtsimulation.util.parameterfitting;
 
-import neqsim.physicalproperties.physicalpropertymethods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 
 /**
