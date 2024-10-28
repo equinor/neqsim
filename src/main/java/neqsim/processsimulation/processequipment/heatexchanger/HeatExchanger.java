@@ -47,6 +47,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   public double thermalEffectiveness = 0.0;
   private String flowArrangement = "concentric tube counterflow";
   private boolean useDeltaT = false;
+  private double deltaT = 1.0;
 
   /**
    * Constructor for HeatExchanger.
@@ -64,11 +65,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
    * @param inStream1 input stream
    */
   public HeatExchanger(String name, StreamInterface inStream1) {
-    this(name);
-    this.inStream[0] = inStream1;
-    this.inStream[1] = inStream1;
-    outStream[0] = inStream1.clone();
-    outStream[1] = inStream1.clone();
+    this(name, inStream1, inStream1);
   }
 
   /**
@@ -84,23 +81,26 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     this.inStream[1] = inStream2;
     outStream[0] = inStream1.clone();
     outStream[1] = inStream2.clone();
+    setName(name);
   }
 
   /**
    * <p>
-   * addInStream.
+   * Add inlet stream.
    * </p>
    *
    * @param inStream a {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
    *        object
    */
   public void addInStream(StreamInterface inStream) {
+    // todo: this is probably intended to specifically set the second stream. should be deprecated
+    // and replaced by setFeedStream?
     this.inStream[1] = inStream;
   }
 
   /**
    * <p>
-   * setFeedStream.
+   * setFeedStream. Will also set name of outstreams.
    * </p>
    *
    * @param number a int
@@ -110,6 +110,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   public void setFeedStream(int number, StreamInterface inStream) {
     this.inStream[number] = inStream;
     outStream[number] = inStream.clone();
+    setName(getName());
   }
 
   /** {@inheritDoc} */
@@ -152,24 +153,26 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
 
   /**
    * <p>
-   * getOutTemperature.
+   * Get temperature of outstream i.
    * </p>
    *
    * @param i a int
+   * @return a double
    */
-  public void getOutTemperature(int i) {
-    outStream[i].getThermoSystem().getTemperature();
+  public double getOutTemperature(int i) {
+    return outStream[i].getThermoSystem().getTemperature();
   }
 
   /**
    * <p>
-   * getInTemperature.
+   * Get temperature of instream i.
    * </p>
    *
    * @param i a int
+   * @return a double
    */
-  public void getInTemperature(int i) {
-    inStream[i].getThermoSystem().getTemperature();
+  public double getInTemperature(int i) {
+    return inStream[i].getThermoSystem().getTemperature();
   }
 
   /**
@@ -225,13 +228,12 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
 
   /**
    * <p>
-   * runSpecifiedStream.
+   * runDeltaT.
    * </p>
    *
    * @param id UUID of run
    */
   public void runDeltaT(UUID id) {
-
     if (getSpecification().equals("out stream")) {
       runSpecifiedStream(id);
     } else if (firstTime) {
@@ -704,7 +706,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   }
 
   /**
-   * <p>Setter for the field <code>useDeltaT</code>.</p>
+   * <p>
+   * Setter for the field <code>useDeltaT</code>.
+   * </p>
    *
    * @param useDeltaT a boolean
    */
@@ -712,10 +716,10 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     this.useDeltaT = useDeltaT;
   }
 
-  private double deltaT = 1.0;
-
   /**
-   * <p>Getter for the field <code>deltaT</code>.</p>
+   * <p>
+   * Getter for the field <code>deltaT</code>.
+   * </p>
    *
    * @return a double
    */
@@ -724,7 +728,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   }
 
   /**
-   * <p>Setter for the field <code>deltaT</code>.</p>
+   * <p>
+   * Setter for the field <code>deltaT</code>.
+   * </p>
    *
    * @param deltaT a double
    */
