@@ -3,7 +3,7 @@ package neqsim.physicalproperties.system;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * Types of PhysicalPropertyModel. This is used when initializing PhysicalPropertyhandler. Ω
+ * Types of PhysicalPropertyModel. This is used when initializing PhysicalPropertyhandler.
  *
  * @author ASMF
  */
