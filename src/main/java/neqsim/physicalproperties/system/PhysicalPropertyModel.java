@@ -4,7 +4,7 @@ import neqsim.util.exception.InvalidInputException;
 
 /**
  * Types of PhysicalPropertyModel. This is used when initializing PhysicalPropertyhandler. Ω
- * 
+ *
  * @author ASMF
  */
 public enum PhysicalPropertyModel {

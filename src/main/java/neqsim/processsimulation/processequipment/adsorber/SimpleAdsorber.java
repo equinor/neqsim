@@ -123,6 +123,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param i a int
+   * @return a double
    */
   public double getOutTemperature(int i) {
     return outStream[i].getThermoSystem().getTemperature();
@@ -134,6 +135,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param i a int
+   * @return a double
    */
   public double getInTemperature(int i) {
     return inStream[i].getThermoSystem().getTemperature();
