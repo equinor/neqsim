@@ -51,7 +51,7 @@ public abstract class Phase implements PhaseInterface {
   private boolean constantPhaseVolume = false;
 
   private PhysicalPropertyModel ppm = PhysicalPropertyModel.DEFAULT;
-  public neqsim.physicalproperties.PhysicalPropertyHandler physicalPropertyHandler = null;
+  public PhysicalPropertyHandler physicalPropertyHandler = null;
 
   protected boolean useVolumeCorrection = true;
   protected double molarVolume = 1.0;
