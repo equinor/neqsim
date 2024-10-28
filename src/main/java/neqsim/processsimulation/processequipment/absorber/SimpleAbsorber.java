@@ -78,12 +78,6 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
 
   /** {@inheritDoc} */
   @Override
-  public AbsorberMechanicalDesign getMechanicalDesign() {
-    return new AbsorberMechanicalDesign(this);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void setName(String name) {
     super.setName(name);
     outStream[0].setName(name + "_Sout1");
@@ -160,24 +154,26 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
 
   /**
    * <p>
-   * getOutTemperature.
+   * Get temperature of outstream i.
    * </p>
    *
    * @param i a int
+   * @return a double
    */
-  public void getOutTemperature(int i) {
-    outStream[i].getThermoSystem().getTemperature();
+  public double getOutTemperature(int i) {
+    return outStream[i].getThermoSystem().getTemperature();
   }
 
   /**
    * <p>
-   * getInTemperature.
+   * * Get temperature of instream i.
    * </p>
    *
    * @param i a int
+   * @return a double
    */
-  public void getInTemperature(int i) {
-    inStream[i].getThermoSystem().getTemperature();
+  public double getInTemperature(int i) {
+    return inStream[i].getThermoSystem().getTemperature();
   }
 
   /** {@inheritDoc} */
@@ -370,5 +366,11 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   public double getWettingRate() {
     double intArea = 3.14 * getInternalDiameter() * getInternalDiameter() / 4.0;
     return getLiquidOutStream().getThermoSystem().getFlowRate("m3/hr") / intArea;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public AbsorberMechanicalDesign getMechanicalDesign() {
+    return new AbsorberMechanicalDesign(this);
   }
 }

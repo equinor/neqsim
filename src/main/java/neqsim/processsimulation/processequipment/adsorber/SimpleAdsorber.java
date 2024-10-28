@@ -77,12 +77,6 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public AdsorberMechanicalDesign getMechanicalDesign() {
-    return new AdsorberMechanicalDesign(this);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void setName(String name) {
     super.setName(name);
     outStream[0].setName(name + "_Sout1");
@@ -125,24 +119,24 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
 
   /**
    * <p>
-   * getOutTemperature.
+   * Get temperature of outstream i.
    * </p>
    *
    * @param i a int
    */
-  public void getOutTemperature(int i) {
-    outStream[i].getThermoSystem().getTemperature();
+  public double getOutTemperature(int i) {
+    return outStream[i].getThermoSystem().getTemperature();
   }
 
   /**
    * <p>
-   * getInTemperature.
+   * Get temperature of instream i.
    * </p>
    *
    * @param i a int
    */
-  public void getInTemperature(int i) {
-    inStream[i].getThermoSystem().getTemperature();
+  public double getInTemperature(int i) {
+    return inStream[i].getThermoSystem().getTemperature();
   }
 
   /** {@inheritDoc} */
@@ -315,5 +309,11 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
    */
   public void setNTU(double NTU) {
     this.NTU = NTU;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public AdsorberMechanicalDesign getMechanicalDesign() {
+    return new AdsorberMechanicalDesign(this);
   }
 }
