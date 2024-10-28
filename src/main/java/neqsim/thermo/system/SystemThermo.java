@@ -4788,14 +4788,6 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setPhysicalPropertyModel(int type) {
-    for (int i = 0; i < numberOfPhases; i++) {
-      getPhase(i).setPhysicalProperties(type);
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public final void setPressure(double newPressure) {
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       phaseArray[i].setPressure(newPressure);

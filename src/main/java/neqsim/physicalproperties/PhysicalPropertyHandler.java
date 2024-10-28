@@ -3,6 +3,7 @@ package neqsim.physicalproperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties;
+import neqsim.physicalproperties.physicalpropertysystem.PhysicalPropertyModel;
 import neqsim.physicalproperties.physicalpropertysystem.commonphasephysicalproperties.DefaultPhysicalProperties;
 import neqsim.physicalproperties.physicalpropertysystem.gasphysicalproperties.GasPhysicalProperties;
 import neqsim.physicalproperties.physicalpropertysystem.liquidphysicalproperties.AminePhysicalProperties;
@@ -15,7 +16,7 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  * <p>
- * PhysicalPropertyHandler class.
+ * PhysicalPropertyHandler class. Group together the physical property functions (density for
  * </p>
  *
  * @author ESOL
@@ -44,36 +45,36 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param type 0 Orginal/default 1 Water 2 Glycol 3 Amine 4 CO2Water 6 Basic
+   * @param ppm PhysicalPropertyModel enum object
    */
-  public void setPhysicalProperties(PhaseInterface phase, int type) {
-    switch (type) {
-      case 0: // Default
+  public void setPhysicalProperties(PhaseInterface phase, PhysicalPropertyModel ppm) {
+    switch (ppm) {
+      case DEFAULT: // Default
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new WaterPhysicalProperties(phase, 0, 0);
         break;
-      case 1: // Water
+      case WATER: // Water
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new WaterPhysicalProperties(phase, 0, 0);
         break;
-      case 2: // Glycol
+      case GLYCOL: // Glycol
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new GlycolPhysicalProperties(phase, 0, 0);
         break;
-      case 3: // Amine
+      case AMINE: // Amine
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new AminePhysicalProperties(phase, 0, 0);
         break;
-      case 4: // CO2water
+      case CO2WATER:
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new CO2waterPhysicalProperties(phase, 0, 0);
         break;
-      case 6: // Basic?
+      case BASIC:
         gasPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
@@ -81,7 +82,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
       default:
         logger
             .error("error selecting physical properties model.\n Continue using default model...");
-        setPhysicalProperties(phase, 0);
+        setPhysicalProperties(phase, PhysicalPropertyModel.DEFAULT);
         break;
     }
     solidPhysicalProperties = new SolidPhysicalProperties(phase);
@@ -94,13 +95,13 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
 
   /**
    * <p>
-   * getPhysicalProperty.
+   * Get PhysicalProperty
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a {@link neqsim.physicalproperties.physicalpropertysystem.PhysicalProperties} object
    */
-  public PhysicalProperties getPhysicalProperty(PhaseInterface phase) {
+  public PhysicalProperties getPhysicalProperties(PhaseInterface phase) {
     switch (phase.getType()) {
       case GAS:
         return gasPhysicalProperties;

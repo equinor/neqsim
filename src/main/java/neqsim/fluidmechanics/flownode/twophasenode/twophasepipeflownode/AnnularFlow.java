@@ -167,7 +167,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
     // testSystem.chemicalReactionInit();
     testSystem.createDatabase(true);
     testSystem.setMixingRule(10);
-    // testSystem.setPhysicalPropertyModel(3);
+    // testSystem.setPhysicalPropertyModel(PhysicalPropertyModel.AMINE);
     // testSystem.setNumericDerivatives(true);
     testSystem.initPhysicalProperties();
     testSystem.getPhase(0).setTemperature(273.15 + 85);
