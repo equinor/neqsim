@@ -43,6 +43,7 @@ public class ProcessSystem extends SimulationBaseClass {
       new ArrayList<MeasurementDeviceInterface>(0);
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
+  private runStep = false;
 
   /**
    * <p>
@@ -459,7 +460,7 @@ public class ProcessSystem extends SimulationBaseClass {
        * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface)
        * measurementDevices.get(i)) .getUnit(); }
        */
-    } while ((!isConverged || (iter < 2 && hasRecycle)) && iter < 100);
+    } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && runStep);
 
     for (int i = 0; i < unitOperations.size(); i++) {
       unitOperations.get(i).setCalculationIdentifier(id);
@@ -734,6 +735,24 @@ public class ProcessSystem extends SimulationBaseClass {
   @Override
   public void setName(String name) {
     this.name = name;
+  }
+
+  /**
+   * Setter for the field <code>runStep</code>.
+   * 
+   * @param runStep A <code>boolean</code> value if run only one iteration
+   */
+  public void setRunStep(boolean runStep) {
+    this.runStep = runStep;
+  }
+
+  /**
+  * Getter for the field <code>runStep</code>.
+  * 
+  * @return A <code>boolean</code> value if run only one iteration
+  */
+  public boolean isRunStep() {
+    return runStep;
   }
 
   /**
