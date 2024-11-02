@@ -295,7 +295,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     Recycle recycl = new Recycle("rec");
     recycl.addStream(antisurgevalve.getOutletStream());
     recycl.setOutletStream(recyclegasstream);
-    recycl.setFlowAccuracy(1e-2);
+    recycl.setFlowTolerance(1e-2);
 
     neqsim.processsimulation.processsystem.ProcessSystem operations =
         new neqsim.processsimulation.processsystem.ProcessSystem();
