@@ -783,6 +783,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Recycle recycleGasFromStripper = new Recycle("stripping gas recirc");
     recycleGasFromStripper.addStream(stripper.getGasOutStream());
     recycleGasFromStripper.setOutletStream(gasToReboiler);
+    recycleGasFromStripper.setTolerance(1.0e-2);
 
     neqsim.thermo.system.SystemInterface pureTEG =
         (neqsim.thermo.system.SystemInterface) feedGas.clone();

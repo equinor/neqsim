@@ -134,7 +134,7 @@ public class CompressorModule extends neqsim.NeqSimTest {
 
     operations.run();
 
-    assertEquals(2046.8012652616517, recycleScrubberStream.getFlowRate("kg/hr"), 0.1);
+    assertEquals(2042.17826, recycleScrubberStream.getFlowRate("kg/hr"), 0.1);
 
     neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator compchartgenerator =
         new neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator(

@@ -633,7 +633,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     Recycle recycle = new Recycle("recycle 1");
     recycle.addStream(recycleValve.getOutletStream());
     recycle.setOutletStream(resycstream);
-    recycle.setFlowAccuracy(1e-4);
+    recycle.setFlowTolerance(1e-4);
 
     ThrottlingValve valve2 = new ThrottlingValve("valve_2", splitter.getSplitStream(0));
     valve2.setOutletPressure(50.0);

@@ -28,17 +28,16 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   protected StreamInterface mixedStream;
   StreamInterface lastIterationStream = null;
   private StreamInterface outletStream = null;
-  private double tolerance = 1e-2;
   private int priority = 100;
-  private double error = 1e10;
-  private double errorFlow = 1e10;
   boolean firstTime = true;
   int iterations = 0;
   int maxIterations = 10;
-
-  double compositionAccuracy = 1.0;
-  double temperatureAccuracy = 1.0;
-  double flowAccuracy = 1.0e-2;
+  private double errorComposition = 1e10;
+  private double errorFlow = 1e10;
+  private double errorTemperature = 1e10;
+  private double flowTolerance = 1e-2;
+  private double compositionTolerance = 1e-2;
+  private double temperatureTolerance = 1e-2;
 
   /**
    * <p>
@@ -53,35 +52,68 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
   /**
    * <p>
-   * Setter for the field <code>compositionAccuracy</code>.
+   * Setter for the field <code>compositionTolerance</code>.
    * </p>
    *
-   * @param compositionAccuracy a double
+   * @param compositionTolerance a double
    */
-  public void setCompositionAccuracy(double compositionAccuracy) {
-    this.compositionAccuracy = compositionAccuracy;
+  public void setCompositionTolerance(double compositionTolerance) {
+    this.compositionTolerance = compositionTolerance;
   }
 
   /**
    * <p>
-   * Setter for the field <code>temperatureAccuracy</code>.
+   * Getter for the field <code>compositionTolerance</code>.
    * </p>
    *
-   * @param temperatureAccuracy a double
+   * @return a double
    */
-  public void setTemperatureAccuracy(double temperatureAccuracy) {
-    this.temperatureAccuracy = temperatureAccuracy;
+  public double getCompositionTolerance() {
+    return this.compositionTolerance;
   }
 
   /**
    * <p>
-   * Setter for the field <code>flowAccuracy</code>.
+   * Setter for the field <code>temperatureTolerance</code>.
    * </p>
    *
-   * @param flowAccuracy a double
+   * @param temperatureTolerance a double in % error
    */
-  public void setFlowAccuracy(double flowAccuracy) {
-    this.flowAccuracy = flowAccuracy;
+  public void setTemperatureTolerance(double temperatureTolerance) {
+    this.temperatureTolerance = temperatureTolerance;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>temperatureTolerance</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getTemperatureTolerance() {
+    return this.temperatureTolerance;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>flowTolerance</code>.
+   * </p>
+   *
+   * @param flowTolerance a double
+   */
+  public void setFlowTolerance(double flowTolerance) {
+    this.flowTolerance = flowTolerance;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>flowTolerance</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getFlowTolerance() {
+    return this.flowTolerance;
   }
 
   /**
@@ -285,8 +317,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     double enthalpy = 0.0;
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
     if (numberOfInputStreams == 1 && thermoSystem2.getFlowRate("kg/hr") < 1e-100) {
-      setError(0);
-      setErrorFlow(0);
+      setErrorCompositon(0.0);
+      setErrorFlow(0.0);
       return;
     }
     mixedStream.setThermoSystem(thermoSystem2);
@@ -314,8 +346,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       testOps.TPflash();
     }
     mixedStream.setCalculationIdentifier(id);
-    setError(massBalanceCheck());
-    setErrorFlow(massBalanceCheck2());
+    setErrorCompositon(compositionBalanceCheck());
+    setErrorFlow(flowBalanceCheck());
+    setErrorTemperature(temperatureBalanceCheck());
     lastIterationStream = mixedStream.clone();
     outletStream.setThermoSystem(mixedStream.getThermoSystem());
     outletStream.setCalculationIdentifier(id);
@@ -338,7 +371,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    *
    * @return a double
    */
-  public double massBalanceCheck2() {
+  public double flowBalanceCheck() {
     double abs_sum_errorFlow = 0.0;
     if (mixedStream.getFlowRate("kg/sec") < 1.0) {
       abs_sum_errorFlow +=
@@ -353,18 +386,12 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
   /**
    * <p>
-   * massBalanceCheck.
+   * compositionBalanceCheck.
    * </p>
    *
    * @return a double
    */
-  public double massBalanceCheck() {
-    // logger.info("flow rate new " +
-    // mixedStream.getThermoSystem().getFlowRate("kg/hr"));
-    // logger.info("temperature " +
-    // mixedStream.getThermoSystem().getTemperature("C"));
-    // logger.info("pressure " +
-    // mixedStream.getThermoSystem().getPressure("bara"));
+  public double compositionBalanceCheck() {
     if (lastIterationStream.getFluid().getNumberOfComponents() != mixedStream.getFluid()
         .getNumberOfComponents()) {
       return 10.0;
@@ -372,16 +399,29 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
     double abs_sum_error = 0.0;
     for (int i = 0; i < mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
-      // logger.info("x last " +
-      // lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
-      // logger.info("x new " +
-      // mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx());
-
       abs_sum_error += Math.abs(mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx()
           - lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
     }
 
     return abs_sum_error;
+  }
+
+
+  /**
+   * <p>
+   * temperatureBalanceCheck.
+   * </p>
+   *
+   * @return a double
+   */
+  public double temperatureBalanceCheck() {
+    double error = 0.0;
+    for (int i = 0; i < mixedStream.getThermoSystem().getNumberOfPhases(); i++) {
+      error += Math.abs((mixedStream.getThermoSystem().getPhase(i).getTemperature()
+          - lastIterationStream.getThermoSystem().getPhase(i).getTemperature())
+          / lastIterationStream.getThermoSystem().getPhase(i).getTemperature()) * 100.0;
+    }
+    return error;
   }
 
   /** {@inheritDoc} */
@@ -413,46 +453,27 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
   /**
    * <p>
-   * Getter for the field <code>tolerance</code>.
+   * Setter for the tolerance fields.
    * </p>
-   *
-   * @return the tolerance
-   */
-  public double getTolerance() {
-    return tolerance;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>tolerance</code>.
-   * </p>
-   *
+   * Set tolerances to tolerance input.
+   * 
    * @param tolerance the tolerance to set
    */
   public void setTolerance(double tolerance) {
-    this.tolerance = tolerance;
+    this.flowTolerance = tolerance;
+    this.temperatureTolerance = tolerance;
+    this.compositionTolerance = tolerance;
   }
 
   /**
    * <p>
-   * Getter for the field <code>error</code>.
+   * Setter for the field <code>errorTemperature</code>.
    * </p>
    *
-   * @return the error
+   * @param errorTemperature the errorTemperature to set
    */
-  public double getError() {
-    return error;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>error</code>.
-   * </p>
-   *
-   * @param error the error to set
-   */
-  public void setError(double error) {
-    this.error = error;
+  public void setErrorTemperature(double errorTemperature) {
+    this.errorTemperature = errorTemperature;
   }
 
   /**
@@ -475,6 +496,28 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    */
   public double getErrorFlow() {
     return errorFlow;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>errorComposition</code>.
+   * </p>
+   *
+   * @param errorComposition the error to set
+   */
+  public void setErrorCompositon(double errorComposition) {
+    this.errorComposition = errorComposition;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>errorComposition</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getErrorComposition() {
+    return errorComposition;
   }
 
   /**
@@ -502,8 +545,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    if (Math.abs(this.error) < tolerance && Math.abs(this.errorFlow) < flowAccuracy
-        && iterations > 1) {
+    if (Math.abs(this.errorComposition) < compositionTolerance
+        && Math.abs(this.errorFlow) < flowTolerance
+        && Math.abs(this.errorTemperature) < temperatureTolerance && iterations > 1) {
       return true;
     } else {
       return false;

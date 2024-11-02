@@ -403,6 +403,6 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     } catch (Exception ex) {
     }
 
-    System.out.println(splitterGasToFlare.getSplitStream(1).getFlowRate("kg/hr"));
+    // System.out.println(splitterGasToFlare.getSplitStream(1).getFlowRate("kg/hr"));
   }
 }
