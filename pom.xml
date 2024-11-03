@@ -10,13 +10,14 @@
 	<description>NeqSim is a library for calculation of fluid behavior, phase equilibrium and process simulation.</description>
 	<url>https://github.com/equinor/neqsim</url>
 	<packaging>jar</packaging>
+	<!-- The version is composed of revision, sha1, and changelist properties -->
 	<version>${revision}${sha1}${changelist}</version>
 
 	<properties>
 		<revision>3.0.2</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<sha1/>
+		<sha1/> <!-- Placeholder for SHA1 hash -->
+		<changelist/> <!-- Placeholder for changelist identifier -->
 		<changelist/>
 		<checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
 	</properties>
@@ -263,7 +264,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.13.0</version>
 				<configuration>
-					<release>11</release> <!-- Upgrade jdk version to 11 if you are having issues compiling -->
+					<!-- Upgrade jdk version to 11 if you are having issues compiling -->
+					<release>11</release>
 					<encoding>${project.build.sourceEncoding}</encoding>
 					<!-- Uncomment below to get compiler warnings
 					<compilerArgs>
@@ -351,7 +353,7 @@
 				<configuration>
 					<failsOnError>true</failsOnError>
 				</configuration>
-			</plugin>  
+			</plugin>
 		</plugins>
 	</build>
 	<distributionManagement>
