@@ -102,6 +102,15 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     return clonedPhase;
   }
 
+  /**
+   * Initializes the phase with the given parameters.
+   *
+   * @param totalNumberOfMoles   the total number of moles in the phase
+   * @param numberOfComponents   the number of components in the phase
+   * @param initType             the type of initialization to perform
+   * @param pt                   the phase type
+   * @param beta                 the beta parameter
+   */
    @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
       boolean changedAssosiationStatus = false;
@@ -255,7 +264,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * <p>
    * initCPAMatrix.
    * </p>
-   * 
    * 
    * Initializes the CPA (Cubic Plus Association) matrix for the phase.
    * This method sets up various matrices and vectors required for the CPA calculations,
