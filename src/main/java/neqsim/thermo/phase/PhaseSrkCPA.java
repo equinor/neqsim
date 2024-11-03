@@ -90,12 +90,10 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     try {
       clonedPhase = (PhaseSrkCPA) super.clone();
     } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      logger.error("Cloning failed for PhaseSrkCPA object.", ex);
     }
     if (activeAccosComp != null) {
       clonedPhase.activeAccosComp = activeAccosComp.clone();
-      System.arraycopy(this.activeAccosComp, 0, clonedPhase.activeAccosComp, 0,
-          activeAccosComp.length);
     }
     // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
     // clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
@@ -104,112 +102,127 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     return clonedPhase;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
-    boolean changedAssosiationStatus = false;
-
-    if (initType == 0) {
-      activeAccosComp = new int[numberOfComponents];
-      for (int i = 0; i < numberOfComponents; i++) {
-        if (componentArray[i].getNumberOfmoles() < 1e-50) {
-          componentArray[i].setNumberOfAssociationSites(0);
-          if (activeAccosComp[i] == 1) {
-            activeAccosComp[i] = 0;
-            changedAssosiationStatus = true;
+   @Override
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
+      boolean changedAssosiationStatus = false;
+  
+      if (initType == 0) {
+          activeAccosComp = new int[numberOfComponents];
+          for (int i = 0; i < numberOfComponents; i++) {
+              double numberOfMoles = componentArray[i].getNumberOfmoles();
+              if (numberOfMoles < 1e-50) {
+                  componentArray[i].setNumberOfAssociationSites(0);
+                  if (activeAccosComp[i] == 1) {
+                      activeAccosComp[i] = 0;
+                      changedAssosiationStatus = true;
+                  }
+              } else {
+                  if (activeAccosComp[i] == 0) {
+                      changedAssosiationStatus = true;
+                      activeAccosComp[i] = 1;
+                  }
+              }
           }
-        } else {
-          if (activeAccosComp[i] == 0) {
-            changedAssosiationStatus = true;
-            activeAccosComp[i] = 1;
+  
+          if (changedAssosiationStatus || lngi == null) {
+              setTotalNumberOfAccociationSites(0);
+              selfAccociationScheme = new int[numberOfComponents][0][0];
+              crossAccociationScheme = new int[numberOfComponents][numberOfComponents][0][0];
+              for (int i = 0; i < numberOfComponents; i++) {
+                  double numberOfMoles = componentArray[i].getNumberOfmoles();
+                  if (numberOfMoles < 1e-50) {
+                      componentArray[i].setNumberOfAssociationSites(0);
+                  } else {
+                      componentArray[i].setNumberOfAssociationSites(componentArray[i].getOrginalNumberOfAssociationSites());
+                      setTotalNumberOfAccociationSites(getTotalNumberOfAccociationSites() + componentArray[i].getNumberOfAssociationSites());
+                      selfAccociationScheme[i] = cpaSelect.setAssociationScheme(i, this);
+                      for (int j = 0; j < numberOfComponents; j++) {
+                          crossAccociationScheme[i][j] = cpaSelect.setCrossAssociationScheme(i, j, this);
+                      }
+                  }
+              }
           }
-        }
-      }
-
-      if (changedAssosiationStatus || lngi == null) {
-        setTotalNumberOfAccociationSites(0);
-        selfAccociationScheme = new int[numberOfComponents][0][0];
-        crossAccociationScheme = new int[numberOfComponents][numberOfComponents][0][0];
-        for (int i = 0; i < numberOfComponents; i++) {
-          if (componentArray[i].getNumberOfmoles() < 1e-50) {
-            componentArray[i].setNumberOfAssociationSites(0);
-          } else {
-            componentArray[i].setNumberOfAssociationSites(
-                componentArray[i].getOrginalNumberOfAssociationSites());
-            setTotalNumberOfAccociationSites(getTotalNumberOfAccociationSites()
-                + componentArray[i].getNumberOfAssociationSites());
-            selfAccociationScheme[i] = cpaSelect.setAssociationScheme(i, this);
-            for (int j = 0; j < numberOfComponents; j++) {
-              crossAccociationScheme[i][j] = cpaSelect.setCrossAssociationScheme(i, j, this);
-            }
+  
+          for (int i = 0; i < numberOfComponents; i++) {
+              ComponentSrkCPA component = (ComponentSrkCPA) componentArray[i];
+              for (int j = 0; j < component.getNumberOfAssociationSites(); j++) {
+                  component.setXsite(j, 1.0);
+                  component.setXsitedV(j, 0.0);
+                  component.setXsitedT(j, 0.0);
+              }
           }
-        }
-      }
-
-      for (int i = 0; i < numberOfComponents; i++) {
-        for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-          ((ComponentSrkCPA) componentArray[i]).setXsite(j, 1.0);
-          ((ComponentSrkCPA) componentArray[i]).setXsitedV(j, 0.0);
-          ((ComponentSrkCPA) componentArray[i]).setXsitedT(j, 0.0);
-        }
-      }
-
-      if (changedAssosiationStatus || lngi == null || mVector == null) {
-        lngi = new double[numberOfComponents];
-        mVector = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
-        KlkMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        KlkVMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        KlkVVMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        KlkVVVMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        hessianMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        KlkTMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        KlkTTMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        KlkTVMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        corr2Matrix = new DMatrixRMaj(getTotalNumberOfAccociationSites(), 1);
-        corr3Matrix = new DMatrixRMaj(getTotalNumberOfAccociationSites(), 1);
-        corr4Matrix = new DMatrixRMaj(getTotalNumberOfAccociationSites(), 1);
-        Klkni =
-            new double[numberOfComponents][getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
-        ksiMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
-        uMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
-        udotMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
-        moleculeNumber = new int[getTotalNumberOfAccociationSites()];
-        assSiteNumber = new int[getTotalNumberOfAccociationSites()];
-        gvector = new double[getTotalNumberOfAccociationSites()][1];
-        udotTimesmMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
-        delta = new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
-        deltaNog =
-            new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
-        deltadT =
-            new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
-        deltadTdT =
-            new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
-        QMatksiksiksi = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
-        udotTimesmiMatrix =
-            new SimpleMatrix(numberOfComponents, getTotalNumberOfAccociationSites());
-
-        oldTotalNumberOfAccociationSites = getTotalNumberOfAccociationSites();
-
-        int temp = 0;
-        for (int i = 0; i < numberOfComponents; i++) {
-          for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-            moleculeNumber[temp + j] = i;
-            assSiteNumber[temp + j] = j;
+  
+          if (changedAssosiationStatus || lngi == null || mVector == null) {
+              int totalSites = getTotalNumberOfAccociationSites();
+              lngi = new double[numberOfComponents];
+              mVector = new SimpleMatrix(totalSites, 1);
+              KlkMatrix = new SimpleMatrix(totalSites, totalSites);
+              KlkVMatrix = new SimpleMatrix(totalSites, totalSites);
+              KlkVVMatrix = new SimpleMatrix(totalSites, totalSites);
+              KlkVVVMatrix = new SimpleMatrix(totalSites, totalSites);
+              hessianMatrix = new SimpleMatrix(totalSites, totalSites);
+              KlkTMatrix = new SimpleMatrix(totalSites, totalSites);
+              KlkTTMatrix = new SimpleMatrix(totalSites, totalSites);
+              KlkTVMatrix = new SimpleMatrix(totalSites, totalSites);
+              corr2Matrix = new DMatrixRMaj(totalSites, 1);
+              corr3Matrix = new DMatrixRMaj(totalSites, 1);
+              corr4Matrix = new DMatrixRMaj(totalSites, 1);
+              Klkni = new double[numberOfComponents][totalSites][totalSites];
+              ksiMatrix = new SimpleMatrix(totalSites, 1);
+              uMatrix = new SimpleMatrix(totalSites, 1);
+              udotMatrix = new SimpleMatrix(totalSites, 1);
+              moleculeNumber = new int[totalSites];
+              assSiteNumber = new int[totalSites];
+              gvector = new double[totalSites][1];
+              udotTimesmMatrix = new SimpleMatrix(totalSites, 1);
+              delta = new double[totalSites][totalSites];
+              deltaNog = new double[totalSites][totalSites];
+              deltadT = new double[totalSites][totalSites];
+              deltadTdT = new double[totalSites][totalSites];
+              QMatksiksiksi = new SimpleMatrix(totalSites, 1);
+              udotTimesmiMatrix = new SimpleMatrix(numberOfComponents, totalSites);
+  
+              oldTotalNumberOfAccociationSites = totalSites;
+  
+              int temp = 0;
+              for (int i = 0; i < numberOfComponents; i++) {
+                  ComponentSrkCPA component = (ComponentSrkCPA) componentArray[i];
+                  for (int j = 0; j < component.getNumberOfAssociationSites(); j++) {
+                      moleculeNumber[temp + j] = i;
+                      assSiteNumber[temp + j] = j;
+                  }
+                  temp += component.getNumberOfAssociationSites();
+              }
           }
-          temp += componentArray[i].getNumberOfAssociationSites();
-        }
       }
-    }
-
+  
+      if (cpamix == null) {
+          cpamix = cpaSelect.getMixingRule(1, this);
+      }
+      if (initType > 0) {
+          calcDelta();
+      }
+  
+      super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+  
+      if (initType > 0 && isConstantPhaseVolume()) {
+          solveX();
+          super.init(totalNumberOfMoles, numberOfComponents, 1, pt, beta);
+          gcpa = calc_g();
+          gcpav = calc_lngV();
+          gcpavv = calc_lngVV();
+          gcpavvv = calc_lngVVV();
+      }
+  
+      if (initType > 0) {
+          hcpatot = calc_hCPA();
+      }
+  
+      if (initType > 1) {
+          initCPAMatrix(initType);
+          super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+      }
+  }
     if (cpamix == null) {
       cpamix = cpaSelect.getMixingRule(1, this);
     }
@@ -242,8 +255,17 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * <p>
    * initCPAMatrix.
    * </p>
+   * 
+   * 
+   * Initializes the CPA (Cubic Plus Association) matrix for the phase.
+   * This method sets up various matrices and vectors required for the CPA calculations,
+   * including the association site matrices, temperature and volume derivatives, and
+   * other related parameters.
    *
-   * @param type a int
+   * @param type an integer indicating the type of initialization to perform:
+   *             - 1: Basic initialization without temperature and volume derivatives.
+   *             - 2: Initialization including temperature derivatives.
+   *             - 3: Full initialization including temperature and volume derivatives.
    */
   public void initCPAMatrix(int type) {
     if (totalNumberOfAccociationSites == 0) {
