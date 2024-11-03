@@ -35,9 +35,11 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   private double errorComposition = 1e10;
   private double errorFlow = 1e10;
   private double errorTemperature = 1e10;
+  private double errorPressure = 1e10;
   private double flowTolerance = 1e-2;
   private double compositionTolerance = 1e-2;
   private double temperatureTolerance = 1e-2;
+  private double pressureTolerance = 1e-2;
 
   /**
    * <p>
@@ -181,7 +183,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * </p>
    *
    * @param i a int
-   * @return a {@link neqsim.processsimulation.processequipment.stream.StreamInterface} object
+   * @return a
+   *         {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
+   *         object
    */
   public StreamInterface getStream(int i) {
     return streams.get(i);
@@ -200,13 +204,11 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
           .getNumberOfComponents(); i++) {
         boolean gotComponent = false;
-        String componentName =
-            streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
+        String componentName = streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
         // logger.info("adding: " + componentName);
         // int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
 
-        double moles =
-            streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getNumberOfmoles();
+        double moles = streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getNumberOfmoles();
         // logger.info("moles: " + moles + " " +
         // mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents());
         for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0)
@@ -214,8 +216,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
           if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName()
               .equals(componentName)) {
             gotComponent = true;
-            index =
-                streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
+            index = streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
             // compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
             // .getComponentName();
           }
@@ -285,8 +286,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * initiateDownstreamProperties.
    * </p>
    *
-   * @param outstream a {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
-   *        object
+   * @param outstream a
+   *                  {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
+   *                  object
    */
   public void initiateDownstreamProperties(StreamInterface outstream) {
     lastIterationStream = outstream.clone();
@@ -349,6 +351,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     setErrorCompositon(compositionBalanceCheck());
     setErrorFlow(flowBalanceCheck());
     setErrorTemperature(temperatureBalanceCheck());
+    setErrorPressure(pressureBalanceCheck());
     lastIterationStream = mixedStream.clone();
     outletStream.setThermoSystem(mixedStream.getThermoSystem());
     outletStream.setCalculationIdentifier(id);
@@ -374,12 +377,10 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   public double flowBalanceCheck() {
     double abs_sum_errorFlow = 0.0;
     if (mixedStream.getFlowRate("kg/sec") < 1.0) {
-      abs_sum_errorFlow +=
-          Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"));
+      abs_sum_errorFlow += Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"));
     } else {
-      abs_sum_errorFlow +=
-          Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"))
-              / mixedStream.getFlowRate("kg/sec") * 100.0;
+      abs_sum_errorFlow += Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"))
+          / mixedStream.getFlowRate("kg/sec") * 100.0;
     }
     return abs_sum_errorFlow;
   }
@@ -406,7 +407,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     return abs_sum_error;
   }
 
-
   /**
    * <p>
    * temperatureBalanceCheck.
@@ -424,9 +424,27 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     return error;
   }
 
+  /**
+   * <p>
+   * pressureBalanceCheck.
+   * </p>
+   *
+   * @return a double
+   */
+  public double pressureBalanceCheck() {
+    double error = 0.0;
+    for (int i = 0; i < mixedStream.getThermoSystem().getNumberOfPhases(); i++) {
+      error += Math.abs((mixedStream.getThermoSystem().getPhase(i).getPressure()
+          - lastIterationStream.getThermoSystem().getPhase(i).getPressure())
+          / lastIterationStream.getThermoSystem().getPhase(i).getPressure()) * 100.0;
+    }
+    return error;
+  }
+
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {}
+  public void displayResult() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -478,6 +496,17 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
   /**
    * <p>
+   * Setter for the field <code>errorPressure</code>.
+   * </p>
+   *
+   * @param errorPressure the errorPressure to set
+   */
+  public void setErrorPressure(double errorPressure) {
+    this.errorPressure = errorPressure;
+  }
+
+  /**
+   * <p>
    * Setter for the field <code>errorFlow</code>.
    * </p>
    *
@@ -496,6 +525,28 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    */
   public double getErrorFlow() {
     return errorFlow;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>errorTemperature</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getErrorTemperature() {
+    return errorTemperature;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>errorPressure</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getErrorPressure() {
+    return errorPressure;
   }
 
   /**
@@ -547,7 +598,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   public boolean solved() {
     if (Math.abs(this.errorComposition) < compositionTolerance
         && Math.abs(this.errorFlow) < flowTolerance
-        && Math.abs(this.errorTemperature) < temperatureTolerance && iterations > 1) {
+        && Math.abs(this.errorTemperature) < temperatureTolerance
+        && Math.abs(this.errorPressure) < pressureTolerance && iterations > 1) {
       return true;
     } else {
       return false;
@@ -576,8 +628,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * Setter for the field <code>outletStream</code>.
    * </p>
    *
-   * @param outletStream a {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
-   *        object
+   * @param outletStream a
+   *                     {@link neqsim.processsimulation.processequipment.stream.StreamInterface}
+   *                     object
    */
   public void setOutletStream(StreamInterface outletStream) {
     this.outletStream = outletStream;
