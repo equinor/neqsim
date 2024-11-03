@@ -3,7 +3,7 @@ package neqsim.processsimulation.processequipment.absorber;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.stream.Stream;
 
 public class SimpleAbsorberTest extends neqsim.NeqSimTest {
   neqsim.thermo.system.SystemFurstElectrolyteEos testSystem;
@@ -21,8 +21,8 @@ public class SimpleAbsorberTest extends neqsim.NeqSimTest {
   @Test
   void testRun() {
     Stream stream_Hot = new Stream("Stream1", testSystem);
-    neqsim.processsimulation.processequipment.absorber.SimpleAbsorber absorber1 =
-        new neqsim.processsimulation.processequipment.absorber.SimpleAbsorber("absorber",
+    neqsim.process.equipment.absorber.SimpleAbsorber absorber1 =
+        new neqsim.process.equipment.absorber.SimpleAbsorber("absorber",
             stream_Hot);
     absorber1.setAproachToEquilibrium(0.75);
 

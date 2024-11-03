@@ -3,8 +3,8 @@ package neqsim.processsimulation.processequipment.compressor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processsystem.ProcessSystem;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 class CompressorPropertyProfileTest extends neqsim.NeqSimTest {
@@ -15,7 +15,7 @@ class CompressorPropertyProfileTest extends neqsim.NeqSimTest {
   double gasFlowRate = 5.0;
   double pressure_Out = 150.0;
   ProcessSystem processOps = null;
-  neqsim.processsimulation.processequipment.compressor.Compressor compressor1 = null;
+  neqsim.process.equipment.compressor.Compressor compressor1 = null;
 
   /**
    * <p>
@@ -33,7 +33,7 @@ class CompressorPropertyProfileTest extends neqsim.NeqSimTest {
     inletStream.setPressure(pressure_inlet, "bara");
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
-    compressor1 = new neqsim.processsimulation.processequipment.compressor.Compressor("Compressor1",
+    compressor1 = new neqsim.process.equipment.compressor.Compressor("Compressor1",
         inletStream);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setUsePolytropicCalc(true);

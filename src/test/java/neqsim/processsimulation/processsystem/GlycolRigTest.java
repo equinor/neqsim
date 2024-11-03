@@ -5,14 +5,15 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.absorber.WaterStripperColumn;
-import neqsim.processsimulation.processequipment.compressor.Compressor;
-import neqsim.processsimulation.processequipment.distillation.DistillationColumn;
-import neqsim.processsimulation.processequipment.heatexchanger.Heater;
-import neqsim.processsimulation.processequipment.mixer.Mixer;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.util.Recycle;
+import neqsim.process.equipment.absorber.WaterStripperColumn;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
@@ -102,8 +103,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     TEGWaterMixer.addStream(coolerStripper.getOutletStream());
     TEGWaterMixer.addStream(liquidToTreatment);
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(TEGtoRegenerator);
     operations.add(strippingGas);
     operations.add(gasToReboiler);
@@ -198,8 +199,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.setTopPressure(1.0 + ThermodynamicConstantsInterface.referencePressure);
     column.setBottomPressure(1.0 + ThermodynamicConstantsInterface.referencePressure);
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(feedToRegenerator);
     operations.add(column);
 
@@ -245,8 +246,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.setTopPressure(1.0 + 5.01325);
     column.setBottomPressure(1.0 + 5.01325);
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(feedToRegenerator);
     operations.add(column);
 
@@ -295,8 +296,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.addFeedStream(feedToRegenerator2, 0);
     column.addFeedStream(feedToRegenerator, 1);
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(feedToRegenerator);
     operations.add(feedToRegenerator2);
     operations.add(column);

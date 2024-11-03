@@ -1,10 +1,10 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.mixer.Mixer;
-import neqsim.processsimulation.processequipment.mixer.StaticPhaseMixer;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.stream.StreamInterface;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.mixer.StaticPhaseMixer;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPA;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -74,8 +74,8 @@ public class OffshoreProcess2 {
         mixer.addStream(stream_2);
         mixer.addStream(stream_4);
 
-        neqsim.processsimulation.processsystem.ProcessSystem operations =
-                new neqsim.processsimulation.processsystem.ProcessSystem();
+        neqsim.process.processmodel.ProcessSystem operations =
+                new neqsim.process.processmodel.ProcessSystem();
         operations.add(stream_1);
         operations.add(separator);
         operations.add(stream_2);

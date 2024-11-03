@@ -5,13 +5,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.compressor.Compressor;
-import neqsim.processsimulation.processequipment.mixer.Mixer;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.stream.StreamInterface;
-import neqsim.processsimulation.processequipment.util.Recycle;
-import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
-import neqsim.processsimulation.processsystem.ProcessSystem;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.splitter.ComponentSplitter;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 class ComponentSplitterTest {

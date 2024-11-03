@@ -6,10 +6,10 @@
 
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.measurementdevice.VolumeFlowTransmitter;
-import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 
 /**
  * <p>
@@ -62,8 +62,8 @@ public class TestSlugcatcher {
         "Water Volume FLow From Slug Catcher", separator2.getWaterOutStream());
     volumeTransmitter4.setMeasuredPhaseNumber(0);
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(separator);
     operations.add(valve1);

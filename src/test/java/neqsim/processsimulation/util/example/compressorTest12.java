@@ -1,8 +1,8 @@
 package neqsim.processsimulation.util.example;
 
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.compressor.Compressor;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 
 /**

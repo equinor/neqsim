@@ -2,7 +2,8 @@ package neqsim.processsimulation.processequipment.pipeline;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe;
+import neqsim.process.equipment.stream.Stream;
 
 public class AdiabaticTwoPhasePipeTest {
   @Test
@@ -28,8 +29,8 @@ public class AdiabaticTwoPhasePipeTest {
     pipe2.setPipeWallRoughness(5e-6);
     // pipe.setOutPressure(112.0);
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(pipe);
     operations.add(pipe2);

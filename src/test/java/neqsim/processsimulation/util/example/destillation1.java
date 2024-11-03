@@ -1,9 +1,9 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.distillation.Condenser;
-import neqsim.processsimulation.processequipment.distillation.DistillationColumn;
-import neqsim.processsimulation.processequipment.distillation.Reboiler;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.distillation.Condenser;
+import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.distillation.Reboiler;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -57,8 +57,8 @@ public class destillation1 {
      * column2.getCondenser()).setRefluxRatio(0.01);
      */
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(column);
     // operations.add(heater);

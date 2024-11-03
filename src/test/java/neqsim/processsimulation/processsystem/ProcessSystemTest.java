@@ -5,25 +5,26 @@ import java.util.ArrayList;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
-import neqsim.processsimulation.measurementdevice.WaterDewPointAnalyser;
-import neqsim.processsimulation.processequipment.ProcessEquipmentInterface;
-import neqsim.processsimulation.processequipment.absorber.SimpleTEGAbsorber;
-import neqsim.processsimulation.processequipment.absorber.WaterStripperColumn;
-import neqsim.processsimulation.processequipment.distillation.DistillationColumn;
-import neqsim.processsimulation.processequipment.filter.Filter;
-import neqsim.processsimulation.processequipment.heatexchanger.HeatExchanger;
-import neqsim.processsimulation.processequipment.heatexchanger.Heater;
-import neqsim.processsimulation.processequipment.mixer.StaticMixer;
-import neqsim.processsimulation.processequipment.pump.Pump;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.splitter.Splitter;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.tank.Tank;
-import neqsim.processsimulation.processequipment.util.Calculator;
-import neqsim.processsimulation.processequipment.util.Recycle;
-import neqsim.processsimulation.processequipment.util.StreamSaturatorUtil;
-import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
+import neqsim.process.equipment.absorber.WaterStripperColumn;
+import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.filter.Filter;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.mixer.StaticMixer;
+import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.tank.Tank;
+import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.util.StreamSaturatorUtil;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
+import neqsim.process.measurementdevice.WaterDewPointAnalyser;
+import neqsim.process.processmodel.ProcessSystem;
 
 /**
  * Class for testing ProcessSystem class.
@@ -509,8 +510,8 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     recycleLeanTEG.setPriority(200);
     recycleLeanTEG.setDownstreamProperty("flow rate");
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(dryFeedGasSmorbukk);
     operations.add(saturatedFeedGasSmorbukk);
     operations.add(waterSaturatedFeedGasSmorbukk);
@@ -827,8 +828,8 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     recycleLeanTEG.setPriority(200);
     recycleLeanTEG.setDownstreamProperty("flow rate");
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(dryFeedGasSmorbukk);
     operations.add(saturatedFeedGasSmorbukk);
     operations.add(waterSaturatedFeedGasSmorbukk);

@@ -2,11 +2,11 @@ package neqsim.processsimulation.util.example;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.stream.Stream;
 
 class process1Test extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem;
-  static neqsim.processsimulation.processsystem.ProcessSystem operations;
+  static neqsim.process.processmodel.ProcessSystem operations;
 
   /**
    * <p>
@@ -25,14 +25,14 @@ class process1Test extends neqsim.NeqSimTest {
 
     Stream stream_1 = new Stream("Stream1", testSystem);
 
-    neqsim.processsimulation.processequipment.compressor.Compressor compr =
-        new neqsim.processsimulation.processequipment.compressor.Compressor("compr", stream_1);
+    neqsim.process.equipment.compressor.Compressor compr =
+        new neqsim.process.equipment.compressor.Compressor("compr", stream_1);
     compr.setOutletPressure(80.0);
     compr.setPolytropicEfficiency(0.9);
     compr.setIsentropicEfficiency(0.9);
     compr.setUsePolytropicCalc(true);
 
-    operations = new neqsim.processsimulation.processsystem.ProcessSystem();
+    operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(compr);
   }

@@ -1,12 +1,12 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.compressor.Compressor;
-import neqsim.processsimulation.processequipment.heatexchanger.Heater;
-import neqsim.processsimulation.processequipment.mixer.Mixer;
-import neqsim.processsimulation.processequipment.separator.GasScrubberSimple;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.GasScrubberSimple;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.valve.ThrottlingValve;
 
 /**
  * <p>simpleTopSideProcess class.</p>
@@ -34,7 +34,7 @@ public class simpleTopSideProcess {
         testSystem.setMixingRule(2);
         Stream stream_1 = new Stream("Stream1", testSystem);
 
-        Mixer mixerHP = new neqsim.processsimulation.processequipment.mixer.StaticMixer("Mixer HP");
+        Mixer mixerHP = new neqsim.process.equipment.mixer.StaticMixer("Mixer HP");
         mixerHP.addStream(stream_1);
 
         Separator separator = new Separator("Separator 1", mixerHP.getOutletStream());
@@ -59,15 +59,15 @@ public class simpleTopSideProcess {
         mixerHP.addStream(stream_3);
 
         Mixer mixer =
-                new neqsim.processsimulation.processequipment.mixer.StaticMixer("Mixer export");
+                new neqsim.process.equipment.mixer.StaticMixer("Mixer export");
         mixer.addStream(separator.getGasOutStream());
         mixer.addStream(gasScrubber.getGasOutStream());
 
         Compressor HPcompressor = new Compressor("HPcompressor", mixer.getOutletStream());
         HPcompressor.setOutletPressure(200.0);
 
-        neqsim.processsimulation.processsystem.ProcessSystem operations =
-                new neqsim.processsimulation.processsystem.ProcessSystem();
+        neqsim.process.processmodel.ProcessSystem operations =
+                new neqsim.process.processmodel.ProcessSystem();
         operations.add(stream_1);
         operations.add(mixerHP);
         operations.add(separator);

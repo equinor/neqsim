@@ -4,12 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import neqsim.processsimulation.processequipment.heatexchanger.HeatExchanger;
-import neqsim.processsimulation.processequipment.pump.Pump;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processsystem.ProcessSystem;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class SeparatorResponseTest {

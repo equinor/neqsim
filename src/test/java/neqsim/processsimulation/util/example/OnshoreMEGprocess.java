@@ -1,22 +1,22 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.compressor.Compressor;
-import neqsim.processsimulation.processequipment.distillation.Condenser;
-import neqsim.processsimulation.processequipment.distillation.DistillationColumn;
-import neqsim.processsimulation.processequipment.distillation.Reboiler;
-import neqsim.processsimulation.processequipment.heatexchanger.Cooler;
-import neqsim.processsimulation.processequipment.heatexchanger.HeatExchanger;
-import neqsim.processsimulation.processequipment.heatexchanger.Heater;
-import neqsim.processsimulation.processequipment.mixer.StaticMixer;
-import neqsim.processsimulation.processequipment.pump.Pump;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
-import neqsim.processsimulation.processequipment.splitter.Splitter;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.util.Calculator;
-import neqsim.processsimulation.processequipment.util.Recycle;
-import neqsim.processsimulation.processequipment.util.StreamSaturatorUtil;
-import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.distillation.Condenser;
+import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.distillation.Reboiler;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.mixer.StaticMixer;
+import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.util.StreamSaturatorUtil;
+import neqsim.process.equipment.valve.ThrottlingValve;
 
 /**
  * <p>
@@ -208,8 +208,8 @@ public class OnshoreMEGprocess {
 
     richMEGstreamHeater2.setEnergyStream(column.getCondenser().getEnergyStream());
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(dryFeedGas);
     operations.add(saturatedFeedGas);
     operations.add(waterSaturatedFeedGas);

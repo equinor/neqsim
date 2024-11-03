@@ -2,8 +2,8 @@ package neqsim.processsimulation.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.processsimulation.processequipment.compressor.Compressor;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.stream.Stream;
 
 /**
  * <p>
@@ -39,8 +39,8 @@ public class compressorTest_1 {
 
     comp_1.setPolytropicEfficiency(0.74629255);
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(comp_1);
 

@@ -1,10 +1,10 @@
 package neqsim.fluidmechanics.util.example;
 
-import neqsim.processsimulation.processequipment.pipeline.Pipeline;
-import neqsim.processsimulation.processequipment.pipeline.TwoPhasePipeLine;
-import neqsim.processsimulation.processequipment.stream.NeqStream;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processsystem.ProcessSystem;
+import neqsim.process.equipment.pipeline.Pipeline;
+import neqsim.process.equipment.pipeline.TwoPhasePipeLine;
+import neqsim.process.equipment.stream.NeqStream;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 

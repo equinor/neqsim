@@ -2,7 +2,8 @@ package neqsim.processsimulation.processequipment.pump;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.stream.Stream;
 
 /**
  * <p>

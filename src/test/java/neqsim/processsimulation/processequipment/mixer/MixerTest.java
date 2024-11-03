@@ -5,8 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processsystem.ProcessSystem;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -48,7 +49,7 @@ class MixerTest {
   }
 
   /**
-   * Test method for {@link neqsim.processsimulation.processequipment.mixer.Mixer#run()}.
+   * Test method for {@link neqsim.process.equipment.mixer.Mixer#run()}.
    */
   @Test
   void testRun() {
@@ -61,7 +62,7 @@ class MixerTest {
   }
 
   /**
-   * Test method for {@link neqsim.processsimulation.processequipment.mixer.Mixer#run()}.
+   * Test method for {@link neqsim.process.equipment.mixer.Mixer#run()}.
    */
   @Test
   void testNeedRecalculation() {

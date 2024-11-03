@@ -1,11 +1,11 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.compressor.Compressor;
-import neqsim.processsimulation.processequipment.mixer.MixerInterface;
-import neqsim.processsimulation.processequipment.mixer.StaticMixer;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.stream.StreamInterface;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.mixer.MixerInterface;
+import neqsim.process.equipment.mixer.StaticMixer;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -47,8 +47,8 @@ public class compressorTest {
 
         mixer.addStream(stream_2);
 
-        neqsim.processsimulation.processsystem.ProcessSystem operations =
-                new neqsim.processsimulation.processsystem.ProcessSystem();
+        neqsim.process.processmodel.ProcessSystem operations =
+                new neqsim.process.processmodel.ProcessSystem();
         operations.add(stream_1);
         operations.add(stream_2);
         operations.add(mixer);

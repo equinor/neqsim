@@ -6,8 +6,8 @@
 
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.mixer.Mixer;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.stream.Stream;
 
 /**
  * <p>
@@ -44,12 +44,12 @@ public class LNGfilling {
     Stream stream_1 = new Stream("Methane Stream", testSystem);
     Stream stream_2 = new Stream("Nitrogen Stream", testSystem2);
 
-    Mixer mixer = new neqsim.processsimulation.processequipment.mixer.StaticMixer("LNG Tank Mix");
+    Mixer mixer = new neqsim.process.equipment.mixer.StaticMixer("LNG Tank Mix");
     mixer.addStream(stream_1);
     mixer.addStream(stream_2);
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(stream_2);
     operations.add(mixer);

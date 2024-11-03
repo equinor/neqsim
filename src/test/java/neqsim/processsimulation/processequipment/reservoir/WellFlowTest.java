@@ -1,11 +1,13 @@
 package neqsim.processsimulation.processequipment.reservoir;
 
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills;
-import neqsim.processsimulation.processequipment.stream.StreamInterface;
-import neqsim.processsimulation.processequipment.util.Adjuster;
-import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
-import neqsim.processsimulation.processsystem.ProcessSystem;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.reservoir.SimpleReservoir;
+import neqsim.process.equipment.reservoir.WellFlow;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.Adjuster;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.ProcessSystem;
 
 public class WellFlowTest {
   @Test
@@ -56,53 +58,53 @@ public class WellFlowTest {
 
     double producxtionIndex = 10.000100751427403E-3;
 
-    neqsim.processsimulation.processequipment.reservoir.SimpleReservoir reservoirOps =
-        new neqsim.processsimulation.processequipment.reservoir.SimpleReservoir("Well 1 reservoir");
+    neqsim.process.equipment.reservoir.SimpleReservoir reservoirOps =
+        new neqsim.process.equipment.reservoir.SimpleReservoir("Well 1 reservoir");
     reservoirOps.setReservoirFluid(fluid1.clone(), 700000000.0, 1.0, 10.0e7);
     reservoirOps.setLowPressureLimit(10.0, "bara");
 
     StreamInterface producedGasStream = reservoirOps.addGasProducer("SLP_A32566GI");
     producedGasStream.setFlowRate(9.0, "MSm3/day");
 
-    neqsim.processsimulation.processequipment.reservoir.WellFlow wellflow =
-        new neqsim.processsimulation.processequipment.reservoir.WellFlow("well flow unit");
+    neqsim.process.equipment.reservoir.WellFlow wellflow =
+        new neqsim.process.equipment.reservoir.WellFlow("well flow unit");
     wellflow.setInletStream(producedGasStream);
     wellflow.setWellProductionIndex(producxtionIndex);
 
-    neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills pipe =
-        new neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills("pipe",
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipe =
+        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("pipe",
             wellflow.getOutletStream());
     pipe.setPipeWallRoughness(5e-6);
     pipe.setLength(170.0);
     pipe.setElevation(170);
     pipe.setDiameter(0.625);
 
-    neqsim.processsimulation.processequipment.compressor.Compressor compressor =
-        new neqsim.processsimulation.processequipment.compressor.Compressor("subcomp");
+    neqsim.process.equipment.compressor.Compressor compressor =
+        new neqsim.process.equipment.compressor.Compressor("subcomp");
     compressor.setInletStream(pipe.getOutletStream());
     compressor.setUsePolytropicCalc(true);
     compressor.setPolytropicEfficiency(0.6);
     compressor.setCompressionRatio(2.0);
 
-    neqsim.processsimulation.processequipment.heatexchanger.Cooler intercooler =
-        new neqsim.processsimulation.processequipment.heatexchanger.Cooler("cooler",
+    neqsim.process.equipment.heatexchanger.Cooler intercooler =
+        new neqsim.process.equipment.heatexchanger.Cooler("cooler",
             compressor.getOutletStream());
     intercooler.setOutTemperature(25.0, "C");
 
-    neqsim.processsimulation.processequipment.compressor.Compressor compressor2 =
-        new neqsim.processsimulation.processequipment.compressor.Compressor("subcomp2");
+    neqsim.process.equipment.compressor.Compressor compressor2 =
+        new neqsim.process.equipment.compressor.Compressor("subcomp2");
     compressor2.setInletStream(intercooler.getOutletStream());
     compressor2.setUsePolytropicCalc(true);
     compressor2.setPolytropicEfficiency(0.6);
     compressor2.setCompressionRatio(2.0);
 
-    neqsim.processsimulation.processequipment.heatexchanger.Heater cooler1 =
-        new neqsim.processsimulation.processequipment.heatexchanger.Heater("cooler 1",
+    neqsim.process.equipment.heatexchanger.Heater cooler1 =
+        new neqsim.process.equipment.heatexchanger.Heater("cooler 1",
             compressor2.getOutletStream());
     cooler1.setOutTemperature(30.0, "C");
 
-    neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills pipeline =
-        new neqsim.processsimulation.processequipment.pipeline.PipeBeggsAndBrills("pipeline",
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline =
+        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("pipeline",
             cooler1.getOutletStream());
     pipeline.setPipeWallRoughness(50e-6);
     pipeline.setLength(50 * 1e3);
@@ -111,16 +113,16 @@ public class WellFlowTest {
     double richgas_inlet_pressure = 150.0;
     double max_gas_production = 9.0;
 
-    neqsim.processsimulation.processequipment.util.Adjuster adjuster =
-        new neqsim.processsimulation.processequipment.util.Adjuster("adjuster");
+    neqsim.process.equipment.util.Adjuster adjuster =
+        new neqsim.process.equipment.util.Adjuster("adjuster");
     adjuster.setTargetVariable(pipeline.getOutletStream(), "pressure", richgas_inlet_pressure,
         "bara");
     adjuster.setAdjustedVariable(producedGasStream, "flow", "MSm3/day");
     adjuster.setMaxAdjustedValue(max_gas_production);
     adjuster.setMinAdjustedValue(1.0);
 
-    neqsim.processsimulation.processsystem.ProcessSystem process =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem process =
+        new neqsim.process.processmodel.ProcessSystem();
     process.add(reservoirOps);
     process.add(wellflow);
     process.add(pipe);

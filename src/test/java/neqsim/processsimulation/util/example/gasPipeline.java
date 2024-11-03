@@ -1,9 +1,9 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.pipeline.AdiabaticPipe;
-import neqsim.processsimulation.processequipment.pipeline.AdiabaticTwoPhasePipe;
-import neqsim.processsimulation.processequipment.pipeline.OnePhasePipeLine;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.pipeline.AdiabaticPipe;
+import neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe;
+import neqsim.process.equipment.pipeline.OnePhasePipeLine;
+import neqsim.process.equipment.stream.Stream;
 
 /**
  * <p>gasPipeline class.</p>
@@ -51,8 +51,8 @@ public class gasPipeline {
         simplePipeline2phase.setInletElevation(0.0);
         simplePipeline2phase.setOutletElevation(-100.0);
 
-        neqsim.processsimulation.processsystem.ProcessSystem operations =
-                new neqsim.processsimulation.processsystem.ProcessSystem();
+        neqsim.process.processmodel.ProcessSystem operations =
+                new neqsim.process.processmodel.ProcessSystem();
         operations.add(stream_1);
         operations.add(pipeline);
         // operations.add(simplePipeline);

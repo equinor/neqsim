@@ -2,7 +2,10 @@ package neqsim.processsimulation.processequipment.pipeline;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.pipeline.AdiabaticPipe;
+import neqsim.process.equipment.pipeline.OnePhasePipeLine;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.stream.Stream;
 
 public class PipelineTest {
   @Test
@@ -52,8 +55,8 @@ public class PipelineTest {
     beggsBrilsPipe.setDiameter(diameter);
     beggsBrilsPipe.setRunIsothermal(false);
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(pipeline);
     operations.add(simplePipeline);

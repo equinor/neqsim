@@ -1,14 +1,14 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.compressor.Compressor;
-import neqsim.processsimulation.processequipment.heatexchanger.Cooler;
-import neqsim.processsimulation.processequipment.heatexchanger.Heater;
-import neqsim.processsimulation.processequipment.mixer.Mixer;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.util.Recycle;
-import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.valve.ThrottlingValve;
 
 /**
  * <p>
@@ -108,8 +108,8 @@ public class TestSeparationTrain {
     HPliquidRecycle.addStream(gasInletScrubber.getLiquidOutStream());
     inletSeparator.addStream(HPliquidRecycle.getOutletStream());
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(wellStream);
     operations.add(inletSeparator);
     operations.add(liquidOutHeater);

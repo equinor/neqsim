@@ -1,13 +1,13 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.absorber.SimpleTEGAbsorber;
-import neqsim.processsimulation.processequipment.heatexchanger.ReBoiler;
-import neqsim.processsimulation.processequipment.mixer.Mixer;
-import neqsim.processsimulation.processequipment.separator.GasScrubberSimple;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.stream.StreamInterface;
-import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
+import neqsim.process.equipment.heatexchanger.ReBoiler;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.GasScrubberSimple;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.valve.ThrottlingValve;
 
 /**
  * <p>
@@ -99,8 +99,8 @@ public class TEGAbsorberTest {
         // processSimulation.processEquipment.absorber.SimpleGlycolAbsorber(gasStreamIn);
         // TEGabsorber.setName("TEGabsorber");
 
-        neqsim.processsimulation.processsystem.ProcessSystem operations =
-                new neqsim.processsimulation.processsystem.ProcessSystem();
+        neqsim.process.processmodel.ProcessSystem operations =
+                new neqsim.process.processmodel.ProcessSystem();
         operations.add(fluidStreamIn);
         operations.add(gasScrubber);
         operations.add(gasToAbsorber);
