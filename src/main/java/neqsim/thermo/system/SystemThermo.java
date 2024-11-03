@@ -5050,14 +5050,14 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public String toJson() {
     return new GsonBuilder().create()
-        .toJson(new neqsim.processsimulation.util.monitor.FluidResponse(this));
+        .toJson(new neqsim.process.util.monitor.FluidResponse(this));
   }
 
   /** {@inheritDoc} */
   @Override
   public String toCompJson() {
     return new GsonBuilder().create()
-        .toJson(new neqsim.processsimulation.util.monitor.FluidComponentResponse(this));
+        .toJson(new neqsim.process.util.monitor.FluidComponentResponse(this));
   }
 
   /** {@inheritDoc} */

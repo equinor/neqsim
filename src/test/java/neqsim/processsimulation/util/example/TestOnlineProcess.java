@@ -1,8 +1,8 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.measurementdevice.TemperatureTransmitter;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.measurementdevice.TemperatureTransmitter;
 
 /**
  * <p>TestOnlineProcess class.</p>
@@ -34,8 +34,8 @@ public class TestOnlineProcess {
         ThrottlingValve valve_1 = new ThrottlingValve("valve_1", stream_1);
         valve_1.setOutletPressure(5.0);
 
-        neqsim.processsimulation.processsystem.ProcessSystem operations =
-                new neqsim.processsimulation.processsystem.ProcessSystem();
+        neqsim.process.processmodel.ProcessSystem operations =
+                new neqsim.process.processmodel.ProcessSystem();
         operations.add(stream_1);
         operations.add(temperatureTransmitter);
         operations.add(valve_1);

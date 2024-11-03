@@ -2,7 +2,8 @@ package neqsim.processsimulation.measurementdevice.simpleflowregime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser;
 
 public class SevereSlugTest {
   @Test

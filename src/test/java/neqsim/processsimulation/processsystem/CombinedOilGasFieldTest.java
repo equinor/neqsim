@@ -2,8 +2,8 @@ package neqsim.processsimulation.processsystem;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.measurementdevice.MultiPhaseMeter;
-import neqsim.processsimulation.processequipment.reservoir.ReservoirTPsim;
+import neqsim.process.equipment.reservoir.ReservoirTPsim;
+import neqsim.process.measurementdevice.MultiPhaseMeter;
 
 public class CombinedOilGasFieldTest {
   @Test
@@ -75,8 +75,8 @@ public class CombinedOilGasFieldTest {
     // MPFMoil.setTemperature(60.0, "C");
     // MPFMoil.setPressure(20.0, "bara");
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(reservoirGasTPsim);
     operations.add(MPFMgas);
     operations.run();

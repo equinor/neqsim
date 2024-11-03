@@ -1,8 +1,8 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.mixer.Mixer;
-import neqsim.processsimulation.processequipment.mixer.StaticMixer;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.mixer.StaticMixer;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -70,8 +70,8 @@ public class WellStreamMixer {
 
         Stream mixerdStream = new Stream("mixed stream", wellStramMixer.getOutletStream());
 
-        neqsim.processsimulation.processsystem.ProcessSystem operations =
-                new neqsim.processsimulation.processsystem.ProcessSystem();
+        neqsim.process.processmodel.ProcessSystem operations =
+                new neqsim.process.processmodel.ProcessSystem();
         operations.add(wellStream_1);
         operations.add(wellStream_2);
         operations.add(wellStramMixer);

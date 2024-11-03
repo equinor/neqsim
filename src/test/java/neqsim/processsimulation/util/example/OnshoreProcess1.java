@@ -2,20 +2,20 @@ package neqsim.processsimulation.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.processsimulation.measurementdevice.MeasurementDeviceInterface;
-import neqsim.processsimulation.measurementdevice.MolarMassAnalyser;
-import neqsim.processsimulation.measurementdevice.PressureTransmitter;
-import neqsim.processsimulation.measurementdevice.TemperatureTransmitter;
-import neqsim.processsimulation.measurementdevice.VolumeFlowTransmitter;
-import neqsim.processsimulation.measurementdevice.WaterContentAnalyser;
-import neqsim.processsimulation.processequipment.heatexchanger.Heater;
-import neqsim.processsimulation.processequipment.mixer.Mixer;
-import neqsim.processsimulation.processequipment.pipeline.SimpleTPoutPipeline;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.stream.StreamInterface;
-import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.pipeline.SimpleTPoutPipeline;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.measurementdevice.MeasurementDeviceInterface;
+import neqsim.process.measurementdevice.MolarMassAnalyser;
+import neqsim.process.measurementdevice.PressureTransmitter;
+import neqsim.process.measurementdevice.TemperatureTransmitter;
+import neqsim.process.measurementdevice.VolumeFlowTransmitter;
+import neqsim.process.measurementdevice.WaterContentAnalyser;
 
 /**
  * <p>
@@ -429,8 +429,8 @@ public class OnshoreProcess1 {
       // VolumeFlowTransmitter("Stream to CO2 removal Volume FLow",streamToCO2removal);
       // volumeTransmitter_StreamToCO2removal.setUnit("Nm^3/day");
 
-      neqsim.processsimulation.processsystem.ProcessSystem operations =
-          new neqsim.processsimulation.processsystem.ProcessSystem();
+      neqsim.process.processmodel.ProcessSystem operations =
+          new neqsim.process.processmodel.ProcessSystem();
       operations.add(stream_1);
       operations.add(reservoirTemperaturTransmitter);
       operations.add(reservoirPressureTransmitter);

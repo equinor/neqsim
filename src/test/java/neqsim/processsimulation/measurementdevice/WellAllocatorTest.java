@@ -3,9 +3,10 @@ package neqsim.processsimulation.measurementdevice;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.util.monitor.WellAllocatorResponse;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.measurementdevice.WellAllocator;
+import neqsim.process.util.monitor.WellAllocatorResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -17,7 +18,7 @@ class WellAllocatorTest extends neqsim.NeqSimTest {
 
   /**
    * Test method for
-   * {@link neqsim.processsimulation.measurementdevice.WellAllocator#getMeasuredValue(java.lang.String)}.
+   * {@link neqsim.process.measurementdevice.WellAllocator#getMeasuredValue(java.lang.String)}.
    */
   @Test
   void testGetMeasuredValueString() {
@@ -60,8 +61,8 @@ class WellAllocatorTest extends neqsim.NeqSimTest {
     wellAlloc.setExportGasStream(stream_gasExp);
     wellAlloc.setExportOilStream(stream_oilExp);
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(stream_2);
     operations.add(sep1);

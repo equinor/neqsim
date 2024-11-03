@@ -3,17 +3,17 @@ package neqsim.processsimulation.processsystem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.processequipment.compressor.Compressor;
-import neqsim.processsimulation.processequipment.heatexchanger.Cooler;
-import neqsim.processsimulation.processequipment.heatexchanger.Heater;
-import neqsim.processsimulation.processequipment.mixer.Mixer;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
-import neqsim.processsimulation.processequipment.splitter.Splitter;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.stream.StreamInterface;
-import neqsim.processsimulation.processequipment.util.Recycle;
-import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -113,8 +113,8 @@ public class CompressorModule extends neqsim.NeqSimTest {
     recycle1.addStream(scrubber1.getLiquidOutStream());
     recycle1.setOutletStream(recycleScrubberStream);
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(feedStream);
     operations.add(inletSeparator);
     operations.add(oilHeater);
@@ -136,8 +136,8 @@ public class CompressorModule extends neqsim.NeqSimTest {
 
     assertEquals(2042.17826, recycleScrubberStream.getFlowRate("kg/hr"), 0.1);
 
-    neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator compchartgenerator =
-        new neqsim.processsimulation.processequipment.compressor.CompressorChartGenerator(
+    neqsim.process.equipment.compressor.CompressorChartGenerator compchartgenerator =
+        new neqsim.process.equipment.compressor.CompressorChartGenerator(
             seccondStageCompressor);
     compchartgenerator.generateCompressorChart("mid range");
 

@@ -3,10 +3,11 @@ package neqsim.processsimulation.processequipment.separator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.measurementdevice.LevelTransmitter;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.stream.StreamInterface;
-import neqsim.processsimulation.processsystem.ProcessSystem;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.measurementdevice.LevelTransmitter;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 
 /**

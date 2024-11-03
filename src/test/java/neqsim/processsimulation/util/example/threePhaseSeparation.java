@@ -1,9 +1,9 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.util.MoleFractionControllerUtil;
-import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.MoleFractionControllerUtil;
+import neqsim.process.equipment.valve.ThrottlingValve;
 
 /**
  * <p>
@@ -83,8 +83,8 @@ public class threePhaseSeparation {
     // ThreePhaseSeparator separator2 = new ThreePhaseSeparator("Separator LP",
     // LP_valve.getOutStream());
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(separator);
     // operations.add(stream_2);

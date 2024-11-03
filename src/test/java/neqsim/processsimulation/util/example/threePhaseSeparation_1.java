@@ -1,7 +1,7 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.separator.ThreePhaseSeparator;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -37,8 +37,8 @@ public class threePhaseSeparation_1 {
         Stream stream_3 = new Stream("oil from separator", separator.getOilOutStream());
         Stream stream_4 = new Stream("water from separator", separator.getWaterOutStream());
 
-        neqsim.processsimulation.processsystem.ProcessSystem operations =
-                new neqsim.processsimulation.processsystem.ProcessSystem();
+        neqsim.process.processmodel.ProcessSystem operations =
+                new neqsim.process.processmodel.ProcessSystem();
         operations.add(stream_1);
         operations.add(separator);
         operations.add(stream_2);

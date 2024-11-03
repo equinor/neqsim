@@ -1,8 +1,8 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.stream.StreamInterface;
-import neqsim.processsimulation.processequipment.tank.Tank;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.tank.Tank;
 
 /**
  * <p>LNGfilling2 class.</p>
@@ -37,13 +37,13 @@ public class LNGfilling2 {
 
         Stream stream_1 = new Stream("Methane Stream", testSystem);
 
-        Tank tank = new neqsim.processsimulation.processequipment.tank.Tank("tank");
+        Tank tank = new neqsim.process.equipment.tank.Tank("tank");
         tank.addStream(stream_1);
 
         StreamInterface liqstream = tank.getLiquidOutStream();
 
-        neqsim.processsimulation.processsystem.ProcessSystem operations =
-                new neqsim.processsimulation.processsystem.ProcessSystem();
+        neqsim.process.processmodel.ProcessSystem operations =
+                new neqsim.process.processmodel.ProcessSystem();
         operations.add(stream_1);
         operations.add(tank);
         operations.add(liqstream);

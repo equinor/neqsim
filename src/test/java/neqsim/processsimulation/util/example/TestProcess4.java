@@ -1,7 +1,7 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
 
 /**
  * <p>TestProcess4 class.</p>
@@ -45,8 +45,8 @@ public class TestProcess4 {
 
         Stream liquidStream = new Stream("liquidStream", separator.getLiquidOutStream());
 
-        neqsim.processsimulation.processsystem.ProcessSystem operations =
-                new neqsim.processsimulation.processsystem.ProcessSystem();
+        neqsim.process.processmodel.ProcessSystem operations =
+                new neqsim.process.processmodel.ProcessSystem();
         operations.add(stream_1);
         operations.add(separator);
         // operations.add(valve_1);

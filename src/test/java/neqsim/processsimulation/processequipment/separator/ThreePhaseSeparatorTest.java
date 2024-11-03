@@ -6,9 +6,9 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
-import neqsim.processsimulation.processequipment.heatexchanger.Heater;
-import neqsim.processsimulation.processequipment.stream.Stream;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 

@@ -1,22 +1,22 @@
 package neqsim.processsimulation.util.example;
 
-import neqsim.processsimulation.conditionmonitor.ConditionMonitor;
-import neqsim.processsimulation.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
-import neqsim.processsimulation.processequipment.absorber.SimpleTEGAbsorber;
-import neqsim.processsimulation.processequipment.absorber.WaterStripperColumn;
-import neqsim.processsimulation.processequipment.distillation.DistillationColumn;
-import neqsim.processsimulation.processequipment.filter.Filter;
-import neqsim.processsimulation.processequipment.heatexchanger.HeatExchanger;
-import neqsim.processsimulation.processequipment.heatexchanger.Heater;
-import neqsim.processsimulation.processequipment.mixer.StaticMixer;
-import neqsim.processsimulation.processequipment.pump.Pump;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.util.Calculator;
-import neqsim.processsimulation.processequipment.util.Recycle;
-import neqsim.processsimulation.processequipment.util.SetPoint;
-import neqsim.processsimulation.processequipment.util.StreamSaturatorUtil;
-import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.process.conditionmonitor.ConditionMonitor;
+import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
+import neqsim.process.equipment.absorber.WaterStripperColumn;
+import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.filter.Filter;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.mixer.StaticMixer;
+import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.util.SetPoint;
+import neqsim.process.equipment.util.StreamSaturatorUtil;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
@@ -34,9 +34,9 @@ public class TEGdehydrationProcessDistillationAaHa {
    * getProcess.
    * </p>
    *
-   * @return a {@link neqsim.processsimulation.processsystem.ProcessSystem} object
+   * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
-  public static neqsim.processsimulation.processsystem.ProcessSystem getProcess() {
+  public static neqsim.process.processmodel.ProcessSystem getProcess() {
     neqsim.thermo.system.SystemInterface feedGas =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     feedGas.addComponent("nitrogen", 1.42);
@@ -231,8 +231,8 @@ public class TEGdehydrationProcessDistillationAaHa {
     richGLycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
     // richGLycolHeater.isSetEnergyStream();
 
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(dryFeedGas);
     operations.add(saturatedFeedGas);
     operations.add(waterSaturatedFeedGas);
@@ -286,7 +286,7 @@ public class TEGdehydrationProcessDistillationAaHa {
    */
   @SuppressWarnings("unused")
   public static void main(String[] args) {
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
+    neqsim.process.processmodel.ProcessSystem operations =
         TEGdehydrationProcessDistillationAaHa.getProcess();
 
     operations.run();

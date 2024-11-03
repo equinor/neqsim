@@ -5,12 +5,13 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.processsimulation.controllerdevice.ControllerDeviceBaseClass;
-import neqsim.processsimulation.controllerdevice.ControllerDeviceInterface;
-import neqsim.processsimulation.measurementdevice.VolumeFlowTransmitter;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.valve.ThrottlingValve;
+import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
+import neqsim.process.controllerdevice.ControllerDeviceInterface;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.measurementdevice.VolumeFlowTransmitter;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 public class ProcessSystemControllerTest extends neqsim.NeqSimTest {

@@ -2,14 +2,14 @@ package neqsim.processsimulation.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.processsimulation.processequipment.compressor.Compressor;
-import neqsim.processsimulation.processequipment.heatexchanger.Cooler;
-import neqsim.processsimulation.processequipment.mixer.MixerInterface;
-import neqsim.processsimulation.processequipment.mixer.StaticMixer;
-import neqsim.processsimulation.processequipment.separator.Separator;
-import neqsim.processsimulation.processequipment.stream.Stream;
-import neqsim.processsimulation.processequipment.stream.StreamInterface;
-import neqsim.processsimulation.processequipment.util.Recycle;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.mixer.MixerInterface;
+import neqsim.process.equipment.mixer.StaticMixer;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.Recycle;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -57,8 +57,8 @@ public class multiThreadTest {
     cooler1.setOutTemperature(283.15 + 30);
 
     // mixer.addStream(stream_2);
-    neqsim.processsimulation.processsystem.ProcessSystem operations =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(stream_2);
     operations.add(mixer);
@@ -104,8 +104,8 @@ public class multiThreadTest {
     mixer2.addStream(resyc.getOutletStream());
 
     // mixer2.addStream(stream_222);
-    neqsim.processsimulation.processsystem.ProcessSystem operations2 =
-        new neqsim.processsimulation.processsystem.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations2 =
+        new neqsim.process.processmodel.ProcessSystem();
     operations2.add(stream_22);
     operations2.add(mixer2);
     operations2.add(stream_32);
