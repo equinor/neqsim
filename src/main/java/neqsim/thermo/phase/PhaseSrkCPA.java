@@ -103,7 +103,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   }
 
   /** {@inheritDoc} */
-  
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
