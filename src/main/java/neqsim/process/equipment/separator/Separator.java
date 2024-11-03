@@ -88,8 +88,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * Constructor for Separator.
    *
    * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Separator(String name, StreamInterface inletStream) {
     this(name);
@@ -114,8 +113,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * setInletStream.
    * </p>
    *
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void setInletStream(StreamInterface inletStream) {
     inletStreamMixer.addStream(inletStream);
@@ -133,8 +131,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * addStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void addStream(StreamInterface newStream) {
     if (numberOfInputStreams == 0) {
@@ -651,9 +648,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * </p>
    *
    * @param i a int
-   * @return a
-   *         {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection}
-   *         object
+   * @return a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
    */
   public SeparatorSection getSeparatorSection(int i) {
     return separatorSection.get(i);
@@ -665,9 +660,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @return a
-   *         {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection}
-   *         object
+   * @return a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
    */
   public SeparatorSection getSeparatorSection(String name) {
     for (SeparatorSection sec : separatorSection) {

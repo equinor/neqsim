@@ -329,7 +329,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    // logger.info("start flashing stream... " + streamNumber);
+    if (!getFluid().isInitialized()) {
+      getFluid().init(0);
+    }
     thermoSystem = getFluid().clone();
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
