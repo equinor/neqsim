@@ -809,17 +809,14 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     p.add(compressor1);
 
     p.run();
-    System.out.println("compressor power " + compressor1.getPower("kW") + "kW");
     double compPower1 = compressor1.getPower("kW");
     valve1.setPercentValveOpening(30 - 25.0);
 
     p.runTransient(1.0);
-    System.out.println("compressor power " + compressor1.getPower("kW") + "kW");
     double compPower2 = compressor1.getPower("kW");
     assertEquals(1.7776105238, compPower1 - compPower2, 0.0001);
 
     p.runTransient(12.0);
-    System.out.println("compressor power " + compressor1.getPower("kW") + "kW");
     compPower2 = compressor1.getPower("kW");
     assertEquals(1.7776105238, compPower1 - compPower2, 0.0001);
   }
