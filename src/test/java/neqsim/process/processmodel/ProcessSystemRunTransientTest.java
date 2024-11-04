@@ -19,7 +19,6 @@ import neqsim.process.measurementdevice.CompressorMonitor;
 import neqsim.process.measurementdevice.LevelTransmitter;
 import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.measurementdevice.VolumeFlowTransmitter;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
@@ -291,8 +290,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     assertEquals(100.0, compressor1.getOutletStream().getPressure(), 0.01);
 
     neqsim.process.equipment.compressor.CompressorChartGenerator compchartgenerator =
-        new neqsim.process.equipment.compressor.CompressorChartGenerator(
-            compressor1);
+        new neqsim.process.equipment.compressor.CompressorChartGenerator(compressor1);
     compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
     compressor1.getCompressorChart().setUseCompressorChart(true);
     // compressor1.setCalculateSteadyState(true);
@@ -396,8 +394,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     // System.out.println("steady state with compressor curves.....");
     neqsim.process.equipment.compressor.CompressorChartGenerator compchartgenerator =
-        new neqsim.process.equipment.compressor.CompressorChartGenerator(
-            compressor1);
+        new neqsim.process.equipment.compressor.CompressorChartGenerator(compressor1);
     compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
     compressor1.getCompressorChart().setUseCompressorChart(true);
     // compressor1.setCalculateSteadyState(true);
@@ -510,8 +507,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     assertEquals(100.0, compressor1.getOutletStream().getPressure(), 0.01);
 
     neqsim.process.equipment.compressor.CompressorChartGenerator compchartgenerator =
-        new neqsim.process.equipment.compressor.CompressorChartGenerator(
-            compressor1);
+        new neqsim.process.equipment.compressor.CompressorChartGenerator(compressor1);
     compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
     compressor1.getCompressorChart().setUseCompressorChart(true);
     // compressor1.setCalculateSteadyState(true);
@@ -678,8 +674,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
      * compressor1.getOutletStream().getPressure() + " distancetosurge ");
      */
     neqsim.process.equipment.compressor.CompressorChartGenerator compchartgenerator =
-        new neqsim.process.equipment.compressor.CompressorChartGenerator(
-            compressor1);
+        new neqsim.process.equipment.compressor.CompressorChartGenerator(compressor1);
     compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
     compressor1.getCompressorChart().setUseCompressorChart(true);
     p.run();
@@ -772,5 +767,60 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
       p.runTransient();
     }
+  }
+
+  @Test
+  public void testValveRegulator() {
+
+    neqsim.thermo.system.SystemSrkEos fluid1 =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    fluid1.addComponent("methane", 0.900);
+    fluid1.addComponent("ethane", 0.100);
+    fluid1.addComponent("n-heptane", 1.00);
+    fluid1.setMixingRule("classic");
+
+    neqsim.process.equipment.stream.Stream stream1 =
+        new neqsim.process.equipment.stream.Stream("Stream1", fluid1);
+    stream1.setFlowRate(510.0, "kg/hr");
+    stream1.setPressure(10.0, "bara");
+    stream1.setCalculateSteadyState(true);
+
+    neqsim.process.equipment.valve.ThrottlingValve valve1 =
+        new neqsim.process.equipment.valve.ThrottlingValve("valve_1", stream1);
+    valve1.setOutletPressure(5.0);
+    valve1.setPercentValveOpening(30.0);
+    valve1.setCalculateSteadyState(false);
+
+    neqsim.process.equipment.separator.Separator separator1 =
+        new neqsim.process.equipment.separator.Separator("separator_1");
+    separator1.addStream(valve1.getOutletStream());
+    separator1.setCalculateSteadyState(true);
+
+    neqsim.process.equipment.compressor.Compressor compressor1 =
+        new neqsim.process.equipment.compressor.Compressor("compressor_1");
+    compressor1.setInletStream(separator1.getGasOutStream());
+    compressor1.setOutletPressure(10.0, "bara");
+    compressor1.setCalculateSteadyState(true);
+
+    neqsim.process.processmodel.ProcessSystem p = new neqsim.process.processmodel.ProcessSystem();
+    p.add(stream1);
+    p.add(valve1);
+    p.add(separator1);
+    p.add(compressor1);
+
+    p.run();
+    System.out.println("compressor power " + compressor1.getPower("kW") + "kW");
+    double compPower1 = compressor1.getPower("kW");
+    valve1.setPercentValveOpening(30 - 25.0);
+
+    p.runTransient(1.0);
+    System.out.println("compressor power " + compressor1.getPower("kW") + "kW");
+    double compPower2 = compressor1.getPower("kW");
+    assertEquals(1.7776105238, compPower1 - compPower2, 0.0001);
+
+    p.runTransient(12.0);
+    System.out.println("compressor power " + compressor1.getPower("kW") + "kW");
+    compPower2 = compressor1.getPower("kW");
+    assertEquals(1.7776105238, compPower1 - compPower2, 0.0001);
   }
 }
