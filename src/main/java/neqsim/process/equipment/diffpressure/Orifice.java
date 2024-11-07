@@ -3,6 +3,7 @@ package neqsim.process.equipment.diffpressure;
 import java.util.UUID;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.system.SystemInterface;
 
 public class Orifice extends TwoPortEquipment {
   private static final long serialVersionUID = 1L;
@@ -162,8 +163,10 @@ public class Orifice extends TwoPortEquipment {
   public void run(UUID uuid) {
     if (inputstream != null && outputstream != null) {
       double newPressure = inputstream.getPressure("bara") - calc_dp();
-      outputstream.getFluid().setPressure(newPressure, "bara");
-      outputstream.run();
+      SystemInterface outfluid = (SystemInterface) inStream.clone();
+      outfluid.setPressure(newPressure);
+      outStream.setFluid(outfluid);
+      outStream.run();
     }
   }
 
