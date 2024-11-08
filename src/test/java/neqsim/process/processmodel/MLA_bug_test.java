@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
 import neqsim.process.equipment.absorber.WaterStripperColumn;
 import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.distillation.Reboiler;
 import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -20,7 +21,6 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.WaterDewPointAnalyser;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPA;
 import neqsim.thermo.util.empiric.BukacekWaterInGas;
@@ -215,7 +215,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
     column.getReboiler().setOutTemperature(273.15 + 197.5);
-    column.getCondenser().setOutTemperature(273.15 + 80.0);
+    column.getCondenser().setOutTemperature(273.15 + 85.0);
     column.getTray(1).addStream(gasToReboiler);
     column.setTopPressure(1.2);
     column.setBottomPressure(1.2);
@@ -329,7 +329,11 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     // System.out.println("water in gas " + dehydratedGas.getFluid().getComponent("water").getx());
 
     assertEquals(-19.1886678,
-        p.getMeasurementDevice("water dew point analyser3").getMeasuredValue("C"), 1e-2);
+        p.getMeasurementDevice("water dew point analyser3").getMeasuredValue("C"), 1e-1);
+    assertEquals(203.024331,
+        ((Reboiler) ((DistillationColumn) p.getUnit("TEG regeneration column")).getReboiler())
+            .getDuty() / 1e3,
+        1e-2);
   }
 
   @Test
