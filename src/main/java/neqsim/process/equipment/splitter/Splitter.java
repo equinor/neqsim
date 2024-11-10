@@ -1,5 +1,6 @@
 package neqsim.process.equipment.splitter;
 
+import java.util.Arrays;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +34,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   double[] splitFactor = new double[1];
   double[] flowRates;
   String flowUnit = "mole/sec";
+  protected double[] oldSplitFactor = null;
+  protected double[] oldFlowRates = null;
 
   /**
    * Constructor for Splitter.
@@ -60,8 +63,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param i a int
    */
   public Splitter(String name, StreamInterface inletStream, int i) {
@@ -180,6 +182,19 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
   /** {@inheritDoc} */
   @Override
+  public boolean needRecalculation() {
+    if (!inletStream.needRecalculation() && Arrays.equals(splitFactor, oldSplitFactor)
+        && Arrays.equals(oldFlowRates, flowRates)) {
+      isSolved = true;
+      return false;
+    } else {
+      isSolved = false;
+      return true;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     double totSplit = 0.0;
 
@@ -215,7 +230,12 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
           new ThermodynamicOperations(splitStream[i].getThermoSystem());
       thermoOps.TPflash();
     }
-
+    if (splitFactor != null) {
+      oldSplitFactor = Arrays.copyOf(splitFactor, splitFactor.length);
+    }
+    if (flowRates != null) {
+      oldFlowRates = Arrays.copyOf(flowRates, flowRates.length);
+    }
     setCalculationIdentifier(id);
   }
 

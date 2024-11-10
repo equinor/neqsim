@@ -134,11 +134,10 @@ public class CompressorModule extends neqsim.NeqSimTest {
 
     operations.run();
 
-    assertEquals(2042.17826, recycleScrubberStream.getFlowRate("kg/hr"), 0.1);
+    assertEquals(2038.8824, recycleScrubberStream.getFlowRate("kg/hr"), 0.1);
 
     neqsim.process.equipment.compressor.CompressorChartGenerator compchartgenerator =
-        new neqsim.process.equipment.compressor.CompressorChartGenerator(
-            seccondStageCompressor);
+        new neqsim.process.equipment.compressor.CompressorChartGenerator(seccondStageCompressor);
     compchartgenerator.generateCompressorChart("mid range");
 
     seccondStageCompressor.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
