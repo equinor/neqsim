@@ -194,6 +194,18 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /** {@inheritDoc} */
   @Override
+  public boolean needRecalculation() {
+    if (!inletStreamMixer.needRecalculation()) {
+      isSolved = true;
+      return false;
+    } else {
+      isSolved = false;
+      return true;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     inletStreamMixer.run(id);
     thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
