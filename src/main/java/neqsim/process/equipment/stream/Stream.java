@@ -7,6 +7,7 @@
 package neqsim.process.equipment.stream;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
@@ -46,6 +47,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   protected double lastTemperature = 0.0;
   protected double lastPressure = 0.0;
   protected double lastFlowRate = 0.0;
+  protected double[] lastComposition = null;
 
   /**
    * Constructor for Stream.
@@ -317,7 +319,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
     if (getFluid().getTemperature() == lastTemperature && getFluid().getPressure() == lastPressure
         && Math.abs(getFluid().getFlowRate("kg/hr") - lastFlowRate)
-            / getFluid().getFlowRate("kg/hr") < 1e-6) {
+            / getFluid().getFlowRate("kg/hr") < 1e-6
+        && Arrays.equals(getFluid().getMolarComposition(), lastComposition)) {
       isSolved = true;
       return false;
     } else {
@@ -398,6 +401,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     thermoSystem.initProperties();
 
     lastFlowRate = thermoSystem.getFlowRate("kg/hr");
+    lastComposition = thermoSystem.getMolarComposition();
     lastTemperature = thermoSystem.getTemperature();
     lastPressure = thermoSystem.getPressure();
 
