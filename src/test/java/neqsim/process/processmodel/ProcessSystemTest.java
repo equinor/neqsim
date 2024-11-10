@@ -24,7 +24,6 @@ import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.process.measurementdevice.WaterDewPointAnalyser;
-import neqsim.process.processmodel.ProcessSystem;
 
 /**
  * Class for testing ProcessSystem class.
@@ -581,7 +580,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
      * coolerhOTteg3.getOutletStream().getFlowRate("kg/hr")); System.out.println("leantoresirc " +
      * leanTEGtoabs.getFlowRate("kg/hr"));
      */
-    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
+    assertEquals(1.743804E-5, dehydratedGas.getFluid().getComponent("water").getx(),
         1e-6);
   }
 

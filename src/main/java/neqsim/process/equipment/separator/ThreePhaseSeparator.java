@@ -56,8 +56,7 @@ public class ThreePhaseSeparator extends Separator {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public ThreePhaseSeparator(String name, StreamInterface inletStream) {
     super(name, inletStream);
@@ -133,6 +132,18 @@ public class ThreePhaseSeparator extends Separator {
    */
   public StreamInterface getOilOutStream() {
     return liquidOutStream;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean needRecalculation() {
+    if (!inletStreamMixer.needRecalculation()) {
+      isSolved = true;
+      return false;
+    } else {
+      isSolved = false;
+      return true;
+    }
   }
 
   /** {@inheritDoc} */
