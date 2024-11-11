@@ -1,5 +1,6 @@
 package neqsim.process.equipment.splitter;
 
+import java.util.Arrays;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +34,11 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   double[] splitFactor = new double[1];
   double[] flowRates;
   String flowUnit = "mole/sec";
+  protected double[] oldSplitFactor = null;
+  protected double lastTemperature = 0.0;
+  protected double lastPressure = 0.0;
+  protected double lastFlowRate = 0.0;
+  protected double[] lastComposition = null;
 
   /**
    * Constructor for Splitter.
@@ -60,8 +66,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param i a int
    */
   public Splitter(String name, StreamInterface inletStream, int i) {
@@ -180,6 +185,22 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
   /** {@inheritDoc} */
   @Override
+  public boolean needRecalculation() {
+    if (inletStream.getFluid().getTemperature() == lastTemperature
+        && inletStream.getFluid().getPressure() == lastPressure
+        && Math.abs(inletStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
+            / inletStream.getFluid().getFlowRate("kg/hr") < 1e-6
+        && Arrays.equals(splitFactor, oldSplitFactor)) {
+      isSolved = true;
+      return false;
+    } else {
+      isSolved = false;
+      return true;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     double totSplit = 0.0;
 
@@ -216,6 +237,12 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       thermoOps.TPflash();
     }
 
+    lastFlowRate = thermoSystem.getFlowRate("kg/hr");
+    lastTemperature = thermoSystem.getTemperature();
+    lastPressure = thermoSystem.getPressure();
+    lastComposition = thermoSystem.getMolarComposition();
+    oldSplitFactor = Arrays.copyOf(splitFactor, splitFactor.length);
+
     setCalculationIdentifier(id);
   }
 
@@ -237,6 +264,12 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
       inletStream.setThermoSystem(mixer.getThermoSystem());
       inletStream.run();
+
+      lastFlowRate = thermoSystem.getFlowRate("kg/hr");
+      lastTemperature = thermoSystem.getTemperature();
+      lastPressure = thermoSystem.getPressure();
+      lastComposition = thermoSystem.getMolarComposition();
+      oldSplitFactor = Arrays.copyOf(splitFactor, splitFactor.length);
       setCalculationIdentifier(id);
     }
   }

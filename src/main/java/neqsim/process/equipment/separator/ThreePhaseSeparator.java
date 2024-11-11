@@ -41,6 +41,10 @@ public class ThreePhaseSeparator extends Separator {
 
   boolean useTempMultiPhaseCheck = false;
 
+  private double lastEnthalpy;
+  private double lastFlowRate;
+  private double lastPressure;
+
   /**
    * Constructor for ThreePhaseSeparator.
    *
@@ -56,8 +60,7 @@ public class ThreePhaseSeparator extends Separator {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public ThreePhaseSeparator(String name, StreamInterface inletStream) {
     super(name, inletStream);
@@ -139,6 +142,17 @@ public class ThreePhaseSeparator extends Separator {
   @Override
   public void run(UUID id) {
     inletStreamMixer.run(id);
+    double enthalpy = inletStreamMixer.getOutletStream().getFluid().getEnthalpy();
+    double flow = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
+    double pres = inletStreamMixer.getOutletStream().getPressure();
+    if (Math.abs((lastEnthalpy - enthalpy) / enthalpy) < 1e-6
+        && Math.abs((lastFlowRate - flow) / flow) < 1e-6
+        && Math.abs((lastPressure - pres) / pres) < 1e-6) {
+      return;
+    }
+    lastEnthalpy = inletStreamMixer.getOutletStream().getFluid().getEnthalpy();
+    lastFlowRate = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
+    lastPressure = inletStreamMixer.getOutletStream().getPressure();
     thermoSystem = inletStreamMixer.getOutletStream().getThermoSystem().clone();
 
     if (!thermoSystem.doMultiPhaseCheck()) {

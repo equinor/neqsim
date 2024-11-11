@@ -73,6 +73,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
 
   SeparatorMechanicalDesign separatorMechanicalDesign;
+  private double lastEnthalpy;
+  private double lastFlowRate;
+  private double lastPressure;
 
   /**
    * Constructor for Separator.
@@ -196,6 +199,17 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   @Override
   public void run(UUID id) {
     inletStreamMixer.run(id);
+    double enthalpy = inletStreamMixer.getOutletStream().getFluid().getEnthalpy();
+    double flow = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
+    double pres = inletStreamMixer.getOutletStream().getPressure();
+    if (Math.abs((lastEnthalpy - enthalpy) / enthalpy) < 1e-6
+        && Math.abs((lastFlowRate - flow) / flow) < 1e-6
+        && Math.abs((lastPressure - pres) / pres) < 1e-6) {
+      return;
+    }
+    lastEnthalpy = inletStreamMixer.getOutletStream().getFluid().getEnthalpy();
+    lastFlowRate = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
+    lastPressure = inletStreamMixer.getOutletStream().getPressure();
     thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
     thermoSystem2.setPressure(thermoSystem2.getPressure() - pressureDrop);
 
@@ -268,7 +282,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         logger.error(ex.getMessage(), ex);
       }
     }
-
     setCalculationIdentifier(id);
   }
 

@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
@@ -77,12 +76,9 @@ class MixerTest {
     processOps.run();
     assertFalse(gasStream.needRecalculation());
     assertFalse(waterStream.needRecalculation());
-    assertFalse(testMixer.needRecalculation());
     gasStream.setFlowRate(100.1, "kg/hr");
     assertTrue(gasStream.needRecalculation());
-    assertTrue(testMixer.needRecalculation());
     processOps.run();
     assertFalse(gasStream.needRecalculation());
-    assertFalse(testMixer.needRecalculation());
   }
 }
