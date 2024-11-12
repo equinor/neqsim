@@ -43,7 +43,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param unit a {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *        object
+   *             object
    */
   public void addInputVariable(ProcessEquipmentInterface unit) {
     inputVariable.add(unit);
@@ -60,21 +60,10 @@ public class Calculator extends ProcessEquipmentBaseClass {
     return outputVariable;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public boolean needRecalculation() {
-    Iterator<ProcessEquipmentInterface> iter = inputVariable.iterator();
-    while (iter.hasNext()) {
-      ProcessEquipmentInterface str = iter.next();
-      if (!str.solved()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   /**
-   * <p>runAntiSurgeCalc.</p>
+   * <p>
+   * runAntiSurgeCalc.
+   * </p>
    *
    * @param id a {@link java.util.UUID} object
    */
@@ -95,7 +84,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
       flowInAntiSurge = 1e-6;
     }
 
-    anitSurgeSplitter.setFlowRates(new double[] {-1, flowInAntiSurge}, "MSm3/day");
+    anitSurgeSplitter.setFlowRates(new double[] { -1, flowInAntiSurge }, "MSm3/day");
     anitSurgeSplitter.run();
     anitSurgeSplitter.setCalculationIdentifier(id);
   }
@@ -142,7 +131,8 @@ public class Calculator extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param outputVariable a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   *                       {@link neqsim.process.equipment.ProcessEquipmentInterface}
+   *                       object
    */
   public void setOutputVariable(ProcessEquipmentInterface outputVariable) {
     this.outputVariable = outputVariable;
