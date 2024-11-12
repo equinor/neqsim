@@ -25,7 +25,6 @@ public class AcidTest extends neqsim.NeqSimTest {
     testSystem.setMixingRule(10);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
-    testSystem.prettyPrint();
   }
 
   /**
@@ -85,7 +84,6 @@ public class AcidTest extends neqsim.NeqSimTest {
     assertEquals(0.0155, boundvol);
     assertEquals(41917.0, assenergy);
     assertEquals(0.3338, m);
-    testSystem.prettyPrint();
   }
 
 
@@ -138,7 +136,6 @@ public class AcidTest extends neqsim.NeqSimTest {
     assertEquals(0.00452, boundvol);
     assertEquals(40323.0, assenergy);
     assertEquals(0.4644000000000, m, 0.0001);
-    testSystem.prettyPrint();
   }
 
   /**
@@ -175,7 +172,6 @@ public class AcidTest extends neqsim.NeqSimTest {
     assertEquals(0.0692, boundvol);
     assertEquals(16655.0, assenergy);
     assertEquals(.6735900000000007, m, 0.00001);
-    testSystem.prettyPrint();
   }
 
   /**
@@ -212,6 +208,5 @@ public class AcidTest extends neqsim.NeqSimTest {
     assertEquals(0.0141, boundvol);
     assertEquals(19752.0, assenergy);
     assertEquals(0.6743999999999983, m);
-    testSystem.prettyPrint();
   }
 }
