@@ -55,7 +55,7 @@ public class AttractiveTermSrk extends AttractiveTermBaseClass {
     double[] acentricConstants = {-0.176, 1.574, (0.48 - this.m)};
     solve.setConstants(acentricConstants);
     getComponent().setAcentricFactor(solve.solve(0.25));
-    System.out.println("solve accen " + getComponent().getAcentricFactor());
+    // System.out.println("solve accen " + getComponent().getAcentricFactor());
   }
 
   /** {@inheritDoc} */
