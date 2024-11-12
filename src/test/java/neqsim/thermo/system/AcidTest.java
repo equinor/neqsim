@@ -95,10 +95,10 @@ public class AcidTest extends neqsim.NeqSimTest {
    * </p>
    */
   @Test
-  @DisplayName("test bublepoint of formic acid")
+  @DisplayName("test bublepoint of acetic acid")
   public void testtestBubpAceticAcid() {
     neqsim.thermo.system.SystemSrkCPAstatoil testSystem =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(373.0 + 17.9, 1.01325);
+        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 117.9, 1.01325);
     testSystem.addComponent("AceticAcid", 25.0, "kg/sec");
     testSystem.setMixingRule(10);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -109,8 +109,8 @@ public class AcidTest extends neqsim.NeqSimTest {
       e.printStackTrace();
     }
 
-    assertEquals(1.11588502, testSystem.getPressure(), 0.001);
-    assertEquals(818.2530757, testSystem.getDensity("kg/m3"), 0.001);
+    assertEquals(0.999088711628, testSystem.getPressure(), 0.001);
+    assertEquals(817.50556, testSystem.getDensity("kg/m3"), 0.001);
 
 
     double t = 373.0;
