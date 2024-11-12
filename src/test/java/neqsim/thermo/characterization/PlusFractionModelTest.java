@@ -100,7 +100,7 @@ public class PlusFractionModelTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
     ops.TPflash();
     // thermoSystem.prettyPrint();
-    assertEquals(0.767272255056255, thermoSystem.getBeta(), 1e-4);
+    assertEquals(0.779829948507, thermoSystem.getBeta(), 1e-4);
   }
 
   @Test

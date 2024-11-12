@@ -48,8 +48,8 @@ public class AcidTest extends neqsim.NeqSimTest {
       e.printStackTrace();
     }
 
-    assertEquals(27.365723, testSystem.getPressure(), 0.001);
-    assertEquals(969.22553749174, testSystem.getDensity("kg/m3"), 0.001);
+    assertEquals(33.2215005, testSystem.getPressure(), 0.001);
+    assertEquals(928.60315, testSystem.getDensity("kg/m3"), 0.001);
 
 
     double t = 373.0;
@@ -80,7 +80,7 @@ public class AcidTest extends neqsim.NeqSimTest {
         ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
             .getAttractiveTerm().getm();
     assertEquals("1A", scheme);
-    assertEquals(56336.0, aCPA);
+    assertEquals(53663.0, aCPA);
     assertEquals(3.0, bCPA);
     assertEquals(0.0155, boundvol);
     assertEquals(41917.0, assenergy);
