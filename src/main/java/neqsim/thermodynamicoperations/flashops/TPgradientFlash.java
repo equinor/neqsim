@@ -52,9 +52,9 @@ public class TPgradientFlash extends Flash {
     this.system = system;
     this.temperature = temperature;
     this.height = height;
-    Jac = new Matrix(system.getPhase(0).getNumberOfComponents(),
-        system.getPhase(0).getNumberOfComponents());
-    fvec = new Matrix(system.getPhase(0).getNumberOfComponents(), 1);
+    Jac = new Matrix(system.getPhase(0).getNumberOfComponents() + 1,
+        system.getPhase(0).getNumberOfComponents() + 1);
+    fvec = new Matrix(system.getPhase(0).getNumberOfComponents() + 1, 1);
   }
 
   /**
@@ -63,7 +63,9 @@ public class TPgradientFlash extends Flash {
    * </p>
    */
   public void setfvec() {
+    double sumx = 0.0;
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+      sumx += localSystem.getPhases()[0].getComponents()[i].getx();
       fvec.set(i, 0,
           Math.log(localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
               * localSystem.getPhases()[0].getComponents()[i].getx() * localSystem.getPressure())
@@ -85,6 +87,7 @@ public class TPgradientFlash extends Flash {
                   / neqsim.thermo.ThermodynamicConstantsInterface.R
                   / tempSystem.getPhase(0).getTemperature());
     }
+    fvec.set(localSystem.getNumberOfComponents(), 0, sumx - 1.0);
   }
 
   /**
@@ -112,7 +115,26 @@ public class TPgradientFlash extends Flash {
         Jac.set(i, j, tempJ);
       }
     }
+
+    int i = system.getPhase(0).getNumberOfComponents();
+    for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
+      Jac.set(i, j, 1.0);
+    }
+
+    for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+      tempJ = 1.0
+          / (localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
+              * localSystem.getPhases()[0].getComponents()[i].getx() * localSystem.getPressure())
+          * (localSystem.getPhases()[0].getComponents()[i].getdfugdp()
+              * localSystem.getPhases()[0].getComponents()[i].getx() * localSystem.getPressure()
+              + localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
+                  * localSystem.getPhases()[0].getComponents()[i].getx());
+      Jac.set(i, system.getPhase(0).getNumberOfComponents(), tempJ);
+    }
+    Jac.set(system.getPhase(0).getNumberOfComponents(), system.getPhase(0).getNumberOfComponents(),
+        0.0);
   }
+
 
   /**
    * <p>
@@ -122,9 +144,11 @@ public class TPgradientFlash extends Flash {
   public void setNewX() {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       localSystem.getPhase(0).getComponent(i)
-          .setx(localSystem.getPhase(0).getComponent(i).getx() - 0.5 * dx.get(i, 0));
+          .setx(localSystem.getPhase(0).getComponent(i).getx() - 0.8 * dx.get(i, 0));
     }
-    localSystem.getPhase(0).normalize();
+    localSystem.setPressure(
+        localSystem.getPressure() - 0.8 * dx.get(system.getPhase(0).getNumberOfComponents(), 0));
+    // localSystem.getPhase(0).normalize();
   }
 
   /** {@inheritDoc} */
@@ -142,14 +166,16 @@ public class TPgradientFlash extends Flash {
 
     for (int i = 0; i < 20; i++) {
       localSystem.setTemperature(localSystem.getTemperature() + deltaT);
-      for (int o = 0; o < 15; o++) {
+      int iter = 0;
+      do {
+        iter += 1;
         localSystem.init(3);
         setfvec();
         setJac();
         dx = Jac.solve(fvec);
-        dx.print(10, 10);
+        // dx.print(10, 10);
         setNewX();
-      }
+      } while (dx.norm2() > 1e-10 && iter < 50);
       // localSystem.display();
 
       tempSystem = localSystem.clone();
