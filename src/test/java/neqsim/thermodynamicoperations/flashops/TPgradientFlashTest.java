@@ -35,7 +35,7 @@ public class TPgradientFlashTest {
       logger.error(ex.getMessage(), ex);
     }
 
-    assertEquals(0.0987274603, newSystem.getComponent("hydrogen").getx(), 1e-2);
+    assertEquals(0.095513700959, newSystem.getComponent("hydrogen").getx(), 1e-4);
   }
 
 }
