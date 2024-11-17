@@ -193,6 +193,7 @@ public class CompressorChartTest {
     testFluid.addComponent("n-pentane", 0.02947);
     testFluid.addComponent("n-hexane", 0.024);
     testFluid.addComponent("n-heptane", 0.01735);
+    testFluid.addComponent("n-octane", 0.0064);
     testFluid.setMixingRule("classic");
 
     testFluid.setTemperature(30.0, "C");
