@@ -180,20 +180,20 @@ public class CompressorChartTest {
 
   @Test
   public void runCurveTest() {
-    SystemInterface testFluid = new SystemPrEos(273.15 + 29.96, 75.7);
+    SystemInterface testFluid = new SystemPrEos(273.15 + 29.96, 75.73);
 
     testFluid.addComponent("nitrogen", 0.7823);
     testFluid.addComponent("CO2", 1.245);
     testFluid.addComponent("methane", 88.4681);
     testFluid.addComponent("ethane", 4.7652);
     testFluid.addComponent("propane", 2.3669);
-    testFluid.addComponent("i-butane", 0.845);
+    testFluid.addComponent("i-butane", 0.3848);
     testFluid.addComponent("n-butane", 0.873);
-    testFluid.addComponent("i-pentane", 0.0243);
-    testFluid.addComponent("n-pentane", 0.02947);
-    testFluid.addComponent("n-hexane", 0.024);
-    testFluid.addComponent("n-heptane", 0.01735);
-    testFluid.addComponent("n-octane", 0.0064);
+    testFluid.addComponent("i-pentane", 0.243);
+    testFluid.addComponent("n-pentane", 0.2947);
+    testFluid.addComponent("n-hexane", 0.2455);
+    testFluid.addComponent("n-heptane", 0.1735);
+    testFluid.addComponent("n-octane", 0.064);
     testFluid.setMixingRule("classic");
 
     testFluid.setTemperature(30.0, "C");
@@ -258,6 +258,7 @@ public class CompressorChartTest {
     System.out.println("dist to surge " + comp1.getDistanceToSurge());
     System.out.println("surge flow rate margin " + comp1.getSurgeFlowRateMargin());
     System.out.println("surge flow rate " + comp1.getSurgeFlowRate());
+    System.out.println("duty " + comp1.getPower("MW"));
   }
 
 }
