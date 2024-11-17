@@ -199,7 +199,7 @@ public class CompressorChartTest {
 
     testFluid.setTemperature(29.96, "C");
     testFluid.setPressure(75.73, "bara");
-    testFluid.setTotalFlowRate(559401.418270102, "kg/hr");
+    testFluid.setTotalFlowRate(359401.418270102, "kg/hr");
 
     Stream stream_1 = new Stream("Stream1", testFluid);
     stream_1.run();
@@ -207,7 +207,7 @@ public class CompressorChartTest {
     stream_1.getFluid().prettyPrint();
 
     Compressor comp1 = new Compressor("compressor 1", stream_1);
-    //comp1.setCompressorChartType("interpolate");
+    comp1.setCompressorChartType("interpolate and extrapolate");
     comp1.setUsePolytropicCalc(true);
     comp1.setSpeed(8765);
 
@@ -262,6 +262,7 @@ public class CompressorChartTest {
     System.out.println("surge flow rate margin " + comp1.getSurgeFlowRateMargin());
     System.out.println("surge flow rate " + comp1.getSurgeFlowRate());
     System.out.println("duty " + comp1.getPower("MW"));
+    System.out.println("surge " + comp1.isSurge());
   }
 
 }

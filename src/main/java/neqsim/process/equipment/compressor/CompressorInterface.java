@@ -142,4 +142,19 @@ public interface CompressorInterface extends ProcessEquipmentInterface, TwoPortI
    *
    */
   public void setCompressorChartType(String type);
+
+  /**
+   * <p>
+   * isSurge.
+   * </p>
+   *
+   * @return a boolean
+   */
+  default boolean isSurge() {
+    if (getDistanceToSurge() < 0) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
