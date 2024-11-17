@@ -73,37 +73,73 @@ public interface CompressorInterface extends ProcessEquipmentInterface, TwoPortI
   public AntiSurge getAntiSurge();
 
   /**
-   * <p>getDistanceToSurge.</p>
+   * <p>
+   * getDistanceToSurge.
+   * </p>
    *
    * @return a double
    */
   public double getDistanceToSurge();
 
   /**
-   * <p>setMaximumSpeed.</p>
+   * <p>
+   * setMaximumSpeed.
+   * </p>
    *
    * @param maxSpeed a double
    */
   public void setMaximumSpeed(double maxSpeed);
 
   /**
-   * <p>setMinimumSpeed.</p>
+   * <p>
+   * setMinimumSpeed.
+   * </p>
    *
    * @param minspeed a double
    */
   public void setMinimumSpeed(double minspeed);
 
   /**
-   * <p>getMaximumSpeed.</p>
+   * <p>
+   * getMaximumSpeed.
+   * </p>
    *
    * @return a double
    */
   public double getMaximumSpeed();
 
   /**
-   * <p>getMinimumSpeed.</p>
+   * <p>
+   * getMinimumSpeed.
+   * </p>
    *
    * @return a double
    */
   public double getMinimumSpeed();
+
+  /**
+   * <p>
+   * getSurgeFlowRateMargin.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getSurgeFlowRateMargin();
+
+  /**
+   * <p>
+   * getSurgeFlowRate.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getSurgeFlowRate();
+
+  /**
+   * <p>
+   * Set CompressorChartType
+   * </p>
+   *
+   */
+  public void setCompressorChartType(String type);
 }

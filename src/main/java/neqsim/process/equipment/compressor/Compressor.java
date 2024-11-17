@@ -80,8 +80,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Compressor(String name, StreamInterface inletStream) {
     this(name);
@@ -926,8 +925,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * Getter for the field <code>compressorChart</code>.
    * </p>
    *
-   * @return a {@link neqsim.process.equipment.compressor.CompressorChartInterface}
-   *         object
+   * @return a {@link neqsim.process.equipment.compressor.CompressorChartInterface} object
    */
   public CompressorChartInterface getCompressorChart() {
     return compressorChart;
@@ -938,8 +936,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * Setter for the field <code>compressorChart</code>.
    * </p>
    *
-   * @param compressorChart a
-   *        {@link neqsim.process.equipment.compressor.CompressorChart} object
+   * @param compressorChart a {@link neqsim.process.equipment.compressor.CompressorChart} object
    */
   public void setCompressorChart(CompressorChart compressorChart) {
     this.compressorChart = compressorChart;
@@ -972,6 +969,19 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         / getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead()) - 1;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double getSurgeFlowRateMargin() {
+    return getInletStream().getFlowRate("m3/hr")
+        - getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSurgeFlowRate() {
+    return getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead());
+  }
+
   /**
    * <p>
    * isStoneWall.
@@ -990,8 +1000,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * Setter for the field <code>antiSurge</code>.
    * </p>
    *
-   * @param antiSurge a {@link neqsim.process.equipment.compressor.AntiSurge}
-   *        object
+   * @param antiSurge a {@link neqsim.process.equipment.compressor.AntiSurge} object
    */
   public void setAntiSurge(AntiSurge antiSurge) {
     this.antiSurge = antiSurge;
@@ -1252,9 +1261,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * Getter for the field <code>propertyProfile</code>.
    * </p>
    *
-   * @return a
-   *         {@link neqsim.process.equipment.compressor.CompressorPropertyProfile}
-   *         object
+   * @return a {@link neqsim.process.equipment.compressor.CompressorPropertyProfile} object
    */
   public CompressorPropertyProfile getPropertyProfile() {
     return propertyProfile;
@@ -1265,8 +1272,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * Setter for the field <code>propertyProfile</code>.
    * </p>
    *
-   * @param propertyProfile a
-   *        {@link neqsim.process.equipment.compressor.CompressorPropertyProfile}
+   * @param propertyProfile a {@link neqsim.process.equipment.compressor.CompressorPropertyProfile}
    *        object
    */
   public void setPropertyProfile(CompressorPropertyProfile propertyProfile) {
@@ -1458,5 +1464,19 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    */
   public double getActualCompressionRatio() {
     return actualCompressionRatio;
+  }
+
+  /**
+   * <p>
+   * Set CompressorChartType
+   * </p>
+   *
+   */
+  public void setCompressorChartType(String type) {
+    if (type.equals("simple")) {
+      compressorChart = new CompressorChart();
+    } else {
+      compressorChart = new CompressorChartAlternativeMapLookup();
+    }
   }
 }
