@@ -66,7 +66,23 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     chartValues.add(curve);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * This method initializes the compressor performance curves, including speed, flow, head, and
+   * polytropic efficiency.
+   *
+   * <p>
+   * The method takes chart conditions and initializes internal variables for different performance
+   * parameters based on input arrays for speed, flow, head, and polytropic efficiency. It also
+   * normalizes these parameters by calculating reduced values based on speed.
+   *
+   * @param chartConditions An array of conditions used for the compressor chart. (Currently unused)
+   * @param speed An array representing the compressor speed values.
+   * @param flow A 2D array representing the flow rates at different speeds.
+   * @param head A 2D array representing the head values at different speeds.
+   * @param polyEff A 2D array representing the polytropic efficiency values at different speeds.
+   */
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] polyEff) {
@@ -75,9 +91,16 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     this.polytropicEfficiency = polyEff;
     this.flow = flow;
 
-    this.redhead = new double[head.length][head[0].length];
-    this.redpolytropicEfficiency = new double[polyEff.length][polyEff[0].length];
-    this.redflow = new double[flow.length][flow[0].length];
+    // Dynamically initialize arrays based on the maximum length of flow, head, and polyEff
+    int maxLength = 0;
+    for (double[] f : flow) {
+      if (f.length > maxLength)
+        maxLength = f.length;
+    }
+
+    this.redhead = new double[head.length][maxLength];
+    this.redpolytropicEfficiency = new double[polyEff.length][maxLength];
+    this.redflow = new double[flow.length][maxLength];
 
     for (int i = 0; i < speed.length; i++) {
       if (speed[i] > maxSpeedCurve) {
@@ -88,7 +111,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
       }
       CompressorCurve curve = new CompressorCurve(speed[i], flow[i], head[i], polyEff[i]);
       chartValues.add(curve);
-      for (int j = 0; j < flow[i].length; j++) {
+
+      for (int j = 0; j < flow[i].length; j++) { // Handle differing lengths for each speed
         redflow[i][j] = flow[i][j] / speed[i];
         redpolytropicEfficiency[i][j] = polyEff[i][j];
         redhead[i][j] = head[i][j] / speed[i] / speed[i];
@@ -97,6 +121,13 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         double flowFanLaw = flow[i][j] * speed[i] / speed[0];
         // TODO: MLLU: not correct. speed[0] should be the requested speed
         fanLawCorrectionFitter.add(speed[i] / speed[0], flow[i][j] / flowFanLaw);
+      }
+
+      // Fill remaining slots with default values (e.g., 0) if arrays are shorter
+      for (int j = flow[i].length; j < maxLength; j++) {
+        redflow[i][j] = 0;
+        redpolytropicEfficiency[i][j] = 0;
+        redhead[i][j] = 0;
       }
     }
 

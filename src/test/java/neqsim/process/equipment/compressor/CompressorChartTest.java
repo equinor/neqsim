@@ -207,7 +207,7 @@ public class CompressorChartTest {
     stream_1.getFluid().prettyPrint();
 
     Compressor comp1 = new Compressor("compressor 1", stream_1);
-    comp1.setCompressorChartType("interpolate");
+    //comp1.setCompressorChartType("interpolate");
     comp1.setUsePolytropicCalc(true);
     comp1.setSpeed(8765);
 
