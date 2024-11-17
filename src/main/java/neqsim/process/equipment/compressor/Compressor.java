@@ -1475,8 +1475,12 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public void setCompressorChartType(String type) {
     if (type.equals("simple")) {
       compressorChart = new CompressorChart();
-    } else {
+    } else if (type.equals("interpolate")) {
       compressorChart = new CompressorChartAlternativeMapLookup();
+    } else if (type.equals("interpolate and extrapolate")) {
+      compressorChart = new CompressorChartAlternativeMapLookupExtrapolate();
+    } else {
+      compressorChart = new CompressorChart();
     }
   }
 }

@@ -16,7 +16,112 @@ import neqsim.thermo.system.SystemSrkEos;
  * This class is an implementation of the compressor chart class that uses Fan laws and "double"
  * interpolation to navigate the compressor map (as opposed to the standard class using reduced
  * variables according to Fan laws).
- *
+ * 
+ * <p>
+ * The class provides methods to add compressor curves, set reference conditions, and calculate
+ * polytropic head and efficiency based on flow and speed. It also includes methods to check surge
+ * and stone wall conditions.
+ * </p>
+ * 
+ * <p>
+ * The main method demonstrates the usage of the class by creating a test fluid, setting up a
+ * compressor, and running a process system.
+ * </p>
+ * 
+ * <p>
+ * The class implements the CompressorChartInterface and is Serializable.
+ * </p>
+ * 
+ * <p>
+ * Fields:
+ * </p>
+ * <ul>
+ * <li>serialVersionUID: A unique identifier for serialization.</li>
+ * <li>logger: Logger instance for logging.</li>
+ * <li>chartValues: List of compressor curves.</li>
+ * <li>chartSpeeds: List of chart speeds.</li>
+ * <li>surgeCurve: Surge curve instance.</li>
+ * <li>stoneWallCurve: Stone wall curve instance.</li>
+ * <li>isSurge: Flag indicating if the compressor is in surge condition.</li>
+ * <li>isStoneWall: Flag indicating if the compressor is in stone wall condition.</li>
+ * <li>refMW: Reference molecular weight.</li>
+ * <li>headUnit: Unit of the head (default is "meter").</li>
+ * <li>useCompressorChart: Flag indicating if the compressor chart is used.</li>
+ * <li>refTemperature: Reference temperature.</li>
+ * <li>refPressure: Reference pressure.</li>
+ * <li>referenceSpeed: Reference speed (default is 1000.0).</li>
+ * <li>refZ: Reference compressibility factor.</li>
+ * <li>useRealKappa: Flag indicating if real kappa is used.</li>
+ * <li>chartConditions: Array of chart conditions.</li>
+ * <li>reducedHeadFitter: Weighted observed points for reduced head fitting.</li>
+ * <li>reducedFlowFitter: Weighted observed points for reduced flow fitting.</li>
+ * <li>fanLawCorrectionFitter: Weighted observed points for fan law correction fitting.</li>
+ * <li>reducedPolytropicEfficiencyFitter: Weighted observed points for reduced polytropic efficiency
+ * fitting.</li>
+ * <li>reducedHeadFitterFunc: Polynomial function for reduced head fitting.</li>
+ * <li>reducedPolytropicEfficiencyFunc: Polynomial function for reduced polytropic efficiency
+ * fitting.</li>
+ * <li>fanLawCorrectionFunc: Polynomial function for fan law correction fitting.</li>
+ * <li>gearRatio: Gear ratio (default is 1.0).</li>
+ * </ul>
+ * 
+ * <p>
+ * Methods:
+ * </p>
+ * <ul>
+ * <li>addCurve: Adds a compressor curve.</li>
+ * <li>setCurves: Sets multiple compressor curves.</li>
+ * <li>getClosestRefSpeeds: Gets the closest reference speeds to a given speed.</li>
+ * <li>getPolytropicHead: Calculates the polytropic head based on flow and speed.</li>
+ * <li>getPolytropicEfficiency: Calculates the polytropic efficiency based on flow and speed.</li>
+ * <li>addSurgeCurve: Adds a surge curve.</li>
+ * <li>getCurveAtRefSpeed: Gets the compressor curve at a given reference speed.</li>
+ * <li>getGearRatio: Gets the gear ratio.</li>
+ * <li>setGearRatio: Sets the gear ratio.</li>
+ * <li>polytropicEfficiency: Calculates the polytropic efficiency (returns a constant value of
+ * 100.0).</li>
+ * <li>getSpeed: Calculates the speed based on flow and head.</li>
+ * <li>checkSurge1: Checks if the compressor is in surge condition (method 1).</li>
+ * <li>checkSurge2: Checks if the compressor is in surge condition (method 2).</li>
+ * <li>checkStoneWall: Checks if the compressor is in stone wall condition.</li>
+ * <li>setReferenceConditions: Sets the reference conditions.</li>
+ * <li>getSurgeCurve: Gets the surge curve.</li>
+ * <li>setSurgeCurve: Sets the surge curve.</li>
+ * <li>getStoneWallCurve: Gets the stone wall curve.</li>
+ * <li>setStoneWallCurve: Sets the stone wall curve.</li>
+ * <li>main: Main method demonstrating the usage of the class.</li>
+ * <li>isUseCompressorChart: Checks if the compressor chart is used.</li>
+ * <li>setUseCompressorChart: Sets the flag indicating if the compressor chart is used.</li>
+ * <li>getHeadUnit: Gets the unit of the head.</li>
+ * <li>setHeadUnit: Sets the unit of the head.</li>
+ * <li>useRealKappa: Checks if real kappa is used.</li>
+ * <li>setUseRealKappa: Sets the flag indicating if real kappa is used.</li>
+ * <li>bisect_left: Helper method for binary search (overloaded).</li>
+ * <li>plot: Placeholder method for plotting (not implemented).</li>
+ * <li>getFlow: Placeholder method for getting flow (not implemented).</li>
+ * </ul>
+ * 
+ * <p>
+ * Exceptions:
+ * </p>
+ * <ul>
+ * <li>RuntimeException: Thrown for invalid input or unsupported head unit value.</li>
+ * </ul>
+ * 
+ * @see neqsim.process.equipment.compressor.CompressorChartInterface
+ * @see java.io.Serializable
+ * @see org.apache.commons.math3.analysis.interpolation.SplineInterpolator
+ * @see org.apache.commons.math3.analysis.polynomials.PolynomialFunction
+ * @see org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction
+ * @see org.apache.commons.math3.fitting.WeightedObservedPoints
+ * @see org.apache.logging.log4j.LogManager
+ * @see org.apache.logging.log4j.Logger
+ * @see neqsim.process.equipment.stream.Stream
+ * @see neqsim.thermo.system.SystemInterface
+ * @see neqsim.thermo.system.SystemSrkEos
+ */
+
+/**
  * @author asmund
  * @version $Id: $Id
  */
@@ -65,6 +170,16 @@ public class CompressorChartAlternativeMapLookup
   }
 
   /** {@inheritDoc} */
+  /**
+   * Sets the compressor curves based on the provided chart conditions, speed, flow, head, and
+   * polytropic efficiency values.
+   *
+   * @param chartConditions an array of chart conditions (not used in this method)
+   * @param speed an array of speed values for the compressor
+   * @param flow a 2D array of flow values corresponding to each speed
+   * @param head a 2D array of head values corresponding to each speed
+   * @param polyEff a 2D array of polytropic efficiency values corresponding to each speed
+   */
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] polyEff) {
@@ -84,6 +199,16 @@ public class CompressorChartAlternativeMapLookup
    *
    * @param speed a double
    * @return a {@link java.util.ArrayList} object
+   */
+  /**
+   * Returns a list of the closest reference speeds to the given speed. If the given speed matches a
+   * reference speed, only that speed is returned. If the given speed is between two reference
+   * speeds, both are returned. If the given speed is lower than the lowest reference speed, the
+   * lowest reference speed is returned. If the given speed is higher than the highest reference
+   * speed, the highest reference speed is returned.
+   *
+   * @param speed the speed to find the closest reference speeds for
+   * @return an ArrayList of the closest reference speeds
    */
   public ArrayList<Double> getClosestRefSpeeds(double speed) {
     ArrayList<Double> closestRefSpeeds = new ArrayList<Double>();
@@ -116,6 +241,16 @@ public class CompressorChartAlternativeMapLookup
   }
 
   /** {@inheritDoc} */
+  /**
+   * Calculates the polytropic head for a given flow and speed.
+   *
+   * This method interpolates the polytropic head values from reference speeds closest to the given
+   * speed and averages them to estimate the polytropic head at the specified flow and speed.
+   *
+   * @param flow the flow rate for which the polytropic head is to be calculated
+   * @param speed the speed at which the polytropic head is to be calculated
+   * @return the calculated polytropic head
+   */
   @Override
   public double getPolytropicHead(double flow, double speed) {
     ArrayList<Double> closestRefSpeeds = new ArrayList<Double>();
@@ -141,6 +276,15 @@ public class CompressorChartAlternativeMapLookup
   }
 
   /** {@inheritDoc} */
+  /**
+   * Calculates the polytropic efficiency of the compressor for a given flow and speed. The method
+   * interpolates the efficiency values from reference speed curves and averages them to estimate
+   * the efficiency at the specified conditions.
+   *
+   * @param flow the flow rate through the compressor
+   * @param speed the rotational speed of the compressor
+   * @return the polytropic efficiency at the specified flow and speed
+   */
   @Override
   public double getPolytropicEfficiency(double flow, double speed) {
     ArrayList<Double> closestRefSpeeds = new ArrayList<Double>();

@@ -207,9 +207,10 @@ public class CompressorChartTest {
     stream_1.getFluid().prettyPrint();
 
     Compressor comp1 = new Compressor("compressor 1", stream_1);
-    //comp1.setCompressorChartType("interpolate");
+    comp1.setCompressorChartType("interpolate and extrapolate");
     comp1.setUsePolytropicCalc(true);
     comp1.setSpeed(8765);
+    comp1.setUseGERG2008(false);
 
     double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};
 
@@ -252,16 +253,19 @@ public class CompressorChartTest {
     comp1.getAntiSurge().setSurgeControlFactor(1.0);
     comp1.run();
 
-    System.out.println("speed " + comp1.getSpeed());
-    System.out.println("out pres " + comp1.getOutletPressure());
-    System.out.println("out temp " + (comp1.getOutTemperature() - 273.15));
-    System.out.println("feed flow " + (comp1.getInletStream().getFlowRate("m3/hr")));
-    System.out.println("polytropic head " + comp1.getPolytropicFluidHead());
-    System.out.println("polytropic efficiency " + comp1.getPolytropicEfficiency());
-    System.out.println("dist to surge " + comp1.getDistanceToSurge());
-    System.out.println("surge flow rate margin " + comp1.getSurgeFlowRateMargin());
-    System.out.println("surge flow rate " + comp1.getSurgeFlowRate());
-    System.out.println("duty " + comp1.getPower("MW"));
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class).debug("speed " + comp1.getSpeed());
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class).debug("out pres " + comp1.getOutletPressure());
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class).debug("out temp " + (comp1.getOutTemperature() - 273.15));
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class).debug("feed flow " + (comp1.getInletStream().getFlowRate("m3/hr")));
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class).debug("polytropic head " + comp1.getPolytropicFluidHead());
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class).debug("polytropic efficiency " + comp1.getPolytropicEfficiency());
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class).debug("dist to surge " + comp1.getDistanceToSurge());
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class).debug("surge flow rate margin " + comp1.getSurgeFlowRateMargin());
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class).debug("surge flow rate " + comp1.getSurgeFlowRate());
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class).debug("duty " + comp1.getPower("MW"));
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class).debug("surge " + comp1.isSurge());
+    Assertions.assertTrue(comp1.isSurge() == false);
+    Assertions.assertEquals(158.7732888, comp1.getOutletPressure(), 1e-3);
   }
 
 }
