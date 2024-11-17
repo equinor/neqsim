@@ -194,14 +194,17 @@ public class CompressorChartTest {
     testFluid.addComponent("n-hexane", 0.2455);
     testFluid.addComponent("n-heptane", 0.1735);
     testFluid.addComponent("n-octane", 0.064);
+    testFluid.addComponent("water", 0.076);
     testFluid.setMixingRule("classic");
 
-    testFluid.setTemperature(30.0, "C");
-    testFluid.setPressure(75.7, "bara");
-    testFluid.setTotalFlowRate(16.67, "MSm3/day");
+    testFluid.setTemperature(29.96, "C");
+    testFluid.setPressure(75.73, "bara");
+    testFluid.setTotalFlowRate(559401.418270102, "kg/hr");
 
     Stream stream_1 = new Stream("Stream1", testFluid);
     stream_1.run();
+
+    stream_1.getFluid().prettyPrint();
 
     Compressor comp1 = new Compressor("compressor 1", stream_1);
     comp1.setCompressorChartType("interpolate");
