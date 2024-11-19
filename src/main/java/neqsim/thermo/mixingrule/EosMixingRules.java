@@ -1467,7 +1467,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       // pressure, numbcomp) * R * temperature * alpha_mix;
       A = getB() * R * temperature * compArray[compNumb].getAder() + phase.getNumberOfMolesInPhase()
           * compArray[compNumb].getBi() * R * temperature * alpha_mix;
-      // calcBi(compNumb, phase, temperature, pressure, numbcomp) * R * temperature * alpha_mix;
+      // calcBi(compNumb, phase, temperature, pressure, numbcomp) * R * temperature *
+      // alpha_mix;
 
       // System.out.println("Ai: " + A);
       return A;
@@ -2130,9 +2131,10 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     wijCalcOrFitted = new int[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       for (int k = 0; k < phase.getNumberOfComponents(); k++) {
-        String component_name = phase.getComponents()[k].getComponentName();
+        String component_name = phase.getComponent(k).getComponentName();
 
         for (int l = k; l < phase.getNumberOfComponents(); l++) {
+          String component_name2 = phase.getComponents()[l].getComponentName();
           if (k == l) {
             classicOrHV[k][l] = "Classic";
             classicOrWS[k][l] = "Classic";
@@ -2141,26 +2143,32 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           } else {
             java.sql.ResultSet dataSet = null;
             try {
+              int underscoreIndex = component_name.indexOf("__"); // double underscore
+              if (underscoreIndex != -1) {
+                component_name = component_name.substring(0, underscoreIndex);
+              }
+              int underscoreIndex2 = component_name2.indexOf("__");
+              if (underscoreIndex2 != -1) {
+                component_name2 = component_name2.substring(0, underscoreIndex2);
+              }
               if (phase.getComponent(k).isIsTBPfraction()
                   || phase.getComponent(l).isIsTBPfraction()) {
                 throw new Exception("no interaction coefficient for TBP fractions");
               }
               int templ = l;
               int tempk = k;
+
               if (NeqSimDataBase.createTemporaryTables()) {
                 dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='"
-                    + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName()
-                    + "') OR (comp1='" + phase.getComponents()[l].getComponentName()
-                    + "' AND comp2='" + component_name + "')");
+                    + component_name + "' AND comp2='" + component_name2 + "') OR (comp1='"
+                    + component_name2 + "' AND comp2='" + component_name + "')");
               } else {
                 dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='"
-                    + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName()
-                    + "') OR (comp1='" + phase.getComponents()[l].getComponentName()
-                    + "' AND comp2='" + component_name + "')");
+                    + component_name + "' AND comp2='" + component_name2 + "') OR (comp1='"
+                    + component_name2 + "' AND comp2='" + component_name + "')");
               }
               dataSet.next();
-              if (dataSet.getString("comp1").trim()
-                  .equals(phase.getComponents()[l].getComponentName())) {
+              if (dataSet.getString("comp1").trim().equals(component_name2)) {
                 templ = k;
                 tempk = l;
               }
@@ -2277,22 +2285,22 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                     nEOSkij);
                 // System.out.println("intparam not defined .... CALCULATING intparam
                 // between "
-                // +phase.getComponents()[l].getComponentName() + " and " +
-                // phase.getComponents()[k].getComponentName()+ " to " +
+                // +component_name2 + " and " +
+                // component_name+ " to " +
                 // intparam[k][l]);
-              } else if ((phase.getComponents()[k].getComponentName().equals("CO2")
+              } else if ((component_name.equals("CO2")
                   && phase.getComponents()[l].isIsTBPfraction())
-                  || (phase.getComponents()[l].getComponentName().equals("CO2")
+                  || (component_name2.equals("CO2")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.1;
-              } else if ((phase.getComponents()[k].getComponentName().equals("nitrogen")
+              } else if ((component_name.equals("nitrogen")
                   && phase.getComponents()[l].isIsTBPfraction())
-                  || (phase.getComponents()[l].getComponentName().equals("nitrogen")
+                  || (component_name2.equals("nitrogen")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.08;
-              } else if ((phase.getComponents()[k].getComponentName().equals("water")
+              } else if ((component_name.equals("water")
                   && phase.getComponents()[l].isIsTBPfraction())
-                  || (phase.getComponents()[l].getComponentName().equals("water")
+                  || (component_name2.equals("water")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.2;
 
@@ -2312,9 +2320,9 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
                   intparamT[k][l] = 0.0;
                 }
-              } else if ((phase.getComponents()[k].getComponentName().equals("MEG")
+              } else if ((component_name.equals("MEG")
                   && phase.getComponents()[l].isIsTBPfraction())
-                  || (phase.getComponents()[l].getComponentName().equals("MEG")
+                  || (component_name2.equals("MEG")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.2;
                 if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
@@ -2331,9 +2339,9 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                   // intparam[k][l] = 0.01;
                   intparamT[k][l] = 0.0;
                 }
-              } else if ((phase.getComponents()[k].getComponentName().equals("ethanol")
+              } else if ((component_name.equals("ethanol")
                   && phase.getComponents()[l].isIsTBPfraction())
-                  || (phase.getComponents()[l].getComponentName().equals("ethanol")
+                  || (component_name2.equals("ethanol")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.0;
                 if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
@@ -2347,9 +2355,9 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                     intparam[k][l] = -0.1;
                   }
                 }
-              } else if ((phase.getComponents()[k].getComponentName().equals("methanol")
+              } else if ((component_name.equals("methanol")
                   && phase.getComponents()[l].isIsTBPfraction())
-                  || (phase.getComponents()[l].getComponentName().equals("methanol")
+                  || (component_name2.equals("methanol")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.0;
                 if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
@@ -2363,9 +2371,9 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                     intparam[k][l] = -0.2;
                   }
                 }
-              } else if ((phase.getComponents()[k].getComponentName().equals("TEG")
+              } else if ((component_name.equals("TEG")
                   && phase.getComponents()[l].isIsTBPfraction())
-                  || (phase.getComponents()[l].getComponentName().equals("TEG")
+                  || (component_name2.equals("TEG")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.12;
                 if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
@@ -2375,27 +2383,25 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                   intparam[k][l] = 0.12;
                   intparamT[k][l] = 0.0;
                 }
-              } else if ((phase.getComponents()[k].getComponentName().equals("S8")
-                  && phase.getComponents()[l].isIsTBPfraction())
-                  || (phase.getComponents()[l].getComponentName().equals("S8")
-                      && phase.getComponents()[k].isIsTBPfraction())) {
+              } else if ((component_name.equals("S8") && phase.getComponents()[l].isIsTBPfraction())
+                  || (component_name2.equals("S8") && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.05;
               } else {
-                // if((phase.getComponents()[l].getComponentName().equals("CO2") ||
-                // phase.getComponents()[k].getComponentName().equals("CO2")) && k!=l)
+                // if((component_name2.equals("CO2") ||
+                // component_name.equals("CO2")) && k!=l)
                 // intparam[k][l] = 0.1;
-                // else if((phase.getComponents()[l].getComponentName().equals("H2S") ||
-                // phase.getComponents()[k].getComponentName().equals("H2S")) && k!=l)
+                // else if((component_name2.equals("H2S") ||
+                // component_name.equals("H2S")) && k!=l)
                 // intparam[k][l] = 0.2;
-                // else if((phase.getComponents()[l].getComponentName().equals("water")
+                // else if((component_name2.equals("water")
                 // ||
-                // phase.getComponents()[k].getComponentName().equals("water")) && k!=l)
+                // component_name.equals("water")) && k!=l)
                 // intparam[k][l] = 0.5;
                 // else intparam[k][l] = 0.0;
                 // System.out.println("intparam not defined .... setting intparam
                 // between " +
-                // phase.getComponents()[l].getComponentName() + " and " +
-                // phase.getComponents()[k].getComponentName() + " to " +
+                // component_name2 + " and " +
+                // component_name + " to " +
                 // intparam[k][l]);
               }
 
@@ -2406,8 +2412,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
               intparamji[k][l] = intparam[k][l];
               intparamji[l][k] = intparam[k][l];
               // System.out.println("kij set to " + intparam[l][k] + " " +
-              // phase.getComponents()[l].getComponentName() + " " +
-              // phase.getComponents()[k].getComponentName());
+              // component_name2 + " " +
+              // component_name);
 
               classicOrHV[k][l] = "Classic";
               classicOrHV[l][k] = classicOrHV[k][l];
@@ -2458,7 +2464,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       mixingRuleName = "classic-CPA_T";
       return new ClassicSRKT2();
     } else if (i == 10) {
-      // return new ElectrolyteMixRule(phase, HValpha, HVgij, HVgii, classicOrHV,wij);}
+      // return new ElectrolyteMixRule(phase, HValpha, HVgij, HVgii,
+      // classicOrHV,wij);}
       org.ejml.simple.SimpleMatrix mat1 = new org.ejml.simple.SimpleMatrix(intparamij);
       org.ejml.simple.SimpleMatrix mat2 = new org.ejml.simple.SimpleMatrix(intparamji);
       org.ejml.simple.SimpleMatrix mat3 = new org.ejml.simple.SimpleMatrix(intparamT);
@@ -2517,7 +2524,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       mixingRuleName = "classic-CPA_T";
       return new ClassicSRKT2();
     } else if (i == 10) {
-      // return new ElectrolyteMixRule(phase, HValpha, HVgij, HVgii, classicOrHV,wij);}
+      // return new ElectrolyteMixRule(phase, HValpha, HVgij, HVgii,
+      // classicOrHV,wij);}
       org.ejml.simple.SimpleMatrix mat1 = new org.ejml.simple.SimpleMatrix(intparamij);
       org.ejml.simple.SimpleMatrix mat2 = new org.ejml.simple.SimpleMatrix(intparamji);
       org.ejml.simple.SimpleMatrix mat3 = new org.ejml.simple.SimpleMatrix(intparamT);
