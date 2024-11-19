@@ -184,8 +184,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0]
           .getNumberOfComponents(); j++) {
         sol4Matrix[j].set(i, 0,
-            pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx()
-                * pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass()
+            pipe.getNode(i).getBulkSystem().getPhases()[0].getComponent(j).getx()
+                * pipe.getNode(i).getBulkSystem().getPhases()[0].getComponent(j).getMolarMass()
                 / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass());
       }
     }
@@ -690,8 +690,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0]
           .getNumberOfComponents(); j++) {
         oldComposition[j][i] = sol4Matrix[j].get(i, 0);
-        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx() *
-        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass() /
+        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponent(j).getx() *
+        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponent(j).getMolarMass() /
         // pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
       }
     }

@@ -263,7 +263,7 @@ public class TPmultiflash extends TPflash {
      * system.getPhase(0).getNumberOfComponents(); j++) { numb = i == j ? 1.0 : 1.0e-12; // set to 0
      * by Even Solbraa 23.01.2013 - chaged back to 1.0e-12 27.04.13 if
      * (system.getPhase(0).getComponent(j).getz() < 1e-100) { numb = 0; } (
-     * clonedSystem.get(i)).getPhase(1).getComponents()[j].setx(numb); } if
+     * clonedSystem.get(i)).getPhase(1).getComponent(j).setx(numb); } if
      * (system.getPhase(0).getComponent(i).getIonicCharge() == 0) { ( clonedSystem.get(i)).init(1);
      * } }
      */
@@ -614,7 +614,7 @@ public class TPmultiflash extends TPflash {
      * system.getPhase(0).getNumberOfComponents(); j++) { numb = i == j ? 1.0 : 1.0e-12; // set to 0
      * by Even Solbraa 23.01.2013 - chaged back to 1.0e-12 27.04.13 if
      * (system.getPhase(0).getComponent(j).getz() < 1e-100) { numb = 0; } (
-     * clonedSystem.get(i)).getPhase(1).getComponents()[j].setx(numb); } if
+     * clonedSystem.get(i)).getPhase(1).getComponent(j).setx(numb); } if
      * (system.getPhase(0).getComponent(i).getIonicCharge() == 0) { ( clonedSystem.get(i)).init(1);
      * } }
      */
@@ -969,7 +969,7 @@ public class TPmultiflash extends TPflash {
         if (system.getPhase(0).getComponent(j).getz() < 1e-100) {
           numb = 0;
         }
-        (clonedSystem.get(i)).getPhase(1).getComponents()[j].setx(numb);
+        (clonedSystem.get(i)).getPhase(1).getComponent(j).setx(numb);
       }
       if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
         (clonedSystem.get(i)).init(1);

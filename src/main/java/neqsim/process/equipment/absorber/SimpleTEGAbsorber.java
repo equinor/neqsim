@@ -73,8 +73,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * addGasInStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void addGasInStream(StreamInterface newStream) {
     // TODO: fail if gasInStream is not null?
@@ -88,8 +87,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * addSolventInStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void addSolventInStream(StreamInterface newStream) {
     // TODO: fail if solventInStream is not null?
@@ -104,8 +102,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * replaceSolventInStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void replaceSolventInStream(StreamInterface newStream) {
     // TODO: fails if solventStreamNumber is 0, i.e. no solventinstream set?
@@ -449,10 +446,10 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
 
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = thermoSystem.getPhases()[0].getComponents()[j].getName();
+        table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
         buf = new StringBuffer();
         table[j + 1][i + 1] =
-            nf.format(thermoSystem.getPhases()[i].getComponents()[j].getx(), buf, test).toString();
+            nf.format(thermoSystem.getPhases()[i].getComponent(j).getx(), buf, test).toString();
         table[j + 1][4] = "[-]";
       }
       buf = new StringBuffer();
@@ -552,8 +549,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * Setter for the field <code>solventOutStream</code>.
    * </p>
    *
-   * @param solventOutStream a
-   *        {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param solventOutStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void setSolventOutStream(StreamInterface solventOutStream) {
     this.solventOutStream = solventOutStream;

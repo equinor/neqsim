@@ -800,23 +800,23 @@ public class PTphaseEnvelope extends BaseOperation {
         initT = 0.;
         dinitT = 0.;
         for (int j = 0; j < numberOfComponents; j++) {
-          Kwil[j] = system.getPhase(0).getComponents()[j].getPC() / P
-              * Math.exp(5.373 * (1. + system.getPhase(0).getComponents()[j].getAcentricFactor())
-                  * (1. - system.getPhase(0).getComponents()[j].getTC() / Tstart));
-          // system.getPhases()[0].getComponents()[j].setK(Kwil[j]);
+          Kwil[j] = system.getPhase(0).getComponent(j).getPC() / P
+              * Math.exp(5.373 * (1. + system.getPhase(0).getComponent(j).getAcentricFactor())
+                  * (1. - system.getPhase(0).getComponent(j).getTC() / Tstart));
+          // system.getPhases()[0].getComponent(j).setK(Kwil[j]);
         }
 
         for (int j = 0; j < numberOfComponents; j++) {
           if (beta < 0.5) {
-            initT = initT + system.getPhase(0).getComponents()[j].getz() * Kwil[j];
-            dinitT = dinitT + system.getPhase(0).getComponents()[j].getz() * Kwil[j] * 5.373
-                * (1 + system.getPhase(0).getComponents()[j].getAcentricFactor())
-                * system.getPhase(0).getComponents()[j].getTC() / (Tstart * Tstart);
+            initT = initT + system.getPhase(0).getComponent(j).getz() * Kwil[j];
+            dinitT = dinitT + system.getPhase(0).getComponent(j).getz() * Kwil[j] * 5.373
+                * (1 + system.getPhase(0).getComponent(j).getAcentricFactor())
+                * system.getPhase(0).getComponent(j).getTC() / (Tstart * Tstart);
           } else {
-            initT = initT + system.getPhase(0).getComponents()[j].getz() / Kwil[j];
-            dinitT = dinitT - system.getPhase(0).getComponents()[j].getz() / Kwil[j] * 5.373
-                * (1 + system.getPhase(0).getComponents()[j].getAcentricFactor())
-                * system.getPhase(0).getComponents()[j].getTC() / (Tstart * Tstart);
+            initT = initT + system.getPhase(0).getComponent(j).getz() / Kwil[j];
+            dinitT = dinitT - system.getPhase(0).getComponent(j).getz() / Kwil[j] * 5.373
+                * (1 + system.getPhase(0).getComponent(j).getAcentricFactor())
+                * system.getPhase(0).getComponent(j).getTC() / (Tstart * Tstart);
           }
         }
 

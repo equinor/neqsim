@@ -137,6 +137,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
       temp += u.get(i, 0);
     }
     system.setBeta(temp);
+
     for (int i = 0; i < numberOfComponents; i++) {
       system.getPhases()[0].getComponents()[i].setx(u.get(i, 0) / system.getBeta());
       system.getPhases()[1].getComponents()[i]

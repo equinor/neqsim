@@ -765,11 +765,10 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
     for (int i = 0; i < getThermoSystem().getNumberOfPhases(); i++) {
       for (int j = 0; j < getThermoSystem().getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = getThermoSystem().getPhases()[0].getComponents()[j].getName();
+        table[j + 1][0] = getThermoSystem().getPhases()[0].getComponent(j).getName();
         buf = new StringBuffer();
-        table[j + 1][i + 1] =
-            nf.format(getThermoSystem().getPhases()[i].getComponents()[j].getx(), buf, test)
-                .toString();
+        table[j + 1][i + 1] = nf
+            .format(getThermoSystem().getPhases()[i].getComponent(j).getx(), buf, test).toString();
         table[j + 1][4] = "[-]";
       }
       buf = new StringBuffer();
@@ -1475,8 +1474,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public void setCompressorChartType(String type) {
     if (type.equals("simple") || type.equals("fan law")) {
       compressorChart = new CompressorChart();
-    }
-    else if (type.equals("interpolate")) {
+    } else if (type.equals("interpolate")) {
       compressorChart = new CompressorChartAlternativeMapLookup();
     } else if (type.equals("interpolate and extrapolate")) {
       compressorChart = new CompressorChartAlternativeMapLookupExtrapolate();

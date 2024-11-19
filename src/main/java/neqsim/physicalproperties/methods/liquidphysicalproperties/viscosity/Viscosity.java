@@ -71,7 +71,7 @@ public class Viscosity extends LiquidPhysicalPropertyMethod implements Viscosity
         }
 
         // if(i!=j) tempVar2 +=
-        // liquidPhase.getPhase().getComponents()[i].getx()*liquidPhase.getPhase().getComponents()[j].getx()*liquidPhase.getMixingRule().getViscosityGij(i,j);
+        // liquidPhase.getPhase().getComponents()[i].getx()*liquidPhase.getPhase().getComponent(j).getx()*liquidPhase.getMixingRule().getViscosityGij(i,j);
       }
     }
     double viscosity = Math.exp(tempVar + tempVar2) / 1.0e3; // N-sek/m2

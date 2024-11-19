@@ -256,7 +256,7 @@ public class ChemicalReaction extends NamedBaseClass
     for (int i = 0; i < names.length; i++) {
       for (int j = 0; j < components.length; j++) {
         // System.out.println("names: " + names[i] + " " +
-        // system.getPhases()[0].getComponents()[j].getName());
+        // system.getPhases()[0].getComponent(j).getName());
         if (this.names[i].equals(components[j].getName())) {
           for (int k = 0; k < Amatrix.length; k++) {
             tempAmatrix.set(k, i, Amatrix[k][j]);

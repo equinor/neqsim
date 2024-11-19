@@ -205,7 +205,7 @@ public class TPmultiflash_1 extends TPflash {
       (clonedSystem.get(i)).init(0);
       for (int j = 0; j < system.getPhases()[1].getNumberOfComponents(); j++) {
         numb = i == j ? 1.0 : 1.0e-3;
-        (clonedSystem.get(i)).getPhases()[1].getComponents()[j].setx(numb);
+        (clonedSystem.get(i)).getPhases()[1].getComponent(j).setx(numb);
       }
       (clonedSystem.get(i)).init(1);
     }

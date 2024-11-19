@@ -141,7 +141,7 @@ public class KrishnaStandartFilmModel extends
       double tempVar = 0;
       for (int j = 0; j < getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
         if (i != j) {
-          tempVar += getBulkSystem().getPhases()[phase].getComponents()[j].getx()
+          tempVar += getBulkSystem().getPhases()[phase].getComponent(j).getx()
               / binaryMassTransferCoefficient[phase][i][j];
         }
         if (j < n) {
@@ -178,11 +178,12 @@ public class KrishnaStandartFilmModel extends
                   * binaryMassTransferCoefficient[phase][i][j]);
         }
         if (j < n) {
-          phiMatrix.set(i, j, -nFlux.get(i, 0) * (1.0
-              / (1.0 / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
-                  * binaryMassTransferCoefficient[phase][i][j])
-              - 1.0 / (1.0 / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
-                  * binaryMassTransferCoefficient[phase][i][n])));
+          phiMatrix.set(i, j,
+              -nFlux.get(i, 0) * (1.0
+                  / (1.0 / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
+                      * binaryMassTransferCoefficient[phase][i][j])
+                  - 1.0 / (1.0 / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
+                      * binaryMassTransferCoefficient[phase][i][n])));
         }
       }
       phiMatrix.set(i, i,

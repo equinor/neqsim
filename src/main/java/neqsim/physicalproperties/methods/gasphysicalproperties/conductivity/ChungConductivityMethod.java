@@ -39,12 +39,10 @@ public class ChungConductivityMethod extends Conductivity {
       for (int j = 0; j < gasPhase.getPhase().getNumberOfComponents(); j++) {
         // Aij from Mason Saxena method
         double Aij = 1.0
-            * Math
-                .pow(
-                    1.0 + Math.sqrt(pureComponentConductivity[i] / pureComponentConductivity[j])
-                        * Math.pow(gasPhase.getPhase().getComponents()[i].getMolarMass()
-                            / gasPhase.getPhase().getComponents()[j].getMolarMass(), 1.0 / 4.0),
-                    2.0)
+            * Math.pow(1.0 + Math.sqrt(pureComponentConductivity[i] / pureComponentConductivity[j])
+                * Math.pow(gasPhase.getPhase().getComponents()[i].getMolarMass()
+                    / gasPhase.getPhase().getComponent(j).getMolarMass(), 1.0 / 4.0),
+                2.0)
             / Math.sqrt(8.0 * (1.0 + gasPhase.getPhase().getComponents()[i].getMolarMass()
                 / gasPhase.getPhase().getComponents()[j].getMolarMass()));
         tempVar += gasPhase.getPhase().getComponents()[j].getx() * Aij;

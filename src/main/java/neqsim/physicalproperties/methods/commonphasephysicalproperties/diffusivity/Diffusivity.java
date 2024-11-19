@@ -89,7 +89,7 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements Diffusi
         if (i == j) {
           continue;
         } else {
-          sum += phase.getPhase().getComponents()[j].getx() / binaryDiffusionCoefficients[i][j];
+          sum += phase.getPhase().getComponent(j).getx() / binaryDiffusionCoefficients[i][j];
         }
       }
       effectiveDiffusionCoefficient[i] = (1.0 - phase.getPhase().getComponents()[i].getx()) / sum;

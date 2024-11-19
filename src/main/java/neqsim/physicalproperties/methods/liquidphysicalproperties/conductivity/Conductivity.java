@@ -65,10 +65,10 @@ public class Conductivity extends LiquidPhysicalPropertyMethod implements Conduc
         /*
          * tempVar2 = Math .pow(1.0 + Math .sqrt(pureComponentConductivity[i] /
          * pureComponentConductivity[j])
-         * Math.pow(liquidPhase.getPhase().getComponents()[j].getMolarMass() /
+         * Math.pow(liquidPhase.getPhase().getComponent(j).getMolarMass() /
          * liquidPhase.getPhase().getComponents()[i].getMolarMass(), 0.25), 2.0) / Math.pow(8.0 (1.0
          * + liquidPhase.getPhase().getComponents()[i].getMolarMass() /
-         * liquidPhase.getPhase().getComponents()[j].getMolarMass()), 0.5);
+         * liquidPhase.getPhase().getComponent(j).getMolarMass()), 0.5);
          */
       }
       double wigthFraci = liquidPhase.getPhase().getWtFrac(i);

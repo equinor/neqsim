@@ -111,7 +111,7 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
       for (int j = 0; j < gasPhase.getPhase().getNumberOfComponents(); j++) {
         if (i == j) {
         } else {
-          sum += gasPhase.getPhase().getComponents()[j].getx() / binaryDiffusionCoefficients[i][j];
+          sum += gasPhase.getPhase().getComponent(j).getx() / binaryDiffusionCoefficients[i][j];
         }
       }
       effectiveDiffusionCoefficient[i] =

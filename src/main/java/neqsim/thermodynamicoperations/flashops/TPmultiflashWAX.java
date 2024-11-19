@@ -239,7 +239,7 @@ public class TPmultiflashWAX extends TPflash {
         if (system.getPhase(0).getComponent(j).getz() < 1e-100) {
           numb = 0;
         }
-        (clonedSystem.get(i)).getPhase(waxphasenumber).getComponents()[j].setx(numb);
+        (clonedSystem.get(i)).getPhase(waxphasenumber).getComponent(j).setx(numb);
       }
       if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
         (clonedSystem.get(i)).init(1);

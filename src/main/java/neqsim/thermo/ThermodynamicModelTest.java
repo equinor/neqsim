@@ -124,9 +124,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
         temp1 = 0;
         // temp2 = 0;
         // temp1 +=
-        // Math.log(system.getPhases()[0].getComponents()[j].getFugacityCoefficient());
+        // Math.log(system.getPhases()[0].getComponent(j).getFugacityCoefficient());
         // temp2 +=
-        // Math.log(system.getPhases()[1].getComponents()[j].getFugacityCoefficient());
+        // Math.log(system.getPhases()[1].getComponent(j).getFugacityCoefficient());
         for (int i = 0; i < system.getPhase(k).getNumberOfComponents(); i++) {
           temp1 += system.getPhase(k).getComponents()[i].getNumberOfMolesInPhase()
               * system.getPhase(k).getComponents()[i].getdfugdn(j);
@@ -137,7 +137,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
         }
 
         // logger.info("test fugdn gas : " + j + " " + temp1 + " name " +
-        // system.getPhases()[0].getComponents()[j].getComponentName());
+        // system.getPhases()[0].getComponent(j).getComponentName());
         // logger.info("test fugdn liq : " + j + " " + temp2);
       }
     }
@@ -167,14 +167,14 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
         temp1 = 0;
         // temp2 = 0;
         // temp1 +=
-        // Math.log(system.getPhases()[0].getComponents()[j].getFugacityCoefficient());
+        // Math.log(system.getPhases()[0].getComponent(j).getFugacityCoefficient());
         // temp2 +=
-        // Math.log(system.getPhases()[1].getComponents()[j].getFugacityCoefficient());
+        // Math.log(system.getPhases()[1].getComponent(j).getFugacityCoefficient());
         for (int i = 0; i < system.getPhase(k).getNumberOfComponents(); i++) {
           temp1 += system.getPhase(k).getComponents()[i].getdfugdn(j)
-              - system.getPhase(k).getComponents()[j].getdfugdn(i);
+              - system.getPhase(k).getComponent(j).getdfugdn(i);
           // temp2 += system.getPhases()[1].getComponents()[i].getdfugdn(j)
-          // - system.getPhases()[1].getComponents()[j].getdfugdn(i);
+          // - system.getPhases()[1].getComponent(j).getdfugdn(i);
         }
         // sum += Math.abs(temp1) + Math.abs(temp2);
         // logger.info("test fugdn gas : " + j + " " + temp1);

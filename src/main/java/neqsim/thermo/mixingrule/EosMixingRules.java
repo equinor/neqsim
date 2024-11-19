@@ -1706,8 +1706,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         double ssi = 0.0;
         for (int j = 0; j < numbcomp; j++) {
           ssi += (1.0 - WSintparam[i][j]) * (abft2[i] + abft2[j])
-              * phase.getComponents()[j].getNumberOfMolesInPhase()
-              / phase.getNumberOfMolesInPhase();
+              * phase.getComponent(j).getNumberOfMolesInPhase() / phase.getNumberOfMolesInPhase();
         }
         dd2 += phase.getComponents()[i].getNumberOfMolesInPhase() / phase.getNumberOfMolesInPhase()
             * ssi;
@@ -1730,7 +1729,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       for (int i = 0; i < numbcomp; i++) {
         double ss = 0.0;
         for (int j = 0; j < numbcomp; j++) {
-          ss += qf2[j][i] * phase.getComponents()[j].getNumberOfMolesInPhase()
+          ss += qf2[j][i] * phase.getComponent(j).getNumberOfMolesInPhase()
               / phase.getNumberOfMolesInPhase();
         }
         qf1[i] = ss;
@@ -1738,7 +1737,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
             * ss;
         double sst = 0.0;
         for (int j = 0; j < numbcomp; j++) {
-          sst += qft[j][i] * phase.getComponents()[j].getNumberOfMolesInPhase()
+          sst += qft[j][i] * phase.getComponent(j).getNumberOfMolesInPhase()
               / phase.getNumberOfMolesInPhase();
         }
         QFTD[i] = sst;

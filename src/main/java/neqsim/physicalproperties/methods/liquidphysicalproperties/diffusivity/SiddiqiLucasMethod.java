@@ -58,8 +58,8 @@ public class SiddiqiLucasMethod extends Diffusivity {
         1.0e-4 * 9.89e-8 * Math.pow(liquidPhase.getPureComponentViscosity(j), -0.907)
             * Math.pow(1.0 / liquidPhase.getPhase().getComponents()[i].getNormalLiquidDensity()
                 * liquidPhase.getPhase().getComponents()[i].getMolarMass() * 1000, -0.45)
-            * Math.pow(1.0 / liquidPhase.getPhase().getComponents()[j].getNormalLiquidDensity()
-                * liquidPhase.getPhase().getComponents()[j].getMolarMass() * 1000, 0.265)
+            * Math.pow(1.0 / liquidPhase.getPhase().getComponent(j).getNormalLiquidDensity()
+                * liquidPhase.getPhase().getComponent(j).getMolarMass() * 1000, 0.265)
             * liquidPhase.getPhase().getTemperature();
     return binaryDiffusionCoefficients[i][j];
   }
