@@ -182,8 +182,8 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
     visRefG = (1.0 - HTAN) / 2.0;
     double viscRef3 = visRefG * Math.exp(viscRefK[0] + viscRefK[3] / temp) * (temp6 - 1.0);
 
-    System.out.println("ref visc2 " + viscRef2);
-    System.out.println("ref visc3 " + viscRef3);
+    // System.out.println("ref visc2 " + viscRef2);
+    // System.out.println("ref visc3 " + viscRef3);
     double refVisc = (viscRefO + viscRef1 + viscRef2 + viscRef3) / 1.0e7;
     // System.out.println("ref visc " + refVisc);
     return refVisc;

@@ -54,6 +54,12 @@ public class AttractiveTermBaseClass implements AttractiveTermInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getm() {
+    return this.m;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public AttractiveTermBaseClass clone() {
     AttractiveTermBaseClass attractiveTerm = null;
     try {

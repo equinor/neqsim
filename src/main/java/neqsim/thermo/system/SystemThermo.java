@@ -105,6 +105,11 @@ public abstract class SystemThermo implements SystemInterface {
 
   // Initialization
   boolean isInitialized = false;
+
+  public boolean isInitialized() {
+    return isInitialized;
+  }
+
   /** Maximum allowed number of phases . */
   public int maxNumberOfPhases = 2;
   private int mixingRule = 1;
@@ -5049,15 +5054,14 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create()
-        .toJson(new neqsim.processsimulation.util.monitor.FluidResponse(this));
+    return new GsonBuilder().create().toJson(new neqsim.process.util.monitor.FluidResponse(this));
   }
 
   /** {@inheritDoc} */
   @Override
   public String toCompJson() {
     return new GsonBuilder().create()
-        .toJson(new neqsim.processsimulation.util.monitor.FluidComponentResponse(this));
+        .toJson(new neqsim.process.util.monitor.FluidComponentResponse(this));
   }
 
   /** {@inheritDoc} */

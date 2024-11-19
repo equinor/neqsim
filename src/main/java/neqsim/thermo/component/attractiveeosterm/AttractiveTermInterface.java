@@ -119,4 +119,6 @@ public interface AttractiveTermInterface extends Cloneable, java.io.Serializable
    * @return a {@link neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface} object
    */
   public AttractiveTermInterface clone();
+
+  public double getm();
 }

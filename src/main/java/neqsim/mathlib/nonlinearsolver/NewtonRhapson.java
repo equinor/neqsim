@@ -153,8 +153,8 @@ public class NewtonRhapson implements java.io.Serializable {
         xNew2 = xNew;
       }
 
-      if (xNew < 0) {
-        xNew = 0;
+      if (xNew < -0.99) {
+        xNew = -0.99;
         // System.out.println("x++...........");
       }
       if (xNew > 1.5) {

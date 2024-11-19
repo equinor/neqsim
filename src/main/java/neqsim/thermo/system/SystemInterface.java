@@ -2659,4 +2659,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param phasetypename a {@link java.lang.String} object
    */
   public void setForceSinglePhase(String phasetypename);
+
+  public boolean isInitialized();
 }
