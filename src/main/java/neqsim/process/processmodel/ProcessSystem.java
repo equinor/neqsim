@@ -68,8 +68,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Add to end.
    * </p>
    *
-   * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *        object
+   * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public void add(ProcessEquipmentInterface operation) {
     // Add to end
@@ -82,8 +81,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param position 0-based position
-   * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *        object
+   * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public void add(int position, ProcessEquipmentInterface operation) {
     ArrayList<ProcessEquipmentInterface> units = this.getUnitOperations();
@@ -114,8 +112,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Add measurementdevice.
    * </p>
    *
-   * @param measurementDevice a
-   *        {@link neqsim.process.measurementdevice.MeasurementDeviceInterface} object
+   * @param measurementDevice a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
+   *        object
    */
   public void add(MeasurementDeviceInterface measurementDevice) {
     measurementDevices.add(measurementDevice);
@@ -126,8 +124,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Add multiple process equipment to end.
    * </p>
    *
-   * @param operations an array of
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} objects
+   * @param operations an array of {@link neqsim.process.equipment.ProcessEquipmentInterface}
+   *        objects
    */
   public void add(ProcessEquipmentInterface[] operations) {
     getUnitOperations().addAll(Arrays.asList(operations));
@@ -223,8 +221,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param unitName a {@link java.lang.String} object
-   * @param operation a {@link neqsim.process.equipment.ProcessEquipmentBaseClass}
-   *        object
+   * @param operation a {@link neqsim.process.equipment.ProcessEquipmentBaseClass} object
    */
   public void replaceObject(String unitName, ProcessEquipmentBaseClass operation) {
     unitOperations.set(getUnitNumber(name), operation);
@@ -441,8 +438,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
       for (int i = 0; i < unitOperations.size(); i++) {
         if (unitOperations.get(i).getClass().getSimpleName().equals("Adjuster")) {
-          if (!((neqsim.process.equipment.util.Adjuster) unitOperations.get(i))
-              .solved()) {
+          if (!((neqsim.process.equipment.util.Adjuster) unitOperations.get(i)).solved()) {
             isConverged = false;
             break;
           }
@@ -460,7 +456,7 @@ public class ProcessSystem extends SimulationBaseClass {
        * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface)
        * measurementDevices.get(i)) .getUnit(); }
        */
-    } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && runStep);
+    } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && !runStep);
 
     for (int i = 0; i < unitOperations.size(); i++) {
       unitOperations.get(i).setCalculationIdentifier(id);
@@ -747,10 +743,10 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-  * Getter for the field <code>runStep</code>.
-  * 
-  * @return A <code>boolean</code> value if run only one iteration
-  */
+   * Getter for the field <code>runStep</code>.
+   * 
+   * @return A <code>boolean</code> value if run only one iteration
+   */
   public boolean isRunStep() {
     return runStep;
   }
@@ -803,11 +799,10 @@ public class ProcessSystem extends SimulationBaseClass {
     double power = 0.0;
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getClass().getSimpleName().equals("Compressor")) {
-        power += ((neqsim.process.equipment.compressor.Compressor) unitOperations
-            .get(i)).getPower();
+        power +=
+            ((neqsim.process.equipment.compressor.Compressor) unitOperations.get(i)).getPower();
       } else if (unitOperations.get(i).getClass().getSimpleName().equals("Pump")) {
-        power += ((neqsim.process.equipment.pump.Pump) unitOperations.get(i))
-            .getPower();
+        power += ((neqsim.process.equipment.pump.Pump) unitOperations.get(i)).getPower();
       }
     }
     if (unit.equals("MW")) {
@@ -831,9 +826,7 @@ public class ProcessSystem extends SimulationBaseClass {
     double heat = 0.0;
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getClass().getSimpleName().equals("Cooler")) {
-        heat +=
-            ((neqsim.process.equipment.heatexchanger.Cooler) unitOperations.get(i))
-                .getDuty();
+        heat += ((neqsim.process.equipment.heatexchanger.Cooler) unitOperations.get(i)).getDuty();
       }
     }
     if (unit.equals("MW")) {
@@ -857,9 +850,7 @@ public class ProcessSystem extends SimulationBaseClass {
     double heat = 0.0;
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getClass().getSimpleName().equals("Heater")) {
-        heat +=
-            ((neqsim.process.equipment.heatexchanger.Heater) unitOperations.get(i))
-                .getDuty();
+        heat += ((neqsim.process.equipment.heatexchanger.Heater) unitOperations.get(i)).getDuty();
       }
     }
     if (unit.equals("MW")) {
