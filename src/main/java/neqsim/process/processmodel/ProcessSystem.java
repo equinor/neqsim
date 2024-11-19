@@ -43,7 +43,7 @@ public class ProcessSystem extends SimulationBaseClass {
       new ArrayList<MeasurementDeviceInterface>(0);
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
-  private runStep = false;
+  private boolean runStep = false;
 
   /**
    * <p>
