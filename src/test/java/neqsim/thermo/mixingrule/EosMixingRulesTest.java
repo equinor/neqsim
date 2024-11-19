@@ -5,6 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseEos;
 
+/**
+ * Test class for verifying the behavior of EOS (Equation of State) mixing rules in the NeqSim
+ * library.
+ */
+/**
+ * This class contains unit tests for verifying the behavior of different mixing rules
+ * in the neqsim thermodynamic system.
+ */
 public class EosMixingRulesTest {
   @Test
   void testSetMixingRuleName() {
@@ -87,6 +95,5 @@ public class EosMixingRulesTest {
     // Print kij
     assertEquals(0.1, kij, 1e-5);
     assertTrue(kij == kij2);
-
   }
 }
