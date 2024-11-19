@@ -2143,13 +2143,6 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           } else {
             java.sql.ResultSet dataSet = null;
             try {
-              if (phase.getComponent(k).isIsTBPfraction()
-                  || phase.getComponent(l).isIsTBPfraction()) {
-                throw new Exception("no interaction coefficient for TBP fractions");
-              }
-              int templ = l;
-              int tempk = k;
-
               int underscoreIndex = component_name.indexOf("__"); // double underscore
               if (underscoreIndex != -1) {
                 component_name = component_name.substring(0, underscoreIndex);
@@ -2158,6 +2151,12 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
               if (underscoreIndex2 != -1) {
                 component_name2 = component_name2.substring(0, underscoreIndex2);
               }
+              if (phase.getComponent(k).isIsTBPfraction()
+                  || phase.getComponent(l).isIsTBPfraction()) {
+                throw new Exception("no interaction coefficient for TBP fractions");
+              }
+              int templ = l;
+              int tempk = k;
 
               if (NeqSimDataBase.createTemporaryTables()) {
                 dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='"
