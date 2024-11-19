@@ -450,7 +450,13 @@ public abstract class Phase implements PhaseInterface {
     return physicalPropertyHandler.getPhysicalProperties(this);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * initType used in component.init()
+   * </p>
+   */
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {

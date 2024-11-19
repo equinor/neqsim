@@ -77,7 +77,13 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     mixSelect.displayInteractionCoefficients(intType, this);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Calls component.init(initType)
+   * </p>
+   */
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {

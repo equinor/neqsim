@@ -1322,8 +1322,6 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         hwfc = -1.0 / 0.53;
       }
 
-      double term = 0.0;
-      double dubdert = 0.0;
       if (qPure == null) {
         qPure = new double[numbcomp];
         qPuredT = new double[numbcomp];
@@ -1356,6 +1354,9 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
       alpha_mix = 0.0;
       dadt = 0.0;
+
+      double term = 0.0;
+      double dubdert = 0.0;
       for (int i = 0; i < numbcomp; i++) {
         term =
             qPure[i] + hwfc * Math.log(((ComponentGEInterface) gePhase.getComponent(i)).getGamma());

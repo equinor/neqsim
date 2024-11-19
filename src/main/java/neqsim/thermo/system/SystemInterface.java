@@ -853,7 +853,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getGamma();
 
   /**
-   * method to return heat capacity ratio calculated as Cp/(Cp-R).
+   * method to return heat capacity ratio calculated as Cp/(Cp-R*nMoles).
    *
    * @return kappa
    */
@@ -1693,8 +1693,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *        derivatives of fugacity coefficients.
    */
   public void init(int number);
-
-  // public void setPressure(double newPressure, int phaseNumber);
 
   /**
    * method to calculate thermodynamic properties of the selected phase. The temperature, pressure,
@@ -2663,7 +2661,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setForceSinglePhase(String phasetypename);
 
   /**
-   * <p>isInitialized.</p>
+   * <p>
+   * isInitialized.
+   * </p>
    *
    * @return a boolean
    */

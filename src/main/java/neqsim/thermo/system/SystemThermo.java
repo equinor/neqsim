@@ -101,20 +101,16 @@ public abstract class SystemThermo implements SystemInterface {
   private boolean implementedPressureDeriativesofFugacity = true;
 
   private boolean implementedTemperatureDeriativesofFugacity = true;
+
+  /*
+   * Initialization type. 0 to initialize and 1 to reset, 2 to calculate T and P derivatives, 3 to
+   * calculate all derivatives and 4 to calculate all derivatives numerically
+   */
   protected int initType = 3;
   protected InterphasePropertiesInterface interfaceProp = null;
 
   // Initialization
   boolean isInitialized = false;
-
-  /**
-   * <p>isInitialized.</p>
-   *
-   * @return a boolean
-   */
-  public boolean isInitialized() {
-    return isInitialized;
-  }
 
   /** Maximum allowed number of phases . */
   public int maxNumberOfPhases = 2;
@@ -3155,6 +3151,7 @@ public abstract class SystemThermo implements SystemInterface {
     } else {
       initAnalytic(type);
     }
+
     this.isInitialized = true;
   }
 
@@ -3264,6 +3261,7 @@ public abstract class SystemThermo implements SystemInterface {
         }
       }
     }
+
     this.isInitialized = true;
   }
 
@@ -3552,6 +3550,7 @@ public abstract class SystemThermo implements SystemInterface {
         }
       }
     }
+
     this.isInitialized = true;
   }
 
@@ -3638,6 +3637,17 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public boolean isForcePhaseTypes() {
     return forcePhaseTypes;
+  }
+
+  /**
+   * <p>
+   * isInitialized.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isInitialized() {
+    return isInitialized;
   }
 
   /** {@inheritDoc} */
