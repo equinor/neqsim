@@ -11,6 +11,7 @@ import neqsim.datapresentation.jfreechart.Graph2b;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.BaseOperation;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -133,6 +134,7 @@ public class PloadingCurve2 extends BaseOperation {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(1);

@@ -1,6 +1,7 @@
 package neqsim.process.measurementdevice;
 
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -38,10 +39,11 @@ public class WaterContentAnalyser extends StreamMeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     try {
-      System.out.println("total water production [kg/dag]" + stream.getThermoSystem().getPhase(0)
-          .getComponent("water").getNumberOfmoles()
+      System.out.println("total water production [kg/dag]"
+          + stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
               * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600
               * 24);
       System.out.println("water in phase 1 (ppm) "

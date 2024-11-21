@@ -13,6 +13,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -59,6 +60,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     getOperations().displayResult();
   }

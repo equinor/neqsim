@@ -6,6 +6,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.adsorber.AdsorberMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -48,8 +49,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param name name of the unit operation
-   * @param inStream1 a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inStream1 a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public SimpleAdsorber(String name, StreamInterface inStream1) {
     this(name);
@@ -187,6 +187,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     outStream[0].displayResult();
     outStream[1].displayResult();

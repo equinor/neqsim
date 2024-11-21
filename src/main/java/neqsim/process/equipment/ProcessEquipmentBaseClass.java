@@ -17,6 +17,7 @@ import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -59,6 +60,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {}
 
   /**
@@ -102,8 +104,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * Setter for the field <code>flowValveController</code>.
    * </p>
    *
-   * @param controller a {@link neqsim.process.controllerdevice.ControllerDeviceInterface}
-   *        object
+   * @param controller a {@link neqsim.process.controllerdevice.ControllerDeviceInterface} object
    */
   public void setFlowValveController(ControllerDeviceInterface controller) {
     this.flowValveController = controller;
@@ -165,8 +166,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * Setter for the field <code>energyStream</code>.
    * </p>
    *
-   * @param energyStream a {@link neqsim.process.equipment.stream.EnergyStream}
-   *        object
+   * @param energyStream a {@link neqsim.process.equipment.stream.EnergyStream} object
    */
   public void setEnergyStream(EnergyStream energyStream) {
     setEnergyStream(true);

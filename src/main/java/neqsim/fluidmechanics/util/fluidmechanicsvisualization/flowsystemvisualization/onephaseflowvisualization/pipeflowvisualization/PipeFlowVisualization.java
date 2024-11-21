@@ -6,6 +6,8 @@
 
 package neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.onephaseflowvisualization.pipeflowvisualization;
 
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
+
 /**
  * <p>
  * PipeFlowVisualization class.
@@ -120,6 +122,7 @@ public class PipeFlowVisualization extends
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult(String name) {
     double[][] points = new double[1][1];
     setPoints();

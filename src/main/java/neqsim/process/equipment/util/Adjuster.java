@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -57,8 +58,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * setAdjustedVariable.
    * </p>
    *
-   * @param adjustedEquipment a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param adjstedVariable a {@link java.lang.String} object
    * @param unit a string
    */
@@ -74,8 +74,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * setAdjustedVariable.
    * </p>
    *
-   * @param adjustedEquipment a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param adjstedVariable a {@link java.lang.String} object
    */
   public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment,
@@ -89,8 +88,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * Setter for the field <code>targetVariable</code>.
    * </p>
    *
-   * @param targetEquipment a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
    * @param targetValue a double
    * @param targetUnit a {@link java.lang.String} object
@@ -108,8 +106,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * Setter for the field <code>targetVariable</code>.
    * </p>
    *
-   * @param targetEquipment a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
    * @param targetValue a double
    * @param targetUnit a {@link java.lang.String} object
@@ -129,8 +126,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * Setter for the field <code>targetVariable</code>.
    * </p>
    *
-   * @param targetEquipment a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
    * @param targetValue a double
    * @param targetUnit a {@link java.lang.String} object
@@ -254,6 +250,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {}
 
   /**

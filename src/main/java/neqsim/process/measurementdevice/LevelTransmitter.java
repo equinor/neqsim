@@ -1,6 +1,7 @@
 package neqsim.process.measurementdevice;
 
 import neqsim.process.equipment.separator.Separator;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -43,6 +44,7 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     System.out.println("measured level " + separator.getLiquidLevel());
   }

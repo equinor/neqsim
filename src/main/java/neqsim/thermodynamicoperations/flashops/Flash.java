@@ -12,6 +12,7 @@ import Jama.Matrix;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.BaseOperation;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Abstract base class for all flash classes.
@@ -372,6 +373,7 @@ public abstract class Flash extends BaseOperation {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     system.display();
   }

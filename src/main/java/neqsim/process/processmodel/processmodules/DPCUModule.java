@@ -19,6 +19,7 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.equipment.valve.ValveInterface;
 import neqsim.process.processmodel.ProcessModuleBaseClass;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -271,6 +272,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     System.out.println("compressor power " + compressor1.getEnergy());
     System.out.println("expander power " + expander.getEnergy());

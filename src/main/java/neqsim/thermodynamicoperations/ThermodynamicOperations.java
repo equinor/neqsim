@@ -63,6 +63,7 @@ import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops
 import neqsim.thermodynamicoperations.phaseenvelopeops.reactivecurves.PloadingCurve2;
 import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterStudents;
 import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterStudentsPH;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.exception.IsNaNException;
 
 /**
@@ -1796,6 +1797,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * displayResult.
    * </p>
    */
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     try {
       getThermoOperationThread().join();
@@ -1821,6 +1823,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * display.
    * </p>
    */
+  @ExcludeFromJacocoGeneratedReport
   public void display() {
     if (resultTable == null) {
       return;

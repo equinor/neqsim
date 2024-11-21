@@ -3,6 +3,7 @@ package neqsim.process.equipment.heatexchanger;
 import java.util.UUID;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -68,6 +69,7 @@ public class NeqHeater extends Heater {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     System.out.println("heater dH: " + dH);
   }

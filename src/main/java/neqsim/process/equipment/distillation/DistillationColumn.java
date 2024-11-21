@@ -12,6 +12,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -86,8 +87,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * addFeedStream.
    * </p>
    *
-   * @param inputStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inputStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param feedTrayNumber a int
    */
   public void addFeedStream(StreamInterface inputStream, int feedTrayNumber) {
@@ -143,8 +143,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // .setTotalNumberOfMoles(((Mixer) trays.get(numberOfTrays -
     // 1)).getStream(0).getThermoSystem()
     // .getTotalNumberOfMoles() * (1.0));
-    trays.get(0)
-        .addStream(trays.get(feedTrayNumber).getLiquidOutStream().clone());
+    trays.get(0).addStream(trays.get(feedTrayNumber).getLiquidOutStream().clone());
     // ((Mixer)
     // trays.get(0)).getStream(streamNumbReboil).getThermoSystem().setTotalNumberOfMoles(
     // ((Mixer)
@@ -157,8 +156,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double feedTrayTemperature = getTray(getFeedTrayNumber()).getTemperature();
 
     if (trays.get(numberOfTrays - 1).getNumberOfInputStreams() > 0) {
-      condenserTemperature =
-          trays.get(numberOfTrays - 1).getThermoSystem().getTemperature();
+      condenserTemperature = trays.get(numberOfTrays - 1).getThermoSystem().getTemperature();
     } else {
       condenserTemperature = feedTrayTemperature - 1.0;
     }
@@ -343,8 +341,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
         for (int i = feedTrayNumber; i > 1; i--) {
           int replaceStream1 = trays.get(i - 1).getNumberOfInputStreams() - 1;
-          trays.get(i - 1).replaceStream(replaceStream1,
-              trays.get(i).getLiquidOutStream());
+          trays.get(i - 1).replaceStream(replaceStream1, trays.get(i).getLiquidOutStream());
           trays.get(i - 1).setPressure(bottomTrayPressure - (i - 1) * dp);
           trays.get(i - 1).run(id);
         }
@@ -364,13 +361,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
         for (int i = numberOfTrays - 2; i >= feedTrayNumber; i--) {
           int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
-          trays.get(i).replaceStream(replaceStream,
-              trays.get(i + 1).getLiquidOutStream());
+          trays.get(i).replaceStream(replaceStream, trays.get(i + 1).getLiquidOutStream());
           trays.get(i).run(id);
         }
         for (int i = 0; i < numberOfTrays; i++) {
-          err += Math.abs(
-              oldtemps[i] - trays.get(i).getThermoSystem().getTemperature());
+          err += Math.abs(oldtemps[i] - trays.get(i).getThermoSystem().getTemperature());
         }
         logger.info("error iter " + err + " iteration " + iter);
         // System.out.println("error iter " + err + " iteration " + iter);
@@ -395,6 +390,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     distoperations.displayResult();
   }

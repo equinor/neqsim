@@ -20,6 +20,7 @@ import neqsim.process.equipment.util.RecycleController;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -590,6 +591,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * displayResult.
    * </p>
    */
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     try {
       thisThread.join();

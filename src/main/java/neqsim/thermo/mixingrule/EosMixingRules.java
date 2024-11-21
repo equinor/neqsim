@@ -23,6 +23,7 @@ import neqsim.thermo.phase.PhaseGEUnifacPSRK;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
@@ -2706,6 +2707,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
    * @param intType a {@link java.lang.String} object
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
+  @ExcludeFromJacocoGeneratedReport
   public void displayInteractionCoefficients(String intType, PhaseInterface phase) {
     String[][] interactTable =
         new String[phase.getNumberOfComponents() + 1][phase.getNumberOfComponents() + 1];

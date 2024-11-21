@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -59,11 +60,9 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param targetEquipment a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
-   * @param sourceEquipment a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param sourceEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public SetPoint(String name, ProcessEquipmentInterface targetEquipment, String targetVariable,
       ProcessEquipmentInterface sourceEquipment) {
@@ -79,8 +78,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * setSourceVariable.
    * </p>
    *
-   * @param adjustedEquipment a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param adjstedVariable a {@link java.lang.String} object
    */
   public void setSourceVariable(ProcessEquipmentInterface adjustedEquipment,
@@ -94,8 +92,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * setSourceVariable.
    * </p>
    *
-   * @param adjustedEquipment a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public void setSourceVariable(ProcessEquipmentInterface adjustedEquipment) {
     this.sourceEquipment = adjustedEquipment;
@@ -106,8 +103,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * Setter for the field <code>targetVariable</code>.
    * </p>
    *
-   * @param targetEquipment a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
    * @param targetValue a double
    * @param targetUnit a {@link java.lang.String} object
@@ -125,8 +121,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * Setter for the field <code>targetVariable</code>.
    * </p>
    *
-   * @param targetEquipment a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable) {
@@ -139,8 +134,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * Setter for the field <code>targetVariable</code>.
    * </p>
    *
-   * @param targetEquipment a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
    * @param targetValue a double
    * @param targetUnit a {@link java.lang.String} object
@@ -160,8 +154,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * Setter for the field <code>targetVariable</code>.
    * </p>
    *
-   * @param targetEquipment a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
    * @param targetValue a double
    * @param targetUnit a {@link java.lang.String} object
@@ -200,6 +193,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {}
 
   /**

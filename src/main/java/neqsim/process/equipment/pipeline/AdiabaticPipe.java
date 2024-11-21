@@ -5,6 +5,7 @@ import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -219,6 +220,7 @@ public class AdiabaticPipe extends Pipeline {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     system.display();
   }

@@ -5,6 +5,7 @@ import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -23,10 +24,8 @@ public class StreamTransition extends TwoPortEquipment {
    * </p>
    *
    * @param name name of unit operation
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
-   * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public StreamTransition(String name, StreamInterface inletStream, StreamInterface outletStream) {
     super(name);
@@ -64,6 +63,7 @@ public class StreamTransition extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     outStream.getFluid().display();
   }
