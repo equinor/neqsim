@@ -113,11 +113,11 @@ public class PloadingCurve implements OperationInterface {
       system.getChemicalReactionOperations().solveChemEq(1);
 
       points[0][i] = (inscr * (i - 1)) / molMDEA;
-      points[1][i] = (system.getPhases()[1].getComponents()[0].getFugacityCoefficient()
-          * system.getPhases()[1].getComponents()[0].getx() * system.getPressure());
+      points[1][i] = (system.getPhases()[1].getComponent(0).getFugacityCoefficient()
+          * system.getPhases()[1].getComponent(0).getx() * system.getPressure());
 
       for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
-        points[k + 2][i] = system.getPhases()[1].getComponents()[k].getx();
+        points[k + 2][i] = system.getPhases()[1].getComponent(k).getx();
         points[k + 2 + system.getPhases()[1].getNumberOfComponents()][i] =
             system.getPhases()[1].getActivityCoefficient(k, 1);
       }

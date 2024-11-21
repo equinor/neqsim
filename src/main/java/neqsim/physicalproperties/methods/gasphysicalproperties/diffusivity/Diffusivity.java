@@ -115,7 +115,7 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
         }
       }
       effectiveDiffusionCoefficient[i] =
-          (1.0 - gasPhase.getPhase().getComponents()[i].getx()) / sum;
+          (1.0 - gasPhase.getPhase().getComponent(i).getx()) / sum;
     }
   }
 
@@ -136,8 +136,8 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
   public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
     /*
      * double temp = (i==j)? 1.0: 0.0; double nonIdealCorrection = temp +
-     * gasPhase.getPhase().getComponents()[i].getx() *
-     * gasPhase.getPhase().getComponents()[i].getdfugdn(j) *
+     * gasPhase.getPhase().getComponent(i).getx() *
+     * gasPhase.getPhase().getComponent(i).getdfugdn(j) *
      * gasPhase.getPhase().getNumberOfMolesInPhase(); if (Double.isNaN(nonIdealCorrection))
      * nonIdealCorrection=1.0; return binaryDiffusionCoefficients[i][j]/nonIdealCorrection; // shuld
      * be divided by non ideality factor

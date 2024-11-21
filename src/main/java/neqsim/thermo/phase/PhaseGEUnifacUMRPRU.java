@@ -51,11 +51,10 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     super(phase, alpha, Dij, mixRule, intparam);
     componentArray = new ComponentGEUnifac[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
-      componentArray[i] = new ComponentGEUnifacUMRPRU(phase.getComponents()[i].getName(),
-          phase.getComponents()[i].getNumberOfmoles(),
-          phase.getComponents()[i].getNumberOfMolesInPhase(),
-          phase.getComponents()[i].getComponentNumber());
-      componentArray[i].setAttractiveTerm(phase.getComponents()[i].getAttractiveTermNumber());
+      componentArray[i] = new ComponentGEUnifacUMRPRU(phase.getComponent(i).getName(),
+          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getComponentNumber());
+      componentArray[i].setAttractiveTerm(phase.getComponent(i).getAttractiveTermNumber());
     }
     this.setMixingRule(2);
   }
@@ -82,7 +81,9 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   }
 
   /**
-   * <p>getVCommontemp.</p>
+   * <p>
+   * getVCommontemp.
+   * </p>
    *
    * @return a double
    */
@@ -91,7 +92,9 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   }
 
   /**
-   * <p>getFCommontemp.</p>
+   * <p>
+   * getFCommontemp.
+   * </p>
    *
    * @return a double
    */
@@ -123,7 +126,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
       double temperature, double pressure, PhaseType pt) {
     double GE = 0.0;
     calcCommontemp(phase, numberOfComponents, temperature, pressure, pt);
-    // ((ComponentGEUnifacUMRPRU) phase.getComponents()[0]).commonInit(phase, numberOfComponents,
+    // ((ComponentGEUnifacUMRPRU) phase.getComponent(0)).commonInit(phase, numberOfComponents,
     // temperature, pressure, pt);
 
     initQmix();
@@ -131,7 +134,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
       initQmixdN();
     }
     for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponents()[i].getx() * Math.log(((ComponentGEUniquac) componentArray[i])
+      GE += phase.getComponent(i).getx() * Math.log(((ComponentGEUniquac) componentArray[i])
           .getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
     return R * phase.getTemperature() * phase.getNumberOfMolesInPhase() * GE;

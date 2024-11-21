@@ -36,7 +36,7 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
   @Override
   public void setFittingParams(int i, double value) {
     params[i] = value;
-    system.getPhases()[0].getComponents()[0].setLiquidViscosityParameter(value, i);
-    system.getPhases()[1].getComponents()[0].setLiquidViscosityParameter(value, i);
+    system.getPhases()[0].getComponent(0).setLiquidViscosityParameter(value, i);
+    system.getPhases()[1].getComponent(0).setLiquidViscosityParameter(value, i);
   }
 }

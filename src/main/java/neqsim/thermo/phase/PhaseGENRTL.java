@@ -56,10 +56,10 @@ public class PhaseGENRTL extends PhaseGE {
     this.intparam = intparam;
     for (int i = 0; i < alpha[0].length; i++) {
       numberOfComponents++;
-      componentArray[i] = new ComponentGeNRTL(phase.getComponents()[i].getName(),
-          phase.getComponents()[i].getNumberOfmoles(),
-          phase.getComponents()[i].getNumberOfMolesInPhase(),
-          phase.getComponents()[i].getComponentNumber());
+      componentArray[i] = new ComponentGeNRTL(phase.getComponent(i).getName(),
+          phase.getComponent(i).getNumberOfmoles(),
+          phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getComponentNumber());
     }
     setMixingRule(2);
   }
@@ -117,7 +117,7 @@ public class PhaseGENRTL extends PhaseGE {
       double temperature, double pressure, PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponents()[i].getx()
+      GE += phase.getComponent(i).getx()
           * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents,
               temperature, pressure, pt, alpha, Dij, intparam, mixRule));
     }

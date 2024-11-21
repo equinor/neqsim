@@ -56,7 +56,7 @@ public class Viscosity extends LiquidPhysicalPropertyMethod implements Viscosity
     // method og Grunberg and Nissan [87]
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
       tempVar += liquidPhase.getPhase().getWtFrac(i) * Math.log(pureComponentViscosity[i]);
-      // tempVar += liquidPhase.getPhase().getComponents()[i].getx() *
+      // tempVar += liquidPhase.getPhase().getComponent(i).getx() *
       // Math.log(pureComponentViscosity[i]);
     }
     tempVar2 = 0;
@@ -71,7 +71,7 @@ public class Viscosity extends LiquidPhysicalPropertyMethod implements Viscosity
         }
 
         // if(i!=j) tempVar2 +=
-        // liquidPhase.getPhase().getComponents()[i].getx()*liquidPhase.getPhase().getComponent(j).getx()*liquidPhase.getMixingRule().getViscosityGij(i,j);
+        // liquidPhase.getPhase().getComponent(i).getx()*liquidPhase.getPhase().getComponent(j).getx()*liquidPhase.getMixingRule().getViscosityGij(i,j);
       }
     }
     double viscosity = Math.exp(tempVar + tempVar2) / 1.0e3; // N-sek/m2
@@ -86,36 +86,36 @@ public class Viscosity extends LiquidPhysicalPropertyMethod implements Viscosity
   public void calcPureComponentViscosity() {
     pureComponentViscosity = new double[liquidPhase.getPhase().getNumberOfComponents()];
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
-      if (liquidPhase.getPhase().getTemperature() > liquidPhase.getPhase().getComponents()[i]
+      if (liquidPhase.getPhase().getTemperature() > liquidPhase.getPhase().getComponent(i)
           .getTC()) {
         pureComponentViscosity[i] = 5.0e-1;
-      } else if (liquidPhase.getPhase().getComponents()[i].getLiquidViscosityModel() == 1) {
+      } else if (liquidPhase.getPhase().getComponent(i).getLiquidViscosityModel() == 1) {
         pureComponentViscosity[i] =
-            liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(0)
+            liquidPhase.getPhase().getComponent(i).getLiquidViscosityParameter(0)
                 * Math.pow(liquidPhase.getPhase().getTemperature(),
-                    liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(1));
-      } else if (liquidPhase.getPhase().getComponents()[i].getLiquidViscosityModel() == 2) {
+                    liquidPhase.getPhase().getComponent(i).getLiquidViscosityParameter(1));
+      } else if (liquidPhase.getPhase().getComponent(i).getLiquidViscosityModel() == 2) {
         pureComponentViscosity[i] =
-            Math.exp(liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(0)
-                + liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(1)
+            Math.exp(liquidPhase.getPhase().getComponent(i).getLiquidViscosityParameter(0)
+                + liquidPhase.getPhase().getComponent(i).getLiquidViscosityParameter(1)
                     / liquidPhase.getPhase().getTemperature());
-      } else if (liquidPhase.getPhase().getComponents()[i].getLiquidViscosityModel() == 3) {
+      } else if (liquidPhase.getPhase().getComponent(i).getLiquidViscosityModel() == 3) {
         pureComponentViscosity[i] =
-            Math.exp(liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(0)
-                + liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(1)
+            Math.exp(liquidPhase.getPhase().getComponent(i).getLiquidViscosityParameter(0)
+                + liquidPhase.getPhase().getComponent(i).getLiquidViscosityParameter(1)
                     / liquidPhase.getPhase().getTemperature()
-                + liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(2)
+                + liquidPhase.getPhase().getComponent(i).getLiquidViscosityParameter(2)
                     * liquidPhase.getPhase().getTemperature()
-                + liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)
+                + liquidPhase.getPhase().getComponent(i).getLiquidViscosityParameter(3)
                     * Math.pow(liquidPhase.getPhase().getTemperature(), 2));
-      } else if (liquidPhase.getPhase().getComponents()[i].getLiquidViscosityModel() == 4) {
-        pureComponentViscosity[i] = Math.pow(10, liquidPhase.getPhase().getComponents()[i]
-            .getLiquidViscosityParameter(0)
-            * (1.0 / liquidPhase.getPhase().getTemperature()
-                - 1.0 / liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(1))); // liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(2)*liquidPhase.getPhase().getTemperature()+liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)/liquidPhase.getPhase().getTemperature()+liquidPhase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)*Math.pow(liquidPhase.getPhase().getTemperature(),2));
+      } else if (liquidPhase.getPhase().getComponent(i).getLiquidViscosityModel() == 4) {
+        pureComponentViscosity[i] = Math.pow(10,
+            liquidPhase.getPhase().getComponent(i).getLiquidViscosityParameter(0)
+                * (1.0 / liquidPhase.getPhase().getTemperature()
+                    - 1.0 / liquidPhase.getPhase().getComponent(i).getLiquidViscosityParameter(1))); // liquidPhase.getPhase().getComponent(i).getLiquidViscosityParameter(2)*liquidPhase.getPhase().getTemperature()+liquidPhase.getPhase().getComponent(i).getLiquidViscosityParameter(3)/liquidPhase.getPhase().getTemperature()+liquidPhase.getPhase().getComponent(i).getLiquidViscosityParameter(3)*Math.pow(liquidPhase.getPhase().getTemperature(),2));
       } else {
         // System.out.println("no pure component viscosity model defined for component "
-        // + liquidPhase.getPhase().getComponents()[i].getComponentName());
+        // + liquidPhase.getPhase().getComponent(i).getComponentName());
         pureComponentViscosity[i] = 7.0e-1;
       }
       pureComponentViscosity[i] *= ((getViscosityPressureCorrection(i) + 1.0) / 2.0);

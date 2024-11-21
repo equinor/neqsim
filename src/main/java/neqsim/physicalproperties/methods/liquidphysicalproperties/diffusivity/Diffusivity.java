@@ -70,7 +70,7 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
           binaryDiffusionCoefficients[i][j] = Math.pow(binaryDiffusionCoefficients[i][j],
               liquidPhase.getPhase().getComponent(j).getx())
               * Math.pow(binaryDiffusionCoefficients[j][i],
-                  liquidPhase.getPhase().getComponents()[i].getx());
+                  liquidPhase.getPhase().getComponent(i).getx());
         }
         // System.out.println("diff liq " + binaryDiffusionCoefficients[i][j] );
       }
@@ -92,7 +92,7 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
         }
       }
       effectiveDiffusionCoefficient[i] =
-          (1.0 - liquidPhase.getPhase().getComponents()[i].getx()) / sum;
+          (1.0 - liquidPhase.getPhase().getComponent(i).getx()) / sum;
     }
   }
 
@@ -112,8 +112,8 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
   @Override
   public double getFickBinaryDiffusionCoefficient(int i, int j) {
     double temp = (i == j) ? 1.0 : 0.0;
-    double nonIdealCorrection = temp + liquidPhase.getPhase().getComponents()[i].getx()
-        * liquidPhase.getPhase().getComponents()[i].getdfugdn(j)
+    double nonIdealCorrection = temp + liquidPhase.getPhase().getComponent(i).getx()
+        * liquidPhase.getPhase().getComponent(i).getdfugdn(j)
         * liquidPhase.getPhase().getNumberOfMolesInPhase();
     if (Double.isNaN(nonIdealCorrection)) {
       nonIdealCorrection = 1.0;

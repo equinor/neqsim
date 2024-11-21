@@ -93,9 +93,9 @@ public class FugTestConstP extends ConstantDutyTemperatureFlash
     for (int k = 0; k < testSystem.getPhases()[0].getNumberOfComponents(); k++) {
       if (testSystem.getPhase(0).getComponent(k).doSolidCheck()) {
         this.compName = testSystem.getPhase(0).getComponent(k).getComponentName();
-        trpTemp = testSystem.getPhases()[0].getComponents()[k].getTriplePointTemperature();
+        trpTemp = testSystem.getPhases()[0].getComponent(k).getTriplePointTemperature();
         this.initTestSystem2(k);
-        if (Math.abs(testSystem.getPhases()[0].getComponents()[k].getHsub()) < 0.000001) {
+        if (Math.abs(testSystem.getPhases()[0].getComponent(k).getHsub()) < 0.000001) {
           CCequation = false;
         }
         for (int i = 0; i < 20; i++) {
@@ -172,7 +172,7 @@ public class FugTestConstP extends ConstantDutyTemperatureFlash
     // try (PrintWriter pr_writer = new PrintWriter(new FileWriter(myFile, true))){
     // // print line to output file
     // pr_writer.println(
-    // testSystem.getPhases()[0].getComponents()[k].getComponentName()+" " +
+    // testSystem.getPhases()[0].getComponent(k).getComponentName()+" " +
     // java.lang.Double.toString(Fug[0+k*6][i])+"
     // "+java.lang.Double.toString(Fug[1+k*6][i])+"
     // "+java.lang.Double.toString(Fug[3+k*6][i]) +" "+

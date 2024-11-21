@@ -61,7 +61,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
   @Override
   public void increaseMolarRate(double moles) {
     for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-      double diff = (getBulkSystem().getPhases()[0].getComponents()[i].getx()
+      double diff = (getBulkSystem().getPhases()[0].getComponent(i).getx()
           * (molarFlowRate[0] - getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()));
       getBulkSystem().addComponent(getBulkSystem().getPhase(0).getComponent(i).getComponentName(),
           diff);
@@ -87,7 +87,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
   @Override
   public void updateMolarFlow() {
     for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-      double diff = (getBulkSystem().getPhases()[0].getComponents()[i].getx()
+      double diff = (getBulkSystem().getPhases()[0].getComponent(i).getx()
           * (molarFlowRate[0] - getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()));
       getBulkSystem().addComponent(getBulkSystem().getPhase(0).getComponent(i).getComponentName(),
           diff);

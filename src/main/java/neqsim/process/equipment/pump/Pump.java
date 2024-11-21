@@ -216,7 +216,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
         table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
         buf = new StringBuffer();
         table[j + 1][i + 1] =
-            nf.format(thermoSystem.getPhases()[i].getComponents()[j].getx(), buf, test).toString();
+            nf.format(thermoSystem.getPhases()[i].getComponent(j).getx(), buf, test).toString();
         table[j + 1][4] = "[-]";
       }
       buf = new StringBuffer();

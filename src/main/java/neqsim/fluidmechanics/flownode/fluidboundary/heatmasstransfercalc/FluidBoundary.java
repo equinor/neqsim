@@ -252,7 +252,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
       temp = (i == k) ? 1.0 : 0.0;
       fluxTypeCorrectionMatrixV[phase].set(i, 0, temp);
       sum += fluxTypeCorrectionMatrixV[phase].get(i, 0)
-          * bulkSystem.getPhases()[phase].getComponents()[i].getx();
+          * bulkSystem.getPhases()[phase].getComponent(i).getx();
     }
 
     sum += fluxTypeCorrectionMatrixV[phase]
@@ -283,8 +283,8 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
       for (int j = 0; j < bulkSystem.getPhases()[phase].getNumberOfComponents() - 1; j++) {
         temp = (i == j) ? 1.0 : 0.0;
         nonIdealCorrections[phase].set(i, j,
-            temp + bulkSystem.getPhases()[phase].getComponents()[i].getx()
-                * bulkSystem.getPhases()[phase].getComponents()[i].getdfugdn(j)
+            temp + bulkSystem.getPhases()[phase].getComponent(i).getx()
+                * bulkSystem.getPhases()[phase].getComponent(i).getdfugdn(j)
                 * bulkSystem.getPhases()[phase].getNumberOfMolesInPhase());
         // her må det fylles inn
       }

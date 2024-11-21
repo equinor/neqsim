@@ -36,8 +36,8 @@ public class CorrespondingStatesDiffusivity extends Diffusivity {
     if (phase.getPhase().getType() == PhaseType.LIQUID) {
       binaryDiffusionCoefficients[i][j] =
           1.0e-4 * 9.89e-8 * Math.pow(phase.getViscosity() * 1e3, -0.907)
-              * Math.pow(1.0 / phase.getPhase().getComponents()[i].getNormalLiquidDensity()
-                  * phase.getPhase().getComponents()[i].getMolarMass() * 1000, -0.45)
+              * Math.pow(1.0 / phase.getPhase().getComponent(i).getNormalLiquidDensity()
+                  * phase.getPhase().getComponent(i).getMolarMass() * 1000, -0.45)
               * Math.pow(1.0 / phase.getPhase().getComponent(j).getNormalLiquidDensity()
                   * phase.getPhase().getComponent(j).getMolarMass() * 1000, 0.265)
               * phase.getPhase().getTemperature();

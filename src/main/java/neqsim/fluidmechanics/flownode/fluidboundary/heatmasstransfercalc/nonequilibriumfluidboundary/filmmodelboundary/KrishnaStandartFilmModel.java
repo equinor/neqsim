@@ -146,13 +146,13 @@ public class KrishnaStandartFilmModel extends
         }
         if (j < n) {
           massTransferCoefficientMatrix[phase].set(i, j,
-              -getBulkSystem().getPhases()[phase].getComponents()[i].getx()
+              -getBulkSystem().getPhases()[phase].getComponent(i).getx()
                   * (1.0 / binaryMassTransferCoefficient[phase][i][j]
                       - 1.0 / binaryMassTransferCoefficient[phase][i][n]));
         }
       }
       massTransferCoefficientMatrix[phase].set(i, i,
-          tempVar + getBulkSystem().getPhases()[phase].getComponents()[i].getx()
+          tempVar + getBulkSystem().getPhases()[phase].getComponent(i).getx()
               / binaryMassTransferCoefficient[phase][i][n]);
     }
     massTransferCoefficientMatrix[phase] = massTransferCoefficientMatrix[phase].inverse();

@@ -78,14 +78,14 @@ public class SysNewtonRhapsonTPflashNew implements java.io.Serializable {
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
       fvec.set(i, 0,
-          u.get(i, 0) + Math.log(system.getPhases()[1].getComponents()[i].getFugacityCoefficient()
-              / system.getPhases()[0].getComponents()[i].getFugacityCoefficient()));
+          u.get(i, 0) + Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
+              / system.getPhases()[0].getComponent(i).getFugacityCoefficient()));
     }
 
     double fsum = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      fsum = fsum + system.getPhases()[1].getComponents()[i].getx()
-          - system.getPhases()[0].getComponents()[i].getx();
+      fsum = fsum + system.getPhases()[1].getComponent(i).getx()
+          - system.getPhases()[0].getComponent(i).getx();
     }
     fvec.set(numberOfComponents, 0, fsum);
     // fvec.print(0,20);
@@ -110,21 +110,21 @@ public class SysNewtonRhapsonTPflashNew implements java.io.Serializable {
     double sumdxidbeta = 0;
     int nofc = numberOfComponents;
     for (int i = 0; i < numberOfComponents; i++) {
-      dxidlnk[i] = -system.getBeta() * system.getPhases()[0].getComponents()[i].getx()
-          * system.getPhases()[1].getComponents()[i].getx()
-          / system.getPhases()[0].getComponents()[i].getz();
-      dyidlnk[i] = system.getPhases()[1].getComponents()[i].getx()
-          + system.getPhases()[0].getComponents()[i].getK() * dxidlnk[i];
+      dxidlnk[i] = -system.getBeta() * system.getPhases()[0].getComponent(i).getx()
+          * system.getPhases()[1].getComponent(i).getx()
+          / system.getPhases()[0].getComponent(i).getz();
+      dyidlnk[i] = system.getPhases()[1].getComponent(i).getx()
+          + system.getPhases()[0].getComponent(i).getK() * dxidlnk[i];
 
-      dyidbeta[i] = (system.getPhases()[0].getComponents()[i].getK()
-          * system.getPhases()[0].getComponents()[i].getz()
-          * (1 - system.getPhases()[0].getComponents()[i].getK()))
+      dyidbeta[i] = (system.getPhases()[0].getComponent(i).getK()
+          * system.getPhases()[0].getComponent(i).getz()
+          * (1 - system.getPhases()[0].getComponent(i).getK()))
           / Math.pow(1 - system.getBeta()
-              + system.getBeta() * system.getPhases()[0].getComponents()[i].getK(), 2);
-      dxidbeta[i] = (system.getPhases()[0].getComponents()[i].getz()
-          * (1 - system.getPhases()[0].getComponents()[i].getK()))
+              + system.getBeta() * system.getPhases()[0].getComponent(i).getK(), 2);
+      dxidbeta[i] = (system.getPhases()[0].getComponent(i).getz()
+          * (1 - system.getPhases()[0].getComponent(i).getK()))
           / Math.pow(1 - system.getBeta()
-              + system.getBeta() * system.getPhases()[0].getComponents()[i].getK(), 2);
+              + system.getBeta() * system.getPhases()[0].getComponent(i).getK(), 2);
 
       sumdyidbeta += dyidbeta[i];
       sumdxidbeta += dxidbeta[i];
@@ -133,12 +133,12 @@ public class SysNewtonRhapsonTPflashNew implements java.io.Serializable {
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
         dij = i == j ? 1.0 : 0.0; // Kroneckers delta
-        tempJ = dij + system.getPhases()[1].getComponents()[i].getdfugdx(j) * dyidlnk[j]
-            - system.getPhases()[0].getComponents()[i].getdfugdx(j) * dxidlnk[j];
+        tempJ = dij + system.getPhases()[1].getComponent(i).getdfugdx(j) * dyidlnk[j]
+            - system.getPhases()[0].getComponent(i).getdfugdx(j) * dxidlnk[j];
         Jac.set(i, j, tempJ);
       }
-      Jac.set(i, nofc, system.getPhases()[1].getComponents()[i].getdfugdx(i) * dyidbeta[i]
-          - system.getPhases()[0].getComponents()[i].getdfugdx(i) * dxidbeta[i]);
+      Jac.set(i, nofc, system.getPhases()[1].getComponent(i).getdfugdx(i) * dyidbeta[i]
+          - system.getPhases()[0].getComponent(i).getdfugdx(i) * dxidbeta[i]);
       Jac.set(nofc, i, dyidlnk[i] - dxidlnk[i]);
     }
 
@@ -152,7 +152,7 @@ public class SysNewtonRhapsonTPflashNew implements java.io.Serializable {
    */
   public void setu() {
     for (int i = 0; i < numberOfComponents; i++) {
-      u.set(i, 0, Math.log(system.getPhases()[0].getComponents()[i].getK()));
+      u.set(i, 0, Math.log(system.getPhases()[0].getComponent(i).getK()));
     }
 
     u.set(numberOfComponents, 0, system.getBeta());
@@ -165,8 +165,8 @@ public class SysNewtonRhapsonTPflashNew implements java.io.Serializable {
    */
   public void init() {
     for (int i = 0; i < numberOfComponents; i++) {
-      system.getPhases()[0].getComponents()[i].setK(Math.exp(u.get(i, 0)));
-      system.getPhases()[1].getComponents()[i].setK(Math.exp(u.get(i, 0)));
+      system.getPhases()[0].getComponent(i).setK(Math.exp(u.get(i, 0)));
+      system.getPhases()[1].getComponent(i).setK(Math.exp(u.get(i, 0)));
     }
     system.setBeta(u.get(numberOfComponents, 0));
     system.calc_x_y();

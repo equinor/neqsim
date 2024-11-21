@@ -311,7 +311,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
           + flowNode[i].getMassFlowRate(0) + " velocity: " + flowNode[i].getVelocity()
           + " reynolds number " + flowNode[i].getReynoldsNumber() + " friction : "
           + flowNode[i].getWallFrictionFactor() + " x1 : "
-          + flowNode[i].getBulkSystem().getPhases()[0].getComponents()[1].getx());
+          + flowNode[i].getBulkSystem().getPhases()[0].getComponent(1).getx());
     }
   }
 

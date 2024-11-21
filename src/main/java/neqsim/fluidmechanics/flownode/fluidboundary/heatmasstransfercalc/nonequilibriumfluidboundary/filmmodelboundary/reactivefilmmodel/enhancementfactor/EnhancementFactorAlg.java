@@ -81,10 +81,10 @@ public class EnhancementFactorAlg extends EnhancementFactor {
   // (fluidBoundary.getBulkSystem().getPhases()[phase].getPhysicalProperties().getEffectiveDiffusionCoefficient(j)/fluidBoundary.getBulkSystem().getPhases()[phase].getPhysicalProperties().getEffectiveDiffusionCoefficient(i))*
   // (stocMatrix[i][i]/stocMatrix[i][j]) *
   // (fluidBoundary.getBulkSystem().getPhases()[phase].getComponent(j).getx()*fluidBoundary.getBulkSystem().getPhases()[phase].getDensity()/fluidBoundary.getBulkSystem().getPhases()[phase].getMolarMass())/
-  // (fluidBoundary.getInterphaseSystem().getPhases()[phase].getComponents()[i].getx()*fluidBoundary.getInterphaseSystem().getPhases()[phase].getDensity()/fluidBoundary.getInterphaseSystem().getPhases()[phase].getMolarMass());
+  // (fluidBoundary.getInterphaseSystem().getPhases()[phase].getComponent(i).getx()*fluidBoundary.getInterphaseSystem().getPhases()[phase].getDensity()/fluidBoundary.getInterphaseSystem().getPhases()[phase].getMolarMass());
 
   // System.out.println("components " +
-  // fluidBoundary.getBulkSystem().getPhases()[phase].getComponents()[i].getComponentName()
+  // fluidBoundary.getBulkSystem().getPhases()[phase].getComponent(i).getComponentName()
   // + " " +
   // fluidBoundary.getBulkSystem().getPhases()[phase].getComponent(j).getComponentName());
   // System.out.println("hatta : " + hattaNumber[phase].get(i,j));

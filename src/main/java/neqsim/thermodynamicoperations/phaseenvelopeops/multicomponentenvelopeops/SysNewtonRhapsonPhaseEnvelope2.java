@@ -88,13 +88,13 @@ public class SysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
   public void setfvec() {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       fvec.setEntry(i, 0,
-          u.getEntry(i, 0) + Math.log(system.getPhase(0).getComponents()[i].getFugacityCoefficient()
-              / system.getPhase(1).getComponents()[i].getFugacityCoefficient()));
+          u.getEntry(i, 0) + Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient()
+              / system.getPhase(1).getComponent(i).getFugacityCoefficient()));
     }
     double fsum = 0.0;
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      fsum += system.getPhase(0).getComponents()[i].getx()
-          - system.getPhase(1).getComponents()[i].getx();
+      fsum += system.getPhase(0).getComponent(i).getx()
+          - system.getPhase(1).getComponent(i).getx();
     }
     fvec.setEntry(system.getPhase(0).getNumberOfComponents(), 0, fsum);
     fvec.setEntry(system.getPhase(0).getNumberOfComponents() + 1, 0, 0);
@@ -110,13 +110,13 @@ public class SysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     int speceqmin = 0;
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      if (system.getPhase(0).getComponents()[i].getTC() > system.getPhase(0).getComponents()[speceq]
+      if (system.getPhase(0).getComponent(i).getTC() > system.getPhase(0).getComponents()[speceq]
           .getTC()) {
-        speceq = system.getPhase(0).getComponents()[i].getComponentNumber();
+        speceq = system.getPhase(0).getComponent(i).getComponentNumber();
       }
-      if (system.getPhase(0).getComponents()[i]
+      if (system.getPhase(0).getComponent(i)
           .getTC() < system.getPhase(0).getComponents()[speceqmin].getTC()) {
-        speceqmin = system.getPhase(0).getComponents()[i].getComponentNumber();
+        speceqmin = system.getPhase(0).getComponent(i).getComponentNumber();
       }
     }
     avscp = 0.3;
@@ -158,26 +158,26 @@ public class SysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     double tempJ = 0.0;
     int nofc = system.getPhase(0).getNumberOfComponents();
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      dxidlnk[i] = -system.getBeta() * system.getPhase(1).getComponents()[i].getx()
-          * system.getPhase(0).getComponents()[i].getx()
-          / system.getPhase(0).getComponents()[i].getz();
-      dyidlnk[i] = system.getPhase(0).getComponents()[i].getx()
-          + system.getPhase(1).getComponents()[i].getK() * dxidlnk[i];
+      dxidlnk[i] = -system.getBeta() * system.getPhase(1).getComponent(i).getx()
+          * system.getPhase(0).getComponent(i).getx()
+          / system.getPhase(0).getComponent(i).getz();
+      dyidlnk[i] = system.getPhase(0).getComponent(i).getx()
+          + system.getPhase(1).getComponent(i).getK() * dxidlnk[i];
       // logger.info("dxidlnk("+i+") "+dxidlnk[i]);
       // logger.info("dyidlnk("+i+") "+dyidlnk[i]);
     }
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
         dij = i == j ? 1.0 : 0.0; // Kroneckers delta
-        tempJ = dij + system.getPhase(0).getComponents()[i].getdfugdx(j) * dyidlnk[j]
-            - system.getPhase(1).getComponents()[i].getdfugdx(j) * dxidlnk[j];
+        tempJ = dij + system.getPhase(0).getComponent(i).getdfugdx(j) * dyidlnk[j]
+            - system.getPhase(1).getComponent(i).getdfugdx(j) * dxidlnk[j];
         Jac.setEntry(i, j, tempJ);
       }
-      tempJ = system.getTemperature() * (system.getPhase(0).getComponents()[i].getdfugdt()
-          - system.getPhase(1).getComponents()[i].getdfugdt());
+      tempJ = system.getTemperature() * (system.getPhase(0).getComponent(i).getdfugdt()
+          - system.getPhase(1).getComponent(i).getdfugdt());
       Jac.setEntry(i, nofc, tempJ);
-      tempJ = system.getPressure() * (system.getPhase(0).getComponents()[i].getdfugdp()
-          - system.getPhase(1).getComponents()[i].getdfugdp());
+      tempJ = system.getPressure() * (system.getPhase(0).getComponent(i).getdfugdp()
+          - system.getPhase(1).getComponent(i).getdfugdp());
       Jac.setEntry(i, nofc + 1, tempJ);
       Jac.setEntry(nofc, i, dyidlnk[i] - dxidlnk[i]);
     }
@@ -191,7 +191,7 @@ public class SysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
    */
   public void setu() {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      u.setEntry(i, 0, Math.log(system.getPhase(0).getComponents()[i].getK()));
+      u.setEntry(i, 0, Math.log(system.getPhase(0).getComponent(i).getK()));
     }
     u.setEntry(system.getPhase(0).getNumberOfComponents(), 0, Math.log(system.getTemperature()));
     u.setEntry(system.getPhase(0).getNumberOfComponents() + 1, 0, Math.log(system.getPressure()));
@@ -204,8 +204,8 @@ public class SysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
    */
   public void init() {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      system.getPhase(0).getComponents()[i].setK(Math.exp(u.getEntry(i, 0)));
-      system.getPhase(1).getComponents()[i].setK(Math.exp(u.getEntry(i, 0)));
+      system.getPhase(0).getComponent(i).setK(Math.exp(u.getEntry(i, 0)));
+      system.getPhase(1).getComponent(i).setK(Math.exp(u.getEntry(i, 0)));
     }
     system.setTemperature(Math.exp(u.getEntry(system.getPhase(0).getNumberOfComponents(), 0)));
     system.setPressure(Math.exp(u.getEntry(system.getPhase(0).getNumberOfComponents() + 1, 0)));
