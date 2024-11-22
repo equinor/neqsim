@@ -65,8 +65,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Pipeline(String name, StreamInterface inStream) {
     super(name, inStream);
@@ -279,15 +278,15 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
    * getSuperficialVelocity.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    * @param node a int
    * @return a double
    */
-  public double getSuperficialVelocity(int phase, int node) {
+  public double getSuperficialVelocity(int phaseNum, int node) {
     try {
-      return outStream.getThermoSystem().getPhase(phase).getNumberOfMolesInPhase()
-          * outStream.getThermoSystem().getPhase(phase).getMolarMass()
-          / outStream.getThermoSystem().getPhase(phase).getPhysicalProperties().getDensity()
+      return outStream.getThermoSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
+          * outStream.getThermoSystem().getPhase(phaseNum).getMolarMass()
+          / outStream.getThermoSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
           / (3.14 * pipeDiameters[node] * pipeDiameters[node] / 4.0);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);

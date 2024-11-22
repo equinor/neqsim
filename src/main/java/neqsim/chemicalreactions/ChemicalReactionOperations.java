@@ -142,11 +142,11 @@ public class ChemicalReactionOperations
    * Setter for the field <code>components</code>.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    */
-  public void setComponents(int phase) {
+  public void setComponents(int phaseNum) {
     for (int j = 0; j < components.length; j++) {
-      system.getPhase(phase).getComponents()[components[j].getComponentNumber()] = components[j];
+      system.getPhase(phaseNum).getComponents()[components[j].getComponentNumber()] = components[j];
     }
   }
 
@@ -155,12 +155,12 @@ public class ChemicalReactionOperations
    * setReactiveComponents.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    */
-  public void setReactiveComponents(int phase) {
+  public void setReactiveComponents(int phaseNum) {
     for (int j = 0; j < components.length; j++) {
       // System.out.println("comp " + components[j].getComponentNumber());
-      components[j] = system.getPhase(phase).getComponent(components[j].getComponentNumber());
+      components[j] = system.getPhase(phaseNum).getComponent(components[j].getComponentNumber());
     }
   }
 
@@ -189,15 +189,15 @@ public class ChemicalReactionOperations
    * calcInertMoles.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    * @return a double
    */
-  public double calcInertMoles(int phase) {
+  public double calcInertMoles(int phaseNum) {
     double reactiveMoles = 0;
     for (int j = 0; j < components.length; j++) {
       reactiveMoles += components[j].getNumberOfMolesInPhase();
     }
-    inertMoles = system.getPhase(phase).getNumberOfMolesInPhase() - reactiveMoles;
+    inertMoles = system.getPhase(phaseNum).getNumberOfMolesInPhase() - reactiveMoles;
     // System.out.println("inertmoles = " + inertMoles);
     if (inertMoles < 0) {
       inertMoles = 1.0e-30;
@@ -328,14 +328,14 @@ public class ChemicalReactionOperations
    * calcChemRefPot.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    * @return an array of type double
    */
-  public double[] calcChemRefPot(int phase) {
+  public double[] calcChemRefPot(int phaseNum) {
     double[] referencePotentials = new double[components.length];
-    reactionList.createReactionMatrix(system.getPhase(phase), components);
+    reactionList.createReactionMatrix(system.getPhase(phaseNum), components);
     double[] newreferencePotentials =
-        reactionList.updateReferencePotentials(system.getPhase(phase), components);
+        reactionList.updateReferencePotentials(system.getPhase(phaseNum), components);
     if (newreferencePotentials != null) {
       for (int i = 0; i < newreferencePotentials.length; i++) {
         referencePotentials[i] = newreferencePotentials[i];
@@ -352,20 +352,20 @@ public class ChemicalReactionOperations
    * updateMoles.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    */
-  public void updateMoles(int phase) {
+  public void updateMoles(int phaseNum) {
     double changeMoles = 0.0;
     for (int i = 0; i < components.length; i++) {
       if (Math.abs(newMoles[i]) > 1e-45) {
         changeMoles += (newMoles[i]
-            - system.getPhase(phase).getComponents()[components[i].getComponentNumber()]
+            - system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
                 .getNumberOfMolesInPhase());
         // System.out.println("update moles first " + (components[i].getComponentName()
         // + " moles " + components[i].getNumberOfMolesInPhase()));
-        system.getPhase(phase).addMolesChemReac(components[i].getComponentNumber(),
+        system.getPhase(phaseNum).addMolesChemReac(components[i].getComponentNumber(),
             (newMoles[i]
-                - system.getPhase(phase).getComponents()[components[i].getComponentNumber()]
+                - system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
                     .getNumberOfMolesInPhase()));
         // System.out.println("update moles after " + (components[i].getComponentName()
         // + " moles " + components[i].getNumberOfMolesInPhase()));
@@ -395,49 +395,49 @@ public class ChemicalReactionOperations
    * solveChemEq.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    * @param type a int
    * @return a boolean
    */
-  public boolean solveChemEq(int phase, int type) {
-    if (this.phase != phase) {
-      setReactiveComponents(phase);
-      chemRefPot = calcChemRefPot(phase);
+  public boolean solveChemEq(int phaseNum, int type) {
+    if (this.phase != phaseNum) {
+      setReactiveComponents(phaseNum);
+      chemRefPot = calcChemRefPot(phaseNum);
     }
-    this.phase = phase;
+    this.phase = phaseNum;
     if (!system.isChemicalSystem()) {
       System.out.println("no chemical reactions will occur...continue");
       return false;
     }
 
     // System.out.println("pressure1");
-    calcChemRefPot(phase);
+    calcChemRefPot(phaseNum);
     // System.out.println("pressure2");
     if (firsttime || type == 0) {
       try {
         // System.out.println("Calculating initial estimates");
         nVector = calcNVector();
         bVector = calcBVector();
-        calcInertMoles(phase);
-        newMoles = initCalc.generateInitialEstimates(system, bVector, inertMoles, phase);
+        calcInertMoles(phaseNum);
+        newMoles = initCalc.generateInitialEstimates(system, bVector, inertMoles, phaseNum);
         // Print statement added by Neeraj
         // for (i=0;i<5;i++)
         // System.out.println("new moles "+newMoles[i]);
-        updateMoles(phase);
+        updateMoles(phaseNum);
         // System.out.println("finished iniT estimtes ");
         // system.display();
         firsttime = false;
         return true;
       } catch (Exception ex) {
         logger.error("error in chem eq", ex);
-        solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phase);
+        solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
         return solver.solve();
       }
     } else {
       nVector = calcNVector();
       bVector = calcBVector();
       try {
-        solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phase);
+        solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
         // todo: Will this crash below?
@@ -451,13 +451,13 @@ public class ChemicalReactionOperations
    * solveKinetics.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    * @param interPhase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param component a int
    * @return a double
    */
-  public double solveKinetics(int phase, PhaseInterface interPhase, int component) {
-    return kineticsSolver.calcReacMatrix(system.getPhase(phase), interPhase, component);
+  public double solveKinetics(int phaseNum, PhaseInterface interPhase, int component) {
+    return kineticsSolver.calcReacMatrix(system.getPhase(phaseNum), interPhase, component);
   }
 
   /**
@@ -487,12 +487,12 @@ public class ChemicalReactionOperations
    * reacHeat.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    * @param component a {@link java.lang.String} object
    * @return a double
    */
-  public double reacHeat(int phase, String component) {
-    return reactionList.reacHeat(system.getPhase(phase), component);
+  public double reacHeat(int phaseNum, String component) {
+    return reactionList.reacHeat(system.getPhase(phaseNum), component);
   }
 
   /**

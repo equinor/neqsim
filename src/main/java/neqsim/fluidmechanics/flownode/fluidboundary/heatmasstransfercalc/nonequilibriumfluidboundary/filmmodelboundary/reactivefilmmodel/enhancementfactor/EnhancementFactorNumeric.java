@@ -38,16 +38,16 @@ public class EnhancementFactorNumeric extends EnhancementFactor {
    * calcEnhancementMatrix.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    */
-  public void calcEnhancementMatrix(int phase) {
+  public void calcEnhancementMatrix(int phaseNum) {
     reactiveInterface.createSystem();
     nonReactiveInterface.createSystem();
     nonReactiveInterface.solve();
     reactiveInterface.solve();
-    for (int i = 0; i < fluidBoundary.getBulkSystem().getPhases()[phase]
+    for (int i = 0; i < fluidBoundary.getBulkSystem().getPhases()[phaseNum]
         .getNumberOfComponents(); i++) {
-      for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phase]
+      for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phaseNum]
           .getNumberOfComponents(); j++) {
         // enhancementFactor[1].set(i,j,0);
         // System.out.println("num enhancement " + enhancementFactor[1].get(i,j));

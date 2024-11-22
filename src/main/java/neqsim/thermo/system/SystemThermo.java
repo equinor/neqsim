@@ -1639,8 +1639,8 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void deleteFluidPhase(int phase) {
-    for (int i = phase; i < numberOfPhases; i++) {
+  public void deleteFluidPhase(int phaseNum) {
+    for (int i = phaseNum; i < numberOfPhases; i++) {
       phaseIndex[i] = phaseIndex[i + 1];
     }
     numberOfPhases--;
@@ -1706,8 +1706,8 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final double getBeta(int phase) {
-    return beta[phaseIndex[phase]];
+  public final double getBeta(int phaseNum) {
+    return beta[phaseIndex[phaseNum]];
   }
 
   /** {@inheritDoc} */
@@ -4243,13 +4243,13 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setAllComponentsInPhase(int phase) {
+  public void setAllComponentsInPhase(int phaseNum) {
     for (int k = 0; k < numberOfPhases; k++) {
       for (int i = 0; i < numberOfComponents; i++) {
-        if (phase != k) {
+        if (phaseNum != k) {
           // System.out.println("moles of comp: " + i + " " +
           // phaseArray[k].getComponent(i).getNumberOfMolesInPhase());
-          phaseArray[phase].addMoles(i,
+          phaseArray[phaseNum].addMoles(i,
               (phaseArray[k].getComponent(i).getNumberOfMolesInPhase() * (1.0 - 0.01)));
           phaseArray[k].addMoles(i,
               -(phaseArray[k].getComponent(i).getNumberOfMolesInPhase() * (1.0 - 0.01)));
@@ -4297,14 +4297,14 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final void setBeta(int phase, double b) {
+  public final void setBeta(int phaseNum, double b) {
     if (b < 0) {
       b = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
     }
     if (b > 1) {
       b = 1.0 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
     }
-    beta[phaseIndex[phase]] = b;
+    beta[phaseIndex[phaseNum]] = b;
   }
 
   /** {@inheritDoc} */
