@@ -235,7 +235,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     for (int i = 0; i < numberOfNodes; i++) {
       pipe.getNode(i).init();
       pipe.getNode(i).getBulkSystem()
-          .setPressure(0.8 * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getdPdrho()
+          .setPressure(0.8 * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getdPdrho()
               * diffMatrix.get(i, 0) * 1e-5 + pipe.getNode(i).getBulkSystem().getPressure());
       pipe.getNode(i).init();
     }
@@ -274,10 +274,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       pipe.getNode(i).getBulkSystem()
           .setTemperature(
               pipe.getNode(i).getBulkSystem().getTemperature(phaseNum) + 0.8 * diffMatrix.get(i, 0)
-                  / (pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getCp()
-                      / pipe.getNode(i).getBulkSystem().getPhases()[phaseNum]
-                          .getNumberOfMolesInPhase()
-                      / pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getMolarMass()),
+                  / (pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getCp()
+                      / pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
+                      / pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getMolarMass()),
               phaseNum);
       pipe.getNode(i).init();
     }
@@ -309,39 +308,35 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    */
   public void initComposition(int phaseNum, int comp) {
     for (int j = 0; j < numberOfNodes; j++) {
-      if ((pipe.getNode(j).getBulkSystem().getPhases()[phaseNum].getComponents()[comp].getx()
-          + diffMatrix.get(j, 0)
-              * pipe.getNode(j).getBulkSystem().getPhases()[phaseNum].getMolarMass()
-              / pipe.getNode(j).getBulkSystem().getPhases()[phaseNum].getComponents()[comp]
+      if ((pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getComponents()[comp].getx()
+          + diffMatrix.get(j, 0) * pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getMolarMass()
+              / pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getComponents()[comp]
                   .getMolarMass()) > 1.0) {
-        pipe.getNode(j).getBulkSystem().getPhases()[phaseNum].getComponents()[comp]
-            .setx(1.0 - 1e-30);
-      } else if (pipe.getNode(j).getBulkSystem().getPhases()[phaseNum].getComponents()[comp].getx()
-          + diffMatrix.get(j, 0)
-              * pipe.getNode(j).getBulkSystem().getPhases()[phaseNum].getMolarMass()
-              / pipe.getNode(j).getBulkSystem().getPhases()[phaseNum].getComponents()[comp]
+        pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getComponents()[comp].setx(1.0 - 1e-30);
+      } else if (pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getComponents()[comp].getx()
+          + diffMatrix.get(j, 0) * pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getMolarMass()
+              / pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getComponents()[comp]
                   .getMolarMass() < 0.0) {
-        pipe.getNode(j).getBulkSystem().getPhases()[phaseNum].getComponents()[comp].setx(1e-30);
+        pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getComponents()[comp].setx(1e-30);
       } else {
-        pipe.getNode(j).getBulkSystem().getPhases()[phaseNum].getComponents()[comp]
-            .setx(pipe.getNode(j).getBulkSystem().getPhases()[phaseNum].getComponents()[comp].getx()
+        pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getComponents()[comp]
+            .setx(pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getComponents()[comp].getx()
                 + diffMatrix.get(j, 0)
-                    * pipe.getNode(j).getBulkSystem().getPhases()[phaseNum].getMolarMass()
-                    / pipe.getNode(j).getBulkSystem().getPhases()[phaseNum].getComponents()[comp]
+                    * pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getMolarMass()
+                    / pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getComponents()[comp]
                         .getMolarMass());
         // pipe.getNode(j).getBulkSystem().getPhases()[0].getComponent(p).getx()
         // + 0.5*diff4Matrix[p].get(j,0));
       }
 
       double xSum = 0.0;
-      for (int i = 0; i < pipe.getNode(j).getBulkSystem().getPhases()[phaseNum]
-          .getNumberOfComponents() - 1; i++) {
-        xSum += pipe.getNode(j).getBulkSystem().getPhases()[phaseNum].getComponent(i).getx();
+      for (int i = 0; i < pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getNumberOfComponents()
+          - 1; i++) {
+        xSum += pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getComponent(i).getx();
       }
 
-      pipe.getNode(j).getBulkSystem().getPhases()[phaseNum]
-          .getComponents()[pipe.getNode(j).getBulkSystem().getPhases()[phaseNum]
-              .getNumberOfComponents() - 1].setx(1.0 - xSum);
+      pipe.getNode(j).getBulkSystem().getPhase(phaseNum).getComponents()[pipe.getNode(j)
+          .getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1].setx(1.0 - xSum);
       pipe.getNode(j).init();
     }
   }
@@ -359,8 +354,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       a[0] = 0;
       b[0] = 1.0;
       c[0] = 0;
-      SU = pipe.getNode(0).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
-          .getDensity();
+      SU = pipe.getNode(0).getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity();
       r[0] = SU;
     } else {
       // double Ae = pipe.getNode(0).getArea(phase);
@@ -467,11 +461,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       double Ae = pipe.getNode(i).getGeometry().getArea();
       double Aw = pipe.getNode(i - 1).getGeometry().getArea();
       double Fe = pipe.getNode(i).getVelocityOut(phaseNum).doubleValue() * Ae
-          * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
-              .getDensity();
-      double Fw = pipe.getNode(i).getVelocityIn(phaseNum).doubleValue() * Aw
-          * pipe.getNode(i - 1).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
-              .getDensity();
+          * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity();
+      double Fw = pipe.getNode(i).getVelocityIn(phaseNum).doubleValue() * Aw * pipe.getNode(i - 1)
+          .getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity();
 
       if (dynamic) {
         oldMass[phaseNum][i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
@@ -495,11 +487,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     double Aw = pipe.getNode(i - 1).getGeometry().getArea();
 
     double Fe = pipe.getNode(i).getVelocity(phaseNum) * Ae
-        * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
-            .getDensity();
-    double Fw = pipe.getNode(i).getVelocityIn(phaseNum).doubleValue() * Aw
-        * pipe.getNode(i - 1).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
-            .getDensity();
+        * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity();
+    double Fw = pipe.getNode(i).getVelocityIn(phaseNum).doubleValue() * Aw * pipe.getNode(i - 1)
+        .getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity();
 
     if (dynamic) {
       oldMass[phaseNum][i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
@@ -552,7 +542,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       double Aw = pipe.getNode(i - 1).getArea(phaseNum);
       double Amean = pipe.getNode(i - 1).getArea(phaseNum);
       double meanFrik = pipe.getNode(i - 1).getWallFrictionFactor(phaseNum);
-      double meanDensity = pipe.getNode(i - 1).getBulkSystem().getPhases()[phaseNum]
+      double meanDensity = pipe.getNode(i - 1).getBulkSystem().getPhase(phaseNum)
           .getPhysicalProperties().getDensity();
       double oldMeanDensity = oldDensity[phaseNum][i];
       double meanVelocity = pipe.getNode(i - 1).getVelocity(phaseNum);
@@ -583,10 +573,11 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       // System.out.println("su " + SU);
       SP = -pipe.getNode(i - 1).getWallContactLength(phaseNum) * nodeLength * meanDensity * meanFrik
           * meanVelocity / 4.0;
-      Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
+      Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
           .getDensity() * pipe.getNode(i - 1).getVelocity(phaseNum);
-      Fe = Ae * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
-          .getDensity() * pipe.getNode(i).getVelocity(phaseNum);
+      Fe = Ae
+          * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
+          * pipe.getNode(i).getVelocity(phaseNum);
 
       if (dynamic) {
         oldImpuls[phaseNum][i] = 1.0 / timeStep * oldMeanDensity * nodeLength * Amean;
@@ -609,8 +600,8 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     double Amean = pipe.getNode(i - 1).getArea(phaseNum);
     // double meanDiameter = pipe.getNode(i - 1).getGeometry().getDiameter();
     double meanFrik = pipe.getNode(i - 1).getWallFrictionFactor(phaseNum);
-    double meanDensity = pipe.getNode(i - 1).getBulkSystem().getPhases()[phaseNum]
-        .getPhysicalProperties().getDensity();
+    double meanDensity =
+        pipe.getNode(i - 1).getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity();
     double oldMeanDensity = oldDensity[phaseNum][i];
     double meanVelocity = pipe.getNode(i - 1).getVelocity(phaseNum);
     double vertposchange = pipe.getNode(i).getVerticalPositionOfNode()
@@ -631,10 +622,10 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             * (pipe.getNode(i).getVelocity(0) - pipe.getNode(i).getVelocity(1)) / 8.0 * sign;
     SP = -pipe.getNode(i - 1).getWallContactLength(phaseNum) * nodeLength * meanDensity * meanFrik
         * meanVelocity / 4.0;
-    Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
+    Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
         .getDensity() * pipe.getNode(i).getVelocityIn(phaseNum).doubleValue();
     Fe = Ae
-        * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties().getDensity()
+        * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
         * pipe.getNode(i).getVelocity(phaseNum);
 
     if (dynamic) {
@@ -667,9 +658,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     a[0] = 0;
     b[0] = 1.0;
     c[0] = 0;
-    double SU = pipe.getNode(0).getBulkSystem().getPhases()[phaseNum].getEnthalpy()
-        / pipe.getNode(0).getBulkSystem().getPhases()[phaseNum].getNumberOfMolesInPhase()
-        / pipe.getNode(0).getBulkSystem().getPhases()[phaseNum].getMolarMass();
+    double SU = pipe.getNode(0).getBulkSystem().getPhase(phaseNum).getEnthalpy()
+        / pipe.getNode(0).getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
+        / pipe.getNode(0).getBulkSystem().getPhase(phaseNum).getMolarMass();
     r[0] = SU;
 
     for (int i = 1; i < numberOfNodes - 1; i++) {
@@ -688,10 +679,10 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
               - pipe.getNode(i - 1).getVerticalPositionOfNode());
 
       SU = -pipe.getNode(i).getArea(phaseNum) * gravity
-          * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getDensity()
+          * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getDensity()
           * pipe.getNode(i).getVelocity(phaseNum) * vertposchange
           + pipe.getNode(i).getArea(phaseNum) * 4.0 * 0.02
-              * (278.0 - pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getTemperature())
+              * (278.0 - pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getTemperature())
               / (pipe.getNode(i).getGeometry().getDiameter())
               * pipe.getNode(i).getGeometry().getNodeLength()
           + sign * pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(phaseNum)
@@ -702,10 +693,11 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       double SP = 0;
 
       double Fw =
-          Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
+          Aw * pipe.getNode(i - 1).getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
               .getDensity() * pipe.getNode(i).getVelocityIn(phaseNum).doubleValue();
-      double Fe = Ae * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
-          .getDensity() * pipe.getNode(i).getVelocityOut(phaseNum).doubleValue();
+      double Fe = Ae
+          * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
+          * pipe.getNode(i).getVelocityOut(phaseNum).doubleValue();
 
       if (dynamic) {
         oldEnergy[phaseNum][i] = 1.0 / timeStep * oldDensity[phaseNum][i]
@@ -739,12 +731,12 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         - pipe.getNode(i - 1).getVerticalPositionOfNode());
 
     SU = -pipe.getNode(i).getArea(phaseNum) * gravity
-        * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getDensity()
+        * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getDensity()
         * pipe.getNode(i).getVelocity(phaseNum) * vertposchange
         + pipe.getNode(i).getWallContactLength(phaseNum)
             / pipe.getNode(i).getGeometry().getCircumference() * pipe.getNode(i).getArea(phaseNum)
             * 4.0 * 0.02
-            * (278.0 - pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getTemperature())
+            * (278.0 - pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getTemperature())
             / (pipe.getNode(i).getGeometry().getDiameter())
             * pipe.getNode(i).getGeometry().getNodeLength()
         + sign * pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(phaseNum)
@@ -756,12 +748,11 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     // -pipe.getNode(i).getGeometry().getArea() * 4.0 * 12.0 /
     // (pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
 
-    double Fw =
-        Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
-            .getDensity() * pipe.getNode(i).getVelocityIn(phaseNum).doubleValue();
-    double Fe = Ae
-        * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties().getDensity()
-        * pipe.getNode(i).getVelocity(phaseNum);
+    double Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
+        .getDensity() * pipe.getNode(i).getVelocityIn(phaseNum).doubleValue();
+    double Fe =
+        Ae * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
+            * pipe.getNode(i).getVelocity(phaseNum);
 
     if (dynamic) {
       oldEnergy[phaseNum][i] = 1.0 / timeStep * oldDensity[phaseNum][i]
@@ -792,8 +783,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     a[0] = 0;
     b[0] = 1.0;
     c[0] = 0;
-    SU = pipe.getNode(0).getBulkSystem().getPhases()[phaseNum].getComponents()[componentNumber]
-        .getx();
+    SU = pipe.getNode(0).getBulkSystem().getPhase(phaseNum).getComponents()[componentNumber].getx();
     // System.out.println("phase x0: "
     // +pipe.getNode(0).getBulkSystem().getPhases()[0].getComponents()[componentNumber].getx());
     // System.out.println("phase x1: "
@@ -813,17 +803,16 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
           + fw / pipe.getNode(i - 1).getArea(phaseNum));
 
       double Fe = pipe.getNode(i).getVelocityOut(phaseNum).doubleValue()
-          * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
-              .getDensity()
-          * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getComponents()[componentNumber]
+          * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
+          * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getComponents()[componentNumber]
               .getMolarMass()
-          / pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getMolarMass() * Ae;
+          / pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getMolarMass() * Ae;
       double Fw = pipe.getNode(i).getVelocityIn(phaseNum).doubleValue()
-          * pipe.getNode(i - 1).getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
+          * pipe.getNode(i - 1).getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
               .getDensity()
-          * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getComponents()[componentNumber]
+          * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getComponents()[componentNumber]
               .getMolarMass()
-          / pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getMolarMass() * Aw;
+          / pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getMolarMass() * Aw;
 
       // System.out.println("vel: " +
       // pipe.getNode(i).getVelocityOut(phase).doubleValue() + " fe " + Fe);
@@ -842,12 +831,12 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     a[numberOfNodes - 1] = -1.0; // -1.0;
     b[numberOfNodes - 1] = 1.0;
     c[numberOfNodes - 1] = 0;
-    SU = pipe.getNode(numberOfNodes - 2).getBulkSystem().getPhases()[phaseNum]
-        .getPhysicalProperties().getDensity()
+    SU = pipe.getNode(numberOfNodes - 2).getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
+        .getDensity()
         * pipe.getNode(numberOfNodes - 2).getVelocityIn(phaseNum).doubleValue()
-        * pipe.getNode(numberOfNodes - 2).getBulkSystem().getPhases()[phaseNum]
+        * pipe.getNode(numberOfNodes - 2).getBulkSystem().getPhase(phaseNum)
             .getComponents()[componentNumber].getx()
-        / (pipe.getNode(numberOfNodes - 1).getBulkSystem().getPhases()[phaseNum]
+        / (pipe.getNode(numberOfNodes - 1).getBulkSystem().getPhase(phaseNum)
             .getPhysicalProperties().getDensity()
             * pipe.getNode(numberOfNodes - 1).getVelocityIn(phaseNum).doubleValue());
     r[numberOfNodes - 1] = 0; // SU;
@@ -867,11 +856,10 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     a[0] = 0;
     b[0] = 1.0;
     c[0] = 0;
-    SU = pipe.getNode(0).getBulkSystem().getPhases()[phaseNum].getComponents()[componentNumber]
-        .getx()
-        * pipe.getNode(0).getBulkSystem().getPhases()[phaseNum].getComponents()[componentNumber]
+    SU = pipe.getNode(0).getBulkSystem().getPhase(phaseNum).getComponents()[componentNumber].getx()
+        * pipe.getNode(0).getBulkSystem().getPhase(phaseNum).getComponents()[componentNumber]
             .getMolarMass()
-        / pipe.getNode(0).getBulkSystem().getPhases()[phaseNum].getMolarMass();
+        / pipe.getNode(0).getBulkSystem().getPhase(phaseNum).getMolarMass();
     r[0] = SU;
 
     for (int i = 1; i < numberOfNodes - 1; i++) {
@@ -879,21 +867,21 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       double Aw = pipe.getNode(i - 1).getArea(phaseNum);
 
       double Fe = pipe.getNode(i).getVelocityOut(phaseNum).doubleValue()
-          * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getDensity() * Ae;
+          * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getDensity() * Ae;
       double Fw = pipe.getNode(i).getVelocityIn(phaseNum).doubleValue()
-          * pipe.getNode(i - 1).getBulkSystem().getPhases()[phaseNum].getDensity() * Aw;
+          * pipe.getNode(i - 1).getBulkSystem().getPhase(phaseNum).getDensity() * Aw;
       // System.out.println("vel: " +
       // pipe.getNode(i).getVelocityOut(phase).doubleValue() + " fe " + Fe);
       if (dynamic) {
         oldComp[phaseNum][i] = 1.0 / timeStep * pipe.getNode(i).getArea(phaseNum)
             * pipe.getNode(i).getGeometry().getNodeLength()
-            * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getDensity();
+            * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getDensity();
       } else {
         oldComp[phaseNum][i] = 0.0;
       }
 
       SU = +sign * pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-          * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getComponents()[componentNumber]
+          * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getComponents()[componentNumber]
               .getMolarMass()
           * pipe.getNode(i).getGeometry().getNodeLength()
           * pipe.getNode(i).getInterphaseContactLength(phaseNum)
@@ -922,12 +910,12 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     // double Aw = pipe.getNode(i - 1).getArea(phaseNum);
 
     // double Fe = pipe.getNode(i).getVelocity(phaseNum) *
-    // pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getDensity() * Ae;
+    // pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getDensity() * Ae;
     // double Fw = pipe.getNode(i).getVelocityIn(phaseNum).doubleValue() * pipe.getNode(i -
-    // 1).getBulkSystem().getPhases()[phaseNum].getDensity() * Aw;
+    // 1).getBulkSystem().getPhase(phaseNum).getDensity() * Aw;
 
     SU = +sign * pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-        * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getComponents()[componentNumber]
+        * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getComponents()[componentNumber]
             .getMolarMass()
         * pipe.getNode(i).getGeometry().getNodeLength()
         * pipe.getNode(i).getInterphaseContactLength(phaseNum)
@@ -939,7 +927,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     if (dynamic) {
       oldComp[phaseNum][i] = 1.0 / timeStep * pipe.getNode(i).getArea(phaseNum)
           * pipe.getNode(i).getGeometry().getNodeLength()
-          * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getDensity();
+          * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getDensity();
     } else {
       oldComp[phaseNum][i] = 0.0;
     }

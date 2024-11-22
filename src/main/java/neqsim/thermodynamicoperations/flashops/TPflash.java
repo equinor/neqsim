@@ -328,10 +328,11 @@ public class TPflash extends Flash {
           }
         } else if (tpdy < 0) {
           for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-            system.getPhase(0).getComponent(i).setK(Math
-                .exp(minGibsLogFugCoef[i]
-                    - Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient()))
-                * presdiff);
+            system.getPhase(0).getComponent(i)
+                .setK(Math
+                    .exp(minGibsLogFugCoef[i]
+                        - Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient()))
+                    * presdiff);
             system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
           }
         } else {

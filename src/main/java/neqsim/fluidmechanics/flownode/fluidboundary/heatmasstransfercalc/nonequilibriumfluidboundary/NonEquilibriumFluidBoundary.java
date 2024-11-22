@@ -441,10 +441,10 @@ public abstract class NonEquilibriumFluidBoundary
    * @param phaseNum a int
    */
   public void calcHeatTransferCoefficients(int phaseNum) {
-    prandtlNumber[phaseNum] = getBulkSystem().getPhases()[phaseNum].getCp()
-        / getBulkSystem().getPhases()[phaseNum].getNumberOfMolesInPhase()
-        * getBulkSystem().getPhases()[phaseNum].getPhysicalProperties().getViscosity()
-        / getBulkSystem().getPhases()[phaseNum].getPhysicalProperties().getConductivity();
+    prandtlNumber[phaseNum] = getBulkSystem().getPhase(phaseNum).getCp()
+        / getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
+        * getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getViscosity()
+        / getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     // System.out.println("prandtlNumber " + prandtlNumber[phase] + " interface " +
     // flowNode.getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(phase,
     // prandtlNumber[phase], flowNode));
@@ -465,8 +465,8 @@ public abstract class NonEquilibriumFluidBoundary
       if (Math.abs(nFlux.get(i, 0)) < 1e-20) {
         temp += 0.0;
       } else {
-        temp += nFlux.get(i, 0) * getBulkSystem().getPhases()[phaseNum].getCp()
-            / getBulkSystem().getPhases()[phaseNum].getNumberOfMolesInPhase()
+        temp += nFlux.get(i, 0) * getBulkSystem().getPhase(phaseNum).getCp()
+            / getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
             / heatTransferCoefficient[phaseNum]; // bulkSystem.getPhases()[0].getComponent(i).getNumberOfMolesInPhase()*
       }
     }

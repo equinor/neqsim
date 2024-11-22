@@ -110,7 +110,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
    * @param phaseNum a int
    */
   public void setOnesVec(int phaseNum) {
-    for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phaseNum]
+    for (int j = 0; j < fluidBoundary.getBulkSystem().getPhase(phaseNum)
         .getNumberOfComponents(); j++) {
       enhancementVec[j] = 1.0;
     }

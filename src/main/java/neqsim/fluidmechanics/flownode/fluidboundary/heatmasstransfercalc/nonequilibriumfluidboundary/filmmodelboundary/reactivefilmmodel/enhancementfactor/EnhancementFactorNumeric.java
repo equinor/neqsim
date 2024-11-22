@@ -45,9 +45,9 @@ public class EnhancementFactorNumeric extends EnhancementFactor {
     nonReactiveInterface.createSystem();
     nonReactiveInterface.solve();
     reactiveInterface.solve();
-    for (int i = 0; i < fluidBoundary.getBulkSystem().getPhases()[phaseNum]
+    for (int i = 0; i < fluidBoundary.getBulkSystem().getPhase(phaseNum)
         .getNumberOfComponents(); i++) {
-      for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phaseNum]
+      for (int j = 0; j < fluidBoundary.getBulkSystem().getPhase(phaseNum)
           .getNumberOfComponents(); j++) {
         // enhancementFactor[1].set(i,j,0);
         // System.out.println("num enhancement " + enhancementFactor[1].get(i,j));

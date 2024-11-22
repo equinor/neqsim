@@ -53,14 +53,14 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
       FlowNodeInterface node) {
     if (Math.abs(node.getReynoldsNumber()) < 2000) {
       return 3.66 / node.getGeometry().getDiameter()
-          * node.getBulkSystem().getPhases()[phaseNum].getPhysicalProperties().getConductivity();
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     }
     // if turbulent - use chilton colburn analogy
     else {
-      double temp = node.getBulkSystem().getPhases()[phaseNum].getCp()
-          / node.getBulkSystem().getPhases()[phaseNum].getMolarMass()
-          / node.getBulkSystem().getPhases()[phaseNum].getNumberOfMolesInPhase()
-          * node.getBulkSystem().getPhases()[phaseNum].getPhysicalProperties().getDensity()
+      double temp = node.getBulkSystem().getPhase(phaseNum).getCp()
+          / node.getBulkSystem().getPhase(phaseNum).getMolarMass()
+          / node.getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
           * node.getVelocity();
       return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(prandtlNumber, -2.0 / 3.0)
           * temp;
@@ -73,8 +73,7 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
       FlowNodeInterface node) {
     if (Math.abs(node.getReynoldsNumber()) < 2000) {
       return 3.66 / node.getGeometry().getDiameter() / schmidtNumber
-          * node.getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
-              .getKinematicViscosity();
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
     } else {
       double temp = node.getVelocity();
       return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(schmidtNumber, -2.0 / 3.0)

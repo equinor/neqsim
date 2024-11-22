@@ -38,13 +38,13 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
       FlowNodeInterface node) {
     if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2000) {
       return 3.66 / node.getHydraulicDiameter(phaseNum)
-          * node.getBulkSystem().getPhases()[phaseNum].getPhysicalProperties().getConductivity();
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     } else {
       // if turbulent - use chilton colburn analogy
-      double temp = node.getBulkSystem().getPhases()[phaseNum].getCp()
-          / node.getBulkSystem().getPhases()[phaseNum].getMolarMass()
-          / node.getBulkSystem().getPhases()[phaseNum].getNumberOfMolesInPhase()
-          * node.getBulkSystem().getPhases()[phaseNum].getPhysicalProperties().getDensity()
+      double temp = node.getBulkSystem().getPhase(phaseNum).getCp()
+          / node.getBulkSystem().getPhase(phaseNum).getMolarMass()
+          / node.getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
           * node.getVelocity(phaseNum);
       return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(prandtlNumber, -2.0 / 3.0)
           * temp;
@@ -57,14 +57,14 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
       FlowNodeInterface node) {
     if (Math.abs(node.getReynoldsNumber()) < 2000) {
       return 3.66 / node.getHydraulicDiameter(phaseNum)
-          * node.getBulkSystem().getPhases()[phaseNum].getPhysicalProperties().getConductivity();
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     }
     // if turbulent - use chilton colburn analogy
     else {
-      double temp = node.getBulkSystem().getPhases()[phaseNum].getCp()
-          / node.getBulkSystem().getPhases()[phaseNum].getMolarMass()
-          / node.getBulkSystem().getPhases()[phaseNum].getNumberOfMolesInPhase()
-          * node.getBulkSystem().getPhases()[phaseNum].getPhysicalProperties().getDensity()
+      double temp = node.getBulkSystem().getPhase(phaseNum).getCp()
+          / node.getBulkSystem().getPhase(phaseNum).getMolarMass()
+          / node.getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
           * node.getVelocity(phaseNum);
       return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(prandtlNumber, -2.0 / 3.0)
           * temp;
@@ -77,8 +77,7 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
       FlowNodeInterface node) {
     if (Math.abs(node.getReynoldsNumber()) < 2000) {
       return 3.66 / node.getHydraulicDiameter(phaseNum) / schmidtNumber
-          * node.getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
-              .getKinematicViscosity();
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
     } else {
       double temp = node.getVelocity(phaseNum);
       return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(schmidtNumber, -2.0 / 3.0)
@@ -98,8 +97,9 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
       // System.out.println("red gas " +
       // redMassTrans/Math.pow(node.getReynoldsNumber(phase),c3));
       // System.out.println("sc gas " + schmidtNumber);
-      massTrans = redMassTrans * node.getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
-          .getKinematicViscosity() / schmidtNumber / node.getGeometry().getDiameter();
+      massTrans = redMassTrans
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
+          / schmidtNumber / node.getGeometry().getDiameter();
     }
     if (phaseNum == 1) {
       double c2 = 0.181, c3 = 0.72, c4 = 0.33;
@@ -108,8 +108,9 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
       // System.out.println("red liq" +
       // redMassTrans/Math.pow(node.getReynoldsNumber(phase),c3));
       // System.out.println("sc liq " + schmidtNumber);
-      massTrans = redMassTrans * node.getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
-          .getKinematicViscosity() / schmidtNumber / node.getGeometry().getDiameter();
+      massTrans = redMassTrans
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
+          / schmidtNumber / node.getGeometry().getDiameter();
     }
     return massTrans;
   }

@@ -362,7 +362,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
             .info("component name " + system.getPhase(phaseNum).getComponent(k).getComponentName());
         logger.info("dn " + dn);
         // logger.info("component name " +
-        // system.getPhases()[phaseNum].getComponent(k).getComponentName());
+        // system.getPhase(phaseNum).getComponent(k).getComponentName());
         // logger.info("dn " + dn);
         if (dn < 1e-12) {
           dn = 1e-12;

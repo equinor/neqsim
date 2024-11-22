@@ -410,9 +410,9 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
   /** {@inheritDoc} */
   @Override
   public void calcHeatTransferCoefficients(int phaseNum) {
-    prandtlNumber[phaseNum] = getBulkSystem().getPhases()[phaseNum].getCp()
-        * getBulkSystem().getPhases()[phaseNum].getPhysicalProperties().getViscosity()
-        / getBulkSystem().getPhases()[phaseNum].getPhysicalProperties().getConductivity();
+    prandtlNumber[phaseNum] = getBulkSystem().getPhase(phaseNum).getCp()
+        * getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getViscosity()
+        / getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     heatTransferCoefficient[phaseNum] = flowNode.getInterphaseTransportCoefficient()
         .calcInterphaseHeatTransferCoefficient(phaseNum, prandtlNumber[phaseNum], flowNode);
   }
@@ -423,7 +423,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
     double temp = 0;
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i++) {
       temp += bulkSystem.getPhases()[0].getComponent(i).getNumberOfMolesInPhase()
-          * getBulkSystem().getPhases()[phaseNum].getCp() / heatTransferCoefficient[phaseNum];
+          * getBulkSystem().getPhase(phaseNum).getCp() / heatTransferCoefficient[phaseNum];
     }
     heatTransferCorrection[phaseNum] = temp;
   }

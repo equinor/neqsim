@@ -82,7 +82,7 @@ public class InterphasePackedBed extends InterphaseReactorFlow
               * Math.pow(node.getGeometry().getPacking().getSurfaceAreaPrVolume()
                   * node.getGeometry().getPacking().getSize(), 0.4);
       massTrans = redMassTrans * Math.pow(
-          node.getBulkSystem().getPhases()[phaseNum].getPhysicalProperties().getKinematicViscosity()
+          node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
               * gravity,
           1.0 / 3.0);
       System.out.println("mas trans liq " + massTrans);
@@ -93,8 +93,7 @@ public class InterphasePackedBed extends InterphaseReactorFlow
               * Math.pow(node.getGeometry().getPacking().getSurfaceAreaPrVolume()
                   * node.getGeometry().getPacking().getSize(), -2.0);
       massTrans = redMassTrans * node.getGeometry().getPacking().getSurfaceAreaPrVolume()
-          * node.getBulkSystem().getPhases()[phaseNum].getPhysicalProperties()
-              .getKinematicViscosity()
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
           / schmidtNumber;
       System.out.println("mas trans gas " + massTrans);
     }
