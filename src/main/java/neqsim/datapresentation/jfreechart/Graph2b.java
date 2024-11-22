@@ -18,6 +18,7 @@ import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -302,6 +303,7 @@ public class Graph2b extends javax.swing.JFrame {
    *
    * @param args the command line arguments
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     new Graph2b().setVisible(true);
   }

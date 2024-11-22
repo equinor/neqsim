@@ -1468,10 +1468,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Set CompressorChartType
    * </p>
-   *
    */
   public void setCompressorChartType(String type) {
     if (type.equals("simple") || type.equals("fan law")) {

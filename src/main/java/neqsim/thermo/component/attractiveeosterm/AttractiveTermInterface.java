@@ -120,5 +120,10 @@ public interface AttractiveTermInterface extends Cloneable, java.io.Serializable
    */
   public AttractiveTermInterface clone();
 
+  /**
+   * <p>getm.</p>
+   *
+   * @return a double
+   */
   public double getm();
 }

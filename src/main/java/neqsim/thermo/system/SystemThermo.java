@@ -107,6 +107,11 @@ public abstract class SystemThermo implements SystemInterface {
   // Initialization
   boolean isInitialized = false;
 
+  /**
+   * <p>isInitialized.</p>
+   *
+   * @return a boolean
+   */
   public boolean isInitialized() {
     return isInitialized;
   }

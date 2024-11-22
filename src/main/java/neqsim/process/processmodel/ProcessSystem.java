@@ -737,7 +737,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Setter for the field <code>runStep</code>.
-   * 
+   *
    * @param runStep A <code>boolean</code> value if run only one iteration
    */
   public void setRunStep(boolean runStep) {
@@ -746,7 +746,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Getter for the field <code>runStep</code>.
-   * 
+   *
    * @return A <code>boolean</code> value if run only one iteration
    */
   public boolean isRunStep() {
