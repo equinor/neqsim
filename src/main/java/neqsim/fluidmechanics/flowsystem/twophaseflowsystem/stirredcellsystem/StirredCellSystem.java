@@ -50,14 +50,14 @@ public class StirredCellSystem
     }
 
     for (int j = 0; j < getTotalNumberOfNodes(); j++) {
-      for (int phase = 0; phase < 2; phase++) {
-        flowNode[j].setVelocityOut(phase, this.flowNode[j].getVelocity(phase));
+      for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
+        flowNode[j].setVelocityOut(phaseNum, this.flowNode[j].getVelocity(phaseNum));
       }
     }
 
     for (int k = 1; k < getTotalNumberOfNodes(); k++) {
-      for (int phase = 0; phase < 2; phase++) {
-        this.flowNode[k].setVelocityIn(phase, this.flowNode[k - 1].getVelocityOut(phase));
+      for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
+        this.flowNode[k].setVelocityIn(phaseNum, this.flowNode[k - 1].getVelocityOut(phaseNum));
       }
     }
   }

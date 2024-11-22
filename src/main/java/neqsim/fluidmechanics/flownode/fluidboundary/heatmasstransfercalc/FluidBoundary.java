@@ -237,33 +237,33 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
    * calcFluxTypeCorrectionMatrix.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    * @param k a int
    */
-  public void calcFluxTypeCorrectionMatrix(int phase, int k) {
-    fluxTypeCorrectionMatrixV[phase] =
-        new Matrix(bulkSystem.getPhases()[phase].getNumberOfComponents(), 1);
-    fluxTypeCorrectionMatrix[phase] =
-        new Matrix(bulkSystem.getPhases()[phase].getNumberOfComponents() - 1, 1);
+  public void calcFluxTypeCorrectionMatrix(int phaseNum, int k) {
+    fluxTypeCorrectionMatrixV[phaseNum] =
+        new Matrix(bulkSystem.getPhase(phaseNum).getNumberOfComponents(), 1);
+    fluxTypeCorrectionMatrix[phaseNum] =
+        new Matrix(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1, 1);
     double temp = 0;
 
     double sum = 0;
-    for (int i = 0; i < bulkSystem.getPhases()[phase].getNumberOfComponents() - 1; i++) {
+    for (int i = 0; i < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
       temp = (i == k) ? 1.0 : 0.0;
-      fluxTypeCorrectionMatrixV[phase].set(i, 0, temp);
-      sum += fluxTypeCorrectionMatrixV[phase].get(i, 0)
-          * bulkSystem.getPhases()[phase].getComponent(i).getx();
+      fluxTypeCorrectionMatrixV[phaseNum].set(i, 0, temp);
+      sum += fluxTypeCorrectionMatrixV[phaseNum].get(i, 0)
+          * bulkSystem.getPhase(phaseNum).getComponent(i).getx();
     }
 
-    sum += fluxTypeCorrectionMatrixV[phase]
-        .get(bulkSystem.getPhases()[phase].getNumberOfComponents() - 1, 0)
-        * bulkSystem.getPhases()[phase]
-            .getComponents()[bulkSystem.getPhases()[phase].getNumberOfComponents() - 1].getx();
+    sum += fluxTypeCorrectionMatrixV[phaseNum]
+        .get(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1, 0)
+        * bulkSystem.getPhase(phaseNum)
+            .getComponents()[bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1].getx();
 
-    for (int i = 0; i < bulkSystem.getPhases()[phase].getNumberOfComponents() - 1; i++) {
-      fluxTypeCorrectionMatrix[phase].set(i, 0,
-          (fluxTypeCorrectionMatrixV[phase].get(i, 0) - fluxTypeCorrectionMatrixV[phase]
-              .get(bulkSystem.getPhases()[phase].getNumberOfComponents() - 1, 0)) / sum);
+    for (int i = 0; i < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
+      fluxTypeCorrectionMatrix[phaseNum].set(i, 0,
+          (fluxTypeCorrectionMatrixV[phaseNum].get(i, 0) - fluxTypeCorrectionMatrixV[phaseNum]
+              .get(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1, 0)) / sum);
     }
   }
 
@@ -272,20 +272,20 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
    * calcNonIdealCorrections.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    */
-  public void calcNonIdealCorrections(int phase) {
-    nonIdealCorrections[phase] =
-        new Matrix(bulkSystem.getPhases()[phase].getNumberOfComponents() - 1,
-            bulkSystem.getPhases()[phase].getNumberOfComponents() - 1);
+  public void calcNonIdealCorrections(int phaseNum) {
+    nonIdealCorrections[phaseNum] =
+        new Matrix(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1,
+            bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1);
     double temp = 0;
-    for (int i = 0; i < bulkSystem.getPhases()[phase].getNumberOfComponents() - 1; i++) {
-      for (int j = 0; j < bulkSystem.getPhases()[phase].getNumberOfComponents() - 1; j++) {
+    for (int i = 0; i < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
+      for (int j = 0; j < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; j++) {
         temp = (i == j) ? 1.0 : 0.0;
-        nonIdealCorrections[phase].set(i, j,
-            temp + bulkSystem.getPhases()[phase].getComponent(i).getx()
-                * bulkSystem.getPhases()[phase].getComponent(i).getdfugdn(j)
-                * bulkSystem.getPhases()[phase].getNumberOfMolesInPhase());
+        nonIdealCorrections[phaseNum].set(i, j,
+            temp + bulkSystem.getPhase(phaseNum).getComponent(i).getx()
+                * bulkSystem.getPhase(phaseNum).getComponent(i).getdfugdn(j)
+                * bulkSystem.getPhase(phaseNum).getNumberOfMolesInPhase());
         // her må det fylles inn
       }
     }
@@ -321,18 +321,18 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
 
   /** {@inheritDoc} */
   @Override
-  public double getBinaryMassTransferCoefficient(int phase, int i, int j) {
-    return binaryMassTransferCoefficient[phase][i][j];
+  public double getBinaryMassTransferCoefficient(int phaseNum, int i, int j) {
+    return binaryMassTransferCoefficient[phaseNum][i][j];
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getEffectiveMassTransferCoefficient(int phase, int i) {
+  public double getEffectiveMassTransferCoefficient(int phaseNum, int i) {
     double temp = 0.0;
-    for (int j = 0; j < bulkSystem.getPhase(phase).getNumberOfComponents(); j++) {
+    for (int j = 0; j < bulkSystem.getPhase(phaseNum).getNumberOfComponents(); j++) {
       try {
-        temp += bulkSystem.getPhase(phase).getComponent(j).getx()
-            * binaryMassTransferCoefficient[phase][i][j];
+        temp += bulkSystem.getPhase(phaseNum).getComponent(j).getx()
+            * binaryMassTransferCoefficient[phaseNum][i][j];
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }

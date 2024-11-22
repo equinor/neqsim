@@ -506,9 +506,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * deleteFluidPhase.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    */
-  public void deleteFluidPhase(int phase);
+  public void deleteFluidPhase(int phaseNum);
 
   /**
    * <p>
@@ -567,10 +567,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Getter for property <code>beta</code> for a specific phase.
    * </p>
    *
-   * @param phase Number of phase to get beta for.
+   * @param phaseNum Number of phase to get beta for.
    * @return Beta value for
    */
-  public double getBeta(int phase);
+  public double getBeta(int phaseNum);
 
   /**
    * <p>
@@ -2148,10 +2148,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Setter for property <code>beta</code> for a given phase.
    * </p>
    *
-   * @param phase Phase number to set beta for.
+   * @param phaseNum Phase number to set beta for.
    * @param b Beta value to set.
    */
-  public void setBeta(int phase, double b);
+  public void setBeta(int phaseNum, double b);
 
   /**
    * <p>

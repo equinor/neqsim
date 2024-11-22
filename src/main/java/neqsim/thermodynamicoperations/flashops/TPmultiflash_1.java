@@ -302,19 +302,19 @@ public class TPmultiflash_1 extends TPflash {
 
     double chemdev = 0;
     if (system.isChemicalSystem()) {
-      for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
         chemdev = 0.0;
-        double[] xchem = new double[system.getPhases()[phase].getNumberOfComponents()];
+        double[] xchem = new double[system.getPhase(phaseNum).getNumberOfComponents()];
 
         for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-          xchem[i] = system.getPhases()[phase].getComponent(i).getx();
+          xchem[i] = system.getPhase(phaseNum).getComponent(i).getx();
         }
 
         system.init(1);
-        system.getChemicalReactionOperations().solveChemEq(phase, 1);
+        system.getChemicalReactionOperations().solveChemEq(phaseNum, 1);
 
         for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-          chemdev += Math.abs(xchem[i] - system.getPhases()[phase].getComponent(i).getx());
+          chemdev += Math.abs(xchem[i] - system.getPhase(phaseNum).getComponent(i).getx());
         }
         logger.info("chemdev: " + chemdev);
       }

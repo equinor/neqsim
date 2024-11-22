@@ -1295,13 +1295,13 @@ public class TPmultiflash extends TPflash {
             // 1);
           }
 
-          for (int phase = system.getPhaseNumberOfPhase("aqueous"); phase < system
-              .getPhaseNumberOfPhase("aqueous") + 1; phase++) {
+          for (int phaseNum = system.getPhaseNumberOfPhase("aqueous"); phaseNum < system
+              .getPhaseNumberOfPhase("aqueous") + 1; phaseNum++) {
             chemdev = 0.0;
-            double[] xchem = new double[system.getPhase(phase).getNumberOfComponents()];
+            double[] xchem = new double[system.getPhase(phaseNum).getNumberOfComponents()];
 
             for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              xchem[i] = system.getPhase(phase).getComponent(i).getx();
+              xchem[i] = system.getPhase(phaseNum).getComponent(i).getx();
             }
 
             system.init(1);
@@ -1309,7 +1309,7 @@ public class TPmultiflash extends TPflash {
                 .solveChemEq(system.getPhaseNumberOfPhase("aqueous"), 1);
 
             for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              chemdev += Math.abs(xchem[i] - system.getPhase(phase).getComponent(i).getx());
+              chemdev += Math.abs(xchem[i] - system.getPhase(phaseNum).getComponent(i).getx());
             }
             // logger.info("chemdev: " + chemdev);
           }

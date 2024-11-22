@@ -224,12 +224,12 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   /** {@inheritDoc} */
   @Override
   public void updateMolarFlow() {
-    for (int phase = 0; phase < 2; phase++) {
+    for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
       for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-        if (molarFlowRate[phase] > 1e-100) {
-          getBulkSystem().getPhases()[phase].addMoles(i,
-              (getBulkSystem().getPhases()[phase].getComponent(i).getx() * (molarFlowRate[phase]
-                  - getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase())));
+        if (molarFlowRate[phaseNum] > 1e-100) {
+          getBulkSystem().getPhase(phaseNum).addMoles(i,
+              (getBulkSystem().getPhase(phaseNum).getComponent(i).getx() * (molarFlowRate[phaseNum]
+                  - getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase())));
         }
       }
     }

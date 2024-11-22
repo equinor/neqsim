@@ -373,10 +373,10 @@ public class EclipseFluidReadWrite {
       fluid.init(0);
       for (int i = 0; i < names.size(); i++) {
         for (int j = i; j < names.size(); j++) {
-          for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
-            ((PhaseEosInterface) fluid.getPhase(phase)).getMixingRule()
+          for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
+            ((PhaseEosInterface) fluid.getPhase(phaseNum)).getMixingRule()
                 .setBinaryInteractionParameter(i, j, kij[i][j]);
-            ((PhaseEosInterface) fluid.getPhase(phase)).getMixingRule()
+            ((PhaseEosInterface) fluid.getPhase(phaseNum)).getMixingRule()
                 .setBinaryInteractionParameter(j, i, kij[i][j]);
           }
         }

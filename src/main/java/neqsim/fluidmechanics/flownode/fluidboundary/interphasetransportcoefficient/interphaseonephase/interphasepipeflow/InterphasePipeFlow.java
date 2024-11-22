@@ -49,34 +49,34 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
 
   /** {@inheritDoc} */
   @Override
-  public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber,
+  public double calcWallHeatTransferCoefficient(int phaseNum, double prandtlNumber,
       FlowNodeInterface node) {
     if (Math.abs(node.getReynoldsNumber()) < 2000) {
       return 3.66 / node.getGeometry().getDiameter()
-          * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getConductivity();
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     }
     // if turbulent - use chilton colburn analogy
     else {
-      double temp = node.getBulkSystem().getPhases()[phase].getCp()
-          / node.getBulkSystem().getPhases()[phase].getMolarMass()
-          / node.getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase()
-          * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getDensity()
+      double temp = node.getBulkSystem().getPhase(phaseNum).getCp()
+          / node.getBulkSystem().getPhase(phaseNum).getMolarMass()
+          / node.getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
           * node.getVelocity();
-      return 0.5 * this.calcWallFrictionFactor(phase, node) * Math.pow(prandtlNumber, -2.0 / 3.0)
+      return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(prandtlNumber, -2.0 / 3.0)
           * temp;
     }
   }
 
   /** {@inheritDoc} */
   @Override
-  public double calcWallMassTransferCoefficient(int phase, double schmidtNumber,
+  public double calcWallMassTransferCoefficient(int phaseNum, double schmidtNumber,
       FlowNodeInterface node) {
     if (Math.abs(node.getReynoldsNumber()) < 2000) {
       return 3.66 / node.getGeometry().getDiameter() / schmidtNumber
-          * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity();
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
     } else {
       double temp = node.getVelocity();
-      return 0.5 * this.calcWallFrictionFactor(phase, node) * Math.pow(schmidtNumber, -2.0 / 3.0)
+      return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(schmidtNumber, -2.0 / 3.0)
           * temp;
     }
   }

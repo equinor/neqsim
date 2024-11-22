@@ -595,19 +595,19 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * getDeRatedGasLoadFactor.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    * @return a double
    */
-  public double getDeRatedGasLoadFactor(int phase) {
+  public double getDeRatedGasLoadFactor(int phaseNum) {
     thermoSystem.initPhysicalProperties();
     double derating = 1.0;
     double surfaceTension =
-        thermoSystem.getInterphaseProperties().getSurfaceTension(phase - 1, phase);
+        thermoSystem.getInterphaseProperties().getSurfaceTension(phaseNum - 1, phaseNum);
     if (surfaceTension < 10.0e-3) {
       derating = 1.0 - 0.5 * (10.0e-3 - surfaceTension) / 10.0e-3;
     }
     // System.out.println("derating " + derating);
-    double term1 = (thermoSystem.getPhase(phase).getPhysicalProperties().getDensity()
+    double term1 = (thermoSystem.getPhase(phaseNum).getPhysicalProperties().getDensity()
         - thermoSystem.getPhase(0).getPhysicalProperties().getDensity())
         / thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
     return derating * getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);

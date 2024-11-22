@@ -476,10 +476,10 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
 
   /** {@inheritDoc} */
   @Override
-  public double getPrandtlNumber(int phase) {
-    return getBulkSystem().getPhases()[phase].getCp()
-        * getBulkSystem().getPhases()[phase].getPhysicalProperties().getViscosity()
-        / getBulkSystem().getPhases()[phase].getPhysicalProperties().getConductivity();
+  public double getPrandtlNumber(int phaseNum) {
+    return getBulkSystem().getPhase(phaseNum).getCp()
+        * getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getViscosity()
+        / getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
   }
 
   /** {@inheritDoc} */
@@ -557,13 +557,14 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
 
   /** {@inheritDoc} */
   @Override
-  public double calcTotalHeatTransferCoefficient(int phase) {
-    double prandtlNumber = getBulkSystem().getPhases()[phase].getCp()
-        / getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase()
-        * getBulkSystem().getPhases()[phase].getPhysicalProperties().getViscosity()
-        / getBulkSystem().getPhases()[phase].getPhysicalProperties().getConductivity();
+  public double calcTotalHeatTransferCoefficient(int phaseNum) {
+    double prandtlNumber = getBulkSystem().getPhase(phaseNum).getCp()
+        / getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
+        * getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getViscosity()
+        / getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     double temp = 1.0 / (1.0
-        / interphaseTransportCoefficient.calcWallHeatTransferCoefficient(phase, prandtlNumber, this)
+        / interphaseTransportCoefficient.calcWallHeatTransferCoefficient(phaseNum, prandtlNumber,
+            this)
         + 1.0 / pipe.getWallHeatTransferCoefficient()
         + 1.0 / pipe.getSurroundingEnvironment().getHeatTransferCoefficient());
     return temp;

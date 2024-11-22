@@ -15,7 +15,9 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for InterphaseDropletFlow.</p>
+   * <p>
+   * Constructor for InterphaseDropletFlow.
+   * </p>
    */
   public InterphaseDropletFlow() {}
 
@@ -50,73 +52,73 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
 
   /** {@inheritDoc} */
   @Override
-  public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber,
+  public double calcWallHeatTransferCoefficient(int phaseNum, double prandtlNumber,
       FlowNodeInterface node) {
-    if (Math.abs(node.getReynoldsNumber(phase)) < 2000) {
-      return 3.66 / node.getHydraulicDiameter(phase)
-          * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getConductivity();
+    if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2000) {
+      return 3.66 / node.getHydraulicDiameter(phaseNum)
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     } else {
       // if turbulent - use chilton colburn analogy
-      double temp = node.getBulkSystem().getPhases()[phase].getCp()
-          / node.getBulkSystem().getPhases()[phase].getMolarMass()
-          / node.getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase()
-          * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getDensity()
-          * node.getVelocity(phase);
-      return 0.5 * this.calcWallFrictionFactor(phase, node) * Math.pow(prandtlNumber, -2.0 / 3.0)
+      double temp = node.getBulkSystem().getPhase(phaseNum).getCp()
+          / node.getBulkSystem().getPhase(phaseNum).getMolarMass()
+          / node.getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
+          * node.getVelocity(phaseNum);
+      return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(prandtlNumber, -2.0 / 3.0)
           * temp;
     }
   }
 
   /** {@inheritDoc} */
   @Override
-  public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber,
+  public double calcInterphaseHeatTransferCoefficient(int phaseNum, double prandtlNumber,
       FlowNodeInterface node) {
     // System.out.println("velocity " + node.getVelocity(phase));
     if (Math.abs(node.getReynoldsNumber()) < 2000) {
-      return 3.66 / node.getHydraulicDiameter(phase)
-          * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getConductivity();
+      return 3.66 / node.getHydraulicDiameter(phaseNum)
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     } else {
       // if turbulent - use chilton colburn analogy
-      double temp = node.getBulkSystem().getPhases()[phase].getCp()
-          / node.getBulkSystem().getPhases()[phase].getMolarMass()
-          / node.getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase()
-          * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getDensity()
-          * node.getVelocity(phase);
+      double temp = node.getBulkSystem().getPhase(phaseNum).getCp()
+          / node.getBulkSystem().getPhase(phaseNum).getMolarMass()
+          / node.getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
+          * node.getVelocity(phaseNum);
 
-      return 0.5 * this.calcWallFrictionFactor(phase, node) * Math.pow(prandtlNumber, -2.0 / 3.0)
+      return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(prandtlNumber, -2.0 / 3.0)
           * temp;
     }
   }
 
   /** {@inheritDoc} */
   @Override
-  public double calcWallMassTransferCoefficient(int phase, double schmidtNumber,
+  public double calcWallMassTransferCoefficient(int phaseNum, double schmidtNumber,
       FlowNodeInterface node) {
     if (Math.abs(node.getReynoldsNumber()) < 2000) {
-      return 3.66 / node.getHydraulicDiameter(phase) / schmidtNumber
-          * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity();
+      return 3.66 / node.getHydraulicDiameter(phaseNum) / schmidtNumber
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
     } else {
-      double temp = node.getVelocity(phase);
-      return 0.5 * this.calcWallFrictionFactor(phase, node) * Math.pow(schmidtNumber, -2.0 / 3.0)
+      double temp = node.getVelocity(phaseNum);
+      return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(schmidtNumber, -2.0 / 3.0)
           * temp;
     }
   }
 
   /** {@inheritDoc} */
   @Override
-  public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber,
+  public double calcInterphaseMassTransferCoefficient(int phaseNum, double schmidtNumber,
       FlowNodeInterface node) {
     double redMassTrans = 0;
     double massTrans = 0;
-    if (phase == 1) {
-      if (Math.abs(node.getReynoldsNumber(phase)) < 300) {
-        redMassTrans = 1.099e-2 * Math.pow(node.getReynoldsNumber(phase), 0.3955)
+    if (phaseNum == 1) {
+      if (Math.abs(node.getReynoldsNumber(phaseNum)) < 300) {
+        redMassTrans = 1.099e-2 * Math.pow(node.getReynoldsNumber(phaseNum), 0.3955)
             * Math.pow(schmidtNumber, 0.5);
-      } else if (Math.abs(node.getReynoldsNumber(phase)) < 1600) {
-        redMassTrans = 2.995e-2 * Math.pow(node.getReynoldsNumber(phase), 0.2134)
+      } else if (Math.abs(node.getReynoldsNumber(phaseNum)) < 1600) {
+        redMassTrans = 2.995e-2 * Math.pow(node.getReynoldsNumber(phaseNum), 0.2134)
             * Math.pow(schmidtNumber, 0.5);
       } else {
-        redMassTrans = 9.777e-4 * Math.pow(node.getReynoldsNumber(phase), 0.6804)
+        redMassTrans = 9.777e-4 * Math.pow(node.getReynoldsNumber(phaseNum), 0.6804)
             * Math.pow(schmidtNumber, 0.5);
       }
       // System.out.println("redmass" + redMassTrans + " redmass " +
@@ -125,61 +127,61 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
       // er usikker paa denne korreksjonen med 1e-2 - maa sjekkes opp mot artikkel av
       // Yih og Chen (1982) - satser paa at de ga den med enhet cm/sek
       massTrans = redMassTrans
-          * Math.pow(Math.pow(node.getBulkSystem().getPhases()[phase].getPhysicalProperties()
+          * Math.pow(Math.pow(node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
               .getKinematicViscosity(), 2.0) / gravity, -1.0 / 3.0)
-          * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity()
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
           / schmidtNumber;
     }
-    if (phase == 0) {
-      if (Math.abs(node.getReynoldsNumber(phase)) < 2300) {
-        // System.out.println("schmidt " + schmidtNumber +" phase " + phase);
-        // System.out.println("hyd diam " + node.getHydraulicDiameter(phase) +" phase "
-        // + phase);
+    if (phaseNum == 0) {
+      if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2300) {
+        // System.out.println("schmidt " + schmidtNumber +" phaseNum " + phaseNum);
+        // System.out.println("hyd diam " + node.getHydraulicDiameter(phaseNum) +" phaseNum "
+        // + phaseNum);
         // System.out.println("kin visk " +
-        // node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity()
-        // +" phase " + phase);
-        // System.out.println("mas " +3.66 / node.getHydraulicDiameter(phase) /
+        // node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
+        // +" phaseNum " + phaseNum);
+        // System.out.println("mas " +3.66 / node.getHydraulicDiameter(phaseNum) /
         // schmidtNumber *
-        // node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity()
-        // +" phase " + phase);
-        massTrans = 3.66 / node.getHydraulicDiameter(phase) / schmidtNumber
-            * node.getBulkSystem().getPhases()[phase].getPhysicalProperties()
-                .getKinematicViscosity();
+        // node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
+        // +" phaseNum " + phaseNum);
+        massTrans = 3.66 / node.getHydraulicDiameter(phaseNum) / schmidtNumber * node
+            .getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
       } else {
-        double temp = node.getVelocity(phase);
-        // System.out.println("mass " + 1e-5* 0.5 * this.calcWallFrictionFactor(phase,
+        double temp = node.getVelocity(phaseNum);
+        // System.out.println("mass " + 1e-5* 0.5 * this.calcWallFrictionFactor(phaseNum,
         // node) * Math.pow(schmidtNumber, -2.0/3.0) * temp);
-        massTrans = 0.5 * this.calcWallFrictionFactor(phase, node)
+        massTrans = 0.5 * this.calcWallFrictionFactor(phaseNum, node)
             * Math.pow(schmidtNumber, -2.0 / 3.0) * temp;
       }
     }
-    // System.out.println("mass "+ massTrans + " phase " + phase + " rey " +
-    // node.getReynoldsNumber(phase) + " COMP " + );
+    // System.out.println("mass "+ massTrans + " phaseNum " + phaseNum + " rey " +
+    // node.getReynoldsNumber(phaseNum) + " COMP " + );
     return massTrans;
   }
 
-  // public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber,
+  // public double calcInterphaseMassTransferCoefficient(int phaseNum, double schmidtNumber,
   // FlowNodeInterface node){
   // double redMassTrans=0.0, massTrans=0.0;
   // double c2=0.181, c3=0.72, c4=0.33;
-  // if(phase==1){
-  // redMassTrans = c2 * Math.pow(node.getReynoldsNumber(phase),c3) * Math.pow(schmidtNumber, c4);
-  // //System.out.println("red " + redMassTrans/Math.pow(node.getReynoldsNumber(phase),c3));
+  // if(phaseNum==1){
+  // redMassTrans = c2 * Math.pow(node.getReynoldsNumber(phaseNum),c3) * Math.pow(schmidtNumber,
+  // c4);
+  // //System.out.println("red " + redMassTrans/Math.pow(node.getReynoldsNumber(phaseNum),c3));
   // //System.out.println("sc " + schmidtNumber);
   // massTrans =
-  // redMassTrans*node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity()
+  // redMassTrans*node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
   // / schmidtNumber / node.getGeometry().getDiameter();
   // }
-  // if(phase==0){
+  // if(phaseNum==0){
   // //System.out.println("diff " +
-  // node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity() /
+  // node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity() /
   // schmidtNumber);
 
-  // //massTrans = 3.66 / node.getHydraulicDiameter(phase) / schmidtNumber *
-  // node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity();
+  // //massTrans = 3.66 / node.getHydraulicDiameter(phaseNum) / schmidtNumber *
+  // node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
   // massTrans=0.010;
   // }
-  // //System.out.println("mass trans " +massTrans + " phase " + phase);
+  // //System.out.println("mass trans " +massTrans + " phaseNum " + phaseNum);
   // return massTrans;
   // }
 }
