@@ -215,10 +215,10 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0]
             .getNumberOfComponents(); j++) {
           solMolFracMatrix[phaseNum][j].set(i, 0,
-              pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getComponent(j).getx()
-                  * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getComponent(j)
+              pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getComponent(j).getx()
+                  * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getComponent(j)
                       .getMolarMass()
-                  / pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getMolarMass());
+                  / pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getMolarMass());
         }
       }
     }

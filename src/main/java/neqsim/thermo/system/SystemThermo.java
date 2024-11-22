@@ -3384,7 +3384,7 @@ public abstract class SystemThermo implements SystemInterface {
 
     for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
       for (int k = 0; k < getPhases()[0].getNumberOfComponents(); k++) {
-        double dn = getPhases()[phaseNum].getComponent(k).getNumberOfMolesInPhase() / 1.0e6;
+        double dn = getPhase(phaseNum).getComponent(k).getNumberOfMolesInPhase() / 1.0e6;
         if (dn < 1e-12) {
           dn = 1e-12;
         }
@@ -3395,7 +3395,7 @@ public abstract class SystemThermo implements SystemInterface {
         init(1);
 
         for (int i = 0; i < getPhases()[0].getNumberOfComponents(); i++) {
-          liqfug[0][i] = Math.log(getPhases()[phaseNum].getComponent(i).getFugacityCoefficient());
+          liqfug[0][i] = Math.log(getPhase(phaseNum).getComponent(i).getFugacityCoefficient());
         }
 
         addComponent(k, -2.0 * dn, phaseNum);
@@ -3406,7 +3406,7 @@ public abstract class SystemThermo implements SystemInterface {
         for (int i = 0; i < getPhases()[0].getNumberOfComponents(); i++) {
           // gasfug[1][i] =
           // Math.log(getPhases()[0].getComponent(i).getFugacityCoefficient());
-          liqfug[1][i] = Math.log(getPhases()[phaseNum].getComponent(i).getFugacityCoefficient());
+          liqfug[1][i] = Math.log(getPhase(phaseNum).getComponent(i).getFugacityCoefficient());
         }
 
         for (int i = 0; i < getPhases()[0].getNumberOfComponents(); i++) {
@@ -3511,7 +3511,7 @@ public abstract class SystemThermo implements SystemInterface {
       if (type == 3) {
         for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
           for (int k = 0; k < getPhases()[0].getNumberOfComponents(); k++) {
-            double dn = getPhases()[phaseNum].getComponent(k).getNumberOfMolesInPhase() / 1.0e6;
+            double dn = getPhase(phaseNum).getComponent(k).getNumberOfMolesInPhase() / 1.0e6;
 
             addComponent(k, dn, phaseNum);
             // initBeta();
@@ -3519,8 +3519,7 @@ public abstract class SystemThermo implements SystemInterface {
             init(1);
 
             for (int i = 0; i < getPhases()[0].getNumberOfComponents(); i++) {
-              liqfug[0][i] =
-                  Math.log(getPhases()[phaseNum].getComponent(i).getFugacityCoefficient());
+              liqfug[0][i] = Math.log(getPhase(phaseNum).getComponent(i).getFugacityCoefficient());
             }
 
             addComponent(k, -2.0 * dn, phaseNum);
@@ -3531,8 +3530,7 @@ public abstract class SystemThermo implements SystemInterface {
             for (int i = 0; i < getPhases()[0].getNumberOfComponents(); i++) {
               // gasfug[1][i] =
               // Math.log(getPhases()[0].getComponent(i).getFugacityCoefficient());
-              liqfug[1][i] =
-                  Math.log(getPhases()[phaseNum].getComponent(i).getFugacityCoefficient());
+              liqfug[1][i] = Math.log(getPhase(phaseNum).getComponent(i).getFugacityCoefficient());
             }
             addComponent(k, dn, phaseNum);
             init_x_y();

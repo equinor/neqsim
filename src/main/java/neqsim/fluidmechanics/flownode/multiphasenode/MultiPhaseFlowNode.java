@@ -205,10 +205,9 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
   public void updateMolarFlow() {
     for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
       for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-        getBulkSystem().getPhases()[phaseNum].addMoles(i,
-            (getBulkSystem().getPhases()[phaseNum].getComponents()[i].getx()
-                * (molarFlowRate[phaseNum]
-                    - getBulkSystem().getPhases()[phaseNum].getNumberOfMolesInPhase())));
+        getBulkSystem().getPhase(phaseNum).addMoles(i,
+            (getBulkSystem().getPhase(phaseNum).getComponent(i).getx() * (molarFlowRate[phaseNum]
+                - getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase())));
       }
     }
     getBulkSystem().init(1);

@@ -357,9 +357,9 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
 
     for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
       for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
-        double dn = system.getPhases()[phaseNum].getComponent(k).getNumberOfMolesInPhase() / 1.0e5;
-        logger.info(
-            "component name " + system.getPhases()[phaseNum].getComponent(k).getComponentName());
+        double dn = system.getPhase(phaseNum).getComponent(k).getNumberOfMolesInPhase() / 1.0e5;
+        logger
+            .info("component name " + system.getPhase(phaseNum).getComponent(k).getComponentName());
         logger.info("dn " + dn);
         // logger.info("component name " +
         // system.getPhases()[phase].getComponent(k).getComponentName());
@@ -376,7 +376,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
           // gasfug[0][i] =
           // Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient());
           liqfug[0][i] =
-              Math.log(system.getPhases()[phaseNum].getComponent(i).getFugacityCoefficient());
+              Math.log(system.getPhase(phaseNum).getComponent(i).getFugacityCoefficient());
         }
 
         system.addComponent(k, -2.0 * dn, phaseNum);
@@ -388,7 +388,7 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
           // gasfug[1][i] =
           // Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient());
           liqfug[1][i] =
-              Math.log(system.getPhases()[phaseNum].getComponent(i).getFugacityCoefficient());
+              Math.log(system.getPhase(phaseNum).getComponent(i).getFugacityCoefficient());
         }
 
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {

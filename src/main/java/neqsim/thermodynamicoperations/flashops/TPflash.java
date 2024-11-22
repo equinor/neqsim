@@ -439,14 +439,14 @@ public class TPflash extends Flash {
         double[] xchem = new double[system.getPhase(0).getNumberOfComponents()];
 
         for (int phaseNum = 1; phaseNum < system.getNumberOfPhases(); phaseNum++) {
-          for (i = 0; i < system.getPhases()[phaseNum].getNumberOfComponents(); i++) {
+          for (i = 0; i < system.getPhase(phaseNum).getNumberOfComponents(); i++) {
             xchem[i] = system.getPhase(phaseNum).getComponent(i).getx();
           }
 
           system.init(1);
           system.getChemicalReactionOperations().solveChemEq(phaseNum, 1);
 
-          for (i = 0; i < system.getPhases()[phaseNum].getNumberOfComponents(); i++) {
+          for (i = 0; i < system.getPhase(phaseNum).getNumberOfComponents(); i++) {
             chemdev +=
                 Math.abs(xchem[i] - system.getPhase(phaseNum).getComponent(i).getx()) / xchem[i];
           }
