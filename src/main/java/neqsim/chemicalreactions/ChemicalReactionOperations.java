@@ -513,9 +513,9 @@ public class ChemicalReactionOperations
     this.deltaReactionHeat = deltaReactionHeat;
   }
 
-  // public Matrix calcReacRates(int phase){
-  // // System.out.println(" vol " + system.getPhases()[0].getMolarVolume());
-  // return getReactionList().calcReacRates(system.getPhase(phase), components);
+  // public Matrix calcReacRates(int phaseNum){
+  // // System.out.println(" vol " + system.getPhase()[0].getMolarVolume());
+  // return getReactionList().calcReacRates(system.getPhase(phaseNum), components);
   // }
 
   // /** Setter for property reactionList.

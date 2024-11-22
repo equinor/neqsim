@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -109,6 +110,7 @@ public class SwellingTest extends BasePVTsimulation {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     SystemInterface oilSystem = new SystemSrkEos(298.0, 50);
     oilSystem.addComponent("methane", 5.01);

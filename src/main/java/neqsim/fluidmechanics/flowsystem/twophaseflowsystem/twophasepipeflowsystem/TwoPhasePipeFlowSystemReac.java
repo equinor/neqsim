@@ -4,6 +4,7 @@ import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -30,6 +31,7 @@ public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // Initierer et nyt rorsystem
     neqsim.fluidmechanics.flowsystem.FlowSystemInterface pipe = new TwoPhasePipeFlowSystemReac();

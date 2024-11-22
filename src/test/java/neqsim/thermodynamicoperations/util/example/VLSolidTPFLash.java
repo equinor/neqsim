@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -25,6 +26,7 @@ public class VLSolidTPFLash {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     SystemInterface testSystem = new SystemPrEos(208.2, 18.34);
     testSystem.addComponent("nitrogen", 0.379);

@@ -68,12 +68,12 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * @param b_element an array of type double
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
-   * @param phase a int
+   * @param phaseNum a int
    */
   public ChemicalEquilibrium(double[][] A_matrix, double[] b_element, SystemInterface system,
-      ComponentInterface[] components, int phase) {
+      ComponentInterface[] components, int phaseNum) {
     this.system = system;
-    phasenumb = phase;
+    phasenumb = phaseNum;
     this.A_matrix = A_matrix;
     this.b_element = b_element;
     this.components = components;

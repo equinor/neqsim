@@ -9,6 +9,7 @@ import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -216,6 +217,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     SystemInterface testSystem = new SystemFurstElectrolyteEos(313.315, 50.01325);
     // SystemInterface testSystem = new SystemSrkEos(295.3, 100.01325);

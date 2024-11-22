@@ -6,6 +6,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -202,6 +203,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     SystemInterface testSystem = new SystemSrkEos(273.15 + 2.0, 1.0);
     testSystem.addComponent("methane", 0.0006538);

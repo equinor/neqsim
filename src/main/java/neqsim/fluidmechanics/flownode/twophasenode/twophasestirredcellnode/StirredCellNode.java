@@ -8,6 +8,7 @@ import neqsim.fluidmechanics.geometrydefinitions.stirredcell.StirredCell;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -225,6 +226,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3,
     // ThermodynamicConstantsInterface.referencePressure);

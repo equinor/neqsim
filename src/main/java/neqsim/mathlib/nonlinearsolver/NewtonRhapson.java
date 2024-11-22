@@ -6,6 +6,8 @@
 
 package neqsim.mathlib.nonlinearsolver;
 
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
+
 /**
  * <p>
  * newtonRhapson class.
@@ -208,6 +210,7 @@ public class NewtonRhapson implements java.io.Serializable {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     NewtonRhapson test = new NewtonRhapson();
     test.setOrder(3);

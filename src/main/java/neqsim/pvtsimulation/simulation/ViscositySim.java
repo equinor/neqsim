@@ -9,6 +9,7 @@ import neqsim.statistics.parameterfitting.SampleValue;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -142,6 +143,7 @@ public class ViscositySim extends BasePVTsimulation {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     SystemInterface tempSystem = new SystemSrkEos(298.0, 10.0);
     // tempSystem.addComponent("n-heptane", 6.78);

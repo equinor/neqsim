@@ -1,5 +1,7 @@
 package neqsim.thermo.util.referenceequations;
 
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
+
 /**
  * <p>
  * methaneBWR32 class.
@@ -102,6 +104,7 @@ public class methaneBWR32 {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     methaneBWR32 testMet = new methaneBWR32();
     double pres = testMet.calcPressure(0.04, 298.0);

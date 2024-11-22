@@ -8,6 +8,7 @@ import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -232,6 +233,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 5.0, 10.0e-3);
 

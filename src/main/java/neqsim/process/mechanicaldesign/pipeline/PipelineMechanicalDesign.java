@@ -6,6 +6,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.designstandards.MaterialPipeDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.PipelineDesignStandard;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -26,8 +27,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
    * Constructor for PipelineMechanicalDesign.
    * </p>
    *
-   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *        object
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public PipelineMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -96,6 +96,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 90.00);

@@ -188,10 +188,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    *
    * @param addSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param phase phase number of phase to add fluid to
+   * @param phaseNum phase number of phase to add fluid to
    * @return SystemInterface
    */
-  public SystemInterface addFluid(SystemInterface addSystem, int phase);
+  public SystemInterface addFluid(SystemInterface addSystem, int phaseNum);
 
   /**
    * <p>
@@ -1412,10 +1412,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    *
    * @param prop a {@link java.lang.String} object
-   * @param phase a int
+   * @param phaseNum a int
    * @return a double
    */
-  public double getProperty(String prop, int phase);
+  public double getProperty(String prop, int phaseNum);
 
   /**
    * <p>
@@ -1424,10 +1424,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param prop a {@link java.lang.String} object
    * @param compName a {@link java.lang.String} object
-   * @param phase a int
+   * @param phaseNum a int
    * @return a double
    */
-  public double getProperty(String prop, String compName, int phase);
+  public double getProperty(String prop, String compName, int phaseNum);
 
   /**
    * <p>
@@ -1704,9 +1704,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *        density, fugacities and Z-factor 2: 1 + calculation of enthalpy, entropy, Cp, Cv, and
    *        most other thermodynamic properties 3: 1+2 + Calculation of composition derivatives of
    *        fugacity coefficients.
-   * @param phase a int
+   * @param phaseNum a int
    */
-  public void init(int number, int phase);
+  public void init(int number, int phaseNum);
 
   /**
    * <p>
@@ -2113,9 +2113,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * setAllComponentsInPhase.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    */
-  public void setAllComponentsInPhase(int phase);
+  public void setAllComponentsInPhase(int phaseNum);
 
   /**
    * Set phase type of all phases.
@@ -2582,9 +2582,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param model a {@link java.lang.String} object
    * @param val a double
-   * @param phase a int
+   * @param phaseNum a int
    */
-  public void tuneModel(String model, double val, int phase);
+  public void tuneModel(String model, double val, int phaseNum);
 
   /**
    * <p>

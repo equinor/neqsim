@@ -266,13 +266,13 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
    * initPhaseFraction.
    * </p>
    *
-   * @param phase a int
+   * @param phaseNum a int
    */
-  public void initPhaseFraction(int phase) {
+  public void initPhaseFraction(int phaseNum) {
     for (int i = 0; i < numberOfNodes; i++) {
-      pipe.getNode(i).setPhaseFraction(phase,
-          pipe.getNode(i).getPhaseFraction(phase) + 0.8 * diffMatrix.get(i, 0));
-      pipe.getNode(i).setPhaseFraction(0, 1.0 - pipe.getNode(i).getPhaseFraction(phase));
+      pipe.getNode(i).setPhaseFraction(phaseNum,
+          pipe.getNode(i).getPhaseFraction(phaseNum) + 0.8 * diffMatrix.get(i, 0));
+      pipe.getNode(i).setPhaseFraction(0, 1.0 - pipe.getNode(i).getPhaseFraction(phaseNum));
       pipe.getNode(i).init();
     }
   }

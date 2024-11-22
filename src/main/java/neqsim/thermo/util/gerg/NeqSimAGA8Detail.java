@@ -7,6 +7,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -329,6 +330,7 @@ public class NeqSimAGA8Detail {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // test HitHub
     SystemInterface fluid1 = new SystemSrkEos();

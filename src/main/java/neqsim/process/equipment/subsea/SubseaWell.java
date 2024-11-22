@@ -9,6 +9,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -31,8 +32,7 @@ public class SubseaWell extends TwoPortEquipment {
    * </p>
    *
    * @param name Name of well
-   * @param instream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param instream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public SubseaWell(String name, StreamInterface instream) {
     super(name);
@@ -45,8 +45,7 @@ public class SubseaWell extends TwoPortEquipment {
    * Getter for the field <code>pipeline</code>.
    * </p>
    *
-   * @return a {@link neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe}
-   *         object
+   * @return a {@link neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe} object
    */
   public AdiabaticTwoPhasePipe getPipeline() {
     return pipeline;
@@ -84,6 +83,7 @@ public class SubseaWell extends TwoPortEquipment {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 100.0), 250.00);

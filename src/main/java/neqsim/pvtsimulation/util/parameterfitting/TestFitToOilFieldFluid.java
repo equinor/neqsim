@@ -8,6 +8,7 @@ import neqsim.statistics.parameterfitting.SampleValue;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -27,6 +28,7 @@ public class TestFitToOilFieldFluid {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

@@ -8,6 +8,7 @@ package neqsim.statistics.parameterfitting.nonlinearparameterfitting;
 
 import Jama.Matrix;
 import neqsim.statistics.parameterfitting.StatisticsBaseClass;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -120,6 +121,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     /*
      * LevenbergMarquardt optim = new LevenbergMarquardt(); TestFunction testFunction = new

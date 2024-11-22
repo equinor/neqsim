@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /*
  * <p> PhaseEnvelope class. Created on 27. september 2001, 10:21 Updated on May 2019 by Nefeli </p>
@@ -27,6 +28,7 @@ public class PhaseEnvelope {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     // String[] components=neqsim.util.database.NeqSimDataBase.getComponentNames();
 

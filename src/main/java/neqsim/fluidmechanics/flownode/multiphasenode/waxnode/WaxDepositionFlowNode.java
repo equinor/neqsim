@@ -9,6 +9,7 @@ import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -119,6 +120,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     SystemInterface testSystem = new SystemSrkEos(273.15 + 40.0, 10.0);
     // SystemInterface testSystem = new SystemSrkCPAstatoil(275.3,

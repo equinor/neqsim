@@ -440,6 +440,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 40.0), 70.0);

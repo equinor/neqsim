@@ -2,6 +2,7 @@ package neqsim.fluidmechanics.flowsystem.twophaseflowsystem.stirredcellsystem;
 
 import java.util.UUID;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -105,6 +106,7 @@ public class StirredCellSystem
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // Initierer et nyt rorsystem
     neqsim.fluidmechanics.flowsystem.FlowSystemInterface pipe = new StirredCellSystem();

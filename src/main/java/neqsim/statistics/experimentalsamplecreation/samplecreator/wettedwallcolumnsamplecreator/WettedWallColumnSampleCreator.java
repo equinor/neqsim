@@ -16,6 +16,7 @@ import neqsim.statistics.experimentalsamplecreation.samplecreator.SampleCreator;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -205,6 +206,7 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     WettedWallColumnSampleCreator creator = new WettedWallColumnSampleCreator("31011250");
     ExperimentalEquipmentData eq = new WettedWallColumnData(0.025, 1.48, 4.9);

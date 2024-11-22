@@ -9,6 +9,7 @@ import neqsim.statistics.parameterfitting.SampleValue;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
@@ -29,13 +30,14 @@ public class TestParachorFit {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     LevenbergMarquardt optim = new LevenbergMarquardt();
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
     try (NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database
-        .getResultSet("SELECT * FROM purecomponentsurfacetension WHERE ComponentName='MEG'")) {
+            .getResultSet("SELECT * FROM purecomponentsurfacetension WHERE ComponentName='MEG'")) {
       while (dataSet.next()) {
         ParachorFunction function = new ParachorFunction();
         double guess[] = {207.2}; // methane

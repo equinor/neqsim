@@ -4,6 +4,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -100,6 +101,7 @@ public class GOR extends BasePVTsimulation {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     SystemInterface tempSystem = new SystemSrkEos(298.0, 1.0);
     tempSystem.addComponent("nitrogen", 0.64);

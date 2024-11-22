@@ -9,6 +9,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -127,6 +128,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     /*
      * System.out.println("Starter....."); SystemSrkEos testSystem = new SystemSrkEos(275.3,

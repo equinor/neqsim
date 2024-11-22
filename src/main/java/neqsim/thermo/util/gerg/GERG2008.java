@@ -3,6 +3,7 @@ package neqsim.thermo.util.gerg;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -3230,6 +3231,7 @@ public class GERG2008 {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     GERG2008 test = new GERG2008();
     test.SetupGERG();

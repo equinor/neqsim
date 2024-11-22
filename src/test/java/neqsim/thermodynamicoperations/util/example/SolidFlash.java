@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -25,6 +26,7 @@ public class SolidFlash {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     SystemInterface testSystem = new SystemUMRPRUMCEos(273.15 - 30, 18.0);
     // testSystem.addComponent("nitrogen", 83.33);

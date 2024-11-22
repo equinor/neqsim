@@ -8,6 +8,7 @@ import neqsim.statistics.parameterfitting.SampleSet;
 import neqsim.statistics.parameterfitting.SampleValue;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
@@ -149,6 +150,7 @@ public class WaxFractionSim extends BasePVTsimulation {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     NeqSimDataBase.setConnectionString(
         "jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
