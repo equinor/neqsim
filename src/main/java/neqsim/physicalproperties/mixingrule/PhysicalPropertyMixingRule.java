@@ -85,7 +85,7 @@ public class PhysicalPropertyMixingRule
       if (phase.getComponent(l).isIsTBPfraction() || phase.getComponent(l).getIonicCharge() != 0) {
         break;
       }
-      String component_name = phase.getComponents()[l].getComponentName();
+      String component_name = phase.getComponent(l).getComponentName();
       for (int k = l; k < phase.getNumberOfComponents(); k++) {
         if (k == l || phase.getComponent(k).getIonicCharge() != 0
             || phase.getComponent(k).isIsTBPfraction()) {

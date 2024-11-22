@@ -109,17 +109,17 @@ public class SysNewtonRhapson implements java.io.Serializable {
     int speceqmin = 0;
 
     for (int i = 0; i < numberOfComponents; i++) {
-      if (system.getPhases()[0].getComponent(i)
-          .getTC() > system.getPhases()[0].getComponents()[speceq].getTC()) {
+      if (system.getPhases()[0].getComponent(i).getTC() > system.getPhases()[0].getComponent(speceq)
+          .getTC()) {
         speceq = system.getPhases()[0].getComponent(i).getComponentNumber();
       }
-      if (system.getPhases()[0].getComponent(i)
-          .getTC() < system.getPhases()[0].getComponents()[speceq].getTC()) {
+      if (system.getPhases()[0].getComponent(i).getTC() < system.getPhases()[0].getComponent(speceq)
+          .getTC()) {
         speceqmin = system.getPhases()[0].getComponent(i).getComponentNumber();
       }
     }
-    avscp = (system.getPhases()[0].getComponents()[speceq].getTC()
-        - system.getPhases()[0].getComponents()[speceqmin].getTC()) / 2000;
+    avscp = (system.getPhases()[0].getComponent(speceq).getTC()
+        - system.getPhases()[0].getComponent(speceqmin).getTC()) / 2000;
     System.out.println("avscp: " + avscp);
     dTmax = avscp * 3;
     dPmax = avscp * 1.5;

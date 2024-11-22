@@ -93,8 +93,7 @@ public class SysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     }
     double fsum = 0.0;
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      fsum += system.getPhase(0).getComponent(i).getx()
-          - system.getPhase(1).getComponent(i).getx();
+      fsum += system.getPhase(0).getComponent(i).getx() - system.getPhase(1).getComponent(i).getx();
     }
     fvec.setEntry(system.getPhase(0).getNumberOfComponents(), 0, fsum);
     fvec.setEntry(system.getPhase(0).getNumberOfComponents() + 1, 0, 0);
@@ -110,18 +109,18 @@ public class SysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     int speceqmin = 0;
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      if (system.getPhase(0).getComponent(i).getTC() > system.getPhase(0).getComponents()[speceq]
+      if (system.getPhase(0).getComponent(i).getTC() > system.getPhase(0).getComponent(speceq)
           .getTC()) {
         speceq = system.getPhase(0).getComponent(i).getComponentNumber();
       }
-      if (system.getPhase(0).getComponent(i)
-          .getTC() < system.getPhase(0).getComponents()[speceqmin].getTC()) {
+      if (system.getPhase(0).getComponent(i).getTC() < system.getPhase(0).getComponent(speceqmin)
+          .getTC()) {
         speceqmin = system.getPhase(0).getComponent(i).getComponentNumber();
       }
     }
     avscp = 0.3;
-    // (system.getPhase(0).getComponents()[speceq].getTC() -
-    // system.getPhase(0).getComponents()[speceqmin].getTC()) / 300.0;
+    // (system.getPhase(0).getComponent(speceq).getTC() -
+    // system.getPhase(0).getComponent(speceqmin).getTC()) / 300.0;
     logger.info("avscp: " + avscp);
     dTmax = 10.0; // avscp*10;
     dPmax = 10.0; // avscp*10;
@@ -159,8 +158,7 @@ public class SysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     int nofc = system.getPhase(0).getNumberOfComponents();
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       dxidlnk[i] = -system.getBeta() * system.getPhase(1).getComponent(i).getx()
-          * system.getPhase(0).getComponent(i).getx()
-          / system.getPhase(0).getComponent(i).getz();
+          * system.getPhase(0).getComponent(i).getx() / system.getPhase(0).getComponent(i).getz();
       dyidlnk[i] = system.getPhase(0).getComponent(i).getx()
           + system.getPhase(1).getComponent(i).getK() * dxidlnk[i];
       // logger.info("dxidlnk("+i+") "+dxidlnk[i]);

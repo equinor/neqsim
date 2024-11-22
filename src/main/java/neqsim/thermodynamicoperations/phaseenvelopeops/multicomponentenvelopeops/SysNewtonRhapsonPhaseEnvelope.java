@@ -116,8 +116,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     }
     double fsum = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      fsum += system.getPhase(0).getComponent(i).getx()
-          - system.getPhase(1).getComponent(i).getx();
+      fsum += system.getPhase(0).getComponent(i).getx() - system.getPhase(1).getComponent(i).getx();
     }
     fvec.set(numberOfComponents, 0, fsum);
     fvec.set(numberOfComponents, 0, sumy - sumx);
@@ -155,14 +154,14 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
       if (system.getComponent(i).getz() < 1e-10) {
         continue;
       }
-      if (system.getPhase(0).getComponent(i).getTC() > system.getPhase(0).getComponents()[speceq]
+      if (system.getPhase(0).getComponent(i).getTC() > system.getPhase(0).getComponent(speceq)
           .getTC()) {
         speceq = system.getPhase(0).getComponent(i).getComponentNumber();
         specVal = u.get(i, 0);
         hc = i;
       }
-      if (system.getPhase(0).getComponent(i)
-          .getTC() < system.getPhase(0).getComponents()[speceqmin].getTC()) {
+      if (system.getPhase(0).getComponent(i).getTC() < system.getPhase(0).getComponent(speceqmin)
+          .getTC()) {
         speceqmin = system.getPhase(0).getComponent(i).getComponentNumber();
         lc = i;
       }
@@ -259,15 +258,14 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     double tempJ = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       dxidlnk[i] = -system.getBeta() * system.getPhase(1).getComponent(i).getx()
-          * system.getPhase(0).getComponent(i).getx()
-          / system.getPhase(0).getComponent(i).getz();
+          * system.getPhase(0).getComponent(i).getx() / system.getPhase(0).getComponent(i).getz();
       dyidlnk[i] = system.getPhase(0).getComponent(i).getx()
           + system.getPhase(1).getComponent(i).getK() * dxidlnk[i];
     }
     for (int i = 0; i < numberOfComponents; i++) {
-      double dlnxdlnK =
-          -1.0 / (1.0 + system.getBeta() * system.getPhase(0).getComponent(i).getK()
-              - system.getBeta()) * system.getBeta() * system.getPhase(0).getComponent(i).getK();
+      double dlnxdlnK = -1.0
+          / (1.0 + system.getBeta() * system.getPhase(0).getComponent(i).getK() - system.getBeta())
+          * system.getBeta() * system.getPhase(0).getComponent(i).getK();
       double dlnydlnK = 1.0 - 1.0
           / (system.getPhase(0).getComponent(i).getK() * system.getBeta() + 1 - system.getBeta())
           * system.getBeta() * system.getPhase(0).getComponent(i).getK();
@@ -299,16 +297,15 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     double[] dyidlnk = new double[numberOfComponents];
     double tempJ = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      dxidlnk[i] = -system.getPhase(1).getComponent(i).getz()
-          * Math.pow(system.getPhase(0).getComponent(i).getK() * system.getBeta() + 1.0
-              - system.getBeta(), -2.0)
-          * system.getBeta() * system.getPhase(1).getComponent(i).getK();
+      dxidlnk[i] =
+          -system.getPhase(1).getComponent(i).getz()
+              * Math.pow(system.getPhase(0).getComponent(i).getK() * system.getBeta() + 1.0
+                  - system.getBeta(), -2.0)
+              * system.getBeta() * system.getPhase(1).getComponent(i).getK();
       dyidlnk[i] = system.getPhase(1).getComponent(i).getz()
-          / (system.getPhase(0).getComponent(i).getK() * system.getBeta() + 1.0
-              - system.getBeta())
+          / (system.getPhase(0).getComponent(i).getK() * system.getBeta() + 1.0 - system.getBeta())
           * system.getPhase(1).getComponent(i).getK()
-          - system.getPhase(0).getComponent(i).getK()
-              * system.getPhase(1).getComponent(i).getz()
+          - system.getPhase(0).getComponent(i).getK() * system.getPhase(1).getComponent(i).getz()
               / Math.pow(1.0 - system.getBeta()
                   + system.getBeta() * system.getPhase(0).getComponent(i).getK(), 2.0)
               * system.getBeta() * system.getPhase(0).getComponent(i).getK();

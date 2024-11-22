@@ -2127,7 +2127,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         String component_name = phase.getComponent(k).getComponentName();
 
         for (int l = k; l < phase.getNumberOfComponents(); l++) {
-          String component_name2 = phase.getComponents()[l].getComponentName();
+          String component_name2 = phase.getComponent(l).getComponentName();
           if (k == l) {
             classicOrHV[k][l] = "Classic";
             classicOrWS[k][l] = "Classic";
@@ -2281,17 +2281,15 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                 // +component_name2 + " and " +
                 // component_name+ " to " +
                 // intparam[k][l]);
-              } else if ((component_name.equals("CO2")
-                  && phase.getComponents()[l].isIsTBPfraction())
+              } else if ((component_name.equals("CO2") && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("CO2") && phase.getComponent(k).isIsTBPfraction())) {
                 intparam[k][l] = 0.1;
               } else if ((component_name.equals("nitrogen")
-                  && phase.getComponents()[l].isIsTBPfraction())
+                  && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("nitrogen")
                       && phase.getComponent(k).isIsTBPfraction())) {
                 intparam[k][l] = 0.08;
-              } else if ((component_name.equals("water")
-                  && phase.getComponents()[l].isIsTBPfraction())
+              } else if ((component_name.equals("water") && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("water") && phase.getComponent(k).isIsTBPfraction())) {
                 intparam[k][l] = 0.2;
 
@@ -2301,7 +2299,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                         .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
                   // intparam[k][l] = -0.0685; // taken from Riaz et a. 2012
 
-                  double molmassPC = phase.getComponents()[l].getMolarMass();
+                  double molmassPC = phase.getComponent(l).getMolarMass();
                   if (phase.getComponent(k).isIsTBPfraction()) {
                     molmassPC = phase.getComponents()[k].getMolarMass();
                   }
@@ -2311,8 +2309,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
                   intparamT[k][l] = 0.0;
                 }
-              } else if ((component_name.equals("MEG")
-                  && phase.getComponents()[l].isIsTBPfraction())
+              } else if ((component_name.equals("MEG") && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("MEG")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.2;
@@ -2320,7 +2317,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                     || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
                     || phase.getClass().getName()
                         .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
-                  double molmassPC = phase.getComponents()[l].getMolarMass();
+                  double molmassPC = phase.getComponent(l).getMolarMass();
                   if (phase.getComponents()[k].isIsTBPfraction()) {
                     molmassPC = phase.getComponents()[k].getMolarMass();
                   }
@@ -2331,7 +2328,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                   intparamT[k][l] = 0.0;
                 }
               } else if ((component_name.equals("ethanol")
-                  && phase.getComponents()[l].isIsTBPfraction())
+                  && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("ethanol")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.0;
@@ -2342,12 +2339,12 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                   intparam[k][l] = -0.05;
                   intparamT[k][l] = 0.0;
                   if (phase.getComponents()[k].getMolarMass() > (200.0 / 1000.0)
-                      || phase.getComponents()[l].getMolarMass() > (200.0 / 1000.0)) {
+                      || phase.getComponent(l).getMolarMass() > (200.0 / 1000.0)) {
                     intparam[k][l] = -0.1;
                   }
                 }
               } else if ((component_name.equals("methanol")
-                  && phase.getComponents()[l].isIsTBPfraction())
+                  && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("methanol")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.0;
@@ -2358,12 +2355,11 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                   intparam[k][l] = -0.1;
                   intparamT[k][l] = 0.0;
                   if (phase.getComponents()[k].getMolarMass() > (200.0 / 1000.0)
-                      || phase.getComponents()[l].getMolarMass() > (200.0 / 1000.0)) {
+                      || phase.getComponent(l).getMolarMass() > (200.0 / 1000.0)) {
                     intparam[k][l] = -0.2;
                   }
                 }
-              } else if ((component_name.equals("TEG")
-                  && phase.getComponents()[l].isIsTBPfraction())
+              } else if ((component_name.equals("TEG") && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("TEG")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.12;
@@ -2374,7 +2370,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                   intparam[k][l] = 0.12;
                   intparamT[k][l] = 0.0;
                 }
-              } else if ((component_name.equals("S8") && phase.getComponents()[l].isIsTBPfraction())
+              } else if ((component_name.equals("S8") && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("S8") && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.05;
               } else {

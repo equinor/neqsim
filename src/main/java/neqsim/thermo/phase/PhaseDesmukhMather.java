@@ -61,7 +61,7 @@ public class PhaseDesmukhMather extends PhaseGE {
 
         for (int l = k; l < getNumberOfComponents(); l++) {
           if (k == l) {
-            if (getComponents()[l].getComponentName().equals("MDEA")
+            if (getComponent(l).getComponentName().equals("MDEA")
                 && getComponent(k).getComponentName().equals("MDEA")) {
               aij[k][l] = -0.0828487;
               this.aij[l][k] = this.aij[k][l];
@@ -69,13 +69,13 @@ public class PhaseDesmukhMather extends PhaseGE {
           } else {
             try (java.sql.ResultSet dataSet =
                 database.getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name
-                    + "' AND comp2='" + getComponents()[l].getComponentName() + "') OR (comp1='"
-                    + getComponents()[l].getComponentName() + "' AND comp2='" + component_name
+                    + "' AND comp2='" + getComponent(l).getComponentName() + "') OR (comp1='"
+                    + getComponent(l).getComponentName() + "' AND comp2='" + component_name
                     + "')");) {
               dataSet.next();
 
               // if
-              // (dataSet.getString("comp1").trim().equals(getComponents()[l].getComponentName())) {
+              // (dataSet.getString("comp1").trim().equals(getComponent(l).getComponentName())) {
               // templ = k;
               // tempk = l;
               // }

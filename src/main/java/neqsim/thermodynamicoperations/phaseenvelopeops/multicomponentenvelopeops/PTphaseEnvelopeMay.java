@@ -130,11 +130,11 @@ public class PTphaseEnvelopeMay extends BaseOperation {
       // based on the desired first point, dew/bubble
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
-          if (bubblePointFirst && system.getPhase(0).getComponents()[speceq].getTC() > system
+          if (bubblePointFirst && system.getPhase(0).getComponent(speceq).getTC() > system
               .getPhase(0).getComponent(i).getTC()) {
             speceq = system.getPhase(0).getComponent(i).getComponentNumber();
           }
-          if (!bubblePointFirst && system.getPhase(0).getComponents()[speceq].getTC() < system
+          if (!bubblePointFirst && system.getPhase(0).getComponent(speceq).getTC() < system
               .getPhase(0).getComponent(i).getTC()) {
             speceq = system.getPhase(0).getComponent(i).getComponentNumber();
           }

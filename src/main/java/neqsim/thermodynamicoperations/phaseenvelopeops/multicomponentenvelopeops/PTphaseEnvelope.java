@@ -156,11 +156,11 @@ public class PTphaseEnvelope extends BaseOperation {
         continue;
       }
       if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
-        if (bubblePointFirst && system.getPhase(0).getComponents()[speceq].getTC() > system
-            .getPhase(0).getComponent(i).getTC()) {
+        if (bubblePointFirst && system.getPhase(0).getComponent(speceq).getTC() > system.getPhase(0)
+            .getComponent(i).getTC()) {
           speceq = system.getPhase(0).getComponent(i).getComponentNumber();
         }
-        if (!bubblePointFirst && system.getPhase(0).getComponents()[speceq].getTC() < system
+        if (!bubblePointFirst && system.getPhase(0).getComponent(speceq).getTC() < system
             .getPhase(0).getComponent(i).getTC()) {
           speceq = system.getPhase(0).getComponent(i).getComponentNumber();
         }

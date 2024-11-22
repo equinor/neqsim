@@ -622,13 +622,13 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
             // database = new util.database.NeqSimDataBase();
             if (NeqSimDataBase.createTemporaryTables()) {
               dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='"
-                  + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName()
-                  + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='"
+                  + component_name + "' AND comp2='" + phase.getComponent(l).getComponentName()
+                  + "') OR (comp1='" + phase.getComponent(l).getComponentName() + "' AND comp2='"
                   + component_name + "')");
             } else {
               dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name
-                  + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='"
-                  + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name
+                  + "' AND comp2='" + phase.getComponent(l).getComponentName() + "') OR (comp1='"
+                  + phase.getComponent(l).getComponentName() + "' AND comp2='" + component_name
                   + "')");
             }
             if (dataSet.next()) {

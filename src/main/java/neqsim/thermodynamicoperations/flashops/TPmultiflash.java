@@ -357,7 +357,7 @@ public class TPmultiflash extends TPflash {
 
         if (clonedSystem.get(0).isPhase(1)) {
           try {
-            clonedSystem.get(0).getPhase(1).getComponents()[cc].setx(nomb);
+            clonedSystem.get(0).getPhase(1).getComponent(cc).setx(nomb);
           } catch (Exception ex) {
             logger.warn(ex.getMessage());
           }
@@ -707,7 +707,7 @@ public class TPmultiflash extends TPflash {
 
         if (clonedSystem.get(0).isPhase(1)) {
           try {
-            clonedSystem.get(0).getPhase(1).getComponents()[cc].setx(nomb);
+            clonedSystem.get(0).getPhase(1).getComponent(cc).setx(nomb);
           } catch (Exception ex) {
             logger.warn(ex.getMessage());
           }
