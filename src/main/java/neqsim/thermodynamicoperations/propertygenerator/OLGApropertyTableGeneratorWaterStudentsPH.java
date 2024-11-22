@@ -14,6 +14,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -1291,6 +1292,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     logger.info("TC " + TC + " PC " + PC);
     for (int i = 0; i < pressures.length; i++) {

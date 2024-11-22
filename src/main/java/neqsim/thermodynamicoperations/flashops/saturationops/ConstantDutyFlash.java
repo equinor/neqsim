@@ -2,8 +2,8 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -35,14 +35,15 @@ public abstract class ConstantDutyFlash implements ConstantDutyFlashInterface {
   double[] lnOldK;
   double[] oldDeltalnK;
   double[] deltalnK;
-  double[] tm = { 1, 1 };
+  double[] tm = {1, 1};
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
 
   /**
-   * <p>Constructor for constantDutyFlash.</p>
+   * <p>
+   * Constructor for constantDutyFlash.
+   * </p>
    */
-  public ConstantDutyFlash() {
-  }
+  public ConstantDutyFlash() {}
 
   /**
    * <p>
@@ -126,6 +127,7 @@ public abstract class ConstantDutyFlash implements ConstantDutyFlashInterface {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     system.display();
   }
@@ -153,6 +155,5 @@ public abstract class ConstantDutyFlash implements ConstantDutyFlashInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addData(String name, double[][] data) {
-  }
+  public void addData(String name, double[][] data) {}
 }

@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -423,6 +424,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     logger.info("TC " + TC + " PC " + PC);
     for (int i = 0; i < pressures.length; i++) {

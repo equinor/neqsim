@@ -28,6 +28,7 @@ import neqsim.thermo.phase.PhaseSolid;
 import neqsim.thermo.phase.PhaseSolidComplex;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PhaseWax;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
 import neqsim.util.exception.InvalidInputException;
 import neqsim.util.unit.Units;
@@ -1647,6 +1648,7 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void display(String name) {
     if (this.getNumberOfComponents() == 0) {
       return;

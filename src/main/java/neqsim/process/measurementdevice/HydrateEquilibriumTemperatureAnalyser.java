@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -35,6 +36,7 @@ public class HydrateEquilibriumTemperatureAnalyser extends StreamMeasurementDevi
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     /*
      * try { // System.out.println("total water production [kg/dag]" + //

@@ -17,6 +17,7 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -450,6 +451,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * displayValues.
    * </p>
    */
+  @ExcludeFromJacocoGeneratedReport
   public void displayValues() {
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(5);
@@ -500,6 +502,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(5);
@@ -554,6 +557,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * displayResultWithDeviation.
    * </p>
    */
+  @ExcludeFromJacocoGeneratedReport
   public void displayResultWithDeviation() {
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(5);
@@ -630,6 +634,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * @param name a {@link java.lang.String} object
    * @param d a int
    */
+  @ExcludeFromJacocoGeneratedReport
   public void displayMatrix(Matrix coVarianceMatrix, String name, int d) {
     int m = coVarianceMatrix.getRowDimension();
     int n = coVarianceMatrix.getColumnDimension();
@@ -710,6 +715,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * displaySimple.
    * </p>
    */
+  @ExcludeFromJacocoGeneratedReport
   public void displaySimple() {
     calcAbsDev();
     try {
@@ -734,6 +740,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayCurveFit() {
     calcAbsDev();
     try {

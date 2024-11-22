@@ -9,6 +9,7 @@ import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -514,6 +515,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * display.
    * </p>
    */
+  @ExcludeFromJacocoGeneratedReport
   public default void display() {
     display(this.getFluidName());
   }

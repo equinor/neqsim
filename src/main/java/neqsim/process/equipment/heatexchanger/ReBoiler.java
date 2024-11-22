@@ -5,6 +5,7 @@ import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -27,8 +28,7 @@ public class ReBoiler extends TwoPortEquipment {
    * </p>
    *
    * @param name name of reboiler
-   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public ReBoiler(String name, StreamInterface inStream) {
     super(name, inStream);
@@ -62,6 +62,7 @@ public class ReBoiler extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     System.out.println("out Temperature " + reboilerDuty);
   }

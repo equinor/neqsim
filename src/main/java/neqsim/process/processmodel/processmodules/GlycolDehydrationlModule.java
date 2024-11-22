@@ -14,6 +14,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessModuleBaseClass;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -353,6 +354,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     gasStreamFromAbsorber.getThermoSystem().display();
     leanTEGStreamToAbsorber.displayResult();
@@ -472,8 +474,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     Separator separator = new Separator("Separator 1", saturator.getOutletStream());
 
     neqsim.process.processmodel.processmodules.GlycolDehydrationlModule TEGplant =
-        new neqsim.process.processmodel.processmodules.GlycolDehydrationlModule(
-            "TEGplant");
+        new neqsim.process.processmodel.processmodules.GlycolDehydrationlModule("TEGplant");
     TEGplant.addInputStream("gasStreamToAbsorber", saturator.getOutletStream());
     TEGplant.addInputStream("strippingGas", strippingGasStream);
     TEGplant.setSpecification("water dew point specification", 273.15 - 10.0);

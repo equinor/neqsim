@@ -14,6 +14,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.HeaterResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -60,8 +61,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Heater(String name, StreamInterface inStream) {
     super(name);
@@ -214,6 +214,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     // System.out.println("heater dH: " + energyInput);
     getOutletStream().displayResult();

@@ -3,6 +3,7 @@ package neqsim.process.measurementdevice;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -35,8 +36,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
    * Constructor for WaterDewPointAnalyser.
    * </p>
    *
-   * @param pipe a {@link neqsim.process.equipment.pipeline.PipeBeggsAndBrills}
-   *        object
+   * @param pipe a {@link neqsim.process.equipment.pipeline.PipeBeggsAndBrills} object
    */
   public FlowInducedVibrationAnalyser(PipeBeggsAndBrills pipe) {
     this("Pipeline Flow Induced Vibration Analyzer", pipe);
@@ -48,8 +48,7 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
    * </p>
    *
    * @param name Name of FlowInducedVibrationAnalyser
-   * @param pipe a {@link neqsim.process.equipment.pipeline.PipeBeggsAndBrills}
-   *        object
+   * @param pipe a {@link neqsim.process.equipment.pipeline.PipeBeggsAndBrills} object
    */
   public FlowInducedVibrationAnalyser(String name, PipeBeggsAndBrills pipe) {
     super(name, pipe.getName() + " FIV analyser");
@@ -58,11 +57,8 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void displayResult() {
-    try {
-    } finally {
-    }
-  }
+  @ExcludeFromJacocoGeneratedReport
+  public void displayResult() {}
 
   /** {@inheritDoc} */
   @Override

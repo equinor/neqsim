@@ -1,6 +1,7 @@
 package neqsim.process.measurementdevice;
 
 import neqsim.process.measurementdevice.online.OnlineSignal;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.NamedBaseClass;
 
 /**
@@ -140,6 +141,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     System.out.println("measured value: " + getMeasuredValue());
   }

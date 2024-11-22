@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.datapresentation.jfreechart.Graph2b;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.OperationInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -130,6 +131,7 @@ public class PloadingCurve implements OperationInterface {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(1);

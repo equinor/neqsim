@@ -9,6 +9,7 @@ import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -444,6 +445,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {}
 
   /** {@inheritDoc} */

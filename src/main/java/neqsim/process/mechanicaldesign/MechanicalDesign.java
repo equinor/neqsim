@@ -19,6 +19,7 @@ import neqsim.process.mechanicaldesign.designstandards.MaterialPlateDesignStanda
 import neqsim.process.mechanicaldesign.designstandards.PipelineDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.PressureVesselDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -127,8 +128,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * Constructor for MechanicalDesign.
    * </p>
    *
-   * @param processEquipment a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param processEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public MechanicalDesign(ProcessEquipmentInterface processEquipment) {
     this.processEquipment = processEquipment;
@@ -1020,6 +1020,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * displayResults.
    * </p>
    */
+  @ExcludeFromJacocoGeneratedReport
   public void displayResults() {
     JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
     Container dialogContentPane = dialog.getContentPane();

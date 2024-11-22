@@ -12,6 +12,7 @@ import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingrule.EosMixingRules;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Abstract class PhaseEos.
@@ -71,6 +72,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayInteractionCoefficients(String intType) {
     mixSelect.displayInteractionCoefficients(intType, this);
   }

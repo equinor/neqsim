@@ -15,6 +15,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.HXResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -89,8 +90,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
    * Add inlet stream.
    * </p>
    *
-   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void addInStream(StreamInterface inStream) {
     // todo: this is probably intended to specifically set the second stream. should be deprecated
@@ -104,8 +104,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
    * </p>
    *
    * @param number a int
-   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void setFeedStream(int number, StreamInterface inStream) {
     this.inStream[number] = inStream;
@@ -446,6 +445,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     outStream[0].displayResult();
     outStream[1].displayResult();
