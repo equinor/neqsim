@@ -26,6 +26,7 @@ import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
 import neqsim.process.util.monitor.SeparatorResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -287,6 +288,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     thermoSystem.display();
   }

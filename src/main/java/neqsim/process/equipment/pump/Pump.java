@@ -16,6 +16,7 @@ import neqsim.process.util.monitor.PumpResponse;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -190,6 +191,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(5);

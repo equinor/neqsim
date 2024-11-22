@@ -2,6 +2,7 @@ package neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisuali
 
 import neqsim.fluidmechanics.flowsystem.FlowSystem;
 import neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualization.twophaseflownodevisualization.TwoPhaseFlowNodeVisualization;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -115,6 +116,7 @@ public class TwoPhasePipeFlowVisualization extends
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult(String name) {
     // double[][] points = new double[1][1];
     setPoints();

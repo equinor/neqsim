@@ -18,6 +18,7 @@ import neqsim.standards.salescontract.BaseContract;
 import neqsim.standards.salescontract.ContractInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.NamedBaseClass;
 
 /**
@@ -155,6 +156,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void display(String name) {
     JDialog dialog = new JDialog(new JFrame(), "Standard-Report");
     Container dialogContentPane = dialog.getContentPane();

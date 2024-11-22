@@ -1,6 +1,7 @@
 package neqsim.process.measurementdevice;
 
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -19,8 +20,7 @@ public class CompressorMonitor extends MeasurementDeviceBaseClass {
    * Constructor for CompressorMonitor.
    * </p>
    *
-   * @param compressor a {@link neqsim.process.equipment.compressor.Compressor}
-   *        object
+   * @param compressor a {@link neqsim.process.equipment.compressor.Compressor} object
    */
   public CompressorMonitor(Compressor compressor) {
     this("Compressor Monitor", compressor);
@@ -41,6 +41,7 @@ public class CompressorMonitor extends MeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     System.out.println("measured speed " + compressor.getSpeed());
   }

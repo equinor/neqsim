@@ -2,6 +2,7 @@ package neqsim.process.measurementdevice;
 
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -41,6 +42,7 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     System.out.println("measured volume " + Double.toString(getMeasuredValue()) + " " + unit);
   }

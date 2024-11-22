@@ -4,6 +4,7 @@ import java.util.UUID;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -78,6 +79,7 @@ public class SimpleTPoutPipeline extends Pipeline {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     outStream.getThermoSystem().display(name);
     outStream.getThermoSystem().initPhysicalProperties();

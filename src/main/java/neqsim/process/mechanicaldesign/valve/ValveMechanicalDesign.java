@@ -10,6 +10,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.designstandards.ValveDesignStandard;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -33,8 +34,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
    * Constructor for ValveMechanicalDesign.
    * </p>
    *
-   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *        object
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public ValveMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -73,6 +73,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResults() {
     JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
     Container dialogContentPane = dialog.getContentPane();

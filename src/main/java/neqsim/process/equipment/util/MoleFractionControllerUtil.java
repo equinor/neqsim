@@ -6,6 +6,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -31,8 +32,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
    * Constructor for MoleFractionControllerUtil.
    * </p>
    *
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public MoleFractionControllerUtil(StreamInterface inletStream) {
     super("MoleFractionControllerUtil");
@@ -140,6 +140,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     thermoSystem.display(getName());
   }

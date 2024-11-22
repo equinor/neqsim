@@ -3,6 +3,7 @@ package neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisuali
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualization.FlowNodeVisualization;
 import neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualization.FlowNodeVisualizationInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -75,5 +76,6 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult(String name) {}
 }

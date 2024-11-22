@@ -2,6 +2,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -217,6 +218,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
    * displayResult.
    * </p>
    */
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {}
 
   /**

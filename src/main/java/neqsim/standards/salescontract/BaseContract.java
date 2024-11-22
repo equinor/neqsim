@@ -23,6 +23,7 @@ import neqsim.standards.gasquality.Standard_ISO6976;
 import neqsim.standards.gasquality.SulfurSpecificationMethod;
 import neqsim.standards.gasquality.UKspecifications_ICF_SI;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -204,6 +205,7 @@ public class BaseContract implements ContractInterface {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void display() {
     JFrame dialog =
         new JFrame("Specification check against sales specifications: " + getContractName());

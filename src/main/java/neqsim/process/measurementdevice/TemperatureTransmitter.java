@@ -7,6 +7,7 @@
 package neqsim.process.measurementdevice;
 
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -44,6 +45,7 @@ public class TemperatureTransmitter extends StreamMeasurementDeviceBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     System.out.println("measured temperature " + getMeasuredValue());
   }

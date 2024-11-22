@@ -12,6 +12,7 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.SeparatorInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.designstandards.CompressorDesignStandard;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -31,8 +32,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    * Constructor for CompressorMechanicalDesign.
    * </p>
    *
-   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *        object
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public CompressorMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -57,6 +57,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResults() {
     JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
     Container dialogContentPane = dialog.getContentPane();

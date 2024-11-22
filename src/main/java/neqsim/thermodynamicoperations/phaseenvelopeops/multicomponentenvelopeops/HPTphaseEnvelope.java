@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.BaseOperation;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -87,6 +88,7 @@ public class HPTphaseEnvelope extends BaseOperation {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     /*
      * try { mainFrame.setVisible(false); visAd3DPlot plot = new visAd3DPlot("pressure[bar]",

@@ -4,6 +4,7 @@ import java.util.UUID;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -42,8 +43,7 @@ public class TwoPhaseSeparator extends Separator {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public TwoPhaseSeparator(String name, StreamInterface inletStream) {
     super(name, inletStream);
@@ -104,5 +104,6 @@ public class TwoPhaseSeparator extends Separator {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {}
 }

@@ -15,6 +15,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.unit.PressureUnit;
 
 /**
@@ -592,6 +593,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     thermoSystem.display();
   }
