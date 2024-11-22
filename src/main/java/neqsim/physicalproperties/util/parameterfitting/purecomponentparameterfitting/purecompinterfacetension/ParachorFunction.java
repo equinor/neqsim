@@ -41,7 +41,7 @@ public class ParachorFunction extends LevenbergMarquardtFunction {
   @Override
   public void setFittingParams(int i, double value) {
     params[i] = value;
-    system.getPhases()[0].getComponent(0).setParachorParameter(value);
-    system.getPhases()[1].getComponent(0).setParachorParameter(value);
+    system.getPhase(0).getComponent(0).setParachorParameter(value);
+    system.getPhase(1).getComponent(0).setParachorParameter(value);
   }
 }

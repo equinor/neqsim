@@ -46,12 +46,11 @@ public class ConstantDutyPressureFlash extends ConstantDutyFlash {
       // system.setBeta(beta+0.65);
       system.init(2);
       iterations++;
-      for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        system.getPhases()[0].getComponent(i)
-            .setK(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
-                / system.getPhases()[0].getComponent(i).getFugacityCoefficient());
-        system.getPhases()[1].getComponent(i)
-            .setK(system.getPhases()[0].getComponent(i).getK());
+      for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+        system.getPhase(0).getComponent(i)
+            .setK(system.getPhase(1).getComponent(i).getFugacityCoefficient()
+                / system.getPhase(0).getComponent(i).getFugacityCoefficient());
+        system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
       }
 
       system.calc_x_y_nonorm();
@@ -59,17 +58,17 @@ public class ConstantDutyPressureFlash extends ConstantDutyFlash {
       funk = 0.0;
       deriv = 0.0;
 
-      for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        dkidp = (system.getPhases()[1].getComponent(i).getdfugdp()
-            - system.getPhases()[0].getComponent(i).getdfugdp())
-            * system.getPhases()[1].getComponent(i).getK();
-        dxidp = -system.getPhases()[1].getComponent(i).getz() * system.getBeta() * dkidp
-            / Math.pow(1.0 - system.getBeta()
-                + system.getBeta() * system.getPhases()[1].getComponent(i).getK(), 2.0);
-        dyidp = dkidp * system.getPhases()[1].getComponent(i).getx()
-            + system.getPhases()[1].getComponent(i).getK() * dxidp;
-        funk += system.getPhases()[0].getComponent(i).getx()
-            - system.getPhases()[1].getComponent(i).getx();
+      for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+        dkidp = (system.getPhase(1).getComponent(i).getdfugdp()
+            - system.getPhase(0).getComponent(i).getdfugdp())
+            * system.getPhase(1).getComponent(i).getK();
+        dxidp = -system.getPhase(1).getComponent(i).getz() * system.getBeta() * dkidp / Math.pow(
+            1.0 - system.getBeta() + system.getBeta() * system.getPhase(1).getComponent(i).getK(),
+            2.0);
+        dyidp = dkidp * system.getPhase(1).getComponent(i).getx()
+            + system.getPhase(1).getComponent(i).getK() * dxidp;
+        funk +=
+            system.getPhase(0).getComponent(i).getx() - system.getPhase(1).getComponent(i).getx();
         deriv += dyidp - dxidp;
       }
 

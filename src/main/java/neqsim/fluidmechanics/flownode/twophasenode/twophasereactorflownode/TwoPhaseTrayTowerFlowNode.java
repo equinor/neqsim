@@ -112,9 +112,9 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
   public FlowNodeInterface getNextNode() {
     TwoPhaseTrayTowerFlowNode newNode = this.clone();
 
-    for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-      // newNode.getBulkSystem().getPhases()[0].addMoles(i, -molarMassTransfer[i]);
-      // newNode.getBulkSystem().getPhases()[1].addMoles(i, +molarMassTransfer[i]);
+    for (int i = 0; i < getBulkSystem().getPhase(0).getNumberOfComponents(); i++) {
+      // newNode.getBulkSystem().getPhase(0).addMoles(i, -molarMassTransfer[i]);
+      // newNode.getBulkSystem().getPhase(1).addMoles(i, +molarMassTransfer[i]);
     }
 
     return newNode;
@@ -156,8 +156,8 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
     // testSystem.init(0);
     testSystem.init_x_y();
 
-    // testSystem.getPhases()[1].setTemperature(294.0);
-    // testSystem.getPhases()[0].setTemperature(299.0);
+    // testSystem.getPhase(1).setTemperature(294.0);
+    // testSystem.getPhase(0).setTemperature(299.0);
 
     FlowNodeInterface test = new TwoPhaseTrayTowerFlowNode(testSystem, pipe1);
     test.setInterphaseModelType(1);

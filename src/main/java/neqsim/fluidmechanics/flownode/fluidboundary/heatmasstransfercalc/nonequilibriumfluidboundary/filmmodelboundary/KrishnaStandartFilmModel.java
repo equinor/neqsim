@@ -37,10 +37,10 @@ public class KrishnaStandartFilmModel extends
    */
   public KrishnaStandartFilmModel(SystemInterface system) {
     super(system);
-    binaryMassTransferCoefficient = new double[2][getBulkSystem().getPhases()[0]
-        .getNumberOfComponents()][getBulkSystem().getPhases()[0].getNumberOfComponents()];
-    binarySchmidtNumber = new double[2][getBulkSystem().getPhases()[0]
-        .getNumberOfComponents()][getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    binaryMassTransferCoefficient = new double[2][getBulkSystem().getPhase(0)
+        .getNumberOfComponents()][getBulkSystem().getPhase(0).getNumberOfComponents()];
+    binarySchmidtNumber = new double[2][getBulkSystem().getPhase(0)
+        .getNumberOfComponents()][getBulkSystem().getPhase(0).getNumberOfComponents()];
     uMassTrans = new Matrix(neq, 1);
     Xgij = new Matrix(neq, 4);
     this.setuMassTrans();
@@ -56,17 +56,17 @@ public class KrishnaStandartFilmModel extends
    */
   public KrishnaStandartFilmModel(FlowNodeInterface flowNode) {
     super(flowNode);
-    binaryMassTransferCoefficient = new double[2][getBulkSystem().getPhases()[0]
-        .getNumberOfComponents()][getBulkSystem().getPhases()[0].getNumberOfComponents()];
-    binarySchmidtNumber = new double[2][getBulkSystem().getPhases()[0]
-        .getNumberOfComponents()][getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    binaryMassTransferCoefficient = new double[2][getBulkSystem().getPhase(0)
+        .getNumberOfComponents()][getBulkSystem().getPhase(0).getNumberOfComponents()];
+    binarySchmidtNumber = new double[2][getBulkSystem().getPhase(0)
+        .getNumberOfComponents()][getBulkSystem().getPhase(0).getNumberOfComponents()];
     uMassTrans = new Matrix(neq, 1);
     Xgij = new Matrix(neq, 4);
     this.setuMassTrans();
     uMassTransold = uMassTrans.copy();
-    phiMatrix = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    redCorrectionMatrix = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1, 1);
+    phiMatrix = new Matrix(getBulkSystem().getPhase(0).getNumberOfComponents() - 1,
+        getBulkSystem().getPhase(0).getNumberOfComponents() - 1);
+    redCorrectionMatrix = new Matrix(getBulkSystem().getPhase(0).getNumberOfComponents() - 1, 1);
   }
 
   /** {@inheritDoc} */

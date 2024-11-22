@@ -40,13 +40,13 @@ public class TPflash extends Flash {
    */
   public TPflash(SystemInterface system) {
     this.system = system;
-    lnOldOldOldK = new double[system.getPhases()[0].getNumberOfComponents()];
-    lnOldOldK = new double[system.getPhases()[0].getNumberOfComponents()];
-    lnOldK = new double[system.getPhases()[0].getNumberOfComponents()];
-    lnK = new double[system.getPhases()[0].getNumberOfComponents()];
-    oldoldDeltalnK = new double[system.getPhases()[0].getNumberOfComponents()];
-    oldDeltalnK = new double[system.getPhases()[0].getNumberOfComponents()];
-    deltalnK = new double[system.getPhases()[0].getNumberOfComponents()];
+    lnOldOldOldK = new double[system.getPhase(0).getNumberOfComponents()];
+    lnOldOldK = new double[system.getPhase(0).getNumberOfComponents()];
+    lnOldK = new double[system.getPhase(0).getNumberOfComponents()];
+    lnK = new double[system.getPhase(0).getNumberOfComponents()];
+    oldoldDeltalnK = new double[system.getPhase(0).getNumberOfComponents()];
+    oldDeltalnK = new double[system.getPhase(0).getNumberOfComponents()];
+    deltalnK = new double[system.getPhase(0).getNumberOfComponents()];
   }
 
   /**
@@ -303,7 +303,7 @@ public class TPflash extends Flash {
       tpdy = -1.0;
       dgonRT = -1.0;
     } else {
-      for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+      for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         if (system.getComponent(i).getz() > 1e-50) {
           tpdy += system.getPhase(0).getComponent(i).getx()
               * (Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient())
@@ -320,7 +320,7 @@ public class TPflash extends Flash {
 
       if (dgonRT > 0) {
         if (tpdx < 0) {
-          for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+          for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             system.getPhase(0).getComponent(i)
                 .setK(Math.exp(Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
                     - minGibsLogFugCoef[i]) * presdiff);
@@ -403,8 +403,8 @@ public class TPflash extends Flash {
         } else if (iterations >= newtonLimit && Math
             .abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) < 1e-5) {
           if (iterations == newtonLimit) {
-            secondOrderSolver = new SysNewtonRhapsonTPflash(system, 2,
-                system.getPhases()[0].getNumberOfComponents());
+            secondOrderSolver =
+                new SysNewtonRhapsonTPflash(system, 2, system.getPhase(0).getNumberOfComponents());
           }
           try {
             deviation = secondOrderSolver.solve();

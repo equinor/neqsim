@@ -41,17 +41,17 @@ public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
   /** {@inheritDoc} */
   @Override
   public void setData(FlowNodeInterface node) {
-    temperature[0] = node.getBulkSystem().getPhases()[0].getTemperature();
-    temperature[1] = node.getBulkSystem().getPhases()[1].getTemperature();
-    pressure[0] = node.getBulkSystem().getPhases()[0].getPressure();
-    pressure[1] = node.getBulkSystem().getPhases()[1].getPressure();
+    temperature[0] = node.getBulkSystem().getPhase(0).getTemperature();
+    temperature[1] = node.getBulkSystem().getPhase(1).getTemperature();
+    pressure[0] = node.getBulkSystem().getPhase(0).getPressure();
+    pressure[1] = node.getBulkSystem().getPhase(1).getPressure();
     velocity[0] = node.getVelocity(0);
     velocity[1] = node.getVelocity(1);
     reynoldsNumber[0] = node.getReynoldsNumber(0);
     interphaseContactLength = node.getInterphaseContactLength(0);
     wallContactLength[0] = node.getWallContactLength(0);
     wallContactLength[1] = node.getWallContactLength(1);
-    numberOfComponents = node.getBulkSystem().getPhases()[0].getNumberOfComponents();
+    numberOfComponents = node.getBulkSystem().getPhase(0).getNumberOfComponents();
     nodeCenter = node.getDistanceToCenterOfNode();
   }
 

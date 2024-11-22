@@ -68,11 +68,11 @@ public class PloadingCurve2 extends BaseOperation {
    */
   public PloadingCurve2(SystemInterface system) {
     this.system = system;
-    lnOldOldK = new double[system.getPhases()[0].getNumberOfComponents()];
-    lnOldK = new double[system.getPhases()[0].getNumberOfComponents()];
-    lnK = new double[system.getPhases()[0].getNumberOfComponents()];
-    oldDeltalnK = new double[system.getPhases()[0].getNumberOfComponents()];
-    deltalnK = new double[system.getPhases()[0].getNumberOfComponents()];
+    lnOldOldK = new double[system.getPhase(0).getNumberOfComponents()];
+    lnOldK = new double[system.getPhase(0).getNumberOfComponents()];
+    lnK = new double[system.getPhase(0).getNumberOfComponents()];
+    oldDeltalnK = new double[system.getPhase(0).getNumberOfComponents()];
+    deltalnK = new double[system.getPhase(0).getNumberOfComponents()];
     mainFrame = new JFrame("Progress Bar");
     mainPanel = new JPanel();
     mainPanel.setSize(200, 100);
@@ -97,12 +97,12 @@ public class PloadingCurve2 extends BaseOperation {
     points[2] = new double[numbPoints];
     ThermodynamicOperations testOps = new ThermodynamicOperations(system);
 
-    for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
+    for (int k = 0; k < system.getPhase(1).getNumberOfComponents(); k++) {
       points[k + 3] = new double[numbPoints];
-      points[k + 3 + system.getPhases()[1].getNumberOfComponents()] = new double[numbPoints];
+      points[k + 3 + system.getPhase(1).getNumberOfComponents()] = new double[numbPoints];
     }
 
-    double molMDEA = system.getPhases()[1].getComponents()[2].getNumberOfMolesInPhase();
+    double molMDEA = system.getPhase(1).getComponents()[2].getNumberOfMolesInPhase();
     system.getChemicalReactionOperations().solveChemEq(1);
 
     for (int i = 1; i < points[0].length; i++) {
@@ -118,15 +118,15 @@ public class PloadingCurve2 extends BaseOperation {
       points[1][i] = (system.getPressure());
       points[2][i] = (system.getPressure() * system.getPhase(0).getComponent(0).getx());
 
-      for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
-        points[k + 3][i] = system.getPhases()[1].getComponent(k).getx();
-        points[k + 3 + system.getPhases()[1].getNumberOfComponents()][i] =
+      for (int k = 0; k < system.getPhase(1).getNumberOfComponents(); k++) {
+        points[k + 3][i] = system.getPhase(1).getComponent(k).getx();
+        points[k + 3 + system.getPhase(1).getNumberOfComponents()][i] =
             system.getPhase(1).getActivityCoefficient(k, 1); // ,1);
       }
       logger.info(
           "point: " + points[0][i] + " tot pres  " + points[1][i] + " CO2 pres  " + points[2][i]);
       system.setPressure(points[1][i]);
-      logger.info("ph: " + system.getPhases()[1].getpH());
+      logger.info("ph: " + system.getPhase(1).getpH());
       system.addComponent("CO2", inscr);
     }
     mainFrame.setVisible(false);
@@ -167,11 +167,11 @@ public class PloadingCurve2 extends BaseOperation {
    * public void createNetCdfFile(String name) { NetCdf2D file = new NetCdf2D();
    * file.setOutputFileName(name); file.setXvalues(points[0], "loading", "");
    * file.setYvalues(points[1], "total pressure", ""); file.setYvalues(points[2], " CO2 pressure",
-   * ""); for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
+   * ""); for (int k = 0; k < system.getPhase(1).getNumberOfComponents(); k++) {
    * file.setYvalues(points[k + 3], "mol frac " +
-   * system.getPhases()[1].getComponent(k).getComponentName(), ""); file.setYvalues(points[k + 3 +
-   * system.getPhases()[1].getNumberOfComponents()], ("activity " +
-   * system.getPhases()[1].getComponent(k).getComponentName()), ""); } file.createFile(); }
+   * system.getPhase(1).getComponent(k).getComponentName(), ""); file.setYvalues(points[k + 3 +
+   * system.getPhase(1).getNumberOfComponents()], ("activity " +
+   * system.getPhase(1).getComponent(k).getComponentName()), ""); } file.createFile(); }
    */
 
   /** {@inheritDoc} */

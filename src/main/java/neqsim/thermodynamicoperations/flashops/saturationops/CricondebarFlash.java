@@ -44,21 +44,19 @@ public class CricondebarFlash extends ConstantDutyPressureFlash {
    */
   public double calcx() {
     double xtotal = 0;
-    for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-      system.getPhases()[0].getComponent(i)
-          .setK(Math.exp(system.getPhases()[1].getComponent(i).getLogFugacityCoefficient()
-              - system.getPhases()[0].getComponent(i).getLogFugacityCoefficient()));
+    for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
+      system.getPhase(0).getComponent(i)
+          .setK(Math.exp(system.getPhase(1).getComponent(i).getLogFugacityCoefficient()
+              - system.getPhase(0).getComponent(i).getLogFugacityCoefficient()));
 
-      system.getPhases()[1].getComponent(i)
-          .setK(system.getPhases()[0].getComponent(i).getK());
-      system.getPhases()[1].getComponent(i)
-          .setx(1.0 / system.getPhases()[0].getComponent(i).getK()
-              * system.getPhases()[1].getComponent(i).getz());
-      // ktot += Math.abs(system.getPhases()[1].getComponent(i).getK() - 1.0);
+      system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
+      system.getPhase(1).getComponent(i).setx(1.0 / system.getPhase(0).getComponent(i).getK()
+          * system.getPhase(1).getComponent(i).getz());
+      // ktot += Math.abs(system.getPhase(1).getComponent(i).getK() - 1.0);
     }
     xtotal = 0.0;
-    for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-      xtotal += system.getPhases()[1].getComponent(i).getx();
+    for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
+      xtotal += system.getPhase(1).getComponent(i).getx();
     }
     return xtotal;
   }
@@ -249,12 +247,12 @@ public class CricondebarFlash extends ConstantDutyPressureFlash {
   public void setfvec() {
     double sumxx = 0;
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      sumxx += system.getPhases()[1].getComponent(i).getx();
+      sumxx += system.getPhase(1).getComponent(i).getx();
       fvec.set(i, 0,
-          Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient()
-              * system.getPhases()[0].getComponent(i).getz() * system.getPressure())
-              - Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
-                  * system.getPhases()[1].getComponent(i).getx() * system.getPressure()));
+          Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient()
+              * system.getPhase(0).getComponent(i).getz() * system.getPressure())
+              - Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient()
+                  * system.getPhase(1).getComponent(i).getx() * system.getPressure()));
     }
     fvec.set(system.getPhase(0).getNumberOfComponents(), 0, 1.0 - sumxx);
     // logger.info("sumx" + sumxx);
@@ -274,8 +272,8 @@ public class CricondebarFlash extends ConstantDutyPressureFlash {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
         dij = i == j ? 1.0 : 0.0; // Kroneckers delta
-        tempJ = -dij * 1.0 / system.getPhases()[1].getComponent(i).getx()
-            - system.getPhases()[1].getComponent(i).getdfugdx(j);
+        tempJ = -dij * 1.0 / system.getPhase(1).getComponent(i).getx()
+            - system.getPhase(1).getComponent(i).getdfugdx(j);
         Jac.set(i, j, tempJ);
       }
     }
@@ -285,8 +283,8 @@ public class CricondebarFlash extends ConstantDutyPressureFlash {
     }
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       Jac.set(i, system.getPhase(0).getNumberOfComponents(),
-          system.getPhases()[0].getComponent(i).getdfugdp()
-              - system.getPhases()[1].getComponent(i).getdfugdp());
+          system.getPhase(0).getComponent(i).getdfugdp()
+              - system.getPhase(1).getComponent(i).getdfugdp());
     }
   }
 

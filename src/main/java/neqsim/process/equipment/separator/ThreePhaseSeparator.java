@@ -113,7 +113,7 @@ public class ThreePhaseSeparator extends Separator {
     super.setInletStream(inletStream);
 
     thermoSystem = inletStream.getThermoSystem().clone();
-    waterSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
+    waterSystem = thermoSystem.phaseToSystem(thermoSystem.getPhase(1));
     waterOutStream = new Stream("waterOutStream", waterSystem);
   }
 

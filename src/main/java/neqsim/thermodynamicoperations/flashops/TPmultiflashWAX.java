@@ -270,9 +270,9 @@ public class TPmultiflashWAX extends TPflash {
       }
 
       if (system.getPhase(0).getComponent(k).getx() > 1e-100) {
-        d[k] = Math.log(
-            minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponent(k).getx())
-            + minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponent(k)
+        d[k] = Math
+            .log(minimumGibbsEnergySystem.getPhase(lowestGibbsEnergyPhase).getComponent(k).getx())
+            + minimumGibbsEnergySystem.getPhase(lowestGibbsEnergyPhase).getComponent(k)
                 .getLogFugacityCoefficient();
       }
     }

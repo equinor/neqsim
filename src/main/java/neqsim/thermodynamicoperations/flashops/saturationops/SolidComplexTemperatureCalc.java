@@ -93,21 +93,21 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
       iter++;
       ops.TPflash();
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        if (system.getPhases()[5].getComponent(i).getName().equals("water")
-            || system.getPhases()[5].getComponent(i).getName().equals("MEG")) {
-          system.getPhases()[5].getComponent(i).setx(0.5);
+        if (system.getPhase(5).getComponent(i).getName().equals("water")
+            || system.getPhase(5).getComponent(i).getName().equals("MEG")) {
+          system.getPhase(5).getComponent(i).setx(0.5);
         } else {
-          system.getPhases()[5].getComponent(i).setx(1e-20);
+          system.getPhase(5).getComponent(i).setx(1e-20);
         }
       }
       logger.info("Temperaure  " + system.getTemperature() + " sumx " + sumx);
       sumx = 0.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        // system.getPhases()[5].getComponent(i).setx(Ksolid[i] *
+        // system.getPhase(5).getComponent(i).setx(Ksolid[i] *
         // system.getPhase(0).getComponent(i).getx());
-        // if (system.getPhases()[5].getComponent(i).getx() > 0.000001) {
+        // if (system.getPhase(5).getComponent(i).getx() > 0.000001) {
         Ksolid[i] = system.getPhase(0).getComponent(i).getFugacityCoefficient()
-            / system.getPhases()[5].getComponent(i).fugcoef(system.getPhases()[5]);
+            / system.getPhase(5).getComponent(i).fugcoef(system.getPhase(5));
         sumx += Ksolid[i] * system.getPhase(0).getComponent(i).getx();
         // }
       }

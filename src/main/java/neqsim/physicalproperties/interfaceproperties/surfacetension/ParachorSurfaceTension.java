@@ -40,15 +40,14 @@ public class ParachorSurfaceTension extends SurfaceTension {
    */
   @Override
   public double calcPureComponentSurfaceTension(int componentNumber) {
-    return 1.0e-3 * Math.pow(system.getPhases()[0].getComponents()[componentNumber]
-        .getParachorParameter()
-        * 1.0e-6
-        * (system.getPhases()[1].getPhysicalProperties().getDensity()
-            / system.getPhases()[1].getMolarMass()
-                * system.getPhases()[1].getComponents()[componentNumber].getx()
-                - system.getPhases()[0].getPhysicalProperties().getDensity()
-                    / system.getPhases()[0].getMolarMass()
-                    * system.getPhases()[0].getComponents()[componentNumber].getx()),
+    return 1.0e-3 * Math
+        .pow(system.getPhase(0).getComponents()[componentNumber].getParachorParameter() * 1.0e-6
+            * (system.getPhase(1).getPhysicalProperties().getDensity()
+                / system.getPhase(1).getMolarMass()
+                * system.getPhase(1).getComponents()[componentNumber].getx()
+                - system.getPhase(0).getPhysicalProperties().getDensity()
+                    / system.getPhase(0).getMolarMass()
+                    * system.getPhase(0).getComponents()[componentNumber].getx()),
             4.0);
   }
 
@@ -68,7 +67,7 @@ public class ParachorSurfaceTension extends SurfaceTension {
     // if(interface1>=2 || interface2>=2) return 0.0;
     // return 0.0;
     try {
-      for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+      for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         // System.out.println("density1 parachor " +
         // system.getPhase(interface1).getPhysicalProperties().getDensity());
         // System.out.println("density2 parachor " +

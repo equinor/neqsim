@@ -41,13 +41,13 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
   @Override
   public double calcPureComponentSurfaceTension(int componentNumber) {
     return 1.0e-3 * Math
-        .pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
-            * (system.getPhases()[1].getPhysicalProperties().getDensity()
-                / system.getPhases()[1].getMolarMass()
-                * system.getPhases()[1].getComponents()[componentNumber].getx()
-                - system.getPhases()[0].getPhysicalProperties().getDensity()
-                    / system.getPhases()[0].getMolarMass()
-                    * system.getPhases()[0].getComponents()[componentNumber].getx()),
+        .pow(system.getPhase(0).getComponents()[componentNumber].getParachorParameter() * 1.0e-6
+            * (system.getPhase(1).getPhysicalProperties().getDensity()
+                / system.getPhase(1).getMolarMass()
+                * system.getPhase(1).getComponents()[componentNumber].getx()
+                - system.getPhase(0).getPhysicalProperties().getDensity()
+                    / system.getPhase(0).getMolarMass()
+                    * system.getPhase(0).getComponents()[componentNumber].getx()),
             4.0);
   }
 

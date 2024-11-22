@@ -73,11 +73,11 @@ public class PloadingCurve implements OperationInterface {
    */
   public PloadingCurve(SystemInterface system) {
     this.system = system;
-    lnOldOldK = new double[system.getPhases()[0].getNumberOfComponents()];
-    lnOldK = new double[system.getPhases()[0].getNumberOfComponents()];
-    lnK = new double[system.getPhases()[0].getNumberOfComponents()];
-    oldDeltalnK = new double[system.getPhases()[0].getNumberOfComponents()];
-    deltalnK = new double[system.getPhases()[0].getNumberOfComponents()];
+    lnOldOldK = new double[system.getPhase(0).getNumberOfComponents()];
+    lnOldK = new double[system.getPhase(0).getNumberOfComponents()];
+    lnK = new double[system.getPhase(0).getNumberOfComponents()];
+    oldDeltalnK = new double[system.getPhase(0).getNumberOfComponents()];
+    deltalnK = new double[system.getPhase(0).getNumberOfComponents()];
     mainFrame = new JFrame("Progress Bar");
     mainPanel = new JPanel();
     mainPanel.setSize(200, 100);
@@ -100,12 +100,12 @@ public class PloadingCurve implements OperationInterface {
     points[0] = new double[numbPoints];
     points[1] = new double[numbPoints];
 
-    for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
+    for (int k = 0; k < system.getPhase(1).getNumberOfComponents(); k++) {
       points[k + 2] = new double[numbPoints];
-      points[k + 2 + system.getPhases()[1].getNumberOfComponents()] = new double[numbPoints];
+      points[k + 2 + system.getPhase(1).getNumberOfComponents()] = new double[numbPoints];
     }
 
-    double molMDEA = system.getPhases()[1].getComponents()[2].getNumberOfMolesInPhase();
+    double molMDEA = system.getPhase(1).getComponents()[2].getNumberOfMolesInPhase();
     system.getChemicalReactionOperations().solveChemEq(0);
 
     for (int i = 1; i < points[0].length; i++) {
@@ -113,17 +113,17 @@ public class PloadingCurve implements OperationInterface {
       system.getChemicalReactionOperations().solveChemEq(1);
 
       points[0][i] = (inscr * (i - 1)) / molMDEA;
-      points[1][i] = (system.getPhases()[1].getComponent(0).getFugacityCoefficient()
-          * system.getPhases()[1].getComponent(0).getx() * system.getPressure());
+      points[1][i] = (system.getPhase(1).getComponent(0).getFugacityCoefficient()
+          * system.getPhase(1).getComponent(0).getx() * system.getPressure());
 
-      for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
-        points[k + 2][i] = system.getPhases()[1].getComponent(k).getx();
-        points[k + 2 + system.getPhases()[1].getNumberOfComponents()][i] =
-            system.getPhases()[1].getActivityCoefficient(k, 1);
+      for (int k = 0; k < system.getPhase(1).getNumberOfComponents(); k++) {
+        points[k + 2][i] = system.getPhase(1).getComponent(k).getx();
+        points[k + 2 + system.getPhase(1).getNumberOfComponents()][i] =
+            system.getPhase(1).getActivityCoefficient(k, 1);
       }
       logger.info("point: " + points[0][i] + "  " + points[1][i]);
       system.setPressure(points[1][i]);
-      logger.info("ph: " + system.getPhases()[1].getpH());
+      logger.info("ph: " + system.getPhase(1).getpH());
       system.addComponent(0, inscr, 1);
     }
     mainFrame.setVisible(false);

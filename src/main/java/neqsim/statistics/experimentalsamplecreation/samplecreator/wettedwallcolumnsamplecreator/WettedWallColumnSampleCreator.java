@@ -174,12 +174,12 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
       for (int i = 1; i < (reader.getSampleObjectList().size() - 3); i++) {
         system.setTemperature(smoothedInletLiquidTemperature[i]);
         system.setPressure(smoothedPressure[i]);
-        system.getPhases()[0].addMoles(1, dNdt[i] * (time[i] - time[i - 1]));
-        system.getPhases()[1].addMoles(1, -dNdt[i] * (time[i] - time[i - 1]));
+        system.getPhase(0).addMoles(1, dNdt[i] * (time[i] - time[i - 1]));
+        system.getPhase(1).addMoles(1, -dNdt[i] * (time[i] - time[i - 1]));
         system.init(1);
         // her bor det komme en funksjon som finer nummeret til Co2!
         dPdt[i] = (smoothedPressure[i + 1] - smoothedPressure[i - 1]) / (time[i + 1] - time[i - 1]);
-        // dPdn[i] = system.getPhases()[1].getdPdn(1);
+        // dPdn[i] = system.getPhase(1).getdPdn(1);
       }
 
       dNdt[0] = 0;

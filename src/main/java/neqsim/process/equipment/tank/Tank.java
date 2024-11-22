@@ -79,11 +79,11 @@ public class Tank extends ProcessEquipmentBaseClass {
   public void setInletStream(StreamInterface inletStream) {
     inletStreamMixer.addStream(inletStream);
     thermoSystem = inletStream.getThermoSystem().clone();
-    gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
+    gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhase(0));
     gasOutStream = new Stream("gasOutStream", gasSystem);
 
     thermoSystem = inletStream.getThermoSystem().clone();
-    liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
+    liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhase(1));
     liquidOutStream = new Stream("liquidOutStream", liquidSystem);
   }
 

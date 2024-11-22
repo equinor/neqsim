@@ -1184,7 +1184,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
 
     for (int i = 0; i < system.getPhase(4).getNumberOfComponents(); i++) {
-      ((ComponentHydrate) system.getPhases()[4].getComponent(i)).setHydrateStructure(structure - 1);
+      ((ComponentHydrate) system.getPhase(4).getComponent(i)).setHydrateStructure(structure - 1);
     }
     if (!isRunAsThread()) {
       getOperation().run();

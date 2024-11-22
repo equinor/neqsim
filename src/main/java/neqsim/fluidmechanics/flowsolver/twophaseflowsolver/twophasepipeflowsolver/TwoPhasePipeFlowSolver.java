@@ -56,11 +56,11 @@ public class TwoPhasePipeFlowSolver
     sol3Matrix = new Matrix[2];
     solPhaseConsMatrix = new Matrix[2];
     solMolFracMatrix =
-        new Matrix[2][pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
+        new Matrix[2][pipe.getNode(0).getBulkSystem().getPhase(0).getNumberOfComponents()];
     solMatrix[0] = new Matrix(PbArray, 1).transpose();
     solMatrix[1] = new Matrix(PbArray, 1).transpose();
     for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
-      for (int i = 0; i < pipe.getNode(0).getBulkSystem().getPhases()[0]
+      for (int i = 0; i < pipe.getNode(0).getBulkSystem().getPhase(0)
           .getNumberOfComponents(); i++) {
         solMolFracMatrix[phaseNum][i] = new Matrix(PbArray, 1).transpose();
       }

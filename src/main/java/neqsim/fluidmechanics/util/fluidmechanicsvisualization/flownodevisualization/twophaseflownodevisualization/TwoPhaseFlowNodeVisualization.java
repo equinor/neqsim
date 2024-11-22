@@ -23,18 +23,17 @@ public class TwoPhaseFlowNodeVisualization extends FlowNodeVisualization {
   @Override
   public void setData(FlowNodeInterface node) {
     super.setData(node);
-    bulkComposition = new double[2][node.getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    bulkComposition = new double[2][node.getBulkSystem().getPhase(0).getNumberOfComponents()];
     effectiveMassTransferCoefficient =
-        new double[2][node.getBulkSystem().getPhases()[0].getNumberOfComponents()];
+        new double[2][node.getBulkSystem().getPhase(0).getNumberOfComponents()];
     effectiveSchmidtNumber =
-        new double[2][node.getBulkSystem().getPhases()[0].getNumberOfComponents()];
-    interfaceComposition =
-        new double[2][node.getBulkSystem().getPhases()[0].getNumberOfComponents()];
-    molarFlux = new double[2][node.getBulkSystem().getPhases()[0].getNumberOfComponents()];
+        new double[2][node.getBulkSystem().getPhase(0).getNumberOfComponents()];
+    interfaceComposition = new double[2][node.getBulkSystem().getPhase(0).getNumberOfComponents()];
+    molarFlux = new double[2][node.getBulkSystem().getPhase(0).getNumberOfComponents()];
 
-    for (int i = 0; i < node.getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-      bulkComposition[0][i] = node.getBulkSystem().getPhases()[0].getComponent(i).getx();
-      bulkComposition[1][i] = node.getBulkSystem().getPhases()[1].getComponent(i).getx();
+    for (int i = 0; i < node.getBulkSystem().getPhase(0).getNumberOfComponents(); i++) {
+      bulkComposition[0][i] = node.getBulkSystem().getPhase(0).getComponent(i).getx();
+      bulkComposition[1][i] = node.getBulkSystem().getPhase(1).getComponent(i).getx();
       effectiveMassTransferCoefficient[1][i] =
           node.getFluidBoundary().getEffectiveMassTransferCoefficient(1, i);
       effectiveMassTransferCoefficient[0][i] =
@@ -43,9 +42,9 @@ public class TwoPhaseFlowNodeVisualization extends FlowNodeVisualization {
       effectiveSchmidtNumber[1][i] = node.getEffectiveSchmidtNumber(1, i);
       // System.out.println("sc " + effectiveSchmidtNumber[1][i]);
       interfaceComposition[0][i] =
-          node.getFluidBoundary().getInterphaseSystem().getPhases()[0].getComponent(i).getx();
+          node.getFluidBoundary().getInterphaseSystem().getPhase(0).getComponent(i).getx();
       interfaceComposition[1][i] =
-          node.getFluidBoundary().getInterphaseSystem().getPhases()[1].getComponent(i).getx();
+          node.getFluidBoundary().getInterphaseSystem().getPhase(1).getComponent(i).getx();
       molarFlux[0][i] = node.getFluidBoundary().getInterphaseMolarFlux(i);
       molarFlux[1][i] = node.getFluidBoundary().getInterphaseMolarFlux(i);
     }
@@ -55,8 +54,8 @@ public class TwoPhaseFlowNodeVisualization extends FlowNodeVisualization {
     phaseFraction[0] = node.getPhaseFraction(0);
     phaseFraction[1] = node.getPhaseFraction(1);
     interfaceTemperature[0] =
-        node.getFluidBoundary().getInterphaseSystem().getPhases()[0].getTemperature();
+        node.getFluidBoundary().getInterphaseSystem().getPhase(0).getTemperature();
     interfaceTemperature[1] =
-        node.getFluidBoundary().getInterphaseSystem().getPhases()[1].getTemperature();
+        node.getFluidBoundary().getInterphaseSystem().getPhase(1).getTemperature();
   }
 }

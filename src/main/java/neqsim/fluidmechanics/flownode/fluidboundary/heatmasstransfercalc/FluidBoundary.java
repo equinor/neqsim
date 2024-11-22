@@ -78,8 +78,8 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     rateCorrectionMatrix = new Matrix[2];
     totalMassTransferCoefficientMatrix = new Matrix[2];
     massTransferCoefficientMatrix = new Matrix[2];
-    jFlux = new Matrix(system.getPhases()[0].getNumberOfComponents() - 1, 1);
-    nFlux = new Matrix(system.getPhases()[0].getNumberOfComponents(), 1);
+    jFlux = new Matrix(system.getPhase(0).getNumberOfComponents() - 1, 1);
+    nFlux = new Matrix(system.getPhase(0).getNumberOfComponents(), 1);
     nFlux.set(0, 0, 0.0);
     nFlux.set(1, 0, 0.0);
     heatTransferCoefficient = new double[2];
@@ -427,7 +427,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
       return table;
     }
 
-    rows = bulkSystem.getPhases()[0].getNumberOfComponents() * 10;
+    rows = bulkSystem.getPhase(0).getNumberOfComponents() * 10;
     String[][] table = new String[rows][5];
 
     // String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
@@ -438,9 +438,9 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     StringBuffer buf = new StringBuffer();
     FieldPosition test = new FieldPosition(0);
     for (int i = 0; i < bulkSystem.getNumberOfPhases(); i++) {
-      for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
+      for (int j = 0; j < bulkSystem.getPhase(0).getNumberOfComponents(); j++) {
         table[j + 1][0] =
-            "eff. mass trans coef. " + bulkSystem.getPhases()[0].getComponent(j).getName();
+            "eff. mass trans coef. " + bulkSystem.getPhase(0).getComponent(j).getName();
         buf = new StringBuffer();
         table[j + 1][i + 1] =
             nf.format(getEffectiveMassTransferCoefficient(i, j), buf, test).toString();
@@ -448,31 +448,31 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
       }
       if (getBulkSystem().isChemicalSystem()) {
         getEnhancementFactor().calcEnhancementVec(i);
-        for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
-          table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][0] =
-              "enhancement " + getInterphaseSystem().getPhases()[0].getComponent(j).getName();
+        for (int j = 0; j < bulkSystem.getPhase(0).getNumberOfComponents(); j++) {
+          table[j + bulkSystem.getPhase(0).getNumberOfComponents() + 2][0] =
+              "enhancement " + getInterphaseSystem().getPhase(0).getComponent(j).getName();
           buf = new StringBuffer();
-          table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] =
+          table[j + bulkSystem.getPhase(0).getNumberOfComponents() + 2][i + 1] =
               nf.format(getEnhancementFactor().getEnhancementVec(j), buf, test).toString();
-          table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][4] = "[-] interfacecoef";
+          table[j + bulkSystem.getPhase(0).getNumberOfComponents() + 2][4] = "[-] interfacecoef";
         }
       }
       getBulkSystem().getPhase(i).getPhysicalProperties().calcEffectiveDiffusionCoefficients();
-      for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][0] =
-            "schmidt " + bulkSystem.getPhases()[0].getComponent(j).getName();
+      for (int j = 0; j < bulkSystem.getPhase(0).getNumberOfComponents(); j++) {
+        table[j + 2 * bulkSystem.getPhase(0).getNumberOfComponents() + 3][0] =
+            "schmidt " + bulkSystem.getPhase(0).getComponent(j).getName();
         buf = new StringBuffer();
-        table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] = nf.format(
+        table[j + 2 * bulkSystem.getPhase(0).getNumberOfComponents() + 3][i + 1] = nf.format(
             getBulkSystem().getPhase(i).getPhysicalProperties().getEffectiveSchmidtNumber(j), buf,
             test).toString();
-        table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][4] =
+        table[j + 2 * bulkSystem.getPhase(0).getNumberOfComponents() + 3][4] =
             "[-] fluidboundarycoef";
       }
 
       buf = new StringBuffer();
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 11][0] = "Node";
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 11][i + 1] = name;
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 11][4] = "-";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 11][0] = "Node";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 11][i + 1] = name;
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 11][4] = "-";
     }
     return table;
   }

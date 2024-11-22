@@ -135,9 +135,9 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   public FlowNodeInterface getNextNode() {
     DropletFlowNode newNode = this.clone();
 
-    for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-      // newNode.getBulkSystem().getPhases()[0].addMoles(i, -molarMassTransfer[i]);
-      // newNode.getBulkSystem().getPhases()[1].addMoles(i, +molarMassTransfer[i]);
+    for (int i = 0; i < getBulkSystem().getPhase(0).getNumberOfComponents(); i++) {
+      // newNode.getBulkSystem().getPhase(0).addMoles(i, -molarMassTransfer[i]);
+      // newNode.getBulkSystem().getPhase(1).addMoles(i, +molarMassTransfer[i]);
     }
 
     return newNode;

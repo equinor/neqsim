@@ -2,7 +2,6 @@ package neqsim.thermodynamicoperations.flashops;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -26,8 +25,7 @@ public class QfuncFlash extends Flash {
    * Constructor for QfuncFlash.
    * </p>
    */
-  public QfuncFlash() {
-  }
+  public QfuncFlash() {}
 
   /**
    * <p>
@@ -35,8 +33,8 @@ public class QfuncFlash extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Hspec  a double
-   * @param type   a int
+   * @param Hspec a double
+   * @param type a int
    */
   public QfuncFlash(SystemInterface system, double Hspec, int type) {
     this.system = system;
@@ -77,7 +75,8 @@ public class QfuncFlash extends Flash {
    * @return a double
    */
   public double solveQ() {
-    double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
+    double oldTemp = 1.0 / system.getTemperature();
+    double nyTemp = 1.0 / system.getTemperature();
     double iterations = 1;
     do {
       iterations++;
@@ -95,8 +94,8 @@ public class QfuncFlash extends Flash {
   public void run() {
     tpFlash.run();
     logger.info("entropy: " + system.getEntropy());
-    SysNewtonRhapsonPHflash secondOrderSolver = new SysNewtonRhapsonPHflash(system, 2,
-        system.getPhases()[0].getNumberOfComponents(), type);
+    SysNewtonRhapsonPHflash secondOrderSolver =
+        new SysNewtonRhapsonPHflash(system, 2, system.getPhase(0).getNumberOfComponents(), type);
     secondOrderSolver.setSpec(Hspec);
     secondOrderSolver.solve(1);
   }

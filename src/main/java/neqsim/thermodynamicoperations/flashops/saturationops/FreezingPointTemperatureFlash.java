@@ -63,13 +63,13 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
     // double deriv = 0, funkOld = 0;
     double funk = 0;
     double SolidFugCoeff = 0.0;
-    int numbComponents = system.getPhases()[0].getNumberOfComponents();
+    int numbComponents = system.getPhase(0).getNumberOfComponents();
 
     for (int k = 0; k < numbComponents; k++) {
       // logger.info("Checking all the components " + k);
       if (system.getPhase(0).getComponent(k).doSolidCheck()) {
         ops.TPflash(false);
-        SolidFugCoeff = system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
+        SolidFugCoeff = system.getPhase(3).getComponent(k).fugcoef(system.getPhase(3));
         funk = system.getPhase(0).getComponent(k).getz();
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
           funk -= system.getPhase(i).getBeta() * SolidFugCoeff
@@ -94,7 +94,7 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
     double oldTemperature = 0.0;
     double newTemp = 0.0;
     double SolidFugCoeff = 0.0;
-    int numbComponents = system.getPhases()[0].getNumberOfComponents();
+    int numbComponents = system.getPhase(0).getNumberOfComponents();
     String[] FCompNames = new String[numbComponents];
     double[] FCompTemp = new double[numbComponents];
     boolean SolidForms = false;
@@ -120,7 +120,7 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
           iterations++;
           // oldPhaseType = system.getPhase(0).getType();
           ops.TPflash(false);
-          SolidFugCoeff = system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
+          SolidFugCoeff = system.getPhase(3).getComponent(k).fugcoef(system.getPhase(3));
           funk = system.getPhase(0).getComponent(k).getz();
           for (int i = 0; i < system.getNumberOfPhases(); i++) {
             funk -= system.getPhase(i).getBeta() * SolidFugCoeff
@@ -172,7 +172,7 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
    * @param FCompTemp an array of type double
    */
   public void printToFile(String name, String[] FCompNames, double[] FCompTemp) {
-    for (int n = 0; n < system.getPhases()[0].getNumberOfComponents(); n++) {
+    for (int n = 0; n < system.getPhase(0).getNumberOfComponents(); n++) {
       name = name + "_" + system.getPhase(0).getComponent(n).getComponentName();
     }
 
@@ -182,11 +182,11 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
       pr_writer.println("name,freezeT,freezeP,z,iterations");
       pr_writer.flush();
 
-      for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
+      for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
         // print line to output file
         pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + ","
             + system.getPressure() + ","
-            + java.lang.Double.toString(system.getPhases()[0].getComponent(k).getz()) + ","
+            + java.lang.Double.toString(system.getPhase(0).getComponent(k).getz()) + ","
             + Niterations);
         pr_writer.flush();
       }

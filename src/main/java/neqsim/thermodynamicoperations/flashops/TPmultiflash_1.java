@@ -68,9 +68,9 @@ public class TPmultiflash_1 extends TPflash {
    */
   public void setXY() {
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
-      for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        system.getPhases()[k].getComponent(i).setx(system.getPhases()[k].getComponent(i).getz()
-            / E[i] / system.getPhases()[k].getComponent(i).getFugacityCoefficient());
+      for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+        system.getPhase(k).getComponent(i).setx(system.getPhase(k).getComponent(i).getz() / E[i]
+            / system.getPhase(k).getComponent(i).getFugacityCoefficient());
       }
     }
   }
@@ -81,12 +81,12 @@ public class TPmultiflash_1 extends TPflash {
    * </p>
    */
   public void calcE() {
-    E = new double[system.getPhases()[0].getNumberOfComponents()];
+    E = new double[system.getPhase(0).getNumberOfComponents()];
 
-    for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        E[i] += system.getPhases()[k].getBeta()
-            / system.getPhases()[k].getComponent(i).getFugacityCoefficient();
+        E[i] += system.getPhase(k).getBeta()
+            / system.getPhase(k).getComponent(i).getFugacityCoefficient();
       }
     }
   }
@@ -105,31 +105,31 @@ public class TPmultiflash_1 extends TPflash {
     Qmatrix = new double[system.getNumberOfPhases()][system.getNumberOfPhases()];
 
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
-      betaTotal += system.getPhases()[k].getBeta();
+      betaTotal += system.getPhase(k).getBeta();
     }
 
     Q = betaTotal;
     this.calcE();
 
-    for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-      Q -= Math.log(E[i]) * system.getPhases()[0].getComponent(i).getz();
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+      Q -= Math.log(E[i]) * system.getPhase(0).getComponent(i).getz();
     }
 
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
       dQdbeta[k] = 1.0;
-      for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        dQdbeta[k] -= system.getPhases()[0].getComponent(i).getz() * 1.0 / E[i]
-            / system.getPhases()[k].getComponent(i).getFugacityCoefficient();
+      for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+        dQdbeta[k] -= system.getPhase(0).getComponent(i).getz() * 1.0 / E[i]
+            / system.getPhase(k).getComponent(i).getFugacityCoefficient();
       }
     }
 
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       for (int j = 0; j < system.getNumberOfPhases(); j++) {
         Qmatrix[i][j] = 0;
-        for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
-          Qmatrix[i][j] += system.getPhases()[0].getComponent(k).getz()
-              / (E[k] * E[k] * system.getPhases()[j].getComponent(k).getFugacityCoefficient()
-                  * system.getPhases()[i].getComponent(k).getFugacityCoefficient());
+        for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
+          Qmatrix[i][j] += system.getPhase(0).getComponent(k).getz()
+              / (E[k] * E[k] * system.getPhase(j).getComponent(k).getFugacityCoefficient()
+                  * system.getPhase(i).getComponent(k).getFugacityCoefficient());
         }
       }
     }
@@ -150,7 +150,7 @@ public class TPmultiflash_1 extends TPflash {
     do {
       iter++;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        oldBeta[k] = system.getPhases()[k].getBeta();
+        oldBeta[k] = system.getPhase(k).getBeta();
       }
 
       calcQ();
@@ -183,14 +183,14 @@ public class TPmultiflash_1 extends TPflash {
   /** {@inheritDoc} */
   @Override
   public void stabilityAnalysis() {
-    double[] logWi = new double[system.getPhases()[1].getNumberOfComponents()];
-    double[][] Wi = new double[system.getPhases()[1].getNumberOfComponents()][system.getPhases()[0]
+    double[] logWi = new double[system.getPhase(1).getNumberOfComponents()];
+    double[][] Wi = new double[system.getPhase(1).getNumberOfComponents()][system.getPhase(0)
         .getNumberOfComponents()];
-    double[] sumw = new double[system.getPhases()[1].getNumberOfComponents()];
+    double[] sumw = new double[system.getPhase(1).getNumberOfComponents()];
     double err = 0;
-    double[] oldlogw = new double[system.getPhases()[1].getNumberOfComponents()];
-    double[] d = new double[system.getPhases()[1].getNumberOfComponents()];
-    double[][] x = new double[system.getPhases()[1].getNumberOfComponents()][system.getPhases()[0]
+    double[] oldlogw = new double[system.getPhase(1).getNumberOfComponents()];
+    double[] d = new double[system.getPhase(1).getNumberOfComponents()];
+    double[][] x = new double[system.getPhase(1).getNumberOfComponents()][system.getPhase(0)
         .getNumberOfComponents()];
 
     SystemInterface minimumGibbsEnergySystem;
@@ -198,13 +198,13 @@ public class TPmultiflash_1 extends TPflash {
 
     minimumGibbsEnergySystem = system.clone();
 
-    for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
+    for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
       double numb = 0;
       clonedSystem.add(system.clone());
       (clonedSystem.get(i)).init(0);
-      for (int j = 0; j < system.getPhases()[1].getNumberOfComponents(); j++) {
+      for (int j = 0; j < system.getPhase(1).getNumberOfComponents(); j++) {
         numb = i == j ? 1.0 : 1.0e-3;
-        (clonedSystem.get(i)).getPhases()[1].getComponent(j).setx(numb);
+        (clonedSystem.get(i)).getPhase(1).getComponent(j).setx(numb);
       }
       (clonedSystem.get(i)).init(1);
     }
@@ -213,70 +213,70 @@ public class TPmultiflash_1 extends TPflash {
 
     // logger.info("low gibbs phase " + lowestGibbsEnergyPhase);
 
-    for (int k = 0; k < minimumGibbsEnergySystem.getPhases()[1].getNumberOfComponents(); k++) {
-      // sumz += minimumGibbsEnergySystem.getPhases()[1].getComponent(k).getz();
-      for (int i = 0; i < minimumGibbsEnergySystem.getPhases()[1].getNumberOfComponents(); i++) {
-        sumw[k] += (clonedSystem.get(k)).getPhases()[1].getComponent(i).getx();
+    for (int k = 0; k < minimumGibbsEnergySystem.getPhase(1).getNumberOfComponents(); k++) {
+      // sumz += minimumGibbsEnergySystem.getPhase(1).getComponent(k).getz();
+      for (int i = 0; i < minimumGibbsEnergySystem.getPhase(1).getNumberOfComponents(); i++) {
+        sumw[k] += (clonedSystem.get(k)).getPhase(1).getComponent(i).getx();
       }
     }
 
-    for (int k = 0; k < minimumGibbsEnergySystem.getPhases()[1].getNumberOfComponents(); k++) {
-      for (int i = 0; i < minimumGibbsEnergySystem.getPhases()[1].getNumberOfComponents(); i++) {
-        (clonedSystem.get(k)).getPhases()[1].getComponent(i)
-            .setx((clonedSystem.get(k)).getPhases()[1].getComponent(i).getx() / sumw[0]);
+    for (int k = 0; k < minimumGibbsEnergySystem.getPhase(1).getNumberOfComponents(); k++) {
+      for (int i = 0; i < minimumGibbsEnergySystem.getPhase(1).getNumberOfComponents(); i++) {
+        (clonedSystem.get(k)).getPhase(1).getComponent(i)
+            .setx((clonedSystem.get(k)).getPhase(1).getComponent(i).getx() / sumw[0]);
         // logger.info("x: " + (
-        // clonedSystem.get(k)).getPhases()[0].getComponent(i).getx());
+        // clonedSystem.get(k)).getPhase(0).getComponent(i).getx());
       }
-      d[k] = Math
-          .log(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponent(k).getx())
-          + Math.log(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponent(k)
-              .getFugacityCoefficient());
+      d[k] =
+          Math.log(minimumGibbsEnergySystem.getPhase(lowestGibbsEnergyPhase).getComponent(k).getx())
+              + Math.log(minimumGibbsEnergySystem.getPhase(lowestGibbsEnergyPhase).getComponent(k)
+                  .getFugacityCoefficient());
       // logger.info("dk: " + d[k]);
     }
 
-    for (int j = 0; j < minimumGibbsEnergySystem.getPhases()[1].getNumberOfComponents(); j++) {
+    for (int j = 0; j < minimumGibbsEnergySystem.getPhase(1).getNumberOfComponents(); j++) {
       logWi[j] = 1;
     }
 
-    for (int j = 0; j < system.getPhases()[1].getNumberOfComponents(); j++) {
+    for (int j = 0; j < system.getPhase(1).getNumberOfComponents(); j++) {
       do {
         err = 0;
         (clonedSystem.get(j)).init(1);
-        for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
+        for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
           oldlogw[i] = logWi[i];
           logWi[i] = d[i] - Math
-              .log((clonedSystem.get(j)).getPhases()[1].getComponent(i).getFugacityCoefficient());
+              .log((clonedSystem.get(j)).getPhase(1).getComponent(i).getFugacityCoefficient());
           err += Math.abs(logWi[i] - oldlogw[i]);
           Wi[j][i] = Math.exp(logWi[i]);
         }
         // logger.info("err: " + err);
         sumw[j] = 0;
 
-        for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
+        for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
           sumw[j] += Math.exp(logWi[i]);
         }
 
-        for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-          (clonedSystem.get(j)).getPhases()[1].getComponent(i).setx(Math.exp(logWi[i]) / sumw[j]);
+        for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
+          (clonedSystem.get(j)).getPhase(1).getComponent(i).setx(Math.exp(logWi[i]) / sumw[j]);
         }
       } while (Math.abs(err) > 1e-9);
 
       tm[j] = 1.0;
 
-      for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
+      for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
         tm[j] -= Math.exp(logWi[i]);
-        x[j][i] = (clonedSystem.get(j)).getPhases()[1].getComponent(i).getx();
+        x[j][i] = (clonedSystem.get(j)).getPhase(1).getComponent(i).getx();
         // logger.info("txji: " + x[j][i]);
       }
       logger.info("tm: " + tm[j]);
     }
     int unstabcomp = 0;
-    for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
+    for (int k = 0; k < system.getPhase(1).getNumberOfComponents(); k++) {
       if (tm[k] < -1e-8 && !(Double.isNaN(tm[k]))) {
         system.addPhase();
         unstabcomp = k;
-        for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-          system.getPhases()[2].getComponent(i).setx(x[k][i]);
+        for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
+          system.getPhase(2).getComponent(i).setx(x[k][i]);
         }
         multiPhaseTest = true;
         system.setBeta(system.getNumberOfPhases() - 1,
@@ -306,14 +306,14 @@ public class TPmultiflash_1 extends TPflash {
         chemdev = 0.0;
         double[] xchem = new double[system.getPhase(phaseNum).getNumberOfComponents()];
 
-        for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+        for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
           xchem[i] = system.getPhase(phaseNum).getComponent(i).getx();
         }
 
         system.init(1);
         system.getChemicalReactionOperations().solveChemEq(phaseNum, 1);
 
-        for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+        for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
           chemdev += Math.abs(xchem[i] - system.getPhase(phaseNum).getComponent(i).getx());
         }
         logger.info("chemdev: " + chemdev);

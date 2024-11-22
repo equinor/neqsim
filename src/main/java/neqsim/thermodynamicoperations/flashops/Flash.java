@@ -87,27 +87,27 @@ public abstract class Flash extends BaseOperation {
    */
   public void stabilityAnalysis() throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double[] logWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] deltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldoldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[][] Wi = new double[2][system.getPhases()[0].getNumberOfComponents()];
+    double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
+    double[] deltalogWi = new double[system.getPhase(0).getNumberOfComponents()];
+    double[] oldDeltalogWi = new double[system.getPhase(0).getNumberOfComponents()];
+    double[] oldoldDeltalogWi = new double[system.getPhase(0).getNumberOfComponents()];
+    double[][] Wi = new double[2][system.getPhase(0).getNumberOfComponents()];
 
     boolean secondOrderStabilityAnalysis = false;
-    double[] oldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldoldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] d = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[][] x = new double[2][system.getPhases()[0].getNumberOfComponents()];
+    double[] oldlogw = new double[system.getPhase(0).getNumberOfComponents()];
+    double[] oldoldlogw = new double[system.getPhase(0).getNumberOfComponents()];
+    double[] oldoldoldlogw = new double[system.getPhase(0).getNumberOfComponents()];
+    double[] d = new double[system.getPhase(0).getNumberOfComponents()];
+    double[][] x = new double[2][system.getPhase(0).getNumberOfComponents()];
     double[] error = new double[2];
     tm = new double[system.getPhase(0).getNumberOfComponents()];
     double[] alpha = null;
-    Matrix f = new Matrix(system.getPhases()[0].getNumberOfComponents(), 1);
+    Matrix f = new Matrix(system.getPhase(0).getNumberOfComponents(), 1);
     Matrix df = null;
     int maxiterations = 50;
     double fNorm = 1.0e10;
     double fNormOld = 0.0;
-    for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       d[i] = minGibsPhaseLogZ[i] + minGibsLogFugCoef[i];
     }
 
@@ -146,7 +146,7 @@ public abstract class Flash extends BaseOperation {
 
     // for (int j = 0; j < clonedSystem.getNumberOfPhases(); j++) {
     for (int j = start; j >= end; j = j + mult) {
-      for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
+      for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
         Wi[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
         logWi[i] = Math.log(Wi[j][i]);
       }
@@ -157,7 +157,7 @@ public abstract class Flash extends BaseOperation {
         iterations++;
         error[j] = 0.0;
 
-        for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
+        for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
           oldoldoldlogw[i] = oldoldlogw[i];
           oldoldlogw[i] = oldlogw[i];
           oldlogw[i] = logWi[i];
@@ -170,7 +170,7 @@ public abstract class Flash extends BaseOperation {
             || !system.isImplementedCompositionDeriativesofFugacity()) {
           clonedSystem.init(1, j);
           fNormOld = fNorm;
-          for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
+          for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
             f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
                 + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]));
           }
@@ -184,7 +184,7 @@ public abstract class Flash extends BaseOperation {
             double vec2 = 0.0;
             double prod1 = 0.0;
             double prod2 = 0.0;
-            for (i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
+            for (i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
               vec1 = oldDeltalogWi[i] * oldoldDeltalogWi[i];
               vec2 = Math.pow(oldoldDeltalogWi[i], 2.0);
               prod1 += vec1 * vec2;
@@ -193,14 +193,14 @@ public abstract class Flash extends BaseOperation {
 
             double lambda = prod1 / prod2;
             // logger.info("lambda " + lambda);
-            for (i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
+            for (i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
               logWi[i] += lambda / (1.0 - lambda) * deltalogWi[i];
               error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
               Wi[j][i] = Math.exp(logWi[i]);
             }
           } else {
             // succsessive substitution
-            for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
+            for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
               logWi[i] =
                   d[i] - clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient();
               error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
@@ -209,30 +209,30 @@ public abstract class Flash extends BaseOperation {
           }
         } else {
           if (!secondOrderStabilityAnalysis) {
-            alpha = new double[system.getPhases()[0].getNumberOfComponents()];
-            df = new Matrix(system.getPhases()[0].getNumberOfComponents(),
-                system.getPhases()[0].getNumberOfComponents());
+            alpha = new double[system.getPhase(0).getNumberOfComponents()];
+            df = new Matrix(system.getPhase(0).getNumberOfComponents(),
+                system.getPhase(0).getNumberOfComponents());
             secondOrderStabilityAnalysis = true;
           }
 
           clonedSystem.init(3, j);
-          for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
+          for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
             alpha[i] = 2.0 * Math.sqrt(Wi[j][i]);
           }
 
-          for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
+          for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
             f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
                 + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]));
-            for (int k = 0; k < clonedSystem.getPhases()[0].getNumberOfComponents(); k++) {
+            for (int k = 0; k < clonedSystem.getPhase(0).getNumberOfComponents(); k++) {
               double kronDelt = (i == k) ? 1.5 : 0.0; // adding 0.5 to diagonal
               df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
                   * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k)); // *
-                                                                            // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                                                                            // clonedSystem.getPhase(j).getNumberOfMolesInPhase());
             }
           }
 
           Matrix dx = df.solve(f).times(-1.0);
-          for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
+          for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
             Wi[j][i] = Math.pow((alpha[i] + dx.get(i, 0)) / 2.0, 2.0);
             logWi[i] = Math.log(Wi[j][i]);
             error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
@@ -244,11 +244,11 @@ public abstract class Flash extends BaseOperation {
         logger.info("norm f " + f.norm1());
         // clonedSystem.display();
         sumw[j] = 0.0;
-        for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
+        for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
           sumw[j] += Wi[j][i];
         }
 
-        for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
+        for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
           deltalogWi[i] = logWi[i] - oldlogw[i];
           clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
         }
@@ -266,7 +266,7 @@ public abstract class Flash extends BaseOperation {
       }
 
       tm[j] = 1.0;
-      for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
+      for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
         tm[j] -= Wi[j][i];
         x[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
       }
@@ -289,16 +289,16 @@ public abstract class Flash extends BaseOperation {
     }
 
     if (((tm[0] < -1e-4) || (tm[1] < -1e-4)) && !(Double.isNaN(tm[0]) || (Double.isNaN(tm[1])))) {
-      for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-        if (system.getPhases()[1].getComponent(i).getx() < 1e-100) {
+      for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
+        if (system.getPhase(1).getComponent(i).getx() < 1e-100) {
           continue;
         }
         if (tm[0] < -1e-4) {
-          system.getPhases()[1].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
-          system.getPhases()[0].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+          system.getPhase(1).getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+          system.getPhase(0).getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
         } else if (tm[1] < -1e-4) {
-          system.getPhases()[1].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
-          system.getPhases()[0].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+          system.getPhase(1).getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+          system.getPhase(0).getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
         } else {
           logger.info("error in stability anlysis");
           system.init(0);
@@ -383,7 +383,7 @@ public abstract class Flash extends BaseOperation {
     boolean solidPhase = false;
     double frac = 0;
     int solid = 0;
-    double[] tempVar = new double[system.getPhases()[0].getNumberOfComponents()];
+    double[] tempVar = new double[system.getPhase(0).getNumberOfComponents()];
 
     if (!system.hasSolidPhase()) {
       system.setNumberOfPhases(system.getNumberOfPhases() + 1);
@@ -397,7 +397,7 @@ public abstract class Flash extends BaseOperation {
         tempVar[k] = system.getPhase(0).getComponent(k).getz();
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
           tempVar[k] -=
-              system.getBeta(i) * system.getPhases()[3].getComponent(k).getFugacityCoefficient()
+              system.getBeta(i) * system.getPhase(3).getComponent(k).getFugacityCoefficient()
                   / system.getPhase(i).getComponent(k).getFugacityCoefficient();
         }
 
@@ -405,19 +405,19 @@ public abstract class Flash extends BaseOperation {
           solidPhase = true;
           solid = k;
           frac = tempVar[k];
-          for (int p = 0; p < system.getPhases()[0].getNumberOfComponents(); p++) {
-            system.getPhases()[3].getComponent(p).setx(1.0e-20);
+          for (int p = 0; p < system.getPhase(0).getNumberOfComponents(); p++) {
+            system.getPhase(3).getComponent(p).setx(1.0e-20);
           }
-          system.getPhases()[3].getComponents()[solid].setx(1.0);
+          system.getPhase(3).getComponents()[solid].setx(1.0);
         }
         // logger.info("tempVar: " + tempVar[k]);
       }
     }
 
     if (solidPhase) {
-      if (frac < system.getPhases()[0].getComponents()[solid].getz() + 1e10) {
+      if (frac < system.getPhase(0).getComponents()[solid].getz() + 1e10) {
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-          // system.getPhases()[i].getComponents()[solid].setx(1.0e-10);
+          // system.getPhase(i).getComponents()[solid].setx(1.0e-10);
         }
         system.init(1);
         // logger.info("solid phase will form..." + system.getNumberOfPhases());
@@ -425,8 +425,7 @@ public abstract class Flash extends BaseOperation {
         system.setBeta(system.getNumberOfPhases() - 1, frac);
         system.initBeta();
         system.setBeta(system.getNumberOfPhases() - 1,
-            system.getPhases()[3].getComponent(solid).getNumberOfmoles()
-                / system.getNumberOfMoles());
+            system.getPhase(3).getComponent(solid).getNumberOfmoles() / system.getNumberOfMoles());
         // double phasetot=0.0;
         // for(int ph=0;ph<system.getNumberOfPhases();ph++){
         // phasetot += system.getPhase(ph).getBeta();
@@ -450,7 +449,7 @@ public abstract class Flash extends BaseOperation {
         // system.setNumberOfPhases(phasesNow);
         // system.setNumberOfPhases(system.getNumberOfPhases()-1);
         // system.setPhaseIndex(system.getNumberOfPhases()-1, 3);
-        // system.setBeta(1-system.getPhases()[0].getComponents()[solid].getz());
+        // system.setBeta(1-system.getPhase(0).getComponents()[solid].getz());
         // system.init(1);
         // system.init_x_y();
         // system.init(1);

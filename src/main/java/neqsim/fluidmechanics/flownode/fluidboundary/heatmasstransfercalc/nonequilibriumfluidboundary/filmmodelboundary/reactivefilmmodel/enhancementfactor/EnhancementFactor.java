@@ -21,7 +21,8 @@ public class EnhancementFactor implements EnhancementFactorInterface {
   protected double[] enhancementVec = null;
   protected double[] hattaNumber = null;
   protected FluidBoundaryInterface fluidBoundary;
-  protected FluidBoundarySystemInterface nonReactiveInterface, reactiveInterface;
+  protected FluidBoundarySystemInterface nonReactiveInterface;
+  protected FluidBoundarySystemInterface reactiveInterface;
 
   /**
    * <p>
@@ -42,9 +43,8 @@ public class EnhancementFactor implements EnhancementFactorInterface {
   public EnhancementFactor(FluidBoundaryInterface fluidBoundary) {
     this();
     this.fluidBoundary = fluidBoundary;
-    enhancementVec =
-        new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
-    hattaNumber = new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    enhancementVec = new double[fluidBoundary.getBulkSystem().getPhase(0).getNumberOfComponents()];
+    hattaNumber = new double[fluidBoundary.getBulkSystem().getPhase(0).getNumberOfComponents()];
   }
 
   /**

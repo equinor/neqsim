@@ -118,13 +118,13 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
       return table;
     }
 
-    rows = thermoSystem.getPhases()[0].getNumberOfComponents() + 30;
+    rows = thermoSystem.getPhase(0).getNumberOfComponents() + 30;
     String[][] table = new String[rows][6];
 
     // String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
-    table[0][0] = ""; // getPhases()[0].getType(); //"";
+    table[0][0] = ""; // getPhase(0).getType(); //"";
 
-    for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {
+    for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents() + 30; i++) {
       for (int j = 0; j < 6; j++) {
         table[i][j] = "";
       }
@@ -136,8 +136,8 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
     StringBuffer buf = new StringBuffer();
     FieldPosition test = new FieldPosition(0);
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
-      for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
+      for (int j = 0; j < thermoSystem.getPhase(0).getNumberOfComponents(); j++) {
+        table[j + 1][0] = thermoSystem.getPhase(0).getComponent(j).getName();
         buf = new StringBuffer();
         table[j + 1][i + 1] =
             nf.format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponent(j).getx(),
@@ -146,10 +146,10 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
       }
 
       buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][0] = "Compressibility Factor";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 3][0] = "Compressibility Factor";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 3][i + 1] =
           nf.format(thermoSystem.getPhase(i).getZ());
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][4] = "[-]";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 3][4] = "[-]";
 
       buf = new StringBuffer();
       table[thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getNumberOfComponents() + 4][0] =
@@ -197,16 +197,16 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
           "[kJ/kg*K]";
 
       buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][0] = "Pressure";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][i + 1] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 10][0] = "Pressure";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 10][i + 1] =
           Double.toString(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getPressure());
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][4] = "[bar]";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 10][4] = "[bar]";
 
       buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][0] = "Temperature";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][i + 1] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 11][0] = "Temperature";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 11][i + 1] =
           Double.toString(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getTemperature());
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][4] = "[K]";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 11][4] = "[K]";
       Double.toString(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getTemperature());
     }
 

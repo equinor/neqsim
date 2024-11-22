@@ -351,9 +351,9 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
               for (int o = 0; o < reaction.getNames().length; o++) {
                 if (phase.getComponent(k).getName().equals(reaction.getNames()[o])) {
                   // System.out.println("comp1 " +
-                  // system.getPhases()[1].getComponent(i).getComponentName() +
+                  // system.getPhase(1).getComponent(i).getComponentName() +
                   // " comp2 "
-                  // +system.getPhases()[1].getComponent(k).getComponentName()
+                  // +system.getPhase(1).getComponent(k).getComponentName()
                   // );
                   tempReacMatrix[i][k] = reaction.getRateFactor(phase);
                   tempStocMatrix[i][k] = -reaction.getStocCoefs()[o];
@@ -404,12 +404,12 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    */
   public Matrix calcReacRates(PhaseInterface phase, ComponentInterface[] components) {
     Matrix modReacMatrix = new Matrix(reacMatrix).copy();
-    // System.out.println(" vol " + system.getPhases()[1].getMolarVolume());
+    // System.out.println(" vol " + system.getPhase(1).getMolarVolume());
 
     for (int i = 0; i < chemicalReactionList.size(); i++) {
       for (int j = 0; j < components.length; j++) {
         // System.out.println("mol cons " +
-        // components[j].getx()/system.getPhases()[1].getMolarMass());
+        // components[j].getx()/system.getPhase(1).getMolarMass());
         modReacMatrix.set(i, j,
             Math.pow(components[j].getx() * phase.getDensity() / phase.getMolarMass(),
                 Math.abs(reacMatrix[i][j])));

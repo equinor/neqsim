@@ -724,7 +724,7 @@ public class PTphaseEnvelopeMay extends BaseOperation {
         Kwil[j] = system.getPhase(0).getComponent(j).getPC() / P
             * Math.exp(5.373 * (1. + system.getPhase(0).getComponent(j).getAcentricFactor())
                 * (1. - system.getPhase(0).getComponent(j).getTC() / Tstart));
-        system.getPhases()[0].getComponent(j).setK(Math.log(Kwil[j]));
+        system.getPhase(0).getComponent(j).setK(Math.log(Kwil[j]));
       }
 
       for (int j = 0; j < numberOfComponents; j++) {
