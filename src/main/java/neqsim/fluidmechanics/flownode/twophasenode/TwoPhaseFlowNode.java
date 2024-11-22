@@ -228,7 +228,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
         if (molarFlowRate[phase] > 1e-100) {
           getBulkSystem().getPhases()[phase].addMoles(i,
-              (getBulkSystem().getPhases()[phase].getComponents()[i].getx() * (molarFlowRate[phase]
+              (getBulkSystem().getPhases()[phase].getComponent(i).getx() * (molarFlowRate[phase]
                   - getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase())));
         }
       }

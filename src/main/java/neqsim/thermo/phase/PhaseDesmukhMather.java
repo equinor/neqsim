@@ -28,8 +28,7 @@ public class PhaseDesmukhMather extends PhaseGE {
    * Constructor for PhaseDesmukhMather.
    * </p>
    */
-  public PhaseDesmukhMather() {
-  }
+  public PhaseDesmukhMather() {}
 
   /** {@inheritDoc} */
   @Override
@@ -58,25 +57,25 @@ public class PhaseDesmukhMather extends PhaseGE {
     this.bij = new double[numberOfComponents][numberOfComponents];
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       for (int k = 0; k < getNumberOfComponents(); k++) {
-        String component_name = getComponents()[k].getComponentName();
+        String component_name = getComponent(k).getComponentName();
 
         for (int l = k; l < getNumberOfComponents(); l++) {
           if (k == l) {
-            if (getComponents()[l].getComponentName().equals("MDEA")
-                && getComponents()[k].getComponentName().equals("MDEA")) {
+            if (getComponent(l).getComponentName().equals("MDEA")
+                && getComponent(k).getComponentName().equals("MDEA")) {
               aij[k][l] = -0.0828487;
               this.aij[l][k] = this.aij[k][l];
             }
           } else {
             try (java.sql.ResultSet dataSet =
                 database.getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name
-                    + "' AND comp2='" + getComponents()[l].getComponentName() + "') OR (comp1='"
-                    + getComponents()[l].getComponentName() + "' AND comp2='" + component_name
+                    + "' AND comp2='" + getComponent(l).getComponentName() + "') OR (comp1='"
+                    + getComponent(l).getComponentName() + "' AND comp2='" + component_name
                     + "')");) {
               dataSet.next();
 
               // if
-              // (dataSet.getString("comp1").trim().equals(getComponents()[l].getComponentName())) {
+              // (dataSet.getString("comp1").trim().equals(getComponent(l).getComponentName())) {
               // templ = k;
               // tempk = l;
               // }
@@ -199,7 +198,7 @@ public class PhaseDesmukhMather extends PhaseGE {
       double temperature, double pressure, PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponents()[i].getx() * Math.log(((ComponentDesmukhMather) componentArray[i])
+      GE += phase.getComponent(i).getx() * Math.log(((ComponentDesmukhMather) componentArray[i])
           .getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
     return R * temperature * numberOfMolesInPhase * GE;

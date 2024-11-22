@@ -76,8 +76,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
    * addGasInStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void addGasInStream(StreamInterface newStream) {
     gasInStream = newStream;
@@ -90,8 +89,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
    * addSolventInStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void addSolventInStream(StreamInterface newStream) {
     solventInStream = newStream;
@@ -105,8 +103,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
    * replaceSolventInStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void replaceSolventInStream(StreamInterface newStream) {
     solventInStream = newStream;
@@ -132,20 +129,20 @@ public class WaterStripperColumn extends SimpleAbsorber {
           .getNumberOfComponents(); i++) {
         boolean gotComponent = false;
         String componentName =
-            streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i].getName();
+            streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getName();
         // System.out.println("adding: " + componentName);
 
         double moles =
-            streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i].getNumberOfmoles();
+            streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getNumberOfmoles();
         // System.out.println("moles: " + moles + " " +
         // mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents());
         for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0]
             .getNumberOfComponents(); p++) {
-          if (mixedStream.getThermoSystem().getPhases()[0].getComponents()[p].getName()
+          if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName()
               .equals(componentName)) {
             gotComponent = true;
 
-            compName = streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
+            compName = streams.get(0).getThermoSystem().getPhases()[0].getComponent(p)
                 .getComponentName();
           }
         }
@@ -403,10 +400,10 @@ public class WaterStripperColumn extends SimpleAbsorber {
 
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = thermoSystem.getPhases()[0].getComponents()[j].getName();
+        table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
         buf = new StringBuffer();
         table[j + 1][i + 1] =
-            nf.format(thermoSystem.getPhases()[i].getComponents()[j].getx(), buf, test).toString();
+            nf.format(thermoSystem.getPhases()[i].getComponent(j).getx(), buf, test).toString();
         table[j + 1][4] = "[-]";
       }
       buf = new StringBuffer();
@@ -508,8 +505,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
    * Setter for the field <code>gasOutStream</code>.
    * </p>
    *
-   * @param gasOutStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param gasOutStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void setGasOutStream(StreamInterface gasOutStream) {
     this.gasOutStream = gasOutStream;
@@ -531,8 +527,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
    * Setter for the field <code>solventOutStream</code>.
    * </p>
    *
-   * @param solventOutStream a
-   *        {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param solventOutStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void setSolventOutStream(StreamInterface solventOutStream) {
     this.solventOutStream = solventOutStream;

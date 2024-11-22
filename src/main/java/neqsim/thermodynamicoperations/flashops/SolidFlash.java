@@ -163,7 +163,7 @@ public class SolidFlash extends TPflash {
 
     Q = betaTotal;
     for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-      Q -= Math.log(E[i]) * system.getPhase(0).getComponents()[i].getz();
+      Q -= Math.log(E[i]) * system.getPhase(0).getComponent(i).getz();
     }
 
     for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {

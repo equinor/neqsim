@@ -452,12 +452,11 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     }
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = thermoSystem.getPhases()[0].getComponents()[j].getName();
+        table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
         buf = new StringBuffer();
-        table[j + 1][i + 1] = nf
-            .format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponents()[j].getx(),
-                buf, test)
-            .toString();
+        table[j + 1][i + 1] =
+            nf.format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponent(j).getx(),
+                buf, test).toString();
         table[j + 1][4] = "[-]";
       }
 

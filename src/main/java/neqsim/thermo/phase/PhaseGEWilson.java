@@ -43,10 +43,10 @@ public class PhaseGEWilson extends PhaseGE {
     componentArray = new ComponentGEWilson[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
       numberOfComponents++;
-      componentArray[i] = new ComponentGEWilson(phase.getComponents()[i].getName(),
-          phase.getComponents()[i].getNumberOfmoles(),
-          phase.getComponents()[i].getNumberOfMolesInPhase(),
-          phase.getComponents()[i].getComponentNumber());
+      componentArray[i] = new ComponentGEWilson(phase.getComponent(i).getName(),
+          phase.getComponent(i).getNumberOfmoles(),
+          phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getComponentNumber());
     }
   }
 
@@ -101,7 +101,7 @@ public class PhaseGEWilson extends PhaseGE {
       double temperature, double pressure, PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponents()[i].getx()
+      GE += phase.getComponent(i).getx()
           * Math.log(((ComponentGEWilson) componentArray[i]).getWilsonActivityCoefficient(phase));
     }
 

@@ -85,7 +85,7 @@ public class PhysicalPropertyMixingRule
       if (phase.getComponent(l).isIsTBPfraction() || phase.getComponent(l).getIonicCharge() != 0) {
         break;
       }
-      String component_name = phase.getComponents()[l].getComponentName();
+      String component_name = phase.getComponent(l).getComponentName();
       for (int k = l; k < phase.getNumberOfComponents(); k++) {
         if (k == l || phase.getComponent(k).getIonicCharge() != 0
             || phase.getComponent(k).isIsTBPfraction()) {
@@ -96,8 +96,8 @@ public class PhysicalPropertyMixingRule
                   new neqsim.util.database.NeqSimDataBase();
               java.sql.ResultSet dataSet =
                   database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='" + component_name
-                      + "' AND COMP2='" + phase.getComponents()[k].getComponentName()
-                      + "') OR (COMP1='" + phase.getComponents()[k].getComponentName()
+                      + "' AND COMP2='" + phase.getComponent(k).getComponentName()
+                      + "') OR (COMP1='" + phase.getComponent(k).getComponentName()
                       + "' AND COMP2='" + component_name + "')")) {
             if (dataSet.next()) {
               Gij[l][k] = Double.parseDouble(dataSet.getString("gijvisc"));

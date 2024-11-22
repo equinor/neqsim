@@ -64,16 +64,15 @@ public class ChungViscosityMethod extends Viscosity {
       for (int j = 0; j < gasPhase.getPhase().getNumberOfComponents(); j++) {
         tempVar2 = Math
             .pow(1.0 + Math.sqrt(pureComponentViscosity[i] / pureComponentViscosity[j])
-                * Math.pow(gasPhase.getPhase().getComponents()[j].getMolarMass()
-                    / gasPhase.getPhase().getComponents()[i].getMolarMass(), 0.25),
+                * Math.pow(gasPhase.getPhase().getComponent(j).getMolarMass()
+                    / gasPhase.getPhase().getComponent(i).getMolarMass(), 0.25),
                 2.0)
-            / Math.pow(8.0 * (1.0 + gasPhase.getPhase().getComponents()[i].getMolarMass()
-                / gasPhase.getPhase().getComponents()[j].getMolarMass()), 0.5);
-        tempVar += gasPhase.getPhase().getComponents()[j].getx() * tempVar2;
+            / Math.pow(8.0 * (1.0 + gasPhase.getPhase().getComponent(i).getMolarMass()
+                / gasPhase.getPhase().getComponent(j).getMolarMass()), 0.5);
+        tempVar += gasPhase.getPhase().getComponent(j).getx() * tempVar2;
       }
 
-      viscosity +=
-          gasPhase.getPhase().getComponents()[i].getx() * pureComponentViscosity[i] / tempVar;
+      viscosity += gasPhase.getPhase().getComponent(i).getx() * pureComponentViscosity[i] / tempVar;
     }
     viscosity *= 1.0e-7; // N-sek/m2
     return viscosity;
@@ -107,31 +106,31 @@ public class ChungViscosityMethod extends Viscosity {
     double chungviskstar = 0;
     for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
       // eq. 9-4.11 TPoLG
-      relativeViscosity[i] = 131.3 * gasPhase.getPhase().getComponents()[i].getDebyeDipoleMoment()
-          / Math.sqrt(gasPhase.getPhase().getComponents()[i].getCriticalVolume()
-              * gasPhase.getPhase().getComponents()[i].getTC());
+      relativeViscosity[i] = 131.3 * gasPhase.getPhase().getComponent(i).getDebyeDipoleMoment()
+          / Math.sqrt(gasPhase.getPhase().getComponent(i).getCriticalVolume()
+              * gasPhase.getPhase().getComponent(i).getTC());
       // eq. 9-4.10 TPoLG
-      Fc[i] = 1.0 - 0.2756 * gasPhase.getPhase().getComponents()[i].getAcentricFactor()
+      Fc[i] = 1.0 - 0.2756 * gasPhase.getPhase().getComponent(i).getAcentricFactor()
           + 0.059035 * Math.pow(relativeViscosity[i], 4)
-          + gasPhase.getPhase().getComponents()[i].getViscosityCorrectionFactor();
+          + gasPhase.getPhase().getComponent(i).getViscosityCorrectionFactor();
 
       for (int j = 0; j < 10; j++) {
         // Table 9-5 TPoLG
         chungE[j] = chungHPcoefs[j][0]
-            + chungHPcoefs[j][1] * gasPhase.getPhase().getComponents()[i].getAcentricFactor()
+            + chungHPcoefs[j][1] * gasPhase.getPhase().getComponent(i).getAcentricFactor()
             + chungHPcoefs[j][2] * Math.pow(relativeViscosity[i], 4) + chungHPcoefs[j][3]
-                * gasPhase.getPhase().getComponents()[i].getViscosityCorrectionFactor();
+                * gasPhase.getPhase().getComponent(i).getViscosityCorrectionFactor();
       }
 
       // eq. 9-4.8 TPoLG (The properties of Liquids and Gases)
       tempVar = 1.2593 * gasPhase.getPhase().getTemperature()
-          / gasPhase.getPhase().getComponents()[i].getTC();
+          / gasPhase.getPhase().getComponent(i).getTC();
       // eq. 9.4.3 TPoLG
       omegaVisc[i] =
           A * Math.pow(tempVar, -B) + C * Math.exp(-D * tempVar) + E * Math.exp(-F * tempVar);
       // eq. 9-6.18 TPoLG
       chungy = 0.1 / (gasPhase.getPhase().getMolarVolume())
-          * gasPhase.getPhase().getComponents()[i].getCriticalVolume() / 6.0;
+          * gasPhase.getPhase().getComponent(i).getCriticalVolume() / 6.0;
       // eq. 9-6.19 TPoLG
       chungG1 = (1.0 - 0.5 * chungy) / Math.pow((1.0 - chungy), 3.0);
       // eq. 9-6.20 TPoLG
@@ -146,9 +145,9 @@ public class ChungViscosityMethod extends Viscosity {
           Math.sqrt(tempVar) / omegaVisc[i] * (Fc[i] * (1.0 / chungG2 + chungE[5] * chungy))
               + chungviskstartstar;
       pureComponentViscosity[i] = chungviskstar * 36.344
-          * Math.pow(gasPhase.getPhase().getComponents()[i].getMolarMass() * 1000.0
-              * gasPhase.getPhase().getComponents()[i].getTC(), 0.5)
-          / (Math.pow(gasPhase.getPhase().getPhase().getComponents()[i].getCriticalVolume(),
+          * Math.pow(gasPhase.getPhase().getComponent(i).getMolarMass() * 1000.0
+              * gasPhase.getPhase().getComponent(i).getTC(), 0.5)
+          / (Math.pow(gasPhase.getPhase().getPhase().getComponent(i).getCriticalVolume(),
               2.0 / 3.0));
     }
   }

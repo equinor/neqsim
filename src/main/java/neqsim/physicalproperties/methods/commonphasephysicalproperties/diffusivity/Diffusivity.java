@@ -89,10 +89,10 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements Diffusi
         if (i == j) {
           continue;
         } else {
-          sum += phase.getPhase().getComponents()[j].getx() / binaryDiffusionCoefficients[i][j];
+          sum += phase.getPhase().getComponent(j).getx() / binaryDiffusionCoefficients[i][j];
         }
       }
-      effectiveDiffusionCoefficient[i] = (1.0 - phase.getPhase().getComponents()[i].getx()) / sum;
+      effectiveDiffusionCoefficient[i] = (1.0 - phase.getPhase().getComponent(i).getx()) / sum;
     }
   }
 
@@ -113,8 +113,8 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements Diffusi
   public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
     /*
      * double temp = (i==j)? 1.0: 0.0; double nonIdealCorrection = temp +
-     * gasPhase.getPhase().getComponents()[i].getx() *
-     * gasPhase.getPhase().getComponents()[i].getdfugdn(j) *
+     * gasPhase.getPhase().getComponent(i).getx() *
+     * gasPhase.getPhase().getComponent(i).getdfugdn(j) *
      * gasPhase.getPhase().getNumberOfMolesInPhase(); if (Double.isNaN(nonIdealCorrection))
      * nonIdealCorrection=1.0; return binaryDiffusionCoefficients[i][j]/nonIdealCorrection; // shuld
      * be divided by non ideality factor

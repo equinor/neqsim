@@ -75,18 +75,18 @@ public class EnhancementFactorAlg extends EnhancementFactor {
   // enhancementFactor[phase].set(i,j, 1.0);
   // else{
   // double pseudoReacRate =
-  // reacMatrix[i][j]*fluidBoundary.getBulkSystem().getPhases()[phase].getComponents()[j].getx()*fluidBoundary.getBulkSystem().getPhases()[phase].getDensity()/fluidBoundary.getBulkSystem().getPhases()[phase].getMolarMass()*Math.abs(stocMatrix[i][i]);
+  // reacMatrix[i][j]*fluidBoundary.getBulkSystem().getPhases()[phase].getComponent(j).getx()*fluidBoundary.getBulkSystem().getPhases()[phase].getDensity()/fluidBoundary.getBulkSystem().getPhases()[phase].getMolarMass()*Math.abs(stocMatrix[i][i]);
   // hattaNumber[phase].set(i,j,Math.sqrt(pseudoReacRate*fluidBoundary.getBulkSystem().getPhases()[phase].getPhysicalProperties().getEffectiveDiffusionCoefficient(i))/fluidBoundary.getBinaryMassTransferCoefficient(phase,i,j));
   // double phiVal = 1.0 +
   // (fluidBoundary.getBulkSystem().getPhases()[phase].getPhysicalProperties().getEffectiveDiffusionCoefficient(j)/fluidBoundary.getBulkSystem().getPhases()[phase].getPhysicalProperties().getEffectiveDiffusionCoefficient(i))*
   // (stocMatrix[i][i]/stocMatrix[i][j]) *
-  // (fluidBoundary.getBulkSystem().getPhases()[phase].getComponents()[j].getx()*fluidBoundary.getBulkSystem().getPhases()[phase].getDensity()/fluidBoundary.getBulkSystem().getPhases()[phase].getMolarMass())/
-  // (fluidBoundary.getInterphaseSystem().getPhases()[phase].getComponents()[i].getx()*fluidBoundary.getInterphaseSystem().getPhases()[phase].getDensity()/fluidBoundary.getInterphaseSystem().getPhases()[phase].getMolarMass());
+  // (fluidBoundary.getBulkSystem().getPhases()[phase].getComponent(j).getx()*fluidBoundary.getBulkSystem().getPhases()[phase].getDensity()/fluidBoundary.getBulkSystem().getPhases()[phase].getMolarMass())/
+  // (fluidBoundary.getInterphaseSystem().getPhases()[phase].getComponent(i).getx()*fluidBoundary.getInterphaseSystem().getPhases()[phase].getDensity()/fluidBoundary.getInterphaseSystem().getPhases()[phase].getMolarMass());
 
   // System.out.println("components " +
-  // fluidBoundary.getBulkSystem().getPhases()[phase].getComponents()[i].getComponentName()
+  // fluidBoundary.getBulkSystem().getPhases()[phase].getComponent(i).getComponentName()
   // + " " +
-  // fluidBoundary.getBulkSystem().getPhases()[phase].getComponents()[j].getComponentName());
+  // fluidBoundary.getBulkSystem().getPhases()[phase].getComponent(j).getComponentName());
   // System.out.println("hatta : " + hattaNumber[phase].get(i,j));
   // System.out.println("phi : " + phiVal);
 

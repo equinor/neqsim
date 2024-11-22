@@ -184,8 +184,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0]
           .getNumberOfComponents(); j++) {
         sol4Matrix[j].set(i, 0,
-            pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx()
-                * pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass()
+            pipe.getNode(i).getBulkSystem().getPhases()[0].getComponent(j).getx()
+                * pipe.getNode(i).getBulkSystem().getPhases()[0].getComponent(j).getMolarMass()
                 / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass());
       }
     }
@@ -283,10 +283,10 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     for (int j = 1; j < numberOfNodes; j++) {
       for (int p = 0; p < pipe.getNode(0).getBulkSystem().getPhases()[0]
           .getNumberOfComponents(); p++) {
-        pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].setx(
+        pipe.getNode(j).getBulkSystem().getPhases()[0].getComponent(p).setx(
             sol4Matrix[p].get(j, 0) * pipe.getNode(j).getBulkSystem().getPhases()[0].getMolarMass()
-                / pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getMolarMass());
-        // pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx() +
+                / pipe.getNode(j).getBulkSystem().getPhases()[0].getComponent(p).getMolarMass());
+        // pipe.getNode(j).getBulkSystem().getPhases()[0].getComponent(p).getx() +
         // 0.5*diff4Matrix[p].get(j,0));
       }
 
@@ -690,8 +690,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0]
           .getNumberOfComponents(); j++) {
         oldComposition[j][i] = sol4Matrix[j].get(i, 0);
-        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx() *
-        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass() /
+        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponent(j).getx() *
+        // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponent(j).getMolarMass() /
         // pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
       }
     }

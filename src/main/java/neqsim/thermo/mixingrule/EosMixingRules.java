@@ -1106,7 +1106,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
       aij = compArray[compNumb].getaT() / compArray[compNumb].getb();
       A = getB() * (aij - R * temperature
-          * Math.log(((ComponentGEInterface) gePhase.getComponents()[compNumb]).getGamma()) / hwfc);
+          * Math.log(((ComponentGEInterface) gePhase.getComponent(compNumb)).getGamma()) / hwfc);
 
       A += getA() * calcBi(compNumb, phase, temperature, pressure, numbcomp) / getB();
       // System.out.println("Ai HV : " + A);
@@ -1122,11 +1122,10 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
       A = getB()
           * (compArray[compNumb].getaDiffT() / compArray[compNumb].getb()
-              - R * Math.log(((ComponentGEInterface) gePhase.getComponents()[compNumb]).getGamma())
+              - R * Math.log(((ComponentGEInterface) gePhase.getComponent(compNumb)).getGamma())
                   / hwfc
               - R * temperature
-                  * ((ComponentGEInterface) gePhase.getComponents()[compNumb]).getlnGammadt()
-                  / hwfc)
+                  * ((ComponentGEInterface) gePhase.getComponent(compNumb)).getlnGammadt() / hwfc)
           + compArray[compNumb].getb() * calcAT(phase, temperature, pressure, numbcomp) / getB();
       // 0.5/Math.sqrt(compArray[compNumb].getaT()*compArray[j].getaT())*(compArray[compNumb].getaT()
       // * compArray[j].getaDiffT() +compArray[j].getaT() *
@@ -1144,10 +1143,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       for (int i = 0; i < numbcomp; i++) {
         A += compArray[i].getNumberOfMolesInPhase()
             * (compArray[i].getaDiffT() / compArray[i].getb()
-                - R * Math.log(((ComponentGEInterface) gePhase.getComponents()[i]).getGamma())
-                    / hwfc
-                - R * temperature
-                    * ((ComponentGEInterface) gePhase.getComponents()[i]).getlnGammadt()
+                - R * Math.log(((ComponentGEInterface) gePhase.getComponent(i)).getGamma()) / hwfc
+                - R * temperature * ((ComponentGEInterface) gePhase.getComponent(i)).getlnGammadt()
                     / Math.log(2.0));
         // ....);
         // 0.5/Math.sqrt(compArray[compNumb].getaT()*compArray[j].getaT())*(compArray[compNumb].getaT()
@@ -1166,10 +1163,9 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
       double aij = compArray[compNumbj].getb()
           * (compArray[compNumb].getaT() / compArray[compNumb].getb() - R * temperature
-              * Math.log(((ComponentGEInterface) gePhase.getComponents()[compNumb]).getGamma())
-              / hwfc)
+              * Math.log(((ComponentGEInterface) gePhase.getComponent(compNumb)).getGamma()) / hwfc)
           - getB() * R * temperature / hwfc
-              * ((ComponentGEInterface) gePhase.getComponents()[compNumb]).getlnGammadn(compNumbj)
+              * ((ComponentGEInterface) gePhase.getComponent(compNumb)).getlnGammadn(compNumbj)
           + compArray[compNumb].getb()
               * (compArray[compNumbj].getaT() / compArray[compNumbj].getb() - R * temperature
                   * Math.log(((ComponentGEInterface) gePhase.getComponents()[compNumbj]).getGamma())
@@ -1361,21 +1357,20 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       alpha_mix = 0.0;
       dadt = 0.0;
       for (int i = 0; i < numbcomp; i++) {
-        term = qPure[i]
-            + hwfc * Math.log(((ComponentGEInterface) gePhase.getComponents()[i]).getGamma());
-        alpha_mix += phase.getComponents()[i].getNumberOfMolesInPhase()
+        term =
+            qPure[i] + hwfc * Math.log(((ComponentGEInterface) gePhase.getComponent(i)).getGamma());
+        alpha_mix += phase.getComponent(i).getNumberOfMolesInPhase()
             / phase.getNumberOfMolesInPhase() * term;
         ader[i] = term;
         compArray[i].setAder(ader[i]);
 
         if (phase.getInitType() > 1) {
-          term = qPuredT[i]
-              + hwfc * ((ComponentGEInterface) gePhase.getComponents()[i]).getlnGammadt();
+          term =
+              qPuredT[i] + hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getlnGammadt();
           dubdert += (qPuredTdT[i]
-              + hwfc * ((ComponentGEInterface) gePhase.getComponents()[i]).getlnGammadtdt())
-              * phase.getComponents()[i].getNumberOfMolesInPhase()
-              / phase.getNumberOfMolesInPhase();
-          dadt += term * phase.getComponents()[i].getNumberOfMolesInPhase()
+              + hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getlnGammadtdt())
+              * phase.getComponent(i).getNumberOfMolesInPhase() / phase.getNumberOfMolesInPhase();
+          dadt += term * phase.getComponent(i).getNumberOfMolesInPhase()
               / phase.getNumberOfMolesInPhase();
           adert[i] = term;
           compArray[i].setdAdTdn(adert[i]);
@@ -1387,7 +1382,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       if (phase.getInitType() > 2) {
         for (int i = 0; i < numbcomp; i++) {
           for (int j = 0; j < numbcomp; j++) {
-            ad2[i][j] = hwfc * ((ComponentGEInterface) gePhase.getComponents()[i]).getlnGammadn(j);
+            ad2[i][j] = hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getlnGammadn(j);
             compArray[i].setdAdndn(j, ad2[i][j]);
           }
         }
@@ -1664,23 +1659,22 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       double sd2 = (2 * hex - cpex * temperature) / Math.pow(temperature, 3.0);
       double cnt2 = 0.0;
       for (int i = 0; i < numbcomp; i++) {
-        cnt2 += phase.getComponents()[i].getNumberOfMolesInPhase() / phase.getNumberOfMolesInPhase()
+        cnt2 += phase.getComponent(i).getNumberOfMolesInPhase() / phase.getNumberOfMolesInPhase()
             * qPuredTdT[i];
         // second part
       }
       alpha_mix = 0.0;
       dadt = 0.0;
       for (int i = 0; i < numbcomp; i++) {
-        term = qPure[i]
-            + hwfc * Math.log(((ComponentGEInterface) gePhase.getComponents()[i]).getGamma());
-        alpha_mix += phase.getComponents()[i].getNumberOfMolesInPhase()
+        term =
+            qPure[i] + hwfc * Math.log(((ComponentGEInterface) gePhase.getComponent(i)).getGamma());
+        alpha_mix += phase.getComponent(i).getNumberOfMolesInPhase()
             / phase.getNumberOfMolesInPhase() * term;
         ader[i] = term;
         compArray[i].setAder(ader[i]);
 
-        term =
-            qPuredT[i] + hwfc * ((ComponentGEInterface) gePhase.getComponents()[i]).getlnGammadt();
-        dadt += term * phase.getComponents()[i].getNumberOfMolesInPhase()
+        term = qPuredT[i] + hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getlnGammadt();
+        dadt += term * phase.getComponent(i).getNumberOfMolesInPhase()
             / phase.getNumberOfMolesInPhase();
         adert[i] = term;
         compArray[i].setdAdTdn(adert[i]);
@@ -1689,7 +1683,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       // TODO implment hex and Cpex and set dAdTdT
       for (int i = 0; i < numbcomp; i++) {
         for (int j = 0; j < numbcomp; j++) {
-          ad2[i][j] = hwfc * ((ComponentGEInterface) gePhase.getComponents()[i]).getlnGammadn(j);
+          ad2[i][j] = hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getlnGammadn(j);
           compArray[i].setdAdndn(j, ad2[i][j]);
         }
       }
@@ -1707,11 +1701,10 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         double ssi = 0.0;
         for (int j = 0; j < numbcomp; j++) {
           ssi += (1.0 - WSintparam[i][j]) * (abft2[i] + abft2[j])
-              * phase.getComponents()[j].getNumberOfMolesInPhase()
-              / phase.getNumberOfMolesInPhase();
+              * phase.getComponent(j).getNumberOfMolesInPhase() / phase.getNumberOfMolesInPhase();
         }
-        dd2 += phase.getComponents()[i].getNumberOfMolesInPhase() / phase.getNumberOfMolesInPhase()
-            * ssi;
+        dd2 +=
+            phase.getComponent(i).getNumberOfMolesInPhase() / phase.getNumberOfMolesInPhase() * ssi;
       }
       dd2 = 0.5 * dd2;
 
@@ -1731,20 +1724,19 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       for (int i = 0; i < numbcomp; i++) {
         double ss = 0.0;
         for (int j = 0; j < numbcomp; j++) {
-          ss += qf2[j][i] * phase.getComponents()[j].getNumberOfMolesInPhase()
+          ss += qf2[j][i] * phase.getComponent(j).getNumberOfMolesInPhase()
               / phase.getNumberOfMolesInPhase();
         }
         qf1[i] = ss;
-        Q += phase.getComponents()[i].getNumberOfMolesInPhase() / phase.getNumberOfMolesInPhase()
-            * ss;
+        Q += phase.getComponent(i).getNumberOfMolesInPhase() / phase.getNumberOfMolesInPhase() * ss;
         double sst = 0.0;
         for (int j = 0; j < numbcomp; j++) {
-          sst += qft[j][i] * phase.getComponents()[j].getNumberOfMolesInPhase()
+          sst += qft[j][i] * phase.getComponent(j).getNumberOfMolesInPhase()
               / phase.getNumberOfMolesInPhase();
         }
         QFTD[i] = sst;
-        QT += phase.getComponents()[i].getNumberOfMolesInPhase() / phase.getNumberOfMolesInPhase()
-            * sst;
+        QT +=
+            phase.getComponent(i).getNumberOfMolesInPhase() / phase.getNumberOfMolesInPhase() * sst;
       }
       double d_mix = 0.5 * Q;
       double d_mixt = 0.5 * QT;
@@ -2135,7 +2127,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         String component_name = phase.getComponent(k).getComponentName();
 
         for (int l = k; l < phase.getNumberOfComponents(); l++) {
-          String component_name2 = phase.getComponents()[l].getComponentName();
+          String component_name2 = phase.getComponent(l).getComponentName();
           if (k == l) {
             classicOrHV[k][l] = "Classic";
             classicOrWS[k][l] = "Classic";
@@ -2289,20 +2281,16 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                 // +component_name2 + " and " +
                 // component_name+ " to " +
                 // intparam[k][l]);
-              } else if ((component_name.equals("CO2")
-                  && phase.getComponents()[l].isIsTBPfraction())
-                  || (component_name2.equals("CO2")
-                      && phase.getComponents()[k].isIsTBPfraction())) {
+              } else if ((component_name.equals("CO2") && phase.getComponent(l).isIsTBPfraction())
+                  || (component_name2.equals("CO2") && phase.getComponent(k).isIsTBPfraction())) {
                 intparam[k][l] = 0.1;
               } else if ((component_name.equals("nitrogen")
-                  && phase.getComponents()[l].isIsTBPfraction())
+                  && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("nitrogen")
-                      && phase.getComponents()[k].isIsTBPfraction())) {
+                      && phase.getComponent(k).isIsTBPfraction())) {
                 intparam[k][l] = 0.08;
-              } else if ((component_name.equals("water")
-                  && phase.getComponents()[l].isIsTBPfraction())
-                  || (component_name2.equals("water")
-                      && phase.getComponents()[k].isIsTBPfraction())) {
+              } else if ((component_name.equals("water") && phase.getComponent(l).isIsTBPfraction())
+                  || (component_name2.equals("water") && phase.getComponent(k).isIsTBPfraction())) {
                 intparam[k][l] = 0.2;
 
                 if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
@@ -2311,8 +2299,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                         .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
                   // intparam[k][l] = -0.0685; // taken from Riaz et a. 2012
 
-                  double molmassPC = phase.getComponents()[l].getMolarMass();
-                  if (phase.getComponents()[k].isIsTBPfraction()) {
+                  double molmassPC = phase.getComponent(l).getMolarMass();
+                  if (phase.getComponent(k).isIsTBPfraction()) {
                     molmassPC = phase.getComponents()[k].getMolarMass();
                   }
                   double intparamkPC = -0.1533 * Math.log(1000.0 * molmassPC) + 0.7055;
@@ -2321,8 +2309,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
                   intparamT[k][l] = 0.0;
                 }
-              } else if ((component_name.equals("MEG")
-                  && phase.getComponents()[l].isIsTBPfraction())
+              } else if ((component_name.equals("MEG") && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("MEG")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.2;
@@ -2330,7 +2317,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                     || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
                     || phase.getClass().getName()
                         .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
-                  double molmassPC = phase.getComponents()[l].getMolarMass();
+                  double molmassPC = phase.getComponent(l).getMolarMass();
                   if (phase.getComponents()[k].isIsTBPfraction()) {
                     molmassPC = phase.getComponents()[k].getMolarMass();
                   }
@@ -2341,7 +2328,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                   intparamT[k][l] = 0.0;
                 }
               } else if ((component_name.equals("ethanol")
-                  && phase.getComponents()[l].isIsTBPfraction())
+                  && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("ethanol")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.0;
@@ -2352,12 +2339,12 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                   intparam[k][l] = -0.05;
                   intparamT[k][l] = 0.0;
                   if (phase.getComponents()[k].getMolarMass() > (200.0 / 1000.0)
-                      || phase.getComponents()[l].getMolarMass() > (200.0 / 1000.0)) {
+                      || phase.getComponent(l).getMolarMass() > (200.0 / 1000.0)) {
                     intparam[k][l] = -0.1;
                   }
                 }
               } else if ((component_name.equals("methanol")
-                  && phase.getComponents()[l].isIsTBPfraction())
+                  && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("methanol")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.0;
@@ -2368,12 +2355,11 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                   intparam[k][l] = -0.1;
                   intparamT[k][l] = 0.0;
                   if (phase.getComponents()[k].getMolarMass() > (200.0 / 1000.0)
-                      || phase.getComponents()[l].getMolarMass() > (200.0 / 1000.0)) {
+                      || phase.getComponent(l).getMolarMass() > (200.0 / 1000.0)) {
                     intparam[k][l] = -0.2;
                   }
                 }
-              } else if ((component_name.equals("TEG")
-                  && phase.getComponents()[l].isIsTBPfraction())
+              } else if ((component_name.equals("TEG") && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("TEG")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.12;
@@ -2384,7 +2370,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                   intparam[k][l] = 0.12;
                   intparamT[k][l] = 0.0;
                 }
-              } else if ((component_name.equals("S8") && phase.getComponents()[l].isIsTBPfraction())
+              } else if ((component_name.equals("S8") && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("S8") && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.05;
               } else {

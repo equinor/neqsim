@@ -132,7 +132,7 @@ public class SolidFlash1 extends TPflash {
     Q = betaTotal;
     for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
       if (i != solidIndex) {
-        Q -= Math.log(E[i]) * system.getPhase(0).getComponents()[i].getz();
+        Q -= Math.log(E[i]) * system.getPhase(0).getComponent(i).getz();
       }
     }
     for (int i = 0; i < solidsNumber; i++) {
@@ -452,7 +452,7 @@ public class SolidFlash1 extends TPflash {
           .getTriplePointTemperature()) {
         solidCandidate[k] = 0;
       } else {
-        solidCandidate[k] = system.getPhase(0).getComponents()[k].getz();
+        solidCandidate[k] = system.getPhase(0).getComponent(k).getz();
         system.getPhases()[3].getComponent(k).setx(1.0);
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
           // double e = system.getBeta(i)*

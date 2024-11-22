@@ -45,8 +45,7 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
     for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
       if (system.getPhase(0).getComponent(k).getComponentName().equals("water")
           || system.getPhase(0).getComponent(k).getComponentName().equals("MEG")) {
-        system
-            .setTemperature(system.getPhases()[0].getComponents()[k].getMeltingPointTemperature());
+        system.setTemperature(system.getPhases()[0].getComponent(k).getMeltingPointTemperature());
         for (int l = 0; l < system.getPhases()[0].getNumberOfComponents(); l++) {
           system.getPhase(1).getComponent(l).setx(1e-30);
           // logger.info("here");
@@ -60,20 +59,20 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
           // deriv = 0.0;
           iterations++;
           system.init(3);
-          funk = system.getPhases()[0].getComponents()[k].getz();
+          funk = system.getPhases()[0].getComponent(k).getz();
 
           funk -= system.getPhases()[0].getBeta()
-              * system.getPhases()[1].getComponents()[k].getFugacityCoefficient()
-              / system.getPhases()[0].getComponents()[k].getFugacityCoefficient();
+              * system.getPhases()[1].getComponent(k).getFugacityCoefficient()
+              / system.getPhases()[0].getComponent(k).getFugacityCoefficient();
 
           // logger.info("funk " + funk);
           /*
            * deriv -= system.getPhases()[0].getBeta()
-           * (system.getPhases()[1].getComponents()[k].getFugacityCoefficient()
-           * system.getPhases()[0].getComponents()[k].getdfugdt() * -1.0 /
-           * Math.pow(system.getPhases()[0].getComponents()[k] .getFugacityCoefficient(), 2.0) +
-           * system.getPhases()[1].getComponents()[k].getdfugdt() /
-           * system.getPhases()[i].getComponents()[k] .getFugacityCoefficient());
+           * (system.getPhases()[1].getComponent(k).getFugacityCoefficient()
+           * system.getPhases()[0].getComponent(k).getdfugdt() * -1.0 /
+           * Math.pow(system.getPhases()[0].getComponent(k) .getFugacityCoefficient(), 2.0) +
+           * system.getPhases()[1].getComponent(k).getdfugdt() /
+           * system.getPhases()[i].getComponent(k) .getFugacityCoefficient());
            *
            * system.setTemperature(system.getTemperature() - funk/deriv);
            */

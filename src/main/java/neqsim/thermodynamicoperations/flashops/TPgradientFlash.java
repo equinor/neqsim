@@ -69,8 +69,8 @@ public class TPgradientFlash extends Flash {
 
       fvec.set(i, 0,
           logTerm
-              - Math.log(tempSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient()
-                  * tempSystem.getPhases()[0].getComponents()[i].getx() * tempSystem.getPressure())
+              - Math.log(tempSystem.getPhases()[0].getComponent(i).getFugacityCoefficient()
+                  * tempSystem.getPhases()[0].getComponent(i).getx() * tempSystem.getPressure())
               - molarMassTerm);
       sumx += componentX;
     }
@@ -89,13 +89,13 @@ public class TPgradientFlash extends Flash {
       for (int j = 0; j < numComponents; j++) {
         double dij = (i == j) ? 1.0 : 0.0; // Kronecker delta
         double fugacityCoeff =
-            localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient();
-        double componentX = localSystem.getPhases()[0].getComponents()[i].getx();
+            localSystem.getPhases()[0].getComponent(i).getFugacityCoefficient();
+        double componentX = localSystem.getPhases()[0].getComponent(i).getx();
         double pressure = localSystem.getPressure();
 
         double tempJ = 1.0 / (fugacityCoeff * componentX * pressure)
             * (fugacityCoeff * dij * pressure
-                + localSystem.getPhases()[0].getComponents()[i].getdfugdx(j) * componentX
+                + localSystem.getPhases()[0].getComponent(i).getdfugdx(j) * componentX
                     * pressure);
         Jac.set(i, j, tempJ);
       }
@@ -107,12 +107,12 @@ public class TPgradientFlash extends Flash {
     }
 
     for (int i = 0; i < numComponents; i++) {
-      double fugacityCoeff = localSystem.getPhases()[0].getComponents()[i].getFugacityCoefficient();
-      double componentX = localSystem.getPhases()[0].getComponents()[i].getx();
+      double fugacityCoeff = localSystem.getPhases()[0].getComponent(i).getFugacityCoefficient();
+      double componentX = localSystem.getPhases()[0].getComponent(i).getx();
       double pressure = localSystem.getPressure();
 
       double tempJ = 1.0 / (fugacityCoeff * componentX * pressure)
-          * (localSystem.getPhases()[0].getComponents()[i].getdfugdp() * componentX * pressure
+          * (localSystem.getPhases()[0].getComponent(i).getdfugdp() * componentX * pressure
               + fugacityCoeff * componentX);
       Jac.set(i, numComponents, tempJ);
     }

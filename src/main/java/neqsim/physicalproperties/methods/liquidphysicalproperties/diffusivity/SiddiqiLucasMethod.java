@@ -33,8 +33,8 @@ public class SiddiqiLucasMethod extends Diffusivity {
     // remember this is the Maxwell-Stefan diffusion coefficients
     binaryDiffusionCoefficients[i][j] =
         1.0e-4 * 2.98e-7 * Math.pow(liquidPhase.getPureComponentViscosity(j), -1.026)
-            * Math.pow(1.0 / liquidPhase.getPhase().getComponents()[i].getNormalLiquidDensity()
-                * liquidPhase.getPhase().getComponents()[i].getMolarMass() * 1000, -0.5473)
+            * Math.pow(1.0 / liquidPhase.getPhase().getComponent(i).getNormalLiquidDensity()
+                * liquidPhase.getPhase().getComponent(i).getMolarMass() * 1000, -0.5473)
             * liquidPhase.getPhase().getTemperature();
     return binaryDiffusionCoefficients[i][j];
   }
@@ -56,10 +56,10 @@ public class SiddiqiLucasMethod extends Diffusivity {
     // remember this is the Maxwell-Stefan diffusion coefficients
     binaryDiffusionCoefficients[i][j] =
         1.0e-4 * 9.89e-8 * Math.pow(liquidPhase.getPureComponentViscosity(j), -0.907)
-            * Math.pow(1.0 / liquidPhase.getPhase().getComponents()[i].getNormalLiquidDensity()
-                * liquidPhase.getPhase().getComponents()[i].getMolarMass() * 1000, -0.45)
-            * Math.pow(1.0 / liquidPhase.getPhase().getComponents()[j].getNormalLiquidDensity()
-                * liquidPhase.getPhase().getComponents()[j].getMolarMass() * 1000, 0.265)
+            * Math.pow(1.0 / liquidPhase.getPhase().getComponent(i).getNormalLiquidDensity()
+                * liquidPhase.getPhase().getComponent(i).getMolarMass() * 1000, -0.45)
+            * Math.pow(1.0 / liquidPhase.getPhase().getComponent(j).getNormalLiquidDensity()
+                * liquidPhase.getPhase().getComponent(j).getMolarMass() * 1000, 0.265)
             * liquidPhase.getPhase().getTemperature();
     return binaryDiffusionCoefficients[i][j];
   }

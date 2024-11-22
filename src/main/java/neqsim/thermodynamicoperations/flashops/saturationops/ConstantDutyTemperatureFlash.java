@@ -52,12 +52,12 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
       system.init(2);
 
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        system.getPhases()[0].getComponents()[i]
-            .setK(system.getPhases()[0].getComponents()[i].getFugacityCoefficient()
-                / system.getPhases()[1].getComponents()[i].getFugacityCoefficient());
-        system.getPhases()[1].getComponents()[i]
-            .setK(system.getPhases()[0].getComponents()[i].getFugacityCoefficient()
-                / system.getPhases()[1].getComponents()[i].getFugacityCoefficient());
+        system.getPhases()[0].getComponent(i)
+            .setK(system.getPhases()[0].getComponent(i).getFugacityCoefficient()
+                / system.getPhases()[1].getComponent(i).getFugacityCoefficient());
+        system.getPhases()[1].getComponent(i)
+            .setK(system.getPhases()[0].getComponent(i).getFugacityCoefficient()
+                / system.getPhases()[1].getComponent(i).getFugacityCoefficient());
       }
 
       system.calc_x_y_nonorm();
@@ -66,18 +66,18 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
       deriv = 0e0;
 
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        dkidt = (system.getPhases()[0].getComponents()[i].getdfugdt()
-            - system.getPhases()[1].getComponents()[i].getdfugdt())
-            * system.getPhases()[0].getComponents()[i].getK();
-        // dxidt=-system.getPhases()[0].getComponents()[i].getx() *
-        // system.getPhases()[0].getComponents()[i].getx()*1.0/system.getPhases()[0].getComponents()[i].getz()*system.getBeta()*dkidt;
-        dxidt = -system.getPhases()[0].getComponents()[i].getz() * system.getBeta() * dkidt
+        dkidt = (system.getPhases()[0].getComponent(i).getdfugdt()
+            - system.getPhases()[1].getComponent(i).getdfugdt())
+            * system.getPhases()[0].getComponent(i).getK();
+        // dxidt=-system.getPhases()[0].getComponent(i).getx() *
+        // system.getPhases()[0].getComponent(i).getx()*1.0/system.getPhases()[0].getComponent(i).getz()*system.getBeta()*dkidt;
+        dxidt = -system.getPhases()[0].getComponent(i).getz() * system.getBeta() * dkidt
             / Math.pow(1.0 - system.getBeta()
-                + system.getBeta() * system.getPhases()[0].getComponents()[i].getK(), 2);
-        dyidt = dkidt * system.getPhases()[0].getComponents()[i].getx()
-            + system.getPhases()[0].getComponents()[i].getK() * dxidt;
-        funk = funk + system.getPhases()[1].getComponents()[i].getx()
-            - system.getPhases()[0].getComponents()[i].getx();
+                + system.getBeta() * system.getPhases()[0].getComponent(i).getK(), 2);
+        dyidt = dkidt * system.getPhases()[0].getComponent(i).getx()
+            + system.getPhases()[0].getComponent(i).getK() * dxidt;
+        funk = funk + system.getPhases()[1].getComponent(i).getx()
+            - system.getPhases()[0].getComponent(i).getx();
         deriv = deriv + dyidt - dxidt;
       }
 
