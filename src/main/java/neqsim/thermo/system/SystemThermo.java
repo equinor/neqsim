@@ -1411,8 +1411,8 @@ public abstract class SystemThermo implements SystemInterface {
       }
       // System.out.println("ok " + names);
 
-      for (int phase = 0; phase < maxNumberOfPhases; phase++) {
-        getPhase(phase).setMixingRuleDefined(false);
+      for (int phaseNum = 0; phaseNum < maxNumberOfPhases; phaseNum++) {
+        getPhase(phaseNum).setMixingRuleDefined(false);
       }
 
       for (int i = 0; i < numberOfComponents; i++) {
@@ -2185,9 +2185,9 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final PhaseInterface getGasPhase() {
-    for (int phase = 0; phase < numberOfPhases; phase++) {
-      if (phaseArray[phaseIndex[phase]].getType() == PhaseType.GAS) {
-        return phaseArray[phase];
+    for (int phaseNum = 0; phaseNum < numberOfPhases; phaseNum++) {
+      if (phaseArray[phaseIndex[phaseNum]].getType() == PhaseType.GAS) {
+        return phaseArray[phaseNum];
       }
     }
     logger.info("No gas phase at current state.");
@@ -2383,9 +2383,9 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final PhaseInterface getLiquidPhase() {
-    for (int phase = 0; phase < numberOfPhases; phase++) {
-      if (phaseArray[phaseIndex[phase]].getType() == PhaseType.LIQUID) {
-        return phaseArray[phase];
+    for (int phaseNum = 0; phaseNum < numberOfPhases; phaseNum++) {
+      if (phaseArray[phaseIndex[phaseNum]].getType() == PhaseType.LIQUID) {
+        return phaseArray[phaseNum];
       }
     }
     logger.info("No liquid phase at current state.");
@@ -3382,23 +3382,23 @@ public abstract class SystemThermo implements SystemInterface {
     setPressure(getPressure() + dp);
     init(1);
 
-    for (int phase = 0; phase < 2; phase++) {
+    for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
       for (int k = 0; k < getPhases()[0].getNumberOfComponents(); k++) {
-        double dn = getPhases()[phase].getComponent(k).getNumberOfMolesInPhase() / 1.0e6;
+        double dn = getPhases()[phaseNum].getComponent(k).getNumberOfMolesInPhase() / 1.0e6;
         if (dn < 1e-12) {
           dn = 1e-12;
         }
 
-        addComponent(k, dn, phase);
+        addComponent(k, dn, phaseNum);
         // initBeta();
         init_x_y();
         init(1);
 
         for (int i = 0; i < getPhases()[0].getNumberOfComponents(); i++) {
-          liqfug[0][i] = Math.log(getPhases()[phase].getComponent(i).getFugacityCoefficient());
+          liqfug[0][i] = Math.log(getPhases()[phaseNum].getComponent(i).getFugacityCoefficient());
         }
 
-        addComponent(k, -2.0 * dn, phase);
+        addComponent(k, -2.0 * dn, phaseNum);
         // initBeta();
         init_x_y();
         init(1);
@@ -3406,18 +3406,18 @@ public abstract class SystemThermo implements SystemInterface {
         for (int i = 0; i < getPhases()[0].getNumberOfComponents(); i++) {
           // gasfug[1][i] =
           // Math.log(getPhases()[0].getComponent(i).getFugacityCoefficient());
-          liqfug[1][i] = Math.log(getPhases()[phase].getComponent(i).getFugacityCoefficient());
+          liqfug[1][i] = Math.log(getPhases()[phaseNum].getComponent(i).getFugacityCoefficient());
         }
 
         for (int i = 0; i < getPhases()[0].getNumberOfComponents(); i++) {
-          if (phase == 0) {
+          if (phaseNum == 0) {
             gasnumericDfugdn[0][k][i] = (liqfug[0][i] - liqfug[1][i]) / (2 * dn);
             phaseArray[0].getComponent(i).setdfugdn(k, gasnumericDfugdn[0][k][i]);
             phaseArray[0].getComponent(i).setdfugdx(k,
                 gasnumericDfugdn[0][k][i] * phaseArray[0].getNumberOfMolesInPhase());
           }
 
-          if (phase == 1) {
+          if (phaseNum == 1) {
             liqnumericDfugdn[0][k][i] = (liqfug[0][i] - liqfug[1][i]) / (2 * dn);
             phaseArray[1].getComponent(i).setdfugdn(k, liqnumericDfugdn[0][k][i]);
             phaseArray[1].getComponent(i).setdfugdx(k,
@@ -3425,7 +3425,7 @@ public abstract class SystemThermo implements SystemInterface {
           }
         }
 
-        addComponent(k, dn, phase);
+        addComponent(k, dn, phaseNum);
         // initBeta();
         init_x_y();
         init(1);
@@ -3509,20 +3509,21 @@ public abstract class SystemThermo implements SystemInterface {
       init(1);
 
       if (type == 3) {
-        for (int phase = 0; phase < 2; phase++) {
+        for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
           for (int k = 0; k < getPhases()[0].getNumberOfComponents(); k++) {
-            double dn = getPhases()[phase].getComponent(k).getNumberOfMolesInPhase() / 1.0e6;
+            double dn = getPhases()[phaseNum].getComponent(k).getNumberOfMolesInPhase() / 1.0e6;
 
-            addComponent(k, dn, phase);
+            addComponent(k, dn, phaseNum);
             // initBeta();
             init_x_y();
             init(1);
 
             for (int i = 0; i < getPhases()[0].getNumberOfComponents(); i++) {
-              liqfug[0][i] = Math.log(getPhases()[phase].getComponent(i).getFugacityCoefficient());
+              liqfug[0][i] =
+                  Math.log(getPhases()[phaseNum].getComponent(i).getFugacityCoefficient());
             }
 
-            addComponent(k, -2.0 * dn, phase);
+            addComponent(k, -2.0 * dn, phaseNum);
             // initBeta();
             init_x_y();
             init(1);
@@ -3530,17 +3531,18 @@ public abstract class SystemThermo implements SystemInterface {
             for (int i = 0; i < getPhases()[0].getNumberOfComponents(); i++) {
               // gasfug[1][i] =
               // Math.log(getPhases()[0].getComponent(i).getFugacityCoefficient());
-              liqfug[1][i] = Math.log(getPhases()[phase].getComponent(i).getFugacityCoefficient());
+              liqfug[1][i] =
+                  Math.log(getPhases()[phaseNum].getComponent(i).getFugacityCoefficient());
             }
-            addComponent(k, dn, phase);
+            addComponent(k, dn, phaseNum);
             init_x_y();
             init(1);
 
             for (int i = 0; i < getPhases()[0].getNumberOfComponents(); i++) {
-              getPhase(phase).getComponent(k).setdfugdn(i,
+              getPhase(phaseNum).getComponent(k).setdfugdn(i,
                   (liqfug[0][i] - liqfug[1][i]) / (2 * dn));
-              getPhase(phase).getComponent(k).setdfugdx(i, (liqfug[0][i] - liqfug[1][i]) / (2 * dn)
-                  * getPhase(phase).getNumberOfMolesInPhase());
+              getPhase(phaseNum).getComponent(k).setdfugdx(i, (liqfug[0][i] - liqfug[1][i])
+                  / (2 * dn) * getPhase(phaseNum).getNumberOfMolesInPhase());
             }
             // initBeta();
           }
@@ -4815,9 +4817,9 @@ public abstract class SystemThermo implements SystemInterface {
     }
     // init(0);
 
-    for (int phase = 0; phase < numberOfPhases; phase++) {
+    for (int phaseNum = 0; phaseNum < numberOfPhases; phaseNum++) {
       for (int k = 0; k < getPhases()[0].getNumberOfComponents(); k++) {
-        getPhase(phase).getComponent(k).setSolidCheck(solidPhaseCheck);
+        getPhase(phaseNum).getComponent(k).setSolidCheck(solidPhaseCheck);
         getPhase(3).getComponent(k).setSolidCheck(solidPhaseCheck);
       }
     }
@@ -4835,9 +4837,9 @@ public abstract class SystemThermo implements SystemInterface {
     this.solidPhaseCheck = true;
     init(0);
 
-    for (int phase = 0; phase < getMaxNumberOfPhases(); phase++) {
+    for (int phaseNum = 0; phaseNum < getMaxNumberOfPhases(); phaseNum++) {
       try {
-        getPhase(phase).getComponent(solidComponent).setSolidCheck(true);
+        getPhase(phaseNum).getComponent(solidComponent).setSolidCheck(true);
         getPhase(3).getComponent(solidComponent).setSolidCheck(true);
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);

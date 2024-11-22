@@ -211,14 +211,14 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
           pipe.getNode(i).getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity());
       solPhaseConsMatrix[1].set(i, 0, pipe.getNode(i).getPhaseFraction(1));
 
-      for (int phase = 0; phase < 2; phase++) {
+      for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
         for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0]
             .getNumberOfComponents(); j++) {
-          solMolFracMatrix[phase][j].set(i, 0,
-              pipe.getNode(i).getBulkSystem().getPhases()[phase].getComponent(j).getx()
-                  * pipe.getNode(i).getBulkSystem().getPhases()[phase].getComponent(j)
+          solMolFracMatrix[phaseNum][j].set(i, 0,
+              pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getComponent(j).getx()
+                  * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getComponent(j)
                       .getMolarMass()
-                  / pipe.getNode(i).getBulkSystem().getPhases()[phase].getMolarMass());
+                  / pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getMolarMass());
         }
       }
     }
@@ -1014,44 +1014,44 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
 
       iter = 0;
       if (this.solverType >= 5) {
-        for (int phase = 0; phase < 2; phase++) {
+        for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
           do {
             iter++;
-            setImpulsMatrixTDMA(phase);
-            Matrix solOld = solMatrix[phase].copy();
+            setImpulsMatrixTDMA(phaseNum);
+            Matrix solOld = solMatrix[phaseNum].copy();
             d = TDMAsolve.solve(a, b, c, r);
-            solMatrix[phase] = new Matrix(d, 1).transpose();
-            solMatrix[phase].print(10, 10);
-            diffMatrix = solMatrix[phase].minus(solOld);
+            solMatrix[phaseNum] = new Matrix(d, 1).transpose();
+            solMatrix[phaseNum].print(10, 10);
+            diffMatrix = solMatrix[phaseNum].minus(solOld);
             // System.out.println("diff impuls: "+
             // diffMatrix.norm2()/solMatrix[phase].norm2());
-            diff = Math.abs(diffMatrix.norm1() / solMatrix[phase].norm1());
+            diff = Math.abs(diffMatrix.norm1() / solMatrix[phaseNum].norm1());
             if (diff > maxDiff) {
               maxDiff = diff;
             }
-            initVelocity(phase);
+            initVelocity(phaseNum);
           } while (diff > 1e-10 && iter < 100);
         }
       }
 
       iter = 0;
       if (this.solverType >= 5) {
-        for (int phase = 1; phase < 2; phase++) {
+        for (int phaseNum = 1; phaseNum < 2; phaseNum++) {
           do {
             iter++;
-            setPhaseFractionMatrix(phase);
-            Matrix solOld = solPhaseConsMatrix[phase].copy();
+            setPhaseFractionMatrix(phaseNum);
+            Matrix solOld = solPhaseConsMatrix[phaseNum].copy();
             d = TDMAsolve.solve(a, b, c, r);
-            solPhaseConsMatrix[phase] = new Matrix(d, 1).transpose();
+            solPhaseConsMatrix[phaseNum] = new Matrix(d, 1).transpose();
             // solPhaseConsMatrix[phase].print(10,10);
-            diffMatrix = solPhaseConsMatrix[phase].minus(solOld);
+            diffMatrix = solPhaseConsMatrix[phaseNum].minus(solOld);
             // System.out.println("diff phase frac: "+
             // diffMatrix.norm2()/solPhaseConsMatrix[phase].norm2());
-            diff = Math.abs(diffMatrix.norm1() / solPhaseConsMatrix[phase].norm1());
+            diff = Math.abs(diffMatrix.norm1() / solPhaseConsMatrix[phaseNum].norm1());
             if (diff > maxDiff) {
               maxDiff = diff;
             }
-            initPhaseFraction(phase);
+            initPhaseFraction(phaseNum);
           } while (diff > 1e-15 && iter < 100);
         }
 
@@ -1075,23 +1075,23 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       }
 
       if (this.solverType >= 5) {
-        for (int phase = 0; phase < 2; phase++) {
+        for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
           iter = 0;
           do {
             iter++;
-            Matrix sol3Old = sol3Matrix[phase].copy();
-            setEnergyMatrixTDMA(phase);
+            Matrix sol3Old = sol3Matrix[phaseNum].copy();
+            setEnergyMatrixTDMA(phaseNum);
             d = TDMAsolve.solve(a, b, c, r);
-            sol3Matrix[phase] = new Matrix(d, 1).transpose();
-            diffMatrix = sol3Matrix[phase].minus(sol3Old);
+            sol3Matrix[phaseNum] = new Matrix(d, 1).transpose();
+            diffMatrix = sol3Matrix[phaseNum].minus(sol3Old);
             // System.out.println("diff energy: " +
             // diffMatrix.norm2()/sol3Matrix[phase].norm2());
             // diffMatrix.print(10,10);
-            diff = Math.abs(diffMatrix.norm1() / sol3Matrix[phase].norm1());
+            diff = Math.abs(diffMatrix.norm1() / sol3Matrix[phaseNum].norm1());
             if (diff > maxDiff) {
               maxDiff = diff;
             }
-            initTemperature(phase);
+            initTemperature(phaseNum);
           } while (diff > 1e-15 && iter < 100);
         }
       }
@@ -1102,18 +1102,18 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         do {
           calcFluxes();
           compIter++;
-          for (int phase = 0; phase < 2; phase++) {
+          for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
             iter = 0;
             for (int p = 0; p < pipe.getNode(0).getBulkSystem().getPhases()[0]
                 .getNumberOfComponents() - 1; p++) {
               do {
                 iter++;
-                setComponentConservationMatrix(phase, p);
-                Matrix solOld = solMolFracMatrix[phase][p].copy();
-                xNew[phase][p] = TDMAsolve.solve(a, b, c, r);
-                solMolFracMatrix[phase][p] = new Matrix(xNew[phase][p], 1).transpose();
-                diffMatrix = solMolFracMatrix[phase][p].minus(solOld);
-                diff = Math.abs(diffMatrix.norm2() / solMolFracMatrix[phase][p].norm2());
+                setComponentConservationMatrix(phaseNum, p);
+                Matrix solOld = solMolFracMatrix[phaseNum][p].copy();
+                xNew[phaseNum][p] = TDMAsolve.solve(a, b, c, r);
+                solMolFracMatrix[phaseNum][p] = new Matrix(xNew[phaseNum][p], 1).transpose();
+                diffMatrix = solMolFracMatrix[phaseNum][p].minus(solOld);
+                diff = Math.abs(diffMatrix.norm2() / solMolFracMatrix[phaseNum][p].norm2());
                 if (diff > maxDiff) {
                   maxDiff = diff;
                 }
@@ -1121,10 +1121,10 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                   compDiff = diff;
                 }
                 System.out.println(
-                    "diff molfrac: " + diffMatrix.norm2() / solMolFracMatrix[phase][p].norm2());
+                    "diff molfrac: " + diffMatrix.norm2() / solMolFracMatrix[phaseNum][p].norm2());
                 // Matrix dmat = new Matrix(xNew[phase][p], 1);
                 // dmat.print(10,10);
-                initComposition(phase, p);
+                initComposition(phaseNum, p);
               } while (diff > 1e-12 && iter < 10);
             }
           }
@@ -1137,10 +1137,10 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       System.out.println("iter: " + iterTop + " maxdiff " + maxDiff);
     } while (Math.abs(maxDiff) > 1e-7 && iterTop < 1); // diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
 
-    for (int phase = 0; phase < 2; phase++) {
+    for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
       for (int p = 0; p < pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()
           - 1; p++) {
-        Matrix dmat = new Matrix(xNew[phase][p], 1);
+        Matrix dmat = new Matrix(xNew[phaseNum][p], 1);
         dmat.print(10, 10);
       }
     }

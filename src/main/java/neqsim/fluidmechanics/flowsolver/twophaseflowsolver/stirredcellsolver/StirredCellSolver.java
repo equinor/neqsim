@@ -190,14 +190,14 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
           pipe.getNode(i).getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity());
       solPhaseConsMatrix[1].set(i, 0, pipe.getNode(i).getPhaseFraction(1));
 
-      for (int phase = 0; phase < 2; phase++) {
+      for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
         for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0]
             .getNumberOfComponents(); j++) {
-          solMolFracMatrix[phase][j].set(i, 0,
-              pipe.getNode(i).getBulkSystem().getPhases()[phase].getComponent(j).getx()
-                  * pipe.getNode(i).getBulkSystem().getPhases()[phase].getComponent(j)
+          solMolFracMatrix[phaseNum][j].set(i, 0,
+              pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getComponent(j).getx()
+                  * pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getComponent(j)
                       .getMolarMass()
-                  / pipe.getNode(i).getBulkSystem().getPhases()[phase].getMolarMass());
+                  / pipe.getNode(i).getBulkSystem().getPhases()[phaseNum].getMolarMass());
         }
       }
     }

@@ -293,14 +293,14 @@ public class KrishnaStandartFilmModel extends
   @Override
   public void initMassTransferCalc() {
     super.initMassTransferCalc();
-    for (int phase = 0; phase < 2; phase++) {
-      this.calcBinarySchmidtNumbers(phase);
-      this.calcBinaryMassTransferCoefficients(phase);
-      this.calcMassTransferCoefficients(phase);
-      this.initCorrections(phase);
-      this.calcNonIdealCorrections(phase);
+    for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
+      this.calcBinarySchmidtNumbers(phaseNum);
+      this.calcBinaryMassTransferCoefficients(phaseNum);
+      this.calcMassTransferCoefficients(phaseNum);
+      this.initCorrections(phaseNum);
+      this.calcNonIdealCorrections(phaseNum);
       // this.calcFluxTypeCorrectionMatrix(phase,0);
-      this.calcTotalMassTransferCoefficientMatrix(phase);
+      this.calcTotalMassTransferCoefficientMatrix(phaseNum);
     }
   }
 
@@ -308,9 +308,9 @@ public class KrishnaStandartFilmModel extends
   @Override
   public void initHeatTransferCalc() {
     super.initHeatTransferCalc();
-    for (int phase = 0; phase < 2; phase++) {
-      this.calcHeatTransferCoefficients(phase);
-      this.calcHeatTransferCorrection(phase);
+    for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
+      this.calcHeatTransferCoefficients(phaseNum);
+      this.calcHeatTransferCorrection(phaseNum);
     }
   }
 
