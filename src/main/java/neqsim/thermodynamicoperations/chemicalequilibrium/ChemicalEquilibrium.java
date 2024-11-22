@@ -52,14 +52,14 @@ public class ChemicalEquilibrium extends BaseOperation {
           double xchem[] = new double[system.getPhases()[phase].getNumberOfComponents()];
 
           for (int i = 0; i < system.getPhases()[phase].getNumberOfComponents(); i++) {
-            xchem[i] = system.getPhases()[phase].getComponent(i).getx();
+            xchem[i] = system.getPhases()[phase].getComponents()[i].getx();
           }
 
           system.init(1);
           system.getChemicalReactionOperations().solveChemEq(phase);
 
           for (int i = 0; i < system.getPhases()[phase].getNumberOfComponents(); i++) {
-            chemdev += Math.abs(xchem[i] - system.getPhases()[phase].getComponent(i).getx());
+            chemdev += Math.abs(xchem[i] - system.getPhases()[phase].getComponents()[i].getx());
           }
         }
       } while (Math.abs(chemdev) > 1e-4 && iter < 100);

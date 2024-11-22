@@ -55,9 +55,9 @@ public class Density extends LiquidPhysicalPropertyMethod implements DensityInte
     double tempVar = 0.0;
     if (liquidPhase.getPhase().useVolumeCorrection()) {
       for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
-        tempVar += liquidPhase.getPhase().getComponent(i).getx()
-            * (liquidPhase.getPhase().getComponent(i).getVolumeCorrection()
-                + liquidPhase.getPhase().getComponent(i).getVolumeCorrectionT()
+        tempVar += liquidPhase.getPhase().getComponents()[i].getx()
+            * (liquidPhase.getPhase().getComponents()[i].getVolumeCorrection()
+                + liquidPhase.getPhase().getComponents()[i].getVolumeCorrectionT()
                     * (liquidPhase.getPhase().getTemperature() - 288.15));
       }
     }

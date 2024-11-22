@@ -104,7 +104,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
       }
 
       if (noFreezeFlash) {
-        system.setTemperature(system.getPhases()[0].getComponent(k).getTriplePointTemperature());
+        system.setTemperature(system.getPhases()[0].getComponents()[k].getTriplePointTemperature());
         logger.info("Starting at Triple point temperature "
             + system.getPhase(0).getComponent(k).getComponentName());
       } else {
@@ -165,15 +165,16 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
         SolidFug = Pvapsolid / pres * Math.exp(solvol / (R * temp) * (pres - Pvapsolid));
         SolVapFugCoeff = testSystem2.getPhase(0).getComponent(0).getFugacityCoefficient();
 
-        funk = system.getPhases()[0].getComponent(k).getz();
+        funk = system.getPhases()[0].getComponents()[k].getz();
 
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
           funk -= system.getPhases()[i].getBeta() * SolidFug * SolVapFugCoeff
-              / system.getPhases()[i].getComponent(k).getFugacityCoefficient();
+              / system.getPhases()[i].getComponents()[k].getFugacityCoefficient();
           deriv -= 0.01 * system.getPhases()[i].getBeta() * (SolidFug * SolVapFugCoeff
-              * Math.exp(system.getPhases()[i].getComponent(k).getdfugdt()) * -1.0
-              / Math.pow(system.getPhases()[i].getComponent(k).getFugacityCoefficient(), 2.0)
-              + Math.exp(dfugdt) / system.getPhases()[i].getComponent(k).getFugacityCoefficient());
+              * Math.exp(system.getPhases()[i].getComponents()[k].getdfugdt()) * -1.0
+                  / Math.pow(system.getPhases()[i].getComponents()[k].getFugacityCoefficient(), 2.0)
+                  + Math.exp(dfugdt)
+                      / system.getPhases()[i].getComponents()[k].getFugacityCoefficient());
         }
         if (iterations >= 2) {
           deriv = -(funk - funkOld) / (system.getTemperature() - oldTemperature);
@@ -192,7 +193,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
         logger.info("newTEmp  " + newTemp);
         if (newTemp > (trpTemp + 5)) {
           system.setTemperature(
-              system.getPhases()[0].getComponent(k).getTriplePointTemperature() + 0.4);
+              system.getPhases()[0].getComponents()[k].getTriplePointTemperature() + 0.4);
         } else if (newTemp < 1) {
           system.setTemperature(oldTemperature + 2);
           // } else if(newTemp=="NaN") { system.setTemperature(oldTemperature*0.9374);
@@ -242,7 +243,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
         // print line to output file
         pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + ","
             + system.getPressure() + ","
-            + java.lang.Double.toString(system.getPhases()[0].getComponent(k).getz()) + ","
+            + java.lang.Double.toString(system.getPhases()[0].getComponents()[k].getz()) + ","
             + Niterations);
         pr_writer.flush();
       }

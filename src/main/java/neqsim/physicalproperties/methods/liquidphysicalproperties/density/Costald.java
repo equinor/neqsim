@@ -86,26 +86,26 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
 
     if (liquidPhase.getPhase().useVolumeCorrection()) {
       for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
-        ascFactMix += Math.sqrt(liquidPhase.getPhase().getComponent(i).getAcentricFactor())
-            * (liquidPhase.getPhase().getComponent(i).getx());
+        ascFactMix += Math.sqrt(liquidPhase.getPhase().getComponents()[i].getAcentricFactor())
+            * (liquidPhase.getPhase().getComponents()[i].getx());
 
-        criticalVolumeMix1 += liquidPhase.getPhase().getComponent(i).getCriticalVolume()
-            * liquidPhase.getPhase().getComponent(i).getx();
+        criticalVolumeMix1 += liquidPhase.getPhase().getComponents()[i].getCriticalVolume()
+            * liquidPhase.getPhase().getComponents()[i].getx();
         criticalVolumeMix2 +=
-            Math.pow(liquidPhase.getPhase().getComponent(i).getCriticalVolume(), 0.6666)
-                * liquidPhase.getPhase().getComponent(i).getx();
+            Math.pow(liquidPhase.getPhase().getComponents()[i].getCriticalVolume(), 0.6666)
+                * liquidPhase.getPhase().getComponents()[i].getx();
         criticalVolumeMix3 +=
-            Math.pow(liquidPhase.getPhase().getComponent(i).getCriticalVolume(), 0.33333)
-                * liquidPhase.getPhase().getComponent(i).getx();
+            Math.pow(liquidPhase.getPhase().getComponents()[i].getCriticalVolume(), 0.33333)
+                * liquidPhase.getPhase().getComponents()[i].getx();
         criticalTemperature1 += Math
-            .sqrt(liquidPhase.getPhase().getComponent(i).getTC()
-                * liquidPhase.getPhase().getComponent(i).getCriticalVolume())
-            * liquidPhase.getPhase().getComponent(i).getx();
+            .sqrt(liquidPhase.getPhase().getComponents()[i].getTC()
+                * liquidPhase.getPhase().getComponents()[i].getCriticalVolume())
+            * liquidPhase.getPhase().getComponents()[i].getx();
 
         /*
-         * tempVar += liquidPhase.getPhase().getComponent(i).getx()
-         * (liquidPhase.getPhase().getComponent(i).getVolumeCorrection() +
-         * liquidPhase.getPhase().getComponent(i).getVolumeCorrectionT()
+         * tempVar += liquidPhase.getPhase().getComponents()[i].getx()
+         * (liquidPhase.getPhase().getComponents()[i].getVolumeCorrection() +
+         * liquidPhase.getPhase().getComponents()[i].getVolumeCorrectionT()
          * (liquidPhase.getPhase().getTemperature() - 288.15));
          */
       }

@@ -164,7 +164,7 @@ public class TPflash extends Flash {
       lnOldOldK[i] = lnOldK[i];
       lnOldK[i] = lnK[i];
       lnK[i] = Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
-          - Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient());
+          - Math.log(system.getPhase(0).getComponents()[i].getFugacityCoefficient());
 
       oldoldDeltalnK[i] = lnOldOldK[i] - lnOldOldOldK[i];
       oldDeltalnK[i] = lnOldK[i] - lnOldOldK[i];
@@ -180,8 +180,8 @@ public class TPflash extends Flash {
   public void resetK() {
     for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       lnK[i] = lnOldK[i];
-      system.getPhase(0).getComponent(i).setK(Math.exp(lnK[i]));
-      system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
+      system.getPhase(0).getComponents()[i].setK(Math.exp(lnK[i]));
+      system.getPhase(1).getComponents()[i].setK(Math.exp(lnK[i]));
     }
     try {
       RachfordRice rachfordRice = new RachfordRice();
@@ -307,11 +307,11 @@ public class TPflash extends Flash {
         if (system.getComponent(i).getz() > 1e-50) {
           tpdy += system.getPhase(0).getComponent(i).getx()
               * (Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient())
-                  + Math.log(system.getPhase(0).getComponent(i).getx()) - minGibsPhaseLogZ[i]
+                  + Math.log(system.getPhase(0).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
                   - minGibsLogFugCoef[i]);
           tpdx += system.getPhase(1).getComponent(i).getx()
               * (Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
-                  + Math.log(system.getPhase(1).getComponent(i).getx()) - minGibsPhaseLogZ[i]
+                  + Math.log(system.getPhase(1).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
                   - minGibsLogFugCoef[i]);
         }
       }
@@ -328,7 +328,7 @@ public class TPflash extends Flash {
           }
         } else if (tpdy < 0) {
           for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-            system.getPhase(0).getComponent(i).setK(Math
+            system.getPhase(0).getComponents()[i].setK(Math
                 .exp(minGibsLogFugCoef[i]
                     - Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient()))
                 * presdiff);

@@ -290,15 +290,19 @@ public abstract class Flash extends BaseOperation {
 
     if (((tm[0] < -1e-4) || (tm[1] < -1e-4)) && !(Double.isNaN(tm[0]) || (Double.isNaN(tm[1])))) {
       for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-        if (system.getPhases()[1].getComponent(i).getx() < 1e-100) {
+        if (system.getPhases()[1].getComponents()[i].getx() < 1e-100) {
           continue;
         }
         if (tm[0] < -1e-4) {
-          system.getPhases()[1].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
-          system.getPhases()[0].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+          system.getPhases()[1].getComponents()[i]
+              .setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+          system.getPhases()[0].getComponents()[i]
+              .setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
         } else if (tm[1] < -1e-4) {
-          system.getPhases()[1].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
-          system.getPhases()[0].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+          system.getPhases()[1].getComponents()[i]
+              .setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+          system.getPhases()[0].getComponents()[i]
+              .setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
         } else {
           logger.info("error in stability anlysis");
           system.init(0);
@@ -394,7 +398,7 @@ public abstract class Flash extends BaseOperation {
 
     for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
       if (system.getPhase(0).getComponent(k).doSolidCheck()) {
-        tempVar[k] = system.getPhase(0).getComponent(k).getz();
+        tempVar[k] = system.getPhase(0).getComponents()[k].getz();
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
           tempVar[k] -=
               system.getBeta(i) * system.getPhases()[3].getComponent(k).getFugacityCoefficient()
@@ -406,7 +410,7 @@ public abstract class Flash extends BaseOperation {
           solid = k;
           frac = tempVar[k];
           for (int p = 0; p < system.getPhases()[0].getNumberOfComponents(); p++) {
-            system.getPhases()[3].getComponent(p).setx(1.0e-20);
+            system.getPhases()[3].getComponents()[p].setx(1.0e-20);
           }
           system.getPhases()[3].getComponents()[solid].setx(1.0);
         }

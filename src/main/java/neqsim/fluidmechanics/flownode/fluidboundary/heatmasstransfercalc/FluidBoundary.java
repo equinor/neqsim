@@ -252,7 +252,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
       temp = (i == k) ? 1.0 : 0.0;
       fluxTypeCorrectionMatrixV[phase].set(i, 0, temp);
       sum += fluxTypeCorrectionMatrixV[phase].get(i, 0)
-          * bulkSystem.getPhases()[phase].getComponent(i).getx();
+          * bulkSystem.getPhases()[phase].getComponents()[i].getx();
     }
 
     sum += fluxTypeCorrectionMatrixV[phase]
@@ -283,8 +283,8 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
       for (int j = 0; j < bulkSystem.getPhases()[phase].getNumberOfComponents() - 1; j++) {
         temp = (i == j) ? 1.0 : 0.0;
         nonIdealCorrections[phase].set(i, j,
-            temp + bulkSystem.getPhases()[phase].getComponent(i).getx()
-                * bulkSystem.getPhases()[phase].getComponent(i).getdfugdn(j)
+            temp + bulkSystem.getPhases()[phase].getComponents()[i].getx()
+                * bulkSystem.getPhases()[phase].getComponents()[i].getdfugdn(j)
                 * bulkSystem.getPhases()[phase].getNumberOfMolesInPhase());
         // her må det fylles inn
       }
@@ -440,7 +440,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     for (int i = 0; i < bulkSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
         table[j + 1][0] =
-            "eff. mass trans coef. " + bulkSystem.getPhases()[0].getComponent(j).getName();
+            "eff. mass trans coef. " + bulkSystem.getPhases()[0].getComponents()[j].getName();
         buf = new StringBuffer();
         table[j + 1][i + 1] =
             nf.format(getEffectiveMassTransferCoefficient(i, j), buf, test).toString();
@@ -450,7 +450,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
         getEnhancementFactor().calcEnhancementVec(i);
         for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
           table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][0] =
-              "enhancement " + getInterphaseSystem().getPhases()[0].getComponent(j).getName();
+              "enhancement " + getInterphaseSystem().getPhases()[0].getComponents()[j].getName();
           buf = new StringBuffer();
           table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] =
               nf.format(getEnhancementFactor().getEnhancementVec(j), buf, test).toString();
@@ -460,7 +460,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
       getBulkSystem().getPhase(i).getPhysicalProperties().calcEffectiveDiffusionCoefficients();
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
         table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][0] =
-            "schmidt " + bulkSystem.getPhases()[0].getComponent(j).getName();
+            "schmidt " + bulkSystem.getPhases()[0].getComponents()[j].getName();
         buf = new StringBuffer();
         table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] = nf.format(
             getBulkSystem().getPhase(i).getPhysicalProperties().getEffectiveSchmidtNumber(j), buf,

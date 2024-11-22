@@ -49,10 +49,10 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     componentArray = new ComponentGENRTLmodifiedHV[alpha[0].length];
     type = 0;
     for (int i = 0; i < alpha[0].length; i++) {
-      componentArray[i] = new ComponentGENRTLmodifiedHV(phase.getComponent(i).getName(),
-          phase.getComponent(i).getNumberOfmoles(),
-          phase.getComponent(i).getNumberOfMolesInPhase(),
-          phase.getComponent(i).getComponentNumber());
+      componentArray[i] = new ComponentGENRTLmodifiedHV(phase.getComponents()[i].getName(),
+          phase.getComponents()[i].getNumberOfmoles(),
+          phase.getComponents()[i].getNumberOfMolesInPhase(),
+          phase.getComponents()[i].getComponentNumber());
     }
   }
 
@@ -75,10 +75,10 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     type = 1;
     this.DijT = DijT;
     for (int i = 0; i < alpha[0].length; i++) {
-      componentArray[i] = new ComponentGENRTLmodifiedHV(phase.getComponent(i).getName(),
-          phase.getComponent(i).getNumberOfmoles(),
-          phase.getComponent(i).getNumberOfMolesInPhase(),
-          phase.getComponent(i).getComponentNumber());
+      componentArray[i] = new ComponentGENRTLmodifiedHV(phase.getComponents()[i].getName(),
+          phase.getComponents()[i].getNumberOfmoles(),
+          phase.getComponents()[i].getNumberOfMolesInPhase(),
+          phase.getComponents()[i].getComponentNumber());
     }
   }
 
@@ -128,11 +128,11 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (type == 0) {
-        GE += phase.getComponent(i).getx()
+        GE += phase.getComponents()[i].getx()
             * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase,
                 numberOfComponents, temperature, pressure, pt, alpha, Dij, intparam, mixRule));
       } else if (type == 1) {
-        GE += phase.getComponent(i).getx() * Math
+        GE += phase.getComponents()[i].getx() * Math
             .log(((ComponentGENRTLmodifiedHV) componentArray[i]).getGamma(phase, numberOfComponents,
                 temperature, pressure, pt, alpha, Dij, DijT, intparam, mixRule));
       }

@@ -156,12 +156,12 @@ public class PTphaseEnvelope extends BaseOperation {
         continue;
       }
       if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
-        if (bubblePointFirst && system.getPhase(0).getComponent(speceq).getTC() > system.getPhase(0)
-            .getComponent(i).getTC()) {
+        if (bubblePointFirst && system.getPhase(0).getComponents()[speceq]
+            .getTC() > system.getPhase(0).getComponents()[i].getTC()) {
           speceq = system.getPhase(0).getComponent(i).getComponentNumber();
         }
-        if (!bubblePointFirst && system.getPhase(0).getComponent(speceq).getTC() < system
-            .getPhase(0).getComponent(i).getTC()) {
+        if (!bubblePointFirst && system.getPhase(0).getComponents()[speceq]
+            .getTC() < system.getPhase(0).getComponents()[i].getTC()) {
           speceq = system.getPhase(0).getComponent(i).getComponentNumber();
         }
       }
@@ -770,12 +770,12 @@ public class PTphaseEnvelope extends BaseOperation {
     double max = 0.;
 
     for (int i = 0; i < numberOfComponents; i++) {
-      if (system.getPhase(0).getComponent(i).getTC() > max) {
-        max = system.getPhase(0).getComponent(i).getTC();
+      if (system.getPhase(0).getComponents()[i].getTC() > max) {
+        max = system.getPhase(0).getComponents()[i].getTC();
         hc = i;
       }
-      if (system.getPhase(0).getComponent(i).getTC() < min) {
-        min = system.getPhase(0).getComponent(i).getTC();
+      if (system.getPhase(0).getComponents()[i].getTC() < min) {
+        min = system.getPhase(0).getComponents()[i].getTC();
         lc = i;
       }
     }
@@ -784,14 +784,14 @@ public class PTphaseEnvelope extends BaseOperation {
       if (beta <= 0.5) {
         // closer to bubble point get the lightest component
 
-        initTc = system.getPhase(0).getComponent(lc).getTC();
-        initPc = system.getPhase(0).getComponent(lc).getPC();
-        initAc = system.getPhase(0).getComponent(lc).getAcentricFactor();
+        initTc = system.getPhase(0).getComponents()[lc].getTC();
+        initPc = system.getPhase(0).getComponents()[lc].getPC();
+        initAc = system.getPhase(0).getComponents()[lc].getAcentricFactor();
       } else {
         // closer to dew point get the heaviest component
-        initTc = system.getPhase(0).getComponent(hc).getTC();
-        initPc = system.getPhase(0).getComponent(hc).getPC();
-        initAc = system.getPhase(0).getComponent(hc).getAcentricFactor();
+        initTc = system.getPhase(0).getComponents()[hc].getTC();
+        initPc = system.getPhase(0).getComponents()[hc].getPC();
+        initAc = system.getPhase(0).getComponents()[hc].getAcentricFactor();
       }
 
       // initial T based on the lightest/heaviest component
@@ -802,23 +802,23 @@ public class PTphaseEnvelope extends BaseOperation {
         initT = 0.;
         dinitT = 0.;
         for (int j = 0; j < numberOfComponents; j++) {
-          Kwil[j] = system.getPhase(0).getComponent(j).getPC() / P
-              * Math.exp(5.373 * (1. + system.getPhase(0).getComponent(j).getAcentricFactor())
-                  * (1. - system.getPhase(0).getComponent(j).getTC() / Tstart));
-          // system.getPhases()[0].getComponent(j).setK(Kwil[j]);
+          Kwil[j] = system.getPhase(0).getComponents()[j].getPC() / P
+              * Math.exp(5.373 * (1. + system.getPhase(0).getComponents()[j].getAcentricFactor())
+                  * (1. - system.getPhase(0).getComponents()[j].getTC() / Tstart));
+          // system.getPhases()[0].getComponents()[j].setK(Kwil[j]);
         }
 
         for (int j = 0; j < numberOfComponents; j++) {
           if (beta < 0.5) {
-            initT = initT + system.getPhase(0).getComponent(j).getz() * Kwil[j];
-            dinitT = dinitT + system.getPhase(0).getComponent(j).getz() * Kwil[j] * 5.373
-                * (1 + system.getPhase(0).getComponent(j).getAcentricFactor())
-                * system.getPhase(0).getComponent(j).getTC() / (Tstart * Tstart);
+            initT = initT + system.getPhase(0).getComponents()[j].getz() * Kwil[j];
+            dinitT = dinitT + system.getPhase(0).getComponents()[j].getz() * Kwil[j] * 5.373
+                * (1 + system.getPhase(0).getComponents()[j].getAcentricFactor())
+                * system.getPhase(0).getComponents()[j].getTC() / (Tstart * Tstart);
           } else {
-            initT = initT + system.getPhase(0).getComponent(j).getz() / Kwil[j];
-            dinitT = dinitT - system.getPhase(0).getComponent(j).getz() / Kwil[j] * 5.373
-                * (1 + system.getPhase(0).getComponent(j).getAcentricFactor())
-                * system.getPhase(0).getComponent(j).getTC() / (Tstart * Tstart);
+            initT = initT + system.getPhase(0).getComponents()[j].getz() / Kwil[j];
+            dinitT = dinitT - system.getPhase(0).getComponents()[j].getz() / Kwil[j] * 5.373
+                * (1 + system.getPhase(0).getComponents()[j].getAcentricFactor())
+                * system.getPhase(0).getComponents()[j].getTC() / (Tstart * Tstart);
           }
         }
 

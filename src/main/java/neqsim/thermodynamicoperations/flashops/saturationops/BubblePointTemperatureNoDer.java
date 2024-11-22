@@ -66,17 +66,19 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
     }
 
     for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-      system.getPhases()[1].getComponent(i).setx(system.getPhases()[0].getComponent(i).getz());
-      if (system.getPhases()[0].getComponent(i).getIonicCharge() != 0) {
-        system.getPhases()[0].getComponent(i).setx(1e-40);
+      system.getPhases()[1].getComponents()[i]
+          .setx(system.getPhases()[0].getComponents()[i].getz());
+      if (system.getPhases()[0].getComponents()[i].getIonicCharge() != 0) {
+        system.getPhases()[0].getComponents()[i].setx(1e-40);
       } else {
-        system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getK()
-            * system.getPhases()[1].getComponent(i).getz());
+        system.getPhases()[0].getComponents()[i]
+            .setx(system.getPhases()[0].getComponents()[i].getK()
+                * system.getPhases()[1].getComponents()[i].getz());
       }
     }
     ytotal = 0.0;
     for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-      ytotal += system.getPhases()[0].getComponent(i).getx();
+      ytotal += system.getPhases()[0].getComponents()[i].getx();
     }
     double oldTemp = 10.0;
 
@@ -84,8 +86,8 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
     do {
       iterations++;
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        system.getPhases()[0].getComponent(i)
-            .setx(system.getPhases()[0].getComponent(i).getx() / ytotal);
+        system.getPhases()[0].getComponents()[i]
+            .setx(system.getPhases()[0].getComponents()[i].getx() / ytotal);
       }
       if (system.isChemicalSystem() && (iterations % 2) == 0) {
         system.getChemicalReactionOperations().solveChemEq(1);
@@ -95,26 +97,28 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
       ktot = 0.0;
       for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
         do {
-          yold = system.getPhases()[0].getComponent(i).getx();
+          yold = system.getPhases()[0].getComponents()[i].getx();
           if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
-            system.getPhases()[0].getComponent(i).setK(1e-40);
+            system.getPhases()[0].getComponents()[i].setK(1e-40);
           } else {
-            system.getPhases()[0].getComponent(i).setK(
-                Math.exp(Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient())
-                    - Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient())));
+            system.getPhases()[0].getComponents()[i].setK(
+                Math.exp(Math.log(system.getPhases()[1].getComponents()[i].getFugacityCoefficient())
+                    - Math.log(system.getPhases()[0].getComponents()[i].getFugacityCoefficient())));
           }
-          system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
-          system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getK()
-              * system.getPhases()[1].getComponent(i).getz());
+          system.getPhases()[1].getComponents()[i]
+              .setK(system.getPhases()[0].getComponents()[i].getK());
+          system.getPhases()[0].getComponents()[i]
+              .setx(system.getPhases()[0].getComponents()[i].getK()
+                  * system.getPhases()[1].getComponents()[i].getz());
           // logger.info("y err " +
-          // Math.abs(system.getPhases()[0].getComponent(i).getx()-yold));
-        } while (Math.abs(system.getPhases()[0].getComponent(i).getx() - yold) > 1e-4);
+          // Math.abs(system.getPhases()[0].getComponents()[i].getx()-yold));
+        } while (Math.abs(system.getPhases()[0].getComponents()[i].getx() - yold) > 1e-4);
 
-        ktot += Math.abs(system.getPhases()[1].getComponent(i).getK() - 1.0);
+        ktot += Math.abs(system.getPhases()[1].getComponents()[i].getK() - 1.0);
       }
       ytotal = 0.0;
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        ytotal += system.getPhases()[0].getComponent(i).getx();
+        ytotal += system.getPhases()[0].getComponents()[i].getx();
       }
       if (ytotal > 1.2) {
         ytotal = 1.2;
@@ -129,10 +133,10 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
       system
           .setTemperature(system.getTemperature() + 0.1 * system.getTemperature() * (1.0 - ytotal));
       // for (int i=0;i<system.getPhases()[1].getNumberOfComponents();i++){
-      // system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getx()
+      // system.getPhases()[0].getComponents()[i].setx(system.getPhases()[0].getComponents()[i].getx()
       // + 0.5 *
-      // (system.getPhases()[0].getComponent(i).getK()*system.getPhases()[1].getComponent(i).getx()
-      // * 1.0 / ytotal-system.getPhases()[0].getComponent(i).getx()));
+      // (system.getPhases()[0].getComponents()[i].getK()*system.getPhases()[1].getComponents()[i].getx()
+      // * 1.0 / ytotal-system.getPhases()[0].getComponents()[i].getx()));
       // }
       // logger.info("temperature " + system.getTemperature());
     } while ((((Math.abs(ytotal) - 1.0) > 1e-9)
@@ -144,8 +148,8 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
       setSuperCritical(true);
     }
     if (system.getPhase(0).getNumberOfComponents() == 1
-        && Math.abs(system.getPhases()[1].getComponent(0).getFugacityCoefficient()
-            / system.getPhases()[0].getComponent(0).getFugacityCoefficient() - 1.0) < 1e-20) {
+        && Math.abs(system.getPhases()[1].getComponents()[0].getFugacityCoefficient()
+            / system.getPhases()[0].getComponents()[0].getFugacityCoefficient() - 1.0) < 1e-20) {
       setSuperCritical(true);
     }
   }

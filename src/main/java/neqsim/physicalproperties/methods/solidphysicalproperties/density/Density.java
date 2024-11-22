@@ -55,9 +55,9 @@ public class Density extends SolidPhysicalPropertyMethod implements DensityInter
     double tempVar = 0.0;
     if (solidPhase.getPhase().useVolumeCorrection()) {
       for (int i = 0; i < solidPhase.getPhase().getNumberOfComponents(); i++) {
-        tempVar += solidPhase.getPhase().getComponent(i).getx()
-            * (solidPhase.getPhase().getComponent(i).getVolumeCorrection()
-                + solidPhase.getPhase().getComponent(i).getVolumeCorrectionT()
+        tempVar += solidPhase.getPhase().getComponents()[i].getx()
+            * (solidPhase.getPhase().getComponents()[i].getVolumeCorrection()
+                + solidPhase.getPhase().getComponents()[i].getVolumeCorrectionT()
                     * (solidPhase.getPhase().getTemperature() - 288.15));
       }
     }

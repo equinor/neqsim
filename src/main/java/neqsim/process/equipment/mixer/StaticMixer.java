@@ -41,20 +41,20 @@ public class StaticMixer extends Mixer {
           .getNumberOfComponents(); i++) {
         boolean gotComponent = false;
         String componentName =
-            streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getName();
+            streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i].getName();
         // System.out.println("adding: " + componentName);
         double moles =
-            streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getNumberOfmoles();
+            streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i].getNumberOfmoles();
         // System.out.println("moles: " + moles + " " +
         // mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents());
         for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0]
             .getNumberOfComponents(); p++) {
-          if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName()
+          if (mixedStream.getThermoSystem().getPhases()[0].getComponents()[p].getName()
               .equals(componentName)) {
             gotComponent = true;
-            index = streams.get(0).getThermoSystem().getPhases()[0].getComponent(p)
+            index = streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
                 .getComponentNumber();
-            compName = streams.get(0).getThermoSystem().getPhases()[0].getComponent(p)
+            compName = streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
                 .getComponentName();
           }
         }

@@ -97,24 +97,24 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
       for (int j = 0; j < boundary.getNode(0).getBulkSystem().getPhases()[0]
           .getNumberOfComponents(); j++) {
         double xbulk =
-            boundary.getFluidBoundary().getBulkSystem().getPhases()[1].getComponent(j).getx();
+            boundary.getFluidBoundary().getBulkSystem().getPhases()[1].getComponents()[j].getx();
         double xinterphase =
-            boundary.getFluidBoundary().getInterphaseSystem().getPhases()[1].getComponent(j)
+            boundary.getFluidBoundary().getInterphaseSystem().getPhases()[1].getComponents()[j]
                 .getx();
         double dx = xinterphase - xbulk;
-        double last = boundary.getNode(i).getBulkSystem().getPhases()[1].getComponent(j).getx();
+        double last = boundary.getNode(i).getBulkSystem().getPhases()[1].getComponents()[j].getx();
         if (reactive) {
-          boundary.getNode(i + 1).getBulkSystem().getPhases()[1].getComponent(j).setx(last - dx
+          boundary.getNode(i + 1).getBulkSystem().getPhases()[1].getComponents()[j].setx(last - dx
               - reacRates.get(j, 0)
                   / boundary.getNode(i).getBulkSystem().getPhases()[1].getPhysicalProperties()
                       .getEffectiveDiffusionCoefficient(j)
                   * Math.pow(boundary.getNodeLength(), 2.0));
         } else {
-          boundary.getNode(i + 1).getBulkSystem().getPhases()[1].getComponent(j)
+          boundary.getNode(i + 1).getBulkSystem().getPhases()[1].getComponents()[j]
               .setx(xinterphase - dx * ((double) (i + 1) / boundary.getNumberOfNodes()));
         }
         System.out.println("x comp " + reactive + "  "
-            + boundary.getNode(i).getBulkSystem().getPhases()[1].getComponent(j).getx());
+            + boundary.getNode(i).getBulkSystem().getPhases()[1].getComponents()[j].getx());
       }
     }
   }
@@ -130,7 +130,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
       // pipe.getNode(i).init();
       for (int i = 0; i < boundary.getNumberOfNodes(); i++) {
         solMatrix[j].set(i, 0,
-            boundary.getNode(i).getBulkSystem().getPhases()[1].getComponent(j).getx());
+            boundary.getNode(i).getBulkSystem().getPhases()[1].getComponents()[j].getx());
       }
     }
   }
@@ -146,7 +146,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
     for (int j = 0; j < boundary.getNumberOfNodes(); j++) {
       for (int p = 0; p < boundary.getNode(0).getBulkSystem().getPhases()[0]
           .getNumberOfComponents(); p++) {
-        boundary.getNode(j).getBulkSystem().getPhases()[1].getComponent(p)
+        boundary.getNode(j).getBulkSystem().getPhases()[1].getComponents()[p]
             .setx(solMatrix[p].get(j, 0));
       }
       boundary.getNode(j).getBulkSystem().getPhases()[0].normalize();

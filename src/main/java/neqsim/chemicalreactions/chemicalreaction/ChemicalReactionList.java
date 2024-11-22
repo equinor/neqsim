@@ -346,14 +346,14 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
       while (e.hasNext()) {
         reaction = e.next();
         for (int j = 0; j < reaction.getNames().length; j++) {
-          if (phase.getComponent(i).getName().equals(reaction.getNames()[j])) {
+          if (phase.getComponents()[i].getName().equals(reaction.getNames()[j])) {
             for (int k = 0; k < phase.getNumberOfComponents(); k++) {
               for (int o = 0; o < reaction.getNames().length; o++) {
-                if (phase.getComponent(k).getName().equals(reaction.getNames()[o])) {
+                if (phase.getComponents()[k].getName().equals(reaction.getNames()[o])) {
                   // System.out.println("comp1 " +
-                  // system.getPhases()[1].getComponent(i).getComponentName() +
+                  // system.getPhases()[1].getComponents()[i].getComponentName() +
                   // " comp2 "
-                  // +system.getPhases()[1].getComponent(k).getComponentName()
+                  // +system.getPhases()[1].getComponents()[k].getComponentName()
                   // );
                   tempReacMatrix[i][k] = reaction.getRateFactor(phase);
                   tempStocMatrix[i][k] = -reaction.getStocCoefs()[o];

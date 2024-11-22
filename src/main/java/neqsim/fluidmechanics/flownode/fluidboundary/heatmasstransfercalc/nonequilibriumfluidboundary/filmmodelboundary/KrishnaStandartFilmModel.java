@@ -141,18 +141,18 @@ public class KrishnaStandartFilmModel extends
       double tempVar = 0;
       for (int j = 0; j < getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
         if (i != j) {
-          tempVar += getBulkSystem().getPhases()[phase].getComponent(j).getx()
+          tempVar += getBulkSystem().getPhases()[phase].getComponents()[j].getx()
               / binaryMassTransferCoefficient[phase][i][j];
         }
         if (j < n) {
           massTransferCoefficientMatrix[phase].set(i, j,
-              -getBulkSystem().getPhases()[phase].getComponent(i).getx()
+              -getBulkSystem().getPhases()[phase].getComponents()[i].getx()
                   * (1.0 / binaryMassTransferCoefficient[phase][i][j]
                       - 1.0 / binaryMassTransferCoefficient[phase][i][n]));
         }
       }
       massTransferCoefficientMatrix[phase].set(i, i,
-          tempVar + getBulkSystem().getPhases()[phase].getComponent(i).getx()
+          tempVar + getBulkSystem().getPhases()[phase].getComponents()[i].getx()
               / binaryMassTransferCoefficient[phase][i][n]);
     }
     massTransferCoefficientMatrix[phase] = massTransferCoefficientMatrix[phase].inverse();
@@ -178,12 +178,11 @@ public class KrishnaStandartFilmModel extends
                   * binaryMassTransferCoefficient[phase][i][j]);
         }
         if (j < n) {
-          phiMatrix.set(i, j,
-              -nFlux.get(i, 0) * (1.0
-                  / (1.0 / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
-                      * binaryMassTransferCoefficient[phase][i][j])
-                  - 1.0 / (1.0 / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
-                      * binaryMassTransferCoefficient[phase][i][n])));
+          phiMatrix.set(i, j, -nFlux.get(i, 0) * (1.0
+              / (1.0 / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
+                  * binaryMassTransferCoefficient[phase][i][j])
+              - 1.0 / (1.0 / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
+                  * binaryMassTransferCoefficient[phase][i][n])));
         }
       }
       phiMatrix.set(i, i,

@@ -275,9 +275,8 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
     public double calcDeltadT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       if (assosSchemeType[compnumb1][compnumb2] == 0) {
-        double derivative1 =
-            -getCrossAssociationEnergy(compnumb2, compnumb2, phase, temperature, pressure, numbcomp)
-                / (R * phase.getTemperature() * phase.getTemperature())
+        double derivative1 = -getCrossAssociationEnergy(compnumb2, compnumb2, phase, temperature,
+            pressure, numbcomp) / (R * phase.getTemperature() * phase.getTemperature())
                 * (Math.exp(getCrossAssociationEnergy(compnumb2, compnumb2, phase, temperature,
                     pressure, numbcomp) / (R * phase.getTemperature())))
                 * (((ComponentEosInterface) phase.getComponent(compnumb2)).getb()
@@ -294,9 +293,8 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
                 numbcomp)
             * ((PhaseCPAInterface) phase).getGcpa();
 
-        double derivative2 =
-            -getCrossAssociationEnergy(compnumb1, compnumb1, phase, temperature, pressure, numbcomp)
-                / (R * phase.getTemperature() * phase.getTemperature())
+        double derivative2 = -getCrossAssociationEnergy(compnumb1, compnumb1, phase, temperature,
+            pressure, numbcomp) / (R * phase.getTemperature() * phase.getTemperature())
                 * (Math.exp(getCrossAssociationEnergy(compnumb1, compnumb1, phase, temperature,
                     pressure, numbcomp) / (R * phase.getTemperature())))
                 * (((ComponentEosInterface) phase.getComponent(compnumb1)).getb()
@@ -322,8 +320,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
           -getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
               / (R * phase.getTemperature() * phase.getTemperature());
       return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2,
-          siteNumber1, siteNumber2)
-          * derivative
+          siteNumber1, siteNumber2) * derivative
           * (Math.exp(getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature, pressure,
               numbcomp) / (R * phase.getTemperature())) - 1.0)
           * (((ComponentEosInterface) phase.getComponent(compnumb1)).getb()
@@ -365,8 +362,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
           -getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
               / (R * phase.getTemperature() * phase.getTemperature());
       return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2,
-          siteNumber1, siteNumber2)
-          * derivative
+          siteNumber1, siteNumber2) * derivative
           * Math.exp(getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature, pressure,
               numbcomp) / (R * phase.getTemperature()))
           * (((ComponentEosInterface) phase.getComponent(compnumb1)).getb()
@@ -388,9 +384,8 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
           deltaj = calcDelta(compnumb2, compnumb2, phase, temperature, pressure, numbcomp);
         }
 
-        double dDeltaidT =
-            -getCrossAssociationEnergy(compnumb1, compnumb1, phase, temperature, pressure, numbcomp)
-                / (R * phase.getTemperature() * phase.getTemperature())
+        double dDeltaidT = -getCrossAssociationEnergy(compnumb1, compnumb1, phase, temperature,
+            pressure, numbcomp) / (R * phase.getTemperature() * phase.getTemperature())
                 * (Math.exp(getCrossAssociationEnergy(compnumb1, compnumb1, phase, temperature,
                     pressure, numbcomp) / (R * phase.getTemperature())))
                 * (((ComponentEosInterface) phase.getComponent(compnumb1)).getb()
@@ -398,9 +393,8 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
                 / 2.0 * getCrossAssociationVolume(compnumb1, compnumb1, phase, temperature,
                     pressure, numbcomp)
                 * ((PhaseCPAInterface) phase).getGcpa();
-        double dDeltajdT =
-            -getCrossAssociationEnergy(compnumb2, compnumb2, phase, temperature, pressure, numbcomp)
-                / (R * phase.getTemperature() * phase.getTemperature())
+        double dDeltajdT = -getCrossAssociationEnergy(compnumb2, compnumb2, phase, temperature,
+            pressure, numbcomp) / (R * phase.getTemperature() * phase.getTemperature())
                 * (Math.exp(getCrossAssociationEnergy(compnumb2, compnumb2, phase, temperature,
                     pressure, numbcomp) / (R * phase.getTemperature())))
                 * (((ComponentEosInterface) phase.getComponent(compnumb2)).getb()
@@ -461,8 +455,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
           / (R * phase.getTemperature() * phase.getTemperature() * phase.getTemperature());
 
       return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2,
-          siteNumber1, siteNumber2)
-          * derivative1 * derivative1
+          siteNumber1, siteNumber2) * derivative1 * derivative1
           * Math.exp(getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature, pressure,
               numbcomp) / (R * phase.getTemperature()))
           * (((ComponentEosInterface) phase.getComponent(compnumb1)).getb()
@@ -471,8 +464,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
           * getCrossAssociationVolume(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
           * ((PhaseCPAInterface) phase).getGcpa()
           + ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2, siteNumber1,
-              siteNumber2)
-              * derivative2
+              siteNumber2) * derivative2
               * Math.exp(getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature,
                   pressure, numbcomp) / (R * phase.getTemperature()))
               * (((ComponentEosInterface) phase.getComponent(compnumb1)).getb()
@@ -610,7 +602,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
     cpaEpsCross = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
 
     for (int k = 0; k < phase.getNumberOfComponents(); k++) {
-      String component_name = phase.getComponent(k).getComponentName();
+      String component_name = phase.getComponents()[k].getComponentName();
       java.sql.ResultSet dataSet = null;
 
       for (int l = k; l < phase.getNumberOfComponents(); l++) {
@@ -622,13 +614,13 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
             // database = new util.database.NeqSimDataBase();
             if (NeqSimDataBase.createTemporaryTables()) {
               dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='"
-                  + component_name + "' AND comp2='" + phase.getComponent(l).getComponentName()
-                  + "') OR (comp1='" + phase.getComponent(l).getComponentName() + "' AND comp2='"
+                  + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName()
+                  + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='"
                   + component_name + "')");
             } else {
               dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name
-                  + "' AND comp2='" + phase.getComponent(l).getComponentName() + "') OR (comp1='"
-                  + phase.getComponent(l).getComponentName() + "' AND comp2='" + component_name
+                  + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='"
+                  + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name
                   + "')");
             }
             if (dataSet.next()) {

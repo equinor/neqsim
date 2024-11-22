@@ -234,7 +234,7 @@ public class CricondenBarFlash extends PTphaseEnvelope {
     for (int j = 0; j < numberOfComponents; j++) {
       double kap = system.getPhase(0).getComponent(j).getFugacityCoefficient()
           / system.getPhase(1).getComponent(j).getFugacityCoefficient();
-      system.getPhase(0).getComponent(j).setK(kap);
+      system.getPhase(0).getComponents()[j].setK(kap);
       u.set(j, 0, kap);
     }
   }
@@ -251,26 +251,27 @@ public class CricondenBarFlash extends PTphaseEnvelope {
     double[] yy = new double[numberOfComponents];
 
     for (int j = 0; j < numberOfComponents; j++) {
-      xx[j] = system.getPhase(0).getComponent(j).getz()
+      xx[j] = system.getPhase(0).getComponents()[j].getz()
           / (1.0 - system.getBeta() + system.getBeta() * u.get(j, 0));
-      yy[j] = system.getPhase(1).getComponent(j).getz() * u.get(j, 0)
+      yy[j] = system.getPhase(1).getComponents()[j].getz() * u.get(j, 0)
           / (1.0 - system.getBeta() + system.getBeta() * u.get(j, 0));
 
-      xx[j] = system.getPhase(0).getComponent(j).getz()
-          / (1.0 - system.getBeta() + system.getBeta() * system.getPhase(0).getComponent(j).getK());
-      yy[j] = system.getPhase(1).getComponent(j).getz() * system.getPhase(0).getComponent(j).getK()
-          / (1.0 - system.getBeta() + system.getBeta() * system.getPhase(0).getComponent(j).getK());
+      xx[j] = system.getPhase(0).getComponents()[j].getz() / (1.0 - system.getBeta()
+          + system.getBeta() * system.getPhase(0).getComponents()[j].getK());
+      yy[j] = system.getPhase(1).getComponents()[j].getz()
+          * system.getPhase(0).getComponents()[j].getK() / (1.0 - system.getBeta()
+              + system.getBeta() * system.getPhase(0).getComponents()[j].getK());
 
       sumx = sumx + xx[j];
       sumy = sumy + yy[j];
     }
 
     for (int j = 0; j < numberOfComponents; j++) {
-      system.getPhase(0).getComponent(j).setx(xx[j] / sumx);
-      system.getPhase(1).getComponent(j).setx(yy[j] / sumy);
+      system.getPhase(0).getComponents()[j].setx(xx[j] / sumx);
+      system.getPhase(1).getComponents()[j].setx(yy[j] / sumy);
 
-      xx[j] = system.getPhase(0).getComponent(j).getx();
-      yy[j] = system.getPhase(1).getComponent(j).getx();
+      xx[j] = system.getPhase(0).getComponents()[j].getx();
+      yy[j] = system.getPhase(1).getComponents()[j].getx();
     }
   }
 
@@ -326,11 +327,11 @@ public class CricondenBarFlash extends PTphaseEnvelope {
       double xx = system.getPhase(0).getComponent(j).getx();
       double yy = system.getPhase(1).getComponent(j).getx();
 
-      double fugl = system.getPhase(0).getComponent(j).getLogFugacityCoefficient();
-      double fugv = system.getPhase(1).getComponent(j).getLogFugacityCoefficient();
+      double fugl = system.getPhase(0).getComponents()[j].getLogFugacityCoefficient();
+      double fugv = system.getPhase(1).getComponents()[j].getLogFugacityCoefficient();
 
-      double fugPl = system.getPhase(0).getComponent(j).getdfugdp();
-      double fugPv = system.getPhase(1).getComponent(j).getdfugdp();
+      double fugPl = system.getPhase(0).getComponents()[j].getdfugdp();
+      double fugPv = system.getPhase(1).getComponents()[j].getdfugdp();
 
       funcP = funcP + xx + xx * (Math.log(yy) - Math.log(xx) + fugv - fugl);
       dfuncdP = dfuncdP + xx * (fugPv - fugPl);

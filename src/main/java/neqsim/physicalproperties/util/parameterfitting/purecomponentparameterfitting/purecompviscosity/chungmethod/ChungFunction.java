@@ -33,7 +33,7 @@ public class ChungFunction extends LevenbergMarquardtFunction {
   @Override
   public void setFittingParams(int i, double value) {
     params[i] = value;
-    system.getPhases()[0].getComponent(i).setViscosityAssociationFactor(value);
-    system.getPhases()[1].getComponent(i).setViscosityAssociationFactor(value);
+    system.getPhases()[0].getComponents()[i].setViscosityAssociationFactor(value);
+    system.getPhases()[1].getComponents()[i].setViscosityAssociationFactor(value);
   }
 }

@@ -211,10 +211,10 @@ public class FrictionTheoryViscosityMethod extends Viscosity
     double E = 2.16178;
     double F = 2.43787;
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
-      Fc[i] = 1.0 - 0.2756 * phase.getPhase().getComponent(i).getAcentricFactor();
+      Fc[i] = 1.0 - 0.2756 * phase.getPhase().getComponents()[i].getAcentricFactor();
 
       tempVar =
-          1.2593 * phase.getPhase().getTemperature() / phase.getPhase().getComponent(i).getTC();
+          1.2593 * phase.getPhase().getTemperature() / phase.getPhase().getComponents()[i].getTC();
       // eq. 9.4.3 TPoLG
       double varLast = -6.435e-4 * Math.pow(tempVar, 0.14874)
           * Math.sin(18.0323 * Math.pow(tempVar, -0.76830) - 7.27371);
@@ -223,11 +223,11 @@ public class FrictionTheoryViscosityMethod extends Viscosity
           + E / Math.exp(F * tempVar) + varLast;
 
       // double critVol = 0.000235751e6+
-      // 1e4*3.4277*(phase.getPhase().getComponent(i).getPC()/(R*phase.getPhase().getComponent(i).getTC()));
-      double critVol = phase.getPhase().getPhase().getComponent(i).getCriticalVolume();
+      // 1e4*3.4277*(phase.getPhase().getComponents()[i].getPC()/(R*phase.getPhase().getComponents()[i].getTC()));
+      double critVol = phase.getPhase().getPhase().getComponents()[i].getCriticalVolume();
 
       pureComponentViscosity[i] = 40.785
-          * Math.sqrt(phase.getPhase().getComponent(i).getMolarMass() * 1000.0
+          * Math.sqrt(phase.getPhase().getComponents()[i].getMolarMass() * 1000.0
               * phase.getPhase().getTemperature())
           / (Math.pow(critVol, 2.0 / 3.0) * omegaVisc[i]) * Fc[i];
       // logger.info("visk " + pureComponentViscosity[i]);

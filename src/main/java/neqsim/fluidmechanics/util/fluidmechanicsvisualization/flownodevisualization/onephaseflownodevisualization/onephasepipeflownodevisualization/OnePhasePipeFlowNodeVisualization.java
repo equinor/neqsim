@@ -32,7 +32,7 @@ public class OnePhasePipeFlowNodeVisualization extends OnePhaseFlowNodeVisualiza
     bulkComposition = new double[2][node.getBulkSystem().getPhases()[0].getNumberOfComponents()];
 
     for (int i = 0; i < node.getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-      bulkComposition[0][i] = node.getBulkSystem().getPhases()[0].getComponent(i).getx();
+      bulkComposition[0][i] = node.getBulkSystem().getPhases()[0].getComponents()[i].getx();
     }
   }
 }

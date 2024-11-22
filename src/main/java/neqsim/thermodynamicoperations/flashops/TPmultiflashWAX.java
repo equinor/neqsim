@@ -66,21 +66,21 @@ public class TPmultiflashWAX extends TPflash {
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-          system.getPhase(k).getComponent(i).setx(system.getPhase(0).getComponent(i).getz() / E[i]
-              / system.getPhase(k).getComponent(i).getFugacityCoefficient());
+          system.getPhase(k).getComponents()[i].setx(system.getPhase(0).getComponents()[i].getz()
+              / E[i] / system.getPhase(k).getComponents()[i].getFugacityCoefficient());
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
             && system.getPhase(k).getType() != PhaseType.AQUEOUS) {
-          system.getPhase(k).getComponent(i).setx(1e-50);
+          system.getPhase(k).getComponents()[i].setx(1e-50);
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
             && system.getPhase(k).getType() == PhaseType.AQUEOUS) {
-          system.getPhase(k).getComponent(i)
-              .setx(system.getPhase(k).getComponent(i).getNumberOfmoles()
+          system.getPhase(k).getComponents()[i]
+              .setx(system.getPhase(k).getComponents()[i].getNumberOfmoles()
                   / system.getPhase(k).getNumberOfMolesInPhase());
         }
         if (system.hasPhaseType("wax")) {
-          system.getPhaseOfType("wax").getComponent(i).setx(0);
+          system.getPhaseOfType("wax").getComponents()[i].setx(0);
         }
       }
       system.getPhase(k).normalize();
@@ -98,7 +98,7 @@ public class TPmultiflashWAX extends TPflash {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
         E[i] += system.getPhase(k).getBeta()
-            / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+            / system.getPhase(k).getComponents()[i].getFugacityCoefficient();
       }
     }
   }
@@ -124,14 +124,14 @@ public class TPmultiflashWAX extends TPflash {
     this.calcE();
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      Q -= Math.log(E[i]) * system.getPhase(0).getComponent(i).getz();
+      Q -= Math.log(E[i]) * system.getPhase(0).getComponents()[i].getz();
     }
 
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
       dQdbeta[k] = 1.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        dQdbeta[k] -= system.getPhase(0).getComponent(i).getz() * 1.0 / E[i]
-            / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+        dQdbeta[k] -= system.getPhase(0).getComponents()[i].getz() * 1.0 / E[i]
+            / system.getPhase(k).getComponents()[i].getFugacityCoefficient();
       }
     }
 
@@ -139,9 +139,9 @@ public class TPmultiflashWAX extends TPflash {
       for (int j = 0; j < system.getNumberOfPhases(); j++) {
         Qmatrix[i][j] = 0;
         for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
-          Qmatrix[i][j] += system.getPhase(0).getComponent(k).getz()
-              / (E[k] * E[k] * system.getPhase(j).getComponent(k).getFugacityCoefficient()
-                  * system.getPhase(i).getComponent(k).getFugacityCoefficient());
+          Qmatrix[i][j] += system.getPhase(0).getComponents()[k].getz()
+              / (E[k] * E[k] * system.getPhase(j).getComponents()[k].getFugacityCoefficient()
+                  * system.getPhase(i).getComponents()[k].getFugacityCoefficient());
         }
         if (i == j) {
           Qmatrix[i][j] += 1e-10;
@@ -239,7 +239,7 @@ public class TPmultiflashWAX extends TPflash {
         if (system.getPhase(0).getComponent(j).getz() < 1e-100) {
           numb = 0;
         }
-        (clonedSystem.get(i)).getPhase(waxphasenumber).getComponent(j).setx(numb);
+        (clonedSystem.get(i)).getPhase(waxphasenumber).getComponents()[j].setx(numb);
       }
       if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
         (clonedSystem.get(i)).init(1);
@@ -250,10 +250,10 @@ public class TPmultiflashWAX extends TPflash {
     // logger.info("low gibbs phase " + lowestGibbsEnergyPhase);
 
     for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) {
-      // sumz += minimumGibbsEnergySystem.getPhase(0).getComponent(k).getz();
+      // sumz += minimumGibbsEnergySystem.getPhase(0).getComponents()[k].getz();
       for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
         if (!((clonedSystem.get(k)) == null)) {
-          sumw[k] += (clonedSystem.get(k)).getPhase(waxphasenumber).getComponent(i).getx();
+          sumw[k] += (clonedSystem.get(k)).getPhase(waxphasenumber).getComponents()[i].getx();
         }
       }
     }
@@ -262,17 +262,17 @@ public class TPmultiflashWAX extends TPflash {
       for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
         if (!((clonedSystem.get(k)) == null)
             && system.getPhase(0).getComponent(k).getx() > 1e-100) {
-          (clonedSystem.get(k)).getPhase(waxphasenumber).getComponent(i).setx(
-              (clonedSystem.get(k)).getPhase(waxphasenumber).getComponent(i).getx() / sumw[0]);
+          (clonedSystem.get(k)).getPhase(waxphasenumber).getComponents()[i].setx(
+              (clonedSystem.get(k)).getPhase(waxphasenumber).getComponents()[i].getx() / sumw[0]);
           // logger.info("x: " + (
-          // clonedSystem.get(k)).getPhase(0).getComponent(i).getx());
+          // clonedSystem.get(k)).getPhase(0).getComponents()[i].getx());
         }
       }
 
       if (system.getPhase(0).getComponent(k).getx() > 1e-100) {
         d[k] = Math.log(
-            minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponent(k).getx())
-            + minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponent(k)
+            minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents()[k].getx())
+            + minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents()[k]
                 .getLogFugacityCoefficient();
       }
     }
@@ -335,12 +335,14 @@ public class TPmultiflashWAX extends TPflash {
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
           oldlogw[i] = logWi[i];
-          if (!Double.isInfinite(Math.log((clonedSystem.get(j)).getPhase(waxphasenumber)
-              .getComponent(i).getLogFugacityCoefficient()))
+          if (!Double
+              .isInfinite(Math.log((clonedSystem.get(j)).getPhase(waxphasenumber).getComponents()[i]
+                  .getLogFugacityCoefficient()))
               && system.getPhase(0).getComponent(i).getx() > 1e-100) {
-            logWi[i] = d[i] - Math.log((clonedSystem.get(j)).getPhase(waxphasenumber)
-                .getComponent(i).getFugacityCoefficient());
-            if ((clonedSystem.get(j)).getPhase(1).getComponent(i).getIonicCharge() != 0) {
+            logWi[i] =
+                d[i] - Math.log((clonedSystem.get(j)).getPhase(waxphasenumber).getComponents()[i]
+                    .getFugacityCoefficient());
+            if ((clonedSystem.get(j)).getPhase(1).getComponents()[i].getIonicCharge() != 0) {
               logWi[i] = -1000.0;
             }
           }
@@ -355,7 +357,7 @@ public class TPmultiflashWAX extends TPflash {
         }
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-          (clonedSystem.get(j)).getPhase(waxphasenumber).getComponent(i)
+          (clonedSystem.get(j)).getPhase(waxphasenumber).getComponents()[i]
               .setx(Math.exp(logWi[i]) / sumw[j]);
         }
       } while (Math.abs(err) > 1e-9 && iter < 100);
@@ -364,7 +366,7 @@ public class TPmultiflashWAX extends TPflash {
 
       for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
         tm[j] -= Math.exp(logWi[i]);
-        x[j][i] = (clonedSystem.get(j)).getPhase(waxphasenumber).getComponent(i).getx();
+        x[j][i] = (clonedSystem.get(j)).getPhase(waxphasenumber).getComponents()[i].getx();
         // logger.info("txji: " + x[j][i]);
       }
       if (iter >= 99) {
@@ -384,7 +386,7 @@ public class TPmultiflashWAX extends TPflash {
         system.setPhaseIndex(system.getNumberOfPhases() - 1, waxphasenumber);
         unstabcomp = k;
         for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
-          system.getPhase(system.getNumberOfPhases() - 1).getComponent(i).setx(x[k][i]);
+          system.getPhase(system.getNumberOfPhases() - 1).getComponents()[i].setx(x[k][i]);
         }
         multiPhaseTest = true;
         system.setBeta(system.getNumberOfPhases() - 1,
@@ -443,14 +445,14 @@ public class TPmultiflashWAX extends TPflash {
         double[] xchem = new double[system.getPhase(phase).getNumberOfComponents()];
 
         for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-          xchem[i] = system.getPhase(phase).getComponent(i).getx();
+          xchem[i] = system.getPhase(phase).getComponents()[i].getx();
         }
 
         system.init(1);
         system.getChemicalReactionOperations().solveChemEq(phase, 1);
 
         for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-          chemdev += Math.abs(xchem[i] - system.getPhase(phase).getComponent(i).getx());
+          chemdev += Math.abs(xchem[i] - system.getPhase(phase).getComponents()[i].getx());
         }
         logger.info("chemdev: " + chemdev);
       }

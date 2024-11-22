@@ -6,11 +6,6 @@
 
 package neqsim.chemicalreactions;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
 import neqsim.chemicalreactions.chemicalequilibrium.ChemicalEquilibrium;
 import neqsim.chemicalreactions.chemicalequilibrium.LinearProgrammingChemicalEquilibrium;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList;
@@ -18,6 +13,13 @@ import neqsim.chemicalreactions.kinetics.Kinetics;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
+
+import java.util.HashSet;
+import java.util.Iterator;
+
+import Jama.Matrix;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -176,9 +178,9 @@ public class ChemicalReactionOperations
       String name = componentNames[j];
       for (int i = 0; i < allComponentNames.length; i++) {
         if (name.equals(allComponentNames[i])) {
-          components[k++] = system.getPhase(phase).getComponent(j);
+          components[k++] = system.getPhase(phase).getComponents()[j];
           // System.out.println("reactive comp " +
-          // system.getPhases()[1].getComponent(j).getName());
+          // system.getPhases()[1].getComponents()[j].getName());
         }
       }
     }

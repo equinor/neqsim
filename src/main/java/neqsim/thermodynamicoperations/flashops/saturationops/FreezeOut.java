@@ -71,7 +71,7 @@ public class FreezeOut extends ConstantDutyTemperatureFlash
     for (int k = 0; k < testSystem.getPhase(0).getNumberOfComponents(); k++) {
       FCompNames[k] = testSystem.getPhase(0).getComponent(k).getComponentName();
       if (testSystem.getPhase(0).getComponent(k).doSolidCheck()) {
-        trpTemp = testSystem.getPhases()[0].getComponent(k).getTriplePointTemperature();
+        trpTemp = testSystem.getPhases()[0].getComponents()[k].getTriplePointTemperature();
         if (noFreezeFlash) {
           testSystem.setTemperature(trpTemp);
           logger.info("Starting at Triple point temperature "
@@ -94,7 +94,7 @@ public class FreezeOut extends ConstantDutyTemperatureFlash
         iterations = 0;
         half = false;
         T2high = trpTemp + 0.1;
-        if (Math.abs(testSystem.getPhases()[0].getComponent(k).getHsub()) < 1) {
+        if (Math.abs(testSystem.getPhases()[0].getComponents()[k].getHsub()) < 1) {
           CCequation = false;
         }
         do {
@@ -212,7 +212,7 @@ public class FreezeOut extends ConstantDutyTemperatureFlash
         // print line to output file
         pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + ","
             + system.getPressure() + ","
-            + java.lang.Double.toString(system.getPhases()[0].getComponent(k).getz()));
+            + java.lang.Double.toString(system.getPhases()[0].getComponents()[k].getz()));
         pr_writer.flush();
       }
     } catch (SecurityException ex) {

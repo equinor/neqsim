@@ -73,7 +73,7 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
         funk = system.getPhase(0).getComponent(k).getz();
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
           funk -= system.getPhase(i).getBeta() * SolidFugCoeff
-              / system.getPhase(i).getComponent(k).getFugacityCoefficient();
+              / system.getPhase(i).getComponents()[k].getFugacityCoefficient();
         }
       }
     }
@@ -124,7 +124,7 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
           funk = system.getPhase(0).getComponent(k).getz();
           for (int i = 0; i < system.getNumberOfPhases(); i++) {
             funk -= system.getPhase(i).getBeta() * SolidFugCoeff
-                / system.getPhase(i).getComponent(k).getFugacityCoefficient();
+                / system.getPhase(i).getComponents()[k].getFugacityCoefficient();
           }
           logger.info("funk " + funk);
           if (iterations > 1) { // && oldPhaseType == system.getPhase(0).getType()) {
@@ -186,7 +186,7 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
         // print line to output file
         pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + ","
             + system.getPressure() + ","
-            + java.lang.Double.toString(system.getPhases()[0].getComponent(k).getz()) + ","
+            + java.lang.Double.toString(system.getPhases()[0].getComponents()[k].getz()) + ","
             + Niterations);
         pr_writer.flush();
       }

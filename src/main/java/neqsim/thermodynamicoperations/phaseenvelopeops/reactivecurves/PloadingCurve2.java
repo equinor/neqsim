@@ -119,7 +119,7 @@ public class PloadingCurve2 extends BaseOperation {
       points[2][i] = (system.getPressure() * system.getPhase(0).getComponent(0).getx());
 
       for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
-        points[k + 3][i] = system.getPhases()[1].getComponent(k).getx();
+        points[k + 3][i] = system.getPhases()[1].getComponents()[k].getx();
         points[k + 3 + system.getPhases()[1].getNumberOfComponents()][i] =
             system.getPhase(1).getActivityCoefficient(k, 1); // ,1);
       }
@@ -169,9 +169,9 @@ public class PloadingCurve2 extends BaseOperation {
    * file.setYvalues(points[1], "total pressure", ""); file.setYvalues(points[2], " CO2 pressure",
    * ""); for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
    * file.setYvalues(points[k + 3], "mol frac " +
-   * system.getPhases()[1].getComponent(k).getComponentName(), ""); file.setYvalues(points[k + 3 +
-   * system.getPhases()[1].getNumberOfComponents()], ("activity " +
-   * system.getPhases()[1].getComponent(k).getComponentName()), ""); } file.createFile(); }
+   * system.getPhases()[1].getComponents()[k].getComponentName(), ""); file.setYvalues(points[k + 3
+   * + system.getPhases()[1].getNumberOfComponents()], ("activity " +
+   * system.getPhases()[1].getComponents()[k].getComponentName()), ""); } file.createFile(); }
    */
 
   /** {@inheritDoc} */

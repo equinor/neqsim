@@ -234,7 +234,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
             * temperature)
         * diElectricdn
         * ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
-            .getComponent(j)).getDiElectricConstantdn()
+            .getComponents()[j]).getDiElectricConstantdn()
         - electronCharge * electronCharge * avagadroNumber
             / (vacumPermittivity
                 * Math.pow(((PhaseModifiedFurstElectrolyteEos) phase).getDiElectricConstant(), 2.0)
@@ -368,12 +368,12 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
       double pressure) {
     return ((PhaseModifiedFurstElectrolyteEos) phase).dFdAlphaLRdX() * XLRi
         * ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
-            .getComponent(j)).getAlphai()
+            .getComponents()[j]).getAlphai()
         + ((PhaseModifiedFurstElectrolyteEos) phase).dFdAlphaLR()
             * dAlphaLRdndn(j, phase, numberOfComponents, temperature, pressure)
         + ((PhaseModifiedFurstElectrolyteEos) phase).dFdAlphaLRdX() * alphai
             * ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
-                .getComponent(j)).getXLRi();
+                .getComponents()[j]).getXLRi();
   }
 
   /**
@@ -448,7 +448,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
   public double calcSolventdiElectricdndn(int j, PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
     if (getIonicCharge() != 0
-        || ((PhaseModifiedFurstElectrolyteEos) phase).getComponent(j).getIonicCharge() != 0) {
+        || ((PhaseModifiedFurstElectrolyteEos) phase).getComponents()[j].getIonicCharge() != 0) {
       return 0.0;
     }
     double ans2 = 0.0;
@@ -459,7 +459,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
     }
     // return 0.0;
     return -getDiElectricConstant(temperature) / (ans2 * ans2)
-        - ((PhaseModifiedFurstElectrolyteEos) phase).getComponent(j)
+        - ((PhaseModifiedFurstElectrolyteEos) phase).getComponents()[j]
             .getDiElectricConstant(temperature) / (ans2 * ans2)
         + 2.0 * ((PhaseModifiedFurstElectrolyteEos) phase).getSolventDiElectricConstant()
             / (ans2 * ans2);
@@ -553,17 +553,17 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
   public double calcdiElectricdndn(int j, PhaseInterface phase, int numberOfComponents,
       double temperature, double pressure) {
     double dYdf = ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
-        .getComponent(j)).getSolventDiElectricConstantdn();
+        .getComponents()[j]).getSolventDiElectricConstantdn();
     double dXdfdfj = getEpsIonici() * -3.0 / 2.0
         / Math.pow(((PhaseModifiedFurstElectrolyteEos) phase).getEpsIonic() / 2.0 + 1.0, 2.0);
 
     double dXdf = ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
-        .getComponent(j)).getEpsIonici() * getEpsIonici() * 3.0 / 2.0
+        .getComponents()[j]).getEpsIonici() * getEpsIonici() * 3.0 / 2.0
         / Math.pow(((PhaseModifiedFurstElectrolyteEos) phase).getEpsIonic() / 2.0 + 1.0, 3.0);
     double d1 = ((PhaseModifiedFurstElectrolyteEos) phase).getSolventDiElectricConstant();
 
     double d2 = ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
-        .getComponent(j)).getEpsIonici() * -3.0 / 2.0
+        .getComponents()[j]).getEpsIonici() * -3.0 / 2.0
         / Math.pow(((PhaseModifiedFurstElectrolyteEos) phase).getEpsIonic() / 2.0 + 1.0, 2.0);
     double d5 = getSolventDiElectricConstantdn();
 
@@ -710,10 +710,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
       double pressure) {
     return ((PhaseModifiedFurstElectrolyteEos) phase).FSR2epseps() * epsi
         * ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
-            .getComponent(j)).getEpsi()
+            .getComponents()[j]).getEpsi()
         + ((PhaseModifiedFurstElectrolyteEos) phase).FSR2epsW() * Wi
             * ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
-                .getComponent(j)).getEpsi()
+                .getComponents()[j]).getEpsi()
         + ((PhaseModifiedFurstElectrolyteEos) phase).FSR2W()
             * ((PhaseModifiedFurstElectrolyteEos) phase).calcWij(componentNumber, j, phase,
                 temperature, pressure, numberOfComponents)
@@ -854,13 +854,13 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
       double pressure) {
     return ((PhaseModifiedFurstElectrolyteEos) phase).FBornDD() * solventdiElectricdn
         * ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
-            .getComponent(j)).getSolventDiElectricConstantdn()
+            .getComponents()[j]).getSolventDiElectricConstantdn()
         + ((PhaseModifiedFurstElectrolyteEos) phase).FBornDX() * XBorni
             * ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
-                .getComponent(j)).getSolventDiElectricConstantdn()
+                .getComponents()[j]).getSolventDiElectricConstantdn()
         + ((PhaseModifiedFurstElectrolyteEos) phase).FBornDX() * solventdiElectricdn
             * ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase)
-                .getComponent(j)).getXBorni()
+                .getComponents()[j]).getXBorni()
         + ((PhaseModifiedFurstElectrolyteEos) phase).FBornD()
             * calcSolventdiElectricdndn(j, phase, numberOfComponents, temperature, pressure);
   }

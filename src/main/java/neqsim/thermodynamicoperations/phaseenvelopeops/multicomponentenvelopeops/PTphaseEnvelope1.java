@@ -126,7 +126,7 @@ public class PTphaseEnvelope1 extends BaseOperation {
       system.init(0);
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
-          if (system.getPhase(0).getComponent(i).getTC() < system.getPhase(0).getComponent(i)
+          if (system.getPhase(0).getComponents()[i].getTC() < system.getPhase(0).getComponents()[i]
               .getTC()) {
             speceq = system.getPhase(0).getComponent(i).getComponentNumber();
           }

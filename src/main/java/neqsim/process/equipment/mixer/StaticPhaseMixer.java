@@ -36,7 +36,7 @@ public class StaticPhaseMixer extends StaticMixer {
           .getNumberOfComponents(); i++) {
         boolean gotComponent = false;
         String componentName =
-            streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getName();
+            streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i].getName();
         System.out.println("adding: " + componentName);
         int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
         double[] moles = new double[numberOfPhases];
@@ -45,7 +45,7 @@ public class StaticPhaseMixer extends StaticMixer {
         // her maa man egentlig sjekke at phase typen er den samme !!! antar at begge er
         // to fase elle gass - tofase
         for (int p = 0; p < numberOfPhases; p++) {
-          moles[p] = streams.get(k).getThermoSystem().getPhase(p).getComponent(i)
+          moles[p] = streams.get(k).getThermoSystem().getPhase(p).getComponents()[i]
               .getNumberOfMolesInPhase();
           phaseType[p] = streams.get(k).getThermoSystem().getPhase(p).getType();
         }
@@ -57,12 +57,12 @@ public class StaticPhaseMixer extends StaticMixer {
 
         for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0]
             .getNumberOfComponents(); p++) {
-          if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName()
+          if (mixedStream.getThermoSystem().getPhases()[0].getComponents()[p].getName()
               .equals(componentName)) {
             gotComponent = true;
-            index = streams.get(0).getThermoSystem().getPhases()[0].getComponent(p)
+            index = streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
                 .getComponentNumber();
-            compName = streams.get(0).getThermoSystem().getPhases()[0].getComponent(p)
+            compName = streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
                 .getComponentName();
           }
         }
