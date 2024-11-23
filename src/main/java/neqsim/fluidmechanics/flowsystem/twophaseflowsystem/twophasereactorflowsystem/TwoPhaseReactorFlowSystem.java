@@ -2,6 +2,7 @@ package neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasereactorflows
 
 import java.util.UUID;
 import neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.twophaseflowvisualization.twophasepipeflowvisualization.TwoPhasePipeFlowVisualization;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -103,6 +104,7 @@ public class TwoPhaseReactorFlowSystem
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // Initierer et nyt rorsystem
     neqsim.fluidmechanics.flowsystem.FlowSystemInterface pipe = new TwoPhaseReactorFlowSystem();

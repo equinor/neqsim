@@ -6,6 +6,11 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * <p>CompressorChartAlternativeMapLookupExtrapolate class.</p>
+ *
+ * @author ASMF
+ */
 public class CompressorChartAlternativeMapLookupExtrapolate
     extends CompressorChartAlternativeMapLookup {
   private static final long serialVersionUID = 1000;
@@ -13,16 +18,14 @@ public class CompressorChartAlternativeMapLookupExtrapolate
 
 
   /**
+   * {@inheritDoc}
+   *
    * Retrieves the closest reference speeds to the given speed from the compressor chart values. The
    * method returns a list containing one or two speeds: - If the given speed matches a reference
    * speed, the list contains only that speed. - If the given speed is between two reference speeds,
    * the list contains both speeds. - If the given speed is less than the lowest reference speed,
    * the list contains the lowest reference speed. - If the given speed is greater than the highest
    * reference speed, the list contains the highest reference speed.
-   *
-   * @param speed the speed to find the closest reference speeds for.
-   * @return a list of the closest reference speeds.
-   * @throws IllegalStateException if no reference speeds are available in the chart values.
    */
   @Override
   public ArrayList<Double> getClosestRefSpeeds(double speed) {
@@ -59,12 +62,10 @@ public class CompressorChartAlternativeMapLookupExtrapolate
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Calculates the polytropic head for a given flow and speed by interpolating or extrapolating
    * between reference compressor curves.
-   *
-   * @param flow the flow rate for which the polytropic head is to be calculated
-   * @param speed the speed at which the compressor is operating
-   * @return the polytropic head corresponding to the given flow and speed
    */
   @Override
   public double getPolytropicHead(double flow, double speed) {
@@ -95,14 +96,10 @@ public class CompressorChartAlternativeMapLookupExtrapolate
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Calculates the polytropic efficiency for a given flow and speed by interpolating or
    * extrapolating between reference compressor curves.
-   *
-   * @param flow the flow rate for which the polytropic efficiency is to be calculated
-   * @param speed the speed at which the compressor is operating
-   * @return the polytropic efficiency at the given flow and speed
-   * @throws IllegalArgumentException if no valid reference speeds are found for the given speed or
-   *         if the curve data for a reference speed is invalid
    */
   @Override
   public double getPolytropicEfficiency(double flow, double speed) {

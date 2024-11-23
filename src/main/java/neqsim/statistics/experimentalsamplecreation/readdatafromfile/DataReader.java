@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.StringTokenizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -92,6 +93,7 @@ public class DataReader implements DataReaderInterface {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     DataReader reader = new DataReader("31011222");
   }

@@ -2,12 +2,12 @@ package neqsim.process.equipment.compressor;
 
 /**
  * Compressor chart generator.
- * 
+ *
  * This class generates a compressor chart based on the provided compressor and the specified
  * generation option.
- * 
+ *
  * Supports generating normal curves and alternative curves.
- * 
+ *
  * @author Even Solbraa
  */
 public class CompressorChartGenerator {

@@ -51,10 +51,10 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
    * @param beta a double
    * @param numberOfComponents a int
    * @param pt the PhaseType of the phase
-   * @param phase a int
+   * @param phaseNum a int
    */
   public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int numberOfComponents, PhaseType pt, int phase) {
+      int numberOfComponents, PhaseType pt, int phaseNum) {
     if (totalNumberOfMoles <= 0) {
       // todo: throw this exception?
       /*

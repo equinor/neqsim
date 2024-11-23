@@ -9,6 +9,7 @@ import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -58,8 +59,10 @@ public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface testSystem =
+        new SystemFurstElectrolyteEos(275.3, ThermodynamicConstantsInterface.referencePressure);
     PipeData pipe1 = new PipeData(10.0, 0.025);
 
     testSystem.addComponent("methane", 0.061152181, 0);

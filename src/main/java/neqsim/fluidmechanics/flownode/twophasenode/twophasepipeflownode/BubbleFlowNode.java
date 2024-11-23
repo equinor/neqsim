@@ -7,6 +7,7 @@ import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -150,6 +151,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkSchwartzentruberEos(295.3, 50.01325);

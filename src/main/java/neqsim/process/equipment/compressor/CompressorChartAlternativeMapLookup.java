@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * This class is an implementation of the compressor chart class that uses Fan laws and "double"
@@ -122,6 +123,8 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 
 /**
+ * <p>CompressorChartAlternativeMapLookup class.</p>
+ *
  * @author asmund
  * @version $Id: $Id
  */
@@ -171,14 +174,10 @@ public class CompressorChartAlternativeMapLookup
 
   /** {@inheritDoc} */
   /**
+   * {@inheritDoc}
+   *
    * Sets the compressor curves based on the provided chart conditions, speed, flow, head, and
    * polytropic efficiency values.
-   *
-   * @param chartConditions an array of chart conditions (not used in this method)
-   * @param speed an array of speed values for the compressor
-   * @param flow a 2D array of flow values corresponding to each speed
-   * @param head a 2D array of head values corresponding to each speed
-   * @param polyEff a 2D array of polytropic efficiency values corresponding to each speed
    */
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
@@ -207,6 +206,7 @@ public class CompressorChartAlternativeMapLookup
    * lowest reference speed is returned. If the given speed is higher than the highest reference
    * speed, the highest reference speed is returned.
    *
+   * @return an ArrayList of the closest reference speeds
    * @param speed the speed to find the closest reference speeds for
    * @return an ArrayList of the closest reference speeds
    */
@@ -242,14 +242,12 @@ public class CompressorChartAlternativeMapLookup
 
   /** {@inheritDoc} */
   /**
+   * {@inheritDoc}
+   *
    * Calculates the polytropic head for a given flow and speed.
    *
    * This method interpolates the polytropic head values from reference speeds closest to the given
    * speed and averages them to estimate the polytropic head at the specified flow and speed.
-   *
-   * @param flow the flow rate for which the polytropic head is to be calculated
-   * @param speed the speed at which the polytropic head is to be calculated
-   * @return the calculated polytropic head
    */
   @Override
   public double getPolytropicHead(double flow, double speed) {
@@ -277,13 +275,11 @@ public class CompressorChartAlternativeMapLookup
 
   /** {@inheritDoc} */
   /**
+   * {@inheritDoc}
+   *
    * Calculates the polytropic efficiency of the compressor for a given flow and speed. The method
    * interpolates the efficiency values from reference speed curves and averages them to estimate
    * the efficiency at the specified conditions.
-   *
-   * @param flow the flow rate through the compressor
-   * @param speed the rotational speed of the compressor
-   * @return the polytropic efficiency at the specified flow and speed
    */
   @Override
   public double getPolytropicEfficiency(double flow, double speed) {
@@ -479,6 +475,7 @@ public class CompressorChartAlternativeMapLookup
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     SystemInterface testFluid = new SystemSrkEos(298.15, 50.0);
 

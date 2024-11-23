@@ -605,6 +605,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 100.0), 200.00);

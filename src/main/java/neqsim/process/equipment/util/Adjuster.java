@@ -304,6 +304,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // test code for adjuster...
     neqsim.thermo.system.SystemInterface testSystem =

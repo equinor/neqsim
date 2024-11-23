@@ -11,6 +11,7 @@ import java.util.StringTokenizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.statistics.experimentalsamplecreation.readdatafromfile.DataReader;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -98,6 +99,7 @@ public class WettedWallDataReader extends DataReader {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     WettedWallDataReader reader = new WettedWallDataReader("31011222");
     int i = 0;

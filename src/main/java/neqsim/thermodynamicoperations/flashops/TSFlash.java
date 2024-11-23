@@ -9,6 +9,7 @@ package neqsim.thermodynamicoperations.flashops;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -102,6 +103,7 @@ public class TSFlash extends QfuncFlash {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     SystemInterface testSystem = new SystemSrkEos(373.15, 45.551793);
 

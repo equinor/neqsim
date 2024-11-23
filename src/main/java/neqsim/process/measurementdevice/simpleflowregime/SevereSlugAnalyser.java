@@ -9,6 +9,7 @@ import neqsim.process.measurementdevice.MeasurementDeviceBaseClass;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -418,9 +419,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * Calculating the universal gas constant.
    * </p>
    *
-   * @param fluid a
-   *        {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug}
-   *        object
+   * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
    * @return a double
    */
   public double gasConst(FluidSevereSlug fluid) {
@@ -437,8 +436,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    *
    * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
    * @param severeSlug a
-   *        {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser}
-   *        object
+   *        {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser} object
    * @return a double
    */
   public double slugHoldUp(Pipe pipe, SevereSlugAnalyser severeSlug) {
@@ -457,13 +455,10 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * stratifiedHoldUp.
    * </p>
    *
-   * @param fluid a
-   *        {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug}
-   *        object
+   * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
    * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
    * @param severeSlug a
-   *        {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser}
-   *        object
+   *        {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser} object
    * @return a double
    */
   public double stratifiedHoldUp(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug) {
@@ -523,13 +518,10 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * runSevereSlug.
    * </p>
    *
-   * @param fluid a
-   *        {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug}
-   *        object
+   * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
    * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
    * @param severeSlug a
-   *        {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser}
-   *        object
+   *        {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser} object
    */
   public void runSevereSlug(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug) {
     resPres = new double[severeSlug.getNumberOfTimeSteps()];
@@ -633,13 +625,10 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * checkFlowRegime.
    * </p>
    *
-   * @param fluid a
-   *        {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug}
-   *        object
+   * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
    * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
    * @param severeSlug a
-   *        {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser}
-   *        object
+   *        {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser} object
    * @return a {@link java.lang.String} object
    */
   public String checkFlowRegime(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug) {
@@ -713,13 +702,10 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * getMeasuredValue.
    * </p>
    *
-   * @param fluid a
-   *        {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug}
-   *        object
+   * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
    * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
    * @param severeSlug a
-   *        {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser}
-   *        object
+   *        {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser} object
    * @return a double
    */
   public double getMeasuredValue(FluidSevereSlug fluid, Pipe pipe, SevereSlugAnalyser severeSlug) {
@@ -764,13 +750,10 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    * getPredictedFlowRegime.
    * </p>
    *
-   * @param fluid a
-   *        {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug}
-   *        object
+   * @param fluid a {@link neqsim.process.measurementdevice.simpleflowregime.FluidSevereSlug} object
    * @param pipe a {@link neqsim.process.measurementdevice.simpleflowregime.Pipe} object
    * @param severeSlug a
-   *        {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser}
-   *        object
+   *        {@link neqsim.process.measurementdevice.simpleflowregime.SevereSlugAnalyser} object
    * @return a {@link java.lang.String} object
    */
   public String getPredictedFlowRegime(FluidSevereSlug fluid, Pipe pipe,
@@ -786,6 +769,7 @@ public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 15.0), 10);

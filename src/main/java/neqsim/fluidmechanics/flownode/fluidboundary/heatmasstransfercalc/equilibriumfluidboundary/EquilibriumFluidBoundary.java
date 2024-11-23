@@ -6,6 +6,7 @@ import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -69,6 +70,7 @@ public class EquilibriumFluidBoundary
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     System.out.println("Starter.....");
     SystemSrkEos testSystem = new SystemSrkEos(295.3, 11.0);

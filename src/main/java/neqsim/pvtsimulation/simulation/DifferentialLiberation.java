@@ -6,6 +6,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -198,13 +199,13 @@ public class DifferentialLiberation extends BasePVTsimulation {
   }
 
   /**
-   * *
    * <p>
-   * main
+   * main.
    * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     SystemInterface tempSystem = new SystemSrkEos(273.15 + 83.5, 450.0);
     tempSystem.addComponent("nitrogen", 0.586);

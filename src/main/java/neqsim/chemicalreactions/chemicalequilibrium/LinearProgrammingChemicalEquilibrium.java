@@ -60,10 +60,10 @@ public class LinearProgrammingChemicalEquilibrium
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
    * @param elements an array of {@link java.lang.String} objects
    * @param operations a {@link neqsim.chemicalreactions.ChemicalReactionOperations} object
-   * @param phase a int
+   * @param phaseNum a int
    */
   public LinearProgrammingChemicalEquilibrium(double[] chemRefPot, ComponentInterface[] components,
-      String[] elements, ChemicalReactionOperations operations, int phase) {
+      String[] elements, ChemicalReactionOperations operations, int phaseNum) {
     this.operations = operations;
     this.chemRefPot = chemRefPot;
     this.components = components;
@@ -79,8 +79,8 @@ public class LinearProgrammingChemicalEquilibrium
     // Commented out by Neeraj
     // Arrays.sort(components,new ReferencePotComparator());
     // this.changePrimaryComponents();
-    if (operations.calcChemRefPot(phase) != null) {
-      System.arraycopy(operations.calcChemRefPot(phase), 0, this.chemRefPot, 0,
+    if (operations.calcChemRefPot(phaseNum) != null) {
+      System.arraycopy(operations.calcChemRefPot(phaseNum), 0, this.chemRefPot, 0,
           this.chemRefPot.length);
       for (int i = 0; i < components.length; i++) {
         components[i].setReferencePotential(chemRefPot[i]);
@@ -90,9 +90,9 @@ public class LinearProgrammingChemicalEquilibrium
       do {
         System.out.println("shifting primary components.....");
         this.changePrimaryComponents();
-      } while (operations.calcChemRefPot(phase) == null);
+      } while (operations.calcChemRefPot(phaseNum) == null);
       // System.out.println("shifting components....." );
-      System.arraycopy(operations.calcChemRefPot(phase), 0, this.chemRefPot, 0,
+      System.arraycopy(operations.calcChemRefPot(phaseNum), 0, this.chemRefPot, 0,
           this.chemRefPot.length);
       for (int i = 0; i < components.length; i++) {
         components[i].setReferencePotential(chemRefPot[i]);
@@ -193,9 +193,9 @@ public class LinearProgrammingChemicalEquilibrium
   // Method commented out by Neeraj
   /*
    * public double[] generateInitialEstimates(SystemInterface system, double[] bVector, double
-   * inertMoles, int phase){ Matrix solved; Matrix atemp = new
+   * inertMoles, int phaseNum){ Matrix solved; Matrix atemp = new
    * Matrix(Amatrix).getMatrix(0,Amatrix.length-1,0,Amatrix[0].length-1).copy(); Matrix mutemp = new
-   * Matrix(chemRefPot,1).times(1.0/(R*system.getPhase(phase).getTemperature())). copy(); Matrix
+   * Matrix(chemRefPot,1).times(1.0/(R*system.getPhase(phaseNum).getTemperature())). copy(); Matrix
    * lagrangeTemp = atemp.transpose().solve(mutemp.transpose()).copy(); //bmatrix and Ans Added by
    * Neeraj //bmatrix = new Matrix(bVector,1); //int rank = atemp.rank();
    * //System.out.println("Rank of A "+rank); //Ans = atemp.solve(bmatrix.transpose());
@@ -311,9 +311,9 @@ public class LinearProgrammingChemicalEquilibrium
   // Method added by Neeraj
   /*
    * public double[] generateInitialEstimates(SystemInterface system, double[] bVector, double
-   * inertMoles, int phase){ int i,j; double[] n = new double[components.length]; Matrix atemp,
+   * inertMoles, int phaseNum){ int i,j; double[] n = new double[components.length]; Matrix atemp,
    * btemp; Matrix mutemp = new
-   * Matrix(chemRefPot,1).times(1.0/(R*system.getPhase(phase).getTemperature())). copy(); Matrix
+   * Matrix(chemRefPot,1).times(1.0/(R*system.getPhase(phaseNum).getTemperature())). copy(); Matrix
    * ntemp; atemp = new Matrix(7,7); btemp = new Matrix(1,7); //for (i=0;i<4;i++) for (i=0;i<5;i++)
    * { for (j=0;j<7;j++) atemp.set(i,j,Amatrix[i][j]); btemp.set(0,i,bVector[i]); }
    * atemp.set(5,4,1); atemp.set(6,5,1); //atemp.set(4,4,1); //atemp.set(5,5,1); //atemp.set(6,1,1);
@@ -331,16 +331,16 @@ public class LinearProgrammingChemicalEquilibrium
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param bVector an array of type double
    * @param inertMoles a double
-   * @param phase a int
+   * @param phaseNum a int
    * @return an array of type double
    */
   public double[] generateInitialEstimates(SystemInterface system, double[] bVector,
-      double inertMoles, int phase) {
+      double inertMoles, int phaseNum) {
     int i;
     int j;
     double rhs = 0.0;
-    Matrix mutemp =
-        new Matrix(chemRefPot, 1).times(1.0 / (R * system.getPhase(phase).getTemperature())).copy();
+    Matrix mutemp = new Matrix(chemRefPot, 1)
+        .times(1.0 / (R * system.getPhase(phaseNum).getTemperature())).copy();
     double[] v = new double[components.length + 1];
     for (i = 0; i < components.length; i++) {
       v[i + 1] = mutemp.get(0, i);
@@ -369,7 +369,7 @@ public class LinearProgrammingChemicalEquilibrium
       return null;
     }
 
-    int compNumb = system.getPhase(phase).getNumberOfComponents();
+    int compNumb = system.getPhase(phaseNum).getNumberOfComponents();
     double[] lp_solution = new double[compNumb];
     double[] temp = optimal.getPoint();
     for (i = 0; i < compNumb - (compNumb - components.length); i++) {

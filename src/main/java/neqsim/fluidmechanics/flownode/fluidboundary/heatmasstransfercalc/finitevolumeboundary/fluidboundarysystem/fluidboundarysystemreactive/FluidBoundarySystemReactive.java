@@ -15,6 +15,7 @@ import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -65,6 +66,7 @@ public class FluidBoundarySystemReactive extends FluidBoundarySystem {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     SystemInterface testSystem =
         new SystemFurstElectrolyteEos(275.3, ThermodynamicConstantsInterface.referencePressure);

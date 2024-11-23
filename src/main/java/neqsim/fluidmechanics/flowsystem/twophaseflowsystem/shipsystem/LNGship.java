@@ -11,6 +11,7 @@ import neqsim.standards.gasquality.Standard_ISO6976_2016;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -404,6 +405,7 @@ public class LNGship
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // thermo.system.SystemInterface testSystem = new
     // thermo.system.SystemGERG2004Eos(273.15 - 161.4, 1.0);

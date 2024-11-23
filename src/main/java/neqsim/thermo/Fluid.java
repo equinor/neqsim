@@ -2,6 +2,7 @@ package neqsim.thermo;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -271,6 +272,7 @@ public class Fluid {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     neqsim.thermo.Fluid fluidCreator = new neqsim.thermo.Fluid();
 

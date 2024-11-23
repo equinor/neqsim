@@ -352,6 +352,7 @@ public class AdiabaticPipe extends Pipeline {
    *
    * @param name an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] name) {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 220.00);

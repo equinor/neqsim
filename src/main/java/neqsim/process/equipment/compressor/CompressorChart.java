@@ -76,12 +76,6 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * The method takes chart conditions and initializes internal variables for different performance
    * parameters based on input arrays for speed, flow, head, and polytropic efficiency. It also
    * normalizes these parameters by calculating reduced values based on speed.
-   *
-   * @param chartConditions An array of conditions used for the compressor chart. (Currently unused)
-   * @param speed An array representing the compressor speed values.
-   * @param flow A 2D array representing the flow rates at different speeds.
-   * @param head A 2D array representing the head values at different speeds.
-   * @param polyEff A 2D array representing the polytropic efficiency values at different speeds.
    */
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,

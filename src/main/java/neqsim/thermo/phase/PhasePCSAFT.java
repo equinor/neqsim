@@ -83,8 +83,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * Constructor for PhasePCSAFT.
    * </p>
    */
-  public PhasePCSAFT() {
-  }
+  public PhasePCSAFT() {}
 
   /** {@inheritDoc} */
   @Override
@@ -1113,16 +1112,16 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * @param temperature a double
    * @param A a double
    * @param B a double
-   * @param phase a int
+   * @param phaseNum a int
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
-  public double molarVolume22(double pressure, double temperature, double A, double B, int phase)
+  public double molarVolume22(double pressure, double temperature, double A, double B, int phaseNum)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     double volume =
-        phase == 0 ? getB() / (2.0 / (2.0 + temperature / getPseudoCriticalTemperature()))
+        phaseNum == 0 ? getB() / (2.0 / (2.0 + temperature / getPseudoCriticalTemperature()))
             : (numberOfMolesInPhase * temperature * R) / pressure;
     setMolarVolume(volume / numberOfMolesInPhase);
     double oldMolarVolume = 0;

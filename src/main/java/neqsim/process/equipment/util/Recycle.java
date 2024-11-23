@@ -476,7 +476,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * Setter for the tolerance fields.
    * </p>
    * Set tolerances to tolerance input.
-   * 
+   *
    * @param tolerance the tolerance to set
    */
   public void setTolerance(double tolerance) {

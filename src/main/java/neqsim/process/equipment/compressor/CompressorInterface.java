@@ -140,6 +140,7 @@ public interface CompressorInterface extends ProcessEquipmentInterface, TwoPortI
    * Set CompressorChartType
    * </p>
    *
+   * @param type a {@link java.lang.String} object
    */
   public void setCompressorChartType(String type);
 

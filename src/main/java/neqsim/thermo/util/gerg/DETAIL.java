@@ -3,6 +3,7 @@ package neqsim.thermo.util.gerg;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -1509,6 +1510,7 @@ public class DETAIL {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     DETAIL test = new DETAIL();
     test.SetupDetail();

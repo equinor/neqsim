@@ -6,6 +6,8 @@
 
 package neqsim.thermo.util.jni;
 
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
+
 /**
  * <p>
  * GERG2004EOS class.
@@ -499,6 +501,7 @@ public class GERG2004EOS {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     GERG2004EOS gergEOS = new GERG2004EOS();
     double c1 = 298.0, c2 = 0.1, c3 = 0.90, c4 = 0.1, c5 = 0, c6 = 0, c7 = 0, c8 = 0, c9 = 0,

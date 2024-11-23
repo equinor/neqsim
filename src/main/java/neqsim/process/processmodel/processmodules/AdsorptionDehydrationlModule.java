@@ -10,6 +10,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessModuleBaseClass;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -201,6 +202,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 30.0), 10.0);
@@ -214,8 +216,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     Separator separator = new Separator("Separator 1", inletStream);
 
     neqsim.process.processmodel.processmodules.AdsorptionDehydrationlModule adsorptionPlant =
-        new neqsim.process.processmodel.processmodules.AdsorptionDehydrationlModule(
-            "absPlant");
+        new neqsim.process.processmodel.processmodules.AdsorptionDehydrationlModule("absPlant");
     adsorptionPlant.addInputStream("gasStreamToAdsorber", separator.getGasOutStream());
     adsorptionPlant.setSpecification("water dew point temperature", 273.15 - 100.0);
     adsorptionPlant.setSpecification("designFlow", 20.0e6); // MSm^3/day

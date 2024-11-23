@@ -1,5 +1,7 @@
 package neqsim.thermo.util.empiric;
 
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
+
 /**
  * <p>
  * Water class.
@@ -46,6 +48,7 @@ public class Water {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     Water testWater = new Water();
     System.out.println("water density " + Water.waterDensity(273.15 + 4));

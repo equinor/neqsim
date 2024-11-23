@@ -11,6 +11,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.processmodel.ProcessModuleBaseClass;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -214,6 +215,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 50, 65);

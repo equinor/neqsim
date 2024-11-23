@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -222,6 +223,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     SystemInterface testFluid = new SystemSrkEos(298.15, 50.0);
     testFluid.addComponent("water", 1.0);
