@@ -414,7 +414,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         double maxSpeed = getMaximumSpeed(); // Maximum speed for the compressor
         double currentSpeed = getSpeed(); // Initial guess for speed
         double maxIterations = 100; // Maximum number of iterations
-        double deltaSpeed = 10.0; // Small increment for numerical derivative
+        double deltaSpeed = 100.0; // Small increment for numerical derivative
         int iteration = 0;
 
         while (iteration < maxIterations) {

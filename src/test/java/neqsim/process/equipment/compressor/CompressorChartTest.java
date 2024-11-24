@@ -292,11 +292,10 @@ public class CompressorChartTest {
     testFluid.addComponent("n-butane", 0.873);
     testFluid.setMixingRule("classic");
 
-    testFluid.setTemperature(29.96, "C");
-    testFluid.setPressure(75.73, "bara");
-    testFluid.setTotalFlowRate(559401.4, "kg/hr");
-
     Stream stream_1 = new Stream("Stream1", testFluid);
+    stream_1.setTemperature(29.96, "C");
+    stream_1.setPressure(75.73, "bara");
+    stream_1.setFlowRate(559401.4, "kg/hr");
     stream_1.run();
 
     Compressor comp1 = new Compressor("compressor 1", stream_1);
@@ -360,6 +359,29 @@ public class CompressorChartTest {
         .debug("polytropic efficiency " + comp1.getPolytropicEfficiency());
     org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class)
         .debug("speed " + comp1.getSpeed());
+
+    stream_1.setFlowRate(309401.4, "kg/hr");
+    stream_1.run();
+    comp1.setOutletPressure(170.0, "bara");
+    comp1.run();
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class)
+        .debug("feed flow " + (comp1.getInletStream().getFlowRate("m3/hr")));
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class)
+        .debug("out pressure " + (comp1.getOutletStream().getPressure("bara")));
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class)
+        .debug("power " + comp1.getPower("MW"));
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class)
+        .debug("polytropic head " + comp1.getPolytropicFluidHead());
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class)
+        .debug("polytropic efficiency " + comp1.getPolytropicEfficiency());
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class)
+        .debug("speed " + comp1.getSpeed());
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class)
+        .debug("dist to surge " + comp1.getDistanceToSurge());
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class)
+        .debug("surge flow rate margin " + comp1.getSurgeFlowRateMargin());
+    org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class)
+        .debug("surge flow rate " + comp1.getSurgeFlowRate());
   }
 
 }
