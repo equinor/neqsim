@@ -1,6 +1,7 @@
 package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
@@ -154,7 +155,39 @@ public class CompressorModule extends neqsim.NeqSimTest {
     feedStream.setFlowRate(204094, "kg/hr");
     operations.run();
 
+
     assertTrue(seccondStageCompressor.isSurge(seccondStageCompressor.getPolytropicFluidHead(),
+        seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
+
+
+    double pressurespeedclac = seccondStageCompressor.getOutletPressure();
+    double speedcomp = seccondStageCompressor.getSpeed();
+
+    seccondStageCompressor.setSolveSpeed(true);
+    operations.run();
+
+    assertEquals(pressurespeedclac, seccondStageCompressor.getOutletStream().getPressure("bara"),
+        0.5);
+    assertEquals(speedcomp, seccondStageCompressor.getSpeed(), 0.5);
+    assertEquals(259.8380255, seccondStageCompressor.getInletStream().getFlowRate("m3/hr"), 0.2);
+
+    feedStream.setFlowRate(304094, "kg/hr");
+    operations.run();
+
+    assertEquals(pressurespeedclac, seccondStageCompressor.getOutletStream().getPressure("bara"),
+        0.5);
+    assertEquals(3526, seccondStageCompressor.getSpeed(), 10);
+    assertEquals(386.5, seccondStageCompressor.getInletStream().getFlowRate("m3/hr"), 0.2);
+    assertTrue(seccondStageCompressor.isSurge(seccondStageCompressor.getPolytropicFluidHead(),
+        seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
+
+    feedStream.setFlowRate(704094, "kg/hr");
+    operations.run();
+
+    assertEquals(pressurespeedclac, seccondStageCompressor.getOutletStream().getPressure("bara"),
+        0.5);
+    assertEquals(4177, seccondStageCompressor.getSpeed(), 10);
+    assertFalse(seccondStageCompressor.isSurge(seccondStageCompressor.getPolytropicFluidHead(),
         seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
   }
 }
