@@ -63,7 +63,7 @@ public abstract class Component implements ComponentInterface {
   protected double bCPA = 0.0;
   protected double mCPA = 0.0;
   protected double srkacentricFactor = 0.0;
-  // TODO: what are the available options here?
+  // TODO: what are the available options here? Can also see solute
   protected String referenceStateType = "solvent";
   protected String associationScheme = "0";
   protected String antoineLiqVapPresType = null;

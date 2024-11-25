@@ -30,12 +30,12 @@ public class ComponentPRvolcor extends ComponentPR {
    * Constructor for ComponentPRvolcor.
    * </p>
    *
-   * @param number a int
-   * @param TC a double
-   * @param PC a double
-   * @param M a double
-   * @param a a double
-   * @param moles a double
+   * @param number a int. Not used.
+   * @param TC Critical temperature
+   * @param PC Critical pressure
+   * @param M Molar mass
+   * @param a Acentric factor
+   * @param moles Total number of moles of component.
    */
   public ComponentPRvolcor(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);

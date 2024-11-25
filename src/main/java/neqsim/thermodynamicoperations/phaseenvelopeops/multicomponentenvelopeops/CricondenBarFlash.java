@@ -276,7 +276,7 @@ public class CricondenBarFlash extends PTphaseEnvelope {
 
   /**
    * <p>
-   * init.
+   * init. Calls system.init(3);
    * </p>
    */
   public void init() {

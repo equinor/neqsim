@@ -104,12 +104,12 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * Constructor for ComponentEos.
    * </p>
    *
-   * @param number a int
+   * @param number a int. Not used.
    * @param TC Critical temperature
    * @param PC Critical pressure
    * @param M Molar mass
    * @param a Acentric factor
-   * @param moles Number of moles
+   * @param moles Total number of moles of component.
    */
   public ComponentEos(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);

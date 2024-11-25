@@ -58,7 +58,7 @@ public class ComponentDesmukhMather extends ComponentGE {
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
       String[][] mixRule) {
-    // not implemented
+    // todo: not actually implemented
     return getGamma(phase, numberOfComponents, temperature, pressure, pt);
   }
 

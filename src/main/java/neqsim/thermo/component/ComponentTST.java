@@ -41,12 +41,12 @@ public class ComponentTST extends ComponentEos {
    * Constructor for ComponentTST.
    * </p>
    *
-   * @param number a int
+   * @param number a int. Not used.
    * @param TC Critical temperature
    * @param PC Critical pressure
    * @param M Molar mass
    * @param a Acentric factor
-   * @param moles Number of moles
+   * @param moles Total number of moles of component.
    */
   public ComponentTST(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);

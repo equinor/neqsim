@@ -26,6 +26,10 @@ public class AttractiveTermRk extends AttractiveTermBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  public void init() {}
+
+  /** {@inheritDoc} */
+  @Override
   public AttractiveTermRk clone() {
     AttractiveTermRk attractiveTerm = null;
     try {
