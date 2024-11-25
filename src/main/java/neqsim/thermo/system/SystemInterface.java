@@ -853,7 +853,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getGamma();
 
   /**
-   * method to return heat capacity ratio calculated as Cp/(Cp-R).
+   * method to return heat capacity ratio calculated as Cp/(Cp-R*nMoles).
    *
    * @return kappa
    */
@@ -1687,26 +1687,24 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * method to calculate thermodynamic properties of the fluid. The temperature, pressure, number of
    * phases and composition of the phases will be used as basis for calculation.
    *
-   * @param number - The number can be 0, 1, 2 or 3. 0: Set feed composition for all phases. 1:
+   * @param initType - The number can be 0, 1, 2 or 3. 0: Set feed composition for all phases. 1:
    *        Calculation of density, fugacities and Z-factor 2: 1 + calculation of enthalpy, entropy,
    *        Cp, Cv, and most other thermodynamic properties 3: 1+2 + Calculation of composition
    *        derivatives of fugacity coefficients.
    */
-  public void init(int number);
-
-  // public void setPressure(double newPressure, int phaseNumber);
+  public void init(int initType);
 
   /**
    * method to calculate thermodynamic properties of the selected phase. The temperature, pressure,
    * number of phases and composition of the phase will be used as basis for calculation.
    *
-   * @param number - The number can be 0, 1, 2 or 3. 0: Set feed composition. 1: Calculation of
+   * @param initType - The number can be 0, 1, 2 or 3. 0: Set feed composition. 1: Calculation of
    *        density, fugacities and Z-factor 2: 1 + calculation of enthalpy, entropy, Cp, Cv, and
    *        most other thermodynamic properties 3: 1+2 + Calculation of composition derivatives of
    *        fugacity coefficients.
    * @param phaseNum a int
    */
-  public void init(int number, int phaseNum);
+  public void init(int initType, int phaseNum);
 
   /**
    * <p>
@@ -2663,7 +2661,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setForceSinglePhase(String phasetypename);
 
   /**
-   * <p>isInitialized.</p>
+   * <p>
+   * isInitialized.
+   * </p>
    *
    * @return a boolean
    */

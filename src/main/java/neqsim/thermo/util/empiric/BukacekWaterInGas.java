@@ -1,6 +1,7 @@
 package neqsim.thermo.util.empiric;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -76,6 +77,7 @@ public class BukacekWaterInGas {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     System.out.println("water in gas " + BukacekWaterInGas.getWaterInGas(273.15 - 18.0, 70.0));
 

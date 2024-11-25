@@ -39,6 +39,10 @@ public class AttractiveTermMollerup extends AttractiveTermBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  public void init() {}
+
+  /** {@inheritDoc} */
+  @Override
   public AttractiveTermMollerup clone() {
     AttractiveTermMollerup attractiveTerm = null;
     try {

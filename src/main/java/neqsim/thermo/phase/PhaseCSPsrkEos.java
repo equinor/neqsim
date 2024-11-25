@@ -66,13 +66,12 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
-    double oldtemp = temperature;
+    double oldtemp = getTemperature();
     if (initType == 0) {
       refBWRSPhase.init(1.0, 1, 0, pt, 1.0);
-      refBWRSPhase.init(1.0, 1, 3, pt, 1.0);
-    } else {
-      refBWRSPhase.init(1.0, 1, 3, pt, 1.0);
     }
+    refBWRSPhase.init(1.0, 1, 3, pt, 1.0);
+
     do {
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
       oldtemp = refBWRSPhase.getTemperature();

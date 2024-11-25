@@ -125,8 +125,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     for (int i = 0; i < numberOfComponents; i++) {
       temp += u.get(i, 0);
     }
-
     system.setBeta(temp);
+
     for (int i = 0; i < numberOfComponents; i++) {
       system.getPhase(0).getComponent(i).setx(u.get(i, 0) / system.getBeta());
       system.getPhase(1).getComponent(i).setx(

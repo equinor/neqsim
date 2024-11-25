@@ -4,6 +4,7 @@ import java.util.Arrays;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -22,6 +23,7 @@ public class TestNeqSimBug {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // double[] spec1 = {1.0}; // salt water Pressure
     // double[] spec2 = { -39678.555}; // salt water Enthalpy

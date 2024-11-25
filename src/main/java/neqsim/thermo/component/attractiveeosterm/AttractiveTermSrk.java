@@ -17,13 +17,6 @@ public class AttractiveTermSrk extends AttractiveTermBaseClass {
    * <p>
    * Constructor for AttractiveTermSrk.
    * </p>
-   */
-  public AttractiveTermSrk() {}
-
-  /**
-   * <p>
-   * Constructor for AttractiveTermSrk.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */

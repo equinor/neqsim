@@ -101,20 +101,16 @@ public abstract class SystemThermo implements SystemInterface {
   private boolean implementedPressureDeriativesofFugacity = true;
 
   private boolean implementedTemperatureDeriativesofFugacity = true;
+
+  /*
+   * Initialization type. 0 to initialize and 1 to reset, 2 to calculate T and P derivatives, 3 to
+   * calculate all derivatives and 4 to calculate all derivatives numerically
+   */
   protected int initType = 3;
   protected InterphasePropertiesInterface interfaceProp = null;
 
   // Initialization
   boolean isInitialized = false;
-
-  /**
-   * <p>isInitialized.</p>
-   *
-   * @return a boolean
-   */
-  public boolean isInitialized() {
-    return isInitialized;
-  }
 
   /** Maximum allowed number of phases . */
   public int maxNumberOfPhases = 2;
@@ -2607,12 +2603,10 @@ public abstract class SystemThermo implements SystemInterface {
   public int[] getOilFractionIDs() {
     int numb = getNumberOfOilFractionComponents();
     int[] IDs = new int[numb];
-    // int number = 0;
     for (int i = 0; i < numb; i++) {
       if (getPhase(0).getComponent(i).isIsTBPfraction()
           || getPhase(0).getComponent(i).isIsPlusFraction()) {
         IDs[i] = getPhase(0).getComponent(i).getIndex();
-        // number++;
       }
     }
     return IDs;
@@ -3145,16 +3139,17 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(int type) {
+  public void init(int initType) {
     if (!this.isInitialized) {
       initBeta();
       init_x_y();
     }
     if (this.numericDerivatives) {
-      initNumeric(type);
+      initNumeric(initType);
     } else {
-      initAnalytic(type);
+      initAnalytic(initType);
     }
+
     this.isInitialized = true;
   }
 
@@ -3264,6 +3259,7 @@ public abstract class SystemThermo implements SystemInterface {
         }
       }
     }
+
     this.isInitialized = true;
   }
 
@@ -3454,12 +3450,12 @@ public abstract class SystemThermo implements SystemInterface {
    * initNumeric.
    * </p>
    *
-   * @param type a int
+   * @param initType a int
    * @param phasen a int
    */
-  public void initNumeric(int type, int phasen) {
-    if (type < 2) {
-      initAnalytic(type);
+  public void initNumeric(int initType, int phasen) {
+    if (initType < 2) {
+      initAnalytic(initType);
     } else {
       double[][] gasfug = new double[2][getPhases()[0].getNumberOfComponents()];
       double[][] liqfug = new double[2][getPhases()[0].getNumberOfComponents()];
@@ -3513,7 +3509,7 @@ public abstract class SystemThermo implements SystemInterface {
       setPressure(getPressure() + dp);
       init(1);
 
-      if (type == 3) {
+      if (initType == 3) {
         for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
           for (int k = 0; k < getPhases()[0].getNumberOfComponents(); k++) {
             double dn = getPhase(phaseNum).getComponent(k).getNumberOfMolesInPhase() / 1.0e6;
@@ -3552,6 +3548,7 @@ public abstract class SystemThermo implements SystemInterface {
         }
       }
     }
+
     this.isInitialized = true;
   }
 
@@ -3638,6 +3635,17 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public boolean isForcePhaseTypes() {
     return forcePhaseTypes;
+  }
+
+  /**
+   * <p>
+   * isInitialized.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isInitialized() {
+    return isInitialized;
   }
 
   /** {@inheritDoc} */

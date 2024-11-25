@@ -193,7 +193,6 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         }
         del_den_interface_old[i] = 0;
       }
-      double interact = 1.0;
       double err = 1.0;
       int iterations = 0;
       while (err > 1e-15 && iterations < 1200) {
@@ -277,6 +276,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
       double kappa = 0.0;
       double kappai = 0.0;
       double kappak = 0.0;
+      double interact = 1.0;
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
         double infli = influenceParam[i];
         // localSystem.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(localSystem.getPhase(0).getTemperature());

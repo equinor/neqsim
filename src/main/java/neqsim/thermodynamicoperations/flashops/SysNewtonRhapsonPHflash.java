@@ -117,8 +117,9 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
    */
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
-      fvec.set(i, 0, Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient())
-          + Math.log(system.getPhases()[0].getComponent(i).getx())
+      fvec.set(i, 0,
+          Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient())
+              + Math.log(system.getPhases()[0].getComponent(i).getx())
               - Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient())
               - Math.log(system.getPhases()[1].getComponent(i).getx()));
     }
@@ -153,9 +154,8 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
         tempJ = 1.0 / system.getBeta()
             * (dij / system.getPhases()[0].getComponent(i).getx() - 1.0
                 + system.getPhases()[0].getComponent(i).getdfugdx(j))
-            + 1.0 / (1.0 - system.getBeta())
-                * (dij / system.getPhases()[1].getComponent(i).getx() - 1.0
-                    + system.getPhases()[1].getComponent(i).getdfugdx(j));
+            + 1.0 / (1.0 - system.getBeta()) * (dij / system.getPhases()[1].getComponent(i).getx()
+                - 1.0 + system.getPhases()[1].getComponent(i).getdfugdx(j));
         Jac.set(i, j, tempJ);
       }
     }
@@ -205,12 +205,12 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
    * </p>
    */
   public void init() {
-    double temp = system.getBeta();
+    double tempBeta = system.getBeta();
 
     for (int i = 0; i < numberOfComponents; i++) {
-      temp += u.get(i, 0);
+      tempBeta += u.get(i, 0);
     }
-    system.setBeta(temp);
+    system.setBeta(tempBeta);
 
     for (int i = 0; i < numberOfComponents; i++) {
       double v = 0.0;
@@ -221,8 +221,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
       system.getPhases()[1].getComponent(i).setx(l / (1.0 - system.getBeta()));
       system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getx()
           / system.getPhases()[1].getComponent(i).getx());
-      system.getPhases()[0].getComponent(i)
-          .setK(system.getPhases()[1].getComponent(i).getK());
+      system.getPhases()[0].getComponent(i).setK(system.getPhases()[1].getComponent(i).getK());
     }
 
     // dt = Math.exp(u.get(numberOfComponents+1,0)) - system.getTemperature();

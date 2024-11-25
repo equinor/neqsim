@@ -18,7 +18,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @author esol
  * @version $Id: $Id
  */
-public class AttractiveTermBaseClass implements AttractiveTermInterface {
+public abstract class AttractiveTermBaseClass implements AttractiveTermInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(AttractiveTermBaseClass.class);
 
@@ -26,13 +26,6 @@ public class AttractiveTermBaseClass implements AttractiveTermInterface {
   protected double m;
   protected double[] parameters = new double[3];
   protected double[] parametersSolid = new double[3];
-
-  /**
-   * <p>
-   * Constructor for AttractiveTermBaseClass.
-   * </p>
-   */
-  public AttractiveTermBaseClass() {}
 
   /**
    * <p>
@@ -74,10 +67,6 @@ public class AttractiveTermBaseClass implements AttractiveTermInterface {
     // parameters.length);
     return attractiveTerm;
   }
-
-  /** {@inheritDoc} */
-  @Override
-  public void init() {}
 
   /** {@inheritDoc} */
   @Override

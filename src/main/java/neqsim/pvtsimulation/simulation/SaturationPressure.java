@@ -2,6 +2,7 @@ package neqsim.pvtsimulation.simulation;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -91,6 +92,7 @@ public class SaturationPressure extends BasePVTsimulation {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // SystemInterface tempSystem = new SystemSrkCPAstatoil(273.15 + 120, 100.0);
     SystemInterface tempSystem = new SystemSrkEos(273.15 + 120, 100.0);

@@ -6,6 +6,7 @@ import neqsim.process.equipment.separator.GasScrubber;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -24,6 +25,7 @@ public class MasstransferMeOH {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // Create the input fluid to the TEG process and saturate it with water at
     // scrubber conditions
@@ -60,8 +62,8 @@ public class MasstransferMeOH {
     mainMixer.addStream(MeOHFeed);
 
     neqsim.process.equipment.util.NeqSimUnit pipeline =
-        new neqsim.process.equipment.util.NeqSimUnit(mainMixer.getOutletStream(),
-            "pipeline", "stratified");
+        new neqsim.process.equipment.util.NeqSimUnit(mainMixer.getOutletStream(), "pipeline",
+            "stratified");
     pipeline.setLength(123.01);
 
     GasScrubber scrubber = new GasScrubber("gas scrub", pipeline.getOutletStream());

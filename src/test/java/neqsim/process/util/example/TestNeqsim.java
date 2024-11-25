@@ -4,6 +4,7 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -23,6 +24,7 @@ public class TestNeqsim {
    * @param args the command line arguments
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     SystemInterface testFluid = new SystemSrkEos(298.15, 10.0); // SystemSrkCPAstatoil(298.1,
                                                                 // 10.9); //298.15 K

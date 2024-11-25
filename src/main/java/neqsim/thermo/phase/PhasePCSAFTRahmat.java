@@ -46,8 +46,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
    * Constructor for PhasePCSAFTRahmat.
    * </p>
    */
-  public PhasePCSAFTRahmat() {
-  }
+  public PhasePCSAFTRahmat() {}
 
   /** {@inheritDoc} */
   @Override
@@ -69,7 +68,13 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     componentArray[compNumber] = new ComponentPCSAFT(name, moles, molesInPhase, compNumber);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Calls component.Finit(initType)
+   * </p>
+   */
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {

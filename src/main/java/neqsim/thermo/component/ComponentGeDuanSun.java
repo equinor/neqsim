@@ -82,7 +82,6 @@ public class ComponentGeDuanSun extends ComponentGE {
    */
   public double getGammaNRTL(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij) {
-    double type = phase.getInitType();
     // double ny = 0, Djj = 0, Dii = 0, gij = 0, gjj = 0, gji = 0, gii = 0, F2T = 0, tot2 = 0;
     double A = 0;
     double B = 0;
@@ -237,7 +236,7 @@ public class ComponentGeDuanSun extends ComponentGE {
     gamma = Math.exp(lngamma);
     // System.out.println("gamma " +gamma);
     // if derivates....
-    if (type == 3) {
+    if (phase.getInitType() == 3) {
       double dAdn = 0;
       double dBdn = 0;
       double Etemp = 0;

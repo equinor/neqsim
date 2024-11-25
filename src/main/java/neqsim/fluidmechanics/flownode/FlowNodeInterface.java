@@ -53,6 +53,13 @@ public interface FlowNodeInterface extends Cloneable {
 
   /**
    * <p>
+   * initBulkSystem.
+   * </p>
+   */
+  public void initBulkSystem();
+
+  /**
+   * <p>
    * getVelocity.
    * </p>
    *
@@ -699,13 +706,6 @@ public interface FlowNodeInterface extends Cloneable {
   // public double calcdTdz();
   // public double calcdVoiddz();
   // public double[] calcdxdz();
-
-  /**
-   * <p>
-   * initBulkSystem.
-   * </p>
-   */
-  public void initBulkSystem();
 
   /**
    * <p>

@@ -2,6 +2,7 @@ package neqsim.process.util.example;
 
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -18,6 +19,7 @@ public class destillation2 {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 30.0), 50.00);

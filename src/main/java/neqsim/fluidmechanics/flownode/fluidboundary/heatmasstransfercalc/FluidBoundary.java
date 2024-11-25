@@ -173,7 +173,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
 
   /**
    * <p>
-   * init.
+   * init. Calls interphaseSystem.init(3)
    * </p>
    */
   public void init() {

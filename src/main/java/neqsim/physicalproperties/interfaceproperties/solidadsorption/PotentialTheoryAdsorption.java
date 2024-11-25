@@ -67,18 +67,20 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
   public void calcAdsorption(int phaseNum) {
     SystemInterface tempSystem = system.clone();
     tempSystem.init(3);
-    double[] bulkFug = new double[system.getPhase(phaseNum).getNumberOfComponents()];
-    double[] corrx = new double[system.getPhase(phaseNum).getNumberOfComponents()];
-    surfaceExcess = new double[system.getPhase(phaseNum).getNumberOfComponents()];
-    surfaceExcessMolFraction = new double[system.getPhase(phaseNum).getNumberOfComponents()];
+    int numComp = system.getPhase(phaseNum).getNumberOfComponents();
 
-    eps0 = new double[system.getPhase(phaseNum).getNumberOfComponents()];
-    z0 = new double[system.getPhase(phaseNum).getNumberOfComponents()];
-    beta = new double[system.getPhase(phaseNum).getNumberOfComponents()];
+    surfaceExcess = new double[numComp];
+    surfaceExcessMolFraction = new double[numComp];
+
+    eps0 = new double[numComp];
+    z0 = new double[numComp];
+    beta = new double[numComp];
 
     readDBParameters();
 
-    for (int comp = 0; comp < system.getPhase(phaseNum).getNumberOfComponents(); comp++) {
+    double[] bulkFug = new double[numComp];
+    double[] corrx = new double[numComp];
+    for (int comp = 0; comp < numComp; comp++) {
       bulkFug[comp] = system.getPhase(phaseNum).getComponent(comp).getx()
           * system.getPhase(phaseNum).getComponent(comp).getFugacityCoefficient()
           * system.getPhase(phaseNum).getPressure();
@@ -98,7 +100,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         iter++;
         sumx = 0.0;
         pressure = 0.0;
-        for (int comp = 0; comp < system.getPhase(phaseNum).getNumberOfComponents(); comp++) {
+        for (int comp = 0; comp < numComp; comp++) {
           double correction =
               Math.exp(epsField[comp][i] / R / system.getPhase(phaseNum).getTemperature());
           fugacityField[comp][i] = correction * bulkFug[comp];
@@ -108,7 +110,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
           pressure += fugacityField[comp][i]
               / tempSystem.getPhase(phaseNum).getComponent(comp).getFugacityCoefficient();
         }
-        for (int comp = 0; comp < system.getPhase(phaseNum).getNumberOfComponents(); comp++) {
+        for (int comp = 0; comp < numComp; comp++) {
           tempSystem.getPhase(phaseNum).getComponent(comp).setx(corrx[comp]);
           sumx += corrx[comp];
         }
@@ -120,7 +122,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         // Math.abs(sumx - 1.0));
       } while (Math.abs(sumx - 1.0) > 1e-12 && iter < 100);
 
-      for (int comp = 0; comp < system.getPhase(phaseNum).getNumberOfComponents(); comp++) {
+      for (int comp = 0; comp < numComp; comp++) {
         surfaceExcess[comp] +=
             deltaz[comp] * (1.0e5 / tempSystem.getPhase(phaseNum).getMolarVolume()
                 * tempSystem.getPhase(phaseNum).getComponent(comp).getx()
@@ -130,10 +132,10 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
     }
 
     totalSurfaceExcess = 0.0;
-    for (int comp = 0; comp < system.getPhase(phaseNum).getNumberOfComponents(); comp++) {
+    for (int comp = 0; comp < numComp; comp++) {
       totalSurfaceExcess += surfaceExcess[comp];
     }
-    for (int comp = 0; comp < system.getPhase(phaseNum).getNumberOfComponents(); comp++) {
+    for (int comp = 0; comp < numComp; comp++) {
       surfaceExcessMolFraction[comp] = surfaceExcess[comp] / totalSurfaceExcess;
       // logger.info("surface excess molfrac " + surfaceExcessMolFraction[comp] + "
       // mol/kg adsorbent " + surfaceExcess[comp]);

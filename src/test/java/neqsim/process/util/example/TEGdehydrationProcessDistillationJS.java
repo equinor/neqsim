@@ -16,6 +16,7 @@ import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -406,6 +407,7 @@ public class TEGdehydrationProcessDistillationJS {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     TEGdehydrationProcessDistillationJS tempClass = new TEGdehydrationProcessDistillationJS();
     neqsim.process.processmodel.ProcessSystem operations = tempClass.getProcess();
