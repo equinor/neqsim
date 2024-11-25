@@ -5255,7 +5255,7 @@ public abstract class SystemThermo implements SystemInterface {
     for (int phaseNum = 0; phaseNum < numberOfPhases; phaseNum++) {
       for (int k = 0; k < getPhases()[0].getNumberOfComponents(); k++) {
         getPhase(phaseNum).getComponent(k).setSolidCheck(solidPhaseCheck);
-        getPhase(3).getComponent(k).setSolidCheck(solidPhaseCheck);
+        getPhase(PhaseType.SOLID).getComponent(k).setSolidCheck(solidPhaseCheck);
       }
     }
     setNumberOfPhases(oldphase);
@@ -5275,7 +5275,7 @@ public abstract class SystemThermo implements SystemInterface {
     for (int phaseNum = 0; phaseNum < getMaxNumberOfPhases(); phaseNum++) {
       try {
         getPhase(phaseNum).getComponent(solidComponent).setSolidCheck(true);
-        getPhase(3).getComponent(solidComponent).setSolidCheck(true);
+        getPhase(PhaseType.SOLID).getComponent(solidComponent).setSolidCheck(true);
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }

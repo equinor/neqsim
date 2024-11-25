@@ -97,7 +97,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
     // for(int k=0;k<system.getPhases()[0].getNumberOfComponents();k++){
     for (int k = 0; k < 1; k++) {
       // if(system.getPhase(0).getComponent(k).fugcoef(system.getPhase(0))<9e4){//&&
-      // system.getPhase(3).getComponent(k).doSolidCheck()){ // solidCheck variablen
+      // system.getPhase(PhaseType.SOLID).getComponent(k).doSolidCheck()){ // solidCheck variablen
       // er satt naar man kaller setSolidCheck Funksjonen som maa kjores faer du
       // kjorer scriptet.
       FCompNames[k] = system.getPhase(0).getComponent(k).getComponentName();

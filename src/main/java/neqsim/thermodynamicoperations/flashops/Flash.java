@@ -441,9 +441,9 @@ public abstract class Flash extends BaseOperation {
       if (system.getPhase(0).getComponent(k).doSolidCheck()) {
         tempVar[k] = system.getPhase(0).getComponent(k).getz();
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-          tempVar[k] -=
-              system.getBeta(i) * system.getPhases()[3].getComponent(k).getFugacityCoefficient()
-                  / system.getPhase(i).getComponent(k).getFugacityCoefficient();
+          tempVar[k] -= system.getBeta(i)
+              * system.getPhase(PhaseType.SOLID).getComponent(k).getFugacityCoefficient()
+              / system.getPhase(i).getComponent(k).getFugacityCoefficient();
         }
 
         if (tempVar[k] > 0.0 && tempVar[k] > frac) {
@@ -451,9 +451,9 @@ public abstract class Flash extends BaseOperation {
           solid = k;
           frac = tempVar[k];
           for (int p = 0; p < system.getPhases()[0].getNumberOfComponents(); p++) {
-            system.getPhases()[3].getComponent(p).setx(1.0e-20);
+            system.getPhase(PhaseType.SOLID).getComponent(p).setx(1.0e-20);
           }
-          system.getPhases()[3].getComponents()[solid].setx(1.0);
+          system.getPhase(PhaseType.SOLID).getComponents()[solid].setx(1.0);
         }
         // logger.info("tempVar: " + tempVar[k]);
       }
@@ -470,7 +470,7 @@ public abstract class Flash extends BaseOperation {
         system.setBeta(system.getNumberOfPhases() - 1, frac);
         system.initBeta();
         system.setBeta(system.getNumberOfPhases() - 1,
-            system.getPhases()[3].getComponent(solid).getNumberOfmoles()
+            system.getPhase(PhaseType.SOLID).getComponent(solid).getNumberOfmoles()
                 / system.getNumberOfMoles());
         // double phasetot=0.0;
         // for(int ph=0;ph<system.getNumberOfPhases();ph++){

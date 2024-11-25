@@ -2,6 +2,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -45,8 +46,9 @@ public class FreezingPointTemperatureFlashOld extends ConstantDutyTemperatureFla
     double minTemperature = 1e6;
     double oldTemperature = 0.0;
     for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
-      if (system.getPhase(3).getComponent(k).fugcoef(system.getPhase(3)) < 9e4
-          && system.getPhase(3).getComponent(k).doSolidCheck()) {
+      if (system.getPhase(PhaseType.SOLID).getComponent(k)
+          .fugcoef(system.getPhase(PhaseType.SOLID)) < 9e4
+          && system.getPhase(PhaseType.SOLID).getComponent(k).doSolidCheck()) {
         // checks if solid can be formed from component k
         system.setTemperature(system.getPhases()[0].getComponent(k).getMeltingPointTemperature());
         system.init(0);
@@ -58,20 +60,21 @@ public class FreezingPointTemperatureFlashOld extends ConstantDutyTemperatureFla
           iterations++;
           system.setSolidPhaseCheck(false);
           ops.TPflash();
-          system.getPhase(3).getComponent(k).fugcoef(system.getPhase(3));
+          system.getPhase(PhaseType.SOLID).getComponent(k)
+              .fugcoef(system.getPhase(PhaseType.SOLID));
 
           funk = system.getPhases()[0].getComponent(k).getz();
           logger.info("phase " + system.getNumberOfPhases());
 
           for (int i = 0; i < system.getNumberOfPhases(); i++) {
             funk -= system.getPhases()[i].getBeta()
-                * system.getPhases()[3].getComponent(k).getFugacityCoefficient()
+                * system.getPhase(PhaseType.SOLID).getComponent(k).getFugacityCoefficient()
                 / system.getPhases()[i].getComponent(k).getFugacityCoefficient();
             deriv -= 0.01 * system.getPhases()[i].getBeta()
-                * (system.getPhases()[3].getComponent(k).getFugacityCoefficient()
+                * (system.getPhase(PhaseType.SOLID).getComponent(k).getFugacityCoefficient()
                     * Math.exp(system.getPhases()[i].getComponent(k).getdfugdt()) * -1.0
                     / Math.pow(system.getPhases()[i].getComponent(k).getFugacityCoefficient(), 2.0)
-                    + Math.exp(system.getPhases()[3].getComponent(k).getdfugdt())
+                    + Math.exp(system.getPhase(PhaseType.SOLID).getComponent(k).getdfugdt())
                         / system.getPhases()[i].getComponent(k).getFugacityCoefficient());
           }
           if (iterations >= 2) {
