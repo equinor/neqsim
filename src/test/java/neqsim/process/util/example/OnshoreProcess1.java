@@ -16,6 +16,7 @@ import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.measurementdevice.TemperatureTransmitter;
 import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.process.measurementdevice.WaterContentAnalyser;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -35,6 +36,7 @@ public class OnshoreProcess1 {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     try {
       double totalProductionRate = 222.5808099 * 3600.0; // kg/time

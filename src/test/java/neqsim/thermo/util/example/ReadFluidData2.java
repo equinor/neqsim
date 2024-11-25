@@ -7,6 +7,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -28,6 +29,7 @@ public class ReadFluidData2 {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     SystemInterface testSystem = new SystemSrkEos(273.15 + 30.0, 10.0);
     // testSystem.readObjectFromFile("C:/temp/neqsimfluids/-65919.68493879325.neqsim",

@@ -12,6 +12,7 @@ import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -30,6 +31,7 @@ public class TEGdehydrationProcess2 {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // Create the input fluid to the TEG process and saturate it with water at
     // scrubber conditions

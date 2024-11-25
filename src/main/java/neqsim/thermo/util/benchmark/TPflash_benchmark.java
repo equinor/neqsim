@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -22,6 +23,7 @@ public class TPflash_benchmark {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     SystemInterface testSystem = new SystemSrkEos(303.15, 35.01325);
     // SystemInterface testSystem = new SystemSrkCPAstatoil(303.15, 10.0);

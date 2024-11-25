@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -25,6 +26,7 @@ public class TestGERGwater {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     // SystemInterface testSystem = new SystemGERGwaterEos(273.15-20.0, 100.0);
     SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 - 20.0, 100.0);

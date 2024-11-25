@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -25,6 +26,7 @@ public class HydrateFlash {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     // SystemInterface testSystem = new SystemSrkCPAstatoil(288.15, 10.450);
     SystemInterface testSystem = new SystemSrkEos(273.15 + 10.5, 51.0);

@@ -6,6 +6,7 @@ import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.separator.GasScrubberSimple;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -26,6 +27,7 @@ public class testGasScrubber {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 66.00);

@@ -17,6 +17,7 @@ import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -35,6 +36,7 @@ public class OnshoreMEGprocess {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     neqsim.thermo.system.SystemInterface feedGas =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);

@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
@@ -27,6 +28,7 @@ public class WaxFlash {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     NeqSimDataBase.setConnectionString(
         "jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");

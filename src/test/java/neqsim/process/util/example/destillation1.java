@@ -5,6 +5,7 @@ import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.distillation.Reboiler;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -21,6 +22,7 @@ public class destillation1 {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     neqsim.thermo.system.SystemInterface testSystem =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 63.0), 16.00);

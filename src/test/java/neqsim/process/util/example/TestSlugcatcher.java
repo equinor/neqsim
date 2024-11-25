@@ -10,6 +10,7 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.VolumeFlowTransmitter;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -28,6 +29,7 @@ public class TestSlugcatcher {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     double reservoirTemperatureSnohvit = 273.15 + 10.0; // K
     double reservoirPressureSnohvit = 5.0; // bar

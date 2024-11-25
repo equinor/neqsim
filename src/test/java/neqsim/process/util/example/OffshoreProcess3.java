@@ -13,6 +13,7 @@ import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -31,6 +32,7 @@ public class OffshoreProcess3 {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     neqsim.thermo.system.SystemInterface testSystem = new SystemSrkEos(354.2, 120.0);
 

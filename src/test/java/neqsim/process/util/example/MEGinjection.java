@@ -7,6 +7,7 @@ import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -25,6 +26,7 @@ public class MEGinjection {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // Create the input fluid to the TEG process and saturate it with water at
     // scrubber conditions

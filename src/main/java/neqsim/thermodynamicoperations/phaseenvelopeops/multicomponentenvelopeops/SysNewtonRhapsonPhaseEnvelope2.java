@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.mathlib.nonlinearsolver.NewtonRhapson;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -502,6 +503,7 @@ public class SysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     /*
      * sysNewtonRhapson test=new sysNewtonRhapson(); double[] constants = new double[]{0.4,0.4};

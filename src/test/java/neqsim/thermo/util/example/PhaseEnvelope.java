@@ -7,6 +7,7 @@ import neqsim.pvtsimulation.simulation.SimulationInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -28,6 +29,7 @@ public class PhaseEnvelope {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     // SystemInterface testSystem = new SystemUMRPRUEos(225.65, 1.00);
     // SystemInterface testSystem = new SystemPrEos1978(223.15,50.00);

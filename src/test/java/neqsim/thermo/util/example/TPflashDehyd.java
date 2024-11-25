@@ -6,6 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -26,6 +27,7 @@ public class TPflashDehyd {
    *
    * @param args an array of {@link java.lang.String} objects
    */
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 165.01325);
     SystemInterface testSystem2 = new SystemSrkEos(298, 10); //

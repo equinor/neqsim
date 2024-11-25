@@ -18,6 +18,7 @@ import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -285,6 +286,7 @@ public class TEGdehydrationProcessDistillationAaHa {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     neqsim.process.processmodel.ProcessSystem operations =
         TEGdehydrationProcessDistillationAaHa.getProcess();
