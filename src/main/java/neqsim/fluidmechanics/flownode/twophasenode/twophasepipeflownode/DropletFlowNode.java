@@ -151,6 +151,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
+  @ExcludeFromJacocoGeneratedReport
   public static void mainOld(String[] args) {
     SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 11.0, 60.0);
     // SystemInterface testSystem = new SystemSrkCPAstatoil(275.3,
