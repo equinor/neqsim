@@ -101,12 +101,6 @@ public abstract class SystemThermo implements SystemInterface {
   private boolean implementedPressureDeriativesofFugacity = true;
 
   private boolean implementedTemperatureDeriativesofFugacity = true;
-
-  /*
-   * Initialization type. 0 to initialize and 1 to reset, 2 to calculate T and P derivatives, 3 to
-   * calculate all derivatives and 4 to calculate all derivatives numerically
-   */
-  protected int initType = 3;
   protected InterphasePropertiesInterface interfaceProp = null;
 
   // Initialization
@@ -2249,12 +2243,6 @@ public abstract class SystemThermo implements SystemInterface {
       default:
         throw new RuntimeException("unit not supported " + unit);
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int getInitType() {
-    return initType;
   }
 
   /** {@inheritDoc} */
@@ -4441,12 +4429,6 @@ public abstract class SystemThermo implements SystemInterface {
   public void setImplementedTemperatureDeriativesofFugacity(
       boolean implementedTemperatureDeriativesofFugacity) {
     this.implementedTemperatureDeriativesofFugacity = implementedTemperatureDeriativesofFugacity;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setInitType(int initType) {
-    this.initType = initType;
   }
 
   /**

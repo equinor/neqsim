@@ -915,15 +915,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getIdealLiquidDensity(String unit);
 
   /**
-   * <p>
-   * Getter for property initType.
-   * </p>
-   *
-   * @return a int
-   */
-  public int getInitType();
-
-  /**
    * method to return interfacial tension between two phases.
    *
    * @param phase1 phase number of phase1
@@ -1675,15 +1666,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   }
 
   /**
-   * Calculate thermodynamic properties of the fluid using the init type set in fluid.
-   *
-   * @see getInitType
-   */
-  public default void init() {
-    this.init(this.getInitType());
-  }
-
-  /**
    * method to calculate thermodynamic properties of the fluid. The temperature, pressure, number of
    * phases and composition of the phases will be used as basis for calculation.
    *
@@ -2266,15 +2248,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public void setImplementedTemperatureDeriativesofFugacity(
       boolean implementedTemperatureDeriativesofFugacity);
-
-  /**
-   * <p>
-   * Setter for property initType.
-   * </p>
-   *
-   * @param initType a int
-   */
-  public void setInitType(int initType);
 
   /**
    * <p>
