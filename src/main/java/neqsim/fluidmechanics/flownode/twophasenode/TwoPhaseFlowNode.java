@@ -38,13 +38,13 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     super(system, pipe);
 
     // gasPrandtlNumber = new
-    // double[getBulkSystem().getPhases()[0].getNumberOfComponents()][getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    // double[getBulkSystem().getPhase(0).getNumberOfComponents()][getBulkSystem().getPhase(0).getNumberOfComponents()];
     // liquidPrandtlNumber = new
-    // double[getBulkSystem().getPhases()[0].getNumberOfComponents()][getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    // double[getBulkSystem().getPhase(0).getNumberOfComponents()][getBulkSystem().getPhase(0).getNumberOfComponents()];
     // molarMassTransferFlux = new
-    // double[getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    // double[getBulkSystem().getPhase(0).getNumberOfComponents()];
     // molarMassTransfer = new
-    // double[getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    // double[getBulkSystem().getPhase(0).getNumberOfComponents()];
     getBulkSystem().initBeta();
     getBulkSystem().init_x_y();
   }
@@ -77,14 +77,14 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   public double initVelocity() {
     getBulkSystem().init(1);
     getBulkSystem().initPhysicalProperties();
-    molarFlowRate[1] = getBulkSystem().getPhases()[1].getNumberOfMolesInPhase();
-    molarFlowRate[0] = getBulkSystem().getPhases()[0].getNumberOfMolesInPhase();
-    massFlowRate[1] = molarFlowRate[1] * getBulkSystem().getPhases()[1].getMolarMass();
-    massFlowRate[0] = molarFlowRate[0] * getBulkSystem().getPhases()[0].getMolarMass();
+    molarFlowRate[1] = getBulkSystem().getPhase(1).getNumberOfMolesInPhase();
+    molarFlowRate[0] = getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
+    massFlowRate[1] = molarFlowRate[1] * getBulkSystem().getPhase(1).getMolarMass();
+    massFlowRate[0] = molarFlowRate[0] * getBulkSystem().getPhase(0).getMolarMass();
     volumetricFlowRate[0] =
-        massFlowRate[0] / getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity();
+        massFlowRate[0] / getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
     volumetricFlowRate[1] =
-        massFlowRate[1] / getBulkSystem().getPhases()[1].getPhysicalProperties().getDensity();
+        massFlowRate[1] / getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
     velocity[0] = volumetricFlowRate[0] / (phaseFraction[0] * pipe.getArea());
     velocity[1] = volumetricFlowRate[1] / (phaseFraction[1] * pipe.getArea());
     // System.out.println("velocity " + velocity[0] + " velocity " +velocity[1]);
@@ -114,28 +114,28 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       initVelocity();
       init();
 
-      double Fg = 0.5 * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
-          * wallFrictionFactor[0] * Math.pow(velocity[0], 2.0) * wallContactLength[0]
-          / (pipe.getArea() * 4.0);
-      double Fl = 0.5 * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
-          * wallFrictionFactor[1] * Math.pow(velocity[1], 2.0) * wallContactLength[1]
-          / (pipe.getArea() * 4.0);
-      double Fi = 0.5 * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
+      double Fg =
+          0.5 * bulkSystem.getPhase(0).getPhysicalProperties().getDensity() * wallFrictionFactor[0]
+              * Math.pow(velocity[0], 2.0) * wallContactLength[0] / (pipe.getArea() * 4.0);
+      double Fl =
+          0.5 * bulkSystem.getPhase(1).getPhysicalProperties().getDensity() * wallFrictionFactor[1]
+              * Math.pow(velocity[1], 2.0) * wallContactLength[1] / (pipe.getArea() * 4.0);
+      double Fi = 0.5 * bulkSystem.getPhase(0).getPhysicalProperties().getDensity()
           * interphaseFrictionFactor[0] * Math.pow(velocity[0] - velocity[1], 2.0)
           * interphaseContactLength[0] / (pipe.getArea() * 4.0);
 
       f = -phaseFraction[0] * Fl + (1 - phaseFraction[0]) * Fg + Fi
           + (1.0 - phaseFraction[0]) * phaseFraction[0]
-              * (bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
-                  - bulkSystem.getPhases()[0].getPhysicalProperties().getDensity())
+              * (bulkSystem.getPhase(1).getPhysicalProperties().getDensity()
+                  - bulkSystem.getPhase(0).getPhysicalProperties().getDensity())
               * gravity * inclination;
 
       /*
-       * df = -Fl - Fg + (bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() -
-       * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()) * gravity * inclination -
+       * df = -Fl - Fg + (bulkSystem.getPhase(1).getPhysicalProperties().getDensity() -
+       * bulkSystem.getPhase(0).getPhysicalProperties().getDensity()) * gravity * inclination -
        * Math.pow(phaseFraction[0], 2.0)
-       * (bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() -
-       * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()) gravity * inclination;
+       * (bulkSystem.getPhase(1).getPhysicalProperties().getDensity() -
+       * bulkSystem.getPhase(0).getPhysicalProperties().getDensity()) gravity * inclination;
        */
 
       if (f > 0) {
@@ -149,9 +149,9 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       }
       phaseFraction[1] = 1.0 - phaseFraction[0];
       // System.out.println("f " + f + " iterations " + iterations + " beta " + phaseFraction[0]);
-    }
+    } while (Math.abs((f - fOld) / f) > 1e-8 && iterations < 100);
     // while (Math.abs(f) > 1e-6 && iterations < 100);
-    while (Math.abs((f - fOld) / f) > 1e-8 && iterations < 100);
+
 
     if (iterations == 10000) {
       System.out.println("error in void init calc");
@@ -184,11 +184,11 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
    */
   public double calcReynoldNumber() {
     reynoldsNumber[1] = velocity[1] * hydraulicDiameter[1]
-        * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
-        / bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
+        * bulkSystem.getPhase(1).getPhysicalProperties().getDensity()
+        / bulkSystem.getPhase(1).getPhysicalProperties().getViscosity();
     reynoldsNumber[0] = velocity[0] * hydraulicDiameter[0]
-        * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
-        / bulkSystem.getPhases()[0].getPhysicalProperties().getViscosity();
+        * bulkSystem.getPhase(0).getPhysicalProperties().getDensity()
+        / bulkSystem.getPhase(0).getPhysicalProperties().getViscosity();
     return reynoldsNumber[1];
   }
 
@@ -212,12 +212,12 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   /** {@inheritDoc} */
   @Override
   public void setFluxes(double[] dn) {
-    for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-      getBulkSystem().getPhases()[0].addMoles(i, -dn[i]);
-      getBulkSystem().getPhases()[1].addMoles(i, +dn[i]);
+    for (int i = 0; i < getBulkSystem().getPhase(0).getNumberOfComponents(); i++) {
+      getBulkSystem().getPhase(0).addMoles(i, -dn[i]);
+      getBulkSystem().getPhase(1).addMoles(i, +dn[i]);
 
-      getInterphaseSystem().getPhases()[0].addMoles(i, -dn[i]);
-      getInterphaseSystem().getPhases()[1].addMoles(i, +dn[i]);
+      getInterphaseSystem().getPhase(0).addMoles(i, -dn[i]);
+      getInterphaseSystem().getPhase(1).addMoles(i, +dn[i]);
     }
   }
 
@@ -225,7 +225,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   @Override
   public void updateMolarFlow() {
     for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
-      for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
+      for (int i = 0; i < getBulkSystem().getPhase(0).getNumberOfComponents(); i++) {
         if (molarFlowRate[phaseNum] > 1e-100) {
           getBulkSystem().getPhase(phaseNum).addMoles(i,
               (getBulkSystem().getPhase(phaseNum).getComponent(i).getx() * (molarFlowRate[phaseNum]
@@ -253,14 +253,12 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   @Override
   public void init() {
     super.init();
-    massFlowRate[0] =
-        velocity[0] * getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity()
-            * pipe.getArea() * phaseFraction[0];
-    massFlowRate[1] =
-        velocity[1] * getBulkSystem().getPhases()[1].getPhysicalProperties().getDensity()
-            * pipe.getArea() * phaseFraction[1];
-    molarFlowRate[0] = massFlowRate[0] / getBulkSystem().getPhases()[0].getMolarMass();
-    molarFlowRate[1] = massFlowRate[1] / getBulkSystem().getPhases()[1].getMolarMass();
+    massFlowRate[0] = velocity[0] * getBulkSystem().getPhase(0).getPhysicalProperties().getDensity()
+        * pipe.getArea() * phaseFraction[0];
+    massFlowRate[1] = velocity[1] * getBulkSystem().getPhase(1).getPhysicalProperties().getDensity()
+        * pipe.getArea() * phaseFraction[1];
+    molarFlowRate[0] = massFlowRate[0] / getBulkSystem().getPhase(0).getMolarMass();
+    molarFlowRate[1] = massFlowRate[1] / getBulkSystem().getPhase(1).getMolarMass();
     superficialVelocity[0] = velocity[0] * phaseFraction[0];
     superficialVelocity[1] = velocity[1] * phaseFraction[1];
     volumetricFlowRate[0] = superficialVelocity[0] * pipe.getArea();
@@ -376,7 +374,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     // System.out.println("liquid velocity " + getSuperficialVelocity(1));
     // System.out.println("gas velocity " + getSuperficialVelocity(0));
 
-    for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
+    for (int componentNumber = 0; componentNumber < getBulkSystem().getPhase(0)
         .getNumberOfComponents(); componentNumber++) {
       double liquidMolarRate =
           getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
@@ -408,7 +406,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
    * @param deltaTime a double
    */
   public void update(double deltaTime) {
-    for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
+    for (int componentNumber = 0; componentNumber < getBulkSystem().getPhase(0)
         .getNumberOfComponents(); componentNumber++) {
       double liquidMolarRate =
           getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();

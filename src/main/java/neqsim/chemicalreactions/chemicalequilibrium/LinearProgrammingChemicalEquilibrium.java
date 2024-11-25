@@ -280,7 +280,7 @@ public class LinearProgrammingChemicalEquilibrium
    *
    * double[] nEts = new double[atemp.getColumnDimension()]; double totm=0.0; for(int
    * k=0;k<atemp.getColumnDimension();k++){ nEts[k] = xEts[k]*moles;
-   * //system.getPhases()[1].getNumberOfMolesInPhase(); totm += nEts[k];
+   * //system.getPhase(1).getNumberOfMolesInPhase(); totm += nEts[k];
    * //System.out.println("N check: " + "  comp " + components[k].getComponentName() + "  " +
    * nEts[k]); } //System.out.println("tot moles : " + system.getPhase(1).getNumberOfMolesInPhase()
    * + "  tot " +totm);

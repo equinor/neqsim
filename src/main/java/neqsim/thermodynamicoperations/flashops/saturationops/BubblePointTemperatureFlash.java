@@ -37,11 +37,10 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
     double deriv = 0;
 
     double funk = 0;
-    for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-      system.getPhases()[1].getComponent(i)
-          .setx(system.getPhases()[0].getComponent(i).getz());
-      system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getK()
-          * system.getPhases()[1].getComponent(i).getx());
+    for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
+      system.getPhase(1).getComponent(i).setx(system.getPhase(0).getComponent(i).getz());
+      system.getPhase(0).getComponent(i).setx(
+          system.getPhase(0).getComponent(i).getK() * system.getPhase(1).getComponent(i).getx());
     }
     system.setNumberOfPhases(2);
     do {
@@ -51,30 +50,29 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
       deriv = 0;
       ytotal = 0;
       system.init(2);
-      for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
+      for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
         do {
           iterations++;
 
-          yold = system.getPhases()[0].getComponent(i).getx();
-          system.getPhases()[0].getComponent(i)
-              .setK(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
-                  / system.getPhases()[0].getComponent(i).getFugacityCoefficient());
-          system.getPhases()[1].getComponent(i)
-              .setK(system.getPhases()[0].getComponent(i).getK());
-          system.getPhases()[0].getComponent(i)
-              .setx(system.getPhases()[1].getComponent(i).getx()
-                  * system.getPhases()[1].getComponent(i).getFugacityCoefficient()
-                  / system.getPhases()[0].getComponent(i).getFugacityCoefficient());
-        } while ((Math.abs(yold - system.getPhases()[1].getComponent(i).getx()) > 1e-10)
+          yold = system.getPhase(0).getComponent(i).getx();
+          system.getPhase(0).getComponent(i)
+              .setK(system.getPhase(1).getComponent(i).getFugacityCoefficient()
+                  / system.getPhase(0).getComponent(i).getFugacityCoefficient());
+          system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
+          system.getPhase(0).getComponent(i)
+              .setx(system.getPhase(1).getComponent(i).getx()
+                  * system.getPhase(1).getComponent(i).getFugacityCoefficient()
+                  / system.getPhase(0).getComponent(i).getFugacityCoefficient());
+        } while ((Math.abs(yold - system.getPhase(1).getComponent(i).getx()) > 1e-10)
             && (iterations < maxNumberOfIterations));
 
-        ytotal += system.getPhases()[0].getComponent(i).getx();
-        funk += system.getPhases()[1].getComponent(i).getx()
-            * system.getPhases()[1].getComponent(i).getK();
-        deriv += system.getPhases()[1].getComponent(i).getx()
-            * system.getPhases()[1].getComponent(i).getK()
-            * (system.getPhases()[1].getComponent(i).getdfugdt()
-                - system.getPhases()[0].getComponent(i).getdfugdt());
+        ytotal += system.getPhase(0).getComponent(i).getx();
+        funk +=
+            system.getPhase(1).getComponent(i).getx() * system.getPhase(1).getComponent(i).getK();
+        deriv +=
+            system.getPhase(1).getComponent(i).getx() * system.getPhase(1).getComponent(i).getK()
+                * (system.getPhase(1).getComponent(i).getdfugdt()
+                    - system.getPhase(0).getComponent(i).getdfugdt());
       }
 
       // logger.info("FUNK: " + funk);

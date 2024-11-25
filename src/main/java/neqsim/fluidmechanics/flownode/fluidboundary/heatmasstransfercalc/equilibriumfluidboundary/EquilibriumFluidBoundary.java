@@ -56,7 +56,7 @@ public class EquilibriumFluidBoundary
   /** {@inheritDoc} */
   @Override
   public double[] calcFluxes() {
-    for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
+    for (int i = 0; i < bulkSystem.getPhase(0).getNumberOfComponents(); i++) {
       nFlux.set(i, 0, 0);
     }
     return nFlux.getArray()[0];

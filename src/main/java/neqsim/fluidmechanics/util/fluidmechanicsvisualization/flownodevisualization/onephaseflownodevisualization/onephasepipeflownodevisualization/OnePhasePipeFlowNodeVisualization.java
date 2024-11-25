@@ -29,10 +29,10 @@ public class OnePhasePipeFlowNodeVisualization extends OnePhaseFlowNodeVisualiza
   @Override
   public void setData(FlowNodeInterface node) {
     super.setData(node);
-    bulkComposition = new double[2][node.getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    bulkComposition = new double[2][node.getBulkSystem().getPhase(0).getNumberOfComponents()];
 
-    for (int i = 0; i < node.getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-      bulkComposition[0][i] = node.getBulkSystem().getPhases()[0].getComponent(i).getx();
+    for (int i = 0; i < node.getBulkSystem().getPhase(0).getNumberOfComponents(); i++) {
+      bulkComposition[0][i] = node.getBulkSystem().getPhase(0).getComponent(i).getx();
     }
   }
 }

@@ -92,7 +92,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
 
     double soldens = 0.0;
     double trpTemp = 0.0;
-    // for(int k=0;k<system.getPhases()[0].getNumberOfComponents();k++){
+    // for(int k=0;k<system.getPhase(0).getNumberOfComponents();k++){
     for (int k = 0; k < 1; k++) {
       // if(system.getPhase(0).getComponent(k).fugcoef(system.getPhase(0))<9e4){//&&
       // system.getPhase(3).getComponent(k).doSolidCheck()){ // solidCheck variablen
@@ -104,7 +104,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
       }
 
       if (noFreezeFlash) {
-        system.setTemperature(system.getPhases()[0].getComponent(k).getTriplePointTemperature());
+        system.setTemperature(system.getPhase(0).getComponent(k).getTriplePointTemperature());
         logger.info("Starting at Triple point temperature "
             + system.getPhase(0).getComponent(k).getComponentName());
       } else {
@@ -165,15 +165,16 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
         SolidFug = Pvapsolid / pres * Math.exp(solvol / (R * temp) * (pres - Pvapsolid));
         SolVapFugCoeff = testSystem2.getPhase(0).getComponent(0).getFugacityCoefficient();
 
-        funk = system.getPhases()[0].getComponent(k).getz();
+        funk = system.getPhase(0).getComponent(k).getz();
 
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
-          funk -= system.getPhases()[i].getBeta() * SolidFug * SolVapFugCoeff
-              / system.getPhases()[i].getComponent(k).getFugacityCoefficient();
-          deriv -= 0.01 * system.getPhases()[i].getBeta() * (SolidFug * SolVapFugCoeff
-              * Math.exp(system.getPhases()[i].getComponent(k).getdfugdt()) * -1.0
-              / Math.pow(system.getPhases()[i].getComponent(k).getFugacityCoefficient(), 2.0)
-              + Math.exp(dfugdt) / system.getPhases()[i].getComponent(k).getFugacityCoefficient());
+          funk -= system.getPhase(i).getBeta() * SolidFug * SolVapFugCoeff
+              / system.getPhase(i).getComponent(k).getFugacityCoefficient();
+          deriv -= 0.01 * system.getPhase(i).getBeta()
+              * (SolidFug * SolVapFugCoeff
+                  * Math.exp(system.getPhase(i).getComponent(k).getdfugdt()) * -1.0
+                  / Math.pow(system.getPhase(i).getComponent(k).getFugacityCoefficient(), 2.0)
+                  + Math.exp(dfugdt) / system.getPhase(i).getComponent(k).getFugacityCoefficient());
         }
         if (iterations >= 2) {
           deriv = -(funk - funkOld) / (system.getTemperature() - oldTemperature);
@@ -191,8 +192,8 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
         }
         logger.info("newTEmp  " + newTemp);
         if (newTemp > (trpTemp + 5)) {
-          system.setTemperature(
-              system.getPhases()[0].getComponent(k).getTriplePointTemperature() + 0.4);
+          system
+              .setTemperature(system.getPhase(0).getComponent(k).getTriplePointTemperature() + 0.4);
         } else if (newTemp < 1) {
           system.setTemperature(oldTemperature + 2);
           // } else if(newTemp=="NaN") { system.setTemperature(oldTemperature*0.9374);
@@ -228,7 +229,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
   /** {@inheritDoc} */
   @Override
   public void printToFile(String name) {
-    for (int n = 0; n < system.getPhases()[0].getNumberOfComponents(); n++) {
+    for (int n = 0; n < system.getPhase(0).getNumberOfComponents(); n++) {
       name = name + "_" + system.getPhase(0).getComponent(n).getComponentName();
     }
 
@@ -238,11 +239,11 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
       pr_writer.println("name,freezeT,freezeP,z,iterations");
       pr_writer.flush();
 
-      for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
+      for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
         // print line to output file
         pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + ","
             + system.getPressure() + ","
-            + java.lang.Double.toString(system.getPhases()[0].getComponent(k).getz()) + ","
+            + java.lang.Double.toString(system.getPhase(0).getComponent(k).getz()) + ","
             + Niterations);
         pr_writer.flush();
       }

@@ -39,7 +39,7 @@ public class WATcalc extends ConstantDutyTemperatureFlash {
     double deltaT = 1.0;
     double[] Ksolid = new double[system.getPhase(0).getNumberOfComponents()];
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      system.getPhases()[5].getComponent(i).setx(1.0);
+      system.getPhase(5).getComponent(i).setx(1.0);
       Ksolid[i] = 1.0;
     }
     do {
@@ -48,10 +48,10 @@ public class WATcalc extends ConstantDutyTemperatureFlash {
 
       sumx = 0.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        system.getPhases()[5].getComponent(i)
+        system.getPhase(5).getComponent(i)
             .setx(Ksolid[i] * system.getPhase(0).getComponent(i).getx());
         Ksolid[i] = system.getPhase(0).getComponent(i).getFugacityCoefficient()
-            / system.getPhases()[5].getComponent(i).fugcoef(system.getPhases()[5]);
+            / system.getPhase(5).getComponent(i).fugcoef(system.getPhase(5));
         sumx += Ksolid[i] * system.getPhase(0).getComponent(i).getx();
       }
       double funk = sumx - 1.0;

@@ -89,9 +89,12 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
   @Override
   public double calcInterphaseMassTransferCoefficient(int phaseNum, double schmidtNumber,
       FlowNodeInterface node) {
-    double redMassTrans = 0.0, massTrans = 0.0;
+    double redMassTrans = 0.0;
+    double massTrans = 0.0;
     if (phaseNum == 0) {
-      double c2 = 0.46, c3 = 0.68, c4 = 0.5;
+      double c2 = 0.46;
+      double c3 = 0.68;
+      double c4 = 0.5;
       redMassTrans =
           c2 * Math.pow(node.getReynoldsNumber(phaseNum), c3) * Math.pow(schmidtNumber, c4);
       // System.out.println("red gas " +
@@ -102,7 +105,9 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
           / schmidtNumber / node.getGeometry().getDiameter();
     }
     if (phaseNum == 1) {
-      double c2 = 0.181, c3 = 0.72, c4 = 0.33;
+      double c2 = 0.181;
+      double c3 = 0.72;
+      double c4 = 0.33;
       redMassTrans =
           c2 * Math.pow(node.getReynoldsNumber(phaseNum), c3) * Math.pow(schmidtNumber, c4);
       // System.out.println("red liq" +

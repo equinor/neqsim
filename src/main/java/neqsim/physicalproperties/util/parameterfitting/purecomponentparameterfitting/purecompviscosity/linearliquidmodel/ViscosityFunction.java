@@ -29,14 +29,14 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
   public double calcValue(double[] dependentValues) {
     system.init(1);
     system.initPhysicalProperties();
-    return system.getPhases()[1].getPhysicalProperties().getViscosity() * 1e3;
+    return system.getPhase(1).getPhysicalProperties().getViscosity() * 1e3;
   }
 
   /** {@inheritDoc} */
   @Override
   public void setFittingParams(int i, double value) {
     params[i] = value;
-    system.getPhases()[0].getComponent(0).setLiquidViscosityParameter(value, i);
-    system.getPhases()[1].getComponent(0).setLiquidViscosityParameter(value, i);
+    system.getPhase(0).getComponent(0).setLiquidViscosityParameter(value, i);
+    system.getPhase(1).getComponent(0).setLiquidViscosityParameter(value, i);
   }
 }

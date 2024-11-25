@@ -60,9 +60,9 @@ public abstract class onePhaseFlowNode extends FlowNode {
   /** {@inheritDoc} */
   @Override
   public void increaseMolarRate(double moles) {
-    for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-      double diff = (getBulkSystem().getPhases()[0].getComponent(i).getx()
-          * (molarFlowRate[0] - getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()));
+    for (int i = 0; i < getBulkSystem().getPhase(0).getNumberOfComponents(); i++) {
+      double diff = (getBulkSystem().getPhase(0).getComponent(i).getx()
+          * (molarFlowRate[0] - getBulkSystem().getPhase(0).getNumberOfMolesInPhase()));
       getBulkSystem().addComponent(getBulkSystem().getPhase(0).getComponent(i).getComponentName(),
           diff);
     }
@@ -74,10 +74,10 @@ public abstract class onePhaseFlowNode extends FlowNode {
   @Override
   public void initFlowCalc() {
     initBulkSystem();
-    molarFlowRate[0] = getBulkSystem().getPhases()[0].getNumberOfMolesInPhase();
-    massFlowRate[0] = molarFlowRate[0] * getBulkSystem().getPhases()[0].getMolarMass();
+    molarFlowRate[0] = getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
+    massFlowRate[0] = molarFlowRate[0] * getBulkSystem().getPhase(0).getMolarMass();
     volumetricFlowRate[0] =
-        massFlowRate[0] / getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity();
+        massFlowRate[0] / getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
     superficialVelocity[0] = volumetricFlowRate[0] / pipe.getArea();
     velocity[0] = superficialVelocity[0];
     this.init();
@@ -86,9 +86,9 @@ public abstract class onePhaseFlowNode extends FlowNode {
   /** {@inheritDoc} */
   @Override
   public void updateMolarFlow() {
-    for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-      double diff = (getBulkSystem().getPhases()[0].getComponent(i).getx()
-          * (molarFlowRate[0] - getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()));
+    for (int i = 0; i < getBulkSystem().getPhase(0).getNumberOfComponents(); i++) {
+      double diff = (getBulkSystem().getPhase(0).getComponent(i).getx()
+          * (molarFlowRate[0] - getBulkSystem().getPhase(0).getNumberOfMolesInPhase()));
       getBulkSystem().addComponent(getBulkSystem().getPhase(0).getComponent(i).getComponentName(),
           diff);
     }
@@ -98,11 +98,11 @@ public abstract class onePhaseFlowNode extends FlowNode {
 
   // public double initVelocity(){
   // initBulkSystem();
-  // molarFlowRate[0] = getBulkSystem().getPhases()[0].getNumberOfMolesInPhase();
+  // molarFlowRate[0] = getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
   // massFlowRate[0] =
-  // molarFlowRate[0]*getBulkSystem().getPhases()[0].getMolarMass();
+  // molarFlowRate[0]*getBulkSystem().getPhase(0).getMolarMass();
   // volumetricFlowRate[0] =
-  // massFlowRate[0]/getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity();
+  // massFlowRate[0]/getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
   // superficialVelocity[0] = volumetricFlowRate[0]/pipe.getArea();
   // velocity[0] = superficialVelocity[0];
   // return velocity[0];
@@ -117,7 +117,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
    */
   public double calcReynoldsNumber() {
     reynoldsNumber[0] = getVelocity() * pipe.getDiameter()
-        / getBulkSystem().getPhases()[0].getPhysicalProperties().getKinematicViscosity();
+        / getBulkSystem().getPhase(0).getPhysicalProperties().getKinematicViscosity();
     return reynoldsNumber[0];
   }
 
@@ -125,14 +125,14 @@ public abstract class onePhaseFlowNode extends FlowNode {
   @Override
   public void init() {
     super.init();
-    massFlowRate[0] = velocity[0]
-        * getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity() * pipe.getArea();
+    massFlowRate[0] = velocity[0] * getBulkSystem().getPhase(0).getPhysicalProperties().getDensity()
+        * pipe.getArea();
     superficialVelocity[0] = velocity[0];
-    molarFlowRate[0] = massFlowRate[0] / getBulkSystem().getPhases()[0].getMolarMass();
+    molarFlowRate[0] = massFlowRate[0] / getBulkSystem().getPhase(0).getMolarMass();
     volumetricFlowRate[0] = superficialVelocity[0] * pipe.getArea();
     this.updateMolarFlow();
     calcReynoldsNumber();
-    //System.out.println("specifiedFrictionFactor " +specifiedFrictionFactor[0]);
+    // System.out.println("specifiedFrictionFactor " +specifiedFrictionFactor[0]);
     if (specifiedFrictionFactor[0] == null) {
       wallFrictionFactor[0] = interphaseTransportCoefficient.calcWallFrictionFactor(this);
     } else {

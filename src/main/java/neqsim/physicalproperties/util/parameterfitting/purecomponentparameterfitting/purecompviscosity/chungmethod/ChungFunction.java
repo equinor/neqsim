@@ -26,14 +26,14 @@ public class ChungFunction extends LevenbergMarquardtFunction {
     system.setTemperature(dependentValues[0]);
     system.init(1);
     system.initPhysicalProperties();
-    return system.getPhases()[1].getPhysicalProperties().getViscosity();
+    return system.getPhase(1).getPhysicalProperties().getViscosity();
   }
 
   /** {@inheritDoc} */
   @Override
   public void setFittingParams(int i, double value) {
     params[i] = value;
-    system.getPhases()[0].getComponent(i).setViscosityAssociationFactor(value);
-    system.getPhases()[1].getComponent(i).setViscosityAssociationFactor(value);
+    system.getPhase(0).getComponent(i).setViscosityAssociationFactor(value);
+    system.getPhase(1).getComponent(i).setViscosityAssociationFactor(value);
   }
 }

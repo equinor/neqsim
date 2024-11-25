@@ -59,9 +59,8 @@ public class OnePhasePipeFlowSolver
     solMatrix = new Matrix(PbArray, 1).transpose();
     sol2Matrix = new Matrix(PbArray, 1).transpose();
     sol3Matrix = new Matrix(PbArray, 1).transpose();
-    sol4Matrix = new Matrix[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
-    for (int k = 0; k < pipe.getNode(0).getBulkSystem().getPhases()[0]
-        .getNumberOfComponents(); k++) {
+    sol4Matrix = new Matrix[pipe.getNode(0).getBulkSystem().getPhase(0).getNumberOfComponents()];
+    for (int k = 0; k < pipe.getNode(0).getBulkSystem().getPhase(0).getNumberOfComponents(); k++) {
       sol4Matrix[k] = new Matrix(PbArray, 1).transpose();
     }
     a = new double[nodes];

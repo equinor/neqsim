@@ -367,6 +367,12 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     }
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(String returnParameter) {
+    return getValue(returnParameter, "");
+  }
+
   /**
    * <p>
    * checkReferenceCondition.
@@ -383,12 +389,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
       volRefT = 15.0;
       logger.error("volume reference temperature not in valid range...setting it to 15C");
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(String returnParameter) {
-    return getValue(returnParameter, "");
   }
 
   /** {@inheritDoc} */
@@ -424,13 +424,13 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
       return table;
     }
 
-    rows = thermoSystem.getPhases()[0].getNumberOfComponents() + 30;
+    rows = thermoSystem.getPhase(0).getNumberOfComponents() + 30;
     String[][] table = new String[rows][6];
 
     // String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
-    table[0][0] = ""; // getPhases()[0].getType(); //"";
+    table[0][0] = ""; // getPhase(0).getType(); //"";
 
-    for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {
+    for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents() + 30; i++) {
       for (int j = 0; j < 6; j++) {
         table[i][j] = "";
       }
@@ -451,8 +451,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
       referenceTypeUnit = "mol";
     }
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
-      for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
+      for (int j = 0; j < thermoSystem.getPhase(0).getNumberOfComponents(); j++) {
+        table[j + 1][0] = thermoSystem.getPhase(0).getComponent(j).getName();
         buf = new StringBuffer();
         table[j + 1][i + 1] =
             nf.format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponent(j).getx(),
@@ -461,77 +461,75 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
       }
 
       buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][0] = "Compressibility Factor";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 3][0] = "Compressibility Factor";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 3][i + 1] =
           nf.format(getValue("CompressionFactor"));
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][4] = "[-]";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 3][4] = "[-]";
 
       buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][0] =
-          "Superior Calorific Value";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][i + 1] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 4][0] = "Superior Calorific Value";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 4][i + 1] =
           nf.format(getValue("SuperiorCalorificValue"));
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][4] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 4][4] =
           "[kJ/" + referenceTypeUnit + "]";
 
       buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][0] =
-          "Inferior Calorific Value";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][i + 1] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 5][0] = "Inferior Calorific Value";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 5][i + 1] =
           nf.format(getValue("InferiorCalorificValue"));
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][4] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 5][4] =
           "[kJ/" + referenceTypeUnit + "]";
 
       buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 6][0] = "Superior Wobbe Index";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 6][i + 1] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 6][0] = "Superior Wobbe Index";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 6][i + 1] =
           nf.format(getValue("SuperiorWobbeIndex") / 3600.0);
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 6][4] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 6][4] =
           "[kWh/" + referenceTypeUnit + "]";
 
       buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][0] = "Superior Wobbe Index";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][i + 1] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 7][0] = "Superior Wobbe Index";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 7][i + 1] =
           nf.format(getValue("SuperiorWobbeIndex"));
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][4] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 7][4] =
           "[kJ/" + referenceTypeUnit + "]";
 
       buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][0] = "Inferior Wobbe Index";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][i + 1] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 8][0] = "Inferior Wobbe Index";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 8][i + 1] =
           nf.format(getValue("InferiorWobbeIndex"));
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][4] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 8][4] =
           "[kJ/" + referenceTypeUnit + "]";
 
       buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 9][0] = "Relative Density";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 9][i + 1] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 9][0] = "Relative Density";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 9][i + 1] =
           nf.format(getValue("RelativeDensity"));
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 9][4] = "[-]";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 9][4] = "[-]";
 
       buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][0] = "Molar Mass";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][i + 1] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 10][0] = "Molar Mass";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 10][i + 1] =
           nf.format(getValue("MolarMass"));
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][4] = "[gr/mol]";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 10][4] = "[gr/mol]";
 
       buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][0] = "Density";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][i + 1] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 11][0] = "Density";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 11][i + 1] =
           nf.format(getValue("DensityReal"));
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][4] = "[kg/m^3]";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 11][4] = "[kg/m^3]";
 
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][0] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 13][0] =
           "Reference Temperature Combustion";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][i + 1] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 13][i + 1] =
           Double.toString(getEnergyRefT());
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][4] = "[C]";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 13][4] = "[C]";
 
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 14][0] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 14][0] =
           "Reference Temperature Volume";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 14][i + 1] =
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 14][i + 1] =
           Double.toString(getVolRefT());
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 14][4] = "[C]";
+      table[thermoSystem.getPhase(0).getNumberOfComponents() + 14][4] = "[C]";
     }
 
     resultTable = table;
@@ -624,7 +622,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
    */
   public double getTotalMolesOfInerts() {
     double inerts = 0.0;
-    for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
+    for (int j = 0; j < thermoSystem.getPhase(0).getNumberOfComponents(); j++) {
       if (carbonNumber[j] == 0) {
         inerts += thermoSystem.getPhase(0).getComponent(j).getNumberOfmoles();
       }
@@ -639,7 +637,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
    * </p>
    */
   public void removeInertsButNitrogen() {
-    for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
+    for (int j = 0; j < thermoSystem.getPhase(0).getNumberOfComponents(); j++) {
       if (carbonNumber[j] == 0
           && !thermoSystem.getPhase(0).getComponent(j).getName().equals("nitrogen")) {
         thermoSystem.addComponent("nitrogen",
@@ -660,7 +658,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   public double getAverageCarbonNumber() {
     double inerts = getTotalMolesOfInerts();
     averageCarbonNumber = 0;
-    for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
+    for (int j = 0; j < thermoSystem.getPhase(0).getNumberOfComponents(); j++) {
       averageCarbonNumber +=
           carbonNumber[j] * thermoSystem.getPhase(0).getComponent(j).getNumberOfmoles()
               / (thermoSystem.getTotalNumberOfMoles() - inerts);

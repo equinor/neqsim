@@ -256,7 +256,7 @@ public class ChemicalReaction extends NamedBaseClass
     for (int i = 0; i < names.length; i++) {
       for (int j = 0; j < components.length; j++) {
         // System.out.println("names: " + names[i] + " " +
-        // system.getPhases()[0].getComponent(j).getName());
+        // system.getPhase(0).getComponent(j).getName());
         if (this.names[i].equals(components[j].getName())) {
           for (int k = 0; k < Amatrix.length; k++) {
             tempAmatrix.set(k, i, Amatrix[k][j]);
@@ -348,7 +348,7 @@ public class ChemicalReaction extends NamedBaseClass
     // double cK=Math.log(getK(system.getTemperature()));
     // for(int i=0;i<names.length;i++){
     // // cK -=
-    // Math.log(moles[i]/system.getPhases()[0].getNumberOfMolesInPhase())*stocCoefs[i];
+    // Math.log(moles[i]/system.getPhase(0).getNumberOfMolesInPhase())*stocCoefs[i];
     // }
     // System.out.println("ck: " +cK);
   }

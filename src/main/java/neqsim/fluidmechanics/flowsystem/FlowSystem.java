@@ -306,12 +306,12 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   public void print() {
     for (int i = 0; i < getTotalNumberOfNodes() - 1; i++) {
       System.out.println("node " + flowNode[i].getDistanceToCenterOfNode() + " pressure: "
-          + flowNode[i].getBulkSystem().getPhases()[0].getPressure() + " temperature: "
-          + flowNode[i].getBulkSystem().getPhases()[1].getTemperature() + "  flow: "
+          + flowNode[i].getBulkSystem().getPhase(0).getPressure() + " temperature: "
+          + flowNode[i].getBulkSystem().getPhase(1).getTemperature() + "  flow: "
           + flowNode[i].getMassFlowRate(0) + " velocity: " + flowNode[i].getVelocity()
           + " reynolds number " + flowNode[i].getReynoldsNumber() + " friction : "
           + flowNode[i].getWallFrictionFactor() + " x1 : "
-          + flowNode[i].getBulkSystem().getPhases()[0].getComponent(1).getx());
+          + flowNode[i].getBulkSystem().getPhase(0).getComponent(1).getx());
     }
   }
 

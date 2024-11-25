@@ -651,7 +651,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
       return table;
     }
 
-    rows = bulkSystem.getPhases()[0].getNumberOfComponents() * 10;
+    rows = bulkSystem.getPhase(0).getNumberOfComponents() * 10;
     String[][] table = new String[rows][5];
 
     DecimalFormat nf = new DecimalFormat();
@@ -665,8 +665,8 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     StringBuffer buf = new StringBuffer();
     FieldPosition test = new FieldPosition(0);
     for (int i = 0; i < bulkSystem.getNumberOfPhases(); i++) {
-      for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = bulkSystem.getPhases()[0].getComponent(j).getName();
+      for (int j = 0; j < bulkSystem.getPhase(0).getNumberOfComponents(); j++) {
+        table[j + 1][0] = bulkSystem.getPhase(0).getComponent(j).getName();
         buf = new StringBuffer();
         table[j + 1][i + 1] =
             nf.format(bulkSystem.getPhase(bulkSystem.getPhaseIndex(i)).getComponent(j).getx(), buf,
@@ -674,79 +674,77 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
         table[j + 1][4] = "[-] bulk";
       }
 
-      for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][0] =
-            getInterphaseSystem().getPhases()[0].getComponent(j).getName();
+      for (int j = 0; j < bulkSystem.getPhase(0).getNumberOfComponents(); j++) {
+        table[j + bulkSystem.getPhase(0).getNumberOfComponents() + 2][0] =
+            getInterphaseSystem().getPhase(0).getComponent(j).getName();
         buf = new StringBuffer();
-        table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] =
+        table[j + bulkSystem.getPhase(0).getNumberOfComponents() + 2][i + 1] =
             nf.format(getInterphaseSystem().getPhase(getInterphaseSystem().getPhaseIndex(i))
                 .getComponent(j).getx(), buf, test).toString();
-        table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][4] = "[-] interface";
+        table[j + bulkSystem.getPhase(0).getNumberOfComponents() + 2][4] = "[-] interface";
       }
 
-      for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][0] =
-            bulkSystem.getPhases()[0].getComponent(j).getName();
+      for (int j = 0; j < bulkSystem.getPhase(0).getNumberOfComponents(); j++) {
+        table[j + 2 * bulkSystem.getPhase(0).getNumberOfComponents() + 3][0] =
+            bulkSystem.getPhase(0).getComponent(j).getName();
         buf = new StringBuffer();
-        table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] =
+        table[j + 2 * bulkSystem.getPhase(0).getNumberOfComponents() + 3][i + 1] =
             nf.format(getFluidBoundary().getInterphaseMolarFlux(j), buf, test).toString();
-        table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][4] = "[mol/sec*m^2]";
+        table[j + 2 * bulkSystem.getPhase(0).getNumberOfComponents() + 3][4] = "[mol/sec*m^2]";
       }
       buf = new StringBuffer();
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 5][0] = "Reynolds Number";
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 5][i + 1] =
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 5][0] = "Reynolds Number";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 5][i + 1] =
           nf.format(reynoldsNumber[i], buf, test).toString();
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 5][4] = "[-]";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 5][4] = "[-]";
 
       // Double.longValue(system.getPhase(phaseIndex[i]).getBeta());
       buf = new StringBuffer();
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 6][0] = "Velocity";
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 6][i + 1] =
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 6][0] = "Velocity";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 6][i + 1] =
           nf.format(velocity[i], buf, test).toString();
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 6][4] = "[m/sec]";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 6][4] = "[m/sec]";
 
       buf = new StringBuffer();
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 7][0] = "Gas Heat Flux";
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 7][i + 1] =
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 7][0] = "Gas Heat Flux";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 7][i + 1] =
           nf.format(getFluidBoundary().getInterphaseHeatFlux(0), buf, test).toString();
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 7][4] = "[J/sec*m^2]";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 7][4] = "[J/sec*m^2]";
 
       buf = new StringBuffer();
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 8][0] = "Pressure";
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 8][i + 1] =
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 8][0] = "Pressure";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 8][i + 1] =
           Double.toString(bulkSystem.getPhase(bulkSystem.getPhaseIndex(i)).getPressure());
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 8][4] = "[bar]";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 8][4] = "[bar]";
 
       buf = new StringBuffer();
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 9][0] = "Bulk Temperature";
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 9][i + 1] =
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 9][0] = "Bulk Temperature";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 9][i + 1] =
           Double.toString(bulkSystem.getPhase(bulkSystem.getPhaseIndex(i)).getTemperature());
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 9][4] = "[K]";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 9][4] = "[K]";
 
       buf = new StringBuffer();
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 10][0] =
-          "Interface Temperature";
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 10][i + 1] = Double
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 10][0] = "Interface Temperature";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 10][i + 1] = Double
           .toString(getInterphaseSystem().getPhase(bulkSystem.getPhaseIndex(i)).getTemperature());
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 10][4] = "[K]";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 10][4] = "[K]";
 
       buf = new StringBuffer();
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 11][0] = "Interface Area";
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 11][i + 1] =
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 11][0] = "Interface Area";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 11][i + 1] =
           nf.format(getInterphaseContactArea());
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 11][4] = "[m^2]";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 11][4] = "[m^2]";
 
       buf = new StringBuffer();
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 12][0] =
-          "Inner wall temperature";
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 12][i + 1] =
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 12][0] = "Inner wall temperature";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 12][i + 1] =
           Double.toString(pipe.getInnerWallTemperature());
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 12][4] = "K";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 12][4] = "K";
 
       buf = new StringBuffer();
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 13][0] = "Node";
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 13][i + 1] = name;
-      table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 13][4] = "-";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 13][0] = "Node";
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 13][i + 1] = name;
+      table[3 * bulkSystem.getPhase(0).getNumberOfComponents() + 13][4] = "-";
     }
 
     return table;

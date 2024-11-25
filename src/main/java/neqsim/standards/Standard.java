@@ -123,12 +123,12 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
     nf.setMaximumFractionDigits(5);
     nf.applyPattern("#.#####E0");
 
-    int rows = thermoSystem.getPhases()[0].getNumberOfComponents() + 30;
+    int rows = thermoSystem.getPhase(0).getNumberOfComponents() + 30;
     String[][] table = new String[rows][6];
     // String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
-    table[0][0] = ""; // getPhases()[0].getType(); //"";
+    table[0][0] = ""; // getPhase(0).getType(); //"";
 
-    for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {
+    for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents() + 30; i++) {
       for (int j = 0; j < 6; j++) {
         table[i][j] = "";
       }
@@ -140,8 +140,8 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
     StringBuffer buf = new StringBuffer();
     FieldPosition test = new FieldPosition(0);
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
-      for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
+      for (int j = 0; j < thermoSystem.getPhase(0).getNumberOfComponents(); j++) {
+        table[j + 1][0] = thermoSystem.getPhase(0).getComponent(j).getName();
         buf = new StringBuffer();
         table[j + 1][i + 1] =
             nf.format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponent(j).getx(),

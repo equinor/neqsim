@@ -164,10 +164,10 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     double[] gP = new double[numberOfComponents];
 
     for (int i = 0; i < numberOfComponents; i++) {
-      gT[i] = system.getTemperature() * (system.getPhases()[0].getComponent(i).getdfugdt()
-          - system.getPhases()[1].getComponent(i).getdfugdt());
-      gP[i] = system.getPressure() * (system.getPhases()[0].getComponent(i).getdfugdp()
-          - system.getPhases()[1].getComponent(i).getdfugdp());
+      gT[i] = system.getTemperature() * (system.getPhase(0).getComponent(i).getdfugdt()
+          - system.getPhase(1).getComponent(i).getdfugdt());
+      gP[i] = system.getPressure() * (system.getPhase(0).getComponent(i).getdfugdp()
+          - system.getPhase(1).getComponent(i).getdfugdp());
 
       Jac.set(numberOfComponents, i, gT[i]);
       Jac.set(i, numberOfComponents, gT[i]);

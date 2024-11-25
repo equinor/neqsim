@@ -82,11 +82,11 @@ public class StirredCellNode extends TwoPhaseFlowNode {
   @Override
   public double calcReynoldNumber() {
     reynoldsNumber[1] = Math.pow(stirrerDiameter[1], 2.0) * stirrerRate[1]
-        * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
-        / bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
+        * bulkSystem.getPhase(1).getPhysicalProperties().getDensity()
+        / bulkSystem.getPhase(1).getPhysicalProperties().getViscosity();
     reynoldsNumber[0] = Math.pow(stirrerDiameter[0], 2.0) * stirrerRate[0]
-        * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
-        / bulkSystem.getPhases()[0].getPhysicalProperties().getViscosity();
+        * bulkSystem.getPhase(0).getPhysicalProperties().getDensity()
+        / bulkSystem.getPhase(0).getPhysicalProperties().getViscosity();
     return reynoldsNumber[1];
   }
 
@@ -137,15 +137,15 @@ public class StirredCellNode extends TwoPhaseFlowNode {
   /** {@inheritDoc} */
   @Override
   public void update() {
-    for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
+    for (int componentNumber = 0; componentNumber < getBulkSystem().getPhase(0)
         .getNumberOfComponents(); componentNumber++) {
       double liquidMolarRate = getFluidBoundary().getInterphaseMolarFlux(componentNumber)
           * getInterphaseContactArea() * getDt();
       double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber)
           * getInterphaseContactArea() * getDt();
       // System.out.println("liquidMolarRate" + liquidMolarRate);
-      getBulkSystem().getPhases()[0].addMoles(componentNumber, gasMolarRate);
-      getBulkSystem().getPhases()[1].addMoles(componentNumber, liquidMolarRate);
+      getBulkSystem().getPhase(0).addMoles(componentNumber, gasMolarRate);
+      getBulkSystem().getPhase(1).addMoles(componentNumber, liquidMolarRate);
     }
     // getBulkSystem().initBeta();
     getBulkSystem().init_x_y();
@@ -161,9 +161,9 @@ public class StirredCellNode extends TwoPhaseFlowNode {
   @Override
   public FlowNodeInterface getNextNode() {
     StirredCellNode newNode = this.clone();
-    for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-      // newNode.getBulkSystem().getPhases()[0].addMoles(i, -molarMassTransfer[i]);
-      // newNode.getBulkSystem().getPhases()[1].addMoles(i, +molarMassTransfer[i]);
+    for (int i = 0; i < getBulkSystem().getPhase(0).getNumberOfComponents(); i++) {
+      // newNode.getBulkSystem().getPhase(0).addMoles(i, -molarMassTransfer[i]);
+      // newNode.getBulkSystem().getPhase(1).addMoles(i, +molarMassTransfer[i]);
     }
     return newNode;
   }

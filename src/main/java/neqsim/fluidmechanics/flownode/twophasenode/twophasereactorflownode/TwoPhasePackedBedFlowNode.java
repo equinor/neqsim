@@ -110,12 +110,12 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
   public double calcReynoldNumber() {
     reynoldsNumber[1] =
         getSuperficialVelocity(1) / getGeometry().getPacking().getSurfaceAreaPrVolume()
-            * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
-            / bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
+            * bulkSystem.getPhase(1).getPhysicalProperties().getDensity()
+            / bulkSystem.getPhase(1).getPhysicalProperties().getViscosity();
     reynoldsNumber[0] =
         getSuperficialVelocity(0) / getGeometry().getPacking().getSurfaceAreaPrVolume()
-            * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
-            / bulkSystem.getPhases()[0].getPhysicalProperties().getViscosity();
+            * bulkSystem.getPhase(0).getPhysicalProperties().getDensity()
+            / bulkSystem.getPhase(0).getPhysicalProperties().getViscosity();
     System.out.println("rey liq " + reynoldsNumber[1]);
     System.out.println("rey gas " + reynoldsNumber[0]);
     return reynoldsNumber[1];
@@ -140,9 +140,9 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
   public FlowNodeInterface getNextNode() {
     TwoPhasePackedBedFlowNode newNode = this.clone();
 
-    for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-      // newNode.getBulkSystem().getPhases()[0].addMoles(i, -molarMassTransfer[i]);
-      // newNode.getBulkSystem().getPhases()[1].addMoles(i, +molarMassTransfer[i]);
+    for (int i = 0; i < getBulkSystem().getPhase(0).getNumberOfComponents(); i++) {
+      // newNode.getBulkSystem().getPhase(0).addMoles(i, -molarMassTransfer[i]);
+      // newNode.getBulkSystem().getPhase(1).addMoles(i, +molarMassTransfer[i]);
     }
 
     return newNode;
@@ -151,7 +151,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
   /** {@inheritDoc} */
   @Override
   public void update() {
-    for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
+    for (int componentNumber = 0; componentNumber < getBulkSystem().getPhase(0)
         .getNumberOfComponents(); componentNumber++) {
       if (componentNumber == 1) {
         double liquidMolarRate =
@@ -237,8 +237,8 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
     testSystem.addComponent("CO2", 2000.11152181, "Nlitre/min", 0);
     testSystem.setPhysicalPropertyModel(PhysicalPropertyModel.AMINE);
     testSystem.init_x_y();
-    testSystem.getPhases()[1].setTemperature(313.0);
-    testSystem.getPhases()[0].setTemperature(325.0);
+    testSystem.getPhase(1).setTemperature(313.0);
+    testSystem.getPhase(0).setTemperature(325.0);
 
     FlowNodeInterface test = new TwoPhasePackedBedFlowNode(testSystem, pipe1);
     test.setLengthOfNode(0.1);
