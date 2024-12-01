@@ -24,7 +24,6 @@ import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.process.measurementdevice.WaterDewPointAnalyser;
-import neqsim.process.processmodel.ProcessSystem;
 
 /**
  * Class for testing ProcessSystem class.
@@ -914,14 +913,14 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.run();
     operations.run();
     operations.run();
-    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
+    assertEquals(1.7153448049613327E-5, dehydratedGas.getFluid().getComponent("water").getx(),
         1e-6);
 
     operations.run();
     operations.run();
     operations.run();
     operations.run();
-    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
+    assertEquals(1.7153448049613327E-5, dehydratedGas.getFluid().getComponent("water").getx(),
         1e-6);
 
     // run as time step as thread

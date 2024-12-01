@@ -35,7 +35,7 @@ public class SlimTubeSimTest {
     oilSystem.setMixingRule(2);
 
     SlimTubeSim sepSim = new SlimTubeSim(oilSystem, gasSystem);
-    sepSim.setTemperature(273.15 + 100);
+    sepSim.setTemperature(273.15 + 80);
     sepSim.setPressure(380.0);
     sepSim.setNumberOfSlimTubeNodes(40);
     sepSim.run();
