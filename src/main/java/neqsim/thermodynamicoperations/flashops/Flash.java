@@ -270,7 +270,7 @@ public abstract class Flash extends BaseOperation {
         tm[j] -= Wi[j][i];
         x[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
       }
-      System.out.println("tm " + tm[j]);
+      // System.out.println("tm " + tm[j]);
       if (tm[j] < -1e-4 && error[j] < 1e-4) {
         break;
       } else {
