@@ -175,7 +175,7 @@ public abstract class Flash extends BaseOperation {
                 + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]));
           }
           fNorm = f.norm2();
-          if (fNorm > fNormOld && iterations > 3 || (iterations + 1) % 7 != 0) {
+          if (fNorm > fNormOld && iterations > 3 && (iterations - 1) % 7 != 0) {
             break;
           }
           if (iterations % 7 == 0 && fNorm < fNormOld && !secondOrderStabilityAnalysis) {
@@ -241,7 +241,7 @@ public abstract class Flash extends BaseOperation {
           // logger.info("err newton " + error[j]);
         }
 
-        logger.info("norm f " + f.norm1());
+        // logger.info("norm f " + f.norm1());
         // clonedSystem.display();
         sumw[j] = 0.0;
         for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -252,8 +252,8 @@ public abstract class Flash extends BaseOperation {
           deltalogWi[i] = logWi[i] - oldlogw[i];
           clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
         }
-        // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " +
-        // iterations + " phase " + j);
+        // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " + iterations
+        // + " phase " + j);
       } while ((f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0
           || iterations < 3);
       // (error[j]<oldErr && oldErr<oldOldErr) &&
@@ -270,7 +270,8 @@ public abstract class Flash extends BaseOperation {
         tm[j] -= Wi[j][i];
         x[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
       }
-      if (tm[j] < -1e-4 && error[j] < 1e-6) {
+      // System.out.println("tm " + tm[j]);
+      if (tm[j] < -1e-4 && error[j] < 1e-4) {
         break;
       } else {
         tm[j] = 1.0;
