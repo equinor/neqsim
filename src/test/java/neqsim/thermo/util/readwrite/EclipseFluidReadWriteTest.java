@@ -104,7 +104,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem.setPressure(520.0, "bara");
     testSystem.setTemperature(105.0, "C");
     testOps.TPflash();
-    testSystem.prettyPrint();
+    // testSystem.prettyPrint();
     Assertions.assertEquals(0.22236662, testSystem.getBeta(0), 1e-6);
 
     testSystem = EclipseFluidReadWrite.read(filer);
@@ -113,7 +113,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem.setPressure(520.0, "bara");
     testSystem.setTemperature(105.0, "C");
     testOps.TPflash();
-    testSystem.prettyPrint();
+    // testSystem.prettyPrint();
     Assertions.assertEquals(0.9270363530, testSystem.getBeta(0), 1e-6);
 
   }
