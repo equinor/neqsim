@@ -241,7 +241,7 @@ public abstract class Flash extends BaseOperation {
           // logger.info("err newton " + error[j]);
         }
 
-        logger.info("norm f " + f.norm1());
+        // logger.info("norm f " + f.norm1());
         // clonedSystem.display();
         sumw[j] = 0.0;
         for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -252,8 +252,8 @@ public abstract class Flash extends BaseOperation {
           deltalogWi[i] = logWi[i] - oldlogw[i];
           clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
         }
-        logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " + iterations
-            + " phase " + j);
+        // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " + iterations
+        // + " phase " + j);
       } while ((f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0
           || iterations < 3);
       // (error[j]<oldErr && oldErr<oldOldErr) &&
