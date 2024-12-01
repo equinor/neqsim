@@ -2,8 +2,6 @@ package neqsim.process.equipment.reservoir;
 
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
-import neqsim.process.equipment.reservoir.SimpleReservoir;
-import neqsim.process.equipment.reservoir.WellFlow;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -49,10 +47,11 @@ public class WellFlowTest {
   void testRunTransientRes2() {
     neqsim.thermo.system.SystemInterface fluid1 =
         new neqsim.thermo.system.SystemPrEos(298.15, 38.0);
-    fluid1.addComponent("water", 3.599);
+
     fluid1.addComponent("nitrogen", 0.599);
     fluid1.addComponent("CO2", 0.51);
     fluid1.addComponent("methane", 99.8);
+    fluid1.addComponent("water", 3.599);
     fluid1.setMixingRule(2);
     fluid1.setMultiPhaseCheck(true);
 
@@ -87,8 +86,7 @@ public class WellFlowTest {
     compressor.setCompressionRatio(2.0);
 
     neqsim.process.equipment.heatexchanger.Cooler intercooler =
-        new neqsim.process.equipment.heatexchanger.Cooler("cooler",
-            compressor.getOutletStream());
+        new neqsim.process.equipment.heatexchanger.Cooler("cooler", compressor.getOutletStream());
     intercooler.setOutTemperature(25.0, "C");
 
     neqsim.process.equipment.compressor.Compressor compressor2 =
