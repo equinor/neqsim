@@ -49,10 +49,10 @@ public class ConstantMassExpansionTest {
     CMEsim.runCalc();
 
     assertEquals(2.1873758493453708E-4, CMEsim.getIsoThermalCompressibility()[0], 0.00001);
-    assertEquals(0.956122065, CMEsim.getRelativeVolume()[0], 0.001);
-    assertEquals(0.994254912, CMEsim.getRelativeVolume()[6], 0.001);
+    assertEquals(0.95756922523, CMEsim.getRelativeVolume()[0], 0.001);
+    assertEquals(0.99569265437, CMEsim.getRelativeVolume()[6], 0.001);
     assertEquals(1.3572659252241415, CMEsim.getRelativeVolume()[12], 0.001);
-    assertEquals(2.153242696868525, CMEsim.getYfactor()[12], 0.001);
+    assertEquals(2.1893764807, CMEsim.getYfactor()[12], 0.001);
   }
 }
 

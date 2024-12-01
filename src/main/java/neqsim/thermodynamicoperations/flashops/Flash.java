@@ -241,7 +241,7 @@ public abstract class Flash extends BaseOperation {
           // logger.info("err newton " + error[j]);
         }
 
-        // logger.info("norm f " + f.norm1());
+        logger.info("norm f " + f.norm1());
         // clonedSystem.display();
         sumw[j] = 0.0;
         for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -270,7 +270,7 @@ public abstract class Flash extends BaseOperation {
         tm[j] -= Wi[j][i];
         x[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
       }
-      // System.out.println("tm " + tm[j]);
+      System.out.println("tm " + tm[j]);
       if (tm[j] < -1e-4 && error[j] < 1e-4) {
         break;
       } else {
@@ -295,11 +295,11 @@ public abstract class Flash extends BaseOperation {
           continue;
         }
         if (tm[0] < -1e-4) {
-          system.getPhases()[1].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
-          system.getPhases()[0].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+          system.getPhases()[1].getComponent(i).setK((Wi[0][i] / sumw[0]));
+          system.getPhases()[0].getComponent(i).setK((Wi[0][i] / sumw[0]));
         } else if (tm[1] < -1e-4) {
-          system.getPhases()[1].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
-          system.getPhases()[0].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+          system.getPhases()[1].getComponent(i).setK((Wi[1][i] / sumw[1]));
+          system.getPhases()[0].getComponent(i).setK((Wi[1][i] / sumw[1]));
         } else {
           logger.info("error in stability anlysis");
           system.init(0);
@@ -333,7 +333,7 @@ public abstract class Flash extends BaseOperation {
         logger.error("error ", ex);
       }
     }
-    if (!(tm[0] < -1e-4) && !(tm[1] < -1e-4) || system.getPhase(0).getNumberOfComponents() == 1) {
+    if (tm[0] > -1e-4 && tm[1] > -1e-4 || system.getPhase(0).getNumberOfComponents() == 1) {
       stable = true;
       system.init(0);
       // logger.info("system is stable");
