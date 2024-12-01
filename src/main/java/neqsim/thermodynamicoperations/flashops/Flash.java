@@ -241,7 +241,7 @@ public abstract class Flash extends BaseOperation {
           // logger.info("err newton " + error[j]);
         }
 
-        // logger.info("norm f " + f.norm1());
+        logger.info("norm f " + f.norm1());
         // clonedSystem.display();
         sumw[j] = 0.0;
         for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -252,8 +252,8 @@ public abstract class Flash extends BaseOperation {
           deltalogWi[i] = logWi[i] - oldlogw[i];
           clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
         }
-        // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " + iterations
-        // + " phase " + j);
+        logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " + iterations
+            + " phase " + j);
       } while ((f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0
           || iterations < 3);
       // (error[j]<oldErr && oldErr<oldOldErr) &&
@@ -271,7 +271,7 @@ public abstract class Flash extends BaseOperation {
         x[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
       }
       // System.out.println("tm " + tm[j]);
-      if (tm[j] < -1e-4 && error[j] < 1e-6) {
+      if (tm[j] < -1e-4 && error[j] < 1e-4) {
         break;
       } else {
         tm[j] = 1.0;
@@ -295,11 +295,17 @@ public abstract class Flash extends BaseOperation {
           continue;
         }
         if (tm[0] < -1e-4) {
-          system.getPhases()[1].getComponent(i).setK((Wi[0][i] / sumw[0]));
-          system.getPhases()[0].getComponent(i).setK((Wi[0][i] / sumw[0]));
+          system.getPhases()[1].getComponent(i).setK(clonedSystem.getPhase(0).getComponent(i).getx()
+              / minimumGibbsEnergySystem.getComponent(i).getz());
+          system.getPhases()[0].getComponent(i).setK(clonedSystem.getPhase(0).getComponent(i).getx()
+              / minimumGibbsEnergySystem.getComponent(i).getz());
         } else if (tm[1] < -1e-4) {
-          system.getPhases()[1].getComponent(i).setK((Wi[1][i] / sumw[1]));
-          system.getPhases()[0].getComponent(i).setK((Wi[1][i] / sumw[1]));
+
+          system.getPhases()[1].getComponent(i).setK(minimumGibbsEnergySystem.getComponent(i).getz()
+              / clonedSystem.getPhase(1).getComponent(i).getx());
+          system.getPhases()[0].getComponent(i).setK(minimumGibbsEnergySystem.getComponent(i).getz()
+              / clonedSystem.getPhase(1).getComponent(i).getx());
+
         } else {
           logger.info("error in stability anlysis");
           system.init(0);

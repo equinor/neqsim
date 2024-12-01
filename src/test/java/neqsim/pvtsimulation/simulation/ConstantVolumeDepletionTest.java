@@ -55,7 +55,7 @@ public class ConstantVolumeDepletionTest {
 
     SaturationPressure satPres = new SaturationPressure(fluid1);
     satPres.run();
-    assertEquals(199.125, fluid1.getPressure("bara"), 0.01);
+    assertEquals(199.45807075500, fluid1.getPressure("bara"), 0.01);
 
     ConstantVolumeDepletion CVDsim = new ConstantVolumeDepletion(fluid1);
     CVDsim.setTemperature(90.0, "C");
