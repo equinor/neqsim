@@ -241,7 +241,7 @@ public abstract class Flash extends BaseOperation {
           // logger.info("err newton " + error[j]);
         }
 
-        logger.info("norm f " + f.norm1());
+        // logger.info("norm f " + f.norm1());
         // clonedSystem.display();
         sumw[j] = 0.0;
         for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
