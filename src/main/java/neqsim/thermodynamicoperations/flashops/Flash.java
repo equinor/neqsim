@@ -251,16 +251,16 @@ public abstract class Flash extends BaseOperation {
           deltalogWi[i] = logWi[i] - oldlogw[i];
           clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
         }
-        //logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " + iterations
-        //    + " phase " + j);
+        // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " + iterations
+        // + " phase " + j);
       } while ((f.norm1() > 1e-6 && iterations < maxiterations && error[j] > 1e-6)
-          || (iterations % 70) == 0 || iterations < 3);
+          || (iterations % 7) == 0 || iterations < 3);
       // (error[j]<oldErr && oldErr<oldOldErr) &&
       // logger.info("err " + error[j]);
       // logger.info("iterations " + iterations);
       // logger.info("f.norm1() " + f.norm1());
       if (iterations >= maxiterations) {
-        //logger.error("err staability check " + error[j]);
+        // logger.error("err staability check " + error[j]);
         throw new neqsim.util.exception.TooManyIterationsException("too many iterations", null,
             maxiterations);
       }
