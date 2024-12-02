@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
@@ -150,8 +149,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
     inletStream.run();
     neqsim.process.equipment.compressor.Compressor compressor1 =
-        new neqsim.process.equipment.compressor.Compressor("Compressor1",
-            inletStream);
+        new neqsim.process.equipment.compressor.Compressor("Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setOutTemperature(358.0);
@@ -179,8 +177,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
     inletStream.run();
     neqsim.process.equipment.compressor.Compressor compressor1 =
-        new neqsim.process.equipment.compressor.Compressor("Compressor1",
-            inletStream);
+        new neqsim.process.equipment.compressor.Compressor("Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setOutTemperature(358.0);
@@ -210,8 +207,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
     inletStream.run();
     neqsim.process.equipment.compressor.Compressor compressor1 =
-        new neqsim.process.equipment.compressor.Compressor("Compressor1",
-            inletStream);
+        new neqsim.process.equipment.compressor.Compressor("Compressor1", inletStream);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setPolytropicEfficiency(0.56);
     compressor1.setUsePolytropicCalc(true);
@@ -255,5 +251,46 @@ class CompressorTest extends neqsim.NeqSimTest {
     processOps.add(compressor1);
     processOps.run();
     assertEquals(compressor1.getPower(), 3712607.597542703, 1110.01);
+  }
+
+  /**
+   * <p>
+   * test Multi Phase Compression.
+   * </p>
+   */
+  @Test
+  public void testPowerEffSpec() {
+    SystemSrkEos testSystem = new SystemSrkEos(315.0, 10.0);
+    testSystem.addComponent("nitrogen", 2.0);
+    testSystem.addComponent("methane", 50.0);
+    testSystem.setMixingRule(2);
+
+    processOps = new ProcessSystem();
+    Stream inletStream = new Stream("feed stream", testSystem);
+    inletStream.setPressure(10, "bara");
+    inletStream.setTemperature(30, "C");
+    inletStream.setFlowRate(1, "MSm3/day");
+    compressor1 = new Compressor(unitName, inletStream);
+    compressor1.setPower(2000000);
+    compressor1.setUsePolytropicCalc(true);
+    compressor1.setPolytropicEfficiency(0.8);
+    compressor1.setCalcPressureOut(true);
+    processOps.add(inletStream);
+    processOps.add(compressor1);
+    processOps.run();
+    assertEquals(30.610386, compressor1.getOutletPressure(), 0.01);
+    compressor1.getOutletStream().getFluid().prettyPrint();
+
+
+    processOps = new ProcessSystem();
+    compressor1 = new Compressor(unitName, inletStream);
+    compressor1.setUsePolytropicCalc(true);
+    compressor1.setPolytropicEfficiency(0.8);
+    compressor1.setOutletPressure(30.61);
+    processOps.add(inletStream);
+    processOps.add(compressor1);
+    processOps.run();
+    assertEquals(139.7216108, compressor1.getOutletStream().getTemperature("C"), 0.01);
+    compressor1.getOutletStream().getFluid().prettyPrint();
   }
 }
