@@ -279,8 +279,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     processOps.add(compressor1);
     processOps.run();
     assertEquals(30.610386, compressor1.getOutletPressure(), 0.01);
-    compressor1.getOutletStream().getFluid().prettyPrint();
-
+    // compressor1.getOutletStream().getFluid().prettyPrint();
 
     processOps = new ProcessSystem();
     compressor1 = new Compressor(unitName, inletStream);
@@ -291,6 +290,6 @@ class CompressorTest extends neqsim.NeqSimTest {
     processOps.add(compressor1);
     processOps.run();
     assertEquals(139.7216108, compressor1.getOutletStream().getTemperature("C"), 0.01);
-    compressor1.getOutletStream().getFluid().prettyPrint();
+    // compressor1.getOutletStream().getFluid().prettyPrint();
   }
 }
