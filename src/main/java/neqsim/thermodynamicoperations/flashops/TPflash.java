@@ -208,12 +208,14 @@ public class TPflash extends Flash {
     system.init(0);
     system.init(1);
 
-    if (system.getPhase(0).getGibbsEnergy() < system.getPhase(1).getGibbsEnergy()) {
-      minimumGibbsEnergy = system.getPhase(0).getGibbsEnergy();
+    if ((system.getPhase(0).getGibbsEnergy()
+        * (1.0 - Math.signum(system.getPhase(0).getGibbsEnergy()) * 1e-8)) < system.getPhase(1)
+            .getGibbsEnergy()) {
+      minGibbsPhase = 0;
     } else {
       minGibbsPhase = 1;
-      minimumGibbsEnergy = system.getPhase(1).getGibbsEnergy();
     }
+    // logger.debug("minimum gibbs phase " + minGibbsPhase);
 
     if (system.getPhase(0).getNumberOfComponents() == 1 || system.getMaxNumberOfPhases() == 1) {
       system.setNumberOfPhases(1);

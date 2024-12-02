@@ -31,7 +31,7 @@ public abstract class Flash extends BaseOperation {
   int i = 0;
   int j = 0;
   int iterations = 0;
-  int maxNumberOfIterations = 100;
+  int maxNumberOfIterations = 50;
   double gibbsEnergy = 0;
   double gibbsEnergyOld = 0;
   double Kold = 0;
@@ -72,6 +72,8 @@ public abstract class Flash extends BaseOperation {
       } else {
         lowestGibbsEnergyPhase = 1;
       }
+      logger.info("Lowest Gibbs energy phase determined: Phase {}", lowestGibbsEnergyPhase);
+
       findLowestGibbsPhaseIsChecked = true;
     }
     return lowestGibbsEnergyPhase;
@@ -113,7 +115,7 @@ public abstract class Flash extends BaseOperation {
 
     SystemInterface clonedSystem = minimumGibbsEnergySystem;
     clonedSystem.setTotalNumberOfMoles(1.0);
-
+    clonedSystem.init(1);
     double[] sumw = new double[2];
     sumw[1] = 0.0;
     sumw[0] = 0.0;
@@ -124,13 +126,10 @@ public abstract class Flash extends BaseOperation {
           * clonedSystem.getPhase(0).getComponent(i).getz();
     }
 
-    // System.out.println("sumw0 " + sumw[0]);
-    // System.out.println("sumw1 " + sumw[1]);
-
     int start = 0;
-    int end = 1; // clonedSystem.getNumberOfPhases()-1;
+    int end = 1;
     int mult = 1;
-    // if (sumw[1] > sumw[0]) {
+
     if (lowestGibbsEnergyPhase == 0) {
       start = end;
       end = 0;
@@ -176,7 +175,7 @@ public abstract class Flash extends BaseOperation {
           }
           fNorm = f.norm2();
           if (fNorm > fNormOld && iterations > 3 && (iterations - 1) % 7 != 0) {
-            break;
+            // break;
           }
           if (iterations % 7 == 0 && fNorm < fNormOld && !secondOrderStabilityAnalysis) {
             double vec1 = 0.0;
@@ -252,17 +251,18 @@ public abstract class Flash extends BaseOperation {
           deltalogWi[i] = logWi[i] - oldlogw[i];
           clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
         }
-        // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " + iterations
-        // + " phase " + j);
-      } while ((f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0
-          || iterations < 3);
+        //logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " + iterations
+        //    + " phase " + j);
+      } while ((f.norm1() > 1e-6 && iterations < maxiterations && error[j] > 1e-6)
+          || (iterations % 70) == 0 || iterations < 3);
       // (error[j]<oldErr && oldErr<oldOldErr) &&
       // logger.info("err " + error[j]);
       // logger.info("iterations " + iterations);
       // logger.info("f.norm1() " + f.norm1());
       if (iterations >= maxiterations) {
-        logger.error("err staability check " + error[j]);
-        // throw new util.exception.TooManyIterationsException();
+        //logger.error("err staability check " + error[j]);
+        throw new neqsim.util.exception.TooManyIterationsException("too many iterations", null,
+            maxiterations);
       }
 
       tm[j] = 1.0;
