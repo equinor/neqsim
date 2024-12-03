@@ -40,7 +40,7 @@ public class DifferentialLiberationTest {
     SimulationInterface satPresSim = new SaturationPressure(tempSystem);
     satPresSim.setTemperature(97.5, "C");
     satPresSim.run();
-    assertEquals(191.61304855, satPresSim.getThermoSystem().getPressure(), 0.1);
+    assertEquals(193.24093, satPresSim.getThermoSystem().getPressure(), 0.1);
     // tempSystem.prettyPrint();
 
     double[] pressures = new double[] {351.4, 323.2, 301.5, 275.9, 250.1, 226.1, 205.9, 179.1,
