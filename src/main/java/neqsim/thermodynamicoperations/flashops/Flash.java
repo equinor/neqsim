@@ -122,8 +122,10 @@ public abstract class Flash extends BaseOperation {
     for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
       sumw[1] += clonedSystem.getPhase(0).getComponent(i).getz()
           / clonedSystem.getPhase(0).getComponent(i).getK();
-      sumw[0] += clonedSystem.getPhase(0).getComponent(i).getK()
-          * clonedSystem.getPhase(0).getComponent(i).getz();
+      if (clonedSystem.getPhase(0).getComponent(i).getz() > 0) {
+        sumw[0] += clonedSystem.getPhase(0).getComponent(i).getK()
+            * clonedSystem.getPhase(0).getComponent(i).getz();
+      }
     }
 
     int start = 0;
@@ -146,7 +148,7 @@ public abstract class Flash extends BaseOperation {
     // for (int j = 0; j < clonedSystem.getNumberOfPhases(); j++) {
     for (int j = start; j >= end; j = j + mult) {
       for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-        Wi[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
+         Wi[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
         logWi[i] = Math.log(Wi[j][i]);
       }
       iterations = 0;
@@ -256,9 +258,9 @@ public abstract class Flash extends BaseOperation {
       } while ((f.norm1() > 1e-6 && iterations < maxiterations && error[j] > 1e-6)
           || (iterations % 7) == 0 || iterations < 3);
       // (error[j]<oldErr && oldErr<oldOldErr) &&
-      // logger.info("err " + error[j]);
-      // logger.info("iterations " + iterations);
-      // logger.info("f.norm1() " + f.norm1());
+      logger.info("err " + error[j]);
+      logger.info("iterations " + iterations);
+      logger.info("f.norm1() " + f.norm1());
       if (iterations >= maxiterations) {
         // logger.error("err staability check " + error[j]);
         throw new neqsim.util.exception.TooManyIterationsException("too many iterations", null,

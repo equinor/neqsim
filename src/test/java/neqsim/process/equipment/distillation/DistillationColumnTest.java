@@ -2,8 +2,6 @@ package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.distillation.Condenser;
-import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 

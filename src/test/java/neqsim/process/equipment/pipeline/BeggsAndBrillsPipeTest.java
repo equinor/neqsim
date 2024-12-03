@@ -2,7 +2,6 @@ package neqsim.process.equipment.pipeline;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -318,8 +317,7 @@ public class BeggsAndBrillsPipeTest {
     ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem3);
     testOps2.TPflash();
     testSystem3.initPhysicalProperties();
-
-    Assertions.assertEquals(testSystem3.hasPhaseType("oil"), true);
+    Assertions.assertEquals(testSystem3.hasPhaseType("gas"), true);
 
     Stream stream_3 = new Stream("Stream1", testSystem3);
     stream_3.setFlowRate(massFlowRate, "kg/hr");
@@ -343,7 +341,7 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(testSystem3.hasPhaseType("gas"), true);
 
-    Assertions.assertEquals(temperatureOut3, -11.04463, 1);
+    Assertions.assertEquals(temperatureOut3, -8.81009355441591, 1);
     Assertions.assertEquals(pressureOut3, 18.3429, 1);
   }
 }
