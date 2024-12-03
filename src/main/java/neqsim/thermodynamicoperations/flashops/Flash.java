@@ -46,6 +46,7 @@ public abstract class Flash extends BaseOperation {
   double[] oldDeltalnK;
   double[] deltalnK;
   double[] tm;
+  double tmLimit = -1e-8;
   int lowestGibbsEnergyPhase = 0;
   SysNewtonRhapsonTPflash secondOrderSolver;
   /** Set true to do solid phase check and calculations */
@@ -106,7 +107,7 @@ public abstract class Flash extends BaseOperation {
     double[] alpha = null;
     Matrix f = new Matrix(system.getPhases()[0].getNumberOfComponents(), 1);
     Matrix df = null;
-    int maxiterations = 50;
+    int maxiterations = 100;
     double fNorm = 1.0e10;
     double fNormOld = 0.0;
     for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
@@ -148,7 +149,7 @@ public abstract class Flash extends BaseOperation {
     // for (int j = 0; j < clonedSystem.getNumberOfPhases(); j++) {
     for (int j = start; j >= end; j = j + mult) {
       for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-         Wi[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
+        Wi[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
         logWi[i] = Math.log(Wi[j][i]);
       }
       iterations = 0;
@@ -255,7 +256,7 @@ public abstract class Flash extends BaseOperation {
         }
         // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " + iterations
         // + " phase " + j);
-      } while ((f.norm1() > 1e-6 && iterations < maxiterations && error[j] > 1e-6)
+      } while ((f.norm1() > 1e-6 && iterations < maxiterations || error[j] > 1e-6)
           || (iterations % 7) == 0 || iterations < 3);
       // (error[j]<oldErr && oldErr<oldOldErr) &&
       logger.info("err " + error[j]);
@@ -272,8 +273,8 @@ public abstract class Flash extends BaseOperation {
         tm[j] -= Wi[j][i];
         x[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
       }
-      // System.out.println("tm " + tm[j]);
-      if (tm[j] < -1e-4 && error[j] < 1e-6) {
+      System.out.println("tm " + tm[j]);
+      if (tm[j] < tmLimit && error[j] < 1e-6) {
         break;
       } else {
         tm[j] = 1.0;
@@ -291,17 +292,18 @@ public abstract class Flash extends BaseOperation {
       tm[1] = 0.0;
     }
 
-    if (((tm[0] < -1e-4) || (tm[1] < -1e-4)) && !(Double.isNaN(tm[0]) || (Double.isNaN(tm[1])))) {
+    if (((tm[0] < tmLimit) || (tm[1] < tmLimit))
+        && !(Double.isNaN(tm[0]) || (Double.isNaN(tm[1])))) {
       for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
         if (system.getPhases()[1].getComponent(i).getx() < 1e-100) {
           continue;
         }
-        if (tm[0] < -1e-4) {
+        if (tm[0] < tmLimit) {
           system.getPhases()[1].getComponent(i).setK(clonedSystem.getPhase(0).getComponent(i).getx()
               / minimumGibbsEnergySystem.getComponent(i).getz());
           system.getPhases()[0].getComponent(i).setK(clonedSystem.getPhase(0).getComponent(i).getx()
               / minimumGibbsEnergySystem.getComponent(i).getz());
-        } else if (tm[1] < -1e-4) {
+        } else if (tm[1] < tmLimit) {
 
           system.getPhases()[1].getComponent(i).setK(minimumGibbsEnergySystem.getComponent(i).getz()
               / clonedSystem.getPhase(1).getComponent(i).getx());
@@ -341,7 +343,7 @@ public abstract class Flash extends BaseOperation {
         logger.error("error ", ex);
       }
     }
-    if (tm[0] > -1e-4 && tm[1] > -1e-4 || system.getPhase(0).getNumberOfComponents() == 1) {
+    if (tm[0] > tmLimit && tm[1] > tmLimit || system.getPhase(0).getNumberOfComponents() == 1) {
       stable = true;
       system.init(0);
       // logger.info("system is stable");

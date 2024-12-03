@@ -48,10 +48,10 @@ public class WellFlowTest {
     neqsim.thermo.system.SystemInterface fluid1 =
         new neqsim.thermo.system.SystemPrEos(298.15, 38.0);
 
+    fluid1.addComponent("water", 3.599);
     fluid1.addComponent("nitrogen", 0.599);
     fluid1.addComponent("CO2", 0.51);
     fluid1.addComponent("methane", 99.8);
-    fluid1.addComponent("water", 3.599);
     fluid1.setMixingRule(2);
     fluid1.setMultiPhaseCheck(true);
 
