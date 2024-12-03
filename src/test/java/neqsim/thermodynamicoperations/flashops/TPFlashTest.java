@@ -168,6 +168,6 @@ class TPFlashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     assertEquals(2, testSystem.getNumberOfPhases());
-    testSystem.prettyPrint();
+    // testSystem.prettyPrint();
   }
 }
