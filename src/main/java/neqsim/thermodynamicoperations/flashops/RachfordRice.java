@@ -7,6 +7,8 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import java.io.Serializable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -16,9 +18,10 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  */
 public class RachfordRice implements Serializable {
+  static Logger logger = LogManager.getLogger(PHsolidFlash.class);
   private static final long serialVersionUID = 1000;
   private double[] beta = new double[2];
-  private static String method = "Michelsen2001"; // alternative use Nielsen2023
+  private static String method = "Nielsen2023"; // alternative use Nielsen2023 or Michelsen2001
 
   /**
    * <p>
@@ -254,6 +257,9 @@ public class RachfordRice implements Serializable {
       } else if (K[i] > Kmax) {
         Kmax = K[i];
       }
+
+      logger.debug(Kmin);
+      logger.debug(Kmax);
     }
 
     double alphaMin = 1.0 / (1.0 - Kmax);

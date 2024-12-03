@@ -295,26 +295,23 @@ public abstract class Flash extends BaseOperation {
     if (((tm[0] < tmLimit) || (tm[1] < tmLimit))
         && !(Double.isNaN(tm[0]) || (Double.isNaN(tm[1])))) {
       for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-        if (system.getPhases()[1].getComponent(i).getx() < 1e-100) {
+        if (system.getPhase(0).getComponent(i).getx() < 1e-100) {
           continue;
         }
         if (tm[0] < tmLimit) {
           system.getPhases()[1].getComponent(i).setK(clonedSystem.getPhase(0).getComponent(i).getx()
-              / minimumGibbsEnergySystem.getComponent(i).getz());
+              / clonedSystem.getPhase(1).getComponent(i).getx());
           system.getPhases()[0].getComponent(i).setK(clonedSystem.getPhase(0).getComponent(i).getx()
-              / minimumGibbsEnergySystem.getComponent(i).getz());
+              / clonedSystem.getPhase(1).getComponent(i).getx());
         } else if (tm[1] < tmLimit) {
-
-          system.getPhases()[1].getComponent(i).setK(minimumGibbsEnergySystem.getComponent(i).getz()
+          system.getPhases()[1].getComponent(i).setK(clonedSystem.getPhase(0).getComponent(i).getx()
               / clonedSystem.getPhase(1).getComponent(i).getx());
-          system.getPhases()[0].getComponent(i).setK(minimumGibbsEnergySystem.getComponent(i).getz()
+          system.getPhases()[0].getComponent(i).setK(clonedSystem.getPhase(0).getComponent(i).getx()
               / clonedSystem.getPhase(1).getComponent(i).getx());
-
         } else {
           logger.info("error in stability anlysis");
           system.init(0);
         }
-
         if (Double.isNaN(tm[j])) {
           tm[j] = 0;
         }
