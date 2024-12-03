@@ -53,7 +53,7 @@ public class WellFlowTest {
     fluid1.addComponent("CO2", 0.51);
     fluid1.addComponent("methane", 99.8);
     fluid1.setMixingRule(2);
-    fluid1.setMultiPhaseCheck(true);
+    fluid1.setMultiPhaseCheck(false);
 
     double producxtionIndex = 10.000100751427403E-3;
 
