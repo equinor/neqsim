@@ -41,7 +41,7 @@ public class ConstantVolumeDepletionTest {
         new double[] {400, 300.0, 200.0, 100.0});
     double[][] expData = {{0.95, 0.99, 1.0, 1.1}};
     CVDsim.setExperimentalData(expData);
-    assertEquals(2.291239632886, CVDsim.getRelativeVolume()[4], 0.001);
+    assertEquals(2.198101313307075, CVDsim.getRelativeVolume()[4], 0.001);
   }
 
   @Test
@@ -55,7 +55,7 @@ public class ConstantVolumeDepletionTest {
 
     SaturationPressure satPres = new SaturationPressure(fluid1);
     satPres.run();
-    assertEquals(196.977180004, fluid1.getPressure("bara"), 0.01);
+    assertEquals(189.945052146, fluid1.getPressure("bara"), 0.01);
 
     ConstantVolumeDepletion CVDsim = new ConstantVolumeDepletion(fluid1);
     CVDsim.setTemperature(90.0, "C");

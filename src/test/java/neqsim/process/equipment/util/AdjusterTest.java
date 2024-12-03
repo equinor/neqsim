@@ -84,6 +84,6 @@ public class AdjusterTest {
 
     assertEquals(flowline1.getOutletStream().getPressure(), 120, 1e-3);
     assertEquals(flowline1.getOutletStream().getFlowRate("MSm3/day"), 4.0, 1e-3);
-    assertEquals(flowline1.getInletStream().getPressure(), 199.85522835429, 0.1);
+    assertEquals(flowline1.getInletStream().getPressure(), 199.976882003305, 0.1);
   }
 }

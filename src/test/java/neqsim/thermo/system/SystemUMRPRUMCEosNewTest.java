@@ -253,6 +253,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     testSystem.addComponent("nC12", 0.000000001);
 
     testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
+    testSystem.setMultiPhaseCheck(true);
     testSystem.init(0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {

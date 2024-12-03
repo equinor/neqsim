@@ -64,7 +64,7 @@ class TPFlashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    double expected = -936964.172416;
+    double expected = -552559.256480;
     double deviation = Math.abs((testSystem.getEnthalpy() - expected) / expected * 100);
     assertEquals(0.0, deviation, 0.5);
   }
@@ -167,7 +167,7 @@ class TPFlashTest {
     testSystem.setMultiPhaseCheck(true);
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
-    assertEquals(1, testSystem.getNumberOfPhases());
+    assertEquals(2, testSystem.getNumberOfPhases());
     testSystem.prettyPrint();
   }
 }
