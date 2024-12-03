@@ -103,7 +103,7 @@ public abstract class Flash extends BaseOperation {
     double[] d = new double[system.getPhases()[0].getNumberOfComponents()];
     double[][] x = new double[2][system.getPhases()[0].getNumberOfComponents()];
     double[] error = new double[2];
-    tm = new double[system.getPhase(0).getNumberOfComponents()];
+    tm = new double[2];
     double[] alpha = null;
     Matrix f = new Matrix(system.getPhases()[0].getNumberOfComponents(), 1);
     Matrix df = null;
@@ -259,9 +259,9 @@ public abstract class Flash extends BaseOperation {
       } while ((f.norm1() > 1e-6 && iterations < maxiterations || error[j] > 1e-6)
           || (iterations % 7) == 0 || iterations < 3);
       // (error[j]<oldErr && oldErr<oldOldErr) &&
-      logger.info("err " + error[j]);
-      logger.info("iterations " + iterations);
-      logger.info("f.norm1() " + f.norm1());
+      // logger.info("err " + error[j]);
+      // logger.info("iterations " + iterations);
+      // logger.info("f.norm1() " + f.norm1());
       if (iterations >= maxiterations) {
         // logger.error("err staability check " + error[j]);
         throw new neqsim.util.exception.TooManyIterationsException("too many iterations", null,
@@ -273,7 +273,7 @@ public abstract class Flash extends BaseOperation {
         tm[j] -= Wi[j][i];
         x[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
       }
-      System.out.println("tm " + tm[j]);
+
       if (tm[j] < tmLimit && error[j] < 1e-6) {
         break;
       } else {

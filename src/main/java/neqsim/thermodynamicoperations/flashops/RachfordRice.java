@@ -257,9 +257,6 @@ public class RachfordRice implements Serializable {
       } else if (K[i] > Kmax) {
         Kmax = K[i];
       }
-
-      logger.debug(Kmin);
-      logger.debug(Kmax);
     }
 
     double alphaMin = 1.0 / (1.0 - Kmax);

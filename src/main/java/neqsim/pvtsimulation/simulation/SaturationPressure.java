@@ -1,5 +1,7 @@
 package neqsim.pvtsimulation.simulation;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -13,6 +15,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class SaturationPressure extends BasePVTsimulation {
+  static Logger logger = LogManager.getLogger(SaturationPressure.class);
+
   /**
    * <p>
    * Constructor for SaturationPressure.
@@ -34,14 +38,10 @@ public class SaturationPressure extends BasePVTsimulation {
   public double calcSaturationPressure() {
     if (!Double.isNaN(temperature)) {
       getThermoSystem().setTemperature(temperature, temperatureUnit);
+    } else {
+      temperature = getThermoSystem().getTemperature(temperatureUnit);
     }
 
-    boolean isMultiPhaseCheckChanged = false;
-    if (!getThermoSystem().doMultiPhaseCheck()) {
-      isMultiPhaseCheckChanged = true;
-      getThermoSystem().setMultiPhaseCheck(true);
-    }
-    // getThermoSystem().isImplementedCompositionDeriativesofFugacity(false);
     getThermoSystem().setPressure(1.0);
     do {
       getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
@@ -57,24 +57,25 @@ public class SaturationPressure extends BasePVTsimulation {
       return getThermoSystem().getPressure();
     }
 
-    double minPres = getThermoSystem().getPressure() - 10.0;
+    double minPres = getThermoSystem().getPressure() - 11.0;
     double maxPres = getThermoSystem().getPressure();
     int iteration = 0;
     do {
       iteration++;
-      getThermoSystem().setPressure((minPres + maxPres) / 2.0);
+      getThermoSystem().setPressure((maxPres + minPres) / 2.0);
       thermoOps.TPflash();
+
       if (getThermoSystem().getNumberOfPhases() > 1) {
         minPres = getThermoSystem().getPressure();
       } else {
         maxPres = getThermoSystem().getPressure();
       }
+      // logger.debug(getThermoSystem().getPressure("bara") + " phases "
+      // + getThermoSystem().getNumberOfPhases());
     } while (Math.abs(maxPres - minPres) > 1e-5 && iteration < 500);
     getThermoSystem().setPressure(maxPres);
     thermoOps.TPflash();
-    if (isMultiPhaseCheckChanged) {
-      getThermoSystem().setMultiPhaseCheck(false);
-    }
+
     return getThermoSystem().getPressure();
   }
 
