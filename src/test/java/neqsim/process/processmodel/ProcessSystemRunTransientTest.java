@@ -48,7 +48,6 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     testSystem.addComponent("methane", 0.900);
     testSystem.addComponent("ethane", 0.100);
     testSystem.addComponent("n-heptane", 1.00);
-    testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
     return testSystem;
   }

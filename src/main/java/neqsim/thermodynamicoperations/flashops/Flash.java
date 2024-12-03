@@ -31,7 +31,7 @@ public abstract class Flash extends BaseOperation {
   int i = 0;
   int j = 0;
   int iterations = 0;
-  int maxNumberOfIterations = 100;
+  int maxNumberOfIterations = 50;
   double gibbsEnergy = 0;
   double gibbsEnergyOld = 0;
   double Kold = 0;
@@ -46,6 +46,7 @@ public abstract class Flash extends BaseOperation {
   double[] oldDeltalnK;
   double[] deltalnK;
   double[] tm;
+  double tmLimit = -1e-8;
   int lowestGibbsEnergyPhase = 0;
   SysNewtonRhapsonTPflash secondOrderSolver;
   /** Set true to do solid phase check and calculations */
@@ -72,6 +73,8 @@ public abstract class Flash extends BaseOperation {
       } else {
         lowestGibbsEnergyPhase = 1;
       }
+      logger.info("Lowest Gibbs energy phase determined: Phase {}", lowestGibbsEnergyPhase);
+
       findLowestGibbsPhaseIsChecked = true;
     }
     return lowestGibbsEnergyPhase;
@@ -100,11 +103,11 @@ public abstract class Flash extends BaseOperation {
     double[] d = new double[system.getPhases()[0].getNumberOfComponents()];
     double[][] x = new double[2][system.getPhases()[0].getNumberOfComponents()];
     double[] error = new double[2];
-    tm = new double[system.getPhase(0).getNumberOfComponents()];
+    tm = new double[2];
     double[] alpha = null;
     Matrix f = new Matrix(system.getPhases()[0].getNumberOfComponents(), 1);
     Matrix df = null;
-    int maxiterations = 50;
+    int maxiterations = 100;
     double fNorm = 1.0e10;
     double fNormOld = 0.0;
     for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
@@ -112,25 +115,22 @@ public abstract class Flash extends BaseOperation {
     }
 
     SystemInterface clonedSystem = minimumGibbsEnergySystem;
-    clonedSystem.setTotalNumberOfMoles(1.0);
-
     double[] sumw = new double[2];
     sumw[1] = 0.0;
     sumw[0] = 0.0;
     for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
       sumw[1] += clonedSystem.getPhase(0).getComponent(i).getz()
           / clonedSystem.getPhase(0).getComponent(i).getK();
-      sumw[0] += clonedSystem.getPhase(0).getComponent(i).getK()
-          * clonedSystem.getPhase(0).getComponent(i).getz();
+      if (clonedSystem.getPhase(0).getComponent(i).getz() > 0) {
+        sumw[0] += clonedSystem.getPhase(0).getComponent(i).getK()
+            * clonedSystem.getPhase(0).getComponent(i).getz();
+      }
     }
 
-    // System.out.println("sumw0 " + sumw[0]);
-    // System.out.println("sumw1 " + sumw[1]);
-
     int start = 0;
-    int end = 1; // clonedSystem.getNumberOfPhases()-1;
+    int end = 1;
     int mult = 1;
-    // if (sumw[1] > sumw[0]) {
+
     if (lowestGibbsEnergyPhase == 0) {
       start = end;
       end = 0;
@@ -175,8 +175,8 @@ public abstract class Flash extends BaseOperation {
                 + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]));
           }
           fNorm = f.norm2();
-          if (fNorm > fNormOld && iterations > 3 || (iterations + 1) % 7 != 0) {
-            break;
+          if (fNorm > fNormOld && iterations > 3 && (iterations - 1) % 7 != 0) {
+            // break;
           }
           if (iterations % 7 == 0 && fNorm < fNormOld && !secondOrderStabilityAnalysis) {
             double vec1 = 0.0;
@@ -241,7 +241,7 @@ public abstract class Flash extends BaseOperation {
           // logger.info("err newton " + error[j]);
         }
 
-        logger.info("norm f " + f.norm1());
+        // logger.info("norm f " + f.norm1());
         // clonedSystem.display();
         sumw[j] = 0.0;
         for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -252,17 +252,18 @@ public abstract class Flash extends BaseOperation {
           deltalogWi[i] = logWi[i] - oldlogw[i];
           clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
         }
-        // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " +
-        // iterations + " phase " + j);
-      } while ((f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0
-          || iterations < 3);
+        // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " + iterations
+        // + " phase " + j);
+      } while ((f.norm1() > 1e-6 && iterations < maxiterations || error[j] > 1e-6)
+          || (iterations % 7) == 0 || iterations < 3);
       // (error[j]<oldErr && oldErr<oldOldErr) &&
       // logger.info("err " + error[j]);
       // logger.info("iterations " + iterations);
       // logger.info("f.norm1() " + f.norm1());
       if (iterations >= maxiterations) {
-        logger.error("err staability check " + error[j]);
-        // throw new util.exception.TooManyIterationsException();
+        // logger.error("err staability check " + error[j]);
+        throw new neqsim.util.exception.TooManyIterationsException("too many iterations", null,
+            maxiterations);
       }
 
       tm[j] = 1.0;
@@ -270,7 +271,8 @@ public abstract class Flash extends BaseOperation {
         tm[j] -= Wi[j][i];
         x[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
       }
-      if (tm[j] < -1e-4 && error[j] < 1e-6) {
+
+      if (tm[j] < tmLimit && error[j] < 1e-6) {
         break;
       } else {
         tm[j] = 1.0;
@@ -280,25 +282,30 @@ public abstract class Flash extends BaseOperation {
     // check for trivial solution
     double diffx = 0.0;
     for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
-      diffx += Math.abs(clonedSystem.getPhase(0).getComponent(i).getx()
-          - clonedSystem.getPhase(1).getComponent(i).getx());
+      diffx += Math.abs(clonedSystem.getPhase(j).getComponent(i).getx()
+          - minimumGibbsEnergySystem.getPhase(0).getComponent(i).getx());
     }
     if (diffx < 1e-10) {
       tm[0] = 0.0;
       tm[1] = 0.0;
     }
 
-    if (((tm[0] < -1e-4) || (tm[1] < -1e-4)) && !(Double.isNaN(tm[0]) || (Double.isNaN(tm[1])))) {
+    if (((tm[0] < tmLimit) || (tm[1] < tmLimit))
+        && !(Double.isNaN(tm[0]) || (Double.isNaN(tm[1])))) {
       for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-        if (system.getPhases()[1].getComponent(i).getx() < 1e-100) {
+        if (system.getPhase(0).getComponent(i).getx() < 1e-100) {
           continue;
         }
-        if (tm[0] < -1e-4) {
-          system.getPhases()[1].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
-          system.getPhases()[0].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
-        } else if (tm[1] < -1e-4) {
-          system.getPhases()[1].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
-          system.getPhases()[0].getComponent(i).setK((Wi[0][i] / sumw[0]) / (Wi[1][i] / sumw[1]));
+        if (tm[0] < tmLimit) {
+          system.getPhases()[1].getComponent(i).setK(clonedSystem.getPhase(0).getComponent(i).getx()
+              / clonedSystem.getPhase(1).getComponent(i).getx());
+          system.getPhases()[0].getComponent(i).setK(clonedSystem.getPhase(0).getComponent(i).getx()
+              / clonedSystem.getPhase(1).getComponent(i).getx());
+        } else if (tm[1] < tmLimit) {
+          system.getPhases()[1].getComponent(i).setK(clonedSystem.getPhase(0).getComponent(i).getx()
+              / clonedSystem.getPhase(1).getComponent(i).getx());
+          system.getPhases()[0].getComponent(i).setK(clonedSystem.getPhase(0).getComponent(i).getx()
+              / clonedSystem.getPhase(1).getComponent(i).getx());
         } else {
           logger.info("error in stability anlysis");
           system.init(0);
@@ -332,7 +339,7 @@ public abstract class Flash extends BaseOperation {
         logger.error("error ", ex);
       }
     }
-    if (!(tm[0] < -1e-4) && !(tm[1] < -1e-4) || system.getPhase(0).getNumberOfComponents() == 1) {
+    if (tm[0] > tmLimit && tm[1] > tmLimit || system.getPhase(0).getNumberOfComponents() == 1) {
       stable = true;
       system.init(0);
       // logger.info("system is stable");
@@ -351,7 +358,7 @@ public abstract class Flash extends BaseOperation {
     } else {
       RachfordRice rachfordRice = new RachfordRice();
       try {
-        system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
+        system.setBeta(rachfordRice.calcBeta(system.getKvector(), minimumGibbsEnergySystem.getzvector()));
       } catch (Exception ex) {
         if (!Double.isNaN(rachfordRice.getBeta()[0])) {
           system.setBeta(rachfordRice.getBeta()[0]);

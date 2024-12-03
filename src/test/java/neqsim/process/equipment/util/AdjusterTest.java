@@ -19,8 +19,7 @@ public class AdjusterTest {
     stream1.setTemperature(75.0, "C");
 
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills flowline1 =
-        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("flowline",
-            stream1);
+        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("flowline", stream1);
     flowline1.setDiameter(0.25);
     flowline1.setPipeWallRoughness(15e-6);
     flowline1.setLength(1200);
@@ -61,8 +60,7 @@ public class AdjusterTest {
     stream1.setTemperature(75.0, "C");
 
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills flowline1 =
-        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("flowline",
-            stream1);
+        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("flowline", stream1);
     flowline1.setDiameter(0.25);
     flowline1.setPipeWallRoughness(15e-6);
     flowline1.setLength(1200);
@@ -86,6 +84,6 @@ public class AdjusterTest {
 
     assertEquals(flowline1.getOutletStream().getPressure(), 120, 1e-3);
     assertEquals(flowline1.getOutletStream().getFlowRate("MSm3/day"), 4.0, 1e-3);
-    assertEquals(flowline1.getInletStream().getPressure(), 200, 0.1);
+    assertEquals(flowline1.getInletStream().getPressure(), 199.976882003305, 0.1);
   }
 }

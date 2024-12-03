@@ -253,6 +253,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     testSystem.addComponent("nC12", 0.000000001);
 
     testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
+    testSystem.setMultiPhaseCheck(true);
     testSystem.init(0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
@@ -266,9 +267,10 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     assertEquals((testOps.get("cricondenbar")[0] - 273.15), -11.09948347, 0.02);
     assertEquals(testOps.get("cricondenbar")[1], 104.75329137038476, 0.02);
 
-    testSystem.setTemperature(-11.09948347, "C");
+    testSystem.setTemperature(-11.0994834, "C");
+    testSystem.setPressure(10);
     SaturationPressure satPresSim = new SaturationPressure(testSystem);
     satPresSim.run();
-    assertEquals(satPresSim.getThermoSystem().getPressure(), 104.7532, 0.001);
+    assertEquals(104.7532901763, satPresSim.getThermoSystem().getPressure(), 0.001);
   }
 }

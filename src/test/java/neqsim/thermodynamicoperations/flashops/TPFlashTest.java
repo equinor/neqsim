@@ -64,7 +64,7 @@ class TPFlashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    double expected = -552558.80195817;
+    double expected = -552559.256480;
     double deviation = Math.abs((testSystem.getEnthalpy() - expected) / expected * 100);
     assertEquals(0.0, deviation, 0.5);
   }
@@ -142,6 +142,7 @@ class TPFlashTest {
   @Test
   void testTPflash1() {
     testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 + 290, 400.0);
+
     testSystem.addComponent("water", 65.93229747922976);
     testSystem.addComponent("NaCl", 0.784426208131475);
     testSystem.addComponent("nitrogen", 0.578509157534656);
@@ -152,6 +153,7 @@ class TPFlashTest {
     testSystem.addComponent("n-butane", 0.1543856425679738);
     testSystem.addComponent("i-pentane", 0.04039429848533373);
     testSystem.addComponent("n-pentane", 0.1543856425679738);
+
     testSystem.addTBPfraction("C6", 0.568724470114871, 84.93298402237961 / 1000.0,
         666.591171644071 / 1000.0);
     testSystem.addTBPfraction("C7", 0.9478147516962493, 90.01311937418495 / 1000.0,

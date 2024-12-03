@@ -208,12 +208,15 @@ public class TPflash extends Flash {
     system.init(0);
     system.init(1);
 
-    if (system.getPhase(0).getGibbsEnergy() < system.getPhase(1).getGibbsEnergy()) {
-      minimumGibbsEnergy = system.getPhase(0).getGibbsEnergy();
+    if ((system.getPhase(0).getGibbsEnergy()
+        * (1.0 - Math.signum(system.getPhase(0).getGibbsEnergy()) * 1e-8)) < system.getPhase(1)
+            .getGibbsEnergy()) {
+      minGibbsPhase = 0;
     } else {
       minGibbsPhase = 1;
-      minimumGibbsEnergy = system.getPhase(1).getGibbsEnergy();
     }
+    // logger.debug("minimum gibbs phase " + minGibbsPhase);
+    minimumGibbsEnergy = system.getPhase(minGibbsPhase).getGibbsEnergy();
 
     if (system.getPhase(0).getNumberOfComponents() == 1 || system.getMaxNumberOfPhases() == 1) {
       system.setNumberOfPhases(1);
@@ -466,19 +469,23 @@ public class TPflash extends Flash {
       operation.run();
     } else {
       // Checks if gas or oil is the most stable phase
-      if (system.getPhase(0).getType() == PhaseType.GAS) {
-        gasgib = system.getPhase(0).getGibbsEnergy();
-        system.setPhaseType(0, PhaseType.byValue(0));
-        system.init(1, 0);
-        liqgib = system.getPhase(0).getGibbsEnergy();
-      } else {
-        liqgib = system.getPhase(0).getGibbsEnergy();
-        system.setPhaseType(0, PhaseType.byValue(1));
-        system.init(1, 0);
-        gasgib = system.getPhase(0).getGibbsEnergy();
-      }
+      try {
+        if (system.getPhase(0).getType() == PhaseType.GAS) {
+          gasgib = system.getPhase(0).getGibbsEnergy();
+          system.setPhaseType(0, PhaseType.byValue(0));
 
-      if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
+          system.init(1, 0);
+          liqgib = system.getPhase(0).getGibbsEnergy();
+        } else {
+          liqgib = system.getPhase(0).getGibbsEnergy();
+          system.setPhaseType(0, PhaseType.byValue(1));
+          system.init(1, 0);
+          gasgib = system.getPhase(0).getGibbsEnergy();
+        }
+        if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
+          system.setPhaseType(0, PhaseType.byValue(1));
+        }
+      } catch (Exception e) {
         system.setPhaseType(0, PhaseType.byValue(1));
       }
 
