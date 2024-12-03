@@ -7,6 +7,7 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentInterface;
@@ -195,6 +196,8 @@ public class RachfordRice implements Serializable {
     beta[1] = 1.0 - nybeta;
 
     if (iterations >= maxIterations) {
+      logger.debug("K " + Arrays.toString(K));
+      logger.debug("z " + Arrays.toString(z));
       throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(),
           "calcBetaMichelsen2001", maxIterations);
     }

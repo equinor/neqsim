@@ -282,8 +282,8 @@ public abstract class Flash extends BaseOperation {
     // check for trivial solution
     double diffx = 0.0;
     for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
-      diffx += Math.abs(clonedSystem.getPhase(0).getComponent(i).getx()
-          - clonedSystem.getPhase(1).getComponent(i).getx());
+      diffx += Math.abs(clonedSystem.getPhase(j).getComponent(i).getx()
+          - minimumGibbsEnergySystem.getPhase(0).getComponent(i).getx());
     }
     if (diffx < 1e-10) {
       tm[0] = 0.0;
@@ -310,6 +310,7 @@ public abstract class Flash extends BaseOperation {
           logger.info("error in stability anlysis");
           system.init(0);
         }
+
         if (Double.isNaN(tm[j])) {
           tm[j] = 0;
         }
@@ -357,7 +358,7 @@ public abstract class Flash extends BaseOperation {
     } else {
       RachfordRice rachfordRice = new RachfordRice();
       try {
-        system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
+        system.setBeta(rachfordRice.calcBeta(system.getKvector(), minimumGibbsEnergySystem.getzvector()));
       } catch (Exception ex) {
         if (!Double.isNaN(rachfordRice.getBeta()[0])) {
           system.setBeta(rachfordRice.getBeta()[0]);

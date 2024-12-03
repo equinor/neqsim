@@ -580,7 +580,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
      * coolerhOTteg3.getOutletStream().getFlowRate("kg/hr")); System.out.println("leantoresirc " +
      * leanTEGtoabs.getFlowRate("kg/hr"));
      */
-    assertEquals(1.6574913669263535E-5, dehydratedGas.getFluid().getComponent("water").getx(),
+    assertEquals(1.5449593316401103E-5, dehydratedGas.getFluid().getComponent("water").getx(),
         1e-6);
   }
 
