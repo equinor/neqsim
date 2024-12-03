@@ -115,8 +115,6 @@ public abstract class Flash extends BaseOperation {
     }
 
     SystemInterface clonedSystem = minimumGibbsEnergySystem;
-    clonedSystem.setTotalNumberOfMoles(1.0);
-    clonedSystem.init(1);
     double[] sumw = new double[2];
     sumw[1] = 0.0;
     sumw[0] = 0.0;
