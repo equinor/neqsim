@@ -94,7 +94,9 @@ public class AcidTest extends neqsim.NeqSimTest {
    */
   @Test
   @DisplayName("test bublepoint of acetic acid")
-  public void testtestBubpAceticAcid() {
+  public void testtestBubpacetic
+
+  acid() {
     neqsim.thermo.system.SystemSrkCPAstatoil testSystem =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 117.9, 1.01325);
     testSystem.addComponent("acetic acid", 25.0, "kg/sec");

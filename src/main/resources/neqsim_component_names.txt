@@ -99,7 +99,7 @@ ethylcyclohexane
 i-pentane
 H2S
 S8
-AceticAcid
+acetic acid
 Ac-
 neon
 acetone
