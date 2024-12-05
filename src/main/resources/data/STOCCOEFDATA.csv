@@ -43,14 +43,14 @@
 110,13,"Piperazineprot3","water",-1
 111,13,"Piperazineprot3","-OOCPZCOO-",1
 112,13,"Piperazineprot3","H3O+",1
-113,14,"Acetate","AceticAcid",-1
+113,14,"Acetate","acetic acid",-1
 114,14,"Acetate","water",1
 115,14,"Acetate","Ac-",1
 116,14,"Acetate","OH-",-1
 117,16,"MDEACO2S","HCO3-",1
 118,16,"MDEACO2S","MDEA+",1
 119,16,"MDEAAcidS","CO2",0
-120,16,"MDEAAcidS","AceticAcid",-1
+120,16,"MDEAAcidS","acetic acid",-1
 121,15,"MDEACO2S","CO2",-1
 122,16,"MDEAAcidS","MDEA",-1
 123,16,"MDEAAcidS","water",0
@@ -63,7 +63,7 @@
 130,18,"MDEACO2Acetate","water",-1
 131,18,"MDEACO2Acetate","Ac-",0
 132,19,"MDEAAcid","MDEA",-1
-133,19,"MDEAAcid","AceticAcid",-1
+133,19,"MDEAAcid","acetic acid",-1
 134,19,"MDEAAcid","Ac-",1
 135,19,"MDEAAcid","MDEA+",1
 136,20,"MDEAAcidCH4","MDEA",-1
@@ -72,9 +72,9 @@
 139,20,"MDEAAcidCH4","CO2",0
 140,20,"MDEAAcidCH4","Ac-",1
 141,20,"MDEAAcidCH4","MDEA+",1
-142,20,"MDEAAcidCH4","AceticAcid",-1
+142,20,"MDEAAcidCH4","acetic acid",-1
 143,20,"MDEAAcidCH4","Methane",0
-144,21,"MDEACO2CH4","AceticAcid",0
+144,21,"MDEACO2CH4","acetic acid",0
 145,21,"MDEACO2CH4","water",-1
 146,21,"MDEACO2CH4","CO2",-1
 147,21,"MDEACO2CH4","Ac-",0
