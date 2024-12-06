@@ -475,7 +475,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   private Collection<TestData> getTestData() throws IOException {
     ClassLoader classLoader = getClass().getClassLoader();
     File folder =
-        new File(classLoader.getResource("neqsim/thermodynamicOperations/testcases").getFile());
+        new File(classLoader.getResource("neqsim/thermodynamicoperations/testcases").getFile());
 
     HashMap<String, TestData> testData = new HashMap<>();
 
