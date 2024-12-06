@@ -111,4 +111,4 @@ jobs:
       - name: Generate javadoc
         run: mvn javadoc:javadoc
       - name: Run tests
-        run: mvn -B test --file pomJava21.xml -ntp
+        run: mvn -B test --file pomJava21.xml 
