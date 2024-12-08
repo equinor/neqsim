@@ -296,6 +296,10 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
       return;
     }
 
+    if (isSetEnergyStream()) {
+      setPower(energyStream.getDuty());
+    }
+
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
     thermoOps = new ThermodynamicOperations(getThermoSystem());
     getThermoSystem().init(3);

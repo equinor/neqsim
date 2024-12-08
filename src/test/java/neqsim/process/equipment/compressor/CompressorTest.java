@@ -12,6 +12,8 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.expander.Expander;
+import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
@@ -291,5 +293,55 @@ class CompressorTest extends neqsim.NeqSimTest {
     processOps.run();
     assertEquals(139.7216108, compressor1.getOutletStream().getTemperature("C"), 0.01);
     // compressor1.getOutletStream().getFluid().prettyPrint();
+  }
+
+
+  /**
+   * <p>
+   * test run with energy stream input.
+   * </p>
+   */
+  @Test
+  public void testRunWithEnergyStreamInput() {
+    SystemSrkEos testSystem = new SystemSrkEos(315.0, 10.0);
+    testSystem.addComponent("nitrogen", 2.0);
+    testSystem.addComponent("methane", 50.0);
+    testSystem.setMixingRule(2);
+
+    Stream inletStream = new Stream("feed stream", testSystem);
+    inletStream.setPressure(100, "bara");
+    inletStream.setTemperature(30, "C");
+    inletStream.setFlowRate(1, "MSm3/day");
+    inletStream.run();
+
+    EnergyStream estream1 = new EnergyStream("e_stream");
+
+    Expander expander1 = new Expander("expander 1", inletStream);
+    expander1.setPolytropicEfficiency(0.8);
+    expander1.setUsePolytropicCalc(true);
+    // expander1.setIsentropicEfficiency(1.0);
+    expander1.setOutletPressure(55.0, "bara");
+    expander1.setEnergyStream(estream1);
+    expander1.run();
+
+    assertEquals(481376.2230301, estream1.getDuty(), 0.01);
+
+    compressor1 = new Compressor("compressor 1", expander1.getOutletStream());
+    compressor1.setUsePolytropicCalc(true);
+    compressor1.setPolytropicEfficiency(0.8);
+    // compressor1.setIsentropicEfficiency(1.0);
+    compressor1.setEnergyStream(estream1);
+    compressor1.setCalcPressureOut(true);
+    compressor1.run();
+
+    assertEquals(481376.2230301, compressor1.getPower(), 0.01);
+
+    processOps = new ProcessSystem();
+    processOps.add(inletStream);
+    processOps.add(expander1);
+    processOps.add(compressor1);
+    processOps.run();
+
+    assertEquals(81.61462472, compressor1.getOutletPressure(), 0.01);
   }
 }

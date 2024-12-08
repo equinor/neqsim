@@ -31,8 +31,7 @@ public class Expander extends Compressor implements ExpanderInterface {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Expander(String name, StreamInterface inletStream) {
     super(name, inletStream);
@@ -51,18 +50,21 @@ public class Expander extends Compressor implements ExpanderInterface {
     // double densInn = getThermoSystem().getDensity();
     double entropy = getThermoSystem().getEntropy();
     inletEnthalpy = hinn;
-
+    double hout = hinn;
     if (usePolytropicCalc) {
       int numbersteps = 40;
       double dp = (pressure - getThermoSystem().getPressure()) / (1.0 * numbersteps);
+
       for (int i = 0; i < numbersteps; i++) {
         entropy = getThermoSystem().getEntropy();
-        hinn = getThermoSystem().getEnthalpy();
+        double hinn_loc = getThermoSystem().getEnthalpy();
         getThermoSystem().setPressure(getThermoSystem().getPressure() + dp);
         thermoOps.PSflash(entropy);
-        double hout = hinn + (getThermoSystem().getEnthalpy() - hinn) * polytropicEfficiency;
+        hout = hinn_loc + (getThermoSystem().getEnthalpy() - hinn_loc) * polytropicEfficiency;
         thermoOps.PHflash(hout, 0);
       }
+
+      dH = hout - hinn;
       /*
        * HYSYS method double oldPolyt = 10.5; int iter = 0; do {
        *
@@ -87,11 +89,14 @@ public class Expander extends Compressor implements ExpanderInterface {
       if (!powerSet) {
         dH = (getThermoSystem().getEnthalpy() - hinn) * isentropicEfficiency;
       }
-      double hout = hinn + dH;
+      hout = hinn + dH;
       isentropicEfficiency = dH / (getThermoSystem().getEnthalpy() - hinn);
       // System.out.println("isentropicEfficiency.. " + isentropicEfficiency);
       dH = hout - hinn;
       thermoOps.PHflash(hout, 0);
+    }
+    if (isSetEnergyStream()) {
+      energyStream.setDuty(-dH);
     }
     // thermoSystem.display();
     outStream.setThermoSystem(getThermoSystem());
