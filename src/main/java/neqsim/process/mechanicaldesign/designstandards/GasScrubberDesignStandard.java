@@ -68,7 +68,7 @@ public class GasScrubberDesignStandard extends DesignStandard {
       }
     } catch (Exception e) {
       // TODO Auto-generated catch block
-      e.printStackTrace();
+      logger.error(e.getMessage());;
     }
   }
 

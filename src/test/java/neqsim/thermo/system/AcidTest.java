@@ -1,6 +1,8 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.component.ComponentSrkCPA;
@@ -8,6 +10,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class AcidTest extends neqsim.NeqSimTest {
+  static Logger logger = LogManager.getLogger(AcidTest.class);
 
   /**
    * <p>
@@ -44,7 +47,7 @@ public class AcidTest extends neqsim.NeqSimTest {
       testOps.bubblePointPressureFlash(false);
       testSystem.initProperties();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());;
     }
 
     assertEquals(33.2215005, testSystem.getPressure(), 0.001);
@@ -104,7 +107,7 @@ public class AcidTest extends neqsim.NeqSimTest {
       testOps.bubblePointPressureFlash();
       testSystem.initProperties();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());;
     }
 
     assertEquals(0.999088711628, testSystem.getPressure(), 0.001);
@@ -154,7 +157,7 @@ public class AcidTest extends neqsim.NeqSimTest {
     try {
       testOps.bubblePointTemperatureFlash();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());;
     }
 
     String scheme = testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0).getAssociationScheme();
@@ -190,7 +193,7 @@ public class AcidTest extends neqsim.NeqSimTest {
     try {
       testOps.bubblePointTemperatureFlash();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());;
     }
 
     String scheme = testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0).getAssociationScheme();

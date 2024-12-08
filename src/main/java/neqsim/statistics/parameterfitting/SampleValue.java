@@ -6,6 +6,8 @@
 
 package neqsim.statistics.parameterfitting;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -18,6 +20,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SampleValue implements Cloneable {
+  static Logger logger = LogManager.getLogger(SampleValue.class);
   protected FunctionInterface testFunction;
   double sampleValue = 0;
   double[] dependentValues;
@@ -80,7 +83,7 @@ public class SampleValue implements Cloneable {
     try {
       clonedValue = (SampleValue) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
     // this was modified 20.05.2002
     // clonedValue.system = system.clone();

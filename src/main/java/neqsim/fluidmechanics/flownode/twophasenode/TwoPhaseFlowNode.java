@@ -1,6 +1,9 @@
 package neqsim.fluidmechanics.flownode.twophasenode;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNode;
+import neqsim.fluidmechanics.flownode.twophasenode.twophasestirredcellnode.StirredCellNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -14,6 +17,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public abstract class TwoPhaseFlowNode extends FlowNode {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(TwoPhaseFlowNode.class);
 
   // public double[] molarMassTransferFlux;
   // public double[] molarMassTransfer;
@@ -56,7 +60,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     try {
       clonedSystem = (TwoPhaseFlowNode) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     // clonedSystem.molarMassTransferFlux = (double[])

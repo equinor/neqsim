@@ -11,9 +11,12 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.InterphaseTransportCoefficientBaseClass;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.InterphaseTransportCoefficientInterface;
+import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -31,6 +34,7 @@ import neqsim.util.util.DoubleCloneable;
  */
 public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(FlowNode.class);
 
   protected double distanceToCenterOfNode = 0;
   protected double lengthOfNode = 0;
@@ -229,7 +233,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     try {
       clonedSystem = (FlowNode) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     clonedSystem.bulkSystem = bulkSystem.clone();

@@ -1,6 +1,9 @@
 package neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver.StirredCellSolver;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.mathlib.generalmath.TDMAsolve;
 
@@ -15,6 +18,7 @@ import neqsim.mathlib.generalmath.TDMAsolve;
 public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     implements neqsim.thermo.ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(TwoPhaseFixedStaggeredGridSolver.class);
   Matrix diffMatrix;
   double[][] dn;
   int iter = 0;
@@ -84,7 +88,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     try {
       clonedSystem = (TwoPhaseFixedStaggeredGridSolver) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
     return clonedSystem;
   }

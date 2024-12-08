@@ -1,5 +1,7 @@
 package neqsim.fluidmechanics.flownode.twophasenode.twophasereactorflownode;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow;
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
@@ -21,6 +23,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(TwoPhaseTrayTowerFlowNode.class);
 
   /**
    * <p>
@@ -76,7 +79,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
     try {
       clonedSystem = (TwoPhaseTrayTowerFlowNode) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     return clonedSystem;

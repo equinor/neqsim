@@ -1,5 +1,7 @@
 package neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
@@ -9,6 +11,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class StratifiedFlowNodeTest {
+  static Logger logger = LogManager.getLogger(StratifiedFlowNodeTest.class);
+
   @Test
   void testInit() {
     SystemInterface testSystem = new SystemSrkEos(313.3, 100.01325);
@@ -187,7 +191,7 @@ public class StratifiedFlowNodeTest {
           }
           oilPhases[i] = nodes[i].getBulkSystem().phaseToSystem(1);
         } catch (Exception e) {
-          e.printStackTrace();
+          logger.error(e.getMessage());;
         }
 
         // gasPhases[i + 1].prettyPrint();
@@ -232,7 +236,7 @@ public class StratifiedFlowNodeTest {
           }
           oilPhases[i] = nodes[i].getBulkSystem().phaseToSystem(1);
         } catch (Exception e) {
-          e.printStackTrace();
+          logger.error(e.getMessage());;
         }
 
         // gasPhases[i + 1].prettyPrint();

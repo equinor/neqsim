@@ -1,6 +1,9 @@
 package neqsim.fluidmechanics.geometrydefinitions.stirredcell;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinition;
+import neqsim.fluidmechanics.geometrydefinitions.reactor.ReactorData;
 
 /**
  * <p>
@@ -12,6 +15,7 @@ import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinition;
  */
 public class StirredCell extends GeometryDefinition {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(StirredCell.class);
 
   /**
    * <p>
@@ -50,7 +54,7 @@ public class StirredCell extends GeometryDefinition {
     try {
       clonedPipe = (StirredCell) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
     return clonedPipe;
   }

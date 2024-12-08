@@ -189,10 +189,10 @@ public class PipeBeggsAndBrills extends Pipeline {
       }
     } catch (NumberFormatException e) {
       // TODO Auto-generated catch block
-      e.printStackTrace();
+      logger.error(e.getMessage());
     } catch (SQLException e) {
       // TODO Auto-generated catch block
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
   }
 

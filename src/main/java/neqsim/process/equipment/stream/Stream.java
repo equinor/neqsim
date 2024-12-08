@@ -177,7 +177,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     try {
       clonedSystem = (Stream) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
     if (stream != null) {
       clonedSystem.setStream(stream.clone());

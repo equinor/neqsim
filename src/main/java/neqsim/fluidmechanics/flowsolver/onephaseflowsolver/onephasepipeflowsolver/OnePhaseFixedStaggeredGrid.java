@@ -6,7 +6,10 @@
 
 package neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.fluidmechanics.flownode.FlowNode;
 import neqsim.mathlib.generalmath.TDMAsolve;
 
 /**
@@ -20,6 +23,7 @@ import neqsim.mathlib.generalmath.TDMAsolve;
 public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     implements neqsim.thermo.ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(OnePhaseFixedStaggeredGrid.class);
 
   Matrix diffMatrix;
   int iter = 0;
@@ -79,7 +83,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     try {
       clonedSystem = (OnePhaseFixedStaggeredGrid) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     return clonedSystem;
@@ -283,8 +287,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     for (int j = 1; j < numberOfNodes; j++) {
       for (int p = 0; p < pipe.getNode(0).getBulkSystem().getPhases()[0]
           .getNumberOfComponents(); p++) {
-        pipe.getNode(j).getBulkSystem().getPhases()[0].getComponent(p).setx(
-            sol4Matrix[p].get(j, 0) * pipe.getNode(j).getBulkSystem().getPhases()[0].getMolarMass()
+        pipe.getNode(j).getBulkSystem().getPhases()[0].getComponent(p)
+            .setx(sol4Matrix[p].get(j, 0)
+                * pipe.getNode(j).getBulkSystem().getPhases()[0].getMolarMass()
                 / pipe.getNode(j).getBulkSystem().getPhases()[0].getComponent(p).getMolarMass());
         // pipe.getNode(j).getBulkSystem().getPhases()[0].getComponent(p).getx() +
         // 0.5*diff4Matrix[p].get(j,0));

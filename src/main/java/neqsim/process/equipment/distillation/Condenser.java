@@ -134,7 +134,7 @@ public class Condenser extends SimpleTray {
       try {
         testOps.bubblePointTemperatureFlash();
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
       }
       mixedStream.getThermoSystem().init(3);
       // mixedStream.getThermoSystem().prettyPrint();

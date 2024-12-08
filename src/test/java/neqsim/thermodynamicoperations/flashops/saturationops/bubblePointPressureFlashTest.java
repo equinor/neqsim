@@ -1,11 +1,14 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class bubblePointPressureFlashTest {
+  static Logger logger = LogManager.getLogger(bubblePointPressureFlashTest.class);
   @Test
   void testRun() {
     SystemSrkEos fluid0_HC = new SystemSrkEos();
@@ -22,7 +25,7 @@ public class bubblePointPressureFlashTest {
     try {
       ops.bubblePointPressureFlash(false);
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());;
     }
     assertEquals(65.150271897839, fluid0_HC.getPressure(), 1e-2);
   }

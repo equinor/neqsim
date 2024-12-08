@@ -1,6 +1,8 @@
 package neqsim.process.equipment.util;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -16,6 +18,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class StreamSaturatorUtil extends TwoPortEquipment {
+  static Logger logger = LogManager.getLogger(StreamSaturatorUtil.class);
   private static final long serialVersionUID = 1000;
 
   SystemInterface thermoSystem;
@@ -85,7 +88,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
             -thermoSystem.getComponent("water").getNumberOfmoles() * (1.0 - approachToSaturation));
         thermoOps.TPflash();
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
       }
     }
 

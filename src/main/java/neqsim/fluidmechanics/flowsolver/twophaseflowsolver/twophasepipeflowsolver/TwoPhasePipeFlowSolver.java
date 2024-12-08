@@ -1,5 +1,7 @@
 package neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 
@@ -14,6 +16,7 @@ import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 public class TwoPhasePipeFlowSolver
     extends neqsim.fluidmechanics.flowsolver.onephaseflowsolver.OnePhaseFlowSolver {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(TwoPhasePipeFlowSolver.class);
 
   protected double[] PbArray; // = new double[100];
   protected Matrix[] solMatrix;
@@ -83,7 +86,7 @@ public class TwoPhasePipeFlowSolver
     try {
       clonedSystem = (TwoPhasePipeFlowSolver) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     return clonedSystem;

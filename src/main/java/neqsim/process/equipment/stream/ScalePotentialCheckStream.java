@@ -60,7 +60,7 @@ public class ScalePotentialCheckStream extends Stream {
     try {
       clonedSystem = (ScalePotentialCheckStream) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
     return clonedSystem;
   }

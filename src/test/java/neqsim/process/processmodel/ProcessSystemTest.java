@@ -2,6 +2,8 @@ package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,8 @@ import neqsim.process.measurementdevice.WaterDewPointAnalyser;
  * Class for testing ProcessSystem class.
  */
 public class ProcessSystemTest extends neqsim.NeqSimTest {
+  static Logger logger = LogManager.getLogger(ProcessSystemTest.class);
+
   ProcessSystem p;
   String _name = "TestProcess";
 
@@ -933,7 +937,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
       thread2.join();
       thread3.join();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());;
     }
   }
 }
