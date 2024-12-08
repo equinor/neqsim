@@ -1,5 +1,7 @@
 package neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow;
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
@@ -19,6 +21,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class StratifiedFlowNode extends TwoPhaseFlowNode {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(StratifiedFlowNode.class);
 
   /**
    * <p>
@@ -74,7 +77,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
     try {
       clonedSystem = (StratifiedFlowNode) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     return clonedSystem;

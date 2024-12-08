@@ -57,7 +57,7 @@ public class NeqStream extends Stream {
     try {
       clonedStream = (NeqStream) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     thermoSystem = thermoSystem.clone();

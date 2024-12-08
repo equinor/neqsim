@@ -1,19 +1,23 @@
 package neqsim.thermodynamicoperations.flashops;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class RachfordRiceTest {
+  static Logger logger = LogManager.getLogger(RachfordRiceTest.class);
+
   @Test
   void testCalcBeta() {
-    double[] z = new double[] { 0.7, 0.3 };
-    double[] K = new double[] { 2.0, 0.01 };
+    double[] z = new double[] {0.7, 0.3};
+    double[] K = new double[] {2.0, 0.01};
 
     try {
       RachfordRice rachfordRice = new RachfordRice();
       Assertions.assertEquals(0.407070707, rachfordRice.calcBeta(K, z), 1e-6);
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());;
     }
 
     try {
@@ -22,20 +26,20 @@ public class RachfordRiceTest {
       Assertions.assertEquals(0.407070707, rachfordRice.calcBeta(K, z), 1e-6);
       RachfordRice.setMethod("Michelsen2001");
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());;
     }
   }
 
   @Test
   void testCalcBetaMethod2() {
-    double[] z = new double[] { 0.7, 0.3 };
-    double[] K = new double[] { 2.0, 0.01 };
+    double[] z = new double[] {0.7, 0.3};
+    double[] K = new double[] {2.0, 0.01};
 
     try {
       RachfordRice rachfordRice = new RachfordRice();
       Assertions.assertEquals(0.407070707, rachfordRice.calcBeta(K, z), 1e-6);
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());;
     }
   }
 }

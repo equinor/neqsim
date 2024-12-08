@@ -1,5 +1,8 @@
 package neqsim.fluidmechanics.geometrydefinitions.pipe;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhasePipeFlowSolver;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinition;
 import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.PipeWall;
 
@@ -13,6 +16,7 @@ import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.PipeWall;
  */
 public class PipeData extends GeometryDefinition {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(PipeData.class);
 
   /**
    * <p>
@@ -55,7 +59,7 @@ public class PipeData extends GeometryDefinition {
     try {
       clonedPipe = (PipeData) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
     return clonedPipe;
   }

@@ -1,8 +1,11 @@
 package neqsim.fluidmechanics.flownode.twophasenode.twophasereactorflownode;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasereactorflow.InterphasePackedBed;
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
+import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.reactor.ReactorData;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
@@ -21,6 +24,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(TwoPhasePackedBedFlowNode.class);
 
   /**
    * <p>
@@ -76,7 +80,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
     try {
       clonedSystem = (TwoPhasePackedBedFlowNode) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     return clonedSystem;

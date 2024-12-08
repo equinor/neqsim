@@ -20,8 +20,7 @@ public class LevenbergMarquardtAbsDev extends LevenbergMarquardt {
    * Constructor for LevenbergMarquardtAbsDev.
    * </p>
    */
-  public LevenbergMarquardtAbsDev() {
-  }
+  public LevenbergMarquardtAbsDev() {}
 
   /** {@inheritDoc} */
   @Override
@@ -30,7 +29,7 @@ public class LevenbergMarquardtAbsDev extends LevenbergMarquardt {
     try {
       clonedClass = (LevenbergMarquardtAbsDev) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     return clonedClass;

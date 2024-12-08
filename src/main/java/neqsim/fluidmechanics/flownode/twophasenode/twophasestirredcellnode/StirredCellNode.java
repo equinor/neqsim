@@ -1,8 +1,11 @@
 package neqsim.fluidmechanics.flownode.twophasenode.twophasestirredcellnode;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow;
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
+import neqsim.fluidmechanics.flownode.twophasenode.twophasereactorflownode.TwoPhaseTrayTowerFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.stirredcell.StirredCell;
 import neqsim.thermo.system.SystemInterface;
@@ -20,6 +23,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class StirredCellNode extends TwoPhaseFlowNode {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(StirredCellNode.class);
 
   private double[] stirrerRate = {1.0, 1.0};
   private double[] stirrerDiameter = {1.0, 1.0};
@@ -97,7 +101,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
     try {
       clonedSystem = (StirredCellNode) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     return clonedSystem;

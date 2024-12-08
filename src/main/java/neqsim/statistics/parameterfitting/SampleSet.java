@@ -8,6 +8,8 @@ package neqsim.statistics.parameterfitting;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -18,6 +20,7 @@ import java.util.Arrays;
  * @version $Id: $Id
  */
 public class SampleSet implements Cloneable {
+  static Logger logger = LogManager.getLogger(SampleSet.class);
   private ArrayList<SampleValue> samples = new ArrayList<SampleValue>(1);
 
   /**
@@ -58,7 +61,7 @@ public class SampleSet implements Cloneable {
     try {
       clonedSet = (SampleSet) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     clonedSet.samples = new ArrayList<SampleValue>(samples);

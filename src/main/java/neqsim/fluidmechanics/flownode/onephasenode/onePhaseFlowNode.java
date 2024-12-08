@@ -1,6 +1,9 @@
 package neqsim.fluidmechanics.flownode.onephasenode;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNode;
+import neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode.onePhasePipeFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -14,6 +17,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public abstract class onePhaseFlowNode extends FlowNode {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(onePhaseFlowNode.class);
 
   /**
    * <p>
@@ -51,7 +55,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
     try {
       clonedSystem = (onePhaseFlowNode) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     return clonedSystem;
@@ -132,7 +136,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
     volumetricFlowRate[0] = superficialVelocity[0] * pipe.getArea();
     this.updateMolarFlow();
     calcReynoldsNumber();
-    //System.out.println("specifiedFrictionFactor " +specifiedFrictionFactor[0]);
+    // System.out.println("specifiedFrictionFactor " +specifiedFrictionFactor[0]);
     if (specifiedFrictionFactor[0] == null) {
       wallFrictionFactor[0] = interphaseTransportCoefficient.calcWallFrictionFactor(this);
     } else {

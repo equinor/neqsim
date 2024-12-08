@@ -1,7 +1,10 @@
 package neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphaseonephase.interphasepipeflow.InterphasePipeFlow;
+import neqsim.fluidmechanics.flownode.multiphasenode.MultiPhaseFlowNode;
 import neqsim.fluidmechanics.flownode.onephasenode.onePhaseFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
@@ -20,6 +23,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class onePhasePipeFlowNode extends onePhaseFlowNode {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(onePhasePipeFlowNode.class);
 
   /**
    * <p>
@@ -52,7 +56,7 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
     try {
       clonedSystem = (onePhasePipeFlowNode) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
     return clonedSystem;
   }

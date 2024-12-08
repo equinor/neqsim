@@ -162,7 +162,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
       // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
     } catch (Exception e) {
       // TODO Auto-generated catch block
-      e.printStackTrace();
+      logger.error(e.getMessage());;
     }
   }
 }

@@ -1,7 +1,10 @@
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
+import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -15,6 +18,7 @@ import neqsim.thermo.system.SystemInterface;
 public abstract class NonEquilibriumFluidBoundary
     extends neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundary {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(NonEquilibriumFluidBoundary.class);
 
   protected int neq = 0;
   protected Matrix dx;
@@ -98,7 +102,7 @@ public abstract class NonEquilibriumFluidBoundary
     try {
       clonedSystem = (NonEquilibriumFluidBoundary) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     return clonedSystem;

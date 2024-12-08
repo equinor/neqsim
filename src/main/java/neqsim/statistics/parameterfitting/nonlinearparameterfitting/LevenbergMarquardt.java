@@ -6,7 +6,10 @@
 
 package neqsim.statistics.parameterfitting.nonlinearparameterfitting;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinition;
 import neqsim.statistics.parameterfitting.StatisticsBaseClass;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -19,6 +22,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class LevenbergMarquardt extends StatisticsBaseClass {
+  static Logger logger = LogManager.getLogger(LevenbergMarquardt.class);
   double oldChiSquare = 1e100;
   double newChiSquare = 0;
   Matrix parameterStdDevMatrix;
@@ -43,7 +47,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     try {
       clonedClass = (LevenbergMarquardt) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     return clonedClass;

@@ -1,5 +1,7 @@
 package neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseDropletFlow;
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
@@ -19,6 +21,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class BubbleFlowNode extends TwoPhaseFlowNode {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(BubbleFlowNode.class);
   private double averageBubbleDiameter = 0.001;
 
   /**
@@ -94,7 +97,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
     try {
       clonedSystem = (BubbleFlowNode) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     return clonedSystem;

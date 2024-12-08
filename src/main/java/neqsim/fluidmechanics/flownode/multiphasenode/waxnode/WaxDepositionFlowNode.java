@@ -1,6 +1,9 @@
 package neqsim.fluidmechanics.flownode.multiphasenode.waxnode;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
+import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.NonEquilibriumFluidBoundary;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow;
 import neqsim.fluidmechanics.flownode.multiphasenode.MultiPhaseFlowNode;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode;
@@ -21,6 +24,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(WaxDepositionFlowNode.class);
 
   /**
    * <p>
@@ -71,7 +75,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
     try {
       clonedSystem = (StratifiedFlowNode) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     return clonedSystem;

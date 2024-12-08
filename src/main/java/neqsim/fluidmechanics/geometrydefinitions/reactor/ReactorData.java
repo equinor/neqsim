@@ -1,6 +1,9 @@
 package neqsim.fluidmechanics.geometrydefinitions.reactor;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinition;
+import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 
 /**
  * <p>
@@ -12,6 +15,7 @@ import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinition;
  */
 public class ReactorData extends GeometryDefinition {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(ReactorData.class);
 
   /**
    * <p>
@@ -114,7 +118,7 @@ public class ReactorData extends GeometryDefinition {
     try {
       clonedPipe = (ReactorData) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     return clonedPipe;

@@ -1,8 +1,11 @@
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel;
+import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,6 +17,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
+  static Logger logger = LogManager.getLogger(ReactiveFluidBoundary.class);
   private static final long serialVersionUID = 1000;
 
   protected int neq = 0;
@@ -85,7 +89,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
     try {
       clonedSystem = (ReactiveFluidBoundary) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     return clonedSystem;

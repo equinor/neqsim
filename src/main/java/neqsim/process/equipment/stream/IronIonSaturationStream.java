@@ -66,7 +66,7 @@ public class IronIonSaturationStream extends Stream {
     try {
       clonedSystem = (IronIonSaturationStream) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
     return clonedSystem;
   }

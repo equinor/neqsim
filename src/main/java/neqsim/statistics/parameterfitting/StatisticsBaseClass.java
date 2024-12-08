@@ -71,7 +71,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     try {
       clonedClass = (StatisticsBaseClass) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
 
     clonedClass.sampleSet = sampleSet.clone();

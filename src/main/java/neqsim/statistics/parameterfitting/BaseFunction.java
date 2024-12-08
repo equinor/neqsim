@@ -1,5 +1,8 @@
 package neqsim.statistics.parameterfitting;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -12,6 +15,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public abstract class BaseFunction implements FunctionInterface {
+  static Logger logger = LogManager.getLogger(BaseFunction.class);
   public double[] params = null;
   public double[][] bounds = null;
 
@@ -32,7 +36,7 @@ public abstract class BaseFunction implements FunctionInterface {
     try {
       clonedClass = (BaseFunction) super.clone();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());;
     }
     // if(system!=null) clonedClass.system = system.clone();
     clonedClass.params = params.clone();

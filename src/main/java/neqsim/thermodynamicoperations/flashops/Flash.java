@@ -73,7 +73,7 @@ public abstract class Flash extends BaseOperation {
       } else {
         lowestGibbsEnergyPhase = 1;
       }
-      logger.info("Lowest Gibbs energy phase determined: Phase {}", lowestGibbsEnergyPhase);
+      // logger.info("Lowest Gibbs energy phase determined: Phase {}", lowestGibbsEnergyPhase);
 
       findLowestGibbsPhaseIsChecked = true;
     }
@@ -176,7 +176,9 @@ public abstract class Flash extends BaseOperation {
           }
           fNorm = f.norm2();
           if (fNorm > fNormOld && iterations > 3 && (iterations - 1) % 7 != 0) {
-            // break;
+            if (iterations > 10) {
+              break;
+            }
           }
           if (iterations % 7 == 0 && fNorm < fNormOld && !secondOrderStabilityAnalysis) {
             double vec1 = 0.0;
@@ -358,7 +360,8 @@ public abstract class Flash extends BaseOperation {
     } else {
       RachfordRice rachfordRice = new RachfordRice();
       try {
-        system.setBeta(rachfordRice.calcBeta(system.getKvector(), minimumGibbsEnergySystem.getzvector()));
+        system.setBeta(
+            rachfordRice.calcBeta(system.getKvector(), minimumGibbsEnergySystem.getzvector()));
       } catch (Exception ex) {
         if (!Double.isNaN(rachfordRice.getBeta()[0])) {
           system.setBeta(rachfordRice.getBeta()[0]);
