@@ -73,7 +73,7 @@ public abstract class Flash extends BaseOperation {
       } else {
         lowestGibbsEnergyPhase = 1;
       }
-      logger.info("Lowest Gibbs energy phase determined: Phase {}", lowestGibbsEnergyPhase);
+      // logger.info("Lowest Gibbs energy phase determined: Phase {}", lowestGibbsEnergyPhase);
 
       findLowestGibbsPhaseIsChecked = true;
     }
