@@ -224,7 +224,7 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
     dewPointControlCooler.setOutTemperature(29.0, "C");
     dewPointControlCooler.run();
 
-    dewPointControlCooler.getOutStream().getFluid().prettyPrint();
+    // dewPointControlCooler.getOutStream().getFluid().prettyPrint();
 
     Separator dewPointScrubber = new neqsim.process.equipment.separator.Separator(
         "dew point scrubber", dewPointControlCooler.getOutStream());
@@ -240,7 +240,7 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
         "dew point scrubber 2", dewPointControlCooler2.getOutStream());
     dewPointScrubber2.run();
 
-    dewPointScrubber.getFluid().prettyPrint();
+    // dewPointScrubber.getFluid().prettyPrint();
 
     Mixer hpLiqmixer = new neqsim.process.equipment.mixer.Mixer("HP liq gas mixer");
     hpLiqmixer.addStream(dewPointScrubber.getLiquidOutStream());
