@@ -1,6 +1,8 @@
 package neqsim.process.processmodel;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import java.io.File;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
@@ -225,22 +227,24 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
     dewPointControlCooler.run();
 
     // dewPointControlCooler.getOutStream().getFluid().prettyPrint();
-
+    Assertions.assertEquals(0.9964199113579,
+        dewPointControlCooler.getOutStream().getFluid().getBeta(), 1e-6);
     Separator dewPointScrubber = new neqsim.process.equipment.separator.Separator(
         "dew point scrubber", dewPointControlCooler.getOutStream());
-    // dewPointScrubber.run();
+    dewPointScrubber.run();
 
     Cooler dewPointControlCooler2 = new neqsim.process.equipment.heatexchanger.Cooler(
         "dew point cooler 2", dewPointScrubber.getGasOutStream());
     dewPointControlCooler2.setOutTemperature(-5.0, "C");
     dewPointControlCooler2.setOutPressure(59.5, "bara");
-    // dewPointControlCooler2.run();
-
+    dewPointControlCooler2.run();
+    Assertions.assertEquals(0.9808118997528,
+        dewPointControlCooler2.getOutStream().getFluid().getBeta(), 1e-6);
     Separator dewPointScrubber2 = new neqsim.process.equipment.separator.Separator(
         "dew point scrubber 2", dewPointControlCooler2.getOutStream());
     dewPointScrubber2.run();
 
-    // dewPointScrubber.getFluid().prettyPrint();
+    // dewPointScrubber2.getFluid().prettyPrint();
 
     Mixer hpLiqmixer = new neqsim.process.equipment.mixer.Mixer("HP liq gas mixer");
     hpLiqmixer.addStream(dewPointScrubber.getLiquidOutStream());
