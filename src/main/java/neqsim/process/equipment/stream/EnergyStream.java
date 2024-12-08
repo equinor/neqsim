@@ -15,8 +15,15 @@ import org.apache.logging.log4j.Logger;
 public class EnergyStream implements java.io.Serializable, Cloneable {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(EnergyStream.class);
+  private String name = "";
 
   private double duty = 0.0;
+
+  public EnergyStream() {}
+
+  public EnergyStream(String name) {
+    this.name = name;
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -72,5 +79,13 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
     }
     EnergyStream other = (EnergyStream) obj;
     return Double.doubleToLongBits(duty) == Double.doubleToLongBits(other.duty);
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 }
