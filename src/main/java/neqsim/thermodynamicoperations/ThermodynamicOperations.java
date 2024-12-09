@@ -601,7 +601,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void TVfractionFlash(double Vspec) {
     operation = new neqsim.thermodynamicoperations.flashops.TVfractionFlash(system, Vspec);
-    getOperation().run();
+    try {
+      getOperation().run();
+    } catch (Exception e) {
+      throw e;
+    }
   }
 
   /**

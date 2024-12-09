@@ -99,11 +99,12 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
 
     this.thermoSystem.setPressure(TVP * 0.9);
     try {
-      // ASTM D323 -08 method is used for this property calculation. It is defined at the pressure
+      // ASTM D323 -08 method is used for this property calculation. It is defined at
+      // the pressure
       // at 100°F (37.8°C) at which 80% of the stream by volume is vapor at 100°F. In
       this.thermoOps.TVfractionFlash(0.8);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      logger.error("not able to find RVP...", ex);
     }
 
     VPCR4 = this.thermoSystem.getPressure();
@@ -116,7 +117,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
       fluid1.init(0);
     }
     try {
-      // ASTM D323 -08 method is used for this property calculation. It is defined at the pressure
+      // ASTM D323 -08 method is used for this property calculation. It is defined at
+      // the pressure
       // at 100°F (37.8°C) at which 80% of the stream by volume is vapor at 100°F. In
       this.thermoOps.TVfractionFlash(0.8);
     } catch (Exception ex) {
