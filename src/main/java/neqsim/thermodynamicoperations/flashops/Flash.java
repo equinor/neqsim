@@ -76,7 +76,8 @@ public abstract class Flash extends BaseOperation {
       } else {
         lowestGibbsEnergyPhase = 1;
       }
-      // logger.info("Lowest Gibbs energy phase determined: Phase {}", lowestGibbsEnergyPhase);
+      // logger.info("Lowest Gibbs energy phase determined: Phase {}",
+      // lowestGibbsEnergyPhase);
 
       findLowestGibbsPhaseIsChecked = true;
     }
@@ -88,7 +89,7 @@ public abstract class Flash extends BaseOperation {
    * stabilityAnalysis.
    * </p>
    *
-   * @throws neqsim.util.exception.IsNaNException if any.
+   * @throws neqsim.util.exception.IsNaNException             if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public void stabilityAnalysis() throws neqsim.util.exception.IsNaNException,
@@ -211,8 +212,7 @@ public abstract class Flash extends BaseOperation {
           } else {
             // succsessive substitution
             for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-              logWi[i] =
-                  d[i] - clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient();
+              logWi[i] = d[i] - clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient();
               error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
               Wi[j][i] = Math.exp(logWi[i]);
             }
@@ -262,9 +262,10 @@ public abstract class Flash extends BaseOperation {
           deltalogWi[i] = logWi[i] - oldlogw[i];
           clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
         }
-        // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " + iterations
+        // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " +
+        // iterations
         // + " phase " + j);
-      } while ((f.norm1() > 1e-6 && iterations < maxiterations || error[j] > 1e-6)
+      } while ((f.norm1() > 1e-6 && error[j] > 1e-9 && iterations < maxiterations)
           || (iterations % 7) == 0 || iterations < 3);
       // (error[j]<oldErr && oldErr<oldOldErr) &&
       // logger.info("err " + error[j]);
@@ -414,9 +415,8 @@ public abstract class Flash extends BaseOperation {
       if (system.getPhase(0).getComponent(k).doSolidCheck()) {
         tempVar[k] = system.getPhase(0).getComponent(k).getz();
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-          tempVar[k] -=
-              system.getBeta(i) * system.getPhases()[3].getComponent(k).getFugacityCoefficient()
-                  / system.getPhase(i).getComponent(k).getFugacityCoefficient();
+          tempVar[k] -= system.getBeta(i) * system.getPhases()[3].getComponent(k).getFugacityCoefficient()
+              / system.getPhase(i).getComponent(k).getFugacityCoefficient();
         }
 
         if (tempVar[k] > 0.0 && tempVar[k] > frac) {
@@ -485,7 +485,8 @@ public abstract class Flash extends BaseOperation {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -501,5 +502,6 @@ public abstract class Flash extends BaseOperation {
 
   /** {@inheritDoc} */
   @Override
-  public void addData(String name, double[][] data) {}
+  public void addData(String name, double[][] data) {
+  }
 }
