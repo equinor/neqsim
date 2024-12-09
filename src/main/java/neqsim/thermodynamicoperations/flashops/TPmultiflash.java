@@ -199,6 +199,8 @@ public class TPmultiflash extends TPflash {
       try {
         ans = dQdBM.solve(dQM).transpose();
       } catch (Exception ex) {
+        logger.error(ex.getMessage());
+        break;
       }
       betaMatrix = betaMatrix.minus(ans.scale(iter / (iter + 3.0)));
       removePhase = false;

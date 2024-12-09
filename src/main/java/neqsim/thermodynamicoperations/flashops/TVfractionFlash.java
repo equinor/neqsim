@@ -6,6 +6,8 @@
 
 package neqsim.thermodynamicoperations.flashops;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -18,6 +20,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class TVfractionFlash extends Flash {
   private static final long serialVersionUID = 1000;
+  static Logger logger = LogManager.getLogger(TVfractionFlash.class);
 
   double Vfractionspec = 0;
   Flash tpFlash;
@@ -86,12 +89,23 @@ public class TVfractionFlash extends Flash {
       if (nyPres <= 0.0) {
         nyPres = oldPres * 0.9;
       }
+      if (Math.abs(nyPres - oldPres) >= 10.0) {
+        nyPres = oldPres + Math.signum(nyPres - oldPres) * 10.0;
+      }
       system.setPressure(nyPres);
-      tpFlash.run();
+      if (system.getPressure() < 5000) {
+        tpFlash.run();
+      } else {
+        logger.error("too high pressure in TVfractionFLash.....stopping");
+        break;
+      }
 
       error = Math.abs(dqdv / Vfractionspec);
-      // System.out.println("error " + error + "iteration " + iterations + " dQdv " + calcdQdV()
-      // + " new pressure " + nyPres + " error " + Math.abs((nyPres - oldPres) / (nyPres))
+      logger.debug("pressure " + nyPres + "  iteration " + iterations);
+      // System.out.println("error " + error + "iteration " + iterations + " dQdv " +
+      // calcdQdV()
+      // + " new pressure " + nyPres + " error " + Math.abs((nyPres - oldPres) /
+      // (nyPres))
       // + " numberofphases " + system.getNumberOfPhases());
     } while ((error > 1e-6 && Math.abs(pressureStep) > 1e-6 && iterations < 200) || iterations < 6);
     return nyPres;
@@ -109,8 +123,11 @@ public class TVfractionFlash extends Flash {
     }
 
     // System.out.println("enthalpy: " + system.getEnthalpy());
-    solveQ();
-
+    try {
+      solveQ();
+    } catch (Exception e) {
+      throw e;
+    }
     // System.out.println("volume: " + system.getVolume());
     // System.out.println("Temperature: " + system.getTemperature());
   }

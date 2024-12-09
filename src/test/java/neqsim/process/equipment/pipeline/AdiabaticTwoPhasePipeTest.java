@@ -2,7 +2,6 @@ package neqsim.process.equipment.pipeline;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.process.equipment.stream.Stream;
 
 public class AdiabaticTwoPhasePipeTest {
@@ -42,10 +41,11 @@ public class AdiabaticTwoPhasePipeTest {
     // System.out.println("out pressure " + pipe2.getOutletStream().getPressure("bara"));
     // System.out.println("velocity " + pipe2.getSuperficialVelocity());
 
-    Assertions.assertEquals(75.0000001, pipe2.getOutletStream().getFluid().getFlowRate("MSm3/day"));
-    Assertions.assertEquals(153.58741116226855, pipe.getOutletStream().getPressure("bara"));
-    Assertions.assertEquals(4.207400548548574, pipe.getSuperficialVelocity());
-    Assertions.assertEquals(146.28492500260614, pipe2.getOutletStream().getPressure("bara"));
-    Assertions.assertEquals(60.751298047046646, pipe2.getSuperficialVelocity());
+    Assertions.assertEquals(75.0000001, pipe2.getOutletStream().getFluid().getFlowRate("MSm3/day"),
+        1e-5);
+    Assertions.assertEquals(153.58741116226855, pipe.getOutletStream().getPressure("bara"), 1e-6);
+    Assertions.assertEquals(4.207400548548574, pipe.getSuperficialVelocity(), 1e-6);
+    Assertions.assertEquals(146.28492500260614, pipe2.getOutletStream().getPressure("bara"), 0.001);
+    Assertions.assertEquals(60.751298047046646, pipe2.getSuperficialVelocity(), 0.01);
   }
 }

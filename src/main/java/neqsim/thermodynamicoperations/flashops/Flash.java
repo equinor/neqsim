@@ -65,6 +65,9 @@ public abstract class Flash extends BaseOperation {
     if (!findLowestGibbsPhaseIsChecked) {
       minimumGibbsEnergySystem = system.clone();
       minimumGibbsEnergySystem.init(0);
+      if (minimumGibbsEnergySystem.getTotalNumberOfMoles() < 1e-20) {
+        minimumGibbsEnergySystem.setTotalNumberOfMoles(1.0);
+      }
       minimumGibbsEnergySystem.init(1);
       if ((minimumGibbsEnergySystem.getPhase(0).getGibbsEnergy()
           * (1.0 - Math.signum(minimumGibbsEnergySystem.getPhase(0).getGibbsEnergy())
@@ -168,7 +171,12 @@ public abstract class Flash extends BaseOperation {
 
         if ((iterations <= maxiterations - 10)
             || !system.isImplementedCompositionDeriativesofFugacity()) {
-          clonedSystem.init(1, j);
+          try {
+            clonedSystem.init(1, j);
+          } catch (Exception e) {
+            logger.error(e.toString());
+            throw e;
+          }
           fNormOld = fNorm;
           for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
             f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
@@ -263,7 +271,7 @@ public abstract class Flash extends BaseOperation {
       // logger.info("iterations " + iterations);
       // logger.info("f.norm1() " + f.norm1());
       if (iterations >= maxiterations) {
-        // logger.error("err staability check " + error[j]);
+        logger.error("err staability check " + error[j]);
         throw new neqsim.util.exception.TooManyIterationsException("too many iterations", null,
             maxiterations);
       }
