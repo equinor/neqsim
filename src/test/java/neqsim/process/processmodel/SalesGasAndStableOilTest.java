@@ -1,10 +1,10 @@
 package neqsim.process.processmodel;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
 import java.io.File;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
@@ -12,6 +12,7 @@ import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 
@@ -235,10 +236,10 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
 
     Cooler dewPointControlCooler2 = new neqsim.process.equipment.heatexchanger.Cooler(
         "dew point cooler 2", dewPointScrubber.getGasOutStream());
-    dewPointControlCooler2.setOutTemperature(-5.0, "C");
+    dewPointControlCooler2.setOutTemperature(-15.0, "C");
     dewPointControlCooler2.setOutPressure(59.5, "bara");
     dewPointControlCooler2.run();
-    Assertions.assertEquals(0.9808118997528,
+    Assertions.assertEquals(0.967383748675644,
         dewPointControlCooler2.getOutStream().getFluid().getBeta(), 1e-6);
     Separator dewPointScrubber2 = new neqsim.process.equipment.separator.Separator(
         "dew point scrubber 2", dewPointControlCooler2.getOutStream());
@@ -259,6 +260,36 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
     lpLiqmixer.addStream(firstStageScrubber2.getLiquidOutStream());
     lpLiqmixer.run();
 
+    Recycle hpResycle = new neqsim.process.equipment.util.Recycle("HP liq resycle");
+    hpResycle.addStream(hpLiqmixer.getOutStream());
+    hpResycle.setOutletStream(oilFirstStage);
+    hpResycle.setTolerance(1e-2);
+    hpResycle.run();
+
+    Recycle mpResycle = new neqsim.process.equipment.util.Recycle("MP liq resycle");
+    mpResycle.addStream(mpLiqmixer.getOutStream());
+    mpResycle.setOutletStream(oilSeccondStage);
+    mpResycle.setTolerance(1e-2);
+    mpResycle.run();
+
+    Recycle lpResycle = new neqsim.process.equipment.util.Recycle("LP liq resycle");
+    lpResycle.addStream(lpLiqmixer.getOutStream());
+    lpResycle.setOutletStream(oilThirdStage);
+    lpResycle.setTolerance(1e-2);
+    lpResycle.run();
+
+    Expander turboexpander =
+        new neqsim.process.equipment.expander.Expander("TEX", dewPointScrubber2.getGasOutStream());
+    turboexpander.setIsentropicEfficiency(0.80);
+    turboexpander.setOutletPressure(50.0);
+    turboexpander.run();
+    turboexpander.getFluid().prettyPrint();
+
+    Separator DPCUScrubber = new neqsim.process.equipment.separator.Separator("TEX LT scrubber",
+        turboexpander.getOutStream());
+    DPCUScrubber.run();
+
+    DPCUScrubber.getFluid().prettyPrint();
     // richGasMixer.getOutStream().getFluid().prettyPrint();
 
 
