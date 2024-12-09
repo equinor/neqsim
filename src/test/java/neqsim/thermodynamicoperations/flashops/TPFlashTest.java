@@ -96,7 +96,7 @@ class TPFlashTest {
     testOps = new ThermodynamicOperations(testSystem5);
     testOps.TPflash();
     testSystem5.initProperties();
-    testSystem5.prettyPrint();
+    // testSystem5.prettyPrint();
     double beta = testSystem5.getBeta();
     assertEquals(0.999999372713993, beta, 1e-9);
   }
