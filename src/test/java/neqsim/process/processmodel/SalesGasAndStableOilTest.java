@@ -283,13 +283,13 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
     turboexpander.setIsentropicEfficiency(0.80);
     turboexpander.setOutletPressure(50.0);
     turboexpander.run();
-    turboexpander.getFluid().prettyPrint();
+    // turboexpander.getFluid().prettyPrint();
 
     Separator DPCUScrubber = new neqsim.process.equipment.separator.Separator("TEX LT scrubber",
         turboexpander.getOutStream());
     DPCUScrubber.run();
 
-    DPCUScrubber.getFluid().prettyPrint();
+    // DPCUScrubber.getFluid().prettyPrint();
     // richGasMixer.getOutStream().getFluid().prettyPrint();
 
 

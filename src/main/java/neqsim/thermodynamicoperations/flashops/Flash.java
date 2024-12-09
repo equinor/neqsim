@@ -174,11 +174,6 @@ public abstract class Flash extends BaseOperation {
           try {
             clonedSystem.init(1, j);
           } catch (Exception e) {
-            if (j == 0) {
-              clonedSystem.init(1, 1);
-            } else {
-              clonedSystem.init(1, 0);
-            }
             logger.error(e.toString());
             throw e;
           }
