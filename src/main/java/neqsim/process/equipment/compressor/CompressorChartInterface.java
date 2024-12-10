@@ -20,6 +20,18 @@ public interface CompressorChartInterface extends Cloneable {
   public void addCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency);
 
   /**
+   * This method is used add a curve to the CompressorChart object.
+   *
+   * @param speed a double
+   * @param flowHead an array of type double
+   * @param head an array of type double
+   * @param flowPolytropicEfficiency an array of type double
+   * @param polytropicEfficiency an array of type double
+   */
+  public void addCurve(double speed, double[] flowHead, double[] head,
+      double[] flowPolytropicEfficiency, double[] polytropicEfficiency);
+
+  /**
    * This method is used add a set of curves to the CompressorChart object.
    *
    * @param chartConditions an array of type double
@@ -30,6 +42,19 @@ public interface CompressorChartInterface extends Cloneable {
    */
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] polyEff);
+
+  /**
+   * This method is used add a set of curves to the CompressorChart object.
+   *
+   * @param chartConditions an array of type double
+   * @param speed an array of type double
+   * @param flow an array of type double
+   * @param head an array of type double
+   * @param flowPolyEff an array of type double
+   * @param polyEff an array of type double
+   */
+  public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
+      double[][] flowPolyEff, double[][] polyEff);
 
   /**
    * Get method for polytropic head from reference curves.
@@ -117,8 +142,7 @@ public interface CompressorChartInterface extends Cloneable {
    * setSurgeCurve.
    * </p>
    *
-   * @param surgeCurve a {@link neqsim.process.equipment.compressor.SurgeCurve}
-   *        object
+   * @param surgeCurve a {@link neqsim.process.equipment.compressor.SurgeCurve} object
    */
   public void setSurgeCurve(SurgeCurve surgeCurve);
 
@@ -136,8 +160,7 @@ public interface CompressorChartInterface extends Cloneable {
    * setStoneWallCurve.
    * </p>
    *
-   * @param stoneWallCurve a
-   *        {@link neqsim.process.equipment.compressor.StoneWallCurve} object
+   * @param stoneWallCurve a {@link neqsim.process.equipment.compressor.StoneWallCurve} object
    */
   public void setStoneWallCurve(StoneWallCurve stoneWallCurve);
 
@@ -168,7 +191,9 @@ public interface CompressorChartInterface extends Cloneable {
   public int hashCode();
 
   /**
-   * <p>getFlow.</p>
+   * <p>
+   * getFlow.
+   * </p>
    *
    * @param head a double
    * @param speed a double
