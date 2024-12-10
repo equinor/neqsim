@@ -5,7 +5,6 @@ import java.util.Arrays;
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
-import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.Stream;
@@ -123,7 +122,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 
 /**
- * <p>CompressorChartAlternativeMapLookup class.</p>
+ * <p>
+ * CompressorChartAlternativeMapLookup class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -148,10 +149,6 @@ public class CompressorChartAlternativeMapLookup
   double refZ;
   private boolean useRealKappa = false;
   double[] chartConditions = null;
-  final WeightedObservedPoints reducedHeadFitter = new WeightedObservedPoints();
-  final WeightedObservedPoints reducedFlowFitter = new WeightedObservedPoints();
-  final WeightedObservedPoints fanLawCorrectionFitter = new WeightedObservedPoints();
-  final WeightedObservedPoints reducedPolytropicEfficiencyFitter = new WeightedObservedPoints();
   PolynomialFunction reducedHeadFitterFunc = null;
   PolynomialFunction reducedPolytropicEfficiencyFunc = null;
   PolynomialFunction fanLawCorrectionFunc = null;
@@ -167,7 +164,15 @@ public class CompressorChartAlternativeMapLookup
   /** {@inheritDoc} */
   @Override
   public void addCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency) {
-    CompressorCurve curve = new CompressorCurve(speed, flow, head, polytropicEfficiency);
+    addCurve(speed, flow, head, flow, polytropicEfficiency);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCurve(double speed, double[] flow, double[] head,
+      double[] flowPolytropicEfficiency, double[] polytropicEfficiency) {
+    CompressorCurve curve =
+        new CompressorCurve(speed, flow, head, flowPolytropicEfficiency, polytropicEfficiency);
     chartValues.add(curve);
     chartSpeeds.add(speed);
   }
@@ -182,8 +187,22 @@ public class CompressorChartAlternativeMapLookup
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] polyEff) {
+    setCurves(chartConditions, speed, flow, head, flow, polyEff);
+  }
+
+  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * Sets the compressor curves based on the provided chart conditions, speed, flow, head,
+   * flowPolytrpicEfficiency and polytropic efficiency values.
+   */
+  @Override
+  public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
+      double[][] flowPolyEff, double[][] polyEff) {
     for (int i = 0; i < speed.length; i++) {
-      CompressorCurve curve = new CompressorCurve(speed[i], flow[i], head[i], polyEff[i]);
+      CompressorCurve curve =
+          new CompressorCurve(speed[i], flow[i], head[i], flowPolyEff[i], polyEff[i]);
       chartValues.add(curve);
       chartSpeeds.add(speed[i]);
     }
@@ -291,8 +310,8 @@ public class CompressorChartAlternativeMapLookup
 
     for (int i = 0; i < closestRefSpeeds.size(); i++) {
       s = closestRefSpeeds.get(i);
-      PolynomialSplineFunction psf =
-          asi.interpolate(getCurveAtRefSpeed(s).flow, getCurveAtRefSpeed(s).polytropicEfficiency);
+      PolynomialSplineFunction psf = asi.interpolate(getCurveAtRefSpeed(s).flowPolytropicEfficiency,
+          getCurveAtRefSpeed(s).polytropicEfficiency);
       tempEffs.add(psf.value(flow));
     }
 
@@ -578,7 +597,7 @@ public class CompressorChartAlternativeMapLookup
     operations.add(stream_1);
     operations.add(comp1);
     operations.run();
-    operations.displayResult();
+    // operations.displayResult();
 
     System.out.println("power " + comp1.getPower());
     System.out
