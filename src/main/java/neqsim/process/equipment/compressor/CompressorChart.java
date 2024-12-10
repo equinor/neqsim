@@ -64,7 +64,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   /** {@inheritDoc} */
   @Override
   public void addCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency) {
-    CompressorCurve curve = new CompressorCurve(speed, flow, head, polytropicEfficiency);
+    CompressorCurve curve = new CompressorCurve(speed, flow, head, flow, polytropicEfficiency);
     chartValues.add(curve);
   }
 
@@ -132,6 +132,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     this.redhead = new double[head.length][maxLength];
     this.redpolytropicEfficiency = new double[polyEff.length][maxLength];
     this.redflow = new double[flow.length][maxLength];
+    this.redflowPolytropicEfficiency = new double[polyEff.length][maxLength];
 
     for (int i = 0; i < speed.length; i++) {
       if (speed[i] > maxSpeedCurve) {
@@ -155,7 +156,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
       for (int j = 0; j < flowPolytropicEfficiency[i].length; j++) { // Handle differing lengths for
                                                                      // each speed
-        redflowPolytropicEfficiency[i][j] = flowPolytropicEfficiency[i][j] / speed[i];
+        redflowPolytropicEfficiency[i][j] = flowPolyEff[i][j] / speed[i];
         redpolytropicEfficiency[i][j] = polyEff[i][j];
         reducedPolytropicEfficiencyFitter.add(redflowPolytropicEfficiency[i][j],
             redpolytropicEfficiency[i][j]);
