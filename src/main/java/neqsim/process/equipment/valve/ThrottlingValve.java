@@ -45,6 +45,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   boolean isCalcPressure = false;
   private boolean gasValve = true;
   private double Fp = 1.0;
+  private double deltaPressure = 0.0;
 
   /**
    * * Constructor for ThrottlingValve.
@@ -415,12 +416,20 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   public void run(UUID id) {
     // System.out.println("valve running..");
     // outStream.setSpecification(inletStream.getSpecification());
-    thermoSystem = getInletStream().getThermoSystem().clone();
+    if (getInletStream().getThermoSystem() != null) {
+      thermoSystem = getInletStream().getThermoSystem().clone();
+    } else {
+      logger.error("Inlet stream thermo system is null");
+      return;
+    }
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoSystem.init(3);
     double enthalpy = thermoSystem.getEnthalpy();
     inStream.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double outp = 0.0;
+    if (pressure == 0) {
+      pressure = inStream.getThermoSystem().getPressure();
+    }
 
     if (inStream.getThermoSystem().hasPhaseType(PhaseType.GAS)
         && inStream.getThermoSystem().getVolumeFraction(0) > 0.9) {
@@ -441,6 +450,12 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       }
       setOutletPressure(outp);
     }
+    if (deltaPressure != 0) {
+      thermoSystem.setPressure(thermoSystem.getPressure(pressureUnit) - deltaPressure,
+          pressureUnit);
+      setOutletPressure(thermoSystem.getPressure());
+
+    }
 
     if ((thermoSystem.getPressure(pressureUnit) - pressure) < 0) {
       if (isAcceptNegativeDP()) {
@@ -456,14 +471,15 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     // System.out.println("enthalpy inn.." + enthalpy);
     // thermoOps.PHflash(enthalpy, 0);
     if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6
-        || thermoSystem.getNumberOfMoles() < 1e-12) {
+        || thermoSystem.getNumberOfMoles() < 1e-12 || pressure == 0) {
       thermoOps.TPflash();
     } else {
       thermoOps.PHflash(enthalpy, 0);
     }
     outStream.setThermoSystem(thermoSystem);
     // System.out.println("Total volume flow " +
-    // outStream.getThermoSystem().getVolume());
+    // Uncomment the line below to get the volume of the outlet stream's thermodynamic system
+    // System.out.println("Total volume flow " + outStream.getThermoSystem().getVolume());
     // System.out.println("density valve " +
     // inletStream.getThermoSystem().getDensity());
 
@@ -522,7 +538,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   }
 
   /** {@inheritDoc} */
-  @Override
+  /**
+   * This annotation is used to exclude the method from Jacoco code coverage reports.
+   */
   @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     thermoSystem.display(getName());
@@ -812,5 +830,14 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    */
   public void setFp(double fp) {
     Fp = fp;
+  }
+
+  public double getDeltaPressure() {
+    return deltaPressure;
+  }
+
+  public void setDeltaPressure(double deltaPressure, String unit) {
+    this.deltaPressure = deltaPressure;
+    this.pressureUnit = unit;
   }
 }
