@@ -52,4 +52,57 @@ public class ThrottlingValveTest {
     assertEquals(100, stream1.getFlowRate("kg/hr"), 1e-2);
     assertEquals(3.015805897362369E-4, valve1.getCv("US"), 1e-2);
   }
+
+  @Test
+  void testSetDeltaPressure() {
+    neqsim.thermo.system.SystemInterface testSystem2 =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    testSystem2.addComponent("methane", 1.0);
+    testSystem2.setMixingRule(2);
+
+    Stream stream1 = new Stream("Stream1", testSystem2);
+    stream1.setFlowRate(100.0, "kg/hr");
+    stream1.setPressure(100.0, "bara");
+    stream1.setTemperature(55.0, "C");
+    stream1.run();
+
+    double deltaPressure = 10.0;
+    ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
+    valve1.setDeltaPressure(deltaPressure, "bara");
+    valve1.run();
+
+    Stream stream2 = new Stream("Stream1", valve1.getOutletStream());
+    stream2.getPressure("bara");
+    stream2.run();
+
+    assertEquals(deltaPressure, valve1.getDeltaPressure(), 1e-2);
+    assertEquals(deltaPressure, stream1.getPressure("bara") - stream2.getPressure("bara"), 1e-4);
+    assertEquals(52.269428855, stream2.getTemperature("C"), 1e-2);
+  }
+
+  @Test
+  void testSetDeltaPressure2() {
+    neqsim.thermo.system.SystemInterface testSystem2 =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    testSystem2.addComponent("methane", 1.0);
+    testSystem2.setMixingRule(2);
+
+    Stream stream1 = new Stream("Stream1", testSystem2);
+    stream1.setFlowRate(100.0, "kg/hr");
+    stream1.setPressure(100.0, "bara");
+    stream1.setTemperature(55.0, "C");
+    stream1.run();
+
+    double deltaPressure = 0.0;
+    ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
+    valve1.run();
+
+    Stream stream2 = new Stream("Stream1", valve1.getOutletStream());
+    stream2.getPressure("bara");
+    stream2.run();
+
+    assertEquals(deltaPressure, valve1.getDeltaPressure(), 1e-2);
+    assertEquals(deltaPressure, stream1.getPressure("bara") - stream2.getPressure("bara"), 1e-4);
+    assertEquals(55.0, stream2.getTemperature("C"), 1e-2);
+  }
 }
