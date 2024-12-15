@@ -21,7 +21,7 @@ public class ProcessModel implements Runnable {
    * </p>
    * 
    *
-   * @return a {@link java.lang.Boolean} runStep
+   * @return a {@link java.lang.boolean} runStep
    * 
    */
   public boolean isRunStep() {
@@ -49,7 +49,7 @@ public class ProcessModel implements Runnable {
    * @param name name of process
    * @param process process to add
    * 
-   * @return a {@link java.lang.Boolean} success
+   * @return a {@link java.lang.boolean} success
    */
   public boolean add(String name, ProcessSystem process) {
     processes.add(process);
