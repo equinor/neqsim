@@ -1,96 +1,119 @@
 package neqsim.process.processmodel;
 
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * <p>
  * ProcessModel class.
  * </p>
  *
+ * Manages a collection of processes that can be run in steps or continuously.
+ * 
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class ProcessModel implements Runnable {
-  ArrayList<ProcessSystem> processes = new ArrayList<ProcessSystem>();
+  private final Map<String, ProcessSystem> processes = new LinkedHashMap<>();
   private boolean runStep = false;
-
+  Thread processThread;
 
   /**
-   * <p>
-   * isRunStep.
-   * </p>
-   * 
+   * Checks if the model is running in step mode.
    *
-   * @return a {@link java.lang.boolean} runStep
-   * 
+   * @return true if running in step mode, false otherwise.
    */
   public boolean isRunStep() {
     return runStep;
   }
 
   /**
-   * <p>
-   * runStep.
-   * </p>
-   * 
-   * @param runStep run in steps
-   * 
+   * Sets the step mode for the process.
+   *
+   * @param runStep true to enable step mode, false to disable.
    */
   public void setRunStep(boolean runStep) {
     this.runStep = runStep;
   }
 
-
   /**
-   * <p>
-   * add.
-   * </p>
+   * Adds a process to the model.
    *
-   * @param name name of process
-   * @param process process to add
-   * 
-   * @return a {@link java.lang.boolean} success
+   * @param name the name of the process.
+   * @param process the process to add.
+   * @return true if the process was added successfully.
    */
   public boolean add(String name, ProcessSystem process) {
-    processes.add(process);
+    if (name == null || name.isEmpty()) {
+      throw new IllegalArgumentException("Name cannot be null or empty");
+    }
+    if (process == null) {
+      throw new IllegalArgumentException("Process cannot be null");
+    }
+    if (processes.containsKey(name)) {
+      throw new IllegalArgumentException("A process with the given name already exists");
+    }
+    processes.put(name, process);
     return true;
   }
 
   /**
-   * <p>
-   * run.
-   * </p>
+   * Retrieves a process by its name.
    *
+   * @param name the name of the process.
+   * @return the corresponding process, or null if not found.
    */
+  public ProcessSystem get(String name) {
+    return processes.get(name);
+  }
+
+  /**
+   * Removes a process by its name.
+   *
+   * @param name the name of the process to remove.
+   * @return true if the process was removed, false otherwise.
+   */
+  public boolean remove(String name) {
+    return processes.remove(name) != null;
+  }
+
+  /**
+   * Executes all processes, either continuously or in steps based on mode.
+   */
+  @Override
   public void run() {
-    for (int i = 0; i < processes.size(); i++) {
-      if (runStep) {
-        processes.get(i).run_step();
-      } else {
-        processes.get(i).run();
+    for (ProcessSystem process : processes.values()) {
+      try {
+        if (runStep) {
+          process.run_step();
+        } else {
+          process.run();
+        }
+      } catch (Exception e) {
+        System.err.println("Error running process: " + e.getMessage());
+        e.printStackTrace();
       }
     }
   }
 
   /**
-   * <p>
-   * runStep.
-   * </p>
-   *
+   * Executes all processes in a single step.
    */
   public void runStep() {
-    for (int i = 0; i < processes.size(); i++) {
-      processes.get(i).run_step();
-
+    for (ProcessSystem process : processes.values()) {
+      try {
+        process.run_step();
+      } catch (Exception e) {
+        System.err.println("Error in runStep: " + e.getMessage());
+        e.printStackTrace();
+      }
     }
   }
 
   /**
-   * <p>
-   * runAsThread.
-   * </p>
+   * Runs the model as a separate thread.
    *
-   * @return a {@link java.lang.Thread} object
+   * @return the thread running the model.
    */
   public Thread runAsThread() {
     Thread processThread = new Thread(this);
