@@ -3,6 +3,7 @@ package neqsim.process.processmodel;
 import java.io.File;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
@@ -63,10 +64,10 @@ public class CombinedModelsTest {
 
     ((Compressor) compressorProcess.getUnit("Compressor1")).setOutletPressure(100.0, "bara");
 
-
     ProcessModel fullProcess = new ProcessModel();
     fullProcess.add("feed process", inletProcess);
     fullProcess.add("compressor process", compressorProcess);
+    fullProcess.setRunStep(true);
 
     try {
       fullProcess.run();
@@ -74,8 +75,11 @@ public class CombinedModelsTest {
       logger.debug(ex.getMessage(), ex);
     }
 
-    ((Compressor) compressorProcess.getUnit("Compressor1")).getOutletStream().getFluid()
-        .prettyPrint();
+    Assertions.assertEquals(164.44139872, ((Compressor) compressorProcess.getUnit("Compressor1"))
+        .getOutletStream().getTemperature("C"), 0.1);
+
+    // ((Compressor) compressorProcess.getUnit("Compressor1")).getOutletStream().getFluid()
+    // .prettyPrint();
 
   }
 
