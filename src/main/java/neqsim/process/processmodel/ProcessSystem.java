@@ -134,6 +134,25 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
+   * Replace a unitoperation
+   * </p>
+   *
+   * @param name Name of the object to replace
+   * @param newObject the object to replace it with
+   * @return a {@link java.lang.Boolean} object
+   */
+  public boolean replaceUnit(String name, ProcessEquipmentInterface newObject) {
+    try {
+      ProcessEquipmentInterface unit = (ProcessEquipmentInterface) getUnit(name);
+      unit = newObject;
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+    }
+    return true;
+  }
+
+  /**
+   * <p>
    * Get process equipmen by name.
    * </p>
    *
