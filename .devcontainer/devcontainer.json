@@ -25,7 +25,9 @@
 				"shengchen.vscode-checkstyle",
 				"mechatroner.rainbow-csv",
 				"redhat.vscode-xml",
-				"vscjava.vscode-java-test"
+				"vscjava.vscode-java-test",
+				"GitHub.copilot",
+				"GitHub.copilot-chat"
 			],
 			"settings": {
 				"java.configuration.updateBuildConfiguration": "interactive",

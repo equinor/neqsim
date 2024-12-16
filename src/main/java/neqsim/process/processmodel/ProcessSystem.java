@@ -157,9 +157,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param name Name of
-   * @return a {@link java.lang.Object} object
+   * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
-  public Object getUnit(String name) {
+  public ProcessEquipmentInterface getUnit(String name) {
     for (int i = 0; i < getUnitOperations().size(); i++) {
       if (getUnitOperations().get(i) instanceof ModuleInterface) {
         for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations()

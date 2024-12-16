@@ -16,7 +16,6 @@ import java.util.Map;
 public class ProcessModel implements Runnable {
   private final Map<String, ProcessSystem> processes = new LinkedHashMap<>();
   private boolean runStep = false;
-  Thread processThread;
 
   /**
    * Checks if the model is running in step mode.
