@@ -25,7 +25,7 @@ public interface PlusFractionModelInterface extends java.io.Serializable {
    *
    * @param model a {@link neqsim.thermo.characterization.TBPModelInterface} object
    */
-  public void characterizePlusFraction(TBPModelInterface model);
+  public boolean characterizePlusFraction(TBPModelInterface model);
 
   /**
    * <p>
@@ -73,7 +73,9 @@ public interface PlusFractionModelInterface extends java.io.Serializable {
   public int getLastPlusFractionNumber();
 
   /**
-   * <p>setLastPlusFractionNumber.</p>
+   * <p>
+   * setLastPlusFractionNumber.
+   * </p>
    *
    * @param fract a int
    */

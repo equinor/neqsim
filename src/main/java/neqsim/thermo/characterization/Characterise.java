@@ -159,8 +159,10 @@ public class Characterise implements java.io.Serializable, Cloneable {
         plusFractionModel = plusFractionModelSelector.getModel("Pedersen Heavy Oil");
         logger.info("changing to " + plusFractionModel.getName());
       }
-      plusFractionModel.characterizePlusFraction(TBPfractionModel);
-      lumpingModel.generateLumpedComposition(this);
+      boolean couldCharacerize = plusFractionModel.characterizePlusFraction(TBPfractionModel);
+      if (couldCharacerize) {
+        lumpingModel.generateLumpedComposition(this);
+      }
     }
   }
 

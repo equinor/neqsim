@@ -144,4 +144,52 @@ public class PlusFractionModelTest {
         .getGammaParameters()[1];
     assertEquals(90.0, minMW, 1e-4);
   }
+
+  @Test
+  void testC6C7PlusModel() {
+    SystemInterface thermoSystem = null;
+    thermoSystem = new SystemSrkEos(298.0, 10.0);
+
+    thermoSystem.addComponent("CO2", 1.0);
+    thermoSystem.addComponent("methane", 51.0);
+    thermoSystem.addComponent("ethane", 1.0);
+    thermoSystem.addComponent("propane", 1.0);
+
+    thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
+                                                                   // adding oil components
+
+    String[] componentNames = {"C7"};
+    double[] molarComposition = {0.15};
+    double[] molarMasses = {0.092};
+    double[] reldens = {0.82};
+
+    thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
+
+    thermoSystem.addOilFractions(componentNames, molarComposition, molarMasses, reldens, true);
+
+    // In this case the molar mass of the plus fraction is set to 0.092 kg/mol an is too low to
+    // distribute the component into heavier components
+    assertEquals(5, thermoSystem.getNumberOfComponents());
+
+    thermoSystem = new SystemSrkEos(298.0, 10.0);
+
+    thermoSystem.addComponent("CO2", 1.0);
+    thermoSystem.addComponent("methane", 51.0);
+    thermoSystem.addComponent("ethane", 1.0);
+    thermoSystem.addComponent("propane", 1.0);
+
+    thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
+                                                                   // adding oil components
+
+    molarMasses = new double[] {0.120};
+
+    thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
+
+    thermoSystem.addOilFractions(componentNames, molarComposition, molarMasses, reldens, true);
+    // In this case the molar mass of the plus fraction is high enogh and can be characterized into
+    // heavier components
+
+    assertEquals(16, thermoSystem.getNumberOfComponents());
+
+  }
 }
