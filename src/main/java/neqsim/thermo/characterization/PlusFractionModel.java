@@ -1,5 +1,7 @@
 package neqsim.thermo.characterization;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -11,6 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class PlusFractionModel implements java.io.Serializable {
+  static Logger logger = LogManager.getLogger(PlusFractionModel.class);
   private static final long serialVersionUID = 1000;
   private String name = "";
   private SystemInterface system = null;
@@ -193,7 +196,7 @@ public class PlusFractionModel implements java.io.Serializable {
     }
 
     @Override
-    public void characterizePlusFraction(TBPModelInterface TBPModel) {
+    public boolean characterizePlusFraction(TBPModelInterface TBPModel) {
       system.init(0);
       Integer firstPlusNumber = Integer.valueOf(0);
       if (system.getPhase(0).getComponent(plusComponentNumber).getComponentName().substring(3, 4)
@@ -210,6 +213,10 @@ public class PlusFractionModel implements java.io.Serializable {
 
       numberOfPlusPseudocomponents = lastPlusFractionNumber - firstPlusFractionNumber + 1;
 
+      if (PVTsimMolarMass[firstPlusFractionNumber - 6] > MPlus * 1000) {
+        logger.error("Plus fraction molar mass too light ");
+        return false;
+      }
       // System.out.println("first plus fraction number " + firstPlusFractionNumber);
       coefs[0] = 0.1;
       coefs[1] = Math.log(zPlus) / getFirstPlusFractionNumber();
@@ -229,6 +236,7 @@ public class PlusFractionModel implements java.io.Serializable {
         dens[i] = getCoef(2) + getCoef(3) * Math.log(i);
       }
       // System.out.println("z,m,dens " + z[i] + " " + M[i] + " " + dens[i]);
+      return true;
     }
 
     @Override
@@ -381,7 +389,7 @@ public class PlusFractionModel implements java.io.Serializable {
     }
 
     @Override
-    public void characterizePlusFraction(TBPModelInterface TBPModel) {
+    public boolean characterizePlusFraction(TBPModelInterface TBPModel) {
       system.init(0);
       double MWBU = Double.NaN;
       double MWBL = Double.NaN;
@@ -427,6 +435,7 @@ public class PlusFractionModel implements java.io.Serializable {
       for (int i = firstPlusFractionNumber; i < lastPlusFractionNumber; i++) {
         zValues[i] *= zPlus / sumZ;
       }
+      return true;
     }
 
     public void setGammaParameters(double shape, double minMW) {
