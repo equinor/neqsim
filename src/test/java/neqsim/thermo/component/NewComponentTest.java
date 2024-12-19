@@ -109,4 +109,17 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     assertEquals(37.557573, thermoSystem.getDensity("kg/m3"), 0.01);
   }
+
+  @Test
+  public void newComponentNO2() {
+    thermoSystem = new SystemSrkEos(298.0, ThermodynamicConstantsInterface.referencePressure);
+    thermoSystem.addComponent("NO2", 1.0);
+    thermoSystem.init(0);
+    assertEquals(0.046005, thermoSystem.getMolarMass("kg/mol"), 0.01);
+
+    thermoSystem = new SystemSrkEos(298.0, ThermodynamicConstantsInterface.referencePressure);
+    thermoSystem.addComponent("SO2", 1.0);
+    thermoSystem.init(0);
+    assertEquals(0.064063, thermoSystem.getMolarMass("kg/mol"), 0.01);
+  }
 }
