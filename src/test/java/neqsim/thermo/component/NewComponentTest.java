@@ -9,6 +9,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class NewComponentTest extends neqsim.NeqSimTest {
   static SystemInterface thermoSystem = null;
@@ -121,5 +122,27 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     thermoSystem.addComponent("SO2", 1.0);
     thermoSystem.init(0);
     assertEquals(0.064063, thermoSystem.getMolarMass("kg/mol"), 0.01);
+  }
+
+  @Test
+  public void testComponentsulfuric_acid() {
+    thermoSystem = new SystemSrkEos(273.15 + 47.9, 118.6);
+    thermoSystem.addComponent("sulfuric acid", 1.0);
+    thermoSystem.addComponent("CO2", 1.0);
+    thermoSystem.createDatabase(true);
+    thermoSystem.setMixingRule("classic");
+    // thermoSystem.setMultiPhaseCheck(true);
+    // ((PhaseEos) thermoSystem.getPhase(0)).getMixingRule().setBinaryInteractionParameter(0, 1,
+    // 0.3012);
+    // ((PhaseEos) thermoSystem.getPhase(1)).getMixingRule().setBinaryInteractionParameter(0, 1,
+    // 0.3012);
+    ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
+    try {
+      ops.TPflash();
+    } catch (Exception e) {
+      System.out.println("error in bubble point flash");
+    }
+    assertEquals(3.447289881042099E-6,
+        thermoSystem.getPhase(0).getComponent("sulfuric acid").getx(), 100e-9);
   }
 }
