@@ -132,18 +132,22 @@ public class LargeCombinedModelsTest {
     // Step 9: Valve for Oil from the Second Stage
     ThrottlingValve valve_oil_from_seccond_stage =
         new ThrottlingValve("valve oil from second stage", secondStageSeparator.getOilOutStream());
-        valve_oil_from_seccond_stage.setOutletPressure(7.0, "bara");
+    valve_oil_from_seccond_stage.setOutletPressure(7.0, "bara");
 
-    Mixer oilSeccondStageMixer = new neqsim.process.equipment.mixer.Mixer("seccond stage oil mixer");
+    Mixer oilSeccondStageMixer =
+        new neqsim.process.equipment.mixer.Mixer("seccond stage oil mixer");
     oilSeccondStageMixer.addStream(valve_oil_from_seccond_stage.getOutletStream());
     oilSeccondStageMixer.addStream(oilSecondStage);
-    
-    ThreePhaseSeparator thirdStageSeparator = new neqsim.process.equipment.separator.ThreePhaseSeparator("3rd stage separator", oilSeccondStageMixer.getOutStream())
 
-    ThrottlingValve valve_oil_from_third_stage = new neqsim.process.equipment.valve.ThrottlingValve("valve oil from third stage", thirdStageSeparator.getOilOutStream());
+    ThreePhaseSeparator thirdStageSeparator =
+        new neqsim.process.equipment.separator.ThreePhaseSeparator("3rd stage separator",
+            oilSeccondStageMixer.getOutStream());
+
+    ThrottlingValve valve_oil_from_third_stage = new neqsim.process.equipment.valve.ThrottlingValve(
+        "valve oil from third stage", thirdStageSeparator.getOilOutStream());
     valve_oil_from_third_stage.setOutletPressure(3.0, "bara");
 
-    StreamInterface oilThirdStage =  (StreamInterface) wellStreamHP.clone();
+    StreamInterface oilThirdStage = (StreamInterface) wellStreamHP.clone();
     oilThirdStage.setName("third stage oil reflux");
     oilThirdStage.setFlowRate(10.0, "kg/hr");
     oilThirdStage.setPressure(3.0, "bara");
@@ -153,15 +157,21 @@ public class LargeCombinedModelsTest {
     oilThirdStageMixer.addStream(valve_oil_from_third_stage.getOutletStream());
     oilThirdStageMixer.addStream(oilThirdStage);
 
-    ThreePhaseSeparator fourthStageSeparator = new neqsim.process.equipment.separator.ThreePhaseSeparator("4th stage separator", oilThirdStageMixer.getOutStream());
+    ThreePhaseSeparator fourthStageSeparator =
+        new neqsim.process.equipment.separator.ThreePhaseSeparator("4th stage separator",
+            oilThirdStageMixer.getOutStream());
 
-    Cooler firstStageCooler = new neqsim.process.equipment.heatexchanger.Cooler("1st stage cooler", fourthStageSeparator.getGasOutStream());
+    Cooler firstStageCooler = new neqsim.process.equipment.heatexchanger.Cooler("1st stage cooler",
+        fourthStageSeparator.getGasOutStream());
 
-    Separator firstStageScrubber = new neqsim.process.equipment.separator.Separator("1st stage scrubber", firstStageCooler.getOutStream());
+    Separator firstStageScrubber = new neqsim.process.equipment.separator.Separator(
+        "1st stage scrubber", firstStageCooler.getOutStream());
 
-    Pump firststagescrubberpump = new neqsim.process.equipment.pump.Pump("1st stage scrubber pump", firstStageScrubber.getLiquidOutStream());
+    Pump firststagescrubberpump = new neqsim.process.equipment.pump.Pump("1st stage scrubber pump",
+        firstStageScrubber.getLiquidOutStream());
 
-    Compressor firstStageCompressor = new neqsim.process.equipment.compressor.Compressor("1st stage compressor", firstStageScrubber.getGasOutStream());
+    Compressor firstStageCompressor = new neqsim.process.equipment.compressor.Compressor(
+        "1st stage compressor", firstStageScrubber.getGasOutStream());
     firstStageCompressor.setUsePolytropicCalc(true);
     firstStageCompressor.setPolytropicEfficiency(0.8);
 
@@ -169,11 +179,14 @@ public class LargeCombinedModelsTest {
     firststagegasmixer.addStream(firstStageCompressor.getOutStream());
     firststagegasmixer.addStream(thirdStageSeparator.getGasOutStream());
 
-    Cooler firstStageCooler2 = new neqsim.process.equipment.heatexchanger.Cooler("1st stage cooler2", firststagegasmixer.getOutStream());
+    Cooler firstStageCooler2 = new neqsim.process.equipment.heatexchanger.Cooler(
+        "1st stage cooler2", firststagegasmixer.getOutStream());
 
-    Separator firstStageScrubber2 = new neqsim.process.equipment.separator.Separator("1st stage scrubber2", firstStageCooler2.getOutStream());
+    Separator firstStageScrubber2 = new neqsim.process.equipment.separator.Separator(
+        "1st stage scrubber2", firstStageCooler2.getOutStream());
 
-    Compressor firstStageCompressor2 = new neqsim.process.equipment.compressor.Compressor("2nd stage compressor", firstStageScrubber2.getGasOutStream());
+    Compressor firstStageCompressor2 = new neqsim.process.equipment.compressor.Compressor(
+        "2nd stage compressor", firstStageScrubber2.getGasOutStream());
     firstStageCompressor2.setUsePolytropicCalc(true);
     firstStageCompressor2.setPolytropicEfficiency(0.8);
 
@@ -181,11 +194,14 @@ public class LargeCombinedModelsTest {
     secondstagegasmixer.addStream(firstStageCompressor2.getOutStream());
     secondstagegasmixer.addStream(secondStageSeparator.getGasOutStream());
 
-    Cooler secondStageCooler = new neqsim.process.equipment.heatexchanger.Cooler("2nd stage cooler", secondstagegasmixer.getOutStream());
+    Cooler secondStageCooler = new neqsim.process.equipment.heatexchanger.Cooler("2nd stage cooler",
+        secondstagegasmixer.getOutStream());
 
-    Separator secondStageScrubber = new neqsim.process.equipment.separator.Separator("2nd stage scrubber", secondStageCooler.getOutStream());
+    Separator secondStageScrubber = new neqsim.process.equipment.separator.Separator(
+        "2nd stage scrubber", secondStageCooler.getOutStream());
 
-    Compressor secondStageCompressor = new neqsim.process.equipment.compressor.Compressor("3rd stage compressor", secondStageScrubber.getGasOutStream());
+    Compressor secondStageCompressor = new neqsim.process.equipment.compressor.Compressor(
+        "3rd stage compressor", secondStageScrubber.getGasOutStream());
     secondStageCompressor.setUsePolytropicCalc(true);
     secondStageCompressor.setPolytropicEfficiency(0.8);
 
@@ -193,9 +209,11 @@ public class LargeCombinedModelsTest {
     richGasMixer.addStream(secondStageCompressor.getOutStream());
     richGasMixer.addStream(firstStageSeparator.getGasOutStream());
 
-    Cooler dewPointControlCooler = new neqsim.process.equipment.heatexchanger.Cooler("dew point cooler", richGasMixer.getOutStream());
+    Cooler dewPointControlCooler = new neqsim.process.equipment.heatexchanger.Cooler(
+        "dew point cooler", richGasMixer.getOutStream());
 
-    Separator dewPointScrubber = new neqsim.process.equipment.separator.Separator("dew point scrubber", dewPointControlCooler.getOutStream());
+    Separator dewPointScrubber = new neqsim.process.equipment.separator.Separator(
+        "dew point scrubber", dewPointControlCooler.getOutStream());
 
     process.add(wellStreamHP);
     process.add(feedTPsetter);
