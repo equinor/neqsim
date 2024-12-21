@@ -451,7 +451,9 @@ public abstract class Component implements ComponentInterface {
       }
       componentNumber = compIndex;
     } catch (Exception ex) {
-      logger.error("error in comp");
+      logger.error("error in adding new component. Check database arameters for component:  "
+          + ex.getMessage());
+      throw new RuntimeException(ex);
     }
 
     srkacentricFactor = acentricFactor;

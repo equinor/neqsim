@@ -27,7 +27,8 @@
 				"redhat.vscode-xml",
 				"vscjava.vscode-java-test",
 				"GitHub.copilot",
-				"GitHub.copilot-chat"
+				"GitHub.copilot-chat",
+				"janisdd.vscode-edit-csv"
 			],
 			"settings": {
 				"java.configuration.updateBuildConfiguration": "interactive",
