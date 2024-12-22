@@ -7,14 +7,20 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.expander.Expander;
+import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 
@@ -32,7 +38,7 @@ public class LargeCombinedModelsTest {
 
     public List<Double> moleRateLP;
 
-    public Double firstStagePressure = 80.0;
+    public Double firstStagePressure = 70.0;
     public Double firstStageTemperature = 50.0;
 
   }
@@ -42,6 +48,7 @@ public class LargeCombinedModelsTest {
     hpStream.getFluid()
         .setMolarComposition(input.moleRateHP.stream().mapToDouble(Double::doubleValue).toArray());
     hpStream.setPressure(input.firstStagePressure, "bara");
+    hpStream.setTemperature(input.firstStageTemperature, "C");
     // Add other updates as necessary...
   }
 
@@ -81,7 +88,7 @@ public class LargeCombinedModelsTest {
     ProcessSystem process = new ProcessSystem();
 
     Heater feedTPsetter = new Heater("feed TP setter", wellStreamHP);
-    feedTPsetter.setOutPressure(50.0, "bara");
+    feedTPsetter.setOutPressure(70.0, "bara");
     feedTPsetter.setOutTemperature(80.0, "C");
 
     // Step 2: First Stage Separator
@@ -163,15 +170,18 @@ public class LargeCombinedModelsTest {
 
     Cooler firstStageCooler = new neqsim.process.equipment.heatexchanger.Cooler("1st stage cooler",
         fourthStageSeparator.getGasOutStream());
+    firstStageCooler.setOutTemperature(30, "C");
 
     Separator firstStageScrubber = new neqsim.process.equipment.separator.Separator(
         "1st stage scrubber", firstStageCooler.getOutStream());
 
     Pump firststagescrubberpump = new neqsim.process.equipment.pump.Pump("1st stage scrubber pump",
         firstStageScrubber.getLiquidOutStream());
+    firststagescrubberpump.setOutletPressure(7.0);
 
     Compressor firstStageCompressor = new neqsim.process.equipment.compressor.Compressor(
         "1st stage compressor", firstStageScrubber.getGasOutStream());
+    firstStageCompressor.setOutletPressure(7.0, "bara");
     firstStageCompressor.setUsePolytropicCalc(true);
     firstStageCompressor.setPolytropicEfficiency(0.8);
 
@@ -181,6 +191,7 @@ public class LargeCombinedModelsTest {
 
     Cooler firstStageCooler2 = new neqsim.process.equipment.heatexchanger.Cooler(
         "1st stage cooler2", firststagegasmixer.getOutStream());
+    firstStageCooler2.setOutTemperature(30, "C");
 
     Separator firstStageScrubber2 = new neqsim.process.equipment.separator.Separator(
         "1st stage scrubber2", firstStageCooler2.getOutStream());
@@ -189,6 +200,7 @@ public class LargeCombinedModelsTest {
         "2nd stage compressor", firstStageScrubber2.getGasOutStream());
     firstStageCompressor2.setUsePolytropicCalc(true);
     firstStageCompressor2.setPolytropicEfficiency(0.8);
+    firstStageCompressor2.setOutletPressure(20.0, "bara");
 
     Mixer secondstagegasmixer = new neqsim.process.equipment.mixer.Mixer("second Stage mixer");
     secondstagegasmixer.addStream(firstStageCompressor2.getOutStream());
@@ -196,6 +208,7 @@ public class LargeCombinedModelsTest {
 
     Cooler secondStageCooler = new neqsim.process.equipment.heatexchanger.Cooler("2nd stage cooler",
         secondstagegasmixer.getOutStream());
+    secondStageCooler.setOutTemperature(30.0, "C");
 
     Separator secondStageScrubber = new neqsim.process.equipment.separator.Separator(
         "2nd stage scrubber", secondStageCooler.getOutStream());
@@ -204,6 +217,7 @@ public class LargeCombinedModelsTest {
         "3rd stage compressor", secondStageScrubber.getGasOutStream());
     secondStageCompressor.setUsePolytropicCalc(true);
     secondStageCompressor.setPolytropicEfficiency(0.8);
+    secondStageCompressor.setOutletPressure(70.0, "bara");
 
     Mixer richGasMixer = new neqsim.process.equipment.mixer.Mixer("fourth Stage mixer");
     richGasMixer.addStream(secondStageCompressor.getOutStream());
@@ -211,9 +225,44 @@ public class LargeCombinedModelsTest {
 
     Cooler dewPointControlCooler = new neqsim.process.equipment.heatexchanger.Cooler(
         "dew point cooler", richGasMixer.getOutStream());
+    dewPointControlCooler.setOutTemperature(30.0, "C");
 
     Separator dewPointScrubber = new neqsim.process.equipment.separator.Separator(
         "dew point scrubber", dewPointControlCooler.getOutStream());
+
+
+    neqsim.process.equipment.heatexchanger.Cooler dewPointControlCooler2 =
+        new neqsim.process.equipment.heatexchanger.Cooler("dew point cooler 2",
+            dewPointScrubber.getGasOutStream());
+    dewPointControlCooler.setOutTemperature(-5.0, "C");
+
+    Separator dewPointScrubber2 = new neqsim.process.equipment.separator.Separator(
+        "dew point scrubber 2", dewPointControlCooler2.getOutStream());
+
+    Mixer hpLiqmixer = new neqsim.process.equipment.mixer.Mixer("HP liq gas mixer");
+    hpLiqmixer.addStream(dewPointScrubber.getLiquidOutStream());
+
+    Mixer mpLiqmixer = new neqsim.process.equipment.mixer.Mixer("MP liq gas mixer");
+    mpLiqmixer.addStream(secondStageScrubber.getLiquidOutStream());
+
+    Mixer lpLiqmixer = new neqsim.process.equipment.mixer.Mixer("LP liq gas mixer");
+    lpLiqmixer.addStream(firststagescrubberpump.getOutletStream());
+    lpLiqmixer.addStream(firstStageScrubber2.getLiquidOutStream());
+
+    Recycle hpResycle = new neqsim.process.equipment.util.Recycle("HP liq resycle");
+    hpResycle.addStream(hpLiqmixer.getOutStream());
+    hpResycle.setOutletStream(oilFirstStage);
+    hpResycle.setTolerance(1e-2);
+
+    Recycle mpResycle = new neqsim.process.equipment.util.Recycle("MP liq resycle");
+    mpResycle.addStream(mpLiqmixer.getOutStream());
+    mpResycle.setOutletStream(oilSecondStage);
+    mpResycle.setTolerance(1e-2);
+
+    Recycle lpResycle = new neqsim.process.equipment.util.Recycle("LP liq resycle");
+    lpResycle.addStream(lpLiqmixer.getOutStream());
+    lpResycle.setOutletStream(oilThirdStage);
+    lpResycle.setTolerance(1e-2);
 
     process.add(wellStreamHP);
     process.add(feedTPsetter);
@@ -245,8 +294,14 @@ public class LargeCombinedModelsTest {
     process.add(richGasMixer);
     process.add(dewPointControlCooler);
     process.add(dewPointScrubber);
-
-
+    process.add(dewPointControlCooler2);
+    process.add(dewPointScrubber2);
+    process.add(hpLiqmixer);
+    process.add(mpLiqmixer);
+    process.add(lpLiqmixer);
+    process.add(hpResycle);
+    process.add(mpResycle);
+    process.add(lpResycle);
 
     return process;
   }
@@ -256,12 +311,130 @@ public class LargeCombinedModelsTest {
     ProcessSystem process = createSeparationTrainProcess(null);
     process.run();
 
-    Assertions.assertEquals(292.861847439,
+    Assertions.assertEquals(296.652026,
         ((ThreePhaseSeparator) process.getUnit("1st stage separator")).getOilOutStream()
             .getFlowRate("kg/hr"),
         0.1);
+  }
+
+  public ProcessSystem createExpanderProcessModel(Separator dewPointScrubber2,
+      ThreePhaseSeparator fourthStageSeparator, Mixer secondstagegasmixer, Mixer firststagegasmixer,
+      Mixer mpLiqmixer) {
+
+    ProcessSystem process = new ProcessSystem();
+
+    EnergyStream expander_energy_stream =
+        new neqsim.process.equipment.stream.EnergyStream("expander energy");
+
+    Expander turboexpander =
+        new neqsim.process.equipment.expander.Expander("TEX", dewPointScrubber2.getGasOutStream());
+    turboexpander.setPolytropicEfficiency(0.75);
+    turboexpander.setUsePolytropicCalc(true);
+    turboexpander.setOutletPressure(55.0, "bara");
+    turboexpander.setEnergyStream(expander_energy_stream);
+    process.add(turboexpander);
+    turboexpander.run();
+    turboexpander.getOutStream().getFluid().prettyPrint();
+
+    Separator DPCUScrubber = new neqsim.process.equipment.separator.Separator("TEX LT scrubber",
+        turboexpander.getOutStream());
+    process.add(DPCUScrubber);
+
+    Mixer NGLpremixer = new neqsim.process.equipment.mixer.Mixer("NGL pre mixer");
+    NGLpremixer.addStream(DPCUScrubber.getLiquidOutStream());
+    NGLpremixer.addStream(dewPointScrubber2.getLiquidOutStream());
+    process.add(NGLpremixer);
+
+    Heater NGLpreflashheater = new neqsim.process.equipment.heatexchanger.Heater(
+        "NGL preflash heater", NGLpremixer.getOutletStream());
+    NGLpreflashheater.setOutTemperature(0.0, "C");
+    process.add(NGLpreflashheater);
+
+    Separator NGLpreflashsseparator = new neqsim.process.equipment.separator.Separator(
+        "NGL pre flash separator", NGLpreflashheater.getOutStream());
+    process.add(NGLpreflashsseparator);
+
+    ThrottlingValve NGLfeedvalve = new neqsim.process.equipment.valve.ThrottlingValve(
+        "NGL column feed valve", NGLpreflashsseparator.getLiquidOutStream());
+    NGLfeedvalve.setOutletPressure(20.0, "bara");
+    process.add(NGLfeedvalve);
+
+    DistillationColumn NGLcolumn =
+        new neqsim.process.equipment.distillation.DistillationColumn("NGL column", 5, true, false);
+    NGLcolumn.addFeedStream(NGLfeedvalve.getOutletStream(), 5);
+    NGLcolumn.getReboiler().setOutTemperature(273.15 + 40.0);
+    NGLcolumn.setTopPressure(7.5);
+    NGLcolumn.setBottomPressure(7.5);
+    process.add(NGLcolumn);
+
+    // TODO: Add more equipment to the process..
+    secondstagegasmixer.addStream(NGLpreflashsseparator.getGasOutStream());
+    firststagegasmixer.addStream(NGLcolumn.getGasOutStream());
+
+    Splitter NGLsplitter = new neqsim.process.equipment.splitter.Splitter("NGL splitter",
+        NGLcolumn.getLiquidOutStream());
+    NGLsplitter.setSplitFactors(new double[] {0.999, 0.001});
+    process.add(NGLsplitter);
+
+    Mixer NGLiqmixer = new neqsim.process.equipment.mixer.Mixer("NGL mixer");
+    NGLiqmixer.addStream(fourthStageSeparator.getOilOutStream());
+    NGLiqmixer.addStream(NGLsplitter.getSplitStream(0));
+    mpLiqmixer.addStream(NGLsplitter.getSplitStream(1));
+    process.add(NGLiqmixer);
+
+    Heater exportoil = new neqsim.process.equipment.heatexchanger.Heater("export oil cooler",
+        NGLiqmixer.getOutStream());
+    process.add(exportoil);
+
+    Stream exportoilstream =
+        new neqsim.process.equipment.stream.Stream("export oil", exportoil.getOutStream());
+    process.add(exportoilstream);
+
+    Heater preheater = new neqsim.process.equipment.heatexchanger.Heater("compresor pre heater",
+        DPCUScrubber.getGasOutStream());
+    preheater.setOutTemperature(15.0, "C");
+    process.add(preheater);
+
+    Compressor compressor_KX25831 = new neqsim.process.equipment.compressor.Compressor(
+        "comp_KX25831B", preheater.getOutStream());
+    compressor_KX25831.setUsePolytropicCalc(true);
+    compressor_KX25831.setPolytropicEfficiency(0.75);
+    compressor_KX25831.setEnergyStream(expander_energy_stream);
+    compressor_KX25831.setCalcPressureOut(true);
+    process.add(compressor_KX25831);
+
+    Filter valve_dp1 = new neqsim.process.equipment.filter.Filter("gas split valve",
+        compressor_KX25831.getOutStream());
+    valve_dp1.setDeltaP(1.0);
+    process.add(valve_dp1);
+
+    return process;
+  }
+
+  @Test
+  public void tesExpanderProcess() {
+    ProcessSystem sepTrainProcess = createSeparationTrainProcess(null);
+    sepTrainProcess.setRunInSteps(true);
+    sepTrainProcess.run();
+
+    Assertions.assertEquals(110.5859, ((Separator) sepTrainProcess.getUnit("dew point scrubber 2"))
+        .getGasOutStream().getFlowRate("kg/hr"), 0.1);
+    ((Separator) sepTrainProcess.getUnit("dew point scrubber 2")).getGasOutStream().getFluid()
+        .prettyPrint();
+    ProcessSystem expanderProcess =
+        createExpanderProcessModel((Separator) sepTrainProcess.getUnit("dew point scrubber 2"),
+            (ThreePhaseSeparator) sepTrainProcess.getUnit("4th stage separator"),
+            (Mixer) sepTrainProcess.getUnit("second Stage mixer"),
+            (Mixer) sepTrainProcess.getUnit("first stage mixer"),
+            (Mixer) sepTrainProcess.getUnit("MP liq gas mixer"));
+    expanderProcess.setRunInSteps(true);
+    expanderProcess.run();
+
+    Assertions.assertEquals(110.58,
+        ((Expander) expanderProcess.getUnit("TEX")).getOutStream().getFlowRate("kg/hr"), 0.1);
 
   }
+
 
   public ProcessModel getCombinedModel() {
     ProcessSystem wellProcess = getWellStreamAndManifoldModel(new SystemInterface[] {wellFluid});
