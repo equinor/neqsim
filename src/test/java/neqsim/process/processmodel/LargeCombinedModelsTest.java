@@ -425,7 +425,7 @@ public class LargeCombinedModelsTest {
     process.add(preheater);
 
     Compressor compressor_KX25831 = new neqsim.process.equipment.compressor.Compressor(
-        "comp_KX25831B", preheater.getOutStream());
+        "comp_KX25831", preheater.getOutStream());
     compressor_KX25831.setUsePolytropicCalc(true);
     compressor_KX25831.setPolytropicEfficiency(0.75);
     compressor_KX25831.setEnergyStream(expander_energy_stream);
@@ -433,7 +433,7 @@ public class LargeCombinedModelsTest {
     process.add(compressor_KX25831);
 
     Filter valve_dp1 = new neqsim.process.equipment.filter.Filter("gas split valve",
-        compressor_KX25831.getOutStream());
+        compressor_KX25831.getOutletStream());
     valve_dp1.setDeltaP(1.0);
     process.add(valve_dp1);
 
