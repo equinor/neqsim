@@ -21,7 +21,7 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * Test class for running compressor module calculation.
  */
-public class CompressorModule extends neqsim.NeqSimTest {
+public class CompressorModuleTest extends neqsim.NeqSimTest {
   // Test methods
 
   @Test
