@@ -103,6 +103,8 @@ public class RachfordRice implements Serializable {
       g1 += -z[i] / K[i];
     }
 
+    // logger.debug("Max beta " + maxBeta + " min beta " + minBeta);
+
     if (g0 < 0) {
       return tolerance;
     }
@@ -186,7 +188,8 @@ public class RachfordRice implements Serializable {
         nybeta = 1.0 - betal;
       }
       step = gbeta / deriv;
-    } while (Math.abs(step) >= 1.0e-11 && iterations < maxIterations);
+    } while (Math.abs(step) >= 1.0e-11 && (Math.abs(step) >= 1e-8 && iterations < 50)
+        && iterations < maxIterations);
     if (nybeta <= tolerance) {
       nybeta = tolerance;
     } else if (nybeta >= 1.0 - tolerance) {
@@ -196,6 +199,8 @@ public class RachfordRice implements Serializable {
     beta[1] = 1.0 - nybeta;
 
     if (iterations >= maxIterations) {
+      logger.debug("error " + beta[1]);
+      logger.debug("gbeta " + gbeta);
       logger.debug("K " + Arrays.toString(K));
       logger.debug("z " + Arrays.toString(z));
       throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(),
@@ -334,6 +339,10 @@ public class RachfordRice implements Serializable {
 
     if (iter >= maxIterations) {
       logger.error("Rachford rice did not coverge afer " + maxIterations + " iterations");
+
+      logger.debug("K " + Arrays.toString(K));
+      logger.debug("z " + Arrays.toString(z));
+
       throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(),
           "calcBetaNielsen2023", maxIterations);
     }
