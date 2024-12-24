@@ -186,7 +186,7 @@ public class RachfordRice implements Serializable {
         nybeta = 1.0 - betal;
       }
       step = gbeta / deriv;
-    } while (Math.abs(step) >= 1.5e-10 && iterations < maxIterations);
+    } while (Math.abs(step) >= 1.0e-11 && iterations < maxIterations);
     if (nybeta <= tolerance) {
       nybeta = tolerance;
     } else if (nybeta >= 1.0 - tolerance) {
@@ -333,6 +333,7 @@ public class RachfordRice implements Serializable {
     beta[1] = 1.0 - V;
 
     if (iter >= maxIterations) {
+      logger.error("Rachford rice did not coverge afer " + maxIterations + " iterations");
       throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(),
           "calcBetaNielsen2023", maxIterations);
     }
