@@ -19,10 +19,10 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  */
 public class RachfordRice implements Serializable {
-  static Logger logger = LogManager.getLogger(PHsolidFlash.class);
+  static Logger logger = LogManager.getLogger(RachfordRice.class);
   private static final long serialVersionUID = 1000;
   private double[] beta = new double[2];
-  private static String method = "Michelsen2001"; // alternative use Nielsen2023 or Michelsen2001
+  private static String method = "Nielsen2023"; // alternative use Nielsen2023 or Michelsen2001
 
   /**
    * <p>

@@ -2,6 +2,7 @@ package neqsim.process.processmodel;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
@@ -73,7 +74,7 @@ public class LargeCombinedModelsTest {
 
     Splitter lpManifold = new Splitter("LP manifold", wellStreamHP);
     lpManifold.setSplitFactors(new double[] {0.5, 0.5});
-    process.add(hpManifold);
+    process.add(lpManifold);
 
     return process;
   };
@@ -137,9 +138,7 @@ public class LargeCombinedModelsTest {
     LPwellStream.setFlowRate(10.0, "kg/hr");
     LPwellStream.setPressure(10.0, "bara");
     LPwellStream.setTemperature(40.0, "C");
-    LPwellStream.run();
 
-    secondStageSeparator.addStream(LPwellStream);
 
     // Step 8: Second Stage Oil Reflux Stream
     Stream oilSecondStage = (Stream) inputStream.clone();
@@ -147,7 +146,6 @@ public class LargeCombinedModelsTest {
     oilSecondStage.setFlowRate(10.0, "kg/hr");
     oilSecondStage.setPressure(7.0, "bara");
     oilSecondStage.setTemperature(30.0, "C");
-    oilSecondStage.run();
 
     // Step 9: Valve for Oil from the Second Stage
     ThrottlingValve valve_oil_from_seccond_stage =
@@ -172,7 +170,6 @@ public class LargeCombinedModelsTest {
     oilThirdStage.setFlowRate(10.0, "kg/hr");
     oilThirdStage.setPressure(3.0, "bara");
     oilThirdStage.setTemperature(30.0, "C");
-    oilThirdStage.run();
 
     Mixer oilThirdStageMixer = new neqsim.process.equipment.mixer.Mixer("third stage oil mixer");
     oilThirdStageMixer.addStream(valve_oil_from_third_stage.getOutletStream());
@@ -344,7 +341,7 @@ public class LargeCombinedModelsTest {
             .getFlowRate("MSm3/day"),
         0.1);
 
-    Assertions.assertEquals(7.72480776,
+    Assertions.assertEquals(6.7252223692,
         ((Separator) sepprocessTrain1.getUnit("dew point scrubber 2")).getGasOutStream()
             .getFlowRate("MSm3/day"),
         0.1);
@@ -354,7 +351,7 @@ public class LargeCombinedModelsTest {
             .getFlowRate("MSm3/day"),
         0.1);
 
-    Assertions.assertEquals(11.58711783545,
+    Assertions.assertEquals(10.08778207167,
         ((Separator) sepprocessTrain2.getUnit("dew point scrubber 2")).getGasOutStream()
             .getFlowRate("MSm3/day"),
         0.1);
@@ -397,20 +394,19 @@ public class LargeCombinedModelsTest {
 
     ThrottlingValve NGLfeedvalve = new neqsim.process.equipment.valve.ThrottlingValve(
         "NGL column feed valve", NGLpreflashsseparator.getLiquidOutStream());
-    NGLfeedvalve.setOutletPressure(20.0, "bara");
+    NGLfeedvalve.setOutletPressure(7.5, "bara");
     process.add(NGLfeedvalve);
 
     DistillationColumn NGLcolumn =
         new neqsim.process.equipment.distillation.DistillationColumn("NGL column", 5, true, false);
     NGLcolumn.addFeedStream(NGLfeedvalve.getOutletStream(), 5);
-    NGLcolumn.getReboiler().setOutTemperature(273.15 + 40.0);
+    NGLcolumn.getReboiler().setOutTemperature(273.15 + 45.0);
     NGLcolumn.setTopPressure(7.5);
     NGLcolumn.setBottomPressure(7.5);
     process.add(NGLcolumn);
 
-    // TODO: Add more equipment to the process..
-    secondstagegasmixer.addStream(NGLpreflashsseparator.getGasOutStream());
     firststagegasmixer.addStream(NGLcolumn.getGasOutStream());
+    secondstagegasmixer.addStream(NGLpreflashsseparator.getGasOutStream());
 
     Splitter NGLsplitter = new neqsim.process.equipment.splitter.Splitter("NGL splitter",
         NGLcolumn.getLiquidOutStream());
@@ -425,6 +421,7 @@ public class LargeCombinedModelsTest {
 
     Heater exportoil = new neqsim.process.equipment.heatexchanger.Heater("export oil cooler",
         NGLiqmixer.getOutletStream());
+    exportoil.setOutTemperature(15.0, "C");
     process.add(exportoil);
 
     Stream exportoilstream =
@@ -468,12 +465,12 @@ public class LargeCombinedModelsTest {
     // sepprocessTrain2.setRunInSteps(true);
     sepprocessTrain2.run();
 
-    Assertions.assertEquals(8.69422423996,
+    Assertions.assertEquals(7.00009786541,
         ((Separator) sepprocessTrain1.getUnit("dew point scrubber 2")).getGasOutStream()
             .getFlowRate("MSm3/day"),
         0.1);
 
-    Assertions.assertEquals(13.0413807213,
+    Assertions.assertEquals(10.50014679543,
         ((Separator) sepprocessTrain2.getUnit("dew point scrubber 2")).getGasOutStream()
             .getFlowRate("MSm3/day"),
         0.1);
@@ -487,11 +484,11 @@ public class LargeCombinedModelsTest {
     expanderProcess1.setRunInSteps(true);
     expanderProcess1.run();
 
-    Assertions.assertEquals(8.69422423996,
+    Assertions.assertEquals(7.00009786541,
         ((Expander) expanderProcess1.getUnit("TEX")).getOutletStream().getFlowRate("MSm3/day"),
         0.1);
 
-    Assertions.assertEquals(8.4376749385,
+    Assertions.assertEquals(6.833672928631,
         ((ThrottlingValve) expanderProcess1.getUnit("gas split valve")).getOutletStream()
             .getFlowRate("MSm3/day"),
         0.1);
@@ -510,11 +507,11 @@ public class LargeCombinedModelsTest {
     expanderProcess2.setRunInSteps(true);
     expanderProcess2.run();
 
-    Assertions.assertEquals(13.04138072,
+    Assertions.assertEquals(10.500146795,
         ((Expander) expanderProcess2.getUnit("TEX")).getOutletStream().getFlowRate("MSm3/day"),
         0.1);
 
-    Assertions.assertEquals(12.65654610568,
+    Assertions.assertEquals(10.250509390,
         ((ThrottlingValve) expanderProcess2.getUnit("gas split valve")).getOutletStream()
             .getFlowRate("MSm3/day"),
         0.1);
@@ -685,8 +682,6 @@ public class LargeCombinedModelsTest {
     Assertions.assertEquals(12, ((Splitter) exportCompressorSystem.getUnit("TEE-104"))
         .getSplitStream(0).getFlowRate("MSm3/day"), 0.1);
 
-    ((Splitter) exportCompressorSystem.getUnit("TEE-104")).getSplitStream(0).getFluid()
-        .prettyPrint();
   }
 
 
@@ -770,6 +765,95 @@ public class LargeCombinedModelsTest {
         0.1);
 
 
+    Assertions.assertEquals(7.4447066422,
+        ((ThrottlingValve) fullProcess.get("expander process A").getUnit("gas split valve"))
+            .getOutletStream().getFlowRate("MSm3/day"),
+        0.1);
+
+
+    Assertions.assertEquals(10.77445657,
+        ((ThrottlingValve) fullProcess.get("expander process B").getUnit("gas split valve"))
+            .getOutletStream().getFlowRate("MSm3/day"),
+        0.1);
+
+
+    Assertions.assertEquals(7.433088408,
+        ((Splitter) fullProcess.get("compressor process A").getUnit("TEE-104")).getSplitStream(0)
+            .getFlowRate("MSm3/day"),
+        0.1);
+
+    Assertions.assertEquals(253.462329520,
+        ((Compressor) fullProcess.get("compressor process A").getUnit("KA27841")).getOutletStream()
+            .getPressure("bara"),
+        0.1);
+
+    Assertions.assertEquals(10.77445657,
+        ((Splitter) fullProcess.get("compressor process B").getUnit("TEE-104")).getSplitStream(0)
+            .getFlowRate("MSm3/day"),
+        0.1);
+
+    Assertions.assertEquals(272.9681899,
+        ((Compressor) fullProcess.get("compressor process B").getUnit("KA27841")).getOutletStream()
+            .getPressure("bara"),
+        0.1);
+
+  }
+
+
+
+  public void testCombinedProcessAsThread() {
+    ProcessModel fullProcess = getCombinedModel();
+
+    // Set fullProcess properties;
+    ((Stream) (fullProcess.get("well and manifold process")).getUnit("HP well stream"))
+        .setFlowRate(30.0, "MSm3/day");
+
+    Map<String, Thread> threads = null;
+    fullProcess.setRunStep(true);
+    do {
+      fullProcess.run();
+    } while (!fullProcess.isFinished());
+    /*
+     * try { fullProcess.run(); } catch (Exception ex) { logger.debug(ex.getMessage(), ex); } try {
+     * threads = fullProcess.getThreads(); threads.get("well and manifold process").start();
+     * threads.get("well and manifold process").join(); threads.get("separation train A").start();
+     * // threads.get("separation train B").start(); threads.get("separation train A").join(); //
+     * threads.get("separation train B").join(); /* threads.get("expander process A").start();
+     * threads.get("expander process B").start(); threads.get("expander process A").join();
+     * threads.get("expander process A").join(); threads.get("separation train A").start();
+     * threads.get("separation train B").start(); threads.get("expander process A").start();
+     * threads.get("expander process B").start(); threads.get("separation train A").join();
+     * threads.get("separation train B").join(); threads.get("expander process A").join();
+     * threads.get("expander process A").join();
+     * 
+     * 
+     * 
+     * threads.get("compressor process A").start(); threads.get("compressor process B").start();
+     * 
+     * threads.get("compressor process A").join(); threads.get("compressor process B").join();
+     * 
+     * 
+     * for (Thread thread : threads.values()) { thread.join(); // Block until this thread finishes }
+     * 
+     * } catch (Exception ex) { logger.debug(ex.getMessage(), ex); }
+     * 
+     */
+    Assertions.assertEquals(5.54017523150,
+        ((ThreePhaseSeparator) fullProcess.get("separation train A").getUnit("1st stage separator"))
+            .getGasOutStream().getFlowRate("MSm3/day"),
+        0.1);
+
+    Assertions.assertEquals(1742523.539419,
+        ((ThreePhaseSeparator) fullProcess.get("separation train A").getUnit("1st stage separator"))
+            .getOilOutStream().getFlowRate("kg/hr"),
+        0.1);
+
+    Assertions.assertEquals(8.3102628472,
+        ((ThreePhaseSeparator) fullProcess.get("separation train B").getUnit("1st stage separator"))
+            .getGasOutStream().getFlowRate("MSm3/day"),
+        0.1);
+
+
     Assertions.assertEquals(13.748552781153,
         ((ThrottlingValve) fullProcess.get("expander process A").getUnit("gas split valve"))
             .getOutletStream().getFlowRate("MSm3/day"),
@@ -801,8 +885,6 @@ public class LargeCombinedModelsTest {
         ((Compressor) fullProcess.get("compressor process B").getUnit("KA27841")).getOutletStream()
             .getPressure("bara"),
         0.1);
-
-
 
   }
 

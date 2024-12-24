@@ -2,6 +2,8 @@ package neqsim.process.processmodel;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -14,8 +16,11 @@ import java.util.Map;
  * @version $Id: $Id
  */
 public class ProcessModel implements Runnable {
+  static Logger logger = LogManager.getLogger(ProcessModel.class);
   private final Map<String, ProcessSystem> processes = new LinkedHashMap<>();
+
   private boolean runStep = false;
+  private boolean runAsThread = false;
 
   /**
    * Checks if the model is running in step mode.
@@ -52,6 +57,7 @@ public class ProcessModel implements Runnable {
     if (processes.containsKey(name)) {
       throw new IllegalArgumentException("A process with the given name already exists");
     }
+    process.setName(name);
     processes.put(name, process);
     return true;
   }
@@ -95,6 +101,15 @@ public class ProcessModel implements Runnable {
     }
   }
 
+  public boolean isFinished() {
+    for (ProcessSystem process : processes.values()) {
+      if (!process.solved()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /**
    * Executes all processes in a single step.
    */
@@ -111,13 +126,19 @@ public class ProcessModel implements Runnable {
 
   /**
    * Runs the model as a separate thread.
-   *
-   * @return the thread running the model.
    */
-  public Thread runAsThread() {
-    Thread processThread = new Thread(this);
-    processThread.start();
-    return processThread;
+  public Map<String, Thread> getThreads() {
+    Map<String, Thread> threads = new LinkedHashMap<>();
+    try {
+      for (ProcessSystem process : processes.values()) {
+        Thread thread = new Thread(process);
+        threads.put(process.getName(), thread);
+      }
+
+    } catch (Exception ex) {
+      logger.debug(ex.getMessage(), ex);
+    }
+    return threads;
   }
 
 }

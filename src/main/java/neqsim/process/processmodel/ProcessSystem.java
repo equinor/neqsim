@@ -495,7 +495,8 @@ public class ProcessSystem extends SimulationBaseClass {
         // }
       } catch (Exception ex) {
         // String error = ex.getMessage();
-        logger.error(ex.getMessage(), ex);
+        logger.error(
+            "equipment: " + unitOperations.get(i).getName() + " errror: " + ex.getMessage(), ex);
       }
     }
     for (int i = 0; i < unitOperations.size(); i++) {
@@ -556,6 +557,15 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
+    if (recycleController.solvedAll()) {
+      for (int i = 0; i < unitOperations.size(); i++) {
+        if (!unitOperations.get(i).solved()) {
+          return false;
+        }
+      }
+    } else {
+      return false;
+    }
     return true;
   }
 
