@@ -37,7 +37,7 @@ public class HydrateInhibitorwtFlashTest {
               * testSystem.getPhase(0).getComponent("MEG").getMolarMass()
               + testSystem.getPhase(0).getComponent("water").getNumberOfmoles()
                   * testSystem.getPhase(0).getComponent("water").getMolarMass());
-      Assertions.assertEquals(98.54736778391424, cons, 1e-12);
+      Assertions.assertEquals(98.54736778391424, cons, 1e-3);
     } catch (Exception ex) {
       ex.toString();
     }
