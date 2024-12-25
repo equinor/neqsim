@@ -457,20 +457,20 @@ public class LargeCombinedModelsTest {
 
     ProcessSystem sepprocessTrain1 =
         createSeparationTrainProcess(((Splitter) process.getUnit("HP manifold")).getSplitStream(0));
-    // sepprocessTrain1.setRunInSteps(true);
+    sepprocessTrain1.setRunInSteps(true);
     sepprocessTrain1.run();
 
     ProcessSystem sepprocessTrain2 =
         createSeparationTrainProcess(((Splitter) process.getUnit("HP manifold")).getSplitStream(1));
-    // sepprocessTrain2.setRunInSteps(true);
+    sepprocessTrain2.setRunInSteps(true);
     sepprocessTrain2.run();
 
-    Assertions.assertEquals(7.00009786541,
+    Assertions.assertEquals(6.72522236922,
         ((Separator) sepprocessTrain1.getUnit("dew point scrubber 2")).getGasOutStream()
             .getFlowRate("MSm3/day"),
         0.1);
 
-    Assertions.assertEquals(10.50014679543,
+    Assertions.assertEquals(10.087782071673,
         ((Separator) sepprocessTrain2.getUnit("dew point scrubber 2")).getGasOutStream()
             .getFlowRate("MSm3/day"),
         0.1);
@@ -484,11 +484,11 @@ public class LargeCombinedModelsTest {
     expanderProcess1.setRunInSteps(true);
     expanderProcess1.run();
 
-    Assertions.assertEquals(7.00009786541,
+    Assertions.assertEquals(6.7252223692,
         ((Expander) expanderProcess1.getUnit("TEX")).getOutletStream().getFlowRate("MSm3/day"),
         0.1);
 
-    Assertions.assertEquals(6.833672928631,
+    Assertions.assertEquals(6.587869090181,
         ((ThrottlingValve) expanderProcess1.getUnit("gas split valve")).getOutletStream()
             .getFlowRate("MSm3/day"),
         0.1);
@@ -507,11 +507,11 @@ public class LargeCombinedModelsTest {
     expanderProcess2.setRunInSteps(true);
     expanderProcess2.run();
 
-    Assertions.assertEquals(10.500146795,
+    Assertions.assertEquals(10.0877820716,
         ((Expander) expanderProcess2.getUnit("TEX")).getOutletStream().getFlowRate("MSm3/day"),
         0.1);
 
-    Assertions.assertEquals(10.250509390,
+    Assertions.assertEquals(9.88175635444993,
         ((ThrottlingValve) expanderProcess2.getUnit("gas split valve")).getOutletStream()
             .getFlowRate("MSm3/day"),
         0.1);

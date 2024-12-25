@@ -188,7 +188,7 @@ public class RachfordRice implements Serializable {
         nybeta = 1.0 - betal;
       }
       step = gbeta / deriv;
-    } while (Math.abs(step) >= 1.0e-11 && (Math.abs(step) >= 1e-8 && iterations < 50)
+    } while (Math.abs(step) >= 1.0e-11 && (Math.abs(step) >= 1e-9 && iterations < 50)
         && iterations < maxIterations);
     if (nybeta <= tolerance) {
       nybeta = tolerance;
@@ -339,7 +339,6 @@ public class RachfordRice implements Serializable {
 
     if (iter >= maxIterations) {
       logger.error("Rachford rice did not coverge afer " + maxIterations + " iterations");
-
       logger.debug("K " + Arrays.toString(K));
       logger.debug("z " + Arrays.toString(z));
 
