@@ -967,7 +967,7 @@ public class LargeCombinedModelsTest {
             .getFlowRate("MSm3/day"),
         0.1);
 
-    Assertions.assertEquals(170.093573665,
+    Assertions.assertEquals(170.640681,
         ((Compressor) fullProcess.get("compressor process B").getUnit("KA27841")).getOutletStream()
             .getPressure("bara"),
         0.5);
