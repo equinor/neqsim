@@ -67,11 +67,11 @@ public class LargeCombinedModelsTest {
     wellStreamLP.setTemperature(inp.firstStageTemperature, "C");
     process.add(wellStreamLP);
 
-    Splitter hpManifold = new Splitter("HP manifold", wellStreamHP);
+    Splitter hpManifold = new Splitter("HP manifold", wellStreamHP, 2);
     hpManifold.setSplitFactors(new double[] {0.4, 0.6});
     process.add(hpManifold);
 
-    Splitter lpManifold = new Splitter("LP manifold", wellStreamLP);
+    Splitter lpManifold = new Splitter("LP manifold", wellStreamLP, 2);
     lpManifold.setSplitFactors(new double[] {0.5, 0.5});
     process.add(lpManifold);
 
@@ -421,7 +421,7 @@ public class LargeCombinedModelsTest {
     secondstagegasmixer.addStream(NGLpreflashsseparator.getGasOutStream());
 
     Splitter NGLsplitter = new neqsim.process.equipment.splitter.Splitter("NGL splitter",
-        NGLcolumn.getLiquidOutStream());
+        NGLcolumn.getLiquidOutStream(), 2);
     NGLsplitter.setSplitFactors(new double[] {0.999, 0.001});
     process.add(NGLsplitter);
 
@@ -678,7 +678,7 @@ public class LargeCombinedModelsTest {
     process.add(compressor_KA27841);
 
     Splitter splitter_TEE_104 = new neqsim.process.equipment.splitter.Splitter("TEE-104",
-        compressor_KA27841.getOutletStream());
+        compressor_KA27841.getOutletStream(), 2);
     splitter_TEE_104.setFlowRates(new double[] {-1, 0.0001}, "MSm3/day");
     process.add(splitter_TEE_104);
 
@@ -737,11 +737,11 @@ public class LargeCombinedModelsTest {
 
     ProcessSystem exportCompressorTrainA = getExportCopressorModel(
         ((ThrottlingValve) expanderProcessA.getUnit("gas split valve")).getOutletStream());
-    exportCompressorTrainA.run();
+    // exportCompressorTrainA.run();
 
     ProcessSystem exportCompressorTrainB = getExportCopressorModel(
         ((ThrottlingValve) expanderProcessB.getUnit("gas split valve")).getOutletStream());
-    exportCompressorTrainB.run();
+    // exportCompressorTrainB.run();
 
     ProcessModel combinedProcess = new ProcessModel();
     combinedProcess.add("well and manifold process", wellProcess);
