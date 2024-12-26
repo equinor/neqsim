@@ -20,7 +20,8 @@ public class ProcessModel implements Runnable {
   private Map<String, ProcessSystem> processes = new LinkedHashMap<>();
 
   private boolean runStep = false;
-  private boolean runAsThread = false;
+  private int maxIterations = 50;
+  private int iterations = 0;
 
   /**
    * Checks if the model is running in step mode.
@@ -99,8 +100,21 @@ public class ProcessModel implements Runnable {
         e.printStackTrace();
       }
     }
+    if (!runStep) {
+      if (!isFinished() && iterations < maxIterations) {
+        iterations += 1;
+        run();
+      } else {
+        iterations = 0;
+      }
+    }
   }
 
+  /**
+   * Checks if all processes are finished.
+   *
+   * @return true if all processes are solved, false otherwise.
+   */
   public boolean isFinished() {
     for (ProcessSystem process : processes.values()) {
       if (!process.solved()) {

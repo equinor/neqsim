@@ -192,10 +192,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
         && Math.abs(inletStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
             / inletStream.getFluid().getFlowRate("kg/hr") < 1e-6
         && Arrays.equals(splitFactor, oldSplitFactor)) {
-      isSolved = true;
       return false;
     } else {
-      isSolved = false;
       return true;
     }
   }
