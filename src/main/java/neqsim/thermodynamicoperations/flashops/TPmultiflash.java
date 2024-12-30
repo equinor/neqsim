@@ -373,7 +373,7 @@ public class TPmultiflash extends TPflash {
       int iter = 0;
       double errOld = 1.0e100;
       boolean useaccsubst = true;
-      int maxsucssubiter = 150;
+      int maxsucssubiter = 200;
       int maxiter = 200;
       do {
         errOld = err;
@@ -481,6 +481,7 @@ public class TPmultiflash extends TPflash {
           try {
             dx = df.plus(identitytimesConst).solve(f).negative();
           } catch (Exception e) {
+            logger.error(e.getMessage());
             dx = df.plus(identitytimesConst.scale(0.5)).solve(f).negative();
           }
 

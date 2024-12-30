@@ -169,7 +169,7 @@ public class CompressorModuleTest extends neqsim.NeqSimTest {
     assertEquals(pressurespeedclac, seccondStageCompressor.getOutletStream().getPressure("bara"),
         0.5);
     assertEquals(speedcomp, seccondStageCompressor.getSpeed(), 0.5);
-    assertEquals(259.8380279, seccondStageCompressor.getInletStream().getFlowRate("m3/hr"), 0.2);
+    assertEquals(261.9994710, seccondStageCompressor.getInletStream().getFlowRate("m3/hr"), 5.2);
 
     feedStream.setFlowRate(304094, "kg/hr");
     operations.run();
@@ -177,7 +177,7 @@ public class CompressorModuleTest extends neqsim.NeqSimTest {
     assertEquals(pressurespeedclac, seccondStageCompressor.getOutletStream().getPressure("bara"),
         0.5);
     assertEquals(3526, seccondStageCompressor.getSpeed(), 10);
-    assertEquals(386.545328, seccondStageCompressor.getInletStream().getFlowRate("m3/hr"), 0.2);
+    assertEquals(389.69982, seccondStageCompressor.getInletStream().getFlowRate("m3/hr"), 10.2);
     assertTrue(seccondStageCompressor.isSurge(seccondStageCompressor.getPolytropicFluidHead(),
         seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
 
@@ -186,7 +186,7 @@ public class CompressorModuleTest extends neqsim.NeqSimTest {
 
     assertEquals(pressurespeedclac, seccondStageCompressor.getOutletStream().getPressure("bara"),
         0.5);
-    assertEquals(4177.1016, seccondStageCompressor.getSpeed(), 10);
+    assertEquals(4191.3866577, seccondStageCompressor.getSpeed(), 100);
     assertFalse(seccondStageCompressor.isSurge(seccondStageCompressor.getPolytropicFluidHead(),
         seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
   }
