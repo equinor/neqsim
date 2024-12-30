@@ -467,7 +467,7 @@ public class TPflash extends Flash {
       sucsSubs();
     }
     if (system.doMultiPhaseCheck()) {
-      TPmultiflash operation = new TPmultiflash(system, true);
+      TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
       operation.run();
     } else {
       // Checks if gas or oil is the most stable phase
