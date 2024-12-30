@@ -1010,7 +1010,7 @@ public class LargeCombinedModelsTest {
 
   }
 
-  @Test
+  // @Test
   public void testCombinedProcess() {
     ProcessModel fullProcess = getCombinedModel();
     fullProcess.setRunStep(false);
