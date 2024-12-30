@@ -600,6 +600,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
+    if (getOutletStream().getFlowRate("kg/hr") < 1e-20 && iterations > 1)
+      return true;
+
     if (Math.abs(this.errorComposition) < compositionTolerance
         && Math.abs(this.errorFlow) < flowTolerance
         && Math.abs(this.errorTemperature) < temperatureTolerance
