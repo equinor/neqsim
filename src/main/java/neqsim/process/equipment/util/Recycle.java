@@ -321,6 +321,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     if (numberOfInputStreams == 1 && thermoSystem2.getFlowRate("kg/hr") < 1e-100) {
       setErrorCompositon(0.0);
       setErrorFlow(0.0);
+      setErrorTemperature(0.0);
+      setErrorPressure(0.0);
       return;
     }
     mixedStream.setThermoSystem(thermoSystem2);

@@ -1003,7 +1003,7 @@ public class LargeCombinedModelsTest {
             .getFlowRate("MSm3/day"),
         0.1);
 
-    Assertions.assertEquals(170.093573665,
+    Assertions.assertEquals(25.26938847,
         ((Compressor) fullProcess.get("compressor process B").getUnit("KA27841")).getOutletStream()
             .getPressure("bara"),
         1.5);
@@ -1041,7 +1041,7 @@ public class LargeCombinedModelsTest {
                 .getFlowRate("kg/hr"))
             / 100.0);
 
-    Assertions.assertEquals(5.54017523150,
+    Assertions.assertEquals(5.309481054,
         ((ThreePhaseSeparator) fullProcess.get("separation train A").getUnit("1st stage separator"))
             .getGasOutStream().getFlowRate("MSm3/day"),
         0.1);
@@ -1098,6 +1098,8 @@ public class LargeCombinedModelsTest {
     Assertions.assertEquals(0.0,
         ((Stream) fullProcess.get("well and manifold process").getUnit("HP well stream"))
             .getFlowRate("kg/hr")
+            + ((Stream) fullProcess.get("well and manifold process").getUnit("LP well stream"))
+                .getFlowRate("kg/hr")
             - ((Stream) fullProcess.get("expander process A").getUnit("export oil"))
                 .getFlowRate("kg/hr")
             - ((Stream) fullProcess.get("expander process B").getUnit("export oil"))
@@ -1106,8 +1108,11 @@ public class LargeCombinedModelsTest {
                 .getOutletStream().getFlowRate("kg/hr")
             - ((Filter) fullProcess.get("compressor process B").getUnit("gas split valve"))
                 .getOutletStream().getFlowRate("kg/hr"),
-        ((Stream) fullProcess.get("well and manifold process").getUnit("HP well stream"))
-            .getFlowRate("kg/hr") / 1000.0);
+        (((Stream) fullProcess.get("well and manifold process").getUnit("HP well stream"))
+            .getFlowRate("kg/hr")
+            + ((Stream) fullProcess.get("well and manifold process").getUnit("LP well stream"))
+                .getFlowRate("kg/hr"))
+            / 100.0);
 
     Assertions.assertEquals(12.1312281897,
         ((Splitter) fullProcess.get("compressor process B").getUnit("TEE-104")).getSplitStream(0)

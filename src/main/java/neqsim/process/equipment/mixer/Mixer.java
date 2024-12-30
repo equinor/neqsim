@@ -239,16 +239,19 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
           testOps.TPflash();
         }
       }
+    } else {
+      testOps.TPflash();
+      mixedStream.getThermoSystem().init(2);
     }
-    mixedStream.setCalculationIdentifier(id);
+
 
     // System.out.println("enthalpy: " +
-    // mixedStream.getThermoSystem().getEnthalpy());
-    // System.out.println("enthalpy: " + enthalpy);
+    // mixedStream.getThermoSystem().getEnthalpy())
+    // System.out.println("enthalpy: " + en
     // System.out.println("temperature: " +
-    // mixedStream.getThermoSystem().getTemperature());
 
-    // System.out.println("beta " + mixedStream.getThermoSystem().getBeta());
+
+    // System.out.println("beta " + mixedStream.getThermoSystem(
     // outStream.setThermoSystem(mixedStream.getThermoSystem());
     setCalculationIdentifier(id);
   }
