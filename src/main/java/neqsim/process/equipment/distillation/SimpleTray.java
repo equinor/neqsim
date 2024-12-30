@@ -16,8 +16,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  * @version $Id: $Id
  */
-public class SimpleTray extends neqsim.process.equipment.mixer.Mixer
-    implements TrayInterface {
+public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements TrayInterface {
   private static final long serialVersionUID = 1000;
   static Logger logger = LogManager.getLogger(SimpleTray.class);
 
@@ -120,11 +119,17 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer
     // double flowRate = ((Stream)
     // streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
     // ((Stream) streams.get(0)).getThermoSystem().display();
+    boolean changeTo2Phase = false;
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
-
+    if (thermoSystem2.doMultiPhaseCheck()) {
+      changeTo2Phase = true;
+      thermoSystem2.setMultiPhaseCheck(false);
+    }
     // System.out.println("total number of moles " +
     // thermoSystem2.getTotalNumberOfMoles());
-    if (trayPressure > 0) {
+    if (trayPressure > 0)
+
+    {
       thermoSystem2.setPressure(trayPressure);
     }
     mixedStream.setThermoSystem(thermoSystem2);
@@ -172,6 +177,10 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer
       System.out
           .println("error...." + mixedStream.getFluid().getNumberOfPhases() + " phases on tray");
       logger.warn("error...." + mixedStream.getFluid().getNumberOfPhases() + " phases on tray");
+    }
+
+    if (changeTo2Phase) {
+      thermoSystem2.setMultiPhaseCheck(true);
     }
   }
 

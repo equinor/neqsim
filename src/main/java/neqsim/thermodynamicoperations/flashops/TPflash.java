@@ -348,7 +348,7 @@ public class TPflash extends Flash {
       if (system.checkStability() && stabilityCheck()) {
         if (system.doMultiPhaseCheck()) {
           // logger.info("one phase flash is stable - checking multiphase flash....");
-          TPmultiflash operation = new TPmultiflash(system, true);
+          TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
           operation.run();
         }
         if (solidCheck) {
