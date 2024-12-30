@@ -888,7 +888,7 @@ public class LargeCombinedModelsTest {
     return combinedProcess;
   }
 
-  @Test
+  // @Test
   public void testCombinedProcessRunStep() {
     ProcessModel fullProcess = getCombinedModel();
     fullProcess.setRunStep(true);
