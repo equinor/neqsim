@@ -207,7 +207,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     mixedStream.setThermoSystem(thermoSystem2);
     // thermoSystem2.display();
     ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
-    if (streams.size() > 0) {
+    if (streams.size() >= 2) {
       mixedStream.getThermoSystem().setNumberOfPhases(2);
       mixedStream.getThermoSystem().init(0);
 
@@ -221,33 +221,37 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         mixedStream.getThermoSystem().setTemperature(guessTemperature());
       }
       // System.out.println("filan temp " + mixedStream.getTemperature());
-    }
-    if (isSetOutTemperature) {
-      if (!Double.isNaN(getOutTemperature())) {
-        mixedStream.getThermoSystem().setTemperature(getOutTemperature());
-      }
-      testOps.TPflash();
-      mixedStream.getThermoSystem().init(2);
-    } else {
-      try {
-        testOps.PHflash(enthalpy, 0);
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+
+      if (isSetOutTemperature) {
         if (!Double.isNaN(getOutTemperature())) {
           mixedStream.getThermoSystem().setTemperature(getOutTemperature());
         }
         testOps.TPflash();
+        mixedStream.getThermoSystem().init(2);
+      } else {
+        try {
+          testOps.PHflash(enthalpy, 0);
+        } catch (Exception ex) {
+          logger.error(ex.getMessage(), ex);
+          if (!Double.isNaN(getOutTemperature())) {
+            mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+          }
+          testOps.TPflash();
+        }
       }
+    } else {
+      testOps.TPflash();
+      mixedStream.getThermoSystem().init(2);
     }
-    mixedStream.setCalculationIdentifier(id);
+
 
     // System.out.println("enthalpy: " +
-    // mixedStream.getThermoSystem().getEnthalpy());
-    // System.out.println("enthalpy: " + enthalpy);
+    // mixedStream.getThermoSystem().getEnthalpy())
+    // System.out.println("enthalpy: " + en
     // System.out.println("temperature: " +
-    // mixedStream.getThermoSystem().getTemperature());
 
-    // System.out.println("beta " + mixedStream.getThermoSystem().getBeta());
+
+    // System.out.println("beta " + mixedStream.getThermoSystem(
     // outStream.setThermoSystem(mixedStream.getThermoSystem());
     setCalculationIdentifier(id);
   }
