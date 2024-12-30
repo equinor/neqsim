@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -68,10 +69,7 @@ public class CombinedModelsTest {
     return process1;
   };
 
-  public ProcessSystem getCompressorProcess() {
-
-    neqsim.process.equipment.stream.Stream gasFeedStream =
-        new neqsim.process.equipment.stream.Stream("compressor feed stream");
+  public ProcessSystem getCompressorProcess(StreamInterface gasFeedStream) {
 
     neqsim.process.equipment.compressor.Compressor compressor1 =
         new neqsim.process.equipment.compressor.Compressor("Compressor1", gasFeedStream);
@@ -87,8 +85,7 @@ public class CombinedModelsTest {
 
   public ProcessModel getCombinedModel() {
     ProcessSystem inletProcess = getinletModel();
-    ProcessSystem compressorProcess = getCompressorProcess();
-    ((Compressor) compressorProcess.getUnit("Compressor1")).setInletStream(
+    ProcessSystem compressorProcess = getCompressorProcess(
         ((ThreePhaseSeparator) inletProcess.getUnit("1st stage separator")).getGasOutStream());
 
 
