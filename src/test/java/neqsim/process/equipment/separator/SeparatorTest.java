@@ -1,10 +1,8 @@
 package neqsim.process.equipment.separator;
 
-import static org.junit.jupiter.api.DynamicTest.stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.measurementdevice.LevelTransmitter;
@@ -100,8 +98,13 @@ class SeparatorTest extends neqsim.NeqSimTest {
     processOps.add(separator1);
     processOps.run();
 
-    Assertions.assertEquals(0.1598175271755,
-        separator1.getFluid().getPhase(PhaseType.OIL).getBeta(), 1e-5);
+
+    Assertions.assertEquals(0.06976026260, feedStream.getFluid().getPhase(PhaseType.OIL).getBeta(),
+        1e-5);
+
+    Assertions.assertEquals(0.06976026260, separator1.getFluid().getPhase(PhaseType.OIL).getBeta(),
+        1e-5);
+
 
   }
 }

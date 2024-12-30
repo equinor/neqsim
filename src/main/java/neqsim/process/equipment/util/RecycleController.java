@@ -2,6 +2,8 @@ package neqsim.process.equipment.util;
 
 import java.util.ArrayList;
 import java.util.Objects;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -12,6 +14,7 @@ import java.util.Objects;
  * @version $Id: $Id
  */
 public class RecycleController implements java.io.Serializable {
+  static Logger logger = LogManager.getLogger(RecycleController.class);
   private static final long serialVersionUID = 1000;
 
   ArrayList<Recycle> recycleArray = new ArrayList<Recycle>();
@@ -165,6 +168,7 @@ public class RecycleController implements java.io.Serializable {
    */
   public boolean solvedAll() {
     for (Recycle recyc : recycleArray) {
+      logger.info(recyc.getName() + " solved " + recyc.solved());
       if (!recyc.solved()) {
         return false;
       }

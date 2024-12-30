@@ -323,10 +323,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         && Math.abs(getFluid().getFlowRate("kg/hr") - lastFlowRate)
             / getFluid().getFlowRate("kg/hr") < 1e-6
         && Arrays.equals(getFluid().getMolarComposition(), lastComposition)) {
-      isSolved = true;
       return false;
     } else {
-      isSolved = false;
       return true;
     }
   }

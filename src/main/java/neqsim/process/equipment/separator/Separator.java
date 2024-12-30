@@ -85,7 +85,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    */
   public Separator(String name) {
     super(name);
-    setCalculateSteadyState(false);
+    setCalculateSteadyState(true);
   }
 
   /**

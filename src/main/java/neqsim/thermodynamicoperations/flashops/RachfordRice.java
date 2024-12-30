@@ -19,7 +19,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  */
 public class RachfordRice implements Serializable {
-  static Logger logger = LogManager.getLogger(PHsolidFlash.class);
+  static Logger logger = LogManager.getLogger(RachfordRice.class);
   private static final long serialVersionUID = 1000;
   private double[] beta = new double[2];
   private static String method = "Michelsen2001"; // alternative use Nielsen2023 or Michelsen2001
@@ -102,6 +102,8 @@ public class RachfordRice implements Serializable {
       g0 += z[i] * K[i];
       g1 += -z[i] / K[i];
     }
+
+    // logger.debug("Max beta " + maxBeta + " min beta " + minBeta);
 
     if (g0 < 0) {
       return tolerance;
@@ -186,7 +188,8 @@ public class RachfordRice implements Serializable {
         nybeta = 1.0 - betal;
       }
       step = gbeta / deriv;
-    } while (Math.abs(step) >= 1.5e-10 && iterations < maxIterations);
+    } while (Math.abs(step) >= 1.0e-11 && (Math.abs(step) >= 1e-9 && iterations < 50)
+        && iterations < maxIterations);
     if (nybeta <= tolerance) {
       nybeta = tolerance;
     } else if (nybeta >= 1.0 - tolerance) {
@@ -196,6 +199,8 @@ public class RachfordRice implements Serializable {
     beta[1] = 1.0 - nybeta;
 
     if (iterations >= maxIterations) {
+      logger.debug("error " + beta[1]);
+      logger.debug("gbeta " + gbeta);
       logger.debug("K " + Arrays.toString(K));
       logger.debug("z " + Arrays.toString(z));
       throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(),
@@ -333,6 +338,10 @@ public class RachfordRice implements Serializable {
     beta[1] = 1.0 - V;
 
     if (iter >= maxIterations) {
+      logger.error("Rachford rice did not coverge afer " + maxIterations + " iterations");
+      logger.debug("K " + Arrays.toString(K));
+      logger.debug("z " + Arrays.toString(z));
+
       throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(),
           "calcBetaNielsen2023", maxIterations);
     }

@@ -54,7 +54,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    */
   public ThrottlingValve(String name) {
     super(name);
-    setCalculateSteadyState(false);
+    setCalculateSteadyState(true);
   }
 
   /**

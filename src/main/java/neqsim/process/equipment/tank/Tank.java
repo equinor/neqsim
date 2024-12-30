@@ -53,7 +53,7 @@ public class Tank extends ProcessEquipmentBaseClass {
    */
   public Tank(String name) {
     super(name);
-    setCalculateSteadyState(false);
+    setCalculateSteadyState(true);
   }
 
   /**

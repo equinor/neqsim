@@ -68,18 +68,18 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
-   * @param i a int
+   * @param number_of_splits an int
    */
-  public Splitter(String name, StreamInterface inletStream, int i) {
+  public Splitter(String name, StreamInterface inletStream, int number_of_splits) {
     this(name);
-    setSplitNumber(i);
+    setSplitNumber(number_of_splits);
     this.setInletStream(inletStream);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setSplitNumber(int i) {
-    splitNumber = i;
+  public void setSplitNumber(int number_of_splits) {
+    splitNumber = number_of_splits;
     splitFactor = new double[splitNumber];
     splitFactor[0] = 1.0;
     if (inletStream != null) {
@@ -192,10 +192,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
         && Math.abs(inletStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
             / inletStream.getFluid().getFlowRate("kg/hr") < 1e-6
         && Arrays.equals(splitFactor, oldSplitFactor)) {
-      isSolved = true;
       return false;
     } else {
-      isSolved = false;
       return true;
     }
   }
