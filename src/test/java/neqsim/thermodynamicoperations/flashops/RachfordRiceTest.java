@@ -21,10 +21,13 @@ public class RachfordRiceTest {
     }
 
     try {
+      String startMetod = RachfordRice.getMethod();
       RachfordRice rachfordRice = new RachfordRice();
       RachfordRice.setMethod("Nielsen2023");
       Assertions.assertEquals(0.407070707, rachfordRice.calcBeta(K, z), 1e-6);
       RachfordRice.setMethod("Michelsen2001");
+      Assertions.assertEquals(0.407070707, rachfordRice.calcBeta(K, z), 1e-6);
+      RachfordRice.setMethod(startMetod);
     } catch (Exception e) {
       logger.error(e.getMessage());;
     }
