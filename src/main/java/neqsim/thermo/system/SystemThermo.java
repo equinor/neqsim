@@ -1392,7 +1392,7 @@ public abstract class SystemThermo implements SystemInterface {
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       String names = new String();
-
+      NeqSimDataBase.setCreateTemporaryTables(reset);
       for (int k = 0; k < getPhase(0).getNumberOfComponents() - 1; k++) {
         names += "'" + this.getComponentNames()[k] + "', ";
       }

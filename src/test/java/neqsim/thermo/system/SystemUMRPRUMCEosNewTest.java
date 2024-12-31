@@ -273,4 +273,29 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     satPresSim.run();
     assertEquals(104.7532901763, satPresSim.getThermoSystem().getPressure(), 0.001);
   }
+
+  /**
+   * <p>
+   * checkPhaseEnvelope2.
+   * </p>
+   *
+   * @throws Exception
+   */
+  @Test
+  @DisplayName("test UMR with pseudo comp")
+  public void testPseudoComptest() {
+    SystemInterface testSystem = new SystemUMRPRUMCEos(273.15 + 15, 10.0);
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.addComponent("methane", 80);
+    testSystem.addTBPfraction("C7", .0010, 85.5 / 1000.0, 0.66533);
+    testSystem.createDatabase(true);
+    testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
+    try {
+      testOps.TPflash();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
+    }
+    testSystem.initPhysicalProperties("density");
+    assertEquals(6.84959007, testSystem.getDensity("kg/m3"), 0.00001);
+  }
 }
