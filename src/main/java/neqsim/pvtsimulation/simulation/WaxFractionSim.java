@@ -171,7 +171,7 @@ public class WaxFractionSim extends BasePVTsimulation {
     tempSystem.setMultiPhaseCheck(true);
     tempSystem.init(0);
     tempSystem.init(1);
-
+    NeqSimDataBase.setCreateTemporaryTables(false);
     WaxFractionSim sepSim = new WaxFractionSim(tempSystem);
     double[] temps = {293.15, 283.15, 273.15, 264.15, 263, 262, 261};
     double[] pres = {5, 5, 5.0, 5.0, 5.0, 5.0, 5.0};
