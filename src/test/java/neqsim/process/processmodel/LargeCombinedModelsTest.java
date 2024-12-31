@@ -58,7 +58,7 @@ public class LargeCombinedModelsTest {
     public Double nglColumnTopPressure = 7.3;
     public Double nglColumnBottomPressure = 7.3;
     public Double nglColumnBottomTemperature = 45.0;
-    public Double nglRoutingToOil = 0.9999;
+    public Double nglRoutingToOil = 0.999999;
     public Double speed27831DXCompressor = 6100.0;
     public Double speed27841DXCompressor = 6100.0;
   }
@@ -434,6 +434,7 @@ public class LargeCombinedModelsTest {
                 .getFlowRate("kg/hr"),
         ((Stream) process.getUnit("HP well stream")).getFlowRate("kg/hr") / 10000.0);
 
+    ((Separator) sepprocessTrain2.getUnit("dew point scrubber")).getFluid().prettyPrint();
     ((Separator) sepprocessTrain2.getUnit("dew point scrubber")).run();
   }
 
@@ -817,7 +818,7 @@ public class LargeCombinedModelsTest {
 
     Splitter splitter_TEE_104 = new neqsim.process.equipment.splitter.Splitter("TEE-104",
         compressor_KA27841.getOutletStream(), 2);
-    splitter_TEE_104.setFlowRates(new double[] {-1, 0.0001}, "MSm3/day");
+    splitter_TEE_104.setFlowRates(new double[] {-1, 0.00001}, "MSm3/day");
     process.add(splitter_TEE_104);
 
     return process;
@@ -888,7 +889,7 @@ public class LargeCombinedModelsTest {
     return combinedProcess;
   }
 
-  // @Test
+  @Test
   public void testCombinedProcessRunStep() {
     ProcessModel fullProcess = getCombinedModel();
     fullProcess.setRunStep(true);
@@ -1015,7 +1016,7 @@ public class LargeCombinedModelsTest {
 
   }
 
-  // @Test
+  @Test
   public void testCombinedProcess() {
     ProcessModel fullProcess = getCombinedModel();
     fullProcess.setRunStep(false);
