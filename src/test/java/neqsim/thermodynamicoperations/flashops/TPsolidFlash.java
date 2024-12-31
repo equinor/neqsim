@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import neqsim.util.database.NeqSimDataBase;
 
 /**
  * @author ESOL
@@ -40,7 +39,6 @@ class TPsolidFlash {
 
   @Test
   void testSolidFLash2() {
-    NeqSimDataBase.setCreateTemporaryTables(true);
     neqsim.thermo.system.SystemPrEos testSystem =
         new neqsim.thermo.system.SystemPrEos(283.15, 100.0);
     testSystem.addComponent("nitrogen", 1.75);
@@ -69,12 +67,12 @@ class TPsolidFlash {
     testSystem.addTBPfraction("C20", 0.0005, 263.65 / 1000.0, 0.918);
     testSystem.addTBPfraction("C21", 0.0009, 301.65 / 1000.0, 0.945);
     testSystem.addComponent("S8", 1.0e-5);
+    testSystem.createDatabase(true);
     testSystem.setMixingRule("classic");
     testSystem.setMultiPhaseCheck(true);
     testSystem.setTotalFlowRate(1.0, "MSm3/hr");
     testSystem.addComponent("S8", 100.0, "kg/hr");
     testSystem.setSolidPhaseCheck("S8");
-    NeqSimDataBase.setCreateTemporaryTables(false);
     ThermodynamicOperations thermoops = new ThermodynamicOperations(testSystem);
     thermoops.TPflash();
     // thermoops.TPSolidflash();
