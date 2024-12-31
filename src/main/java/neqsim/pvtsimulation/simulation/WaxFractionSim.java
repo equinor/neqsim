@@ -159,7 +159,7 @@ public class WaxFractionSim extends BasePVTsimulation {
     SystemInterface tempSystem = new SystemSrkEos(298.0, 10.0);
     tempSystem.addComponent("methane", 6.78);
 
-    tempSystem.addTBPfraction(false);"C19", 10.13, 170.0 / 1000.0, 0.7814);
+    tempSystem.addTBPfraction("C19", 10.13, 170.0 / 1000.0, 0.7814);
     tempSystem.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.850871882888);
 
     tempSystem.getCharacterization().characterisePlusFraction();
