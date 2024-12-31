@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.pvtsimulation.simulation.SaturationPressure;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.database.NeqSimDataBase;
 
 class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   static Logger logger = LogManager.getLogger(SystemUMRPRUMCEosNewTest.class);
@@ -284,12 +285,14 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test UMR with pseudo comp")
   public void testPseudoComptest() {
+    NeqSimDataBase.setCreateTemporaryTables(true);
     SystemInterface testSystem = new SystemUMRPRUMCEos(273.15 + 15, 10.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testSystem.addComponent("methane", 80);
     testSystem.addTBPfraction("C7", .0010, 85.5 / 1000.0, 0.66533);
     testSystem.createDatabase(true);
     testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
+    NeqSimDataBase.setCreateTemporaryTables(false);
     try {
       testOps.TPflash();
     } catch (Exception ex) {
