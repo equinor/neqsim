@@ -22,7 +22,7 @@ public class RachfordRice implements Serializable {
   static Logger logger = LogManager.getLogger(RachfordRice.class);
   private static final long serialVersionUID = 1000;
   private double[] beta = new double[2];
-  private static String method = "Nielsen2023"; // alternative use Nielsen2023 or Michelsen2001
+  private static String method = "Michelsen2001"; // alternative use Nielsen2023 or Michelsen2001
 
   /**
    * <p>
@@ -188,8 +188,7 @@ public class RachfordRice implements Serializable {
         nybeta = 1.0 - betal;
       }
       step = gbeta / deriv;
-    } while (Math.abs(step) >= 1.0e-11 && (Math.abs(step) >= 1e-9 && iterations < 50)
-        && iterations < maxIterations);
+    } while (Math.abs(step) >= 1.0e-11 && iterations < maxIterations);
     if (nybeta <= tolerance) {
       nybeta = tolerance;
     } else if (nybeta >= 1.0 - tolerance) {

@@ -373,7 +373,7 @@ public class TPmultiflash extends TPflash {
       int iter = 0;
       double errOld = 1.0e100;
       boolean useaccsubst = true;
-      int maxsucssubiter = 200;
+      int maxsucssubiter = 150;
       int maxiter = 200;
       do {
         errOld = err;
