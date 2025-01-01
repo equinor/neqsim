@@ -80,6 +80,10 @@ public class ProcessModel implements Runnable {
       // Step mode: just run each process once in step mode
       for (ProcessSystem process : processes.values()) {
         try {
+          if (Thread.currentThread().isInterrupted()) {
+            logger.debug("Thread was interrupted, exiting run()...");
+            return;
+          }
           process.run_step();
         } catch (Exception e) {
           System.err.println("Error running process step: " + e.getMessage());
@@ -88,7 +92,8 @@ public class ProcessModel implements Runnable {
       }
     } else {
       int iterations = 0;
-      while (!isFinished() && iterations < maxIterations) {
+      while (!Thread.currentThread().isInterrupted() && !isFinished()
+          && iterations < maxIterations) {
         for (ProcessSystem process : processes.values()) {
           if (Thread.currentThread().isInterrupted()) {
             logger.debug("Thread was interrupted, exiting run()...");
@@ -133,6 +138,10 @@ public class ProcessModel implements Runnable {
   public void runStep() {
     for (ProcessSystem process : processes.values()) {
       try {
+        if (Thread.currentThread().isInterrupted()) {
+          logger.debug("Thread was interrupted, exiting run()...");
+          return;
+        }
         process.run_step();
       } catch (Exception e) {
         System.err.println("Error in runStep: " + e.getMessage());
