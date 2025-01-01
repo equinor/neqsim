@@ -425,6 +425,10 @@ public class ProcessSystem extends SimulationBaseClass {
       iter++;
       isConverged = true;
       for (int i = 0; i < unitOperations.size(); i++) {
+        if (Thread.currentThread().isInterrupted()) {
+          logger.debug("Process simulation was interrupted, exiting run()..." + getName());
+          return;
+        }
         if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
           try {
             if (iter == 1 || unitOperations.get(i).needRecalculation()) {

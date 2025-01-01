@@ -12,21 +12,18 @@ import org.apache.logging.log4j.Logger;
  *
  * Manages a collection of processes that can be run in steps or continuously.
  * 
- * @author Even Solbraa
- * @version $Id: $Id
+ * 
  */
 public class ProcessModel implements Runnable {
+
   static Logger logger = LogManager.getLogger(ProcessModel.class);
   private Map<String, ProcessSystem> processes = new LinkedHashMap<>();
 
   private boolean runStep = false;
   private int maxIterations = 50;
-  private int iterations = 0;
 
   /**
    * Checks if the model is running in step mode.
-   *
-   * @return true if running in step mode, false otherwise.
    */
   public boolean isRunStep() {
     return runStep;
@@ -34,8 +31,6 @@ public class ProcessModel implements Runnable {
 
   /**
    * Sets the step mode for the process.
-   *
-   * @param runStep true to enable step mode, false to disable.
    */
   public void setRunStep(boolean runStep) {
     this.runStep = runStep;
@@ -43,10 +38,6 @@ public class ProcessModel implements Runnable {
 
   /**
    * Adds a process to the model.
-   *
-   * @param name the name of the process.
-   * @param process the process to add.
-   * @return true if the process was added successfully.
    */
   public boolean add(String name, ProcessSystem process) {
     if (name == null || name.isEmpty()) {
@@ -65,9 +56,6 @@ public class ProcessModel implements Runnable {
 
   /**
    * Retrieves a process by its name.
-   *
-   * @param name the name of the process.
-   * @return the corresponding process, or null if not found.
    */
   public ProcessSystem get(String name) {
     return processes.get(name);
@@ -75,45 +63,60 @@ public class ProcessModel implements Runnable {
 
   /**
    * Removes a process by its name.
-   *
-   * @param name the name of the process to remove.
-   * @return true if the process was removed, false otherwise.
    */
   public boolean remove(String name) {
     return processes.remove(name) != null;
   }
 
   /**
-   * Executes all processes, either continuously or in steps based on mode.
+   * The core run method.
+   * 
+   * - If runStep == true, each process is run in "step" mode exactly once. - Otherwise (continuous
+   * mode), it loops up to maxIterations or until all processes are finished (isFinished() == true).
    */
   @Override
   public void run() {
-    for (ProcessSystem process : processes.values()) {
-      try {
-        if (runStep) {
+    if (runStep) {
+      // Step mode: just run each process once in step mode
+      for (ProcessSystem process : processes.values()) {
+        try {
           process.run_step();
-        } else {
-          process.run();
+        } catch (Exception e) {
+          System.err.println("Error running process step: " + e.getMessage());
+          e.printStackTrace();
         }
-      } catch (Exception e) {
-        System.err.println("Error running process: " + e.getMessage());
-        e.printStackTrace();
       }
-    }
-    if (!runStep) {
-      if (!isFinished() && iterations < maxIterations) {
-        iterations += 1;
-        run();
-      } else {
-        iterations = 0;
+    } else {
+      int iterations = 0;
+      while (!isFinished() && iterations < maxIterations) {
+        for (ProcessSystem process : processes.values()) {
+          if (Thread.currentThread().isInterrupted()) {
+            logger.debug("Thread was interrupted, exiting run()...");
+            return;
+          }
+          try {
+            process.run(); // the process's continuous run
+          } catch (Exception e) {
+            System.err.println("Error running process: " + e.getMessage());
+            e.printStackTrace();
+          }
+        }
+        iterations++;
       }
     }
   }
 
   /**
+   * Starts this model in a new thread and returns that thread.
+   */
+  public Thread runAsThread() {
+    Thread processThread = new Thread(this);
+    processThread.start();
+    return processThread;
+  }
+
+  /**
    * Checks if all processes are finished.
-   *
-   * @return true if all processes are solved, false otherwise.
    */
   public boolean isFinished() {
     for (ProcessSystem process : processes.values()) {
@@ -125,7 +128,7 @@ public class ProcessModel implements Runnable {
   }
 
   /**
-   * Executes all processes in a single step.
+   * Runs all processes in a single step (used outside of the thread model).
    */
   public void runStep() {
     for (ProcessSystem process : processes.values()) {
@@ -139,20 +142,19 @@ public class ProcessModel implements Runnable {
   }
 
   /**
-   * Runs the model as a separate thread.
+   * (Optional) Creates separate threads for each process (if you need them).
    */
   public Map<String, Thread> getThreads() {
     Map<String, Thread> threads = new LinkedHashMap<>();
     try {
       for (ProcessSystem process : processes.values()) {
         Thread thread = new Thread(process);
+        thread.setName(process.getName() + " thread");
         threads.put(process.getName(), thread);
       }
-
     } catch (Exception ex) {
       logger.debug(ex.getMessage(), ex);
     }
     return threads;
   }
-
 }

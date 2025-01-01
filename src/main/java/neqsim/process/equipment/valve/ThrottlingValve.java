@@ -160,7 +160,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * @param percentValveOpening Percentage valve opening (0 to 100).
    * @return Adjusted flow coefficient (Cv) in US gallons per minute (USG/min).
    */
-  private static double adjustCv(double Cv, double percentValveOpening) {
+  private double adjustCv(double Cv, double percentValveOpening) {
     return Cv * (percentValveOpening / 100);
   }
 
@@ -176,7 +176,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * @param percentValveOpening Percentage valve opening (0 to 100).
    * @return Mass flow rate in kilograms per hour (kg/h).
    */
-  public static double liquidValveMassFlow(double P1, double P2, double rho, double Cv, double Fp,
+  public double liquidValveMassFlow(double P1, double P2, double rho, double Cv, double Fp,
       double percentValveOpening) {
     // Equation unit conversion constant
     final double N1 = 0.0865;
@@ -211,8 +211,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * @param Fp The piping geometry factor (dimensionless).
    * @return The percent valve opening.
    */
-  public static double calcPercentValveOpeningLiquid(double massFlowRate, double P1, double P2,
-      double rho, double Cv, double Fp) {
+  public double calcPercentValveOpeningLiquid(double massFlowRate, double P1, double P2, double rho,
+      double Cv, double Fp) {
     // Equation unit conversion constant
     final double N1 = 0.0865;
 
@@ -244,7 +244,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * @param percentValveOpening Percentage valve opening (0 to 100).
    * @return Downstream pressure in bar.
    */
-  public static double liquidValvePout(double P1, double m, double rho, double Cv, double Fp,
+  public double liquidValvePout(double P1, double m, double rho, double Cv, double Fp,
       double percentValveOpening) {
     // Equation unit conversion constant
     final double N1 = 0.0865;
@@ -281,7 +281,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * @param percentValveOpening Percentage valve opening (0 to 100).
    * @return Flow coefficient (Cv) in US gallons per minute (USG/min).
    */
-  public static double liquidValveCv(double P1, double P2, double rho, double m, double Fp,
+  public double liquidValveCv(double P1, double P2, double rho, double m, double Fp,
       double percentValveOpening) {
     // Equation unit conversion constant
     final double N1 = 0.0865;
