@@ -425,6 +425,10 @@ public class ProcessSystem extends SimulationBaseClass {
       iter++;
       isConverged = true;
       for (int i = 0; i < unitOperations.size(); i++) {
+        if (Thread.currentThread().isInterrupted()) {
+          logger.debug("Process simulation was interrupted, exiting run()..." + getName());
+          break;
+        }
         if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
           try {
             if (iter == 1 || unitOperations.get(i).needRecalculation()) {
@@ -432,7 +436,9 @@ public class ProcessSystem extends SimulationBaseClass {
             }
           } catch (Exception ex) {
             // String error = ex.getMessage();
-            logger.error(ex.getMessage(), ex);
+            logger.error("error running unit uperation " + unitOperations.get(i).getName() + " "
+                + ex.getMessage(), ex);
+            ex.printStackTrace();
           }
         }
         if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
@@ -476,7 +482,8 @@ public class ProcessSystem extends SimulationBaseClass {
        * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface)
        * measurementDevices.get(i)) .getUnit(); }
        */
-    } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && !runStep);
+    } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && !runStep
+        && !Thread.currentThread().isInterrupted());
 
     for (int i = 0; i < unitOperations.size(); i++) {
       unitOperations.get(i).setCalculationIdentifier(id);
@@ -490,7 +497,10 @@ public class ProcessSystem extends SimulationBaseClass {
   public void run_step(UUID id) {
     for (int i = 0; i < unitOperations.size(); i++) {
       try {
-        // if (unitOperations.get(i).needRecalculation()) {
+        if (Thread.currentThread().isInterrupted()) {
+          logger.debug("Process simulation was interrupted, exiting run()..." + getName());
+          break;
+        }
         unitOperations.get(i).run(id);
         // }
       } catch (Exception ex) {
