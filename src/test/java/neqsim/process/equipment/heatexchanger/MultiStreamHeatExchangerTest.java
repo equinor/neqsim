@@ -36,8 +36,8 @@ public class MultiStreamHeatExchangerTest {
     stream_Cold.setFlowRate(310.0, "kg/hr");
 
     MultiStreamHeatExchanger heatEx = new MultiStreamHeatExchanger("heatEx");
-    heatEx.setGuessOutTemperature(80.0, "C");
-    heatEx.setUAvalue(1000);
+    // heatEx.setGuessOutTemperature(80.0, "C");
+    // heatEx.setUAvalue(1000);
 
     Separator sep = new Separator("sep", stream_Hot);
     Stream oilOutStream = new Stream("oilOutStream", sep.getLiquidOutStream());
@@ -59,7 +59,7 @@ public class MultiStreamHeatExchangerTest {
     operations.add(valv1);
     operations.add(resyc);
 
-    operations.run();
+    // operations.run();
     // heatEx.getOutStream(0).displayResult();
     // resyc.getOutStream().displayResult();
   }
