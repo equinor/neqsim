@@ -1,0 +1,222 @@
+package neqsim.process.equipment.heatexchanger;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import com.google.gson.GsonBuilder;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
+
+/**
+ * MultiStreamHeatExchanger class.
+ * Extends the HeatExchanger to handle multiple inlet and outlet streams.
+ * Suitable for complex heat exchanger applications like LNG processes.
+ * 
+ * @author 
+ * @version 1.0
+ */
+public class MultiStreamHeatExchanger extends Heater implements HeatExchangerInterface {
+    private static final long serialVersionUID = 1001;
+
+    private List<StreamInterface> inStreams = new ArrayList<>();
+    private List<StreamInterface> outStreams = new ArrayList<>();
+    private double UAvalue = 500.0; // Default UA value, can be set externally
+    private double duty = 0.0;
+    private String flowArrangement = "multi-stream counterflow";
+    private boolean useDeltaT = false;
+    private double deltaT = 1.0;
+
+    // Additional properties for multi-stream
+    private double thermalEffectiveness = 0.0;
+    private double NTU = 0.0;
+
+    /**
+     * Constructor for MultiStreamHeatExchanger.
+     *
+     * @param name Name of the heat exchanger
+     */
+    public MultiStreamHeatExchanger(String name) {
+        super(name);
+    }
+
+    /**
+     * Adds an inlet stream to the heat exchanger.
+     *
+     * @param inStream Inlet stream to add
+     */
+    public void addInStream(StreamInterface inStream) {
+        inStreams.add(inStream);
+        outStreams.add(inStream.clone()); // Clone to create corresponding outlet stream
+        outStreams.get(outStreams.size() - 1).setName(this.getName() + "_Sout" + (outStreams.size()));
+    }
+
+    /**
+     * Retrieves an inlet stream by index.
+     *
+     * @param index Index of the inlet stream
+     * @return Inlet stream
+     */
+    public StreamInterface getInStream(int index) {
+        return inStreams.get(index);
+    }
+
+    /**
+     * Retrieves an outlet stream by index.
+     *
+     * @param index Index of the outlet stream
+     * @return Outlet stream
+     */
+    public StreamInterface getOutStream(int index) {
+        return outStreams.get(index);
+    }
+
+    /**
+     * Sets the name of the heat exchanger and updates all outlet stream names accordingly.
+     *
+     * @param name New name for the heat exchanger
+     */
+    @Override
+    public void setName(String name) {
+        super.setName(name);
+        for (int i = 0; i < outStreams.size(); i++) {
+            outStreams.get(i).setName(name + "_Sout" + (i + 1));
+        }
+    }
+
+    /**
+     * Runs the heat exchanger simulation.
+     *
+     * @param id UUID of the run
+     */
+    @Override
+    public void run(UUID id) {
+        if (useDeltaT) {
+            runDeltaT(id);
+            return;
+        }
+
+        if (inStreams.isEmpty()) {
+            throw new IllegalStateException("No inlet streams defined for the heat exchanger.");
+        }
+
+        // Initialize outlet streams with inlet stream conditions
+        for (int i = 0; i < inStreams.size(); i++) {
+            StreamInterface inStream = inStreams.get(i);
+            StreamInterface outStream = outStreams.get(i);
+            outStream.setThermoSystem(inStream.getThermoSystem().clone());
+            outStream.getThermoSystem().setTemperature(guessOutTemperature, guessOutTemperatureUnit);
+            outStream.run(id);
+        }
+
+        // Iterative approach to balance heat duties
+        boolean converged = false;
+        int maxIterations = 100;
+        int iteration = 0;
+        double tolerance = 1e-3;
+
+        while (!converged && iteration < maxIterations) {
+            iteration++;
+            double totalDuty = 0.0;
+
+            for (int i = 0; i < inStreams.size(); i++) {
+                StreamInterface inStream = inStreams.get(i);
+                StreamInterface outStream = outStreams.get(i);
+
+                // Calculate duty for each stream
+                double deltaEnthalpy = outStream.getThermoSystem().getEnthalpy()
+                        - inStream.getThermoSystem().getEnthalpy();
+                totalDuty += deltaEnthalpy;
+
+                // Update thermal effectiveness based on NTU
+                double Cp = inStream.getThermoSystem().getCp();
+                // Assume Cmin and Cmax calculations for multi-stream are more complex
+                // Placeholder for actual multi-stream effectiveness calculation
+                // thermalEffectiveness = calcThermalEffectiveness(NTU, Cr);
+            }
+
+            // Check convergence
+            if (Math.abs(totalDuty - duty) < tolerance) {
+                converged = true;
+            } else {
+                duty = totalDuty;
+                // Update outlet streams based on new duty
+                for (int i = 0; i < outStreams.size(); i++) {
+                    StreamInterface outStream = outStreams.get(i);
+                    // Implement specific logic to adjust outlet temperatures based on duty
+                    // This might involve PH-flash or other thermodynamic operations
+                    ThermodynamicOperations thermoOps = new ThermodynamicOperations(outStream.getThermoSystem());
+                    thermoOps.PHflash(outStream.getThermoSystem().getEnthalpy() - duty, 0);
+                    outStream.run(id);
+                }
+            }
+        }
+
+        if (!converged) {
+            throw new RuntimeException("Heat exchanger did not converge within the maximum number of iterations.");
+        }
+
+        setCalculationIdentifier(id);
+    }
+
+    /**
+     * Runs the heat exchanger simulation using a specified delta temperature approach.
+     *
+     * @param id UUID of the run
+     */
+    public void runDeltaT(UUID id) {
+        // Implement a similar delta T approach as in the two-stream HeatExchanger
+        // Adjust for multiple streams
+        // This might involve setting specific temperature differences between pairs of streams
+        // Placeholder for actual implementation
+    }
+
+    /**
+     * Calculates the thermal effectiveness based on NTU and capacity ratio.
+     *
+     * @param NTU Number of Transfer Units
+     * @param Cr Capacity ratio (Cmin/Cmax)
+     * @return Thermal effectiveness
+     */
+    public double calcThermalEffectiveness(double NTU, double Cr) {
+        // Extend the calculation to handle multi-stream scenarios
+        // Placeholder for actual multi-stream effectiveness formula
+        return 1.0 - Math.exp(-NTU);
+    }
+
+    /**
+     * Gets the total heat duty of the heat exchanger.
+     *
+     * @return Heat duty
+     */
+    @Override
+    public double getDuty() {
+        return duty;
+    }
+
+    /**
+     * Displays the results of all outlet streams.
+     */
+    @Override
+    @ExcludeFromJacocoGeneratedReport
+    public void displayResult() {
+        for (StreamInterface outStream : outStreams) {
+            outStream.displayResult();
+        }
+    }
+
+    /**
+     * Converts the heat exchanger data to JSON format.
+     *
+     * @return JSON representation of the heat exchanger
+     */
+    @Override
+    public String toJson() {
+        return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+                .toJson(new HXResponse(this));
+    }
+
+    // Additional methods for mass balance, entropy production, condition analysis, etc., should be implemented similarly
+}
