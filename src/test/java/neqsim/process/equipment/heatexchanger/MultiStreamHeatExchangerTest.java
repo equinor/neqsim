@@ -1,14 +1,14 @@
 package neqsim.process.equipment.heatexchanger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.util.Recycle;
-import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class MultiStreamHeatExchangerTest {
+  static Logger logger = LogManager.getLogger(MultiStreamHeatExchangerTest.class);
 
   static neqsim.thermo.system.SystemInterface testSystem;
   Stream gasStream;
@@ -31,38 +31,40 @@ public class MultiStreamHeatExchangerTest {
     Stream stream_Hot = new Stream("Stream1", testSystem);
     stream_Hot.setTemperature(100.0, "C");
     stream_Hot.setFlowRate(1000.0, "kg/hr");
+
     Stream stream_Cold = new Stream("Stream2", testSystem.clone());
     stream_Cold.setTemperature(20.0, "C");
     stream_Cold.setFlowRate(310.0, "kg/hr");
 
+    Stream stream_Cold2 = new Stream("Stream3", testSystem.clone());
+    stream_Cold2.setTemperature(0.0, "C");
+    stream_Cold2.setFlowRate(50.0, "kg/hr");
+
     MultiStreamHeatExchanger heatEx = new MultiStreamHeatExchanger("heatEx");
-    // heatEx.setGuessOutTemperature(80.0, "C");
-    // heatEx.setUAvalue(1000);
+    heatEx.addInStream(stream_Hot);
+    heatEx.addInStream(stream_Cold);
+    heatEx.addInStream(stream_Cold2);
+    heatEx.setGuessOutTemperature(20.0, "C");
+    heatEx.setUAvalue(1000);
 
-    Separator sep = new Separator("sep", stream_Hot);
-    Stream oilOutStream = new Stream("oilOutStream", sep.getLiquidOutStream());
-
-    ThrottlingValve valv1 = new ThrottlingValve("valv1", oilOutStream);
-    valv1.setOutletPressure(5.0);
-
-    Recycle resyc = new Recycle("resyc");
-    resyc.addStream(valv1.getOutletStream());
-    resyc.setOutletStream(stream_Cold);
 
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_Hot);
     operations.add(stream_Cold);
+    operations.add(stream_Cold2);
     operations.add(heatEx);
-    operations.add(sep);
-    operations.add(oilOutStream);
-    operations.add(valv1);
-    operations.add(resyc);
 
-    // operations.run();
-    // heatEx.getOutStream(0).displayResult();
+    operations.run();
+
+    heatEx.getOutStream(0).getFluid().prettyPrint();
+    heatEx.getOutStream(1).getFluid().prettyPrint();
+    heatEx.getOutStream(2).getFluid().prettyPrint();
+    logger.debug("duty " + heatEx.getDuty());
     // resyc.getOutStream().displayResult();
   }
+
+
 
 }
 

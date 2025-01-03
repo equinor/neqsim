@@ -9,6 +9,8 @@ package neqsim.process.equipment.heatexchanger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.conditionmonitor.ConditionMonitorSpecifications;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -29,6 +31,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatExchangerInterface {
   private static final long serialVersionUID = 1001;
+  static Logger logger = LogManager.getLogger(MultiStreamHeatExchanger.class);
 
   private boolean setTemperature = false;
   private List<StreamInterface> outStreams = new ArrayList<>();
@@ -486,7 +489,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
       for (int i = 0; i < outStreams.size(); i++) {
         outStreams.get(i).setThermoSystem(systemsOut.get(i));
         // Set temperature based on some logic, e.g., maintaining a certain delta T
-        outStreams.get(i).setTemperature(inStreams.get(i).getTemperature(), "K");
+        outStreams.get(i).setTemperature(inStreams.get(i).getTemperature() + 10, "K");
         if (!outStreams.get(i).getSpecification().equals("TP")) {
           outStreams.get(i).runTPflash();
         }
