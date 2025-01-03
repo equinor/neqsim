@@ -145,5 +145,26 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     }
     assertEquals(3.447289881042099E-6,
         thermoSystem.getPhase(0).getComponent("sulfuric acid").getx(), 100e-9);
+
+
+    thermoSystem = new SystemSrkEos(273.15 + 25.0, 100.6);
+    thermoSystem.addComponent("nitric acid", 1.0);
+    thermoSystem.addComponent("CO2", 1.0);
+    thermoSystem.createDatabase(true);
+    thermoSystem.setMixingRule("classic");
+
+    // thermoSystem.setMultiPhaseCheck(true);
+    // ((PhaseEos) thermoSystem.getPhase(0)).getMixingRule().setBinaryInteractionParameter(0, 1,
+    // 0.4012);
+    // ((PhaseEos) thermoSystem.getPhase(1)).getMixingRule().setBinaryInteractionParameter(0, 1,
+    // 0.4012);
+    ops = new ThermodynamicOperations(thermoSystem);
+    try {
+      ops.TPflash();
+    } catch (Exception e) {
+      System.out.println("error in bubble point flash");
+    }
+
+    assertEquals(0.002568785, thermoSystem.getPhase(0).getComponent("nitric acid").getx(), 100e-6);
   }
 }
