@@ -55,6 +55,8 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   private String flowArrangement = "counterflow"; // Default arrangement
   private boolean useDeltaT = false;
   private double deltaT = 1.0;
+  int MAX_ITERATIONS = 100;
+  int iterations = 0;
 
   /**
    * Constructor for MultiStreamHeatExchanger.
@@ -697,17 +699,19 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
       logger.info("Overall LMTD: " + LMTD + " K");
       logger.info("Overall UA: " + UA + " W/K");
 
-      if (UAvalueIsSet && Math.abs((UA - getUAvalue()) / getUAvalue()) > 0.001) {
+      if (UAvalueIsSet && Math.abs((UA - getUAvalue()) / getUAvalue()) > 0.001
+          && iterations < MAX_ITERATIONS) {
+        iterations++;
         setTemperatureApproach(getTemperatureApproach() * UA / getUAvalue());
         firstTime = true;
         run(id);
         return;
       }
-
       // Log the results
       logger.info("Overall LMTD: " + LMTD + " K");
       logger.info("Overall UA: " + UA + " W/K");
-
+      logger.info("iterations: " + iterations);
+      iterations = 0;
     }
     setCalculationIdentifier(id);
   }
