@@ -1,5 +1,6 @@
 package neqsim.process.equipment.heatexchanger;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,8 +45,7 @@ public class MultiStreamHeatExchangerTest {
     heatEx.addInStream(stream_Hot);
     heatEx.addInStream(stream_Cold);
     heatEx.addInStream(stream_Cold2);
-    heatEx.setGuessOutTemperature(20.0, "C");
-    heatEx.setUAvalue(1000);
+    heatEx.setTemperatureApproach(5.0);
 
 
     neqsim.process.processmodel.ProcessSystem operations =
@@ -57,11 +57,10 @@ public class MultiStreamHeatExchangerTest {
 
     operations.run();
 
-    heatEx.getOutStream(0).getFluid().prettyPrint();
-    heatEx.getOutStream(1).getFluid().prettyPrint();
-    heatEx.getOutStream(2).getFluid().prettyPrint();
-    logger.debug("duty " + heatEx.getDuty());
-    // resyc.getOutStream().displayResult();
+    assertEquals(95, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
+    assertEquals(95, heatEx.getOutStream(2).getTemperature("C"), 1e-3);
+    assertEquals(70.5921794735, heatEx.getOutStream(0).getTemperature("C"), 1e-3);
+
   }
 
 

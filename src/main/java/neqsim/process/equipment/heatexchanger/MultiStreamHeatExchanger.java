@@ -41,6 +41,8 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   protected double temperatureOut = 0;
 
   protected double dT = 0.0;
+  private double temperatureApproach = 0.0;
+
 
   private double UAvalue = 500.0; // Overall heat transfer coefficient times area
   private double duty = 0.0;
@@ -455,93 +457,182 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
    */
   @Override
   public void run(UUID id) {
-    if (useDeltaT) {
-      runDeltaT(id);
+    if (firstTime) {
+      firstTime = false;
+
+      // 1. Identify the hottest and coldest inlet streams
+      double hottestTemperature = Double.NEGATIVE_INFINITY;
+      double coldestTemperature = Double.POSITIVE_INFINITY;
+      int hottestIndex = -1;
+      int coldestIndex = -1;
+
+      for (int i = 0; i < inStreams.size(); i++) {
+        StreamInterface inStream = inStreams.get(i);
+        // Ensure the inlet stream is run to get the latest temperature
+        inStream.run();
+        double currentTemp = inStream.getThermoSystem().getTemperature("K");
+
+        if (currentTemp > hottestTemperature) {
+          hottestTemperature = currentTemp;
+          hottestIndex = i;
+        }
+
+        if (currentTemp < coldestTemperature) {
+          coldestTemperature = currentTemp;
+          coldestIndex = i;
+        }
+      }
+
+      // Check if valid indices were found
+      if (hottestIndex == -1 || coldestIndex == -1) {
+        throw new IllegalStateException("Unable to determine hottest or coldest inlet streams.");
+      }
+
+      // 2. Set the outlet temperatures accordingly
+      for (int i = 0; i < outStreams.size(); i++) {
+        StreamInterface outStream = outStreams.get(i);
+        SystemInterface systemOut = inStreams.get(i).getThermoSystem().clone();
+        outStream.setThermoSystem(systemOut);
+
+        if (i == hottestIndex) {
+          // Set the outlet temperature of the hottest inlet stream to the coldest inlet temperature
+          outStream.getThermoSystem().setTemperature(coldestTemperature + temperatureApproach, "K");
+        } else if (i == coldestIndex) {
+          // Set the outlet temperature of the coldest inlet stream to the hottest inlet temperature
+          outStream.getThermoSystem().setTemperature(hottestTemperature - temperatureApproach, "K");
+        } else {
+          // Set the outlet temperature of other streams to the hottest inlet temperature
+          outStream.getThermoSystem().setTemperature(hottestTemperature - temperatureApproach, "K");
+        }
+
+        // Run the outlet stream with the given ID
+        outStream.run(id);
+      }
+
+      // Finalize the setup
+      run();
       return;
     }
 
-    if (getSpecification().equals("out stream")) {
-      runSpecifiedStream(id);
-    } else if (firstTime) {
-      firstTime = false;
-      // Initialize all outStreams with guessed temperatures
+    else {
+      // Run all input and output streams to ensure they are up-to-date
+      for (StreamInterface inStream : inStreams) {
+        inStream.run(id);
+      }
       for (StreamInterface outStream : outStreams) {
-        SystemInterface systemOut =
-            inStreams.get(outStreams.indexOf(outStream)).getThermoSystem().clone();
-        outStream.setThermoSystem(systemOut);
-        outStream.getThermoSystem().setTemperature(guessOutTemperature, guessOutTemperatureUnit);
         outStream.run(id);
       }
-      run(id);
-    } else {
-      // Ensure all input streams are run
-      for (StreamInterface inStream : inStreams) {
-        inStream.run();
-      }
 
-      // Clone thermo systems for all out streams
-      List<SystemInterface> systemsOut = new ArrayList<>();
-      for (StreamInterface inStream : inStreams) {
-        systemsOut.add(inStream.getThermoSystem().clone());
-      }
+      // Identify heated and cooled streams
+      List<Integer> heatedStreamIndices = new ArrayList<>();
+      List<Integer> cooledStreamIndices = new ArrayList<>();
+      double totalHeatGained = 0.0; // Total Q for heated streams
+      double totalHeatLost = 0.0; // Total Q for cooled streams
 
-      // Set thermo systems to out streams
-      for (int i = 0; i < outStreams.size(); i++) {
-        outStreams.get(i).setThermoSystem(systemsOut.get(i));
-        // Set temperature based on some logic, e.g., maintaining a certain delta T
-        outStreams.get(i).setTemperature(inStreams.get(i).getTemperature() + 10, "K");
-        if (!outStreams.get(i).getSpecification().equals("TP")) {
-          outStreams.get(i).runTPflash();
-        }
-        outStreams.get(i).run(id);
-      }
-
-      // Calculate enthalpy changes and capacity rates
-      List<Double> deltaEnthalpies = new ArrayList<>();
-      List<Double> capacities = new ArrayList<>();
       for (int i = 0; i < inStreams.size(); i++) {
-        double deltaH = outStreams.get(i).getThermoSystem().getEnthalpy()
-            - inStreams.get(i).getThermoSystem().getEnthalpy();
-        deltaEnthalpies.add(deltaH);
-        double C = Math.abs(deltaH) / Math.abs(outStreams.get(i).getThermoSystem().getTemperature()
-            - inStreams.get(i).getThermoSystem().getTemperature());
-        capacities.add(C);
-      }
+        double enthalpyIn = inStreams.get(i).getThermoSystem().getEnthalpy();
+        double enthalpyOut = outStreams.get(i).getThermoSystem().getEnthalpy();
+        double deltaH = enthalpyOut - enthalpyIn;
 
-      // Determine Cmin and Cmax among all streams
-      double Cmin = capacities.stream().min(Double::compare).orElse(1.0);
-      double Cmax = capacities.stream().max(Double::compare).orElse(1.0);
-      double Cr = Cmin / Cmax;
-
-      // Calculate NTU and thermal effectiveness
-      NTU = UAvalue / Cmin;
-      thermalEffectiveness = calcThermalEffectiveness(NTU, Cr);
-
-      // Adjust enthalpies based on effectiveness
-      duty = 0.0;
-      for (int i = 0; i < deltaEnthalpies.size(); i++) {
-        deltaEnthalpies.set(i, thermalEffectiveness * deltaEnthalpies.get(i));
-        duty += deltaEnthalpies.get(i);
-      }
-
-      // Update thermo systems based on adjusted enthalpies
-      for (int i = 0; i < outStreams.size(); i++) {
-        ThermodynamicOperations thermoOps =
-            new ThermodynamicOperations(outStreams.get(i).getThermoSystem());
-        thermoOps.PHflash(inStreams.get(i).getThermoSystem().getEnthalpy() - deltaEnthalpies.get(i),
-            0);
-        if (Math.abs(thermalEffectiveness - 1.0) > 1e-10) {
-          thermoOps = new ThermodynamicOperations(outStreams.get(i).getThermoSystem());
-          thermoOps.PHflash(
-              inStreams.get(i).getThermoSystem().getEnthalpy() + deltaEnthalpies.get(i), 0);
+        if (deltaH > 0) {
+          // Stream is being heated
+          heatedStreamIndices.add(i);
+          totalHeatGained += deltaH;
+        } else if (deltaH < 0) {
+          // Stream is being cooled
+          cooledStreamIndices.add(i);
+          totalHeatLost += Math.abs(deltaH);
         }
+        // Streams with deltaH == 0 are neither heated nor cooled
       }
 
-      hotColdDutyBalance = 1.0; // Adjust as needed for specific applications
-    }
+      logger.debug(": Total Heat Gained = " + totalHeatGained + " J");
+      logger.debug(": Total Heat Lost = " + totalHeatLost + " J");
 
+      // Determine the limiting side
+      double limitingHeat;
+      boolean heatingIsLimiting;
+
+      if (totalHeatGained < totalHeatLost) {
+        limitingHeat = totalHeatGained;
+        heatingIsLimiting = true;
+        logger.debug("Limiting side: Heating");
+      } else {
+        limitingHeat = totalHeatLost;
+        heatingIsLimiting = false;
+        logger.debug("Limiting side: Cooling");
+      }
+
+      // Calculate scaling factors for each side
+      double scalingFactor = 1.0;
+
+      if (heatingIsLimiting) {
+        // Scale down the heat lost by cooled streams
+        scalingFactor = limitingHeat / totalHeatLost;
+        logger.debug("Scaling factor for cooled streams: " + scalingFactor);
+      } else {
+        // Scale down the heat gained by heated streams
+        scalingFactor = limitingHeat / totalHeatGained;
+        logger.debug("Scaling factor for heated streams: " + scalingFactor);
+      }
+
+      // Apply scaling factors to adjust outlet enthalpies
+      double maxTemperatureChange = 0.0;
+
+      for (int i : cooledStreamIndices) {
+        StreamInterface inStream = inStreams.get(i);
+        StreamInterface outStream = outStreams.get(i);
+
+        double enthalpyIn = inStream.getThermoSystem().getEnthalpy();
+        double targetDeltaH =
+            -(outStream.getThermoSystem().getEnthalpy() - enthalpyIn) * scalingFactor;
+
+        // Adjust the outlet enthalpy
+        double adjustedEnthalpyOut = enthalpyIn - (Math.abs(targetDeltaH));
+        ThermodynamicOperations ops = new ThermodynamicOperations(outStream.getThermoSystem());
+        ops.PHflash(adjustedEnthalpyOut);
+
+        // Calculate temperature change for convergence check
+        double oldTemp = outStream.getThermoSystem().getTemperature("K");
+        outStream.run(id); // Re-run to update temperature based on adjusted enthalpy
+        double newTemp = outStream.getThermoSystem().getTemperature("K");
+        double tempChange = Math.abs(newTemp - oldTemp);
+        if (tempChange > maxTemperatureChange) {
+          maxTemperatureChange = tempChange;
+        }
+
+        logger.debug("Adjusted cooled stream " + i + ": ΔH = " + targetDeltaH);
+      }
+
+      scalingFactor = 1.0;
+      for (int i : heatedStreamIndices) {
+        StreamInterface inStream = inStreams.get(i);
+        StreamInterface outStream = outStreams.get(i);
+
+        double enthalpyIn = inStream.getThermoSystem().getEnthalpy();
+        double targetDeltaH =
+            (outStream.getThermoSystem().getEnthalpy() - enthalpyIn) * scalingFactor;
+
+        // Adjust the outlet enthalpy
+        double adjustedEnthalpyOut = enthalpyIn + (Math.abs(targetDeltaH));
+        ThermodynamicOperations ops = new ThermodynamicOperations(outStream.getThermoSystem());
+        ops.PHflash(adjustedEnthalpyOut);
+
+        // Calculate temperature change for convergence check
+        double oldTemp = outStream.getThermoSystem().getTemperature("K");
+        outStream.run(id); // Re-run to update temperature based on adjusted enthalpy
+        double newTemp = outStream.getThermoSystem().getTemperature("K");
+        double tempChange = Math.abs(newTemp - oldTemp);
+        if (tempChange > maxTemperatureChange) {
+          maxTemperatureChange = tempChange;
+        }
+
+        logger.debug("Adjusted heated stream " + i + ": ΔH = " + targetDeltaH);
+      }
+    }
     setCalculationIdentifier(id);
   }
+
 
   /**
    * Runs the heat exchanger simulation using a specified stream approach.
@@ -553,13 +644,12 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     // This method needs to be defined based on specific requirements
   }
 
-  /**
-   * Runs the heat exchanger simulation using a delta T approach.
-   *
-   * @param id Unique identifier for the run
-   */
-  public void runDeltaT(UUID id) {
-    // Implementation similar to the two-stream case but generalized for multiple streams
-    // This method needs to be defined based on specific requirements
+
+  public double getTemperatureApproach() {
+    return temperatureApproach;
+  }
+
+  public void setTemperatureApproach(double temperatureApproach) {
+    this.temperatureApproach = temperatureApproach;
   }
 }
