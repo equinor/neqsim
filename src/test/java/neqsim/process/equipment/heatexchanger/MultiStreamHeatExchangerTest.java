@@ -45,7 +45,8 @@ public class MultiStreamHeatExchangerTest {
     heatEx.addInStream(stream_Hot);
     heatEx.addInStream(stream_Cold);
     heatEx.addInStream(stream_Cold2);
-    heatEx.setTemperatureApproach(5.0);
+    // heatEx.setUAvalue(1000);
+    heatEx.setTemperatureApproach(5);
 
 
     neqsim.process.processmodel.ProcessSystem operations =
@@ -60,6 +61,14 @@ public class MultiStreamHeatExchangerTest {
     assertEquals(95, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
     assertEquals(95, heatEx.getOutStream(2).getTemperature("C"), 1e-3);
     assertEquals(70.5921794735, heatEx.getOutStream(0).getTemperature("C"), 1e-3);
+
+    heatEx.setUAvalue(1000);
+
+    operations.run();
+    assertEquals(97.992627692, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
+    assertEquals(97.992627692, heatEx.getOutStream(2).getTemperature("C"), 1e-3);
+    assertEquals(69.477801, heatEx.getOutStream(0).getTemperature("C"), 1e-3);
+    assertEquals(1000, heatEx.getUAvalue(), 0.1);
 
   }
 

@@ -42,7 +42,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
 
   protected double dT = 0.0;
   private double temperatureApproach = 0.0;
-
+  private boolean UAvalueIsSet = false;
 
   private double UAvalue = 500.0; // Overall heat transfer coefficient times area
   private double duty = 0.0;
@@ -194,6 +194,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
    * @param UAvalue UA value to set
    */
   public void setUAvalue(double UAvalue) {
+    UAvalueIsSet = true;
     this.UAvalue = UAvalue;
   }
 
@@ -629,6 +630,84 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
 
         logger.debug("Adjusted heated stream " + i + ": ΔH = " + targetDeltaH);
       }
+
+      // ----------------------- LMTD and UA Calculations -----------------------
+
+      // Re-identify the hottest and coldest inlet streams after adjustment
+      double adjustedHottestTemp = Double.NEGATIVE_INFINITY;
+      double adjustedColdestTemp = Double.POSITIVE_INFINITY;
+      int adjustedHottestIndex = -1;
+      int adjustedColdestIndex = -1;
+
+      for (int i = 0; i < inStreams.size(); i++) {
+        StreamInterface inStream = inStreams.get(i);
+        double currentTemp = inStream.getThermoSystem().getTemperature("K");
+
+        if (currentTemp > adjustedHottestTemp) {
+          adjustedHottestTemp = currentTemp;
+          adjustedHottestIndex = i;
+        }
+
+        if (currentTemp < adjustedColdestTemp) {
+          adjustedColdestTemp = currentTemp;
+          adjustedColdestIndex = i;
+        }
+      }
+
+      // Ensure valid indices
+      if (adjustedHottestIndex == -1 || adjustedColdestIndex == -1) {
+        throw new IllegalStateException(
+            "Unable to determine adjusted hottest or coldest inlet streams.");
+      }
+
+      // Outlet temperatures after adjustment
+      double hotInletTemp = adjustedHottestTemp;
+      double coldInletTemp = adjustedColdestTemp;
+
+      StreamInterface hotOutletStream = outStreams.get(adjustedHottestIndex);
+      double hotOutletTemp = hotOutletStream.getThermoSystem().getTemperature("K");
+
+      StreamInterface coldOutletStream = outStreams.get(adjustedColdestIndex);
+      double coldOutletTemp = coldOutletStream.getThermoSystem().getTemperature("K");
+
+      // Calculate temperature differences
+      double deltaT1 = hotInletTemp - coldOutletTemp; // Hot inlet - Cold outlet
+      double deltaT2 = hotOutletTemp - coldInletTemp; // Hot outlet - Cold inlet
+
+      // Validate temperature differences
+      if (deltaT1 <= 0 || deltaT2 <= 0) {
+        throw new IllegalStateException("Invalid temperature differences for LMTD calculation.");
+      }
+
+      // Calculate LMTD
+      double LMTD;
+      if (deltaT1 == deltaT2) {
+        // Avoid division by zero in logarithm
+        LMTD = deltaT1;
+      } else {
+        LMTD = (deltaT1 - deltaT2) / Math.log(deltaT1 / deltaT2);
+      }
+
+      // Total heat transfer rate (assuming energy balance is achieved)
+      double totalQ = heatingIsLimiting ? totalHeatGained : totalHeatLost;
+
+      // Calculate UA
+      double UA = totalQ / LMTD;
+      // setUAvalue(UA);
+      logger.info("Overall LMTD: " + LMTD + " K");
+      logger.info("Overall UA: " + UA + " W/K");
+
+      if (UAvalueIsSet && Math.abs((UA - getUAvalue()) / getUAvalue()) > 0.001) {
+        setTemperatureApproach(getTemperatureApproach() * UA / getUAvalue());
+        firstTime = true;
+        run(id);
+        return;
+      }
+
+      // Log the results
+      logger.info("Overall LMTD: " + LMTD + " K");
+      logger.info("Overall UA: " + UA + " W/K");
+
     }
     setCalculationIdentifier(id);
   }
