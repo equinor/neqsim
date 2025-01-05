@@ -39,19 +39,19 @@ import neqsim.util.unit.Units;
  * @author Even Solbraa
  */
 public abstract class SystemThermo implements SystemInterface {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(SystemThermo.class);
-  // Class variables
-  private static final int MAX_PHASES = 6;
-
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(SystemThermo.class);
+
+  // Class variables
+  private static final int MAX_PHASES = 6;
 
   protected int a;
   protected boolean allowPhaseShift = true;
   protected int attractiveTermNumber = 0;
 
-  // Fraction of moles_in_phase / moles_in_system.
+  /** Fraction of moles_in_phase / moles_in_system. Cached. */
   protected double[] beta = new double[MAX_PHASES];
   protected String[] CapeOpenProperties10 = {"molecularWeight", "speedOfSound",
       "jouleThomsonCoefficient", "energy", "energy.Dtemperature", "gibbsFreeEnergy",
@@ -106,7 +106,7 @@ public abstract class SystemThermo implements SystemInterface {
   // Initialization
   boolean isInitialized = false;
 
-  /** Maximum allowed number of phases . */
+  /** Maximum allowed number of phases. */
   public int maxNumberOfPhases = 2;
   private int mixingRule = 1;
   protected String modelName = "Default";
