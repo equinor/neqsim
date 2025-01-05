@@ -36,6 +36,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   protected StreamInterface mixedStream;
   private boolean isSetOutTemperature = false;
   private double outTemperature = Double.NaN;
+  double lowestPressure = Double.NEGATIVE_INFINITY;
 
   /**
    * <p>
@@ -106,13 +107,17 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   public void mixStream() {
     int index = 0;
     String compName = new String();
-    double lowestPressure = mixedStream.getThermoSystem().getPhase(0).getPressure();
+    lowestPressure = mixedStream.getThermoSystem().getPhase(0).getPressure();
     boolean hasAddedNewComponent = false;
     for (int k = 1; k < streams.size(); k++) {
       if (streams.get(k).getThermoSystem().getPhase(0).getPressure() < lowestPressure) {
         lowestPressure = streams.get(k).getThermoSystem().getPhase(0).getPressure();
-        mixedStream.getThermoSystem().getPhase(0).setPressure(lowestPressure);
       }
+    }
+    for (int k = 0; k < streams.size(); k++) {
+      // streams.get(k).getThermoSystem().getPhase(0).setPressure(lowestPressure);
+    }
+    for (int k = 1; k < streams.size(); k++) {
       for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
           .getNumberOfComponents(); i++) {
         boolean gotComponent = false;
@@ -212,7 +217,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       mixedStream.getThermoSystem().init(0);
 
       mixStream();
-
+      mixedStream.setPressure(lowestPressure);
       enthalpy = calcMixStreamEnthalpy();
       // System.out.println("temp guess " + guessTemperature());
       if (isSetOutTemperature) {
@@ -244,12 +249,10 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       mixedStream.getThermoSystem().init(2);
     }
 
-
     // System.out.println("enthalpy: " +
     // mixedStream.getThermoSystem().getEnthalpy())
     // System.out.println("enthalpy: " + en
     // System.out.println("temperature: " +
-
 
     // System.out.println("beta " + mixedStream.getThermoSystem(
     // outStream.setThermoSystem(mixedStream.getThermoSystem());

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -80,5 +81,31 @@ class MixerTest {
     assertTrue(gasStream.needRecalculation());
     processOps.run();
     assertFalse(gasStream.needRecalculation());
+  }
+
+  /**
+   * Test method for {@link neqsim.process.equipment.mixer.Mixer#run()}.
+   */
+  @Test
+  void testRunDifferentPressures() {
+    StreamInterface gasStream2 = (StreamInterface) gasStream.clone();
+    StreamInterface waterStream2 = (StreamInterface) waterStream.clone();
+
+    gasStream2.setPressure(10.0, "bara");
+    waterStream2.setPressure(30.0, "bara");
+
+    gasStream2.run();
+    waterStream2.run();
+
+    double totalEnthalpy =
+        gasStream2.getFluid().getEnthalpy("J") + waterStream2.getFluid().getEnthalpy("J");
+
+    Mixer testMixer = new Mixer("test mixer");
+    testMixer.addStream(waterStream2);
+    testMixer.addStream(gasStream2);
+    testMixer.run();
+
+    assertEquals(totalEnthalpy, testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1e-1);
+    assertEquals(10.0, testMixer.getOutletStream().getPressure("bara"), 1e-1);
   }
 }
