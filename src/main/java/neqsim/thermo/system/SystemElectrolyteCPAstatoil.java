@@ -31,8 +31,9 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
    */
   public SystemElectrolyteCPAstatoil(double T, double P) {
     super(T, P);
-    attractiveTermNumber = 15;
     modelName = "Electrolyte-CPA-EOS-statoil";
+    attractiveTermNumber = 15;
+
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseElectrolyteCPAstatoil();
       phaseArray[i].setTemperature(T);

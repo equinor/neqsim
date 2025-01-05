@@ -47,8 +47,8 @@ public class SystemTSTEos extends SystemEos {
    */
   public SystemTSTEos(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    attractiveTermNumber = 14;
     modelName = "TST-EOS";
+    attractiveTermNumber = 14;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseTSTEos();

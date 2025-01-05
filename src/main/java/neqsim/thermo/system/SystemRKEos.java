@@ -44,8 +44,8 @@ public class SystemRKEos extends SystemEos {
    */
   public SystemRKEos(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    attractiveTermNumber = 5;
     modelName = "RK-EOS";
+    attractiveTermNumber = 5;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseRK();

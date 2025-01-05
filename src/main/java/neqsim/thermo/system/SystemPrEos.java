@@ -39,9 +39,9 @@ public class SystemPrEos extends SystemEos {
    */
   public SystemPrEos(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    attractiveTermNumber = 1;
     modelName = "PR-EOS";
     getCharacterization().setTBPModel("PedersenPR");
+    attractiveTermNumber = 1;
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhasePrEos();
