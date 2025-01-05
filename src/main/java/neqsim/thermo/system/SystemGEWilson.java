@@ -45,8 +45,8 @@ public class SystemGEWilson extends SystemEos {
    */
   public SystemGEWilson(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    attractiveTermNumber = 0;
     modelName = "UNIFAC-GE-model";
+    attractiveTermNumber = 0;
 
     phaseArray[0] = new PhaseSrkEos();
     phaseArray[0].setTemperature(T);

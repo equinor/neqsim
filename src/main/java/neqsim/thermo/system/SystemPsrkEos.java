@@ -41,8 +41,8 @@ public class SystemPsrkEos extends SystemSrkEos {
    */
   public SystemPsrkEos(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    attractiveTermNumber = 4;
     modelName = "Predictive-SRK-EOS";
+    attractiveTermNumber = 4;
   }
 
   /** {@inheritDoc} */

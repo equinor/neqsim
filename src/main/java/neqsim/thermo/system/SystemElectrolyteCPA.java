@@ -31,8 +31,9 @@ public class SystemElectrolyteCPA extends SystemFurstElectrolyteEos {
    */
   public SystemElectrolyteCPA(double T, double P) {
     super(T, P);
-    attractiveTermNumber = 0;
     modelName = "Electrolyte-CPA-EOS";
+    attractiveTermNumber = 0;
+
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseElectrolyteCPA();
       phaseArray[i].setTemperature(T);

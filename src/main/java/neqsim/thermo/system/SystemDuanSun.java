@@ -48,8 +48,8 @@ public class SystemDuanSun extends SystemEos {
    */
   public SystemDuanSun(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    attractiveTermNumber = 0;
     modelName = "Duan-Sun-model";
+    attractiveTermNumber = 0;
 
     phaseArray[0] = new PhaseSrkEos();
     phaseArray[0].setTemperature(T);

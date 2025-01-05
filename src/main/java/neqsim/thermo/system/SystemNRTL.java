@@ -45,8 +45,8 @@ public class SystemNRTL extends SystemEos {
    */
   public SystemNRTL(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    attractiveTermNumber = 0;
     modelName = "NRTL-GE-model";
+    attractiveTermNumber = 0;
 
     phaseArray[0] = new PhaseSrkEos();
     phaseArray[0].setTemperature(T);

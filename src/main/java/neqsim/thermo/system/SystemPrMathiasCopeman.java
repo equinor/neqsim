@@ -41,8 +41,8 @@ public class SystemPrMathiasCopeman extends SystemPrEos {
    */
   public SystemPrMathiasCopeman(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    attractiveTermNumber = 13;
     modelName = "Mathias-Copeman-PR-EOS";
+    attractiveTermNumber = 13;
   }
 
   /** {@inheritDoc} */

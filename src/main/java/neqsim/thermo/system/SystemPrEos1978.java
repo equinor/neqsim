@@ -41,8 +41,8 @@ public class SystemPrEos1978 extends SystemPrEos {
    */
   public SystemPrEos1978(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    attractiveTermNumber = 6;
     modelName = "PR78-EoS";
+    attractiveTermNumber = 6;
   }
 
   /** {@inheritDoc} */

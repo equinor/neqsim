@@ -45,8 +45,8 @@ public class SystemKentEisenberg extends SystemEos {
    */
   public SystemKentEisenberg(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    attractiveTermNumber = 0;
     modelName = "Kent Eisenberg-model";
+    attractiveTermNumber = 0;
 
     phaseArray[0] = new PhaseSrkEos();
     phaseArray[0].setTemperature(T);

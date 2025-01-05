@@ -44,6 +44,7 @@ public class SystemUMRPRUEos extends SystemPrEos {
     setBmixType(1);
     modelName = "UMR-PRU-EoS";
     attractiveTermNumber = 1;
+
     CapeOpenProperties11 = new String[] {"speedOfSound", "jouleThomsonCoefficient",
         "internalEnergy", "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy",
         "fugacityCoefficient", "logFugacityCoefficient", "logFugacityCoefficient.Dtemperature",
