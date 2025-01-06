@@ -123,8 +123,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
           .getNumberOfComponents(); i++) {
         boolean gotComponent = false;
-        String componentName =
-            streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
+        String componentName = streams.get(k).getThermoSystem().getPhase(0).getComponentName(i);
         // System.out.println("adding: " + componentName);
 
         double moles =
@@ -133,8 +132,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         // mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents());
         for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0)
             .getNumberOfComponents(); p++) {
-          if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName()
-              .equals(componentName)) {
+          if (mixedStream.getThermoSystem().getPhase(0).getComponentName(p).equals(componentName)) {
             gotComponent = true;
             index =
                 streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
@@ -285,7 +283,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
+        table[j + 1][0] = thermoSystem.getPhases()[0].getComponentName(j);
         buf = new StringBuffer();
         table[j + 1][i + 1] =
             nf.format(thermoSystem.getPhases()[i].getComponent(j).getx(), buf, test).toString();

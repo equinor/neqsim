@@ -345,6 +345,16 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public ComponentInterface[] getcomponentArray();
 
   /**
+   * Get name of component i.
+   *
+   * @param index Component index
+   * @return Name of component
+   */
+  public default String getComponentName(int index) {
+    return getComponent(index).getComponentName();
+  }
+
+  /**
    * Get normalized names of components in phase.
    *
    * @return Array of names of components in phase.

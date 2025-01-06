@@ -42,7 +42,7 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
       this.thermoSystem =
           new SystemGERG2004Eos(thermoSystemMet.getTemperature(), thermoSystemMet.getPressure());
       for (int i = 0; i < thermoSystemMet.getPhase(0).getNumberOfComponents(); i++) {
-        this.thermoSystem.addComponent(thermoSystemMet.getPhase(0).getComponent(i).getName(),
+        this.thermoSystem.addComponent(thermoSystemMet.getPhase(0).getComponentName(i),
             thermoSystemMet.getPhase(0).getComponent(i).getNumberOfmoles());
       }
     }
@@ -139,7 +139,7 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
     FieldPosition test = new FieldPosition(0);
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
+        table[j + 1][0] = thermoSystem.getPhases()[0].getComponentName(j);
         buf = new StringBuffer();
         table[j + 1][i + 1] =
             nf.format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponent(j).getx(),

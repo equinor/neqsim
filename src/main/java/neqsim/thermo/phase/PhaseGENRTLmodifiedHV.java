@@ -51,7 +51,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     componentArray = new ComponentGENRTLmodifiedHV[alpha[0].length];
     type = 0;
     for (int i = 0; i < alpha[0].length; i++) {
-      componentArray[i] = new ComponentGENRTLmodifiedHV(phase.getComponent(i).getName(),
+      componentArray[i] = new ComponentGENRTLmodifiedHV(phase.getComponentName(i),
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }
@@ -76,7 +76,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     type = 1;
     this.DijT = DijT;
     for (int i = 0; i < alpha[0].length; i++) {
-      componentArray[i] = new ComponentGENRTLmodifiedHV(phase.getComponent(i).getName(),
+      componentArray[i] = new ComponentGENRTLmodifiedHV(phase.getComponentName(i),
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }

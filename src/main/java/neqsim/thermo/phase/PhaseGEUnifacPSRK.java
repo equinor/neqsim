@@ -48,7 +48,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
     super(phase, alpha, Dij, mixRule, intparam);
     componentArray = new ComponentGEUnifac[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
-      componentArray[i] = new ComponentGEUnifacPSRK(phase.getComponent(i).getName(),
+      componentArray[i] = new ComponentGEUnifacPSRK(phase.getComponentName(i),
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }

@@ -141,7 +141,7 @@ public class LNGship
     double oldMoles = getThermoSystem().getTotalNumberOfMoles();
 
     for (int i = 0; i < getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
-      getThermoSystem().addComponent(getThermoSystem().getPhase(0).getComponent(i).getName(),
+      getThermoSystem().addComponent(getThermoSystem().getPhase(0).getComponentName(i),
           (initialNumberOffMoles - oldMoles)
               * getThermoSystem().getPhase(0).getComponent(i).getz());
     }
@@ -295,7 +295,7 @@ public class LNGship
         this.standardISO6976.setReferenceType("volume");
 
         for (int i = 0; i < getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
-          getThermoSystem().addComponent(getThermoSystem().getPhase(0).getComponent(i).getName(),
+          getThermoSystem().addComponent(getThermoSystem().getPhase(0).getComponentName(i),
               -xgas[i] * molarBoilOffRate);
         }
       }

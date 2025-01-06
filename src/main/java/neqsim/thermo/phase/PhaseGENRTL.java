@@ -58,7 +58,7 @@ public class PhaseGENRTL extends PhaseGE {
     this.intparam = intparam;
     for (int i = 0; i < alpha[0].length; i++) {
       numberOfComponents++;
-      componentArray[i] = new ComponentGeNRTL(phase.getComponent(i).getName(),
+      componentArray[i] = new ComponentGeNRTL(phase.getComponentName(i),
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }

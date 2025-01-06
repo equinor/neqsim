@@ -894,7 +894,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
     for (int i = 0; i < getThermoSystem().getNumberOfPhases(); i++) {
       for (int j = 0; j < getThermoSystem().getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = getThermoSystem().getPhases()[0].getComponent(j).getName();
+        table[j + 1][0] = getThermoSystem().getPhases()[0].getComponentName(j);
         buf = new StringBuffer();
         table[j + 1][i + 1] = nf
             .format(getThermoSystem().getPhases()[i].getComponent(j).getx(), buf, test).toString();

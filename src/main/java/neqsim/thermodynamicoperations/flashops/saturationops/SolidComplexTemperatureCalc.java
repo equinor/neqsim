@@ -95,8 +95,8 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
       iter++;
       ops.TPflash();
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        if (system.getPhases()[5].getComponent(i).getName().equals("water")
-            || system.getPhases()[5].getComponent(i).getName().equals("MEG")) {
+        if (system.getPhases()[5].getComponentName(i).equals("water")
+            || system.getPhases()[5].getComponentName(i).equals("MEG")) {
           system.getPhases()[5].getComponent(i).setx(0.5);
         } else {
           system.getPhases()[5].getComponent(i).setx(1e-20);

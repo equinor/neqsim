@@ -180,7 +180,7 @@ public class ChemicalReactionOperations
         if (name.equals(allComponentNames[i])) {
           components[k++] = system.getPhase(phase).getComponent(j);
           // System.out.println("reactive comp " +
-          // system.getPhases()[1].getComponent(j).getName());
+          // system.getPhases()[1].getComponentName(j));
         }
       }
     }
