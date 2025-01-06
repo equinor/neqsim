@@ -117,7 +117,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
 
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
+        table[j + 1][0] = thermoSystem.getPhases()[0].getComponentName(j);
         buf = new StringBuffer();
         table[j + 1][i + 1] =
             nf.format(thermoSystem.getPhases()[i].getComponent(j).getx(), buf, test).toString();

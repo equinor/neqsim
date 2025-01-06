@@ -205,8 +205,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
           .getNumberOfComponents(); i++) {
         boolean gotComponent = false;
-        String componentName =
-            streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
+        String componentName = streams.get(k).getThermoSystem().getPhase(0).getComponentName(i);
         // logger.info("adding: " + componentName);
         // int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
 
@@ -216,8 +215,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         // mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents());
         for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0)
             .getNumberOfComponents(); p++) {
-          if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName()
-              .equals(componentName)) {
+          if (mixedStream.getThermoSystem().getPhase(0).getComponentName(p).equals(componentName)) {
             gotComponent = true;
             index =
                 streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();

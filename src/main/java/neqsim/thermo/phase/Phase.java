@@ -1394,7 +1394,7 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public double getLogInfiniteDiluteFugacity(int k, int p) {
     if (refPhase == null) {
-      initRefPhases(false, getComponent(p).getName());
+      initRefPhases(false, getComponentName(p));
     }
     refPhase[k].setTemperature(temperature);
     refPhase[k].setPressure(pressure);

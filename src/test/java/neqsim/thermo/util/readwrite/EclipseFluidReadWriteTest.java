@@ -91,7 +91,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
 
     // for (int i = 0; i < testSystem.getNumberOfComponents(); i++) {
-    // System.out.println(testSystem.getComponent(i).getName() + " TC "
+    // System.out.println(testSystem.getComponentName(i) + " TC "
     // + (testSystem.getComponent(i).getVolumeCorrectionConst()));
     // }
   }

@@ -51,7 +51,7 @@ public class DewPointTemperatureFlashDer extends ConstantDutyTemperatureFlash {
       if (system.getPhases()[0].getComponent(i).getIonicCharge() != 0) {
         system.getPhases()[0].getComponent(i).setx(1e-40);
       } else {
-        if (system.getPhases()[1].getComponent(i).getName().equals("water")) {
+        if (system.getPhases()[1].getComponentName(i).equals("water")) {
           system.getPhases()[1].getComponent(i).setx(1.0);
         } else if (system.getPhases()[1].hasComponent("water")) {
           system.getPhases()[1].getComponent(i).setx(1.0e-10);

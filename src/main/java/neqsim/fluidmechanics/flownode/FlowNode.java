@@ -671,7 +671,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     FieldPosition test = new FieldPosition(0);
     for (int i = 0; i < bulkSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = bulkSystem.getPhases()[0].getComponent(j).getName();
+        table[j + 1][0] = bulkSystem.getPhases()[0].getComponentName(j);
         buf = new StringBuffer();
         table[j + 1][i + 1] =
             nf.format(bulkSystem.getPhase(bulkSystem.getPhaseIndex(i)).getComponent(j).getx(), buf,
@@ -681,7 +681,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
 
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
         table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][0] =
-            getInterphaseSystem().getPhases()[0].getComponent(j).getName();
+            getInterphaseSystem().getPhases()[0].getComponentName(j);
         buf = new StringBuffer();
         table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] =
             nf.format(getInterphaseSystem().getPhase(getInterphaseSystem().getPhaseIndex(i))
@@ -691,7 +691,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
 
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
         table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][0] =
-            bulkSystem.getPhases()[0].getComponent(j).getName();
+            bulkSystem.getPhases()[0].getComponentName(j);
         buf = new StringBuffer();
         table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] =
             nf.format(getFluidBoundary().getInterphaseMolarFlux(j), buf, test).toString();

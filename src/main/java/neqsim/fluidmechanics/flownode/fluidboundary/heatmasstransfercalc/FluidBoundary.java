@@ -441,8 +441,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     FieldPosition test = new FieldPosition(0);
     for (int i = 0; i < bulkSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] =
-            "eff. mass trans coef. " + bulkSystem.getPhases()[0].getComponent(j).getName();
+        table[j + 1][0] = "eff. mass trans coef. " + bulkSystem.getPhases()[0].getComponentName(j);
         buf = new StringBuffer();
         table[j + 1][i + 1] =
             nf.format(getEffectiveMassTransferCoefficient(i, j), buf, test).toString();
@@ -452,7 +451,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
         getEnhancementFactor().calcEnhancementVec(i);
         for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
           table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][0] =
-              "enhancement " + getInterphaseSystem().getPhases()[0].getComponent(j).getName();
+              "enhancement " + getInterphaseSystem().getPhases()[0].getComponentName(j);
           buf = new StringBuffer();
           table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] =
               nf.format(getEnhancementFactor().getEnhancementVec(j), buf, test).toString();
@@ -462,7 +461,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
       getBulkSystem().getPhase(i).getPhysicalProperties().calcEffectiveDiffusionCoefficients();
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
         table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][0] =
-            "schmidt " + bulkSystem.getPhases()[0].getComponent(j).getName();
+            "schmidt " + bulkSystem.getPhases()[0].getComponentName(j);
         buf = new StringBuffer();
         table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] = nf.format(
             getBulkSystem().getPhase(i).getPhysicalProperties().getEffectiveSchmidtNumber(j), buf,

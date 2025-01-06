@@ -55,7 +55,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     super(phase, alpha, Dij, mixRule, intparam);
     componentArray = new ComponentGEUnifac[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
-      componentArray[i] = new ComponentGEUnifacUMRPRU(phase.getComponent(i).getName(),
+      componentArray[i] = new ComponentGEUnifacUMRPRU(phase.getComponentName(i),
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
       componentArray[i].setAttractiveTerm(phase.getComponent(i).getAttractiveTermNumber());
