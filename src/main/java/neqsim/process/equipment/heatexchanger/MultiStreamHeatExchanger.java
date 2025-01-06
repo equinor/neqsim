@@ -714,6 +714,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
       iterations = 0;
     }
     setCalculationIdentifier(id);
+    firstTime = true;
   }
 
 
