@@ -18,6 +18,7 @@ import neqsim.thermo.phase.PhaseType;
  * @version $Id: $Id
  */
 public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

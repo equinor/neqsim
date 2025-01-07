@@ -22,7 +22,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SolidFlash12 extends TPflash {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SolidFlash12.class);
 
   // SystemInterface clonedSystem;

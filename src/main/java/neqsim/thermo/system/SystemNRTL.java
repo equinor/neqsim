@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * @version $Id: $Id
  */
 public class SystemNRTL extends SystemEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

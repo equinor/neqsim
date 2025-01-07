@@ -18,6 +18,7 @@ import neqsim.util.database.NeqSimDataBase;
  * @since 2.2.3
  */
 public class WaxFlash {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(WaxFlash.class);
 
   /**

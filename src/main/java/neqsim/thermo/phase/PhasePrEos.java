@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentPR;
  * @version $Id: $Id
  */
 public class PhasePrEos extends PhaseEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

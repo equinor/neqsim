@@ -19,7 +19,9 @@ import neqsim.util.NamedBaseClass;
  * @version $Id: $Id
  */
 public abstract class Packing extends NamedBaseClass implements PackingInterface {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Packing.class);
 
   double voidFractionPacking = 0.951;

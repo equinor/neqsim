@@ -8,7 +8,8 @@ import java.io.Serializable;
  * @author Even Solbraa
  */
 public class TablePrinter implements Serializable {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
 
   /**
    * Prints a 2D string table in a formatted and visually appealing way.

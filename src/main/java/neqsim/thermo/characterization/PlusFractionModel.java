@@ -13,7 +13,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class PlusFractionModel implements java.io.Serializable {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PlusFractionModel.class);
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   private String name = "";
   private SystemInterface system = null;
@@ -43,6 +45,7 @@ public class PlusFractionModel implements java.io.Serializable {
   }
 
   class PedersenPlusModel implements PlusFractionModelInterface, Cloneable {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     double[] coefs = {4.4660105006, -1.1266303727, 0.80, 0.0408709562};
@@ -302,6 +305,7 @@ public class PlusFractionModel implements java.io.Serializable {
   }
 
   private class PedersenHeavyOilPlusModel extends PedersenPlusModel {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     public PedersenHeavyOilPlusModel() {
@@ -313,7 +317,8 @@ public class PlusFractionModel implements java.io.Serializable {
 
   class WhitsonGammaModel extends PedersenPlusModel {
 
-    private static final long serialVersionUID = 1L;
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000;
     public double[] zValues;
     public double[] molarMasses;
     public double[] densities;

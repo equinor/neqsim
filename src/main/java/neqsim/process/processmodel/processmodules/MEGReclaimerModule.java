@@ -22,7 +22,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class MEGReclaimerModule extends ProcessModuleBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(MEGReclaimerModule.class);
 
   protected StreamInterface streamToReclaimer = null;

@@ -37,7 +37,9 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public abstract class PhysicalProperties implements Cloneable, ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhysicalProperties.class);
 
   protected PhaseInterface phase;

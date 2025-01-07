@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseSrkCPA;
  * @version $Id: $Id
  */
 public class SystemSrkCPA extends SystemSrkEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

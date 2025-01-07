@@ -19,7 +19,9 @@ import neqsim.process.equipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public class Manifold extends ProcessEquipmentBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Manifold.class);
 
   protected Mixer localmixer = new Mixer("tmpName");
@@ -44,8 +46,7 @@ public class Manifold extends ProcessEquipmentBaseClass {
    * addStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void addStream(StreamInterface newStream) {
     localmixer.addStream(newStream);

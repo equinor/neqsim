@@ -16,6 +16,7 @@ import neqsim.process.mechanicaldesign.designstandards.PressureVesselDesignStand
  * @version $Id: $Id
  */
 public class AdsorberMechanicalDesign extends MechanicalDesign {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private double wallThickness = 0.0;
@@ -27,8 +28,7 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
    * Constructor for AdsorberMechanicalDesign.
    * </p>
    *
-   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *        object
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public AdsorberMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);

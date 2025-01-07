@@ -14,7 +14,9 @@ import org.apache.logging.log4j.Logger;
  * @version June 2023
  */
 public class NeqSimContractDataBase extends NeqSimDataBase {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(NeqSimContractDataBase.class);
 
   /** Constant <code>dataBasePath=""</code>. */

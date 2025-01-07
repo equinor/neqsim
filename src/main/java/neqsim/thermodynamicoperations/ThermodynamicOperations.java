@@ -75,28 +75,19 @@ import neqsim.util.exception.IsNaNException;
  * @version $Id: $Id
  */
 public class ThermodynamicOperations implements java.io.Serializable, Cloneable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(ThermodynamicOperations.class);
 
   private Thread thermoOperationThread = new Thread();
   private OperationInterface operation = null;
-
-  /**
-   * <p>
-   * Getter for the field <code>system</code>.
-   * </p>
-   *
-   * @return a {@link neqsim.thermo.system.SystemInterface} object
-   */
-  public SystemInterface getSystem() {
-    return system;
-  }
 
   SystemInterface system = null;
   boolean writeFile = false;
   String fileName = null;
   private boolean runAsThread = false;
   protected String[][] resultTable = null;
-  static Logger logger = LogManager.getLogger(ThermodynamicOperations.class);
 
   /**
    * <p>
@@ -114,6 +105,17 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public ThermodynamicOperations(SystemInterface system) {
     this.system = system;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>system</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public SystemInterface getSystem() {
+    return system;
   }
 
   /**

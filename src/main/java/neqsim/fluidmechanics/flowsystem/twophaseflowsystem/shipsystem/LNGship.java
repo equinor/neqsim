@@ -23,7 +23,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class LNGship
     extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem.TwoPhaseFlowSystem {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LNGship.class);
 
   double[] temperature = null;

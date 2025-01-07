@@ -18,6 +18,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestCharacterizationCondensate1 {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TestCharacterizationCondensate1.class);
 
   /**

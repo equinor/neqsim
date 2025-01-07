@@ -11,6 +11,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * @version $Id: $Id
  */
 public class WilkeLeeDiffusivity extends Diffusivity {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double[][] binaryDiffusionCoefficients;

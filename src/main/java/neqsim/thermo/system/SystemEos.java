@@ -6,6 +6,7 @@ package neqsim.thermo.system;
  * @author Even Solbraa
  */
 public abstract class SystemEos extends neqsim.thermo.system.SystemThermo {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

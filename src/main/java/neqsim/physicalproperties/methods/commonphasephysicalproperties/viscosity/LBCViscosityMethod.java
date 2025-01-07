@@ -13,7 +13,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
  */
 public class LBCViscosityMethod extends Viscosity {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LBCViscosityMethod.class);
 
   double[] a = {0.10230, 0.023364, 0.058533, -0.040758, 0.0093324};

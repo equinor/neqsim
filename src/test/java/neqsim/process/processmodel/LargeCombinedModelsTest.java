@@ -27,6 +27,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 
 public class LargeCombinedModelsTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LargeCombinedModelsTest.class);
   File file = new File("src/test/java/neqsim/process/processmodel");
   String fileFluid1 = file.getAbsolutePath() + "/feedfluid.e300";

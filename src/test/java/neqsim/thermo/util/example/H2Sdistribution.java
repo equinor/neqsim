@@ -17,6 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class H2Sdistribution {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(H2Sdistribution.class);
 
   /**

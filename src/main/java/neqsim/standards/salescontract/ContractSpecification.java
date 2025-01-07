@@ -18,7 +18,8 @@ import neqsim.util.NamedBaseClass;
  * @version $Id: $Id
  */
 public class ContractSpecification extends NamedBaseClass {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
   StandardInterface standard = null;
   String specification = "dew point temperature specification";
   private String country = "";

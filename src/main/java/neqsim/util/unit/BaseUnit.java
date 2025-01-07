@@ -9,6 +9,7 @@ package neqsim.util.unit;
  * @version $Id: $Id
  */
 public abstract class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /** Process value in SI units */

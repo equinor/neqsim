@@ -17,7 +17,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ReactiveFluidBoundary.class);
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   protected int neq = 0;

@@ -19,6 +19,7 @@ import neqsim.thermo.component.ComponentHydratePVTsim;
  * @version $Id: $Id
  */
 public class PhaseHydrate extends Phase {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   String hydrateModel = "PVTsimHydrateModel";
 

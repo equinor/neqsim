@@ -18,6 +18,7 @@ import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
  * @version $Id: $Id
  */
 public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private double wallThickness = 0.02;
@@ -30,8 +31,7 @@ public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
    * Constructor for AbsorberMechanicalDesign.
    * </p>
    *
-   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *        object
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public AbsorberMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);

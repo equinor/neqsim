@@ -25,6 +25,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     implements ModuleInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   protected String preferedThermodynamicModel = "";

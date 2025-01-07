@@ -14,7 +14,9 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentHydrateKluda extends Component {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ComponentHydrateKluda.class);
 
   double par1_struc1 = 17.44;

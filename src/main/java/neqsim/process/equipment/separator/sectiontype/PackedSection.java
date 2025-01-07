@@ -11,6 +11,7 @@ import neqsim.process.equipment.separator.Separator;
  * @version $Id: $Id
  */
 public class PackedSection extends SeparatorSection {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -20,9 +21,7 @@ public class PackedSection extends SeparatorSection {
    *
    * @param name a {@link java.lang.String} object
    * @param type a {@link java.lang.String} object
-   * @param sep  a
-   *             {@link neqsim.process.equipment.separator.Separator}
-   *             object
+   * @param sep a {@link neqsim.process.equipment.separator.Separator} object
    */
   public PackedSection(String name, String type, Separator sep) {
     super(name, type, sep);

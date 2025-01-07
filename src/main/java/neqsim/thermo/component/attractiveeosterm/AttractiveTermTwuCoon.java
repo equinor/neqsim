@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private double a = -0.201158;

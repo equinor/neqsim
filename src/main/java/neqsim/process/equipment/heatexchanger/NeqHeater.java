@@ -14,6 +14,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class NeqHeater extends Heater {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   SystemInterface system;

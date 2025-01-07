@@ -19,6 +19,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public class TwoPhasePipeLine extends Pipeline {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

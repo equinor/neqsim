@@ -15,7 +15,8 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class Standard_ISO6578 extends neqsim.standards.Standard {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
   double LNGdensity = 0.0;
   String densityUnit = "kg/m^3";
   double KMcorrectionFactor1 = 0.0;

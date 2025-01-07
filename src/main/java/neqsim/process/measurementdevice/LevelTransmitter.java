@@ -12,6 +12,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class LevelTransmitter extends MeasurementDeviceBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   protected Separator separator = null;

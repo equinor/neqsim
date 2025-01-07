@@ -15,6 +15,7 @@ import neqsim.standards.gasquality.Standard_ISO6976;
  * @version $Id: $Id
  */
 public class StreamResponse {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(StreamResponse.class);
   public String name;
   public HashMap<String, HashMap<String, Value>> properties =
@@ -29,8 +30,7 @@ public class StreamResponse {
    * Constructor for StreamResponse.
    * </p>
    *
-   * @param inputStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inputStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public StreamResponse(StreamInterface inputStream) {
     name = inputStream.getName();

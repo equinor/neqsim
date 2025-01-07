@@ -18,6 +18,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class SurfaceTension extends InterfaceProperties implements SurfaceTensionInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   protected SystemInterface system;

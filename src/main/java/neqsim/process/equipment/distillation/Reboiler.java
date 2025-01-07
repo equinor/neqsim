@@ -13,6 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private double refluxRatio = 0.1;

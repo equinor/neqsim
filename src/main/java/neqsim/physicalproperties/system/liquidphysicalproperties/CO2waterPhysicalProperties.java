@@ -18,7 +18,9 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class CO2waterPhysicalProperties extends PhysicalProperties {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CO2waterPhysicalProperties.class);
 
   /**

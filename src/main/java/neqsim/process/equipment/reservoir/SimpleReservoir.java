@@ -27,6 +27,7 @@ import neqsim.util.unit.PressureUnit;
  * @version $Id: $Id
  */
 public class SimpleReservoir extends ProcessEquipmentBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   SystemInterface thermoSystem;

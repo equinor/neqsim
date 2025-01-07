@@ -17,6 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class PipelineMechanicalDesign extends MechanicalDesign {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double innerDiameter = 1.0;

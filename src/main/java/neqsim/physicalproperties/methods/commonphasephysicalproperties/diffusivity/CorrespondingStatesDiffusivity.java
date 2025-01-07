@@ -12,6 +12,7 @@ import neqsim.thermo.phase.PhaseType;
  * @version $Id: $Id
  */
 public class CorrespondingStatesDiffusivity extends Diffusivity {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double[][] binaryDiffusionCoefficients;

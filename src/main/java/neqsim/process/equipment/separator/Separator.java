@@ -37,7 +37,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class Separator extends ProcessEquipmentBaseClass implements SeparatorInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Separator.class);
 
   SystemInterface thermoSystem;

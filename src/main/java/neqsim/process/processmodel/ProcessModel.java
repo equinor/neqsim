@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class ProcessModel implements Runnable {
 
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ProcessModel.class);
   private Map<String, ProcessSystem> processes = new LinkedHashMap<>();
 

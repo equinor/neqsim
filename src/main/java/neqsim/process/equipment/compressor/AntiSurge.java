@@ -11,6 +11,7 @@ import java.util.Objects;
  * @version $Id: $Id
  */
 public class AntiSurge implements java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   private boolean isActive = false;
   private boolean isSurge = false;

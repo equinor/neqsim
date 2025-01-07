@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentRK;
  * @version $Id: $Id
  */
 public class PhaseRK extends PhaseEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

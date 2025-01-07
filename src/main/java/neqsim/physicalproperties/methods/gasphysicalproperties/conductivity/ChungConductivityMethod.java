@@ -11,6 +11,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * @version $Id: $Id
  */
 public class ChungConductivityMethod extends Conductivity {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   double conductivity = 0;
   public double[] pureComponentConductivity;

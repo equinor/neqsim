@@ -13,6 +13,7 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class MultiStreamHeatExchangerTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(MultiStreamHeatExchangerTest.class);
 
   static neqsim.thermo.system.SystemInterface testSystem;
@@ -51,7 +52,8 @@ public class MultiStreamHeatExchangerTest {
     // heatEx.setUAvalue(1000);
     heatEx.setTemperatureApproach(5);
 
-    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_Hot);
     operations.add(stream_Cold);
     operations.add(stream_Cold2);
@@ -76,7 +78,8 @@ public class MultiStreamHeatExchangerTest {
   @Test
   void testRun2() {
 
-    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
 
     Stream feed_stream = new Stream("Stream1", testSystem);
     feed_stream.setTemperature(30.0, "C");

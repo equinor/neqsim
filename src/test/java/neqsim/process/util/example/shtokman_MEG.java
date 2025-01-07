@@ -18,6 +18,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class shtokman_MEG {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(shtokman_MEG.class);
 
   /**

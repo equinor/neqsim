@@ -19,6 +19,7 @@ import neqsim.statistics.parameterfitting.SampleValue;
  * @version $Id: $Id
  */
 public class DoubleCloneable implements Cloneable {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(DoubleCloneable.class);
   double doubleValue;
 

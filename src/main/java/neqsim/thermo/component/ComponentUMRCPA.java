@@ -13,6 +13,7 @@ import neqsim.thermo.phase.PhaseUMRCPA;
  * @version $Id: $Id
  */
 public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   int cpaon = 1;

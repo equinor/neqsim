@@ -11,7 +11,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public class WellAllocator extends StreamMeasurementDeviceBaseClass {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
   protected StreamInterface exportGasStream = null;
   protected StreamInterface exportOilStream = null;
 
@@ -83,8 +84,7 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
       splitFactors[i] = exportGasStream.getFluid().getComponent(i).getFlowRate("kg/hr")
           / (exportGasStream.getFluid().getComponent(i).getFlowRate("kg/hr")
               + exportOilStream.getFluid().getComponent(i).getFlowRate("kg/hr"));
-      gasExportFlow +=
-          stream.getFluid().getComponent(i).getTotalFlowRate(unit) * splitFactors[i];
+      gasExportFlow += stream.getFluid().getComponent(i).getTotalFlowRate(unit) * splitFactors[i];
       oilExportFlow +=
           stream.getFluid().getComponent(i).getTotalFlowRate(unit) * (1.0 - splitFactors[i]);
     }

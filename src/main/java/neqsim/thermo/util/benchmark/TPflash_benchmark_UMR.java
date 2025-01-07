@@ -16,6 +16,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class TPflash_benchmark_UMR {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TPflash_benchmark_UMR.class);
 
   /**

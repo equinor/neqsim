@@ -31,6 +31,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatExchangerInterface {
   private static final long serialVersionUID = 1001;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(MultiStreamHeatExchanger.class);
 
   private boolean setTemperature = false;

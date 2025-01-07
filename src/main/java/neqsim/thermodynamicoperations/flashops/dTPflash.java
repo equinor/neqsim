@@ -19,7 +19,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class dTPflash extends TPflash {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(dTPflash.class);
 
   String[] flashComp = null;
@@ -60,8 +62,9 @@ public class dTPflash extends TPflash {
                 - (system.getPhase(0).getComponent(i).getx()
                     * system.getPhase(0).getComponent(i).getFugacityCoefficient()
                     * system.getPhase(0).getPressure()));
-            system.getPhase(1).getComponent(i).setx(system.getPhase(1).getComponent(i).getx()
-                * (system.getPhase(0).getComponent(i).getx()
+            system.getPhase(1).getComponent(i)
+                .setx(system.getPhase(1).getComponent(i).getx()
+                    * (system.getPhase(0).getComponent(i).getx()
                         * system.getPhase(0).getComponent(i).getFugacityCoefficient()
                         * system.getPhase(0).getPressure())
                     / (system.getPhase(1).getComponent(i).getx()

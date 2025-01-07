@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentKentEisenberg extends ComponentGeNRTL {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

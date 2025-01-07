@@ -20,6 +20,7 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class WaxFractionSim extends BasePVTsimulation {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(WaxFractionSim.class);
 
   double[] temperature = null;

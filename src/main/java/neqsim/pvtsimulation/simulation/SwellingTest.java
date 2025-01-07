@@ -15,6 +15,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class SwellingTest extends BasePVTsimulation {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SwellingTest.class);
 
   double[] gasInjected = null;

@@ -21,7 +21,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * @version $Id: $Id
  */
 public class Conductivity extends LiquidPhysicalPropertyMethod implements ConductivityInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Conductivity.class);
 
   double conductivity = 0;

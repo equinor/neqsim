@@ -26,6 +26,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class HeatExchanger extends Heater implements HeatExchangerInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   boolean setTemperature = false;

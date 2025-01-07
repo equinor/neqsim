@@ -17,6 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class DifferentialLiberation extends BasePVTsimulation {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(DifferentialLiberation.class);
 
   double VoilStd = 0.0;

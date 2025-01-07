@@ -32,7 +32,9 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     return dFdNtemp;
   }
 
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseUMRCPA.class);
 
   public CPAMixing cpaSelect = new CPAMixing();

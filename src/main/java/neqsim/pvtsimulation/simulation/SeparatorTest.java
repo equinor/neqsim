@@ -17,6 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class SeparatorTest extends BasePVTsimulation {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SeparatorTest.class);
 
   double[] temperature = null;

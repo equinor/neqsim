@@ -24,7 +24,9 @@ import neqsim.fluidmechanics.geometrydefinitions.surrounding.SurroundingEnvironm
  */
 public abstract class GeometryDefinition
     implements GeometryDefinitionInterface, neqsim.thermo.ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(GeometryDefinition.class);
 
   /** {@inheritDoc} */

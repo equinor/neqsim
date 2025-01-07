@@ -14,6 +14,7 @@ import neqsim.util.exception.TooManyIterationsException;
  * @version $Id: $Id
  */
 public class PhaseGEWilson extends PhaseGE {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double GE = 0;
@@ -44,8 +45,7 @@ public class PhaseGEWilson extends PhaseGE {
     for (int i = 0; i < alpha[0].length; i++) {
       numberOfComponents++;
       componentArray[i] = new ComponentGEWilson(phase.getComponent(i).getName(),
-          phase.getComponent(i).getNumberOfmoles(),
-          phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }
   }

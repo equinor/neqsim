@@ -11,6 +11,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class ParachorSurfaceTension extends SurfaceTension {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -40,11 +41,10 @@ public class ParachorSurfaceTension extends SurfaceTension {
    */
   @Override
   public double calcPureComponentSurfaceTension(int componentNumber) {
-    return 1.0e-3 * Math.pow(system.getPhases()[0].getComponents()[componentNumber]
-        .getParachorParameter()
-        * 1.0e-6
-        * (system.getPhases()[1].getPhysicalProperties().getDensity()
-            / system.getPhases()[1].getMolarMass()
+    return 1.0e-3 * Math
+        .pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
+            * (system.getPhases()[1].getPhysicalProperties().getDensity()
+                / system.getPhases()[1].getMolarMass()
                 * system.getPhases()[1].getComponents()[componentNumber].getx()
                 - system.getPhases()[0].getPhysicalProperties().getDensity()
                     / system.getPhases()[0].getMolarMass()

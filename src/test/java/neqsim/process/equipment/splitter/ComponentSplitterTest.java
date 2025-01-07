@@ -17,6 +17,7 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 class ComponentSplitterTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ComponentSplitterTest.class);
 
   static neqsim.thermo.system.SystemInterface testSystem = null;

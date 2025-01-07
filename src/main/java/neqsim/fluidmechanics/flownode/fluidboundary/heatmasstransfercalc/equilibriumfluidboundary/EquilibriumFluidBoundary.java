@@ -18,6 +18,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class EquilibriumFluidBoundary
     extends neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundary {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

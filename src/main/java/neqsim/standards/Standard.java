@@ -30,7 +30,8 @@ import neqsim.util.NamedBaseClass;
  * @version $Id: $Id
  */
 public abstract class Standard extends NamedBaseClass implements StandardInterface {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
   protected String standardDescription = "Base Description";
   protected ContractInterface salesContract = new BaseContract();
   protected String[][] resultTable = null;

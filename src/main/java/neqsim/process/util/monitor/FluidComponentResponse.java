@@ -16,6 +16,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class FluidComponentResponse {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(FluidComponentResponse.class);
   public String name;
   public HashMap<String, HashMap<String, Value>> properties =

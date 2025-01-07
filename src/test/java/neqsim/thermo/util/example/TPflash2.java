@@ -18,6 +18,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TPflash2 {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TPflash2.class);
 
   /**

@@ -14,6 +14,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version Method was revised by Even Solbraa 21.01.2019
  */
 public class PFCTConductivityMethodMod86 extends Conductivity {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /** Constant <code>referenceSystem</code>. */

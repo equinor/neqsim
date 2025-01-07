@@ -20,6 +20,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   protected FlowNodeInterface[] flowNode;

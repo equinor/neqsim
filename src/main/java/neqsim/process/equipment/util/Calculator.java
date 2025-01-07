@@ -19,7 +19,9 @@ import neqsim.process.equipment.splitter.Splitter;
  * @version $Id: $Id
  */
 public class Calculator extends ProcessEquipmentBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Calculator.class);
 
   ArrayList<ProcessEquipmentInterface> inputVariable = new ArrayList<ProcessEquipmentInterface>();
@@ -42,8 +44,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
    * addInputVariable.
    * </p>
    *
-   * @param unit a {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *             object
+   * @param unit a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public void addInputVariable(ProcessEquipmentInterface unit) {
     inputVariable.add(unit);
@@ -84,7 +85,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
       flowInAntiSurge = 1e-6;
     }
 
-    anitSurgeSplitter.setFlowRates(new double[] { -1, flowInAntiSurge }, "MSm3/day");
+    anitSurgeSplitter.setFlowRates(new double[] {-1, flowInAntiSurge}, "MSm3/day");
     anitSurgeSplitter.run();
     anitSurgeSplitter.setCalculationIdentifier(id);
   }
@@ -114,8 +115,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
       if (sum < 0.0) {
         sum = 0.0;
       }
-      ((neqsim.process.equipment.stream.Stream) outputVariable).setFlowRate(sum,
-          "kg/hr");
+      ((neqsim.process.equipment.stream.Stream) outputVariable).setFlowRate(sum, "kg/hr");
       outputVariable.run();
       outputVariable.setCalculationIdentifier(id);
     } catch (Exception ex) {
@@ -130,9 +130,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
    * Setter for the field <code>outputVariable</code>.
    * </p>
    *
-   * @param outputVariable a
-   *                       {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *                       object
+   * @param outputVariable a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public void setOutputVariable(ProcessEquipmentInterface outputVariable) {
     this.outputVariable = outputVariable;

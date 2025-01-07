@@ -11,6 +11,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class DewPointTemperatureFlashDer extends ConstantDutyTemperatureFlash {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -46,8 +47,7 @@ public class DewPointTemperatureFlashDer extends ConstantDutyTemperatureFlash {
     }
 
     for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-      system.getPhases()[0].getComponent(i)
-          .setx(system.getPhases()[0].getComponent(i).getz());
+      system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getz());
       if (system.getPhases()[0].getComponent(i).getIonicCharge() != 0) {
         system.getPhases()[0].getComponent(i).setx(1e-40);
       } else {
@@ -117,8 +117,7 @@ public class DewPointTemperatureFlashDer extends ConstantDutyTemperatureFlash {
               .setK(Math.exp(system.getPhases()[1].getComponent(i).getLogFugacityCoefficient()
                   - system.getPhases()[0].getComponent(i).getLogFugacityCoefficient()));
         }
-        system.getPhases()[1].getComponent(i)
-            .setK(system.getPhases()[0].getComponent(i).getK());
+        system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
         system.getPhases()[1].getComponent(i)
             .setx(1.0 / system.getPhases()[0].getComponent(i).getK()
                 * system.getPhases()[1].getComponent(i).getz());

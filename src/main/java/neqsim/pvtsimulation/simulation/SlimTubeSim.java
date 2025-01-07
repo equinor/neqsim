@@ -17,6 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class SlimTubeSim extends BasePVTsimulation {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SlimTubeSim.class);
   SystemInterface inectionGasSystem = null;
   private int numberOfSlimTubeNodes = 200;

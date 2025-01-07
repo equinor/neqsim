@@ -16,6 +16,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Condenser extends SimpleTray {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private double refluxRatio = 0.1;

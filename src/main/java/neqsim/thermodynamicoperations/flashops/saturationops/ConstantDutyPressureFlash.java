@@ -11,6 +11,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class ConstantDutyPressureFlash extends ConstantDutyFlash {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -50,8 +51,7 @@ public class ConstantDutyPressureFlash extends ConstantDutyFlash {
         system.getPhases()[0].getComponent(i)
             .setK(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
                 / system.getPhases()[0].getComponent(i).getFugacityCoefficient());
-        system.getPhases()[1].getComponent(i)
-            .setK(system.getPhases()[0].getComponent(i).getK());
+        system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
       }
 
       system.calc_x_y_nonorm();

@@ -13,6 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class pHProbe extends StreamMeasurementDeviceBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   protected SystemInterface reactiveThermoSystem;

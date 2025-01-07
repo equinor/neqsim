@@ -15,6 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class SimpleFlowLine extends TwoPortEquipment {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private double height = 100.0;
@@ -26,8 +27,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
    * Constructor for SimpleFlowLine.
    *
    * @param name Name of SimpleFlowLine object
-   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public SimpleFlowLine(String name, StreamInterface inStream) {
     super(name);
@@ -40,8 +40,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
    * Getter for the field <code>pipeline</code>.
    * </p>
    *
-   * @return a {@link neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe}
-   *         object
+   * @return a {@link neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe} object
    */
   public AdiabaticTwoPhasePipe getPipeline() {
     return pipeline;

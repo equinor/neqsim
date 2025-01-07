@@ -12,7 +12,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * @author Even Solbraa
  */
 abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements DiffusivityInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Diffusivity.class);
 
   double[][] binaryDiffusionCoefficients;

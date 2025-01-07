@@ -22,7 +22,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class OLGApropertyTableGeneratorWaterEven
     extends neqsim.thermodynamicoperations.BaseOperation {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(OLGApropertyTableGeneratorWaterEven.class);
 
   SystemInterface thermoSystem = null;

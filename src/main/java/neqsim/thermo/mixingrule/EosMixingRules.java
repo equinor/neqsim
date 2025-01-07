@@ -35,7 +35,9 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(EosMixingRules.class);
 
   public double Atot = 0;
@@ -109,6 +111,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   }
 
   public class ClassicVdW implements EosMixingRulesInterface, java.io.Serializable {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     @Override
@@ -406,6 +409,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   }
 
   public class ClassicSRK extends ClassicVdW {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     public double getkij(double temp, int i, int j) {
@@ -579,6 +583,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   }
 
   public class ClassicSRKT extends ClassicSRK {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     @Override
@@ -691,6 +696,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   }
 
   public class ClassicSRKT2x extends ClassicSRKT2 {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     public double getkij(PhaseInterface phase, double temperature, int i, int j) {
@@ -947,6 +953,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   }
 
   public class ClassicSRKT2 extends ClassicSRKT {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     @Override
@@ -996,6 +1003,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   }
 
   public class SRKHuronVidal extends ClassicSRK implements HVmixingRuleInterface {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     PhaseInterface orgPhase;
@@ -1175,6 +1183,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   }
 
   public class SRKHuronVidal2 extends ClassicSRK implements HVmixingRuleInterface {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     PhaseInterface orgPhase;
@@ -1528,6 +1537,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   }
 
   public class WongSandlerMixingRule extends SRKHuronVidal2 {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     double Q = 0;
@@ -1903,6 +1913,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   }
 
   public class ElectrolyteMixRule implements ElectrolyteMixingRulesInterface, Cloneable {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     public ElectrolyteMixRule(PhaseInterface phase) {

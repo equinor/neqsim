@@ -13,7 +13,9 @@ import neqsim.thermo.component.ComponentBWRS;
  * @version $Id: $Id
  */
 public class PhaseBWRSEos extends PhaseSrkEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseBWRSEos.class);
 
   int OP = 9;
@@ -24,8 +26,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
    * Constructor for PhaseBWRSEos.
    * </p>
    */
-  public PhaseBWRSEos() {
-  }
+  public PhaseBWRSEos() {}
 
   /** {@inheritDoc} */
   @Override

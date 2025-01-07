@@ -21,7 +21,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 public class FreezeOut extends ConstantDutyTemperatureFlash
     implements ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(FreezeOut.class);
 
   public double[] FCompTemp = new double[10];

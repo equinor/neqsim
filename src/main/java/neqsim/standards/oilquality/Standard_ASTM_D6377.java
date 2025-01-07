@@ -17,7 +17,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Standard_ASTM_D6377.class);
 
   String unit = "bara";

@@ -8,7 +8,8 @@ import neqsim.thermo.phase.PhasePrEosvolcor;
  * @author Even Solbraa
  */
 public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
 
   /**
    * <p>

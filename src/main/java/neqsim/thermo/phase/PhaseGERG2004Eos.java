@@ -13,6 +13,7 @@ import neqsim.thermo.util.jni.GERG2004EOS;
  * @version $Id: $Id
  */
 public class PhaseGERG2004Eos extends PhaseEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private GERG2004EOS gergEOS = new GERG2004EOS();

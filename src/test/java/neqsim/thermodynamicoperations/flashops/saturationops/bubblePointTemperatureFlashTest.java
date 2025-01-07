@@ -8,7 +8,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class bubblePointTemperatureFlashTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(bubblePointTemperatureFlashTest.class);
+
   @Test
   void testRun() {
     SystemSrkEos fluid0_HC = new SystemSrkEos();

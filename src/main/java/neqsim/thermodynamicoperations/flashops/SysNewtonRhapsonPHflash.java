@@ -16,7 +16,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SysNewtonRhapsonPHflash.class);
 
   int neq = 0;

@@ -20,7 +20,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SevereSlugAnalyser.class);
 
   FluidSevereSlug fluidSevereS;

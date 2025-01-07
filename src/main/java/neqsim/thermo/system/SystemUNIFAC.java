@@ -12,6 +12,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * @version $Id: $Id
  */
 public class SystemUNIFAC extends SystemEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

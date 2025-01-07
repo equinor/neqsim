@@ -15,9 +15,11 @@ import neqsim.thermo.phase.PhaseType;
  * @version $Id: $Id
  */
 public class ComponentDesmukhMather extends ComponentGE {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private double deshMathIonicDiameter = 1.0;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ComponentDesmukhMather.class);
 
   /**

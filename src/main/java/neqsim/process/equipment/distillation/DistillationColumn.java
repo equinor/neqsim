@@ -23,7 +23,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class DistillationColumn extends ProcessEquipmentBaseClass implements DistillationInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(DistillationColumn.class);
 
   private boolean doInitializion = true;

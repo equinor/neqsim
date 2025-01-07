@@ -19,6 +19,7 @@ import neqsim.thermo.phase.PhaseType;
  * @version $Id: $Id
  */
 public final class NumericalDerivative implements java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   static final double CON = 1.4;

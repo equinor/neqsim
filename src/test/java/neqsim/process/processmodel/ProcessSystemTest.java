@@ -31,6 +31,7 @@ import neqsim.process.measurementdevice.WaterDewPointAnalyser;
  * Class for testing ProcessSystem class.
  */
 public class ProcessSystemTest extends neqsim.NeqSimTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ProcessSystemTest.class);
 
   ProcessSystem p;

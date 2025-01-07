@@ -26,7 +26,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Pipeline.class);
 
   protected String fileName = "c:/test5.nc";

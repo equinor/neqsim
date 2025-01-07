@@ -16,6 +16,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: ReservoirTPsim.java 1234 2024-05-31 10:00:00Z esolbraa $
  */
 public class ReservoirTPsim extends ProcessEquipmentBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private SystemInterface reservoirFluid = null;

@@ -13,6 +13,7 @@ import neqsim.thermo.component.ComponentSrkCPAs;
  * @version $Id: $Id
  */
 public class PhaseSrkCPAs extends PhaseSrkCPA {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -20,8 +21,7 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
    * Constructor for PhaseSrkCPAs.
    * </p>
    */
-  public PhaseSrkCPAs() {
-  }
+  public PhaseSrkCPAs() {}
 
   /** {@inheritDoc} */
   @Override

@@ -13,6 +13,7 @@ import neqsim.util.exception.TooManyIterationsException;
  * @version $Id: $Id
  */
 public class PhaseDuanSun extends PhaseGE {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double[][] alpha;
@@ -26,8 +27,7 @@ public class PhaseDuanSun extends PhaseGE {
    * Constructor for PhaseDuanSun.
    * </p>
    */
-  public PhaseDuanSun() {
-  }
+  public PhaseDuanSun() {}
 
   /** {@inheritDoc} */
   @Override

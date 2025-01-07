@@ -19,7 +19,9 @@ import neqsim.thermo.mixingrule.CPAMixingInterface;
  * @version Modified to use procedural oriented ejml matrices by Marlene Lund
  */
 public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements PhaseCPAInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseSrkCPA_proceduralMatrices.class);
 
   public CPAMixing cpaSelect = new CPAMixing();

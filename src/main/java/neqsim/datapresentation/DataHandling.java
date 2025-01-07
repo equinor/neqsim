@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class DataHandling {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(DataHandling.class);
 
   /**

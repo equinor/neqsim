@@ -20,6 +20,7 @@ import neqsim.process.util.report.Report;
  * @version 1.0
  */
 public class ProcessModule extends SimulationBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   private static final Logger logger = LogManager.getLogger(ProcessModule.class);
 

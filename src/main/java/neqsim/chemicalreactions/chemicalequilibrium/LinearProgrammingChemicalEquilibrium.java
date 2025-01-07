@@ -36,7 +36,9 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class LinearProgrammingChemicalEquilibrium
     implements neqsim.thermo.ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LinearProgrammingChemicalEquilibrium.class);
 
   double[] xEts = null;

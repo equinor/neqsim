@@ -11,7 +11,8 @@ import neqsim.util.exception.InvalidInputException;
  * @version $Id: $Id
  */
 public abstract class SimulationBaseClass extends NamedBaseClass implements SimulationInterface {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
 
   /**
    * Unique identifier of which solve/run call was last called successfully.

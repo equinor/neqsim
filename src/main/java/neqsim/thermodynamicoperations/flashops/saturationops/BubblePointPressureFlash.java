@@ -13,7 +13,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(BubblePointPressureFlash.class);
 
   /**
@@ -56,14 +58,12 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
     }
 
     for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-      system.getPhases()[1].getComponent(i)
-          .setx(system.getPhases()[0].getComponent(i).getz());
+      system.getPhases()[1].getComponent(i).setx(system.getPhases()[0].getComponent(i).getz());
       if (system.getPhases()[0].getComponent(i).getIonicCharge() != 0) {
         system.getPhases()[0].getComponent(i).setx(1e-40);
       } else {
-        system.getPhases()[0].getComponent(i)
-            .setx(system.getPhases()[0].getComponent(i).getK()
-                * system.getPhases()[1].getComponent(i).getz());
+        system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getK()
+            * system.getPhases()[1].getComponent(i).getz());
       }
     }
 
@@ -91,22 +91,21 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
         for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
           do {
             yold = system.getPhases()[0].getComponent(i).getx();
-            if (!Double.isNaN(Math.exp(
-                Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient()) - Math
-                    .log(system.getPhases()[0].getComponent(i).getFugacityCoefficient())))) {
+            if (!Double.isNaN(
+                Math.exp(Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient())
+                    - Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient())))) {
               if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
                 system.getPhases()[0].getComponent(i).setK(1e-40);
               } else {
-                system.getPhases()[0].getComponent(i).setK(Math.exp(Math
-                    .log(system.getPhases()[1].getComponent(i).getFugacityCoefficient())
-                    - Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient())));
+                system.getPhases()[0].getComponent(i).setK(Math.exp(
+                    Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient()) - Math
+                        .log(system.getPhases()[0].getComponent(i).getFugacityCoefficient())));
               }
             }
             system.getPhases()[1].getComponent(i)
                 .setK(system.getPhases()[0].getComponent(i).getK());
-            system.getPhases()[0].getComponent(i)
-                .setx(system.getPhases()[0].getComponent(i).getK()
-                    * system.getPhases()[1].getComponent(i).getz());
+            system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getK()
+                * system.getPhases()[1].getComponent(i).getz());
             // logger.info("y err " +
             // Math.abs(system.getPhases()[0].getComponent(i).getx()-yold));
           } while (Math.abs(system.getPhases()[0].getComponent(i).getx() - yold) / yold > 1e-8);
@@ -114,9 +113,8 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
         }
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
           if (!Double.isNaN(system.getPhases()[0].getComponent(i).getK())) {
-            system.getPhases()[0].getComponent(i)
-                .setx(system.getPhases()[0].getComponent(i).getK()
-                    * system.getPhases()[1].getComponent(i).getz());
+            system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getK()
+                * system.getPhases()[1].getComponent(i).getz());
           } else {
             system.init(0);
             logger.error("k err. : nan");

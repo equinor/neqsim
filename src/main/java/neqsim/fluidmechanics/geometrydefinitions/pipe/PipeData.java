@@ -15,7 +15,9 @@ import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.PipeWall;
  * @version $Id: $Id
  */
 public class PipeData extends GeometryDefinition {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PipeData.class);
 
   /**

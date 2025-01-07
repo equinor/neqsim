@@ -20,6 +20,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class DensitySim extends BasePVTsimulation {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(DensitySim.class);
 
   double[] temperature = null;

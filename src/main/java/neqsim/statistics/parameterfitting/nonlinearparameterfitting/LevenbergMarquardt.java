@@ -22,6 +22,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class LevenbergMarquardt extends StatisticsBaseClass {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LevenbergMarquardt.class);
   double oldChiSquare = 1e100;
   double newChiSquare = 0;

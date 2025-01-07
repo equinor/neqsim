@@ -21,7 +21,9 @@ import neqsim.thermo.mixingrule.CPAMixingInterface;
  */
 public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     implements PhaseCPAInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseElectrolyteCPA.class);
 
   public CPAMixing cpaSelect = new CPAMixing();

@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentWax;
  * @version $Id: $Id
  */
 public class PhaseWax extends PhaseSolid {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

@@ -12,6 +12,7 @@ import neqsim.util.exception.InvalidInputException;
  * @version $Id: $Id
  */
 public class PressureUnit extends neqsim.util.unit.BaseUnit {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

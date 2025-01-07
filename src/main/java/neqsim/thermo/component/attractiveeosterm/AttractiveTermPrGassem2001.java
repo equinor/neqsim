@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   protected double A = 2.0;
@@ -69,11 +70,11 @@ public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
   @Override
   public double diffalphaT(double temperature) {
     return 1.0 / getComponent().getTC() * alpha(temperature)
-        * ((B * (1.0 - Math.pow(temperature / getComponent().getTC(), C
-            + D * getComponent().getAcentricFactor()
+        * ((B * (1.0 - Math.pow(temperature / getComponent().getTC(),
+            C + D * getComponent().getAcentricFactor()
                 + E * getComponent().getAcentricFactor() * getComponent().getAcentricFactor())))
-            - (A + B * temperature / getComponent().getTC()) * (C
-                + D * getComponent().getAcentricFactor()
+            - (A + B * temperature / getComponent().getTC())
+                * (C + D * getComponent().getAcentricFactor()
                     + E * getComponent().getAcentricFactor() * getComponent().getAcentricFactor())
                 * Math.pow(temperature / getComponent().getTC(),
                     C + D * getComponent().getAcentricFactor() + E
@@ -86,8 +87,8 @@ public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
   public double diffdiffalphaT(double temperature) {
     // not implemented dubble derivative
 
-    return m * m / temperature / getComponent().getTC() / 2.0 + (1.0
-        + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
+    return m * m / temperature / getComponent().getTC() / 2.0
+        + (1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
             / Math.sqrt(
                 temperature * temperature * temperature / (Math.pow(getComponent().getTC(), 3.0)))
             / (getComponent().getTC() * getComponent().getTC()) / 2.0;

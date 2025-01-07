@@ -15,9 +15,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(BestPracticeHydrocarbonDewPoint.class);
 
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
   String dewPointTemperatureUnit = "C";
   String pressureUnit = "bar";
   double dewPointTemperature = 273.0;

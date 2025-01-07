@@ -18,7 +18,9 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class Standard_ISO6976 extends neqsim.standards.Standard
     implements neqsim.thermo.ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Standard_ISO6976.class);
 
   // metering conditions

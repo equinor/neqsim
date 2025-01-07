@@ -18,6 +18,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class AmineFlash {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(AmineFlash.class);
 
   /**

@@ -20,7 +20,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 public class StirredCellSolver extends TwoPhasePipeFlowSolver
     implements neqsim.thermo.ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(StirredCellSolver.class);
   Matrix diffMatrix;
   double[][] dn;

@@ -14,7 +14,9 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class Fittings implements Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Fittings.class);
 
   ArrayList<Fitting> fittingList = new ArrayList<Fitting>();
@@ -64,6 +66,7 @@ public class Fittings implements Serializable {
    * Constructor for Fitting.
    */
   public class Fitting implements Serializable {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     private String fittingName = "";

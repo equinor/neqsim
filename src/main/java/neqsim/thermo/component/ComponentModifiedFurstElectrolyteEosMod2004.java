@@ -18,6 +18,7 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEosMod2004;
  * @version $Id: $Id
  */
 public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double Wi = 0;

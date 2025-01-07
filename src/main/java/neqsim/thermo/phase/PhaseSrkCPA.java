@@ -20,7 +20,9 @@ import neqsim.thermo.mixingrule.CPAMixingInterface;
  * @version $Id: $Id
  */
 public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseSrkCPA.class);
 
   public CPAMixing cpaSelect = new CPAMixing();

@@ -15,7 +15,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Draft_ISO18453 extends neqsim.standards.Standard {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Draft_ISO18453.class);
   String dewPointTemperatureUnit = "C";
   String pressureUnit = "bar";

@@ -15,6 +15,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class DefaultPhysicalProperties extends PhysicalProperties {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

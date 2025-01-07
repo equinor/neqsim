@@ -12,6 +12,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * @version $Id: $Id
  */
 public class ChemEq implements java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   int NSPEC = 10;
   int NELE = 3;

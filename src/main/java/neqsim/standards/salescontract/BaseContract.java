@@ -34,6 +34,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class BaseContract implements ContractInterface {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(BaseContract.class);
 
   private String[][] resultTable = new String[50][9];

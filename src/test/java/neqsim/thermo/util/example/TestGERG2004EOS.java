@@ -17,6 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class TestGERG2004EOS {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TestGERG2004EOS.class);
 
   /**

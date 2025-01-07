@@ -22,7 +22,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class PTphaseEnvelopeNew extends BaseOperation {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PTphaseEnvelopeNew.class);
 
   Graph2b graph2 = null;

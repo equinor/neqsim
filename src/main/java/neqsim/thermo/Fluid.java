@@ -13,6 +13,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class Fluid {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Fluid.class);
 
   neqsim.thermo.system.SystemInterface fluid = null;

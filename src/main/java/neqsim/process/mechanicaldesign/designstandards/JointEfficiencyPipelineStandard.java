@@ -11,6 +11,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * @version $Id: $Id
  */
 public class JointEfficiencyPipelineStandard extends DesignStandard {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

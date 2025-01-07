@@ -27,7 +27,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class SimpleTEGAbsorber extends SimpleAbsorber {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SimpleTEGAbsorber.class);
 
   protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
@@ -142,8 +144,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
           if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName()
               .equals(componentName)) {
             gotComponent = true;
-            compName = streams.get(0).getThermoSystem().getPhases()[0].getComponent(p)
-                .getComponentName();
+            compName =
+                streams.get(0).getThermoSystem().getPhases()[0].getComponent(p).getComponentName();
           }
         }
 

@@ -16,7 +16,9 @@ import neqsim.thermo.component.ComponentGEUniquac;
  * @version $Id: $Id
  */
 public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseGEUnifacUMRPRU.class);
 
   double[] Qmix = null;

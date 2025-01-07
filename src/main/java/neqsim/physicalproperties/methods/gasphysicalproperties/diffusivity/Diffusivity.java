@@ -15,7 +15,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * @version $Id: $Id
  */
 public class Diffusivity extends GasPhysicalPropertyMethod implements DiffusivityInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Diffusivity.class);
 
   double[][] binaryDiffusionCoefficients;
@@ -114,8 +116,7 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
           sum += gasPhase.getPhase().getComponent(j).getx() / binaryDiffusionCoefficients[i][j];
         }
       }
-      effectiveDiffusionCoefficient[i] =
-          (1.0 - gasPhase.getPhase().getComponent(i).getx()) / sum;
+      effectiveDiffusionCoefficient[i] = (1.0 - gasPhase.getPhase().getComponent(i).getx()) / sum;
     }
   }
 
@@ -136,9 +137,8 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
   public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
     /*
      * double temp = (i==j)? 1.0: 0.0; double nonIdealCorrection = temp +
-     * gasPhase.getPhase().getComponent(i).getx() *
-     * gasPhase.getPhase().getComponent(i).getdfugdn(j) *
-     * gasPhase.getPhase().getNumberOfMolesInPhase(); if (Double.isNaN(nonIdealCorrection))
+     * gasPhase.getPhase().getComponent(i).getx() * gasPhase.getPhase().getComponent(i).getdfugdn(j)
+     * * gasPhase.getPhase().getNumberOfMolesInPhase(); if (Double.isNaN(nonIdealCorrection))
      * nonIdealCorrection=1.0; return binaryDiffusionCoefficients[i][j]/nonIdealCorrection; // shuld
      * be divided by non ideality factor
      */

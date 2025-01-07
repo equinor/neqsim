@@ -11,6 +11,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public class NMVOCAnalyser extends StreamMeasurementDeviceBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -53,10 +54,9 @@ public class NMVOCAnalyser extends StreamMeasurementDeviceBaseClass {
    */
   public double getnmVOCFlowRate(String unit) {
     // Define list of components to include in mass flow calculation
-    java.util.List<String> nmVOCcomponents = java.util.Arrays.asList("ethane", "propane", "i-butane", "n-butane",
-        "i-pentane",
-        "n-pentane",
-        "n-hexane", "n-heptane", "benzene", "nC8", "nC9", "nC10", "nC11");
+    java.util.List<String> nmVOCcomponents =
+        java.util.Arrays.asList("ethane", "propane", "i-butane", "n-butane", "i-pentane",
+            "n-pentane", "n-hexane", "n-heptane", "benzene", "nC8", "nC9", "nC10", "nC11");
 
     double flow = 0.0;
     for (int i = 0; i < this.stream.getFluid().getNumberOfComponents(); i++) {

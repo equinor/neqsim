@@ -40,7 +40,9 @@ public class NeqSimExperimentDatabase
     NeqSimExperimentDatabase.createTemporaryTables = createTemporaryTables;
   }
 
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(NeqSimExperimentDatabase.class);
 
   /** Constant <code>dataBasePath=""</code>. */

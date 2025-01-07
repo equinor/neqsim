@@ -18,6 +18,7 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
  * @version $Id: $Id
  */
 public class PipeLeg extends FlowLeg {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   // FlowNodeInterface[] node;
@@ -27,8 +28,7 @@ public class PipeLeg extends FlowLeg {
    * Constructor for PipeLeg.
    * </p>
    */
-  public PipeLeg() {
-  }
+  public PipeLeg() {}
 
   /** {@inheritDoc} */
   @Override

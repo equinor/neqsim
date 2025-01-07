@@ -12,7 +12,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * @author Even Solbraa
  */
 public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseClass {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
 
   // Composition of natural gas (in mole percent)
   private static final Map<String, Double> NATURAL_GAS_COMPOSITION = new HashMap<>();

@@ -18,7 +18,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class StreamSaturatorUtil extends TwoPortEquipment {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(StreamSaturatorUtil.class);
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   SystemInterface thermoSystem;

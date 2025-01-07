@@ -28,6 +28,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class OnshoreProcess1 {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(OnshoreProcess1.class);
 
   /**

@@ -21,6 +21,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class ConstantMassExpansion extends BasePVTsimulation {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ConstantMassExpansion.class);
 
   double[] relativeVolume = null;

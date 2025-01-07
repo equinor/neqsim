@@ -11,6 +11,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Test TVFlash.
  */
 class TVFlashTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TVFlashTest.class);
 
   static neqsim.thermo.system.SystemInterface testSystem = null;

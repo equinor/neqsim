@@ -12,7 +12,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * @author Even Solbraa
  */
 public abstract class Viscosity extends GasPhysicalPropertyMethod implements ViscosityInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Viscosity.class);
 
   /**

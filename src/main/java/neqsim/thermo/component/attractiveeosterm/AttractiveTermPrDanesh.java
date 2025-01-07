@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AttractiveTermPrDanesh extends AttractiveTermPr1978 {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double mMod = 0;
@@ -84,8 +85,8 @@ public class AttractiveTermPrDanesh extends AttractiveTermPr1978 {
       mMod = m;
     }
 
-    return mMod * mMod / temperature / getComponent().getTC() / 2.0 + (1.0
-        + mMod * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
+    return mMod * mMod / temperature / getComponent().getTC() / 2.0
+        + (1.0 + mMod * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
             / Math.sqrt(
                 temperature * temperature * temperature / (Math.pow(getComponent().getTC(), 3.0)))
             / (getComponent().getTC() * getComponent().getTC()) / 2.0;

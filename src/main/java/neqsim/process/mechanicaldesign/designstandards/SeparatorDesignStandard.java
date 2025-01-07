@@ -14,7 +14,9 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * @version $Id: $Id
  */
 public class SeparatorDesignStandard extends DesignStandard {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SeparatorDesignStandard.class);
 
   /**

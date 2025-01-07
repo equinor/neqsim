@@ -29,6 +29,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     implements ProcessEquipmentInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private ControllerDeviceInterface controller = null;

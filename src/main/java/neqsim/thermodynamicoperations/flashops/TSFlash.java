@@ -20,6 +20,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class TSFlash extends QfuncFlash {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double Sspec = 0;

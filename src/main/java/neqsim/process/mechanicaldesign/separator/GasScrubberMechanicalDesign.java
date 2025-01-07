@@ -16,6 +16,7 @@ import neqsim.process.mechanicaldesign.separator.sectiontype.SepDesignSection;
  * @version $Id: $Id
  */
 public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -23,8 +24,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    * Constructor for GasScrubberMechanicalDesign.
    * </p>
    *
-   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *        object
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public GasScrubberMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);

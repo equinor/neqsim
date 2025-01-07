@@ -16,7 +16,10 @@ import neqsim.thermo.mixingrule.CPAMixingInterface;
  * @version $Id: $Id
  */
 public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(PhasePCSAFTa.class);
 
   public CPAMixing cpaSelect = new CPAMixing();
   public CPAMixingInterface cpamix;
@@ -33,15 +36,13 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
   int[][][] selfAccociationScheme = null;
   int[][][][] crossAccociationScheme = null;
-  static Logger logger = LogManager.getLogger(PhasePCSAFTa.class);
 
   /**
    * <p>
    * Constructor for PhasePCSAFTa.
    * </p>
    */
-  public PhasePCSAFTa() {
-  }
+  public PhasePCSAFTa() {}
 
   /** {@inheritDoc} */
   @Override

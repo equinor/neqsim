@@ -12,6 +12,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class SysNewtonRhapsonTPflash implements java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   int neq = 0;
   int iter = 0;
@@ -131,8 +132,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       system.getPhase(0).getComponent(i).setx(u.get(i, 0) / system.getBeta());
       system.getPhase(1).getComponent(i).setx(
           (system.getPhase(0).getComponent(i).getz() - u.get(i, 0)) / (1.0 - system.getBeta()));
-      system.getPhase(0).getComponent(i).setK(system.getPhase(0).getComponent(i).getx()
-          / system.getPhase(1).getComponent(i).getx());
+      system.getPhase(0).getComponent(i).setK(
+          system.getPhase(0).getComponent(i).getx() / system.getPhase(1).getComponent(i).getx());
       system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
     }
 

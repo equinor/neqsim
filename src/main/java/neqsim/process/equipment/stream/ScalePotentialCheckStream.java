@@ -17,7 +17,9 @@ import neqsim.util.exception.InvalidInputException;
  * @version $Id: $Id
  */
 public class ScalePotentialCheckStream extends Stream {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ScalePotentialCheckStream.class);
 
   protected SystemInterface reactiveThermoSystem;

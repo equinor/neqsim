@@ -13,6 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public abstract class TwoPhaseFlowSystem extends FlowSystem {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   // FlowNodeInterface[] test = new AnnularFlow[100];
   // public FluidMechanicsInterface[] flowNode;

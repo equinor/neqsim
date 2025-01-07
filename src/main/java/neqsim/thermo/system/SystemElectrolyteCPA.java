@@ -10,6 +10,7 @@ import neqsim.thermo.util.constants.FurstElectrolyteConstants;
  * @version $Id: $Id
  */
 public class SystemElectrolyteCPA extends SystemFurstElectrolyteEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

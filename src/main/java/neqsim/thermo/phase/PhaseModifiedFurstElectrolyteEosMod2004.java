@@ -19,7 +19,9 @@ import neqsim.thermo.component.ComponentModifiedFurstElectrolyteEos;
  * @version $Id: $Id
  */
 public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseModifiedFurstElectrolyteEos.class);
 
   double gammaold = 0;

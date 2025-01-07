@@ -21,7 +21,9 @@ import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFl
  */
 public class OnePhasePipeFlowSolver
     extends neqsim.fluidmechanics.flowsolver.onephaseflowsolver.OnePhaseFlowSolver {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(OnePhasePipeFlowSolver.class);
 
   protected double[] PbArray; // = new double[100];

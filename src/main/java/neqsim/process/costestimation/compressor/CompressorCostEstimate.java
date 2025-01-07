@@ -12,6 +12,7 @@ import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
  * @version $Id: $Id
  */
 public class CompressorCostEstimate extends UnitCostEstimateBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -20,8 +21,7 @@ public class CompressorCostEstimate extends UnitCostEstimateBaseClass {
    * </p>
    *
    * @param mechanicalEquipment a
-   *        {@link neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign}
-   *        object
+   *        {@link neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign} object
    */
   public CompressorCostEstimate(CompressorMechanicalDesign mechanicalEquipment) {
     super(mechanicalEquipment);

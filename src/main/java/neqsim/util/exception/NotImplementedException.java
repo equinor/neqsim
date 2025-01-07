@@ -8,6 +8,7 @@ package neqsim.util.exception;
  * @author Åsmund Våge Fannemel
  */
 public class NotImplementedException extends neqsim.util.exception.ThermoException {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

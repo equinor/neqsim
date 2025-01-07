@@ -31,7 +31,9 @@ import neqsim.util.exception.InvalidInputException;
  * @version $Id: $Id
  */
 public class Stream extends ProcessEquipmentBaseClass implements StreamInterface, Cloneable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Stream.class);
 
   protected SystemInterface thermoSystem;

@@ -15,7 +15,9 @@ import neqsim.util.exception.InvalidInputException;
  * @version $Id: $Id
  */
 public class NeqStream extends Stream {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(NeqStream.class);
 
   /**

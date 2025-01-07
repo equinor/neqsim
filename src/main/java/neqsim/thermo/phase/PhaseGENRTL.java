@@ -20,6 +20,7 @@ import neqsim.util.exception.TooManyIterationsException;
  * @version $Id: $Id
  */
 public class PhaseGENRTL extends PhaseGE {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double[][] alpha;
@@ -33,8 +34,7 @@ public class PhaseGENRTL extends PhaseGE {
    * Constructor for PhaseGENRTL.
    * </p>
    */
-  public PhaseGENRTL() {
-  }
+  public PhaseGENRTL() {}
 
   /**
    * <p>
@@ -57,8 +57,7 @@ public class PhaseGENRTL extends PhaseGE {
     for (int i = 0; i < alpha[0].length; i++) {
       numberOfComponents++;
       componentArray[i] = new ComponentGeNRTL(phase.getComponent(i).getName(),
-          phase.getComponent(i).getNumberOfmoles(),
-          phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }
     setMixingRule(2);

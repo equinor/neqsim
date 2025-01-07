@@ -13,7 +13,9 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * @version $Id: $Id
  */
 public class SystemPCSAFT extends SystemSrkEos {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SystemPCSAFT.class);
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

@@ -7,13 +7,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>CompressorChartAlternativeMapLookupExtrapolate class.</p>
+ * <p>
+ * CompressorChartAlternativeMapLookupExtrapolate class.
+ * </p>
  *
  * @author ASMF
  */
 public class CompressorChartAlternativeMapLookupExtrapolate
     extends CompressorChartAlternativeMapLookup {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CompressorChartAlternativeMapLookupExtrapolate.class);
 
 

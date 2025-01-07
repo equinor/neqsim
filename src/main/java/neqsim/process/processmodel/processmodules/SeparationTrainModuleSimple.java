@@ -24,6 +24,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   protected StreamInterface feedStream = null;

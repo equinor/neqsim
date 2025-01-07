@@ -13,6 +13,7 @@ import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMar
  * @version $Id: $Id
  */
 public class ParachorFunction extends LevenbergMarquardtFunction {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ParachorFunction.class);
 
   /**

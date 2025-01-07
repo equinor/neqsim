@@ -18,7 +18,9 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class CompressorChart implements CompressorChartInterface, java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CompressorChart.class);
 
   ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();

@@ -17,6 +17,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class PHflashGERG2008 extends Flash {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double Hspec = 0;

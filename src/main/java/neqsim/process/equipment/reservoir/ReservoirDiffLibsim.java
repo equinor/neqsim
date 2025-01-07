@@ -13,6 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: ReservoirDiffLibsim.java 1234 2024-05-31 10:00:00Z esolbraa $
  */
 public class ReservoirDiffLibsim extends ProcessEquipmentBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

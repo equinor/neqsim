@@ -12,6 +12,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class CricondenBarTemp implements java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   int neq = 0;
   int iter = 0;
@@ -95,9 +96,8 @@ public class CricondenBarTemp implements java.io.Serializable {
         tempJ = 1.0 / system.getBeta()
             * (dij / system.getPhases()[0].getComponent(i).getx() - 1.0
                 + system.getPhases()[0].getComponent(i).getdfugdx(j))
-            + 1.0 / (1.0 - system.getBeta())
-                * (dij / system.getPhases()[1].getComponent(i).getx() - 1.0
-                    + system.getPhases()[1].getComponent(i).getdfugdx(j));
+            + 1.0 / (1.0 - system.getBeta()) * (dij / system.getPhases()[1].getComponent(i).getx()
+                - 1.0 + system.getPhases()[1].getComponent(i).getdfugdx(j));
         Jac.set(i, j, tempJ);
       }
     }
@@ -129,13 +129,11 @@ public class CricondenBarTemp implements java.io.Serializable {
 
     for (int i = 0; i < numberOfComponents; i++) {
       system.getPhases()[0].getComponent(i).setx(u.get(i, 0) / system.getBeta());
-      system.getPhases()[1].getComponent(i)
-          .setx((system.getPhases()[0].getComponent(i).getz() - u.get(i, 0))
-              / (1.0 - system.getBeta()));
+      system.getPhases()[1].getComponent(i).setx(
+          (system.getPhases()[0].getComponent(i).getz() - u.get(i, 0)) / (1.0 - system.getBeta()));
       system.getPhases()[0].getComponent(i).setK(system.getPhases()[0].getComponent(i).getx()
           / system.getPhases()[1].getComponent(i).getx());
-      system.getPhases()[1].getComponent(i)
-          .setK(system.getPhases()[0].getComponent(i).getK());
+      system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
     }
 
     system.init(3);

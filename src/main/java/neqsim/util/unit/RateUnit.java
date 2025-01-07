@@ -20,7 +20,9 @@ import neqsim.util.exception.InvalidInputException;
  * @version $Id: $Id
  */
 public class RateUnit extends neqsim.util.unit.BaseUnit {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(RateUnit.class);
 
   double molarmass = 0.0;

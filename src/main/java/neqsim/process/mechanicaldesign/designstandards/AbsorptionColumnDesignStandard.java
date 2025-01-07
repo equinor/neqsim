@@ -13,7 +13,9 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * @version $Id: $Id
  */
 public class AbsorptionColumnDesignStandard extends DesignStandard {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(AbsorptionColumnDesignStandard.class);
 
   private double molecularSieveWaterCapacity = 20;
@@ -30,7 +32,8 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
     super(name, equipmentInn);
 
     java.sql.ResultSet dataSet = null;
-    try (neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
+        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       dataSet = database.getResultSet(
           ("SELECT * FROM technicalrequirements WHERE EQUIPMENTTYPE='Absorber' AND Company='"
               + standardName + "'"));

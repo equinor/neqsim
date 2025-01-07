@@ -22,6 +22,7 @@ import neqsim.util.NamedBaseClass;
  */
 public class ChemicalReaction extends NamedBaseClass
     implements neqsim.thermo.ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   String[] names;

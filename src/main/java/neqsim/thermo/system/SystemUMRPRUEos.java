@@ -7,6 +7,7 @@ package neqsim.thermo.system;
  * @version $Id: $Id
  */
 public class SystemUMRPRUEos extends SystemPrEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
