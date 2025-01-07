@@ -4434,21 +4434,23 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void setMixingRule(String typename) {
     int var = 0;
-    if (typename.equals("no")) {
+    if (typename.equalsIgnoreCase("no")) {
       var = 1;
-    } else if (typename.equals("classic")) {
+    } else if (typename.equalsIgnoreCase("classic")) {
       var = 2;
-    } else if (typename.equals("HV")) {
+    } else if (typename.equalsIgnoreCase("HV")) {
       var = 4;
-    } else if (typename.equals("WS")) {
+    } else if (typename.equalsIgnoreCase("WS")) {
       var = 5;
-    } else if (typename.equals("CPA-Mix")) {
+    } else if (typename.equalsIgnoreCase("CPA-Mix") || typename.equalsIgnoreCase("CPA_Mix")) {
       var = 7;
-    } else if (typename.equals("classic-T")) {
+    } else if (typename.equalsIgnoreCase("classic-T") || typename.equalsIgnoreCase("classic_T")) {
       var = 8;
-    } else if (typename.equals("classic-T-cpa")) {
+    } else if (typename.equalsIgnoreCase("classic-T-cpa")
+        || typename.equalsIgnoreCase("classic_t_cpa")) {
       var = 9;
-    } else if (typename.equals("classic-Tx-cpa")) {
+    } else if (typename.equalsIgnoreCase("classic-Tx-cpa")
+        || typename.equalsIgnoreCase("classic_tx_cpa")) {
       var = 10;
     } else {
       var = 1;

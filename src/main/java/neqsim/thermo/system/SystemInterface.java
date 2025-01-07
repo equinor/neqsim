@@ -7,6 +7,7 @@ import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -1596,7 +1597,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getZ();
 
   /**
-   * method to return Z volume corrected gas compressibility
+   * method to return Z volume corrected gas compressibility.
    *
    * @return double Z volume corrected
    */
@@ -2258,6 +2259,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public void setMaxNumberOfPhases(int maxNumberOfPhases);
 
+
+  /**
+   * method to set mixing rule used for the fluid.
+   *
+   * @param mr EosMixingRuleTypes enum
+   */
+  public default void setMixingRule(EosMixingRuleType mr) {
+    setMixingRule(mr.getValue());
+  }
+
   /**
    * method to set mixing rule used for the fluid.
    *
@@ -2616,7 +2627,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * <p>
    * setForceSinglePhase - force the fluid to be single phase of type as spesified by phasetype
-   * input
+   * input.
    * </p>
    *
    * @param phasetype a {@link neqsim.thermo.phase.PhaseType} object
