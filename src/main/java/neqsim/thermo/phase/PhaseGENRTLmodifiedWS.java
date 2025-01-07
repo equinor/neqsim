@@ -12,6 +12,7 @@ import neqsim.thermo.component.ComponentGENRTLmodifiedWS;
  * @version $Id: $Id
  */
 public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -19,8 +20,7 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
    * Constructor for PhaseGENRTLmodifiedWS.
    * </p>
    */
-  public PhaseGENRTLmodifiedWS() {
-  }
+  public PhaseGENRTLmodifiedWS() {}
 
   /**
    * <p>
@@ -40,8 +40,7 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
     for (int i = 0; i < alpha[0].length; i++) {
       numberOfComponents++;
       componentArray[i] = new ComponentGENRTLmodifiedWS(phase.getComponent(i).getName(),
-          phase.getComponent(i).getNumberOfmoles(),
-          phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }
   }
@@ -64,8 +63,7 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
     componentArray = new ComponentGENRTLmodifiedWS[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
       componentArray[i] = new ComponentGENRTLmodifiedWS(phase.getComponent(i).getName(),
-          phase.getComponent(i).getNumberOfmoles(),
-          phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }
   }

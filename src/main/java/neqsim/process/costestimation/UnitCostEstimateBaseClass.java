@@ -12,6 +12,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * @version $Id: $Id
  */
 public class UnitCostEstimateBaseClass implements java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private double costPerWeightUnit = 1000.0;
@@ -29,8 +30,7 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
    * Constructor for UnitCostEstimateBaseClass.
    * </p>
    *
-   * @param mechanicalEquipment a {@link neqsim.process.mechanicaldesign.MechanicalDesign}
-   *        object
+   * @param mechanicalEquipment a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public UnitCostEstimateBaseClass(MechanicalDesign mechanicalEquipment) {
     this.mechanicalEquipment = mechanicalEquipment;

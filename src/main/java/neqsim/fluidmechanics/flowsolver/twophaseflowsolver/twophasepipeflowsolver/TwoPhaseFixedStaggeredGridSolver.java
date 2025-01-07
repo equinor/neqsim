@@ -17,7 +17,9 @@ import neqsim.mathlib.generalmath.TDMAsolve;
  */
 public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     implements neqsim.thermo.ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TwoPhaseFixedStaggeredGridSolver.class);
   Matrix diffMatrix;
   double[][] dn;

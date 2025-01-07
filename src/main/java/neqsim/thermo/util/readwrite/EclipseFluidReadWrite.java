@@ -21,6 +21,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class EclipseFluidReadWrite {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(EclipseFluidReadWrite.class);
 
   /** Constant <code>pseudoName=""</code> */

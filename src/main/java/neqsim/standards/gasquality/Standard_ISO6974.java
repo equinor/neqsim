@@ -11,7 +11,8 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class Standard_ISO6974 extends GasChromotograpyhBase {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
 
   /**
    * <p>

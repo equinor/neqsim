@@ -18,6 +18,7 @@ import neqsim.thermo.component.ComponentGENRTLmodifiedHV;
  * @version $Id: $Id
  */
 public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double[][] DijT;
@@ -50,8 +51,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     type = 0;
     for (int i = 0; i < alpha[0].length; i++) {
       componentArray[i] = new ComponentGENRTLmodifiedHV(phase.getComponent(i).getName(),
-          phase.getComponent(i).getNumberOfmoles(),
-          phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }
   }
@@ -76,8 +76,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     this.DijT = DijT;
     for (int i = 0; i < alpha[0].length; i++) {
       componentArray[i] = new ComponentGENRTLmodifiedHV(phase.getComponent(i).getName(),
-          phase.getComponent(i).getNumberOfmoles(),
-          phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }
   }
@@ -146,7 +145,8 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     double val = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       val +=
-          getComponent(i).getNumberOfMolesInPhase() * (getComponent(i).getLogFugacityCoefficient()); // +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
+          getComponent(i).getNumberOfMolesInPhase() * (getComponent(i).getLogFugacityCoefficient());
+      // +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
     }
     return R * temperature * numberOfMolesInPhase * (val + Math.log(pressure));
   }

@@ -14,7 +14,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class WATcalc extends ConstantDutyTemperatureFlash {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(WATcalc.class);
 
   /**

@@ -28,6 +28,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterface {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(StatisticsBaseClass.class);
 
   protected SampleSet sampleSet = new SampleSet();

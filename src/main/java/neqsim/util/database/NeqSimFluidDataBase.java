@@ -19,7 +19,9 @@ import org.apache.logging.log4j.Logger;
  */
 public class NeqSimFluidDataBase
     implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(NeqSimFluidDataBase.class);
 
   static boolean started = false;

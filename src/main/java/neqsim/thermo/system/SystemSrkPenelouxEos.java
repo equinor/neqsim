@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseSrkPenelouxEos;
  * @version $Id: $Id
  */
 public class SystemSrkPenelouxEos extends SystemSrkEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

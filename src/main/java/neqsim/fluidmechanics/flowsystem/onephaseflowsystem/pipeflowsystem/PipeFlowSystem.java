@@ -14,6 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class PipeFlowSystem
     extends neqsim.fluidmechanics.flowsystem.onephaseflowsystem.OnePhaseFlowSystem {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

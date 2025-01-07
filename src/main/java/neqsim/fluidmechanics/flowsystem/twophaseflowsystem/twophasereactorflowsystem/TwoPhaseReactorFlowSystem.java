@@ -14,6 +14,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class TwoPhaseReactorFlowSystem
     extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem.TwoPhaseFlowSystem {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

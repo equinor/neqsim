@@ -12,6 +12,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   int cpaon = 1;

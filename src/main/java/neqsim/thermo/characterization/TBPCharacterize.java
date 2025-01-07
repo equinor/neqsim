@@ -17,6 +17,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class TBPCharacterize extends PlusCharacterize {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   int startPlus = 7;
   int endPlus = 20;

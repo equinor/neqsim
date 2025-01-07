@@ -10,6 +10,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class TPgradientFlashTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TPgradientFlashTest.class);
 
   @Test

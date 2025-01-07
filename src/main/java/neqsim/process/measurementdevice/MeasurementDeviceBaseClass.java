@@ -14,6 +14,7 @@ import neqsim.util.NamedBaseClass;
  */
 public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
     implements MeasurementDeviceInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   protected String unit;

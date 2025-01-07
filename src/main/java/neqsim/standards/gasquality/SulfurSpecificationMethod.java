@@ -11,7 +11,8 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class SulfurSpecificationMethod extends neqsim.standards.Standard {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
   String unit = "ppm";
   double H2Scontent = 0.0;
 

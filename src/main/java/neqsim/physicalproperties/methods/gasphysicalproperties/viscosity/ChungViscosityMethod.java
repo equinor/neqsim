@@ -17,6 +17,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
  */
 public class ChungViscosityMethod extends Viscosity {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   public double[] pureComponentViscosity;

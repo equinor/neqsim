@@ -15,7 +15,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class CricondebarFlash extends ConstantDutyPressureFlash {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ConstantDutyFlash.class);
 
   Matrix Jac;
@@ -49,11 +51,9 @@ public class CricondebarFlash extends ConstantDutyPressureFlash {
           .setK(Math.exp(system.getPhases()[1].getComponent(i).getLogFugacityCoefficient()
               - system.getPhases()[0].getComponent(i).getLogFugacityCoefficient()));
 
-      system.getPhases()[1].getComponent(i)
-          .setK(system.getPhases()[0].getComponent(i).getK());
-      system.getPhases()[1].getComponent(i)
-          .setx(1.0 / system.getPhases()[0].getComponent(i).getK()
-              * system.getPhases()[1].getComponent(i).getz());
+      system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
+      system.getPhases()[1].getComponent(i).setx(1.0 / system.getPhases()[0].getComponent(i).getK()
+          * system.getPhases()[1].getComponent(i).getz());
       // ktot += Math.abs(system.getPhases()[1].getComponent(i).getK() - 1.0);
     }
     xtotal = 0.0;

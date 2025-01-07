@@ -24,6 +24,7 @@ import neqsim.util.exception.InvalidInputException;
  * @version $Id: $Id
  */
 public class FlowSetter extends TwoPortEquipment {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   private static final Logger logger = LogManager.getLogger(FlowSetter.class);
   double[] pressure = new double[] {1.01325};
@@ -303,8 +304,7 @@ public class FlowSetter extends TwoPortEquipment {
    * createReferenceProcess.
    * </p>
    *
-   * @param feedStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param feedStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
   public ProcessSystem createReferenceProcess(StreamInterface feedStream) {

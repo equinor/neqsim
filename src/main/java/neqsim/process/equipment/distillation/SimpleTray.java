@@ -17,7 +17,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements TrayInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SimpleTray.class);
 
   double heatInput = 0.0;

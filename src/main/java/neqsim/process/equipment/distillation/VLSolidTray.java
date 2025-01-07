@@ -15,6 +15,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class VLSolidTray extends SimpleTray {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double heatInput = 0.0;

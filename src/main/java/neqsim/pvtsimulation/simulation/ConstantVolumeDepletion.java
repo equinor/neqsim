@@ -21,6 +21,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class ConstantVolumeDepletion extends BasePVTsimulation {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ConstantVolumeDepletion.class);
 
   private double[] relativeVolume = null;

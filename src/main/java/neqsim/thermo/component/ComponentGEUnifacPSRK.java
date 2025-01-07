@@ -13,6 +13,7 @@ import neqsim.thermo.phase.PhaseType;
  * @version $Id: $Id
  */
 public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double[][] bij = new double[1][1];

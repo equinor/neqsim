@@ -20,6 +20,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class ViscositySim extends BasePVTsimulation {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ViscositySim.class);
 
   double[] temperature = null;

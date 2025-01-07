@@ -15,6 +15,7 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ProcessSystemControllerTest.class);
 
   ProcessSystem p;

@@ -13,7 +13,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(BubblePointTemperatureFlash.class);
 
   /**
@@ -38,8 +40,7 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
 
     double funk = 0;
     for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-      system.getPhases()[1].getComponent(i)
-          .setx(system.getPhases()[0].getComponent(i).getz());
+      system.getPhases()[1].getComponent(i).setx(system.getPhases()[0].getComponent(i).getz());
       system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getK()
           * system.getPhases()[1].getComponent(i).getx());
     }
@@ -59,8 +60,7 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
           system.getPhases()[0].getComponent(i)
               .setK(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
                   / system.getPhases()[0].getComponent(i).getFugacityCoefficient());
-          system.getPhases()[1].getComponent(i)
-              .setK(system.getPhases()[0].getComponent(i).getK());
+          system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
           system.getPhases()[0].getComponent(i)
               .setx(system.getPhases()[1].getComponent(i).getx()
                   * system.getPhases()[1].getComponent(i).getFugacityCoefficient()

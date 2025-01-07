@@ -17,6 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class ReactiveTPflash {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ReactiveTPflash.class);
 
   /**

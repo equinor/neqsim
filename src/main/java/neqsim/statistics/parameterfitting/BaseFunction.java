@@ -15,6 +15,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public abstract class BaseFunction implements FunctionInterface {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(BaseFunction.class);
   public double[] params = null;
   public double[][] bounds = null;

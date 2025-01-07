@@ -23,7 +23,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class GasTurbine extends TwoPortEquipment {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Compressor.class);
 
   public SystemInterface thermoSystem;
@@ -71,8 +73,7 @@ public class GasTurbine extends TwoPortEquipment {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public GasTurbine(String name, StreamInterface inletStream) {
     super(name, inletStream);

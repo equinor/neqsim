@@ -23,6 +23,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class CompressorMechanicalDesign extends MechanicalDesign {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double compressorFactor = 0.0;

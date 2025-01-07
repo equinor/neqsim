@@ -11,6 +11,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class StratifiedFlowNodeTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(StratifiedFlowNodeTest.class);
 
   @Test

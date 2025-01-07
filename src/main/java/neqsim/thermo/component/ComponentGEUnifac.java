@@ -23,7 +23,9 @@ import neqsim.thermo.phase.PhaseType;
  * @version $Id: $Id
  */
 public class ComponentGEUnifac extends ComponentGEUniquac {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ComponentGEUnifac.class);
 
   ArrayList<UNIFACgroup> unifacGroups = new ArrayList<UNIFACgroup>();

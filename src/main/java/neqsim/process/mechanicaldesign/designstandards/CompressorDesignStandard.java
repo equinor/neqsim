@@ -13,7 +13,9 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * @version $Id: $Id
  */
 public class CompressorDesignStandard extends DesignStandard {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CompressorDesignStandard.class);
 
   private double compressorFactor = 0.11;

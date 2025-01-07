@@ -16,7 +16,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * @version $Id: $Id
  */
 public class SystemMechanicalDesign implements java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SystemMechanicalDesign.class);
 
   ProcessSystem processSystem = null;

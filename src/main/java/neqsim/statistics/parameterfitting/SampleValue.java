@@ -20,6 +20,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SampleValue implements Cloneable {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SampleValue.class);
   protected FunctionInterface testFunction;
   double sampleValue = 0;

@@ -13,6 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
 class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SystemUMRPRUMCEosNewTest.class);
 
   static neqsim.thermo.system.SystemInterface testSystem = null;

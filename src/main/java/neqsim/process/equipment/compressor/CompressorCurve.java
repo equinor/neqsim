@@ -12,6 +12,7 @@ import java.util.Objects;
  * @version $Id: $Id
  */
 public class CompressorCurve implements java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   public double[] flow;
   public double[] flowPolytropicEfficiency;

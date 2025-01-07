@@ -17,7 +17,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class MultiPhaseMeter extends StreamMeasurementDeviceBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(MultiPhaseMeter.class);
 
   double pressure = 1.01325;

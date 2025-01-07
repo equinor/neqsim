@@ -16,7 +16,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(UKspecifications_ICF_SI.class);
 
   String componentName = "";

@@ -17,6 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class LNGfreezingTestSolid1 {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LNGfreezingTestSolid1.class);
 
   /**

@@ -12,6 +12,7 @@ import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
  * @version $Id: $Id
  */
 public class ValveCostEstimate extends UnitCostEstimateBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

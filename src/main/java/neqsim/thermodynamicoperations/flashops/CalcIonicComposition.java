@@ -21,6 +21,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class CalcIonicComposition extends Flash {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   Logger logger = LogManager.getLogger(CalcIonicComposition.class);
 

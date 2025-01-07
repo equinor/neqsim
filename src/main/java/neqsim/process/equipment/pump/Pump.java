@@ -27,6 +27,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class Pump extends TwoPortEquipment implements PumpInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   SystemInterface thermoSystem;

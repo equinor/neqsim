@@ -16,7 +16,9 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class ComponentHydrate extends Component {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ComponentHydrate.class);
 
   // double[][] emptyHydrateVapourPressureConstant = {{17.6025820786,

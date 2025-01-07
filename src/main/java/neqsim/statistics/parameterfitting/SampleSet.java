@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class SampleSet implements Cloneable {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SampleSet.class);
   private ArrayList<SampleValue> samples = new ArrayList<SampleValue>(1);
 

@@ -23,7 +23,9 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhysicalPropertyHandler.class);
 
   private PhysicalProperties gasPhysicalProperties = null;

@@ -16,7 +16,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class WellFlow extends TwoPortEquipment {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ThrottlingValve.class);
   SystemInterface thermoSystem;
   private double wellProductionIndex = 0;

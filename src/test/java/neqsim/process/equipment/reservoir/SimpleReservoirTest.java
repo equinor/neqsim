@@ -8,6 +8,7 @@ import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.stream.StreamInterface;
 
 public class SimpleReservoirTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SimpleReservoirTest.class);
 
   @Test

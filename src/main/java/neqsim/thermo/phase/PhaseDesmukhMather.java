@@ -16,7 +16,9 @@ import neqsim.util.exception.TooManyIterationsException;
  * @version $Id: $Id
  */
 public class PhaseDesmukhMather extends PhaseGE {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseDesmukhMather.class);
 
   double GE = 0.0;

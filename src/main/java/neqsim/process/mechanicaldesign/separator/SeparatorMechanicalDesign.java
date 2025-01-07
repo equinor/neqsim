@@ -24,6 +24,7 @@ import neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard;
  * @version $Id: $Id
  */
 public class SeparatorMechanicalDesign extends MechanicalDesign {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   double gasLoadFactor = 1.0;
   double volumeSafetyFactor = 1.0;
@@ -35,8 +36,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * Constructor for SeparatorMechanicalDesign.
    * </p>
    *
-   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *        object
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public SeparatorMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);

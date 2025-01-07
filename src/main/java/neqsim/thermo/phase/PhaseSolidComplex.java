@@ -9,6 +9,7 @@ package neqsim.thermo.phase;
  * @version $Id: $Id
  */
 public class PhaseSolidComplex extends PhaseSolid {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

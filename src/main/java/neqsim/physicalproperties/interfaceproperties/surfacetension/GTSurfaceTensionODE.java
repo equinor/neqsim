@@ -28,6 +28,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(GTSurfaceTensionODE.class);
 
   private boolean initialized = false;

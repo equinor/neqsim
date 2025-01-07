@@ -1,9 +1,3 @@
-/*
- * MultiStreamHeatExchangerInterface.java
- *
- * Created on [Date]
- */
-
 package neqsim.process.equipment.heatexchanger;
 
 import java.util.UUID;
@@ -11,13 +5,13 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * <p>
  * MultiStreamHeatExchangerInterface interface.
- * </p>
  *
+ * <p>
  * Defines the contract for a multi-stream heat exchanger, enabling the simulation and management of
  * multiple input and output streams. This interface extends the {@link ProcessEquipmentInterface}
  * to integrate with the broader NeqSim process simulation framework.
+ * </p>
  *
  * <p>
  * Implementations of this interface should handle the addition and management of multiple streams,
@@ -25,7 +19,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * condition of the heat exchanger.
  * </p>
  *
- * @author
+ * @author esol
  * @version 1.0
  */
 public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInterface {

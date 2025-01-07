@@ -12,6 +12,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentCSPsrk extends ComponentSrk {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double f_scale_mix_i = 0;

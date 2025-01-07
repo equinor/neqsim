@@ -12,6 +12,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * @version $Id: $Id
  */
 public abstract class SolidPhysicalPropertyMethod extends PhysicalPropertyMethod {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   protected PhysicalProperties solidPhase;

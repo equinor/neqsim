@@ -11,6 +11,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public class SafetyValve extends ThrottlingValve {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private double pressureSpec = 10.0;

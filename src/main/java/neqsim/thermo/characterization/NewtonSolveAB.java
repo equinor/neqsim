@@ -14,7 +14,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class NewtonSolveAB implements java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(NewtonSolveAB.class);
 
   int iter = 0;

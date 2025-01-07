@@ -17,6 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class DuanSun {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(DuanSun.class);
 
   double[] c = new double[] {0.1, 0.2, 0.3, 0.4, 0.5};

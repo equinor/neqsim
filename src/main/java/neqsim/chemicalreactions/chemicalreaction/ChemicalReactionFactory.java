@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public final class ChemicalReactionFactory {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ChemicalReactionFactory.class);
 
   /**

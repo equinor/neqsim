@@ -12,6 +12,7 @@ import neqsim.process.mechanicaldesign.separator.sectiontype.DistillationTraySec
  * @version $Id: $Id
  */
 public class ValveSection extends SeparatorSection {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

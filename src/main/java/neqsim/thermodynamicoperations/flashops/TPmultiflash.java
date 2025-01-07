@@ -24,7 +24,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class TPmultiflash extends TPflash {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TPmultiflash.class);
 
   // SystemInterface clonedSystem;

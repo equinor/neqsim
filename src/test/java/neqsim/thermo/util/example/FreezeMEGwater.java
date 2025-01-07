@@ -17,6 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class FreezeMEGwater {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(FreezeMEGwater.class);
 
   /**

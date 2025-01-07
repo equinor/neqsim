@@ -19,7 +19,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class PressureDrop extends ThrottlingValve {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PressureDrop.class);
 
   SystemInterface thermoSystem;
@@ -37,7 +39,9 @@ public class PressureDrop extends ThrottlingValve {
   }
 
   /**
-   * <p>Setter for the field <code>pressureDrop</code>.</p>
+   * <p>
+   * Setter for the field <code>pressureDrop</code>.
+   * </p>
    *
    * @param pressureDrop a double
    * @param unit a {@link java.lang.String} object
@@ -58,8 +62,7 @@ public class PressureDrop extends ThrottlingValve {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public PressureDrop(String name, StreamInterface inletStream) {
     this(name);

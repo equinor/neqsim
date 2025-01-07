@@ -15,7 +15,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * @version $Id: $Id
  */
 public class Diffusivity extends CommonPhysicalPropertyMethod implements DiffusivityInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Diffusivity.class);
 
   double[][] binaryDiffusionCoefficients;
@@ -113,9 +115,8 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements Diffusi
   public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
     /*
      * double temp = (i==j)? 1.0: 0.0; double nonIdealCorrection = temp +
-     * gasPhase.getPhase().getComponent(i).getx() *
-     * gasPhase.getPhase().getComponent(i).getdfugdn(j) *
-     * gasPhase.getPhase().getNumberOfMolesInPhase(); if (Double.isNaN(nonIdealCorrection))
+     * gasPhase.getPhase().getComponent(i).getx() * gasPhase.getPhase().getComponent(i).getdfugdn(j)
+     * * gasPhase.getPhase().getNumberOfMolesInPhase(); if (Double.isNaN(nonIdealCorrection))
      * nonIdealCorrection=1.0; return binaryDiffusionCoefficients[i][j]/nonIdealCorrection; // shuld
      * be divided by non ideality factor
      */

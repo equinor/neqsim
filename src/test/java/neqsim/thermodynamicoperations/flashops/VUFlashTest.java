@@ -10,6 +10,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Test VUFlash.
  */
 class VUFlashTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(VUFlashTest.class);
 
   static neqsim.thermo.system.SystemInterface testSystem = null;

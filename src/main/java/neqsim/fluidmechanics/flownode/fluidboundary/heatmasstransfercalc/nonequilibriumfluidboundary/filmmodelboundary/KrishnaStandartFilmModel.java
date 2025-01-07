@@ -24,7 +24,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 public class KrishnaStandartFilmModel extends
     neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.NonEquilibriumFluidBoundary
     implements ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(KrishnaStandartFilmModel.class);
   Matrix phiMatrix;
   Matrix redPhiMatrix;

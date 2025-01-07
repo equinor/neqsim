@@ -17,6 +17,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * @author Even Solbraa
  */
 public abstract class ComponentGE extends Component implements ComponentGEInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   protected double gamma = 0;
@@ -26,6 +27,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   protected double dlngammadp = 0;
   protected double dlngammadtdt = 0.0;
   protected double[] dlngammadn;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ComponentGE.class);
 
   /**

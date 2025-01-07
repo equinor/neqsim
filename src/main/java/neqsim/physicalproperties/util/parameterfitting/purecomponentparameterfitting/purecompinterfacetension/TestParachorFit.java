@@ -21,6 +21,7 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class TestParachorFit {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TestParachorFit.class);
 
   /**

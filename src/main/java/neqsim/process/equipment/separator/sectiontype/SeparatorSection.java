@@ -13,6 +13,7 @@ import neqsim.util.NamedBaseClass;
  * @version $Id: $Id
  */
 public class SeparatorSection extends NamedBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private double efficiency = 0.95;
@@ -29,9 +30,7 @@ public class SeparatorSection extends NamedBaseClass {
    *
    * @param name a {@link java.lang.String} object
    * @param type a {@link java.lang.String} object
-   * @param sep  a
-   *             {@link neqsim.process.equipment.separator.Separator}
-   *             object
+   * @param sep a {@link neqsim.process.equipment.separator.Separator} object
    */
   public SeparatorSection(String name, String type, Separator sep) {
     super(name);

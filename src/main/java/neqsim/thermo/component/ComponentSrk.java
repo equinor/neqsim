@@ -12,6 +12,7 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermSrk;
  * @version $Id: $Id
  */
 public class ComponentSrk extends ComponentEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private double factTemp = Math.pow(2.0, 1.0 / 3.0);

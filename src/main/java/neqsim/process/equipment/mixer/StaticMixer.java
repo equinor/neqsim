@@ -18,6 +18,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class StaticMixer extends Mixer {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -54,8 +55,8 @@ public class StaticMixer extends Mixer {
             gotComponent = true;
             index = streams.get(0).getThermoSystem().getPhases()[0].getComponent(p)
                 .getComponentNumber();
-            compName = streams.get(0).getThermoSystem().getPhases()[0].getComponent(p)
-                .getComponentName();
+            compName =
+                streams.get(0).getThermoSystem().getPhases()[0].getComponent(p).getComponentName();
           }
         }
 

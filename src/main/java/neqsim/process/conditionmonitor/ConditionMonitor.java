@@ -12,6 +12,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * @version $Id: $Id
  */
 public class ConditionMonitor implements java.io.Serializable, Runnable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   ProcessSystem refprocess = null;
   ProcessSystem process = null;
@@ -45,12 +46,11 @@ public class ConditionMonitor implements java.io.Serializable, Runnable {
    */
   public void conditionAnalysis(String unitName) {
     neqsim.process.equipment.ProcessEquipmentBaseClass refUn =
-        (neqsim.process.equipment.ProcessEquipmentBaseClass) refprocess
-            .getUnit(unitName);
-    ((neqsim.process.equipment.ProcessEquipmentInterface) process
-        .getUnit(unitName)).runConditionAnalysis(refUn);
-    report += ((neqsim.process.equipment.ProcessEquipmentInterface) process
-        .getUnit(unitName)).getConditionAnalysisMessage();
+        (neqsim.process.equipment.ProcessEquipmentBaseClass) refprocess.getUnit(unitName);
+    ((neqsim.process.equipment.ProcessEquipmentInterface) process.getUnit(unitName))
+        .runConditionAnalysis(refUn);
+    report += ((neqsim.process.equipment.ProcessEquipmentInterface) process.getUnit(unitName))
+        .getConditionAnalysisMessage();
   }
 
   /**

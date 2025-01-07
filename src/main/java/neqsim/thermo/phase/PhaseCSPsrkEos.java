@@ -12,6 +12,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class PhaseCSPsrkEos extends PhaseSrkEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double f_scale_mix = 0;

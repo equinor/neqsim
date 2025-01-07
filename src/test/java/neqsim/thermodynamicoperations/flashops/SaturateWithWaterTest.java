@@ -12,6 +12,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SaturateWithWaterTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SaturateWithWaterTest.class);
 
   @Test

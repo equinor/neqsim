@@ -18,13 +18,15 @@ import neqsim.thermo.component.ComponentGEUniquac;
  * @version $Id: $Id
  */
 public class PhaseGEUnifac extends PhaseGEUniquac {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(PhaseGEUnifac.class);
 
   double[][] aij = new double[1][1];
   double[][] bij = new double[1][1];
   double[][] cij = new double[1][1];
   boolean checkedGroups = false;
-  static Logger logger = LogManager.getLogger(PhaseGEUnifac.class);
 
   /**
    * <p>
@@ -52,8 +54,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     componentArray = new ComponentGEUnifac[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
       componentArray[i] = new ComponentGEUnifac(phase.getComponent(i).getName(),
-          phase.getComponent(i).getNumberOfmoles(),
-          phase.getComponent(i).getNumberOfMolesInPhase(),
+          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }
   }

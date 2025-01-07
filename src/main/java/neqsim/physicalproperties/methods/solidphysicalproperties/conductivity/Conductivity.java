@@ -22,7 +22,9 @@ import neqsim.thermo.phase.PhaseType;
  * @version $Id: $Id
  */
 public class Conductivity extends SolidPhysicalPropertyMethod implements ConductivityInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Conductivity.class);
 
   double conductivity = 0;

@@ -13,7 +13,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class LumpingModel implements java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LumpingModel.class);
 
   int numberOfLumpedComponents = 7;
@@ -43,6 +45,7 @@ public class LumpingModel implements java.io.Serializable {
    */
   public class StandardLumpingModel
       implements LumpingModelInterface, Cloneable, java.io.Serializable {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     public StandardLumpingModel() {}
@@ -212,6 +215,7 @@ public class LumpingModel implements java.io.Serializable {
    * @version 1.0
    */
   public class PVTLumpingModel extends StandardLumpingModel {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     public PVTLumpingModel() {}
@@ -325,6 +329,7 @@ public class LumpingModel implements java.io.Serializable {
    * @version 1.0
    */
   public class NoLumpingModel extends StandardLumpingModel {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     public NoLumpingModel() {}

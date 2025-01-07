@@ -15,6 +15,7 @@ package neqsim.fluidmechanics.flowsolver.onephaseflowsolver;
  * @version $Id: $Id
  */
 public abstract class OnePhaseFlowSolver extends neqsim.fluidmechanics.flowsolver.FlowSolver {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

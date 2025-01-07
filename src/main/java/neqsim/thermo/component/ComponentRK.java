@@ -11,6 +11,7 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermRk;
  * @version $Id: $Id
  */
 public class ComponentRK extends ComponentEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

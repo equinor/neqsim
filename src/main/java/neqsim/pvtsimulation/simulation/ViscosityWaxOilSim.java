@@ -20,6 +20,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class ViscosityWaxOilSim extends BasePVTsimulation {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ViscosityWaxOilSim.class);
 
   double[] temperature = null;

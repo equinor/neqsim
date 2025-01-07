@@ -12,6 +12,7 @@ import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
  * @version $Id: $Id
  */
 public class SeparatorCostEstimate extends UnitCostEstimateBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -20,8 +21,7 @@ public class SeparatorCostEstimate extends UnitCostEstimateBaseClass {
    * </p>
    *
    * @param mechanicalEquipment a
-   *        {@link neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign}
-   *        object
+   *        {@link neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign} object
    */
   public SeparatorCostEstimate(SeparatorMechanicalDesign mechanicalEquipment) {
     super(mechanicalEquipment);

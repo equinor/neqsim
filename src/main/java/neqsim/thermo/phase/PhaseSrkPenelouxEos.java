@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentSrkPeneloux;
  * @version $Id: $Id
  */
 public class PhaseSrkPenelouxEos extends PhaseSrkEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -18,8 +19,7 @@ public class PhaseSrkPenelouxEos extends PhaseSrkEos {
    * Constructor for PhaseSrkPenelouxEos.
    * </p>
    */
-  public PhaseSrkPenelouxEos() {
-  }
+  public PhaseSrkPenelouxEos() {}
 
   /** {@inheritDoc} */
   @Override

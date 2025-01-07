@@ -7,7 +7,8 @@ package neqsim.util;
  * @version $Id: $Id
  */
 public abstract class NamedBaseClass implements NamedInterface, java.io.Serializable {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
   public String name;
 
   /**

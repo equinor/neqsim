@@ -14,7 +14,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class PlusCharacterize implements java.io.Serializable, CharacteriseInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PlusCharacterize.class);
 
   double[] TBPfractions = null;

@@ -17,6 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class VLSolidTPFLash {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(VLSolidTPFLash.class);
 
   /**

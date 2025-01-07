@@ -9,6 +9,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * Test class for GlycolRig.
  */
 public class OilProcessTest extends neqsim.NeqSimTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(OilProcessTest.class);
 
   ProcessSystem p;

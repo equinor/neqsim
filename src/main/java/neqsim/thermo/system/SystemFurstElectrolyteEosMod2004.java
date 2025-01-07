@@ -10,6 +10,7 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEosMod2004;
  * @version $Id: $Id
  */
 public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

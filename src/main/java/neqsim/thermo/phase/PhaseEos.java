@@ -20,7 +20,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  */
 public abstract class PhaseEos extends Phase implements PhaseEosInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseEos.class);
 
   private double loc_A;

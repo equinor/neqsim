@@ -18,7 +18,9 @@ import neqsim.thermo.phase.PhaseGEUnifac;
  * @version $Id: $Id
  */
 public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<UNIFACgroup> {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(UNIFACgroup.class);
 
   double R = 0.0;

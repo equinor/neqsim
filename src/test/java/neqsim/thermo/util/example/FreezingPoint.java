@@ -18,6 +18,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class FreezingPoint {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(FreezingPoint.class);
 
   /**

@@ -10,6 +10,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class AcidTest extends neqsim.NeqSimTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(AcidTest.class);
 
   /**

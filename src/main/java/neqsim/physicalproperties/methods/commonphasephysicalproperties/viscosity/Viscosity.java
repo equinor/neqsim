@@ -12,7 +12,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * @author Even Solbraa
  */
 public abstract class Viscosity extends CommonPhysicalPropertyMethod implements ViscosityInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Viscosity.class);
 
   public double[] pureComponentViscosity;
@@ -40,10 +42,9 @@ public abstract class Viscosity extends CommonPhysicalPropertyMethod implements 
       if (phase.getPhase().getTemperature() > phase.getPhase().getComponent(i).getTC()) {
         pureComponentViscosity[i] = 5.0e-1;
       } else if (phase.getPhase().getComponent(i).getLiquidViscosityModel() == 1) {
-        pureComponentViscosity[i] =
-            phase.getPhase().getComponent(i).getLiquidViscosityParameter(0)
-                * Math.pow(phase.getPhase().getTemperature(),
-                    phase.getPhase().getComponent(i).getLiquidViscosityParameter(1));
+        pureComponentViscosity[i] = phase.getPhase().getComponent(i).getLiquidViscosityParameter(0)
+            * Math.pow(phase.getPhase().getTemperature(),
+                phase.getPhase().getComponent(i).getLiquidViscosityParameter(1));
       } else if (phase.getPhase().getComponent(i).getLiquidViscosityModel() == 2) {
       } else if (phase.getPhase().getComponent(i).getLiquidViscosityModel() == 3) {
         pureComponentViscosity[i] =

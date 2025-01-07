@@ -10,7 +10,8 @@ import neqsim.thermo.system.SystemInterface;
  * @author ASMF
  */
 public class Standard_ISO15403 extends neqsim.standards.Standard {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
 
   private double NM;
   private double MON;

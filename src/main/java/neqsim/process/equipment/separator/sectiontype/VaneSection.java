@@ -12,6 +12,7 @@ import neqsim.process.mechanicaldesign.separator.sectiontype.MechVaneSection;
  * @version $Id: $Id
  */
 public class VaneSection extends SeparatorSection {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -21,9 +22,7 @@ public class VaneSection extends SeparatorSection {
    *
    * @param name a {@link java.lang.String} object
    * @param type a {@link java.lang.String} object
-   * @param sep  a
-   *             {@link neqsim.process.equipment.separator.Separator}
-   *             object
+   * @param sep a {@link neqsim.process.equipment.separator.Separator} object
    */
   public VaneSection(String name, String type, Separator sep) {
     super(name, type, sep);

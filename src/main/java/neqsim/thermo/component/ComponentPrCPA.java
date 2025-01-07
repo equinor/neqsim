@@ -9,6 +9,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * @author Even Solbraa
  */
 public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   int cpaon = 1;

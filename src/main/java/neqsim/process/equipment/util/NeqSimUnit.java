@@ -20,6 +20,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class NeqSimUnit extends TwoPortEquipment {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   SystemInterface thermoSystem;

@@ -24,7 +24,9 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CPAMixing.class);
 
   int[][] assosSchemeType = null; // 0- ER - 1 - CR1
@@ -56,6 +58,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
   }
 
   public class CPA_Radoch_base implements CPAMixingInterface {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     double eps = 12000.76;
@@ -120,6 +123,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
   }
 
   public class CPA_Radoch extends CPA_Radoch_base {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     public double getCrossAssociationEnergy(int compnumb1, int compnumb2, PhaseInterface phase,
@@ -534,6 +538,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
   }
 
   public class PCSAFTa_Radoch extends CPA_Radoch {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     public double getCrossAssociationEnergy(int siteNumber1, int siteNumber2, int compnumb1,

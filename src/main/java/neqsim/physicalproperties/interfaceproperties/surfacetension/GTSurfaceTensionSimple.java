@@ -17,7 +17,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class GTSurfaceTensionSimple extends SurfaceTension {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(GTSurfaceTensionSimple.class);
 
   int ite_step = 200;

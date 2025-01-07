@@ -11,6 +11,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public abstract class StreamMeasurementDeviceBaseClass extends MeasurementDeviceBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   protected StreamInterface stream = null;

@@ -15,7 +15,8 @@ package neqsim.fluidmechanics.geometrydefinitions.internalgeometry.packings;
  * @version $Id: $Id
  */
 public class PallRingPacking extends Packing {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
 
   /**
    * <p>

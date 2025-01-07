@@ -33,7 +33,9 @@ import neqsim.util.util.DoubleCloneable;
  * @version $Id: $Id
  */
 public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(FlowNode.class);
 
   protected double distanceToCenterOfNode = 0;

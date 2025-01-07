@@ -12,6 +12,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class CricondenThermFlash extends PTphaseEnvelope {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   int neq = 0;
   // double beta = 0;

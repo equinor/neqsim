@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class RachfordRiceTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(RachfordRiceTest.class);
 
   @Test

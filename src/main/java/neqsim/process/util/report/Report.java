@@ -24,6 +24,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class Report {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Report.class);
   ProcessSystem process = null;
   ProcessEquipmentBaseClass processEquipment = null;
@@ -56,8 +57,8 @@ public class Report {
    * Constructor for Report.
    * </p>
    *
-   * @param processEquipmentBaseClass a
-   *        {@link neqsim.process.equipment.ProcessEquipmentBaseClass} object
+   * @param processEquipmentBaseClass a {@link neqsim.process.equipment.ProcessEquipmentBaseClass}
+   *        object
    */
   public Report(ProcessEquipmentBaseClass processEquipmentBaseClass) {
     processEquipment = processEquipmentBaseClass;
@@ -79,8 +80,8 @@ public class Report {
    * Constructor for Report.
    * </p>
    *
-   * @param processModuleBaseClass a
-   *        {@link neqsim.process.processmodel.ProcessModuleBaseClass} object
+   * @param processModuleBaseClass a {@link neqsim.process.processmodel.ProcessModuleBaseClass}
+   *        object
    */
   public Report(ProcessModuleBaseClass processModuleBaseClass) {
     // TODO Auto-generated constructor stub

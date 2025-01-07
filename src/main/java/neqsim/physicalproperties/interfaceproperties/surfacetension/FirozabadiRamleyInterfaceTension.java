@@ -11,6 +11,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

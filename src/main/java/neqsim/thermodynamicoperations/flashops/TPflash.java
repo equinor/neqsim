@@ -17,7 +17,9 @@ import neqsim.util.exception.TooManyIterationsException;
  * @version $Id: $Id
  */
 public class TPflash extends Flash {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TPflash.class);
 
   SystemInterface clonedSystem;

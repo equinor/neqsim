@@ -22,6 +22,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class DataReader implements DataReaderInterface {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(DataReader.class);
 
   protected String fileName;

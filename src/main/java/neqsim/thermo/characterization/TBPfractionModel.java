@@ -14,7 +14,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class TBPfractionModel implements java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TBPfractionModel.class);
 
   String name = "";
@@ -30,6 +32,7 @@ public class TBPfractionModel implements java.io.Serializable {
    * Base model for something.
    */
   public abstract class TBPBaseModel implements TBPModelInterface, Cloneable, java.io.Serializable {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     protected boolean calcm = true;
@@ -125,6 +128,7 @@ public class TBPfractionModel implements java.io.Serializable {
    * PedersenTBPModelSRK
    */
   public class PedersenTBPModelSRK extends TBPBaseModel {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     double[][] TBPfractionCoefOil = {{163.12, 86.052, 0.43475, -1877.4, 0.0},
@@ -195,6 +199,7 @@ public class TBPfractionModel implements java.io.Serializable {
   }
 
   public class PedersenTBPModelSRKHeavyOil extends PedersenTBPModelSRK {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     double[][] TBPfractionCoefsHeavyOil = {{8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0},
@@ -211,6 +216,7 @@ public class TBPfractionModel implements java.io.Serializable {
   }
 
   public class PedersenTBPModelPR extends PedersenTBPModelSRK {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     public PedersenTBPModelPR() {
@@ -228,6 +234,7 @@ public class TBPfractionModel implements java.io.Serializable {
   }
 
   public class PedersenTBPModelPRHeavyOil extends PedersenTBPModelPR {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     public PedersenTBPModelPRHeavyOil() {
@@ -242,6 +249,7 @@ public class TBPfractionModel implements java.io.Serializable {
   }
 
   public class RiaziDaubert extends PedersenTBPModelSRK {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     public RiaziDaubert() {
@@ -311,6 +319,7 @@ public class TBPfractionModel implements java.io.Serializable {
    * Lee-Kesler property estimation method
    */
   public class LeeKesler extends TBPBaseModel {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     public LeeKesler() {
@@ -348,6 +357,7 @@ public class TBPfractionModel implements java.io.Serializable {
    * Two property estimation method
    */
   public class TwuModel extends TBPBaseModel {
+    /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     public TwuModel() {

@@ -40,6 +40,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * @author Even Solbraa
  */
 public abstract class ComponentEos extends Component implements ComponentEosInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   public double a = 1;
@@ -83,6 +84,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   protected double[] dAdndn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   protected double[] dBdndn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   private AttractiveTermInterface attractiveParameter;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ComponentEos.class);
 
   /**

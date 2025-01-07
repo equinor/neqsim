@@ -29,7 +29,9 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ChemicalReactionOperations
     implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ChemicalReactionOperations.class);
 
   SystemInterface system;

@@ -17,6 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestPCSAFT1 {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TestPCSAFT1.class);
 
   /**

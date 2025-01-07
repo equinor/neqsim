@@ -14,7 +14,9 @@ import neqsim.thermo.component.ComponentPCSAFT;
  * @version $Id: $Id
  */
 public class PhasePCSAFTRahmat extends PhasePCSAFT {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhasePCSAFTRahmat.class);
 
   double dnSAFTdVdVdV = 1.0;

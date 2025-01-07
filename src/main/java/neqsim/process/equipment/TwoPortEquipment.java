@@ -10,7 +10,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  */
 public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
     implements TwoPortInterface {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
   protected StreamInterface inStream;
   protected StreamInterface outStream;
 

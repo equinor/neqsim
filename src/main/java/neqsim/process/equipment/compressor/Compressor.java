@@ -32,7 +32,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class Compressor extends TwoPortEquipment implements CompressorInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Compressor.class);
 
   public SystemInterface thermoSystem;

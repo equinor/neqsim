@@ -12,6 +12,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class GasTurbineTest extends neqsim.NeqSimTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(GasTurbineTest.class);
 
   static neqsim.thermo.system.SystemInterface testSystem;

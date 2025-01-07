@@ -11,6 +11,7 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -18,8 +19,7 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
    * Constructor for constantDutyTemperatureFlash.
    * </p>
    */
-  public ConstantDutyTemperatureFlash() {
-  }
+  public ConstantDutyTemperatureFlash() {}
 
   /**
    * <p>

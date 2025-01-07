@@ -19,7 +19,9 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public abstract class AttractiveTermBaseClass implements AttractiveTermInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(AttractiveTermBaseClass.class);
 
   private ComponentEosInterface component = null;

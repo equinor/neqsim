@@ -11,6 +11,7 @@ import java.util.Date;
  * @version $Id: $Id
  */
 public class OnlineSignal implements java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

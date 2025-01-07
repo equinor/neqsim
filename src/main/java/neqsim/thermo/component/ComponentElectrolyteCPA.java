@@ -13,6 +13,7 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEos
     implements ComponentCPAInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   int cpaon = 1;

@@ -9,6 +9,7 @@ package neqsim.util.exception;
  * @version $Id: $Id
  */
 public class InvalidOutputException extends neqsim.util.exception.ThermoException {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

@@ -14,7 +14,9 @@ import neqsim.thermo.phase.PhaseType;
  * @version $Id: $Id
  */
 public class ComponentHydrateGF extends ComponentHydrate {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ComponentHydrateGF.class);
 
   double[][] Ak = new double[2][2]; // [structure][cavitytype]

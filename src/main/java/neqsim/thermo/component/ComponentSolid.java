@@ -19,6 +19,7 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class ComponentSolid extends ComponentSrk {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   double dpdt = 1.0;

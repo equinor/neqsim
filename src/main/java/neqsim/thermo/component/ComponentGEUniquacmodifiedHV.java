@@ -15,6 +15,7 @@ import neqsim.thermo.phase.PhaseType;
  * @author Even Solbraa
  */
 public abstract class ComponentGEUniquacmodifiedHV extends ComponentGEUniquac {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

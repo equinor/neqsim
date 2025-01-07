@@ -14,6 +14,7 @@ import neqsim.thermo.phase.PhasePCSAFT;
  * @version $Id: $Id
  */
 public class ComponentPCSAFT extends ComponentSrk {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private double dSAFTi = 1.0;

@@ -25,6 +25,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class Heater extends TwoPortEquipment implements HeaterInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   boolean setTemperature = false, setOutPressure = false;

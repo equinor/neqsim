@@ -14,7 +14,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  */
 public class FrictionTheoryViscosityMethod extends Viscosity
     implements neqsim.thermo.ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(FrictionTheoryViscosityMethod.class);
 
   public double[] pureComponentViscosity;

@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AttractiveTermMatCopPRUMR extends AttractiveTermPr {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   double orgpar = 0.0;
   boolean useStandardAlphaForSupercritical = false;

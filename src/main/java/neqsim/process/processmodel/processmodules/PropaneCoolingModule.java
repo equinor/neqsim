@@ -53,6 +53,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     this.vaporizerTemperature = vaporizerTemperature;
   }
 
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   StreamInterface refrigerantStream;

@@ -16,7 +16,9 @@ import neqsim.process.mechanicaldesign.SystemMechanicalDesign;
  * @version $Id: $Id
  */
 public class CostEstimateBaseClass implements java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CostEstimateBaseClass.class);
 
   private SystemMechanicalDesign processdesign;
@@ -27,8 +29,7 @@ public class CostEstimateBaseClass implements java.io.Serializable {
    * Constructor for CostEstimateBaseClass.
    * </p>
    *
-   * @param processdesign a {@link neqsim.process.mechanicaldesign.SystemMechanicalDesign}
-   *        object
+   * @param processdesign a {@link neqsim.process.mechanicaldesign.SystemMechanicalDesign} object
    */
   public CostEstimateBaseClass(SystemMechanicalDesign processdesign) {
     this.processdesign = processdesign;

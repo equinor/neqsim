@@ -15,11 +15,13 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class ComponentHydratePVTsim extends ComponentHydrate {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(ComponentHydratePVTsim.class);
 
   double[][] Ak = new double[2][2]; // [structure][cavitytype]
   double[][] Bk = new double[2][2]; // [structure][cavitytype]
-  static Logger logger = LogManager.getLogger(ComponentHydratePVTsim.class);
 
   /**
    * <p>

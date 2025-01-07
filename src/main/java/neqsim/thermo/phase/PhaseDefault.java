@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentInterface;
  * @version $Id: $Id
  */
 public class PhaseDefault extends Phase {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   protected ComponentInterface defComponent = null;

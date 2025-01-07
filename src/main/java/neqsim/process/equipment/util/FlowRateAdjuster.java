@@ -21,7 +21,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class FlowRateAdjuster extends TwoPortEquipment {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(FlowRateAdjuster.class);
 
   String name = "Flow Rate Adjuster";
@@ -72,8 +74,7 @@ public class FlowRateAdjuster extends TwoPortEquipment {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public FlowRateAdjuster(String name, StreamInterface inStream) {
     super(name, inStream);

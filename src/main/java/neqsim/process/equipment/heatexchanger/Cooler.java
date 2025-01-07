@@ -14,6 +14,7 @@ import neqsim.process.util.monitor.HeaterResponse;
  * @version $Id: $Id
  */
 public class Cooler extends Heater {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -31,8 +32,7 @@ public class Cooler extends Heater {
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Cooler(String name, StreamInterface inStream) {
     super(name, inStream);

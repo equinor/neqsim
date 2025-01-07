@@ -18,6 +18,7 @@ import neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign;
  * @version $Id: $Id
  */
 public class GasScrubber extends Separator {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

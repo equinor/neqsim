@@ -19,6 +19,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class TestSaturationPresFunction {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TestSaturationPresFunction.class);
 
   /**

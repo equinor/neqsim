@@ -22,6 +22,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class WettedWallDataReader extends DataReader {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(WettedWallDataReader.class);
 
   /**

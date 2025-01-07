@@ -47,6 +47,7 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  */
 public class CombinedModelsTest {
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CombinedModelsTest.class);
 
   public ProcessSystem getinletModel() {

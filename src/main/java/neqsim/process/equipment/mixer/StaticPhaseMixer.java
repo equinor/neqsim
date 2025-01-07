@@ -12,6 +12,7 @@ import neqsim.thermo.phase.PhaseType;
  * @version $Id: $Id
  */
 public class StaticPhaseMixer extends StaticMixer {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
@@ -62,8 +63,8 @@ public class StaticPhaseMixer extends StaticMixer {
             gotComponent = true;
             index = streams.get(0).getThermoSystem().getPhases()[0].getComponent(p)
                 .getComponentNumber();
-            compName = streams.get(0).getThermoSystem().getPhases()[0].getComponent(p)
-                .getComponentName();
+            compName =
+                streams.get(0).getThermoSystem().getPhases()[0].getComponent(p).getComponentName();
           }
         }
 

@@ -15,7 +15,9 @@ import neqsim.thermo.phase.PhaseType;
  * @version $Id: $Id
  */
 public class ComponentWaxWilson extends ComponentSolid {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ComponentWaxWilson.class);
 
   /**

@@ -22,6 +22,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class GasScrubberSimple extends Separator {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   SystemInterface gasSystem;

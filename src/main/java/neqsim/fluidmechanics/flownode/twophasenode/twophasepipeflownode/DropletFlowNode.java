@@ -19,6 +19,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class DropletFlowNode extends TwoPhaseFlowNode {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   private double averageDropletDiameter = 100.0e-6;
 

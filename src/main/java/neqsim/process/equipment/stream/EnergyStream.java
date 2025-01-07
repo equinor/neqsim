@@ -13,7 +13,9 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class EnergyStream implements java.io.Serializable, Cloneable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(EnergyStream.class);
   private String name = "";
 

@@ -15,6 +15,7 @@ import neqsim.util.NamedBaseClass;
  * @version $Id: $Id
  */
 public class Well extends NamedBaseClass {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private StreamInterface stream = null;

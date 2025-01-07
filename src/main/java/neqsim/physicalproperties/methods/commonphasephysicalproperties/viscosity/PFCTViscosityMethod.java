@@ -20,6 +20,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
  */
 public class PFCTViscosityMethod extends Viscosity {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   // todo: is this parameter required?

@@ -9,6 +9,7 @@ package neqsim.process.equipment.pump;
  * @version $Id: $Id
  */
 public class PumpCurve implements java.io.Serializable {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   public double[] flow;
   public double[] head;

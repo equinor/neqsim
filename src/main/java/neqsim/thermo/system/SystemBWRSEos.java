@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * @version $Id: $Id
  */
 public class SystemBWRSEos extends SystemEos {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   double[][] TBPfractionCoefs = {{163.12, 86.052, 0.43475, -1877.4, 0.0},
       {-0.13408, 2.5019, 208.46, -3987.2, 1.0}, {0.7431, 0.004812, 0.009671, -3.7e-6, 0.0}};

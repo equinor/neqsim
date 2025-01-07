@@ -16,6 +16,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Filter extends TwoPortEquipment {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   private double deltaP = 0.01;
@@ -27,8 +28,7 @@ public class Filter extends TwoPortEquipment {
    * </p>
    *
    * @param name name of filter
-   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Filter(String name, StreamInterface inStream) {
     super(name, inStream);

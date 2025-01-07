@@ -23,7 +23,9 @@ import neqsim.thermo.mixingrule.EosMixingRulesInterface;
  * @version $Id: $Id
  */
 public abstract class PhaseGE extends Phase implements PhaseGEInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseGE.class);
 
   EosMixingRules mixSelect = new EosMixingRules();

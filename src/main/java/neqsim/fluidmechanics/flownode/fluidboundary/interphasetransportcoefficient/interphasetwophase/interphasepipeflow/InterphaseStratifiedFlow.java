@@ -12,6 +12,7 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
  */
 public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
     implements neqsim.thermo.ThermodynamicConstantsInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**

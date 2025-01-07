@@ -14,6 +14,7 @@ import neqsim.thermo.mixingrule.CPAMixingInterface;
  * @version $Id: $Id
  */
 public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
+  /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   int totalNumberOfAccociationSites = 0;
