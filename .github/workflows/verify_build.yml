@@ -101,6 +101,7 @@ jobs:
   test_java_21_windows:
     name: Assert tests with Java 21 on Windows
     runs-on: windows-latest
+    needs: test_java_11_windows
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
