@@ -62,8 +62,6 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-      - name: Generate javadoc
-        run: mvn javadoc:javadoc
       - name: Run tests
         run: mvn -B test --file pomJava21.xml -ntp
 
@@ -78,8 +76,6 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
           cache: 'maven'
-      - name: Generate javadoc
-        run: mvn javadoc:javadoc
       - name: Run tests
         run: mvn -B test --file pom.xml -ntp
 
@@ -110,7 +106,5 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-      - name: Generate javadoc
-        run: mvn javadoc:javadoc
       - name: Run tests
         run: mvn -B test --file pomJava21.xml -ntp
