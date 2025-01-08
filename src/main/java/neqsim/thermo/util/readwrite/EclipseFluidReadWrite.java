@@ -32,8 +32,8 @@ public class EclipseFluidReadWrite {
    * setComposition.
    * </p>
    *
-   * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
-   * @param inputFile a {@link java.lang.String} object
+   * @param fluid        a {@link neqsim.thermo.system.SystemInterface} object
+   * @param inputFile    a {@link java.lang.String} object
    * @param pseudoNameIn a {@link java.lang.String} object
    */
   public static void setComposition(SystemInterface fluid, String inputFile, String pseudoNameIn) {
@@ -46,7 +46,7 @@ public class EclipseFluidReadWrite {
    * setComposition.
    * </p>
    *
-   * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
+   * @param fluid     a {@link neqsim.thermo.system.SystemInterface} object
    * @param inputFile a {@link java.lang.String} object
    */
   public static void setComposition(SystemInterface fluid, String inputFile) {
@@ -121,7 +121,7 @@ public class EclipseFluidReadWrite {
    * read.
    * </p>
    *
-   * @param inputFile a {@link java.lang.String} object
+   * @param inputFile    a {@link java.lang.String} object
    * @param pseudoNameIn a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -142,7 +142,7 @@ public class EclipseFluidReadWrite {
     neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
         ThermodynamicConstantsInterface.referencePressure);
 
-    double[][] kij = null;
+    Double[][] kij = null;
     try (BufferedReader br = new BufferedReader(new FileReader(new File(inputFile)))) {
       String st;
 
@@ -262,7 +262,7 @@ public class EclipseFluidReadWrite {
         }
         if (st.equals("BIC")) {
           int addedComps = 0;
-          kij = new double[names.size()][names.size()];
+          kij = new Double[names.size()][names.size()];
           int lengthLastLine = 0;
           List<String> list = new ArrayList<String>();
           while ((st = br.readLine().replace("/", "")) != null && addedComps < names.size() - 1) {
@@ -335,12 +335,12 @@ public class EclipseFluidReadWrite {
           fluid.addComponent(name, ZI.get(counter));
         } else if (TC.get(counter) >= 00.0) {
           name = names.get(counter);
-          double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
+          Double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
           fluid.addTBPfraction(name, ZI.get(counter), MW.get(counter) / 1000.0, stddensity);
           name = name + "_PC";
         } else {
           name = names.get(counter);
-          double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
+          Double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
           fluid.addTBPfraction(name, ZI.get(counter), MW.get(counter) / 1000.0, stddensity);
           name = name + "_PC";
           // fluid.changeComponentName(name+"_PC", names.get(counter));
