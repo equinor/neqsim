@@ -32,8 +32,8 @@ public class EclipseFluidReadWrite {
    * setComposition.
    * </p>
    *
-   * @param fluid        a {@link neqsim.thermo.system.SystemInterface} object
-   * @param inputFile    a {@link java.lang.String} object
+   * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
+   * @param inputFile a {@link java.lang.String} object
    * @param pseudoNameIn a {@link java.lang.String} object
    */
   public static void setComposition(SystemInterface fluid, String inputFile, String pseudoNameIn) {
@@ -46,7 +46,7 @@ public class EclipseFluidReadWrite {
    * setComposition.
    * </p>
    *
-   * @param fluid     a {@link neqsim.thermo.system.SystemInterface} object
+   * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
    * @param inputFile a {@link java.lang.String} object
    */
   public static void setComposition(SystemInterface fluid, String inputFile) {
@@ -121,7 +121,7 @@ public class EclipseFluidReadWrite {
    * read.
    * </p>
    *
-   * @param inputFile    a {@link java.lang.String} object
+   * @param inputFile a {@link java.lang.String} object
    * @param pseudoNameIn a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -263,6 +263,9 @@ public class EclipseFluidReadWrite {
         if (st.equals("BIC")) {
           int addedComps = 0;
           kij = new Double[names.size()][names.size()];
+          for (Double[] row : kij) {
+            Arrays.fill(row, 0.0);
+          }
           int lengthLastLine = 0;
           List<String> list = new ArrayList<String>();
           while ((st = br.readLine().replace("/", "")) != null && addedComps < names.size() - 1) {
@@ -376,7 +379,7 @@ public class EclipseFluidReadWrite {
         for (int j = i; j < names.size(); j++) {
           for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
             ((PhaseEosInterface) fluid.getPhase(phaseNum)).getMixingRule()
-                .setBinaryInteractionParameter(i, j, kij[i][j]);
+                .setBinaryInteractionParameter(i, j, kij[i][j].doubleValue());
             ((PhaseEosInterface) fluid.getPhase(phaseNum)).getMixingRule()
                 .setBinaryInteractionParameter(j, i, kij[i][j]);
           }
