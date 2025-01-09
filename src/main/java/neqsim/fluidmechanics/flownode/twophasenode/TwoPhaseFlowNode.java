@@ -3,7 +3,6 @@ package neqsim.fluidmechanics.flownode.twophasenode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNode;
-import neqsim.fluidmechanics.flownode.twophasenode.twophasestirredcellnode.StirredCellNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 

@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
-import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.ThermodynamicConstantsInterface;

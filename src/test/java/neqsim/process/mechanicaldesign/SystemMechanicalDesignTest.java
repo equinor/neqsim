@@ -12,7 +12,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
-import neqsim.process.mechanicaldesign.SystemMechanicalDesign;
 import neqsim.process.mechanicaldesign.pipeline.PipelineMechanicalDesign;
 import neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
@@ -63,8 +62,8 @@ public class SystemMechanicalDesignTest {
     feedStream.setPressure(26.0, "bara");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator seprator1stStage =
-        new neqsim.process.equipment.separator.ThreePhaseSeparator(
-            "1st stage separator", feedStream);
+        new neqsim.process.equipment.separator.ThreePhaseSeparator("1st stage separator",
+            feedStream);
 
     ThrottlingValve valve1 = new ThrottlingValve("valve1", seprator1stStage.getLiquidOutStream());
     valve1.setOutletPressure(19.0);
@@ -73,8 +72,8 @@ public class SystemMechanicalDesignTest {
     oilHeater.setOutTemperature(359.0);
 
     neqsim.process.equipment.separator.ThreePhaseSeparator seprator2ndStage =
-        new neqsim.process.equipment.separator.ThreePhaseSeparator(
-            "2nd stage separator", oilHeater.getOutletStream());
+        new neqsim.process.equipment.separator.ThreePhaseSeparator("2nd stage separator",
+            oilHeater.getOutletStream());
 
     ThrottlingValve valve2 = new ThrottlingValve("valve2", seprator2ndStage.getLiquidOutStream());
     valve2.setOutletPressure(2.7);
@@ -83,8 +82,7 @@ public class SystemMechanicalDesignTest {
     recircstream1.setFlowRate(1e-6, "kg/hr");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator seprator3rdStage =
-        new neqsim.process.equipment.separator.ThreePhaseSeparator(
-            "3rd stage separator");
+        new neqsim.process.equipment.separator.ThreePhaseSeparator("3rd stage separator");
     seprator3rdStage.addStream(valve2.getOutletStream());
     seprator3rdStage.addStream(recircstream1);
 

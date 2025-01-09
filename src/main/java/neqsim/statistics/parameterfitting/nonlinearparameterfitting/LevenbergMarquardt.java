@@ -9,7 +9,6 @@ package neqsim.statistics.parameterfitting.nonlinearparameterfitting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
-import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinition;
 import neqsim.statistics.parameterfitting.StatisticsBaseClass;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 

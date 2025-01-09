@@ -3,7 +3,6 @@ package neqsim.fluidmechanics.geometrydefinitions.reactor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinition;
-import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 
 /**
  * <p>

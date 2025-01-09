@@ -3,7 +3,6 @@ package neqsim.process.controllerdevice;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 
 public class ControllerDeviceBaseClassTest {
   static ControllerDeviceBaseClass c;

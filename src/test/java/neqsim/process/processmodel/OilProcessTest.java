@@ -3,7 +3,6 @@ package neqsim.process.processmodel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
-import neqsim.process.processmodel.ProcessSystem;
 
 /**
  * Test class for GlycolRig.

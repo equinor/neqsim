@@ -8,7 +8,6 @@ package neqsim.util.util;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.statistics.parameterfitting.SampleValue;
 
 /**
  * <p>

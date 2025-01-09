@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.FlowRateAdjuster;
-import neqsim.process.measurementdevice.FlowInducedVibrationAnalyser;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;

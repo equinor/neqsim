@@ -3,7 +3,6 @@ package neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
-import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhasePipeFlowSolver;
 import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver;
 import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhasePipeFlowSolver;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
