@@ -1,5 +1,5 @@
 /*
- * CPAMixingInterface.java
+ * CPAMixingRulesInterface.java
  *
  * Created on 26. februar 2001, 19:38
  */
@@ -10,13 +10,13 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  * <p>
- * CPAMixingInterface interface.
+ * CPAMixingRulesInterface interface.
  * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface CPAMixingInterface extends java.io.Serializable {
+public interface CPAMixingRulesInterface extends java.io.Serializable {
   // public double calcXi(int siteNumber, int compnumb, PhaseInterface phase,
   // double temperature, double pressure, int numbcomp);
 

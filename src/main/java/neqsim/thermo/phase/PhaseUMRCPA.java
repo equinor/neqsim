@@ -9,8 +9,8 @@ import org.ejml.simple.SimpleMatrix;
 // import org.ejml.data.DenseMatrix64F;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentUMRCPA;
-import neqsim.thermo.mixingrule.CPAMixing;
-import neqsim.thermo.mixingrule.CPAMixingInterface;
+import neqsim.thermo.mixingrule.CPAMixingRules;
+import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 
 /**
  * <p>
@@ -21,24 +21,13 @@ import neqsim.thermo.mixingrule.CPAMixingInterface;
  * @version $Id: $Id
  */
 public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
-  /**
-   * <p>
-   * Getter for the field <code>dFdNtemp</code>.
-   * </p>
-   *
-   * @return the dFdNtemp
-   */
-  public double[] getdFdNtemp() {
-    return dFdNtemp;
-  }
-
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseUMRCPA.class);
 
-  public CPAMixing cpaSelect = new CPAMixing();
-  public CPAMixingInterface cpamix;
+  public CPAMixingRules cpaSelect = new CPAMixingRules();
+  public CPAMixingRulesInterface cpamix;
   double gcpavv = 0.0;
   double gcpavvv = 0.0;
   double gcpa = 0.0;
@@ -822,11 +811,22 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
-   * calcdFdNtemp.
+   * <p>
+   * Getter for the field <code>dFdNtemp</code>. Set value by calling function molarVolume.
+   * </p>
+   *
+   * @return the dFdNtemp
+   */
+  public double[] getdFdNtemp() {
+    return dFdNtemp;
+  }
+
+  /**
+   * Calculate and return dFdNtemp. NB! Does not set field <code>dFdNtemp</code>.
    *
    * @return double[]
    */
-  double[] calcdFdNtemp() {
+  private double[] calcdFdNtemp() {
     double tot1 = 0.0;
     double tot2 = 0.0;
     double tot3 = 0.0;
@@ -1373,7 +1373,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public CPAMixingInterface getCpamix() {
+  public CPAMixingRulesInterface getCpamix() {
     return cpamix;
   }
 
