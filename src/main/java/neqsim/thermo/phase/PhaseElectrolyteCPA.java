@@ -99,6 +99,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
   @Override
   public void setMixingRule(int type) {
     super.setMixingRule(type);
+    // NB! Ignores input type
     cpamix = cpaSelect.getMixingRule(1, this);
   }
 
@@ -179,6 +180,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     }
 
     if (cpamix == null) {
+      // NB! Hardcoded mixing rule type
       cpamix = cpaSelect.getMixingRule(1, this);
     }
 

@@ -125,6 +125,7 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
   @Override
   public void setMixingRule(int type) {
     mixingRuleDefined = true;
+    // NB! Ignores input type
     super.setMixingRule(2);
     mixRuleEos = mixSelect.getMixingRule(2, this);
   }
@@ -133,6 +134,7 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
   @Override
   public void resetMixingRule(int type) {
     mixingRuleDefined = true;
+    // NB! Ignores input type
     super.setMixingRule(2);
     mixRuleEos = mixSelect.resetMixingRule(2, this);
   }
