@@ -154,6 +154,19 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    */
   public double getRVP(double referenceTemperature, String unit, String returnUnit);
 
+
+  /**
+   * Calculates the Reid Vapor Pressure (RVP) of the stream.
+   *
+   * @param referenceTemperature the reference temperature at which RVP is calculated
+   * @param unit the unit of the reference temperature
+   * @param returnUnit the unit in which the RVP should be returned
+   * @param rvpMethod the method used to calculate RVP
+   * @return the calculated RVP in the specified return unit
+   */
+  public double getRVP(double referenceTemperature, String unit, String returnUnit,
+      String rvpMethod);
+
   /**
    * <p>
    * setFluid.
@@ -307,4 +320,17 @@ public interface StreamInterface extends ProcessEquipmentInterface {
   /** {@inheritDoc} */
   @Override
   public int hashCode();
+
+
+  /**
+   * Calculates the hydrocarbon dew point of the stream.
+   *
+   * @param temperatureUnit the unit of the temperature to be used (e.g., "C" for Celsius, "K" for
+   *        Kelvin)
+   * @param refpressure the reference pressure at which the dew point is to be calculated
+   * @param refPressureUnit the unit of the reference pressure (e.g., "bar", "Pa")
+   * @return the hydrocarbon dew point temperature in the specified temperature unit
+   */
+  public double getHydrocarbonDewPoint(String temperatureUnit, double refpressure,
+      String refPressureUnit);
 }

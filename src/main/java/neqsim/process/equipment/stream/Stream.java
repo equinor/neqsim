@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
+import neqsim.process.measurementdevice.HydrocarbonDewPointAnalyser;
 import neqsim.process.util.monitor.StreamResponse;
 import neqsim.standards.gasquality.Standard_ISO6976;
 import neqsim.standards.oilquality.Standard_ASTM_D6377;
@@ -560,6 +561,18 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
   /** {@inheritDoc} */
   @Override
+  public double getRVP(double referenceTemperature, String unit, String returnUnit,
+      String rvpMethod) {
+    SystemInterface localSyst = getFluid().clone();
+    Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(localSyst);
+    standard.setReferenceTemperature(referenceTemperature, unit);
+    standard.setMethodRVP(rvpMethod);
+    standard.calculate();
+    return standard.getValue("RVP", returnUnit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String[][] reportResults() {
     return getFluid().getResultTable();
   }
@@ -593,6 +606,16 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     standard.setReferenceState("real");
     standard.calculate();
     return standard.getValue("GCV") * 1.0e3;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getHydrocarbonDewPoint(String temperatureUnit, double refpressure,
+      String refPressureUnit) {
+    HydrocarbonDewPointAnalyser dewPointAnalyser =
+        new HydrocarbonDewPointAnalyser("dew point analyser", this);
+    dewPointAnalyser.setReferencePressure(refpressure);
+    return dewPointAnalyser.getMeasuredValue(temperatureUnit);
   }
 
   /** {@inheritDoc} */
