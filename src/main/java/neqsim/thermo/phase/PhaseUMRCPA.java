@@ -214,6 +214,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     }
 
     if (cpamix == null) {
+      // NB! Hardcoded mixing rule type
       cpamix = cpaSelect.getMixingRule(1, this);
     }
     if (initType > 0) {
@@ -492,6 +493,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   @Override
   public void setMixingRule(int type) {
     super.setMixingRule(type);
+    // NB! Ignores input type
     cpamix = cpaSelect.getMixingRule(1, this);
   }
 
@@ -1528,6 +1530,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       }
     }
     if (cpamix == null) {
+      // NB! Hardcoded mixing rule type
       cpamix = cpaSelect.getMixingRule(1, this);
     }
 

@@ -62,6 +62,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   @Override
   public void setMixingRule(int type) {
     super.setMixingRule(type);
+    // NB! Ignores input type
     cpamix = cpaSelect.getMixingRule(3, this);
   }
 

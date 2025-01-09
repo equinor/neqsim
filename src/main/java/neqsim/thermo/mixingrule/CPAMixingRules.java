@@ -656,15 +656,7 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       }
     }
 
-    if (i == 1) {
-      return new CPA_Radoch();
-    } else if (i == 2) {
-      return new CPA_Radoch();
-    } else if (i == 3) {
-      return new PCSAFTa_Radoch();
-    } else {
-      return new CPA_Radoch();
-    }
+    return getMixingRule(i);
   }
 
   /**
@@ -677,15 +669,7 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
    * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
    */
   public CPAMixingRulesInterface resetMixingRule(int i, PhaseInterface phase) {
-    if (i == 1) {
-      return new CPA_Radoch();
-    } else if (i == 2) {
-      return new CPA_Radoch();
-    } else if (i == 3) {
-      return new PCSAFTa_Radoch();
-    } else {
-      return new CPA_Radoch();
-    }
+    return getMixingRule(i);
   }
 
   /**

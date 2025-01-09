@@ -2099,6 +2099,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     } else if (i == 3) {
       return new ClassicVdW();
     } else {
+      // TODO: not matching the initialization in getMixingRule(int i, PhaseInterface phase)
       return new ClassicVdW();
     }
   }
@@ -2114,12 +2115,12 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
    */
   public EosMixingRulesInterface getMixingRule(int i, PhaseInterface phase) {
     this.wij = new double[3][phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    intparam = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
 
     if (i == 1) {
-      intparam = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+      mixingRuleName = "no (kij=0)";
       return new ClassicVdW();
     }
-    intparam = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     intparamji = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     intparamij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     intparamT = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
