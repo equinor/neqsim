@@ -96,8 +96,6 @@ public class PhaseEnvelope {
 
     testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
     // testSystem.setMultiPhaseCheck(true);
-    // 1- orginal no interaction 2- classic w interaction
-    // 3- Huron-Vidal 4- Wong-Sandler
     // testSystem.setMixingRule(2); //"UNIFAC_UMRPRU");
     // testSystem.setHydrateCheck(true);
     // testSystem.setBmixType(0);

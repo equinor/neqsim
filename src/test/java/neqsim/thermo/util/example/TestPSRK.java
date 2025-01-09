@@ -54,7 +54,7 @@ public class TestPSRK {
     // testSystem.setMixingRule(1);
     // testSystem.set
     testSystem.setMixingRule("HV", "UNIFAC_PSRK");
-    // testSystem.setMixingRule("WS","UNIFAC_PSRK");
+    // testSystem.setMixingRule("WS", "UNIFAC_PSRK");
     testSystem.init(0);
     testSystem.init(2);
 

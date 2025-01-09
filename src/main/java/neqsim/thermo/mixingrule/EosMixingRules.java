@@ -40,15 +40,16 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(EosMixingRules.class);
 
+  /** Name of mixing rule. */
+  private String mixingRuleName = "no (kij=0)";
+  public String mixingRuleGEModel = "NRTL";
+
   public double Atot = 0;
   public double Btot = 0;
   public double Ai = 0;
   public double Bi = 0;
   public double A;
   public double B;
-
-  public String mixingRuleGEModel = "NRTL";
-  public String mixingRuleName = "no (kij=0)";
 
   public double[][] intparam;
   public double[][] intparamT;
@@ -58,21 +59,18 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   public int[][] intparamTType;
 
   double[][] HVDij;
+  double[][] HVDijT;
 
   double[][] HValpha;
 
-  double[][] HVDijT;
-
   double[][] NRTLDij;
+  double[][] NRTLDijT;
 
   double[][] NRTLalpha;
-
-  double[][] NRTLDijT;
 
   double[][][] wij;
   int[][] wijCalcOrFitted;
   String[][] classicOrHV;
-
   String[][] classicOrWS;
 
   public double nEOSkij = 3.0;
@@ -110,25 +108,29 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     return clonedSystem;
   }
 
-  public class ClassicVdW implements EosMixingRulesInterface, java.io.Serializable {
+  public class ClassicVdW implements EosMixingRulesInterface {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
+    /** {@inheritDoc} */
     @Override
-    public java.lang.String getMixingRuleName() {
+    public String getName() {
       return mixingRuleName;
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhaseInterface getGEPhase() {
       return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setMixingRuleGEModel(java.lang.String GEmodel) {
       mixingRuleGEModel = GEmodel;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getBinaryInteractionParameter(int i, int j) {
       if (i == j) {
@@ -137,6 +139,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return intparam[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[][] getBinaryInteractionParameters() {
       return intparam;
@@ -144,6 +147,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
     public void prettyPrintKij() {}
 
+    /** {@inheritDoc} */
     @Override
     public double getBinaryInteractionParameterT1(int i, int j) {
       if (i == j) {
@@ -188,6 +192,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setBinaryInteractionParameter(int i, int j, double value) {
       // System.out.println("intparam: " + intparam[i][j] + " value " + value);
@@ -195,12 +200,14 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       intparam[j][i] = value;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setBinaryInteractionParameterij(int i, int j, double value) {
       intparamij[i][j] = value;
       intparamji[j][i] = value;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setBinaryInteractionParameterji(int i, int j, double value) {
       // System.out.println("intparam: " + intparam[i][j] + " value " + value);
@@ -208,6 +215,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       intparamij[j][i] = value;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setBinaryInteractionParameterT1(int i, int j, double value) {
       // System.out.println("intparam: " + intparam[i][j] + " value " + value);
@@ -225,6 +233,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       calcEOSInteractionParameters = CalcEOSInteractionParameters2;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setnEOSkij(double n) {
       nEOSkij = n;
@@ -238,6 +247,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return Btot;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double aij = 0.0;
@@ -255,6 +265,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       B = 0.0;
@@ -271,6 +282,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return B;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -286,6 +298,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return 2.0 * Ai;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcBi(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -319,6 +332,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return ans1 / (phase.getNumberOfMolesInPhase() * phase.getNumberOfMolesInPhase());
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcBij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
         double pressure, int numbcomp) {
@@ -330,6 +344,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           / phase.getNumberOfMolesInPhase();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -347,6 +362,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return 2.0 * A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
         double pressure, int numbcomp) {
@@ -358,6 +374,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return 2.0 * aij;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double A = 0.0;
@@ -371,6 +388,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return 0.5 * A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double aij = 0;
@@ -395,6 +413,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public ClassicVdW clone() {
       ClassicVdW clonedSystem = null;
@@ -417,6 +436,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return intparam[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double aij = 0;
@@ -508,6 +528,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return 2.0 * A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
         double pressure, int numbcomp) {
@@ -518,6 +539,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return 2.0 * aij;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double A = 0.0;
@@ -532,6 +554,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return 0.5 * A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double aij = 0;
@@ -568,6 +591,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public ClassicSRK clone() {
       ClassicSRK clonedSystem = null;
@@ -586,6 +610,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
+    /** {@inheritDoc} */
     @Override
     public double getkij(double temperature, int i, int j) {
       return intparam[i][j] + intparamT[i][j] * (temperature / 273.15 - 1.0);
@@ -601,6 +626,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -642,6 +668,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return 2.0 * A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double aij = 0.0;
@@ -682,6 +709,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public ClassicSRKT clone() {
       ClassicSRKT clonedSystem = null;
@@ -791,6 +819,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return temp;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double aij = 0;
@@ -818,6 +847,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -857,6 +887,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return 2.0 * A1 + A2;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
         double pressure, int numbcomp) {
@@ -904,6 +935,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A1 + A2 + A4;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -956,6 +988,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
+    /** {@inheritDoc} */
     @Override
     public double getkij(double temperature, int i, int j) {
       if (intparamTType[i][j] == 0) {
@@ -967,6 +1000,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getkijdT(double temperature, int i, int j) {
       if (intparamTType[i][j] == 0) {
@@ -978,6 +1012,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getkijdTdT(double temperature, int i, int j) {
       if (intparamTType[i][j] == 0) {
@@ -989,6 +1024,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       }
     }
 
+    /** {@inheritDoc} */
     @Override
     public ClassicSRKT clone() {
       ClassicSRKT clonedSystem = null;
@@ -1039,6 +1075,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       gePhase.setProperties(phase);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setHVDijParameter(int i, int j, double value) {
       HVDij[i][j] = value;
@@ -1047,11 +1084,13 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       gePhase.setDij(HVDij);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getHVDijParameter(int i, int j) {
       return HVDij[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setHVDijTParameter(int i, int j, double value) {
       HVDijT[i][j] = value;
@@ -1059,11 +1098,13 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       gePhase.setDijT(HVDijT);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getHVDijTParameter(int i, int j) {
       return HVDijT[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setHValphaParameter(int i, int j, double value) {
       HValpha[i][j] = value;
@@ -1071,22 +1112,26 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       gePhase.setAlpha(HValpha);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getHValphaParameter(int i, int j) {
       return HValpha[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getKijWongSandler(int i, int j) {
       return WSintparam[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setKijWongSandler(int i, int j, double value) {
       WSintparam[i][j] = value;
       WSintparam[j][i] = value;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double A = 0.0;
@@ -1106,6 +1151,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -1121,6 +1167,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -1144,6 +1191,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double A = 0;
@@ -1165,6 +1213,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
         double pressure, int numbcomp) {
@@ -1399,33 +1448,39 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       }
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhaseInterface getGEPhase() {
       return gePhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setHVDijParameter(int i, int j, double value) {
       HVDij[i][j] = value;
       gePhase.setDij(HVDij);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getHVDijParameter(int i, int j) {
       return HVDij[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setHVDijTParameter(int i, int j, double value) {
       HVDijT[i][j] = value;
       gePhase.setDijT(HVDijT);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getHVDijTParameter(int i, int j) {
       return HVDijT[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setHValphaParameter(int i, int j, double value) {
       HValpha[i][j] = value;
@@ -1433,22 +1488,26 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       gePhase.setAlpha(HValpha);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getHValphaParameter(int i, int j) {
       return HValpha[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getKijWongSandler(int i, int j) {
       return WSintparam[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setKijWongSandler(int i, int j, double value) {
       WSintparam[i][j] = value;
       WSintparam[j][i] = value;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double A = 0.0;
@@ -1462,6 +1521,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -1480,6 +1540,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
         double pressure, int numbcomp) {
@@ -1497,6 +1558,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double A = 0.0;
@@ -1509,6 +1571,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double A = 0.0;
@@ -1520,6 +1583,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -1616,6 +1680,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       super(phase, WSalpha, WSDij, WSDijT, mixRule);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -1777,6 +1842,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double A = 0;
@@ -1788,6 +1854,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -1803,6 +1870,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double A = 0;
@@ -1817,6 +1885,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double A = 0;
@@ -1834,6 +1903,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -1853,6 +1923,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
         double pressure, int numbcomp) {
@@ -1875,6 +1946,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double B = b_mix * phase.getNumberOfMolesInPhase();
@@ -1882,6 +1954,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return B;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcBi(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -1904,6 +1977,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return bit;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcBij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
         double pressure, int numbcomp) {
@@ -1912,14 +1986,21 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     }
   }
 
-  public class ElectrolyteMixRule implements ElectrolyteMixingRulesInterface, Cloneable {
+  public class ElectrolyteMixRule implements ElectrolyteMixingRulesInterface {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
+
+    /** {@inheritDoc} */
+    @Override
+    public String getName() {
+      return mixingRuleName;
+    }
 
     public ElectrolyteMixRule(PhaseInterface phase) {
       calcWij(phase);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcWij(PhaseInterface phase) {
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -1959,12 +2040,14 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcWij(int compNumbi, int compNumj, PhaseInterface phase, double temperature,
         double pressure, int numbcomp) {
       return -2.0 * getWij(compNumbi, compNumj, temperature); // iwij[0][compNumbi][compNumj];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setWijParameter(int i, int j, double value) {
       // System.out.println("intparam: " + value);
@@ -1972,45 +2055,53 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       wij[0][j][i] = value;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getWijParameter(int i, int j) {
       return wij[0][i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setWijT1Parameter(int i, int j, double value) {
       wij[1][i][j] = value;
       wij[1][j][i] = value;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double gettWijT1Parameter(int i, int j) {
       return wij[1][i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setWijT2Parameter(int i, int j, double value) {
       wij[2][i][j] = value;
       wij[2][j][i] = value;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double gettWijT2Parameter(int i, int j) {
       return wij[2][i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getWij(int i, int j, double temperature) {
       return wij[0][i][j] + wij[1][i][j] * (1.0 / temperature - 1.0 / 298.15)
           + wij[2][i][j] * ((298.15 - temperature) / temperature + Math.log(temperature / 298.15));
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getWijT(int i, int j, double temperature) {
       return (-wij[1][i][j] / (temperature * temperature)
           - wij[2][i][j] * (298.15 - temperature) / (temperature * temperature));
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getWijTT(int i, int j, double temperature) {
       return (2.0 * wij[1][i][j] / (temperature * temperature * temperature)
@@ -2018,6 +2109,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
               / (temperature * temperature * temperature));
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcW(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -2031,6 +2123,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return -W;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcWi(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -2043,6 +2136,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return -2.0 * Wi;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcWiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -2054,6 +2148,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return -2.0 * WiT;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcWT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -2068,6 +2163,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return -WT;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcWTT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -2088,18 +2184,18 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
    * getMixingRule.
    * </p>
    *
-   * @param i a int
+   * @param mr a int
    * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
    */
-  public EosMixingRulesInterface getMixingRule(int i) {
-    if (i == 1) {
+  public EosMixingRulesInterface getMixingRule(int mr) {
+    if (mr == 1) {
       return new ClassicVdW();
-    } else if (i == 2) {
+    } else if (mr == 2) {
       return new ClassicSRK();
-    } else if (i == 3) {
+    } else if (mr == 3) {
       return new ClassicVdW();
     } else {
-      // TODO: not matching the initialization in getMixingRule(int i, PhaseInterface phase)
+      // TODO: not matching the initialization in getMixingRule(int mr, PhaseInterface phase)
       return new ClassicVdW();
     }
   }
@@ -2109,15 +2205,15 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
    * getMixingRule.
    * </p>
    *
-   * @param i a int
+   * @param mr a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
    */
-  public EosMixingRulesInterface getMixingRule(int i, PhaseInterface phase) {
+  public EosMixingRulesInterface getMixingRule(int mr, PhaseInterface phase) {
     this.wij = new double[3][phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     intparam = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
 
-    if (i == 1) {
+    if (mr == 1) {
       mixingRuleName = "no (kij=0)";
       return new ClassicVdW();
     }
@@ -2438,7 +2534,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       logger.error("error reading from database", ex);
     }
 
-    return resetMixingRule(i, phase);
+    return resetMixingRule(mr, phase);
   }
 
   /**
@@ -2468,6 +2564,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       mixingRuleName = "Wong-Sandler";
       return new WongSandlerMixingRule(phase, NRTLalpha, NRTLDij, NRTLDijT, classicOrWS);
     } else if (i == 6) {
+      // Exactly the same as 5
       mixingRuleName = "Wong-Sandler";
       return new WongSandlerMixingRule(phase, NRTLalpha, NRTLDij, NRTLDijT, classicOrWS);
     } else if (i == 7) {

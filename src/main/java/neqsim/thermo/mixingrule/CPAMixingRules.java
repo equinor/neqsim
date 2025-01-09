@@ -29,6 +29,9 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CPAMixingRules.class);
 
+  /** Name of mixing rule. */
+  private String mixingRuleName = "CPA_Radoch";
+
   int[][] assosSchemeType = null; // 0- ER - 1 - CR1
   double[][] cpaBetaCross = null;
   double[][] cpaEpsCross = null;
@@ -73,48 +76,56 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       return 1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcXi(int[][][] assosScheme, int[][][][] assosScheme2, int siteNumber,
         int compnumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       return 1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDelta(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       return 1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDeltaNog(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       return 1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDeltadN(int derivativeComp, int siteNumber1, int siteNumber2, int compnumb1,
         int compnumb2, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       return 1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDeltadT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       return 1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDeltadV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       return 1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDeltadTdT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       return 1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDeltadTdV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -125,6 +136,12 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
   public class CPA_Radoch extends CPA_Radoch_base {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
+
+    /** {@inheritDoc} */
+    @Override
+    public String getName() {
+      return mixingRuleName;
+    }
 
     public double getCrossAssociationEnergy(int compnumb1, int compnumb2, PhaseInterface phase,
         double temperature, double pressure, int numbcomp) {
@@ -154,6 +171,7 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           * phase.getComponent(compnumb2).getAssociationVolume());
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDelta(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -230,6 +248,7 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           * ((PhaseCPAInterface) phase).getGcpa();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDeltaNog(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -266,6 +285,7 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           * getCrossAssociationVolume(compnumb1, compnumb2, phase, temperature, pressure, numbcomp);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDeltadN(int derivativeComp, int siteNumber1, int siteNumber2, int compnumb1,
         int compnumb2, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -275,6 +295,7 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           * ((ComponentSrkCPA) phase.getComponent(derivativeComp)).calc_lngi(phase);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDeltadT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -337,6 +358,7 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           * ((PhaseCPAInterface) phase).getGcpa();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDeltadV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -346,6 +368,7 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           * ((PhaseCPAInterface) phase).getGcpav();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDeltadTdV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -380,6 +403,7 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           * ((PhaseCPAInterface) phase).getGcpa() * ((PhaseCPAInterface) phase).getGcpav();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDeltadTdT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -561,6 +585,7 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           * phase.getComponent(compnumb2).getAssociationVolumeSAFT()) * extrwterm;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcDelta(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -585,17 +610,21 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
    * getMixingRule.
    * </p>
    *
-   * @param i a int
+   * @param mr a int
    * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
    */
-  public CPAMixingRulesInterface getMixingRule(int i) {
-    if (i == 1) {
+  public CPAMixingRulesInterface getMixingRule(int mr) {
+    if (mr == 1) {
+      mixingRuleName = "CPA_Radoch";
       return new CPA_Radoch();
-    } else if (i == 2) {
+    } else if (mr == 2) {
+      mixingRuleName = "CPA_Radoch";
       return new CPA_Radoch();
-    } else if (i == 3) {
+    } else if (mr == 3) {
+      mixingRuleName = "PCSAFTa_Radoch";
       return new PCSAFTa_Radoch();
     } else {
+      mixingRuleName = "CPA_Radoch";
       return new CPA_Radoch();
     }
   }
@@ -605,11 +634,11 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
    * getMixingRule.
    * </p>
    *
-   * @param i a int
+   * @param mr a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
    */
-  public CPAMixingRulesInterface getMixingRule(int i, PhaseInterface phase) {
+  public CPAMixingRulesInterface getMixingRule(int mr, PhaseInterface phase) {
     assosSchemeType = new int[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     cpaBetaCross = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     cpaEpsCross = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
@@ -656,7 +685,7 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       }
     }
 
-    return getMixingRule(i);
+    return getMixingRule(mr);
   }
 
   /**

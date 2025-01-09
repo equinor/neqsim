@@ -44,8 +44,6 @@ public class TVflash {
 
     // testSystem.addComponent("water", 1.0);
     testSystem.createDatabase(true);
-    // 1- orginal no interaction 2- classic w interaction
-    // 3- Huron-Vidal 4- Wong-Sandler
     testSystem.setMixingRule(2);
     // testSystem.setMultiPhaseCheck(true);
     testSystem.init(0);

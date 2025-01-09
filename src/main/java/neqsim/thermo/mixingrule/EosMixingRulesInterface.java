@@ -16,7 +16,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface EosMixingRulesInterface extends Cloneable {
+public interface EosMixingRulesInterface extends MixingRulesInterface {
   /**
    * <p>
    * calcA.
@@ -218,15 +218,6 @@ public interface EosMixingRulesInterface extends Cloneable {
    * @param n a double
    */
   public void setnEOSkij(double n);
-
-  /**
-   * <p>
-   * getMixingRuleName.
-   * </p>
-   *
-   * @return a {@link java.lang.String} object
-   */
-  public java.lang.String getMixingRuleName();
 
   /**
    * <p>

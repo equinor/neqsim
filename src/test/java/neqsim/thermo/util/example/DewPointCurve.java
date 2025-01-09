@@ -60,8 +60,6 @@ public class DewPointCurve {
     // testSystem.addComponent("n-heptane", 0.1757);
 
     testSystem.createDatabase(true);
-    // 1- orginal no interaction 2- classic w interaction
-    // 3- Huron-Vidal 4- Wong-Sandler
     testSystem.setMixingRule(2);
     // testSystem.setMixingRule("HV", "UNIFAC_PSRK");
     testSystem.init(0);

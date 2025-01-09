@@ -20,6 +20,7 @@ import neqsim.thermo.characterization.Characterise;
 import neqsim.thermo.characterization.WaxCharacterise;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhaseInterface;
@@ -108,8 +109,10 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** Maximum allowed number of phases. */
   public int maxNumberOfPhases = 2;
-  private int mixingRule = 1;
+
+  private EosMixingRuleType eosMixingRuleType = EosMixingRuleType.byValue(1);
   protected String modelName = "Default";
+
   protected boolean multiPhaseCheck = false;
   private boolean multiphaseWaxCheck = false;
 
@@ -2432,13 +2435,13 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public int getMixingRule() {
-    return mixingRule;
+    return eosMixingRuleType.getValue();
   }
 
   /** {@inheritDoc} */
   @Override
   public String getMixingRuleName() {
-    return ((PhaseEosInterface) getPhase(0)).getEosMixingRule().getMixingRuleName();
+    return ((PhaseEosInterface) getPhase(0)).getEosMixingRule().getName();
   }
 
   /** {@inheritDoc} */
@@ -4417,45 +4420,17 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final void setMixingRule(int type) {
-    mixingRule = type;
+  public final void setMixingRule(EosMixingRuleType emrt) {
+    eosMixingRuleType = emrt;
     if (numberOfPhases < 4) {
       resetPhysicalProperties();
     }
     for (int i = 0; i < maxNumberOfPhases; i++) {
       if (isPhase(i)) {
-        getPhase(i).setMixingRule(type);
+        getPhase(i).setMixingRule(emrt.getValue());
         getPhase(i).initPhysicalProperties();
       }
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setMixingRule(String typename) {
-    int var = 0;
-    if (typename.equalsIgnoreCase("no")) {
-      var = 1;
-    } else if (typename.equalsIgnoreCase("classic")) {
-      var = 2;
-    } else if (typename.equalsIgnoreCase("HV")) {
-      var = 4;
-    } else if (typename.equalsIgnoreCase("WS")) {
-      var = 5;
-    } else if (typename.equalsIgnoreCase("CPA-Mix") || typename.equalsIgnoreCase("CPA_Mix")) {
-      var = 7;
-    } else if (typename.equalsIgnoreCase("classic-T") || typename.equalsIgnoreCase("classic_T")) {
-      var = 8;
-    } else if (typename.equalsIgnoreCase("classic-T-cpa")
-        || typename.equalsIgnoreCase("classic_t_cpa")) {
-      var = 9;
-    } else if (typename.equalsIgnoreCase("classic-Tx-cpa")
-        || typename.equalsIgnoreCase("classic_tx_cpa")) {
-      var = 10;
-    } else {
-      var = 1;
-    }
-    this.setMixingRule(var);
   }
 
   /** {@inheritDoc} */
@@ -4682,7 +4657,7 @@ public abstract class SystemThermo implements SystemInterface {
         setMaxNumberOfPhases(3);
         if (phaseArray[1] != null) {
           phaseArray[2] = phaseArray[1].clone();
-          phaseArray[2].resetMixingRule(phaseArray[0].getMixingRuleNumber());
+          phaseArray[2].resetMixingRule(phaseArray[0].getEosMixingRuleType().getValue());
           phaseArray[2].resetPhysicalProperties();
           phaseArray[2].initPhysicalProperties();
         }

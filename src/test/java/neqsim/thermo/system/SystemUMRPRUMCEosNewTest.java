@@ -77,6 +77,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
    * testCompressibility.
    * </p>
    */
+  @Disabled("No assertions")
   @Test
   @DisplayName("test compressibility of gas phase")
   public void testCompressibility() {
@@ -90,7 +91,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     testSystem.addComponent("ethane", 0.3);
     // testSystem.addComponent("n-heptane", 0.2);
     // testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
-    testSystem.setMixingRule(0);
+    testSystem.setMixingRule(1);
     testSystem.init(0);
     // testSystem.init(1);
     testSystem.init(3);

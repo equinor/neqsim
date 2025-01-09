@@ -39,8 +39,6 @@ public class BubbleFlash {
 
     // testSystem.addComponent("MEG", 30);
     testSystem.createDatabase(true);
-    // 1- orginal no interaction 2- classic w interaction
-    // 3- Huron-Vidal 4- Wong-Sandler
     testSystem.setMixingRule(10);
     // testSystem.setMixingRule("HV", "UNIFAC_PSRK");
     try {

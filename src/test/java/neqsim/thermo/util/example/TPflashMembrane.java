@@ -44,8 +44,6 @@ public class TPflashMembrane {
     testSystem.addComponent("propane", 100.0, 1);
 
     testSystem.createDatabase(true);
-    // 1- orginal no interaction 2- classic w interaction
-    // 3- Huron-Vidal 4- Wong-Sandler
     testSystem.setMixingRule(2);
 
     testSystem.init_x_y();

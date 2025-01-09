@@ -102,7 +102,7 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
 
     ThreePhaseSeparator secondStageSeparator =
         new neqsim.process.equipment.separator.ThreePhaseSeparator("2nd stage separator",
-            oilHeaterFromFirstStage.getOutStream());
+            oilHeaterFromFirstStage.getOutletStream());
     secondStageSeparator.addStream(LPwellStream);
     secondStageSeparator.run();
 
@@ -149,7 +149,7 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
 
     ThreePhaseSeparator fourthStageSeparator =
         new neqsim.process.equipment.separator.ThreePhaseSeparator("4th stage separator",
-            oilThirdStageMixer.getOutStream());
+            oilThirdStageMixer.getOutletStream());
     fourthStageSeparator.run();
 
     Cooler firstStageCooler = new neqsim.process.equipment.heatexchanger.Cooler("1st stage cooler",
@@ -158,7 +158,7 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
     firstStageCooler.run();
 
     Separator firstStageScrubber = new neqsim.process.equipment.separator.Separator(
-        "1st stage scrubber", firstStageCooler.getOutStream());
+        "1st stage scrubber", firstStageCooler.getOutletStream());
     firstStageScrubber.run();
 
     Pump firststagescrubberpump = new neqsim.process.equipment.pump.Pump("1st stage scrubber pump",
@@ -184,7 +184,7 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
     firstStageCooler2.run();
 
     Separator firstStageScrubber2 = new neqsim.process.equipment.separator.Separator(
-        "1st stage scrubber2", firstStageCooler2.getOutStream());
+        "1st stage scrubber2", firstStageCooler2.getOutletStream());
     firstStageScrubber2.run();
 
     Compressor firstStageCompressor2 = new neqsim.process.equipment.compressor.Compressor(
@@ -200,7 +200,7 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
     secondstagegasmixer.run();
 
     Cooler secondStageCooler = new neqsim.process.equipment.heatexchanger.Cooler("2nd stage cooler",
-        secondstagegasmixer.getOutStream());
+        secondstagegasmixer.getOutletStream());
     secondStageCooler.setOutTemperature(29.0, "C");
     secondStageCooler.run();
 
@@ -217,19 +217,19 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
 
     Mixer richGasMixer = new neqsim.process.equipment.mixer.Mixer("fourth Stage mixer");
     richGasMixer.addStream(firstStageSeparator.getGasOutStream());
-    richGasMixer.addStream(secondStageCompressor.getOutStream());
+    richGasMixer.addStream(secondStageCompressor.getOutletStream());
     richGasMixer.run();
 
     Cooler dewPointControlCooler = new neqsim.process.equipment.heatexchanger.Cooler(
-        "dew point cooler", richGasMixer.getOutStream());
+        "dew point cooler", richGasMixer.getOutletStream());
     dewPointControlCooler.setOutTemperature(29.0, "C");
     dewPointControlCooler.run();
 
     // dewPointControlCooler.getOutStream().getFluid().prettyPrint();
     Assertions.assertEquals(0.9964199113579,
-        dewPointControlCooler.getOutStream().getFluid().getBeta(), 1e-6);
+        dewPointControlCooler.getOutletStream().getFluid().getBeta(), 1e-6);
     Separator dewPointScrubber = new neqsim.process.equipment.separator.Separator(
-        "dew point scrubber", dewPointControlCooler.getOutStream());
+        "dew point scrubber", dewPointControlCooler.getOutletStream());
     dewPointScrubber.run();
 
     Cooler dewPointControlCooler2 = new neqsim.process.equipment.heatexchanger.Cooler(
@@ -238,9 +238,9 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
     dewPointControlCooler2.setOutPressure(59.5, "bara");
     dewPointControlCooler2.run();
     Assertions.assertEquals(0.96737504327,
-        dewPointControlCooler2.getOutStream().getFluid().getBeta(), 1e-6);
+        dewPointControlCooler2.getOutletStream().getFluid().getBeta(), 1e-6);
     Separator dewPointScrubber2 = new neqsim.process.equipment.separator.Separator(
-        "dew point scrubber 2", dewPointControlCooler2.getOutStream());
+        "dew point scrubber 2", dewPointControlCooler2.getOutletStream());
     dewPointScrubber2.run();
 
     // dewPointScrubber2.getFluid().prettyPrint();
@@ -259,19 +259,19 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
     lpLiqmixer.run();
 
     Recycle hpResycle = new neqsim.process.equipment.util.Recycle("HP liq resycle");
-    hpResycle.addStream(hpLiqmixer.getOutStream());
+    hpResycle.addStream(hpLiqmixer.getOutletStream());
     hpResycle.setOutletStream(oilFirstStage);
     hpResycle.setTolerance(1e-2);
     hpResycle.run();
 
     Recycle mpResycle = new neqsim.process.equipment.util.Recycle("MP liq resycle");
-    mpResycle.addStream(mpLiqmixer.getOutStream());
+    mpResycle.addStream(mpLiqmixer.getOutletStream());
     mpResycle.setOutletStream(oilSeccondStage);
     mpResycle.setTolerance(1e-2);
     mpResycle.run();
 
     Recycle lpResycle = new neqsim.process.equipment.util.Recycle("LP liq resycle");
-    lpResycle.addStream(lpLiqmixer.getOutStream());
+    lpResycle.addStream(lpLiqmixer.getOutletStream());
     lpResycle.setOutletStream(oilThirdStage);
     lpResycle.setTolerance(1e-2);
     lpResycle.run();
@@ -284,7 +284,7 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
     // turboexpander.getFluid().prettyPrint();
 
     Separator DPCUScrubber = new neqsim.process.equipment.separator.Separator("TEX LT scrubber",
-        turboexpander.getOutStream());
+        turboexpander.getOutletStream());
     DPCUScrubber.run();
 
     // DPCUScrubber.getFluid().prettyPrint();
