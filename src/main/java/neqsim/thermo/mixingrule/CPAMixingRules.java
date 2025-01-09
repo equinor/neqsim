@@ -17,17 +17,17 @@ import neqsim.util.database.NeqSimDataBase;
 
 /**
  * <p>
- * CPAMixing class.
+ * CPAMixingRules class.
  * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
+public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(CPAMixing.class);
+  static Logger logger = LogManager.getLogger(CPAMixingRules.class);
 
   int[][] assosSchemeType = null; // 0- ER - 1 - CR1
   double[][] cpaBetaCross = null;
@@ -39,17 +39,17 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
 
   /**
    * <p>
-   * Constructor for CPAMixing.
+   * Constructor for CPAMixingRules.
    * </p>
    */
-  public CPAMixing() {}
+  public CPAMixingRules() {}
 
   /** {@inheritDoc} */
   @Override
-  public CPAMixing clone() {
-    CPAMixing clonedSystem = null;
+  public CPAMixingRules clone() {
+    CPAMixingRules clonedSystem = null;
     try {
-      clonedSystem = (CPAMixing) super.clone();
+      clonedSystem = (CPAMixingRules) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
@@ -57,7 +57,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
     return clonedSystem;
   }
 
-  public class CPA_Radoch_base implements CPAMixingInterface {
+  public abstract class CPA_Radoch_base implements CPAMixingRulesInterface {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
@@ -586,9 +586,9 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
    * </p>
    *
    * @param i a int
-   * @return a {@link neqsim.thermo.mixingrule.CPAMixingInterface} object
+   * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
    */
-  public CPAMixingInterface getMixingRule(int i) {
+  public CPAMixingRulesInterface getMixingRule(int i) {
     if (i == 1) {
       return new CPA_Radoch();
     } else if (i == 2) {
@@ -607,9 +607,9 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
    *
    * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a {@link neqsim.thermo.mixingrule.CPAMixingInterface} object
+   * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
    */
-  public CPAMixingInterface getMixingRule(int i, PhaseInterface phase) {
+  public CPAMixingRulesInterface getMixingRule(int i, PhaseInterface phase) {
     assosSchemeType = new int[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     cpaBetaCross = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     cpaEpsCross = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
@@ -674,9 +674,9 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
    *
    * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a {@link neqsim.thermo.mixingrule.CPAMixingInterface} object
+   * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
    */
-  public CPAMixingInterface resetMixingRule(int i, PhaseInterface phase) {
+  public CPAMixingRulesInterface resetMixingRule(int i, PhaseInterface phase) {
     if (i == 1) {
       return new CPA_Radoch();
     } else if (i == 2) {

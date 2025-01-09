@@ -1002,7 +1002,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     }
   }
 
-  public class SRKHuronVidal extends ClassicSRK implements HVmixingRuleInterface {
+  public class SRKHuronVidal extends ClassicSRK implements HVMixingRulesInterface {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
@@ -1182,7 +1182,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     }
   }
 
-  public class SRKHuronVidal2 extends ClassicSRK implements HVmixingRuleInterface {
+  public class SRKHuronVidal2 extends ClassicSRK implements HVMixingRulesInterface {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
@@ -2707,9 +2707,6 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
    */
   @ExcludeFromJacocoGeneratedReport
   public void displayInteractionCoefficients(String intType, PhaseInterface phase) {
-    String[][] interactTable =
-        new String[phase.getNumberOfComponents() + 1][phase.getNumberOfComponents() + 1];
-
     java.text.DecimalFormat nf = new java.text.DecimalFormat();
 
     java.text.DecimalFormatSymbols symbols = new java.text.DecimalFormatSymbols();
@@ -2721,6 +2718,8 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
 
     // String[][] table = new String[getPhases()[0].getNumberOfComponents() +
     // 30][7];
+    String[][] interactTable =
+        new String[phase.getNumberOfComponents() + 1][phase.getNumberOfComponents() + 1];
     String[] names = new String[phase.getNumberOfComponents() + 1];
     names[0] = "";
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {

@@ -2,8 +2,8 @@ package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
-import neqsim.thermo.mixingrule.CPAMixing;
-import neqsim.thermo.mixingrule.CPAMixingInterface;
+import neqsim.thermo.mixingrule.CPAMixingRules;
+import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 
 /**
  * <p>
@@ -18,8 +18,8 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
   private static final long serialVersionUID = 1000;
 
   int totalNumberOfAccociationSites = 0;
-  public CPAMixing cpaSelect = new CPAMixing();
-  public CPAMixingInterface cpamix;
+  public CPAMixingRules cpaSelect = new CPAMixingRules();
+  public CPAMixingRulesInterface cpamix;
   double hcpatot = 1.0;
   double hcpatotdT = 0.0;
   double hcpatotdTdT = 0.0;
@@ -456,7 +456,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public CPAMixingInterface getCpamix() {
+  public CPAMixingRulesInterface getCpamix() {
     return cpamix;
   }
 

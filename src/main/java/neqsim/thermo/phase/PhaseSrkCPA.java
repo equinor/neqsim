@@ -8,8 +8,8 @@ import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
-import neqsim.thermo.mixingrule.CPAMixing;
-import neqsim.thermo.mixingrule.CPAMixingInterface;
+import neqsim.thermo.mixingrule.CPAMixingRules;
+import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 
 /**
  * <p>
@@ -25,8 +25,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseSrkCPA.class);
 
-  public CPAMixing cpaSelect = new CPAMixing();
-  public CPAMixingInterface cpamix;
+  public CPAMixingRules cpaSelect = new CPAMixingRules();
+  public CPAMixingRulesInterface cpamix;
   double gcpavv = 0.0;
   double gcpavvv = 0.0;
   double gcpa = 0.0;
@@ -667,11 +667,11 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   }
 
   /**
-   * calcdFdNtemp.
+   * Calculate and return dFdNtemp. NB! Does not set field <code>dFdNtemp</code>.
    *
    * @return double[]
    */
-  double[] calcdFdNtemp() {
+  private double[] calcdFdNtemp() {
     double tot1 = 0.0;
     double tot2 = 0.0;
     double tot3 = 0.0;
@@ -960,7 +960,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
   /**
    * <p>
-   * Getter for the field <code>dFdNtemp</code>.
+   * Getter for the field <code>dFdNtemp</code>. Set value by calling function molarVolume.
    * </p>
    *
    * @return the dFdNtemp
@@ -1419,7 +1419,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public CPAMixingInterface getCpamix() {
+  public CPAMixingRulesInterface getCpamix() {
     return cpamix;
   }
 
