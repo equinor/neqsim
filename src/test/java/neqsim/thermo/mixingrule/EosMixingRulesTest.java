@@ -38,9 +38,9 @@ public class EosMixingRulesTest {
     testSystem.setMixingRule("classic");
 
     double kij =
-        ((PhaseEos) testSystem.getPhase(0)).getEOSMixingRule().getBinaryInteractionParameter(0, 1);
+        ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(0, 1);
     double kij2 =
-        ((PhaseEos) testSystem.getPhase(0)).getEOSMixingRule().getBinaryInteractionParameter(3, 0);
+        ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(3, 0);
 
     // Print kij
     assertEquals(-0.019997, kij, 1e-5);
@@ -59,7 +59,7 @@ public class EosMixingRulesTest {
     testSystem.setMixingRule("classic");
 
     double kij =
-        ((PhaseEos) testSystem.getPhase(0)).getEOSMixingRule().getBinaryInteractionParameter(0, 1);
+        ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(0, 1);
 
     // Print kij
     assertEquals(-0.05, kij, 1e-5);
@@ -88,9 +88,9 @@ public class EosMixingRulesTest {
     testSystem.setMixingRule("classic");
 
     double kij =
-        ((PhaseEos) testSystem.getPhase(0)).getEOSMixingRule().getBinaryInteractionParameter(0, 1);
+        ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(0, 1);
     double kij2 =
-        ((PhaseEos) testSystem.getPhase(0)).getEOSMixingRule().getBinaryInteractionParameter(3, 0);
+        ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(3, 0);
 
     // Print kij
     assertEquals(0.1, kij, 1e-5);

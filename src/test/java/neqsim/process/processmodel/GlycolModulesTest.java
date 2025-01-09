@@ -47,37 +47,37 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(feedGas);
     testOps.TPflash();
-    ((PhaseEosInterface) feedGas.getPhases()[0]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[0]).getEosMixingRule()
         .setBinaryInteractionParameterji(2, 15, 0.13);
-    ((PhaseEosInterface) feedGas.getPhases()[1]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[1]).getEosMixingRule()
         .setBinaryInteractionParameterji(2, 15, 0.13); // methane
-    ((PhaseEosInterface) feedGas.getPhases()[0]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[0]).getEosMixingRule()
         .setBinaryInteractionParameterji(5, 15, 0.13);
-    ((PhaseEosInterface) feedGas.getPhases()[1]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[1]).getEosMixingRule()
         .setBinaryInteractionParameterji(5, 15, 0.13); // i-butane
-    ((PhaseEosInterface) feedGas.getPhases()[0]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[0]).getEosMixingRule()
         .setBinaryInteractionParameterji(6, 15, 0.157);
-    ((PhaseEosInterface) feedGas.getPhases()[1]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[1]).getEosMixingRule()
         .setBinaryInteractionParameterji(6, 15, 0.157); // n-butane
-    ((PhaseEosInterface) feedGas.getPhases()[0]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[0]).getEosMixingRule()
         .setBinaryInteractionParameterji(7, 15, 0.055);
-    ((PhaseEosInterface) feedGas.getPhases()[1]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[1]).getEosMixingRule()
         .setBinaryInteractionParameterji(7, 15, 0.055); // i-pentane
-    ((PhaseEosInterface) feedGas.getPhases()[0]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[0]).getEosMixingRule()
         .setBinaryInteractionParameterji(8, 15, 0.095);
-    ((PhaseEosInterface) feedGas.getPhases()[1]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[1]).getEosMixingRule()
         .setBinaryInteractionParameterji(8, 15, 0.095); // n-pentane
-    ((PhaseEosInterface) feedGas.getPhases()[0]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[0]).getEosMixingRule()
         .setBinaryInteractionParameterji(9, 15, -0.02);
-    ((PhaseEosInterface) feedGas.getPhases()[1]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[1]).getEosMixingRule()
         .setBinaryInteractionParameterji(9, 15, -0.02); // n-hexane
-    ((PhaseEosInterface) feedGas.getPhases()[0]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[0]).getEosMixingRule()
         .setBinaryInteractionParameterji(10, 15, 0.08);
-    ((PhaseEosInterface) feedGas.getPhases()[1]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[1]).getEosMixingRule()
         .setBinaryInteractionParameterji(10, 15, 0.08); // n-heptane
-    ((PhaseEosInterface) feedGas.getPhases()[0]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[0]).getEosMixingRule()
         .setBinaryInteractionParameterji(11, 15, 0.087);
-    ((PhaseEosInterface) feedGas.getPhases()[1]).getEOSMixingRule()
+    ((PhaseEosInterface) feedGas.getPhases()[1]).getEosMixingRule()
         .setBinaryInteractionParameterji(11, 15, 0.087); // benzene
     testOps.TPflash();
     // feedGas.setMolarComposition(new double[] { liftGas_N2, liftGas_CO2, liftGas_Methane,

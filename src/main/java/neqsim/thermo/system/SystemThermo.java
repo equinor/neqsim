@@ -1277,7 +1277,7 @@ public abstract class SystemThermo implements SystemInterface {
   public void calcKIJ(boolean ok) {
     neqsim.thermo.mixingrule.EosMixingRules.calcEOSInteractionParameters = ok;
     for (int i = 0; i < numberOfPhases; i++) {
-      ((PhaseEosInterface) getPhase(i)).getEOSMixingRule().setCalcEOSInteractionParameters(ok);
+      ((PhaseEosInterface) getPhase(i)).getEosMixingRule().setCalcEOSInteractionParameters(ok);
     }
   }
 
@@ -2438,7 +2438,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public String getMixingRuleName() {
-    return ((PhaseEosInterface) getPhase(0)).getEOSMixingRule().getMixingRuleName();
+    return ((PhaseEosInterface) getPhase(0)).getEosMixingRule().getMixingRuleName();
   }
 
   /** {@inheritDoc} */
@@ -4311,7 +4311,7 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void setBmixType(int bmixType) {
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      ((PhaseEosInterface) getPhase(i)).getEOSMixingRule().setBmixType(bmixType);
+      ((PhaseEosInterface) getPhase(i)).getEosMixingRule().setBmixType(bmixType);
     }
   }
 

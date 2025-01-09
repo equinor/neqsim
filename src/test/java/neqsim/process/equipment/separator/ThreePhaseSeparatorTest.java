@@ -85,10 +85,10 @@ class ThreePhaseSeparatorTest {
       int waterIndex = findComponentIndex(componentNames, "water");
 
       if (componentIndex != -1 && waterIndex != -1) {
-        ((PhaseEosInterface) fluid1.getPhases()[0]).getEOSMixingRule()
+        ((PhaseEosInterface) fluid1.getPhases()[0]).getEosMixingRule()
             .setBinaryInteractionParameter(componentIndex, waterIndex, intParameter[i]);
 
-        ((PhaseEosInterface) fluid1.getPhases()[1]).getEOSMixingRule()
+        ((PhaseEosInterface) fluid1.getPhases()[1]).getEosMixingRule()
             .setBinaryInteractionParameter(componentIndex, waterIndex, intParameter[i]);
       } else {
       }
