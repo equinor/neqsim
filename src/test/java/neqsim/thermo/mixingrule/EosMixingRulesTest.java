@@ -10,8 +10,8 @@ import neqsim.thermo.phase.PhaseEos;
  * library.
  */
 /**
- * This class contains unit tests for verifying the behavior of different mixing rules
- * in the neqsim thermodynamic system.
+ * This class contains unit tests for verifying the behavior of different mixing rules in the neqsim
+ * thermodynamic system.
  */
 public class EosMixingRulesTest {
   @Test
@@ -38,9 +38,9 @@ public class EosMixingRulesTest {
     testSystem.setMixingRule("classic");
 
     double kij =
-        ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameter(0, 1);
+        ((PhaseEos) testSystem.getPhase(0)).getEOSMixingRule().getBinaryInteractionParameter(0, 1);
     double kij2 =
-        ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameter(3, 0);
+        ((PhaseEos) testSystem.getPhase(0)).getEOSMixingRule().getBinaryInteractionParameter(3, 0);
 
     // Print kij
     assertEquals(-0.019997, kij, 1e-5);
@@ -59,7 +59,7 @@ public class EosMixingRulesTest {
     testSystem.setMixingRule("classic");
 
     double kij =
-        ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameter(0, 1);
+        ((PhaseEos) testSystem.getPhase(0)).getEOSMixingRule().getBinaryInteractionParameter(0, 1);
 
     // Print kij
     assertEquals(-0.05, kij, 1e-5);
@@ -88,9 +88,9 @@ public class EosMixingRulesTest {
     testSystem.setMixingRule("classic");
 
     double kij =
-        ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameter(0, 1);
+        ((PhaseEos) testSystem.getPhase(0)).getEOSMixingRule().getBinaryInteractionParameter(0, 1);
     double kij2 =
-        ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameter(3, 0);
+        ((PhaseEos) testSystem.getPhase(0)).getEOSMixingRule().getBinaryInteractionParameter(3, 0);
 
     // Print kij
     assertEquals(0.1, kij, 1e-5);
