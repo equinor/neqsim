@@ -3,7 +3,6 @@ package neqsim.process.equipment.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.util.PressureDrop;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class PressureDropTest {

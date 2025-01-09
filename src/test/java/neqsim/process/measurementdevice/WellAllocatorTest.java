@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.measurementdevice.WellAllocator;
 import neqsim.process.util.monitor.WellAllocatorResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;

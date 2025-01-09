@@ -2,7 +2,6 @@ package neqsim.statistics.parameterfitting;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 

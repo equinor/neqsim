@@ -3,7 +3,6 @@ package neqsim.process.equipment.heatexchanger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.Recycle;
@@ -91,8 +90,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     Stream stream_Cold = new Stream("Stream2", testSystem2);
 
     neqsim.process.equipment.heatexchanger.HeatExchanger heatExchanger1 =
-        new neqsim.process.equipment.heatexchanger.HeatExchanger("heatEx",
-            stream_Hot, stream_Cold);
+        new neqsim.process.equipment.heatexchanger.HeatExchanger("heatEx", stream_Hot, stream_Cold);
 
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();
@@ -108,8 +106,8 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
 
     assertEquals(15780.77130, heatExchanger1.getUAvalue(), 1e-3);
 
-    heatExchanger1 = new neqsim.process.equipment.heatexchanger.HeatExchanger(
-        "heatEx", stream_Hot, stream_Cold);
+    heatExchanger1 =
+        new neqsim.process.equipment.heatexchanger.HeatExchanger("heatEx", stream_Hot, stream_Cold);
     heatExchanger1.setDeltaT(1.0);
     heatExchanger1.run();
 

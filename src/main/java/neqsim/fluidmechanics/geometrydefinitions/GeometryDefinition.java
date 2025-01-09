@@ -10,7 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.packings.PackingInterface;
 import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.Wall;
-import neqsim.fluidmechanics.geometrydefinitions.stirredcell.StirredCell;
 import neqsim.fluidmechanics.geometrydefinitions.surrounding.SurroundingEnvironment;
 import neqsim.fluidmechanics.geometrydefinitions.surrounding.SurroundingEnvironmentBaseClass;
 

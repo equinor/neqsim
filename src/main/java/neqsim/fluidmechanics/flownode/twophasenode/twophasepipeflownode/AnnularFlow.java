@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow;
-import neqsim.fluidmechanics.flownode.onephasenode.onePhaseFlowNode;
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.MaterialLayer;

@@ -11,7 +11,6 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.VolumeFlowTransmitter;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 public class ProcessSystemControllerTest extends neqsim.NeqSimTest {

@@ -2,7 +2,6 @@ package neqsim.fluidmechanics.geometrydefinitions.pipe;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhasePipeFlowSolver;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinition;
 import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.PipeWall;
 

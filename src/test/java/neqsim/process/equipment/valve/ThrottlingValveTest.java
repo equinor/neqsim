@@ -3,7 +3,6 @@ package neqsim.process.equipment.valve;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.valve.ThrottlingValve;
 
 public class ThrottlingValveTest {
   @Test

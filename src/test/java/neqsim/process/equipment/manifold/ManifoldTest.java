@@ -2,7 +2,6 @@ package neqsim.process.equipment.manifold;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;

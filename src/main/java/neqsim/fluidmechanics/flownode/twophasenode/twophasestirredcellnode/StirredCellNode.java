@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow;
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
-import neqsim.fluidmechanics.flownode.twophasenode.twophasereactorflownode.TwoPhaseTrayTowerFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.stirredcell.StirredCell;
 import neqsim.thermo.system.SystemInterface;
