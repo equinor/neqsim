@@ -3579,35 +3579,6 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setPhaseType(int phaseToChange, String phaseName) {
-    // System.out.println("new phase type: cha " + pt);
-    if (allowPhaseShift) {
-      phaseType[phaseIndex[phaseToChange]] = PhaseType.byName(phaseName);
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void invertPhaseTypes() {
-    // Following code was from public void setPhaseType(int phaseToChange, String
-    // phaseTypeName) {
-    /*
-     * int newPhaseType = 0; if (phaseTypeName.equals("gas")) { newPhaseType = 1; } else if
-     * (StateOfMatter.isLiquid(PhaseType.byDesc(phaseTypeName))) { newPhaseType = 0; } else {
-     * newPhaseType = 0; }
-     */
-
-    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      if (phaseType[i] == PhaseType.byValue(0)) {
-        phaseType[i] = PhaseType.byValue(1);
-      } else {
-        phaseType[i] = PhaseType.byValue(0);
-      }
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public final boolean isChemicalSystem() {
     return chemicalSystem;
   }
@@ -4266,16 +4237,6 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setAllPhaseType(PhaseType pt) {
-    if (allowPhaseShift) {
-      for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-        setPhaseType(i, pt);
-      }
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void setAttractiveTerm(int i) {
     for (int k = 0; k < getMaxNumberOfPhases(); k++) {
       phaseArray[k].setAttractiveTerm(i);
@@ -4779,6 +4740,45 @@ public abstract class SystemThermo implements SystemInterface {
     // System.out.println("new phase type: cha " + pt);
     if (allowPhaseShift) {
       phaseType[phaseIndex[phaseToChange]] = pt;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPhaseType(int phaseToChange, String phaseName) {
+    // System.out.println("new phase type: cha " + pt);
+    if (allowPhaseShift) {
+      phaseType[phaseIndex[phaseToChange]] = PhaseType.byName(phaseName);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setAllPhaseType(PhaseType pt) {
+    if (allowPhaseShift) {
+      for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+        setPhaseType(i, pt);
+      }
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void invertPhaseTypes() {
+    // Following code was from public void setPhaseType(int phaseToChange, String
+    // phaseTypeName) {
+    /*
+     * int newPhaseType = 0; if (phaseTypeName.equals("gas")) { newPhaseType = 1; } else if
+     * (StateOfMatter.isLiquid(PhaseType.byDesc(phaseTypeName))) { newPhaseType = 0; } else {
+     * newPhaseType = 0; }
+     */
+
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+      if (phaseType[i] == PhaseType.byValue(0)) {
+        phaseType[i] = PhaseType.byValue(1);
+      } else {
+        phaseType[i] = PhaseType.byValue(0);
+      }
     }
   }
 

@@ -193,41 +193,6 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           * ((PhaseCPAInterface) phase).getGcpa();
     }
 
-    @Override
-    public double calcDeltaNog(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
-        PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-      if (assosSchemeType[compnumb1][compnumb2] == 0) {
-        double temp2 = 0;
-        double temp1 = (Math.exp(
-            getCrossAssociationEnergy(compnumb1, compnumb1, phase, temperature, pressure, numbcomp)
-                / (R * phase.getTemperature()))
-            - 1.0)
-            * (((ComponentEosInterface) phase.getComponent(compnumb1)).getb()
-                + ((ComponentEosInterface) phase.getComponent(compnumb1)).getb())
-            / 2.0 * getCrossAssociationVolume(compnumb1, compnumb1, phase, temperature, pressure,
-                numbcomp);
-        if (compnumb1 == compnumb2) {
-          temp2 = temp1;
-        } else {
-          temp2 = (Math.exp(getCrossAssociationEnergy(compnumb2, compnumb2, phase, temperature,
-              pressure, numbcomp) / (R * phase.getTemperature())) - 1.0)
-              * (((ComponentEosInterface) phase.getComponent(compnumb2)).getb()
-                  + ((ComponentEosInterface) phase.getComponent(compnumb2)).getb())
-              / 2.0 * getCrossAssociationVolume(compnumb2, compnumb2, phase, temperature, pressure,
-                  numbcomp);
-        }
-        return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2,
-            siteNumber1, siteNumber2) * Math.sqrt(temp1 * temp2);
-      }
-      return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2,
-          siteNumber1, siteNumber2)
-          * (Math.exp(getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature, pressure,
-              numbcomp) / (R * phase.getTemperature())) - 1.0)
-          * (((ComponentEosInterface) phase.getComponent(compnumb1)).getb()
-              + ((ComponentEosInterface) phase.getComponent(compnumb2)).getb())
-          / 2.0
-          * getCrossAssociationVolume(compnumb1, compnumb2, phase, temperature, pressure, numbcomp);
-    }
 
     public double calcDelta(int compnumb1, int compnumb2, PhaseInterface phase, double temperature,
         double pressure, int numbcomp) {
@@ -264,6 +229,42 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           / 2.0
           * getCrossAssociationVolume(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
           * ((PhaseCPAInterface) phase).getGcpa();
+    }
+
+    @Override
+    public double calcDeltaNog(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
+        PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+      if (assosSchemeType[compnumb1][compnumb2] == 0) {
+        double temp2 = 0;
+        double temp1 = (Math.exp(
+            getCrossAssociationEnergy(compnumb1, compnumb1, phase, temperature, pressure, numbcomp)
+                / (R * phase.getTemperature()))
+            - 1.0)
+            * (((ComponentEosInterface) phase.getComponent(compnumb1)).getb()
+                + ((ComponentEosInterface) phase.getComponent(compnumb1)).getb())
+            / 2.0 * getCrossAssociationVolume(compnumb1, compnumb1, phase, temperature, pressure,
+                numbcomp);
+        if (compnumb1 == compnumb2) {
+          temp2 = temp1;
+        } else {
+          temp2 = (Math.exp(getCrossAssociationEnergy(compnumb2, compnumb2, phase, temperature,
+              pressure, numbcomp) / (R * phase.getTemperature())) - 1.0)
+              * (((ComponentEosInterface) phase.getComponent(compnumb2)).getb()
+                  + ((ComponentEosInterface) phase.getComponent(compnumb2)).getb())
+              / 2.0 * getCrossAssociationVolume(compnumb2, compnumb2, phase, temperature, pressure,
+                  numbcomp);
+        }
+        return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2,
+            siteNumber1, siteNumber2) * Math.sqrt(temp1 * temp2);
+      }
+      return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2,
+          siteNumber1, siteNumber2)
+          * (Math.exp(getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature, pressure,
+              numbcomp) / (R * phase.getTemperature())) - 1.0)
+          * (((ComponentEosInterface) phase.getComponent(compnumb1)).getb()
+              + ((ComponentEosInterface) phase.getComponent(compnumb2)).getb())
+          / 2.0
+          * getCrossAssociationVolume(compnumb1, compnumb2, phase, temperature, pressure, numbcomp);
     }
 
     @Override

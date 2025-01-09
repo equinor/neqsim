@@ -41,21 +41,6 @@ public class Fluid {
   }
 
   /**
-   *
-   */
-  private void setThermoModel() {
-    if (thermoModel.equals("srk")) {
-      fluid = new neqsim.thermo.system.SystemSrkEos();
-    } else if (thermoModel.equals("pr")) {
-      fluid = new neqsim.thermo.system.SystemPrEos();
-    } else if (thermoModel.equals("cpa")) {
-      fluid = new neqsim.thermo.system.SystemSrkCPAstatoil();
-    } else {
-      fluid = new neqsim.thermo.system.SystemSrkEos();
-    }
-  }
-
-  /**
    * <p>
    * create2.
    * </p>
@@ -342,6 +327,21 @@ public class Fluid {
    */
   public String getThermoModel() {
     return thermoModel;
+  }
+
+  /**
+   * Init fluid object?.
+   */
+  private void setThermoModel() {
+    if (thermoModel.equals("srk")) {
+      fluid = new neqsim.thermo.system.SystemSrkEos();
+    } else if (thermoModel.equals("pr")) {
+      fluid = new neqsim.thermo.system.SystemPrEos();
+    } else if (thermoModel.equals("cpa")) {
+      fluid = new neqsim.thermo.system.SystemSrkCPAstatoil();
+    } else {
+      fluid = new neqsim.thermo.system.SystemSrkEos();
+    }
   }
 
   /**
