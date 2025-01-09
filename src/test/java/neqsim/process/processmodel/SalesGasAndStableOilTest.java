@@ -100,7 +100,6 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
     oilHeaterFromFirstStage.setOutTemperature(80.0, "C");
     oilHeaterFromFirstStage.run();
 
-
     ThreePhaseSeparator secondStageSeparator =
         new neqsim.process.equipment.separator.ThreePhaseSeparator("2nd stage separator",
             oilHeaterFromFirstStage.getOutStream());
@@ -157,7 +156,6 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
         fourthStageSeparator.getGasOutStream());
     firstStageCooler.setOutTemperature(28.9, "C");
     firstStageCooler.run();
-
 
     Separator firstStageScrubber = new neqsim.process.equipment.separator.Separator(
         "1st stage scrubber", firstStageCooler.getOutStream());
@@ -291,16 +289,7 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
 
     // DPCUScrubber.getFluid().prettyPrint();
     // richGasMixer.getOutStream().getFluid().prettyPrint();
-
-
     /*
-     * 
-     * 
-     * 
-     * 
-     * 
-     * 
-     * 
      * hpResycle = jneqsim.process.equipment.util.Recycle("HP liq resycle")
      * hpResycle.addStream(hpLiqmixer.getOutStream()) hpResycle.setOutletStream(oilFirstStage)
      * hpResycle.setTolerance(1e-2)
@@ -331,7 +320,5 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
      * :75.0, 'ngl_routing_to_oil': 0.1, 'TEXcompOutPressure': 47.0, 'KA27831A_outpressure': 95.3,
      * 'KA27831B_outpressure':95.3, 'KA27841A_outpressure': 150.5, 'KA27841B_outpressure':150.5,
      */
-
   }
-
 }

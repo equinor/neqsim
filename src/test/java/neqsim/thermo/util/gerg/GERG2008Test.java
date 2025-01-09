@@ -8,8 +8,6 @@ import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 
-
-
 public class GERG2008Test {
   private GERG2008 gerg;
 
@@ -94,6 +92,5 @@ public class GERG2008Test {
     assertTrue(Kappa.val != 0);
     assertTrue(A.val != 0);
     assertEquals(0.83232372466, Z.val, 1e-5);
-
   }
 }

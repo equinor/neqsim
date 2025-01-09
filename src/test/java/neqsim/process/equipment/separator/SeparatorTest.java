@@ -89,7 +89,6 @@ class SeparatorTest extends neqsim.NeqSimTest {
     fluid1.setTemperature(55.0, "C");
     fluid1.setPressure(55.0, "bara");
 
-
     Stream feedStream = new Stream("feed fluid", fluid1);
     Separator separator1 = new Separator("sep1", feedStream);
 
@@ -98,13 +97,10 @@ class SeparatorTest extends neqsim.NeqSimTest {
     processOps.add(separator1);
     processOps.run();
 
-
     Assertions.assertEquals(0.06976026260, feedStream.getFluid().getPhase(PhaseType.OIL).getBeta(),
         1e-5);
 
     Assertions.assertEquals(0.06976026260, separator1.getFluid().getPhase(PhaseType.OIL).getBeta(),
         1e-5);
-
-
   }
 }

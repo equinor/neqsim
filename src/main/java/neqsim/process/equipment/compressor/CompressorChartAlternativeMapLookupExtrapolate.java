@@ -20,16 +20,17 @@ public class CompressorChartAlternativeMapLookupExtrapolate
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CompressorChartAlternativeMapLookupExtrapolate.class);
 
-
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Retrieves the closest reference speeds to the given speed from the compressor chart values. The
    * method returns a list containing one or two speeds: - If the given speed matches a reference
    * speed, the list contains only that speed. - If the given speed is between two reference speeds,
    * the list contains both speeds. - If the given speed is less than the lowest reference speed,
    * the list contains the lowest reference speed. - If the given speed is greater than the highest
    * reference speed, the list contains the highest reference speed.
+   * </p>
    */
   @Override
   public ArrayList<Double> getClosestRefSpeeds(double speed) {

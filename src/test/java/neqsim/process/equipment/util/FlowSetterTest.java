@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.process.equipment.util.FlowSetter;
 import neqsim.process.measurementdevice.MultiPhaseMeter;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;

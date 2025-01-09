@@ -14,7 +14,6 @@ public class PhysicalPropertyModelTest {
     assertEquals(PhysicalPropertyModel.WATER, PhysicalPropertyModel.byName("water"));
   }
 
-
   @Test
   void testByValue() {
     assertEquals(PhysicalPropertyModel.AMINE, PhysicalPropertyModel.byValue(3));

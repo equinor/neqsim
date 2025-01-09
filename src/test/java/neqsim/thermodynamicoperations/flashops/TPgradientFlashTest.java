@@ -38,8 +38,7 @@ public class TPgradientFlashTest {
 
   @Test
   void testGradient() {
-
-    double depth = 1000.0;
+    // double depth = 1000.0;
     double temperature = 273.15 + 70;
     double pressure = 80.0;
 
@@ -50,7 +49,6 @@ public class TPgradientFlashTest {
     testSystem.addComponent("hydrogen", 1.0);
     testSystem.addComponent("methane", 8.0);
     testSystem.addComponent("propane", 1.0);
-
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
 
@@ -70,7 +68,5 @@ public class TPgradientFlashTest {
       // .println(newSystem.getComponent("hydrogen").getx() + " " + newSystem.getPressure());
     }
     assertEquals(0.0964169380341, x_h2.get(6), 1e-4);
-
   }
-
 }

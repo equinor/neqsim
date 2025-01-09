@@ -1,7 +1,6 @@
 package neqsim.process.equipment.util;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

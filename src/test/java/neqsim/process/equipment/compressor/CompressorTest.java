@@ -296,7 +296,6 @@ class CompressorTest extends neqsim.NeqSimTest {
     // compressor1.getOutletStream().getFluid().prettyPrint();
   }
 
-
   /**
    * <p>
    * test run with energy stream input.

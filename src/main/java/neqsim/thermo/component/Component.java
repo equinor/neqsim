@@ -1883,7 +1883,6 @@ public abstract class Component implements ComponentInterface {
     molarMass = refMolarMass * 1.0 / conversionFactor;
   }
 
-
   /** {@inheritDoc} */
   @Override
   public final boolean doSolidCheck() {

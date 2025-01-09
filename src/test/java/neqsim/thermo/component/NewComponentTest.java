@@ -159,7 +159,6 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     assertEquals(3.447289881042099E-6,
         thermoSystem.getPhase(0).getComponent("sulfuric acid").getx(), 100e-9);
 
-
     thermoSystem = new SystemSrkEos(273.15 + 25.0, 100.6);
     thermoSystem.addComponent("nitric acid", 1.0);
     thermoSystem.addComponent("CO2", 1.0);

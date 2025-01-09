@@ -6,7 +6,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class ReferenceProcessTest extends neqsim.NeqSimTest {
-
   @Test
   public void testProcess() {
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);
@@ -46,18 +45,18 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
     wellStream.setPressure(90.0, "bara");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator firstStageSeparator =
-        new neqsim.process.equipment.separator.ThreePhaseSeparator(
-            "1st stage separator", wellStream);
+        new neqsim.process.equipment.separator.ThreePhaseSeparator("1st stage separator",
+            wellStream);
 
     neqsim.process.equipment.heatexchanger.Heater oilHeaterSecondStage =
-        new neqsim.process.equipment.heatexchanger.Heater(
-            "oil heater second stage", firstStageSeparator.getOilOutStream());
+        new neqsim.process.equipment.heatexchanger.Heater("oil heater second stage",
+            firstStageSeparator.getOilOutStream());
     oilHeaterSecondStage.setOutPressure(30.0);
     oilHeaterSecondStage.setOutTemperature(68.0, "C");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator secondStageSeparator =
-        new neqsim.process.equipment.separator.ThreePhaseSeparator(
-            "2nd stage separator", oilHeaterSecondStage.getOutletStream());
+        new neqsim.process.equipment.separator.ThreePhaseSeparator("2nd stage separator",
+            oilHeaterSecondStage.getOutletStream());
 
     neqsim.process.equipment.heatexchanger.Heater oilHeaterThirdStage =
         new neqsim.process.equipment.heatexchanger.Heater("oil heater third stage",
@@ -66,18 +65,18 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
     oilHeaterThirdStage.setOutTemperature(70.0, "C");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator thirdStageSeparator =
-        new neqsim.process.equipment.separator.ThreePhaseSeparator(
-            "3rd stage separator", oilHeaterThirdStage.getOutletStream());
+        new neqsim.process.equipment.separator.ThreePhaseSeparator("3rd stage separator",
+            oilHeaterThirdStage.getOutletStream());
 
     neqsim.process.equipment.heatexchanger.Heater oilHeaterStandardStage =
-        new neqsim.process.equipment.heatexchanger.Heater(
-            "oil heater standard stage", thirdStageSeparator.getOilOutStream());
+        new neqsim.process.equipment.heatexchanger.Heater("oil heater standard stage",
+            thirdStageSeparator.getOilOutStream());
     oilHeaterStandardStage.setOutPressure(1.01325);
     oilHeaterStandardStage.setOutTemperature(15.0, "C");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator standardStageSeparator =
-        new neqsim.process.equipment.separator.ThreePhaseSeparator(
-            "standard stage separator", oilHeaterStandardStage.getOutletStream());
+        new neqsim.process.equipment.separator.ThreePhaseSeparator("standard stage separator",
+            oilHeaterStandardStage.getOutletStream());
 
     neqsim.process.equipment.mixer.Mixer gasMixer =
         new neqsim.process.equipment.mixer.Mixer("gas mixer");
@@ -87,12 +86,10 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
     gasMixer.addStream(standardStageSeparator.getGasOutStream());
     gasMixer.setOutTemperature(288.15);
 
-    neqsim.process.equipment.stream.Stream exportoil =
-        new neqsim.process.equipment.stream.Stream("export oil",
-            standardStageSeparator.getOilOutStream());
+    neqsim.process.equipment.stream.Stream exportoil = new neqsim.process.equipment.stream.Stream(
+        "export oil", standardStageSeparator.getOilOutStream());
     neqsim.process.equipment.stream.Stream exportgas =
-        new neqsim.process.equipment.stream.Stream("export gas",
-            gasMixer.getOutletStream());
+        new neqsim.process.equipment.stream.Stream("export gas", gasMixer.getOutletStream());
 
     neqsim.process.processmodel.ProcessSystem oilprocess =
         new neqsim.process.processmodel.ProcessSystem();

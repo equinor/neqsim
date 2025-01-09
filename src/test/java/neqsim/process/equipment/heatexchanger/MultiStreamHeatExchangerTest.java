@@ -72,12 +72,10 @@ public class MultiStreamHeatExchangerTest {
     assertEquals(97.992627692, heatEx.getOutStream(2).getTemperature("C"), 1e-3);
     assertEquals(69.477801, heatEx.getOutStream(0).getTemperature("C"), 1e-3);
     assertEquals(1000, heatEx.getUAvalue(), 0.1);
-
   }
 
   @Test
   void testRun2() {
-
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();
 
@@ -160,7 +158,5 @@ public class MultiStreamHeatExchangerTest {
 
     assertEquals(-26.931795168, separator2.getFluid().getTemperature("C"), 1e-3);
     assertEquals(17.37650429489, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
-
   }
-
 }

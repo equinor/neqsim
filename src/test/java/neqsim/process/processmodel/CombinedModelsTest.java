@@ -71,7 +71,6 @@ public class CombinedModelsTest {
   };
 
   public ProcessSystem getCompressorProcess(StreamInterface gasFeedStream) {
-
     neqsim.process.equipment.compressor.Compressor compressor1 =
         new neqsim.process.equipment.compressor.Compressor("Compressor1", gasFeedStream);
     compressor1.setPolytropicEfficiency(0.56);
@@ -88,7 +87,6 @@ public class CombinedModelsTest {
     ProcessSystem inletProcess = getinletModel();
     ProcessSystem compressorProcess = getCompressorProcess(
         ((ThreePhaseSeparator) inletProcess.getUnit("1st stage separator")).getGasOutStream());
-
 
     ProcessModel combinedProcess = new ProcessModel();
     combinedProcess.add("feed process", inletProcess);
@@ -122,7 +120,6 @@ public class CombinedModelsTest {
     ((Compressor) (fullProcess.get("compressor process")).getUnit("Compressor1"))
         .setOutletPressure(100.0, "bara");
 
-
     try {
       fullProcess.run();
     } catch (Exception ex) {
@@ -133,7 +130,5 @@ public class CombinedModelsTest {
         ((Compressor) fullProcess.get("compressor process").getUnit("Compressor1"))
             .getOutletStream().getTemperature("C"),
         0.1);
-
   }
-
 }

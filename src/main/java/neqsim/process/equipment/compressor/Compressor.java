@@ -357,7 +357,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
               / MW),
           n / (n - 1.0));
       setOutletPressure(pressureRatio * getInletPressure());
-
     }
     if (useOutTemperature)
 

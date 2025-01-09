@@ -7,7 +7,6 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.report.Report;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class ReportTest {

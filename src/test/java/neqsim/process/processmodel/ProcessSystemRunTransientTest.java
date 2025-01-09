@@ -770,7 +770,6 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
   @Test
   public void testValveRegulator() {
-
     neqsim.thermo.system.SystemSrkEos fluid1 =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     fluid1.addComponent("methane", 0.900);

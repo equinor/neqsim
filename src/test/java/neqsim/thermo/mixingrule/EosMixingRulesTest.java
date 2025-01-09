@@ -9,14 +9,9 @@ import neqsim.thermo.phase.PhaseEos;
  * Test class for verifying the behavior of EOS (Equation of State) mixing rules in the NeqSim
  * library.
  */
-/**
- * This class contains unit tests for verifying the behavior of different mixing rules in the neqsim
- * thermodynamic system.
- */
 public class EosMixingRulesTest {
   @Test
   void testSetMixingRuleName() {
-
     neqsim.thermo.system.SystemPrEos testSystem = new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
@@ -25,15 +20,12 @@ public class EosMixingRulesTest {
     testSystem.changeComponentName(testSystem.getComponent(1).getName(),
         (testSystem.getComponent(1).getName() + "__well1"));
 
-
-
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
     testSystem.changeComponentName(testSystem.getComponent(2).getName(),
         (testSystem.getComponent(2).getName() + "__well2"));
     testSystem.changeComponentName(testSystem.getComponent(3).getName(),
         (testSystem.getComponent(3).getName() + "__well2"));
-
 
     testSystem.setMixingRule("classic");
 
@@ -45,12 +37,10 @@ public class EosMixingRulesTest {
     // Print kij
     assertEquals(-0.019997, kij, 1e-5);
     assertTrue(kij == kij2);
-
   }
 
   @Test
   void testMEGOil() {
-
     neqsim.thermo.system.SystemSrkCPAstatoil testSystem =
         new neqsim.thermo.system.SystemSrkCPAstatoil(298.0, 10.0);
     testSystem.addTBPfraction("C8", 0.01, 90.9 / 1000.0, 0.9);
@@ -63,12 +53,10 @@ public class EosMixingRulesTest {
 
     // Print kij
     assertEquals(-0.05, kij, 1e-5);
-
   }
 
   @Test
   void testHCoilInter() {
-
     neqsim.thermo.system.SystemPrEos testSystem = new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
     testSystem.addTBPfraction("C8", 0.01, 90.9 / 1000.0, 0.9);
     testSystem.addComponent("CO2", 0.01);
@@ -76,7 +64,6 @@ public class EosMixingRulesTest {
         (testSystem.getComponent(0).getName() + "__well1"));
     testSystem.changeComponentName(testSystem.getComponent(1).getName(),
         (testSystem.getComponent(1).getName() + "__well1"));
-
 
     testSystem.addTBPfraction("C8", 0.01, 90.9 / 1000.0, 0.9);
     testSystem.addComponent("CO2", 0.01);
