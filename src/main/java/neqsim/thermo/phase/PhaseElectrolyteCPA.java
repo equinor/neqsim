@@ -1324,7 +1324,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
 
   /** {@inheritDoc} */
   @Override
-  public CPAMixingRulesInterface getCpamix() {
+  public CPAMixingRulesInterface getCpaMixingRule() {
     return cpamix;
   }
 

@@ -71,10 +71,10 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
 
   /**
    * <p>
-   * getCpamix.
+   * getCpaMixingRule.
    * </p>
    *
    * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
    */
-  public CPAMixingRulesInterface getCpamix();
+  public CPAMixingRulesInterface getCpaMixingRule();
 }

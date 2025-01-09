@@ -421,8 +421,8 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     }
     return -getNumberOfMolesInPhase() / Math.pow(xsite[sitei], 2.0) * fact
         - getNumberOfMolesInPhase() * phase.getComponent(compj).getNumberOfMolesInPhase()
-            * ((PhaseCPAInterface) phase).getCpamix().calcDelta(sitei, sitej, componentNumber,
-                compj, phase, phase.getTemperature(), phase.getPressure(),
+            * ((PhaseCPAInterface) phase).getCpaMixingRule().calcDelta(sitei, sitej,
+                componentNumber, compj, phase, phase.getTemperature(), phase.getPressure(),
                 phase.getNumberOfComponents());
   }
 

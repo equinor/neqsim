@@ -1406,7 +1406,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
   /** {@inheritDoc} */
   @Override
-  public CPAMixingRulesInterface getCpamix() {
+  public CPAMixingRulesInterface getCpaMixingRule() {
     return cpamix;
   }
 
