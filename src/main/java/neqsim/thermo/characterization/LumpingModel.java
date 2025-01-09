@@ -50,41 +50,49 @@ public class LumpingModel implements java.io.Serializable {
 
     public StandardLumpingModel() {}
 
+    /** {@inheritDoc} */
     @Override
     public void setNumberOfLumpedComponents(int lumpedNumb) {
       numberOfLumpedComponents = lumpedNumb;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getNumberOfLumpedComponents() {
       return numberOfLumpedComponents;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setNumberOfPseudoComponents(int lumpedNumb) {
       numberOfPseudocomponents = lumpedNumb;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getNumberOfPseudoComponents() {
       return numberOfPseudocomponents;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
       return name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getLumpedComponentName(int i) {
       return lumpedComponentNames[i];
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[] getLumpedComponentNames() {
       return lumpedComponentNames;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void generateLumpedComposition(Characterise charac) {
       numberOfLumpedComponents = numberOfPseudocomponents;
@@ -196,6 +204,7 @@ public class LumpingModel implements java.io.Serializable {
       }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getFractionOfHeavyEnd(int i) {
       if (fractionOfHeavyEnd == null) {
@@ -220,6 +229,7 @@ public class LumpingModel implements java.io.Serializable {
 
     public PVTLumpingModel() {}
 
+    /** {@inheritDoc} */
     @Override
     public void generateLumpedComposition(Characterise charac) {
       double weightFrac = 0.0;
@@ -311,6 +321,7 @@ public class LumpingModel implements java.io.Serializable {
       system.init(0);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getFractionOfHeavyEnd(int i) {
       if (fractionOfHeavyEnd == null) {
@@ -334,6 +345,7 @@ public class LumpingModel implements java.io.Serializable {
 
     public NoLumpingModel() {}
 
+    /** {@inheritDoc} */
     @Override
     public void generateLumpedComposition(Characterise charac) {
       numberOfPseudocomponents = charac.getPlusFractionModel().getLastPlusFractionNumber();
@@ -414,6 +426,7 @@ public class LumpingModel implements java.io.Serializable {
       system.init(0);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getFractionOfHeavyEnd(int i) {
       if (fractionOfHeavyEnd == null) {

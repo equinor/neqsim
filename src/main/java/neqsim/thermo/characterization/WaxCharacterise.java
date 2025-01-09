@@ -54,6 +54,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
     double[] parameterWaxHeatOfFusion = new double[1];
     double[] parameterWaxTriplePointTemperature = new double[1];
 
+    /** {@inheritDoc} */
     @Override
     public WaxBaseModel clone() {
       WaxBaseModel clonedSystem = null;
@@ -65,29 +66,35 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
       return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addTBPWax() {}
 
+    /** {@inheritDoc} */
     @Override
     public void setWaxParameters(double[] parameters) {
       parameterWax = parameters;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setWaxParameter(int i, double parameters) {
       parameterWax[i] = parameters;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setParameterWaxHeatOfFusion(int i, double parameters) {
       parameterWaxHeatOfFusion[i] = parameters;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setParameterWaxTriplePointTemperature(int i, double parameters) {
       parameterWaxTriplePointTemperature[i] = parameters;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] getWaxParameters() {
       return parameterWax;
@@ -164,6 +171,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
           3.46);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addTBPWax() {
       int numberOfCOmponents = thermoSystem.getPhase(0).getNumberOfComponents();
@@ -239,6 +247,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
       }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void removeWax() {
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {

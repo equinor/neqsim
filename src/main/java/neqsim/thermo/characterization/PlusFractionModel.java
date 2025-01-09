@@ -101,11 +101,13 @@ public class PlusFractionModel implements java.io.Serializable {
       return name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getMPlus() {
       return MPlus;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getZPlus() {
       return zPlus;
@@ -119,36 +121,43 @@ public class PlusFractionModel implements java.io.Serializable {
       return maxPlusMolarMass;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getNumberOfPlusPseudocomponents() {
       return numberOfPlusPseudocomponents;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] getZ() {
       return z;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] getM() {
       return M;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] getDens() {
       return dens;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getDensPlus() {
       return densPlus;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getFirstPlusFractionNumber() {
       return firstPlusFractionNumber;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getFirstTBPFractionNumber() {
       int firstTBPNumber = 0;
@@ -174,16 +183,19 @@ public class PlusFractionModel implements java.io.Serializable {
       return firstTBPNumber;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getPlusComponentNumber() {
       return plusComponentNumber;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getLastPlusFractionNumber() {
       return lastPlusFractionNumber;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean hasPlusFraction() {
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -198,6 +210,7 @@ public class PlusFractionModel implements java.io.Serializable {
       return false;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean characterizePlusFraction(TBPModelInterface TBPModel) {
       system.init(0);
@@ -242,11 +255,13 @@ public class PlusFractionModel implements java.io.Serializable {
       return true;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] getCoefs() {
       return this.coefs;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getCoef(int i) {
       return this.coefs[i];
@@ -298,6 +313,7 @@ public class PlusFractionModel implements java.io.Serializable {
       this.coefs[i] = coef;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setLastPlusFractionNumber(int fract) {
       lastPlusFractionNumber = fract + 1;
@@ -392,6 +408,7 @@ public class PlusFractionModel implements java.io.Serializable {
       }
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean characterizePlusFraction(TBPModelInterface TBPModel) {
       system.init(0);
@@ -451,11 +468,13 @@ public class PlusFractionModel implements java.io.Serializable {
       return new double[] {this.alfa, this.eta};
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] getCoefs() {
       return new double[] {alfa, eta};
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getCoef(int i) {
       if (i == 0)
@@ -465,16 +484,19 @@ public class PlusFractionModel implements java.io.Serializable {
       return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] getZ() {
       return zValues;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] getM() {
       return molarMasses;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] getDens() {
       return densities;

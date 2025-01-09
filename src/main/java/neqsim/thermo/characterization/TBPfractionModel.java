@@ -37,22 +37,26 @@ public class TBPfractionModel implements java.io.Serializable {
 
     protected boolean calcm = true;
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
       return name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTB(double molarMass, double density) {
       return Math.pow((molarMass / 5.805e-5 * Math.pow(density, 0.9371)), 1.0 / 2.3776);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcWatsonCharacterizationFactor(double molarMass, double density) {
       // System.out.println("boiling point " + calcTB(molarMass, density));
       return Math.pow(1.8 * calcTB(molarMass, density), 1.0 / 3.0) / density;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAcentricFactorKeslerLee(double molarMass, double density) {
       double TC = calcTC(molarMass, density);
@@ -71,6 +75,7 @@ public class TBPfractionModel implements java.io.Serializable {
       }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAcentricFactor(double molarMass, double density) {
       double TC = calcTC(molarMass, density);
@@ -80,6 +85,7 @@ public class TBPfractionModel implements java.io.Serializable {
           / (TC / TB - 1.0) - 1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcCriticalVolume(double molarMass, double density) {
       double TC = calcTC(molarMass, density);
@@ -94,11 +100,13 @@ public class TBPfractionModel implements java.io.Serializable {
       return criticaVol;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcParachorParameter(double molarMass, double density) {
       return 59.3 + 2.34 * molarMass * 1000.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcCriticalViscosity(double molarMass, double density) {
       double TC = calcTC(molarMass, density);
@@ -107,17 +115,20 @@ public class TBPfractionModel implements java.io.Serializable {
           * 1e-7;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density) {
       throw new RuntimeException(
           new neqsim.util.exception.NotImplementedException(this, "calcRacketZ"));
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcm(double molarMass, double density) {
       throw new RuntimeException(new neqsim.util.exception.NotImplementedException(this, "calcm"));
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean isCalcm() {
       return calcm;
@@ -139,6 +150,7 @@ public class TBPfractionModel implements java.io.Serializable {
     double[] TPBracketcoefs = {0.29441, 0.40768};
     double[][] TBPfractionCoefs = null;
 
+    /** {@inheritDoc} */
     @Override
     public double calcTC(double molarMass, double density) {
       // System.out.println("TC ccc " + TBPfractionCoefs[0][0]);
@@ -152,6 +164,7 @@ public class TBPfractionModel implements java.io.Serializable {
           + TBPfractionCoefs[0][2] * molarMass + TBPfractionCoefs[0][3] / molarMass;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcPC(double molarMass, double density) {
       if (molarMass < 1120) {
@@ -165,6 +178,7 @@ public class TBPfractionModel implements java.io.Serializable {
           + TBPfractionCoefs[1][2] / molarMass + TBPfractionCoefs[1][3] / Math.pow(molarMass, 2.0));
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcm(double molarMass, double density) {
       if (molarMass < 1120) {
@@ -176,6 +190,7 @@ public class TBPfractionModel implements java.io.Serializable {
           + TBPfractionCoefs[2][2] * density + TBPfractionCoefs[2][3] * Math.pow(molarMass, 2.0);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTB(double molarMass, double density) {
       if (molarMass < 540) {
@@ -186,6 +201,7 @@ public class TBPfractionModel implements java.io.Serializable {
       }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density) {
       double penelouxC = (thermoSystem.getPhase(0).getMolarVolume() - molarMass / (density * 10.0));
@@ -256,6 +272,7 @@ public class TBPfractionModel implements java.io.Serializable {
       calcm = false;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTC(double molarMass, double density) {
       // molarMass=molarMass*1e3;
@@ -268,6 +285,7 @@ public class TBPfractionModel implements java.io.Serializable {
                                                                      // Math.pow(sig2, c);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcPC(double molarMass, double density) {
       if (molarMass > 300) {
@@ -288,6 +306,7 @@ public class TBPfractionModel implements java.io.Serializable {
           / (TC / TB - 1.0) - 1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTB(double molarMass, double density) {
       // Soreide method (Whitson book)
@@ -296,6 +315,7 @@ public class TBPfractionModel implements java.io.Serializable {
           * Math.exp(-4.922e-3 * molarMass - 4.7685 * density + 3.462e-3 * molarMass * density)); // 97.58*Math.pow(molarMass,0.3323)*Math.pow(density,0.04609);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAcentricFactor(double molarMass, double density) {
       double TC = calcTC(molarMass, density);
@@ -326,6 +346,7 @@ public class TBPfractionModel implements java.io.Serializable {
       calcm = false;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTC(double molarMass, double density) {
       double sg = density;
@@ -335,6 +356,7 @@ public class TBPfractionModel implements java.io.Serializable {
       return TC;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcPC(double molarMass, double density) {
       double sg = density;
@@ -347,6 +369,7 @@ public class TBPfractionModel implements java.io.Serializable {
       return PC;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAcentricFactor(double molarMass, double density) {
       return super.calcAcentricFactorKeslerLee(molarMass, density);
@@ -364,6 +387,7 @@ public class TBPfractionModel implements java.io.Serializable {
       calcm = false;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTC(double molarMass, double density) {
       double sg = density;
@@ -417,6 +441,7 @@ public class TBPfractionModel implements java.io.Serializable {
       return MW_alkane;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcPC(double molarMass, double density) {
       double sg = density;
@@ -447,6 +472,7 @@ public class TBPfractionModel implements java.io.Serializable {
       return PC * 10.0; // * 10 due to conversion MPa to bar
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcCriticalVolume(double molarMass, double density) {
       double sg = density;
