@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.util.empiric.BukacekWaterInGas;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -22,8 +21,8 @@ public class HydrocarbonDewPointAnalyser extends StreamMeasurementDeviceBaseClas
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(WaterDewPointAnalyser.class);
 
-  private double referencePressure = 40.0;
-  private String method = "Bukacek";
+  private double referencePressure = 50.0;
+  private String method = "EOS";
 
   /**
    * <p>
@@ -66,35 +65,19 @@ public class HydrocarbonDewPointAnalyser extends StreamMeasurementDeviceBaseClas
   /** {@inheritDoc} */
   @Override
   public double getMeasuredValue(String unit) {
-    if (method.equals("Bukacek")) {
-      SystemInterface tempFluid = stream.getThermoSystem().clone();
-      tempFluid.setTemperature(BukacekWaterInGas
-          .waterDewPointTemperature(tempFluid.getComponent("water").getx(), referencePressure));
-      return tempFluid.getTemperature(unit);
-    } else if (method.equals("multiphase")) {
-      SystemInterface tempFluid = stream.getThermoSystem().clone();
-      tempFluid.setPressure(referencePressure);
-      tempFluid.setTemperature(0.1, "C");
-      ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
-      try {
-        thermoOps.waterDewPointTemperatureMultiphaseFlash();
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-      }
-      return tempFluid.getTemperature(unit);
-    } else {
-      SystemInterface tempFluid = stream.getThermoSystem().clone();
-      SystemInterface tempFluid2 = tempFluid.setModel("GERG-water-EOS");
-      tempFluid2.setPressure(referencePressure);
-      tempFluid2.setTemperature(-17.0, "C");
-      ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid2);
-      try {
-        thermoOps.waterDewPointTemperatureFlash();
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-      }
-      return tempFluid2.getTemperature(unit);
+    SystemInterface tempFluid = stream.getThermoSystem().clone();
+    if (tempFluid.hasComponent("water")) {
+      tempFluid.removeComponent("water");
     }
+    tempFluid.setPressure(referencePressure);
+    tempFluid.setTemperature(-10.0, "C");
+    ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
+    try {
+      thermoOps.dewPointTemperatureFlash(false);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
+    }
+    return tempFluid.getTemperature(unit);
   }
 
   /**
