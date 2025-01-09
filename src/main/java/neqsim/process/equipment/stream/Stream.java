@@ -52,7 +52,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   protected double lastFlowRate = 0.0;
   protected double[] lastComposition = null;
 
-
   /**
    * Constructor for Stream.
    *

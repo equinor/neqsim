@@ -456,7 +456,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       thermoSystem.setPressure(thermoSystem.getPressure(pressureUnit) - deltaPressure,
           pressureUnit);
       setOutletPressure(thermoSystem.getPressure());
-
     }
 
     if ((thermoSystem.getPressure(pressureUnit) - pressure) < 0) {

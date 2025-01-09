@@ -11,7 +11,6 @@ import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBo
  * @version $Id: $Id
  */
 public class EnhancementFactorAlg extends EnhancementFactor {
-
   /**
    * <p>
    * Constructor for EnhancementFactorAlg.

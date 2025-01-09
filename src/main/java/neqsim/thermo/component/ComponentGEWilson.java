@@ -72,7 +72,6 @@ public class ComponentGEWilson extends ComponentGE {
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
       String[][] mixRule) {
-
     return 0.0;
   }
 

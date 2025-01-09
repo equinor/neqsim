@@ -23,7 +23,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * @version 1.0
  */
 public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInterface {
-
   // ================================
   // Stream Management Methods
   // ================================

@@ -589,7 +589,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
         1e-6);
   }
 
-
   @Test
   public void testRun_step() {
     neqsim.thermo.system.SystemInterface feedGas =

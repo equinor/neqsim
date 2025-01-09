@@ -54,15 +54,13 @@ public class AcidTest extends neqsim.NeqSimTest {
     assertEquals(33.2215005, testSystem.getPressure(), 0.001);
     assertEquals(928.60315, testSystem.getDensity("kg/m3"), 0.001);
 
-
     double t = 373.0;
     double vapp =
         Math.exp(50.323 + -5378.2 / t + -4.2030 * Math.log(t) + 3.4697e-6 * Math.pow(t, 2)) / 1e5;
 
     assertEquals(0.9857520491, vapp, 0.001);
 
-    double dens = 1.938 / (0.24225 * (1 + Math.pow(1 - t / 588, 0.24435)));// * 46.025;
-
+    // double dens = 1.938 / (0.24225 * (1 + Math.pow(1 - t / 588, 0.24435)));// * 46.025;
     // assertEquals(1002.54762, dens, 0.001);
 
     String scheme =
@@ -90,7 +88,6 @@ public class AcidTest extends neqsim.NeqSimTest {
     assertEquals(0.3338, m);
   }
 
-
   /**
    * <p>
    * testtestBubpAcid.
@@ -114,15 +111,13 @@ public class AcidTest extends neqsim.NeqSimTest {
     assertEquals(0.999088711628, testSystem.getPressure(), 0.001);
     assertEquals(817.50556, testSystem.getDensity("kg/m3"), 0.001);
 
-
     double t = 373.0;
     double vapp =
         Math.exp(50.323 + -5378.2 / t + -4.2030 * Math.log(t) + 3.4697e-6 * Math.pow(t, 2)) / 1e5;
 
     assertEquals(0.9857520491, vapp, 0.001);
 
-    double dens = 1.938 / (0.24225 * (1 + Math.pow(1 - t / 588, 0.24435)));// * 46.025;
-
+    // double dens = 1.938 / (0.24225 * (1 + Math.pow(1 - t / 588, 0.24435)));// * 46.025;
     // assertEquals(1002.54762, dens, 0.001);
 
     String scheme = testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0).getAssociationScheme();

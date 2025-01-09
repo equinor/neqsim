@@ -7,15 +7,10 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
- * ProcessModel class.
+ * ProcessModel class. Manages a collection of processes that can be run in steps or continuously.
  * </p>
- *
- * Manages a collection of processes that can be run in steps or continuously.
- * 
- * 
  */
 public class ProcessModel implements Runnable {
-
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ProcessModel.class);
   private Map<String, ProcessSystem> processes = new LinkedHashMap<>();

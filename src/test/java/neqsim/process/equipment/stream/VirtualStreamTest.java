@@ -3,8 +3,6 @@ package neqsim.process.equipment.stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.stream.VirtualStream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 

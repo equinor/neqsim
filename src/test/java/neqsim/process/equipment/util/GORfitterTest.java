@@ -3,7 +3,6 @@ package neqsim.process.equipment.util;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.util.GORfitter;
 import neqsim.process.measurementdevice.MultiPhaseMeter;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;

@@ -383,5 +383,4 @@ public class CompressorChartTest {
     org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class)
         .debug("surge flow rate " + comp1.getSurgeFlowRate());
   }
-
 }

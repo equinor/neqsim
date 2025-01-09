@@ -8,7 +8,6 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class PlusFractionModelTest {
-
   @Test
   void testPedersenPlusModelCharacterization() {
     SystemInterface thermoSystem = null;
@@ -190,6 +189,5 @@ public class PlusFractionModelTest {
     // heavier components
 
     assertEquals(16, thermoSystem.getNumberOfComponents());
-
   }
 }

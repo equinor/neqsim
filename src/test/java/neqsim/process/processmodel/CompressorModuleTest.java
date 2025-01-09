@@ -155,10 +155,8 @@ public class CompressorModuleTest extends neqsim.NeqSimTest {
     feedStream.setFlowRate(204094, "kg/hr");
     operations.run();
 
-
     assertTrue(seccondStageCompressor.isSurge(seccondStageCompressor.getPolytropicFluidHead(),
         seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
-
 
     double pressurespeedclac = seccondStageCompressor.getOutletPressure();
     double speedcomp = seccondStageCompressor.getSpeed();

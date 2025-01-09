@@ -35,7 +35,6 @@ public class LargeCombinedModelsTest {
   ProcessInput inp = new ProcessInput();
 
   public static class ProcessInput {
-
     private List<Double> moleRateHP;
     public List<Double> moleRateLP;
     public Double flowFirstStage = 30.0;
@@ -80,7 +79,6 @@ public class LargeCombinedModelsTest {
    * @return a ProcessSystem object representing the well stream and manifold model
    */
   public ProcessSystem getWellStreamAndManifoldModel(SystemInterface feedFluid) {
-
     ProcessSystem process = new ProcessSystem();
 
     Stream wellStreamHP = new Stream("HP well stream", feedFluid.clone());
@@ -144,7 +142,6 @@ public class LargeCombinedModelsTest {
             - ((Splitter) process.getUnit("LP manifold")).getSplitStream(0).getFlowRate("kg/hr")
             - ((Splitter) process.getUnit("LP manifold")).getSplitStream(1).getFlowRate("kg/hr"),
         ((Stream) process.getUnit("LP well stream")).getFlowRate("kg/hr") / 10000.0);
-
   }
 
   /**
@@ -156,7 +153,6 @@ public class LargeCombinedModelsTest {
    */
   public ProcessSystem createSeparationTrainProcess(StreamInterface firstStageStream,
       StreamInterface seccondStageStream) {
-
     ProcessSystem process = new ProcessSystem();
 
     Heater feedTPsetterFirstStage = new Heater("feed TP setter", firstStageStream);
@@ -451,8 +447,6 @@ public class LargeCombinedModelsTest {
   public ProcessSystem createExpanderProcessModel(Separator dewPointScrubber2,
       ThreePhaseSeparator fourthStageSeparator, Mixer secondstagegasmixer, Mixer firststagegasmixer,
       Mixer mpLiqmixer) {
-
-
     ProcessSystem process = new ProcessSystem();
 
     EnergyStream expander_energy_stream =
@@ -826,7 +820,6 @@ public class LargeCombinedModelsTest {
 
   @Test
   public void testExportCompressorModel() {
-
     SystemInterface gasFluid = new SystemPrEos(273.15 + 20.0, 10.0);
     gasFluid.addComponent("methane", 0.9);
     gasFluid.addComponent("ethane", 0.1);
@@ -843,7 +836,6 @@ public class LargeCombinedModelsTest {
 
     Assertions.assertEquals(12, ((Splitter) exportCompressorSystem.getUnit("TEE-104"))
         .getSplitStream(0).getFlowRate("MSm3/day"), 0.1);
-
   }
 
   public ProcessModel getCombinedModel() {
@@ -1014,7 +1006,6 @@ public class LargeCombinedModelsTest {
         ((Compressor) fullProcess.get("compressor process B").getUnit("KA27841")).getOutletStream()
             .getPressure("bara"),
         1.5);
-
   }
 
   // @Test
@@ -1027,7 +1018,6 @@ public class LargeCombinedModelsTest {
     } catch (Exception ex) {
       logger.debug(ex.getMessage(), ex);
     }
-
 
     Assertions.assertEquals(0.0,
         ((Stream) fullProcess.get("well and manifold process").getUnit("HP well stream"))
@@ -1130,7 +1120,6 @@ public class LargeCombinedModelsTest {
         ((Compressor) fullProcess.get("compressor process B").getUnit("KA27841")).getOutletStream()
             .getPressure("bara"),
         0.5);
-
   }
 
   // @Test
@@ -1189,11 +1178,9 @@ public class LargeCombinedModelsTest {
       }
     } catch (InterruptedException e) {
       logger.debug("Thread was interrupted: " + e.getMessage());
-
     } catch (Exception e) {
       logger.debug("Thread interrupted: " + e.getMessage());
     }
-
 
     // ProcessSystem expProcessA = fullProcess.get("expander process A");
     // Thread expProcessThreadA = expProcessA.runAsThread();
@@ -1291,7 +1278,5 @@ public class LargeCombinedModelsTest {
         ((Compressor) fullProcess.get("compressor process B").getUnit("KA27841")).getOutletStream()
             .getPressure("bara"),
         0.5);
-
   }
-
 }

@@ -9,7 +9,6 @@ package neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolv
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
-import neqsim.fluidmechanics.flownode.FlowNode;
 import neqsim.mathlib.generalmath.TDMAsolve;
 
 /**

@@ -193,7 +193,6 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           * ((PhaseCPAInterface) phase).getGcpa();
     }
 
-
     public double calcDelta(int compnumb1, int compnumb2, PhaseInterface phase, double temperature,
         double pressure, int numbcomp) {
       if (assosSchemeType[compnumb1][compnumb2] == 0) {

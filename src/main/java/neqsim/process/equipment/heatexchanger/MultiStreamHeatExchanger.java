@@ -718,7 +718,6 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     firstTime = true;
   }
 
-
   /**
    * Runs the heat exchanger simulation using a specified stream approach.
    *
@@ -728,7 +727,6 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     // Implementation similar to the two-stream case but generalized for multiple streams
     // This method needs to be defined based on specific requirements
   }
-
 
   public double getTemperatureApproach() {
     return temperatureApproach;
