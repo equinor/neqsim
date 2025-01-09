@@ -476,7 +476,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public CPAMixingRulesInterface getCpamix() {
+  public CPAMixingRulesInterface getCpaMixingRule() {
     return cpamix;
   }
 

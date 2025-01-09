@@ -495,8 +495,8 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
       for (int i = 0; i < numberOfComponents; i++) {
         for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
           double old = ((ComponentElectrolyteCPA) getComponent(i)).getXsite()[j];
-          double neeval = getCpamix().calcXi(selfAccociationScheme, crossAccociationScheme, j, i,
-              this, temperature, pressure, numberOfComponents);
+          double neeval = getCpaMixingRule().calcXi(selfAccociationScheme, crossAccociationScheme,
+              j, i, this, temperature, pressure, numberOfComponents);
           ((ComponentCPAInterface) getComponent(i)).setXsite(j, neeval);
           err += Math.abs((old - neeval) / neeval);
         }
@@ -803,7 +803,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
 
   /** {@inheritDoc} */
   @Override
-  public CPAMixingRulesInterface getCpamix() {
+  public CPAMixingRulesInterface getCpaMixingRule() {
     return cpamix;
   }
 

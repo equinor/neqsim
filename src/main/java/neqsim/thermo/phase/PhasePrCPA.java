@@ -456,7 +456,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public CPAMixingRulesInterface getCpamix() {
+  public CPAMixingRulesInterface getCpaMixingRule() {
     return cpamix;
   }
 

@@ -1375,7 +1375,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public CPAMixingRulesInterface getCpamix() {
+  public CPAMixingRulesInterface getCpaMixingRule() {
     return cpamix;
   }
 
