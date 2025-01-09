@@ -2262,9 +2262,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * method to set mixing rule used for the fluid.
    *
-   * @param mr EosMixingRuleTypes enum
+   * @param emrt EosMixingRuleTypes enum
    */
-  public void setMixingRule(EosMixingRuleType mr);
+  public void setMixingRule(EosMixingRuleType emrt);
 
   /**
    * method to set mixing rule used for the fluid.
