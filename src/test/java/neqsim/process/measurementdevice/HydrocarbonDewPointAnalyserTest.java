@@ -32,6 +32,8 @@ public class HydrocarbonDewPointAnalyserTest {
     hc_analyser.getMeasuredValue("C");
     Assertions.assertEquals(-14.0173918, hc_analyser.getMeasuredValue("C"), 1e-5);
 
+    Assertions.assertEquals(-14.0173918, stream1.getHydrocarbonDewPoint("C", 40.0, "bara"), 1e-5);
+
 
   }
 }
