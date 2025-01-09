@@ -247,7 +247,7 @@ public class ComponentPCSAFT extends ComponentSrk {
           * getmSAFTi()
           * Math.sqrt(
               getEpsikSAFT() / temperature * phase.getComponent(i).getEpsikSAFT() / temperature)
-          * (1.0 - ((PhaseEosInterface) phase).getEOSMixingRule()
+          * (1.0 - ((PhaseEosInterface) phase).getEosMixingRule()
               .getBinaryInteractionParameter(componentNumber, i))
           * Math.pow(0.5 * (phase.getComponent(i).getSigmaSAFTi() + getSigmaSAFTi()), 3.0);
     }
@@ -274,11 +274,11 @@ public class ComponentPCSAFT extends ComponentSrk {
       temp1 += phase.getComponent(i).getNumberOfMolesInPhase() * phase.getComponent(i).getmSAFTi()
           * getmSAFTi() * getEpsikSAFT() / temperature * phase.getComponent(i).getEpsikSAFT()
           / temperature
-          * Math.pow((1.0 - ((PhaseEosInterface) phase).getEOSMixingRule()
+          * Math.pow((1.0 - ((PhaseEosInterface) phase).getEosMixingRule()
               .getBinaryInteractionParameter(componentNumber, i)), 2.0)
           * Math.pow(0.5 * (phase.getComponent(i).getSigmaSAFTi() + getSigmaSAFTi()), 3.0);
       // System.out.println("kij "+
-      // ((PhaseEosInterface)phase).getEOSMixingRule().getBinaryInteractionParameter(componentNumber,
+      // ((PhaseEosInterface)phase).getEosMixingRule().getBinaryInteractionParameter(componentNumber,
       // i));
     }
     return -2.0 / Math.pow(phase.getNumberOfMolesInPhase(), 1.0)

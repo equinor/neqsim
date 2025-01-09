@@ -29,7 +29,7 @@ public interface PhaseEosInterface extends PhaseInterface {
    *
    * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
    */
-  public EosMixingRulesInterface getEOSMixingRule();
+  public EosMixingRulesInterface getEosMixingRule();
 
   /**
    * <p>
