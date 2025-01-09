@@ -2438,51 +2438,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       logger.error("error reading from database", ex);
     }
 
-    if (i == 2) {
-      mixingRuleName = "classic";
-      return new ClassicSRK();
-    } else if (i == 3) {
-      // Classic Huron-Vidal
-      mixingRuleName = "Huron-Vidal";
-      return new SRKHuronVidal2(phase, HValpha, HVDij, classicOrHV);
-    } else if (i == 4) {
-      mixingRuleName = "Huron-Vidal";
-      return new SRKHuronVidal2(phase, HValpha, HVDij, HVDijT, classicOrHV);
-    } else if (i == 5) {
-      mixingRuleName = "Wong-Sandler";
-      return new WongSandlerMixingRule(phase, NRTLalpha, NRTLDij, NRTLDijT, classicOrWS);
-    } else if (i == 6) {
-      mixingRuleName = "Wong-Sandler";
-      return new WongSandlerMixingRule(phase, NRTLalpha, NRTLDij, NRTLDijT, classicOrWS);
-    } else if (i == 7) {
-      mixingRuleName = "classic-CPA";
-      return new ClassicSRK();
-    } else if (i == 8) {
-      mixingRuleName = "classicdT";
-      return new ClassicSRKT();
-    } else if (i == 9) {
-      mixingRuleName = "classic-CPA_T";
-      return new ClassicSRKT2();
-    } else if (i == 10) {
-      // return new ElectrolyteMixRule(phase, HValpha, HVgij, HVgii,
-      // classicOrHV,wij);}
-      org.ejml.simple.SimpleMatrix mat1 = new org.ejml.simple.SimpleMatrix(intparamij);
-      org.ejml.simple.SimpleMatrix mat2 = new org.ejml.simple.SimpleMatrix(intparamji);
-      org.ejml.simple.SimpleMatrix mat3 = new org.ejml.simple.SimpleMatrix(intparamT);
-      if (mat1.isIdentical(mat2, 1e-8)) {
-        if (mat3.elementMaxAbs() < 1e-8) {
-          mixingRuleName = "classic-CPA";
-          return new ClassicSRK();
-        }
-        mixingRuleName = "classic-CPA_T";
-        return new ClassicSRKT2();
-      } else {
-        mixingRuleName = "classic-CPA_Tx";
-        return new ClassicSRKT2x();
-      }
-    } else {
-      return new ClassicVdW();
-    }
+    return resetMixingRule(i, phase);
   }
 
   /**
