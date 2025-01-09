@@ -1960,6 +1960,12 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     }
 
     @Override
+    public double calcWij(int compNumbi, int compNumj, PhaseInterface phase, double temperature,
+        double pressure, int numbcomp) {
+      return -2.0 * getWij(compNumbi, compNumj, temperature); // iwij[0][compNumbi][compNumj];
+    }
+
+    @Override
     public void setWijParameter(int i, int j, double value) {
       // System.out.println("intparam: " + value);
       wij[0][i][j] = value;
@@ -2074,12 +2080,6 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
       }
       return -WTT;
-    }
-
-    @Override
-    public double calcWij(int compNumbi, int compNumj, PhaseInterface phase, double temperature,
-        double pressure, int numbcomp) {
-      return -2.0 * getWij(compNumbi, compNumj, temperature); // iwij[0][compNumbi][compNumj];
     }
   }
 

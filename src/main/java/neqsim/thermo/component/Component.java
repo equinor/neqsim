@@ -823,48 +823,6 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getMolarMass(String unit) {
-    double refMolarMass = getMolarMass();
-    double conversionFactor = 1.0;
-    switch (unit) {
-      case "kg/mol":
-        conversionFactor = 1.0;
-        break;
-      case "gr/mol":
-        conversionFactor = 1000.0;
-        break;
-      case "lbm/lbmol":
-        conversionFactor = 1000.0;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + unit);
-    }
-    return refMolarMass * conversionFactor;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setMolarMass(double value, String unit) {
-    double refMolarMass = value;
-    double conversionFactor = 1.0;
-    switch (unit) {
-      case "kg/mol":
-        conversionFactor = 1.0;
-        break;
-      case "gr/mol":
-        conversionFactor = 1000.0;
-        break;
-      case "lbm/lbmol":
-        conversionFactor = 1000.0;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + unit);
-    }
-    molarMass = refMolarMass * 1.0 / conversionFactor;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getViscosityCorrectionFactor() {
     return viscosityCorrectionFactor;
   }
@@ -1026,6 +984,27 @@ public abstract class Component implements ComponentInterface {
   @Override
   public final double getMolarMass() {
     return this.molarMass;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMolarMass(String unit) {
+    double refMolarMass = getMolarMass();
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "kg/mol":
+        conversionFactor = 1.0;
+        break;
+      case "gr/mol":
+        conversionFactor = 1000.0;
+        break;
+      case "lbm/lbmol":
+        conversionFactor = 1000.0;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
+    }
+    return refMolarMass * conversionFactor;
   }
 
   /** {@inheritDoc} */
@@ -1882,6 +1861,28 @@ public abstract class Component implements ComponentInterface {
   public void setMolarMass(double molarMass) {
     this.molarMass = molarMass;
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setMolarMass(double value, String unit) {
+    double refMolarMass = value;
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "kg/mol":
+        conversionFactor = 1.0;
+        break;
+      case "gr/mol":
+        conversionFactor = 1000.0;
+        break;
+      case "lbm/lbmol":
+        conversionFactor = 1000.0;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
+    }
+    molarMass = refMolarMass * 1.0 / conversionFactor;
+  }
+
 
   /** {@inheritDoc} */
   @Override
