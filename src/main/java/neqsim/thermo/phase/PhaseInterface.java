@@ -11,6 +11,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -1804,13 +1805,22 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getLogInfiniteDiluteFugacity(int k);
 
   /**
+   * Getter for property mixingRuleNumber.
+   *
+   * @return a EosMixingRuleType
+   */
+  public EosMixingRuleType getEosMixingRuleType();
+
+  /**
    * <p>
    * Getter for property mixingRuleNumber.
    * </p>
    *
    * @return a int
    */
-  public int getMixingRuleNumber();
+  public default int getMixingRuleNumber() {
+    return getEosMixingRuleType().getValue();
+  }
 
   /**
    * <p>

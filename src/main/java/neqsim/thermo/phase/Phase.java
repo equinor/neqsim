@@ -16,6 +16,7 @@ import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.exception.InvalidInputException;
 
@@ -44,7 +45,6 @@ public abstract class Phase implements PhaseInterface {
 
   public int numberOfComponents = 0;
   public ComponentInterface[] componentArray;
-  public boolean mixingRuleDefined = false;
 
   public boolean calcMolarVolume = true;
 
@@ -76,7 +76,8 @@ public abstract class Phase implements PhaseInterface {
   public double numberOfMolesInPhase = 0;
 
   private int initType = 0;
-  int mixingRuleNumber = 0;
+  public boolean mixingRuleDefined = false;
+  EosMixingRuleType mixingRuleType = EosMixingRuleType.byValue(0);
 
   /** Temperature of phase. */
   double temperature = 0;
@@ -1725,8 +1726,14 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
+  public EosMixingRuleType getEosMixingRuleType() {
+    return mixingRuleType;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setMixingRule(int type) {
-    mixingRuleNumber = type;
+    mixingRuleType = EosMixingRuleType.byValue(type);
   }
 
   /**
@@ -1899,12 +1906,6 @@ public abstract class Phase implements PhaseInterface {
       }
     }
     return false;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public final int getMixingRuleNumber() {
-    return mixingRuleNumber;
   }
 
   /** {@inheritDoc} */

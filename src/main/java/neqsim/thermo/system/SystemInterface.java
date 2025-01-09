@@ -2259,7 +2259,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public void setMaxNumberOfPhases(int maxNumberOfPhases);
 
-
   /**
    * method to set mixing rule used for the fluid.
    *
