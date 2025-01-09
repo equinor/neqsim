@@ -2441,7 +2441,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public String getMixingRuleName() {
-    return ((PhaseEosInterface) getPhase(0)).getEosMixingRule().getMixingRuleName();
+    return ((PhaseEosInterface) getPhase(0)).getEosMixingRule().getName();
   }
 
   /** {@inheritDoc} */

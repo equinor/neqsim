@@ -77,7 +77,7 @@ public abstract class Phase implements PhaseInterface {
 
   private int initType = 0;
   public boolean mixingRuleDefined = false;
-  EosMixingRuleType mixingRuleType = EosMixingRuleType.NO;
+  private EosMixingRuleType mixingRuleType = EosMixingRuleType.NO;
 
   /** Temperature of phase. */
   double temperature = 0;
