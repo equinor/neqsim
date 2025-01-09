@@ -3,6 +3,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -22,7 +23,7 @@ public class HydrateInhibitorwtFlashTest {
     testSystem.addComponent("MEG", 0.000001);
     testSystem.addComponent("water", 0.0010);
     testSystem.createDatabase(true);
-    testSystem.setMixingRule(10);
+    testSystem.setMixingRule(EosMixingRuleType.byValue(10));
 
     testSystem.init(0);
     testSystem.setMultiPhaseCheck(true);

@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -30,7 +31,7 @@ class TVFlashTest {
     testSystem.addComponent("ethane", 0.0);
     testSystem.addComponent("n-pentane", 9E-1);
     testSystem.addComponent("nC16", 1E-1);
-    testSystem.setMixingRule("classic");
+    testSystem.setMixingRule(EosMixingRuleType.CLASSIC);
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
