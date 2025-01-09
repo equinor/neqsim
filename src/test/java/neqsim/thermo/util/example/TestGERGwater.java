@@ -44,8 +44,6 @@ public class TestGERGwater {
     testSystem.addComponent("water", 178.3e-4);
 
     testSystem.createDatabase(true);
-    // 1- orginal no interaction 2- classic w interaction
-    // 3- Huron-Vidal 4- Wong-Sandler
     testSystem.setMixingRule(7);
     // testSystem.setMixingRule("HV", "UNIFAC_PSRK");
     testSystem.init(0);

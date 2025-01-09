@@ -54,8 +54,6 @@ public class PS_PH_flash {
      * testSystem.addComponent("n-butane", 3.53465e-1); // testSystem.addComponent("propane", 50);
      * //testSystem.addComponent("CO2", 50); //testSystem.addComponent("water", 20);
      */
-    // 1- orginal no interaction 2- classic w interaction
-    // 3- Huron-Vidal 4- Wong-Sandler
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
     testSystem.setMultiPhaseCheck(true);

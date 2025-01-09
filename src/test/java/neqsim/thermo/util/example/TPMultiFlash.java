@@ -78,8 +78,6 @@ public class TPMultiFlash {
 
     // System.out.println("activity water " +
     // testSystem.getPhase(1).getActivityCoefficient(2));
-    // 1- orginal no interaction 2- classic w interaction
-    // 3- Huron-Vidal 4- Wong-Sandler
     // testSystem.setMixingRule(1);
 
     try {
