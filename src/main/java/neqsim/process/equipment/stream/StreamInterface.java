@@ -154,7 +154,6 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    */
   public double getRVP(double referenceTemperature, String unit, String returnUnit);
 
-
   /**
    * Calculates the Reid Vapor Pressure (RVP) of the stream.
    *
@@ -320,7 +319,6 @@ public interface StreamInterface extends ProcessEquipmentInterface {
   /** {@inheritDoc} */
   @Override
   public int hashCode();
-
 
   /**
    * Calculates the hydrocarbon dew point of the stream.

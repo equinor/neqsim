@@ -1805,22 +1805,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getLogInfiniteDiluteFugacity(int k);
 
   /**
-   * Getter for property mixingRuleNumber.
+   * Get EOS mixing rule type.
    *
    * @return a EosMixingRuleType
    */
   public EosMixingRuleType getEosMixingRuleType();
-
-  /**
-   * <p>
-   * Getter for property mixingRuleNumber.
-   * </p>
-   *
-   * @return a int
-   */
-  public default int getMixingRuleNumber() {
-    return getEosMixingRuleType().getValue();
-  }
 
   /**
    * <p>

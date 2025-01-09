@@ -2264,9 +2264,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param mr EosMixingRuleTypes enum
    */
-  public default void setMixingRule(EosMixingRuleType mr) {
-    setMixingRule(mr.getValue());
-  }
+  public void setMixingRule(EosMixingRuleType mr);
 
   /**
    * method to set mixing rule used for the fluid.
@@ -2279,14 +2277,18 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *        10-classic mixing rule with temperature and composition dependent kij of CPA from NeqSim
    *        database
    */
-  public void setMixingRule(int type);
+  public default void setMixingRule(int type) {
+    setMixingRule(EosMixingRuleType.byValue(type));
+  }
 
   /**
    * method to set the mixing rule for the fluid.
    *
    * @param typename a {@link java.lang.String} object
    */
-  public void setMixingRule(String typename);
+  public default void setMixingRule(String typename) {
+    setMixingRule(EosMixingRuleType.byName(typename.replace("-", "_")));
+  }
 
   /**
    * <p>

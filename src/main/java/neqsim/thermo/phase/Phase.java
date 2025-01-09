@@ -77,7 +77,7 @@ public abstract class Phase implements PhaseInterface {
 
   private int initType = 0;
   public boolean mixingRuleDefined = false;
-  EosMixingRuleType mixingRuleType = EosMixingRuleType.byValue(0);
+  EosMixingRuleType mixingRuleType = EosMixingRuleType.NO;
 
   /** Temperature of phase. */
   double temperature = 0;
@@ -1328,7 +1328,7 @@ public abstract class Phase implements PhaseInterface {
           refPhase[i].addComponent(getComponent(i).getComponentName(), 10.0, 10.0, 0);
         }
         refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
-        refPhase[i].setMixingRule(this.getMixingRuleNumber());
+        refPhase[i].setMixingRule(this.getEosMixingRuleType().getValue());
         refPhase[i].setType(this.getType());
         refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getType(), 1.0);
       } else {
@@ -1346,7 +1346,7 @@ public abstract class Phase implements PhaseInterface {
         }
         refPhase[i].addComponent(name, 10.0, 10.0, 1);
         refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
-        refPhase[i].setMixingRule(this.getMixingRuleNumber());
+        refPhase[i].setMixingRule(this.getEosMixingRuleType().getValue());
         refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 2, 0, this.getType(), 1.0);
       }
     }
