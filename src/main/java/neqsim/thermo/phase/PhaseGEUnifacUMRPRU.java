@@ -6,6 +6,8 @@ import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUnifacUMRPRU;
 import neqsim.thermo.component.ComponentGEUniquac;
+import neqsim.thermo.mixingrule.EosMixingRuleType;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
  * <p>
@@ -58,7 +60,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           phase.getComponent(i).getComponentNumber());
       componentArray[i].setAttractiveTerm(phase.getComponent(i).getAttractiveTermNumber());
     }
-    this.setMixingRule(2);
+    this.setMixingRule(EosMixingRuleType.byValue(2));
   }
 
   /**
@@ -113,8 +115,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRule(int type) {
-    super.setMixingRule(type);
+  public void setMixingRule(MixingRuleTypeInterface mr) {
+    super.setMixingRule(mr);
     if (!checkedGroups) {
       checkGroups();
     }

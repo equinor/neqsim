@@ -8,6 +8,8 @@ package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGeNRTL;
+import neqsim.thermo.mixingrule.EosMixingRuleType;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.util.exception.IsNaNException;
 import neqsim.util.exception.TooManyIterationsException;
 
@@ -24,7 +26,7 @@ public class PhaseGENRTL extends PhaseGE {
   private static final long serialVersionUID = 1000;
 
   double[][] alpha;
-  String[][] mixRule;
+  String[][] mixRuleString;
   double[][] intparam;
   double[][] Dij;
   double GE = 0.0;
@@ -50,7 +52,7 @@ public class PhaseGENRTL extends PhaseGE {
   public PhaseGENRTL(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
       double[][] intparam) {
     componentArray = new ComponentGeNRTL[alpha[0].length];
-    this.mixRule = mixRule;
+    this.mixRuleString = mixRule;
     this.alpha = alpha;
     this.Dij = Dij;
     this.intparam = intparam;
@@ -60,7 +62,7 @@ public class PhaseGENRTL extends PhaseGE {
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }
-    setMixingRule(2);
+    setMixingRule(EosMixingRuleType.byValue(2));
   }
 
   /** {@inheritDoc} */
@@ -72,11 +74,11 @@ public class PhaseGENRTL extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRule(int type) {
-    super.setMixingRule(type);
+  public void setMixingRule(MixingRuleTypeInterface mr) {
+    super.setMixingRule(mr);
     this.intparam = mixSelect.getSRKbinaryInteractionParameters();
     this.alpha = mixSelect.getNRTLalpha();
-    this.mixRule = mixSelect.getClassicOrHV();
+    this.mixRuleString = mixSelect.getClassicOrHV();
     this.Dij = mixSelect.getNRTLDij();
   }
 
@@ -118,7 +120,7 @@ public class PhaseGENRTL extends PhaseGE {
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponent(i).getx()
           * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents,
-              temperature, pressure, pt, alpha, Dij, intparam, mixRule));
+              temperature, pressure, pt, alpha, Dij, intparam, mixRuleString));
     }
 
     return R * temperature * numberOfMolesInPhase * GE;

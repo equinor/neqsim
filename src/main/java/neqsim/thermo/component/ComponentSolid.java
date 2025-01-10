@@ -30,8 +30,10 @@ public class ComponentSolid extends ComponentSrk {
   double soldens = 0.0;
   boolean CCequation = true;
   boolean AntoineSolidequation = true;
-  PhaseInterface refPhase = null;
   double pureCompFug = 0.0;
+
+  /** Reference phase containing only this single component, i.e., mixing rules are not relevant. */
+  PhaseInterface refPhase = null;
 
   /**
    * <p>
@@ -257,6 +259,7 @@ public class ComponentSolid extends ComponentSrk {
       refPhase.getComponent(componentName)
           .setAttractiveTerm(phase.getComponent(componentName).getAttractiveTermNumber());
       refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, PhaseType.GAS, 1.0);
+      refPhase.setMixingRule(null);
       // }
     } catch (Exception ex) {
       logger.error("error occured", ex);

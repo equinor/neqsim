@@ -516,9 +516,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
       // Finalize the setup
       run();
       return;
-    }
-
-    else {
+    } else {
       // Run all input and output streams to ensure they are up-to-date
       for (StreamInterface inStream : inStreams) {
         inStream.run(id);

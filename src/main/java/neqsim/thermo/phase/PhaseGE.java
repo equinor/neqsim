@@ -11,8 +11,10 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEInterface;
+import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.mixingrule.EosMixingRules;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
  * <p>
@@ -29,7 +31,7 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
   static Logger logger = LogManager.getLogger(PhaseGE.class);
 
   EosMixingRules mixSelect = new EosMixingRules();
-  EosMixingRulesInterface mixRuleEos;
+  EosMixingRulesInterface mixRule;
 
   /**
    * <p>
@@ -123,20 +125,38 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRule(int type) {
-    mixingRuleDefined = true;
-    // NB! Ignores input type
-    super.setMixingRule(2);
-    mixRuleEos = mixSelect.getMixingRule(2, this);
+  public void setMixingRuleGEModel(String name) {
+    mixRule.setMixingRuleGEModel(name);
+    mixSelect.setMixingRuleGEModel(name);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void resetMixingRule(int type) {
-    mixingRuleDefined = true;
-    // NB! Ignores input type
-    super.setMixingRule(2);
-    mixRuleEos = mixSelect.resetMixingRule(2, this);
+  public EosMixingRulesInterface getMixingRule() {
+    return mixRule;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setMixingRule(MixingRuleTypeInterface mr) {
+    if (!(mr == null) && !EosMixingRuleType.class.isInstance(mr)) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException(this, "setMixingRule", "mr"));
+    }
+    mixingRuleType = EosMixingRuleType.byValue(2);
+    mixRule = mixSelect.getMixingRule(mixingRuleType.getValue(), this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void resetMixingRule(MixingRuleTypeInterface mr) {
+    if (!(mr == null) && !EosMixingRuleType.class.isInstance(mr)) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException(this, "resetMixingRule", "mr"));
+    }
+    // NB! Ignores input mr
+    mixingRuleType = EosMixingRuleType.byValue(2);
+    mixRule = mixSelect.resetMixingRule(mixingRuleType.getValue(), this);
   }
 
   /** {@inheritDoc} */

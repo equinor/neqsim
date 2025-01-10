@@ -6,6 +6,8 @@ import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUnifacPSRK;
 import neqsim.thermo.component.ComponentGEUniquac;
+import neqsim.thermo.mixingrule.EosMixingRuleType;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
  * <p>
@@ -50,7 +52,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }
-    this.setMixingRule(2);
+    this.setMixingRule(EosMixingRuleType.byValue(2));
   }
 
   /** {@inheritDoc} */
@@ -62,8 +64,8 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRule(int type) {
-    super.setMixingRule(type);
+  public void setMixingRule(MixingRuleTypeInterface mr) {
+    super.setMixingRule(mr);
     if (!checkedGroups) {
       checkGroups();
     }

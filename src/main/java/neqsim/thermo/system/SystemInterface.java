@@ -8,6 +8,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.mixingrule.EosMixingRuleType;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -480,6 +481,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * method to read pure component and interaction parameters from the NeqSim database and create
    * temporary tables with parameters for active fluid.
+   * 
+   * NB! Resets the mixing rule of each phase.
    *
    * @param reset If reset is set to true, new temporary tables with parameters for the added
    *        components will be created. When parameters are needed (eg. when adding components or
@@ -1061,9 +1064,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * getMixingRule.
    * </p>
    *
-   * @return a int
+   * @return A MixingRuleTypeInterface
    */
-  public int getMixingRule();
+  public MixingRuleTypeInterface getMixingRule();
+
 
   /**
    * <p>
@@ -2266,9 +2270,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * method to set mixing rule used for the fluid.
    *
-   * @param emrt EosMixingRuleTypes enum
+   * @param emrt MixingRuleTypeInterface enum
    */
-  public void setMixingRule(EosMixingRuleType emrt);
+  public void setMixingRule(MixingRuleTypeInterface emrt);
 
   /**
    * method to set mixing rule used for the fluid.

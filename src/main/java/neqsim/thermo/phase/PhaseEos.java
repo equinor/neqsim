@@ -10,8 +10,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentEosInterface;
+import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.mixingrule.EosMixingRules;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -33,6 +35,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   private double g = 0;
   public double delta1 = 0;
   public double delta2 = 0;
+
   protected EosMixingRules mixSelect = null;
   protected EosMixingRulesInterface mixRule = null;
   double uEOS = 0;
@@ -68,12 +71,6 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public EosMixingRulesInterface getEosMixingRule() {
-    return mixRule;
-  }
-
-  /** {@inheritDoc} */
-  @Override
   @ExcludeFromJacocoGeneratedReport
   public void displayInteractionCoefficients(String intType) {
     mixSelect.displayInteractionCoefficients(intType, this);
@@ -92,8 +89,8 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     if (pt != PhaseType.GAS) {
       pt = PhaseType.LIQUID;
     }
-    if (!mixingRuleDefined) {
-      setMixingRule(1);
+    if (!isMixingRuleDefined()) {
+      setMixingRule(EosMixingRuleType.byValue(1));
     }
 
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
@@ -168,25 +165,55 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRule(int type) {
-    mixingRuleDefined = true;
-    super.setMixingRule(type);
-    mixRule = mixSelect.getMixingRule(type, this);
+  public EosMixingRulesInterface getMixingRule() {
+    return mixRule;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public EosMixingRulesInterface getEosMixingRule() {
+    return mixRule;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setMixingRule(MixingRuleTypeInterface mr) {
+    if (!(mr == null) && !EosMixingRuleType.class.isInstance(mr)) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException(this, "setMixingRule", "mr"));
+    }
+    mixingRuleType = mr;
+    if (mr == null) {
+      mixRule = null;
+    } else {
+      mixRule = mixSelect.getMixingRule(mr.getValue(), this);
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public void setMixingRuleGEModel(String name) {
-    mixRule.setMixingRuleGEModel(name);
-    mixSelect.setMixingRuleGEModel(name);
+    if (mixRule != null) {
+      mixRule.setMixingRuleGEModel(name);
+    }
+    if (mixSelect != null) {
+      mixSelect.setMixingRuleGEModel(name);
+    }
   }
 
   /** {@inheritDoc} */
   @Override
-  public void resetMixingRule(int type) {
-    mixingRuleDefined = true;
-    super.setMixingRule(type);
-    mixRule = mixSelect.resetMixingRule(type, this);
+  public void resetMixingRule(MixingRuleTypeInterface mr) {
+    if (!(mr == null) && !EosMixingRuleType.class.isInstance(mr)) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException(this, "resetMixingRule", "mr"));
+    }
+    mixingRuleType = mr;
+    if (mr == null) {
+      mixRule = null;
+    } else {
+      mixRule = mixSelect.getMixingRule(mr.getValue(), this);
+    }
   }
 
   /**
@@ -492,6 +519,9 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   @Override
   public double calcBi(int compNumb, PhaseInterface phase, double temperature, double pressure,
       int numbcomp) {
+    if (mixRule == null) {
+      return 0;
+    }
     return mixRule.calcBi(compNumb, phase, temperature, pressure, numbcomp);
   }
 

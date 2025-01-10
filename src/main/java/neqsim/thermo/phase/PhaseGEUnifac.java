@@ -8,6 +8,7 @@ import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.atomelement.UNIFACgroup;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUniquac;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
  * <p>
@@ -68,8 +69,8 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRule(int type) {
-    super.setMixingRule(type);
+  public void setMixingRule(MixingRuleTypeInterface mr) {
+    super.setMixingRule(mr);
     if (!checkedGroups) {
       checkGroups();
     }

@@ -9,6 +9,7 @@ import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingrule.CPAMixingRules;
 import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
  * <p>
@@ -532,9 +533,10 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRule(int type) {
-    super.setMixingRule(type);
-    // NB! Ignores input type
+  public void setMixingRule(MixingRuleTypeInterface mr) {
+    // NB! Sets EOS mixing rule in parent class
+    super.setMixingRule(mr);
+    // NB! Ignores input mr, uses CPA
     cpamix = cpaSelect.getMixingRule(1, this);
   }
 

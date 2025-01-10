@@ -12,6 +12,8 @@ import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.mixingrule.EosMixingRuleType;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
+import neqsim.thermo.mixingrule.MixingRulesInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -863,12 +865,32 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
+   * setMixingRule.
+   * </p>
+   *
+   * @param mr a MixingRuleTypeInterface
+   */
+  public void setMixingRule(MixingRuleTypeInterface mr);
+
+  /**
+   * <p>
+   * setMixingRule.
+   * </p>
+   *
+   * @param mr a int
+   */
+  public default void setMixingRule(int mr) {
+    setMixingRule(EosMixingRuleType.byValue(mr));
+  }
+
+  /**
+   * <p>
    * resetMixingRule.
    * </p>
    *
-   * @param type a int
+   * @param mr a int
    */
-  public void resetMixingRule(int type);
+  public void resetMixingRule(MixingRuleTypeInterface mr);
 
   /**
    * Set the temperature of a phase.
@@ -1246,15 +1268,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @param k a int
    */
   public void setNumberOfComponents(int k);
-
-  /**
-   * <p>
-   * setMixingRule.
-   * </p>
-   *
-   * @param type a int
-   */
-  public void setMixingRule(int type);
 
   /**
    * <p>
@@ -1805,11 +1818,18 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getLogInfiniteDiluteFugacity(int k);
 
   /**
-   * Get EOS mixing rule type.
-   *
-   * @return a EosMixingRuleType
+   * Get mixing rule
+   * 
+   * @return a MixingRulesInterface
    */
-  public EosMixingRuleType getEosMixingRuleType();
+  public MixingRulesInterface getMixingRule();
+
+  /**
+   * Get mixing rule type.
+   *
+   * @return a MixingRuleTypeInterface
+   */
+  public MixingRuleTypeInterface getMixingRuleType();
 
   /**
    * <p>
@@ -1911,21 +1931,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * Getter for property mixingRuleDefined.
+   * Check if mixing rule is defined.
    * </p>
    *
-   * @return a boolean
+   * @return Returns true if MixingRule is defined and false if not.
    */
   public boolean isMixingRuleDefined();
-
-  /**
-   * <p>
-   * Setter for property mixingRuleDefined.
-   * </p>
-   *
-   * @param mixingRuleDefined a boolean
-   */
-  public void setMixingRuleDefined(boolean mixingRuleDefined);
 
   /**
    * <p>

@@ -178,20 +178,21 @@ public class PipeBeggsAndBrills extends Pipeline {
     this.nominalDiameter = nominalDiameter;
     this.PipeSpecSet = true;
 
-    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-    java.sql.ResultSet dataSet =
-        database.getResultSet("SELECT * FROM pipedata where Size='" + nominalDiameter + "'");
-    try {
-      if (dataSet.next()) {
-        this.pipeThickness = Double.parseDouble(dataSet.getString(pipeSpecification)) / 1000;
-        this.insideDiameter =
-            (Double.parseDouble(dataSet.getString("OD"))) / 1000 - 2 * this.pipeThickness;
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+      java.sql.ResultSet dataSet =
+          database.getResultSet("SELECT * FROM pipedata where Size='" + nominalDiameter + "'");
+      try {
+        if (dataSet.next()) {
+          this.pipeThickness = Double.parseDouble(dataSet.getString(pipeSpecification)) / 1000;
+          this.insideDiameter =
+              (Double.parseDouble(dataSet.getString("OD"))) / 1000 - 2 * this.pipeThickness;
+        }
+      } catch (NumberFormatException e) {
+        logger.error(e.getMessage());
+      } catch (SQLException e) {
+        logger.error(e.getMessage());
       }
-    } catch (NumberFormatException e) {
-      // TODO Auto-generated catch block
-      logger.error(e.getMessage());
     } catch (SQLException e) {
-      // TODO Auto-generated catch block
       logger.error(e.getMessage());
     }
   }

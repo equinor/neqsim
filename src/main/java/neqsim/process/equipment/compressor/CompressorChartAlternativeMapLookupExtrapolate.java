@@ -69,8 +69,10 @@ public class CompressorChartAlternativeMapLookupExtrapolate
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Calculates the polytropic head for a given flow and speed by interpolating or extrapolating
    * between reference compressor curves.
+   * </p>
    */
   @Override
   public double getPolytropicHead(double flow, double speed) {

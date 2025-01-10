@@ -8,6 +8,7 @@ package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGENRTLmodifiedHV;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
  * <p>
@@ -30,7 +31,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
    * </p>
    */
   public PhaseGENRTLmodifiedHV() {
-    mixRuleEos = mixSelect.getMixingRule(1);
+    mixRule = mixSelect.getMixingRule(1);
   }
 
   /**
@@ -91,12 +92,12 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRule(int type) {
-    super.setMixingRule(type);
+  public void setMixingRule(MixingRuleTypeInterface mr) {
+    super.setMixingRule(mr);
     this.DijT = mixSelect.getHVDijT();
     this.intparam = mixSelect.getSRKbinaryInteractionParameters();
     this.alpha = mixSelect.getHValpha();
-    this.mixRule = mixSelect.getClassicOrHV();
+    this.mixRuleString = mixSelect.getClassicOrHV();
     this.Dij = mixSelect.getHVDij();
   }
 
@@ -104,7 +105,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
   @Override
   public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT,
       String[][] mixRule, double[][] intparam) {
-    this.mixRule = mixRule;
+    this.mixRuleString = mixRule;
     this.alpha = alpha;
     this.Dij = Dij;
     type = 1;
@@ -127,13 +128,13 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (type == 0) {
-        GE += phase.getComponent(i).getx()
-            * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase,
-                numberOfComponents, temperature, pressure, pt, alpha, Dij, intparam, mixRule));
+        GE += phase.getComponent(i).getx() * Math
+            .log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents,
+                temperature, pressure, pt, alpha, Dij, intparam, mixRuleString));
       } else if (type == 1) {
         GE += phase.getComponent(i).getx() * Math
             .log(((ComponentGENRTLmodifiedHV) componentArray[i]).getGamma(phase, numberOfComponents,
-                temperature, pressure, pt, alpha, Dij, DijT, intparam, mixRule));
+                temperature, pressure, pt, alpha, Dij, DijT, intparam, mixRuleString));
       }
     }
     return R * phase.getTemperature() * phase.getNumberOfMolesInPhase() * GE;

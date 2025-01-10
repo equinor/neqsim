@@ -1,6 +1,8 @@
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
  * <p>
@@ -67,7 +69,21 @@ public class PhaseDefault extends Phase {
 
   /** {@inheritDoc} */
   @Override
-  public void resetMixingRule(int type) {}
+  public EosMixingRulesInterface getMixingRule() {
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setMixingRuleGEModel(String name) {}
+
+  /** {@inheritDoc} */
+  @Override
+  public void setMixingRule(MixingRuleTypeInterface mr) {}
+
+  /** {@inheritDoc} */
+  @Override
+  public void resetMixingRule(MixingRuleTypeInterface mr) {}
 
   /** {@inheritDoc} */
   @Override
