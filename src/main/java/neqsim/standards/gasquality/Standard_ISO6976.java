@@ -245,7 +245,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     Zmix20 -= Math.pow(Zmixtemp20, 2.0);
     molRefm3 =
         volRefP * 1.0e5 * 1.0 / (R * (getVolRefT() + 273.15) * getValue("CompressionFactor"));
-    // System.out.println("molRefm3 " + molRefm3);
   }
 
   /** {@inheritDoc} */

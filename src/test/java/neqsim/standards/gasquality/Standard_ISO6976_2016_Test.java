@@ -133,6 +133,37 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
   }
 
   @Test
+  void testCalculate3() {
+    SystemInterface testSystem = new SystemSrkEos(273.15, 1.0);
+    testSystem.addComponent("methane", 0.92470);
+    testSystem.addComponent("ethane", 0.035);
+    testSystem.addComponent("propane", 0.0098);
+    testSystem.addComponent("n-butane", 0.00220);
+    testSystem.addComponent("i-butane", 0.0034);
+    testSystem.addComponent("n-pentane", 0.0006);
+    testSystem.addComponent("nitrogen", 0.0175);
+    testSystem.addComponent("CO2", 0.0068);
+    testSystem.createDatabase(true);
+    testSystem.setMixingRule(2);
+
+    testSystem.init(0);
+    Standard_ISO6976_2016 standard = new Standard_ISO6976_2016(testSystem, 15, 15, "volume");
+    standard.setReferenceState("real");
+    standard.setReferenceType("volume");
+    standard.calculate();
+    Assertions.assertEquals(0.99764929782, standard.getValue("CompressionFactor"), 1e-3);
+    Assertions.assertEquals(35144.8789915, standard.getValue("InferiorCalorificValue"), 5);
+    Assertions.assertEquals(38956.94693, standard.getValue("GCV"), 1e-5);
+
+    Assertions.assertEquals(50105.17975854, standard.getValue("SuperiorWobbeIndex"), 1e-5);
+    Assertions.assertEquals(45201.5624460, standard.getValue("InferiorWobbeIndex"), 1e-5);
+
+    Assertions.assertEquals(0.6045115156, standard.getValue("RelativeDensity"), 1e-5);
+    Assertions.assertEquals(0.99773023373, standard.getValue("CompressionFactor"), 1e-5);
+    Assertions.assertEquals(17.477288925, standard.getValue("MolarMass"), 1e-5);
+  }
+
+  @Test
   @Disabled
   void testDisplay() {
     Standard_ISO6976_2016 s = new Standard_ISO6976_2016(testSystem);

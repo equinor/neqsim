@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -162,6 +163,44 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
      * logger.info("Hres " + testSystem.getPhase(0).getComponent("methane").getHresTP(273.15 -
      * 150.0));
      */
+  }
+
+
+  @Test
+  void testCalculate3() {
+    SystemInterface testSystem = new SystemSrkEos(273.15, 1.0);
+    testSystem.addComponent("methane", 0.92470);
+    testSystem.addComponent("ethane", 0.035);
+    testSystem.addComponent("propane", 0.0098);
+    testSystem.addComponent("n-butane", 0.00220);
+    testSystem.addComponent("i-butane", 0.0034);
+    testSystem.addComponent("n-pentane", 0.0006);
+    testSystem.addComponent("nitrogen", 0.0175);
+    testSystem.addComponent("CO2", 0.0068);
+    testSystem.createDatabase(true);
+    testSystem.setMixingRule(2);
+
+    testSystem.init(0);
+    Standard_ISO6976 standard = new Standard_ISO6976(testSystem, 15, 15, "volume");
+    standard.setReferenceState("real");
+    standard.setReferenceType("volume");
+    standard.calculate();
+    Assertions.assertEquals(0.99764929782, standard.getValue("CompressionFactor"), 1e-3);
+    Assertions.assertEquals(35144.8789915, standard.getValue("InferiorCalorificValue"), 5);
+    Assertions.assertEquals(38959.473378295, standard.getValue("GCV"), 1e-5);
+
+    Assertions.assertEquals(50107.49824498, standard.getValue("SuperiorWobbeIndex"), 1e-5);
+    Assertions.assertEquals(45201.380041, standard.getValue("InferiorWobbeIndex"), 1e-5);
+
+    Assertions.assertEquals(0.60453397833045, standard.getValue("RelativeDensity"), 1e-5);
+    Assertions.assertEquals(0.99770997554, standard.getValue("CompressionFactor"), 1e-5);
+    Assertions.assertEquals(17.477845, standard.getValue("MolarMass"), 1e-5);
+
+    Stream testStream = new Stream("testStream", testSystem);
+    testStream.run();
+    Assertions.assertEquals(50107.49824498, testStream.getWI("volume", 15, 15) / 1e3, 1e-5);
+    Assertions.assertEquals(38959.473378, testStream.getGCV("volume", 15, 15) / 1e3, 1e-5);
+
   }
 
   @Test
