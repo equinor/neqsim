@@ -81,7 +81,7 @@ public class TPMultiFlash {
     // testSystem.setMixingRule(1);
 
     try {
-      int phase = 0;
+      PhaseType pt = PhaseType.LIQUID;
 
       testSystem.init(0);
       testSystem.useVolumeCorrection(true);
@@ -94,13 +94,15 @@ public class TPMultiFlash {
         testSystem.init(0, 0);
         testSystem.setTemperature(298);
         testSystem.setPressure(10);
-        if (phase == 1) {
-          phase = 0;
+
+        // Change phasetype each run
+        if (pt == PhaseType.GAS) {
+          pt = PhaseType.LIQUID;
         } else {
-          phase = 1;
+          pt = PhaseType.LIQUID;
         }
 
-        testSystem.setPhaseType(0, PhaseType.byValue(phase));
+        testSystem.setPhaseType(0, pt);
         testSystem.init(2, 0);
         testSystem.initPhysicalProperties();
       }

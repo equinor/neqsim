@@ -1057,7 +1057,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                   / (1.0 + compArray[0].getDeltaEosParameters()[0]));
       gePhase = new PhaseGENRTLmodifiedHV(orgPhase, HValpha, HVDij, mixRule, intparam);
       gePhase.getExcessGibbsEnergy(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-          phase.getPressure(), PhaseType.byValue(1));
+          phase.getPressure(), PhaseType.GAS);
       gePhase.setProperties(phase);
     }
 
@@ -1071,7 +1071,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                   / (1.0 + compArray[0].getDeltaEosParameters()[0]));
       gePhase = new PhaseGENRTLmodifiedHV(orgPhase, HValpha, HVDij, HVDijT, mixRule, intparam);
       gePhase.getExcessGibbsEnergy(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-          phase.getPressure(), PhaseType.byValue(1));
+          phase.getPressure(), PhaseType.GAS);
       gePhase.setProperties(phase);
     }
 
@@ -1145,7 +1145,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
       }
       A = calcB(phase, temperature, pressure, numbcomp) * (A - phase.getNumberOfMolesInPhase()
           * gePhase.getExcessGibbsEnergy(phase, phase.getNumberOfComponents(),
-              phase.getTemperature(), phase.getPressure(), PhaseType.byValue(0))
+              phase.getTemperature(), phase.getPressure(), PhaseType.LIQUID)
           / gePhase.getNumberOfMolesInPhase() / hwfc);
       Atot = A;
       return A;

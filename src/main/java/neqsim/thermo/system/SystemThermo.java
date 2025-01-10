@@ -1321,8 +1321,8 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void clearAll() {
     setTotalNumberOfMoles(0);
-    phaseType[0] = PhaseType.byValue(1);
-    phaseType[1] = PhaseType.byValue(0);
+    phaseType[0] = PhaseType.GAS;
+    phaseType[1] = PhaseType.LIQUID;
     numberOfComponents = 0;
     setNumberOfPhases(2);
     beta[0] = 1.0;
@@ -3903,10 +3903,10 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void reInitPhaseType() {
-    phaseType[0] = PhaseType.byValue(1);
-    phaseType[1] = PhaseType.byValue(0);
-    phaseType[2] = PhaseType.byValue(0);
-    phaseType[3] = PhaseType.byValue(0);
+    phaseType[0] = PhaseType.GAS;
+    phaseType[1] = PhaseType.LIQUID;
+    phaseType[2] = PhaseType.LIQUID;
+    phaseType[3] = PhaseType.LIQUID;
     // TODO: why stop at 3 and not iterate through MAX_PHASES elements?
   }
 
@@ -4751,10 +4751,10 @@ public abstract class SystemThermo implements SystemInterface {
      */
 
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      if (phaseType[i] == PhaseType.byValue(0)) {
-        phaseType[i] = PhaseType.byValue(1);
+      if (phaseType[i] == PhaseType.LIQUID) {
+        phaseType[i] = PhaseType.GAS;
       } else {
-        phaseType[i] = PhaseType.byValue(0);
+        phaseType[i] = PhaseType.LIQUID;
       }
     }
   }

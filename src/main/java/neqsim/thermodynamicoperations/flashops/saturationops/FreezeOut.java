@@ -86,7 +86,7 @@ public class FreezeOut extends ConstantDutyTemperatureFlash
         SystemInterface testSystem2 = new SystemSrkSchwartzentruberEos(216, 1);
         ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
         testSystem2.addComponent(testSystem.getPhase(0).getComponent(k).getComponentName(), 1);
-        testSystem2.setPhaseType(0, PhaseType.byValue(1));
+        testSystem2.setPhaseType(0, PhaseType.GAS);
         noFreezeliq = true;
         SolidFug = 0.0;
         FluidFug = 0.0;

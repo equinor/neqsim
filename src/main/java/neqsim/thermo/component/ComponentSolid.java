@@ -111,7 +111,7 @@ public class ComponentSolid extends ComponentSrk {
 
     refPhase.setTemperature(temp);
     refPhase.setPressure(PvapSolid);
-    refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, PhaseType.byValue(1), 1.0);
+    refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, PhaseType.GAS, 1.0);
     refPhase.getComponent(0).fugcoef(refPhase);
 
     // System.out.println("ref co2 fugcoef " +
@@ -142,7 +142,7 @@ public class ComponentSolid extends ComponentSrk {
     refPhase.setTemperature(phase1.getTemperature());
     refPhase.setPressure(phase1.getPressure());
     try {
-      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, PhaseType.byValue(0), 1.0);
+      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, PhaseType.LIQUID, 1.0);
     } catch (Exception ex) {
       logger.error(ex.getMessage());
     }
@@ -256,7 +256,7 @@ public class ComponentSolid extends ComponentSrk {
       }
       refPhase.getComponent(componentName)
           .setAttractiveTerm(phase.getComponent(componentName).getAttractiveTermNumber());
-      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, PhaseType.byValue(1), 1.0);
+      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, PhaseType.GAS, 1.0);
       // }
     } catch (Exception ex) {
       logger.error("error occured", ex);
