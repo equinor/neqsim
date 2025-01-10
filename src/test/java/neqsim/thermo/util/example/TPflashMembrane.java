@@ -49,7 +49,7 @@ public class TPflashMembrane {
     testSystem.init_x_y();
     testSystem.getPhase(0).setPressure(30.0);
     testSystem.getPhase(1).setPressure(2.0);
-    testSystem.setAllPhaseType(PhaseType.byValue(1));
+    testSystem.setAllPhaseType(PhaseType.GAS);
     testSystem.allowPhaseShift(false);
 
     try {

@@ -361,8 +361,8 @@ public class SysNewtonRhapson implements java.io.Serializable {
       PC2 = Math.exp(u.get(numberOfComponents + 1, 0));
       system.setTC((TC1 + TC2) * 0.5);
       system.setPC((PC1 + PC2) * 0.5);
-      system.setPhaseType(0, PhaseType.byValue(1));
-      system.setPhaseType(1, PhaseType.byValue(0));
+      system.setPhaseType(0, PhaseType.GAS);
+      system.setPhaseType(1, PhaseType.LIQUID);
       return;
     } else if ((xlnkmax < avscp && testcrit != 1) && (np != ic03p && !etterCP)) {
       // System.out.println("hei fra her");

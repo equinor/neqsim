@@ -166,7 +166,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
 
         if (!thermoSystem.hasPhaseType("gas")) {
           thermoSystem.setPhaseType(thermoSystem.getPhaseNumberOfPhase(PhaseType.OIL),
-              PhaseType.byValue(1));
+              PhaseType.GAS);
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
 
@@ -176,7 +176,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
 
         if (!thermoSystem.hasPhaseType("oil")) {
           thermoSystem.setPhaseType(thermoSystem.getPhaseNumberOfPhase(PhaseType.GAS),
-              PhaseType.byValue(1));
+              PhaseType.GAS);
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
 
@@ -185,7 +185,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
         }
 
         if (!thermoSystem.hasPhaseType("aqueous")) {
-          thermoSystem.setPhaseType(1, PhaseType.byValue(1));
+          thermoSystem.setPhaseType(1, PhaseType.GAS);
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
 

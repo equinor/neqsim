@@ -376,12 +376,12 @@ public class TPflash extends Flash {
 
     // Checks if gas or oil is the most stable phase
     double gasgib = system.getPhase(0).getGibbsEnergy();
-    system.setPhaseType(0, PhaseType.byValue(0));
+    system.setPhaseType(0, PhaseType.LIQUID);
     system.init(1, 0);
     double liqgib = system.getPhase(0).getGibbsEnergy();
 
     if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
-      system.setPhaseType(0, PhaseType.byValue(1));
+      system.setPhaseType(0, PhaseType.GAS);
     }
     system.init(1);
 
@@ -472,25 +472,25 @@ public class TPflash extends Flash {
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
       operation.run();
     } else {
-      // Checks if gas or oil is the most stable phase
       try {
+        // Checks if gas or oil is the most stable phase
         if (system.getPhase(0).getType() == PhaseType.GAS) {
           gasgib = system.getPhase(0).getGibbsEnergy();
-          system.setPhaseType(0, PhaseType.byValue(0));
+          system.setPhaseType(0, PhaseType.LIQUID);
 
           system.init(1, 0);
           liqgib = system.getPhase(0).getGibbsEnergy();
         } else {
           liqgib = system.getPhase(0).getGibbsEnergy();
-          system.setPhaseType(0, PhaseType.byValue(1));
+          system.setPhaseType(0, PhaseType.GAS);
           system.init(1, 0);
           gasgib = system.getPhase(0).getGibbsEnergy();
         }
         if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
-          system.setPhaseType(0, PhaseType.byValue(1));
+          system.setPhaseType(0, PhaseType.GAS);
         }
       } catch (Exception e) {
-        system.setPhaseType(0, PhaseType.byValue(1));
+        system.setPhaseType(0, PhaseType.GAS);
       }
 
       system.init(1);

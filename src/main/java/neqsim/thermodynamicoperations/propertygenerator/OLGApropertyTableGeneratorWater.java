@@ -577,7 +577,7 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicoperati
             } while (k < 17); // names[k] = "GAS DENSITY";
             // units[k] = "KG/M3";
           } else {
-            oilSystem.setPhaseType(0, PhaseType.byValue(0));
+            oilSystem.setPhaseType(0, PhaseType.LIQUID);
             oilSystem.setTemperature(temperatures[j]);
             oilSystem.setPressure(pressures[i]);
             oilSystem.init(3);
@@ -715,7 +715,7 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicoperati
           } else {
             waterSystem.setTemperature(temperatures[j]);
             waterSystem.setPressure(pressures[i]);
-            waterSystem.setPhaseType(0, PhaseType.byValue(0));
+            waterSystem.setPhaseType(0, PhaseType.LIQUID);
             waterSystem.init(3);
             waterSystem.initPhysicalProperties();
 

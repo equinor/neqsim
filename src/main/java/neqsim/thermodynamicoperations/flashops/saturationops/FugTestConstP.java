@@ -72,7 +72,7 @@ public class FugTestConstP extends ConstantDutyTemperatureFlash
   public void initTestSystem2(int K) {
     this.testSystem2 = new SystemSrkSchwartzentruberEos(temp, pres);
     this.testSystem2.addComponent(compName, 1);
-    this.testSystem2.setPhaseType(0, PhaseType.byValue(1));
+    this.testSystem2.setPhaseType(0, PhaseType.GAS);
     this.testOps2 = new ThermodynamicOperations(testSystem2);
   }
 

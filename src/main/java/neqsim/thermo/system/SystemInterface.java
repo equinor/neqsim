@@ -1865,7 +1865,11 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void normalizeBeta();
 
   /**
-   * Order phases by density.
+   * Order phases 0-3, as many as there are, by density such that getPhase(0) is lightest.
+   * 
+   * <p>
+   * Typically GAS, LIQUID for two-phase or GAS, OIL, AQUEOUS for multiphase .
+   * </p>
    */
   public void orderByDensity();
 

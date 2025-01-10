@@ -56,7 +56,7 @@ public class ComponentHydrateBallard extends ComponentHydrate {
     if (componentName.equals("water")) {
       refPhase.setTemperature(temp);
       refPhase.setPressure(pres);
-      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, PhaseType.byValue(0), 1.0);
+      refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, PhaseType.LIQUID, 1.0);
       double refWaterFugacity = refPhase.getComponent("water").fugcoef(refPhase) * pres;
       double alphaWater = reffug[getComponentNumber()];
       double wateralphaRef = Math.log(refWaterFugacity / alphaWater);

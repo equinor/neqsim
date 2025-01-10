@@ -339,16 +339,16 @@ public class SolidFlash1 extends TPflash {
     double gibbs1 = 0;
     double gibbs2 = 0;
     for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-      system.setPhaseType(i, PhaseType.byValue(0));
+      system.setPhaseType(i, PhaseType.LIQUID);
       system.init(1);
       gibbs1 = system.getPhase(i).getGibbsEnergy();
-      system.setPhaseType(i, PhaseType.byValue(1));
+      system.setPhaseType(i, PhaseType.GAS);
       system.init(1);
       gibbs2 = system.getPhase(i).getGibbsEnergy();
       if (gibbs1 < gibbs2) {
-        system.setPhaseType(i, PhaseType.byValue(0));
+        system.setPhaseType(i, PhaseType.LIQUID);
       } else {
-        system.setPhaseType(i, PhaseType.byValue(1));
+        system.setPhaseType(i, PhaseType.GAS);
       }
       system.init(1);
     }
