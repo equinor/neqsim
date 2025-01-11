@@ -60,7 +60,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
           phase.getComponent(i).getComponentNumber());
       componentArray[i].setAttractiveTerm(phase.getComponent(i).getAttractiveTermNumber());
     }
-    this.setMixingRule(EosMixingRuleType.byValue(2));
+    this.setMixingRule(EosMixingRuleType.CLASSIC);
   }
 
   /**

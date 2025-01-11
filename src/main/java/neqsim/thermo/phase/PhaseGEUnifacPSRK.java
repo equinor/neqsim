@@ -52,7 +52,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }
-    this.setMixingRule(EosMixingRuleType.byValue(2));
+    this.setMixingRule(EosMixingRuleType.CLASSIC);
   }
 
   /** {@inheritDoc} */

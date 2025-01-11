@@ -23,7 +23,7 @@ public class HydrateInhibitorwtFlashTest {
     testSystem.addComponent("MEG", 0.000001);
     testSystem.addComponent("water", 0.0010);
     testSystem.createDatabase(true);
-    testSystem.setMixingRule(EosMixingRuleType.byValue(10));
+    testSystem.setMixingRule(EosMixingRuleType.CLASSIC_TX_CPA);
 
     testSystem.init(0);
     testSystem.setMultiPhaseCheck(true);
