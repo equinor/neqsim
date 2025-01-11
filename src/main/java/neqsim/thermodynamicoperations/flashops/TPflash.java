@@ -287,16 +287,16 @@ public class TPflash extends Flash {
     // This solves some problems when we have high volumes of water and heavy
     // hydrocarbons returning only one liquid phase (and this phase desolves all
     // gas)
-    if (system.getBeta() > (1.0 - phaseFractionMinimumLimit * 1.1)
-        || system.getBeta() < (phaseFractionMinimumLimit * 1.1)) {
+    if (system.getBeta() > (1.0 - 1.1 * phaseFractionMinimumLimit)
+        || system.getBeta() < (1.1 * phaseFractionMinimumLimit)) {
       system.setBeta(0.5);
       sucsSubs();
     }
 
     // Performs three iterations of successive substitution
     for (int k = 0; k < 3; k++) {
-      if (system.getBeta() < (1.0 - phaseFractionMinimumLimit * 1.1)
-          && system.getBeta() > (phaseFractionMinimumLimit * 1.1)) {
+      if (system.getBeta() < (1.0 - 1.1 * phaseFractionMinimumLimit)
+          && system.getBeta() > (1.1 * phaseFractionMinimumLimit)) {
         sucsSubs();
         if ((system.getGibbsEnergy() - minimumGibbsEnergy)
             / Math.abs(minimumGibbsEnergy) < -1e-12) {
