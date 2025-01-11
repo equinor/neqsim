@@ -36,7 +36,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public double delta1 = 0;
   public double delta2 = 0;
 
-  protected EosMixingRules mixSelect = null;
+  protected EosMixingRules mixSelect = new EosMixingRules();
   protected EosMixingRulesInterface mixRule = null;
   double uEOS = 0;
   double wEOS = 0;
@@ -63,7 +63,6 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * </p>
    */
   public PhaseEos() {
-    mixSelect = new EosMixingRules();
     componentArray = new ComponentEosInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
     mixRule = mixSelect.getMixingRule(1);
     // solver = new newtonRhapson();
@@ -199,12 +198,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     } else {
       mixRule.setMixingRuleGEModel(name);
     }
-    if (mixSelect == null) {
-      // do nothing or initialize?
-      logger.debug("mixSelect is null");
-    } else {
-      mixSelect.setMixingRuleGEModel(name);
-    }
+    mixSelect.setMixingRuleGEModel(name);
   }
 
   /** {@inheritDoc} */

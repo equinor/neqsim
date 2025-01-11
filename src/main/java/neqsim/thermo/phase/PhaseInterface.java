@@ -39,10 +39,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * setMoleFractions.
+   * Set <code>x</code> and normalize for all Components in phase.
    * </p>
    *
-   * @param x an array of type double
+   * @param x Mole fractions of component in a phase.
    */
   public void setMoleFractions(double[] x);
 
@@ -690,8 +690,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getpH();
 
   /**
+   * Normalize property <code>x</code>.
+   * 
    * <p>
-   * normalize.
+   * Property <code>x</code> is the mole fraction of a component in a specific phase. Normalizing,
+   * means that the sum of <code>x</code> for all Components in a phase equal 1.0.
    * </p>
    */
   public void normalize();
@@ -1280,10 +1283,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * getNumberOfMolesInPhase.
+   * Get the number of moles the phase contains.
    * </p>
    *
-   * @return a double
+   * @return The number of moles in the phase.
    */
   public double getNumberOfMolesInPhase();
 
@@ -1723,7 +1726,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * dFdT.
+   * Calculate derivative of F per Temperature, i.e., dF/dT.
    * </p>
    *
    * @return a double
@@ -1732,7 +1735,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * dFdV.
+   * Calculate derivative of F per Volume, i.e., dF/dV.
    * </p>
    *
    * @return a double
@@ -1741,7 +1744,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * dFdTdV.
+   * Calculate derivative of F per Temperature and Volume, i.e., dF/dT * 1/dV.
    * </p>
    *
    * @return a double
@@ -1818,8 +1821,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getLogInfiniteDiluteFugacity(int k);
 
   /**
-   * Get mixing rule
-   * 
+   * Get mixing rule.
+   *
    * @return a MixingRulesInterface
    */
   public MixingRulesInterface getMixingRule();

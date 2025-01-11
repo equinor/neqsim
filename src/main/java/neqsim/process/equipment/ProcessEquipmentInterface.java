@@ -89,8 +89,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * setController.
    * </p>
    *
-   * @param controller a {@link neqsim.process.controllerdevice.ControllerDeviceInterface}
-   *        object
+   * @param controller a {@link neqsim.process.controllerdevice.ControllerDeviceInterface} object
    */
   public void setController(ControllerDeviceInterface controller);
 
@@ -166,8 +165,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * runConditionAnalysis.
    * </p>
    *
-   * @param refExchanger a
-   *        {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param refExchanger a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public void runConditionAnalysis(ProcessEquipmentInterface refExchanger);
 
@@ -216,10 +214,10 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
 
   /**
    * <p>
-   * toJson.
+   * Serializes the Process Equipment along with its state to a JSON string.
    * </p>
    *
-   * @return a String
+   * @return json string.
    */
   public String toJson();
 

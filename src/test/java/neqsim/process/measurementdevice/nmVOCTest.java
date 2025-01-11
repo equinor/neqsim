@@ -121,7 +121,7 @@ public class nmVOCTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  public void nmVOCFlowRateTest() {
+  public void testnmVOCFlowRate() {
     process1.run();
     Assertions.assertEquals(vocanalyser1.getMeasuredValue(), 10555.540704);
     Assertions.assertEquals(vocanalyser1.getMeasuredValue("tonnes/year"), 10555.540704);

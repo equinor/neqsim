@@ -1472,7 +1472,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * Getter for property <code>TC</code>.
+   * Get critical temperature.
    * </p>
    *
    * @return Critical temperature
@@ -1488,13 +1488,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * method to return temperature.
+   * method to return temperature from a specific phase.
    * </p>
    *
    * @param phaseNumber phase to get temperature of
    * @return temperature in unit Kelvin
    */
-  public double getTemperature(int phaseNumber);
+  public double getTemperature(int phaseNumber); // TODO: is it possible for the phases to have
+                                                 // different temperatures?
 
   /**
    * method to return temperature in a specified unit.
@@ -2123,9 +2124,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setAttractiveTerm(int i);
 
   /**
+   * Setter for property <code>beta</code>.
    * <p>
-   * Setter for property <code>beta</code>. NB! Sets beta = b for first phase and 1-b for second
-   * phase, not for multiphase systems.
+   * NB! Sets beta = b for first (heaviest) phase and 1-b for second (lightest) phase, not for
+   * multiphase systems.
    * </p>
    *
    * @param b Beta value to set.

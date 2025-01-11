@@ -140,7 +140,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Method to perform a flash at given temperature, pressure and specified volume The number of
+   * Method to perform a flash at given temperature, pressure and specified volume. The number of
    * moles in the system are changed to match the specified volume.
    *
    * @param volumeSpec is the specified volume
@@ -1380,6 +1380,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       fraction = 1.0 - 1.0e-10;
     }
     ConstantDutyFlashInterface operation = new ConstantDutyTemperatureFlash(system);
+    // TODO: bug, sum of beta will not equal 1
     system.setBeta(1, fraction);
     system.setBeta(0, fraction);
     operation.run();
