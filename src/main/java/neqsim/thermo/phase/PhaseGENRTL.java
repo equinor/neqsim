@@ -62,7 +62,7 @@ public class PhaseGENRTL extends PhaseGE {
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }
-    setMixingRule(EosMixingRuleType.byValue(2));
+    setMixingRule(EosMixingRuleType.CLASSIC);
   }
 
   /** {@inheritDoc} */

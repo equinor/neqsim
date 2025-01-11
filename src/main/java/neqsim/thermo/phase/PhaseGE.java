@@ -143,7 +143,7 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
       throw new RuntimeException(
           new neqsim.util.exception.InvalidInputException(this, "setMixingRule", "mr"));
     }
-    mixingRuleType = EosMixingRuleType.byValue(2);
+    mixingRuleType = EosMixingRuleType.CLASSIC);
     mixRule = mixSelect.getMixingRule(mixingRuleType.getValue(), this);
   }
 
@@ -155,7 +155,7 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
           new neqsim.util.exception.InvalidInputException(this, "resetMixingRule", "mr"));
     }
     // NB! Ignores input mr
-    mixingRuleType = EosMixingRuleType.byValue(2);
+    mixingRuleType = EosMixingRuleType.CLASSIC;
     mixRule = mixSelect.resetMixingRule(mixingRuleType.getValue(), this);
   }
 
