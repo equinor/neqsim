@@ -1,5 +1,6 @@
 package neqsim.thermo.system;
 
+import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -3335,9 +3336,8 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < numberOfPhases; i++) {
       this.beta[phaseIndex[i]] = getPhase(i).getNumberOfMolesInPhase() / getTotalNumberOfMoles();
     }
-    if (!isInitialized
-        && this.getSumBeta() < 1.0 - ThermodynamicModelSettings.phaseFractionMinimumLimit
-        || this.getSumBeta() > 1.0 + ThermodynamicModelSettings.phaseFractionMinimumLimit) {
+    if (!isInitialized && this.getSumBeta() < 1.0 - phaseFractionMinimumLimit
+        || this.getSumBeta() > 1.0 + phaseFractionMinimumLimit) {
       logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0. " + beta);
     }
   }
@@ -4282,11 +4282,11 @@ public abstract class SystemThermo implements SystemInterface {
     // TODO: if number of phases > 2, should fail
     if (b < 0) {
       logger.warn("setBeta - Tried to set beta < 0: " + beta);
-      b = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+      b = phaseFractionMinimumLimit;
     }
     if (b > 1) {
       logger.warn("setBeta - Tried to set beta > 1: " + beta);
-      b = 1.0 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+      b = 1.0 - phaseFractionMinimumLimit;
     }
     beta[0] = b;
     beta[1] = 1.0 - b;
@@ -4297,11 +4297,11 @@ public abstract class SystemThermo implements SystemInterface {
   public final void setBeta(int phaseNum, double b) {
     if (b < 0) {
       logger.warn("setBeta - Tried to set beta < 0: " + beta);
-      b = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+      b = phaseFractionMinimumLimit;
     }
     if (b > 1) {
       logger.warn("setBeta - Tried to set beta > 1: " + beta);
-      b = 1.0 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+      b = 1.0 - phaseFractionMinimumLimit;
     }
     beta[phaseIndex[phaseNum]] = b;
   }

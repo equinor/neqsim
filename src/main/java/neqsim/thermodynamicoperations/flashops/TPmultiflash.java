@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.simple.SimpleMatrix;
-import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
@@ -1349,7 +1348,7 @@ public class TPmultiflash extends TPflash {
 
       boolean hasRemovedPhase = false;
       for (int i = 0; i < system.getNumberOfPhases(); i++) {
-        if (system.getBeta(i) < ThermodynamicModelSettings.phaseFractionMinimumLimit * 1.1) {
+        if (system.getBeta(i) < phaseFractionMinimumLimit * 1.1) {
           system.removePhaseKeepTotalComposition(i);
           doStabilityAnalysis = false;
           hasRemovedPhase = true;

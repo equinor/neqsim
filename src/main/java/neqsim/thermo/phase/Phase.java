@@ -6,6 +6,7 @@
 
 package neqsim.thermo.phase;
 
+import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -2020,10 +2021,10 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public final void setBeta(double b) {
     if (b < 0) {
-      b = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+      b = phaseFractionMinimumLimit;
     }
     if (b > 1) {
-      b = 1.0 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+      b = 1.0 - phaseFractionMinimumLimit;
     }
     this.beta = b;
   }

@@ -1,5 +1,6 @@
 package neqsim.thermodynamicoperations.flashops;
 
+import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
@@ -238,10 +239,10 @@ public class SolidFlash extends TPflash {
       betaMatrix.minusEquals(ans.times((iter + 1.0) / (10.0 + iter)));
       for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
         double currBeta = betaMatrix.get(k, 0);
-        if (currBeta < neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit) {
-          system.setBeta(k, neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit);
+        if (currBeta < phaseFractionMinimumLimit) {
+          system.setBeta(k, phaseFractionMinimumLimit);
         } else if (currBeta > 1) {
-          system.setBeta(k, 1 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit);
+          system.setBeta(k, 1 - phaseFractionMinimumLimit);
         } else {
           system.setBeta(k, currBeta);
         }
