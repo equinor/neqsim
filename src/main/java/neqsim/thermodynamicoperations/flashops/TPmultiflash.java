@@ -207,16 +207,18 @@ public class TPmultiflash extends TPflash {
       betaMatrix = betaMatrix.minus(ans.scale(iter / (iter + 3.0)));
       removePhase = false;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        system.setBeta(k, betaMatrix.get(0, k));
-        if (betaMatrix.get(0, k) < phaseFractionMinimumLimit) {
+        double currBeta = betaMatrix.get(0, k);
+        if (currBeta < phaseFractionMinimumLimit) {
           system.setBeta(k, phaseFractionMinimumLimit);
           if (checkOneRemove) {
             checkOneRemove = false;
             removePhase = true;
           }
           checkOneRemove = true;
-        } else if (betaMatrix.get(0, k) > (1.0 - phaseFractionMinimumLimit)) {
+        } else if (currBeta > (1.0 - phaseFractionMinimumLimit)) {
           system.setBeta(k, 1.0 - phaseFractionMinimumLimit);
+        } else {
+          system.setBeta(k, currBeta);
         }
       }
       system.normalizeBeta();

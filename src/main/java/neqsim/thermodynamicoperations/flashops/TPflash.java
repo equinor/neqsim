@@ -66,7 +66,7 @@ public class TPflash extends Flash {
 
   /**
    * <p>
-   * sucsSubs.
+   * sucsSubs. Successive substitutions.
    * </p>
    */
   public void sucsSubs() {
@@ -195,7 +195,20 @@ public class TPflash extends Flash {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   * 
+   * <p>
+   * Calculate the following properties:
+   * </p>
+   * <ul>
+   * <li>minimumGibbsEnergy</li>
+   * <li>minGibsPhaseLogZ</li>
+   * <li>minGibsLogFugCoef</li>
+   * <li>presdiff</li>
+   * <li>Component K properties for all phases if required</li>
+   * </ul>
+   */
   @Override
   public void run() {
     if (system.isForcePhaseTypes() && system.getMaxNumberOfPhases() == 1) {
@@ -292,7 +305,6 @@ public class TPflash extends Flash {
     }
 
     // System.out.println("beta " + system.getBeta());
-
     int totiter = 0;
     double tpdx = 1.0;
     double tpdy = 1.0;
@@ -322,7 +334,6 @@ public class TPflash extends Flash {
       }
 
       dgonRT = system.getPhase(0).getBeta() * tpdy + (1.0 - system.getPhase(0).getBeta()) * tpdx;
-
       if (dgonRT > 0) {
         if (tpdx < 0) {
           for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
@@ -363,8 +374,6 @@ public class TPflash extends Flash {
 
         system.orderByDensity();
         system.init(1);
-        // commented out by Even Solbraa 6/2-2012k
-        // system.init(3);
         return;
       }
     }

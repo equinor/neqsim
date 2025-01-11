@@ -236,16 +236,14 @@ public class SolidFlash extends TPflash {
       }
 
       betaMatrix.minusEquals(ans.times((iter + 1.0) / (10.0 + iter)));
-      // betaMatrix.print(10, 2);
-      // betaMatrix.print(10,2);
-
       for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
-        system.setBeta(k, betaMatrix.get(k, 0));
-        if (betaMatrix.get(k, 0) < 0) {
-          system.setBeta(k, 1e-9);
-        }
-        if (betaMatrix.get(k, 0) > 1) {
-          system.setBeta(k, 1 - 1e-9);
+        double currBeta = betaMatrix.get(k, 0);
+        if (currBeta < neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit) {
+          system.setBeta(k, neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit);
+        } else if (currBeta > 1) {
+          system.setBeta(k, 1 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit);
+        } else {
+          system.setBeta(k, currBeta);
         }
       }
 

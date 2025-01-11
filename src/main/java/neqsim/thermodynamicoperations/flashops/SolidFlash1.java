@@ -295,11 +295,18 @@ public class SolidFlash1 extends TPflash {
       betaMatrix = betaMatrixTemp.copy();
       boolean deactivatedPhase = false;
       for (int i = 0; i < system.getNumberOfPhases() - solidsNumber; i++) {
-        system.setBeta(i, betaMatrix.get(i, 0));
-        // logger.info("Fluid Phase fraction" + system.getBeta(i));
-        if (Math.abs(system.getBeta(i)) < 1.0e-10) {
+        double currBeta = betaMatrix.get(i, 0);
+        if (currBeta < neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit) {
+          system.setBeta(i, neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit);
+          // This used to be verified with abs(betamatrix.get(i,0)) < 1.0e-10
           FluidPhaseActiveDescriptors[i] = 0;
           deactivatedPhase = true;
+        } else if (currBeta > (1.0
+            - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit)) {
+          system.setBeta(i,
+              1.0 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit);
+        } else {
+          system.setBeta(i, currBeta);
         }
       }
 
