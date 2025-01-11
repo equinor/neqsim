@@ -152,17 +152,17 @@ class SystemThermoTest extends neqsim.NeqSimTest {
     EosMixingRuleType[] mrNum = EosMixingRuleType.values();
     for (EosMixingRuleType mixingRule : mrNum) {
       testSystem.setMixingRule(mixingRule.getValue());
-      assertEquals(mixingRule.getValue(), testSystem.getMixingRule());
+      assertEquals(mixingRule, testSystem.getMixingRule());
     }
 
     for (EosMixingRuleType mixingRule : mrNum) {
       testSystem.setMixingRule(mixingRule);
-      assertEquals(mixingRule.getValue(), testSystem.getMixingRule());
+      assertEquals(mixingRule, testSystem.getMixingRule());
     }
 
     for (EosMixingRuleType mixingRule : mrNum) {
       testSystem.setMixingRule(mixingRule.name());
-      assertEquals(mixingRule.getValue(), testSystem.getMixingRule());
+      assertEquals(mixingRule, testSystem.getMixingRule());
     }
   }
 }

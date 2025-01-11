@@ -59,9 +59,7 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
     if (Math.abs(node.getReynoldsNumber()) < 2000) {
       return 3.66 / node.getHydraulicDiameter(phaseNum)
           * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
-    }
-    // if turbulent - use chilton colburn analogy
-    else {
+    } else { // if turbulent - use chilton colburn analogy
       double temp = node.getBulkSystem().getPhase(phaseNum).getCp()
           / node.getBulkSystem().getPhase(phaseNum).getMolarMass()
           / node.getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()

@@ -20,7 +20,7 @@ import neqsim.thermo.characterization.Characterise;
 import neqsim.thermo.characterization.WaxCharacterise;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
-import neqsim.thermo.mixingrule.EosMixingRuleType;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhaseInterface;
@@ -110,7 +110,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** Maximum allowed number of phases. */
   public int maxNumberOfPhases = 2;
 
-  private EosMixingRuleType eosMixingRuleType = EosMixingRuleType.byValue(1);
+  private MixingRuleTypeInterface mixingRuleType;
   protected String modelName = "Default";
 
   protected boolean multiPhaseCheck = false;
@@ -259,6 +259,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
+    // TODO: isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -280,6 +281,7 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
+    // TODO: isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -334,6 +336,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
     setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
+    // TODO: isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -359,6 +362,7 @@ public abstract class SystemThermo implements SystemInterface {
       componentNames.remove("default");
       componentNames.add(componentName);
     }
+    // TODO: isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -398,6 +402,7 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).setAttractiveTerm(attractiveTermNumber);
     }
     numberOfComponents++;
+    // TODO: isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -428,6 +433,7 @@ public abstract class SystemThermo implements SystemInterface {
     double SIval = unit.getSIvalue();
     // System.out.println("number of moles " + SIval);
     this.addComponent(componentName, SIval);
+    // TODO: isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -458,6 +464,7 @@ public abstract class SystemThermo implements SystemInterface {
     double SIval = unit.getSIvalue();
     // System.out.println("number of moles " + SIval);
     this.addComponent(componentName, SIval, phaseNum);
+    // TODO: isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -863,6 +870,7 @@ public abstract class SystemThermo implements SystemInterface {
       refSystem.setTemperature(273.15 + 15.0);
       refSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
       refSystem.addComponent("default", 1.0, 273.15, 50.0, 0.1);
+      refSystem.setMixingRule(1);
       refSystem.init(0);
       refSystem.setNumberOfPhases(1);
       refSystem.setPhaseType(0, PhaseType.LIQUID);
@@ -1406,10 +1414,9 @@ public abstract class SystemThermo implements SystemInterface {
             + names + ") AND comp2 IN (" + names + ")");
         database.execute("delete FROM intertemp WHERE comp1=comp2");
       }
-      // System.out.println("ok " + names);
 
       for (int phaseNum = 0; phaseNum < maxNumberOfPhases; phaseNum++) {
-        getPhase(phaseNum).setMixingRuleDefined(false);
+        getPhase(phaseNum).setMixingRule(null);
       }
 
       for (int i = 0; i < numberOfComponents; i++) {
@@ -1698,6 +1705,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final double getBeta() {
+    // TODO: verify, actually returning the heaviest?
     return beta[0];
   }
 
@@ -2434,8 +2442,8 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public int getMixingRule() {
-    return eosMixingRuleType.getValue();
+  public MixingRuleTypeInterface getMixingRule() {
+    return mixingRuleType;
   }
 
   /** {@inheritDoc} */
@@ -2508,6 +2516,12 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public double getMolarVolume() {
+    if (!this.isInitialized) {
+      this.init(0);
+    }
+    if (!isBetaValid()) {
+      logger.warn("getMolarVolume", "Calculation is wrong, as beta is not valid. Perform flash");
+    }
     double volume = 0;
     for (int i = 0; i < numberOfPhases; i++) {
       volume += beta[phaseIndex[i]] * getPhase(i).getMolarVolume();
@@ -2518,6 +2532,12 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public double getMolarVolume(String unit) {
+    if (!this.isInitialized) {
+      this.init(0);
+    }
+    if (!isBetaValid()) {
+      logger.warn("getMolarVolume", "Calculation is wrong, as beta is not valid. Perform flash");
+    }
     double volume = 0;
     for (int i = 0; i < numberOfPhases; i++) {
       volume += beta[phaseIndex[i]] * getPhase(i).getMolarVolume(unit);
@@ -2907,6 +2927,16 @@ public abstract class SystemThermo implements SystemInterface {
       sum += getBeta(k);
     }
     return sum;
+  }
+
+  /**
+   * Verify if sum of beta is 1. Used to check if System needs to be flashed.
+   *
+   * @return True if the sum of beta is close to 1.
+   */
+  public boolean isBetaValid() {
+    return this.getSumBeta() > 1.0 - ThermodynamicModelSettings.phaseFractionMinimumLimit
+        && this.getSumBeta() < 1.0 + ThermodynamicModelSettings.phaseFractionMinimumLimit;
   }
 
   /** {@inheritDoc} */
@@ -3308,7 +3338,7 @@ public abstract class SystemThermo implements SystemInterface {
     if (!isInitialized
         && this.getSumBeta() < 1.0 - ThermodynamicModelSettings.phaseFractionMinimumLimit
         || this.getSumBeta() > 1.0 + ThermodynamicModelSettings.phaseFractionMinimumLimit) {
-      logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0 ");
+      logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0. " + beta);
     }
   }
 
@@ -3673,7 +3703,6 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void orderByDensity() {
     boolean change = false;
-    // int count = 0;
 
     for (int i = 0; i < getNumberOfPhases(); i++) {
       if (getPhase(i).getPhysicalProperties() == null) {
@@ -3684,9 +3713,9 @@ public abstract class SystemThermo implements SystemInterface {
 
     do {
       change = false;
-      // count++;
       for (int i = 1; i < getNumberOfPhases(); i++) {
         if (i == 4) {
+          // Do not sort phase 5 and 6
           break;
         }
 
@@ -3695,7 +3724,7 @@ public abstract class SystemThermo implements SystemInterface {
             getPhase(i).initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
           }
         } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
+          logger.error(ex.getMessage());
         }
         if (getPhase(i).getPhysicalProperties().calcDensity() < getPhase(i - 1)
             .getPhysicalProperties().calcDensity()) {
@@ -4003,6 +4032,7 @@ public abstract class SystemThermo implements SystemInterface {
       addComponent(getPhase(0).getComponent(i).getComponentName(),
           -getPhase(0).getComponent(i).getNumberOfmoles());
     }
+    // TODO: isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -4249,10 +4279,13 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final void setBeta(double b) {
+    // TODO: if number of phases > 2, should fail
     if (b < 0) {
+      logger.warn("setBeta - Tried to set beta < 0: " + beta);
       b = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
     }
     if (b > 1) {
+      logger.warn("setBeta - Tried to set beta > 1: " + beta);
       b = 1.0 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
     }
     beta[0] = b;
@@ -4263,9 +4296,11 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public final void setBeta(int phaseNum, double b) {
     if (b < 0) {
+      logger.warn("setBeta - Tried to set beta < 0: " + beta);
       b = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
     }
     if (b > 1) {
+      logger.warn("setBeta - Tried to set beta > 1: " + beta);
       b = 1.0 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
     }
     beta[phaseIndex[phaseNum]] = b;
@@ -4420,14 +4455,14 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public final void setMixingRule(EosMixingRuleType emrt) {
-    eosMixingRuleType = emrt;
+  public final void setMixingRule(MixingRuleTypeInterface mr) {
+    mixingRuleType = mr;
     if (numberOfPhases < 4) {
       resetPhysicalProperties();
     }
     for (int i = 0; i < maxNumberOfPhases; i++) {
       if (isPhase(i)) {
-        getPhase(i).setMixingRule(emrt.getValue());
+        getPhase(i).setMixingRule(mr);
         getPhase(i).initPhysicalProperties();
       }
     }
@@ -4657,7 +4692,7 @@ public abstract class SystemThermo implements SystemInterface {
         setMaxNumberOfPhases(3);
         if (phaseArray[1] != null) {
           phaseArray[2] = phaseArray[1].clone();
-          phaseArray[2].resetMixingRule(phaseArray[0].getEosMixingRuleType().getValue());
+          phaseArray[2].resetMixingRule(phaseArray[0].getMixingRuleType());
           phaseArray[2].resetPhysicalProperties();
           phaseArray[2].initPhysicalProperties();
         }

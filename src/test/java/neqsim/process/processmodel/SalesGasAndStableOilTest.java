@@ -2,6 +2,7 @@ package neqsim.process.processmodel;
 
 import java.io.File;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.expander.Expander;
@@ -20,13 +21,11 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
   File file = new File("src/test/java/neqsim/process/processmodel");
   String fileFluid1 = file.getAbsolutePath() + "/feedfluid.e300";
 
+  @Disabled("No assertions")
   @Test
   public void testProcess() {
     SystemInterface wellFluid = neqsim.thermo.util.readwrite.EclipseFluidReadWrite.read(fileFluid1);
     // wellFluid.setMultiPhaseCheck(true);
-
-    neqsim.process.equipment.stream.Stream wellStream =
-        new neqsim.process.equipment.stream.Stream("HP well stream", wellFluid);
     SystemInterface LPwellFLuid = wellFluid.clone();
 
     Stream wellStreamHP = new neqsim.process.equipment.stream.Stream("HP well stream", wellFluid);

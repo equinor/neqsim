@@ -16,7 +16,7 @@ import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentInterface;
-import neqsim.thermo.mixingrule.EosMixingRuleType;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.exception.InvalidInputException;
 
@@ -76,8 +76,7 @@ public abstract class Phase implements PhaseInterface {
   public double numberOfMolesInPhase = 0;
 
   private int initType = 0;
-  public boolean mixingRuleDefined = false;
-  private EosMixingRuleType mixingRuleType = EosMixingRuleType.NO;
+  protected MixingRuleTypeInterface mixingRuleType;
 
   /** Temperature of phase. */
   double temperature = 0;
@@ -85,6 +84,7 @@ public abstract class Phase implements PhaseInterface {
   /** Pressure of phase. */
   double pressure = 0;
 
+  /** Reference phase per component. Relevant for solids and chemicalreactions. */
   protected PhaseInterface[] refPhase = null;
   protected PhaseType pt = PhaseType.GAS;
 
@@ -1328,11 +1328,10 @@ public abstract class Phase implements PhaseInterface {
           refPhase[i].addComponent(getComponent(i).getComponentName(), 10.0, 10.0, 0);
         }
         refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
-        refPhase[i].setMixingRule(this.getEosMixingRuleType().getValue());
+        refPhase[i].setMixingRule(this.getMixingRuleType());
         refPhase[i].setType(this.getType());
         refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getType(), 1.0);
       } else {
-        // System.out.println("ref " + name);
         if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
           refPhase[i].addComponent("default", 10.0, 10.0, 0);
           refPhase[i].getComponent(0).setMolarMass(this.getComponent(i).getMolarMass());
@@ -1346,7 +1345,7 @@ public abstract class Phase implements PhaseInterface {
         }
         refPhase[i].addComponent(name, 10.0, 10.0, 1);
         refPhase[i].setAttractiveTerm(this.getComponent(i).getAttractiveTermNumber());
-        refPhase[i].setMixingRule(this.getEosMixingRuleType().getValue());
+        refPhase[i].setMixingRule(this.getMixingRuleType());
         refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 2, 0, this.getType(), 1.0);
       }
     }
@@ -1726,14 +1725,8 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public EosMixingRuleType getEosMixingRuleType() {
+  public MixingRuleTypeInterface getMixingRuleType() {
     return mixingRuleType;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setMixingRule(int type) {
-    mixingRuleType = EosMixingRuleType.byValue(type);
   }
 
   /**
@@ -2037,18 +2030,11 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRuleGEModel(String name) {}
-
-  /** {@inheritDoc} */
-  @Override
   public boolean isMixingRuleDefined() {
-    return mixingRuleDefined;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setMixingRuleDefined(boolean mixingRuleDefined) {
-    this.mixingRuleDefined = mixingRuleDefined;
+    if (mixingRuleType == null) {
+      return false;
+    }
+    return true;
   }
 
   /** {@inheritDoc} */

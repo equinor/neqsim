@@ -1,6 +1,8 @@
 package neqsim.process.equipment.tank;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.Stream;
@@ -20,6 +22,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 public class Tank extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(Tank.class);
 
   SystemInterface thermoSystem;
   SystemInterface gasSystem;
@@ -148,14 +152,29 @@ public class Tank extends ProcessEquipmentBaseClass {
     return getLiquidOutStream();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Calculates the following properties:
+   * </p>
+   * <ul>
+   * <li>steelWallTemperature</li>
+   * <li>gasOutStream</li>
+   * <li>liquidOutStream</li>
+   * <li><code>thermoSystem</code> including properties</li>
+   * <li>liquidLevel</li>
+   * <li>liquidVolume</li>
+   * <li>gasVolume</li>
+   * </ul>
+   */
   @Override
   public void run(UUID id) {
     inletStreamMixer.run(id);
     SystemInterface thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
     ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
     ops.VUflash(thermoSystem2.getVolume(), thermoSystem2.getInternalEnergy());
-    System.out.println("Volume " + thermoSystem2.getVolume() + " internalEnergy "
+    logger.info("Volume " + thermoSystem2.getVolume() + " internalEnergy "
         + thermoSystem2.getInternalEnergy());
     steelWallTemperature = thermoSystem2.getTemperature();
     if (thermoSystem2.hasPhaseType("gas")) {
@@ -172,7 +191,7 @@ public class Tank extends ProcessEquipmentBaseClass {
     thermoSystem = thermoSystem2.clone();
     thermoSystem.setTotalNumberOfMoles(1.0e-10);
     thermoSystem.init(1);
-    System.out.println("number of phases " + thermoSystem.getNumberOfPhases());
+    logger.info("number of phases " + thermoSystem.getNumberOfPhases());
     for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
       double relFact = gasVolume / (thermoSystem.getPhase(j).getVolume() * 1.0e-5);
       if (j == 1) {
@@ -191,10 +210,10 @@ public class Tank extends ProcessEquipmentBaseClass {
       thermoSystem.setBeta(1.0 - 1e-10);
     }
     thermoSystem.init(3);
-    System.out.println("moles in separator " + thermoSystem.getNumberOfMoles());
+    logger.info("moles in separator " + thermoSystem.getNumberOfMoles());
     double volume1 = thermoSystem.getVolume();
-    System.out.println("volume1 bef " + volume1);
-    System.out.println("beta " + thermoSystem.getBeta());
+    logger.info("volume1 bef " + volume1);
+    logger.info("beta " + thermoSystem.getBeta());
 
     if (thermoSystem2.getNumberOfPhases() == 2) {
       liquidLevel = thermoSystem.getPhase(1).getVolume() * 1e-5 / (liquidVolume + gasVolume);
@@ -205,7 +224,7 @@ public class Tank extends ProcessEquipmentBaseClass {
         getLiquidLevel() * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
     gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
         * separatorLength;
-    System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
+    logger.info("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
 
     setCalculationIdentifier(id);
   }

@@ -17,8 +17,8 @@ public class PhasePCSAFTRahmatTest {
     testSystem = new SystemPCSAFT(150.0, 10.0);
     testSystem.addComponent("methane", 100.0);
     testSystem.addComponent("n-hexane", 1000.0001);
-    testSystem.setMixingRule(1);
     testSystem.createDatabase(true);
+    testSystem.setMixingRule(1);
     testSystem.init(0);
     testSystem.init(3);
 

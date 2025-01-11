@@ -2,6 +2,7 @@ package neqsim.thermo.phase;
 
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEWilson;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.util.exception.IsNaNException;
 import neqsim.util.exception.TooManyIterationsException;
 
@@ -77,8 +78,8 @@ public class PhaseGEWilson extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRule(int type) {
-    super.setMixingRule(type);
+  public void setMixingRule(MixingRuleTypeInterface mr) {
+    super.setMixingRule(mr);
   }
 
   /** {@inheritDoc} */

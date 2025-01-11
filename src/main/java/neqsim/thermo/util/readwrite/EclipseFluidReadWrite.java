@@ -371,7 +371,6 @@ public class EclipseFluidReadWrite {
         }
       }
 
-      // System.out.println(st);
       fluid.setMixingRule(2);
       fluid.useVolumeCorrection(true);
       fluid.init(0);
@@ -385,8 +384,6 @@ public class EclipseFluidReadWrite {
           }
         }
       }
-
-      // fluid.display();
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }

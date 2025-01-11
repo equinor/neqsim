@@ -12,6 +12,8 @@ import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.mixingrule.EosMixingRuleType;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
+import neqsim.thermo.mixingrule.MixingRulesInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -37,10 +39,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * setMoleFractions.
+   * Set <code>x</code> and normalize for all Components in phase.
    * </p>
    *
-   * @param x an array of type double
+   * @param x Mole fractions of component in a phase.
    */
   public void setMoleFractions(double[] x);
 
@@ -688,8 +690,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getpH();
 
   /**
+   * Normalize property <code>x</code>.
+   * 
    * <p>
-   * normalize.
+   * Property <code>x</code> is the mole fraction of a component in a specific phase. Normalizing,
+   * means that the sum of <code>x</code> for all Components in a phase equal 1.0.
    * </p>
    */
   public void normalize();
@@ -863,12 +868,32 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
+   * setMixingRule.
+   * </p>
+   *
+   * @param mr a MixingRuleTypeInterface
+   */
+  public void setMixingRule(MixingRuleTypeInterface mr);
+
+  /**
+   * <p>
+   * setMixingRule.
+   * </p>
+   *
+   * @param mr a int
+   */
+  public default void setMixingRule(int mr) {
+    setMixingRule(EosMixingRuleType.byValue(mr));
+  }
+
+  /**
+   * <p>
    * resetMixingRule.
    * </p>
    *
-   * @param type a int
+   * @param mr a int
    */
-  public void resetMixingRule(int type);
+  public void resetMixingRule(MixingRuleTypeInterface mr);
 
   /**
    * Set the temperature of a phase.
@@ -1249,15 +1274,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * setMixingRule.
-   * </p>
-   *
-   * @param type a int
-   */
-  public void setMixingRule(int type);
-
-  /**
-   * <p>
    * getComponents.
    * </p>
    *
@@ -1267,10 +1283,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * getNumberOfMolesInPhase.
+   * Get the number of moles the phase contains.
    * </p>
    *
-   * @return a double
+   * @return The number of moles in the phase.
    */
   public double getNumberOfMolesInPhase();
 
@@ -1710,7 +1726,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * dFdT.
+   * Calculate derivative of F per Temperature, i.e., dF/dT.
    * </p>
    *
    * @return a double
@@ -1719,7 +1735,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * dFdV.
+   * Calculate derivative of F per Volume, i.e., dF/dV.
    * </p>
    *
    * @return a double
@@ -1728,7 +1744,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * dFdTdV.
+   * Calculate derivative of F per Temperature and Volume, i.e., dF/dT * 1/dV.
    * </p>
    *
    * @return a double
@@ -1805,11 +1821,18 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getLogInfiniteDiluteFugacity(int k);
 
   /**
-   * Get EOS mixing rule type.
+   * Get mixing rule.
    *
-   * @return a EosMixingRuleType
+   * @return a MixingRulesInterface
    */
-  public EosMixingRuleType getEosMixingRuleType();
+  public MixingRulesInterface getMixingRule();
+
+  /**
+   * Get mixing rule type.
+   *
+   * @return a MixingRuleTypeInterface
+   */
+  public MixingRuleTypeInterface getMixingRuleType();
 
   /**
    * <p>
@@ -1911,21 +1934,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * Getter for property mixingRuleDefined.
+   * Check if mixing rule is defined.
    * </p>
    *
-   * @return a boolean
+   * @return Returns true if MixingRule is defined and false if not.
    */
   public boolean isMixingRuleDefined();
-
-  /**
-   * <p>
-   * Setter for property mixingRuleDefined.
-   * </p>
-   *
-   * @param mixingRuleDefined a boolean
-   */
-  public void setMixingRuleDefined(boolean mixingRuleDefined);
 
   /**
    * <p>

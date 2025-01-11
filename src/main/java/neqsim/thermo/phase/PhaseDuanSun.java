@@ -1,6 +1,7 @@
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentGeDuanSun;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.util.exception.IsNaNException;
 import neqsim.util.exception.TooManyIterationsException;
 
@@ -38,8 +39,8 @@ public class PhaseDuanSun extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRule(int type) {
-    super.setMixingRule(type);
+  public void setMixingRule(MixingRuleTypeInterface mr) {
+    super.setMixingRule(mr);
     this.alpha = mixSelect.getNRTLalpha();
     this.Dij = mixSelect.getNRTLDij();
   }

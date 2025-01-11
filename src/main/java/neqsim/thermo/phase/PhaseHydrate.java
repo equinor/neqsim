@@ -9,6 +9,8 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.component.ComponentHydrateGF;
 import neqsim.thermo.component.ComponentHydratePVTsim;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
+import neqsim.thermo.mixingrule.MixingRulesInterface;
 
 /**
  * <p>
@@ -109,9 +111,33 @@ public class PhaseHydrate extends Phase {
     setType(PhaseType.HYDRATE);
   }
 
-  /** {@inheritDoc} */
   @Override
-  public void resetMixingRule(int type) {}
+  public MixingRulesInterface getMixingRule() {
+    return null;
+  }
+
+  @Override
+  public void setMixingRuleGEModel(String name) {}
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Not relevant for PhaseHydrate
+   * </p>
+   */
+  @Override
+  public void resetMixingRule(MixingRuleTypeInterface mr) {}
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Not relevant for PhaseHydrate
+   * </p>
+   */
+  @Override
+  public void setMixingRule(MixingRuleTypeInterface mr) {}
 
   /**
    * <p>

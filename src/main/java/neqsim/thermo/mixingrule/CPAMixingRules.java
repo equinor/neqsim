@@ -617,15 +617,37 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     if (mr == 1) {
       mixingRuleName = "CPA_Radoch";
       return new CPA_Radoch();
-    } else if (mr == 2) {
-      mixingRuleName = "CPA_Radoch";
-      return new CPA_Radoch();
     } else if (mr == 3) {
       mixingRuleName = "PCSAFTa_Radoch";
       return new PCSAFTa_Radoch();
-    } else {
-      mixingRuleName = "CPA_Radoch";
-      return new CPA_Radoch();
+    }
+    throw new RuntimeException(
+        new neqsim.util.exception.InvalidInputException(this, "getMixingRule", "mr"));
+  }
+
+  /**
+   * <p>
+   * getMixingRule.
+   * </p>
+   *
+   * @param mr a int
+   * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
+   */
+  public CPAMixingRulesInterface getMixingRule(MixingRuleTypeInterface mr) {
+    if (!CPAMixingRuleType.class.isInstance(mr)) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException(this, "setMixingRule", "mr"));
+    }
+    CPAMixingRuleType cmr = (CPAMixingRuleType) mr;
+    switch (cmr) {
+      case CPA_RADOCH:
+        mixingRuleName = "CPA_Radoch";
+        return new CPA_Radoch();
+      case PCSAFTA_RADOCH:
+        mixingRuleName = "PCSAFTa_Radoch";
+        return new PCSAFTa_Radoch();
+      default:
+        return new CPA_Radoch();
     }
   }
 

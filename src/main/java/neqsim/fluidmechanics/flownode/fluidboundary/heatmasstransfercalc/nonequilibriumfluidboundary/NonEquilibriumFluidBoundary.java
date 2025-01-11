@@ -628,8 +628,5 @@ public abstract class NonEquilibriumFluidBoundary
     } while (Math.abs((oldHeatFlux - heatFlux) / heatFlux) > 1e-6 && heatTransferCalc
         && iterInner < 50);
     init();
-    // System.out.println("iterInner " +iterInner + " temp gas " +
-    // interphaseSystem.getTemperature(0)+ " temp liq " +
-    // interphaseSystem.getTemperature(1));
   }
 }

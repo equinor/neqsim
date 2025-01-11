@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentDesmukhMather;
 import neqsim.thermo.component.ComponentGEInterface;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.util.exception.IsNaNException;
 import neqsim.util.exception.TooManyIterationsException;
 
@@ -53,8 +54,8 @@ public class PhaseDesmukhMather extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRule(int type) {
-    super.setMixingRule(type);
+  public void setMixingRule(MixingRuleTypeInterface mr) {
+    super.setMixingRule(mr);
     this.aij = new double[numberOfComponents][numberOfComponents];
     this.bij = new double[numberOfComponents][numberOfComponents];
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {

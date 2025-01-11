@@ -50,10 +50,11 @@ public abstract class Component implements ComponentInterface {
   /** Mole fraction of Component in Phase. */
   protected double x = 0;
   /**
-   * Number of moles of Component in System. <code>numberOfMoles = totalNumberOfMoles * z</code>.
+   * Number of moles of Component in System. Ideally
+   * <code>numberOfMoles = totalNumberOfMoles * z</code>.
    */
   protected double numberOfMoles = 0.0;
-  /** Number of moles of Component in Phase. <code>totalNumberOfMoles * x * beta</code>. */
+  /** Number of moles of Component in Phase. Ideally <code>totalNumberOfMoles * x * beta</code>. */
   protected double numberOfMolesInPhase = 0.0;
   protected double K;
 

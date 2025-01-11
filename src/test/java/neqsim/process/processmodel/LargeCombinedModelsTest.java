@@ -538,7 +538,7 @@ public class LargeCombinedModelsTest {
   }
 
   @Test
-  public void tesExpanderProcess() {
+  public void testExpanderProcess() {
     // wellFluid.setMultiPhaseCheck(true);
     ProcessSystem wellprocess = getWellStreamAndManifoldModel(wellFluid);
     wellprocess.run();

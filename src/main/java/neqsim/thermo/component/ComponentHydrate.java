@@ -40,6 +40,8 @@ public class ComponentHydrate extends Component {
   private double sphericalCoreRadiusHydrate = 0.0;
   private double lennardJonesEnergyParameterHydrate = 0.0;
   private double lennardJonesMolecularDiameterHydrate = 0.0;
+
+  /** Reference phase containing only this single component, i.e., mixing rules are not relevant. */
   PhaseInterface refPhase = null;
 
   /**
@@ -659,6 +661,7 @@ public class ComponentHydrate extends Component {
       refPhase.setTemperature(273.0);
       refPhase.setPressure(1.0);
       refPhase.addComponent("water", 10.0, 10.0, 0);
+      refPhase.setMixingRule(null);
       refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, PhaseType.GAS, 1.0);
     } catch (Exception ex) {
       logger.error("error occured", ex);

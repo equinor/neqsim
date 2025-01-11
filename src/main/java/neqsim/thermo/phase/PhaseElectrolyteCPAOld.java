@@ -7,6 +7,7 @@ import neqsim.thermo.component.ComponentElectrolyteCPA;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingrule.CPAMixingRules;
 import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
+import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
  * <p>
@@ -96,9 +97,10 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRule(int type) {
-    super.setMixingRule(type);
-    // NB! Ignores input type
+  public void setMixingRule(MixingRuleTypeInterface mr) {
+    // NB! Sets EOS mixing rule in parent class PhaseEos
+    super.setMixingRule(mr);
+    // NB! Ignores input mr, uses CPA
     cpamix = cpaSelect.getMixingRule(1, this);
   }
 
