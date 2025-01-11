@@ -46,7 +46,6 @@ public class dTPflash extends TPflash {
     double diff = 0.0;
     // double fracdiff = 0.0;
 
-    // system.setBeta(0.5);
     do {
       diff = 0.0;
       // fracdiff = 0.0;
@@ -80,8 +79,6 @@ public class dTPflash extends TPflash {
         }
         // if(!hasgot) system.getPhase(1).getComponent(i).setx(1e-16);
       }
-
-      // system.setBeta(0.5+fracdiff);
 
       system.getPhase(1).normalize();
       logger.info("diff " + diff);

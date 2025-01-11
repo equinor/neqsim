@@ -3,9 +3,9 @@
  *
  * Created on 1.april 2024
  */
-
 package neqsim.thermodynamicoperations.flashops;
 
+import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import java.io.Serializable;
 import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
@@ -85,10 +85,9 @@ public class RachfordRice implements Serializable {
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
     int i;
-    double tolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
     double midler = 0;
-    double minBeta = tolerance;
-    double maxBeta = 1.0 - tolerance;
+    double minBeta = phaseFractionMinimumLimit;
+    double maxBeta = 1.0 - phaseFractionMinimumLimit;
     double g0 = -1.0;
     double g1 = 1.0;
 
@@ -108,10 +107,10 @@ public class RachfordRice implements Serializable {
     // logger.debug("Max beta " + maxBeta + " min beta " + minBeta);
 
     if (g0 < 0) {
-      return tolerance;
+      return phaseFractionMinimumLimit;
     }
     if (g1 > 0) {
-      return 1.0 - tolerance;
+      return 1.0 - phaseFractionMinimumLimit;
     }
 
     double nybeta = (minBeta + maxBeta) / 2.0;
@@ -191,10 +190,10 @@ public class RachfordRice implements Serializable {
       }
       step = gbeta / deriv;
     } while (Math.abs(step) >= 1.0e-11 && iterations < maxIterations);
-    if (nybeta <= tolerance) {
-      nybeta = tolerance;
-    } else if (nybeta >= 1.0 - tolerance) {
-      nybeta = 1.0 - tolerance;
+    if (nybeta <= phaseFractionMinimumLimit) {
+      nybeta = phaseFractionMinimumLimit;
+    } else if (nybeta >= 1.0 - phaseFractionMinimumLimit) {
+      nybeta = 1.0 - phaseFractionMinimumLimit;
     }
     beta[0] = nybeta;
     beta[1] = 1.0 - nybeta;
@@ -229,7 +228,6 @@ public class RachfordRice implements Serializable {
   public double calcBetaNielsen2023(double[] K, double[] z)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double tolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
     double g0 = -1.0;
     double g1 = 1.0;
 
@@ -239,10 +237,10 @@ public class RachfordRice implements Serializable {
     }
 
     if (g0 < 0) {
-      return tolerance;
+      return phaseFractionMinimumLimit;
     }
     if (g1 > 0) {
-      return 1.0 - tolerance;
+      return 1.0 - phaseFractionMinimumLimit;
     }
 
     double V = 0.5;
@@ -329,10 +327,10 @@ public class RachfordRice implements Serializable {
       V = 1 - V;
     }
 
-    if (V <= tolerance) {
-      V = tolerance;
-    } else if (V >= 1.0 - tolerance) {
-      V = 1.0 - tolerance;
+    if (V <= phaseFractionMinimumLimit) {
+      V = phaseFractionMinimumLimit;
+    } else if (V >= 1.0 - phaseFractionMinimumLimit) {
+      V = 1.0 - phaseFractionMinimumLimit;
     }
 
     beta[0] = V;
@@ -380,10 +378,9 @@ public class RachfordRice implements Serializable {
     ComponentInterface[] compArray = system.getPhase(0).getComponents();
 
     int i;
-    double tolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
     double midler = 0;
-    double minBeta = tolerance;
-    double maxBeta = 1.0 - tolerance;
+    double minBeta = phaseFractionMinimumLimit;
+    double maxBeta = 1.0 - phaseFractionMinimumLimit;
     double g0 = -1.0;
     double g1 = 1.0;
 
@@ -401,13 +398,13 @@ public class RachfordRice implements Serializable {
     }
 
     if (g0 < 0) {
-      this.beta[1] = 1.0 - tolerance;
-      this.beta[0] = tolerance;
+      this.beta[1] = 1.0 - phaseFractionMinimumLimit;
+      this.beta[0] = phaseFractionMinimumLimit;
       return this.beta[0];
     }
     if (g1 > 0) {
-      this.beta[1] = tolerance;
-      this.beta[0] = 1.0 - tolerance;
+      this.beta[1] = phaseFractionMinimumLimit;
+      this.beta[0] = 1.0 - phaseFractionMinimumLimit;
       return this.beta[0];
     }
 
@@ -496,12 +493,12 @@ public class RachfordRice implements Serializable {
       step = gbeta / deriv;
     } while (Math.abs(step) >= 1.0e-10 && iterations < maxIterations); // &&
 
-    if (nybeta <= tolerance) {
+    if (nybeta <= phaseFractionMinimumLimit) {
       // this.phase = 1;
-      nybeta = tolerance;
-    } else if (nybeta >= 1.0 - tolerance) {
+      nybeta = phaseFractionMinimumLimit;
+    } else if (nybeta >= 1.0 - phaseFractionMinimumLimit) {
       // this.phase = 0;
-      nybeta = 1.0 - tolerance;
+      nybeta = 1.0 - phaseFractionMinimumLimit;
       // superheated vapour
     } else {
       // this.phase = 2;

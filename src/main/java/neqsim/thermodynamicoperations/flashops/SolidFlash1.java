@@ -1,5 +1,6 @@
 package neqsim.thermodynamicoperations.flashops;
 
+import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
@@ -272,10 +273,10 @@ public class SolidFlash1 extends TPflash {
       double minBetaTem = 1000000;
       int minBetaTemIndex = 0;
 
-      for (int i = 0; i < system.getNumberOfPhases() - solidsNumber; i++) {
-        if (betaMatrixTemp.get(i, 0) * FluidPhaseActiveDescriptors[i] < minBetaTem) {
-          minBetaTem = betaMatrixTemp.get(i, 0);
-          minBetaTemIndex = i;
+      for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
+        if (betaMatrixTemp.get(k, 0) * FluidPhaseActiveDescriptors[k] < minBetaTem) {
+          minBetaTem = betaMatrixTemp.get(k, 0);
+          minBetaTemIndex = k;
         }
       }
 
@@ -294,12 +295,17 @@ public class SolidFlash1 extends TPflash {
       betaMatrixOld = betaMatrix.copy();
       betaMatrix = betaMatrixTemp.copy();
       boolean deactivatedPhase = false;
-      for (int i = 0; i < system.getNumberOfPhases() - solidsNumber; i++) {
-        system.setBeta(i, betaMatrix.get(i, 0));
-        // logger.info("Fluid Phase fraction" + system.getBeta(i));
-        if (Math.abs(system.getBeta(i)) < 1.0e-10) {
-          FluidPhaseActiveDescriptors[i] = 0;
+      for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
+        double currBeta = betaMatrix.get(k, 0);
+        if (currBeta < phaseFractionMinimumLimit) {
+          system.setBeta(k, phaseFractionMinimumLimit);
+          // This used to be verified with abs(betamatrix.get(i,0)) < 1.0e-10
+          FluidPhaseActiveDescriptors[k] = 0;
           deactivatedPhase = true;
+        } else if (currBeta > (1.0 - phaseFractionMinimumLimit)) {
+          system.setBeta(k, 1.0 - phaseFractionMinimumLimit);
+        } else {
+          system.setBeta(k, currBeta);
         }
       }
 
@@ -307,7 +313,6 @@ public class SolidFlash1 extends TPflash {
 
       // logger.info("Qold = " + Qold);
       // logger.info("Qnew = " + Qnew);
-
       if (Qnew > Qold + 1.0e-10 && !deactivatedPhase) {
         // logger.info("Qnew > Qold...............................");
         int iter2 = 0;

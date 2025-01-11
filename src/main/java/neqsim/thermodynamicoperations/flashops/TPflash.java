@@ -1,5 +1,6 @@
 package neqsim.thermodynamicoperations.flashops;
 
+import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseType;
@@ -23,7 +24,6 @@ public class TPflash extends Flash {
   static Logger logger = LogManager.getLogger(TPflash.class);
 
   SystemInterface clonedSystem;
-  double betaTolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
   double presdiff = 1.0;
 
   /**
@@ -66,7 +66,7 @@ public class TPflash extends Flash {
 
   /**
    * <p>
-   * sucsSubs.
+   * sucsSubs. Successive substitutions.
    * </p>
    */
   public void sucsSubs() {
@@ -104,11 +104,11 @@ public class TPflash extends Flash {
       logger.warn("Not able to calculate beta, calculation is not converging.");
       system.setBeta(oldBeta);
     }
-    if (system.getBeta() > 1.0 - betaTolerance) {
-      system.setBeta(1.0 - betaTolerance);
+    if (system.getBeta() > 1.0 - phaseFractionMinimumLimit) {
+      system.setBeta(1.0 - phaseFractionMinimumLimit);
     }
-    if (system.getBeta() < betaTolerance) {
-      system.setBeta(betaTolerance);
+    if (system.getBeta() < phaseFractionMinimumLimit) {
+      system.setBeta(phaseFractionMinimumLimit);
     }
     system.calc_x_y();
     system.init(1);
@@ -142,7 +142,8 @@ public class TPflash extends Flash {
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (Exception ex) {
       system.setBeta(rachfordRice.getBeta()[0]);
-      if (system.getBeta() > 1.0 - betaTolerance || system.getBeta() < betaTolerance) {
+      if (system.getBeta() > 1.0 - phaseFractionMinimumLimit
+          || system.getBeta() < phaseFractionMinimumLimit) {
         system.setBeta(oldBeta);
       }
       // logger.info("temperature " + system.getTemperature() + " pressure " +
@@ -195,7 +196,20 @@ public class TPflash extends Flash {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   * 
+   * <p>
+   * Calculate the following properties:
+   * </p>
+   * <ul>
+   * <li>minimumGibbsEnergy</li>
+   * <li>minGibsPhaseLogZ</li>
+   * <li>minGibsLogFugCoef</li>
+   * <li>presdiff</li>
+   * <li>Component K properties for all phases if required</li>
+   * </ul>
+   */
   @Override
   public void run() {
     if (system.isForcePhaseTypes() && system.getMaxNumberOfPhases() == 1) {
@@ -273,16 +287,16 @@ public class TPflash extends Flash {
     // This solves some problems when we have high volumes of water and heavy
     // hydrocarbons returning only one liquid phase (and this phase desolves all
     // gas)
-    if (system.getBeta() > (1.0 - betaTolerance * 1.1)
-        || system.getBeta() < (betaTolerance * 1.1)) {
+    if (system.getBeta() > (1.0 - 1.1 * phaseFractionMinimumLimit)
+        || system.getBeta() < (1.1 * phaseFractionMinimumLimit)) {
       system.setBeta(0.5);
       sucsSubs();
     }
 
     // Performs three iterations of successive substitution
     for (int k = 0; k < 3; k++) {
-      if (system.getBeta() < (1.0 - betaTolerance * 1.1)
-          && system.getBeta() > (betaTolerance * 1.1)) {
+      if (system.getBeta() < (1.0 - 1.1 * phaseFractionMinimumLimit)
+          && system.getBeta() > (1.1 * phaseFractionMinimumLimit)) {
         sucsSubs();
         if ((system.getGibbsEnergy() - minimumGibbsEnergy)
             / Math.abs(minimumGibbsEnergy) < -1e-12) {
@@ -292,14 +306,13 @@ public class TPflash extends Flash {
     }
 
     // System.out.println("beta " + system.getBeta());
-
     int totiter = 0;
     double tpdx = 1.0;
     double tpdy = 1.0;
     double dgonRT = 1.0;
     boolean passedTests = false;
-    if (system.getBeta() > (1.0 - 1.1 * betaTolerance)
-        || system.getBeta() < (1.1 * betaTolerance)) {
+    if (system.getBeta() > (1.0 - 1.1 * phaseFractionMinimumLimit)
+        || system.getBeta() < (1.1 * phaseFractionMinimumLimit)) {
       tpdx = 1.0;
       tpdy = 1.0;
       dgonRT = 1.0;
@@ -322,7 +335,6 @@ public class TPflash extends Flash {
       }
 
       dgonRT = system.getPhase(0).getBeta() * tpdy + (1.0 - system.getPhase(0).getBeta()) * tpdx;
-
       if (dgonRT > 0) {
         if (tpdx < 0) {
           for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
@@ -363,8 +375,6 @@ public class TPflash extends Flash {
 
         system.orderByDensity();
         system.init(1);
-        // commented out by Even Solbraa 6/2-2012k
-        // system.init(3);
         return;
       }
     }
@@ -424,9 +434,9 @@ public class TPflash extends Flash {
         gibbsEnergy = system.getGibbsEnergy();
 
         if (((gibbsEnergy - gibbsEnergyOld) / Math.abs(gibbsEnergyOld) > 1e-8
-            || system.getBeta() < betaTolerance * 1.01
-            || system.getBeta() > (1 - betaTolerance * 1.01)) && !system.isChemicalSystem()
-            && timeFromLastGibbsFail > 0) {
+            || system.getBeta() < phaseFractionMinimumLimit * 1.01
+            || system.getBeta() > (1 - phaseFractionMinimumLimit * 1.01))
+            && !system.isChemicalSystem() && timeFromLastGibbsFail > 0) {
           resetK();
           timeFromLastGibbsFail = 0;
           // logger.info("gibbs decrease " + (gibbsEnergy - gibbsEnergyOld) /
@@ -505,7 +515,7 @@ public class TPflash extends Flash {
     }
 
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      if (system.getBeta(i) < betaTolerance * 1.01) {
+      if (system.getBeta(i) < phaseFractionMinimumLimit * 1.01) {
         system.removePhase(i);
       }
     }
