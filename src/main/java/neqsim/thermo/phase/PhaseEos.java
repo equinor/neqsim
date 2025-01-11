@@ -193,10 +193,16 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   /** {@inheritDoc} */
   @Override
   public void setMixingRuleGEModel(String name) {
-    if (mixRule != null) {
+    if (mixRule == null) {
+      // do nothing or initialize?
+      logger.debug("mixRule is null");
+    } else {
       mixRule.setMixingRuleGEModel(name);
     }
-    if (mixSelect != null) {
+    if (mixSelect == null) {
+      // do nothing or initialize?
+      logger.debug("mixSelect is null");
+    } else {
       mixSelect.setMixingRuleGEModel(name);
     }
   }
@@ -212,7 +218,9 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     if (mr == null) {
       mixRule = null;
     } else {
-      mixRule = mixSelect.getMixingRule(mr.getValue(), this);
+      mixRule = mixSelect.resetMixingRule(mr.getValue(), this);
+      // TODO: verify if should resetMixingRule or getMixingRule
+      // mixRule = mixSelect.getMixingRule(mr.getValue(), this);
     }
   }
 
