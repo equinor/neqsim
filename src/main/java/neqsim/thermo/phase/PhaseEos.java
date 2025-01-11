@@ -213,8 +213,6 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       mixRule = null;
     } else {
       mixRule = mixSelect.resetMixingRule(mr.getValue(), this);
-      // TODO: verify if should resetMixingRule or getMixingRule
-      // mixRule = mixSelect.getMixingRule(mr.getValue(), this);
     }
   }
 
