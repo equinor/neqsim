@@ -1,19 +1,37 @@
 package neqsim.process.processmodel;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
- * ProcessModel class. Manages a collection of processes that can be run in steps or continuously.
+ * ProcessModel class. Manages a collection of processes that can be run in
+ * steps or continuously.
+ * 
+ * Extended to also allow grouping of processes and the ability to run only the
+ * processes
+ * within a given group instead of always running all.
  * </p>
  */
 public class ProcessModel implements Runnable {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ProcessModel.class);
+
+  /** Map of process name -> ProcessSystem. */
   private Map<String, ProcessSystem> processes = new LinkedHashMap<>();
+
+  /**
+   * Map of group name -> list of process names in that group.
+   * 
+   * We store process *names* here, pointing to the actual ProcessSystem in
+   * `processes`.
+   * Alternatively, you can store the ProcessSystem references directly.
+   */
+  private Map<String, List<String>> groups = new LinkedHashMap<>();
 
   private boolean runStep = false;
   private int maxIterations = 50;
@@ -65,10 +83,110 @@ public class ProcessModel implements Runnable {
   }
 
   /**
+   * Creates a new group or clears it if it already exists.
+   */
+  public void createGroup(String groupName) {
+    if (groupName == null || groupName.isEmpty()) {
+      throw new IllegalArgumentException("Group name cannot be null or empty");
+    }
+    groups.put(groupName, new ArrayList<>());
+  }
+
+  /**
+   * Add a process to a given group (by process name).
+   */
+  public void addProcessToGroup(String groupName, String processName) {
+    if (!processes.containsKey(processName)) {
+      throw new IllegalArgumentException("No process with name " + processName + " found");
+    }
+
+    groups.computeIfAbsent(groupName, key -> new ArrayList<>());
+    List<String> groupProcesses = groups.get(groupName);
+    if (!groupProcesses.contains(processName)) {
+      groupProcesses.add(processName);
+    }
+  }
+
+  /**
+   * Remove a process from a given group.
+   */
+  public void removeProcessFromGroup(String groupName, String processName) {
+    if (groups.containsKey(groupName)) {
+      groups.get(groupName).remove(processName);
+    }
+  }
+
+  /**
+   * Runs all processes in the specified group (step or continuous).
+   * 
+   * If the group name doesn't exist or is empty, does nothing.
+   */
+  public void runGroup(String groupName) {
+    if (!groups.containsKey(groupName) || groups.get(groupName).isEmpty()) {
+      logger.debug("Group '{}' does not exist or is empty, nothing to run", groupName);
+      return;
+    }
+
+    List<String> groupProcesses = groups.get(groupName);
+    if (runStep) {
+      // Step mode: just run each process once in step mode
+      for (String processName : groupProcesses) {
+        try {
+          if (Thread.currentThread().isInterrupted()) {
+            logger.debug("Thread was interrupted, exiting runGroup()...");
+            return;
+          }
+          processes.get(processName).run_step();
+        } catch (Exception e) {
+          System.err.println("Error running process step: " + e.getMessage());
+          e.printStackTrace();
+        }
+      }
+    } else {
+      // Continuous mode
+      int iterations = 0;
+      while (!Thread.currentThread().isInterrupted() && !isGroupFinished(groupName)
+          && iterations < maxIterations) {
+        for (String processName : groupProcesses) {
+          if (Thread.currentThread().isInterrupted()) {
+            logger.debug("Thread was interrupted, exiting runGroup()...");
+            return;
+          }
+          try {
+            processes.get(processName).run();
+          } catch (Exception e) {
+            System.err.println("Error running process: " + e.getMessage());
+            e.printStackTrace();
+          }
+        }
+        iterations++;
+      }
+    }
+  }
+
+  /**
+   * Check if the group has all processes finished.
+   */
+  public boolean isGroupFinished(String groupName) {
+    if (!groups.containsKey(groupName)) {
+      // no group or group doesn't exist -> consider it "finished" or throw exception
+      return true;
+    }
+    for (String processName : groups.get(groupName)) {
+      ProcessSystem process = processes.get(processName);
+      if (process != null && !process.solved()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * The core run method.
    * 
-   * - If runStep == true, each process is run in "step" mode exactly once. - Otherwise (continuous
-   * mode), it loops up to maxIterations or until all processes are finished (isFinished() == true).
+   * - If runStep == true, each process is run in "step" mode exactly once.
+   * - Otherwise (continuous mode), it loops up to maxIterations or until all
+   * processes are finished (isFinished() == true).
    */
   @Override
   public void run() {
@@ -161,5 +279,21 @@ public class ProcessModel implements Runnable {
       logger.debug(ex.getMessage(), ex);
     }
     return threads;
+  }
+
+  public double getPower(String unit) {
+    double totalPower = 0.0;
+    for (ProcessSystem process : processes.values()) {
+      totalPower += process.getPower(unit);
+    }
+    return totalPower;
+  }
+
+  public double getTotalDuty(String unit) {
+    double totalDuty = 0.0;
+    for (ProcessSystem process : processes.values()) {
+      totalDuty += process.getTotalDuty(unit);
+    }
+    return totalDuty;
   }
 }
