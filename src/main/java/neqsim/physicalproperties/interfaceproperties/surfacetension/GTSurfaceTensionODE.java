@@ -111,7 +111,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     double[] nv = new double[this.ncomp];
     for (i = 0; i < ncomp; i++) {
       nv[i] = this.rho_ph1[i] * Pa;
-      // this.sys.addComponent(this.sys.getPhase(0).getComponent(i).getName(),
+      // this.sys.addComponent(this.sys.getPhase(0).getComponentName(i),
       // this.rho_ph1[i]*Pa);
     }
     this.sys.setMolarComposition(nv);

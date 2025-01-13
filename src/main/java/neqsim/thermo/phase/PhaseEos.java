@@ -135,7 +135,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       for (int i = 0; i < numberOfComponents; i++) {
         if ((getComponent(i).isHydrocarbon() || getComponent(i).isInert()
             || getComponent(i).isIsTBPfraction()) && !getComponent(i).getName().equals("water")
-            && !getComponent(i).getName().equals("water_PC")) {
+            && !getComponentName(i).equals("water_PC")) {
           sumHydrocarbons += getComponent(i).getx();
         } else {
           sumAqueous += getComponent(i).getx();

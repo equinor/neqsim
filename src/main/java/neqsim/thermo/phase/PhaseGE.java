@@ -182,7 +182,7 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
    */
   public double getActivityCoefficientInfDilWater(int k, int p) {
     if (refPhase == null) {
-      initRefPhases(false, getComponent(p).getName());
+      initRefPhases(false, getComponentName(p));
     }
     refPhase[k].setTemperature(temperature);
     refPhase[k].setPressure(pressure);

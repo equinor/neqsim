@@ -59,7 +59,7 @@ public class PhaseGEUniquac extends PhaseGE {
     this.intparam = intparam;
     for (int i = 0; i < alpha[0].length; i++) {
       numberOfComponents++;
-      componentArray[i] = new ComponentGEUniquac(phase.getComponent(i).getName(),
+      componentArray[i] = new ComponentGEUniquac(phase.getComponentName(i),
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }

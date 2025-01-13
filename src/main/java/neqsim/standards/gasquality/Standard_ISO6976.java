@@ -127,7 +127,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         try {
           dataSet = database.getResultSet(("SELECT * FROM ISO6976constants WHERE ComponentName='"
-              + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
+              + this.thermoSystem.getPhase(0).getComponentName(i) + "'"));
           dataSet.next();
           dataSet.getString("ID");
         } catch (Exception ex) {
@@ -453,7 +453,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     }
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
+        table[j + 1][0] = thermoSystem.getPhases()[0].getComponentName(j);
         buf = new StringBuffer();
         table[j + 1][i + 1] =
             nf.format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponent(j).getx(),
@@ -642,10 +642,10 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   public void removeInertsButNitrogen() {
     for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
       if (carbonNumber[j] == 0
-          && !thermoSystem.getPhase(0).getComponent(j).getName().equals("nitrogen")) {
+          && !thermoSystem.getPhase(0).getComponentName(j).equals("nitrogen")) {
         thermoSystem.addComponent("nitrogen",
             thermoSystem.getPhase(0).getComponent(j).getNumberOfmoles());
-        thermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(j).getName(),
+        thermoSystem.addComponent(thermoSystem.getPhase(0).getComponentName(j),
             -thermoSystem.getPhase(0).getComponent(j).getNumberOfmoles() * 0.99999);
       }
     }

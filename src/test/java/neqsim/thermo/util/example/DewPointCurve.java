@@ -84,15 +84,13 @@ public class DewPointCurve {
     /*
      * System.out.println("temp " + (testSystem.getTemperature() - 273.15)); for (int i = 0; i <
      * testSystem.getPhase(0).getNumberOfComponents(); i++) {
-     * System.out.println("unsymetric activity coeff " +
-     * testSystem.getPhase(1).getComponent(i).getName() + " " +
-     * testSystem.getPhase(1).getActivityCoefficientUnSymetric(i)); } for (int i = 0; i <
+     * System.out.println("unsymetric activity coeff " + testSystem.getPhase(1).getComponentName(i)
+     * + " " + testSystem.getPhase(1).getActivityCoefficientUnSymetric(i)); } for (int i = 0; i <
      * testSystem.getPhase(0).getNumberOfComponents(); i++) {
-     * System.out.println("symetric activity coeff " +
-     * testSystem.getPhase(1).getComponent(i).getName() + " " +
-     * testSystem.getPhase(1).getActivityCoefficientSymetric(i)); }
-     * System.out.println("activity coeff " + testSystem.getPhase(1).getComponent(1).getName() + " "
-     * + testSystem.getPhase(1).getActivityCoefficient(1, 0));
+     * System.out.println("symetric activity coeff " + testSystem.getPhase(1).getComponentName(i) +
+     * " " + testSystem.getPhase(1).getActivityCoefficientSymetric(i)); }
+     * System.out.println("activity coeff " + testSystem.getPhase(1).getComponentName(1) + " " +
+     * testSystem.getPhase(1).getActivityCoefficient(1, 0));
      */
   }
 }

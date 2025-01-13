@@ -85,9 +85,9 @@ public class LGTSurfaceTension extends SurfaceTension {
               / system.getPhase(interface1).getMolarVolume())
           / (ite_step * 1.0);
       del_den_interface_old[i] = 0.0;
-      localSystem.addComponent(localSystem.getPhase(0).getComponent(i).getName(),
+      localSystem.addComponent(localSystem.getPhase(0).getComponentName(i),
           -system.getPhase(0).getComponent(i).getNumberOfmoles());
-      localSystem.addComponent(localSystem.getPhase(0).getComponent(i).getName(),
+      localSystem.addComponent(localSystem.getPhase(0).getComponentName(i),
           system.getPhase(interface1).getComponent(i).getx()
               / system.getPhase(interface1).getMolarVolume());
     }
@@ -117,7 +117,7 @@ public class LGTSurfaceTension extends SurfaceTension {
 
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
         den_interface[j][i] = den_interface[j - 1][i] + del_den_interface[i];
-        localSystem.addComponent(localSystem.getPhase(0).getComponent(i).getName(),
+        localSystem.addComponent(localSystem.getPhase(0).getComponentName(i),
             (del_den_interface[i] - del_den_interface_old[i]) / 1.0e5);
         del_den_interface_old[i] = del_den_interface[i];
       }
@@ -154,10 +154,10 @@ public class LGTSurfaceTension extends SurfaceTension {
 
         mu_times_den[j] += den_interface[j][i] * (mu_inter[j][i] - mu_equi[i]);
         for (int k = 0; k < localSystem.getPhase(0).getNumberOfComponents(); k++) {
-          if ((localSystem.getPhase(0).getComponent(i).getName().equals("water")
-              || localSystem.getPhase(0).getComponent(k).getName().equals("water")) && i != k) {
-            if ((localSystem.getPhase(0).getComponent(i).getName().equals("MEG")
-                || localSystem.getPhase(0).getComponent(k).getName().equals("MEG")) && i != k) {
+          if ((localSystem.getPhase(0).getComponentName(i).equals("water")
+              || localSystem.getPhase(0).getComponentName(k).equals("water")) && i != k) {
+            if ((localSystem.getPhase(0).getComponentName(i).equals("MEG")
+                || localSystem.getPhase(0).getComponentName(k).equals("MEG")) && i != k) {
               interact = 0.2;
             } else {
               interact = 0.35;
