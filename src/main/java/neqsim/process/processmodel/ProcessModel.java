@@ -9,13 +9,51 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
- * ProcessModel class. Manages a collection of processes that can be run in
- * steps or continuously.
+ * ProcessModel class. Manages a collection of processes that can be run in steps or continuously.
  * 
- * Extended to also allow grouping of processes and the ability to run only the
- * processes
- * within a given group instead of always running all.
+ * Extended to also allow grouping of processes and the ability to run only the processes within a
+ * given group instead of always running all.
  * </p>
+ */
+/**
+ * The ProcessModel class represents a model that manages and runs multiple process systems. It
+ * supports both step mode and continuous mode execution, and allows grouping of processes.
+ * 
+ * <p>
+ * This class implements the Runnable interface, enabling it to be executed in a separate thread.
+ * 
+ * <p>
+ * Features:
+ * <ul>
+ * <li>Add, retrieve, and remove processes by name.</li>
+ * <li>Create and manage groups of processes.</li>
+ * <li>Run processes in step mode or continuous mode.</li>
+ * <li>Check if all processes or groups of processes are finished.</li>
+ * <li>Run the model in a new thread or get individual threads for each process.</li>
+ * <li>Calculate total power and heater duty for all processes.</li>
+ * </ul>
+ * 
+ * <p>
+ * Usage example:
+ * 
+ * <pre>
+ * {@code
+ * ProcessModel model = new ProcessModel();
+ * model.add("process1", new ProcessSystem());
+ * model.createGroup("group1");
+ * model.addProcessToGroup("group1", "process1");
+ * model.runAsThread();
+ * }
+ * </pre>
+ * 
+ * <p>
+ * Thread safety: This class is not thread-safe and should be synchronized externally if used in a
+ * multi-threaded environment.
+ * 
+ * <p>
+ * Logging: This class uses a logger to log debug information and errors.
+ * 
+ * @see ProcessSystem
  */
 public class ProcessModel implements Runnable {
   /** Logger object for class. */
@@ -27,8 +65,7 @@ public class ProcessModel implements Runnable {
   /**
    * Map of group name -> list of process names in that group.
    * 
-   * We store process *names* here, pointing to the actual ProcessSystem in
-   * `processes`.
+   * We store process *names* here, pointing to the actual ProcessSystem in `processes`.
    * Alternatively, you can store the ProcessSystem references directly.
    */
   private Map<String, List<String>> groups = new LinkedHashMap<>();
@@ -184,9 +221,8 @@ public class ProcessModel implements Runnable {
   /**
    * The core run method.
    * 
-   * - If runStep == true, each process is run in "step" mode exactly once.
-   * - Otherwise (continuous mode), it loops up to maxIterations or until all
-   * processes are finished (isFinished() == true).
+   * - If runStep == true, each process is run in "step" mode exactly once. - Otherwise (continuous
+   * mode), it loops up to maxIterations or until all processes are finished (isFinished() == true).
    */
   @Override
   public void run() {
@@ -281,6 +317,12 @@ public class ProcessModel implements Runnable {
     return threads;
   }
 
+  /**
+   * Calculates the total power consumption of all processes in the specified unit.
+   *
+   * @param unit the unit of power to be used (e.g., "kW", "MW").
+   * @return the total power consumption of all processes in the specified unit.
+   */
   public double getPower(String unit) {
     double totalPower = 0.0;
     for (ProcessSystem process : processes.values()) {
@@ -289,10 +331,30 @@ public class ProcessModel implements Runnable {
     return totalPower;
   }
 
-  public double getTotalDuty(String unit) {
+  /**
+   * Calculates the total heater duty for all processes in the specified unit.
+   *
+   * @param unit the unit for which the heater duty is to be calculated
+   * @return the total heater duty for the specified unit
+   */
+  public double getHeaterDuty(String unit) {
     double totalDuty = 0.0;
     for (ProcessSystem process : processes.values()) {
-      totalDuty += process.getTotalDuty(unit);
+      totalDuty += process.getHeaterDuty(unit);
+    }
+    return totalDuty;
+  }
+
+  /**
+   * Calculates the total cooler duty for all processes in the specified unit.
+   *
+   * @param unit the unit for which the cooler duty is to be calculated
+   * @return the total cooler duty for the specified unit
+   */
+  public double getCoolerDuty(String unit) {
+    double totalDuty = 0.0;
+    for (ProcessSystem process : processes.values()) {
+      totalDuty += process.getCoolerDuty(unit);
     }
     return totalDuty;
   }
