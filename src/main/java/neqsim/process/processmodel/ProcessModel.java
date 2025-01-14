@@ -8,52 +8,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
- * ProcessModel class. Manages a collection of processes that can be run in steps or continuously.
+ * A process model that can run multiple processes in parallel.
  * 
- * Extended to also allow grouping of processes and the ability to run only the processes within a
- * given group instead of always running all.
- * </p>
- */
-/**
- * The ProcessModel class represents a model that manages and runs multiple process systems. It
- * supports both step mode and continuous mode execution, and allows grouping of processes.
+ * This class is a simple model that can run multiple processes in parallel. It
+ * can run in two modes:
+ * - Step mode: each process is run once in a loop, in the order they were
+ * added. - Continuous mode:
+ * each process is run in a loop until all processes are finished or a maximum
+ * number of iterations
+ * is reached.
  * 
- * <p>
- * This class implements the Runnable interface, enabling it to be executed in a separate thread.
- * 
- * <p>
- * Features:
- * <ul>
- * <li>Add, retrieve, and remove processes by name.</li>
- * <li>Create and manage groups of processes.</li>
- * <li>Run processes in step mode or continuous mode.</li>
- * <li>Check if all processes or groups of processes are finished.</li>
- * <li>Run the model in a new thread or get individual threads for each process.</li>
- * <li>Calculate total power and heater duty for all processes.</li>
- * </ul>
- * 
- * <p>
- * Usage example:
- * 
- * <pre>
- * {@code
- * ProcessModel model = new ProcessModel();
- * model.add("process1", new ProcessSystem());
- * model.createGroup("group1");
- * model.addProcessToGroup("group1", "process1");
- * model.runAsThread();
- * }
- * </pre>
- * 
- * <p>
- * Thread safety: This class is not thread-safe and should be synchronized externally if used in a
- * multi-threaded environment.
- * 
- * <p>
- * Logging: This class uses a logger to log debug information and errors.
- * 
- * @see ProcessSystem
+ * You can also create groups of processes and run them separately.
  */
 public class ProcessModel implements Runnable {
   /** Logger object for class. */
@@ -65,7 +30,8 @@ public class ProcessModel implements Runnable {
   /**
    * Map of group name -> list of process names in that group.
    * 
-   * We store process *names* here, pointing to the actual ProcessSystem in `processes`.
+   * We store process *names* here, pointing to the actual ProcessSystem in
+   * `processes`.
    * Alternatively, you can store the ProcessSystem references directly.
    */
   private Map<String, List<String>> groups = new LinkedHashMap<>();
@@ -221,8 +187,10 @@ public class ProcessModel implements Runnable {
   /**
    * The core run method.
    * 
-   * - If runStep == true, each process is run in "step" mode exactly once. - Otherwise (continuous
-   * mode), it loops up to maxIterations or until all processes are finished (isFinished() == true).
+   * - If runStep == true, each process is run in "step" mode exactly once. -
+   * Otherwise (continuous
+   * mode), it loops up to maxIterations or until all processes are finished
+   * (isFinished() == true).
    */
   @Override
   public void run() {
@@ -318,7 +286,8 @@ public class ProcessModel implements Runnable {
   }
 
   /**
-   * Calculates the total power consumption of all processes in the specified unit.
+   * Calculates the total power consumption of all processes in the specified
+   * unit.
    *
    * @param unit the unit of power to be used (e.g., "kW", "MW").
    * @return the total power consumption of all processes in the specified unit.
