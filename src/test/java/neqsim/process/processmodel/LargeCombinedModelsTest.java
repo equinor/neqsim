@@ -1279,4 +1279,31 @@ public class LargeCombinedModelsTest {
             .getPressure("bara"),
         0.5);
   }
+
+  /**
+   * Test method for creating and running a process group in the ProcessModel.
+   * <p>
+   * This test performs the following steps:
+   * <ul>
+   *   <li>Creates a new ProcessModel instance.</li>
+   *   <li>Adds a process named "wellprocess" to the model using the well stream and manifold model.</li>
+   *   <li>Creates a group named "wellGroup" in the model.</li>
+   *   <li>Adds the "wellprocess" to the "wellGroup".</li>
+   *   <li>Runs the "wellGroup".</li>
+   *   <li>Asserts that the flow rate of the "HP well stream" unit in the "wellprocess" matches the expected flow rate within a tolerance of 0.1.</li>
+   * </ul>
+   */
+  @Test
+  void testCreateAndRunGroup() {
+    ProcessModel model1 = new ProcessModel();
+    model1.add("wellprocess", getWellStreamAndManifoldModel(wellFluid));
+
+    model1.createGroup("wellGroup");
+    model1.addProcessToGroup("wellGroup", "wellprocess");
+    model1.runGroup("wellGroup");
+
+    Assertions.assertEquals(inp.flowFirstStage,
+        ((Stream) model1.get("wellprocess").getUnit("HP well stream")).getFlowRate("MSm3/day"),
+        0.1);
+  }
 }
