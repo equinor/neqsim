@@ -314,7 +314,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * @return The calculated mass flow rate (in kg/s).
    */
   public double calcmassflow(double Pus, double Pds, double rhous, double Cv,
-      double percentValveOpening, boolean isGasService) { // Add isGasService flag
+      double percentValveOpening, boolean isGasService) {
 
     double Cl = 30.0; // Define Cl value
     double sineFactor;
@@ -370,6 +370,16 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     return Pds;
   }
 
+  /**
+   * Calculates the valve flow coefficient (Cv) for a throttling valve.
+   *
+   * @param Pus Upstream pressure (in bar).
+   * @param Pds Downstream pressure (in bar).
+   * @param rhous Upstream fluid density (in kg/m³).
+   * @param massFlowRate Mass flow rate through the valve (in kg/h).
+   * @param percentValveOpening Percentage of valve opening (0-100%).
+   * @return The calculated valve flow coefficient (Cv).
+   */
   public double calcCv(double Pus, double Pds, double rhous, double massFlowRate,
       double percentValveOpening) {
     // Sine of 3417 / 30.0
