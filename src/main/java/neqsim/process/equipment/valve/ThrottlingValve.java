@@ -371,32 +371,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   }
 
   /**
-   * Calculates the flow coefficient (Cv) of a valve given the upstream pressure (Pus), downstream
-   * pressure (Pds), fluid density (rhous), mass flow rate, and the percent valve opening.
-   *
-   * The calculation is based on the formula for mass flow through a valve, rearranged to solve for
-   * Cv.
-   *
-   * @param Pus The upstream pressure (Pus) in bara.
-   * @param Pds The downstream pressure (Pds) in bara.
-   * @param rhous The density of the fluid upstream of the valve in kg/m^3.
-   * @param massFlowRate The mass flow rate through the valve in kg/hr.
-   * @param percentValveOpening Opening of valve in %
-   * @return The flow coefficient (Cv) of the valve.
-   */
-  public double calcCvOld(double Pus, double Pds, double rhous, double massFlowRate,
-      double percentValveOpening) {
-    // Sine of 3417 / 30.0
-    double sineFactor = Math.sin(3417 / 30.0);
-
-    // Calculate Cv
-    double Cv = massFlowRate / (0.0457 * Math.sqrt(Pus * 100.0 * rhous) * sineFactor
-        * Math.sqrt((Pus - Pds) / Pus) * percentValveOpening / 100.0);
-
-    return Cv;
-  }
-
-  /**
    * Calculates the flow coefficient (Cv) for a throttling valve.
    *
    * @param Pus Upstream pressure in bar
@@ -698,7 +672,10 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   public double getCv(String unit) {
     if (unit.equals("US")) {
       return Cv / 54.9;
+    } else if (unit.equalsIgnoreCase("SI") || unit.isEmpty()) {
+      return Cv;
     } else {
+      logger.warn("Invalid unit specified for getCv. Returning SI value.");
       return Cv;
     }
   }
