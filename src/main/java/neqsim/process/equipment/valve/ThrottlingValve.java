@@ -370,36 +370,14 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     return Pds;
   }
 
-  /**
-   * Calculates the flow coefficient (Cv) for a throttling valve.
-   *
-   * @param Pus Upstream pressure in bar
-   * @param Pds Downstream pressure in bar
-   * @param rhous Fluid density in kg/m^3
-   * @param massFlowRate Mass flow rate in kg/h
-   * @param percentValveOpening Percent valve opening (0-100)
-   * @param isGasService Flag indicating if the service is gas (true) or liquid (false)
-   * @return The calculated flow coefficient (Cv)
-   */
   public double calcCv(double Pus, double Pds, double rhous, double massFlowRate,
-      double percentValveOpening, boolean isGasService) {
+      double percentValveOpening) {
+    // Sine of 3417 / 30.0
+    double sineFactor = Math.sin(3417 / 30.0);
 
-    double Cl = 30.0; // Define Cl value
-    double sineFactor;
-    double Cv;
-
-    if (isGasService) {
-      // Gas service calculations
-      sineFactor = Math.sin(Math.toRadians(3417 / Cl));
-      double Cg = massFlowRate / (0.0457 * Math.sqrt(Pus * 100.0 * rhous) * sineFactor
-          * Math.sqrt((Pus - Pds) / Pus) * percentValveOpening / 100.0);
-      Cv = Cg / Cl; // Convert Cg back to Cv
-    } else {
-      // Liquid service calculations
-      sineFactor = Math.sin(Math.toRadians(3417 / Cl));
-      Cv = massFlowRate / (0.0457 * Math.sqrt(Pus * 100.0 * rhous) * sineFactor
-          * Math.sqrt((Pus - Pds) / Pus) * percentValveOpening / 100.0);
-    }
+    // Calculate Cv
+    double Cv = massFlowRate / (0.0457 * Math.sqrt(Pus * 100.0 * rhous) * sineFactor
+        * Math.sqrt((Pus - Pds) / Pus) * percentValveOpening / 100.0);
 
     return Cv;
   }
@@ -512,7 +490,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       if (gasValve) {
         Cv = calcCv(inStream.getThermoSystem().getPressure(),
             outStream.getThermoSystem().getPressure(), inStream.getFluid().getDensity("kg/m3"),
-            inStream.getFlowRate("kg/hr"), percentValveOpening, true);
+            inStream.getFlowRate("kg/hr"), percentValveOpening);
       } else {
         Cv = liquidValveCv(inStream.getThermoSystem().getPressure(),
             outStream.getThermoSystem().getPressure(), inStream.getFluid().getDensity("kg/m3"),
