@@ -5,6 +5,17 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 
 public class ThrottlingValveTest {
+
+  /**
+   * Test method for calculating the flow coefficient (Cv) of a gas through a throttling valve.
+   * <p>
+   * This test sets up a thermodynamic system using the SRK EOS model with methane as the component.
+   * It creates a stream with specified flow rate, pressure, and temperature, and then passes it
+   * through a throttling valve. The outlet pressure and valve opening percentage are set, and the
+   * valve is run. The test asserts that the calculated Cv values in both US and SI units are as
+   * expected.
+   * </p>
+   */
   @Test
   void testCalcCvGas() {
     neqsim.thermo.system.SystemInterface testSystem2 =
