@@ -113,7 +113,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
         assertEquals(sim.getCalculationIdentifier(), p.getCalculationIdentifier());
       }
     }
-    assertEquals(73.5, flowTransmitter.getMeasuredValue(), 1.0);
+    assertEquals(50.147984, flowTransmitter.getMeasuredValue(), 1.0);
   }
 
   @Test
@@ -524,7 +524,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     assertEquals(102.7, compressor1.getOutletStream().getPressure(), 2.01);
     assertEquals(50.0, separator1.getGasOutStream().getPressure(), 0.01);
     // System.out.println("speed " + compressor1.getSpeed());
-    p.setTimeStep(10.0);
+    p.setTimeStep(1.0);
     p.runTransient();
     /*
      * System.out.println(" speed " + compressor1.getSpeed() + "feed flow " +
@@ -812,10 +812,10 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     p.runTransient(1.0);
     double compPower2 = compressor1.getPower("kW");
-    assertEquals(1.7776105238, compPower1 - compPower2, 0.0001);
+    assertEquals(2.0261603269, compPower1 - compPower2, 0.0001);
 
     p.runTransient(12.0);
     compPower2 = compressor1.getPower("kW");
-    assertEquals(1.7776105238, compPower1 - compPower2, 0.0001);
+    assertEquals(2.0261603269, compPower1 - compPower2, 0.0001);
   }
 }

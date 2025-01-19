@@ -66,6 +66,15 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
 
   /**
    * <p>
+   * getCg.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getCg();
+
+  /**
+   * <p>
    * getCv.
    * </p>
    *
@@ -73,6 +82,7 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
    * @return a double
    */
   public double getCv(String unit);
+
 
   /**
    * <p>
@@ -82,6 +92,15 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
    * @param Cv a double
    */
   public void setCv(double Cv);
+
+  /**
+   * <p>
+   * setCv.
+   * </p>
+   *
+   * @param Cg a double
+   */
+  public void setCg(double Cg);
 
   /**
    * <p>

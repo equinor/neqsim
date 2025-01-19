@@ -2,14 +2,18 @@ package neqsim.process.mechanicaldesign.valve;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import neqsim.process.costestimation.valve.ValveCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.equipment.valve.ValveInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.designstandards.ValveDesignStandard;
+import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -23,12 +27,22 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 public class ValveMechanicalDesign extends MechanicalDesign {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-
+  neqsim.process.mechanicaldesign.valve.ControlValveSizing controlValveSizing =
+      new neqsim.process.mechanicaldesign.valve.ControlValveSizing();
   double valveCvMax = 1.0;
   double valveWeight = 100.0;
   double inletPressure = 0.0;
   double outletPressure = 0.0;
   double dP = 0.0;
+  double diameter = 0.1;
+  double diameterInlet = 0.1;
+  double diameterOutlet = 0.1;
+  double xT = 0.137;
+  double FL = 1.0;
+  double FD = 1.0;
+  boolean allowChoked = true;
+  boolean allowLaminar = true;
+  boolean fullOutput = true;
 
   /**
    * <p>
@@ -40,6 +54,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   public ValveMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
     costEstimate = new ValveCostEstimate(this);
+    controlValveSizing.setMethod("API"); // IEC / ANSI / / API
   }
 
   /** {@inheritDoc} */
@@ -65,11 +80,30 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     inletPressure = valve1.getInletPressure();
     outletPressure = valve1.getOutletPressure();
     dP = inletPressure - outletPressure;
-
-    valveCvMax = valve1.getThermoSystem().getFlowRate("m3/hr")
-        * Math.sqrt(valve1.getThermoSystem().getDensity("kg/m3") / 1000.0 / dP);
+    SystemInterface fluid = getProcessEquipment().getFluid();
+    if (getProcessEquipment().getFluid().hasPhaseType(PhaseType.GAS)) {
+      Map<String, Object> result = ControlValveSizing.sizeControlValveGas(fluid.getTemperature("K"),
+          fluid.getMolarMass("gr/mol"), fluid.getViscosity("kg/msec"), fluid.getGamma2(),
+          fluid.getZ(), ((ValveInterface) getProcessEquipment()).getInletPressure() * 1e5,
+          ((ValveInterface) getProcessEquipment()).getOutletPressure() * 1e5,
+          fluid.getFlowRate("Sm3/sec"), diameterInlet, diameterOutlet, diameter, FL, FD, xT,
+          allowChoked, allowLaminar, fullOutput);
+      this.valveCvMax = (double) result.get("Cv");
+    } else {
+      Map<String, Object> result = ControlValveSizing.sizeControlValveLiquid(
+          fluid.getDensity("kg/m3"), 1.0 * 1e5, fluid.getPC() * 1e5, fluid.getViscosity("kg/msec"),
+          ((ValveInterface) getProcessEquipment()).getInletPressure() * 1e5,
+          ((ValveInterface) getProcessEquipment()).getOutletPressure() * 1e5,
+          fluid.getFlowRate("kg/hr") / fluid.getDensity("kg/m3"), diameterInlet, diameterOutlet,
+          diameter, FL, FD, allowChoked, allowLaminar, fullOutput);
+      this.valveCvMax = (double) result.get("Cv");
+    }
     valveWeight = valveCvMax * 100.0;
     setWeightTotal(valveWeight);
+  }
+
+  public ControlValveSizing getControlValveSizing() {
+    return new ControlValveSizing();
   }
 
   /** {@inheritDoc} */
@@ -106,5 +140,10 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     dialog.setSize(800, 600); // pack();
     // dialog.pack();
     dialog.setVisible(true);
+  }
+
+  public void setControlValveSizing(
+      neqsim.process.mechanicaldesign.valve.ControlValveSizing controlValveSizing) {
+    this.controlValveSizing = controlValveSizing;
   }
 }
