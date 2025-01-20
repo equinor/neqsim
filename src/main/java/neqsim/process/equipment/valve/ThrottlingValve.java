@@ -161,7 +161,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     double xT = .137;
     double D1 = 8 * 0.0254;
     double D2 = 8 * 0.0254;
-    double d = D1;
+    double d = 3 * 0.0254;
     double FL = 1.0;
     double FD = 1.0;
 
@@ -177,7 +177,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     } else {
       Map<String, Object> result =
           neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534.sizeControlValveLiquid(
-              fluid.getDensity("kg/m3"), 1.0 * 1e5,
+              fluid.getDensity("kg/m3"), 858710.72,
               fluid.getPhase(0).getPseudoCriticalPressure() * 1e5, fluid.getViscosity("kg/msec"),
               getInletPressure() * 1e5, getOutletPressure() * 1e5,
               fluid.getFlowRate("kg/sec") / fluid.getDensity("kg/m3"), null, null, null, 1.0, 1.0,

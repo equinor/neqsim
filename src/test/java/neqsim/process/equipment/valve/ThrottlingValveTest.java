@@ -114,6 +114,31 @@ public class ThrottlingValveTest {
   }
 
   @Test
+  void testCalcCvLiquidPropnane() {
+    neqsim.thermo.system.SystemInterface testSystem2 =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    testSystem2.addComponent("propane", 1.0);
+    testSystem2.setMixingRule(2);
+
+    Stream stream1 = new Stream("Stream1", testSystem2);
+    stream1.setFlowRate(0.0504721571, "idSm3/sec");
+    stream1.setPressure(20.7, "bara");
+    stream1.setTemperature(19.0, "C");
+    stream1.run();
+
+    ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
+    valve1.setOutletPressure(19);
+    valve1.run();
+
+    stream1.getFluid().prettyPrint();
+    assertEquals(135.3602060, valve1.getCv(), 1e-2);
+    assertEquals(135.3602060, valve1.getCv("SI"), 1e-2);
+    assertEquals(2.46557752, valve1.getCv("US"), 1e-2);
+
+
+  }
+
+  @Test
   void testCalcCvLiquid() {
     neqsim.thermo.system.SystemInterface testSystem2 =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);

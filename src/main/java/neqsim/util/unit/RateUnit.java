@@ -101,6 +101,10 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
       factor = 1.0e6 * mol_Sm3 / (3600.0 * 24.0);
     } else if (name.equals("MSm^3/hr") || name.equals("MSm3/hr")) {
       factor = 1.0e6 * mol_Sm3 / (3600.0);
+    } else if (name.equals("idSm3/sec")) {
+      factor = 1.0 / molarmass * stddens;
+    } else if (name.equals("idSm3/min")) {
+      factor = 1.0 / molarmass / 60.0 * stddens;
     } else if (name.equals("idSm3/hr")) {
       factor = 1.0 / molarmass / 3600.0 * stddens;
     } else if (name.equals("idSm3/day")) {
