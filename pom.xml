@@ -11,7 +11,6 @@
 	<url>https://github.com/equinor/neqsim</url>
 	<packaging>jar</packaging>
 	<version>${revision}${sha1}${changelist}</version>
-
 	<properties>
 		<revision>3.0.13</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -35,14 +34,17 @@
 			<organizationUrl>https://github.com/equinor</organizationUrl>
 		</developer>
 	</developers>
-
+	<scm>
+		<connection>scm:git:git://github.com/equinor/neqsim.git</connection>
+		<developerConnection>scm:git:ssh://github.com/equinor/neqsim.git</developerConnection>
+		<url>https://github.com/equinor/neqsim</url>
+	</scm>
 	<repositories>
 		<repository>
 			<id>central</id>
 			<url>https://repo1.maven.org/maven2/</url>
 		</repository>
 	</repositories>
-
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
 		<dependency>
@@ -189,6 +191,57 @@
 	 </profiles>
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.7</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+					<id>attach-sources</id>
+					<goals>
+						<goal>jar-no-fork</goal>
+					</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.9.1</version>
+				<executions>
+					<execution>
+					<id>attach-javadocs</id>
+					<goals>
+						<goal>jar</goal>
+					</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+					<id>sign-artifacts</id>
+					<phase>verify</phase>
+					<goals>
+						<goal>sign</goal>
+					</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
@@ -355,10 +408,20 @@
 		</plugins>
 	</build>
 	<distributionManagement>
+	<!--
 		<repository>
 			<id>github</id>
 			<name>GitHub Equinor Apache Maven Packages</name>
 			<url>https://maven.pkg.github.com/Equinor/neqsim</url>
 		</repository>
+	-->
+	<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			</snapshotRepository>
+			<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+			</repository>
 	</distributionManagement>
 </project>
