@@ -3,6 +3,7 @@ package neqsim.process.equipment.valve;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534;
 
 public class ThrottlingValveTest {
 
@@ -18,6 +19,11 @@ public class ThrottlingValveTest {
    */
   @Test
   void testCalcCvGas() {
+
+    double res = (double) ControlValveSizing_IEC_60534.sizeControlValveGas(289.15, 17.798,
+        1.077830925292769e-05, 1.299, 0.9999, 1480304.39084324, 446090.79686799296,
+        47.194744319999984, 0.2032, 0.2032, 0.2032, 1, 1, 0.137, true, true, true).get("Cv");
+    assertEquals(1627.73514, res, 1e-2);
     neqsim.thermo.system.SystemInterface testSystem2 =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("methane", 1.0);
@@ -34,9 +40,9 @@ public class ThrottlingValveTest {
     valve1.setPercentValveOpening(100);
     valve1.run();
 
-    assertEquals(82.276059, valve1.getCv(), 1e-2);
-    assertEquals(2468.2817776, valve1.getCg(), 1e-2);
-    assertEquals(82.276059256, valve1.getCv("SI"), 1e-2);
+    assertEquals(100.3366576, valve1.getCv(), 1e-2);
+    assertEquals(3010.09972888, valve1.getCg(), 1e-2);
+    assertEquals(100.3366576, valve1.getCv("SI"), 1e-2);
     assertEquals(100.0, valve1.getPercentValveOpening(), 1e-2);
 
     valve1.setCalculateSteadyState(false);
@@ -82,10 +88,10 @@ public class ThrottlingValveTest {
     valve1.setPercentValveOpening(100);
     valve1.run();
 
-    assertEquals(1248.72092647, valve1.getCv(), 1e-2);
-    assertEquals(1248.72092647 * 30, valve1.getCg(), 1e-2);
-    assertEquals(1248.720926478, valve1.getCv("SI"), 1e-2);
-    assertEquals(1248.720926478 / 54.9, valve1.getCv("US"), 1e-2);
+    assertEquals(1522.8303981, valve1.getCv(), 1e-2);
+    assertEquals(45684.9119, valve1.getCg(), 1e-2);
+    assertEquals(1522.830398, valve1.getCv("SI"), 1e-2);
+    assertEquals(27.73825861, valve1.getCv("US"), 1e-2);
   }
 
   @Test

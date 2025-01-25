@@ -54,7 +54,7 @@ public class ControlValveSizing_IEC_60534 {
 
   // Constants
   private static final double N1 = 0.1; // Constant for liquids (m^3/hr, kPa)
-  private static final double N9 = 0.03; // Constant for gases (m^3/hr, kPa)
+  private static final double N9 = 2.46E1; // Constant for gases (m^3/hr, kPa)
   private static final double rho0 = 999.10329075702327; // Water density at 288.15 K
   private static final double R = 8.314; // Gas constant [J/(mol*K)]
 
@@ -388,16 +388,16 @@ public class ControlValveSizing_IEC_60534 {
     double Vm = Z * R * T / (locP1 * 1000);
     double rho = MW * 1e-3 / Vm;
     double nu = mu / rho;
-    double dP = P1 - P2;
+    double dP = locP1 - locP2;
 
     // Choked flow check
     double Fgamma = gamma / 1.40;
-    double x = dP / P1;
+    double x = dP / locP1;
     double Y = Math.max(1 - x / (3 * Fgamma * xT), 2.0 / 3.0);
     boolean choked = isChokedTurbulentG(x, Fgamma, xT);
 
-    double C = choked && allowChoked ? Qloc / (N9 * P1 * Y) * Math.sqrt(MW * T * Z / xT / Fgamma)
-        : Qloc / (N9 * P1 * Y) * Math.sqrt(MW * T * Z / x);
+    double C = choked && allowChoked ? Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / xT / Fgamma)
+        : Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / x);
     if (fullOutput) {
       ans.put("choked", choked);
       ans.put("Y", Y);
@@ -455,9 +455,9 @@ public class ControlValveSizing_IEC_60534 {
     // Calculate flow rate in m^3/h
     double Qloc;
     if (choked && allowChoked) {
-      Qloc = effectiveCv * N9 * P1 * Y / Math.sqrt(MW * T * Z / xT / Fgamma);
+      Qloc = effectiveCv * N9 * locP1 * Y / Math.sqrt(MW * T * Z / xT / Fgamma);
     } else {
-      Qloc = effectiveCv * N9 * P1 * Y / Math.sqrt(MW * T * Z / x);
+      Qloc = effectiveCv * N9 * locP1 * Y / Math.sqrt(MW * T * Z / x);
     }
 
     // Convert flow rate from m^3/h to m^3/s
@@ -505,9 +505,9 @@ public class ControlValveSizing_IEC_60534 {
     // Calculate the effective Cv required for the given flow rate
     double effectiveCv;
     if (choked && allowChoked) {
-      effectiveCv = Qloc / (N9 * P1 * Y) * Math.sqrt(MW * T * Z / xT / Fgamma);
+      effectiveCv = Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / xT / Fgamma);
     } else {
-      effectiveCv = Qloc / (N9 * P1 * Y) * Math.sqrt(MW * T * Z / x);
+      effectiveCv = Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / x);
     }
 
     effectiveCv = Kv_to_Cv(effectiveCv);
