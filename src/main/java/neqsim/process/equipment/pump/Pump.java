@@ -42,7 +42,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   public double isentropicEfficiency = 1.0;
   public boolean powerSet = false;
   private String pressureUnit = "bara";
-  private PumpChart pumpChart = new PumpChart();
+  private PumpChartInterface pumpChart = new PumpChart();
 
   /**
    * Constructor for Pump.
@@ -439,7 +439,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    *
    * @return a {@link neqsim.process.equipment.pump.PumpChart} object
    */
-  public PumpChart getPumpChart() {
+  public PumpChartInterface getPumpChart() {
     return pumpChart;
   }
 
@@ -448,5 +448,22 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   public String toJson() {
     return new GsonBuilder().serializeSpecialFloatingPointValues().create()
         .toJson(new PumpResponse(this));
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Set CompressorChartType
+   * </p>
+   */
+  public void setPumpChartType(String type) {
+    if (type.equals("simple") || type.equals("fan law")) {
+      pumpChart = new PumpChart();
+    } else if (type.equals("interpolate and extrapolate")) {
+      pumpChart = new PumpChartAlternativeMapLookupExtrapolate();
+    } else {
+      pumpChart = new PumpChart();
+    }
   }
 }

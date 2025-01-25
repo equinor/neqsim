@@ -29,4 +29,13 @@ public interface PumpInterface extends ProcessEquipmentInterface, TwoPortInterfa
    * @return a double
    */
   public double getPower();
+
+  /**
+   * <p>
+   * setPumpChartType.
+   * </p>
+   *
+   * @param type a {@link java.lang.String} object
+   */
+  public void setPumpChartType(String type);
 }
