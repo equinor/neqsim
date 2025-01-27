@@ -1,55 +1,38 @@
+/**
+ * This class provides methods for sizing control valves according to the IEC 60534 standard. It
+ * supports both liquid and gas fluids and includes methods for calculating flow rates and valve
+ * openings based on various parameters.
+ * 
+ * Constants: - N1: Constant for liquids (m^3/hr, kPa) - N9: Constant for gases (m^3/hr, kPa) -
+ * rho0: Water density at 288.15 K - R: Gas constant [J/(mol*K)]
+ * 
+ * Enum: - FluidType: Enum representing the type of fluid (LIQUID or GAS)
+ * 
+ * Methods: - sizeControlValve: Sizes a control valve based on the provided parameters. -
+ * sizeControlValveLiquid: Sizes a control valve for liquid based on the provided parameters. -
+ * calculateFlowRateFromValveOpeningLiquid: Calculates the flow rate for a control valve based on
+ * the valve opening and given Cv for liquids. - calculateValveOpeningFromFlowRateLiquid: Calculates
+ * the valve opening percentage based on the flow rate and Cv for liquids. -
+ * findOutletPressureForFixedCvLiquid: Finds the outlet pressure for a given flow rate and a fixed
+ * Cv in a liquid valve. - sizeControlValveGas: Sizes a control valve for gas based on the provided
+ * parameters. - calculateFlowRateFromCvAndValveOpeningGas: Calculates the flow rate for gas based
+ * on Cv and valve opening percentage. - calculateValveOpeningFromFlowRateGas: Calculates the valve
+ * opening percentage for gas based on the flow rate and Cv. - findOutletPressureForFixedCvGas:
+ * Finds the outlet pressure for a given flow rate and a fixed Cv in a gas valve.
+ * 
+ * Private Methods: - isChokedTurbulentL: Determines if the flow is choked for turbulent liquid
+ * flow. - isChokedTurbulentG: Determines if the flow is choked for turbulent gas flow. -
+ * ffCriticalPressureRatioL: Calculates the critical pressure ratio for liquids. - Kv_to_Cv:
+ * Converts Kv to Cv. - Cv_to_Kv: Converts Cv to Kv.
+ */
 package neqsim.process.mechanicaldesign.valve;
 
 import java.util.HashMap;
 import java.util.Map;
 
 
-/**
- * The ControlValveSizing_IEC_60534 class provides methods for sizing control valves according to
- * the IEC 60534 standard. It supports both liquid and gas fluids and includes methods for
- * calculating flow rates, valve openings, and outlet pressures.
- * 
- * Constants: - N1: Constant for liquids (m^3/hr, kPa) - N9: Constant for gases (m^3/hr, kPa) -
- * rho0: Water density at 288.15 K - R: Gas constant [J/(mol*K)]
- * 
- * Methods: - getMethod(): Returns the current sizing method. - setMethod(String method): Sets the
- * sizing method. - sizeControlValve(FluidType type, double rhoOrT, double MW, double mu, double
- * gammaOrPsat, double ZOrPc, double P1, double P2, double Q, Double D1, Double D2, Double d, double
- * FL, double Fd, double xTOrNone, boolean allowChoked, boolean allowLaminar, boolean fullOutput):
- * Sizes a control valve based on the provided parameters. - sizeControlValveLiquid(double rho,
- * double Psat, double Pc, double mu, double P1, double P2, double Q, Double D1, Double D2, Double
- * d, double FL, double Fd, boolean allowChoked, boolean allowLaminar, boolean fullOutput): Sizes a
- * control valve for liquid based on the provided parameters. -
- * calculateFlowRateFromValveOpeningLiquid(double valveOpening, double Cv, double rho, double Psat,
- * double Pc, double mu, double P1, double P2, double FL, double Fd, boolean allowChoked):
- * Calculates the flow rate for a control valve based on the valve opening and given Cv for liquids.
- * - calculateValveOpeningFromFlowRateLiquid(double Q, double Cv, double rho, double Psat, double
- * Pc, double mu, double P1, double P2, double FL, double Fd, boolean allowChoked): Calculates the
- * valve opening percentage based on the flow rate and Cv for liquids. -
- * findOutletPressureForFixedCvLiquid(double rho, double Psat, double Pc, double mu, double P1,
- * double Q, double actualCv, double FL, double Fd, boolean allowChoked, boolean allowLaminar):
- * Finds the outlet pressure for a given flow rate Q and a fixed (actual) Cv in a liquid valve. -
- * sizeControlValveGas(double T, double MW, double mu, double gamma, double Z, double P1, double P2,
- * double Q, Double D1, Double D2, Double d, double FL, double Fd, double xT, boolean allowChoked,
- * boolean allowLaminar, boolean fullOutput): Sizes a control valve for gas based on the provided
- * parameters. - calculateFlowRateFromCvAndValveOpeningGas(double Cv, double valveOpening, double T,
- * double MW, double mu, double gamma, double Z, double P1, double P2, double FL, double xT, boolean
- * allowChoked): Calculates the flow rate for gas based on Cv and valve opening percentage. -
- * calculateValveOpeningFromFlowRateGas(double Q, double Cv, double T, double MW, double mu, double
- * gamma, double Z, double P1, double P2, double FL, double xT, boolean allowChoked): Calculates the
- * valve opening percentage for gas based on the flow rate and Cv. -
- * findOutletPressureForFixedCvGas(double T, double MW, double mu, double gamma, double Z, double
- * P1, double Q, double actualCv, double xT, boolean allowChoked): Finds the outlet pressure for a
- * given flow rate Q and a fixed (actual) Cv in a gas valve.
- * 
- * Enums: - FluidType: Enum representing the type of fluid (LIQUID, GAS).
- * 
- * Private Methods: - isChokedTurbulentL(double dP, double P1, double Psat, double FF, double FL):
- * Checks if the flow is choked for liquids. - isChokedTurbulentG(double x, double Fgamma, double
- * xT): Checks if the flow is choked for gases. - ffCriticalPressureRatioL(double Psat, double Pc):
- * Calculates the critical pressure ratio for liquids. - Kv_to_Cv(double Kv): Converts Kv to Cv. -
- * Cv_to_Kv(double Cv): Converts Cv to Kv.
- */
+// THis class is based on the implementation in the fluids package from
+// see: https://fluids.readthedocs.io/tutorial.html#control-valve-sizing-introduction
 public class ControlValveSizing_IEC_60534 {
 
   // Constants

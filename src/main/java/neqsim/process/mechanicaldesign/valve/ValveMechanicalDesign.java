@@ -2,6 +2,7 @@ package neqsim.process.mechanicaldesign.valve;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -32,15 +33,17 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   double inletPressure = 0.0;
   double outletPressure = 0.0;
   double dP = 0.0;
-  double diameter = 0.1;
-  double diameterInlet = 0.1;
-  double diameterOutlet = 0.1;
+  double diameter = 8 * 0.0254;
+  double diameterInlet = 8 * 0.0254;
+  double diameterOutlet = 8 * 0.0254;
   double xT = 0.137;
   double FL = 1.0;
   double FD = 1.0;
   boolean allowChoked = true;
   boolean allowLaminar = true;
   boolean fullOutput = true;
+  String valveSizingStandard = "IEC 60534";
+
 
   /**
    * <p>
@@ -52,6 +55,42 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   public ValveMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
     costEstimate = new ValveCostEstimate(this);
+  }
+
+  public ControlValveSizing_IEC_60534 getValveSizingMethod() {
+    return new ControlValveSizing_IEC_60534();
+  }
+
+  /**
+   * Calculates the valve size based on the fluid properties and operating conditions.
+   *
+   * @return a map containing the calculated valve size and related parameters. If fullOutput is
+   *         false, the map will be null.
+   */
+  public Map<String, Object> calcValveSize() {
+    // valveSizing.
+    SystemInterface fluid = getProcessEquipment().getFluid();
+
+    Map<String, Object> result = fullOutput ? new HashMap<>() : null;
+
+    if (fluid.hasPhaseType(PhaseType.GAS)) {
+      result = neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534
+          .sizeControlValveGas(fluid.getTemperature("K"), fluid.getMolarMass("gr/mol"),
+              fluid.getViscosity("kg/msec"), fluid.getGamma2(), fluid.getZ(),
+              ((ValveInterface) this.getProcessEquipment()).getInletPressure() * 1e5,
+              ((ValveInterface) this.getProcessEquipment()).getOutletPressure() * 1e5,
+              fluid.getFlowRate("Sm3/sec"), diameterInlet, diameterOutlet, diameter, FL, FD, xT,
+              true, true, true);
+    } else {
+      result = neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534
+          .sizeControlValveLiquid(fluid.getDensity("kg/m3"), 1.0 * 1e5,
+              fluid.getPhase(0).getPseudoCriticalPressure() * 1e5, fluid.getViscosity("kg/msec"),
+              ((ValveInterface) this.getProcessEquipment()).getInletPressure() * 1e5,
+              ((ValveInterface) this.getProcessEquipment()).getOutletPressure() * 1e5,
+              fluid.getFlowRate("kg/sec") / fluid.getDensity("kg/m3"), diameterInlet,
+              diameterOutlet, diameter, FL, FD, true, true, true);
+    }
+    return result;
   }
 
   /** {@inheritDoc} */
@@ -80,7 +119,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     SystemInterface fluid = getProcessEquipment().getFluid();
     if (getProcessEquipment().getFluid().hasPhaseType(PhaseType.GAS)) {
       Map<String, Object> result =
-          ControlValveSizing_IEC_60534.sizeControlValveGas(fluid.getTemperature("K"),
+          getValveSizingMethod().sizeControlValveGas(fluid.getTemperature("K"),
               fluid.getMolarMass("gr/mol"), fluid.getViscosity("kg/msec"), fluid.getGamma2(),
               fluid.getZ(), ((ValveInterface) getProcessEquipment()).getInletPressure() * 1e5,
               ((ValveInterface) getProcessEquipment()).getOutletPressure() * 1e5,
@@ -88,7 +127,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
               allowChoked, allowLaminar, fullOutput);
       this.valveCvMax = (double) result.get("Cv");
     } else {
-      Map<String, Object> result = ControlValveSizing_IEC_60534.sizeControlValveLiquid(
+      Map<String, Object> result = getValveSizingMethod().sizeControlValveLiquid(
           fluid.getDensity("kg/m3"), 1.0 * 1e5, fluid.getPC() * 1e5, fluid.getViscosity("kg/msec"),
           ((ValveInterface) getProcessEquipment()).getInletPressure() * 1e5,
           ((ValveInterface) getProcessEquipment()).getOutletPressure() * 1e5,
