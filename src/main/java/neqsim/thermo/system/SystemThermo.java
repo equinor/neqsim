@@ -1287,7 +1287,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void calcKIJ(boolean ok) {
-    neqsim.thermo.mixingrule.EosMixingRules.calcEOSInteractionParameters = ok;
+    neqsim.thermo.mixingrule.EosMixingRuleHandler.calcEOSInteractionParameters = ok;
     for (int i = 0; i < numberOfPhases; i++) {
       ((PhaseEosInterface) getPhase(i)).getEosMixingRule().setCalcEOSInteractionParameters(ok);
     }

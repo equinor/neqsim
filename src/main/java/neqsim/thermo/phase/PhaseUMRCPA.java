@@ -9,7 +9,7 @@ import org.ejml.simple.SimpleMatrix;
 // import org.ejml.data.DenseMatrix64F;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentUMRCPA;
-import neqsim.thermo.mixingrule.CPAMixingRules;
+import neqsim.thermo.mixingrule.CPAMixingRuleHandler;
 import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
@@ -27,7 +27,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseUMRCPA.class);
 
-  public CPAMixingRules cpaSelect = new CPAMixingRules();
+  public CPAMixingRuleHandler cpaSelect = new CPAMixingRuleHandler();
   public CPAMixingRulesInterface cpamix;
   double gcpavv = 0.0;
   double gcpavvv = 0.0;

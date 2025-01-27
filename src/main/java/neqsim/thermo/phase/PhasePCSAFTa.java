@@ -4,7 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentPCSAFTa;
-import neqsim.thermo.mixingrule.CPAMixingRules;
+import neqsim.thermo.mixingrule.CPAMixingRuleHandler;
 import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
@@ -22,7 +22,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhasePCSAFTa.class);
 
-  public CPAMixingRules cpaSelect = new CPAMixingRules();
+  public CPAMixingRuleHandler cpaSelect = new CPAMixingRuleHandler();
   public CPAMixingRulesInterface cpamix;
   double hcpatot = 1.0;
   double hcpatotdT = 0.0;
