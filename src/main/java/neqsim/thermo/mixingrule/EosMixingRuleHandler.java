@@ -1,5 +1,5 @@
 /*
- * EosMixingRules.java
+ * EosMixingRuleHandler.java
  *
  * Created on 4. juni 2000, 12:38
  */
@@ -13,7 +13,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.phase.PhaseGE;
@@ -28,20 +27,18 @@ import neqsim.util.database.NeqSimDataBase;
 
 /**
  * <p>
- * EosMixingRules class.
+ * EosMixingRuleHandler class.
  * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterface {
+public class EosMixingRuleHandler extends MixingRuleHandler {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(EosMixingRules.class);
+  static Logger logger = LogManager.getLogger(EosMixingRuleHandler.class);
 
-  /** Name of mixing rule. */
-  private String mixingRuleName = "no (kij=0)";
   public String mixingRuleGEModel = "NRTL";
 
   public double Atot = 0;
@@ -83,14 +80,435 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
    * Constructor for EosMixingRules.
    * </p>
    */
-  public EosMixingRules() {}
+  public EosMixingRuleHandler() {
+    this.mixingRuleName = "no (kij=0)";
+  }
+
+  /**
+   * <p>
+   * getMixingRule.
+   * </p>
+   *
+   * @param mr a int
+   * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
+   */
+  public EosMixingRulesInterface getMixingRule(int mr) {
+    if (mr == 1) {
+      return new ClassicVdW();
+    } else if (mr == 2) {
+      return new ClassicSRK();
+    } else if (mr == 3) {
+      return new ClassicVdW();
+    } else {
+      // TODO: not matching the initialization in getMixingRule(int mr, PhaseInterface phase)
+      return new ClassicVdW();
+    }
+  }
+
+  /**
+   * <p>
+   * getMixingRule.
+   * </p>
+   *
+   * @param mr a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
+   */
+  public EosMixingRulesInterface getMixingRule(int mr, PhaseInterface phase) {
+    this.wij = new double[3][phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    intparam = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+
+    if (mr == 1) {
+      mixingRuleName = "no (kij=0)";
+      return new ClassicVdW();
+    }
+    intparamji = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    intparamij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    intparamT = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    intparamTType = new int[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    HVDij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    HVDijT = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    NRTLDij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    NRTLDijT = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    WSintparam = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    HValpha = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    NRTLalpha = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    classicOrHV = new String[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    classicOrWS = new String[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    wijCalcOrFitted = new int[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+      for (int k = 0; k < phase.getNumberOfComponents(); k++) {
+        String component_name = phase.getComponent(k).getComponentName();
+
+        for (int l = k; l < phase.getNumberOfComponents(); l++) {
+          String component_name2 = phase.getComponent(l).getComponentName();
+          if (k == l) {
+            classicOrHV[k][l] = "Classic";
+            classicOrWS[k][l] = "Classic";
+            classicOrHV[l][k] = classicOrHV[k][l];
+            classicOrWS[l][k] = classicOrWS[k][l];
+          } else {
+            java.sql.ResultSet dataSet = null;
+            try {
+              int underscoreIndex = component_name.indexOf("__"); // double underscore
+              if (underscoreIndex != -1) {
+                component_name = component_name.substring(0, underscoreIndex);
+              }
+              int underscoreIndex2 = component_name2.indexOf("__");
+              if (underscoreIndex2 != -1) {
+                component_name2 = component_name2.substring(0, underscoreIndex2);
+              }
+              if (phase.getComponent(k).isIsTBPfraction()
+                  || phase.getComponent(l).isIsTBPfraction()) {
+                throw new Exception("no interaction coefficient for TBP fractions");
+              }
+              int templ = l;
+              int tempk = k;
+
+              if (NeqSimDataBase.createTemporaryTables()) {
+                dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='"
+                    + component_name + "' AND comp2='" + component_name2 + "') OR (comp1='"
+                    + component_name2 + "' AND comp2='" + component_name + "')");
+              } else {
+                dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='"
+                    + component_name + "' AND comp2='" + component_name2 + "') OR (comp1='"
+                    + component_name2 + "' AND comp2='" + component_name + "')");
+              }
+              dataSet.next();
+              if (dataSet.getString("comp1").trim().equals(component_name2)) {
+                templ = k;
+                tempk = l;
+              }
+
+              classicOrHV[k][l] = dataSet.getString("HVTYPE").trim();
+              classicOrHV[l][k] = classicOrHV[k][l];
+
+              if (isCalcEOSInteractionParameters()) {
+                intparam[k][l] =
+                    1.0 - Math.pow(
+                        (2.0 * Math.sqrt(Math.pow(phase.getComponent(l).getCriticalVolume(), 1 / 3)
+                            * Math.pow(phase.getComponent(k).getCriticalVolume(), 1 / 3))
+                            / (Math.pow(phase.getComponent(l).getCriticalVolume(), 1 / 3)
+                                + Math.pow(phase.getComponent(k).getCriticalVolume(), 1 / 3))),
+                        nEOSkij);
+                intparamT[k][l] = 0.0;
+                // System.out.println("kij " + intparam[k][l]);
+              } else {
+                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhasePrEos")) {
+                  // System.out.println("using PR intparams");
+                  intparam[k][l] = Double.parseDouble(dataSet.getString("kijpr"));
+                  intparamT[k][l] = Double.parseDouble(dataSet.getString("KIJTpr"));
+                } else {
+                  intparam[k][l] = Double.parseDouble(dataSet.getString("kijsrk"));
+                  intparamT[k][l] = Double.parseDouble(dataSet.getString("KIJTSRK"));
+                }
+                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhasePrCPA")) {
+                  intparam[k][l] = Double.parseDouble(dataSet.getString("cpakij_PR"));
+                  intparamT[k][l] = 0.0;
+                } else if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
+                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
+                    || phase.getClass().getName()
+                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
+                  intparam[k][l] = Double.parseDouble(dataSet.getString("cpakij_SRK"));
+                  intparamT[k][l] = Double.parseDouble(dataSet.getString("cpakijT_SRK"));
+
+                  intparamij[tempk][templ] = Double.parseDouble(dataSet.getString("cpakijx_SRK"));
+                  intparamji[templ][tempk] = intparamij[tempk][templ];
+
+                  intparamji[tempk][templ] = Double.parseDouble(dataSet.getString("cpakjix_SRK"));
+                  intparamij[templ][tempk] = intparamji[tempk][templ];
+                }
+                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhasePCSAFTRahmat")
+                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhasePCSAFT")
+                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhasePCSAFTa")) {
+                  intparam[k][l] = Double.parseDouble(dataSet.getString("KIJPCSAFT"));
+                  intparamT[k][l] = 0.0;
+                }
+              }
+
+              java.sql.ResultSetMetaData dataSetMD = dataSet.getMetaData();
+              int cols = dataSetMD.getColumnCount();
+              boolean hasKIJTTypeCPAcol = false;
+              String colname = "KIJTTypeCPA";
+              for (int x = 1; x <= cols; x++) {
+                if (colname.equals(dataSetMD.getColumnName(x))) {
+                  hasKIJTTypeCPAcol = true;
+                }
+              }
+
+              // System.out.println("class name " + phase.getClass().getName());
+              if (!phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
+                  || !hasKIJTTypeCPAcol) {
+                intparamTType[k][l] = Integer.parseInt(dataSet.getString("KIJTType"));
+              } else {
+                intparamTType[k][l] = Integer.parseInt(dataSet.getString("KIJTTypeCPA"));
+                // TODO: implement in all dbs
+              }
+              intparamTType[l][k] = intparamTType[k][l];
+
+              HValpha[k][l] = Double.parseDouble(dataSet.getString("HValpha"));
+              HValpha[l][k] = HValpha[k][l];
+
+              HVDij[tempk][templ] = Double.parseDouble(dataSet.getString("HVgij"));
+              HVDij[templ][tempk] = Double.parseDouble(dataSet.getString("HVgji"));
+
+              wijCalcOrFitted[k][l] = Integer.parseInt(dataSet.getString("CalcWij"));
+              wijCalcOrFitted[l][k] = wijCalcOrFitted[k][l];
+
+              wij[0][k][l] = Double.parseDouble(dataSet.getString("w1"));
+              wij[0][l][k] = wij[0][k][l];
+              wij[1][k][l] = Double.parseDouble(dataSet.getString("w2"));
+              wij[1][l][k] = wij[1][k][l];
+              wij[2][k][l] = Double.parseDouble(dataSet.getString("w3"));
+              wij[2][l][k] = wij[2][k][l];
+
+              classicOrWS[k][l] = dataSet.getString("WSTYPE").trim();
+              classicOrWS[l][k] = classicOrWS[k][l];
+
+              WSintparam[k][l] = Double.parseDouble(dataSet.getString("kijWS"));
+              WSintparam[k][l] = Double.parseDouble(dataSet.getString("KIJWSunifac"));
+              WSintparam[l][k] = WSintparam[k][l];
+
+              NRTLalpha[k][l] = Double.parseDouble(dataSet.getString("NRTLalpha"));
+              NRTLalpha[l][k] = NRTLalpha[k][l];
+
+              NRTLDij[tempk][templ] = Double.parseDouble(dataSet.getString("NRTLgij"));
+              NRTLDij[templ][tempk] = Double.parseDouble(dataSet.getString("NRTLgji"));
+
+              HVDijT[tempk][templ] = Double.parseDouble(dataSet.getString("HVgijT"));
+              HVDijT[templ][tempk] = Double.parseDouble(dataSet.getString("HVgjiT"));
+
+              NRTLDijT[tempk][templ] = Double.parseDouble(dataSet.getString("WSgijT"));
+              NRTLDijT[templ][tempk] = Double.parseDouble(dataSet.getString("WSgjiT"));
+            } catch (Exception ex) {
+              // System.out.println("err in thermo mix.....");
+              // System.out.println(ex.toString());
+              if (isCalcEOSInteractionParameters()) {
+                intparam[k][l] = 1.0 - Math.pow(
+                    (2.0 * Math.sqrt(Math.pow(phase.getComponent(l).getCriticalVolume(), 1.0 / 3.0)
+                        * Math.pow(phase.getComponent(k).getCriticalVolume(), 1.0 / 3.0))
+                        / (Math.pow(phase.getComponent(l).getCriticalVolume(), 1.0 / 3.0)
+                            + Math.pow(phase.getComponent(k).getCriticalVolume(), 1.0 / 3.0))),
+                    nEOSkij);
+                // System.out.println("intparam not defined .... CALCULATING intparam
+                // between "
+                // +component_name2 + " and " +
+                // component_name+ " to " +
+                // intparam[k][l]);
+              } else if ((component_name.equals("CO2") && phase.getComponent(l).isIsTBPfraction())
+                  || (component_name2.equals("CO2") && phase.getComponent(k).isIsTBPfraction())) {
+                intparam[k][l] = 0.1;
+              } else if ((component_name.equals("nitrogen")
+                  && phase.getComponent(l).isIsTBPfraction())
+                  || (component_name2.equals("nitrogen")
+                      && phase.getComponent(k).isIsTBPfraction())) {
+                intparam[k][l] = 0.08;
+              } else if ((component_name.equals("water") && phase.getComponent(l).isIsTBPfraction())
+                  || (component_name2.equals("water") && phase.getComponent(k).isIsTBPfraction())) {
+                intparam[k][l] = 0.2;
+
+                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
+                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
+                    || phase.getClass().getName()
+                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
+                  // intparam[k][l] = -0.0685; // taken from Riaz et a. 2012
+
+                  double molmassPC = phase.getComponent(l).getMolarMass();
+                  if (phase.getComponent(k).isIsTBPfraction()) {
+                    molmassPC = phase.getComponents()[k].getMolarMass();
+                  }
+                  double intparamkPC = -0.1533 * Math.log(1000.0 * molmassPC) + 0.7055;
+                  intparam[k][l] = intparamkPC;
+                  // System.out.println("kij water-HC " + intparam[k][l]);
+
+                  intparamT[k][l] = 0.0;
+                }
+              } else if ((component_name.equals("MEG") && phase.getComponent(l).isIsTBPfraction())
+                  || (component_name2.equals("MEG")
+                      && phase.getComponents()[k].isIsTBPfraction())) {
+                intparam[k][l] = 0.2;
+                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
+                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
+                    || phase.getClass().getName()
+                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
+                  double molmassPC = phase.getComponent(l).getMolarMass();
+                  if (phase.getComponents()[k].isIsTBPfraction()) {
+                    molmassPC = phase.getComponents()[k].getMolarMass();
+                  }
+                  double intparamkPC = -0.0701 * Math.log(1000.0 * molmassPC) + 0.3521;
+                  intparam[k][l] = intparamkPC;
+                  // System.out.println("kij MEG-HC " + intparam[k][l]);
+                  // intparam[k][l] = 0.01;
+                  intparamT[k][l] = 0.0;
+                }
+              } else if ((component_name.equals("ethanol")
+                  && phase.getComponent(l).isIsTBPfraction())
+                  || (component_name2.equals("ethanol")
+                      && phase.getComponents()[k].isIsTBPfraction())) {
+                intparam[k][l] = 0.0;
+                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
+                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
+                    || phase.getClass().getName()
+                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
+                  intparam[k][l] = -0.05;
+                  intparamT[k][l] = 0.0;
+                  if (phase.getComponents()[k].getMolarMass() > (200.0 / 1000.0)
+                      || phase.getComponent(l).getMolarMass() > (200.0 / 1000.0)) {
+                    intparam[k][l] = -0.1;
+                  }
+                }
+              } else if ((component_name.equals("methanol")
+                  && phase.getComponent(l).isIsTBPfraction())
+                  || (component_name2.equals("methanol")
+                      && phase.getComponents()[k].isIsTBPfraction())) {
+                intparam[k][l] = 0.0;
+                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
+                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
+                    || phase.getClass().getName()
+                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
+                  intparam[k][l] = -0.1;
+                  intparamT[k][l] = 0.0;
+                  if (phase.getComponents()[k].getMolarMass() > (200.0 / 1000.0)
+                      || phase.getComponent(l).getMolarMass() > (200.0 / 1000.0)) {
+                    intparam[k][l] = -0.2;
+                  }
+                }
+              } else if ((component_name.equals("TEG") && phase.getComponent(l).isIsTBPfraction())
+                  || (component_name2.equals("TEG")
+                      && phase.getComponents()[k].isIsTBPfraction())) {
+                intparam[k][l] = 0.12;
+                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
+                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
+                    || phase.getClass().getName()
+                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
+                  intparam[k][l] = 0.12;
+                  intparamT[k][l] = 0.0;
+                }
+              } else if ((component_name.equals("S8") && phase.getComponent(l).isIsTBPfraction())
+                  || (component_name2.equals("S8") && phase.getComponents()[k].isIsTBPfraction())) {
+                intparam[k][l] = 0.05;
+              } else {
+                // if((component_name2.equals("CO2") ||
+                // component_name.equals("CO2")) && k!=l)
+                // intparam[k][l] = 0.1;
+                // else if((component_name2.equals("H2S") ||
+                // component_name.equals("H2S")) && k!=l)
+                // intparam[k][l] = 0.2;
+                // else if((component_name2.equals("water")
+                // ||
+                // component_name.equals("water")) && k!=l)
+                // intparam[k][l] = 0.5;
+                // else intparam[k][l] = 0.0;
+                // System.out.println("intparam not defined .... setting intparam
+                // between " +
+                // component_name2 + " and " +
+                // component_name + " to " +
+                // intparam[k][l]);
+              }
+
+              // intparam[l][k] = intparam[k][l];
+              // intparamT[l][k] = intparamT[k][l];
+              intparamij[k][l] = intparam[k][l];
+              intparamij[l][k] = intparam[k][l];
+              intparamji[k][l] = intparam[k][l];
+              intparamji[l][k] = intparam[k][l];
+              // System.out.println("kij set to " + intparam[l][k] + " " +
+              // component_name2 + " " +
+              // component_name);
+
+              classicOrHV[k][l] = "Classic";
+              classicOrHV[l][k] = classicOrHV[k][l];
+
+              classicOrWS[k][l] = "Classic";
+              classicOrWS[l][k] = classicOrWS[k][l];
+            } finally {
+              intparam[l][k] = intparam[k][l];
+              intparamT[l][k] = intparamT[k][l];
+              try {
+                if (dataSet != null) {
+                  dataSet.close();
+                }
+              } catch (Exception ex) {
+                logger.error("err closing dataSet IN MIX...", ex);
+              }
+            }
+          }
+        }
+      }
+    } catch (Exception ex) {
+      logger.error("error reading from database", ex);
+    }
+
+    return resetMixingRule(mr, phase);
+  }
+
+  /**
+   * <p>
+   * resetMixingRule.
+   * </p>
+   *
+   * @param i a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
+   */
+  public EosMixingRulesInterface resetMixingRule(int i, PhaseInterface phase) {
+    if (i == 1) {
+      mixingRuleName = "no (kij=0)";
+      return new ClassicVdW();
+    } else if (i == 2) {
+      mixingRuleName = "classic";
+      return new ClassicSRK();
+    } else if (i == 3) {
+      // Classic Huron-Vidal
+      mixingRuleName = "Huron-Vidal";
+      return new SRKHuronVidal2(phase, HValpha, HVDij, classicOrHV);
+    } else if (i == 4) {
+      mixingRuleName = "Huron-Vidal";
+      return new SRKHuronVidal2(phase, HValpha, HVDij, HVDijT, classicOrHV);
+    } else if (i == 5) {
+      mixingRuleName = "Wong-Sandler";
+      return new WongSandlerMixingRule(phase, NRTLalpha, NRTLDij, NRTLDijT, classicOrWS);
+    } else if (i == 6) {
+      // Exactly the same as 5
+      mixingRuleName = "Wong-Sandler";
+      return new WongSandlerMixingRule(phase, NRTLalpha, NRTLDij, NRTLDijT, classicOrWS);
+    } else if (i == 7) {
+      mixingRuleName = "classic-CPA";
+      return new ClassicSRK();
+    } else if (i == 8) {
+      mixingRuleName = "classic-T";
+      return new ClassicSRKT();
+    } else if (i == 9) {
+      mixingRuleName = "classic-CPA_T";
+      return new ClassicSRKT2();
+    } else if (i == 10) {
+      // return new ElectrolyteMixRule(phase, HValpha, HVgij, HVgii,
+      // classicOrHV,wij);}
+      org.ejml.simple.SimpleMatrix mat1 = new org.ejml.simple.SimpleMatrix(intparamij);
+      org.ejml.simple.SimpleMatrix mat2 = new org.ejml.simple.SimpleMatrix(intparamji);
+      org.ejml.simple.SimpleMatrix mat3 = new org.ejml.simple.SimpleMatrix(intparamT);
+      if (mat1.isIdentical(mat2, 1e-8)) {
+        if (mat3.elementMaxAbs() < 1e-8) {
+          mixingRuleName = "classic-CPA";
+          return new ClassicSRK();
+        }
+        mixingRuleName = "classic-CPA_T";
+        return new ClassicSRKT2();
+      } else {
+        mixingRuleName = "classic-CPA_Tx";
+        return new ClassicSRKT2x();
+      }
+    } else {
+      return new ClassicVdW();
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
-  public EosMixingRules clone() {
-    EosMixingRules clonedSystem = null;
+  public EosMixingRuleHandler clone() {
+    EosMixingRuleHandler clonedSystem = null;
     try {
-      clonedSystem = (EosMixingRules) super.clone();
+      clonedSystem = (EosMixingRuleHandler) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
@@ -2176,425 +2594,6 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
       }
       return -WTT;
-    }
-  }
-
-  /**
-   * <p>
-   * getMixingRule.
-   * </p>
-   *
-   * @param mr a int
-   * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
-   */
-  public EosMixingRulesInterface getMixingRule(int mr) {
-    if (mr == 1) {
-      return new ClassicVdW();
-    } else if (mr == 2) {
-      return new ClassicSRK();
-    } else if (mr == 3) {
-      return new ClassicVdW();
-    } else {
-      // TODO: not matching the initialization in getMixingRule(int mr, PhaseInterface phase)
-      return new ClassicVdW();
-    }
-  }
-
-  /**
-   * <p>
-   * getMixingRule.
-   * </p>
-   *
-   * @param mr a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
-   */
-  public EosMixingRulesInterface getMixingRule(int mr, PhaseInterface phase) {
-    this.wij = new double[3][phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    intparam = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-
-    if (mr == 1) {
-      mixingRuleName = "no (kij=0)";
-      return new ClassicVdW();
-    }
-    intparamji = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    intparamij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    intparamT = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    intparamTType = new int[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    HVDij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    HVDijT = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    NRTLDij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    NRTLDijT = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    WSintparam = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    HValpha = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    NRTLalpha = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    classicOrHV = new String[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    classicOrWS = new String[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    wijCalcOrFitted = new int[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-      for (int k = 0; k < phase.getNumberOfComponents(); k++) {
-        String component_name = phase.getComponent(k).getComponentName();
-
-        for (int l = k; l < phase.getNumberOfComponents(); l++) {
-          String component_name2 = phase.getComponent(l).getComponentName();
-          if (k == l) {
-            classicOrHV[k][l] = "Classic";
-            classicOrWS[k][l] = "Classic";
-            classicOrHV[l][k] = classicOrHV[k][l];
-            classicOrWS[l][k] = classicOrWS[k][l];
-          } else {
-            java.sql.ResultSet dataSet = null;
-            try {
-              int underscoreIndex = component_name.indexOf("__"); // double underscore
-              if (underscoreIndex != -1) {
-                component_name = component_name.substring(0, underscoreIndex);
-              }
-              int underscoreIndex2 = component_name2.indexOf("__");
-              if (underscoreIndex2 != -1) {
-                component_name2 = component_name2.substring(0, underscoreIndex2);
-              }
-              if (phase.getComponent(k).isIsTBPfraction()
-                  || phase.getComponent(l).isIsTBPfraction()) {
-                throw new Exception("no interaction coefficient for TBP fractions");
-              }
-              int templ = l;
-              int tempk = k;
-
-              if (NeqSimDataBase.createTemporaryTables()) {
-                dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='"
-                    + component_name + "' AND comp2='" + component_name2 + "') OR (comp1='"
-                    + component_name2 + "' AND comp2='" + component_name + "')");
-              } else {
-                dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='"
-                    + component_name + "' AND comp2='" + component_name2 + "') OR (comp1='"
-                    + component_name2 + "' AND comp2='" + component_name + "')");
-              }
-              dataSet.next();
-              if (dataSet.getString("comp1").trim().equals(component_name2)) {
-                templ = k;
-                tempk = l;
-              }
-
-              classicOrHV[k][l] = dataSet.getString("HVTYPE").trim();
-              classicOrHV[l][k] = classicOrHV[k][l];
-
-              if (isCalcEOSInteractionParameters()) {
-                intparam[k][l] =
-                    1.0 - Math.pow(
-                        (2.0 * Math.sqrt(Math.pow(phase.getComponent(l).getCriticalVolume(), 1 / 3)
-                            * Math.pow(phase.getComponent(k).getCriticalVolume(), 1 / 3))
-                            / (Math.pow(phase.getComponent(l).getCriticalVolume(), 1 / 3)
-                                + Math.pow(phase.getComponent(k).getCriticalVolume(), 1 / 3))),
-                        nEOSkij);
-                intparamT[k][l] = 0.0;
-                // System.out.println("kij " + intparam[k][l]);
-              } else {
-                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhasePrEos")) {
-                  // System.out.println("using PR intparams");
-                  intparam[k][l] = Double.parseDouble(dataSet.getString("kijpr"));
-                  intparamT[k][l] = Double.parseDouble(dataSet.getString("KIJTpr"));
-                } else {
-                  intparam[k][l] = Double.parseDouble(dataSet.getString("kijsrk"));
-                  intparamT[k][l] = Double.parseDouble(dataSet.getString("KIJTSRK"));
-                }
-                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhasePrCPA")) {
-                  intparam[k][l] = Double.parseDouble(dataSet.getString("cpakij_PR"));
-                  intparamT[k][l] = 0.0;
-                } else if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
-                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                    || phase.getClass().getName()
-                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
-                  intparam[k][l] = Double.parseDouble(dataSet.getString("cpakij_SRK"));
-                  intparamT[k][l] = Double.parseDouble(dataSet.getString("cpakijT_SRK"));
-
-                  intparamij[tempk][templ] = Double.parseDouble(dataSet.getString("cpakijx_SRK"));
-                  intparamji[templ][tempk] = intparamij[tempk][templ];
-
-                  intparamji[tempk][templ] = Double.parseDouble(dataSet.getString("cpakjix_SRK"));
-                  intparamij[templ][tempk] = intparamji[tempk][templ];
-                }
-                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhasePCSAFTRahmat")
-                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhasePCSAFT")
-                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhasePCSAFTa")) {
-                  intparam[k][l] = Double.parseDouble(dataSet.getString("KIJPCSAFT"));
-                  intparamT[k][l] = 0.0;
-                }
-              }
-
-              java.sql.ResultSetMetaData dataSetMD = dataSet.getMetaData();
-              int cols = dataSetMD.getColumnCount();
-              boolean hasKIJTTypeCPAcol = false;
-              String colname = "KIJTTypeCPA";
-              for (int x = 1; x <= cols; x++) {
-                if (colname.equals(dataSetMD.getColumnName(x))) {
-                  hasKIJTTypeCPAcol = true;
-                }
-              }
-
-              // System.out.println("class name " + phase.getClass().getName());
-              if (!phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                  || !hasKIJTTypeCPAcol) {
-                intparamTType[k][l] = Integer.parseInt(dataSet.getString("KIJTType"));
-              } else {
-                intparamTType[k][l] = Integer.parseInt(dataSet.getString("KIJTTypeCPA"));
-                // TODO: implement in all dbs
-              }
-              intparamTType[l][k] = intparamTType[k][l];
-
-              HValpha[k][l] = Double.parseDouble(dataSet.getString("HValpha"));
-              HValpha[l][k] = HValpha[k][l];
-
-              HVDij[tempk][templ] = Double.parseDouble(dataSet.getString("HVgij"));
-              HVDij[templ][tempk] = Double.parseDouble(dataSet.getString("HVgji"));
-
-              wijCalcOrFitted[k][l] = Integer.parseInt(dataSet.getString("CalcWij"));
-              wijCalcOrFitted[l][k] = wijCalcOrFitted[k][l];
-
-              wij[0][k][l] = Double.parseDouble(dataSet.getString("w1"));
-              wij[0][l][k] = wij[0][k][l];
-              wij[1][k][l] = Double.parseDouble(dataSet.getString("w2"));
-              wij[1][l][k] = wij[1][k][l];
-              wij[2][k][l] = Double.parseDouble(dataSet.getString("w3"));
-              wij[2][l][k] = wij[2][k][l];
-
-              classicOrWS[k][l] = dataSet.getString("WSTYPE").trim();
-              classicOrWS[l][k] = classicOrWS[k][l];
-
-              WSintparam[k][l] = Double.parseDouble(dataSet.getString("kijWS"));
-              WSintparam[k][l] = Double.parseDouble(dataSet.getString("KIJWSunifac"));
-              WSintparam[l][k] = WSintparam[k][l];
-
-              NRTLalpha[k][l] = Double.parseDouble(dataSet.getString("NRTLalpha"));
-              NRTLalpha[l][k] = NRTLalpha[k][l];
-
-              NRTLDij[tempk][templ] = Double.parseDouble(dataSet.getString("NRTLgij"));
-              NRTLDij[templ][tempk] = Double.parseDouble(dataSet.getString("NRTLgji"));
-
-              HVDijT[tempk][templ] = Double.parseDouble(dataSet.getString("HVgijT"));
-              HVDijT[templ][tempk] = Double.parseDouble(dataSet.getString("HVgjiT"));
-
-              NRTLDijT[tempk][templ] = Double.parseDouble(dataSet.getString("WSgijT"));
-              NRTLDijT[templ][tempk] = Double.parseDouble(dataSet.getString("WSgjiT"));
-            } catch (Exception ex) {
-              // System.out.println("err in thermo mix.....");
-              // System.out.println(ex.toString());
-              if (isCalcEOSInteractionParameters()) {
-                intparam[k][l] = 1.0 - Math.pow(
-                    (2.0 * Math.sqrt(Math.pow(phase.getComponent(l).getCriticalVolume(), 1.0 / 3.0)
-                        * Math.pow(phase.getComponent(k).getCriticalVolume(), 1.0 / 3.0))
-                        / (Math.pow(phase.getComponent(l).getCriticalVolume(), 1.0 / 3.0)
-                            + Math.pow(phase.getComponent(k).getCriticalVolume(), 1.0 / 3.0))),
-                    nEOSkij);
-                // System.out.println("intparam not defined .... CALCULATING intparam
-                // between "
-                // +component_name2 + " and " +
-                // component_name+ " to " +
-                // intparam[k][l]);
-              } else if ((component_name.equals("CO2") && phase.getComponent(l).isIsTBPfraction())
-                  || (component_name2.equals("CO2") && phase.getComponent(k).isIsTBPfraction())) {
-                intparam[k][l] = 0.1;
-              } else if ((component_name.equals("nitrogen")
-                  && phase.getComponent(l).isIsTBPfraction())
-                  || (component_name2.equals("nitrogen")
-                      && phase.getComponent(k).isIsTBPfraction())) {
-                intparam[k][l] = 0.08;
-              } else if ((component_name.equals("water") && phase.getComponent(l).isIsTBPfraction())
-                  || (component_name2.equals("water") && phase.getComponent(k).isIsTBPfraction())) {
-                intparam[k][l] = 0.2;
-
-                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
-                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                    || phase.getClass().getName()
-                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
-                  // intparam[k][l] = -0.0685; // taken from Riaz et a. 2012
-
-                  double molmassPC = phase.getComponent(l).getMolarMass();
-                  if (phase.getComponent(k).isIsTBPfraction()) {
-                    molmassPC = phase.getComponents()[k].getMolarMass();
-                  }
-                  double intparamkPC = -0.1533 * Math.log(1000.0 * molmassPC) + 0.7055;
-                  intparam[k][l] = intparamkPC;
-                  // System.out.println("kij water-HC " + intparam[k][l]);
-
-                  intparamT[k][l] = 0.0;
-                }
-              } else if ((component_name.equals("MEG") && phase.getComponent(l).isIsTBPfraction())
-                  || (component_name2.equals("MEG")
-                      && phase.getComponents()[k].isIsTBPfraction())) {
-                intparam[k][l] = 0.2;
-                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
-                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                    || phase.getClass().getName()
-                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
-                  double molmassPC = phase.getComponent(l).getMolarMass();
-                  if (phase.getComponents()[k].isIsTBPfraction()) {
-                    molmassPC = phase.getComponents()[k].getMolarMass();
-                  }
-                  double intparamkPC = -0.0701 * Math.log(1000.0 * molmassPC) + 0.3521;
-                  intparam[k][l] = intparamkPC;
-                  // System.out.println("kij MEG-HC " + intparam[k][l]);
-                  // intparam[k][l] = 0.01;
-                  intparamT[k][l] = 0.0;
-                }
-              } else if ((component_name.equals("ethanol")
-                  && phase.getComponent(l).isIsTBPfraction())
-                  || (component_name2.equals("ethanol")
-                      && phase.getComponents()[k].isIsTBPfraction())) {
-                intparam[k][l] = 0.0;
-                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
-                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                    || phase.getClass().getName()
-                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
-                  intparam[k][l] = -0.05;
-                  intparamT[k][l] = 0.0;
-                  if (phase.getComponents()[k].getMolarMass() > (200.0 / 1000.0)
-                      || phase.getComponent(l).getMolarMass() > (200.0 / 1000.0)) {
-                    intparam[k][l] = -0.1;
-                  }
-                }
-              } else if ((component_name.equals("methanol")
-                  && phase.getComponent(l).isIsTBPfraction())
-                  || (component_name2.equals("methanol")
-                      && phase.getComponents()[k].isIsTBPfraction())) {
-                intparam[k][l] = 0.0;
-                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
-                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                    || phase.getClass().getName()
-                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
-                  intparam[k][l] = -0.1;
-                  intparamT[k][l] = 0.0;
-                  if (phase.getComponents()[k].getMolarMass() > (200.0 / 1000.0)
-                      || phase.getComponent(l).getMolarMass() > (200.0 / 1000.0)) {
-                    intparam[k][l] = -0.2;
-                  }
-                }
-              } else if ((component_name.equals("TEG") && phase.getComponent(l).isIsTBPfraction())
-                  || (component_name2.equals("TEG")
-                      && phase.getComponents()[k].isIsTBPfraction())) {
-                intparam[k][l] = 0.12;
-                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
-                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                    || phase.getClass().getName()
-                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
-                  intparam[k][l] = 0.12;
-                  intparamT[k][l] = 0.0;
-                }
-              } else if ((component_name.equals("S8") && phase.getComponent(l).isIsTBPfraction())
-                  || (component_name2.equals("S8") && phase.getComponents()[k].isIsTBPfraction())) {
-                intparam[k][l] = 0.05;
-              } else {
-                // if((component_name2.equals("CO2") ||
-                // component_name.equals("CO2")) && k!=l)
-                // intparam[k][l] = 0.1;
-                // else if((component_name2.equals("H2S") ||
-                // component_name.equals("H2S")) && k!=l)
-                // intparam[k][l] = 0.2;
-                // else if((component_name2.equals("water")
-                // ||
-                // component_name.equals("water")) && k!=l)
-                // intparam[k][l] = 0.5;
-                // else intparam[k][l] = 0.0;
-                // System.out.println("intparam not defined .... setting intparam
-                // between " +
-                // component_name2 + " and " +
-                // component_name + " to " +
-                // intparam[k][l]);
-              }
-
-              // intparam[l][k] = intparam[k][l];
-              // intparamT[l][k] = intparamT[k][l];
-              intparamij[k][l] = intparam[k][l];
-              intparamij[l][k] = intparam[k][l];
-              intparamji[k][l] = intparam[k][l];
-              intparamji[l][k] = intparam[k][l];
-              // System.out.println("kij set to " + intparam[l][k] + " " +
-              // component_name2 + " " +
-              // component_name);
-
-              classicOrHV[k][l] = "Classic";
-              classicOrHV[l][k] = classicOrHV[k][l];
-
-              classicOrWS[k][l] = "Classic";
-              classicOrWS[l][k] = classicOrWS[k][l];
-            } finally {
-              intparam[l][k] = intparam[k][l];
-              intparamT[l][k] = intparamT[k][l];
-              try {
-                if (dataSet != null) {
-                  dataSet.close();
-                }
-              } catch (Exception ex) {
-                logger.error("err closing dataSet IN MIX...", ex);
-              }
-            }
-          }
-        }
-      }
-    } catch (Exception ex) {
-      logger.error("error reading from database", ex);
-    }
-
-    return resetMixingRule(mr, phase);
-  }
-
-  /**
-   * <p>
-   * resetMixingRule.
-   * </p>
-   *
-   * @param i a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
-   */
-  public EosMixingRulesInterface resetMixingRule(int i, PhaseInterface phase) {
-    if (i == 1) {
-      mixingRuleName = "no (kij=0)";
-      return new ClassicVdW();
-    } else if (i == 2) {
-      mixingRuleName = "classic";
-      return new ClassicSRK();
-    } else if (i == 3) {
-      // Classic Huron-Vidal
-      mixingRuleName = "Huron-Vidal";
-      return new SRKHuronVidal2(phase, HValpha, HVDij, classicOrHV);
-    } else if (i == 4) {
-      mixingRuleName = "Huron-Vidal";
-      return new SRKHuronVidal2(phase, HValpha, HVDij, HVDijT, classicOrHV);
-    } else if (i == 5) {
-      mixingRuleName = "Wong-Sandler";
-      return new WongSandlerMixingRule(phase, NRTLalpha, NRTLDij, NRTLDijT, classicOrWS);
-    } else if (i == 6) {
-      // Exactly the same as 5
-      mixingRuleName = "Wong-Sandler";
-      return new WongSandlerMixingRule(phase, NRTLalpha, NRTLDij, NRTLDijT, classicOrWS);
-    } else if (i == 7) {
-      mixingRuleName = "classic-CPA";
-      return new ClassicSRK();
-    } else if (i == 8) {
-      mixingRuleName = "classic-T";
-      return new ClassicSRKT();
-    } else if (i == 9) {
-      mixingRuleName = "classic-CPA_T";
-      return new ClassicSRKT2();
-    } else if (i == 10) {
-      // return new ElectrolyteMixRule(phase, HValpha, HVgij, HVgii,
-      // classicOrHV,wij);}
-      org.ejml.simple.SimpleMatrix mat1 = new org.ejml.simple.SimpleMatrix(intparamij);
-      org.ejml.simple.SimpleMatrix mat2 = new org.ejml.simple.SimpleMatrix(intparamji);
-      org.ejml.simple.SimpleMatrix mat3 = new org.ejml.simple.SimpleMatrix(intparamT);
-      if (mat1.isIdentical(mat2, 1e-8)) {
-        if (mat3.elementMaxAbs() < 1e-8) {
-          mixingRuleName = "classic-CPA";
-          return new ClassicSRK();
-        }
-        mixingRuleName = "classic-CPA_T";
-        return new ClassicSRKT2();
-      } else {
-        mixingRuleName = "classic-CPA_Tx";
-        return new ClassicSRKT2x();
-      }
-    } else {
-      return new ClassicVdW();
     }
   }
 

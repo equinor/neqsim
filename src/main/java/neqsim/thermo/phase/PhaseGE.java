@@ -11,14 +11,14 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEInterface;
+import neqsim.thermo.mixingrule.EosMixingRuleHandler;
 import neqsim.thermo.mixingrule.EosMixingRuleType;
-import neqsim.thermo.mixingrule.EosMixingRules;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
  * <p>
- * PhaseGE class.
+ * Abstract class PhaseGE.
  * </p>
  *
  * @author Even Solbraa
@@ -30,7 +30,7 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseGE.class);
 
-  EosMixingRules mixSelect = new EosMixingRules();
+  EosMixingRuleHandler mixSelect = new EosMixingRuleHandler();
   EosMixingRulesInterface mixRule;
 
   /**

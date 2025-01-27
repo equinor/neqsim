@@ -10,8 +10,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentEosInterface;
+import neqsim.thermo.mixingrule.EosMixingRuleHandler;
 import neqsim.thermo.mixingrule.EosMixingRuleType;
-import neqsim.thermo.mixingrule.EosMixingRules;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -36,7 +36,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public double delta1 = 0;
   public double delta2 = 0;
 
-  protected EosMixingRules mixSelect = new EosMixingRules();
+  protected EosMixingRuleHandler mixSelect = new EosMixingRuleHandler();
   protected EosMixingRulesInterface mixRule = null;
   double uEOS = 0;
   double wEOS = 0;

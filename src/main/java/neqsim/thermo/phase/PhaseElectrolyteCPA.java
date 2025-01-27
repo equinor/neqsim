@@ -8,7 +8,7 @@ import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentElectrolyteCPA;
-import neqsim.thermo.mixingrule.CPAMixingRules;
+import neqsim.thermo.mixingrule.CPAMixingRuleHandler;
 import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
@@ -27,7 +27,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseElectrolyteCPA.class);
 
-  public CPAMixingRules cpaSelect = new CPAMixingRules();
+  public CPAMixingRuleHandler cpaSelect = new CPAMixingRuleHandler();
   public CPAMixingRulesInterface cpamix;
   double gcpavv = 0.0;
   double gcpavvv = 0.0;

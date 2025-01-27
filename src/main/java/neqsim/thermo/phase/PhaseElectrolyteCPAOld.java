@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentElectrolyteCPA;
 import neqsim.thermo.component.ComponentEosInterface;
-import neqsim.thermo.mixingrule.CPAMixingRules;
+import neqsim.thermo.mixingrule.CPAMixingRuleHandler;
 import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
@@ -24,7 +24,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseElectrolyteCPAOld.class);
 
-  public CPAMixingRules cpaSelect = new CPAMixingRules();
+  public CPAMixingRuleHandler cpaSelect = new CPAMixingRuleHandler();
 
   int totalNumberOfAccociationSites = 0;
   public CPAMixingRulesInterface cpamix;

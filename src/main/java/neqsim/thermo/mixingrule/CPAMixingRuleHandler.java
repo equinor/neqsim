@@ -1,5 +1,5 @@
 /*
- * CPAMixing.java
+ * CPAMixingRuleHandler.java
  *
  * Created on 4. juni 2000, 12:38
  */
@@ -8,7 +8,6 @@ package neqsim.thermo.mixingrule;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.phase.PhaseCPAInterface;
@@ -23,14 +22,11 @@ import neqsim.util.database.NeqSimDataBase;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterface {
+public class CPAMixingRuleHandler extends MixingRuleHandler {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(CPAMixingRules.class);
-
-  /** Name of mixing rule. */
-  private String mixingRuleName = "CPA_Radoch";
+  static Logger logger = LogManager.getLogger(CPAMixingRuleHandler.class);
 
   int[][] assosSchemeType = null; // 0- ER - 1 - CR1
   double[][] cpaBetaCross = null;
@@ -45,14 +41,135 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
    * Constructor for CPAMixingRules.
    * </p>
    */
-  public CPAMixingRules() {}
+  public CPAMixingRuleHandler() {
+    this.mixingRuleName = "CPA_Radoch";
+  }
+
+  /**
+   * <p>
+   * getMixingRule.
+   * </p>
+   *
+   * @param mr a int
+   * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
+   */
+  public CPAMixingRulesInterface getMixingRule(MixingRuleTypeInterface mr) {
+    if (!CPAMixingRuleType.class.isInstance(mr)) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException(this, "setMixingRule", "mr"));
+    }
+    CPAMixingRuleType cmr = (CPAMixingRuleType) mr;
+    switch (cmr) {
+      case CPA_RADOCH:
+        mixingRuleName = "CPA_Radoch";
+        return new CPA_Radoch();
+      case PCSAFTA_RADOCH:
+        mixingRuleName = "PCSAFTa_Radoch";
+        return new PCSAFTa_Radoch();
+      default:
+        return new CPA_Radoch();
+    }
+  }
+
+  /**
+   * <p>
+   * getMixingRule.
+   * </p>
+   *
+   * @param mr a int
+   * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
+   */
+  public CPAMixingRulesInterface getMixingRule(int mr) {
+    if (mr == 1) {
+      mixingRuleName = "CPA_Radoch";
+      return new CPA_Radoch();
+    } else if (mr == 3) {
+      mixingRuleName = "PCSAFTa_Radoch";
+      return new PCSAFTa_Radoch();
+    }
+    throw new RuntimeException(
+        new neqsim.util.exception.InvalidInputException(this, "getMixingRule", "mr"));
+  }
+
+
+  /**
+   * <p>
+   * getMixingRule.
+   * </p>
+   *
+   * @param mr a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
+   */
+  public CPAMixingRulesInterface getMixingRule(int mr, PhaseInterface phase) {
+    assosSchemeType = new int[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    cpaBetaCross = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    cpaEpsCross = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+
+    for (int k = 0; k < phase.getNumberOfComponents(); k++) {
+      String component_name = phase.getComponent(k).getComponentName();
+      java.sql.ResultSet dataSet = null;
+
+      for (int l = k; l < phase.getNumberOfComponents(); l++) {
+        if (k == l || phase.getComponent(l).getNumberOfAssociationSites() == 0
+            || phase.getComponent(k).getNumberOfAssociationSites() == 0) {
+        } else {
+          try (neqsim.util.database.NeqSimDataBase database =
+              new neqsim.util.database.NeqSimDataBase()) {
+            // database = new util.database.NeqSimDataBase();
+            if (NeqSimDataBase.createTemporaryTables()) {
+              dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='"
+                  + component_name + "' AND comp2='" + phase.getComponent(l).getComponentName()
+                  + "') OR (comp1='" + phase.getComponent(l).getComponentName() + "' AND comp2='"
+                  + component_name + "')");
+            } else {
+              dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name
+                  + "' AND comp2='" + phase.getComponent(l).getComponentName() + "') OR (comp1='"
+                  + phase.getComponent(l).getComponentName() + "' AND comp2='" + component_name
+                  + "')");
+            }
+            if (dataSet.next()) {
+              assosSchemeType[k][l] =
+                  Integer.parseInt(dataSet.getString("cpaAssosiationType").trim());
+              assosSchemeType[l][k] = assosSchemeType[k][l];
+
+              cpaBetaCross[k][l] = Double.parseDouble(dataSet.getString("cpaBetaCross").trim());
+              cpaBetaCross[l][k] = cpaBetaCross[k][l];
+
+              cpaEpsCross[k][l] = Double.parseDouble(dataSet.getString("cpaEpsCross").trim());
+              cpaEpsCross[l][k] = cpaEpsCross[k][l];
+            }
+            // System.out.println("ass scheme " + assosSchemeType[l][k]);
+            // System.out.println("cpaEpsCross[k][l] " + cpaEpsCross[k][l]);
+          } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+          }
+        }
+      }
+    }
+
+    return getMixingRule(mr);
+  }
+
+  /**
+   * <p>
+   * resetMixingRule.
+   * </p>
+   *
+   * @param i a int
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
+   */
+  public MixingRulesInterface resetMixingRule(int i, PhaseInterface phase) {
+    return getMixingRule(i);
+  }
 
   /** {@inheritDoc} */
   @Override
-  public CPAMixingRules clone() {
-    CPAMixingRules clonedSystem = null;
+  public CPAMixingRuleHandler clone() {
+    CPAMixingRuleHandler clonedSystem = null;
     try {
-      clonedSystem = (CPAMixingRules) super.clone();
+      clonedSystem = (CPAMixingRuleHandler) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
@@ -598,129 +715,10 @@ public class CPAMixingRules implements Cloneable, ThermodynamicConstantsInterfac
           phase, temperature, pressure, numbcomp) / (R * phase.getTemperature())) - 1.0)
           * Math.pow((phase.getComponent(compnumb1).getSigmaSAFTi()
               + phase.getComponent(compnumb2).getSigmaSAFTi()) / 2.0, 3.0)
-          * 1.0e5 * ThermodynamicConstantsInterface.avagadroNumber
-          * getCrossAssociationVolume(siteNumber1, siteNumber2, compnumb1, compnumb2, phase,
-              temperature, pressure, numbcomp)
+          * 1.0e5 * avagadroNumber * getCrossAssociationVolume(siteNumber1, siteNumber2, compnumb1,
+              compnumb2, phase, temperature, pressure, numbcomp)
           * ((PhaseCPAInterface) phase).getGcpa();
     }
-  }
-
-  /**
-   * <p>
-   * getMixingRule.
-   * </p>
-   *
-   * @param mr a int
-   * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
-   */
-  public CPAMixingRulesInterface getMixingRule(int mr) {
-    if (mr == 1) {
-      mixingRuleName = "CPA_Radoch";
-      return new CPA_Radoch();
-    } else if (mr == 3) {
-      mixingRuleName = "PCSAFTa_Radoch";
-      return new PCSAFTa_Radoch();
-    }
-    throw new RuntimeException(
-        new neqsim.util.exception.InvalidInputException(this, "getMixingRule", "mr"));
-  }
-
-  /**
-   * <p>
-   * getMixingRule.
-   * </p>
-   *
-   * @param mr a int
-   * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
-   */
-  public CPAMixingRulesInterface getMixingRule(MixingRuleTypeInterface mr) {
-    if (!CPAMixingRuleType.class.isInstance(mr)) {
-      throw new RuntimeException(
-          new neqsim.util.exception.InvalidInputException(this, "setMixingRule", "mr"));
-    }
-    CPAMixingRuleType cmr = (CPAMixingRuleType) mr;
-    switch (cmr) {
-      case CPA_RADOCH:
-        mixingRuleName = "CPA_Radoch";
-        return new CPA_Radoch();
-      case PCSAFTA_RADOCH:
-        mixingRuleName = "PCSAFTa_Radoch";
-        return new PCSAFTa_Radoch();
-      default:
-        return new CPA_Radoch();
-    }
-  }
-
-  /**
-   * <p>
-   * getMixingRule.
-   * </p>
-   *
-   * @param mr a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
-   */
-  public CPAMixingRulesInterface getMixingRule(int mr, PhaseInterface phase) {
-    assosSchemeType = new int[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    cpaBetaCross = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-    cpaEpsCross = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-
-    for (int k = 0; k < phase.getNumberOfComponents(); k++) {
-      String component_name = phase.getComponent(k).getComponentName();
-      java.sql.ResultSet dataSet = null;
-
-      for (int l = k; l < phase.getNumberOfComponents(); l++) {
-        if (k == l || phase.getComponent(l).getNumberOfAssociationSites() == 0
-            || phase.getComponent(k).getNumberOfAssociationSites() == 0) {
-        } else {
-          try (neqsim.util.database.NeqSimDataBase database =
-              new neqsim.util.database.NeqSimDataBase()) {
-            // database = new util.database.NeqSimDataBase();
-            if (NeqSimDataBase.createTemporaryTables()) {
-              dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='"
-                  + component_name + "' AND comp2='" + phase.getComponent(l).getComponentName()
-                  + "') OR (comp1='" + phase.getComponent(l).getComponentName() + "' AND comp2='"
-                  + component_name + "')");
-            } else {
-              dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name
-                  + "' AND comp2='" + phase.getComponent(l).getComponentName() + "') OR (comp1='"
-                  + phase.getComponent(l).getComponentName() + "' AND comp2='" + component_name
-                  + "')");
-            }
-            if (dataSet.next()) {
-              assosSchemeType[k][l] =
-                  Integer.parseInt(dataSet.getString("cpaAssosiationType").trim());
-              assosSchemeType[l][k] = assosSchemeType[k][l];
-
-              cpaBetaCross[k][l] = Double.parseDouble(dataSet.getString("cpaBetaCross").trim());
-              cpaBetaCross[l][k] = cpaBetaCross[k][l];
-
-              cpaEpsCross[k][l] = Double.parseDouble(dataSet.getString("cpaEpsCross").trim());
-              cpaEpsCross[l][k] = cpaEpsCross[k][l];
-            }
-            // System.out.println("ass scheme " + assosSchemeType[l][k]);
-            // System.out.println("cpaEpsCross[k][l] " + cpaEpsCross[k][l]);
-          } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-          }
-        }
-      }
-    }
-
-    return getMixingRule(mr);
-  }
-
-  /**
-   * <p>
-   * resetMixingRule.
-   * </p>
-   *
-   * @param i a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
-   */
-  public CPAMixingRulesInterface resetMixingRule(int i, PhaseInterface phase) {
-    return getMixingRule(i);
   }
 
   /**
