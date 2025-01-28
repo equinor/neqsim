@@ -4923,7 +4923,8 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     density = getPhase(0).getDensity("kg/m3");
-    if (flowunit.equals("idSm3/hr")) {
+    if (flowunit.equals("idSm3/hr") || flowunit.equals("idSm3/min") || flowunit.equals("idSm3/sec")
+        || flowunit.equals("gallons/min")) {
       density = getIdealLiquidDensity("kg/m3");
     }
     neqsim.util.unit.Unit unit =
