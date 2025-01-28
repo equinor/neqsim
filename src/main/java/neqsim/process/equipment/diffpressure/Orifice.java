@@ -7,7 +7,6 @@ import neqsim.thermo.system.SystemInterface;
 
 public class Orifice extends TwoPortEquipment {
   private static final long serialVersionUID = 1L;
-  private String name;
   private StreamInterface inputstream;
   private StreamInterface outputstream;
   private Double dp;
@@ -33,15 +32,6 @@ public class Orifice extends TwoPortEquipment {
     this.dischargeCoefficient = dischargeCoefficient;
   }
 
-  public void setInputStream(StreamInterface stream) {
-    this.inputstream = stream;
-    this.outputstream = (StreamInterface) stream.clone();
-  }
-
-  public StreamInterface getOutputStream() {
-    return outputstream;
-  }
-
   public void setOrificeParameters(Double diameter, Double diameter_outer, Double C) {
     this.diameter = diameter;
     this.diameter_outer = diameter_outer;
@@ -65,7 +55,7 @@ public class Orifice extends TwoPortEquipment {
 
   /**
    * Calculates the orifice discharge coefficient using the Reader-Harris Gallagher method.
-   * 
+   *
    * @param D Upstream internal pipe diameter, in meters.
    * @param Do Diameter of orifice at flow conditions, in meters.
    * @param rho Density of fluid at P1, in kg/m^3.
@@ -84,7 +74,8 @@ public class Orifice extends TwoPortEquipment {
     double beta4 = beta2 * beta2;
     double beta8 = beta4 * beta4;
 
-    double L1, L2_prime;
+    double L1;
+    double L2_prime;
     if ("corner".equalsIgnoreCase(taps)) {
       L1 = 0.0;
       L2_prime = 0.0;
@@ -114,7 +105,7 @@ public class Orifice extends TwoPortEquipment {
 
   /**
    * Calculates the expansibility factor for orifice plate calculations.
-   * 
+   *
    * @param D Upstream internal pipe diameter, in meters.
    * @param Do Diameter of orifice at flow conditions, in meters.
    * @param P1 Static pressure of fluid upstream, in Pa.
@@ -130,7 +121,7 @@ public class Orifice extends TwoPortEquipment {
 
   /**
    * Calculates the non-recoverable pressure drop across the orifice plate.
-   * 
+   *
    * @param D Upstream internal pipe diameter, in meters.
    * @param Do Diameter of orifice at flow conditions, in meters.
    * @param P1 Static pressure of fluid upstream, in Pa.
@@ -150,7 +141,7 @@ public class Orifice extends TwoPortEquipment {
 
   /**
    * Calculates the diameter ratio (beta) of the orifice plate.
-   * 
+   *
    * @param D Upstream internal pipe diameter, in meters.
    * @param Do Diameter of orifice at flow conditions, in meters.
    * @return Diameter ratio (beta).
@@ -169,5 +160,4 @@ public class Orifice extends TwoPortEquipment {
       outStream.run();
     }
   }
-
 }

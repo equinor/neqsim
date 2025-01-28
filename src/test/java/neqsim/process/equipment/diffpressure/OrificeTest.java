@@ -20,12 +20,12 @@ public class OrificeTest {
 
     // Step 3: Define and set up the orifice unit operation
     Orifice orif1 = new Orifice("orifice 1");
-    orif1.setInputStream(stream1);
+    orif1.setInletStream(stream1);
     orif1.setOrificeParameters(0.07366, 0.05, 0.61); // Diameter, outer diameter, and discharge
                                                      // coefficient
 
     // Step 4: Define the output stream after the orifice
-    Stream stream2 = new Stream("stream 2", orif1.getOutputStream());
+    Stream stream2 = new Stream("stream 2", orif1.getOutletStream());
 
     // Step 5: Set up and run the process system
     ProcessSystem oilProcess = new ProcessSystem();
@@ -37,6 +37,5 @@ public class OrificeTest {
 
     // Output the pressure after the orifice
     System.out.println("Pressure out of orifice: " + stream2.getPressure("bara") + " bara");
-
   }
 }
