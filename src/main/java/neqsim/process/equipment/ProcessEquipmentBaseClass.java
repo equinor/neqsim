@@ -299,4 +299,15 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public void run_step(UUID id) {}
+
+  /** {@inheritDoc} */
+  @Override
+  public String[][] createTable(String name) {
+    String[][] table = new String[50][3];
+    String[] names = {"Property", "Value", "Unit"};
+    table[0][0] = "";
+    table[0][1] = "";
+    table[0][2] = "";
+    return table;
+  }
 }

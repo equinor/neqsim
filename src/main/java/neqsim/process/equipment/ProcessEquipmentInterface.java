@@ -224,4 +224,19 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
   /** {@inheritDoc} */
   @Override
   public String getReport_json();
+
+  /**
+   * Prints the fluid in a visually appealing way.
+   */
+  public default void prettyPrint() {
+    neqsim.thermo.util.readwrite.TablePrinter.printTable(createTable(getName()));
+  }
+
+  /**
+   * Create table.
+   *
+   * @param name
+   * @return
+   */
+  public String[][] createTable(String name);
 }

@@ -71,6 +71,22 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
     return dH;
   }
 
+  /**
+   * Return head in specified unit.
+   *
+   * @param unit unit can be or kJ/kg
+   */
+  public double getHead(String unit) {
+    if (unit.equals("meter")) {
+      return (getOutletStream().getPressure("bara") - getInletStream().getPressure("bara"))
+          / (1000.0 * ThermodynamicConstantsInterface.gravity / 1.0E5);
+    } else if (unit.equals("kJ/kg")) {
+      return getPower("kW") / getInletStream().getFlowRate("kg/sec");
+    }
+    throw new RuntimeException(
+        new neqsim.util.exception.InvalidInputException(this, "getHead", unit));
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getPower() {
@@ -188,6 +204,38 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
     setCalculationIdentifier(id);
 
     // outStream.run(id);
+  }
+
+  /** {@inheritDoc} */
+  @ExcludeFromJacocoGeneratedReport
+  public String[][] createTable(String name) {
+    DecimalFormat nf = new DecimalFormat();
+    nf.setMaximumFractionDigits(5);
+    nf.applyPattern("#.#####E0");
+
+    String[][] table = new String[4][3];
+    String[] names = {"Property", "Value", "Unit"};
+    table[0][0] = "";
+    table[0][1] = "";
+    table[0][2] = "";
+    StringBuffer buf = new StringBuffer();
+    FieldPosition test = new FieldPosition(0);
+
+    table[1][0] = "Inlet pressure";
+    buf = new StringBuffer();
+    table[1][1] = nf.format(inStream.getPressure("bara"), buf, test).toString();
+    table[1][2] = "bara";
+
+    table[2][0] = "Outlet pressure";
+    buf = new StringBuffer();
+    table[2][1] = nf.format(outStream.getPressure("bara"), buf, test).toString();
+    table[2][2] = "bara";
+
+    table[3][0] = "Head";
+    buf = new StringBuffer();
+    table[3][1] = nf.format(getHead("meter"), buf, test).toString();
+    table[3][2] = "meter";
+    return table;
   }
 
   /** {@inheritDoc} */

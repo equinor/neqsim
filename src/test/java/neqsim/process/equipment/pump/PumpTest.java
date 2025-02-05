@@ -97,6 +97,8 @@ public class PumpTest extends neqsim.NeqSimTest {
     pump1.setSpeed(500);
     pump1.run();
 
+    pump1.prettyPrint();
+
     Assertions.assertEquals(7.274237081101, pump1.getOutletPressure(), 1e-5);
   }
 }
