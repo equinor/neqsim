@@ -113,6 +113,7 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
         / PCmix * alfa0 / alfaMix;
 
     double refVisosity = getRefComponentViscosity(T0, P0);
+    
     double viscosity = refVisosity * Math.pow(TCmix / Tc0, -1.0 / 6.0)
         * Math.pow(PCmix / Pc0, 2.0 / 3.0) * Math.pow(Mmix / M0, 0.5) * alfaMix / alfa0;
     return viscosity;
