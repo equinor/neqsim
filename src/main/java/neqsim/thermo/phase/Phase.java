@@ -2230,6 +2230,50 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getDensity_Leachman(String hydrogenType) {
+    neqsim.thermo.util.Leachman.NeqSimLeachman test = 
+      new neqsim.thermo.util.Leachman.NeqSimLeachman(this, hydrogenType);
+    return test.getDensity();
+  }
+
+  /**
+   * Gets the density using the default hydrogen type ('normal').
+   * This method prints a warning if no hydrogen type is specified.
+   *
+   * @return the density calculated with the 'normal' hydrogen type.
+   */
+  public double getDensity_Leachman() {
+    // Warn the user that no hydrogen type was specified and use "normal" by default
+    System.out.println("No hydrogen type specified. Using default type: 'normal'.");
+    return getDensity_Leachman("normal");
+  }
+
+
+  
+  /** {@inheritDoc} */
+  @Override
+  public double[] getProperties_Leachman(String hydrogenType) {
+    neqsim.thermo.util.Leachman.NeqSimLeachman test = 
+      new neqsim.thermo.util.Leachman.NeqSimLeachman(this, hydrogenType);      
+    return test.propertiesLeachman();
+  }
+
+
+  /**
+ * Gets the Leachman properties of a phase using the default hydrogen type ('normal').
+ * This method prints a warning if no hydrogen type is specified.
+ *
+ * @return an array of properties of type double.
+ */
+  public double[] getProperties_Leachman() {
+    // Warn the user and use the default hydrogen type
+    System.out.println("No hydrogen type specified. Using default type: 'normal'.");
+    return getProperties_Leachman("normal");
+  }
+
+
+  /** {@inheritDoc} */
+  @Override
   public double getDensity_AGA8() {
     neqsim.thermo.util.gerg.NeqSimAGA8Detail test =
         new neqsim.thermo.util.gerg.NeqSimAGA8Detail(this);
