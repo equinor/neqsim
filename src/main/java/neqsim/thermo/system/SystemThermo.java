@@ -5083,4 +5083,23 @@ public abstract class SystemThermo implements SystemInterface {
   public void setForceSinglePhase(String phasetype) {
     setForceSinglePhase(PhaseType.byName(phasetype));
   }
+
+  /**
+   * Sets the molar composition of components whose names contain the specified definition.
+   *
+   * @param nameDef the definition to match component names against
+   * @param molarComposition an array of molar compositions to set for the matching components
+   */
+  public void setMolarCompositionOfNamedComponents(String nameDef, double[] molarComposition) {
+    int place = 0;
+    double[] comp = new double[getNumberOfComponents()];
+    for (int i = 0; i < getNumberOfComponents(); i++) {
+      comp[i] = 0.0;
+      if (getPhase(0).getComponent(i).getName().contains(nameDef)) {
+        comp[i] = molarComposition[place];
+        place++;
+      }
+    }
+    setMolarComposition(comp);
+  }
 }

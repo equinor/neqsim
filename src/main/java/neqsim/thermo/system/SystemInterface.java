@@ -2663,4 +2663,12 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return a boolean
    */
   public boolean isInitialized();
+
+  /**
+   * Sets the molar composition of components whose names contain the specified definition.
+   *
+   * @param nameDef the definition to match component names against
+   * @param molarComposition an array of molar compositions to set for the matching components
+   */
+  public void setMolarCompositionOfNamedComponents(String nameDef, double[] molarComposition);
 }
