@@ -2231,8 +2231,8 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getDensity_Leachman(String hydrogenType) {
-    neqsim.thermo.util.Leachman.NeqSimLeachman test = 
-      new neqsim.thermo.util.Leachman.NeqSimLeachman(this, hydrogenType);
+    neqsim.thermo.util.leachman.NeqSimLeachman test = 
+      new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
     return test.getDensity();
   }
 
@@ -2253,8 +2253,8 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double[] getProperties_Leachman(String hydrogenType) {
-    neqsim.thermo.util.Leachman.NeqSimLeachman test = 
-      new neqsim.thermo.util.Leachman.NeqSimLeachman(this, hydrogenType);      
+    neqsim.thermo.util.leachman.NeqSimLeachman test = 
+      new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);      
     return test.propertiesLeachman();
   }
 
