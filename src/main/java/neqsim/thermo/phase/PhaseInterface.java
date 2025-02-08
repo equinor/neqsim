@@ -422,16 +422,17 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * method to get Leachman density of a phase using the Leachman EoS.
-   *
+   * 
+   * @param hydrogenType Supported types are 'normal', 'para', 'ortho'
    * @return density with unit kg/m3
    */
   public double getDensity_Leachman(String hydrogenType);
 
   /**
-    * Overloaded method to get the Leachman density with default hydrogen type ('normal').
-    *
-    * @return density with unit kg/m3
-    */
+   * Overloaded method to get the Leachman density with default hydrogen type ('normal').
+   *
+   * @return density with unit kg/m3
+   */
   public double getDensity_Leachman();
 
   /**
@@ -445,10 +446,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double[] getProperties_Leachman(String hydrogenType);
 
   /**
-    * Overloaded method to get the Leachman properties with default hydrogen type ('normal').
-    *
-    * @return density with unit kg/m3
-    */
+   * Overloaded method to get the Leachman properties with default hydrogen type ('normal').
+   *
+   * @return density with unit kg/m3
+   */
 
   public double[] getProperties_Leachman();
 

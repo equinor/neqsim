@@ -596,7 +596,6 @@ public class Leachman {
    *
    * @param T a double
    * @param D a double
-   * @param x an array of type double
    * @param P a {@link org.netlib.util.doubleW} object
    * @param Z a {@link org.netlib.util.doubleW} object
    * @param dPdD a {@link org.netlib.util.doubleW} object
@@ -735,6 +734,8 @@ public class Leachman {
    * <p>
    * SetupGERG.
    * </p>
+   * 
+   * @param hydrogenType String
    */
   public void SetupLeachman(String hydrogenType) {
     // Initialize all the constants and parameters in the GERG-2008 model.
