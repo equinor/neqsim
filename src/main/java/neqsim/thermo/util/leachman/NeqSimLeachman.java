@@ -1,4 +1,4 @@
-package neqsim.thermo.util.Leachman;
+package neqsim.thermo.util.leachman;
 
 
 import org.netlib.util.StringW;
@@ -17,18 +17,15 @@ public class NeqSimLeachman {
   Leachman Leachman = new Leachman();
 
   /**
-   * <p>
-   * Constructor for NeqSimGERG2008.
-   * </p>
+   * Constructor for NeqSimLeachman.
    */
   public NeqSimLeachman() {}
 
   /**
-   * <p>
-   * Constructor for NeqSimGERG2008.
-   * </p>
+   * Constructor for NeqSimLeachman.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param hydrogenType a {@link java.lang.String} object representing the type of hydrogen
    */
   public NeqSimLeachman(PhaseInterface phase, String hydrogenType) {
     this.setPhase(phase);
@@ -38,50 +35,38 @@ public class NeqSimLeachman {
   }
 
   /**
-   * <p>
-   * getMolarDensity.
-   * </p>
+   * Get the molar density of the specified phase.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
+   * @return a double representing the molar density
    */
   public double getMolarDensity(PhaseInterface phase) {
-    //this.setPhase(phase);
     return getMolarDensity();
   }
 
   /**
-   * <p>
-   * getDensity.
-   * </p>
+   * Get the density of the specified phase.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
+   * @return a double representing the density
    */
   public double getDensity(PhaseInterface phase) {
-    //this.setPhase(phase);
-    // return getMolarDensity() * getMolarMass() * 1000.0;
     return getMolarDensity() * Leachman.M_L;
   }
 
   /**
-   * <p>
-   * getDensity.
-   * </p>
+   * Get the density.
    *
-   * @return a double
+   * @return a double representing the density
    */
   public double getDensity() {
     return getMolarDensity() * Leachman.M_L;
-    // return getMolarDensity() * getMolarMass()* 1000.0;
   }
 
   /**
-   * <p>
-   * getPressure.
-   * </p>
+   * Get the pressure.
    *
-   * @return a double
+   * @return a double representing the pressure
    */
   public double getPressure() {
     double moldens = getMolarDensity();
@@ -92,24 +77,9 @@ public class NeqSimLeachman {
   }
 
   /**
-   * <p>
-   * getMolarMass.
-   * </p>
+   * Get the molar density.
    *
-   * @return a double
-   */
-  //public double getMolarMass() {
-    //doubleW mm = new doubleW(0.0);
-    //GERG2008.MolarMassGERG(normalizedGERGComposition, mm);
-   // return mm.val / 1.0e3;
-  //}
-
-  /**
-   * <p>
-   * getMolarDensity.
-   * </p>
-   *
-   * @return a double
+   * @return a double representing the molar density
    */
   public double getMolarDensity() {
     int flag = 0;
@@ -117,32 +87,27 @@ public class NeqSimLeachman {
     StringW herr = new StringW("");
     doubleW D = new doubleW(0.0);
     double pressure = phase.getPressure() * 100.0;
-    Leachman.DensityLeachman(flag, phase.getTemperature(), pressure, D, ierr,
-        herr);
+    Leachman.DensityLeachman(flag, phase.getTemperature(), pressure, D, ierr, herr);
     return D.val;
   }
 
   /**
-   * <p>
-   * propertiesGERG.
-   * </p>
+   * Get various thermodynamic properties of the specified phase.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return an array of type double
+   * @return an array of type double representing various thermodynamic properties
    */
   public double[] propertiesLeachman(PhaseInterface phase) {
-    //this.setPhase(phase);
     return propertiesLeachman();
   }
 
   /**
-   * <p>
-   * getProperties.
-   * </p>
+   * Get specific thermodynamic properties of the specified phase.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param properties an array of {@link java.lang.String} objects
-   * @return an array of type double
+   * @param properties an array of {@link java.lang.String} objects representing the properties to
+   *        retrieve
+   * @return an array of type double representing the requested properties
    */
   public double[] getProperties(PhaseInterface phase, String[] properties) {
     double[] allProperties = propertiesLeachman();
@@ -170,11 +135,9 @@ public class NeqSimLeachman {
   }
 
   /**
-   * <p>
-   * propertiesGERG.
-   * </p>
+   * Get various thermodynamic properties.
    *
-   * @return an array of type double
+   * @return an array of type double representing various thermodynamic properties
    */
   public double[] propertiesLeachman() {
     doubleW p = new doubleW(0.0);
@@ -194,65 +157,39 @@ public class NeqSimLeachman {
     doubleW kappa = new doubleW(0.0);
     doubleW A = new doubleW(0.0);
     double dens = getMolarDensity();
-    // neqsim.thermo.GERG.Densitygerg.densitygerg(0, 0, 0, arg3, 0, arg5, arg6,
-    // arg7);
-    Leachman.propertiesLeachman(phase.getTemperature(), dens, p, z, dpdd,
-        d2pdd2, d2pdtd, dpdt, u, h, s, cv, cp, w, g, jt, kappa, A);
+    Leachman.propertiesLeachman(phase.getTemperature(), dens, p, z, dpdd, d2pdd2, d2pdtd, dpdt, u,
+        h, s, cv, cp, w, g, jt, kappa, A);
     double[] properties = new double[] {p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val,
         u.val, h.val, s.val, cv.val, cp.val, w.val, g.val, jt.val, kappa.val};
     return properties;
   }
+
   /**
-   * <p>
    * Setter for the field <code>phase</code>.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
-
-   
-   public void setPhase(PhaseInterface phase) {
+  public void setPhase(PhaseInterface phase) {
     // 1) Check if the phase contains ONLY hydrogen
     if (phase.getNumberOfComponents() != 1) {
-        throw new IllegalArgumentException(
-            "Leachman model requires exactly one component (hydrogen). " +
-            "Found " + phase.getNumberOfComponents() + " components."
-        );
+      throw new IllegalArgumentException(
+          "Leachman model requires exactly one component (hydrogen). " + "Found "
+              + phase.getNumberOfComponents() + " components.");
     }
 
     // 2) Check the name of that single component
     String componentName = phase.getComponent(0).getComponentName();
     if (!"hydrogen".equalsIgnoreCase(componentName)) {
-        throw new IllegalArgumentException(
-            "Leachman model requires 'hydrogen'. Found: " + componentName
-        );
+      throw new IllegalArgumentException(
+          "Leachman model requires 'hydrogen'. Found: " + componentName);
     }
 
     // If everything checks out, we can safely set 'this.phase'
     this.phase = phase;
-}
-  
-  /**
-   * <p>
-   * normalizeComposition.
-   * </p>
-   */
-  /* 
-  public void normalizeComposition() {
-    double result = 0;
-    for (double value : notNormalizedGERGComposition) {
-      result += value;
-    }
-    for (int k = 0; k < normalizedGERGComposition.length; k++) {
-      normalizedGERGComposition[k] = notNormalizedGERGComposition[k] / result;
-    }
   }
-*/
 
   /**
-   * <p>
-   * main.
-   * </p>
+   * main method.
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -260,7 +197,7 @@ public class NeqSimLeachman {
   public static void main(String[] args) {
     // test HitHub
     SystemInterface fluid1 = new SystemSrkEos();
-    //fluid1.addComponent("methane", 10.0);
+    // fluid1.addComponent("methane", 10.0);
     fluid1.addComponent("hydrogen", 90.0);
     // fluid1.addComponent("CO2", 1.0);
     // fluid1.addComponent("ethane", 10.0);
@@ -286,7 +223,7 @@ public class NeqSimLeachman {
     System.out.println("density Leachman " + fluid1.getPhase(0).getDensity_Leachman(hydrogenType));
 
     NeqSimLeachman test = new NeqSimLeachman(fluid1.getPhase("gas"), hydrogenType);
-    //fluid1.getPhase("gas").getProperties_GERG2008();
+    // fluid1.getPhase("gas").getProperties_GERG2008();
     System.out.println("density " + test.getDensity());
     System.out.println("pressure " + test.getPressure());
     // System.out.println("properties " + test.propertiesGERG());

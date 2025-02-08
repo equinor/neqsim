@@ -367,7 +367,6 @@ public class EclipseFluidReadWrite {
         if (fluid.getPhase(0).getComponent(name).isIsTBPfraction()) {
           fluid.changeComponentName(name, names.get(counter).replaceAll("_PC", "") + pseudoName);
         } else {
-          // fluid.changeComponentName(name, names.get(counter));
         }
       }
 
@@ -385,6 +384,297 @@ public class EclipseFluidReadWrite {
         }
       }
     } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
+    }
+    return fluid;
+  }
+
+
+
+  /**
+   * <p>
+   * read.
+   * </p>
+   *
+   * @param inputFile a {@link java.lang.String} object representing the path to the input file
+   * @param fluidNames an array of {@link java.lang.String} objects representing the names of the
+   *        fluids
+   * @return a {@link neqsim.thermo.system.SystemInterface} object representing the thermodynamic
+   *         system
+   */
+  public static SystemInterface read(String inputFile, String[] fluidNames) {
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
+        ThermodynamicConstantsInterface.referencePressure);
+
+    Double[][] kij = null;
+    try (BufferedReader br = new BufferedReader(new FileReader(new File(inputFile)))) {
+      String st;
+
+      ArrayList<String> names = new ArrayList<String>();
+      ArrayList<Double> TC = new ArrayList<Double>();
+      ArrayList<Double> PC = new ArrayList<Double>();
+      ArrayList<Double> ACF = new ArrayList<Double>();
+      ArrayList<Double> MW = new ArrayList<Double>();
+      ArrayList<Double> SSHIFT = new ArrayList<Double>();
+      ArrayList<Double> SSHIFTS = new ArrayList<Double>();
+      ArrayList<Double> TBOIL = new ArrayList<Double>();
+      ArrayList<Double> VCRIT = new ArrayList<Double>();
+      ArrayList<Double> PARACHOR = new ArrayList<Double>();
+      ArrayList<Double> ZI = new ArrayList<Double>();
+      ArrayList<Double> BIC = new ArrayList<Double>();
+      String EOS;
+      while ((st = br.readLine()) != null) {
+        // System.out.println("EOS " +EOS );
+        if (st.trim().equals("EOS")) {
+          EOS = br.readLine().replace("/", "");
+          if (EOS.contains("SRK")) {
+            fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
+                ThermodynamicConstantsInterface.referencePressure);
+          } else if (EOS.contains("PR")) {
+            String corr = br.readLine().replace("/", "");
+            if (corr.equals("PRCORR")) {
+              fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
+                  ThermodynamicConstantsInterface.referencePressure);
+            } else {
+              fluid = new neqsim.thermo.system.SystemPrEos(288.15,
+                  ThermodynamicConstantsInterface.referencePressure);
+            }
+          } else {
+            fluid = new neqsim.thermo.system.SystemPrEos(288.15,
+                ThermodynamicConstantsInterface.referencePressure);
+          }
+        }
+        if (st.equals("CNAMES")) {
+          while ((st = br.readLine().replace("/", "")) != null) {
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+            names.add(st);
+          }
+        }
+        if (st.equals("TCRIT")) {
+          while ((st = br.readLine().replace("/", "")) != null) {
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+            TC.add(Double.parseDouble(st));
+          }
+        }
+        if (st.equals("PCRIT")) {
+          while ((st = br.readLine().replace("/", "")) != null) {
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+            PC.add(Double.parseDouble(st));
+          }
+        }
+        if (st.equals("ACF")) {
+          while ((st = br.readLine().replace("/", "")) != null) {
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+            ACF.add(Double.parseDouble(st));
+          }
+        }
+        if (st.equals("MW")) {
+          while ((st = br.readLine().replace("/", "")) != null) {
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+            MW.add(Double.parseDouble(st));
+          }
+        }
+        if (st.equals("TBOIL")) {
+          while ((st = br.readLine().replace("/", "")) != null) {
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+            TBOIL.add(Double.parseDouble(st));
+          }
+        }
+        if (st.equals("VCRIT")) {
+          while ((st = br.readLine().replace("/", "")) != null) {
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+            VCRIT.add(Double.parseDouble(st));
+          }
+        }
+        if (st.equals("SSHIFT")) {
+          while ((st = br.readLine().replace("/", "")) != null) {
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+            SSHIFT.add(Double.parseDouble(st));
+          }
+        }
+        if (st.equals("PARACHOR")) {
+          while ((st = br.readLine().replace("/", "")) != null) {
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+            PARACHOR.add(Double.parseDouble(st));
+          }
+        }
+        if (st.equals("ZI")) {
+          while ((st = br.readLine().replace("/", "")) != null) {
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+            ZI.add(Double.parseDouble(st));
+          }
+        }
+        if (st.equals("BIC")) {
+          int addedComps = 0;
+          kij = new Double[names.size()][names.size()];
+          for (Double[] row : kij) {
+            Arrays.fill(row, 0.0);
+          }
+          int lengthLastLine = 0;
+          List<String> list = new ArrayList<String>();
+          while ((st = br.readLine().replace("/", "")) != null && addedComps < names.size() - 1) {
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+            String[] arr = st.split("  ");
+            List<String> templist = new ArrayList<String>(Arrays.asList(arr));
+            list.addAll(templist);
+            list.removeAll(Arrays.asList("", null));
+            if (lengthLastLine >= list.size()) {
+              continue;
+            }
+            lengthLastLine = list.size();
+            for (int i = 0; i < list.size(); i++) {
+              BIC.add(Double.parseDouble(list.get(i)));
+              kij[i][addedComps + 1] = Double.parseDouble(list.get(i));
+              kij[addedComps + 1][i] = kij[i][addedComps + 1];
+            }
+            addedComps++;
+            list.clear();
+          }
+        }
+        if (st.equals("SSHIFTS")) {
+          String line;
+          while ((line = br.readLine()) != null) {
+            st = line.replace("/", "");
+            if (st.startsWith("--") || st.isEmpty()) {
+              break;
+            }
+            try {
+              SSHIFTS.add(Double.parseDouble(st));
+            } catch (NumberFormatException e) {
+              System.out.println("Error parsing double value: " + e.getMessage());
+            }
+          }
+        }
+      }
+
+
+      for (String fluidName : fluidNames) {
+        for (int counter = 0; counter < names.size(); counter++) {
+          String name = names.get(counter);
+          if (name.equals("C1") || TC.get(counter) < 00.0) {
+            name = "methane";
+            fluid.addComponent(name, ZI.get(counter));
+          } else if (name.equals("C2") || TC.get(counter) < 00.0) {
+            name = "ethane";
+            fluid.addComponent(name, ZI.get(counter));
+          } else if (name.equals("N2") || TC.get(counter) < 00.0) {
+            name = "nitrogen";
+            fluid.addComponent(name, ZI.get(counter));
+          } else if (name.equals("iC4") || TC.get(counter) < 00.0) {
+            name = "i-butane";
+            fluid.addComponent(name, ZI.get(counter));
+          } else if (name.equals("C4") || TC.get(counter) < 00.0) {
+            name = "n-butane";
+            fluid.addComponent(name, ZI.get(counter));
+          } else if (name.equals("iC5") || TC.get(counter) < 00.0) {
+            name = "i-pentane";
+            fluid.addComponent(name, ZI.get(counter));
+          } else if (name.equals("C5") || TC.get(counter) < 00.0) {
+            name = "n-pentane";
+            fluid.addComponent(name, ZI.get(counter));
+          } else if (name.equals("C6") || TC.get(counter) < 00.0) {
+            name = "n-hexane";
+            fluid.addComponent(name, ZI.get(counter));
+          } else if (name.equals("C3") || TC.get(counter) < 00.0) {
+            name = "propane";
+            fluid.addComponent(name, ZI.get(counter));
+          } else if (name.equals("CO2") || TC.get(counter) < 00.0) {
+            name = "CO2";
+            fluid.addComponent(name, ZI.get(counter));
+          } else if (TC.get(counter) >= 0.0) {
+            name = names.get(counter);
+            Double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
+            fluid.addTBPfraction(name, ZI.get(counter), MW.get(counter) / 1000.0, stddensity);
+            name = name + "_PC";
+          } else {
+            name = names.get(counter);
+            Double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
+            fluid.addTBPfraction(name, ZI.get(counter), MW.get(counter) / 1000.0, stddensity);
+            name = name + "_PC";
+            // fluid.changeComponentName(name+"_PC", names.get(counter));
+          }
+          // fluid.addComponent(name, ZI.get(counter));
+          for (int i = 0; i < fluid.getMaxNumberOfPhases(); i++) {
+            fluid.getPhase(i).getComponent(name).setTC(TC.get(counter));
+            fluid.getPhase(i).getComponent(name).setPC(PC.get(counter));
+            fluid.getPhase(i).getComponent(name).setAcentricFactor(ACF.get(counter));
+            fluid.getPhase(i).getComponent(name).setMolarMass(MW.get(counter) / 1000.0);
+            fluid.getPhase(i).getComponent(name).setNormalBoilingPoint(TBOIL.get(counter));
+            fluid.getPhase(i).getComponent(name).setCriticalVolume(VCRIT.get(counter));
+            fluid.getPhase(i).getComponent(name).setParachorParameter(PARACHOR.get(counter));
+            if (SSHIFTS.size() > 0) {
+              fluid.getPhase(i).getComponent(name).setVolumeCorrectionConst(SSHIFTS.get(counter));
+            } else {
+              fluid.getPhase(i).getComponent(name).setVolumeCorrectionConst(SSHIFT.get(counter));
+            }
+            fluid.getPhase(i).getComponent(name).setRacketZ(0.29056 - 0.08775 * ACF.get(counter));
+          }
+
+          fluid.changeComponentName(name, name + "_" + fluidName);
+        }
+
+      }
+
+      fluid.setMixingRule(2);
+      fluid.useVolumeCorrection(true);
+      fluid.init(0);
+
+      int nCompsPerFluid = names.size(); // base number of components
+      int nFluids = fluidNames.length; // number of times you replicate
+
+      // We end up with N * nFluids total components in the fluid
+      // Suppose we want to replicate the same kij block for each fluid
+      // and across the same fluid. Typically you'd do:
+      for (int i = 0; i < nCompsPerFluid * nFluids; i++) {
+        // figure out which base component i corresponds to
+        // and which fluid-block it belongs to
+        int fluidIndexI = i / nCompsPerFluid;
+        int baseIndexI = i % nCompsPerFluid;
+
+        for (int j = 0; j < nCompsPerFluid * nFluids; j++) {
+          int fluidIndexJ = j / nCompsPerFluid;
+          int baseIndexJ = j % nCompsPerFluid;
+
+          // Then, to replicate the original kij,
+          // we just pick the old kij[baseIndexI][baseIndexJ].
+          double kijVal = kij[baseIndexI][baseIndexJ];
+
+          // Finally set it in the fluid
+
+          for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
+            ((PhaseEosInterface) fluid.getPhase(phaseNum)).getEosMixingRule()
+                .setBinaryInteractionParameter(i, j, kij[i][j].doubleValue());
+            ((PhaseEosInterface) fluid.getPhase(phaseNum)).getEosMixingRule()
+                .setBinaryInteractionParameter(j, i, kijVal);
+          }
+        }
+      }
+
+    } catch (
+
+    Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
     return fluid;
