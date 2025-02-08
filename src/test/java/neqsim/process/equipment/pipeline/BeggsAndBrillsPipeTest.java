@@ -19,7 +19,7 @@ public class BeggsAndBrillsPipeTest {
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
-    testSystem.initPhysicalProperties();
+    // testSystem.initPhysicalProperties();
 
     Assertions.assertEquals(testSystem.getPhase("oil").getFlowRate("m3/hr"),
         testSystem.getFlowRate("m3/hr"), 1);
@@ -344,4 +344,65 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(temperatureOut3, -8.81009355441591, 1);
     Assertions.assertEquals(pressureOut3, 18.3429, 1);
   }
+
+
+  @Test
+  public void testPipeLineBeggsAndBrills5() {
+    double pressure = 10; // bara
+    double temperature = 20; // C
+    double massFlowRate = 0.25; // kg/s
+    double heatTransferCoeff = 755;  // W/m2K
+    double constantSurfaceTemperature = 100; // C
+
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(
+        (273.15 + 45), ThermodynamicConstantsInterface.referencePressure);
+
+    testSystem.addComponent("water", 1.0);
+    testSystem.setMixingRule(2);
+    testSystem.init(0);
+    testSystem.useVolumeCorrection(true);
+    testSystem.setPressure(pressure, "bara");
+    testSystem.setTemperature(temperature, "C");
+    testSystem.setTotalFlowRate(massFlowRate, "kg/sec");
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.initPhysicalProperties();
+
+    Stream stream_1 = new Stream("Stream1", testSystem);
+    stream_1.setFlowRate(massFlowRate, "kg/sec");
+
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("beggs and brils pipe 1", stream_1);
+    pipe.setPipeWallRoughness(0);
+    pipe.setLength(6.0);
+    pipe.setAngle(0);
+    pipe.setDiameter(0.05);
+    pipe.setNumberOfIncrements(1);
+    pipe.setConstantSurfaceTemperature(constantSurfaceTemperature, "C");
+    pipe.setHeatTransferCoefficient(heatTransferCoeff);
+    pipe.setNumberOfIncrements(10);
+
+    PipeBeggsAndBrills pipe2 = new PipeBeggsAndBrills("beggs and brils pipe 2", stream_1);
+    pipe2.setPipeWallRoughness(0);
+    pipe2.setLength(6.0);
+    pipe2.setAngle(0);
+    pipe2.setDiameter(0.05);
+    pipe2.setNumberOfIncrements(1);
+    pipe2.setConstantSurfaceTemperature(constantSurfaceTemperature, "C");
+    
+
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
+    operations.add(stream_1);
+    operations.add(pipe);
+    operations.add(pipe2);
+    operations.run();
+
+    double pressureOut = pipe.getOutletPressure();
+    double temperatureOut = pipe.getOutletTemperature() - 273.15;
+    double temperatureOut2 = pipe2.getOutletTemperature() - 273.15;
+    Assertions.assertEquals(temperatureOut, 57, 5);
+    Assertions.assertEquals(temperatureOut2, 40, 5);
+  }
+
 }
