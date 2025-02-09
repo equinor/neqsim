@@ -1,4 +1,4 @@
-package neqsim.thermo.util.Leachman;
+package neqsim.thermo.util.leachman;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
-import neqsim.thermo.util.leachman.Leachman;
 
 public class LeachmanTest {
   private Leachman Leachman;

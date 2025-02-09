@@ -118,7 +118,12 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     double x_methane_A19 = testSystem.getPhase(1).getComponent("methane_A19").getx();
     assertEquals(0.0, x_methane_A13, 1e-9);
-    assertEquals(0.004620472627047, x_methane_A19, 1e-9);
+    assertEquals(0.0046202437, x_methane_A19, 1e-9);
+
+    // double[][] interactionParams =
+    // ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters();
+
+    // System.out.println(Arrays.deepToString(interactionParams));
 
   }
 

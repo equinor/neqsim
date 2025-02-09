@@ -659,13 +659,15 @@ public class EclipseFluidReadWrite {
 
           // Then, to replicate the original kij,
           // we just pick the old kij[baseIndexI][baseIndexJ].
+          // System.out.println("i: " + i + " j: " + j);
+          // System.out.println("baseIndexI: " + baseIndexI + " baseIndexJ: " + baseIndexJ);
           double kijVal = kij[baseIndexI][baseIndexJ];
 
           // Finally set it in the fluid
 
           for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
             ((PhaseEosInterface) fluid.getPhase(phaseNum)).getEosMixingRule()
-                .setBinaryInteractionParameter(i, j, kij[i][j].doubleValue());
+                .setBinaryInteractionParameter(i, j, kijVal);
             ((PhaseEosInterface) fluid.getPhase(phaseNum)).getEosMixingRule()
                 .setBinaryInteractionParameter(j, i, kijVal);
           }
