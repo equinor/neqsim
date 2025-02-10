@@ -907,6 +907,10 @@ public class PipeBeggsAndBrills extends Pipeline {
       heatTransferCoefficient = estimateHeatTransferCoefficent(system);
     } 
 
+    if (Math.abs(Ts - Tmi) < 0.5) {
+      return 0.0;
+    }
+
     for (int i = 0; i < maxIterations; i++) {
         double dTlm = ((Ts - Tmo) - (Ts - Tmi)) / (Math.log((Ts - Tmo) / (Ts - Tmi)));
         error = heatTransferCoefficient - system.getFlowRate("kg/sec") * cp * (Tmo - Tmi) / (3.1415 * insideDiameter * length * dTlm);
