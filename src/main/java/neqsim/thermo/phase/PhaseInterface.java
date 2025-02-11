@@ -419,6 +419,24 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   public double[] getProperties_GERG2008();
 
+
+
+  /**
+ * method to get helium density of a phase using the Vega EoS.
+ *
+ * @return density with unit kg/m3
+ */
+  public double getDensity_Vega();
+
+  /**
+   * <p>
+   * method to get helium properties of a phase using the Vega EoS.
+   * </p>
+   *
+   * @return an array of type double
+   */
+  public double[] getProperties_Vega();
+
   /**
    * method to get density of a phase note: does not use Peneloux volume correction.
    *
