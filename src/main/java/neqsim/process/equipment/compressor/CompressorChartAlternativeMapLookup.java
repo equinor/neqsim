@@ -216,11 +216,6 @@ public class CompressorChartAlternativeMapLookup
    * <p>
    * getClosestRefSpeeds.
    * </p>
-   *
-   * @param speed a double
-   * @return a {@link java.util.ArrayList} object
-   */
-  /**
    * Returns a list of the closest reference speeds to the given speed. If the given speed matches a
    * reference speed, only that speed is returned. If the given speed is between two reference
    * speeds, both are returned. If the given speed is lower than the lowest reference speed, the
@@ -228,7 +223,7 @@ public class CompressorChartAlternativeMapLookup
    * speed, the highest reference speed is returned.
    *
    * @param speed the speed to find the closest reference speeds for
-   * @return an ArrayList of the closest reference speeds
+   * @return a {@link java.util.ArrayList} of the closest reference speeds
    */
   public ArrayList<Double> getClosestRefSpeeds(double speed) {
     ArrayList<Double> closestRefSpeeds = new ArrayList<Double>();
