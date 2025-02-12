@@ -19,24 +19,28 @@ public class PumpChartAlternativeMapLookupExtrapolate
   static Logger logger = LogManager.getLogger(PumpChartAlternativeMapLookupExtrapolate.class);
   boolean usePumpChart = false;
 
+  /** {@inheritDoc} */
   @Override
   public double getHead(double flow, double speed) {
     // Implement the method logic here
     return getPolytropicHead(flow, speed);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isUsePumpChart() {
     // Implement the method logic here
     return usePumpChart;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getEfficiency(double flow, double speed) {
     // Implement the method logic here
     return getPolytropicEfficiency(flow, speed);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setUsePumpChart(boolean usePumpChart) {
     this.usePumpChart = usePumpChart;

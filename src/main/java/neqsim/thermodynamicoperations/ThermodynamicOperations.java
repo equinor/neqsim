@@ -2099,9 +2099,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         }
 
         if (hasOnlineFractions) {
-          // Assure that fraction is inserted for the correct component (in case of
-          // mismatch of
-          // component input and fluid component list)
+          // Ensure that fraction is inserted for the correct component (in case of
+          // mismatch of component input and fluid component list)
           double[] fraction = new double[this.system.getNumberOfComponents()];
           // For all components defined in system
           for (int compIndex = 0; compIndex < fraction.length; compIndex++) {

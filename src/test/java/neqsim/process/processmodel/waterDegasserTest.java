@@ -51,15 +51,14 @@ public class waterDegasserTest {
     fluid1.init(0);
 
     neqsim.process.equipment.stream.Stream inlet_stream_VA_01 =
-        new neqsim.process.equipment.stream.Stream("INLET_STREAM_1ST_SEPARATOR",
-            fluid1);
+        new neqsim.process.equipment.stream.Stream("INLET_STREAM_1ST_SEPARATOR", fluid1);
     inlet_stream_VA_01.setTemperature(79.36872863769531, "C");
     inlet_stream_VA_01.setPressure(66.97672112018574, "bara");
     inlet_stream_VA_01.setFlowRate(273050.4311185292, "kg/hr");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator separator_VA_01 =
-        new neqsim.process.equipment.separator.ThreePhaseSeparator(
-            "FIRST_SEPARATOR", inlet_stream_VA_01);
+        new neqsim.process.equipment.separator.ThreePhaseSeparator("FIRST_SEPARATOR",
+            inlet_stream_VA_01);
 
     neqsim.process.equipment.heatexchanger.Heater TP_setter_hydrocyclone =
         new neqsim.process.equipment.heatexchanger.Heater(
@@ -72,8 +71,8 @@ public class waterDegasserTest {
     // hydrocyclone_main.setEntrainment(0.0, "mole", "feed", "aqueous", "gas");
 
     neqsim.process.equipment.heatexchanger.Heater heater_TP_setter_main_stream =
-        new neqsim.process.equipment.heatexchanger.Heater(
-            "TP_SETTER_FOR_THE_DEGASSER_MAIN_STREAM", hydrocyclone_main.getWaterOutStream());
+        new neqsim.process.equipment.heatexchanger.Heater("TP_SETTER_FOR_THE_DEGASSER_MAIN_STREAM",
+            hydrocyclone_main.getWaterOutStream());
     heater_TP_setter_main_stream.setOutPressure(4.076956398010254, "bara");
     heater_TP_setter_main_stream.setOutTemperature(76.51406860351562, "C");
 
@@ -138,16 +137,15 @@ public class waterDegasserTest {
     fluid1.init(0);
 
     neqsim.process.equipment.stream.Stream inlet_stream_VA_01 =
-        new neqsim.process.equipment.stream.Stream("INLET_STREAM_1ST_SEPARATOR",
-            fluid1);
+        new neqsim.process.equipment.stream.Stream("INLET_STREAM_1ST_SEPARATOR", fluid1);
     inlet_stream_VA_01.setTemperature(79.21922658197582, "C");
     inlet_stream_VA_01.setPressure(62.3388000793457, "bara");
     inlet_stream_VA_01.setFlowRate(450261.1588574318, "kg/hr");
     inlet_stream_VA_01.run();
 
     neqsim.process.equipment.separator.ThreePhaseSeparator separator_VA_01 =
-        new neqsim.process.equipment.separator.ThreePhaseSeparator(
-            "FIRST_SEPARATOR", inlet_stream_VA_01);
+        new neqsim.process.equipment.separator.ThreePhaseSeparator("FIRST_SEPARATOR",
+            inlet_stream_VA_01);
     separator_VA_01.run();
 
     neqsim.process.equipment.heatexchanger.Heater TP_setter_hydrocyclone =

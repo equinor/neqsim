@@ -9,6 +9,8 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * ProcessModel class. Manages a collection of processes that can be run in steps or continuously.
  * </p>
+ *
+ * @author ASMF
  */
 public class ProcessModel implements Runnable {
   /** Logger object for class. */
@@ -20,6 +22,8 @@ public class ProcessModel implements Runnable {
 
   /**
    * Checks if the model is running in step mode.
+   *
+   * @return a boolean
    */
   public boolean isRunStep() {
     return runStep;
@@ -27,6 +31,8 @@ public class ProcessModel implements Runnable {
 
   /**
    * Sets the step mode for the process.
+   *
+   * @param runStep a boolean
    */
   public void setRunStep(boolean runStep) {
     this.runStep = runStep;
@@ -34,6 +40,10 @@ public class ProcessModel implements Runnable {
 
   /**
    * Adds a process to the model.
+   *
+   * @param name a {@link java.lang.String} object
+   * @param process a {@link neqsim.process.processmodel.ProcessSystem} object
+   * @return a boolean
    */
   public boolean add(String name, ProcessSystem process) {
     if (name == null || name.isEmpty()) {
@@ -52,6 +62,9 @@ public class ProcessModel implements Runnable {
 
   /**
    * Retrieves a process by its name.
+   *
+   * @param name a {@link java.lang.String} object
+   * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
   public ProcessSystem get(String name) {
     return processes.get(name);
@@ -59,14 +72,19 @@ public class ProcessModel implements Runnable {
 
   /**
    * Removes a process by its name.
+   *
+   * @param name a {@link java.lang.String} object
+   * @return a boolean
    */
   public boolean remove(String name) {
     return processes.remove(name) != null;
   }
 
   /**
+   * {@inheritDoc}
+   *
    * The core run method.
-   * 
+   *
    * - If runStep == true, each process is run in "step" mode exactly once. - Otherwise (continuous
    * mode), it loops up to maxIterations or until all processes are finished (isFinished() == true).
    */
@@ -109,6 +127,8 @@ public class ProcessModel implements Runnable {
 
   /**
    * Starts this model in a new thread and returns that thread.
+   *
+   * @return a {@link java.lang.Thread} object
    */
   public Thread runAsThread() {
     Thread processThread = new Thread(this);
@@ -118,6 +138,8 @@ public class ProcessModel implements Runnable {
 
   /**
    * Checks if all processes are finished.
+   *
+   * @return a boolean
    */
   public boolean isFinished() {
     for (ProcessSystem process : processes.values()) {
@@ -148,6 +170,8 @@ public class ProcessModel implements Runnable {
 
   /**
    * (Optional) Creates separate threads for each process (if you need them).
+   *
+   * @return a {@link java.util.Map} object
    */
   public Map<String, Thread> getThreads() {
     Map<String, Thread> threads = new LinkedHashMap<>();

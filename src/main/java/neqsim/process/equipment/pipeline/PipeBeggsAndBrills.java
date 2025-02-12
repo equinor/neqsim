@@ -160,8 +160,8 @@ public class PipeBeggsAndBrills extends Pipeline {
   // Heat transfer parameters
   double Tmi; // medium temperature
   double Tmo; // outlet temperature
-  double Ts;  // wall temperature
-  double error; // error in heat transfer  
+  double Ts; // wall temperature
+  double error; // error in heat transfer
   double iterationT; // iteration in heat transfer
   double dTlm; // log mean temperature difference
   double cp; // heat capacity
@@ -342,6 +342,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * </p>
    *
    * @param temperature a double
+   * @param unit a {@link java.lang.String} object
    */
   public void setConstantSurfaceTemperature(double temperature, String unit) {
     if (unit.equals("K")) {
@@ -356,7 +357,7 @@ public class PipeBeggsAndBrills extends Pipeline {
     this.runConstantSurfaceTemperature = true;
   }
 
-  
+
   /**
    * <p>
    * Setter for the field <code>heatTransferCoefficient</code>.
@@ -718,8 +719,7 @@ public class PipeBeggsAndBrills extends Pipeline {
     mixtureViscosityProfile.add(muNoSlip);
     mixtureDensityProfile.add(rhoNoSlip * 16.01846);
 
-    ReNoSlip =
-        rhoNoSlip * supMixVel * insideDiameter * (16 / (3.28 * 3.28)) / (0.001 * muNoSlip);
+    ReNoSlip = rhoNoSlip * supMixVel * insideDiameter * (16 / (3.28 * 3.28)) / (0.001 * muNoSlip);
 
     mixtureReynoldsNumber.add(ReNoSlip);
 
@@ -819,7 +819,7 @@ public class PipeBeggsAndBrills extends Pipeline {
       system.setPressure(pressureOut);
       if (!runIsothermal) {
         enthalpyInlet = calcHeatBalance(enthalpyInlet, system, testOps);
-        //testOps.PHflash(enthalpyInlet);
+        // testOps.PHflash(enthalpyInlet);
         temperatureProfile.add(system.getTemperature());
       } else {
         testOps.TPflash();
@@ -840,47 +840,53 @@ public class PipeBeggsAndBrills extends Pipeline {
   /**
    * Estimates the heat transfer coefficient for the given system.
    *
-   * @param system the thermodynamic system for which the heat transfer coefficient is to be estimated
+   * @param system the thermodynamic system for which the heat transfer coefficient is to be
+   *        estimated
    * @return the estimated heat transfer coefficient
    */
-  public double estimateHeatTransferCoefficent(SystemInterface system){
+  public double estimateHeatTransferCoefficent(SystemInterface system) {
     cp = system.getCp("J/kgK");
     thermalConductivity = system.getThermalConductivity();
-    Pr = 0.001*system.getViscosity("cP") * cp / thermalConductivity;
-    if( ReNoSlip < 3000 ){
-      Nu = 3.66; 
-    }else{
-      if(Pr < 2000 && Pr > 0.5  && ReNoSlip < 5E6){
-      Nu = ((frictionTwoPhase/8)*(ReNoSlip - 1000)*Pr)/(1 + 12.7*Math.pow(frictionTwoPhase, 0.5)*(Math.pow(Pr,0.66)-1));
+    Pr = 0.001 * system.getViscosity("cP") * cp / thermalConductivity;
+    if (ReNoSlip < 3000) {
+      Nu = 3.66;
+    } else {
+      if (Pr < 2000 && Pr > 0.5 && ReNoSlip < 5E6) {
+        Nu = ((frictionTwoPhase / 8) * (ReNoSlip - 1000) * Pr)
+            / (1 + 12.7 * Math.pow(frictionTwoPhase, 0.5) * (Math.pow(Pr, 0.66) - 1));
       }
     }
-    heatTransferCoefficient = Nu*thermalConductivity/(insideDiameter);
+    heatTransferCoefficient = Nu * thermalConductivity / (insideDiameter);
 
 
-    if (system.getNumberOfPhases() > 1){
+    if (system.getNumberOfPhases() > 1) {
       X = system.getPhase(0).getFlowRate("kg/sec") / system.getFlowRate("kg/sec");
-      heatTransferCoefficient = (-31.469*Math.pow(X, 2) + 31.469*X+0.007)*heatTransferCoefficient;
-      // double Xtt = (Math.pow(((1-X)/X),0.9)*Math.pow((system.getPhase(0).getDensity()/mixtureLiquidDensity), 0.5)*
+      heatTransferCoefficient =
+          (-31.469 * Math.pow(X, 2) + 31.469 * X + 0.007) * heatTransferCoefficient;
+      // double Xtt =
+      // (Math.pow(((1-X)/X),0.9)*Math.pow((system.getPhase(0).getDensity()/mixtureLiquidDensity),
+      // 0.5)*
       // Math.pow(mixtureLiquidViscosity/(0.001*system.getPhase(0).getViscosity()), 0.1));
       // double E = 0.8897*(1/Xtt) + 1.0392;
       // double Retp = ReNoSlip*Math.pow(E, 1.25);
       // double S;
       // if (Retp < 1E5){
-      //   S = 0.9;
+      // S = 0.9;
       // }
       // else if(Retp <= 1E6){
-      //   S = -5.6*1E-7*Retp + 0.9405;
+      // S = -5.6*1E-7*Retp + 0.9405;
       // }
       // else if(Retp < 1E7)
-      //   S = 1368.9*Math.pow(Retp, -0.601);
+      // S = 1368.9*Math.pow(Retp, -0.601);
       // else{
-      //   S = 0.1;
+      // S = 0.1;
       // }
 
       // double reducedPressure = system.getPressure()*100/criticalPressure;
-      // double Fp = 1.8*Math.pow(reducedPressure, 0.17) + 4*Math.pow(reducedPressure, 1.2) + 10*Math.pow(reducedPressure, 10);
+      // double Fp = 1.8*Math.pow(reducedPressure, 0.17) + 4*Math.pow(reducedPressure, 1.2) +
+      // 10*Math.pow(reducedPressure, 10);
       // double hb = 0.00417*Math.pow(criticalPressure, 0.69)*Math.pow(heatFlux/100, 0.7)*Fp;
-      // heatTransferCoefficient = E*heatTransferCoefficient + S*hb;         
+      // heatTransferCoefficient = E*heatTransferCoefficient + S*hb;
     }
 
     return heatTransferCoefficient;
@@ -892,12 +898,12 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @param system the thermodynamic system for which the temperature difference is to be calculated
    * @return the temperature difference between the outlet and inlet
    */
-  public double calcTemperatureDifference(SystemInterface system){
+  public double calcTemperatureDifference(SystemInterface system) {
     double cp = system.getCp("J/kgK");
     double Tmi = system.getTemperature("C");
     double Ts = constantSurfaceTemperature - 273.15;
     double TmoLower = Tmi; // Lower bound for Tmo
-    double TmoUpper = Ts;  // Upper bound for Tmo
+    double TmoUpper = Ts; // Upper bound for Tmo
     double Tmo = (TmoLower + TmoUpper) / 2; // Initial guess
     double error = 999;
     double tolerance = 0.01; // Tolerance for convergence
@@ -905,23 +911,24 @@ public class PipeBeggsAndBrills extends Pipeline {
 
     if (heatTransferCoefficientMethod.equals("Estimated")) {
       heatTransferCoefficient = estimateHeatTransferCoefficent(system);
-    } 
+    }
 
     for (int i = 0; i < maxIterations; i++) {
-        double dTlm = ((Ts - Tmo) - (Ts - Tmi)) / (Math.log((Ts - Tmo) / (Ts - Tmi)));
-        error = heatTransferCoefficient - system.getFlowRate("kg/sec") * cp * (Tmo - Tmi) / (3.1415 * insideDiameter * length * dTlm);
+      double dTlm = ((Ts - Tmo) - (Ts - Tmi)) / (Math.log((Ts - Tmo) / (Ts - Tmi)));
+      error = heatTransferCoefficient - system.getFlowRate("kg/sec") * cp * (Tmo - Tmi)
+          / (3.1415 * insideDiameter * length * dTlm);
 
-        if (Math.abs(error) < tolerance) {
-            break; // Converged
-        }
+      if (Math.abs(error) < tolerance) {
+        break; // Converged
+      }
 
-        if (error > 0) {
-            TmoLower = Tmo; // Adjust lower bound
-        } else {
-            TmoUpper = Tmo; // Adjust upper bound
-        }
+      if (error > 0) {
+        TmoLower = Tmo; // Adjust lower bound
+      } else {
+        TmoUpper = Tmo; // Adjust upper bound
+      }
 
-        Tmo = (TmoLower + TmoUpper) / 2; // New guess
+      Tmo = (TmoLower + TmoUpper) / 2; // New guess
     }
     return Tmo - Tmi;
   }
@@ -929,17 +936,18 @@ public class PipeBeggsAndBrills extends Pipeline {
 
 
   /**
- * Calculates the heat balance for the given system.
- *
- * @param enthalpy the initial enthalpy of the system
- * @param system the thermodynamic system for which the heat balance is to be calculated
- * @param testOps the thermodynamic operations to be performed
- * @return the calculated enthalpy after performing the heat balance
- */
-  public double calcHeatBalance(double enthalpy, SystemInterface system, ThermodynamicOperations testOps){
+   * Calculates the heat balance for the given system.
+   *
+   * @param enthalpy the initial enthalpy of the system
+   * @param system the thermodynamic system for which the heat balance is to be calculated
+   * @param testOps the thermodynamic operations to be performed
+   * @return the calculated enthalpy after performing the heat balance
+   */
+  public double calcHeatBalance(double enthalpy, SystemInterface system,
+      ThermodynamicOperations testOps) {
     double Cp = system.getCp("J/kgK");
     if (!runAdiabatic) {
-    enthalpy = enthalpy + system.getFlowRate("kg/sec")*Cp*calcTemperatureDifference(system);
+      enthalpy = enthalpy + system.getFlowRate("kg/sec") * Cp * calcTemperatureDifference(system);
     }
     testOps.PHflash(enthalpy);
     return enthalpy;
@@ -978,13 +986,13 @@ public class PipeBeggsAndBrills extends Pipeline {
         / (Math.PI / 4.0 * Math.pow(insideDiameter, 2.0));
   }
 
-   /**
-     * Getter for the field <code>heatTransferCoefficient</code>.
-     *
-     * @return the heat transfer coefficient
-     */
-    public double getHeatTransferCoefficient() {
-      return heatTransferCoefficient;
+  /**
+   * Getter for the field <code>heatTransferCoefficient</code>.
+   *
+   * @return the heat transfer coefficient
+   */
+  public double getHeatTransferCoefficient() {
+    return heatTransferCoefficient;
   }
 
   /**

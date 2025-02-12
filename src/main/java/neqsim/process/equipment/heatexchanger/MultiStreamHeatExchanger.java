@@ -86,11 +86,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     setName(name);
   }
 
-  /**
-   * Adds an inlet stream to the heat exchanger.
-   *
-   * @param inStream Input stream to add
-   */
+  /** {@inheritDoc} */
   public void addInStream(StreamInterface inStream) {
     this.inStreams.add(inStream);
     StreamInterface outStream = inStream.clone();
@@ -98,12 +94,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     this.outStreams.add(outStream);
   }
 
-  /**
-   * Sets the feed stream at a specific index.
-   *
-   * @param index Index of the stream to set
-   * @param inStream Input stream to set
-   */
+  /** {@inheritDoc} */
   public void setFeedStream(int index, StreamInterface inStream) {
     if (index < inStreams.size()) {
       this.inStreams.set(index, inStream);
@@ -148,20 +139,18 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * Gets the output temperature of a specific stream.
+   * {@inheritDoc}
    *
-   * @param i Index of the stream
-   * @return Temperature of the output stream
+   * Gets the output temperature of a specific stream.
    */
   public double getOutTemperature(int i) {
     return outStreams.get(i).getThermoSystem().getTemperature();
   }
 
   /**
-   * Gets the input temperature of a specific stream.
+   * {@inheritDoc}
    *
-   * @param i Index of the stream
-   * @return Temperature of the input stream
+   * Gets the input temperature of a specific stream.
    */
   public double getInTemperature(int i) {
     return inStreams.get(i).getThermoSystem().getTemperature();
@@ -192,9 +181,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * Sets the overall UA value.
+   * {@inheritDoc}
    *
-   * @param UAvalue UA value to set
+   * Sets the overall UA value.
    */
   public void setUAvalue(double UAvalue) {
     UAvalueIsSet = true;
@@ -211,9 +200,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * Sets the guessed outlet temperature in Kelvin.
+   * {@inheritDoc}
    *
-   * @param guessOutTemperature Guessed outlet temperature
+   * Sets the guessed outlet temperature in Kelvin.
    */
   public void setGuessOutTemperature(double guessOutTemperature) {
     this.guessOutTemperature = guessOutTemperature;
@@ -221,10 +210,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * Sets the guessed outlet temperature with specified unit.
+   * {@inheritDoc}
    *
-   * @param guessOutTemperature Guessed outlet temperature
-   * @param unit Unit of the temperature
+   * Sets the guessed outlet temperature with specified unit.
    */
   public void setGuessOutTemperature(double guessOutTemperature, String unit) {
     this.guessOutTemperature = guessOutTemperature;
@@ -344,9 +332,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * Sets the thermal effectiveness of the heat exchanger.
+   * {@inheritDoc}
    *
-   * @param thermalEffectiveness Thermal effectiveness to set
+   * Sets the thermal effectiveness of the heat exchanger.
    */
   public void setThermalEffectiveness(double thermalEffectiveness) {
     this.thermalEffectiveness = thermalEffectiveness;
@@ -362,20 +350,18 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * Sets the flow arrangement of the heat exchanger.
+   * {@inheritDoc}
    *
-   * @param flowArrangement Name of the flow arrangement
+   * Sets the flow arrangement of the heat exchanger.
    */
   public void setFlowArrangement(String flowArrangement) {
     this.flowArrangement = flowArrangement;
   }
 
   /**
-   * Calculates the thermal effectiveness based on NTU and capacity ratio.
+   * {@inheritDoc}
    *
-   * @param NTU NTU value
-   * @param Cr Capacity ratio (Cmin/Cmax)
-   * @return Thermal effectiveness
+   * Calculates the thermal effectiveness based on NTU and capacity ratio.
    */
   public double calcThermalEffectiveness(double NTU, double Cr) {
     switch (flowArrangement.toLowerCase()) {
@@ -410,9 +396,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * Sets the hot and cold duty balance.
+   * {@inheritDoc}
    *
-   * @param hotColdDutyBalance Hot and cold duty balance to set
+   * Sets the hot and cold duty balance.
    */
   public void setHotColdDutyBalance(double hotColdDutyBalance) {
     this.hotColdDutyBalance = hotColdDutyBalance;
@@ -427,9 +413,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * Sets whether to use delta T for the calculations.
+   * {@inheritDoc}
    *
-   * @param useDeltaT Boolean flag to use delta T
+   * Sets whether to use delta T for the calculations.
    */
   public void setUseDeltaT(boolean useDeltaT) {
     this.useDeltaT = useDeltaT;
@@ -445,9 +431,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * Sets the delta T value and enables its usage.
+   * {@inheritDoc}
    *
-   * @param deltaT Delta T to set
+   * Sets the delta T value and enables its usage.
    */
   public void setDeltaT(double deltaT) {
     this.useDeltaT = true;
@@ -455,9 +441,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * Runs the heat exchanger simulation considering multiple streams.
+   * {@inheritDoc}
    *
-   * @param id Unique identifier for the run
+   * Runs the heat exchanger simulation considering multiple streams.
    */
   @Override
   public void run(UUID id) {
@@ -726,10 +712,24 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     // This method needs to be defined based on specific requirements
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>temperatureApproach</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getTemperatureApproach() {
     return temperatureApproach;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>temperatureApproach</code>.
+   * </p>
+   *
+   * @param temperatureApproach a double
+   */
   public void setTemperatureApproach(double temperatureApproach) {
     this.temperatureApproach = temperatureApproach;
   }

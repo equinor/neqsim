@@ -481,7 +481,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * method to read pure component and interaction parameters from the NeqSim database and create
    * temporary tables with parameters for active fluid.
-   * 
+   *
    * NB! Resets the mixing rule of each phase.
    *
    * @param reset If reset is set to true, new temporary tables with parameters for the added
@@ -1871,7 +1871,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * Order phases 0-3, as many as there are, by density such that getPhase(0) is lightest.
-   * 
+   *
    * <p>
    * Typically GAS, LIQUID for two-phase or GAS, OIL, AQUEOUS for multiphase .
    * </p>

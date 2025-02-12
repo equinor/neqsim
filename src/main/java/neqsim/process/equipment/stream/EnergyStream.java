@@ -21,8 +21,16 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
 
   private double duty = 0.0;
 
+  /**
+   * <p>Constructor for EnergyStream.</p>
+   */
   public EnergyStream() {}
 
+  /**
+   * <p>Constructor for EnergyStream.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public EnergyStream(String name) {
     this.name = name;
   }
@@ -83,10 +91,20 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
     return Double.doubleToLongBits(duty) == Double.doubleToLongBits(other.duty);
   }
 
+  /**
+   * <p>Getter for the field <code>name</code>.</p>
+   *
+   * @return a {@link java.lang.String} object
+   */
   public String getName() {
     return name;
   }
 
+  /**
+   * <p>Setter for the field <code>name</code>.</p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public void setName(String name) {
     this.name = name;
   }

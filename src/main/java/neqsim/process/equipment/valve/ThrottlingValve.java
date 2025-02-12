@@ -158,6 +158,11 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
   }
 
+  /**
+   * <p>calcCv.</p>
+   *
+   * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public void calcCv(SystemInterface fluid) {
     Map<String, Object> result = getMechanicalDesign().calcValveSize();
     this.Cv = (double) result.get("Cv");
@@ -649,10 +654,21 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     Fp = fp;
   }
 
+  /**
+   * <p>Getter for the field <code>deltaPressure</code>.</p>
+   *
+   * @return a double
+   */
   public double getDeltaPressure() {
     return deltaPressure;
   }
 
+  /**
+   * <p>Setter for the field <code>deltaPressure</code>.</p>
+   *
+   * @param deltaPressure a double
+   * @param unit a {@link java.lang.String} object
+   */
   public void setDeltaPressure(double deltaPressure, String unit) {
     this.deltaPressure = deltaPressure;
     this.pressureUnit = unit;

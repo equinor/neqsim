@@ -33,6 +33,11 @@ import java.util.Map;
 
 // THis class is based on the implementation in the fluids package from
 // see: https://fluids.readthedocs.io/tutorial.html#control-valve-sizing-introduction
+/**
+ * <p>ControlValveSizing_IEC_60534 class.</p>
+ *
+ * @author ASMF
+ */
 public class ControlValveSizing_IEC_60534 {
 
   // Constants
@@ -51,7 +56,7 @@ public class ControlValveSizing_IEC_60534 {
 
   /**
    * Sizes a control valve based on the provided parameters.
-   * 
+   *
    * @param type the type of fluid (LIQUID or GAS)
    * @param rhoOrT density for liquid or temperature for gas
    * @param MW molecular weight of the fluid
@@ -92,7 +97,7 @@ public class ControlValveSizing_IEC_60534 {
 
   /**
    * Sizes a control valve for liquid based on the provided parameters.
-   * 
+   *
    * @param rho density of the liquid
    * @param Psat saturation pressure of the liquid
    * @param Pc critical pressure of the liquid
@@ -335,7 +340,7 @@ public class ControlValveSizing_IEC_60534 {
 
   /**
    * Sizes a control valve for gas based on the provided parameters.
-   * 
+   *
    * @param T temperature of the gas
    * @param MW molecular weight of the gas
    * @param mu dynamic viscosity of the gas
@@ -508,6 +513,21 @@ public class ControlValveSizing_IEC_60534 {
     return valveOpening;
   }
 
+  /**
+   * <p>findOutletPressureForFixedCvGas.</p>
+   *
+   * @param T a double
+   * @param MW a double
+   * @param mu a double
+   * @param gamma a double
+   * @param Z a double
+   * @param P1 a double
+   * @param Q a double
+   * @param actualCv a double
+   * @param xT a double
+   * @param allowChoked a boolean
+   * @return a double
+   */
   public static double findOutletPressureForFixedCvGas(double T, double MW, double mu, double gamma,
       double Z, double P1, double Q, // known upstream pressure & desired flow
       double actualCv, // the actual installed valve's Cv

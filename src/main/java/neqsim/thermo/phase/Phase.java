@@ -2235,7 +2235,7 @@ public abstract class Phase implements PhaseInterface {
     neqsim.thermo.util.Vega.NeqSimVega test = new neqsim.thermo.util.Vega.NeqSimVega(this);
     return test.getDensity();
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public double[] getProperties_Vega() {
@@ -2245,14 +2245,14 @@ public abstract class Phase implements PhaseInterface {
 
 
   public double getDensity_Leachman(String hydrogenType) {
-    neqsim.thermo.util.leachman.NeqSimLeachman test = 
-      new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
+    neqsim.thermo.util.leachman.NeqSimLeachman test =
+        new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
     return test.getDensity();
   }
 
   /**
-   * Gets the density using the default hydrogen type ('normal').
-   * This method prints a warning if no hydrogen type is specified.
+   * Gets the density using the default hydrogen type ('normal'). This method prints a warning if no
+   * hydrogen type is specified.
    *
    * @return the density calculated with the 'normal' hydrogen type.
    */
@@ -2263,19 +2263,19 @@ public abstract class Phase implements PhaseInterface {
   }
 
 
-  
+
   /** {@inheritDoc} */
   @Override
   public double[] getProperties_Leachman(String hydrogenType) {
-    neqsim.thermo.util.leachman.NeqSimLeachman test = 
-      new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);      
+    neqsim.thermo.util.leachman.NeqSimLeachman test =
+        new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
     return test.propertiesLeachman();
   }
 
 
   /**
-   * Gets the Leachman properties of a phase using the default hydrogen type ('normal').
-   * This method prints a warning if no hydrogen type is specified.
+   * Gets the Leachman properties of a phase using the default hydrogen type ('normal'). This method
+   * prints a warning if no hydrogen type is specified.
    *
    * @return an array of properties of type double.
    */

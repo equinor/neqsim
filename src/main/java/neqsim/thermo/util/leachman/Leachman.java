@@ -9,13 +9,13 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * The Leachman class provides methods to calculate the density, pressure, and various thermodynamic
  * properties of hydrogen using the Leachman method. It supports different types of hydrogen:
  * normal, para, and ortho.
- * 
+ *
  * <p>
  * The class includes methods for setting up the parameters for different hydrogen types,
  * calculating the density from temperature and pressure, and calculating various thermodynamic
  * properties.
  * </p>
- * 
+ *
  * <p>
  * The main methods include:
  * </p>
@@ -29,16 +29,16 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>{@link #propertiesLeachman(double, double, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW)}:
  * Calculates various thermodynamic properties.</li>
  * </ul>
- * 
+ *
  * <p>
  * The class also includes helper methods for calculating the ideal gas and real gas Helmholtz
  * energy and their derivatives.
  * </p>
- * 
+ *
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * Leachman leachman = new Leachman();
@@ -51,15 +51,16 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * System.out.println("Density: " + density.val);
  * }
  * </pre>
- * 
+ *
  * <p>
  * Note: The class uses the doubleW and intW classes from the org.netlib.util package to handle
  * output parameters.
  * </p>
- * 
+ *
  * @see org.netlib.util.doubleW
  * @see org.netlib.util.intW
  * @see org.netlib.util.StringW
+ * @author ASMF
  */
 public class Leachman {
 
@@ -733,7 +734,7 @@ public class Leachman {
    * <p>
    * SetupGERG.
    * </p>
-   * 
+   *
    * @param hydrogenType String
    */
   public void SetupLeachman(String hydrogenType) {

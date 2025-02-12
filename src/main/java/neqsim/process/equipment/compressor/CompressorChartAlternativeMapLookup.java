@@ -227,7 +227,6 @@ public class CompressorChartAlternativeMapLookup
    * lowest reference speed is returned. If the given speed is higher than the highest reference
    * speed, the highest reference speed is returned.
    *
-   * @return an ArrayList of the closest reference speeds
    * @param speed the speed to find the closest reference speeds for
    * @return an ArrayList of the closest reference speeds
    */

@@ -11,6 +11,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 
+/**
+ * <p>NeqSimLeachman class.</p>
+ *
+ * @author ASMF
+ */
 public class NeqSimLeachman {
 
   PhaseInterface phase = null;
