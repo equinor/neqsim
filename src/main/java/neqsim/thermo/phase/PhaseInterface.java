@@ -421,6 +421,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
 
 
+
   /**
  * method to get helium density of a phase using the Vega EoS.
  *
@@ -428,14 +429,43 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
  */
   public double getDensity_Vega();
 
+ 
+  /**
+   * method to get Leachman density of a phase using the Leachman EoS.
+   * 
+   * @param hydrogenType Supported types are 'normal', 'para', 'ortho'
+   * @return density with unit kg/m3
+   */
+  public double getDensity_Leachman(String hydrogenType);
+
+  /**
+   * Overloaded method to get the Leachman density with default hydrogen type ('normal').
+   *
+   * @return density with unit kg/m3
+   */
+  public double getDensity_Leachman();
+
   /**
    * <p>
-   * method to get helium properties of a phase using the Vega EoS.
+   * method to get Leachman properties of a phase using the Leachman EoS.
    * </p>
    *
    * @return an array of type double
    */
+
   public double[] getProperties_Vega();
+
+
+  public double[] getProperties_Leachman(String hydrogenType);
+
+  /**
+   * Overloaded method to get the Leachman properties with default hydrogen type ('normal').
+   *
+   * @return density with unit kg/m3
+   */
+
+  public double[] getProperties_Leachman();
+
 
   /**
    * method to get density of a phase note: does not use Peneloux volume correction.

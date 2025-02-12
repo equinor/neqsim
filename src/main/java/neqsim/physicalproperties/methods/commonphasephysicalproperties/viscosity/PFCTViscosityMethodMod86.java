@@ -20,12 +20,12 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
   // SystemInterface referenceSystem = new SystemBWRSEos(273.15,
   // ThermodynamicConstantsInterface.referencePressure);
   SystemInterface referenceSystem =
-      new SystemSrkEos(273.0, ThermodynamicConstantsInterface.referencePressure);
+      new SystemSrkEos(273.15, ThermodynamicConstantsInterface.referencePressure);
 
   // todo: is this parameter required?
   int phaseTypeNumb = 1;
   double[] GVcoef = {-2.090975e5, 2.647269e5, -1.472818e5, 4.716740e4, -9.491872e3, 1.219979e3,
-      -9.627993e1, 4.274152, -8.141531e-2};
+                      -9.627993e1, 4.274152, -8.141531e-2};
   double visRefA = 1.696985927;
   double visRefB = -0.133372346;
   double visRefC = 1.4;
@@ -34,7 +34,7 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
   double visRefG = 0.0;
 
   double[] viscRefJ = {-1.035060586e1, 1.7571599671e1, -3.0193918656e3, 1.8873011594e2,
-      4.2903609488e-2, 1.4529023444e2, 6.1276818706e3};
+                        4.2903609488e-2, 1.4529023444e2, 6.1276818706e3};
   double[] viscRefK = {-9.74602, 18.0834, -4126.66, 44.6055, 0.976544, 81.8134, 15649.9};
 
   /**
@@ -93,17 +93,12 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
     }
     PCmix = 8.0 * tempPC1 / (tempPC2 * tempPC2);
     double TCmix = tempTC1 / tempTC2;
-    double Mmix =
-        (Mmtemp + 1.304e-4 * (Math.pow(Mwtemp / Mmtemp, 2.303) - Math.pow(Mmtemp, 2.303))) * 1e3; // phase.getPhase().getMolarMass();
+    double Mmix = (Mmtemp + 1.304e-4 * (Math.pow(Mwtemp / Mmtemp, 2.303) - Math.pow(Mmtemp, 2.303))) * 1e3; // phase.getPhase().getMolarMass();
 
-    referenceSystem.setTemperature(phase.getPhase().getTemperature()
-        * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix);
-    referenceSystem.setPressure(phase.getPhase().getPressure()
-        * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix);
+    referenceSystem.setTemperature(phase.getPhase().getTemperature());
+    referenceSystem.setPressure(phase.getPhase().getPressure());
     referenceSystem.init(1);
-    // todo: mixing phasetype and phase index?
-    // double molDens = 1.0 /
-    // referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 100.0;
+
     double molDens = 1.0 / referenceSystem.getLowestGibbsEnergyPhase().getMolarVolume() * 100.0;
     double critMolDens = 10.15; // 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
     double redDens = molDens / critMolDens;
@@ -111,19 +106,16 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
     double alfaMix = 1.0 + 7.378e-3 * Math.pow(redDens, 1.847) * Math.pow(Mmix, 0.5173);
     double alfa0 = 1.0 + 7.378e-3 * Math.pow(redDens, 1.847)
         * Math.pow(referenceSystem.getMolarMass() * 1.0e3, 0.5173);
-    // alfa0 = 1.0 + 8.374e-4 * Math.pow(redDens, 4.265);
-    // System.out.println("func " + 7.475e-5*Math.pow(16.043, 0.8579));
+    
     double T0 = phase.getPhase().getTemperature()
         * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix * alfa0 / alfaMix;
     double P0 = phase.getPhase().getPressure() * referenceSystem.getPhase(0).getComponent(0).getPC()
         / PCmix * alfa0 / alfaMix;
 
     double refVisosity = getRefComponentViscosity(T0, P0);
-    // System.out.println("m/mix " + Mmix/M0);
-    // System.out.println("a/amix " + alfaMix/alfa0);
+    
     double viscosity = refVisosity * Math.pow(TCmix / Tc0, -1.0 / 6.0)
         * Math.pow(PCmix / Pc0, 2.0 / 3.0) * Math.pow(Mmix / M0, 0.5) * alfaMix / alfa0;
-    // System.out.println("viscosity " + refVisosity);
     return viscosity;
   }
 
@@ -138,32 +130,19 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
    */
   public double getRefComponentViscosity(double temp, double pres) {
     referenceSystem.setTemperature(temp);
-    // System.out.println("ref temp " + temp);
     referenceSystem.setPressure(pres);
-    // System.out.println("ref pres " + pres);
     referenceSystem.init(1);
-    // referenceSystem.display();
-    // todo: mixing phasetype and phase index?
-    // double molDens = 1.0 /
-    // referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 100.0;
-    double molDens = 1.0 / referenceSystem.getLowestGibbsEnergyPhase().getMolarVolume() * 100.0; // mol/dm^3
-    // System.out.println("mol dens " + molDens);
-    double critMolDens = 10.15; // 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
+    double molDens = referenceSystem.getLowestGibbsEnergyPhase().getDensity() * 1e-3;  //[kg/L]
+    double critMolDens = 162.66e-3; //[kg/L] (Source: NIST)
     double redMolDens = (molDens - critMolDens) / critMolDens;
-    // System.out.println("gv1 " +GVcoef[0]);
+    
+    double viscRefO = 0.0;
+    for (int i = 0; i < GVcoef.length; i++) {
+      viscRefO += GVcoef[i] * Math.pow(temp, ((i + 1) - 4) / 3.0);
+    }
 
-    molDens = referenceSystem.getLowestGibbsEnergyPhase().getDensity() * 1e-3;
-
-    double viscRefO = GVcoef[0] * Math.pow(temp, -1.0) + GVcoef[1] * Math.pow(temp, -2.0 / 3.0)
-        + GVcoef[2] * Math.pow(temp, -1.0 / 3.0) + GVcoef[3] + GVcoef[4] * Math.pow(temp, 1.0 / 3.0)
-        + GVcoef[5] * Math.pow(temp, 2.0 / 3.0) + GVcoef[6] * temp
-        + GVcoef[7] * Math.pow(temp, 4.0 / 3.0) + GVcoef[8] * Math.pow(temp, 5.0 / 3.0);
-
-    // System.out.println("ref visc0 " + viscRefO);
-    double viscRef1 =
-        (visRefA + visRefB * Math.pow(visRefC - Math.log(temp / visRefF), 2.0)) * molDens;
-    // System.out.println("ref visc1 " + viscRef1);
-
+    
+    //Calculating the reference viscosity contributions:
     double temp1 = Math.pow(molDens, 0.1) * (viscRefJ[1] + viscRefJ[2] / Math.pow(temp, 3.0 / 2.0));
     double temp2 = redMolDens * Math.pow(molDens, 0.5)
         * (viscRefJ[4] + viscRefJ[5] / temp + viscRefJ[6] / Math.pow(temp, 2.0));
@@ -172,21 +151,26 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
     double dTfreeze = temp - 90.69;
     double HTAN =
         (Math.exp(dTfreeze) - Math.exp(-dTfreeze)) / (Math.exp(dTfreeze) + Math.exp(-dTfreeze));
-    visRefE = (HTAN + 1.0) / 2.0;
+    
+    //This compensates for that the HTAN function is not defined for dTfreeze > 709.0:
+    if (dTfreeze > 709.0) { 
+      double visRefE = 1.0;
+      double visRefG = 0.0;
+    } else {
+      double visRefE = (HTAN + 1.0) / 2.0;
+      double visRefG = (1.0 - HTAN) / 2.0;
+    }
 
+    double viscRef1 = (visRefA + visRefB * Math.pow(visRefC - Math.log(temp / visRefF), 2.0)) * molDens;
     double viscRef2 = visRefE * Math.exp(viscRefJ[0] + viscRefJ[3] / temp) * (temp3 - 1.0);
 
     double temp4 = Math.pow(molDens, 0.1) * (viscRefK[1] + viscRefK[2] / Math.pow(temp, 3.0 / 2.0));
     double temp5 = redMolDens * Math.pow(molDens, 0.5)
         * (viscRefK[4] + viscRefK[5] / temp + viscRefK[6] / Math.pow(temp, 2.0));
     double temp6 = Math.exp(temp4 + temp5);
-    visRefG = (1.0 - HTAN) / 2.0;
     double viscRef3 = visRefG * Math.exp(viscRefK[0] + viscRefK[3] / temp) * (temp6 - 1.0);
 
-    // System.out.println("ref visc2 " + viscRef2);
-    // System.out.println("ref visc3 " + viscRef3);
     double refVisc = (viscRefO + viscRef1 + viscRef2 + viscRef3) / 1.0e7;
-    // System.out.println("ref visc " + refVisc);
     return refVisc;
   }
 }
