@@ -408,7 +408,6 @@ void Alpha0Vega(double T, double D, doubleW[] a0) {
    *
    * @param T a double
    * @param D a double
-   * @param x an array of type double
    * @param P a {@link org.netlib.util.doubleW} object
    * @param Z a {@link org.netlib.util.doubleW} object
    * @param dPdD a {@link org.netlib.util.doubleW} object
