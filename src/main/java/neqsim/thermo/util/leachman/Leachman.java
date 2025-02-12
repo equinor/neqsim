@@ -573,7 +573,6 @@ public class Leachman {
     a0[1].val = 1.5 / tau + a0k[1];
     for (int k = 2; k < K; k++) {
       a0[1].val += -a0k[k] * b0k[k] * Math.exp(b0k[k] * tau) / (1 - Math.exp(b0k[k] * tau));
-      System.out.println(-a0k[k] * b0k[k] * Math.exp(b0k[k] * tau) / (1 - Math.exp(b0k[k] * tau)));
     }
 
 
