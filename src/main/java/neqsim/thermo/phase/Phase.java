@@ -2274,11 +2274,11 @@ public abstract class Phase implements PhaseInterface {
 
 
   /**
- * Gets the Leachman properties of a phase using the default hydrogen type ('normal').
- * This method prints a warning if no hydrogen type is specified.
- *
- * @return an array of properties of type double.
- */
+   * Gets the Leachman properties of a phase using the default hydrogen type ('normal').
+   * This method prints a warning if no hydrogen type is specified.
+   *
+   * @return an array of properties of type double.
+   */
   public double[] getProperties_Leachman() {
     // Warn the user and use the default hydrogen type
     System.out.println("No hydrogen type specified. Using default type: 'normal'.");
