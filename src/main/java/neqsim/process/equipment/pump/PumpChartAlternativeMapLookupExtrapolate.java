@@ -9,7 +9,7 @@ import neqsim.process.equipment.compressor.CompressorChartAlternativeMapLookupEx
  * CompressorChartAlternativeMapLookupExtrapolate class.
  * </p>
  *
- * @author ASMF
+ * @author ESOL
  */
 public class PumpChartAlternativeMapLookupExtrapolate
     extends CompressorChartAlternativeMapLookupExtrapolate implements PumpChartInterface {

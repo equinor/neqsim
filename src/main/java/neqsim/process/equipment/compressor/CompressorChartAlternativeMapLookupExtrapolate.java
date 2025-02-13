@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
  * CompressorChartAlternativeMapLookupExtrapolate class.
  * </p>
  *
- * @author ASMF
+ * @author ESOL
  */
 public class CompressorChartAlternativeMapLookupExtrapolate
     extends CompressorChartAlternativeMapLookup {

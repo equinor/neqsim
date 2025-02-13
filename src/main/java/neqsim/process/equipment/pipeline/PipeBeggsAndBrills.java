@@ -156,7 +156,6 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   private String heatTransferCoefficientMethod = "Estimated";
 
-
   // Heat transfer parameters
   double Tmi; // medium temperature
   double Tmo; // outlet temperature
@@ -357,7 +356,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     this.runConstantSurfaceTemperature = true;
   }
 
-
   /**
    * <p>
    * Setter for the field <code>heatTransferCoefficient</code>.
@@ -369,7 +367,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     this.heatTransferCoefficient = heatTransferCoefficient;
     this.heatTransferCoefficientMethod = "Defined";
   }
-
 
   /**
    * Converts the input values from the system measurement units to imperial units. Needed because
@@ -832,7 +829,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     elevationProfile.add(cumulativeElevation);
     incrementsProfile.add(getNumberOfIncrements());
 
-
     outStream.setThermoSystem(system);
     outStream.setCalculationIdentifier(id);
   }
@@ -857,7 +853,6 @@ public class PipeBeggsAndBrills extends Pipeline {
       }
     }
     heatTransferCoefficient = Nu * thermalConductivity / (insideDiameter);
-
 
     if (system.getNumberOfPhases() > 1) {
       X = system.getPhase(0).getFlowRate("kg/sec") / system.getFlowRate("kg/sec");
@@ -932,7 +927,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
     return Tmo - Tmi;
   }
-
 
 
   /**

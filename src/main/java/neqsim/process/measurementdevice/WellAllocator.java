@@ -7,7 +7,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * WellAllocator class.
  * </p>
  *
- * @author ASMF
+ * @author ESOL
  * @version $Id: $Id
  */
 public class WellAllocator extends StreamMeasurementDeviceBaseClass {

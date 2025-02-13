@@ -30,13 +30,14 @@ package neqsim.process.mechanicaldesign.valve;
 import java.util.HashMap;
 import java.util.Map;
 
-
 // THis class is based on the implementation in the fluids package from
 // see: https://fluids.readthedocs.io/tutorial.html#control-valve-sizing-introduction
 /**
- * <p>ControlValveSizing_IEC_60534 class.</p>
+ * <p>
+ * ControlValveSizing_IEC_60534 class.
+ * </p>
  *
- * @author ASMF
+ * @author ESOL
  */
 public class ControlValveSizing_IEC_60534 {
 
@@ -500,7 +501,6 @@ public class ControlValveSizing_IEC_60534 {
 
     effectiveCv = Kv_to_Cv(effectiveCv);
 
-
     // Calculate valve opening percentage
     double valveOpening = (effectiveCv / Cv) * 100.0;
 
@@ -514,7 +514,9 @@ public class ControlValveSizing_IEC_60534 {
   }
 
   /**
-   * <p>findOutletPressureForFixedCvGas.</p>
+   * <p>
+   * findOutletPressureForFixedCvGas.
+   * </p>
    *
    * @param T a double
    * @param MW a double
@@ -565,7 +567,6 @@ public class ControlValveSizing_IEC_60534 {
     // return final guess of P2 in Pa
     return locP2mid * 1e3;
   }
-
 
   private static boolean isChokedTurbulentL(double dP, double P1, double Psat, double FF,
       double FL) {

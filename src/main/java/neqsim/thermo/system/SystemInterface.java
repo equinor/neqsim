@@ -1068,7 +1068,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public MixingRuleTypeInterface getMixingRule();
 
-
   /**
    * <p>
    * getMixingRuleName.

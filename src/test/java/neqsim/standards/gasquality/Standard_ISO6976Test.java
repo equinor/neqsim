@@ -165,7 +165,6 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
      */
   }
 
-
   @Test
   void testCalculate3() {
     SystemInterface testSystem = new SystemSrkEos(273.15, 1.0);
@@ -200,7 +199,6 @@ class Standard_ISO6976Test extends neqsim.NeqSimTest {
     testStream.run();
     Assertions.assertEquals(50107.49824498, testStream.getWI("volume", 15, 15) / 1e3, 1e-5);
     Assertions.assertEquals(38959.473378, testStream.getGCV("volume", 15, 15) / 1e3, 1e-5);
-
   }
 
   @Test

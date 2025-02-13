@@ -8,7 +8,6 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 
-
 public class ControlValveSizingTest {
 
   @Test
@@ -38,8 +37,8 @@ public class ControlValveSizingTest {
   @Test
   public void testInvalidFluidType() {
     Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-      ControlValveSizing_IEC_60534.sizeControlValve(null, 300.0, 28.97, 0.01, 1.4, 0.9, 500000.0, 400000.0,
-          10.0, null, null, null, 0.9, 0.8, 0.7, true, true, true);
+      ControlValveSizing_IEC_60534.sizeControlValve(null, 300.0, 28.97, 0.01, 1.4, 0.9, 500000.0,
+          400000.0, 10.0, null, null, null, 0.9, 0.8, 0.7, true, true, true);
     });
 
     assertEquals("Invalid fluid type", exception.getMessage());
@@ -47,9 +46,9 @@ public class ControlValveSizingTest {
 
   @Test
   public void testSizeControlValveGasFullOutput() {
-    Map<String, Object> result =
-    ControlValveSizing_IEC_60534.sizeControlValve(ControlValveSizing_IEC_60534.FluidType.GAS, 300.0, 28.97, 0.01,
-            1.4, 0.9, 500000.0, 400000.0, 10.0, null, null, null, 0.9, 0.8, 0.7, true, true, true);
+    Map<String, Object> result = ControlValveSizing_IEC_60534.sizeControlValve(
+        ControlValveSizing_IEC_60534.FluidType.GAS, 300.0, 28.97, 0.01, 1.4, 0.9, 500000.0,
+        400000.0, 10.0, null, null, null, 0.9, 0.8, 0.7, true, true, true);
 
     assertNotNull(result);
     assertTrue(result.containsKey("choked"));
@@ -60,9 +59,9 @@ public class ControlValveSizingTest {
 
   @Test
   public void testSizeControlValveGasChokedFlow() {
-    Map<String, Object> result =
-    ControlValveSizing_IEC_60534.sizeControlValve(ControlValveSizing_IEC_60534.FluidType.GAS, 300.0, 28.97, 0.01,
-            1.4, 0.9, 500000.0, 100000.0, 10.0, null, null, null, 0.9, 0.8, 0.7, true, true, true);
+    Map<String, Object> result = ControlValveSizing_IEC_60534.sizeControlValve(
+        ControlValveSizing_IEC_60534.FluidType.GAS, 300.0, 28.97, 0.01, 1.4, 0.9, 500000.0,
+        100000.0, 10.0, null, null, null, 0.9, 0.8, 0.7, true, true, true);
 
     assertNotNull(result);
     assertTrue(result.containsKey("choked"));
@@ -71,9 +70,9 @@ public class ControlValveSizingTest {
 
   @Test
   public void testSizeControlValveGasNonChokedFlow() {
-    Map<String, Object> result =
-    ControlValveSizing_IEC_60534.sizeControlValve(ControlValveSizing_IEC_60534.FluidType.GAS, 300.0, 28.97, 0.01,
-            1.4, 0.9, 500000.0, 490000.0, 10.0, null, null, null, 0.9, 0.8, 0.7, true, true, true);
+    Map<String, Object> result = ControlValveSizing_IEC_60534.sizeControlValve(
+        ControlValveSizing_IEC_60534.FluidType.GAS, 300.0, 28.97, 0.01, 1.4, 0.9, 500000.0,
+        490000.0, 10.0, null, null, null, 0.9, 0.8, 0.7, true, true, true);
 
     assertNotNull(result);
     assertTrue(result.containsKey("choked"));

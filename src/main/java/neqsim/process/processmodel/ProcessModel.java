@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
  * ProcessModel class. Manages a collection of processes that can be run in steps or continuously.
  * </p>
  *
- * @author ASMF
+ * @author ESOL
  */
 public class ProcessModel implements Runnable {
   /** Logger object for class. */

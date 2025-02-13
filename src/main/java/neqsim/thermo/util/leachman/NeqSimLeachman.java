@@ -1,6 +1,5 @@
 package neqsim.thermo.util.leachman;
 
-
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
@@ -10,11 +9,12 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
-
 /**
- * <p>NeqSimLeachman class.</p>
+ * <p>
+ * NeqSimLeachman class.
+ * </p>
  *
- * @author ASMF
+ * @author victorigi99
  */
 public class NeqSimLeachman {
 

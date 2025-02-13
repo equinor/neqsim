@@ -5,7 +5,7 @@ package neqsim.process.measurementdevice.simpleflowregime;
  * Pipe class.
  * </p>
  *
- * @author ASMF
+ * @author ESOL
  * @version $Id: $Id
  */
 public class Pipe {

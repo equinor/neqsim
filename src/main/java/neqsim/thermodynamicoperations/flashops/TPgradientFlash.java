@@ -13,7 +13,7 @@ import neqsim.thermo.system.SystemInterface;
 /**
  * TPgradientFlash class handles thermodynamic calculations with temperature and pressure gradients.
  *
- * @author ASMF
+ * @author ESOL
  */
 public class TPgradientFlash extends Flash {
   /** Serialization version UID. */

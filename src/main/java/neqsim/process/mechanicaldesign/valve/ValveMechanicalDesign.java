@@ -44,7 +44,6 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   boolean fullOutput = true;
   String valveSizingStandard = "IEC 60534";
 
-
   /**
    * <p>
    * Constructor for ValveMechanicalDesign.
@@ -58,7 +57,9 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * <p>getValveSizingMethod.</p>
+   * <p>
+   * getValveSizingMethod.
+   * </p>
    *
    * @return a {@link neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534} object
    */

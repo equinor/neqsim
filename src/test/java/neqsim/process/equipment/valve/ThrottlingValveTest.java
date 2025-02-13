@@ -56,8 +56,6 @@ public class ThrottlingValveTest {
     valve1.run();
     assertEquals(9.537350370, valve1.getOutletStream().getPressure("bara"), 0.01); // choked flow up
                                                                                    // to 9.5 bar?
-
-
   }
 
   /**
@@ -115,8 +113,6 @@ public class ThrottlingValveTest {
     assertEquals(0.318792242, valve1.getCv(), 1e-2);
     assertEquals(0.318792242, valve1.getCv("SI"), 1e-2);
     assertEquals(0.318792242 / 54.9, valve1.getCv("US"), 1e-2);
-
-
   }
 
   @Test
@@ -140,8 +136,6 @@ public class ThrottlingValveTest {
     assertEquals(135.3602060, valve1.getCv(), 1e-2);
     assertEquals(135.3602060, valve1.getCv("SI"), 1e-2);
     assertEquals(2.46557752, valve1.getCv("US"), 1e-2);
-
-
   }
 
   @Test
@@ -162,7 +156,6 @@ public class ThrottlingValveTest {
     valve1.setPercentValveOpening(100);
     valve1.run();
 
-
     // assertEquals(0.451532797, stream1.getFlowRate("gallons/min"), 1e-2);
     assertEquals(0.0165632088268, valve1.getCv("SI"), 1e-2);
     assertEquals(100.0, valve1.getPercentValveOpening(), 1e-2);
@@ -174,7 +167,6 @@ public class ThrottlingValveTest {
     valve1.setOutletPressure(51.0);
     valve1.runTransient(0.1);
     assertEquals(100.0, valve1.getInletStream().getFlowRate("kg/hr"), 1e-2);
-
 
     valve1.setIsCalcOutPressure(true);
     valve1.run();

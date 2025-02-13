@@ -2262,8 +2262,6 @@ public abstract class Phase implements PhaseInterface {
     return getDensity_Leachman("normal");
   }
 
-
-
   /** {@inheritDoc} */
   @Override
   public double[] getProperties_Leachman(String hydrogenType) {
@@ -2271,7 +2269,6 @@ public abstract class Phase implements PhaseInterface {
         new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
     return test.propertiesLeachman();
   }
-
 
   /**
    * Gets the Leachman properties of a phase using the default hydrogen type ('normal'). This method

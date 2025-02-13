@@ -43,9 +43,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <p>PipeDesign class.</p>
+ * <p>
+ * PipeDesign class.
+ * </p>
  *
- * @author ASMF
+ * @author ESOL
  */
 public class PipeDesign {
 
@@ -639,7 +641,9 @@ public class PipeDesign {
   // main method to demonstrate usage
   // ------------------------------------------------------------------------
   /**
-   * <p>main.</p>
+   * <p>
+   * main.
+   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

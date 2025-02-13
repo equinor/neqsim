@@ -419,7 +419,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   public double[] getProperties_GERG2008();
 
- 
   /**
    * method to get Leachman density of a phase using the Leachman EoS.
    *
@@ -453,9 +452,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double[] getProperties_Leachman();
 
 
-  
 
-    /**
+  /**
    * method to get helium density of a phase using the Vega EoS.
    *
    * @return density with unit kg/m3

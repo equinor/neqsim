@@ -159,7 +159,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   }
 
   /**
-   * <p>calcCv.</p>
+   * <p>
+   * calcCv.
+   * </p>
    *
    * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -249,7 +251,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
             inStream.getFluid().getViscosity("kg/msec"), inStream.getFluid().getGamma2(),
             inStream.getFluid().getZ(), inStream.getThermoSystem().getPressure("Pa"),
             inStream.getFlowRate("Sm3/sec"), Cv, 0.137, true) / 1e5;
-
       } else
 
       {
@@ -305,7 +306,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       valveCvSet = true;
     }
 
-
     if (isGasValve()) {
       double xT = .137;
       double Q = inStream.getFlowRate("Sm3/sec");
@@ -328,7 +328,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
     setCalculationIdentifier(id);
   }
-
 
   /** {@inheritDoc} */
   /**
@@ -655,7 +654,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   }
 
   /**
-   * <p>Getter for the field <code>deltaPressure</code>.</p>
+   * <p>
+   * Getter for the field <code>deltaPressure</code>.
+   * </p>
    *
    * @return a double
    */
@@ -664,7 +665,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   }
 
   /**
-   * <p>Setter for the field <code>deltaPressure</code>.</p>
+   * <p>
+   * Setter for the field <code>deltaPressure</code>.
+   * </p>
    *
    * @param deltaPressure a double
    * @param unit a {@link java.lang.String} object
