@@ -111,11 +111,13 @@ public class PhaseHydrate extends Phase {
     setType(PhaseType.HYDRATE);
   }
 
+  /** {@inheritDoc} */
   @Override
   public MixingRulesInterface getMixingRule() {
     return null;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setMixingRuleGEModel(String name) {}
 

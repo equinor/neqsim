@@ -198,7 +198,7 @@ public class TPflash extends Flash {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * <p>
    * Calculate the following properties:
    * </p>

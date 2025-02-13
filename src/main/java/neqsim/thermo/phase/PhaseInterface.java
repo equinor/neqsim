@@ -419,10 +419,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   public double[] getProperties_GERG2008();
 
-
+ 
   /**
    * method to get Leachman density of a phase using the Leachman EoS.
-   * 
+   *
    * @param hydrogenType Supported types are 'normal', 'para', 'ortho'
    * @return density with unit kg/m3
    */
@@ -441,8 +441,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * </p>
    *
    * @return an array of type double
+   * @param hydrogenType a {@link java.lang.String} object
    */
-
   public double[] getProperties_Leachman(String hydrogenType);
 
   /**
@@ -450,8 +450,27 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    *
    * @return density with unit kg/m3
    */
-
   public double[] getProperties_Leachman();
+
+
+  
+
+    /**
+   * method to get helium density of a phase using the Vega EoS.
+   *
+   * @return density with unit kg/m3
+   */
+  public double getDensity_Vega();
+
+  /**
+   * <p>
+   * method to get helium properties of a phase using the Vega EoS.
+   * </p>
+   *
+   * @return an array of type double
+   */
+  public double[] getProperties_Vega();
+
 
   /**
    * method to get density of a phase note: does not use Peneloux volume correction.
@@ -725,7 +744,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * Normalize property <code>x</code>.
-   * 
+   *
    * <p>
    * Property <code>x</code> is the mole fraction of a component in a specific phase. Normalizing,
    * means that the sum of <code>x</code> for all Components in a phase equal 1.0.
