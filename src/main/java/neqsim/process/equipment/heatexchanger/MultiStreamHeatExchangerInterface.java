@@ -1,6 +1,5 @@
 package neqsim.process.equipment.heatexchanger;
 
-import java.util.UUID;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 
@@ -9,8 +8,9 @@ import neqsim.process.equipment.stream.StreamInterface;
  *
  * <p>
  * Defines the contract for a multi-stream heat exchanger, enabling the simulation and management of
- * multiple input and output streams. This interface extends the {@link neqsim.process.equipment.ProcessEquipmentInterface}
- * to integrate with the broader NeqSim process simulation framework.
+ * multiple input and output streams. This interface extends the
+ * {@link neqsim.process.equipment.ProcessEquipmentInterface} to integrate with the broader NeqSim
+ * process simulation framework.
  * </p>
  *
  * <p>
@@ -183,18 +183,10 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
    */
   double getDuty();
 
-  /**
-   * {@inheritDoc}
-   *
-   * Retrieves the mass balance of the heat exchanger.
-   */
+  /** {@inheritDoc} */
   double getMassBalance(String unit);
 
-  /**
-   * {@inheritDoc}
-   *
-   * Retrieves the entropy production of the heat exchanger.
-   */
+  /** {@inheritDoc} */
   double getEntropyProduction(String unit);
 
   // ================================
@@ -221,8 +213,9 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
 
   /**
    * {@inheritDoc}
-   *
+   * <p>
    * Runs a condition analysis by comparing the current heat exchanger with a reference exchanger.
+   * </p>
    */
   void runConditionAnalysis(ProcessEquipmentInterface refExchanger);
 
@@ -271,13 +264,6 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   // ================================
   // Additional Methods
   // ================================
-
-  /**
-   * {@inheritDoc}
-   *
-   * Runs the heat exchanger simulation with a unique identifier.
-   */
-  void run(UUID id);
 
   /**
    * Displays the results of the heat exchanger simulation. Typically outputs temperatures,

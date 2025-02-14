@@ -23,8 +23,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * MultiStreamHeatExchanger class.
  * </p>
  *
+ * <p>
  * Extends the Heater class to support multiple input and output streams, enabling the simulation of
  * complex heat exchange processes such as those found in LNG heat exchangers.
+ * </p>
  *
  * @author ESOL
  * @version 1.0
@@ -139,11 +141,13 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /** {@inheritDoc} */
+  @Override
   public double getOutTemperature(int i) {
     return outStreams.get(i).getThermoSystem().getTemperature();
   }
 
   /** {@inheritDoc} */
+  @Override
   public double getInTemperature(int i) {
     return inStreams.get(i).getThermoSystem().getTemperature();
   }
@@ -352,11 +356,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     }
   }
 
-  /**
-   * Gets the hot and cold duty balance.
-   *
-   * @return Hot and cold duty balance
-   */
+  /** {@inheritDoc} */
   @Override
   public double getHotColdDutyBalance() {
     return hotColdDutyBalance;
