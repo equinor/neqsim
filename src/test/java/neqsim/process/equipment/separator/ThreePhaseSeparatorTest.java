@@ -2,6 +2,7 @@ package neqsim.process.equipment.separator;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -189,5 +190,43 @@ class ThreePhaseSeparatorTest {
      * System.out. println("The gas flow rate should be < 200 kg/hr, the actual value is " +
      * VD02Separator.getGasOutStream().getFlowRate("kg/hr"));
      */
+  }
+
+  @Test
+  void testEntrainmentSep() {
+    neqsim.thermo.system.SystemInterface fluid1 =
+        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+
+    fluid1.addComponent("methane", 72.3870849609375);
+    fluid1.addComponent("n-heptane", 13.90587639808655);
+    fluid1.addComponent("water", 40.0);
+    fluid1.setMixingRule(10);
+    fluid1.setMultiPhaseCheck(true);
+
+    Stream inlet_stream_test_sep = new Stream("TEST_SEPARATOR_INLET", fluid1);
+    inlet_stream_test_sep.setTemperature(72.6675872802734, "C");
+    inlet_stream_test_sep.setPressure(10.6767892837524, "bara");
+    inlet_stream_test_sep.setFlowRate(721.3143271348611, "kg/hr");
+    inlet_stream_test_sep.run();
+
+    ThreePhaseSeparator test_separator =
+        new ThreePhaseSeparator("TEST_SEPARATOR", inlet_stream_test_sep);
+    test_separator.setEntrainment(0.05, "volume", "product", "aqueous", "oil");
+    test_separator.run();
+    // test_separator.getFluid().prettyPrint();
+
+    Assertions.assertEquals(5.8, test_separator.getOilOutStream().getFluid().getPhase("aqueous")
+        .getFlowRate("m3/hr")
+        / (test_separator.getOilOutStream().getFluid().getPhase("oil").getFlowRate("m3/hr")
+            + test_separator.getOilOutStream().getFluid().getPhase("aqueous").getFlowRate("m3/hr"))
+        * 100, 0.1);
+    /*
+     * System.out.println("water in oil % " + (test_separator.getOilOutStream().getFluid()
+     * .getPhase("aqueous").getFlowRate("m3/hr") /
+     * (test_separator.getOilOutStream().getFluid().getPhase("oil").getFlowRate("m3/hr") +
+     * test_separator.getOilOutStream().getFluid().getPhase("aqueous").getFlowRate("m3/hr"))) 100);
+     */
+    // test_separator.getOilOutStream().getThermoSystem().prettyPrint();
+
   }
 }
