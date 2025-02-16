@@ -3,6 +3,7 @@ package neqsim.thermo.util.readwrite;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.File;
 import java.io.IOException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -176,5 +177,19 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     // neqsim.thermo.util.readwrite.TablePrinter.printTable(
     // (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
+    double[][] paramsPhase0 =
+        ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters();
+    double[][] paramsPhase1 =
+        ((PhaseEos) testSystem.getPhase(2)).getMixingRule().getBinaryInteractionParameters();
+
+    // Check that both 2D arrays have the same dimensions first.
+    Assertions.assertEquals(paramsPhase0.length, paramsPhase1.length);
+
+    // CHeck that kij are equal of phase gas and water
+    for (int i = 0; i < paramsPhase0.length; i++) {
+      for (int j = 0; j < paramsPhase0.length; j++) {
+        Assertions.assertEquals(paramsPhase0[i][j], paramsPhase1[i][j]);
+      }
+    }
   }
 }
