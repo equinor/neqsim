@@ -336,7 +336,7 @@ public class EclipseFluidReadWrite {
         } else if (name.equals("CO2") || TC.get(counter) < 00.0) {
           name = "CO2";
           fluid.addComponent(name, ZI.get(counter));
-        } else if (name.strip().equals("H2O") || TC.get(counter) < 00.0) {
+        } else if (name.trim().equals("H2O") || TC.get(counter) < 00.0) {
           name = "water";
           fluid.addComponent(name, ZI.get(counter));
         } else if (TC.get(counter) >= 00.0) {
@@ -603,7 +603,7 @@ public class EclipseFluidReadWrite {
           } else if (name.equals("CO2") || TC.get(counter) < 00.0) {
             name = "CO2";
             fluid.addComponent(name, ZI.get(counter));
-          } else if (name.strip().equals("H2O") || TC.get(counter) < 00.0) {
+          } else if (name.trim().equals("H2O") || TC.get(counter) < 00.0) {
             name = "water";
             fluid.addComponent(name, ZI.get(counter));
           } else if (TC.get(counter) >= 0.0) {
