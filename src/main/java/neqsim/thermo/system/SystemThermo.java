@@ -5102,4 +5102,11 @@ public abstract class SystemThermo implements SystemInterface {
     }
     setMolarComposition(comp);
   }
+
+  public void setMixingRuleParametersForComponent(String compName) {
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+      // getPhase(i).getMixingRule().setMixingRuleParametersForComponent(compName);
+    }
+
+  }
 }
