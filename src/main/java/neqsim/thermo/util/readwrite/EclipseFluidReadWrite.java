@@ -339,8 +339,6 @@ public class EclipseFluidReadWrite {
         } else if (name.strip().equals("H2O") || TC.get(counter) < 00.0) {
           name = "water";
           fluid.addComponent(name, ZI.get(counter));
-          fluid.init(0);
-          fluid.setMultiPhaseCheck(true);
         } else if (TC.get(counter) >= 00.0) {
           name = names.get(counter);
           Double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
@@ -608,8 +606,6 @@ public class EclipseFluidReadWrite {
           } else if (name.strip().equals("H2O") || TC.get(counter) < 00.0) {
             name = "water";
             fluid.addComponent(name, ZI.get(counter));
-            fluid.init(0);
-            fluid.setMultiPhaseCheck(true);
           } else if (TC.get(counter) >= 0.0) {
             name = names.get(counter);
             Double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;

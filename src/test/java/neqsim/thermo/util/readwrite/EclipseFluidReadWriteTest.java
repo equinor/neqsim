@@ -167,6 +167,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   @Test
   void testFluidWater() throws IOException {
     testSystem = EclipseFluidReadWrite.read(fluid_water);
+    testSystem.setMultiPhaseCheck(true);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testSystem.setPressure(60.0, "bara");
     testSystem.setTemperature(65.0, "C");
@@ -174,8 +175,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     // testSystem.prettyPrint();
 
-    // neqsim.thermo.util.readwrite.TablePrinter.printTable(
-    // (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
+    neqsim.thermo.util.readwrite.TablePrinter.printTable(
+        (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
     double[][] paramsPhase0 =
         ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters();
     double[][] paramsPhase1 =
