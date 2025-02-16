@@ -20,6 +20,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   String fileA17 = file.getAbsolutePath() + "/A-17.E300";
   String fileA19 = file.getAbsolutePath() + "/A-19.E300";
   String filer = file.getAbsolutePath() + "/fluid-r.E300";
+  String fluid_water = file.getAbsolutePath() + "/fluid_water.E300";
 
   /**
    * Test method for
@@ -160,5 +161,20 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testOps.TPflash();
     // testSystem.prettyPrint();
     // Assertions.assertEquals(0.9270363530, testSystem.getBeta(0), 1e-6);
+  }
+
+  @Test
+  void testFluidWater() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(fluid_water);
+    testSystem.setMultiPhaseCheck(true);
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(60.0, "bara");
+    testSystem.setTemperature(65.0, "C");
+    testOps.TPflash();
+
+    // testSystem.prettyPrint();
+
+    // neqsim.thermo.util.readwrite.TablePrinter.printTable(
+    // (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
   }
 }

@@ -336,6 +336,11 @@ public class EclipseFluidReadWrite {
         } else if (name.equals("CO2") || TC.get(counter) < 00.0) {
           name = "CO2";
           fluid.addComponent(name, ZI.get(counter));
+        } else if (name.strip().equals("H2O") || TC.get(counter) < 00.0) {
+          name = "water";
+          fluid.addComponent(name, ZI.get(counter));
+          fluid.init(0);
+          fluid.setMultiPhaseCheck(true);
         } else if (TC.get(counter) >= 00.0) {
           name = names.get(counter);
           Double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
@@ -388,8 +393,6 @@ public class EclipseFluidReadWrite {
     }
     return fluid;
   }
-
-
 
   /**
    * <p>
@@ -569,7 +572,6 @@ public class EclipseFluidReadWrite {
         }
       }
 
-
       for (String fluidName : fluidNames) {
         for (int counter = 0; counter < names.size(); counter++) {
           String name = names.get(counter);
@@ -603,6 +605,11 @@ public class EclipseFluidReadWrite {
           } else if (name.equals("CO2") || TC.get(counter) < 00.0) {
             name = "CO2";
             fluid.addComponent(name, ZI.get(counter));
+          } else if (name.strip().equals("H2O") || TC.get(counter) < 00.0) {
+            name = "water";
+            fluid.addComponent(name, ZI.get(counter));
+            fluid.init(0);
+            fluid.setMultiPhaseCheck(true);
           } else if (TC.get(counter) >= 0.0) {
             name = names.get(counter);
             Double stddensity = 0.5046 * MW.get(counter) / 1000.0 + 0.668468;
@@ -660,7 +667,8 @@ public class EclipseFluidReadWrite {
           // Then, to replicate the original kij,
           // we just pick the old kij[baseIndexI][baseIndexJ].
           // System.out.println("i: " + i + " j: " + j);
-          // System.out.println("baseIndexI: " + baseIndexI + " baseIndexJ: " + baseIndexJ);
+          // System.out.println("baseIndexI: " + baseIndexI + " baseIndexJ: " +
+          // baseIndexJ);
           double kijVal = kij[baseIndexI][baseIndexJ];
 
           // Finally set it in the fluid
