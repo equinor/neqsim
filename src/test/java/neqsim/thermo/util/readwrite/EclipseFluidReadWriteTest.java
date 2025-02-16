@@ -3,6 +3,7 @@ package neqsim.thermo.util.readwrite;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.File;
 import java.io.IOException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -20,6 +21,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   String fileA17 = file.getAbsolutePath() + "/A-17.E300";
   String fileA19 = file.getAbsolutePath() + "/A-19.E300";
   String filer = file.getAbsolutePath() + "/fluid-r.E300";
+  String fluid_water = file.getAbsolutePath() + "/fluid_water.E300";
 
   /**
    * Test method for
@@ -160,5 +162,34 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testOps.TPflash();
     // testSystem.prettyPrint();
     // Assertions.assertEquals(0.9270363530, testSystem.getBeta(0), 1e-6);
+  }
+
+  @Test
+  void testFluidWater() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(fluid_water);
+    testSystem.setMultiPhaseCheck(true);
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(60.0, "bara");
+    testSystem.setTemperature(65.0, "C");
+    testOps.TPflash();
+
+    // testSystem.prettyPrint();
+
+    neqsim.thermo.util.readwrite.TablePrinter.printTable(
+        (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
+    double[][] paramsPhase0 =
+        ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters();
+    double[][] paramsPhase1 =
+        ((PhaseEos) testSystem.getPhase(2)).getMixingRule().getBinaryInteractionParameters();
+
+    // Check that both 2D arrays have the same dimensions first.
+    Assertions.assertEquals(paramsPhase0.length, paramsPhase1.length);
+
+    // CHeck that kij are equal of phase gas and water
+    for (int i = 0; i < paramsPhase0.length; i++) {
+      for (int j = 0; j < paramsPhase0.length; j++) {
+        Assertions.assertEquals(paramsPhase0[i][j], paramsPhase1[i][j]);
+      }
+    }
   }
 }
