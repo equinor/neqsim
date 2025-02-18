@@ -342,7 +342,6 @@ public class Leachman {
   /**
    * Calculate the residual Helmholtz energy and its derivatives with respect to tau and delta.
    * 
-   * <p>
    * Outputs:
    * <ul>
    * <li>ar(0,0) - Residual Helmholtz energy (dimensionless, =a/RT)</li>
@@ -353,7 +352,6 @@ public class Leachman {
    * <li>ar(1,1) - tau*delta*partial^2(ar)/partial(tau)/partial(delta)</li>
    * <li>ar(2,0) - tau^2*partial^2(ar)/partial(tau)^2</li>
    * </ul>
-   * </p>
    *
    * @param itau Order of derivative with respect to tau
    * @param idelta Order of derivative with respect to delta

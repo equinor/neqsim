@@ -19,6 +19,7 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /** Wall thickness in mm. */
   private double wallThickness = 0.0;
   private double outerDiameter = 0.0;
   double molecularSieveWaterCapacity = 10.0;

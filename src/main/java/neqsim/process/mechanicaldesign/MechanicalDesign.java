@@ -105,6 +105,7 @@ public class MechanicalDesign implements java.io.Serializable {
   private double pressureMarginFactor = 0.1;
   public double innerDiameter = 0.0;
   public double outerDiameter = 0.0;
+  /** Wall thickness in mm. */
   public double wallThickness = 0.0;
   public double tantanLength = 0.0; // tantan is same as seamtoseam length
   private double weightTotal = 0.0;
