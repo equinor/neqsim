@@ -712,7 +712,7 @@ public abstract class SystemThermo implements SystemInterface {
     if (specifiedStream.equals("feed")) {
       moleFraction = fraction;
     } else if (specifiedStream.equals("product")) {
-      // double specFractionFrom = getPhaseFraction(specification, fromPhaseName);
+      // double specFractionFrom = getPhaseFraction(fromPhaseName, specification);
       double specFractionTo = getPhaseFraction(toPhaseName, specification);
 
       double moleFractionFrom = getMoleFraction(phaseNumbFrom);
@@ -5103,6 +5103,11 @@ public abstract class SystemThermo implements SystemInterface {
     setMolarComposition(comp);
   }
 
+  /**
+   * <p>setMixingRuleParametersForComponent.</p>
+   *
+   * @param compName a {@link java.lang.String} object
+   */
   public void setMixingRuleParametersForComponent(String compName) {
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       // getPhase(i).getMixingRule().setMixingRuleParametersForComponent(compName);

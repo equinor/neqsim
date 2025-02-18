@@ -63,7 +63,6 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author victor
  */
 public class Leachman {
-
   private String hydrogenType;
 
   // Constants for hydrogen
@@ -342,6 +341,17 @@ public class Leachman {
 
   /**
    * Calculate the residual Helmholtz energy and its derivatives with respect to tau and delta.
+   * 
+   * Outputs:
+   * <ul>
+   * <li>ar(0,0) - Residual Helmholtz energy (dimensionless, =a/RT)</li>
+   * <li>ar(0,1) - delta*partial (ar)/partial(delta)</li>
+   * <li>ar(0,2) - delta^2*partial^2(ar)/partial(delta)^2</li>
+   * <li>ar(0,3) - delta^3*partial^3(ar)/partial(delta)^3</li>
+   * <li>ar(1,0) - tau*partial (ar)/partial(tau)</li>
+   * <li>ar(1,1) - tau*delta*partial^2(ar)/partial(tau)/partial(delta)</li>
+   * <li>ar(2,0) - tau^2*partial^2(ar)/partial(tau)^2</li>
+   * </ul>
    *
    * @param itau Order of derivative with respect to tau
    * @param idelta Order of derivative with respect to delta
@@ -351,14 +361,6 @@ public class Leachman {
    */
   void AlpharLeachman(int itau, int idelta, double T, double D, doubleW[][] ar) {
 
-    // Outputs:
-    // ar(0,0) - Residual Helmholtz energy (dimensionless, =a/RT)
-    // ar(0,1) - delta*partial (ar)/partial(delta)
-    // ar(0,2) - delta^2*partial^2(ar)/partial(delta)^2
-    // ar(0,3) - delta^3*partial^3(ar)/partial(delta)^3
-    // ar(1,0) - tau*partial (ar)/partial(tau)
-    // ar(1,1) - tau*delta*partial^2(ar)/partial(tau)/partial(delta)
-    // ar(2,0) - tau^2*partial^2(ar)/partial(tau)^2
 
     // Select parameters based on hydrogen type
     // double[] N_i, t_i, d_i, p_i, phi_i, beta_i, gamma_i, D_i;
@@ -730,7 +732,7 @@ public class Leachman {
     // Define the number of terms in the Helmholtz energy expressions
     switch (hydrogenType.toLowerCase()) {
       case "normal":
-        System.out.println("Hydrogen type used: Normal.");
+        // System.out.println("Hydrogen type used: Normal.");
 
         a0k = new double[] {-1.4579856475, 1.888076782, 1.616, -0.4117, -0.792, 0.758, 1.217};
         b0k = new double[] {0, 0, -16.0205159149, -22.6580178006, -60.0090511389, -74.9434303817,
@@ -753,7 +755,7 @@ public class Leachman {
         break;
 
       case "para":
-        System.out.println("Hydrogen type used: Para.");
+        // System.out.println("Hydrogen type used: Para.");
 
         a0k = new double[] {-1.4485891134, 1.884521239, 4.30256, 13.0289, -47.7365, 50.0013,
             -18.6261, 0.993973, 0.536078};
@@ -778,7 +780,7 @@ public class Leachman {
         break;
 
       case "ortho":
-        System.out.println("Hydrogen type used: Ortho.");
+        // System.out.println("Hydrogen type used: Ortho.");
 
         a0k = new double[] {-1.4675442336, 1.8845068862, 2.54151, -2.3661, 1.00365, 1.22447};
         b0k = new double[] {0, 0, -25.7676098736, -43.4677904877, -66.0445514750, -209.7531607465};

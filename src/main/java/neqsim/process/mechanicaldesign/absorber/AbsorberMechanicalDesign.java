@@ -21,6 +21,7 @@ public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /** Wall thickness in mm. */
   private double wallThickness = 0.02;
   private double outerDiameter = 0.0;
   double gasLoadFactor = 1.0;

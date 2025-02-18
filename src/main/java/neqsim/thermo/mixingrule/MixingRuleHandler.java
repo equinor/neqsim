@@ -10,7 +10,6 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * @author ASMF
  */
 public abstract class MixingRuleHandler implements ThermodynamicConstantsInterface {
-
   protected String mixingRuleName;
 
   /**

@@ -1,12 +1,11 @@
 package neqsim.thermo.mixingrule;
 
 /**
- * Dummy Interface to allow Phase object to keep either CPA or EosMixingRuleType
+ * Dummy Interface to allow Phase object to keep either CPA or EosMixingRuleType.
  *
  * @author ASMF
  */
 public interface MixingRuleTypeInterface {
-
   /**
    * <p>
    * getValue.

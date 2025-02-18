@@ -51,16 +51,16 @@ class TPFlashTestHighTemp {
   void testRun() {
     testSystem.setPressure(88, "bara");
 
-    for (int i = 0; i < 400; i++) {
-      testSystem.setTemperature(0.0 + i * 1, "C");
-      testOps = new ThermodynamicOperations(testSystem);
-      testOps.TPflash();
-      testSystem.initProperties();
-      System.out.print(testSystem.getPhaseFraction("gas", "mole") + " numerofphases "
-          + testSystem.getNumberOfPhases() + " temp " + testSystem.getTemperature("C") + " hasoil "
-          + testSystem.hasPhaseType("oil") + " gibbs energy " + testSystem.getGibbsEnergy()
-          + " gibbs energy " + " density " + testSystem.getDensity("kg/m3") + " \n");
-    }
+    /*
+     * for (int i = 0; i < 400; i++) { testSystem.setTemperature(0.0 + i * 1, "C"); testOps = new
+     * ThermodynamicOperations(testSystem); testOps.TPflash(); testSystem.initProperties();
+     * System.out.print(testSystem.getPhaseFraction("gas", "mole") + " numerofphases " +
+     * testSystem.getNumberOfPhases() + " temp " + testSystem.getTemperature("C") + " hasoil " +
+     * testSystem.hasPhaseType("oil") + " gibbs energy " + testSystem.getGibbsEnergy() + " gibbs
+     * energy " + " density " + testSystem.getDensity("kg/m3") + " \n");
+     * 
+     * }
+     */
 
     testSystem.setTemperature(268.0, "C");
     testOps = new ThermodynamicOperations(testSystem);

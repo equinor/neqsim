@@ -17,7 +17,6 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author victorigi99
  */
 public class NeqSimLeachman {
-
   PhaseInterface phase = null;
   Leachman Leachman = new Leachman();
 
