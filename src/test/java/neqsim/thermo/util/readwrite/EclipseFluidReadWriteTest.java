@@ -122,7 +122,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     assertEquals(0.0046202437, x_methane_A19, 1e-9);
 
     // double[][] interactionParams =
-    // ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters();
+    // ((PhaseEos)
+    // testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters();
 
     // System.out.println(Arrays.deepToString(interactionParams));
   }
@@ -134,7 +135,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem.setPressure(50.0, "bara");
 
     // neqsim.thermo.util.readwrite.TablePrinter.printTable(
-    // (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
+    // (((PhaseEos)
+    // testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
 
     // for (int i = 0; i < testSystem.getNumberOfComponents(); i++) {
     // System.out.println(testSystem.getComponent(i).getName() + " TC "
@@ -173,8 +175,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     // testSystem.prettyPrint();
 
-    neqsim.thermo.util.readwrite.TablePrinter.printTable(
-        (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
+    //neqsim.thermo.util.readwrite.TablePrinter.printTable(
+   //     (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
     double[][] paramsPhase0 =
         ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters();
     double[][] paramsPhase1 =
@@ -189,5 +191,29 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
         Assertions.assertEquals(paramsPhase0[i][j], paramsPhase1[i][j]);
       }
     }
+  }
+
+  @Test
+  void testFluidWater2() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(fluid_water);
+    testSystem.setMultiPhaseCheck(true);
+
+    // testSystem.init(0);
+
+    double molcomp[] = new double[] {.005823483446243756, 0.011911670685498591, 0.7510528953701038,
+        0.06432302170169239, 0.027440959875481938, 0.003176445516132957, 0.0068822986182880755,
+        0.0015882227580664785, 0.002029395746418279, 0.0018529265510775586, 0.0021176303440886383,
+        0.001235284367385039, 0.001235284367385039, 0.0008823459767035993, 0.00044117298835179964,
+        0.00017646919534071987, 0.00405500399809711783049249174136};
+
+    testSystem.setMolarComposition(molcomp);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(60.0, "bara");
+    testSystem.setTemperature(65.0, "C");
+    testOps.TPflash();
+
+    Assertions.assertEquals(3, testSystem.getNumberOfPhases());
+
   }
 }

@@ -3338,7 +3338,7 @@ public abstract class SystemThermo implements SystemInterface {
     }
     if (!isInitialized && this.getSumBeta() < 1.0 - phaseFractionMinimumLimit
         || this.getSumBeta() > 1.0 + phaseFractionMinimumLimit) {
-      logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0. " + beta);
+      // logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0. " + beta);
     }
   }
 
@@ -5104,7 +5104,9 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * <p>setMixingRuleParametersForComponent.</p>
+   * <p>
+   * setMixingRuleParametersForComponent.
+   * </p>
    *
    * @param compName a {@link java.lang.String} object
    */
