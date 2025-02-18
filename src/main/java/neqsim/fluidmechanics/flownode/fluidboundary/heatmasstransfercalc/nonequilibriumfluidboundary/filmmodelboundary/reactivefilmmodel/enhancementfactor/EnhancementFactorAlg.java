@@ -30,7 +30,7 @@ public class EnhancementFactorAlg extends EnhancementFactor {
     double hatta = 0.0;
     for (int j = 0; j < fluidBoundary.getBulkSystem().getPhase(phaseNum)
         .getNumberOfComponents(); j++) {
-      if (fluidBoundary.getBulkSystem().getPhase(phaseNum).getComponent(j).getName().equals("CO2")
+      if (fluidBoundary.getBulkSystem().getPhase(phaseNum).getComponentName(j).equals("CO2")
           && phaseNum == 1) {
         enhancementVec[j] = fluidBoundary.getBulkSystem().getChemicalReactionOperations()
             .solveKinetics(phaseNum, fluidBoundary.getInterphaseSystem().getPhase(phaseNum), j);

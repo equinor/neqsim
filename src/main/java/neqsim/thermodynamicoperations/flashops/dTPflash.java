@@ -54,7 +54,7 @@ public class dTPflash extends TPflash {
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         // boolean hasgot = false;
         for (int j = 0; j < flashComp.length; j++) {
-          if (flashComp[j].equals(system.getPhase(0).getComponent(i).getName())) {
+          if (flashComp[j].equals(system.getPhase(0).getComponentName(i))) {
             diff += Math.abs((system.getPhase(1).getComponent(i).getx()
                 * system.getPhase(1).getComponent(i).getFugacityCoefficient()
                 * system.getPhase(1).getPressure())

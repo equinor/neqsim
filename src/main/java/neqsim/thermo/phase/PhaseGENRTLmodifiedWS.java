@@ -40,7 +40,7 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
     componentArray = new ComponentGENRTLmodifiedWS[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
       numberOfComponents++;
-      componentArray[i] = new ComponentGENRTLmodifiedWS(phase.getComponent(i).getName(),
+      componentArray[i] = new ComponentGENRTLmodifiedWS(phase.getComponentName(i),
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }
@@ -63,7 +63,7 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
     super(phase, alpha, Dij, DijT, mixRule, intparam);
     componentArray = new ComponentGENRTLmodifiedWS[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
-      componentArray[i] = new ComponentGENRTLmodifiedWS(phase.getComponent(i).getName(),
+      componentArray[i] = new ComponentGENRTLmodifiedWS(phase.getComponentName(i),
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }

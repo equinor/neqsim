@@ -130,8 +130,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
       for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0]
           .getNumberOfComponents(); i++) {
         boolean gotComponent = false;
-        String componentName =
-            streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getName();
+        String componentName = streams.get(k).getThermoSystem().getPhases()[0].getComponentName(i);
         // System.out.println("adding: " + componentName);
 
         double moles =
@@ -140,7 +139,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
         // mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents());
         for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0]
             .getNumberOfComponents(); p++) {
-          if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName()
+          if (mixedStream.getThermoSystem().getPhases()[0].getComponentName(p)
               .equals(componentName)) {
             gotComponent = true;
 
@@ -402,7 +401,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
 
     for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
+        table[j + 1][0] = thermoSystem.getPhases()[0].getComponentName(j);
         buf = new StringBuffer();
         table[j + 1][i + 1] =
             nf.format(thermoSystem.getPhases()[i].getComponent(j).getx(), buf, test).toString();

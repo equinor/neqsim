@@ -177,17 +177,17 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
       int numberOfCOmponents = thermoSystem.getPhase(0).getNumberOfComponents();
       boolean hasWax = false;
       for (int i = 0; i < numberOfCOmponents; i++) {
-        if (thermoSystem.getPhase(0).getComponent(i).getName().startsWith("wax")) {
+        if (thermoSystem.getPhase(0).getComponentName(i).startsWith("wax")) {
           hasWax = true;
         }
       }
 
       for (int i = 0; i < numberOfCOmponents; i++) {
-        if (hasWax && thermoSystem.getPhase(0).getComponent(i).getName().startsWith("wax")) {
+        if (hasWax && thermoSystem.getPhase(0).getComponentName(i).startsWith("wax")) {
           double A = parameterWax[0];
           double B = parameterWax[1];
           double C = parameterWax[2];
-          String compName = thermoSystem.getPhase(0).getComponent(i).getName().substring(3);
+          String compName = thermoSystem.getPhase(0).getComponentName(i).substring(3);
 
           double densityLocal = calcParaffinDensity(i);
 
@@ -203,8 +203,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
           }
 
           thermoSystem.addComponent(compName, -molesChange);
-          thermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getName(),
-              molesChange);
+          thermoSystem.addComponent(thermoSystem.getPhase(0).getComponentName(i), molesChange);
           for (int k = 0; k < thermoSystem.getNumberOfPhases(); k++) {
             thermoSystem.getPhase(k).getComponent(i).setWaxFormer(true);
             thermoSystem.getPhase(k).getComponent(i).setHeatOfFusion(calcHeatOfFusion(i));
@@ -251,8 +250,8 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
     @Override
     public void removeWax() {
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-        if (thermoSystem.getPhase(0).getComponent(i).getName().startsWith("wax")) {
-          String compName = thermoSystem.getPhase(0).getComponent(i).getName().substring(3);
+        if (thermoSystem.getPhase(0).getComponentName(i).startsWith("wax")) {
+          String compName = thermoSystem.getPhase(0).getComponentName(i).substring(3);
           double moles = thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles();
           thermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getComponentName(),
               -moles);

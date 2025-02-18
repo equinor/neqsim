@@ -108,7 +108,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
         try {
           dataSet =
               database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='"
-                  + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
+                  + this.thermoSystem.getPhase(0).getComponentName(i) + "'"));
           dataSet.next();
           M[i] = Double.parseDouble(dataSet.getString("MolarMass"));
         } catch (Exception ex) {

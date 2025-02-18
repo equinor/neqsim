@@ -45,7 +45,7 @@ public class PhaseGEWilson extends PhaseGE {
     componentArray = new ComponentGEWilson[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
       numberOfComponents++;
-      componentArray[i] = new ComponentGEWilson(phase.getComponent(i).getName(),
+      componentArray[i] = new ComponentGEWilson(phase.getComponentName(i),
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
     }

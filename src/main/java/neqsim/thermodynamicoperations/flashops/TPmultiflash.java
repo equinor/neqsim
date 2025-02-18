@@ -368,7 +368,7 @@ public class TPmultiflash extends TPflash {
           }
         }
       }
-      // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName().equals("water")
+      // if(minimumGibbsEnergySystem.getPhase(0).getComponentName(j).equals("water")
       // && minimumGibbsEnergySystem.isChemicalSystem()) continue;
       // logger.info("STAB CHECK COMP " +
       // system.getPhase(0).getComponent(j).getComponentName());
@@ -719,7 +719,7 @@ public class TPmultiflash extends TPflash {
           }
         }
       }
-      // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName().equals("water")
+      // if(minimumGibbsEnergySystem.getPhase(0).getComponentName(j).equals("water")
       // && minimumGibbsEnergySystem.isChemicalSystem()) continue;
       // logger.info("STAB CHECK COMP " +
       // system.getPhase(0).getComponent(j).getComponentName());
@@ -1059,7 +1059,7 @@ public class TPmultiflash extends TPflash {
               && j != hydrocarbonTestCompNumb && j != lightTestCompNumb)) {
         continue;
       }
-      // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName().equals("water")
+      // if(minimumGibbsEnergySystem.getPhase(0).getComponentName(j).equals("water")
       // && minimumGibbsEnergySystem.isChemicalSystem()) continue;
       // logger.info("STAB CHECK COMP " +
       // system.getPhase(0).getComponent(j).getComponentName());

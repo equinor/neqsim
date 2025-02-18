@@ -159,7 +159,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
         if (system.getPhase(4).getComponent(j).isHydrateFormer()
-            || system.getPhase(4).getComponent(j).getName().equals("water")) {
+            || system.getPhase(4).getComponentName(j).equals("water")) {
           ((ComponentHydrate) system.getPhase(4).getComponent(i)).setRefFug(j,
               system.getPhase(0).getFugacity(j));
         } else {
