@@ -245,7 +245,8 @@ public class Vega {
     dPdDsave = R * T * (1 + 2 * ar[0][1].val + ar[0][2].val);
   }
 
-  void AlpharVega(int itau, int idelta, double T, double D, doubleW[][] ar) { // Outputs:
+  void AlpharVega(int itau, int idelta, double T, double D, doubleW[][] ar) {
+    // Outputs:
     // ar(0,0) - Residual Helmholtz energy (dimensionless, =a/RT)
     // ar(0,1) - delta*partial (ar)/partial(delta)
     // ar(0,2) - delta^2*partial^2(ar)/partial(delta)^2
@@ -430,7 +431,9 @@ public class Vega {
   }
 
   /**
-   * <p>propertiesVega.</p>
+   * <p>
+   * propertiesVega.
+   * </p>
    *
    * @param T a double
    * @param D a double
