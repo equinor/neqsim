@@ -9,13 +9,13 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * The Leachman class provides methods to calculate the density, pressure, and various thermodynamic
  * properties of hydrogen using the Leachman method. It supports different types of hydrogen:
  * normal, para, and ortho.
- * 
+ *
  * <p>
  * The class includes methods for setting up the parameters for different hydrogen types,
  * calculating the density from temperature and pressure, and calculating various thermodynamic
  * properties.
  * </p>
- * 
+ *
  * <p>
  * The main methods include:
  * </p>
@@ -29,16 +29,16 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>{@link #propertiesLeachman(double, double, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW, doubleW)}:
  * Calculates various thermodynamic properties.</li>
  * </ul>
- * 
+ *
  * <p>
  * The class also includes helper methods for calculating the ideal gas and real gas Helmholtz
  * energy and their derivatives.
  * </p>
- * 
+ *
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * Leachman leachman = new Leachman();
@@ -51,15 +51,16 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * System.out.println("Density: " + density.val);
  * }
  * </pre>
- * 
+ *
  * <p>
  * Note: The class uses the doubleW and intW classes from the org.netlib.util package to handle
  * output parameters.
  * </p>
- * 
+ *
  * @see org.netlib.util.doubleW
  * @see org.netlib.util.intW
  * @see org.netlib.util.StringW
+ * @author victor
  */
 public class Leachman {
 
@@ -70,7 +71,6 @@ public class Leachman {
   double M_L;// = 2.01588; // Molar mass for hydrogen (g/mol)
   double Tc;
   double Dc;
-
 
   double dPdDsave;
 
@@ -125,8 +125,6 @@ public class Leachman {
   double[] D_i_ortho = new double[n + 1];
 
   double epsilon = 1e-15;
-
-
 
   /**
    * Calculate density as a function of temperature and pressure using the Leachman method. This is
@@ -362,11 +360,9 @@ public class Leachman {
     // ar(1,1) - tau*delta*partial^2(ar)/partial(tau)/partial(delta)
     // ar(2,0) - tau^2*partial^2(ar)/partial(tau)^2
 
-
     // Select parameters based on hydrogen type
     // double[] N_i, t_i, d_i, p_i, phi_i, beta_i, gamma_i, D_i;
     // double Tc, Dc;
-
 
     // Clear previous ar values
     for (int i = 0; i <= 3; ++i) {
@@ -404,7 +400,6 @@ public class Leachman {
       ar[2][0].val += d2Bdtau2;
 
       ar[1][1].val += d2Bddeltadtau;
-
     }
     // second sum
     for (int k = l; k < m; k++) {
@@ -416,7 +411,6 @@ public class Leachman {
       double B = Ni * Math.pow(delta, di) * Math.pow(tau, ti);
       double e = -Math.pow(delta, pi);
       double E = Math.exp(e);
-
 
       // derivatives of delta
       double dBddelta = B * di * Math.pow(delta, -1);
@@ -437,7 +431,6 @@ public class Leachman {
       // derivatives of delta and tau
       double d2Bddeltadtau = B * di * ti * Math.pow(delta, -1) * Math.pow(tau, -1);
       double d2edDeltadTau = 0;
-
 
       ar[0][0].val += B * E;
       // d(alpha^r)/d(delta)
@@ -471,7 +464,6 @@ public class Leachman {
       double e = (phi * (delta - Di) * (delta - Di) + betai * (tau - gammai) * (tau - gammai));
       double E = Math.exp(e);
 
-
       ar[0][0].val += B * E;
 
       // derivatives of delta
@@ -495,10 +487,8 @@ public class Leachman {
       double d2Bddeltadtau = B * di * ti * Math.pow(delta, -1) * Math.pow(tau, -1);
       double d2edDeltadTau = 0;
 
-
       // d(alpha^r)/d(delta)
       ar[0][1].val += dBddelta * E + B * E * dedDelta;
-
 
       // d^2(alpha^r)/d(delta)^2
       double G = d2Bddelta2 + 2 * dBddelta * dedDelta + B * dedDelta * dedDelta + B * d2edDelta2;
@@ -520,7 +510,6 @@ public class Leachman {
       // d^2(alpha^r)/(d(delta)d(tau))
       ar[1][1].val += d2Bddeltadtau * E + dBdTau * E * dedDelta + dBddelta * E * dedTau
           + B * E * dedDelta * dedTau + B * E * d2edDeltadTau;
-
     }
     ar[0][1].val = delta * ar[0][1].val;
     ar[0][2].val = delta * delta * ar[0][2].val;
@@ -554,7 +543,6 @@ public class Leachman {
     // a0(1) - tau*partial(a0)/partial(tau)
     // a0(2) - tau^2*partial^2(a0)/partial(tau)^2
 
-
     // Define reduced variables
     double tau = Tc / T; // Reduced temperature
     double delta = D / Dc; // Reduced density
@@ -575,7 +563,6 @@ public class Leachman {
       a0[1].val += -a0k[k] * b0k[k] * Math.exp(b0k[k] * tau) / (1 - Math.exp(b0k[k] * tau));
     }
 
-
     a0[2].val = -1.5 / (tau * tau);
     for (int k = 2; k < K; k++) {
       a0[2].val +=
@@ -586,7 +573,6 @@ public class Leachman {
     a0[1].val = tau * a0[1].val;
     a0[2].val = tau * tau * a0[2].val;
   }
-
 
   /**
    * <p>
@@ -708,8 +694,6 @@ public class Leachman {
     Kappa.val = Math.pow(W.val, 2) * M_L / (RT * 1000 * Z.val);
   }
 
-
-
   /**
    * @param Tcx temperature in Kelvin
    * @param Dcx density
@@ -733,7 +717,7 @@ public class Leachman {
    * <p>
    * SetupGERG.
    * </p>
-   * 
+   *
    * @param hydrogenType String
    */
   public void SetupLeachman(String hydrogenType) {
@@ -829,7 +813,6 @@ public class Leachman {
     SetupLeachman("normal");
   }
 
-
   /*
    * //a0 parameters a0k_normal = new double[] {-1.4579856475, 1.888076782, 1.616, -0.4117, -0.792,
    * 0.758, 1.217}; b0k_normal = new double[] {0, 0, -16.0205159149, -22.6580178006, -60.0090511389,
@@ -878,7 +861,6 @@ public class Leachman {
    * 0.9626};
    */
 
-
   /**
    * <p>
    * main.
@@ -900,8 +882,6 @@ public class Leachman {
     doubleW Z = new doubleW(0.0d);
     int iFlag = 0;
     StringW herr = new StringW("");
-
-
 
     // System.out.println("mol mass " + Mm.val);
 
@@ -967,5 +947,4 @@ public class Leachman {
     System.out.println("Isentropic exponent:                " + Kappa.val);
   }
 }
-
 

@@ -1613,18 +1613,38 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     }
   }
 
+  /**
+   * <p>isSolveSpeed.</p>
+   *
+   * @return a boolean
+   */
   public boolean isSolveSpeed() {
     return solveSpeed;
   }
 
+  /**
+   * <p>Setter for the field <code>solveSpeed</code>.</p>
+   *
+   * @param solveSpeed a boolean
+   */
   public void setSolveSpeed(boolean solveSpeed) {
     this.solveSpeed = solveSpeed;
   }
 
+  /**
+   * <p>isCalcPressureOut.</p>
+   *
+   * @return a boolean
+   */
   public boolean isCalcPressureOut() {
     return calcPressureOut;
   }
 
+  /**
+   * <p>Setter for the field <code>calcPressureOut</code>.</p>
+   *
+   * @param calcPressureOut a boolean
+   */
   public void setCalcPressureOut(boolean calcPressureOut) {
     this.calcPressureOut = calcPressureOut;
   }

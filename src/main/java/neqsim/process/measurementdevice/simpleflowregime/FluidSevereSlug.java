@@ -8,7 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * FluidSevereSlug class.
  * </p>
  *
- * @author ASMF
+ * @author ESOL
  * @version $Id: $Id
  */
 public class FluidSevereSlug {

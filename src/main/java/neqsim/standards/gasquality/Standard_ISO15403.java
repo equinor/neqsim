@@ -7,7 +7,7 @@ import neqsim.thermo.system.SystemInterface;
  * Standard_ISO15403 class.
  * </p>
  *
- * @author ASMF
+ * @author ESOL
  */
 public class Standard_ISO15403 extends neqsim.standards.Standard {
   /** Serialization version UID. */

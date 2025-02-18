@@ -77,7 +77,6 @@ public class PumpChartTest {
 
     double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};
 
-
     Pump pump1 = new Pump("pump 1", feedGasStream);
     pump1.getPumpChart().setCurves(chartConditions, speed, flow, head, polyEff);
     pump1.getPumpChart().setHeadUnit("meter");
@@ -112,6 +111,4 @@ public class PumpChartTest {
     Assertions.assertEquals(8.2492862, pump1.getOutletStream().getPressure("bara"), 0.01);
     Assertions.assertEquals(990.9909569, pump1.getPower("kW"), 0.01);
   }
-
-
 }

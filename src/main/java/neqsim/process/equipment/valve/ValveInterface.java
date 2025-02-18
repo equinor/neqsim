@@ -83,7 +83,6 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
    */
   public double getCv(String unit);
 
-
   /**
    * <p>
    * setCv.

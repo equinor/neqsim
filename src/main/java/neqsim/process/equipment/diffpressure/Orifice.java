@@ -5,6 +5,13 @@ import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * Orifice class.
+ * </p>
+ *
+ * @author ESOL
+ */
 public class Orifice extends TwoPortEquipment {
   private static final long serialVersionUID = 1L;
   private StreamInterface inputstream;
@@ -18,10 +25,29 @@ public class Orifice extends TwoPortEquipment {
   private double pressureDownstream;
   private double dischargeCoefficient;
 
+  /**
+   * <p>
+   * Constructor for Orifice.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public Orifice(String name) {
     super(name);
   }
 
+  /**
+   * <p>
+   * Constructor for Orifice.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param diameter a double
+   * @param orificeDiameter a double
+   * @param pressureUpstream a double
+   * @param pressureDownstream a double
+   * @param dischargeCoefficient a double
+   */
   public Orifice(String name, double diameter, double orificeDiameter, double pressureUpstream,
       double pressureDownstream, double dischargeCoefficient) {
     super(name);
@@ -32,12 +58,28 @@ public class Orifice extends TwoPortEquipment {
     this.dischargeCoefficient = dischargeCoefficient;
   }
 
+  /**
+   * <p>
+   * setOrificeParameters.
+   * </p>
+   *
+   * @param diameter a {@link java.lang.Double} object
+   * @param diameter_outer a {@link java.lang.Double} object
+   * @param C a {@link java.lang.Double} object
+   */
   public void setOrificeParameters(Double diameter, Double diameter_outer, Double C) {
     this.diameter = diameter;
     this.diameter_outer = diameter_outer;
     this.C = C;
   }
 
+  /**
+   * <p>
+   * calc_dp.
+   * </p>
+   *
+   * @return a {@link java.lang.Double} object
+   */
   public Double calc_dp() {
     double beta = orificeDiameter / diameter;
     double beta2 = beta * beta;
@@ -150,6 +192,7 @@ public class Orifice extends TwoPortEquipment {
     return Do / D;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void run(UUID uuid) {
     if (inputstream != null && outputstream != null) {

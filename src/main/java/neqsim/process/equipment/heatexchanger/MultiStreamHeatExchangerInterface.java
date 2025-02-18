@@ -1,6 +1,5 @@
 package neqsim.process.equipment.heatexchanger;
 
-import java.util.UUID;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 
@@ -9,8 +8,9 @@ import neqsim.process.equipment.stream.StreamInterface;
  *
  * <p>
  * Defines the contract for a multi-stream heat exchanger, enabling the simulation and management of
- * multiple input and output streams. This interface extends the {@link ProcessEquipmentInterface}
- * to integrate with the broader NeqSim process simulation framework.
+ * multiple input and output streams. This interface extends the
+ * {@link neqsim.process.equipment.ProcessEquipmentInterface} to integrate with the broader NeqSim
+ * process simulation framework.
  * </p>
  *
  * <p>
@@ -39,7 +39,7 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
    *
    * @param index Index of the stream to set
    * @param inStream Input stream to set at the specified index
-   * @throws IndexOutOfBoundsException if the index is out of range
+   * @throws java.lang.IndexOutOfBoundsException if the index is out of range
    */
   void setFeedStream(int index, StreamInterface inStream);
 
@@ -47,8 +47,8 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
    * Retrieves the output stream at the specified index.
    *
    * @param index Index of the output stream
-   * @return The output {@link StreamInterface} at the given index
-   * @throws IndexOutOfBoundsException if the index is out of range
+   * @return The output {@link neqsim.process.equipment.stream.StreamInterface} at the given index
+   * @throws java.lang.IndexOutOfBoundsException if the index is out of range
    */
   StreamInterface getOutStream(int index);
 
@@ -56,8 +56,8 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
    * Retrieves the input stream at the specified index.
    *
    * @param index Index of the input stream
-   * @return The input {@link StreamInterface} at the given index
-   * @throws IndexOutOfBoundsException if the index is out of range
+   * @return The input {@link neqsim.process.equipment.stream.StreamInterface} at the given index
+   * @throws java.lang.IndexOutOfBoundsException if the index is out of range
    */
   StreamInterface getInStream(int index);
 
@@ -183,20 +183,10 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
    */
   double getDuty();
 
-  /**
-   * Retrieves the mass balance of the heat exchanger.
-   *
-   * @param unit Unit of mass flow rate (e.g., "kg/sec")
-   * @return Mass balance value
-   */
+  /** {@inheritDoc} */
   double getMassBalance(String unit);
 
-  /**
-   * Retrieves the entropy production of the heat exchanger.
-   *
-   * @param unit Unit of entropy (e.g., "J/(kg*K)")
-   * @return Entropy production value
-   */
+  /** {@inheritDoc} */
   double getEntropyProduction(String unit);
 
   // ================================
@@ -222,9 +212,10 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   // ================================
 
   /**
+   * {@inheritDoc}
+   * <p>
    * Runs a condition analysis by comparing the current heat exchanger with a reference exchanger.
-   *
-   * @param refExchanger Reference {@link ProcessEquipmentInterface} heat exchanger for comparison
+   * </p>
    */
   void runConditionAnalysis(ProcessEquipmentInterface refExchanger);
 
@@ -273,13 +264,6 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   // ================================
   // Additional Methods
   // ================================
-
-  /**
-   * Runs the heat exchanger simulation with a unique identifier.
-   *
-   * @param id Unique identifier for the simulation run
-   */
-  void run(UUID id);
 
   /**
    * Displays the results of the heat exchanger simulation. Typically outputs temperatures,

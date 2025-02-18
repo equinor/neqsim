@@ -345,13 +345,12 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pressureOut3, 18.3429, 1);
   }
 
-
   @Test
   public void testPipeLineBeggsAndBrills5() {
     double pressure = 10; // bara
     double temperature = 20; // C
     double massFlowRate = 0.25; // kg/s
-    double heatTransferCoeff = 755;  // W/m2K
+    double heatTransferCoeff = 755; // W/m2K
     double constantSurfaceTemperature = 100; // C
 
     neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(
@@ -389,7 +388,7 @@ public class BeggsAndBrillsPipeTest {
     pipe2.setDiameter(0.05);
     pipe2.setNumberOfIncrements(1);
     pipe2.setConstantSurfaceTemperature(constantSurfaceTemperature, "C");
-    
+
 
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();
@@ -404,5 +403,4 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(temperatureOut, 57, 5);
     Assertions.assertEquals(temperatureOut2, 40, 5);
   }
-
 }

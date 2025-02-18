@@ -5,14 +5,10 @@ import org.junit.jupiter.api.Test;
 
 public class PipeDesignTest {
   @Test
-  void testErosionalVelocity() {
-
-  }
+  void testErosionalVelocity() {}
 
   @Test
-  void testGaugeFromThickness() {
-
-  }
+  void testGaugeFromThickness() {}
 
   @Test
   void testNearestPipe() {
@@ -35,7 +31,6 @@ public class PipeDesignTest {
 
     // wall thickness
     Assertions.assertEquals(nearestPipe[3], 0.009269999999999, 0.0000001);
-
   }
 
   @Test
@@ -59,11 +54,8 @@ public class PipeDesignTest {
 
     // wall thickness
     Assertions.assertEquals(nearestPipe[3], 0.01509, 0.0000001);
-
   }
 
   @Test
-  void testThicknessFromGauge() {
-
-  }
+  void testThicknessFromGauge() {}
 }

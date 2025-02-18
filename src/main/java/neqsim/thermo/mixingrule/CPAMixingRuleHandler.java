@@ -91,7 +91,6 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
         new neqsim.util.exception.InvalidInputException(this, "getMixingRule", "mr"));
   }
 
-
   /**
    * <p>
    * getMixingRule.

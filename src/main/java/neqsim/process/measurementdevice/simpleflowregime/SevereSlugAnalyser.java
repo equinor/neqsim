@@ -16,7 +16,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * SevereSlugAnalyser class.
  * </p>
  *
- * @author ASMF
+ * @author ESOL
  * @version $Id: $Id
  */
 public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {

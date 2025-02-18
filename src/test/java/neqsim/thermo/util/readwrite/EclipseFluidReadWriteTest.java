@@ -83,7 +83,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     EclipseFluidReadWrite.setComposition(testSystem, fileA13);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
-
   }
 
   @Test
@@ -126,7 +125,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters();
 
     // System.out.println(Arrays.deepToString(interactionParams));
-
   }
 
   @Test

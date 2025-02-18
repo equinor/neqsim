@@ -637,7 +637,6 @@ public class EclipseFluidReadWrite {
 
           fluid.changeComponentName(name, name + "_" + fluidName);
         }
-
       }
 
       fluid.setMixingRule(2);
@@ -677,7 +676,6 @@ public class EclipseFluidReadWrite {
           }
         }
       }
-
     } catch (
 
     Exception ex) {

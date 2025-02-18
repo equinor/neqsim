@@ -23,10 +23,12 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * MultiStreamHeatExchanger class.
  * </p>
  *
+ * <p>
  * Extends the Heater class to support multiple input and output streams, enabling the simulation of
  * complex heat exchange processes such as those found in LNG heat exchangers.
+ * </p>
  *
- * @author [Your Name]
+ * @author ESOL
  * @version 1.0
  */
 public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatExchangerInterface {
@@ -86,11 +88,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     setName(name);
   }
 
-  /**
-   * Adds an inlet stream to the heat exchanger.
-   *
-   * @param inStream Input stream to add
-   */
+  /** {@inheritDoc} */
   public void addInStream(StreamInterface inStream) {
     this.inStreams.add(inStream);
     StreamInterface outStream = inStream.clone();
@@ -98,12 +96,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     this.outStreams.add(outStream);
   }
 
-  /**
-   * Sets the feed stream at a specific index.
-   *
-   * @param index Index of the stream to set
-   * @param inStream Input stream to set
-   */
+  /** {@inheritDoc} */
   public void setFeedStream(int index, StreamInterface inStream) {
     if (index < inStreams.size()) {
       this.inStreams.set(index, inStream);
@@ -147,22 +140,14 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     this.temperatureOut = temperature;
   }
 
-  /**
-   * Gets the output temperature of a specific stream.
-   *
-   * @param i Index of the stream
-   * @return Temperature of the output stream
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getOutTemperature(int i) {
     return outStreams.get(i).getThermoSystem().getTemperature();
   }
 
-  /**
-   * Gets the input temperature of a specific stream.
-   *
-   * @param i Index of the stream
-   * @return Temperature of the input stream
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getInTemperature(int i) {
     return inStreams.get(i).getThermoSystem().getTemperature();
   }
@@ -182,50 +167,31 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     }
   }
 
-  /**
-   * Gets the overall UA value.
-   *
-   * @return UA value
-   */
+  /** {@inheritDoc} */
   public double getUAvalue() {
     return UAvalue;
   }
 
-  /**
-   * Sets the overall UA value.
-   *
-   * @param UAvalue UA value to set
-   */
+  /** {@inheritDoc} */
   public void setUAvalue(double UAvalue) {
     UAvalueIsSet = true;
     this.UAvalue = UAvalue;
   }
 
-  /**
-   * Gets the guessed outlet temperature.
-   *
-   * @return Guessed outlet temperature
-   */
+  /** {@inheritDoc} */
   public double getGuessOutTemperature() {
     return guessOutTemperature;
   }
 
-  /**
-   * Sets the guessed outlet temperature in Kelvin.
-   *
-   * @param guessOutTemperature Guessed outlet temperature
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setGuessOutTemperature(double guessOutTemperature) {
     this.guessOutTemperature = guessOutTemperature;
     this.guessOutTemperatureUnit = "K";
   }
 
-  /**
-   * Sets the guessed outlet temperature with specified unit.
-   *
-   * @param guessOutTemperature Guessed outlet temperature
-   * @param unit Unit of the temperature
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setGuessOutTemperature(double guessOutTemperature, String unit) {
     this.guessOutTemperature = guessOutTemperature;
     this.guessOutTemperatureUnit = unit;
@@ -343,11 +309,8 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     return thermalEffectiveness;
   }
 
-  /**
-   * Sets the thermal effectiveness of the heat exchanger.
-   *
-   * @param thermalEffectiveness Thermal effectiveness to set
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setThermalEffectiveness(double thermalEffectiveness) {
     this.thermalEffectiveness = thermalEffectiveness;
   }
@@ -357,26 +320,19 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
    *
    * @return Flow arrangement
    */
+  @Override
   public String getFlowArrangement() {
     return flowArrangement;
   }
 
-  /**
-   * Sets the flow arrangement of the heat exchanger.
-   *
-   * @param flowArrangement Name of the flow arrangement
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setFlowArrangement(String flowArrangement) {
     this.flowArrangement = flowArrangement;
   }
 
-  /**
-   * Calculates the thermal effectiveness based on NTU and capacity ratio.
-   *
-   * @param NTU NTU value
-   * @param Cr Capacity ratio (Cmin/Cmax)
-   * @return Thermal effectiveness
-   */
+  /** {@inheritDoc} */
+  @Override
   public double calcThermalEffectiveness(double NTU, double Cr) {
     switch (flowArrangement.toLowerCase()) {
       case "counterflow":
@@ -400,20 +356,14 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     }
   }
 
-  /**
-   * Gets the hot and cold duty balance.
-   *
-   * @return Hot and cold duty balance
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getHotColdDutyBalance() {
     return hotColdDutyBalance;
   }
 
-  /**
-   * Sets the hot and cold duty balance.
-   *
-   * @param hotColdDutyBalance Hot and cold duty balance to set
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setHotColdDutyBalance(double hotColdDutyBalance) {
     this.hotColdDutyBalance = hotColdDutyBalance;
   }
@@ -426,39 +376,26 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     return super.toJson();
   }
 
-  /**
-   * Sets whether to use delta T for the calculations.
-   *
-   * @param useDeltaT Boolean flag to use delta T
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setUseDeltaT(boolean useDeltaT) {
     this.useDeltaT = useDeltaT;
   }
 
-  /**
-   * Gets the delta T value.
-   *
-   * @return Delta T
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getDeltaT() {
     return deltaT;
   }
 
-  /**
-   * Sets the delta T value and enables its usage.
-   *
-   * @param deltaT Delta T to set
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setDeltaT(double deltaT) {
     this.useDeltaT = true;
     this.deltaT = deltaT;
   }
 
-  /**
-   * Runs the heat exchanger simulation considering multiple streams.
-   *
-   * @param id Unique identifier for the run
-   */
+  /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     if (firstTime) {
@@ -726,10 +663,24 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     // This method needs to be defined based on specific requirements
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>temperatureApproach</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getTemperatureApproach() {
     return temperatureApproach;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>temperatureApproach</code>.
+   * </p>
+   *
+   * @param temperatureApproach a double
+   */
   public void setTemperatureApproach(double temperatureApproach) {
     this.temperatureApproach = temperatureApproach;
   }
