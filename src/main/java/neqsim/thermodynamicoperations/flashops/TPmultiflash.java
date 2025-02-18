@@ -376,7 +376,6 @@ public class TPmultiflash extends TPflash {
 
       if (system.getPhase(1).getType() == PhaseType.AQUEOUS && !checkdForHCmix) {
         checkdForHCmix = true;
-        j--;
       }
 
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName().equals("water")

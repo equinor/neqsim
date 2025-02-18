@@ -175,8 +175,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     // testSystem.prettyPrint();
 
-    neqsim.thermo.util.readwrite.TablePrinter.printTable(
-        (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
+    //neqsim.thermo.util.readwrite.TablePrinter.printTable(
+   //     (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
     double[][] paramsPhase0 =
         ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters();
     double[][] paramsPhase1 =
