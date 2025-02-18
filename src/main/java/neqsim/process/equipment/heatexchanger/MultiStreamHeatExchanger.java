@@ -168,6 +168,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /** {@inheritDoc} */
+  @Override
   public double getUAvalue() {
     return UAvalue;
   }
@@ -179,6 +180,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /** {@inheritDoc} */
+  @Override
   public double getGuessOutTemperature() {
     return guessOutTemperature;
   }
@@ -315,11 +317,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     this.thermalEffectiveness = thermalEffectiveness;
   }
 
-  /**
-   * Gets the flow arrangement of the heat exchanger.
-   *
-   * @return Flow arrangement
-   */
+  /** {@inheritDoc} */
   @Override
   public String getFlowArrangement() {
     return flowArrangement;

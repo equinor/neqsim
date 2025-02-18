@@ -8,6 +8,13 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 // Fundamental EOS for Helium based on Helmholz free energy, used by NIST
 // https://nvlpubs.nist.gov/nistpubs/ir/2023/NIST.IR.8474.pdf
 
+/**
+ * <p>
+ * Vega class.
+ * </p>
+ *
+ * @author [author]
+ */
 public class Vega {
   double R;
   double M;
@@ -33,6 +40,18 @@ public class Vega {
 
   double epsilon = 1e-15;
 
+  /**
+   * <p>
+   * DensityVega.
+   * </p>
+   *
+   * @param iFlag a int
+   * @param T a double
+   * @param P a double
+   * @param D a {@link org.netlib.util.doubleW} object
+   * @param ierr a {@link org.netlib.util.intW} object
+   * @param herr a {@link org.netlib.util.StringW} object
+   */
   public void DensityVega(int iFlag, double T, double P, doubleW D, intW ierr, StringW herr) {
     // Sub DensityGERG(iFlag, T, P, x, D, ierr, herr)
 
@@ -202,6 +221,16 @@ public class Vega {
     D.val = P / R / T;
   }
 
+  /**
+   * <p>
+   * PressureVega.
+   * </p>
+   *
+   * @param T a double
+   * @param D a double
+   * @param P a {@link org.netlib.util.doubleW}object
+   * @param Z a {@link org.netlib.util.doubleW}object
+   */
   public void PressureVega(double T, double D, doubleW P, doubleW Z) {
     doubleW[][] ar = new doubleW[4][4];
     for (int i = 0; i < 4; i++) {
@@ -401,9 +430,7 @@ public class Vega {
   }
 
   /**
-   * <p>
-   * PropertiesVega.
-   * </p>
+   * <p>propertiesVega.</p>
    *
    * @param T a double
    * @param D a double
@@ -518,10 +545,6 @@ public class Vega {
     Kappa.val = Math.pow(W.val, 2) * M / (RT * 1000 * Z.val);
   }
 
-  /**
-   * @param Tcx temperature in Kelvin
-   * @param Dcx density
-   */
   void PseudoCriticalPointVega(doubleW Tcx, doubleW Dcx) {
     // Use the pre-initialized class-level values for Tc and Dc
     if (Tc == 0 || Dc == 0) {
@@ -578,7 +601,7 @@ public class Vega {
    * main.
    * </p>
    *
-   * @param args an array of {@link java.lang.String} objects
+   * @param args an array of {@link java.lang.String}objects
    */
   @SuppressWarnings("unused")
   @ExcludeFromJacocoGeneratedReport

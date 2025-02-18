@@ -2224,7 +2224,6 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-
   public double getDensity_Vega() {
     neqsim.thermo.util.Vega.NeqSimVega test = new neqsim.thermo.util.Vega.NeqSimVega(this);
     return test.getDensity();
@@ -2237,6 +2236,7 @@ public abstract class Phase implements PhaseInterface {
     return test.propertiesVega();
   }
 
+  /** {@inheritDoc} */
   public double getDensity_Leachman(String hydrogenType) {
     neqsim.thermo.util.leachman.NeqSimLeachman test =
         new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);

@@ -9,6 +9,13 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
+/**
+ * <p>
+ * NeqSimVega class.
+ * </p>
+ *
+ * @author [author]
+ */
 public class NeqSimVega {
   PhaseInterface phase = null;
   Vega Vega = new Vega();
@@ -206,8 +213,6 @@ public class NeqSimVega {
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
-
-
   public void setPhase(PhaseInterface phase) {
     // 1) Check if the phase contains ONLY hydrogen
     if (phase.getNumberOfComponents() != 1) {
