@@ -221,7 +221,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-
     if (getInletStream().getThermoSystem() != null) {
       thermoSystem = getInletStream().getThermoSystem().clone();
     } else {
@@ -245,7 +244,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
     if (valveCvSet && isCalcPressure) {
       if (gasValve) {
-
         outp = getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedCvGas(
             inStream.getTemperature(), inStream.getFluid().getMolarMass("gr/mol"),
             inStream.getFluid().getViscosity("kg/msec"), inStream.getFluid().getGamma2(),

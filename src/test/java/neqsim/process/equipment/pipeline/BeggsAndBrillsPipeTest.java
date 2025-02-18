@@ -389,7 +389,6 @@ public class BeggsAndBrillsPipeTest {
     pipe2.setNumberOfIncrements(1);
     pipe2.setConstantSurfaceTemperature(constantSurfaceTemperature, "C");
 
-
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
@@ -397,7 +396,7 @@ public class BeggsAndBrillsPipeTest {
     operations.add(pipe2);
     operations.run();
 
-    double pressureOut = pipe.getOutletPressure();
+    // double pressureOut = pipe.getOutletPressure();
     double temperatureOut = pipe.getOutletTemperature() - 273.15;
     double temperatureOut2 = pipe2.getOutletTemperature() - 273.15;
     Assertions.assertEquals(temperatureOut, 57, 5);

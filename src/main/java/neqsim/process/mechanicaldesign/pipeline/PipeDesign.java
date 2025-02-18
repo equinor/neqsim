@@ -50,7 +50,6 @@ import java.util.Map;
  * @author ESOL
  */
 public class PipeDesign {
-
   // ------------------------------------------------------------
   // Unit conversion constants used in the original code
   // ------------------------------------------------------------

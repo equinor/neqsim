@@ -6,7 +6,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534;
 
 public class ThrottlingValveTest {
-
   /**
    * Test method for calculating the flow coefficient (Cv) of a gas through a throttling valve.
    * <p>
@@ -19,7 +18,6 @@ public class ThrottlingValveTest {
    */
   @Test
   void testCalcCvGas() {
-
     double res = (double) ControlValveSizing_IEC_60534.sizeControlValveGas(289.15, 17.798,
         1.077830925292769e-05, 1.299, 0.9999, 1480304.39084324, 446090.79686799296,
         47.194744319999984, 0.2032, 0.2032, 0.2032, 1, 1, 0.137, true, true, true).get("Cv");

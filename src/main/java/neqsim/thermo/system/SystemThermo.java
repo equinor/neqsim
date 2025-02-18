@@ -712,7 +712,7 @@ public abstract class SystemThermo implements SystemInterface {
     if (specifiedStream.equals("feed")) {
       moleFraction = fraction;
     } else if (specifiedStream.equals("product")) {
-      // double specFractionFrom = getPhaseFraction(specification, fromPhaseName);
+      // double specFractionFrom = getPhaseFraction(fromPhaseName, specification);
       double specFractionTo = getPhaseFraction(toPhaseName, specification);
 
       double moleFractionFrom = getMoleFraction(phaseNumbFrom);

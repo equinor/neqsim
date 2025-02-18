@@ -928,7 +928,6 @@ public class PipeBeggsAndBrills extends Pipeline {
     return Tmo - Tmi;
   }
 
-
   /**
    * Calculates the heat balance for the given system.
    *

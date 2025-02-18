@@ -40,7 +40,6 @@ import java.util.Map;
  * @author ESOL
  */
 public class ControlValveSizing_IEC_60534 {
-
   // Constants
   private static final double N1 = 0.1; // Constant for liquids (m^3/hr, kPa)
   private static final double N9 = 2.46E1; // Constant for gases (m^3/hr, kPa)
@@ -82,7 +81,6 @@ public class ControlValveSizing_IEC_60534 {
       double mu, double gammaOrPsat, double ZOrPc, double P1, double P2, double Q, Double D1,
       Double D2, Double d, double FL, double Fd, double xTOrNone, boolean allowChoked,
       boolean allowLaminar, boolean fullOutput) {
-
     Map<String, Object> result = fullOutput ? new HashMap<>() : null;
 
     if (type == FluidType.LIQUID) {
@@ -119,7 +117,6 @@ public class ControlValveSizing_IEC_60534 {
   public static Map<String, Object> sizeControlValveLiquid(double rho, double Psat, double Pc,
       double mu, double P1, double P2, double Q, Double D1, Double D2, Double d, double FL,
       double Fd, boolean allowChoked, boolean allowLaminar, boolean fullOutput) {
-
     Map<String, Object> ans = fullOutput ? new HashMap<>() : null;
 
     double locP1 = P1 / 1000.0;
@@ -165,9 +162,7 @@ public class ControlValveSizing_IEC_60534 {
    */
   public static double calculateFlowRateFromValveOpeningLiquid(double valveOpening, double Cv,
       double rho, double Psat, double Pc, double mu, double P1, double P2, double FL, double Fd,
-      boolean allowChoked) {
-
-    // Validate input for valve opening
+      boolean allowChoked) { // Validate input for valve opening
     if (valveOpening < 0 || valveOpening > 100) {
       throw new IllegalArgumentException("Valve opening must be between 0 and 100%");
     }
@@ -219,9 +214,7 @@ public class ControlValveSizing_IEC_60534 {
    */
   public static double calculateValveOpeningFromFlowRateLiquid(double Q, double Cv, double rho,
       double Psat, double Pc, double mu, double P1, double P2, double FL, double Fd,
-      boolean allowChoked) {
-
-    // Constants
+      boolean allowChoked) { // Constants
     double N1 = 0.865; // Flow coefficient constant for liquids
     double rho0 = 1000.0; // Reference density (kg/m^3)
 
@@ -365,7 +358,6 @@ public class ControlValveSizing_IEC_60534 {
       double gamma, double Z, double P1, double P2, double Q, Double D1, Double D2, Double d,
       double FL, double Fd, double xT, boolean allowChoked, boolean allowLaminar,
       boolean fullOutput) {
-
     Map<String, Object> ans = fullOutput ? new HashMap<>() : null;
 
     // Convert units
@@ -416,9 +408,7 @@ public class ControlValveSizing_IEC_60534 {
    */
   public static double calculateFlowRateFromCvAndValveOpeningGas(double Cv, double valveOpening,
       double T, double MW, double mu, double gamma, double Z, double P1, double P2, double FL,
-      double xT, boolean allowChoked) {
-
-    // Validate input for valve opening
+      double xT, boolean allowChoked) { // Validate input for valve opening
     if (valveOpening < 0 || valveOpening > 100) {
       throw new IllegalArgumentException("Valve opening must be between 0 and 100%");
     }

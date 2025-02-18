@@ -1,6 +1,5 @@
 package neqsim.thermo.util.Vega;
 
-
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
@@ -10,9 +9,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
-
 public class NeqSimVega {
-
   PhaseInterface phase = null;
   Vega Vega = new Vega();
 
@@ -46,7 +43,7 @@ public class NeqSimVega {
    * @return a double
    */
   public double getMolarDensity(PhaseInterface phase) {
-    //this.setPhase(phase);
+    // this.setPhase(phase);
     return getMolarDensity();
   }
 
@@ -59,7 +56,7 @@ public class NeqSimVega {
    * @return a double
    */
   public double getDensity(PhaseInterface phase) {
-    //this.setPhase(phase);
+    // this.setPhase(phase);
     // return getMolarDensity() * getMolarMass() * 1000.0;
     return getMolarDensity() * Vega.M;
   }
@@ -98,11 +95,11 @@ public class NeqSimVega {
    *
    * @return a double
    */
-  //public double getMolarMass() {
-    //doubleW mm = new doubleW(0.0);
-    //GERG2008.MolarMassGERG(normalizedGERGComposition, mm);
-   // return mm.val / 1.0e3;
-  //}
+  // public double getMolarMass() {
+  // doubleW mm = new doubleW(0.0);
+  // GERG2008.MolarMassGERG(normalizedGERGComposition, mm);
+  // return mm.val / 1.0e3;
+  // }
 
   /**
    * <p>
@@ -117,8 +114,7 @@ public class NeqSimVega {
     StringW herr = new StringW("");
     doubleW D = new doubleW(0.0);
     double pressure = phase.getPressure() * 100.0;
-    Vega.DensityVega(flag, phase.getTemperature(), pressure, D, ierr,
-        herr);
+    Vega.DensityVega(flag, phase.getTemperature(), pressure, D, ierr, herr);
     return D.val;
   }
 
@@ -131,7 +127,7 @@ public class NeqSimVega {
    * @return an array of type double
    */
   public double[] propertiesVega(PhaseInterface phase) {
-    //this.setPhase(phase);
+    // this.setPhase(phase);
     return propertiesVega();
   }
 
@@ -196,12 +192,13 @@ public class NeqSimVega {
     double dens = getMolarDensity();
     // neqsim.thermo.GERG.Densitygerg.densitygerg(0, 0, 0, arg3, 0, arg5, arg6,
     // arg7);
-    Vega.propertiesVega(phase.getTemperature(), dens, p, z, dpdd,
-        d2pdd2, d2pdtd, dpdt, u, h, s, cv, cp, w, g, jt, kappa, A);
+    Vega.propertiesVega(phase.getTemperature(), dens, p, z, dpdd, d2pdd2, d2pdtd, dpdt, u, h, s, cv,
+        cp, w, g, jt, kappa, A);
     double[] properties = new double[] {p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val,
         u.val, h.val, s.val, cv.val, cp.val, w.val, g.val, jt.val, kappa.val};
     return properties;
   }
+
   /**
    * <p>
    * Setter for the field <code>phase</code>.
@@ -210,44 +207,35 @@ public class NeqSimVega {
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
 
-   
-   public void setPhase(PhaseInterface phase) {
+
+  public void setPhase(PhaseInterface phase) {
     // 1) Check if the phase contains ONLY hydrogen
     if (phase.getNumberOfComponents() != 1) {
-        throw new IllegalArgumentException(
-            "Vega model requires exactly one component (helium). " +
-            "Found " + phase.getNumberOfComponents() + " components."
-        );
+      throw new IllegalArgumentException("Vega model requires exactly one component (helium). "
+          + "Found " + phase.getNumberOfComponents() + " components.");
     }
 
     // 2) Check the name of that single component
     String componentName = phase.getComponent(0).getComponentName();
     if (!"helium".equalsIgnoreCase(componentName)) {
-        throw new IllegalArgumentException(
-            "Vega model requires 'helium'. Found: " + componentName
-        );
+      throw new IllegalArgumentException("Vega model requires 'helium'. Found: " + componentName);
     }
 
     // If everything checks out, we can safely set 'this.phase'
     this.phase = phase;
-}
-  
+  }
+
   /**
    * <p>
    * normalizeComposition.
    * </p>
    */
-  /* 
-  public void normalizeComposition() {
-    double result = 0;
-    for (double value : notNormalizedGERGComposition) {
-      result += value;
-    }
-    for (int k = 0; k < normalizedGERGComposition.length; k++) {
-      normalizedGERGComposition[k] = notNormalizedGERGComposition[k] / result;
-    }
-  }
-*/
+  /*
+   * public void normalizeComposition() { double result = 0; for (double value :
+   * notNormalizedGERGComposition) { result += value; } for (int k = 0; k <
+   * normalizedGERGComposition.length; k++) { normalizedGERGComposition[k] =
+   * notNormalizedGERGComposition[k] / result; } }
+   */
 
   /**
    * <p>
@@ -260,7 +248,7 @@ public class NeqSimVega {
   public static void main(String[] args) {
     // test HitHub
     SystemInterface fluid1 = new SystemSrkEos();
-    //fluid1.addComponent("methane", 10.0);
+    // fluid1.addComponent("methane", 10.0);
     fluid1.addComponent("helium", 90.0);
     // fluid1.addComponent("CO2", 1.0);
     // fluid1.addComponent("ethane", 10.0);
@@ -277,16 +265,16 @@ public class NeqSimVega {
     // fluid1.addComponent("propane", 5.0);
     // fluid1.addTBPfraction("C8", 0.01, 211.0/1000.0, 0.82);
     fluid1.setTemperature(273.15);
-    fluid1.setPressure(10.0);//bar
+    fluid1.setPressure(10.0);// bar
     fluid1.init(0);
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid1);
     ops.TPflash();
     // fluid1.display();
-    //String hydrogenType = "normal";
+    // String hydrogenType = "normal";
     System.out.println("density Vega " + fluid1.getPhase(0).getDensity_Vega());
 
     NeqSimVega test = new NeqSimVega(fluid1.getPhase(0));
-    //fluid1.getPhase("gas").getProperties_Leachman("normal");
+    // fluid1.getPhase("gas").getProperties_Leachman("normal");
     System.out.println("density " + test.getDensity());
     System.out.println("pressure " + test.getPressure());
     // System.out.println("properties " + test.propertiesGERG());

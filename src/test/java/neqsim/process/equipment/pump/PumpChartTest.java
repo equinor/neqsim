@@ -26,7 +26,6 @@ public class PumpChartTest {
 
   @Test
   void testPumpChart() {
-
     neqsim.thermo.system.SystemInterface feedGas =
         new neqsim.thermo.system.SystemSrkEos(273.15 + 20.0, 10.00);
     feedGas.addComponent("water", 1.0);

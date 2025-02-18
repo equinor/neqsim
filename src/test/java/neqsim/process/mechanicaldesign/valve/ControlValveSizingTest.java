@@ -7,9 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-
 public class ControlValveSizingTest {
-
   @Test
   public void testSizeControlValveLiquid() {
     Map<String, Object> result = ControlValveSizing_IEC_60534.sizeControlValve(
