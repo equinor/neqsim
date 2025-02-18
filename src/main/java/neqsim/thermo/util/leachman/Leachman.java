@@ -341,6 +341,19 @@ public class Leachman {
 
   /**
    * Calculate the residual Helmholtz energy and its derivatives with respect to tau and delta.
+   * 
+   * <p>
+   * Outputs:
+   * <ul>
+   * <li>ar(0,0) - Residual Helmholtz energy (dimensionless, =a/RT)</li>
+   * <li>ar(0,1) - delta*partial (ar)/partial(delta)</li>
+   * <li>ar(0,2) - delta^2*partial^2(ar)/partial(delta)^2</li>
+   * <li>ar(0,3) - delta^3*partial^3(ar)/partial(delta)^3</li>
+   * <li>ar(1,0) - tau*partial (ar)/partial(tau)</li>
+   * <li>ar(1,1) - tau*delta*partial^2(ar)/partial(tau)/partial(delta)</li>
+   * <li>ar(2,0) - tau^2*partial^2(ar)/partial(tau)^2</li>
+   * </ul>
+   * </p>
    *
    * @param itau Order of derivative with respect to tau
    * @param idelta Order of derivative with respect to delta
@@ -348,14 +361,8 @@ public class Leachman {
    * @param D Density (mol/l)
    * @param ar Output array for Helmholtz energy and its derivatives
    */
-  void AlpharLeachman(int itau, int idelta, double T, double D, doubleW[][] ar) { // Outputs:
-    // ar(0,0) - Residual Helmholtz energy (dimensionless, =a/RT)
-    // ar(0,1) - delta*partial (ar)/partial(delta)
-    // ar(0,2) - delta^2*partial^2(ar)/partial(delta)^2
-    // ar(0,3) - delta^3*partial^3(ar)/partial(delta)^3
-    // ar(1,0) - tau*partial (ar)/partial(tau)
-    // ar(1,1) - tau*delta*partial^2(ar)/partial(tau)/partial(delta)
-    // ar(2,0) - tau^2*partial^2(ar)/partial(tau)^2
+  void AlpharLeachman(int itau, int idelta, double T, double D, doubleW[][] ar) {
+
 
     // Select parameters based on hydrogen type
     // double[] N_i, t_i, d_i, p_i, phi_i, beta_i, gamma_i, D_i;
