@@ -324,8 +324,8 @@ public class TPmultiflash extends TPflash {
         }
       }
     }
-
     for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
+
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(i).isHydrocarbon()
           && minimumGibbsEnergySystem.getPhase(0).getComponent(i).getz() > 1e-50) {
         if (Math.abs(
@@ -344,7 +344,7 @@ public class TPmultiflash extends TPflash {
         }
       }
     }
-
+    boolean checkdForHCmix = false;
     for (int j = system.getPhase(0).getNumberOfComponents() - 1; j >= 0; j--) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getx() < 1e-100
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getIonicCharge() != 0)
@@ -352,7 +352,6 @@ public class TPmultiflash extends TPflash {
               && j != hydrocarbonTestCompNumb && j != lightTestCompNumb)) {
         continue;
       }
-
       double nomb = 0.0;
       for (int cc = 0; cc < system.getPhase(0).getNumberOfComponents(); cc++) {
         nomb = cc == j ? 1.0 : 1.0e-12;
@@ -362,12 +361,24 @@ public class TPmultiflash extends TPflash {
 
         if (clonedSystem.get(0).isPhase(1)) {
           try {
-            clonedSystem.get(0).getPhase(1).getComponent(cc).setx(nomb);
+            if (system.getPhase(1).getType() == PhaseType.AQUEOUS && !checkdForHCmix) {
+              clonedSystem.get(0).getPhase(1).getComponent(cc)
+                  .setx(clonedSystem.get(0).getPhase(0).getComponent(cc).getK()
+                      / clonedSystem.get(0).getPhase(0).getComponent(cc).getx());
+            } else {
+              clonedSystem.get(0).getPhase(1).getComponent(cc).setx(nomb);
+            }
           } catch (Exception ex) {
             logger.warn(ex.getMessage());
           }
         }
       }
+
+      if (system.getPhase(1).getType() == PhaseType.AQUEOUS && !checkdForHCmix) {
+        checkdForHCmix = true;
+        j--;
+      }
+
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName().equals("water")
       // && minimumGibbsEnergySystem.isChemicalSystem()) continue;
       // logger.info("STAB CHECK COMP " +
