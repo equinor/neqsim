@@ -624,7 +624,7 @@ public class LargeCombinedModelsTest {
     combinedProcess.run();
     combinedProcess.run();
 
-    ((Separator) sepprocessTrain1.getUnit("dew point scrubber")).getFluid().prettyPrint();
+    // ((Separator) sepprocessTrain1.getUnit("dew point scrubber")).getFluid().prettyPrint();
 
     Assertions.assertEquals(8.14523949005678,
         ((Separator) sepprocessTrain1.getUnit("dew point scrubber 2")).getGasOutStream()
