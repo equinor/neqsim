@@ -130,7 +130,6 @@ public class ThrottlingValveTest {
     valve1.setOutletPressure(19);
     valve1.run();
 
-    stream1.getFluid().prettyPrint();
     assertEquals(135.3602060, valve1.getCv(), 1e-2);
     assertEquals(135.3602060, valve1.getCv("SI"), 1e-2);
     assertEquals(2.46557752, valve1.getCv("US"), 1e-2);
