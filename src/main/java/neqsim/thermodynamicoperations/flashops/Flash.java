@@ -158,6 +158,8 @@ public abstract class Flash extends BaseOperation {
       }
       iterations = 0;
       fNorm = 1.0e10;
+      boolean acceleration = true;
+      double olderror = 1.0e10;
 
       do {
         iterations++;
@@ -191,7 +193,8 @@ public abstract class Flash extends BaseOperation {
               break;
             }
           }
-          if (iterations % 7 == 0 && fNorm < fNormOld && !secondOrderStabilityAnalysis) {
+          if (iterations % 7 == 0 && fNorm < fNormOld && !secondOrderStabilityAnalysis
+              && acceleration) {
             double vec1 = 0.0;
 
             double vec2 = 0.0;
@@ -210,6 +213,9 @@ public abstract class Flash extends BaseOperation {
               logWi[i] += lambda / (1.0 - lambda) * deltalogWi[i];
               error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
               Wi[j][i] = Math.exp(logWi[i]);
+            }
+            if (error[j] > olderror) {
+              acceleration = false;
             }
           } else {
             // succsessive substitution
@@ -268,14 +274,15 @@ public abstract class Flash extends BaseOperation {
         // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " +
         // iterations
         // + " phase " + j);
-      } while ((f.norm1() > 1e-6 && error[j] > 1e-9 && iterations < maxiterations)
+        // logger.info("error " + error[j]);
+        olderror = error[j];
+      } while ((f.norm1() > 1e-3 && error[j] > 1e-3 && iterations < maxiterations)
           || (iterations % 7) == 0 || iterations < 3);
       // (error[j]<oldErr && oldErr<oldOldErr) &&
       // logger.info("err " + error[j]);
       // logger.info("iterations " + iterations);
       // logger.info("f.norm1() " + f.norm1());
       if (iterations >= maxiterations) {
-        logger.error("err staability check " + error[j]);
         throw new neqsim.util.exception.TooManyIterationsException("too many iterations", null,
             maxiterations);
       }
