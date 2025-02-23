@@ -123,8 +123,11 @@ public class PumpTest extends neqsim.NeqSimTest {
     pump1.setMinimumFlow(1e-20);
     pump1.run();
 
+    Stream outStream = feedGasStream.clone();
+
     Recycle res1 = new Recycle("recycle");
     res1.addStream(pump1.getOutletStream());
+    res1.setOutletStream(outStream);
     res1.setTolerance(1e-5);
     res1.setMinimumFlow(1e-20);
     res1.run();
