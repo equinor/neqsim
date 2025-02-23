@@ -35,6 +35,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   double pressure = 0.0;
   private double molarFlow = 10.0;
   private double speed = 1000.0;
+  private double minimumFlow = 1e-20;
 
   private double outTemperature = 298.15;
   private boolean useOutTemperature = false;
@@ -121,6 +122,16 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   @Override
   public void run(UUID id) {
     // System.out.println("pump running..");
+    if (inStream.getFlowRate("kg/sec") < minimumFlow) {
+      thermoSystem = inStream.getThermoSystem().clone();
+      thermoSystem.setPressure(pressure, pressureUnit);
+      thermoSystem.init(3);
+      dH = 0.0;
+      outStream.setThermoSystem(thermoSystem);
+      outStream.setCalculationIdentifier(id);
+      setCalculationIdentifier(id);
+    }
+
     inStream.getThermoSystem().init(3);
     double hinn = inStream.getThermoSystem().getEnthalpy();
     double entropy = inStream.getThermoSystem().getEntropy();
@@ -465,5 +476,23 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
     } else {
       pumpChart = new PumpChart();
     }
+  }
+
+  /**
+   * Gets the minimum flow rate for the pump.
+   *
+   * @return the minimum flow rate
+   */
+  public double getMinimumFlow() {
+    return minimumFlow;
+  }
+
+  /**
+   * Sets the minimum flow rate for the pump.
+   *
+   * @param minimumFlow the minimum flow rate to be set, in appropriate units.
+   */
+  public void setMinimumFlow(double minimumFlow) {
+    this.minimumFlow = minimumFlow;
   }
 }

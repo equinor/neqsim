@@ -2,7 +2,9 @@ package neqsim.process.equipment.pump;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Recycle;
 
 /**
  * <p>
@@ -99,4 +101,40 @@ public class PumpTest extends neqsim.NeqSimTest {
 
     Assertions.assertEquals(7.274237081101, pump1.getOutletPressure(), 1e-5);
   }
+
+  @Test
+  void testSeparatorandPump() {
+    neqsim.thermo.system.SystemInterface feedGas =
+        new neqsim.thermo.system.SystemSrkEos(273.15 + 20.0, 10.00);
+    feedGas.addComponent("methane", 1.0);
+    feedGas.addComponent("water", 1.0e-5);
+
+    Stream feedGasStream = new Stream("feed fluid", feedGas);
+    feedGasStream.setFlowRate(4000.0, "kg/hr");
+    feedGasStream.setTemperature(20.0, "C");
+    feedGasStream.setPressure(1.5, "bara");
+    feedGasStream.run();
+
+    Separator sep = new Separator("separator", feedGasStream);
+    sep.run();
+
+    Pump pump1 = new Pump("pump1", sep.getLiquidOutStream());
+    pump1.setOutletPressure(12.6);
+    pump1.setMinimumFlow(1e-20);
+    pump1.run();
+
+    Stream outStream = feedGasStream.clone();
+
+    Recycle res1 = new Recycle("recycle");
+    res1.addStream(pump1.getOutletStream());
+    res1.setOutletStream(outStream);
+    res1.setTolerance(1e-5);
+    res1.setMinimumFlow(1e-20);
+    res1.run();
+
+
+    Assertions.assertEquals(0.0, pump1.getOutletStream().getFlowRate("kg/sec"), 1e-20);
+
+  }
+
 }
