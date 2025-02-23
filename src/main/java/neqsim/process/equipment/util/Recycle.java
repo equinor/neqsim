@@ -327,6 +327,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       setErrorFlow(0.0);
       setErrorTemperature(0.0);
       setErrorPressure(0.0);
+      outletStream.setThermoSystem(thermoSystem2);
+      outletStream.setCalculationIdentifier(id);
       return;
     }
     mixedStream.setThermoSystem(thermoSystem2);
