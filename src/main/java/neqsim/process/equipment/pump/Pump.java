@@ -126,7 +126,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
       thermoSystem = inStream.getThermoSystem().clone();
       thermoSystem.setPressure(pressure, pressureUnit);
       thermoSystem.init(3);
-      dH = thermoSystem.getEnthalpy() - hinn;
+      dH = 0.0;
       outStream.setThermoSystem(thermoSystem);
       outStream.setCalculationIdentifier(id);
       setCalculationIdentifier(id);
