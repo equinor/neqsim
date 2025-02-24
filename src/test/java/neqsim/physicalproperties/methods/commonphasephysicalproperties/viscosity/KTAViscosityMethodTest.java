@@ -10,7 +10,7 @@ public class KTAViscosityMethodTest {
   @Test
   void testCalcViscosity() {
     double T = 273.15;
-    double P = 20.265; //Pressure in bar(a)
+    double P = 20.265; //Pressure in MPa
     testSystem = new neqsim.thermo.system.SystemSrkEos(T, P);
     testSystem.addComponent("helium", 1.0);
     //testSystem.addComponent("hydrogen", 0.6);
