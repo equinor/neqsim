@@ -12,6 +12,7 @@ import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.diffusivity.CorrespondingStatesDiffusivity;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.LBCViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodMod86;
@@ -219,6 +220,8 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
       viscosityCalc = new PFCTViscosityMethodMod86(this);
     } else if ("PFCT-Heavy-Oil".equals(model)) {
       viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
+    } else if ("KTA".equals(model)) {
+      viscosityCalc = new KTAViscosityMethod(this);
     }
   }
 
