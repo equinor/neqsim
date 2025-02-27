@@ -10,14 +10,12 @@
 	<description>NeqSim is a library for calculation of fluid behavior, phase equilibrium and process simulation.</description>
 	<url>https://github.com/equinor/neqsim</url>
 	<packaging>jar</packaging>
-	<version>${revision}${sha1}${changelist}</version>
+	<version>${revision}</version>
 
 	<properties>
 		<revision>3.0.18</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<sha1/>
-		<changelist/>
 		<checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
 	</properties>
 	<licenses>
