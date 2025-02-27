@@ -93,12 +93,12 @@ public class Calculator extends ProcessEquipmentBaseClass {
   @Override
   public void run(UUID id) {
     double sum = 0.0;
-    if (name.equals("anti surge calculator")) {
+    if (name.startsWith("anti surge calculator")) {
       runAntiSurgeCalc(id);
       return;
     }
 
-    if (name.equals("MEG makeup calculator")) {
+    if (name.startsWith("MEG makeup calculator")) {
       for (int i = 0; i < inputVariable.size(); i++) {
         sum += inputVariable.get(i).getFluid().getPhase(0).getComponent("MEG").getFlowRate("kg/hr");
       }
