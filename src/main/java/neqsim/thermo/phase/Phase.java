@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.PhysicalPropertyHandler;
 import neqsim.physicalproperties.PhysicalPropertyType;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.density.Water;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -1677,6 +1678,28 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public double getDensity(String unit) {
     double refDensity = getPhysicalProperties().getDensity(); // density in kg/m3
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "kg/m3":
+        conversionFactor = 1.0;
+        break;
+      case "mol/m3":
+        conversionFactor = 1.0 / getMolarMass();
+        break;
+      case "lb/ft3":
+        conversionFactor = 0.0624279606;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
+    }
+    return refDensity * conversionFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getWaterDensity(String unit) {
+    Water water = new Water(getPhysicalProperties());
+    double refDensity = water.calcDensity();
     double conversionFactor = 1.0;
     switch (unit) {
       case "kg/m3":
