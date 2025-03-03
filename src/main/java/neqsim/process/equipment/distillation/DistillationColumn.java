@@ -448,6 +448,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return internalDiameter;
   }
 
+
+  /**
+   * Calculates the Fs factor for the distillation column. The Fs factor is a measure of the gas
+   * flow rate through the column relative to the cross-sectional area and the density of the gas.
+   *
+   * @return the Fs factor as a double value
+   */
   public double getFsFactor() {
     double intArea = Math.PI * getInternalDiameter() * getInternalDiameter() / 4.0;
     return getGasOutStream().getThermoSystem().getFlowRate("m3/sec") / intArea
@@ -495,7 +502,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Check overall mass balance.
+   * Check mass balance for all components.
+   *
+   * @return true if mass balance is within 1e-6
    */
   public boolean massBalanceCheck() {
     double[] massInput = new double[numberOfTrays];
@@ -522,10 +531,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Component-level mass balance check for debugging.
-   * 
-   * @param componentName name of the component to track
-   * @return true if balanced, false otherwise
+   * Check mass balance for a specific component.
+   *
+   * @param componentName the component name
+   * @return true if mass balance is within 1e-6
    */
   public boolean componentMassBalanceCheck(String componentName) {
     double[] massInput = new double[numberOfTrays];
@@ -585,7 +594,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Example main method to test multi-feed usage.
+   * The main method demonstrates the creation and operation of a distillation column using the
+   * NeqSim library. It performs the following steps:
+   * 
+   * 1. Creates a test thermodynamic system with methane, ethane, and propane components. 2.
+   * Performs a TP flash calculation on the test system. 3. Creates two separate feed streams from
+   * the test system. 4. Constructs a distillation column with 5 trays, a reboiler, and a condenser.
+   * 5. Adds the two feed streams to the distillation column at tray 3. 6. Builds and runs the
+   * process system. 7. Displays the results of the distillation column, including the gas and
+   * liquid output streams.
+   * 
+   *
+   * @param args command line arguments (not used)
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {

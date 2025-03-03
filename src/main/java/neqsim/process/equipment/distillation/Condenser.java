@@ -28,10 +28,23 @@ public class Condenser extends SimpleTray {
   private double reflux_value;
   private String reflux_unit;
 
+  /**
+   * Checks if the separation process involves liquid reflux.
+   *
+   * @return {@code true} if the separation process involves liquid reflux, {@code false} otherwise.
+   */
   public boolean isSeparation_with_liquid_reflux() {
     return separation_with_liquid_reflux;
   }
 
+  /**
+   * Sets the separation with liquid reflux parameters.
+   *
+   * @param separation_with_liquid_reflux a boolean indicating if separation with liquid reflux is
+   *        set
+   * @param value the value of the reflux
+   * @param unit the unit of the reflux value
+   */
   public void setSeparation_with_liquid_reflux(boolean separation_with_liquid_reflux, double value,
       String unit) {
     this.refluxIsSet = separation_with_liquid_reflux;
