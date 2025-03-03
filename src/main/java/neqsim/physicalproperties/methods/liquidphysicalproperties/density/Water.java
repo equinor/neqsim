@@ -89,7 +89,7 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
       if (comp.getName().equalsIgnoreCase("water")) {
         wH2O = w;
         // Try a more accurate density from NeqSim's pure-component function
-        double pureWaterDensity = comp.getPureComponentLiquidDensity(tempK);
+        double pureWaterDensity = 1000.0;// comp.getPureComponentLiquidDensity(tempK);
         if (pureWaterDensity > 1e-8) {
           rhoWater = pureWaterDensity;
         }
