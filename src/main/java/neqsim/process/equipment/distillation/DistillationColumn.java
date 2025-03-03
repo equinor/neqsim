@@ -59,7 +59,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double err = 1.0e10;
 
   /**
-   * Instead of Map<Integer,StreamInterface>, we store a list of feed streams per tray number. This
+   * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed streams per tray number. This
    * allows multiple feeds to the same tray.
    */
   private Map<Integer, List<StreamInterface>> feedStreams = new HashMap<>();
