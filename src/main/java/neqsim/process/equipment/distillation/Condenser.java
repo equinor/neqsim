@@ -24,6 +24,21 @@ public class Condenser extends SimpleTray {
   double duty = 0.0;
   boolean totalCondenser = false;
   Splitter mixedStreamSplitter = null;
+  private boolean separation_with_liquid_reflux = false;
+  private double reflux_value;
+  private String reflux_unit;
+
+  public boolean isSeparation_with_liquid_reflux() {
+    return separation_with_liquid_reflux;
+  }
+
+  public void setSeparation_with_liquid_reflux(boolean separation_with_liquid_reflux, double value,
+      String unit) {
+    this.refluxIsSet = separation_with_liquid_reflux;
+    this.separation_with_liquid_reflux = separation_with_liquid_reflux;
+    this.reflux_value = value;
+    this.reflux_unit = unit;
+  }
 
   /**
    * <p>
@@ -110,12 +125,28 @@ public class Condenser extends SimpleTray {
    */
   @Override
   public StreamInterface getLiquidOutStream() {
-    if (totalCondenser) {
-      return new Stream("", mixedStreamSplitter.getSplitStream(0));
+    if (totalCondenser || separation_with_liquid_reflux) {
+      return mixedStreamSplitter.getSplitStream(0);
     } else {
       return super.getLiquidOutStream();
     }
   }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * getLiquidOutStream.
+   * </p>
+   */
+  public StreamInterface getLiquidProductStream() {
+    if (separation_with_liquid_reflux) {
+      return mixedStreamSplitter.getSplitStream(1);
+    } else {
+      return null;
+    }
+  }
+
 
   /** {@inheritDoc} */
   @Override
@@ -147,6 +178,17 @@ public class Condenser extends SimpleTray {
       UUID oldID = getCalculationIdentifier();
       super.run(id);
       setCalculationIdentifier(oldID);
+    } else if (separation_with_liquid_reflux) {
+      super.run(id);
+      Stream liquidstream = new Stream("temp liq stream", mixedStream.getFluid().phaseToSystem(1));
+      liquidstream.run();
+      if (liquidstream.getFlowRate("kg/hr") < this.reflux_value) {
+        liquidstream.setFlowRate(this.reflux_value + 1, this.reflux_unit);
+        liquidstream.run();
+      }
+      mixedStreamSplitter = new Splitter("splitter", liquidstream, 2);
+      mixedStreamSplitter.setFlowRates(new double[] {this.reflux_value, -1}, this.reflux_unit);
+      mixedStreamSplitter.run();
     } else {
       SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
       // System.out.println("total number of moles " +
