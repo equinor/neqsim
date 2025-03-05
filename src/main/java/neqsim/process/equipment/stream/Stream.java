@@ -474,7 +474,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     SystemInterface localSyst = getFluid().clone();
     ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
     ops.setRunAsThread(true);
-    ops.calcPTphaseEnvelope(true);
+    ops.calcPTphaseEnvelope2();
     ops.waitAndCheckForFinishedCalculation(10000);
     ops.displayResult();
     // ops.getJfreeChart();
