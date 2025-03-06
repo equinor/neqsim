@@ -82,6 +82,33 @@ public class WaterDewPointAnalyser extends StreamMeasurementDeviceBaseClass {
         logger.error(ex.getMessage(), ex);
       }
       return tempFluid.getTemperature(unit);
+    } else if (method.equals("CPA")) {
+      SystemInterface tempFluid = stream.getThermoSystem().clone();
+      SystemInterface tempFluid2 = tempFluid.setModel("CPAs-SRK-EOS-statoil");
+      tempFluid2.setMultiPhaseCheck(true);
+      tempFluid2.setPressure(referencePressure);
+      tempFluid2.setTemperature(0.1, "C");
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid2);
+      try {
+        thermoOps.waterDewPointTemperatureMultiphaseFlash();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
+      }
+      return tempFluid2.getTemperature(unit);
+    } else if (method.equals("CPA hydrate")) {
+      SystemInterface tempFluid = stream.getThermoSystem().clone();
+      SystemInterface tempFluid2 = tempFluid.setModel("CPAs-SRK-EOS-statoil");
+      tempFluid2.setMultiPhaseCheck(true);
+      tempFluid2.setHydrateCheck(true);
+      tempFluid2.setPressure(referencePressure);
+      tempFluid2.setTemperature(0.1, "C");
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid2);
+      try {
+        thermoOps.hydrateFormationTemperature();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
+      }
+      return tempFluid2.getTemperature(unit);
     } else {
       SystemInterface tempFluid = stream.getThermoSystem().clone();
       SystemInterface tempFluid2 = tempFluid.setModel("GERG-water-EOS");
