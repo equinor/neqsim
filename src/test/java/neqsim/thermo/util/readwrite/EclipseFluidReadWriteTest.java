@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -22,6 +23,27 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   String fileA19 = file.getAbsolutePath() + "/A-19.E300";
   String filer = file.getAbsolutePath() + "/fluid-r.E300";
   String fluid_water = file.getAbsolutePath() + "/fluid_water.E300";
+  String file_brd = file.getAbsolutePath() + "/Brd.e300";
+
+
+
+  @Test
+  void testReadBrd() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(file_brd);
+    double[] molcomp = new double[] {0.000793504, 0.002185115, 0.970279547, 0.020714159,
+        0.002100576, 0.002181042, 0.000447426, 0.000480092, 0.000119605, 0.000279524, 0.000226219,
+        0.000154766, 3.65936E-05, 1.82958E-06, 1.10E-09, 8.06E-13, 2.62E-16, 1.08E-25};
+    molcomp = new double[] {0.001139104, 0.002173947, 0.969756121, 0.02078901, 0.002092749,
+        0.002280241, 0.000446227, 0.000499483, 0.000120059, 0.000288996, 0.000226389, 0.000151364,
+        3.43368E-05, 1.97238E-06, 1.15E-09, 8.71E-13, 3.03E-16, 1.57E-25};
+
+    testSystem.setMolarComposition(molcomp);
+
+    Stream stream1 = new Stream("Stream1", testSystem);
+    stream1.run();
+    assertEquals(-3.84116452828, stream1.CCT("C"), 1e-3);
+  }
+
 
   /**
    * Test method for
@@ -175,8 +197,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     // testSystem.prettyPrint();
 
-    //neqsim.thermo.util.readwrite.TablePrinter.printTable(
-   //     (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
+    // neqsim.thermo.util.readwrite.TablePrinter.printTable(
+    // (((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
     double[][] paramsPhase0 =
         ((PhaseEos) testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters();
     double[][] paramsPhase1 =
