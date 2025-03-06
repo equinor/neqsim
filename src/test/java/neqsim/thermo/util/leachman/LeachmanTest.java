@@ -8,6 +8,9 @@ import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 
+/**
+ * @author victorigi99
+ */
 public class LeachmanTest {
   private Leachman Leachman;
 
