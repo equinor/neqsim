@@ -610,7 +610,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         // logger.info("Double.isNaN(dx.norm2())........");
         iter2++;
         u = uold.copy();
-        ds *= 0.5;
+        ds *= 0.3;
         calcInc2(np);
         solve(np);
       } else if (dxOldNorm < dx.norm2()) {
@@ -628,7 +628,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         // logger.info("dxOldNorm < dx.norm2()");
         iter2++;
         u = uold.copy();
-        ds *= 0.5;
+        ds *= 0.3;
         calcInc2(np);
         solve(np);
       }
