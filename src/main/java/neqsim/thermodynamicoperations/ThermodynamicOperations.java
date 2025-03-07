@@ -21,6 +21,8 @@ import neqsim.thermodynamicoperations.flashops.PHflashSingleComp;
 import neqsim.thermodynamicoperations.flashops.PHsolidFlash;
 import neqsim.thermodynamicoperations.flashops.PSFlash;
 import neqsim.thermodynamicoperations.flashops.PSFlashGERG2008;
+import neqsim.thermodynamicoperations.flashops.PSFlashLeachman;
+import neqsim.thermodynamicoperations.flashops.PSFlashVega;
 import neqsim.thermodynamicoperations.flashops.PSflashSingleComp;
 import neqsim.thermodynamicoperations.flashops.PVrefluxflash;
 import neqsim.thermodynamicoperations.flashops.SaturateWithWater;
@@ -310,6 +312,28 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Method to perform a PH flash calculation based on Leachman EoS.
+   *
+   * @param Hspec is the enthalpy in unit Joule to be held constant
+   */
+  public void PHflashLeachman(double Hspec) {
+    operation = new neqsim.thermodynamicoperations.flashops.PHflashLeachman(system, Hspec);
+    getOperation().run();
+  }
+
+  /**
+   * Method to perform a PH flash calculation based on Vega EoS.
+   *
+   * @param Hspec is the enthalpy in unit Joule to be held constant
+   */
+  public void PHflashVega(double Hspec) {
+    operation = new neqsim.thermodynamicoperations.flashops.PHflashVega(system, Hspec);
+    getOperation().run();
+  }
+
+
+
+  /**
    * <p>
    * PUflash.
    * </p>
@@ -492,6 +516,32 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void PSflashGERG2008(double Sspec) {
     operation = new PSFlashGERG2008(system, Sspec);
+    getOperation().run();
+  }
+
+  /**
+   * <p>
+   * PSflashLeachman.
+   * </p>
+   * Run a flash at constant pressure and entropy using the Leachman EoS
+   *
+   * @param Sspec is the specidfied entropy
+   */
+  public void PSflashLeachman(double Sspec) {
+    operation = new PSFlashLeachman(system, Sspec);
+    getOperation().run();
+  }
+
+  /**
+   * <p>
+   * PSflashVega.
+   * </p>
+   * Run a flash at constant pressure and entropy using the Vega EoS
+   *
+   * @param Sspec is the specidfied entropy
+   */
+  public void PSflashVega(double Sspec) {
+    operation = new PSFlashVega(system, Sspec);
     getOperation().run();
   }
 

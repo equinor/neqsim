@@ -2244,15 +2244,38 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * Gets the density using the default hydrogen type ('normal'). This method prints a warning if no
-   * hydrogen type is specified.
+   * If no hydrogenType is specified it checks the component name and chooses the correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase is not pure
    *
    * @return the density calculated with the 'normal' hydrogen type.
    */
   public double getDensity_Leachman() {
-    // Warn the user that no hydrogen type was specified and use "normal" by default
-    System.out.println("No hydrogen type specified. Using default type: 'normal'.");
-    return getDensity_Leachman("normal");
+    // Check that the phase contains exactly one component
+    if (this.getNumberOfComponents() != 1) {
+      StringBuilder compNames = new StringBuilder();
+      for (int i = 0; i < this.getNumberOfComponents(); i++) {
+        compNames.append(this.getComponent(i).getComponentName());
+        if (i < this.getNumberOfComponents() - 1) {
+          compNames.append(", ");
+        }
+      }
+      throw new IllegalArgumentException("Leachman model only works for pure hydrogen streams. Found components: " 
+                                           + compNames.toString());
+    }
+
+    // Retrieve the component name from the current phase
+    String compName = this.getComponent(0).getComponentName();
+
+    // Check the component type and choose the correct hydrogen type
+    if (compName.equalsIgnoreCase("para-hydrogen")) {
+      return getDensity_Leachman("para");
+    } else if (compName.equalsIgnoreCase("ortho-hydrogen")) {
+      return getDensity_Leachman("ortho");
+    } else if (compName.equalsIgnoreCase("hydrogen")) {
+      return getDensity_Leachman("normal");
+    } else {
+      throw new IllegalArgumentException("Leachman model only works for hydrogen. Found: " + compName);
+    }
   }
 
   /** {@inheritDoc} */
@@ -2264,16 +2287,40 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * Gets the Leachman properties of a phase using the default hydrogen type ('normal'). This method
-   * prints a warning if no hydrogen type is specified.
+   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase is not pure
    *
    * @return an array of properties of type double.
    */
   public double[] getProperties_Leachman() {
-    // Warn the user and use the default hydrogen type
-    System.out.println("No hydrogen type specified. Using default type: 'normal'.");
-    return getProperties_Leachman("normal");
+    // Check that the phase contains exactly one component
+    if (this.getNumberOfComponents() != 1) {
+      StringBuilder compNames = new StringBuilder();
+      for (int i = 0; i < this.getNumberOfComponents(); i++) {
+        compNames.append(this.getComponent(i).getComponentName());
+        if (i < this.getNumberOfComponents() - 1) {
+          compNames.append(", ");
+        }
+      }
+      throw new IllegalArgumentException("Leachman model only works for pure hydrogen streams. Found components: " 
+                                           + compNames.toString());
+    }
+
+    // Retrieve the component name from the current phase
+    String compName = this.getComponent(0).getComponentName();
+
+    // Check the component type and choose the correct hydrogen type
+    if (compName.equalsIgnoreCase("para-hydrogen")) {
+      return getProperties_Leachman("para");
+    } else if (compName.equalsIgnoreCase("ortho-hydrogen")) {
+      return getProperties_Leachman("ortho");
+    } else if (compName.equalsIgnoreCase("hydrogen")) {
+      return getProperties_Leachman("normal");
+    } else {
+      throw new IllegalArgumentException("Leachman model only works for hydrogen. Found: " + compName);
+    }
   }
+  
 
   /** {@inheritDoc} */
   @Override

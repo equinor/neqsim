@@ -27,15 +27,26 @@ public class NeqSimLeachman {
 
   /**
    * Constructor for NeqSimLeachman.
+   * If hydrogenType is provided (non-empty), it uses that; otherwise, it auto-detects
+   * based on the phase's component name.
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param hydrogenType a {@link java.lang.String} object representing the type of hydrogen
+   * @param phase a PhaseInterface representing the stream.
+   * @param hydrogenType a String representing the desired hydrogen type; can be empty.
    */
   public NeqSimLeachman(PhaseInterface phase, String hydrogenType) {
-    this.setPhase(phase);
-    if (Double.isNaN(Leachman.R_L) || Leachman.R_L == 0) {
-      Leachman.SetupLeachman(hydrogenType);
+    setPhase(phase);
+    // If hydrogenType is null or empty, auto-detect based on the phase's component name
+    if (hydrogenType == null || hydrogenType.trim().isEmpty()) {
+      String componentName = phase.getComponent(0).getComponentName().toLowerCase();
+      if (componentName.equals("para-hydrogen")) {
+        hydrogenType = "para";
+      } else if (componentName.equals("ortho-hydrogen")) {
+        hydrogenType = "ortho";
+      } else {
+        hydrogenType = "normal";
+      }
     }
+    Leachman.SetupLeachman(hydrogenType);
   }
 
   /**
@@ -183,7 +194,8 @@ public class NeqSimLeachman {
 
     // 2) Check the name of that single component
     String componentName = phase.getComponent(0).getComponentName();
-    if (!"hydrogen".equalsIgnoreCase(componentName)) {
+    if (!"hydrogen".equalsIgnoreCase(componentName) && !"para-hydrogen".equalsIgnoreCase(componentName)
+        && !"ortho-hydrogen".equalsIgnoreCase(componentName)) {
       throw new IllegalArgumentException(
           "Leachman model requires 'hydrogen'. Found: " + componentName);
     }
