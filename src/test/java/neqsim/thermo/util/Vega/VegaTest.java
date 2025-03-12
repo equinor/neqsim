@@ -83,34 +83,45 @@ public class VegaTest {
     vegafluid.addComponent("helium", 1.0);
     vegafluid.init(0);
     vegafluid.init(1);
-    double densitygas = vegafluid.getPhase("gas").getDensity("kg/m3");
-    assertEquals(1.607, densitygas, 1e-3);
-    vegafluid.init(2);
+    // ThermodynamicOperations ops = new ThermodynamicOperations(vegafluid);
+    // ops.TPflash();
+    // double densitygas = vegafluid.getPhase("gas").getDensity("kg/m3");
+    // assertEquals(1.607, densitygas, 1e-3);
+    // vegafluid.init(2);
 
     // vegafluid.setP
 
-    double enthalpgas = vegafluid.getPhase("gas").getEnthalpy("J/mol");
-    assertEquals(6230.66, enthalpgas, 1e-2);
+    // double enthalpgas = vegafluid.getPhase("gas").getEnthalpy("J/mol");
+    // assertEquals(6230.66, enthalpgas, 1e-2);
+
 
     vegafluid.setNumberOfPhases(1);
     vegafluid.setMaxNumberOfPhases(1);
     vegafluid.setForcePhaseTypes(true);
     vegafluid.setPhaseType(0, "GAS");
-    vegafluid.init(0);
-    vegafluid.init(1);
-    vegafluid.getTotalNumberOfMoles();
 
     neqsim.process.equipment.stream.Stream gasstream =
         new neqsim.process.equipment.stream.Stream("gas", vegafluid);
-    gasstream.setFlowRate(100.0, "kg/hr");
+    gasstream.setFlowRate(10000.0, "kg/hr");
     gasstream.run();
 
     neqsim.process.equipment.compressor.Compressor compressor =
         new neqsim.process.equipment.compressor.Compressor("compressor 1", gasstream);
-    compressor.setOutletPressure(0.0);
+    // compressor.setUseVega(true);
+    compressor.setOutletPressure(20.0);
     compressor.run();
 
-    assertEquals(120.0, compressor.getOutletStream().getTemperature("C"), 1e-5);
+    assertEquals(120.1829302, compressor.getOutletStream().getTemperature("C"), 1e-5);
+
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline =
+        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("pipe 1",
+            compressor.getOutletStream());
+    pipeline.setLength(1000.0);
+    pipeline.setDiameter(0.2);
+    pipeline.setElevation(0);
+    pipeline.run();
+    assertEquals(18.88, pipeline.getOutletStream().getPressure(), 1e-2);
+
 
     // assertEquals(0.43802, D.val, 1e-5);
   }

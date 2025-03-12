@@ -75,10 +75,10 @@ public class SystemVegaEos extends SystemEos {
 
   /** {@inheritDoc} */
   @Override
-  public SystemGERG2004Eos clone() {
-    SystemGERG2004Eos clonedSystem = null;
+  public SystemVegaEos clone() {
+    SystemVegaEos clonedSystem = null;
     try {
-      clonedSystem = (SystemGERG2004Eos) super.clone();
+      clonedSystem = (SystemVegaEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
