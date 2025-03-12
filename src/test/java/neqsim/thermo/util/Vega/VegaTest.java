@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
+import neqsim.thermo.system.SystemInterface;
 
 public class VegaTest {
   private Vega Vega;
@@ -73,5 +74,44 @@ public class VegaTest {
     assertTrue(A.val != 0);
     assertEquals(1.005253888311987, Z.val, 1e-5);
 
+  }
+
+  @Test
+  void testThermoVega() {
+
+    SystemInterface vegafluid = new neqsim.thermo.system.SystemVegaEos(298.15, 10.0);
+    vegafluid.addComponent("helium", 1.0);
+    vegafluid.init(0);
+    vegafluid.init(1);
+    double densitygas = vegafluid.getPhase("gas").getDensity("kg/m3");
+    assertEquals(1.607, densitygas, 1e-3);
+    vegafluid.init(2);
+
+    // vegafluid.setP
+
+    double enthalpgas = vegafluid.getPhase("gas").getEnthalpy("J/mol");
+    assertEquals(6230.66, enthalpgas, 1e-2);
+
+    vegafluid.setNumberOfPhases(1);
+    vegafluid.setMaxNumberOfPhases(1);
+    vegafluid.setForcePhaseTypes(true);
+    vegafluid.setPhaseType(0, "GAS");
+    vegafluid.init(0);
+    vegafluid.init(1);
+    vegafluid.getTotalNumberOfMoles();
+
+    neqsim.process.equipment.stream.Stream gasstream =
+        new neqsim.process.equipment.stream.Stream("gas", vegafluid);
+    gasstream.setFlowRate(100.0, "kg/hr");
+    gasstream.run();
+
+    neqsim.process.equipment.compressor.Compressor compressor =
+        new neqsim.process.equipment.compressor.Compressor("compressor 1", gasstream);
+    compressor.setOutletPressure(0.0);
+    compressor.run();
+
+    assertEquals(120.0, compressor.getOutletStream().getTemperature("C"), 1e-5);
+
+    // assertEquals(0.43802, D.val, 1e-5);
   }
 }
