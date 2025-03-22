@@ -20,7 +20,6 @@ import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
 import neqsim.process.util.monitor.CompressorResponse;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.util.leachman.Leachman;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -292,6 +291,15 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public void run(UUID id) {
     thermoSystem = inStream.getThermoSystem().clone();
 
+    isActive(true);
+
+    if (inStream.getFlowRate("kg/hr") < getMinimumFlow()) {
+      isActive(false);
+      thermoSystem.setPressure(pressure, pressureUnit);
+      getOutletStream().setThermoSystem(thermoSystem);
+      return;
+    }
+
     if (Math.abs(pressure - thermoSystem.getPressure(pressureUnit)) < 1e-6
         && !compressorChart.isUseCompressorChart()) {
       thermoSystem.initProperties();
@@ -424,7 +432,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           double[] VegaProps;
           VegaProps = getThermoSystem().getPhase(0).getProperties_Vega();
           densOutIsentropic = getThermoSystem().getPhase(0).getDensity_Vega();
-          enthalpyOutIsentropic = 
+          enthalpyOutIsentropic =
               VegaProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
         }
         thermoSystem.setTemperature(outTemperature);
@@ -616,7 +624,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
             kappa = gergProps[14];
             z_inlet = gergProps[1];
           }
-          
+
           if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
             double[] LeachmanProps;
             LeachmanProps = getThermoSystem().getPhase(0).getProperties_Leachman();
@@ -1854,7 +1862,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * <p>isSolveSpeed.</p>
+   * <p>
+   * isSolveSpeed.
+   * </p>
    *
    * @return a boolean
    */
@@ -1863,7 +1873,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * <p>Setter for the field <code>solveSpeed</code>.</p>
+   * <p>
+   * Setter for the field <code>solveSpeed</code>.
+   * </p>
    *
    * @param solveSpeed a boolean
    */
@@ -1872,7 +1884,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * <p>isCalcPressureOut.</p>
+   * <p>
+   * isCalcPressureOut.
+   * </p>
    *
    * @return a boolean
    */
@@ -1881,7 +1895,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * <p>Setter for the field <code>calcPressureOut</code>.</p>
+   * <p>
+   * Setter for the field <code>calcPressureOut</code>.
+   * </p>
    *
    * @param calcPressureOut a boolean
    */

@@ -41,6 +41,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   public EnergyStream energyStream = new EnergyStream();
   private boolean isSetEnergyStream = false;
   protected boolean isSolved = true;
+  private boolean isActive = true;
+  private double minimumFlow = 1e-20;
 
   /**
    * <p>
@@ -299,4 +301,49 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public void run_step(UUID id) {}
+
+  /**
+   * <p>
+   * Getter for the field <code>minimumFlow</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getMinimumFlow() {
+    return minimumFlow;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>minimumFlow</code>.
+   * </p>
+   *
+   * @param minimumFlow a double
+   */
+  public void setMinimumFlow(double minimumFlow) {
+    this.minimumFlow = minimumFlow;
+  }
+
+
+  /**
+   * <p>
+   * Getter for the field <code>isActive</code>.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isActive() {
+    return isActive;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>isActive</code>.
+   * </p>
+   * 
+   * @param isActive a boolean
+   */
+  public void isActive(boolean isActive) {
+    this.isActive = isActive;
+  }
 }

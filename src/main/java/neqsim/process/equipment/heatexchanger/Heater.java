@@ -151,6 +151,21 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   @Override
   public void run(UUID id) {
     system = inStream.getThermoSystem().clone();
+    isActive(true);
+
+    if (inStream.getFlowRate("kg/hr") < getMinimumFlow()) {
+      isActive(false);
+      getOutletStream().setThermoSystem(system);
+      lastTemperature = inStream.getFluid().getTemperature();
+      lastPressure = inStream.getFluid().getPressure();
+      lastFlowRate = inStream.getFluid().getFlowRate("kg/hr");
+      lastDuty = getDuty();
+      lastOutPressure = pressureOut;
+      lastOutTemperature = temperatureOut;
+      lastPressureDrop = pressureDrop;
+      setCalculationIdentifier(id);
+      return;
+    }
     system.init(3);
     double oldH = system.getEnthalpy();
     if (isSetEnergyStream()) {

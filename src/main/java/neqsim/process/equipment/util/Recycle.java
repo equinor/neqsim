@@ -317,12 +317,14 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   @Override
   public void run(UUID id) {
     iterations++;
+    isActive(true);
     /*
      * if(firstTime || iterations>maxIterations) { firstTime=false; return; }
      */
     double enthalpy = 0.0;
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
     if (numberOfInputStreams == 1 && thermoSystem2.getFlowRate("kg/hr") < minimumFlow) {
+      isActive(false);
       mixedStream.setThermoSystem(thermoSystem2);
       setErrorCompositon(0.0);
       setErrorFlow(flowBalanceCheck());
@@ -340,6 +342,18 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       mixedStream.getThermoSystem().init(0);
 
       mixStream();
+
+      if (mixedStream.getFlowRate("kg/hr") < minimumFlow) {
+        isActive(false);
+        mixedStream.setThermoSystem(thermoSystem2);
+        setErrorCompositon(0.0);
+        setErrorFlow(flowBalanceCheck());
+        setErrorTemperature(temperatureBalanceCheck());
+        setErrorPressure(pressureBalanceCheck());
+        outletStream.setThermoSystem(mixedStream.getThermoSystem());
+        outletStream.setCalculationIdentifier(id);
+        return;
+      }
 
       setDownstreamProperties();
       try {
