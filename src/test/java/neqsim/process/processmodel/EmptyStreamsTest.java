@@ -113,9 +113,9 @@ public class EmptyStreamsTest extends neqsim.NeqSimTest {
 
     stream3.run();
 
-    stream3.getFluid().prettyPrint();
-    System.out.println("flow rate " + stream3.getFlowRate("kg/hr"));
-    System.out.println(recycle1.isActive());
+    // stream3.getFluid().prettyPrint();
+    // System.out.println("flow rate " + stream3.getFlowRate("kg/hr"));
+    // System.out.println(recycle1.isActive());
     operations.run();
 
   }
