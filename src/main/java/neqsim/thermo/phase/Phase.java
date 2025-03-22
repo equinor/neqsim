@@ -219,7 +219,11 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public void addMolesChemReac(int component, double dn, double totdn) {
-    if ((numberOfMolesInPhase + dn) / numberOfMolesInPhase < -1e-10) {
+    double numbmoles = numberOfMolesInPhase;
+    if (numbmoles < 0.0001) {
+      numbmoles = 1;
+    }
+    if ((numberOfMolesInPhase + dn) / numbmoles < -1e-10) {
       String msg = "will lead to negative number of moles in phase." + (numberOfMolesInPhase + dn);
       neqsim.util.exception.InvalidInputException ex =
           new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
@@ -2259,8 +2263,9 @@ public abstract class Phase implements PhaseInterface {
           compNames.append(", ");
         }
       }
-      throw new IllegalArgumentException("Leachman model only works for pure hydrogen streams. Found components: " 
-                                           + compNames.toString());
+      throw new IllegalArgumentException(
+          "Leachman model only works for pure hydrogen streams. Found components: "
+              + compNames.toString());
     }
 
     // Retrieve the component name from the current phase
@@ -2274,7 +2279,8 @@ public abstract class Phase implements PhaseInterface {
     } else if (compName.equalsIgnoreCase("hydrogen")) {
       return getDensity_Leachman("normal");
     } else {
-      throw new IllegalArgumentException("Leachman model only works for hydrogen. Found: " + compName);
+      throw new IllegalArgumentException(
+          "Leachman model only works for hydrogen. Found: " + compName);
     }
   }
 
@@ -2302,8 +2308,9 @@ public abstract class Phase implements PhaseInterface {
           compNames.append(", ");
         }
       }
-      throw new IllegalArgumentException("Leachman model only works for pure hydrogen streams. Found components: " 
-                                           + compNames.toString());
+      throw new IllegalArgumentException(
+          "Leachman model only works for pure hydrogen streams. Found components: "
+              + compNames.toString());
     }
 
     // Retrieve the component name from the current phase
@@ -2317,10 +2324,11 @@ public abstract class Phase implements PhaseInterface {
     } else if (compName.equalsIgnoreCase("hydrogen")) {
       return getProperties_Leachman("normal");
     } else {
-      throw new IllegalArgumentException("Leachman model only works for hydrogen. Found: " + compName);
+      throw new IllegalArgumentException(
+          "Leachman model only works for hydrogen. Found: " + compName);
     }
   }
-  
+
 
   /** {@inheritDoc} */
   @Override

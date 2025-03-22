@@ -208,7 +208,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     double enthalpy = 0.0;
     // ((Stream) streams.get(0)).getThermoSystem().display();
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
-
+    isActive(true);
     // System.out.println("total number of moles " +
     // thermoSystem2.getTotalNumberOfMoles());
     mixedStream.setThermoSystem(thermoSystem2);
@@ -219,36 +219,46 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       mixedStream.getThermoSystem().init(0);
 
       mixStream();
-      mixedStream.setPressure(lowestPressure);
-      enthalpy = calcMixStreamEnthalpy();
-      // System.out.println("temp guess " + guessTemperature());
-      if (isSetOutTemperature) {
-        mixedStream.setTemperature(outTemperature, "K");
-      } else {
-        mixedStream.getThermoSystem().setTemperature(guessTemperature());
-      }
-      // System.out.println("filan temp " + mixedStream.getTemperature());
-
-      if (isSetOutTemperature) {
-        if (!Double.isNaN(getOutTemperature())) {
-          mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+      if (mixedStream.getFlowRate("kg/hr") > getMinimumFlow()) {
+        mixedStream.setPressure(lowestPressure);
+        enthalpy = calcMixStreamEnthalpy();
+        // System.out.println("temp guess " + guessTemperature());
+        if (isSetOutTemperature) {
+          mixedStream.setTemperature(outTemperature, "K");
+        } else {
+          mixedStream.getThermoSystem().setTemperature(guessTemperature());
         }
-        testOps.TPflash();
-        mixedStream.getThermoSystem().init(2);
-      } else {
-        try {
-          testOps.PHflash(enthalpy, 0);
-        } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
+        // System.out.println("filan temp " + mixedStream.getTemperature());
+
+        if (isSetOutTemperature) {
           if (!Double.isNaN(getOutTemperature())) {
             mixedStream.getThermoSystem().setTemperature(getOutTemperature());
           }
           testOps.TPflash();
+          mixedStream.getThermoSystem().init(2);
+        } else {
+          try {
+            testOps.PHflash(enthalpy, 0);
+          } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            if (!Double.isNaN(getOutTemperature())) {
+              mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+            }
+            testOps.TPflash();
+          }
         }
+      } else {
+        isActive(false);
       }
-    } else {
-      testOps.TPflash();
-      mixedStream.getThermoSystem().init(2);
+    } else
+
+    {
+      if (mixedStream.getFlowRate("kg/hr") > getMinimumFlow()) {
+        testOps.TPflash();
+        mixedStream.getThermoSystem().init(2);
+      } else {
+        isActive(false);
+      }
     }
 
     // System.out.println("enthalpy: " +
