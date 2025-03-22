@@ -42,7 +42,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   private boolean isSetEnergyStream = false;
   protected boolean isSolved = true;
   private boolean isActive = true;
-  private double minimumFlow = 1e-10;
+  private double minimumFlow = 1e-20;
 
   /**
    * <p>
