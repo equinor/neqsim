@@ -190,8 +190,10 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   public double calcMixStreamEnthalpy() {
     double enthalpy = 0;
     for (int k = 0; k < streams.size(); k++) {
-      streams.get(k).getThermoSystem().init(3);
-      enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
+      if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
+        streams.get(k).getThermoSystem().init(3);
+        enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
+      }
     }
     return enthalpy;
   }
@@ -215,9 +217,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     // thermoSystem2.display();
     ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
     if (streams.size() >= 2) {
-      mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().init(0);
-
       mixStream();
       if (mixedStream.getFlowRate("kg/hr") > getMinimumFlow()) {
         mixedStream.setPressure(lowestPressure);
