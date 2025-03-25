@@ -10,6 +10,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessModule;
 import neqsim.process.processmodel.ProcessModuleBaseClass;
 import neqsim.process.processmodel.ProcessSystem;
@@ -27,6 +28,7 @@ public class Report {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Report.class);
   ProcessSystem process = null;
+  ProcessModel processmodel = null;
   ProcessEquipmentBaseClass processEquipment = null;
   SystemInterface fluid = null;
 
@@ -39,6 +41,17 @@ public class Report {
    */
   public Report(ProcessSystem process) {
     this.process = process;
+  }
+
+  /**
+   * <p>
+   * Constructor for Report.
+   * </p>
+   *
+   * @param processmodel a {@link neqsim.process.processmodel.ProcessModel} object
+   */
+  public Report(ProcessModel processmodel) {
+    this.processmodel = processmodel;
   }
 
   /**
@@ -108,7 +121,18 @@ public class Report {
     if (fluid != null) {
       json_reports.put(fluid.getFluidName(), fluid.toJson());
     }
-
+    if (processmodel != null) {
+      for (ProcessSystem process : processmodel.getAllProcesses()) {
+        JsonObject processJson = new JsonObject();
+        for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+          processJson.add(unit.getName(), JsonParser.parseString(unit.toJson()));
+          // System.out.println("unit " + unit.getName() + " " + unit.toJson());
+        }
+        // System.out.println(processJson.toString());
+        json_reports.put(process.getName(), processJson.toString());
+      }
+    }
+    // System.out.println(json_reports.toString());
     // Create a JsonObject to hold the parsed nested JSON objects
     JsonObject finalJsonObject = new JsonObject();
 
@@ -116,7 +140,7 @@ public class Report {
     for (Map.Entry<String, String> entry : json_reports.entrySet()) {
       // Parse each value as a separate JSON object using the static parseString method
       try {
-        String s = entry.getValue();
+        String s = entry.getValue() instanceof String ? (String) entry.getValue() : null;
         if (s == null) {
           // Not necessary to log that an entry is null
           continue;
