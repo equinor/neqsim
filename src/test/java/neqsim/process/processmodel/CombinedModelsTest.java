@@ -9,6 +9,7 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -130,5 +131,8 @@ public class CombinedModelsTest {
         ((Compressor) fullProcess.get("compressor process").getUnit("Compressor1"))
             .getOutletStream().getTemperature("C"),
         0.1);
+
+    Report reporter = new Report(fullProcess);
+    Assertions.assertTrue(fullProcess.getReport_json().equals(reporter.generateJsonReport()));
   }
 }
