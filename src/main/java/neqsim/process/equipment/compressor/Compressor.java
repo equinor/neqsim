@@ -69,7 +69,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   private boolean useGERG2008 = false;
   private boolean useLeachman = false;
   private boolean useVega = false;
-
+  private boolean limitSpeed = false;
 
   private String pressureUnit = "bara";
   private String polytropicMethod = "detailed";
@@ -589,8 +589,24 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
               / getPolytropicEfficiency() * thermoSystem.getTotalNumberOfMoles();
           // Check if speed is within bounds
           if (currentSpeed < minSpeed || currentSpeed > maxSpeed) {
-            throw new IllegalArgumentException(
-                "Speed out of bounds during Newton-Raphson iteration.");
+            if (limitSpeed) {
+              setSolveSpeed(false);
+              setCalcPressureOut(true);
+              if (currentSpeed > maxSpeed) {
+                setSpeed(maxSpeed);
+              } else if (currentSpeed < minSpeed) {
+                setSpeed(minSpeed);
+              }
+              run();
+              setSolveSpeed(true);
+              setCalcPressureOut(false);
+              return;
+            } else {
+              throw new IllegalArgumentException(
+                  "Speed out of bounds during Newton-Raphson iteration.");
+            }
+            // throw new IllegalArgumentException(
+            // "Speed out of bounds during Newton-Raphson iteration.");
           }
 
           // Check for convergence
@@ -687,7 +703,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
       }
     }
 
-    if (usePolytropicCalc) {
+    if (usePolytropicCalc)
+
+    {
       if (powerSet) {
         double hout = hinn * (1 - 0 + fractionAntiSurge) + dH;
         thermoSystem.setPressure(pressure, pressureUnit);
@@ -1904,4 +1922,23 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public void setCalcPressureOut(boolean calcPressureOut) {
     this.calcPressureOut = calcPressureOut;
   }
+
+  /**
+   * Checks if the compressor speed is limited.
+   *
+   * @return {@code true} if the compressor speed is limited, {@code false} otherwise.
+   */
+  public boolean isLimitSpeed() {
+    return limitSpeed;
+  }
+
+  /**
+   * Sets whether the compressor speed should be limited.
+   *
+   * @param limitSpeed {@code true} to limit the compressor speed, {@code false} otherwise.
+   */
+  public void setLimitSpeed(boolean limitSpeed) {
+    this.limitSpeed = limitSpeed;
+  }
+
 }
