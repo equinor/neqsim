@@ -383,4 +383,92 @@ public class CompressorChartTest {
     org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class)
         .debug("surge flow rate " + comp1.getSurgeFlowRate());
   }
+
+  @Test
+  public void runCurveTestMaxMinSpeed() {
+    SystemInterface testFluid = new SystemPrEos(273.15 + 29.96, 75.73);
+
+    testFluid.addComponent("nitrogen", 0.7823);
+    testFluid.addComponent("CO2", 1.245);
+    testFluid.addComponent("methane", 88.4681);
+    testFluid.addComponent("ethane", 4.7652);
+    testFluid.addComponent("propane", 2.3669);
+    testFluid.addComponent("i-butane", 0.3848);
+    testFluid.addComponent("n-butane", 0.873);
+    testFluid.setMixingRule("classic");
+
+    Stream stream_1 = new Stream("Stream1", testFluid);
+    stream_1.setTemperature(29.96, "C");
+    stream_1.setPressure(75.73, "bara");
+    stream_1.setFlowRate(559401.4, "kg/hr");
+    stream_1.run();
+
+    Compressor comp1 = new Compressor("compressor 1", stream_1);
+    // comp1.setCompressorChartType("interpolate and extrapolate");
+    comp1.setUsePolytropicCalc(true);
+    comp1.setPolytropicEfficiency(0.85);
+    comp1.setSpeed(9000);
+    double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};
+
+    double[] speed = new double[] {7000, 7500, 8000, 8500, 9000, 9500, 9659, 10000, 10500};
+
+    double[][] flow = new double[][] {{4512.7, 5120.8, 5760.9, 6401, 6868.27},
+        {4862.47, 5486.57, 6172.39, 6858.21, 7550.89},
+        {5237.84, 5852.34, 6583.88, 7315.43, 8046.97, 8266.43},
+        {5642.94, 6218.11, 6995.38, 7772.64, 8549.9, 9000.72},
+        {6221.77, 6583.88, 7406.87, 8229.85, 9052.84, 9768.84},
+        {6888.85, 6949.65, 7818.36, 8687.07, 9555.77, 10424.5, 10546.1},
+        {7109.83, 7948.87, 8832.08, 9715.29, 10598.5, 10801.6},
+        {7598.9, 8229.85, 9144.28, 10058.7, 10973.1, 11338.9},
+        {8334.1, 8641.35, 9601.5, 10561.6, 11521.8, 11963.5}};
+
+    double[][] head = new double[][] {{61.885, 59.639, 56.433, 52.481, 49.132},
+        {71.416, 69.079, 65.589, 61.216, 55.858}, {81.621, 79.311, 75.545, 70.727, 64.867, 62.879,},
+        {92.493, 90.312, 86.3, 81.079, 74.658, 70.216},
+        {103.512, 102.073, 97.83, 92.254, 85.292, 77.638},
+        {114.891, 114.632, 110.169, 104.221, 96.727, 87.002, 85.262},
+        {118.595, 114.252, 108.203, 100.55, 90.532, 87.54},
+        {126.747, 123.376, 117.113, 109.056, 98.369, 92.632},
+        {139.082, 137.398, 130.867, 122.264, 110.548, 103.247},};
+    double[][] polyEff = new double[][] {{78.3, 78.2, 77.2, 75.4, 73.4},
+
+        {78.3, 78.3, 77.5, 75.8, 73}, {78.2, 78.4, 77.7, 76.1, 73.5, 72.5},
+        {78.2, 78.4, 77.9, 76.4, 74, 71.9}, {78.3, 78.4, 78, 76.7, 74.5, 71.2},
+        {78.3, 78.4, 78.1, 77, 74.9, 71.3, 70.5}, {78.4, 78.1, 77.1, 75, 71.4, 70.2},
+        {78.3, 78.2, 77.2, 75.2, 71.7, 69.5}, {78.2, 78.2, 77.3, 75.5, 72.2, 69.6}};
+
+    comp1.getCompressorChart().setCurves(chartConditions, speed, flow, head, polyEff);
+    comp1.getCompressorChart().setHeadUnit("kJ/kg");
+
+    double[] surgeflow =
+        new double[] {4512.7, 4862.47, 5237.84, 5642.94, 6221.77, 6888.85, 7109.83, 7598.9};
+    double[] surgehead =
+        new double[] {61.885, 71.416, 81.621, 92.493, 103.512, 114.891, 118.595, 126.747};
+    comp1.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeflow, surgehead);
+    // comp1.getAntiSurge().setActive(true);
+    comp1.getAntiSurge().setSurgeControlFactor(1.0);
+    comp1.getCompressorChart().setUseCompressorChart(true);
+    comp1.setOutletPressure(240.0, "bara");
+    comp1.setSolveSpeed(true);
+    comp1.setLimitSpeed(true);
+    comp1.setMaximumSpeed(10500);
+    comp1.setMinimumSpeed(7000);
+    comp1.run();
+
+    Assertions.assertEquals(215.443922, comp1.getOutletStream().getPressure("bara"), 0.1);
+
+    comp1.setOutletPressure(100.0, "bara");
+    comp1.run();
+
+    Assertions.assertEquals(106.1630, comp1.getOutletStream().getPressure("bara"), 0.1);
+
+    comp1.setOutletPressure(130.0, "bara");
+    comp1.run();
+
+    Assertions.assertEquals(130.0, comp1.getOutletStream().getPressure("bara"), 0.1);
+    Assertions.assertEquals(8067.65882, comp1.getSpeed(), 0.1);
+
+
+
+  }
 }
