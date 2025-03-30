@@ -492,10 +492,27 @@ public class TPmultiflash extends TPflash {
           // df.print(10, 10);
           SimpleMatrix dx = null;
           try {
-            dx = df.plus(identitytimesConst).solve(f).negative();
+            // Check if the determinant is close to zero
+            double determinant = df.determinant();
+            if (Math.abs(determinant) < 1e-10) {
+              logger.warn("Matrix is nearly singular. Determinant: " + determinant);
+              // Add a small regularization term to stabilize the solution
+              dx = df.plus(identitytimesConst.scale(1e-6)).solve(f).negative();
+            } else {
+              dx = df.plus(identitytimesConst).solve(f).negative();
+            }
           } catch (Exception e) {
-            logger.error(e.getMessage());
-            dx = df.plus(identitytimesConst.scale(0.5)).solve(f).negative();
+            logger.error("Error solving matrix equation: " + e.getMessage());
+            logger.debug("Attempting fallback with scaled regularization...");
+            try {
+              // Fallback: Add a larger regularization term and retry
+              dx = df.plus(identitytimesConst.scale(0.2)).solve(f).negative();
+            } catch (Exception ex) {
+              logger.error("Fallback matrix solve failed: " + ex.getMessage());
+              logger.warn("Setting dx to zero matrix as a fallback.");
+              // Set dx to a zero matrix
+              dx = new SimpleMatrix(f.numRows(), f.numCols());
+            }
           }
 
           // dx.print(10, 10);
@@ -843,9 +860,25 @@ public class TPmultiflash extends TPflash {
           // df.print(10, 10);
           SimpleMatrix dx = null;
           try {
-            dx = df.plus(identitytimesConst).solve(f).negative();
+            // Check if the determinant is close to zero
+            double determinant = df.determinant();
+            if (Math.abs(determinant) < 1e-10) {
+              logger.warn("Matrix is nearly singular. Determinant: " + determinant);
+              // Add a small regularization term to stabilize the solution
+              dx = df.plus(identitytimesConst.scale(1e-6)).solve(f).negative();
+            } else {
+              dx = df.plus(identitytimesConst).solve(f).negative();
+            }
           } catch (Exception e) {
-            dx = df.plus(identitytimesConst.scale(0.5)).solve(f).negative();
+            logger.error("Error solving matrix equation: " + e.getMessage());
+            logger.debug("Attempting fallback with scaled regularization...");
+            try {
+              // Fallback: Add a larger regularization term and retry
+              dx = df.plus(identitytimesConst.scale(0.5)).solve(f).negative();
+            } catch (Exception ex) {
+              logger.error("Fallback matrix solve failed: " + ex.getMessage());
+              throw new RuntimeException("Matrix solve failed after fallback attempts", ex);
+            }
           }
 
           // dx.print(10, 10);
@@ -1174,7 +1207,29 @@ public class TPmultiflash extends TPflash {
           }
           // f.print(10, 10);
           // df.print(10, 10);
-          SimpleMatrix dx = df.plus(identitytimesConst).solve(f).negative();
+          SimpleMatrix dx = null;
+          try {
+            // Check if the determinant is close to zero
+            double determinant = df.determinant();
+            if (Math.abs(determinant) < 1e-10) {
+              logger.warn("Matrix is nearly singular. Determinant: " + determinant);
+              // Add a small regularization term to stabilize the solution
+              dx = df.plus(identitytimesConst.scale(1e-6)).solve(f).negative();
+            } else {
+              dx = df.plus(identitytimesConst).solve(f).negative();
+            }
+          } catch (Exception e) {
+            logger.error("Error solving matrix equation: " + e.getMessage());
+            logger.debug("Attempting fallback with scaled regularization...");
+            try {
+              // Fallback: Add a larger regularization term and retry
+              dx = df.plus(identitytimesConst.scale(0.5)).solve(f).negative();
+            } catch (Exception ex) {
+              logger.error("Fallback matrix solve failed: " + ex.getMessage());
+              throw new RuntimeException("Matrix solve failed after fallback attempts", ex);
+            }
+          }
+
           // dx.print(10, 10);
 
           for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
