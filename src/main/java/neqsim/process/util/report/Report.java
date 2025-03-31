@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
@@ -121,15 +122,46 @@ public class Report {
     if (fluid != null) {
       json_reports.put(fluid.getFluidName(), fluid.toJson());
     }
+
     if (processmodel != null) {
       for (ProcessSystem process : processmodel.getAllProcesses()) {
         JsonObject processJson = new JsonObject();
+
         for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-          processJson.add(unit.getName(), JsonParser.parseString(unit.toJson()));
-          // System.out.println("unit " + unit.getName() + " " + unit.toJson());
+          try {
+            String unitJson = unit.toJson();
+            String unitName = unit.getName() != null ? unit.getName() : "UnnamedUnit";
+
+            if (unitJson != null && !unitJson.isEmpty()) {
+              try {
+                JsonElement parsedJson = JsonParser.parseString(unitJson);
+                processJson.add(unitName, parsedJson);
+              } catch (Exception parseEx) {
+                logger.error("Failed to parse JSON for unit: " + unitName, parseEx);
+              }
+            } else {
+              logger.warn("unit.toJson() returned null or empty for unit: " + unitName);
+            }
+          } catch (Exception unitEx) {
+            logger.error("Error handling unit: " + unit.getName(), unitEx);
+          }
         }
-        // System.out.println(processJson.toString());
-        json_reports.put(process.getName(), processJson.toString());
+
+        if (processJson.size() == 0) {
+          logger.warn("processJson is empty for process: " + process.getName());
+        }
+
+        // Safely serialize the JSON using Gson with support for NaN and Infinity
+        try {
+          Gson prettyGson =
+              new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+
+          String jsonString = prettyGson.toJson(processJson);
+          json_reports.put(process.getName(), jsonString);
+        } catch (Exception ex) {
+          logger.error(
+              "Error converting final JSON object to string for process: " + process.getName(), ex);
+        }
       }
     }
     // System.out.println(json_reports.toString());
