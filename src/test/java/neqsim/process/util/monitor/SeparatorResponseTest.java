@@ -42,6 +42,7 @@ public class SeparatorResponseTest {
     hx1.setFeedStream(1, separator3phase.getOilOutStream());
 
     Pump pump1 = new Pump("pump", separator3phase.getOilOutStream());
+    pump1.setTagName("20PA-001");
     pump1.setOutletPressure(100.0);
 
     processOps.add(inletStream);
@@ -59,5 +60,6 @@ public class SeparatorResponseTest {
     Double reldens = jsonObject.getAsJsonObject("feed").getAsJsonObject("properties")
         .getAsJsonObject("oil").getAsJsonObject("relative density").get("value").getAsDouble();
     assertEquals(0.688292615281, reldens, 0.01);
+
   }
 }

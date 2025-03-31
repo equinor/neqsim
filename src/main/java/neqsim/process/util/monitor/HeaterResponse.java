@@ -10,8 +10,7 @@ import neqsim.process.equipment.heatexchanger.Heater;
  * @author asmund
  * @version $Id: $Id
  */
-public class HeaterResponse {
-  public String name = "test";
+public class HeaterResponse extends BaseResponse {
 
   public Double feedTemperature;
   public Double dischargeTemperature;
@@ -25,7 +24,7 @@ public class HeaterResponse {
    * @param inputHeater a {@link neqsim.process.equipment.heatexchanger.Heater} object
    */
   public HeaterResponse(Heater inputHeater) {
-    name = inputHeater.getName();
+    super(inputHeater);
 
     feedTemperature = inputHeater.getInletStream().getTemperature("C");
     dischargeTemperature = inputHeater.getOutletStream().getTemperature("C");

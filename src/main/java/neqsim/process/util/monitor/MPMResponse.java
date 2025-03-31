@@ -10,8 +10,7 @@ import neqsim.process.measurementdevice.MultiPhaseMeter;
  * @author asmund
  * @version $Id: $Id
  */
-public class MPMResponse {
-  public String name;
+public class MPMResponse extends BaseResponse {
   public Double massFLow, GOR, GOR_std, gasDensity, oilDensity, waterDensity;
 
   /**
@@ -22,7 +21,7 @@ public class MPMResponse {
    * @param inputMPM a {@link neqsim.process.measurementdevice.MultiPhaseMeter} object
    */
   public MPMResponse(MultiPhaseMeter inputMPM) {
-    name = inputMPM.getName();
+    super(inputMPM);
     massFLow = inputMPM.getMeasuredValue();
     GOR = inputMPM.getMeasuredValue("GOR", "");
     GOR_std = inputMPM.getMeasuredValue("GOR_std", "");
