@@ -549,7 +549,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       ops.bubblePointPressureFlash(false);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
-      return null;
+      return 0.0;
     }
     return localSyst.getPressure();
   }
@@ -564,7 +564,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       ops.bubblePointPressureFlash(false);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
-      return null;
+      return 0.0;
     }
     return localSyst.getPressure(returnUnit);
   }
@@ -579,7 +579,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       standard.calculate();
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
-      return null;
+      return 0.0;
     }
     return standard.getValue("RVP", returnUnit);
   }
@@ -596,7 +596,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       standard.calculate();
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
-      return null;
+      return 0.0;
     }
     return standard.getValue("RVP", returnUnit);
   }
