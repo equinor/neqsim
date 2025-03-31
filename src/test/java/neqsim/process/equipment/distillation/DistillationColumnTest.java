@@ -307,6 +307,8 @@ public class DistillationColumnTest {
      * System.out .println("Tray 2 temperature " + (distillationColumn.getTray(2).getTemperature())
      * + " C");
      */
+
+     distillationColumn.toJson();
   }
 
 }

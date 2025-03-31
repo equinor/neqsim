@@ -8,12 +8,14 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.monitor.DistillationColumnResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -59,8 +61,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double err = 1.0e10;
 
   /**
-   * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed streams per tray number. This
-   * allows multiple feeds to the same tray.
+   * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed streams per tray number.
+   * This allows multiple feeds to the same tray.
    */
   private Map<Integer, List<StreamInterface>> feedStreams = new HashMap<>();
 
@@ -648,4 +650,32 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     System.out.println("Liquid out:");
     column.getLiquidOutStream().getThermoSystem().display();
   }
+
+  /**
+   * Calculates the total number of sections in the distillation column. The total number of
+   * sections is determined by adding the number of trays to any additional sections contributed by
+   * the presence of a reboiler and/or a condenser.
+   *
+   * @return the total number of sections in the distillation column, including trays, reboiler (if
+   *         present), and condenser (if present).
+   */
+  public int getNumberOfSections() {
+
+    return numberOfTrays;
+  }
+
+  public boolean isHasReboiler() {
+    return hasReboiler;
+  }
+
+  public boolean isHasCondenser() {
+    return hasCondenser;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new DistillationColumnResponse(this));
+  }
+
 }
