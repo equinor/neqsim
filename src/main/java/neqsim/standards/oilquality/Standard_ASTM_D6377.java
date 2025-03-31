@@ -93,8 +93,9 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     this.thermoOps = new ThermodynamicOperations(thermoSystem);
     try {
       this.thermoOps.bubblePointPressureFlash(false);
-    } catch (Exception ex) {
+    } catch (IsNaNException ex) {
       logger.error(ex.getMessage(), ex);
+      return;
     }
 
     TVP = this.thermoSystem.getPressure();
@@ -147,13 +148,11 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   public double getValue(String returnParameter, String returnUnit) {
     if (returnParameter == "RVP") {
       double RVPlocal = getValue("RVP");
-      neqsim.util.unit.PressureUnit presConversion =
-          new neqsim.util.unit.PressureUnit(RVPlocal, "bara");
+      neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(RVPlocal, "bara");
       return presConversion.getValue(returnUnit);
     }
     if (returnParameter == "TVP") {
-      neqsim.util.unit.PressureUnit presConversion =
-          new neqsim.util.unit.PressureUnit(getValue("TVP"), "bara");
+      neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(getValue("TVP"), "bara");
       return presConversion.getValue(returnUnit);
     } else {
       return RVP;
@@ -191,12 +190,11 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    * setReferenceTemperature.
    * </p>
    *
-   * @param refTemp a double
+   * @param refTemp     a double
    * @param refTempUnit a {@link java.lang.String} object
    */
   public void setReferenceTemperature(double refTemp, String refTempUnit) {
-    neqsim.util.unit.TemperatureUnit tempConversion =
-        new neqsim.util.unit.TemperatureUnit(refTemp, refTempUnit);
+    neqsim.util.unit.TemperatureUnit tempConversion = new neqsim.util.unit.TemperatureUnit(refTemp, refTempUnit);
     referenceTemperature = tempConversion.getValue(refTemp, refTempUnit, "C");
   }
 
