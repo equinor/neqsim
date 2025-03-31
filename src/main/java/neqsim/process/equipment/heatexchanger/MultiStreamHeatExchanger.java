@@ -11,9 +11,11 @@ import java.util.List;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.conditionmonitor.ConditionMonitorSpecifications;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.monitor.MultiStreamHeatExchangerResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -60,6 +62,8 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   private double deltaT = 1.0;
   int MAX_ITERATIONS = 100;
   int iterations = 0;
+
+
 
   /**
    * Constructor for MultiStreamHeatExchanger.
@@ -369,9 +373,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    // return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-    // .toJson(new HXResponse(this));
-    return super.toJson();
+    return new GsonBuilder().create().toJson(new MultiStreamHeatExchangerResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -681,5 +683,33 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
    */
   public void setTemperatureApproach(double temperatureApproach) {
     this.temperatureApproach = temperatureApproach;
+  }
+
+  /**
+   * Returns the number of feed streams connected to the heat exchanger.
+   *
+   * @return the number of input streams.
+   */
+  public int numerOfFeedStreams() {
+    return inStreams.size();
+  }
+
+  /**
+   * Calculates the heat duty for a specified stream in the multi-stream heat exchanger. The heat
+   * duty is determined as the difference in enthalpy between the outlet and inlet streams for the
+   * given stream index.
+   *
+   * @param streamNumber the index of the stream for which the heat duty is to be calculated. Must
+   *        be less than the total number of input streams.
+   * @return the heat duty (in appropriate energy units) for the specified stream in W
+   * @throws IndexOutOfBoundsException if the specified stream index is out of bounds.
+   */
+  public double getDuty(int streamNumber) {
+    if (streamNumber < inStreams.size()) {
+      return outStreams.get(streamNumber).getThermoSystem().getEnthalpy()
+          - inStreams.get(streamNumber).getThermoSystem().getEnthalpy();
+    } else {
+      throw new IndexOutOfBoundsException("Stream index out of bounds.");
+    }
   }
 }

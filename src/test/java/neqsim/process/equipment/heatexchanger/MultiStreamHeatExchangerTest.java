@@ -158,5 +158,7 @@ public class MultiStreamHeatExchangerTest {
 
     assertEquals(-26.931795168, separator2.getFluid().getTemperature("C"), 1e-3);
     assertEquals(17.37650429489, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
+
+    heatEx.toJson();
   }
 }
