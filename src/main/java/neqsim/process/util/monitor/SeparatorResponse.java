@@ -11,8 +11,7 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
  * @author asmund
  * @version $Id: $Id
  */
-public class SeparatorResponse {
-  public String name;
+public class SeparatorResponse extends BaseResponse {
   public Double gasLoadFactor;
   public StreamResponse feed, gas, liquid, oil, water;
 
@@ -21,11 +20,11 @@ public class SeparatorResponse {
    * Constructor for SeparatorResponse.
    * </p>
    *
-   * @param inputSeparator a
-   *        {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object
+   * @param inputSeparator a {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object
    */
   public SeparatorResponse(ThreePhaseSeparator inputSeparator) {
-    name = inputSeparator.getName();
+    super(inputSeparator);
+    tagName = inputSeparator.getTagName();
     gasLoadFactor = inputSeparator.getGasLoadFactor();
 
     feed = new StreamResponse(inputSeparator.getFeedStream());
@@ -45,8 +44,7 @@ public class SeparatorResponse {
    * Constructor for SeparatorResponse.
    * </p>
    *
-   * @param inputSeparator a {@link neqsim.process.equipment.separator.Separator}
-   *        object
+   * @param inputSeparator a {@link neqsim.process.equipment.separator.Separator} object
    */
   public SeparatorResponse(Separator inputSeparator) {
     name = inputSeparator.getName();

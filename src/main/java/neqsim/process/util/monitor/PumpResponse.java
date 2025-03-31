@@ -10,8 +10,7 @@ import neqsim.process.equipment.pump.Pump;
  * @author asmund
  * @version $Id: $Id
  */
-public class PumpResponse {
-  public String name = "test";
+public class PumpResponse extends BaseResponse {
 
   public Double suctionTemperature;
   public Double dischargeTemperature;
@@ -38,7 +37,7 @@ public class PumpResponse {
    * @param inputPump a {@link neqsim.process.equipment.pump.Pump} object
    */
   public PumpResponse(Pump inputPump) {
-    name = inputPump.getName();
+    super(inputPump);
     molarMass = inputPump.getInletStream().getFluid().getMolarMass();
     suctionMassDensity = inputPump.getInletStream().getFluid().getDensity("kg/m3");
     dischargeMassDensity = inputPump.getOutletStream().getFluid().getDensity("kg/m3");

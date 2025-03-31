@@ -11,8 +11,7 @@ import neqsim.process.equipment.valve.ValveInterface;
  * @author asmund
  * @version $Id: $Id
  */
-public class ValveResponse {
-  public String name;
+public class ValveResponse extends BaseResponse {
   public ArrayList<String[]> data = new ArrayList<String[]>();
 
   /**
@@ -23,8 +22,7 @@ public class ValveResponse {
    * @param valve a {@link neqsim.process.equipment.valve.ValveInterface} object
    */
   public ValveResponse(ValveInterface valve) {
-    name = valve.getName();
-
+    super(valve);
     data.add(new String[] {"outlet temperature",
         Double.toString(valve.getOutletStream()
             .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),

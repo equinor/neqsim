@@ -14,10 +14,9 @@ import neqsim.standards.gasquality.Standard_ISO6976;
  * @author asmund
  * @version $Id: $Id
  */
-public class StreamResponse {
+public class StreamResponse extends BaseResponse {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(StreamResponse.class);
-  public String name;
   public HashMap<String, HashMap<String, Value>> properties =
       new HashMap<String, HashMap<String, Value>>();
   public HashMap<String, HashMap<String, Value>> conditions =
@@ -33,7 +32,7 @@ public class StreamResponse {
    * @param inputStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public StreamResponse(StreamInterface inputStream) {
-    name = inputStream.getName();
+    super(inputStream);
 
     HashMap<String, Value> newdata = new HashMap<String, Value>();
     newdata.put("temperature",
