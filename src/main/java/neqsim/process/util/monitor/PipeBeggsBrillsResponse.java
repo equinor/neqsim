@@ -28,7 +28,7 @@ public class PipeBeggsBrillsResponse extends BaseResponse {
    * Constructor for PumpResponse.
    * </p>
    *
-   * @param inputPump a {@link neqsim.process.equipment.pump.Pump} object
+   * @param pipe
    */
   public PipeBeggsBrillsResponse(PipeBeggsAndBrills pipe) {
     super(pipe);
