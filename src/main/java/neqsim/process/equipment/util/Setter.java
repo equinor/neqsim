@@ -1,7 +1,9 @@
 package neqsim.process.equipment.util;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,15 +13,11 @@ import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
-import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
- * SetPoint class.
+ * Setter class.
  * </p>
- *
- * @author Even Solbraa
- * @version $Id: $Id
  */
 public class Setter extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */
@@ -30,14 +28,12 @@ public class Setter extends ProcessEquipmentBaseClass {
   // Declare targetEquipment as a list of ProcessEquipmentInterface
   private List<ProcessEquipmentInterface> targetEquipment = new ArrayList<>();
 
-  // New fields
-  private String type;
-  private String unit;
-  private double value;
+  // Store multiple parameters
+  private List<Map<String, Object>> parameters = new ArrayList<>();
 
   /**
    * <p>
-   * Constructor for SetPoint.
+   * Constructor for Setter.
    * </p>
    */
   @Deprecated
@@ -47,7 +43,7 @@ public class Setter extends ProcessEquipmentBaseClass {
 
   /**
    * <p>
-   * Constructor for SetPoint.
+   * Constructor for Setter.
    * </p>
    *
    * @param name a {@link java.lang.String} object
@@ -76,52 +72,27 @@ public class Setter extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Get the list of target equipment.
-   *
-   * @return a {@link java.util.List} of {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   */
-  public List<ProcessEquipmentInterface> getTargetEquipment() {
-    return targetEquipment;
-  }
-
-  /**
-   * Common setter for type, unit, and value.
+   * Add a parameter to the list of parameters.
    *
    * @param type a {@link java.lang.String} object representing the type
    * @param unit a {@link java.lang.String} object representing the unit
    * @param value a {@link double} representing the value
    */
-  public void setParameter(String type, String unit, double value) {
-    this.type = type;
-    this.unit = unit;
-    this.value = value;
+  public void addParameter(String type, String unit, double value) {
+    Map<String, Object> parameter = new HashMap<>();
+    parameter.put("type", type);
+    parameter.put("unit", unit);
+    parameter.put("value", value);
+    parameters.add(parameter);
   }
 
   /**
-   * Get the type.
+   * Get the list of parameters.
    *
-   * @return a {@link java.lang.String} object representing the type
+   * @return a {@link java.util.List} of parameters
    */
-  public String getType() {
-    return type;
-  }
-
-  /**
-   * Get the unit.
-   *
-   * @return a {@link java.lang.String} object representing the unit
-   */
-  public String getUnit() {
-    return unit;
-  }
-
-  /**
-   * Get the value.
-   *
-   * @return a {@link double} representing the value
-   */
-  public double getValue() {
-    return value;
+  public List<Map<String, Object>> getParameters() {
+    return parameters;
   }
 
   /** {@inheritDoc} */
@@ -134,70 +105,93 @@ public class Setter extends ProcessEquipmentBaseClass {
       try {
         logger.info("Running equipment: " + equipment.getName());
 
-        // Check the type of equipment and apply the appropriate setter
-        if (equipment instanceof Stream) {
-          Stream stream = (Stream) equipment;
+        // Apply each parameter to the equipment
+        for (Map<String, Object> parameter : parameters) {
+          String type = (String) parameter.get("type");
+          String unit = (String) parameter.get("unit");
+          double value = (double) parameter.get("value");
 
-          switch (type.toLowerCase()) {
-            case "pressure":
-              stream.setPressure(value, unit);
-              logger.info(
-                  "Set pressure to " + value + " " + unit + " for stream: " + stream.getName());
-              break;
+          if (equipment instanceof Stream) {
+            Stream stream = (Stream) equipment;
 
-            case "temperature":
-              stream.setTemperature(value, unit);
-              logger.info(
-                  "Set temperature to " + value + " " + unit + " for stream: " + stream.getName());
-              break;
+            switch (type.toLowerCase()) {
+              case "pressure":
+                stream.setPressure(value, unit);
+                logger.info(
+                    "Set pressure to " + value + " " + unit + " for stream: " + stream.getName());
+                break;
 
-            default:
+              case "temperature":
+                stream.setTemperature(value, unit);
+                logger.info("Set temperature to " + value + " " + unit + " for stream: "
+                    + stream.getName());
+                break;
+
+              default:
+                logger.warn(
+                    "Unknown specification type: " + type + " for stream: " + stream.getName());
+                break;
+            }
+          } else if (equipment instanceof ThrottlingValve) {
+            ThrottlingValve valve = (ThrottlingValve) equipment;
+
+            if ("pressure".equalsIgnoreCase(type)) {
+              valve.setOutletPressure(value, unit);
+              logger.info("Set outlet pressure to " + value + " " + unit + " for throttling valve: "
+                  + valve.getName());
+            } else {
+              logger.warn("Unknown specification type: " + type + " for throttling valve: "
+                  + valve.getName());
+            }
+          } else if (equipment instanceof Heater) {
+            Heater heater = (Heater) equipment;
+
+            if ("temperature".equalsIgnoreCase(type)) {
+              heater.setOutTemperature(value, unit);
+              logger.info("Set outlet temperature to " + value + " " + unit + " for heater: "
+                  + heater.getName());
+            } else {
               logger
-                  .warn("Unknown specification type: " + type + " for stream: " + stream.getName());
-              break;
-          }
-        } else if (equipment instanceof ThrottlingValve) {
-          ThrottlingValve valve = (ThrottlingValve) equipment;
+                  .warn("Unknown specification type: " + type + " for heater: " + heater.getName());
+            }
+          } else if (equipment instanceof Cooler) {
+            Cooler cooler = (Cooler) equipment;
 
-          if ("pressure".equalsIgnoreCase(type)) {
-            valve.setOutletPressure(value, unit);
-            logger.info("Set outlet pressure to " + value + " " + unit + " for throttling valve: "
-                + valve.getName());
+            if ("temperature".equalsIgnoreCase(type)) {
+              cooler.setOutTemperature(value, unit);
+              logger.info("Set outlet temperature to " + value + " " + unit + " for cooler: "
+                  + cooler.getName());
+            } else if ("pressure".equalsIgnoreCase(type)) {
+              cooler.setOutPressure(value, unit);
+              logger.info("Set outlet pressure to " + value + " " + unit + " for cooler: "
+                  + cooler.getName());
+            } else {
+              logger
+                  .warn("Unknown specification type: " + type + " for cooler: " + cooler.getName());
+            }
           } else {
-            logger.warn("Unknown specification type: " + type + " for throttling valve: "
-                + valve.getName());
+            logger.warn("Unsupported equipment type: " + equipment.getClass().getSimpleName()
+                + " for equipment: " + equipment.getName());
           }
-        } else if (equipment instanceof Heater) {
-          Heater heater = (Heater) equipment;
-
-          if ("temperature".equalsIgnoreCase(type)) {
-            heater.setOutTemperature(value, unit);
-            logger.info("Set outlet temperature to " + value + " " + unit + " for heater: "
-                + heater.getName());
-          } else {
-            logger.warn("Unknown specification type: " + type + " for heater: " + heater.getName());
-          }
-        } else if (equipment instanceof Cooler) {
-          Cooler cooler = (Cooler) equipment;
-
-          if ("temperature".equalsIgnoreCase(type)) {
-            cooler.setOutTemperature(value, unit);
-            logger.info("Set outlet temperature to " + value + " " + unit + " for cooler: "
-                + cooler.getName());
-          } else if ("pressure".equalsIgnoreCase(type)) {
-            cooler.setOutPressure(value, unit);
-            logger.info("Set outlet pressure to " + value + " " + unit + " for cooler: "
-                + cooler.getName());
-          } else {
-            logger.warn("Unknown specification type: " + type + " for cooler: " + cooler.getName());
-          }
-        } else {
-          logger.warn("Unsupported equipment type: " + equipment.getClass().getSimpleName()
-              + " for equipment: " + equipment.getName());
         }
       } catch (Exception ex) {
         logger.error("Error setting specification for equipment: " + equipment.getName(), ex);
       }
     }
+  }
+
+  public static void main(String[] args) {
+    Setter setter = new Setter("Test Setter");
+
+    // Add multiple parameters
+    setter.addParameter("temperature", "C", 150.0);
+    setter.addParameter("pressure", "bar", 5.0);
+
+    // Add target equipment
+    Stream stream = new Stream("Test Stream");
+    setter.addTargetEquipment(stream);
+
+    // Run the setter
+    setter.run(UUID.randomUUID());
   }
 }
