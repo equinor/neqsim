@@ -4,7 +4,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.monitor.PipeBeggsBrillsResponse;
+import neqsim.process.util.monitor.PumpResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -1472,5 +1475,12 @@ public class PipeBeggsAndBrills extends Pipeline {
     } else {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new PipeBeggsBrillsResponse(this));
   }
 }
