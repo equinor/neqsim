@@ -10,6 +10,7 @@ import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.netlib.util.doubleW;
 import neqsim.physicalproperties.PhysicalPropertyHandler;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.system.PhysicalProperties;
@@ -2320,7 +2321,94 @@ public abstract class Phase implements PhaseInterface {
       throw new IllegalArgumentException("Leachman model only works for hydrogen. Found: " + compName);
     }
   }
+
+
+  /** {@inheritDoc} */
+  @Override
+  public doubleW[] getAlpha0_Leachman(String hydrogenType) {
+    neqsim.thermo.util.leachman.NeqSimLeachman test =
+        new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
+    return test.getAlpha0_Leachman();
+  }
+
+  /**
+   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase is not pure
+   *
+   * @return a matrix of properties of type doubleW.
+   */
+  public doubleW[] getAlpha0_Leachman() {
+    // Check that the phase contains exactly one component
+    if (this.getNumberOfComponents() != 1) {
+      StringBuilder compNames = new StringBuilder();
+      for (int i = 0; i < this.getNumberOfComponents(); i++) {
+        compNames.append(this.getComponent(i).getComponentName());
+        if (i < this.getNumberOfComponents() - 1) {
+          compNames.append(", ");
+        }
+      }
+      throw new IllegalArgumentException("Leachman model only works for pure hydrogen streams. Found components: " 
+                                            + compNames.toString());
+    }
+
+    // Retrieve the component name from the current phase
+    String compName = this.getComponent(0).getComponentName();
+
+    // Check the component type and choose the correct hydrogen type
+    if (compName.equalsIgnoreCase("para-hydrogen")) {
+      return getAlpha0_Leachman("para");
+    } else if (compName.equalsIgnoreCase("ortho-hydrogen")) {
+      return getAlpha0_Leachman("ortho");
+    } else if (compName.equalsIgnoreCase("hydrogen")) {
+      return getAlpha0_Leachman("normal");
+    } else {
+      throw new IllegalArgumentException("Leachman model only works for hydrogen. Found: " + compName);
+    }
+  }
   
+
+  /** {@inheritDoc} */
+  @Override
+  public doubleW[][] getAlphares_Leachman(String hydrogenType) {
+    neqsim.thermo.util.leachman.NeqSimLeachman test =
+        new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
+    return test.getAlphares_Leachman();
+  }
+
+  /**
+   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase is not pure
+   *
+   * @return a matrix of properties of type doubleW.
+   */
+  public doubleW[][] getAlphares_Leachman() {
+    // Check that the phase contains exactly one component
+    if (this.getNumberOfComponents() != 1) {
+      StringBuilder compNames = new StringBuilder();
+      for (int i = 0; i < this.getNumberOfComponents(); i++) {
+        compNames.append(this.getComponent(i).getComponentName());
+        if (i < this.getNumberOfComponents() - 1) {
+          compNames.append(", ");
+        }
+      }
+      throw new IllegalArgumentException("Leachman model only works for pure hydrogen streams. Found components: " 
+                                            + compNames.toString());
+    }
+
+    // Retrieve the component name from the current phase
+    String compName = this.getComponent(0).getComponentName();
+
+    // Check the component type and choose the correct hydrogen type
+    if (compName.equalsIgnoreCase("para-hydrogen")) {
+      return getAlphares_Leachman("para");
+    } else if (compName.equalsIgnoreCase("ortho-hydrogen")) {
+      return getAlphares_Leachman("ortho");
+    } else if (compName.equalsIgnoreCase("hydrogen")) {
+      return getAlphares_Leachman("normal");
+    } else {
+      throw new IllegalArgumentException("Leachman model only works for hydrogen. Found: " + compName);
+    }
+  }
 
   /** {@inheritDoc} */
   @Override

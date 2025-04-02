@@ -17,9 +17,9 @@ public class PipelineTest {
     double wallroughness = 5e-6;
 
     neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + temperature), pressure);
-    testSystem.addComponent("methane", 0.9);
-    testSystem.addComponent("ethane", 0.1);
+        new neqsim.thermo.system.SystemLeachmanEos((273.15 + temperature), pressure);
+    testSystem.addComponent("hydrogen", 1.0);
+    //testSystem.addComponent("ethane", 0.1);
     testSystem.setMixingRule("classic");
 
     Stream stream_1 = new Stream("Stream1", testSystem);

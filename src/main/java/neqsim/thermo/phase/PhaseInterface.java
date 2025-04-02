@@ -6,6 +6,7 @@
 
 package neqsim.thermo.phase;
 
+import org.netlib.util.doubleW;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
@@ -15,6 +16,7 @@ import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.thermo.mixingrule.MixingRulesInterface;
 import neqsim.thermo.system.SystemInterface;
+ 
 
 /**
  * <p>
@@ -452,6 +454,45 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return density with unit kg/m3
    */
   public double[] getProperties_Leachman();
+
+
+
+  /**
+  * <p>
+  * method to get Leachman alpha0 of a phase using the Leachman EoS.
+  * </p>
+  *
+  * @param hydrogenType a {@link java.lang.String} object
+  * @return a matrix of the reduced ideal helmholtz free energy and its derivatives
+  */
+  public doubleW[] getAlpha0_Leachman(String hydrogenType);
+
+
+  /**
+   * Overloaded method to get the Leachman a0matrix with default hydrogen type ('normal').   
+   *
+   * @return matrix of the reduced ideal helmholtz free energy and its derivatives
+   */
+  public doubleW[] getAlpha0_Leachman();
+
+  /**
+  * <p>
+  * method to get Leachman alphares of a phase using the Leachman EoS.
+  * </p>
+  *
+  * @param hydrogenType a {@link java.lang.String} object
+  * @return a matrix of the reduced residual helmholtz free energy and its derivatives
+  */
+  public doubleW[][] getAlphares_Leachman(String hydrogenType);
+
+
+  /**
+   * Overloaded method to get the Leachman armatrix with default hydrogen type ('normal').   
+   *
+   * @return matrix of the reduced residual helmholtz free energy and its derivatives
+   */
+  public doubleW[][] getAlphares_Leachman();
+
 
   /**
    * method to get helium density of a phase using the Vega EoS.
@@ -2088,4 +2129,5 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return double Z volume corrected
    */
   public double getZvolcorr();
+
 }

@@ -4,10 +4,10 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  * <p>
- * ComponentGERG2004 class.
+ * ComponentVega class.
  * </p>
  *
- * @author Even Solbraa
+ * @author Even Solbraa Vega
  * @version $Id: $Id
  */
 public class ComponentVegaEos extends ComponentEos {
@@ -16,7 +16,7 @@ public class ComponentVegaEos extends ComponentEos {
 
   /**
    * <p>
-   * Constructor for ComponentGERG2004.
+   * Constructor for ComponentVega
    * </p>
    *
    * @param name Name of component.
@@ -30,7 +30,7 @@ public class ComponentVegaEos extends ComponentEos {
 
   /**
    * <p>
-   * Constructor for ComponentGERG2004.
+   * Constructor for ComponentVega
    * </p>
    *
    * @param number a int. Not used.

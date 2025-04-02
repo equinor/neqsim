@@ -16,7 +16,7 @@ public class SystemVegaEos extends SystemEos {
 
   /**
    * <p>
-   * Constructor for SystemGERG2004Eos.
+   * Constructor for SystemVegaEos.
    * </p>
    */
   public SystemVegaEos() {
@@ -25,7 +25,7 @@ public class SystemVegaEos extends SystemEos {
 
   /**
    * <p>
-   * Constructor for SystemGERG2004Eos.
+   * Constructor for SystemVegaEos.
    * </p>
    *
    * @param T The temperature in unit Kelvin
@@ -37,7 +37,7 @@ public class SystemVegaEos extends SystemEos {
 
   /**
    * <p>
-   * Constructor for SystemGERG2004Eos.
+   * Constructor for SystemVegaEos.
    * </p>
    *
    * @param T The temperature in unit Kelvin
@@ -46,7 +46,7 @@ public class SystemVegaEos extends SystemEos {
    */
   public SystemVegaEos(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    modelName = "GERG2004-EOS";
+    modelName = "Vega-EOS";
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseVegaEos();

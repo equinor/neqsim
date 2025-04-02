@@ -4,13 +4,13 @@ import neqsim.thermo.component.ComponentVegaEos;
 
 /**
  * <p>
- * PhaseGERG2004Eos class.
+ * PhaseVegaEos class.
  * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class PhaseVegaEos extends PhaseEos {
+public class PhaseVegaEos extends PhaseFundamentalEOS {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -32,7 +32,7 @@ public class PhaseVegaEos extends PhaseEos {
 
   /**
    * <p>
-   * Constructor for PhaseGERG2004Eos.
+   * Constructor for PhaseVegaEos.
    * </p>
    */
   public PhaseVegaEos() {
@@ -86,6 +86,7 @@ public class PhaseVegaEos extends PhaseEos {
                          // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
       CvVega = temp[9]; // gergEOS.CPOTPX(temperature,pressure/10.0,
                         // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
+      JTcoef = temp[13];
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     }
   }
@@ -93,43 +94,43 @@ public class PhaseVegaEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double getGibbsEnergy() {
-    return gibbsEnergy;
+    return gibbsEnergy * numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getJouleThomsonCoefficient() {
-    return JTcoef;
+    return JTcoef * 1e3; // [K/bar]
   }
 
   /** {@inheritDoc} */
   @Override
   public double getEnthalpy() {
-    return enthalpy;
+    return enthalpy * numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getEntropy() {
-    return entropy;
+    return entropy * numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getInternalEnergy() {
-    return internalEnery;
+    return internalEnery * numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getCp() {
-    return CpVega;
+    return CpVega * numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getCv() {
-    return CvVega;
+    return CvVega * numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
