@@ -37,6 +37,7 @@ public class DistillationColumnResponse extends BaseResponse {
     trayTemperature = new Double[numberOfTrays];
     trayMassBalance = new Double[numberOfTrays];
     trayVaporFlowRate = new Double[numberOfTrays];
+    trayLiquidFlowRate = new Double[numberOfTrays];
     trayFeedFlow = new Double[numberOfTrays];
     trayFeedFlow = new Double[numberOfTrays];
     for (int i = 0; i < numberOfTrays; i++) {

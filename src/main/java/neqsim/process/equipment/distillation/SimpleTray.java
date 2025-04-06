@@ -257,8 +257,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   public double getLiquidFlowRate(String unit) {
-    if (getFluid().hasPhaseType("liquid")) {
-      return getFluid().getPhase("liquid").getFlowRate(unit);
+    if (getFluid().hasPhaseType("aqueous") || getFluid().hasPhaseType("oil")) {
+      return getFluid().getPhase(1).getFlowRate(unit);
     } else
       return 0.0;
   }
