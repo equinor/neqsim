@@ -23,10 +23,10 @@ public class DistillationColumnResponse extends BaseResponse {
 
   /**
    * <p>
-   * Constructor for PumpResponse.
+   * Constructor for DistillationColumnResponse.
    * </p>
    *
-   * @param column a {@link neqsim.process.equipment.distillationColumn.DistillationColumn} object
+   * @param column a {@link neqsim.process.equipment.distillation.DistillationColumn} object
    */
   public DistillationColumnResponse(DistillationColumn column) {
     super(column);
