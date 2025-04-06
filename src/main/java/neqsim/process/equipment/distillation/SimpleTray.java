@@ -248,4 +248,18 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
       return temperature;
     }
   }
+
+  public double getVaporFlowRate(String unit) {
+    if (getFluid().hasPhaseType("gas")) {
+      return getFluid().getPhase("gas").getFlowRate(unit);
+    } else
+      return 0.0;
+  }
+
+  public double getLiquidFlowRate(String unit) {
+    if (getFluid().hasPhaseType("liquid")) {
+      return getFluid().getPhase("liquid").getFlowRate(unit);
+    } else
+      return 0.0;
+  }
 }

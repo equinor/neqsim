@@ -1,0 +1,44 @@
+package neqsim.process.util.monitor;
+
+import neqsim.process.equipment.distillation.DistillationColumn;
+
+/**
+ * <p>
+ * PumpResponse class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
+public class DistillationColumnResponse extends BaseResponse {
+
+  public Double massBalanceError;
+  public Double[] trayTemperature;
+  public Double[] trayPressure;
+  public int numberOfTrays;
+  public Double[] trayVaporFlowRate;
+  public Double[] trayLiquidFlowRate;
+
+
+  /**
+   * <p>
+   * Constructor for PumpResponse.
+   * </p>
+   *
+   * @param column a {@link neqsim.process.equipment.distillationColumn.DistillationColumn} object
+   */
+  public DistillationColumnResponse(DistillationColumn column) {
+    super(column);
+    massBalanceError = column.getMassBalanceError();
+
+    int numberOfTrays = column.getNumerOfTrays();
+    trayTemperature = new Double[numberOfTrays];
+    trayPressure = new Double[numberOfTrays];
+    for (int i = 0; i < numberOfTrays; i++) {
+      trayTemperature[i] = column.getTray(i).getTemperature() - 273.15;
+      trayPressure[i] = column.getTray(i).getPressure("bara");
+      trayVaporFlowRate[i] = column.getTray(i).getVaporFlowRate("kg/hr");
+      trayLiquidFlowRate[i] = column.getTray(i).getLiquidFlowRate("kg/hr");
+    }
+  }
+}

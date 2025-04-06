@@ -273,6 +273,8 @@ public class DistillationColumnTest {
     distillationColumn.getCondenser().setSeparation_with_liquid_reflux(true, 370.0, "kg/hr");
 
     distillationColumn.run();
+
+    distillationColumn.toJson();
     /*
      * System.out.println("---------- PROCESS RESULTS ----------");
      * System.out.println("density feed " + stream1.getFluid().getDensity("kg/m3") + " kg/m3");
