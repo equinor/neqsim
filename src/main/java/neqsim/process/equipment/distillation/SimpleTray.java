@@ -262,4 +262,26 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     } else
       return 0.0;
   }
+
+  /**
+   * <p>
+   * massBalance.
+   * </p>
+   *
+   * Calculates the mass balance by comparing the total mass input and output.
+   *
+   * @return the difference between mass input and mass output
+   */
+  public double massBalance() {
+    double massInput = 0;
+    double massOutput = 0;
+    int numberOfInputStreams = getNumberOfInputStreams();
+    for (int j = 0; j < numberOfInputStreams; j++) {
+      massInput += getStream(j).getFluid().getFlowRate("kg/hr");
+    }
+    massOutput += getGasOutStream().getFlowRate("kg/hr");
+    massOutput += getLiquidOutStream().getFlowRate("kg/hr");
+    return massInput - massOutput;
+  }
+
 }
