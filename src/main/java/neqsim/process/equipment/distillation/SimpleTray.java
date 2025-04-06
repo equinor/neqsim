@@ -263,6 +263,14 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
       return 0.0;
   }
 
+  public double getFeedRate(String unit) {
+    double feed = 0.0;
+    for (int j = 0; j < getNumberOfInputStreams(); j++) {
+      feed += getStream(j).getFluid().getFlowRate("kg/hr");
+    }
+    return feed;
+  }
+
   /**
    * <p>
    * massBalance.
@@ -283,5 +291,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     massOutput += getLiquidOutStream().getFlowRate("kg/hr");
     return massInput - massOutput;
   }
+
+
 
 }

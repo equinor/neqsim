@@ -18,6 +18,7 @@ public class DistillationColumnResponse extends BaseResponse {
   public int numberOfTrays;
   public Double[] trayVaporFlowRate;
   public Double[] trayLiquidFlowRate;
+  public Double[] trayFeedFlow;
   public Double[] trayMassBalance;
 
 
@@ -36,7 +37,11 @@ public class DistillationColumnResponse extends BaseResponse {
     trayTemperature = new Double[numberOfTrays];
     trayMassBalance = new Double[numberOfTrays];
     trayVaporFlowRate = new Double[numberOfTrays];
-    trayLiquidFlowRate = new Double[numberOfTrays];
+    trayFeedFlow = new Double[numberOfTrays];
+    trayFeedFlow = new Double[numberOfTrays];
+    for (int i = 0; i < numberOfTrays; i++) {
+      trayFeedFlow[i] = column.getTray(i).getFeedRate("kg/hr");
+    }
     for (int i = 0; i < numberOfTrays; i++) {
       trayMassBalance[i] = column.getTray(i).massBalance();
     }
