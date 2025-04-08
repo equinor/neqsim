@@ -198,15 +198,17 @@ public class LeachmanTest {
     
     Leachmanfluid.addComponent("hydrogen", 1.0);
     Leachmanfluid.init(0);
-    Leachmanfluid.init(1);
-    Leachmanfluid.init(2);
-    Leachmanfluid.init(3);
+
 
     Leachmanfluid.setNumberOfPhases(1);
     Leachmanfluid.setMaxNumberOfPhases(1);
     Leachmanfluid.setForcePhaseTypes(true);
     Leachmanfluid.setPhaseType(0, "GAS");
-    //Leachmanfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("PFCT");
+    Leachmanfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("PFCT");
+
+    Leachmanfluid.init(1);
+    Leachmanfluid.init(2);
+    Leachmanfluid.init(3);
     Leachmanfluid.getPhase("gas").initPhysicalProperties();
 
     neqsim.process.equipment.stream.Stream gasstream_leachman =

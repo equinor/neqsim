@@ -341,15 +341,18 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
     try {
       density = densityCalc.calcDensity();
       viscosity = viscosityCalc.calcViscosity();
+      System.out.println(density);
       kinematicViscosity = this.calcKinematicViscosity();
       diffusivityCalc.calcDiffusionCoefficients(binaryDiffusionCoefficientMethod,
           multicomponentDiffusionMethod);
       // diffusivityCalc.calcEffectiveDiffusionCoefficients();
       conductivity = conductivityCalc.calcConductivity();
     } catch (Exception ex) {
+      viscosity = viscosityCalc.calcViscosity();
+
       // might be a chance that entering here ends in an infinite loop...
-      phase.resetPhysicalProperties();
-      phase.initPhysicalProperties();
+      //phase.resetPhysicalProperties();
+      //phase.initPhysicalProperties();
     }
   }
 
