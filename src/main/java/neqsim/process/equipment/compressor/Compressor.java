@@ -610,6 +610,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
               currentSpeed = getCompressorChart().getMinSpeedCurve();
             }
           }
+
           powerSet = true;
           dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass()
               / getPolytropicEfficiency() * thermoSystem.getTotalNumberOfMoles();
