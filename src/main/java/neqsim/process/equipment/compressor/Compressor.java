@@ -512,7 +512,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         double currentSpeed = getSpeed(); // Initial guess for speed
         double maxIterations = 100; // Maximum number of iterations
         double deltaSpeed = 100.0; // Small increment for numerical derivative
-        int iteration = 0;
+        int iteration = 1;
 
         while (iteration < maxIterations) {
           // Calculate the pressure at the current speed
@@ -549,12 +549,24 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           double polytropEff =
               getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed);
           setPolytropicEfficiency(polytropEff / 100.0);
+          if (polytropEff <= 0.0) {
+            polytropEff = 0.01;
+            setPolytropicEfficiency(0.01);
+          }
+          if (polytropEff > 100.0) {
+            polytropEff = 100;
+            setPolytropicEfficiency(100.0);
+          }
+
           polytropicHead = getCompressorChart().getPolytropicHead(actualFlowRate, currentSpeed);
           double temperature_inlet = thermoSystem.getTemperature();
           double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
           polytropicFluidHead =
               (getCompressorChart().getHeadUnit().equals("meter")) ? polytropicHead / 1000.0 * 9.81
                   : polytropicHead;
+          if (polytropicFluidHead <= 0.0) {
+            polytropicFluidHead = 0.0001;
+          }
           double pressureRatio = Math.pow((polytropicFluidHead * 1000.0 + (n / (n - 1.0) * z_inlet
               * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
               / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet)
@@ -581,9 +593,15 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
           double dPressure_dSpeed = (pressureDelta - currentPressure) / deltaSpeed;
 
+          if (Math.abs(dPressure_dSpeed) < 1e-6) {
+            dPressure_dSpeed = Math.signum(dPressure_dSpeed) * 1e-6;
+          }
+
           // Update speed using Newton-Raphson method
+          double relaxationFactor = Math.min(0.8, iteration / (iteration + 3.0));
+
           double speedUpdate = (targetPressure - currentPressure) / dPressure_dSpeed;
-          currentSpeed += 0.8 * speedUpdate;
+          currentSpeed += relaxationFactor * speedUpdate;
           powerSet = true;
           dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass()
               / getPolytropicEfficiency() * thermoSystem.getTotalNumberOfMoles();
@@ -602,8 +620,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
               setCalcPressureOut(false);
               return;
             } else {
-              throw new IllegalArgumentException(
-                  "Speed out of bounds during Newton-Raphson iteration.");
+              // throw new IllegalArgumentException(
+              // "Speed out of bounds during Newton-Raphson iteration.");
             }
             // throw new IllegalArgumentException(
             // "Speed out of bounds during Newton-Raphson iteration.");
@@ -1627,7 +1645,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     this.useLeachman = useLeachman;
   }
 
-
   /**
    * Getter for property useVega.
    *
@@ -1645,7 +1662,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public void setUseVega(boolean useVega) {
     this.useVega = useVega;
   }
-
 
   /**
    * <p>
