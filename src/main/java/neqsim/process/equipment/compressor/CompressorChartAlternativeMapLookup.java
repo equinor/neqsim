@@ -207,6 +207,7 @@ public class CompressorChartAlternativeMapLookup
           new CompressorCurve(speed[i], flow[i], head[i], flowPolyEff[i], polyEff[i]);
       chartValues.add(curve);
       chartSpeeds.add(speed[i]);
+
     }
 
     setUseCompressorChart(true);
@@ -700,5 +701,16 @@ public class CompressorChartAlternativeMapLookup
   @Override
   public double getFlow(double head, double speed, double guessFlow) {
     return 0.0;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>minSpeedCurve</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getMinSpeedCurve() {
+    return 0;
   }
 }

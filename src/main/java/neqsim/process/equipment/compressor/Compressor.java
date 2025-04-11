@@ -601,7 +601,16 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           double relaxationFactor = Math.min(0.8, iteration / (iteration + 3.0));
 
           double speedUpdate = (targetPressure - currentPressure) / dPressure_dSpeed;
+
           currentSpeed += relaxationFactor * speedUpdate;
+          if (currentSpeed < 0) {
+            if (minSpeed > 1) {
+              currentSpeed = minSpeed;
+            } else {
+              currentSpeed = getCompressorChart().getMinSpeedCurve();
+            }
+          }
+
           powerSet = true;
           dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass()
               / getPolytropicEfficiency() * thermoSystem.getTotalNumberOfMoles();

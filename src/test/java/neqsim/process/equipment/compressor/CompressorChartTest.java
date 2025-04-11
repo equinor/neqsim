@@ -453,17 +453,33 @@ public class CompressorChartTest {
     comp1.getCompressorChart().setUseCompressorChart(true);
     comp1.setOutletPressure(240.0, "bara");
     comp1.setSolveSpeed(true);
-    comp1.setLimitSpeed(true);
     comp1.setMaximumSpeed(10500);
     comp1.setMinimumSpeed(7000);
     comp1.run();
-
+    Assertions.assertEquals(10992, comp1.getSpeed(), 1.1);
+    comp1.setLimitSpeed(true);
+    comp1.run();
     Assertions.assertEquals(215.443922, comp1.getOutletStream().getPressure("bara"), 0.1);
+    Assertions.assertEquals(10500, comp1.getSpeed(), 0.1);
 
     comp1.setOutletPressure(100.0, "bara");
     comp1.run();
-
     Assertions.assertEquals(106.1630, comp1.getOutletStream().getPressure("bara"), 0.1);
+    Assertions.assertEquals(7000, comp1.getSpeed(), 0.1);
+
+    comp1.setSpeed(15000);
+    comp1.setLimitSpeed(false);
+    comp1.run();
+    Assertions.assertEquals(106.16307446, comp1.getOutletStream().getPressure("bara"), 0.1);
+    Assertions.assertEquals(7000, comp1.getSpeed(), 0.1);
+
+    comp1.setOutletPressure(90);
+    comp1.setMinimumSpeed(0);
+    comp1.setSpeed(3000);
+    comp1.setLimitSpeed(false);
+    comp1.run();
+    Assertions.assertEquals(90, comp1.getOutletStream().getPressure("bara"), 0.1);
+    Assertions.assertEquals(6064.9280, comp1.getSpeed(), 0.1);
 
     comp1.setOutletPressure(130.0, "bara");
     comp1.run();
