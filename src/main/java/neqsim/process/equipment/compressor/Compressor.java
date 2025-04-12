@@ -589,9 +589,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
                   / (nDelta / (nDelta - 1.0) * z_inlet * ThermodynamicConstantsInterface.R
                       * (temperature_inlet) / MW),
                   nDelta / (nDelta - 1.0));
-          double pressureDelta = thermoSystem.getPressure() * pressureRatioDelta;
+          double pressureNew = thermoSystem.getPressure() * pressureRatioDelta;
 
-          double dPressure_dSpeed = (pressureDelta - currentPressure) / deltaSpeed;
+          double dPressure_dSpeed = (pressureNew - currentPressure) / deltaSpeed;
 
           if (Math.abs(dPressure_dSpeed) < 1e-6) {
             dPressure_dSpeed = Math.signum(dPressure_dSpeed) * 1e-6;
@@ -609,6 +609,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
             } else {
               currentSpeed = getCompressorChart().getMinSpeedCurve();
             }
+          }
+          if (iteration % 10 == 0) {
+            deltaSpeed = deltaSpeed / 2;
           }
 
           powerSet = true;
