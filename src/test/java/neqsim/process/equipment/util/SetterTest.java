@@ -41,11 +41,15 @@ public class SetterTest {
   @Test
   public void testRunWithThrottlingValve() {
     // Mock a ThrottlingValve object
-    ThrottlingValve valve = new ThrottlingValve("Test Valve");
+    Stream stream = new Stream("Test Stream", testFluid);
+    setter.addTargetEquipment(stream);
+    stream.run();
+    ThrottlingValve valve = new ThrottlingValve("Test Valve", stream);
+    setter = new Setter("Test Setter");
     setter.addTargetEquipment(valve);
 
     // Set parameters and run
-    setter.addParameter("pressure", "bar", 5.0);
+    setter.addParameter("pressure", "bara", 5.0);
     setter.run(UUID.randomUUID());
 
     // Assert that the outlet pressure was set correctly
