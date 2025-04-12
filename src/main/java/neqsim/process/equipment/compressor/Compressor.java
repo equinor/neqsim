@@ -593,7 +593,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
           double dPressure_dSpeed = (pressureNew - currentPressure) / deltaSpeed;
 
-          if (Math.abs(dPressure_dSpeed) < 1e-6) {
+          if (dPressure_dSpeed < 1e-6) {
+            setSpeed(getSpeed() * 1.1);
             dPressure_dSpeed = Math.signum(dPressure_dSpeed) * 1e-6;
           }
 
@@ -610,7 +611,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
               currentSpeed = getCompressorChart().getMinSpeedCurve();
             }
           }
-          if (iteration % 10 == 0) {
+          if (iteration % 10 == 0 && deltaSpeed > 10) {
             deltaSpeed = deltaSpeed / 2;
           }
 

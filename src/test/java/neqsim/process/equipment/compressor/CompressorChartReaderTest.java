@@ -2,6 +2,8 @@ package neqsim.process.equipment.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import java.io.File;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
@@ -45,8 +47,9 @@ public class CompressorChartReaderTest {
     compressor.setOutletPressure(120.0, "bara");
 
     // Create a CompressorChartReader and set curves to the compressor
-    CompressorChartReader chartReader = new CompressorChartReader(
-        "/workspaces/neqsim/src/test/java/neqsim/process/equipment/compressor/curve.csv");
+    File file = new File("src/test/java/neqsim/process/equipment/compressor");
+    String fileFluid1 = file.getAbsolutePath() + "/curve.csv";
+    CompressorChartReader chartReader = new CompressorChartReader(fileFluid1);
     chartReader.setCurvesToCompressor(compressor);
 
     // Assertions to verify the compressor chart was set correctly
@@ -55,27 +58,11 @@ public class CompressorChartReaderTest {
     assertNotNull(compressor.getCompressorChart().getSurgeCurve());
     assertEquals("kJ/kg", compressor.getCompressorChart().getHeadUnit());
 
-    System.out
-        .println("Inlet flow rate: " + compressor.getInletStream().getFlowRate("m3/hr") + " m3/hr");
 
     compressor.run();
 
+    Assertions.assertEquals(5303.277373, compressor.getSpeed(), 0.1);
 
-    // Print and verify compressor performance metrics
-
-    System.out.println("Speed: " + compressor.getSpeed());
-    System.out.println("Inlet fluid Mw: "
-        + compressor.getInletStream().getFluid().getMolarMass("gr/mol") + " gr/mol");
-    System.out.println(
-        "Compressor pressure out: " + compressor.getOutletStream().getPressure("bara") + " bara");
-    System.out.println("Compressor flow out: "
-        + compressor.getOutletStream().getFlowRate("MSm3/day") + " MSm3/day");
-    System.out.println(
-        "Compressor temperature out: " + compressor.getOutletStream().getTemperature("C") + " C");
-    System.out.println("Polytropic head: " + compressor.getPolytropicFluidHead() + " kJ/kg");
-    System.out
-        .println("Polytropic efficiency: " + (compressor.getPolytropicEfficiency() * 100) + " %");
-    System.out.println("Power: " + compressor.getPower("MW") + " MW");
 
   }
 }
