@@ -9,8 +9,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 
@@ -132,6 +134,26 @@ public class Setter extends ProcessEquipmentBaseClass {
                     "Unknown specification type: " + type + " for stream: " + stream.getName());
                 break;
             }
+          } else if (equipment instanceof Compressor) {
+            Compressor comp1 = (Compressor) equipment;
+
+            if ("pressure".equalsIgnoreCase(type)) {
+              comp1.setOutletPressure(value, unit);
+              logger.info("Set outlet pressure to " + value + " " + unit + " for compressor: "
+                  + comp1.getName());
+            } else {
+              logger.warn(
+                  "Unknown specification type: " + type + " for compressor: " + comp1.getName());
+            }
+          } else if (equipment instanceof Pump) {
+            Pump pump1 = (Pump) equipment;
+            if ("pressure".equalsIgnoreCase(type)) {
+              pump1.setOutletPressure(value, unit);
+              logger.info("Set outlet pressure to " + value + " " + unit + " for compressor: "
+                  + pump1.getName());
+            } else {
+              logger.warn("Unknown specification type: " + type + " for pump1: " + pump1.getName());
+            }
           } else if (equipment instanceof ThrottlingValve) {
             ThrottlingValve valve = (ThrottlingValve) equipment;
 
@@ -178,6 +200,7 @@ public class Setter extends ProcessEquipmentBaseClass {
         logger.error("Error setting specification for equipment: " + equipment.getName(), ex);
       }
     }
+
   }
 
   public static void main(String[] args) {

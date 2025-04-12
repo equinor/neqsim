@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
@@ -59,6 +61,18 @@ public class SetterTest {
     Heater heater = new Heater("Test Heater", stream);
     setter.addTargetEquipment(heater);
 
+    Setter setter2 = new Setter("Test Setter");
+    Compressor comp1 = new Compressor("Test Compressor", stream);
+    setter2.addTargetEquipment(comp1);
+    setter2.addParameter("pressure", "bar", 50.0);
+    setter2.run(UUID.randomUUID());
+    comp1.run();
+
+    Pump pump1 = new Pump("Test Pump", stream);
+    setter2.addTargetEquipment(pump1);
+    setter2.run(UUID.randomUUID());
+    pump1.run();
+
     // Set parameters and run
     setter.addParameter("temperature", "C", 150.0);
     setter.addParameter("pressure", "bar", 5.0);
@@ -68,6 +82,8 @@ public class SetterTest {
     // Assert that the outlet temperature was set correctly
     assertEquals(150.0, heater.getOutletTemperature() - 273.15, 0.01);
     assertEquals(5.0, heater.getOutletPressure(), 0.01);
+    assertEquals(50.0, comp1.getOutletPressure(), 0.01);
+    assertEquals(50.0, pump1.getOutletPressure(), 0.01);
   }
 
   @Test
