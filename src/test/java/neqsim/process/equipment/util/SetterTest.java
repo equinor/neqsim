@@ -93,7 +93,6 @@ public class SetterTest {
 
   @Test
   public void testRunWithCooler() {
-    // Mock a Cooler object
     Stream stream = new Stream("Test Stream", testFluid);
     Cooler cooler = new Cooler("Test Cooler", stream);
     setter.addTargetEquipment(cooler);

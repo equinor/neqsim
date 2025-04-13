@@ -405,6 +405,14 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+
+    // Run setters firt to set conditions
+    for (int i = 0; i < unitOperations.size(); i++) {
+      if (unitOperations.get(i).getClass().getSimpleName().equals("Setter")) {
+        unitOperations.get(i).run(id);
+      }
+    }
+
     boolean hasRecycle = false;
     // boolean hasAdjuster = false;
 
@@ -547,6 +555,13 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   @Override
   public void runTransient(double dt, UUID id) {
+
+    for (int i = 0; i < unitOperations.size(); i++) {
+      if (unitOperations.get(i).getClass().getSimpleName().equals("Setter")) {
+        unitOperations.get(i).run(id);
+      }
+    }
+
     setTimeStep(dt);
     increaseTime(dt);
 
