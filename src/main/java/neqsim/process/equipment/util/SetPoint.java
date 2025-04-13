@@ -5,7 +5,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -87,6 +90,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
       String adjstedVariable) {
     this.sourceEquipment = adjustedEquipment;
     this.sourceVariable = adjstedVariable;
+    this.targetVariable = adjstedVariable;
   }
 
   /**
@@ -137,6 +141,17 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   */
+  public void setTargetVariable(ProcessEquipmentInterface targetEquipment) {
+    this.targetEquipment = targetEquipment;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>targetVariable</code>.
+   * </p>
+   *
+   * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @param targetVariable a {@link java.lang.String} object
    * @param targetValue a double
    * @param targetUnit a {@link java.lang.String} object
@@ -176,20 +191,41 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    if (targetVariable.equals("pressure")) {
-      targetEquipment.setPressure(sourceEquipment.getPressure());
-    } else {
-      inputValue = ((Stream) sourceEquipment).getThermoSystem().getNumberOfMoles();
+    if (targetEquipment instanceof Stream) {
+      if (targetVariable.equals("pressure")) {
+        targetEquipment.setPressure(sourceEquipment.getPressure());
+      } else if (targetVariable.equals("temperature")) {
+        targetEquipment.setTemperature(sourceEquipment.getTemperature());
+      } else {
+        inputValue = ((Stream) sourceEquipment).getThermoSystem().getNumberOfMoles();
 
-      double targetValueCurrent =
-          ((Stream) targetEquipment).getThermoSystem().getVolume(targetUnit);
+        double targetValueCurrent =
+            ((Stream) targetEquipment).getThermoSystem().getVolume(targetUnit);
 
-      double deviation = targetValue - targetValueCurrent;
+        double deviation = targetValue - targetValueCurrent;
 
-      logger.info("adjuster deviation " + deviation + " inputValue " + inputValue);
+        logger.info("adjuster deviation " + deviation + " inputValue " + inputValue);
 
-      oldInputValue = inputValue;
+        oldInputValue = inputValue;
+      }
+    } else if (targetEquipment instanceof ThrottlingValve) {
+      if (targetVariable.equals("pressure")) {
+        ((ThrottlingValve) targetEquipment).setOutletPressure(sourceEquipment.getPressure());
+      } else {
+        throw new RuntimeException(
+            targetVariable + " adjustment is not supported for ThrottlingValve.");
+      }
+    } else if (targetEquipment instanceof Heater || targetEquipment instanceof Cooler) {
+      if (targetVariable.equals("pressure")) {
+        ((Heater) targetEquipment).setOutletPressure(sourceEquipment.getPressure());
+      } else if (targetVariable.equals("temperature")) {
+        ((Heater) targetEquipment).setOutTemperature(sourceEquipment.getTemperature());
+
+      } else {
+        throw new RuntimeException(targetVariable + " adjustment is not supported for Heater.");
+      }
     }
+
     setCalculationIdentifier(id);
   }
 

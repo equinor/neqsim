@@ -74,6 +74,8 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   /** {@inheritDoc} */
   @Override
   public void setdT(double dT) {
+    setTemperature = false;
+    setEnergyInput = false;
     this.dT = dT;
   }
 
@@ -86,6 +88,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
    */
   public void setOutPressure(double pressure) {
     setOutPressure = true;
+    this.pressureUnit = "bara";
     this.pressureOut = pressure;
   }
 
@@ -107,6 +110,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   public void setOutTemperature(double temperature) {
     setTemperature = true;
     setEnergyInput = false;
+    this.temperatureUnit = "K";
     this.temperatureOut = temperature;
   }
 
@@ -125,6 +129,8 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     setTemperature = true;
     setEnergyInput = false;
     this.temperatureOut = temperature;
+    temperatureUnit = "K";
+    this.pressureUnit = "bara";
     setOutPressure = true;
     this.pressureOut = pressure;
   }
