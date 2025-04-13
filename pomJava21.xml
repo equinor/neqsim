@@ -89,7 +89,7 @@
 		<dependency>
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-all</artifactId>
-			<version>0.43.1</version>
+			<version>0.44.0</version>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
