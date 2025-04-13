@@ -193,6 +193,9 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (!(sourceEquipment instanceof Stream)) {
+      throw new RuntimeException("only Stream supproted as  sourceEquipment");
+    }
     if (targetEquipment instanceof Stream) {
       if (targetVariable.equals("pressure")) {
         targetEquipment.setPressure(sourceEquipment.getPressure());
