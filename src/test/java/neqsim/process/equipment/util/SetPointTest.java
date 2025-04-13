@@ -3,6 +3,7 @@ package neqsim.process.equipment.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 
@@ -46,7 +47,20 @@ public class SetPointTest {
     heater2.setOutPressure(23.0, "bara");
     heater2.setdT(0.0);
     heater2.run();
+
+
     assertEquals(22.0, heater2.getOutletStream().getTemperature("C"), 0.01);
     assertEquals(23.0, heater2.getOutletStream().getPressure("bara"), 0.01);
+
+    Pump pump1 = new Pump("Test Pump", stream2);
+    pump1.setOutletPressure(45.0, "bara");
+    pump1.run();
+
+    SetPoint setter3 = new SetPoint("Test Setter3");
+    setter3.setSourceVariable(stream, "pressure");
+    setter3.setTargetVariable(pump1);
+    setter3.run();
+    pump1.run();
+    assertEquals(20.0, pump1.getOutletStream().getPressure(), 0.01);
   }
 }

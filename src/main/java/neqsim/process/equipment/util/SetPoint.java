@@ -5,8 +5,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -214,6 +216,18 @@ public class SetPoint extends ProcessEquipmentBaseClass {
       } else {
         throw new RuntimeException(
             targetVariable + " adjustment is not supported for ThrottlingValve.");
+      }
+    } else if (targetEquipment instanceof Compressor) {
+      if (targetVariable.equals("pressure")) {
+        ((Compressor) targetEquipment).setOutletPressure(sourceEquipment.getPressure());
+      } else {
+        throw new RuntimeException(targetVariable + " adjustment is not supported for Compressor.");
+      }
+    } else if (targetEquipment instanceof Pump) {
+      if (targetVariable.equals("pressure")) {
+        ((Pump) targetEquipment).setOutletPressure(sourceEquipment.getPressure());
+      } else {
+        throw new RuntimeException(targetVariable + " adjustment is not supported for Pump.");
       }
     } else if (targetEquipment instanceof Heater || targetEquipment instanceof Cooler) {
       if (targetVariable.equals("pressure")) {
