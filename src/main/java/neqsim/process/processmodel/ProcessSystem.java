@@ -1,25 +1,16 @@
 package neqsim.process.processmodel;
 
-import static guru.nidi.graphviz.model.Factory.*;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import guru.nidi.graphviz.engine.Graphviz;
-import guru.nidi.graphviz.model.Graph;
 import neqsim.process.SimulationBaseClass;
 import neqsim.process.conditionmonitor.ConditionMonitor;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
@@ -27,6 +18,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.RecycleController;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
+import neqsim.process.util.ProcessSystemUtils;
 import neqsim.process.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -1099,28 +1091,7 @@ public class ProcessSystem extends SimulationBaseClass {
   // Method to create a process system from a YAML/JSON file
   public void createFromDescription(String filePath) {
     try {
-      ObjectMapper mapper = filePath.endsWith(".yaml") || filePath.endsWith(".yml")
-          ? new ObjectMapper(new YAMLFactory())
-          : new ObjectMapper();
-
-      Map<String, Object> processDescription = mapper.readValue(new File(filePath), Map.class);
-
-      // Parse units
-      List<Map<String, String>> units = (List<Map<String, String>>) processDescription.get("units");
-      for (Map<String, String> unit : units) {
-        String name = unit.get("name");
-        EquipmentEnum type = EquipmentEnum.valueOf(unit.get("type"));
-        addUnit(name, type);
-      }
-
-      // Parse connections
-      List<Map<String, String>> connections =
-          (List<Map<String, String>>) processDescription.get("connections");
-      for (Map<String, String> connection : connections) {
-        ProcessEquipmentInterface source = getUnit(connection.get("source"));
-        ProcessEquipmentInterface target = getUnit(connection.get("target"));
-        connectStreams(source, target);
-      }
+      ProcessSystemUtils.createFromDescription(this, filePath);
     } catch (Exception e) {
       logger.error("Error creating process system from description: " + e.getMessage(), e);
     }
@@ -1129,28 +1100,7 @@ public class ProcessSystem extends SimulationBaseClass {
   // Method to export process flow diagram
   public void exportProcessFlowDiagram(String outputFilePath) {
     try {
-      Graph graph = graph("processFlow").directed();
-
-      // Create nodes for each unit
-      Map<String, Node> nodes = new HashMap<>();
-      for (ProcessEquipmentInterface unit : unitOperations) {
-        nodes.put(unit.getName(), node(unit.getName()));
-      }
-
-      // Create edges for connections
-      for (ProcessEquipmentInterface unit : unitOperations) {
-        if (unit instanceof neqsim.process.equipment.stream.Stream) {
-          ProcessEquipmentInterface target =
-              ((neqsim.process.equipment.stream.Stream) unit).getTarget();
-          if (target != null) {
-            graph = graph.with(nodes.get(unit.getName()).link(to(nodes.get(target.getName()))));
-          }
-        }
-      }
-
-      // Render graph to file
-      Graphviz.fromGraph(graph).render(Format.PNG).toFile(new File(outputFilePath));
-      logger.info("Process flow diagram exported to: " + outputFilePath);
+      ProcessSystemUtils.exportProcessFlowDiagram(this, outputFilePath);
     } catch (Exception e) {
       logger.error("Error exporting process flow diagram: " + e.getMessage(), e);
     }
