@@ -1105,4 +1105,16 @@ public class ProcessSystem extends SimulationBaseClass {
       logger.error("Error exporting process flow diagram: " + e.getMessage(), e);
     }
   }
+
+  public void connect(ProcessEquipmentInterface fromUnit, ProcessEquipmentInterface toUnit) {
+    try {
+        java.lang.reflect.Method getOutlet = fromUnit.getClass().getMethod("getOutletStream");
+        Object outletStream = getOutlet.invoke(fromUnit);
+
+        java.lang.reflect.Method setInlet = toUnit.getClass().getMethod("setInletStream", outletStream.getClass());
+        setInlet.invoke(toUnit, outletStream);
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
 }
