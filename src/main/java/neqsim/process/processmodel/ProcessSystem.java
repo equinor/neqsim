@@ -1,16 +1,25 @@
 package neqsim.process.processmodel;
 
+import static guru.nidi.graphviz.model.Factory.*;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import guru.nidi.graphviz.engine.Graphviz;
+import guru.nidi.graphviz.model.Graph;
 import neqsim.process.SimulationBaseClass;
 import neqsim.process.conditionmonitor.ConditionMonitor;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
@@ -1022,4 +1031,128 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * public Report getReport(){ return this.new Report(); }
    */
+
+  // New enum for equipment types
+  public enum EquipmentEnum {
+    STREAM("Stream"), THROTTLING_VALVE("ThrottlingValve"), COMPRESSOR("Compressor"), PUMP(
+        "Pump"), SEPARATOR("Separator");
+
+    private final String typeName;
+
+    EquipmentEnum(String typeName) {
+      this.typeName = typeName;
+    }
+
+    public String getTypeName() {
+      return typeName;
+    }
+  }
+
+  // Overloaded addUnit method
+  public ProcessEquipmentInterface addUnit(String name, EquipmentEnum equipmentType) {
+    ProcessEquipmentInterface unit = createUnit(equipmentType);
+    unit.setName(name);
+    this.add(unit);
+    return unit;
+  }
+
+  public ProcessEquipmentInterface addUnit(EquipmentEnum equipmentType) {
+    String defaultName = generateDefaultName(equipmentType);
+    return addUnit(defaultName, equipmentType);
+  }
+
+  private ProcessEquipmentInterface createUnit(EquipmentEnum equipmentType) {
+    switch (equipmentType) {
+      case STREAM:
+        return new neqsim.process.equipment.stream.Stream();
+      case THROTTLING_VALVE:
+        return new neqsim.process.equipment.valve.ThrottlingValve();
+      case COMPRESSOR:
+        return new neqsim.process.equipment.compressor.Compressor();
+      case PUMP:
+        return new neqsim.process.equipment.pump.Pump();
+      case SEPARATOR:
+        return new neqsim.process.equipment.separator.Separator();
+      default:
+        throw new IllegalArgumentException("Unsupported equipment type: " + equipmentType);
+    }
+  }
+
+  private String generateDefaultName(EquipmentEnum equipmentType) {
+    String baseName = equipmentType.name().toLowerCase();
+    int count = 1;
+    while (hasUnitName(baseName + "_" + count)) {
+      count++;
+    }
+    return baseName + "_" + count;
+  }
+
+  // Automatic connection of streams
+  public void connectStreams(ProcessEquipmentInterface source, ProcessEquipmentInterface target) {
+    if (source instanceof neqsim.process.equipment.stream.Stream
+        && target instanceof neqsim.process.equipment.stream.ProcessEquipmentInterface) {
+      ((neqsim.process.equipment.equipment.ProcessEquipmentInterface) target)
+          .setInletStream((neqsim.process.equipment.stream.Stream) source);
+    }
+  }
+
+  // Method to create a process system from a YAML/JSON file
+  public void createFromDescription(String filePath) {
+    try {
+      ObjectMapper mapper = filePath.endsWith(".yaml") || filePath.endsWith(".yml")
+          ? new ObjectMapper(new YAMLFactory())
+          : new ObjectMapper();
+
+      Map<String, Object> processDescription = mapper.readValue(new File(filePath), Map.class);
+
+      // Parse units
+      List<Map<String, String>> units = (List<Map<String, String>>) processDescription.get("units");
+      for (Map<String, String> unit : units) {
+        String name = unit.get("name");
+        EquipmentEnum type = EquipmentEnum.valueOf(unit.get("type"));
+        addUnit(name, type);
+      }
+
+      // Parse connections
+      List<Map<String, String>> connections =
+          (List<Map<String, String>>) processDescription.get("connections");
+      for (Map<String, String> connection : connections) {
+        ProcessEquipmentInterface source = getUnit(connection.get("source"));
+        ProcessEquipmentInterface target = getUnit(connection.get("target"));
+        connectStreams(source, target);
+      }
+    } catch (Exception e) {
+      logger.error("Error creating process system from description: " + e.getMessage(), e);
+    }
+  }
+
+  // Method to export process flow diagram
+  public void exportProcessFlowDiagram(String outputFilePath) {
+    try {
+      Graph graph = graph("processFlow").directed();
+
+      // Create nodes for each unit
+      Map<String, Node> nodes = new HashMap<>();
+      for (ProcessEquipmentInterface unit : unitOperations) {
+        nodes.put(unit.getName(), node(unit.getName()));
+      }
+
+      // Create edges for connections
+      for (ProcessEquipmentInterface unit : unitOperations) {
+        if (unit instanceof neqsim.process.equipment.stream.Stream) {
+          ProcessEquipmentInterface target =
+              ((neqsim.process.equipment.stream.Stream) unit).getTarget();
+          if (target != null) {
+            graph = graph.with(nodes.get(unit.getName()).link(to(nodes.get(target.getName()))));
+          }
+        }
+      }
+
+      // Render graph to file
+      Graphviz.fromGraph(graph).render(Format.PNG).toFile(new File(outputFilePath));
+      logger.info("Process flow diagram exported to: " + outputFilePath);
+    } catch (Exception e) {
+      logger.error("Error exporting process flow diagram: " + e.getMessage(), e);
+    }
+  }
 }
