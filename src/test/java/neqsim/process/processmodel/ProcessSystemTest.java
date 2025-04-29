@@ -968,14 +968,14 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     Separator separator1 = process1.addUnit("Separator 1", "Separator");
 
-    var gasOut = process1.addUnit("GasOut", separator1.getGasOutStream());
+    process1.addUnit("GasOut", separator1.getGasOutStream());
     Compressor compressor1 = process1.addUnit("Compressor 1", "Compressor");
     compressor1.setOutletPressure(50.0, "bara");
 
-    var liquidOut = process1.addUnit(separator1.getLiquidOutStream());
+    process1.addUnit(separator1.getLiquidOutStream());
     ThrottlingValve valve2 = process1.addUnit("Valve 2", "ThrottlingValve");
     valve2.setOutletPressure(1.0, "bara");
-    var stableoil = process1.addUnit("stableoil", "Stream");
+    process1.addUnit("stableoil", "Stream");
 
     process1.run();
 

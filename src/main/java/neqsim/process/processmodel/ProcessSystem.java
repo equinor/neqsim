@@ -152,8 +152,8 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public boolean replaceUnit(String name, ProcessEquipmentInterface newObject) {
     try {
-      ProcessEquipmentInterface unit = (ProcessEquipmentInterface) getUnit(name);
-      unit = newObject;
+      int unitIndex = getUnitNumber(name);
+      unitOperations.set(unitIndex, newObject);
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
     }
@@ -1083,11 +1083,11 @@ public class ProcessSystem extends SimulationBaseClass {
       return;
     fromUnit.run();
     try {
-      var getOutlet = fromUnit.getClass().getMethod("getOutletStream");
+      java.lang.reflect.Method getOutlet = fromUnit.getClass().getMethod("getOutletStream");
       Object outletStream = getOutlet.invoke(fromUnit);
 
       if (outletStream != null) {
-        var setInlet = toUnit.getClass().getMethod("setInletStream",
+        java.lang.reflect.Method setInlet = toUnit.getClass().getMethod("setInletStream",
             neqsim.process.equipment.stream.StreamInterface.class);
         setInlet.invoke(toUnit, outletStream);
       }
