@@ -1091,7 +1091,7 @@ public class ProcessSystem extends SimulationBaseClass {
   public void connectStreams(ProcessEquipmentInterface source, ProcessEquipmentInterface target) {
     if (source instanceof neqsim.process.equipment.stream.Stream
         && target instanceof neqsim.process.equipment.stream.ProcessEquipmentInterface) {
-      ((neqsim.process.equipment.equipment.ProcessEquipmentInterface) target)
+      ((neqsim.process.equipment.stream.ProcessEquipmentInterface) target)
           .setInletStream((neqsim.process.equipment.stream.Stream) source);
     }
   }

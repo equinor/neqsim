@@ -20,7 +20,7 @@ ProcessSystem processSystem = new ProcessSystem("My Process System");
 ### Adding Unit Operations
 ```java
 processSystem.addUnit("Compressor1", ProcessSystem.EquipmentEnum.COMPRESSOR);
-processSystem.addUnit("Heater1", ProcessSystem.EquipmentEnum.HEATER);
+processSystem.addUnit("Pump1", ProcessSystem.EquipmentEnum.PUMP);
 ```
 
 ### Connecting Streams
