@@ -708,11 +708,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
-   * Getter for stream.
-   * </p>
+   * Gets the outlet stream.
    *
-   * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object representing the
+   *        stream to process.
+   * @return the outlet stream as a {@link neqsim.process.equipment.stream.StreamInterface} object.
    */
   public StreamInterface getOutletStream() {
     return this;
