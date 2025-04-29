@@ -2,6 +2,7 @@ package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.ArrayList;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
 import neqsim.process.equipment.absorber.WaterStripperColumn;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
@@ -19,6 +21,7 @@ import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
@@ -74,7 +77,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     sep.setName(sepName);
     p.add(sep);
 
-    ArrayList<ProcessEquipmentInterface> list = p.getUnitOperations();
+    List<ProcessEquipmentInterface> list = p.getUnitOperations();
 
     Assertions.assertTrue(sep == p.getUnit(sepName));
 
@@ -940,4 +943,50 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
       logger.error(e.getMessage());;
     }
   }
+
+  @Test
+  public void testSimplifiedModel() {
+
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkEos(190, 10);
+    fluid1.addComponent("methane", 0.5);
+    fluid1.addComponent("ethane", 0.2);
+    fluid1.addComponent("propane", 0.1);
+    fluid1.addComponent("nC10", 0.1);
+    fluid1.setMixingRule("classic");
+
+
+    ProcessSystem process1 = new ProcessSystem();
+
+    Stream stream1 = process1.addUnit("stream_1", "Stream");
+    stream1.setFluid(fluid1);
+    stream1.setTemperature(20.0, "C");
+    stream1.setFlowRate(100.0, "kg/hr");
+    stream1.setPressure(30.0, "bara");
+
+    ThrottlingValve valve1 = process1.addUnit("Valve 1", "ThrottlingValve");
+    valve1.setOutletPressure(10.0, "bara");
+
+    Separator separator1 = process1.addUnit("Separator 1", "Separator");
+
+    var gasOut = process1.addUnit("GasOut", separator1.getGasOutStream());
+    Compressor compressor1 = process1.addUnit("Compressor 1", "Compressor");
+    compressor1.setOutletPressure(50.0, "bara");
+
+    var liquidOut = process1.addUnit(separator1.getLiquidOutStream());
+    ThrottlingValve valve2 = process1.addUnit("Valve 2", "ThrottlingValve");
+    valve2.setOutletPressure(1.0, "bara");
+    var stableoil = process1.addUnit("stableoil", "Stream");
+
+    process1.run();
+
+    // System.out.println("name " + liquidOut.getName());
+
+    // compressor1.getOutletStream().getFluid().prettyPrint();
+
+    assertEquals(4.78589648, valve1.getOutletStream().getTemperature("C"), 1e-6);
+
+    // process1.validateConnections();
+    // process1.checkMassBalance();
+  }
+
 }
