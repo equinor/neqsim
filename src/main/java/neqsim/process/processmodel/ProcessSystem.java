@@ -46,8 +46,7 @@ public class ProcessSystem extends SimulationBaseClass {
   private double surroundingTemperature = 288.15;
   private int timeStepNumber = 0;
   private List<ProcessEquipmentInterface> unitOperations = new ArrayList<>();
-  List<MeasurementDeviceInterface> measurementDevices =
-      new ArrayList<MeasurementDeviceInterface>(0);
+  List<MeasurementDeviceInterface> measurementDevices = new ArrayList<MeasurementDeviceInterface>(0);
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
   private boolean runStep = false;
@@ -78,7 +77,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Add to end.
    * </p>
    *
-   * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface}
+   *                  object
    */
   public void add(ProcessEquipmentInterface operation) {
     // Add to end
@@ -90,8 +90,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Add to specific position.
    * </p>
    *
-   * @param position 0-based position
-   * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param position  0-based position
+   * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface}
+   *                  object
    */
   public void add(int position, ProcessEquipmentInterface operation) {
     List<ProcessEquipmentInterface> units = this.getUnitOperations();
@@ -104,8 +105,7 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     if (getAllUnitNames().contains(operation.getName())) {
-      ProcessEquipmentInterface existing =
-          (ProcessEquipmentInterface) this.getUnit(operation.getName());
+      ProcessEquipmentInterface existing = (ProcessEquipmentInterface) this.getUnit(operation.getName());
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("ProcessSystem",
           "add", "operation", "- Process equipment of type " + existing.getClass().getSimpleName()
               + " named " + operation.getName() + " already included in ProcessSystem"));
@@ -122,8 +122,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Add measurementdevice.
    * </p>
    *
-   * @param measurementDevice a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
-   *        object
+   * @param measurementDevice a
+   *                          {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
+   *                          object
    */
   public void add(MeasurementDeviceInterface measurementDevice) {
     measurementDevices.add(measurementDevice);
@@ -134,8 +135,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Add multiple process equipment to end.
    * </p>
    *
-   * @param operations an array of {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *        objects
+   * @param operations an array of
+   *                   {@link neqsim.process.equipment.ProcessEquipmentInterface}
+   *                   objects
    */
   public void add(ProcessEquipmentInterface[] operations) {
     getUnitOperations().addAll(Arrays.asList(operations));
@@ -146,7 +148,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Replace a unitoperation
    * </p>
    *
-   * @param name Name of the object to replace
+   * @param name      Name of the object to replace
    * @param newObject the object to replace it with
    * @return a {@link java.lang.Boolean} object
    */
@@ -208,7 +210,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param name Name of measurement device
-   * @return a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface} object
+   * @return a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
+   *         object
    */
   public MeasurementDeviceInterface getMeasurementDevice(String name) {
     for (int i = 0; i < measurementDevices.size(); i++) {
@@ -249,8 +252,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * replaceObject.
    * </p>
    *
-   * @param unitName a {@link java.lang.String} object
-   * @param operation a {@link neqsim.process.equipment.ProcessEquipmentBaseClass} object
+   * @param unitName  a {@link java.lang.String} object
+   * @param operation a {@link neqsim.process.equipment.ProcessEquipmentBaseClass}
+   *                  object
    */
   public void replaceObject(String unitName, ProcessEquipmentBaseClass operation) {
     unitOperations.set(getUnitNumber(name), operation);
@@ -327,8 +331,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * setFluid.
    * </p>
    *
-   * @param fluid1 a {@link neqsim.thermo.system.SystemInterface} object
-   * @param fluid2 a {@link neqsim.thermo.system.SystemInterface} object
+   * @param fluid1           a {@link neqsim.thermo.system.SystemInterface} object
+   * @param fluid2           a {@link neqsim.thermo.system.SystemInterface} object
    * @param addNewComponents a boolean
    */
   public void setFluid(SystemInterface fluid1, SystemInterface fluid2, boolean addNewComponents) {
@@ -491,11 +495,15 @@ public class ProcessSystem extends SimulationBaseClass {
       /*
        * signalDB = new String[1000][1 + 3 * measurementDevices.size()];
        *
-       * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for (int i = 0; i
-       * < measurementDevices.size(); i++) { signalDB[timeStepNumber][0] = Double.toString(time);
+       * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for
+       * (int i = 0; i
+       * < measurementDevices.size(); i++) { signalDB[timeStepNumber][0] =
+       * Double.toString(time);
        * signalDB[timeStepNumber][3 * i + 1] = ((MeasurementDeviceInterface)
-       * measurementDevices.get(i)) .getName(); signalDB[timeStepNumber][3 * i + 2] = Double
-       * .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
+       * measurementDevices.get(i)) .getName(); signalDB[timeStepNumber][3 * i + 2] =
+       * Double
+       * .toString(((MeasurementDeviceInterface)
+       * measurementDevices.get(i)).getMeasuredValue());
        * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface)
        * measurementDevices.get(i)) .getUnit(); }
        */
@@ -535,12 +543,17 @@ public class ProcessSystem extends SimulationBaseClass {
   /*
    * signalDB = new String[1000][1 + 3 * measurementDevices.size()];
    *
-   * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for (int i = 0; i <
-   * measurementDevices.size(); i++) { signalDB[timeStepNumber][0] = Double.toString(time);
-   * signalDB[timeStepNumber][3 * i + 1] = ((MeasurementDeviceInterface) measurementDevices.get(i))
+   * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for
+   * (int i = 0; i <
+   * measurementDevices.size(); i++) { signalDB[timeStepNumber][0] =
+   * Double.toString(time);
+   * signalDB[timeStepNumber][3 * i + 1] = ((MeasurementDeviceInterface)
+   * measurementDevices.get(i))
    * .getName(); signalDB[timeStepNumber][3 * i + 2] = Double
-   * .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
-   * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface) measurementDevices.get(i))
+   * .toString(((MeasurementDeviceInterface)
+   * measurementDevices.get(i)).getMeasuredValue());
+   * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface)
+   * measurementDevices.get(i))
    * .getUnit(); }
    */
 
@@ -581,8 +594,7 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < measurementDevices.size(); i++) {
       signalDB[timeStepNumber][0] = Double.toString(time);
       signalDB[timeStepNumber][3 * i + 1] = measurementDevices.get(i).getName();
-      signalDB[timeStepNumber][3 * i + 2] =
-          Double.toString(measurementDevices.get(i).getMeasuredValue());
+      signalDB[timeStepNumber][3 * i + 2] = Double.toString(measurementDevices.get(i).getMeasuredValue());
       signalDB[timeStepNumber][3 * i + 3] = measurementDevices.get(i).getUnit();
     }
     setCalculationIdentifier(id);
@@ -669,9 +681,12 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     /*
-     * JFrame frame = new JFrame(); frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-     * frame.setLayout(new GridLayout(1, 0, 5, 5)); JTextArea area1 = new JTextArea(10, 10); JTable
-     * Jtab = new JTable(reportResults(), reportResults()[0]); frame.add(area1); frame.pack();
+     * JFrame frame = new JFrame();
+     * frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+     * frame.setLayout(new GridLayout(1, 0, 5, 5)); JTextArea area1 = new
+     * JTextArea(10, 10); JTable
+     * Jtab = new JTable(reportResults(), reportResults()[0]); frame.add(area1);
+     * frame.pack();
      * frame.setLocationRelativeTo(null); frame.setVisible(true);
      */
   }
@@ -723,8 +738,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
   public static ProcessSystem open(String filePath) {
-    try (ObjectInputStream objectinputstream =
-        new ObjectInputStream(new FileInputStream(filePath))) {
+    try (ObjectInputStream objectinputstream = new ObjectInputStream(new FileInputStream(filePath))) {
       return (ProcessSystem) objectinputstream.readObject();
       // logger.info("process file open ok: " + filePath);
     } catch (Exception ex) {
@@ -760,8 +774,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param filename a {@link java.lang.String} object
    */
   public void printLogFile(String filename) {
-    neqsim.datapresentation.filehandling.TextFile tempFile =
-        new neqsim.datapresentation.filehandling.TextFile();
+    neqsim.datapresentation.filehandling.TextFile tempFile = new neqsim.datapresentation.filehandling.TextFile();
     tempFile.setOutputFileName(filename);
     tempFile.setValues(signalDB);
     tempFile.createFile();
@@ -867,8 +880,7 @@ public class ProcessSystem extends SimulationBaseClass {
     double power = 0.0;
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getClass().getSimpleName().equals("Compressor")) {
-        power +=
-            ((neqsim.process.equipment.compressor.Compressor) unitOperations.get(i)).getPower();
+        power += ((neqsim.process.equipment.compressor.Compressor) unitOperations.get(i)).getPower();
       } else if (unitOperations.get(i).getClass().getSimpleName().equals("Pump")) {
         power += ((neqsim.process.equipment.pump.Pump) unitOperations.get(i)).getPower();
       }
@@ -1053,14 +1065,12 @@ public class ProcessSystem extends SimulationBaseClass {
     return (T) addUnit(null, equipmentEnum);
   }
 
-
   private String generateUniqueName(String equipmentType) {
     int count = equipmentCounter.getOrDefault(equipmentType, 0) + 1;
     equipmentCounter.put(equipmentType, count);
     String formatted = equipmentType.substring(0, 1).toLowerCase() + equipmentType.substring(1);
     return formatted + "_" + count;
   }
-
 
   public ProcessEquipmentInterface addUnit(String name, ProcessEquipmentInterface equipment) {
     unitOperations.add(equipment);
@@ -1098,8 +1108,10 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /*
-   * @XmlRootElement private class Report extends Object{ public Double name; public
-   * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();
+   * @XmlRootElement private class Report extends Object{ public Double name;
+   * public
+   * ArrayList<ReportInterface> unitOperationsReports = new
+   * ArrayList<ReportInterface>();
    *
    * Report(){ name= getName();
    *
