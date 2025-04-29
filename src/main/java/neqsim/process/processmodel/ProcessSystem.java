@@ -10,7 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.io.PrintWriter;
 import java.util.UUID;
+import java.lang.reflect.InvocationTargetException;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -1094,6 +1096,49 @@ public class ProcessSystem extends SimulationBaseClass {
     } catch (NoSuchMethodException ignored) {
     } catch (Exception e) {
       e.printStackTrace();
+    }
+  }
+
+  public void exportToGraphviz(String filename) {
+    try (PrintWriter writer = new PrintWriter(filename)) {
+      writer.println("digraph process {");
+
+      for (ProcessEquipmentInterface unit : getUnitOperations()) {
+        boolean hasConnection = false;
+        try {
+          java.lang.reflect.Method getOutlet = unit.getClass().getMethod("getOutletStream");
+          Object outlet = getOutlet.invoke(unit);
+
+          if (outlet != null) {
+            for (ProcessEquipmentInterface nextUnit : getUnitOperations()) {
+              try {
+                java.lang.reflect.Method getInlet = nextUnit.getClass().getMethod("getInletStream");
+                Object inlet = getInlet.invoke(nextUnit);
+
+                if (inlet != null && inlet.equals(outlet)) {
+                  writer.println("  \"" + unit.getName() + "\" -> \"" + nextUnit.getName() + "\";");
+                  hasConnection = true;
+                }
+              } catch (NoSuchMethodException | IllegalAccessException
+                  | InvocationTargetException ignore) {
+                // Ignore units without getInletStream method or inaccessible methods
+              }
+            }
+          }
+        } catch (NoSuchMethodException | IllegalAccessException
+            | InvocationTargetException ignore) {
+          // Ignore units without getOutletStream method or inaccessible methods
+        }
+
+        // Add the unit to the graph even if it has no connections
+        if (!hasConnection) {
+          writer.println("  \"" + unit.getName() + "\";");
+        }
+      }
+
+      writer.println("}");
+    } catch (Exception e) {
+      logger.error("Error exporting to Graphviz", e);
     }
   }
 

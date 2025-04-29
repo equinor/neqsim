@@ -38,6 +38,10 @@ class ProcessLoaderTest {
     ThrottlingValve unit = (ThrottlingValve) processSystem.getUnit("throttlingValve_1");
     assertNotNull(unit, "Unit should be added to the process system");
     assertEquals(10.45841962, unit.getOutletStream().getTemperature("C"), 1e-3);
+
+    processSystem.exportToGraphviz("C:\\Users\\esol\\OneDrive - Equinor\\Documents\\GitHub\\n" + //
+        "eqsim\\src\\test\\java\\n" + //
+        "eqsim\\process\\processmodel\\process.dot");
   }
 
 }
