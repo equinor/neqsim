@@ -34,6 +34,9 @@ public class LBCViscosityMethod extends Viscosity {
   /** {@inheritDoc} */
   @Override
   public double calcViscosity() {
+    double T = phase.getPhase().getTemperature();
+    double P = phase.getPhase().getPressure() / 10.0; // [MPa]
+
     double lowPresVisc = 0.0;
     double temp = 0.0;
     double temp2 = 0.0;
@@ -77,6 +80,28 @@ public class LBCViscosityMethod extends Viscosity {
     double viscosity = (-Math.pow(10.0, -4.0) + Math.pow(numb, 4.0)) / eps + lowPresVisc;
     viscosity /= 1.0e3;
     // System.out.println("visc " + viscosity);
+
+    ///* 
+    // Check if there is only methane, then it can be calculated very accurately
+    if (phase.getPhase().getNumberOfComponents() == 1 
+      && phase.getPhase().getComponent(0).getName().equals("methane")
+      && T >= 265.0 && T <= 500.0 && P <= 32.0) {
+      double term_A = 0.0;  //Declaring the variable so that it can be changed 
+      if (T >= 345) {
+        term_A = 1.1 * Math.pow(T/345 - 1, 1.2);
+      } else {
+        term_A = 0.64*(T/345 - 1) * (1 - 0.4*Math.exp(-Math.pow(T-298.15, 2) / 100)/(1+Math.exp(-(P-21))));
+      }
+
+      double A = Math.pow(10, -6) * ( term_A + 0.27 * Math.exp(-Math.pow(T-430, 2) / 9000) * Math.exp(-Math.pow(P-21, 2) / 35)/(1+Math.exp(-(P-15))) );
+      double B = Math.pow(10, -8) * (  1.2 * Math.pow(300/T, 3) * Math.pow(P, 1.2)/(1+Math.exp(-0.6*(P-20))) + 30 * (1 - T/400) * Math.exp(-Math.pow(P-15, 2) / 20) + 13*Math.exp(-Math.pow(P-12.8, 2) / 7) );
+      double C = Math.pow(10, -8) * ( 1/(1+Math.exp((P-15)))*( 2*P * Math.exp(-Math.pow(T-375, 2) / 10000) + 8.0 * (P/4 - 1)) + 10.0 * Math.exp(-Math.pow(T-260, 2) / 300)/(1+Math.exp(0.9*(P-12))) );
+      double D = Math.pow(10, -6) * ( 0.62 * (1 - T/430) * 1/(1+Math.exp(-0.5*(P-26))) + 0.306*Math.exp(-Math.pow(T-270, 2)/50)/(1+Math.exp(-(P-25))) - (265.2/T) * Math.exp(-Math.pow(T-270, 2)/160)/(1+Math.exp(-0.5*(P-25))) );
+
+      viscosity += A - B + C - D;
+    }
+    //*/
+    
     return viscosity;
   }
 
