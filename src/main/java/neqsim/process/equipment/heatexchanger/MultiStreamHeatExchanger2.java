@@ -31,7 +31,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author ESOL
  * @version 1.0
  */
-public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatExchangerInterface {
+public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeatExchangerInterface {
   private static final long serialVersionUID = 1001;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(MultiStreamHeatExchanger.class);
@@ -66,7 +66,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
    *
    * @param name Name of the heat exchanger
    */
-  public MultiStreamHeatExchanger(String name) {
+  public MultiStreamHeatExchanger2(String name) {
     super(name);
   }
 
@@ -76,7 +76,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
    * @param name Name of the heat exchanger
    * @param inStreams Initial list of input streams
    */
-  public MultiStreamHeatExchanger(String name, List<StreamInterface> inStreams) {
+  public MultiStreamHeatExchanger2(String name, List<StreamInterface> inStreams) {
     this(name);
     this.inStreams.addAll(inStreams);
     // Initialize outStreams as clones of inStreams
