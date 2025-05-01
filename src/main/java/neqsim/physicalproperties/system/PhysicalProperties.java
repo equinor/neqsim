@@ -15,6 +15,7 @@ import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethodMod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.LBCViscosityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MethaneViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MuznyModViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MuznyViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
@@ -231,6 +232,8 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
       viscosityCalc = new MuznyViscosityMethod(this);
     } else if ("Muzny_mod".equals(model)) {
       viscosityCalc = new MuznyModViscosityMethod(this);
+    } else if ("MethaneModel".equals(model)) {
+      viscosityCalc = new MethaneViscosityMethod(this);
     }
   }
 
