@@ -4,19 +4,19 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  * <p>
- * ComponentVega class.
+ * ComponentLeachman class.
  * </p>
  *
- * @author victorigi
+ * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ComponentVegaEos extends ComponentEos {
+public class ComponentLeachmanEos extends ComponentEos {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
    * <p>
-   * Constructor for ComponentGERG2004.
+   * Constructor for ComponentLeachman.
    * </p>
    *
    * @param name Name of component.
@@ -24,13 +24,13 @@ public class ComponentVegaEos extends ComponentEos {
    * @param molesInPhase Number of moles in phase.
    * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentVegaEos(String name, double moles, double molesInPhase, int compIndex) {
+  public ComponentLeachmanEos(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
   }
 
   /**
    * <p>
-   * Constructor for ComponentGERG2004.
+   * Constructor for ComponentLeachman.
    * </p>
    *
    * @param number a int. Not used.
@@ -40,16 +40,16 @@ public class ComponentVegaEos extends ComponentEos {
    * @param a Acentric factor
    * @param moles Total number of moles of component.
    */
-  public ComponentVegaEos(int number, double TC, double PC, double M, double a, double moles) {
+  public ComponentLeachmanEos(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
   }
 
   /** {@inheritDoc} */
   @Override
-  public ComponentVegaEos clone() {
-    ComponentVegaEos clonedComponent = null;
+  public ComponentLeachmanEos clone() {
+    ComponentLeachmanEos clonedComponent = null;
     try {
-      clonedComponent = (ComponentVegaEos) super.clone();
+      clonedComponent = (ComponentLeachmanEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
@@ -111,27 +111,27 @@ public class ComponentVegaEos extends ComponentEos {
   @Override
   public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    return phase.getAlphares_Vega()[0][0].val + phase.getAlphares_Vega()[0][1].val; //single component EOS
+    return phase.getAlphares_Leachman()[0][0].val + phase.getAlphares_Leachman()[0][1].val; //single component EOS
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents,
                        double temperature, double pressure) {
-    return (2 * phase.getAlphares_Vega()[0][1].val + phase.getAlphares_Vega()[0][2].val) 
+    return (2 * phase.getAlphares_Leachman()[0][1].val + phase.getAlphares_Leachman()[0][2].val) 
       / phase.getNumberOfMolesInPhase(); 
   }
 
   @Override
   public double dFdNdV(PhaseInterface phase, int numberOfComponents,
                        double temperature, double pressure) {
-    return -(2 * phase.getAlphares_Vega()[0][1].val + phase.getAlphares_Vega()[0][2].val)
+    return -(2 * phase.getAlphares_Leachman()[0][1].val + phase.getAlphares_Leachman()[0][2].val)
       / phase.getVolume();
   }
 
   @Override
   public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
-    return -(phase.getAlphares_Vega()[1][0].val + phase.getAlphares_Vega()[1][1].val)
+    return -(phase.getAlphares_Leachman()[1][0].val + phase.getAlphares_Leachman()[1][1].val)
       / phase.getTemperature();
   }
 

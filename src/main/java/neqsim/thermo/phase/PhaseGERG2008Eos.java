@@ -2,17 +2,24 @@ package neqsim.thermo.phase;
 
 import org.netlib.util.doubleW;
 import neqsim.thermo.component.ComponentEosInterface;
-import neqsim.thermo.component.ComponentVegaEos;
+import neqsim.thermo.component.ComponentGERG2008Eos;
 
 /**
  * <p>
- * PhaseVegaEos class.
+ * PhaseGERG2008Eos class.
  * </p>
  *
- * @author Even Solbraa
+ * @author victorigi
  * @version $Id: $Id
  */
-public class PhaseVegaEos extends PhaseEos {
+
+
+// --- DISCLAIMER BEGIN ---
+// This class is not yet done
+// Some of the properties releated to the helmholtz free energy and its derivatives
+// are not yet implemented
+// --- DISCLAIMER END ---
+public class PhaseGERG2008Eos extends PhaseEos {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -24,9 +31,9 @@ public class PhaseVegaEos extends PhaseEos {
 
   double gibbsEnergy = 0.0;
 
-  double CpVega = 0.0;
+  double CpGERG2008 = 0.0;
 
-  double CvVega = 0.0;
+  double CvGERG2008 = 0.0;
 
   double internalEnery = 0.0;
 
@@ -44,19 +51,19 @@ public class PhaseVegaEos extends PhaseEos {
 
   /**
    * <p>
-   * Constructor for PhaseVegaEos.
+   * Constructor for PhaseGERG2008Eos.
    * </p>
    */
-  public PhaseVegaEos() {
-    thermoPropertyModelName = "Vega Eos";
+  public PhaseGERG2008Eos() {
+    thermoPropertyModelName = "GERG2008 Eos";
   }
 
   /** {@inheritDoc} */
   @Override
-  public PhaseVegaEos clone() {
-    PhaseVegaEos clonedPhase = null;
+  public PhaseGERG2008Eos clone() {
+    PhaseGERG2008Eos clonedPhase = null;
     try {
-      clonedPhase = (PhaseVegaEos) super.clone();
+      clonedPhase = (PhaseGERG2008Eos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
@@ -68,7 +75,7 @@ public class PhaseVegaEos extends PhaseEos {
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, molesInPhase, compNumber);
-    componentArray[compNumber] = new ComponentVegaEos(name, moles, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentGERG2008Eos(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -84,9 +91,9 @@ public class PhaseVegaEos extends PhaseEos {
     }
     if (initType >= 1) {
       double[] temp = new double[18];
-      temp = getProperties_Vega();
-      a0 = getAlpha0_Vega();
-      ar = getAlphares_Vega();
+      temp = getProperties_GERG2008();
+      a0 = getAlpha0_GERG2008();
+      ar = getAlphares_GERG2008();
 
       pressure = temp[0] / 100;
 
@@ -104,9 +111,9 @@ public class PhaseVegaEos extends PhaseEos {
                           // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
       entropy = temp[8]; // gergEOS.SOTPX(temperature,pressure/10.0,
                          // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      CpVega = temp[10]; // gergEOS.CPOTPX(temperature,pressure/10.0,
+      CpGERG2008 = temp[10]; // gergEOS.CPOTPX(temperature,pressure/10.0,
                          // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      CvVega = temp[9]; // gergEOS.CPOTPX(temperature,pressure/10.0,
+      CvGERG2008 = temp[9]; // gergEOS.CPOTPX(temperature,pressure/10.0,
                         // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     }
@@ -151,13 +158,13 @@ public class PhaseVegaEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double getCp() {
-    return CpVega * numberOfMolesInPhase;
+    return CpGERG2008 * numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getCv() {
-    return CvVega * numberOfMolesInPhase;
+    return CvGERG2008 * numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
@@ -165,7 +172,7 @@ public class PhaseVegaEos extends PhaseEos {
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    return getMolarMass() * 1e5 / getDensity_Vega();
+    return getMolarMass() * 1e5 / getDensity_GERG2008();
   }
 
   /** {@inheritDoc} */
@@ -214,7 +221,7 @@ public class PhaseVegaEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double getDensity() {
-    return getDensity_Vega();
+    return getDensity_GERG2008();
   }
 
   /** {@inheritDoc} */

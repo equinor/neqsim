@@ -1,55 +1,62 @@
 package neqsim.thermo.system;
 
+import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePureComponentSolid;
-import neqsim.thermo.phase.PhaseVegaEos;
 
 /**
- * This class defines a thermodynamic system using the VegaEos equation of state.
+ * This class defines a thermodynamic system using the GERG2008Eos equation of state.
  *
- * @author Even Solbraa
+ * @author victorigi
  * @version $Id: $Id
  */
-public class SystemVegaEos extends SystemEos {
+
+
+  // --- DISCLAIMER BEGIN ---
+  // This class is not yet done
+  // Some of the properties releated to the helmholtz energy and its derivatives
+  // are not yet implemented
+  // --- DISCLAIMER END ---
+public class SystemGERG2008Eos extends SystemEos {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
    * <p>
-   * Constructor for SystemVegaEos.
+   * Constructor for SystemGERG2008Eos.
    * </p>
    */
-  public SystemVegaEos() {
+  public SystemGERG2008Eos() {
     this(298.15, 1.0, false);
   }
 
   /**
    * <p>
-   * Constructor for SystemVegaEos.
+   * Constructor for SystemGERG2008Eos.
    * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
    */
-  public SystemVegaEos(double T, double P) {
+  public SystemGERG2008Eos(double T, double P) {
     this(T, P, false);
   }
 
   /**
    * <p>
-   * Constructor for SystemVegaEos.
+   * Constructor for SystemGERG2008Eos.
    * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemVegaEos(double T, double P, boolean checkForSolids) {
+  public SystemGERG2008Eos(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    modelName = "Vega-EOS";
+    modelName = "GERG2008-EOS";
 
     for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseVegaEos();
+      phaseArray[i] = new PhaseGERG2008Eos();
       phaseArray[i].setTemperature(T);
       phaseArray[i].setPressure(P);
     }
@@ -75,10 +82,10 @@ public class SystemVegaEos extends SystemEos {
 
   /** {@inheritDoc} */
   @Override
-  public SystemVegaEos clone() {
-    SystemVegaEos clonedSystem = null;
+  public SystemGERG2008Eos clone() {
+    SystemGERG2008Eos clonedSystem = null;
     try {
-      clonedSystem = (SystemVegaEos) super.clone();
+      clonedSystem = (SystemGERG2008Eos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
