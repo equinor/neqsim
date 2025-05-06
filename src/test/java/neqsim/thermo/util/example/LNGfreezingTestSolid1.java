@@ -2,6 +2,7 @@ package neqsim.thermo.util.example;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -55,14 +56,14 @@ public class LNGfreezingTestSolid1 {
     testSystem.setSolidPhaseCheck("benzene");
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
-    testSystem.getPhase(3).getComponent("benzene").setHeatOfFusion(6000);
+    testSystem.getPhase(PhaseType.SOLID).getComponent("benzene").setHeatOfFusion(6000);
     try {
       // System.out.println("heat of fusion " +
-      // testSystem.getPhase(3).getComponent("benzene").getHeatOfFusion());
+      // testSystem.getPhase(PhaseType.SOLID).getComponent("benzene").getHeatOfFusion());
 
       testOps.TPSolidflash();
       // System.out.println("heat of fusion " +
-      // testSystem.getPhase(3).getComponent("benzene").getHeatOfFusion());
+      // testSystem.getPhase(PhaseType.SOLID).getComponent("benzene").getHeatOfFusion());
       // testOps.displayResult();
       // testOps.freezingPointTemperatureFlash();
       testSystem.display();
