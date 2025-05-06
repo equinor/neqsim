@@ -28,7 +28,7 @@ public class PipeBeggsBrillsResponse extends BaseResponse {
    * Constructor for PumpResponse.
    * </p>
    *
-   * @param pipe
+   * @param pipe the pipe to set for the response.
    */
   public PipeBeggsBrillsResponse(PipeBeggsAndBrills pipe) {
     super(pipe);

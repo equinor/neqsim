@@ -70,6 +70,10 @@ public class CompressorChartGenerator {
 
   /**
    * Generates flow data based on the reference flow and the generation option.
+   *
+   * @param refFlow the reference flow rate
+   * @param isNormalCurves whether to generate normal curves
+   * @return a 2D array representing flow data
    */
   private double[][] generateFlowData(double refFlow, boolean isNormalCurves) {
     double[][] flow = new double[1][3];
@@ -87,6 +91,10 @@ public class CompressorChartGenerator {
 
   /**
    * Generates head data based on the reference head and the generation option.
+   *
+   * @param refHead the reference head value
+   * @param isNormalCurves whether to generate normal curves
+   * @return a 2D array representing head data
    */
   private double[][] generateHeadData(double refHead, boolean isNormalCurves) {
     double[][] head = new double[1][3];
@@ -104,6 +112,9 @@ public class CompressorChartGenerator {
 
   /**
    * Generates efficiency data based on the reference efficiency.
+   *
+   * @param refEfficiency the reference efficiency value
+   * @return a 2D array representing efficiency data
    */
   private double[][] generateEfficiencyData(double refEfficiency) {
     double[][] polyEff = new double[1][3];
@@ -115,6 +126,16 @@ public class CompressorChartGenerator {
 
   /**
    * Generates the surge curve based on the provided parameters.
+   *
+   * @param compChart the compressor chart object
+   * @param refFlow the reference flow rate
+   * @param refSpeed the reference speed
+   * @param minFlow the minimum flow rate
+   * @param maxFlow the maximum flow rate
+   * @param minSpeed the minimum speed
+   * @param maxSpeed the maximum speed
+   * @param isNormalCurves whether to generate normal curves
+   * @return a {@link SurgeCurve} object representing the surge curve
    */
   private SurgeCurve generateSurgeCurve(CompressorChart compChart, double refFlow, double refSpeed,
       double minFlow, double maxFlow, double minSpeed, double maxSpeed, boolean isNormalCurves) {
