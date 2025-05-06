@@ -1,0 +1,12 @@
+process:
+  - unit: Stream
+    properties:
+      fluid:
+        methane: 1.0
+      flowRate: [100.0, "kg/hr"]
+      temperature: [20.0, "C"]
+      pressure: [30.0, "bara"]
+  - unit: ThrottlingValve
+    properties:
+      outletPressure: [10.0, "bara"]
+  - unit: Separator

@@ -1,0 +1,5 @@
+digraph process {
+  "stream_1" -> "throttlingValve_1";
+  "throttlingValve_1";
+  "separator_1";
+}
