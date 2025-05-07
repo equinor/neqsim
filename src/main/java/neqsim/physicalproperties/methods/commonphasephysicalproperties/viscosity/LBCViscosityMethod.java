@@ -34,9 +34,6 @@ public class LBCViscosityMethod extends Viscosity {
   /** {@inheritDoc} */
   @Override
   public double calcViscosity() {
-    double T = phase.getPhase().getTemperature();
-    double P = phase.getPhase().getPressure() / 10.0; // [MPa]
-
     double lowPresVisc = 0.0;
     double temp = 0.0;
     double temp2 = 0.0;
@@ -80,7 +77,6 @@ public class LBCViscosityMethod extends Viscosity {
     double viscosity = (-Math.pow(10.0, -4.0) + Math.pow(numb, 4.0)) / eps + lowPresVisc;
     viscosity /= 1.0e3;
     // System.out.println("visc " + viscosity);
-    
     return viscosity;
   }
 
