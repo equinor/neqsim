@@ -133,7 +133,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
    */
   public void calcPhaseEnvelope() {
     try {
-      thermoOps.calcPTphaseEnvelope();
+      thermoOps.calcPTphaseEnvelopeNew();
       TCLOG = thermoSystem.getTC();
       PCLOG = thermoSystem.getPC() * 0.986923267; // convert to ATM
       TC = thermoSystem.getTC() - 273.15;
@@ -516,136 +516,118 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         // + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
       }
     }
-    writeOLGAinpFile("");
+    writeOLGAinpFile("test.tab");
   }
 
   /**
-   * <p>
-   * writeOLGAinpFile.
-   * </p>
+   * Writes an OLGA .inp file for PVT table input.
    *
    * @param filename a {@link java.lang.String} object
    */
   public void writeOLGAinpFile(String filename) {
-    try (Writer writer = new BufferedWriter(new OutputStreamWriter(
-        new FileOutputStream(
-            "C:/Users/Kjetil Raul/Documents/Master KRB/3phaseTables/testCrazyFluidKeyWaterCPA.tab"),
-        "utf-8"))) {
-      writer.write(
-          "PVTTABLE LABEL = " + "\"" + "NewFluid" + "\"" + "," + "PHASE = THREE" + ",\\" + "\n");
-      writer.write("EOS = " + "\"" + "Equation" + "\"" + ",\\" + "\n");
+    try (Writer writer =
+        new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), "utf-8"))) {
+
+      writer.write("PVTTABLE LABEL = \"NewFluid\", PHASE = THREE,\\\n");
+      writer.write("EOS = \"Equation\",\\\n");
 
       writer.write("COMPONENTS = (");
       for (int i = 0; i < molfracs.length; i++) {
-        writer.write("\"" + components[i] + "\""); // How to set extra " ??
-        if (i < molfracs.length - 1) {
+        writer.write("\"" + components[i] + "\"");
+        if (i < molfracs.length - 1)
           writer.write(",");
-        }
       }
-      writer.write("),\\" + "\n");
+      writer.write("),\\\n");
 
       writer.write("MOLES = (");
       for (int i = 0; i < molfracs.length; i++) {
-        writer.write(molfracs[i] + "");
-        if (i < molfracs.length - 1) {
+        writer.write(Double.toString(molfracs[i]));
+        if (i < molfracs.length - 1)
           writer.write(",");
-        }
       }
-      writer.write("),\\" + "\n");
+      writer.write("),\\\n");
 
       writer.write("MOLWEIGHT = (");
       for (int i = 0; i < molfracs.length; i++) {
-        writer.write(MW[i] + "");
-        if (i < molfracs.length - 1) {
+        writer.write(Double.toString(MW[i]));
+        if (i < molfracs.length - 1)
           writer.write(",");
-        }
       }
-      writer.write(") g/mol,\\" + "\n");
+      writer.write(") g/mol,\\\n");
 
       writer.write("DENSITY = (");
       for (int i = 0; i < molfracs.length; i++) {
-        writer.write(dens[i] + "");
-        if (i < molfracs.length - 1) {
+        writer.write(Double.toString(dens[i]));
+        if (i < molfracs.length - 1)
           writer.write(",");
-        }
       }
-      writer.write(") g/cm3,\\" + "\n");
+      writer.write(") g/cm3,\\\n");
 
-      writer.write("STDPRESSURE = " + stdPresATM + " ATM,\\" + "\n");
-      writer.write("STDTEMPERATURE = " + stdTemp + " K,\\" + "\n");
-      writer.write("GOR = " + GOR + " Sm3/Sm3,\\" + "\n");
-      writer.write("GLR = " + GLR + " Sm3/Sm3,\\" + "\n");
-      writer.write("STDGASDENSITY = " + stdGasDens + " kg/m3,\\" + "\n");
-      writer.write("STDOILDENSITY = " + stdLiqDens + " kg/m3,\\" + "\n");
-      writer.write("STDWATDENSITY = " + stdWatDens + " kg/m3,\\" + "\n");
-      writer.write("CRITICALPRESSURE = " + PCLOG + " ATM,\\" + "\n");
-      writer.write("CRITICALTEMPERATURE = " + TCLOG + " K,\\" + "\n");
-
-      writer.write("MESHTYPE = STANDARD" + "," + "TOTWATERFRACTION = (" + RSWTOB + "),\\" + "\n");
+      writer.write("STDPRESSURE = " + stdPresATM + " ATM,\\\n");
+      writer.write("STDTEMPERATURE = " + stdTemp + " K,\\\n");
+      writer.write("GOR = " + GOR + " Sm3/Sm3,\\\n");
+      writer.write("GLR = " + GLR + " Sm3/Sm3,\\\n");
+      writer.write("STDGASDENSITY = " + stdGasDens + " kg/m3,\\\n");
+      writer.write("STDOILDENSITY = " + stdLiqDens + " kg/m3,\\\n");
+      writer.write("STDWATDENSITY = " + stdWatDens + " kg/m3,\\\n");
+      writer.write("CRITICALPRESSURE = " + PCLOG + " ATM,\\\n");
+      writer.write("CRITICALTEMPERATURE = " + TCLOG + " K,\\\n");
+      writer.write("MESHTYPE = STANDARD, TOTWATERFRACTION = (" + RSWTOB + "),\\\n");
 
       writer.write("PRESSURE = (");
       for (int i = 0; i < pressures.length; i++) {
-        writer.write(pressureLOG[i] + "");
-        if (i < pressures.length - 1) {
+        writer.write(Double.toString(pressureLOG[i]));
+        if (i < pressures.length - 1)
           writer.write(",");
-        }
       }
-      writer.write(") Pa,\\" + "\n");
+      writer.write(") Pa,\\\n");
 
       writer.write("TEMPERATURE = (");
       for (int i = 0; i < temperatures.length; i++) {
-        writer.write(temperatureLOG[i] + "");
-        if (i < temperatures.length - 1) {
+        writer.write(Double.toString(temperatureLOG[i]));
+        if (i < temperatures.length - 1)
           writer.write(",");
-        }
       }
-      writer.write(") C,\\" + "\n");
+      writer.write(") C,\\\n");
 
       writer.write("BUBBLEPRESSURES = (");
       for (int i = 0; i < temperatures.length; i++) {
-        writer.write(bubPLOG[i] + "");
-        if (i < temperatures.length - 1) {
+        writer.write(Double.toString(bubPLOG[i]));
+        if (i < temperatures.length - 1)
           writer.write(",");
-        }
       }
-      writer.write(") Pa,\\" + "\n");
+      writer.write(") Pa,\\\n");
 
       writer.write("BUBBLETEMPERATURES = (");
       for (int i = 0; i < pressures.length; i++) {
-        writer.write(bubTLOG[i] + "");
-        if (i < pressures.length - 1) {
+        writer.write(Double.toString(bubTLOG[i]));
+        if (i < pressures.length - 1)
           writer.write(",");
-        }
       }
-      writer.write(") C,\\" + "\n");
+      writer.write(") C,\\\n");
 
       writer.write("COLUMNS = (PT,TM,");
       for (int k = 0; k < nProps; k++) {
-        writer.write(namesKeyword[k] + "");
-        if (k < nProps - 1) {
+        writer.write(namesKeyword[k]);
+        if (k < nProps - 1)
           writer.write(",");
-        }
       }
-      writer.write(")" + "\n");
+      writer.write(")\n");
 
       for (int i = 0; i < pressures.length; i++) {
         thermoSystem.setPressure(pressures[i]);
         for (int j = 0; j < temperatures.length; j++) {
           thermoSystem.setTemperature(temperatures[j]);
           writer.write("PVTTABLE POINT = (");
-          writer.write(pressureLOG[i] + ",");
-          writer.write(temperatureLOG[j] + ",");
+          writer.write(pressureLOG[i] + "," + temperatureLOG[j]);
           for (int k = 0; k < nProps; k++) {
-            writer.write(props[k][i][j] + "");
-            if (k < nProps - 1) {
-              writer.write(",");
-            }
+            writer.write("," + props[k][i][j]);
           }
-          writer.write(")" + "\n");
+          writer.write(")\n");
         }
       }
     } catch (IOException ex) {
-      // report
+      ex.printStackTrace();
     }
   }
 }
