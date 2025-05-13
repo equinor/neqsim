@@ -1,16 +1,10 @@
 package neqsim.process.processmodel;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.equipment.valve.ThrottlingValve;
-import neqsim.process.processmodel.ProcessLoader;
-import neqsim.process.processmodel.ProcessSystem;
-import neqsim.thermo.system.SystemInterface;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.io.File;
-import java.util.Map;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.valve.ThrottlingValve;
 
 
 class ProcessLoaderTest {
@@ -20,10 +14,8 @@ class ProcessLoaderTest {
     // Create a temporary YAML file for testing
     File tempYamlFile = File.createTempFile("testProcess", ".yaml");
     tempYamlFile.deleteOnExit();
-    // Load YAML content from an external file named "process.yaml"
-    File yamlFile = new File("C:\\Users\\esol\\OneDrive - Equinor\\Documents\\GitHub\\n" + //
-        "eqsim\\src\\test\\java\\n" + //
-        "eqsim\\process\\processmodel\\process.yaml");
+    // Load YAML content from the relative path
+    File yamlFile = new File("src/test/java/neqsim/process/processmodel/process.yaml");
     String yamlContent = java.nio.file.Files.readString(yamlFile.toPath());
     java.nio.file.Files.writeString(tempYamlFile.toPath(), yamlContent);
 
