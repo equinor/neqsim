@@ -6,6 +6,7 @@
 
 package neqsim.thermo.phase;
 
+import org.netlib.util.doubleW;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
@@ -421,6 +422,21 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   public double[] getProperties_GERG2008();
 
+
+  /**
+   * Overloaded method to get the Leachman a0matrix with default hydrogen type ('normal').
+   *
+   * @return matrix of the reduced ideal helmholtz free energy and its derivatives
+   */
+  doubleW[] getAlpha0_GERG2008();
+
+  /**
+   * Overloaded method to get the Leachman armatrix with default hydrogen type ('normal').
+   *
+   * @return matrix of the reduced residual helmholtz free energy and its derivatives
+   */
+  doubleW[][] getAlphares_GERG2008();
+
   /**
    * method to get Leachman density of a phase using the Leachman EoS.
    *
@@ -454,6 +470,43 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double[] getProperties_Leachman();
 
   /**
+   * Overloaded method to get the Leachman a0matrix with default hydrogen type ('normal').
+   *
+   * @return matrix of the reduced ideal helmholtz free energy and its derivatives
+   */
+  doubleW[] getAlpha0_Leachman();
+
+
+  /**
+   * <p>
+   * method to get Leachman a0matrix of a phase using the Leachman EoS.
+   * </p>
+   *
+   * @param hydrogenType Supported types are 'normal', 'para', 'ortho'
+   * @return matrix of the reduced ideal helmholtz free energy and its derivatives
+   */
+  doubleW[] getAlpha0_Leachman(String hydrogenType);
+
+
+
+  /**
+   * <p>
+   * method to get Leachman armatrix of a phase using the Leachman EoS.
+   * </p>
+   *
+   * @param hydrogenType Supported types are 'normal', 'para', 'ortho'
+   * @return matrix of the reduced residual helmholtz free energy and its derivatives
+   */
+  doubleW[][] getAlphares_Leachman(String hydrogenType);
+
+  /**
+   * Overloaded method to get the Leachman armatrix with default hydrogen type ('normal').
+   *
+   * @return matrix of the reduced residual helmholtz free energy and its derivatives
+   */
+  doubleW[][] getAlphares_Leachman();
+
+  /**
    * method to get helium density of a phase using the Vega EoS.
    *
    * @return density with unit kg/m3
@@ -468,6 +521,21 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return an array of type double
    */
   public double[] getProperties_Vega();
+
+
+  /**
+   * Overloaded method to get the Leachman a0matrix with default hydrogen type ('normal').
+   *
+   * @return matrix of the reduced ideal helmholtz free energy and its derivatives
+   */
+  public doubleW[] getAlpha0_Vega();
+
+  /**
+   * Overloaded method to get the Leachman armatrix with default hydrogen type ('normal').
+   *
+   * @return matrix of the reduced residual helmholtz free energy and its derivatives
+   */
+  public doubleW[][] getAlphares_Vega();
 
   /**
    * method to get density of a phase note: does not use Peneloux volume correction.

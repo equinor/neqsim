@@ -26,6 +26,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   String filer = file.getAbsolutePath() + "/fluid-r.E300";
   String fluid_water = file.getAbsolutePath() + "/fluid_water.E300";
   String file_brd = file.getAbsolutePath() + "/Brd.e300";
+  String delete = file.getAbsolutePath() + "/deleteme.e300";
 
 
 
@@ -166,6 +167,23 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // System.out.println(testSystem.getComponent(i).getName() + " TC "
     // + (testSystem.getComponent(i).getVolumeCorrectionConst()));
     // }
+  }
+
+  @Test
+  void testReadFlui() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(delete);
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setMixingRule("classic");
+    testSystem.setMultiPhaseCheck(true);
+    testSystem.setPressure(30.97, "bara");
+    testSystem.setTemperature(15.0, "C");
+    testSystem.setTotalFlowRate(10.0, "kg/hr");
+    testOps.TPflash();
+    Assertions.assertEquals(0.9780559630, testSystem.getBeta(0), 1e-6);
+    // testSystem.prettyPrint();
+    // String fileName = "OLGAneqsim.tab";
+    // testOps.OLGApropTable(273.15 + 20, 273.15 + 100.0, 20, 1.0, 100.0, 20, fileName, 1);
+
   }
 
   @Test

@@ -2,17 +2,16 @@ package neqsim.thermo.phase;
 
 import org.netlib.util.doubleW;
 import neqsim.thermo.component.ComponentEosInterface;
-import neqsim.thermo.component.ComponentVegaEos;
+import neqsim.thermo.component.ComponentLeachmanEos;
 
 /**
  * <p>
- * PhaseVegaEos class.
- * </p>
+ * PhaseLeachmanEos class.
  *
- * @author Even Solbraa
  * @version $Id: $Id
+ * @author vscode
  */
-public class PhaseVegaEos extends PhaseEos {
+public class PhaseLeachmanEos extends PhaseEos {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -24,9 +23,9 @@ public class PhaseVegaEos extends PhaseEos {
 
   double gibbsEnergy = 0.0;
 
-  double CpVega = 0.0;
+  double CpLeachman = 0.0;
 
-  double CvVega = 0.0;
+  double CvLeachman = 0.0;
 
   double internalEnery = 0.0;
 
@@ -44,19 +43,19 @@ public class PhaseVegaEos extends PhaseEos {
 
   /**
    * <p>
-   * Constructor for PhaseVegaEos.
+   * Constructor for PhaseLeachmanEos.
    * </p>
    */
-  public PhaseVegaEos() {
-    thermoPropertyModelName = "Vega Eos";
+  public PhaseLeachmanEos() {
+    thermoPropertyModelName = "Leachman Eos";
   }
 
   /** {@inheritDoc} */
   @Override
-  public PhaseVegaEos clone() {
-    PhaseVegaEos clonedPhase = null;
+  public PhaseLeachmanEos clone() {
+    PhaseLeachmanEos clonedPhase = null;
     try {
-      clonedPhase = (PhaseVegaEos) super.clone();
+      clonedPhase = (PhaseLeachmanEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
@@ -68,7 +67,7 @@ public class PhaseVegaEos extends PhaseEos {
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, molesInPhase, compNumber);
-    componentArray[compNumber] = new ComponentVegaEos(name, moles, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentLeachmanEos(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -84,9 +83,9 @@ public class PhaseVegaEos extends PhaseEos {
     }
     if (initType >= 1) {
       double[] temp = new double[18];
-      temp = getProperties_Vega();
-      a0 = getAlpha0_Vega();
-      ar = getAlphares_Vega();
+      temp = getProperties_Leachman();
+      a0 = getAlpha0_Leachman();
+      ar = getAlphares_Leachman();
 
       pressure = temp[0] / 100;
 
@@ -104,9 +103,9 @@ public class PhaseVegaEos extends PhaseEos {
                           // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
       entropy = temp[8]; // gergEOS.SOTPX(temperature,pressure/10.0,
                          // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      CpVega = temp[10]; // gergEOS.CPOTPX(temperature,pressure/10.0,
+      CpLeachman = temp[10]; // gergEOS.CPOTPX(temperature,pressure/10.0,
                          // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      CvVega = temp[9]; // gergEOS.CPOTPX(temperature,pressure/10.0,
+      CvLeachman = temp[9]; // gergEOS.CPOTPX(temperature,pressure/10.0,
                         // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     }
@@ -151,13 +150,13 @@ public class PhaseVegaEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double getCp() {
-    return CpVega * numberOfMolesInPhase;
+    return CpLeachman * numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getCv() {
-    return CvVega * numberOfMolesInPhase;
+    return CvLeachman * numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
@@ -165,7 +164,7 @@ public class PhaseVegaEos extends PhaseEos {
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    return getMolarMass() * 1e5 / getDensity_Vega();
+    return getMolarMass() * 1e5 / getDensity_Leachman();
   }
 
   /** {@inheritDoc} */
@@ -214,7 +213,7 @@ public class PhaseVegaEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double getDensity() {
-    return getDensity_Vega();
+    return getDensity_Leachman();
   }
 
   /** {@inheritDoc} */
