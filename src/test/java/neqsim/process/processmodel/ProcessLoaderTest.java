@@ -3,6 +3,8 @@ package neqsim.process.processmodel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.valve.ThrottlingValve;
 
@@ -16,8 +18,8 @@ class ProcessLoaderTest {
     tempYamlFile.deleteOnExit();
     // Load YAML content from the relative path
     File yamlFile = new File("src/test/java/neqsim/process/processmodel/process.yaml");
-    String yamlContent = java.nio.file.Files.readString(yamlFile.toPath());
-    java.nio.file.Files.writeString(tempYamlFile.toPath(), yamlContent);
+    String yamlContent = new String(Files.readAllBytes(yamlFile.toPath()), StandardCharsets.UTF_8);
+    Files.write(tempYamlFile.toPath(), yamlContent.getBytes(StandardCharsets.UTF_8));
 
     // Create a ProcessSystem instance
     ProcessSystem processSystem = new ProcessSystem();

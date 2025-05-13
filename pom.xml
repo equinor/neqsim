@@ -21,10 +21,10 @@
 	<licenses>
 		<license>
 			<name>The Apache Software License, Version 2.0</name>
-		  	<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-		  	<distribution>repo</distribution>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
 		</license>
-	  </licenses>
+	</licenses>
 	<developers>
 		<developer>
 			<name>Even Solbraa</name>
@@ -116,96 +116,92 @@
 			<version>2.13.0</version>
 		</dependency>
 		<dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <version>5.5.0</version>
-      <scope>test</scope>
-    </dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>5.5.0</version>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.15.2</version>
-    </dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.15.2</version>
+		</dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.dataformat</groupId>
-      <artifactId>jackson-dataformat-yaml</artifactId>
-      <version>2.15.2</version>
-    </dependency>
-		<dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.12.0</version>
-        </dependency>
-	</dependencies>
-	<profiles>
-		  <profile>
-			   <id>release</id>
-			   <build>
-				<plugins>
-					 <plugin>
-						  <groupId>org.sonatype.central</groupId>
-						  <artifactId>central-publishing-maven-plugin</artifactId>
-						  <version>0.6.0</version>
-						  <extensions>true</extensions>
-						  <configuration>
-							   <publishingServerId>central</publishingServerId>
-							   <autoPublish>true</autoPublish>
-						  </configuration>
-					 </plugin>
-					 <plugin>
-						  <groupId>org.apache.maven.plugins</groupId>
-						  <artifactId>maven-source-plugin</artifactId>
-						  <version>3.3.0</version>
-						  <executions>
-							   <execution>
-								<id>attach-sources</id>
-								<phase>verify</phase>
-								<goals>
-									 <goal>jar-no-fork</goal>
-								</goals>
-							   </execution>
-						  </executions>
-					 </plugin>
-					 <plugin>
-						  <groupId>org.apache.maven.plugins</groupId>
-						  <artifactId>maven-javadoc-plugin</artifactId>
-						  <version>3.10.0</version>
-						  <executions>
-							   <execution>
-								<id>attach-javadoc</id>
-								<goals>
-									 <goal>jar</goal>
-								</goals>
-							   </execution>
-						</executions>
-						  <configuration>
-							   <doclint>none</doclint>
-						  </configuration>
-					 </plugin>
-					 <plugin>
-						  <groupId>org.apache.maven.plugins</groupId>
-						  <artifactId>maven-gpg-plugin</artifactId>
-						  <version>3.2.6</version>
-						  <executions>
-							   <execution>
-								<id>sign-artifacts</id>
-								<phase>verify</phase>
-								<goals>
-									 <goal>sign</goal>
-								</goals>
-							   </execution>
-						  </executions>
-						  <configuration>
-							   <gpgArguments>
-								<arg>--pinentry-mode</arg>
-								<arg>loopback</arg>
-							   </gpgArguments>
-						  </configuration>
-					 </plugin>
-				</plugins>
-			   </build>
-		  </profile>
-	 </profiles>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
+			<version>2.15.2</version>
+		</dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.6.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.3.0</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.10.0</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadoc</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <doclint>none</doclint>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 	<build>
 		<plugins>
 			<plugin>
@@ -282,7 +278,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.13.0</version>
 				<configuration>
-					<release>11</release> <!-- Upgrade jdk version to 11 if you are having issues compiling -->
+					<release>11</release> <!-- Upgrade jdk version to 11 if you are having issues
+					compiling -->
 					<encoding>${project.build.sourceEncoding}</encoding>
 					<!-- Uncomment below to get compiler warnings
 					<compilerArgs>
@@ -370,7 +367,7 @@
 				<configuration>
 					<failsOnError>true</failsOnError>
 				</configuration>
-			</plugin>  
+			</plugin>
 		</plugins>
 	</build>
 	<distributionManagement>
