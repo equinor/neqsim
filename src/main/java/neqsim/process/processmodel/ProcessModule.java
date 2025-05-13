@@ -1,9 +1,12 @@
 package neqsim.process.processmodel;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.SimulationBaseClass;
@@ -234,9 +237,17 @@ public class ProcessModule extends SimulationBaseClass {
    * @return a {@link neqsim.process.processmodel.ProcessModule} object
    */
   public ProcessModule copy() {
-    byte[] bytes = SerializationUtils.serialize(this);
-    ProcessModule copyModule = (ProcessModule) SerializationUtils.deserialize(bytes);
-    return copyModule;
+    try {
+      ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+      ObjectOutputStream out = new ObjectOutputStream(byteOut);
+      out.writeObject(this);
+      out.flush();
+      ByteArrayInputStream byteIn = new ByteArrayInputStream(byteOut.toByteArray());
+      ObjectInputStream in = new ObjectInputStream(byteIn);
+      return (ProcessModule) in.readObject();
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to copy ProcessModule", e);
+    }
   }
 
   /**

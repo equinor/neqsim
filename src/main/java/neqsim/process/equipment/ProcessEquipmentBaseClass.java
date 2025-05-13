@@ -6,11 +6,14 @@
 
 package neqsim.process.equipment;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
-import org.apache.commons.lang.SerializationUtils;
 import neqsim.process.SimulationBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.stream.EnergyStream;
@@ -72,8 +75,17 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * @return a deep copy of the unit operation/process equipment
    */
   public ProcessEquipmentInterface copy() {
-    byte[] bytes = SerializationUtils.serialize(this);
-    return (ProcessEquipmentInterface) SerializationUtils.deserialize(bytes);
+    try {
+      ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+      ObjectOutputStream out = new ObjectOutputStream(byteOut);
+      out.writeObject(this);
+      out.flush();
+      ByteArrayInputStream byteIn = new ByteArrayInputStream(byteOut.toByteArray());
+      ObjectInputStream in = new ObjectInputStream(byteIn);
+      return (ProcessEquipmentInterface) in.readObject();
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to copy ProcessEquipmentBaseClass", e);
+    }
   }
 
   /**
