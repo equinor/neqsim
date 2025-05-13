@@ -1,55 +1,55 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseHydrate;
+import neqsim.thermo.phase.PhaseLeachmanEos;
 import neqsim.thermo.phase.PhasePureComponentSolid;
-import neqsim.thermo.phase.PhaseVegaEos;
 
 /**
- * This class defines a thermodynamic system using the VegaEos equation of state.
+ * This class defines a thermodynamic system using the LeachmanEos equation of state.
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class SystemVegaEos extends SystemEos {
+public class SystemLeachmanEos extends SystemEos {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
    * <p>
-   * Constructor for SystemVegaEos.
+   * Constructor for SystemLeachmanEos.
    * </p>
    */
-  public SystemVegaEos() {
+  public SystemLeachmanEos() {
     this(298.15, 1.0, false);
   }
 
   /**
    * <p>
-   * Constructor for SystemVegaEos.
+   * Constructor for SystemLeachmanEos.
    * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
    */
-  public SystemVegaEos(double T, double P) {
+  public SystemLeachmanEos(double T, double P) {
     this(T, P, false);
   }
 
   /**
    * <p>
-   * Constructor for SystemVegaEos.
+   * Constructor for SystemLeachmanEos.
    * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
-  public SystemVegaEos(double T, double P, boolean checkForSolids) {
+  public SystemLeachmanEos(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    modelName = "Vega-EOS";
+    modelName = "Leachman-EOS";
 
     for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseVegaEos();
+      phaseArray[i] = new PhaseLeachmanEos();
       phaseArray[i].setTemperature(T);
       phaseArray[i].setPressure(P);
     }
@@ -75,10 +75,10 @@ public class SystemVegaEos extends SystemEos {
 
   /** {@inheritDoc} */
   @Override
-  public SystemVegaEos clone() {
-    SystemVegaEos clonedSystem = null;
+  public SystemLeachmanEos clone() {
+    SystemLeachmanEos clonedSystem = null;
     try {
-      clonedSystem = (SystemVegaEos) super.clone();
+      clonedSystem = (SystemLeachmanEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }

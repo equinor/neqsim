@@ -63,6 +63,7 @@ import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelope;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelopeNew2;
 import neqsim.thermodynamicoperations.phaseenvelopeops.reactivecurves.PloadingCurve2;
+import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterKeywordFormat;
 import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterStudents;
 import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterStudentsPH;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -330,8 +331,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     operation = new neqsim.thermodynamicoperations.flashops.PHflashVega(system, Hspec);
     getOperation().run();
   }
-
-
 
   /**
    * <p>
@@ -1082,7 +1081,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     systemTemp = system.clone();
 
     for (int i = 0; i < temperature.length; i++) {
-      // todo: this function does not actually set hydTemps which is the returned variable
+      // todo: this function does not actually set hydTemps which is the returned
+      // variable
       /*
        * opsTemp = new ThermodynamicOperations(systemTemp);
        * systemTemp.setTemperature(temperature[i]); systemTemp.setPressure(pressure[i]);
@@ -1712,13 +1712,26 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void OLGApropTable(double minTemp, double maxTemp, int temperatureSteps, double minPres,
       double maxPres, int pressureSteps, String filename, int TABtype) {
-    operation = new OLGApropertyTableGeneratorWaterStudents(system);
-    ((OLGApropertyTableGeneratorWaterStudents) operation).setFileName(filename);
-    ((OLGApropertyTableGeneratorWaterStudents) operation).setPressureRange(minPres, maxPres,
-        pressureSteps);
-    ((OLGApropertyTableGeneratorWaterStudents) operation).setTemperatureRange(minTemp, maxTemp,
-        temperatureSteps);
-    getOperation().run();
+
+    if (TABtype == 0) {
+      operation = new OLGApropertyTableGeneratorWaterKeywordFormat(system);
+
+      ((OLGApropertyTableGeneratorWaterKeywordFormat) operation).setPressureRange(minPres, maxPres,
+          pressureSteps);
+      ((OLGApropertyTableGeneratorWaterKeywordFormat) operation).setTemperatureRange(minTemp,
+          maxTemp, temperatureSteps);
+      ((OLGApropertyTableGeneratorWaterKeywordFormat) operation).run();
+      ((OLGApropertyTableGeneratorWaterKeywordFormat) operation).writeOLGAinpFile(filename);
+    } else {
+      operation = new OLGApropertyTableGeneratorWaterStudents(system);
+      ((OLGApropertyTableGeneratorWaterStudents) operation).setFileName(filename);
+      ((OLGApropertyTableGeneratorWaterStudents) operation).setPressureRange(minPres, maxPres,
+          pressureSteps);
+      ((OLGApropertyTableGeneratorWaterStudents) operation).setTemperatureRange(minTemp, maxTemp,
+          temperatureSteps);
+      getOperation().run();
+      ((OLGApropertyTableGeneratorWaterStudents) operation).writeOLGAinpFile(filename);
+    }
   }
 
   /**
