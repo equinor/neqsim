@@ -1,18 +1,19 @@
 package neqsim.process.processmodel;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.io.PrintWriter;
 import java.util.UUID;
-import java.lang.reflect.InvocationTargetException;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -1140,6 +1141,15 @@ public class ProcessSystem extends SimulationBaseClass {
     } catch (Exception e) {
       logger.error("Error exporting to Graphviz", e);
     }
+  }
+
+  /**
+   * Load a process from a YAML file.
+   *
+   * @param yamlFile the YAML file to load
+   */
+  public void loadProcessFromYaml(File yamlFile) {
+    neqsim.process.util.ProcessLoader.loadProcessFromYaml(yamlFile, this);
   }
 
   /*
