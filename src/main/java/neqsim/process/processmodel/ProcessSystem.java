@@ -1,6 +1,8 @@
 package neqsim.process.processmodel;
 
-// Reorganizing imports into proper groups and order
+// Reorganized imports into proper groups and order
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -15,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import org.apache.commons.lang3.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.SimulationBaseClass;
@@ -967,9 +968,17 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
   public ProcessSystem copy() {
-    byte[] bytes = SerializationUtils.serialize(this);
-    ProcessSystem copyOperation = (ProcessSystem) SerializationUtils.deserialize(bytes);
-    return copyOperation;
+    try {
+      ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+      ObjectOutputStream out = new ObjectOutputStream(byteOut);
+      out.writeObject(this);
+      out.flush();
+      ByteArrayInputStream byteIn = new ByteArrayInputStream(byteOut.toByteArray());
+      ObjectInputStream in = new ObjectInputStream(byteIn);
+      return (ProcessSystem) in.readObject();
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to copy ProcessSystem", e);
+    }
   }
 
   /**
