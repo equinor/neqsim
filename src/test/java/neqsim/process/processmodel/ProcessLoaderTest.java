@@ -31,9 +31,7 @@ class ProcessLoaderTest {
     assertNotNull(unit, "Unit should be added to the process system");
     assertEquals(10.45841962, unit.getOutletStream().getTemperature("C"), 1e-3);
 
-    processSystem.exportToGraphviz("C:\\Users\\esol\\OneDrive - Equinor\\Documents\\GitHub\\n" + //
-        "eqsim\\src\\test\\java\\n" + //
-        "eqsim\\process\\processmodel\\process.dot");
+    processSystem.exportToGraphviz("src/test/java/neqsim/process/processmodel/process.dot");
   }
 
 }
