@@ -1082,8 +1082,9 @@ public class ProcessSystem extends SimulationBaseClass {
 
   private void autoConnect(ProcessEquipmentInterface fromUnit, ProcessEquipmentInterface toUnit) {
 
-    if (fromUnit == null)
+    if (fromUnit == null) {
       return;
+    }
     fromUnit.run();
     try {
       var getOutlet = fromUnit.getClass().getMethod("getOutletStream");
