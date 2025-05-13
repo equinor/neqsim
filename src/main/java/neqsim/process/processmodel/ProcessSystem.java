@@ -1,11 +1,17 @@
 package neqsim.process.processmodel;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang.SerializationUtils;
@@ -13,6 +19,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.SimulationBaseClass;
 import neqsim.process.conditionmonitor.ConditionMonitor;
+import neqsim.process.equipment.EquipmentEnum;
+import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.util.Recycle;
@@ -40,13 +48,15 @@ public class ProcessSystem extends SimulationBaseClass {
   String[][] signalDB = new String[10000][100];
   private double surroundingTemperature = 288.15;
   private int timeStepNumber = 0;
-  private ArrayList<ProcessEquipmentInterface> unitOperations =
-      new ArrayList<ProcessEquipmentInterface>(0);
-  ArrayList<MeasurementDeviceInterface> measurementDevices =
+  private List<ProcessEquipmentInterface> unitOperations = new ArrayList<>();
+  List<MeasurementDeviceInterface> measurementDevices =
       new ArrayList<MeasurementDeviceInterface>(0);
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
   private boolean runStep = false;
+
+  private final Map<String, Integer> equipmentCounter = new HashMap<>();
+  private ProcessEquipmentInterface lastAddedUnit = null;
 
   /**
    * <p>
@@ -87,7 +97,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public void add(int position, ProcessEquipmentInterface operation) {
-    ArrayList<ProcessEquipmentInterface> units = this.getUnitOperations();
+    List<ProcessEquipmentInterface> units = this.getUnitOperations();
 
     for (ProcessEquipmentInterface unit : units) {
       if (unit == operation) {
@@ -278,7 +288,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @return the unitOperations
    */
-  public ArrayList<ProcessEquipmentInterface> getUnitOperations() {
+  public List<ProcessEquipmentInterface> getUnitOperations() {
     return unitOperations;
   }
 
@@ -303,7 +313,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    */
   public void clearAll() {
-    unitOperations = new ArrayList<ProcessEquipmentInterface>(0);
+    unitOperations.clear();
   }
 
   /**
@@ -1009,6 +1019,142 @@ public class ProcessSystem extends SimulationBaseClass {
   @Override
   public String getReport_json() {
     return new Report(this).generateJsonReport();
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T extends ProcessEquipmentInterface> T addUnit(String name, String equipmentType) {
+    ProcessEquipmentInterface unit = EquipmentFactory.createEquipment(name, equipmentType);
+
+    if (name == null || name.trim().isEmpty()) {
+      name = generateUniqueName(equipmentType);
+    }
+
+    unit.setName(name);
+
+    // Auto-connect streams if possible
+    autoConnect(lastAddedUnit, unit);
+
+    this.add(unit);
+    lastAddedUnit = unit; // Update last added unit
+    return (T) unit;
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T extends ProcessEquipmentInterface> T addUnit(String name, EquipmentEnum equipmentEnum) {
+    return (T) addUnit(name, equipmentEnum.name());
+  }
+
+  // New overload: addUnit only with equipmentType String
+  @SuppressWarnings("unchecked")
+  public <T extends ProcessEquipmentInterface> T addUnit(String equipmentType) {
+    return (T) addUnit(null, equipmentType);
+  }
+
+  // New overload: addUnit only with EquipmentEnum
+  @SuppressWarnings("unchecked")
+  public <T extends ProcessEquipmentInterface> T addUnit(EquipmentEnum equipmentEnum) {
+    return (T) addUnit(null, equipmentEnum);
+  }
+
+
+  private String generateUniqueName(String equipmentType) {
+    int count = equipmentCounter.getOrDefault(equipmentType, 0) + 1;
+    equipmentCounter.put(equipmentType, count);
+    String formatted = equipmentType.substring(0, 1).toLowerCase() + equipmentType.substring(1);
+    return formatted + "_" + count;
+  }
+
+
+  public ProcessEquipmentInterface addUnit(String name, ProcessEquipmentInterface equipment) {
+    unitOperations.add(equipment);
+    equipment.setName(name);
+    lastAddedUnit = equipment;
+    equipment.run();
+    return equipment;
+  }
+
+  public ProcessEquipmentInterface addUnit(ProcessEquipmentInterface equipment) {
+    String generatedName = generateUniqueName(equipment.getClass().getSimpleName());
+    return addUnit(generatedName, equipment);
+  }
+
+  // --- Auto Connection (Outlet -> Inlet) ---
+
+  private void autoConnect(ProcessEquipmentInterface fromUnit, ProcessEquipmentInterface toUnit) {
+
+    if (fromUnit == null) {
+      return;
+    }
+    fromUnit.run();
+    try {
+      var getOutlet = fromUnit.getClass().getMethod("getOutletStream");
+      Object outletStream = getOutlet.invoke(fromUnit);
+
+      if (outletStream != null) {
+        var setInlet = toUnit.getClass().getMethod("setInletStream",
+            neqsim.process.equipment.stream.StreamInterface.class);
+        setInlet.invoke(toUnit, outletStream);
+      }
+    } catch (NoSuchMethodException ignored) {
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void exportToGraphviz(String filename) {
+    try (PrintWriter writer = new PrintWriter(filename)) {
+      writer.println("digraph process {");
+
+      for (ProcessEquipmentInterface unit : getUnitOperations()) {
+        boolean hasConnection = false;
+        try {
+          java.lang.reflect.Method getOutlet = unit.getClass().getMethod("getOutletStream");
+          Object outlet = getOutlet.invoke(unit);
+
+          if (outlet != null) {
+            for (ProcessEquipmentInterface nextUnit : getUnitOperations()) {
+              try {
+                java.lang.reflect.Method getInlet = nextUnit.getClass().getMethod("getInletStream");
+                Object inlet = getInlet.invoke(nextUnit);
+
+                if (inlet != null && inlet.equals(outlet)) {
+                  writer.println("  \"" + unit.getName() + "\" -> \"" + nextUnit.getName() + "\";");
+                  hasConnection = true;
+                }
+              } catch (NoSuchMethodException | IllegalAccessException
+                  | InvocationTargetException ignore) {
+                // Ignore units without getInletStream method or inaccessible methods
+              }
+            }
+          }
+        } catch (NoSuchMethodException | IllegalAccessException
+            | InvocationTargetException ignore) {
+          // Ignore units without getOutletStream method or inaccessible methods
+        }
+
+        // Add the unit to the graph even if it has no connections
+        if (!hasConnection) {
+          writer.println("  \"" + unit.getName() + "\";");
+        }
+      }
+
+      writer.println("}");
+    } catch (Exception e) {
+      logger.error("Error exporting to Graphviz", e);
+    }
+  }
+
+  /**
+   * Load a process from a YAML file.
+   *
+   * @param yamlFile the YAML file to load
+   */
+  public void loadProcessFromYaml(File yamlFile) {
+    try {
+      neqsim.process.processmodel.ProcessLoader.loadProcessFromYaml(yamlFile, this);
+    } catch (Exception e) {
+      logger.error("Error loading process from YAML file", e);
+    }
   }
 
   /*
