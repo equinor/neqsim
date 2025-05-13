@@ -1,7 +1,6 @@
 package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import java.util.ArrayList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,7 +20,6 @@ import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
@@ -968,14 +966,14 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     Separator separator1 = process1.addUnit("Separator 1", "Separator");
 
-    var gasOut = process1.addUnit("GasOut", separator1.getGasOutStream());
+    Stream gasOut = (Stream) process1.addUnit("GasOut", separator1.getGasOutStream());
     Compressor compressor1 = process1.addUnit("Compressor 1", "Compressor");
     compressor1.setOutletPressure(50.0, "bara");
 
-    var liquidOut = process1.addUnit(separator1.getLiquidOutStream());
+    Stream liquidOut = (Stream) process1.addUnit(separator1.getLiquidOutStream());
     ThrottlingValve valve2 = process1.addUnit("Valve 2", "ThrottlingValve");
     valve2.setOutletPressure(1.0, "bara");
-    var stableoil = process1.addUnit("stableoil", "Stream");
+    Stream stableoil = process1.addUnit("stableoil", "Stream");
 
     process1.run();
 
