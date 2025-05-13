@@ -1,14 +1,18 @@
 package neqsim.process.processmodel;
 
+import java.io.File;
+import java.util.List;
+import java.util.Map;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.thermo.system.SystemInterface;
-import java.io.File;
-import java.util.List;
-import java.util.Map;
 import neqsim.thermo.system.SystemSrkEos;
 
+/**
+ * The ProcessLoader class is responsible for loading process configurations from a YAML file and
+ * initializing the process system with the specified units and their properties.
+ */
 public class ProcessLoader {
 
   public static void loadProcessFromYaml(File yamlFile, ProcessSystem process) throws Exception {

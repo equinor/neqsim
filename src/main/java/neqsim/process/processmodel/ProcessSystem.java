@@ -1150,7 +1150,11 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param yamlFile the YAML file to load
    */
   public void loadProcessFromYaml(File yamlFile) {
-    neqsim.process.util.ProcessLoader.loadProcessFromYaml(yamlFile, this);
+    try {
+      neqsim.process.processmodel.ProcessLoader.loadProcessFromYaml(yamlFile, this);
+    } catch (Exception e) {
+      logger.error("Error loading process from YAML file", e);
+    }
   }
 
   /*
