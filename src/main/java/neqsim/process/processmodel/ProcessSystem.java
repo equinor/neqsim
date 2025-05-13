@@ -1,5 +1,6 @@
 package neqsim.process.processmodel;
 
+// Reorganizing imports into proper groups and order
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -8,12 +9,15 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import org.apache.commons.lang.SerializationUtils;
+import org.apache.commons.lang3.SerializationUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.SimulationBaseClass;
 import neqsim.process.conditionmonitor.ConditionMonitor;
 import neqsim.process.equipment.EquipmentEnum;
@@ -26,44 +30,34 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import neqsim.process.equipment.ProcessEquipmentBaseClass;
-import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.equipment.util.Recycle;
-import neqsim.process.equipment.util.RecycleController;
-import neqsim.process.measurementdevice.MeasurementDeviceInterface;
-import neqsim.process.util.report.Report;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
- * ProcessSystem class.
- * </p>
- *
- * @author Even Solbraa
- * @version $Id: $Id
+ * Represents a process system containing unit operations.
  */
 public class ProcessSystem extends SimulationBaseClass {
-  /** Serialization version UID. */
+  /**
+   * Serialization version UID.
+   */
   private static final long serialVersionUID = 1000;
-  /** Logger object for class. */
+
+  /**
+   * Logger object for class.
+   */
   static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
   transient Thread thisThread;
   String[][] signalDB = new String[10000][100];
   private double surroundingTemperature = 288.15;
   private int timeStepNumber = 0;
-  private List<ProcessEquipmentInterface> unitOperations = new ArrayList<>();
-  List<MeasurementDeviceInterface> measurementDevices =
+  /**
+   * List of unit operations in the process system.
+   */
   private List<ProcessEquipmentInterface> unitOperations = new ArrayList<>();
   List<MeasurementDeviceInterface> measurementDevices =
       new ArrayList<MeasurementDeviceInterface>(0);
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
   private boolean runStep = false;
-
-  private final Map<String, Integer> equipmentCounter = new HashMap<>();
-  private ProcessEquipmentInterface lastAddedUnit = null;
 
   private final Map<String, Integer> equipmentCounter = new HashMap<>();
   private ProcessEquipmentInterface lastAddedUnit = null;
@@ -107,7 +101,6 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public void add(int position, ProcessEquipmentInterface operation) {
-    List<ProcessEquipmentInterface> units = this.getUnitOperations();
     List<ProcessEquipmentInterface> units = this.getUnitOperations();
 
     for (ProcessEquipmentInterface unit : units) {
@@ -294,12 +287,11 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * Getter for the field <code>unitOperations</code>.
+   * Gets the list of unit operations.
    * </p>
    *
-   * @return the unitOperations
+   * @return the list of unit operations
    */
-  public List<ProcessEquipmentInterface> getUnitOperations() {
   public List<ProcessEquipmentInterface> getUnitOperations() {
     return unitOperations;
   }
@@ -325,7 +317,6 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    */
   public void clearAll() {
-    unitOperations.clear();
     unitOperations.clear();
   }
 
