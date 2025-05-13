@@ -1087,11 +1087,11 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     fromUnit.run();
     try {
-      var getOutlet = fromUnit.getClass().getMethod("getOutletStream");
+      java.lang.reflect.Method getOutlet = fromUnit.getClass().getMethod("getOutletStream");
       Object outletStream = getOutlet.invoke(fromUnit);
 
       if (outletStream != null) {
-        var setInlet = toUnit.getClass().getMethod("setInletStream",
+        java.lang.reflect.Method setInlet = toUnit.getClass().getMethod("setInletStream",
             neqsim.process.equipment.stream.StreamInterface.class);
         setInlet.invoke(toUnit, outletStream);
       }
