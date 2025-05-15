@@ -10,10 +10,32 @@ public class TurboExpanderCompressor extends Expander {
   private static final long serialVersionUID = 1001;
   private double expanderOutPressure = 40.0; // bar
   private double IGVposition = 1.0; // 1.0 = 100% open
-  private double bearingLossPower = 1000.0; // W
-  private double compressorRequiredPower = 0.0; // W
-  private double turboSpeed = 10000.0; // rpm, initial guess
+  private double bearingLossPower = 10.0; // W
+  private double gearRatio = 1.0;
+  private double expanderSpeed = 1000.0; // rpm, initial guess
+  private double compressorSpeed = 1000.0;
+
+  private double expanderIsentropicEfficiencyDesign = 0.85;
+  private double expanderEfficiency = 0.85;
+
   private double expanderEfficiencyDesign = 0.85;
+  private double compressorPolytropicEfficiency = 0.85;
+  private double compressorPolytropicHead = 20.47; // kJ/kg
+
+  // Stores the fitted 'a' parameter for the constrained parabola
+  private double ucCurveA = 0.0;
+  private double ucCurveH = 1.0; // vertex x (h)
+  private double ucCurveK = 1.0; // vertex y (k)
+
+  // Stores the fitted 'a' parameter for the constrained parabola for Q/N
+  private double qnCurveA = 0.0;
+  private double qnCurveH = 1.0; // vertex x (h)
+  private double qnCurveK = 1.0; // vertex y (k)
+
+  // Stores the fitted 'a' parameter for the constrained parabola for Q/N head curve
+  private double qnHeadCurveA = 0.0;
+  private double qnHeadCurveH = 1.0; // vertex x (h)
+  private double qnHeadCurveK = 1.0; // vertex y (k)
 
   public TurboExpanderCompressor(String name, StreamInterface inletStream) {
     super(name, inletStream);
@@ -33,56 +55,86 @@ public class TurboExpanderCompressor extends Expander {
 
   @Override
   public void run(UUID id) {
-    SystemInterface thermoSystem = inStream.getThermoSystem().clone();
-    ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-    thermoSystem.init(3);
+    // Java implementation of the find_speed logic (simplified, using available neqsim API)
+    // Assumes: inStream is the expander inlet stream
+    // Design parameters and curve fits should be set before calling run()
+    double N = expanderSpeed; // initial guess for speed (rpm)
+    double N_max = 9000.0;
+    double N_min = 1000.0;
+    boolean plus = true;
+    double D = 424.8 / 1000.0; // m, impeller diameter
+    double uc_design = ucCurveH; // usually 1.0
+    double qn_design = qnCurveH; // usually 1.0
+    double eta_s_design = expanderIsentropicEfficiencyDesign;
+    double Hp_design = compressorPolytropicHead;
+    double eta_p_design = compressorPolytropicEfficiency;
+    double N_design = expanderSpeed; // or set externally
+    double W_bearing_design = bearingLossPower;
+    double m1 = inStream.getFlowRate("kg/sec");
+    double outPress = expanderOutPressure;
+    // Clone the inlet stream and fluid
+    StreamInterface stream2 = inStream.clone();
+    SystemInterface fluid2 = stream2.getThermoSystem();
+    fluid2.initProperties();
+    double h_in = fluid2.getEnthalpy("kJ/kg");
+    double s1 = fluid2.getEntropy("kJ/kgK");
+    double T1 = fluid2.getTemperature("C");
+    double P1 = fluid2.getPressure("bara");
 
-    double P_in = thermoSystem.getPressure();
-    double H_in = thermoSystem.getEnthalpy();
-    double S_in = thermoSystem.getEntropy();
+    // Isentropic flash to find isentropic enthalpy change
+    fluid2.setPressure(outPress, "bara");
 
-    // Step 1: Apply IGV pressure drop
-    double P_afterIGV = applyIGVpressureDrop(P_in);
-    thermoSystem.setPressure(P_afterIGV);
-    thermoOps.TPflash();
-    thermoSystem.initThermoProperties();
-    H_in = thermoSystem.getEnthalpy(); // update enthalpy after IGV
+    ThermodynamicOperations flash = new ThermodynamicOperations(fluid2);
+    flash.PSflash(s1, "kJ/kgK");
 
-    // Step 2: Iterate on speed to match power
-    double speed = turboSpeed;
-    double dSpeed = 500.0;
+    fluid2.init(3);
+    double h_out = fluid2.getEnthalpy("kJ/kg");
+    double T2s = fluid2.getTemperature("C");
+    double h_s = (h_in - h_out) * 1000.0; // J/kg
+
+    // Main iteration to match expander and compressor power
+    double W_expander = 0.0, W_compressor = 0.0, W_bearing = 0.0;
+    double Q_comp = 0.0, m_comp = 0.0, eta_s = 0.0, eta_p = 0.0, Hp = 0.0;
+    double CF_eff_comp = 1.0, CF_head_comp = 1.0;
     int iter = 0;
-    int maxIter = 20;
+    N = expanderSpeed;
+    while (iter < 50 && N < N_max && N > N_min) {
+      double U = Math.PI * D * N / 60.0;
+      double C = Math.sqrt(2.0 * h_s);
+      double uc = U / C / uc_design;
+      double CF = getEfficiencyFromUC(uc); // use fitted UC curve
+      eta_s = eta_s_design * CF;
 
-    while (iter < maxIter) {
-      thermoSystem.setPressure(expanderOutPressure);
-      thermoOps.PSflash(S_in); // isentropic expansion
-      double H_isentropicOut = thermoSystem.getEnthalpy();
+      // Expander simulation (simplified)
+      // Here, you would use a real neqsim Expander object and set efficiency, etc.
+      W_expander = m1 * h_s * eta_s; // simplified, real code should use Expander class
 
-      // Correct efficiency based on speed
-      double efficiency = correctEfficiency(speed);
+      // Simulate compressor side (simplified)
+      // Assume Q_comp and m_comp are proportional to m1 for this example
+      Q_comp = m1 / 30.0; // placeholder, should use actual compressor out stream
+      m_comp = m1; // placeholder
+      double qn_ratio = (Q_comp * 60.0 / N) / qn_design;
+      CF_eff_comp = getEfficiencyFromQN(qn_ratio);
+      CF_head_comp = 1.0; // or use a head curve if available
+      Hp = Hp_design * (N / N_design) * (N / N_design) * CF_head_comp;
+      eta_p = CF_eff_comp * eta_p_design;
+      W_compressor = m_comp * Hp / eta_p;
+      W_bearing = W_bearing_design * (N / N_design) * (N / N_design);
 
-      double W_isentropic = H_isentropicOut - H_in;
-      double W_expander = W_isentropic * efficiency;
-      double W_expander_total = W_expander; // W
-
-      double W_corrected = W_expander_total - bearingLossPower;
-
-      double error = W_corrected - compressorRequiredPower;
-      if (Math.abs(error) < 50.0)
-        break; // convergence criteria 50 W
-
-      speed -= error / 500.0; // crude proportional adjustment
+      double error = W_expander - (W_compressor + W_bearing);
+      if (Math.abs(error) < 500.0)
+        break;
+      if (plus) {
+        N += 10.0;
+      } else {
+        N -= 10.0;
+      }
       iter++;
     }
-
-    // Final PH-flash to determine outlet state
-    double H_out = H_in + (compressorRequiredPower + bearingLossPower)
-        / (thermoSystem.getFlowRate("kg/sec") * 1000.0);
-    thermoSystem.setPressure(expanderOutPressure);
-    thermoOps.PHflash(H_out);
-
-    outStream.setThermoSystem(thermoSystem);
+    // Store results in class fields if needed
+    this.expanderSpeed = N;
+    this.compressorSpeed = N;
+    // Optionally, set output stream state here
     setCalculationIdentifier(id);
   }
 
@@ -102,4 +154,129 @@ public class TurboExpanderCompressor extends Expander {
   public double getTurboSpeed() {
     return turboSpeed;
   }
+
+  // Add this method to the TurboExpanderCompressor class
+
+  public void setDesignParameters(double designSpeed, double designIsentropicEfficiency,
+      double designUC, double bearingloww, double impeller_diamater,
+      double compressor_polytropicEfficiency, double compressor_polytropichead) {
+    // TODO: Implement the logic to set these parameters in the class
+    // For now, you can assign them to fields or just leave this as a stub
+  }
+
+  /**
+   * Fit a constrained parabola: efficiency = a*(uc - h)^2 + k, with vertex at (h, k) = (1, 1)
+   * 
+   * @param ucValues array of uc values
+   * @param efficiencyValues array of efficiency values
+   */
+  public void setUCcurve(double[] ucValues, double[] efficiencyValues) {
+    // Fit only parameter 'a' for y = a*(x-h)^2 + k, with h=1, k=1
+    double h = ucCurveH;
+    double k = ucCurveK;
+    int n = ucValues.length;
+    if (n < 2)
+      return;
+    double num = 0.0;
+    double denom = 0.0;
+    for (int i = 0; i < n; i++) {
+      double dx = ucValues[i] - h;
+      num += (efficiencyValues[i] - k) * (dx);
+      denom += dx * dx;
+    }
+    if (denom != 0.0) {
+      ucCurveA = num / denom;
+    } else {
+      ucCurveA = 0.0;
+    }
+  }
+
+  /**
+   * Evaluate the fitted UC curve at a given uc value.
+   * 
+   * @param uc the uc value
+   * @return the efficiency
+   */
+  public double getEfficiencyFromUC(double uc) {
+    return ucCurveA * (uc - ucCurveH) * (uc - ucCurveH) + ucCurveK;
+  }
+
+  /**
+   * Fit a constrained parabola: efficiency = a*(qn - h)^2 + k, with vertex at (h, k) = (1, 1)
+   * 
+   * @param qnValues array of Q/N values
+   * @param efficiencyValues array of efficiency values
+   */
+  public void setQNEfficiencycurve(double[] qnValues, double[] efficiencyValues) {
+    double h = qnCurveH;
+    double k = qnCurveK;
+    int n = qnValues.length;
+    if (n < 2)
+      return;
+    double num = 0.0;
+    double denom = 0.0;
+    for (int i = 0; i < n; i++) {
+      double dx = qnValues[i] - h;
+      num += (efficiencyValues[i] - k) * (dx);
+      denom += dx * dx;
+    }
+    if (denom != 0.0) {
+      qnCurveA = num / denom;
+    } else {
+      qnCurveA = 0.0;
+    }
+  }
+
+  /**
+   * Evaluate the fitted Q/N curve at a given qn value.
+   * 
+   * @param qn the Q/N value
+   * @return the efficiency
+   */
+  public double getEfficiencyFromQN(double qn) {
+    return qnCurveA * (qn - qnCurveH) * (qn - qnCurveH) + qnCurveK;
+  }
+
+  /**
+   * Fit a constrained parabola: head = a*(qn - h)^2 + k, with vertex at (h, k) = (1, 1)
+   * 
+   * @param qnValues array of Q/N values
+   * @param headValues array of head values
+   */
+  public void setQNHeadcurve(double[] qnValues, double[] headValues) {
+    double h = qnHeadCurveH;
+    double k = qnHeadCurveK;
+    int n = qnValues.length;
+    if (n < 2)
+      return;
+    double num = 0.0;
+    double denom = 0.0;
+    for (int i = 0; i < n; i++) {
+      double dx = qnValues[i] - h;
+      num += (headValues[i] - k) * (dx);
+      denom += dx * dx;
+    }
+    if (denom != 0.0) {
+      qnHeadCurveA = num / denom;
+    } else {
+      qnHeadCurveA = 0.0;
+    }
+  }
+
+  /**
+   * Evaluate the fitted Q/N head curve at a given qn value.
+   * 
+   * @param qn the Q/N value
+   * @return the head
+   */
+  public double getHeadFromQN(double qn) {
+    return qnHeadCurveA * (qn - qnHeadCurveH) * (qn - qnHeadCurveH) + qnHeadCurveK;
+  }
+
+  public double calcIGVOpening() {
+    // Calculate the IGV opening based on the current speed and design speed
+    double opening = (expanderSpeed / expanderSpeed) * IGVposition;
+    return opening;
+  }
+
 }
