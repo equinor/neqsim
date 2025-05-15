@@ -1,13 +1,13 @@
 package neqsim.process.equipment.expander;
 
 import java.util.UUID;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 
 public class TurboExpanderCompressorTest {
   @Test
   void testRun() {
-    System.out.println("Turtall etter konvergens: ");
     neqsim.thermo.system.SystemInterface feedGas =
         new neqsim.thermo.system.SystemSrkEos(273.15 + 42.0, 10.00);
     feedGas.addComponent("nitrogen", 0.006);
@@ -74,6 +74,20 @@ public class TurboExpanderCompressorTest {
     Stream outStream = new Stream("outstream", turboExpander.getOutletStream());
     outStream.run();
 
-    // System.out.println("Turtall etter konvergens: " + turboExpander.getTurboSpeed());
+    Assertions.assertEquals(49.251854,
+        turboExpander.getCompressorOutletStream().getPressure("bara"), 1e-2);
+
+    Assertions.assertEquals(6514.27, turboExpander.getSpeed(), 1e-2);
+    Assertions.assertEquals(2591562.235, turboExpander.getPowerExpander(), 1e-2);
+    Assertions.assertEquals(2591553.19170, turboExpander.getPowerCompressor(), 1e-2);
+    Assertions.assertEquals(0.80561644, turboExpander.getCompressorPolytropicEfficiency(), 1e-2);
+    Assertions.assertEquals(0.8811436058, turboExpander.getExpanderIsentropicEfficiency(), 1e-2);
+    Assertions.assertEquals(18.5183479780, turboExpander.getCompressorPolytropicHead(), 1e-2);
+    Assertions.assertEquals(0.95872326, turboExpander.getUCratioexpander(), 1e-2);
+    Assertions.assertEquals(0.9588704361, turboExpander.getUCratiocompressor(), 1e-2);
+    Assertions.assertEquals(0.84649197, turboExpander.getQNratioexpander(), 1e-2);
+    Assertions.assertEquals(0.8463620513, turboExpander.getQNratiocompressor(), 1e-2);
+
+    // outStream.getFluid().prettyPrint();
   }
 }
