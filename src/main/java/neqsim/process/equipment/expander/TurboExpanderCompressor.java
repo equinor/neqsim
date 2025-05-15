@@ -1,6 +1,7 @@
 package neqsim.process.equipment.expander;
 
 import java.util.UUID;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -21,6 +22,17 @@ public class TurboExpanderCompressor extends Expander {
   private double expanderEfficiencyDesign = 0.85;
   private double compressorPolytropicEfficiency = 0.85;
   private double compressorPolytropicHead = 20.47; // kJ/kg
+
+  StreamInterface compressorFeedStream = null;
+  StreamInterface otletStream = null;
+
+  public StreamInterface getCompressorFeedStream() {
+    return compressorFeedStream;
+  }
+
+  public void setCompressorFeedStream(StreamInterface compressorFeedStream) {
+    this.compressorFeedStream = compressorFeedStream;
+  }
 
   // Stores the fitted 'a' parameter for the constrained parabola
   private double ucCurveA = 0.0;
@@ -111,8 +123,10 @@ public class TurboExpanderCompressor extends Expander {
 
       // Simulate compressor side (simplified)
       // Assume Q_comp and m_comp are proportional to m1 for this example
-      Q_comp = m1 / 30.0; // placeholder, should use actual compressor out stream
-      m_comp = m1; // placeholder
+
+      m_comp = compressorFeedStream.getFluid().getFlowRate("kg/sec");
+      Q_comp = compressorFeedStream.getFluid().getFlowRate("m3/sec");
+
       double qn_ratio = (Q_comp * 60.0 / N) / qn_design;
       CF_eff_comp = getEfficiencyFromQN(qn_ratio);
       CF_head_comp = 1.0; // or use a head curve if available
@@ -134,6 +148,16 @@ public class TurboExpanderCompressor extends Expander {
     // Store results in class fields if needed
     this.expanderSpeed = N;
     this.compressorSpeed = N;
+
+    Compressor tempCOmpressor = new Compressor("tempCompressor", compressorFeedStream);
+    tempCOmpressor.setPolytropicEfficiency(eta_p);
+    tempCOmpressor.setPower(W_compressor);
+    tempCOmpressor.setCalcPressureOut(true);
+    tempCOmpressor.run();
+
+    setOutletStream(tempCOmpressor.getOutletStream());
+
+
     // Optionally, set output stream state here
     setCalculationIdentifier(id);
   }

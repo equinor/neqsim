@@ -27,9 +27,15 @@ public class TurboExpanderCompressorTest {
     feedStream.setTemperature(-23.0, "C");
     feedStream.setPressure(60.95, "bara");
 
+    Stream feedStream2 = new Stream("dry feed gas Smorbukk", feedGas);
+    feedStream.setFlowRate(406000.0, "kg/hr");
+    feedStream.setTemperature(17.0, "C");
+    feedStream.setPressure(42.0, "bara");
+
     TurboExpanderCompressor turboExpander =
         new TurboExpanderCompressor("TurboExpander", feedStream);
 
+        turboExpander.setCompressorFeedStream(feedStream2);
     /*
      * double designSpeed = 6850.0; // rpm double designIsentropicEfficiency = 0.88; double designUC
      * = 0.7; double bearingloww = 0.25; double impeller_diamater = 0.424; double
