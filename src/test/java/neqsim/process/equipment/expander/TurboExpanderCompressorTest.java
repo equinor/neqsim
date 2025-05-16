@@ -63,7 +63,7 @@ public class TurboExpanderCompressorTest {
     turboExpander.setDesignIsentropicEfficiency(0.88);
     turboExpander.setDesignUC(0.7); // m/s
     turboExpander.setDesignQn(0.03328);
-    turboExpander.setExpanderOutPressure(42.0);
+    turboExpander.setExpanderOutPressure(45.0);
     turboExpander.setComprosserPolytropicEfficieny(0.81);
     turboExpander.setCompressorDesingPolytropicHead(20.47);//// kJ/kg
     turboExpander.setMaximumIGVArea(1.637e4); // mm2
