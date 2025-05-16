@@ -20,9 +20,26 @@ public class TurboExpanderCompressorResponse extends BaseResponse {
     this.expanderIsentropicEfficiency = turboExpanderCompressor.getExpanderIsentropicEfficiency();
     this.compressorPolytropicHead = turboExpanderCompressor.getCompressorPolytropicHead();
     this.UCratioexpander = turboExpanderCompressor.getUCratioexpander();
-    this.UCratiocompressor = turboExpanderCompressor.getUCratiocompressor();
-    this.QNratioexpander = turboExpanderCompressor.getQNratioexpander();
     this.QNratiocompressor = turboExpanderCompressor.getQNratiocompressor();
+
+    this.expanderFeedTemperature =
+        turboExpanderCompressor.getExpanderFeedStream().getTemperature("C");
+    this.expanderFeedFlow = turboExpanderCompressor.getExpanderFeedStream().getFlowRate("kg/hr");
+    this.expanderFeedPressure = turboExpanderCompressor.getExpanderFeedStream().getPressure("bara");
+    this.expanderDischargeTemperature =
+        turboExpanderCompressor.getExpanderOutletStream().getTemperature("C");
+    this.expanderDischargePressure =
+        turboExpanderCompressor.getExpanderOutletStream().getPressure("bara");
+    this.compressorFeedFlow =
+        turboExpanderCompressor.getCompressorFeedStream().getFlowRate("kg/hr");
+    this.compresorFeedPressure =
+        turboExpanderCompressor.getCompressorFeedStream().getPressure("bara");
+    this.compresorFeedTemperature =
+        turboExpanderCompressor.getCompressorFeedStream().getTemperature("C");
+    this.compresorDischargePressure =
+        turboExpanderCompressor.getCompressorOutletStream().getPressure("bara");
+    this.compresorDischargeTemperature =
+        turboExpanderCompressor.getCompressorOutletStream().getTemperature("C");
   }
 
   private Double speed = 0.0;
@@ -32,47 +49,16 @@ public class TurboExpanderCompressorResponse extends BaseResponse {
   private Double expanderIsentropicEfficiency = 0.0;
   private Double compressorPolytropicHead = 0.0;
   private Double UCratioexpander = 0.0;
-  private Double UCratiocompressor = 0.0;
-  private Double QNratioexpander = 0.0;
   private Double QNratiocompressor = 0.0;
+  private Double expanderFeedTemperature = 0.0;
+  private Double expanderFeedFlow = 0.0;
+  private Double expanderFeedPressure = 0.0;
+  private Double expanderDischargeTemperature = 0.0;
+  private Double expanderDischargePressure = 0.0;
+  private Double compressorFeedFlow = 0.0;
+  private Double compresorFeedPressure = 0.0;
+  private Double compresorFeedTemperature = 0.0;
+  private Double compresorDischargePressure = 0.0;
+  private Double compresorDischargeTemperature = 0.0;
 
-  public Double getSpeed() {
-    return speed;
-  }
-
-  public Double getPowerExpander() {
-    return powerExpander;
-  }
-
-  public Double getPowerCompressor() {
-    return powerCompressor;
-  }
-
-  public Double getCompressorPolytropicEfficiency() {
-    return compressorPolytropicEfficiency;
-  }
-
-  public Double getExpanderIsentropicEfficiency() {
-    return expanderIsentropicEfficiency;
-  }
-
-  public Double getCompressorPolytropicHead() {
-    return compressorPolytropicHead;
-  }
-
-  public Double getUCratioexpander() {
-    return UCratioexpander;
-  }
-
-  public Double getUCratiocompressor() {
-    return UCratiocompressor;
-  }
-
-  public Double getQNratioexpander() {
-    return QNratioexpander;
-  }
-
-  public Double getQNratiocompressor() {
-    return QNratiocompressor;
-  }
 }

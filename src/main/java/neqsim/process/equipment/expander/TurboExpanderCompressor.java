@@ -48,7 +48,7 @@ public class TurboExpanderCompressor extends Expander {
   /** Design speed [rpm]. */
   private double designSpeed = 6850.0;
   /** Design isentropic efficiency (expander). */
-  private double designIsentropicEfficiency = 0.88;
+  // private double designIsentropicEfficiency = 0.88;
   /** Design UC (velocity ratio, expander). */
   private double designUC = 0.7;
   /** UC ratio for expander (actual/ideal). */
@@ -66,6 +66,7 @@ public class TurboExpanderCompressor extends Expander {
   /** Maximum IGV area [mm^2]. */
   private double maximumIGVArea = 1.637e4;
   /** Compressor polytropic efficiency (design/actual). */
+  private double compressorDesignPolytropicEfficiency = 0.81;
   private double compressorPolytropicEfficiency = 0.81;
   /** Compressor design polytropic head [kJ/kg]. */
   private double compressorDesignPolytropicHead = 20.47;
@@ -73,11 +74,11 @@ public class TurboExpanderCompressor extends Expander {
   private double compressorPolytropicHead = 20.47;
   /** Expander isentropic efficiency (actual, result). */
   private double expanderIsentropicEfficiency = 1.0;
+  private double expanderDesignIsentropicEfficiency = 1.0;
   /** Expander shaft power [W]. */
   private double powerExpander = 0.0;
   /** Compressor shaft power [W]. */
   private double powerCompressor = 0.0;
-
   // --- Polynomial Curve Fit Parameters ---
   /** UC/efficiency curve fit parameter. */
   private double ucCurveA = 0.0;
@@ -129,11 +130,11 @@ public class TurboExpanderCompressor extends Expander {
     final double N_min = 1000.0;
     double eta_p = 0.0, W_compressor = 0.0, W_expander = 0.0, W_bearing = 0.0;
     double D = impellerDiameter;
-    double eta_s_design = designIsentropicEfficiency;
+    double eta_s_design = expanderDesignIsentropicEfficiency;
     double Hp_design = compressorDesignPolytropicHead;
-    double eta_p_design = compressorPolytropicEfficiency;
+    double eta_p_design = compressorDesignPolytropicEfficiency;
     double N_design = designSpeed;
-    double m1 = inStream.getFlowRate("kg/sec");
+    double m1 = expanderFeedStream.getFlowRate("kg/sec");
     double Q_comp = 0.0, m_comp = 0.0, eta_s = 0.0, Hp = 0.0, CF_eff_comp = 1.0, CF_head_comp = 1.0;
     // Newton-Raphson method for speed matching
     int maxIter = 50;
@@ -144,11 +145,9 @@ public class TurboExpanderCompressor extends Expander {
         qn_ratio2 = 0.0;
     do {
       double outPress = expanderOutPressure;
-      StreamInterface stream2 = inStream.clone();
-      SystemInterface fluid2 = stream2.getThermoSystem();
+      SystemInterface fluid2 = expanderFeedStream.getThermoSystem().clone();
       fluid2.initThermoProperties();
       double s1 = fluid2.getEntropy("kJ/kgK");
-
       double h_in = fluid2.getEnthalpy("kJ/kg");
       fluid2.setPressure(outPress, "bara");
       ThermodynamicOperations flash = new ThermodynamicOperations(fluid2);
@@ -171,6 +170,7 @@ public class TurboExpanderCompressor extends Expander {
       eta_p = CF_eff_comp * eta_p_design;
       W_compressor = m_comp * Hp / eta_p * 1000.0;
       W_bearing = bearingLossPower * (N / N_design) * (N / N_design);
+
       double fN = W_expander - (W_compressor + W_bearing);
       // Finite difference for derivative
       double N2 = N + dN;
@@ -204,18 +204,17 @@ public class TurboExpanderCompressor extends Expander {
     if (iter >= maxIter) {
       System.out.println("Warning: TurboExpanderCompressor did not converge.");
     }
-    expanderIsentropicEfficiency = eta_s2;
-    compressorPolytropicHead = Hp2;
-    compressorPolytropicEfficiency = eta_p2;
+
+    expanderIsentropicEfficiency = eta_s;
+    compressorPolytropicHead = Hp;
+    compressorPolytropicEfficiency = eta_p;
     expanderSpeed = N;
     setSpeed(N);
     setPower(W_expander);
-    setPowerExpander(W_expander);
-    setPowerCompressor(W_compressor);
+    powerExpander = W_expander;
+    powerCompressor = W_compressor;
     setUCratioexpander(uc);
-    setUCratiocompressor(uc2);
-    setQNratioexpander(qn_ratio);
-    setQNratiocompressor(qn_ratio2);
+    setQNratiocompressor(qn_ratio);
     setQn(N / 60.0 * Q_comp / designQn);
 
     Expander expander = new Expander("tempExpander", expanderFeedStream);
@@ -287,16 +286,8 @@ public class TurboExpanderCompressor extends Expander {
     return powerExpander;
   }
 
-  public void setPowerExpander(double powerExpander) {
-    this.powerExpander = powerExpander;
-  }
-
   public double getPowerCompressor() {
     return powerCompressor;
-  }
-
-  public void setPowerCompressor(double powerCompressor) {
-    this.powerCompressor = powerCompressor;
   }
 
   public double getExpanderIsentropicEfficiency() {
@@ -307,12 +298,12 @@ public class TurboExpanderCompressor extends Expander {
     this.expanderIsentropicEfficiency = expanderIsentropicEfficiency;
   }
 
-  public double getCompressorPolytropicEfficiency() {
-    return compressorPolytropicEfficiency;
+  public double getDesignCompressorPolytropicEfficiency() {
+    return compressorDesignPolytropicEfficiency;
   }
 
-  public void setCompressorPolytropicEfficiency(double compressorPolytropicEfficiency) {
-    this.compressorPolytropicEfficiency = compressorPolytropicEfficiency;
+  public void setCompressorDesignPolytropicEfficiency(double compressorPolytropicEfficiency) {
+    this.compressorDesignPolytropicEfficiency = compressorPolytropicEfficiency;
   }
 
   public double getCompressorDesignPolytropicHead() {
@@ -566,10 +557,6 @@ public class TurboExpanderCompressor extends Expander {
     this.designSpeed = designSpeed;
   }
 
-  public void setDesignIsentropicEfficiency(double designIsentropicEfficiency) {
-    this.designIsentropicEfficiency = designIsentropicEfficiency;
-  }
-
   public void setDesignUC(double designUC) {
     this.designUC = designUC;
   }
@@ -582,14 +569,6 @@ public class TurboExpanderCompressor extends Expander {
     this.maximumIGVArea = maximumIGVArea;
   }
 
-  public void setComprosserPolytropicEfficieny(double compressorPolytropicEfficiency) {
-    this.compressorPolytropicEfficiency = compressorPolytropicEfficiency;
-  }
-
-  public void setCompressorDesingPolytropicHead(double compressorDesignPolytropicHead) {
-    this.compressorDesignPolytropicHead = compressorDesignPolytropicHead;
-  }
-
   // --- Getters ---
   public double getImpellerDiameter() {
     return impellerDiameter;
@@ -597,10 +576,6 @@ public class TurboExpanderCompressor extends Expander {
 
   public double getDesignSpeed() {
     return designSpeed;
-  }
-
-  public double getDesignIsentropicEfficiency() {
-    return designIsentropicEfficiency;
   }
 
   public double getDesignUC() {
@@ -615,7 +590,7 @@ public class TurboExpanderCompressor extends Expander {
     return maximumIGVArea;
   }
 
-  public double getComprosserPolytropicEfficieny() {
+  public double getCompressorPolytropicEfficieny() {
     return compressorPolytropicEfficiency;
   }
 
@@ -639,7 +614,6 @@ public class TurboExpanderCompressor extends Expander {
    */
   public void setExpanderOutPressure(double expanderOutPressure) {
     this.expanderOutPressure = expanderOutPressure;
-    this.compressorFeedStream.setPressure(expanderOutPressure, "bara");
   }
 
   /**
@@ -649,7 +623,6 @@ public class TurboExpanderCompressor extends Expander {
    */
   public void setCompressorFeedStream(StreamInterface compressorFeedStream) {
     this.compressorFeedStream = compressorFeedStream;
-    this.compressorFeedStream.setPressure(expanderOutPressure, "bara");
   }
 
   /**
@@ -771,6 +744,23 @@ public class TurboExpanderCompressor extends Expander {
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new TurboExpanderCompressorResponse(this));
+  }
+
+  public double getCompressorDesignPolytropicEfficiency() {
+    return compressorDesignPolytropicEfficiency;
+  }
+
+  public double getCompressorPolytropicEfficiency() {
+    return compressorPolytropicEfficiency;
+  }
+
+
+  public double getExpanderDesignIsentropicEfficiency() {
+    return expanderDesignIsentropicEfficiency;
+  }
+
+  public void setExpanderDesignIsentropicEfficiency(double expanderDesignIsentropicEfficiency) {
+    this.expanderDesignIsentropicEfficiency = expanderDesignIsentropicEfficiency;
   }
 
 
