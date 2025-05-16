@@ -5,12 +5,10 @@ import neqsim.process.equipment.expander.TurboExpanderCompressor;
 public class TurboExpanderCompressorResponse extends BaseResponse {
 
   /**
-   * <p>
-   * Constructor for CompressorResponse.
-   * </p>
+   * Constructs a TurboExpanderCompressorResponse from a TurboExpanderCompressor.
    *
-   * @param inputCompressor a {@link neqsim.process.equipment.expander.TurboExpanderCompressor}
-   *        object
+   * @param turboExpanderCompressor a
+   *        {@link neqsim.process.equipment.expander.TurboExpanderCompressor} object
    */
   public TurboExpanderCompressorResponse(TurboExpanderCompressor turboExpanderCompressor) {
     super(turboExpanderCompressor);
@@ -38,4 +36,43 @@ public class TurboExpanderCompressorResponse extends BaseResponse {
   private Double QNratioexpander = 0.0;
   private Double QNratiocompressor = 0.0;
 
+  public Double getSpeed() {
+    return speed;
+  }
+
+  public Double getPowerExpander() {
+    return powerExpander;
+  }
+
+  public Double getPowerCompressor() {
+    return powerCompressor;
+  }
+
+  public Double getCompressorPolytropicEfficiency() {
+    return compressorPolytropicEfficiency;
+  }
+
+  public Double getExpanderIsentropicEfficiency() {
+    return expanderIsentropicEfficiency;
+  }
+
+  public Double getCompressorPolytropicHead() {
+    return compressorPolytropicHead;
+  }
+
+  public Double getUCratioexpander() {
+    return UCratioexpander;
+  }
+
+  public Double getUCratiocompressor() {
+    return UCratiocompressor;
+  }
+
+  public Double getQNratioexpander() {
+    return QNratioexpander;
+  }
+
+  public Double getQNratiocompressor() {
+    return QNratiocompressor;
+  }
 }
