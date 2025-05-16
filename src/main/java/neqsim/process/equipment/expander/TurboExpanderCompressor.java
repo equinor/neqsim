@@ -6,126 +6,91 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
+/**
+ * TurboExpanderCompressor models a coupled expander and compressor system with design and
+ * performance parameters, polynomial curve fits for efficiency and head, and Newton-Raphson
+ * iteration for speed matching.
+ * <p>
+ * This class provides configuration for impeller, speed, efficiency, and curve fit parameters, and
+ * exposes all relevant design and result values via getters/setters. The main run() method matches
+ * expander and compressor power using a robust Newton-Raphson approach, updating all result fields
+ * and output streams.
+ * </p>
+ */
 public class TurboExpanderCompressor extends Expander {
 
   private static final long serialVersionUID = 1001;
-  private double expanderOutPressure = 40.0; // bar
-  private double IGVposition = 1.0; // 1.0 = 100% open
-  private double bearingLossPower = 10.0; // W
-  private double expanderSpeed = 1000.0; // rpm, stores the matched expander speed
 
+  // --- Expander/Compressor Configuration ---
+  /** Expander outlet pressure [bar abs]. */
+  private double expanderOutPressure = 40.0;
+  /** IGV opening (1.0 = 100% open, fraction of max area). */
+  private double IGVopening = 1.0;
+  /** Mechanical bearing loss power [W]. */
+  private double bearingLossPower = 10.0;
+  /** Matched expander speed [rpm]. */
+  private double expanderSpeed = 1000.0;
+  private double compressorSpeed = 1000.0;
+  private double gearRatio = 1.0;
+
+  // --- Process Streams ---
   StreamInterface compressorFeedStream = null;
   StreamInterface compressorOutletStream = null;
-
   StreamInterface expanderFeedStream = null;
   StreamInterface expanderOutletStream = null;
 
-  // --- Design and configuration parameters ---
-  private double impellerDiameter = 0.424; // m
-  private double designSpeed = 6850.0; // rpm
+  // --- Design and Performance Parameters ---
+  /** Impeller diameter [m]. */
+  private double impellerDiameter = 0.424;
+  /** Design speed [rpm]. */
+  private double designSpeed = 6850.0;
+  /** Design isentropic efficiency (expander). */
   private double designIsentropicEfficiency = 0.88;
-  private double designUC = 0.7; // m/s
-  private double UCratioexpander = 0.7; // m/s
-  private double UCratiocompressor = 0.7; // m/s
-
-  public double getUCratioexpander() {
-    return UCratioexpander;
-  }
-
-  public void setUCratioexpander(double uCratioexpander) {
-    UCratioexpander = uCratioexpander;
-  }
-
-  public double getUCratiocompressor() {
-    return UCratiocompressor;
-  }
-
-  public void setUCratiocompressor(double uCratiocompressor) {
-    UCratiocompressor = uCratiocompressor;
-  }
-
-  public double getQNratioexpander() {
-    return QNratioexpander;
-  }
-
-  public void setQNratioexpander(double qNratioexpander) {
-    QNratioexpander = qNratioexpander;
-  }
-
-  public double getQNratiocompressor() {
-    return QNratiocompressor;
-  }
-
-  public void setQNratiocompressor(double qNratiocompressor) {
-    QNratiocompressor = qNratiocompressor;
-  }
-
-  private double QNratioexpander = 0.7; // m/s
-  private double QNratiocompressor = 0.7; // m/s
+  /** Design UC (velocity ratio, expander). */
+  private double designUC = 0.7;
+  /** UC ratio for expander (actual/ideal). */
+  private double UCratioexpander = 0.7;
+  /** UC ratio for compressor (actual/ideal). */
+  private double UCratiocompressor = 0.7;
+  /** QN ratio for expander (actual/ideal). */
+  private double QNratioexpander = 0.7;
+  /** QN ratio for compressor (actual/ideal). */
+  private double QNratiocompressor = 0.7;
+  /** Design Q/N (flow/speed ratio). */
   private double designQn = 0.03328;
-
-  public double getQn() {
-    return Qn;
-  }
-
-  public void setQn(double qn) {
-    Qn = qn;
-  }
-
+  /** Actual Q/N (flow/speed ratio). */
   private double Qn = 0.03328;
-  private double maximumIGVArea = 1.637e4; // mm^2 or as required
+  /** Maximum IGV area [mm^2]. */
+  private double maximumIGVArea = 1.637e4;
+  /** Compressor polytropic efficiency (design/actual). */
   private double compressorPolytropicEfficiency = 0.81;
-  private double compressorDesignPolytropicHead = 20.47; // kJ/kg
+  /** Compressor design polytropic head [kJ/kg]. */
+  private double compressorDesignPolytropicHead = 20.47;
+  /** Compressor actual polytropic head [kJ/kg]. */
   private double compressorPolytropicHead = 20.47;
-
-  public double getCompressorPolytropicHead() {
-    return compressorPolytropicHead;
-  }
-
-  public void setCompressorPolytropicHead(double compressorPolytropicHead) {
-    this.compressorPolytropicHead = compressorPolytropicHead;
-  }
-
+  /** Expander isentropic efficiency (actual, result). */
   private double expanderIsentropicEfficiency = 1.0;
-  double powerExpander = 0.0; // W
+  /** Expander shaft power [W]. */
+  private double powerExpander = 0.0;
+  /** Compressor shaft power [W]. */
+  private double powerCompressor = 0.0;
 
-  public double getPowerExpander() {
-    return powerExpander;
-  }
-
-  public void setPowerExpander(double powerExpander) {
-    this.powerExpander = powerExpander;
-  }
-
-  public double getPowerCompressor() {
-    return powerCompressor;
-  }
-
-  public void setPowerCompressor(double powerCompressor) {
-    this.powerCompressor = powerCompressor;
-  }
-
-  double powerCompressor = 0.0; // W
-
-
-  // Stores the fitted 'a' parameter for the constrained parabola
+  // --- Polynomial Curve Fit Parameters ---
+  /** UC/efficiency curve fit parameter. */
   private double ucCurveA = 0.0;
-  private double ucCurveH = 1.0; // vertex x (h)
-  private double ucCurveK = 1.0; // vertex y (k)
-
-  // Stores the fitted 'a' parameter for the constrained parabola for Q/N
+  private double ucCurveH = 1.0;
+  private double ucCurveK = 1.0;
+  /** QN/efficiency curve fit parameter. */
   private double qnCurveA = 0.0;
-  private double qnCurveH = 1.0; // vertex x (h)
-  private double qnCurveK = 1.0; // vertex y (k)
-
-  // Stores the fitted 'a' parameter for the constrained parabola for Q/N head
-  // curve
+  private double qnCurveH = 1.0;
+  private double qnCurveK = 1.0;
+  /** QN/head curve fit parameter. */
   private double qnHeadCurveA = 0.0;
-  private double qnHeadCurveH = 1.0; // vertex x (h)
-  private double qnHeadCurveK = 1.0; // vertex y (k)
+  private double qnHeadCurveH = 1.0;
+  private double qnHeadCurveK = 1.0;
 
   /**
-   * Constructs a TurboExpanderCompressor with the specified name and inlet stream.
+   * Construct a TurboExpanderCompressor with the specified name and inlet stream.
    *
    * @param name the name of the turbo expander compressor
    * @param inletStream the inlet stream for the expander
@@ -139,69 +104,39 @@ public class TurboExpanderCompressor extends Expander {
     outStream = compressorOutletStream;
   }
 
-  public StreamInterface getCompressorFeedStream() {
-    return compressorFeedStream;
-  }
-
-  public StreamInterface getCompressorOutletStream() {
-    return compressorOutletStream;
-  }
-
-  public StreamInterface getExpanderOutletStream() {
-    return expanderOutletStream;
-  }
-
-  public void setCompressorFeedStream(StreamInterface compressorFeedStream) {
-    this.compressorFeedStream = compressorFeedStream;
-  }
-
-  public void setIGVposition(double IGVposition) {
-    this.IGVposition = IGVposition;
-  }
-
-  public void setExpanderOutPressure(double pressure) {
-    this.expanderOutPressure = pressure;
-  }
-
+  // --- Main Calculation ---
+  /**
+   * Run the expander/compressor calculation, matching expander and compressor power using
+   * Newton-Raphson iteration. Updates all result fields and output streams.
+   *
+   * @param id calculation identifier
+   */
   @Override
   public void run(UUID id) {
-    double N = designSpeed; // use designSpeed as initial guess
+    double N = designSpeed; // initial guess for speed [rpm]
     final double N_max = 9000.0;
     final double N_min = 1000.0;
-    double eta_p = 0.0;
-    double W_compressor = 0.0;
-    double W_expander = 0.0;
-    double W_bearing = 0.0;
-    double D = impellerDiameter; // m, impeller diameter
+    double eta_p = 0.0, W_compressor = 0.0, W_expander = 0.0, W_bearing = 0.0;
+    double D = impellerDiameter;
     double eta_s_design = designIsentropicEfficiency;
     double Hp_design = compressorDesignPolytropicHead;
     double eta_p_design = compressorPolytropicEfficiency;
     double N_design = designSpeed;
     double m1 = inStream.getFlowRate("kg/sec");
-    double Q_comp = 0.0;
-    double m_comp = 0.0;
-    double eta_s = 0.0;
-    double Hp = 0.0;
-    double CF_eff_comp = 1.0;
-    double CF_head_comp = 1.0;
-
+    double Q_comp = 0.0, m_comp = 0.0, eta_s = 0.0, Hp = 0.0, CF_eff_comp = 1.0, CF_head_comp = 1.0;
     // Newton-Raphson method for speed matching
     int maxIter = 50;
-    double dN = 1.0; // finite difference step for derivative
+    double dN = 1.0;
     int iter = 0;
-    double Hp2;
-    double eta_p2;
-    double eta_s2;
-    double uc;
-    double uc2;
-    double qn_ratio;
-    double qn_ratio2;
+    double Hp2 = 0.0, eta_p2 = 0.0, eta_s2 = 0.0, uc = 0.0, uc2 = 0.0, qn_ratio = 0.0,
+        qn_ratio2 = 0.0;
     do {
       double outPress = expanderOutPressure;
       StreamInterface stream2 = inStream.clone();
       SystemInterface fluid2 = stream2.getThermoSystem();
       fluid2.initThermoProperties();
       double s1 = fluid2.getEntropy("kJ/kgK");
+
       double h_in = fluid2.getEnthalpy("kJ/kg");
       fluid2.setPressure(outPress, "bara");
       ThermodynamicOperations flash = new ThermodynamicOperations(fluid2);
@@ -259,18 +194,7 @@ public class TurboExpanderCompressor extends Expander {
     expanderIsentropicEfficiency = eta_s2;
     compressorPolytropicHead = Hp2;
     compressorPolytropicEfficiency = eta_p2;
-    // System.out.println("expanderIsentropicEfficiency: " + expanderIsentropicEfficiency);
-    // System.out.println("compressorDesignPolytropicHead: " + compressorDesignPolytropicHead);
-    // System.out.println("compressorPolytropicEfficiency: " + compressorPolytropicEfficiency);
-    // System.out.println("error: " + Math.abs(W_expander - (W_compressor + W_bearing)));
-    // System.out.println("iter: " + iter);
-    // System.out.println("eta_s: " + eta_s);
-    // System.out.println("CF_eff_comp: " + CF_eff_comp);
-    // System.out.println("eta_p: " + eta_p);
-    // System.out.println("Expander speed: " + N);
-    // System.out.println("Expander power: " + (W_expander / 1000.0));
-    // System.out.println("Compressor power: " + (W_compressor / 1000.0));
-    expanderSpeed = N; // store matched speed
+    expanderSpeed = N;
     setSpeed(N);
     setPower(W_expander);
     setPowerExpander(W_expander);
@@ -280,16 +204,86 @@ public class TurboExpanderCompressor extends Expander {
     setQNratioexpander(qn_ratio);
     setQNratiocompressor(qn_ratio2);
     setQn(N / 60.0 * Q_comp / designQn);
+
+    Expander expander = new Expander("tempExpander", expanderFeedStream);
+    expander.setOutletPressure(getExpanderOutPressure());
+    expander.setIsentropicEfficiency(eta_s);
+    expander.run();
+    expanderOutletStream.setFluid(expander.getOutletStream().getFluid());
+
     Compressor tempCompressor = new Compressor("tempCompressor", compressorFeedStream);
     tempCompressor.setUsePolytropicCalc(true);
     tempCompressor.setPolytropicEfficiency(eta_p);
     tempCompressor.setPower(W_compressor);
     tempCompressor.setCalcPressureOut(true);
     tempCompressor.run();
-    // System.out.println("Outlet pressure: " + tempCompressor.getOutletPressure());
-
     compressorOutletStream.setFluid(tempCompressor.getOutletStream().getFluid());
     setCalculationIdentifier(id);
+  }
+
+  // --- Getters and Setters for all configuration and result fields ---
+  public double getCompressorPolytropicHead() {
+    return compressorPolytropicHead;
+  }
+
+  /**
+   * Get the UC ratio for the expander after calculation.
+   *
+   * @return the UC ratio (expander)
+   */
+  public double getUCratioexpander() {
+    return UCratioexpander;
+  }
+
+  /**
+   * Get the UC ratio for the compressor after calculation.
+   *
+   * @return the UC ratio (compressor)
+   */
+  public double getUCratiocompressor() {
+    return UCratiocompressor;
+  }
+
+  /**
+   * Get the QN ratio for the expander after calculation.
+   *
+   * @return the QN ratio (expander)
+   */
+  public double getQNratioexpander() {
+    return QNratioexpander;
+  }
+
+  /**
+   * Get the QN ratio for the compressor after calculation.
+   *
+   * @return the QN ratio (compressor)
+   */
+  public double getQNratiocompressor() {
+    return QNratiocompressor;
+  }
+
+  public double getQn() {
+    return Qn;
+  }
+
+  public void setQn(double qn) {
+    Qn = qn;
+  }
+
+  public double getPowerExpander() {
+    return powerExpander;
+  }
+
+  public void setPowerExpander(double powerExpander) {
+    this.powerExpander = powerExpander;
+  }
+
+  public double getPowerCompressor() {
+    return powerCompressor;
+  }
+
+  public void setPowerCompressor(double powerCompressor) {
+    this.powerCompressor = powerCompressor;
   }
 
   public double getExpanderIsentropicEfficiency() {
@@ -428,12 +422,41 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * Calculate the IGV opening based on the current IGV position and design speed.
-   * 
+   * Calculate the IGV opening based on the current IGV opening fraction.
+   *
    * @return IGV opening (fraction of max area)
    */
   public double calcIGVOpening() {
-    return IGVposition;
+    return IGVopening;
+  }
+
+  /**
+   * Calculate the current IGV (Inlet Guide Vane) open area.
+   * 
+   * @return the IGV open area in mm²
+   */
+  public double calcIGVOpenArea() {
+    return IGVopening * maximumIGVArea;
+  }
+
+  /**
+   * Calculate the IGV (Inlet Guide Vane) opening as the ratio of the volumetric flow into the
+   * expander to the maximum IGV area (assuming unit velocity for simplicity).
+   *
+   * @return IGV opening (fraction of max area, capped at 1.0)
+   */
+  public double calcIGVOpeningFromFlow() {
+    // Volumetric flow into expander in m3/s
+    double volumetricFlow =
+        expanderFeedStream != null ? expanderFeedStream.getFluid().getFlowRate("m3/sec") : 0.0;
+    // Maximum IGV area in m2 (convert from mm2)
+    double maxArea = maximumIGVArea / 1.0e6;
+    // Assume a reference velocity (e.g., 1 m/s) for area calculation
+    double referenceVelocity = 1.0; // m/s
+    double requiredArea = volumetricFlow / referenceVelocity;
+    double opening = maxArea > 0.0 ? requiredArea / maxArea : 0.0;
+    // Cap at 1.0 (cannot open more than max area)s
+    return Math.min(opening, 1.0);
   }
 
   // --- Setters ---
@@ -501,5 +524,148 @@ public class TurboExpanderCompressor extends Expander {
   public double getCompressorDesingPolytropicHead() {
     return compressorDesignPolytropicHead;
   }
+
+  public double getIGVopening() {
+
+    return IGVopening;
+  }
+
+  public void setIGVopening(double iGVopening) {
+    IGVopening = iGVopening;
+  }
+
+  /**
+   * Set the expander outlet pressure (absolute, bar).
+   *
+   * @param expanderOutPressure the desired expander outlet pressure in bar abs
+   */
+  public void setExpanderOutPressure(double expanderOutPressure) {
+    this.expanderOutPressure = expanderOutPressure;
+  }
+
+  /**
+   * Set the compressor feed stream for the turbo expander-compressor system.
+   *
+   * @param compressorFeedStream the feed stream to use for the compressor
+   */
+  public void setCompressorFeedStream(StreamInterface compressorFeedStream) {
+    this.compressorFeedStream = compressorFeedStream;
+  }
+
+  /**
+   * Get the compressor outlet stream after calculation.
+   *
+   * @return the compressor outlet stream
+   */
+  public StreamInterface getCompressorOutletStream() {
+    return compressorOutletStream;
+  }
+
+  /**
+   * Get the current speed (expander speed) after calculation.
+   *
+   * @return the matched expander speed [rpm]
+   */
+  public double getSpeed() {
+    return expanderSpeed;
+  }
+
+  /**
+   * Get the outlet stream (for compatibility with Stream constructor in test).
+   *
+   * @return the compressor outlet stream
+   */
+  public StreamInterface getOutletStream() {
+    return compressorOutletStream;
+  }
+
+  public void setUCratioexpander(double UCratioexpander) {
+    this.UCratioexpander = UCratioexpander;
+  }
+
+  public void setUCratiocompressor(double UCratiocompressor) {
+    this.UCratiocompressor = UCratiocompressor;
+  }
+
+  public void setQNratioexpander(double QNratioexpander) {
+    this.QNratioexpander = QNratioexpander;
+  }
+
+  public void setQNratiocompressor(double QNratiocompressor) {
+    this.QNratiocompressor = QNratiocompressor;
+  }
+
+  public static long getSerialversionuid() {
+    return serialVersionUID;
+  }
+
+  public double getExpanderOutPressure() {
+    return expanderOutPressure;
+  }
+
+  public double getBearingLossPower() {
+    return bearingLossPower;
+  }
+
+  public double getExpanderSpeed() {
+    return expanderSpeed;
+  }
+
+  public double getCompressorSpeed() {
+    return compressorSpeed;
+  }
+
+  public double getGearRatio() {
+    return gearRatio;
+  }
+
+  public StreamInterface getCompressorFeedStream() {
+    return compressorFeedStream;
+  }
+
+  public StreamInterface getExpanderFeedStream() {
+    return expanderFeedStream;
+  }
+
+  public StreamInterface getExpanderOutletStream() {
+    return expanderOutletStream;
+  }
+
+  public double getUcCurveA() {
+    return ucCurveA;
+  }
+
+  public double getUcCurveH() {
+    return ucCurveH;
+  }
+
+  public double getUcCurveK() {
+    return ucCurveK;
+  }
+
+  public double getQnCurveA() {
+    return qnCurveA;
+  }
+
+  public double getQnCurveH() {
+    return qnCurveH;
+  }
+
+  public double getQnCurveK() {
+    return qnCurveK;
+  }
+
+  public double getQnHeadCurveA() {
+    return qnHeadCurveA;
+  }
+
+  public double getQnHeadCurveH() {
+    return qnHeadCurveH;
+  }
+
+  public double getQnHeadCurveK() {
+    return qnHeadCurveK;
+  }
+
 
 }

@@ -67,7 +67,8 @@ public class TurboExpanderCompressorTest {
     turboExpander.setComprosserPolytropicEfficieny(0.81);
     turboExpander.setCompressorDesingPolytropicHead(20.47);//// kJ/kg
     turboExpander.setMaximumIGVArea(1.637e4); // mm2
-    turboExpander.setExpanderOutPressure(45.0); // bar
+    turboExpander.setCompressorDesingPolytropicHead(20.47);
+
 
     turboExpander.run(UUID.randomUUID());
 
@@ -87,6 +88,9 @@ public class TurboExpanderCompressorTest {
     Assertions.assertEquals(0.9588704361, turboExpander.getUCratiocompressor(), 1e-2);
     Assertions.assertEquals(0.84649197, turboExpander.getQNratioexpander(), 1e-2);
     Assertions.assertEquals(0.8463620513, turboExpander.getQNratiocompressor(), 1e-2);
+    Assertions.assertEquals(-38.0745229056,
+        turboExpander.getExpanderOutletStream().getTemperature("C"), 1e-2);
+    // Assertions.assertEquals(78, turboExpander.calcIGVOpeningFromFlow(), 1e-2);
 
     // outStream.getFluid().prettyPrint();
   }
