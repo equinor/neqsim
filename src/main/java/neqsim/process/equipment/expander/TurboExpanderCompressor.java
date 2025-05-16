@@ -1,5 +1,6 @@
 package neqsim.process.equipment.expander;
 
+import java.util.Arrays;
 import java.util.UUID;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -89,6 +90,14 @@ public class TurboExpanderCompressor extends Expander {
   private double qnHeadCurveH = 1.0;
   private double qnHeadCurveK = 1.0;
 
+  // --- Spline data for QN/head curve ---
+  private double[] qnHeadCurveQnValues = null;
+  private double[] qnHeadCurveHeadValues = null;
+
+  // --- Spline data for QN/efficiency curve ---
+  private double[] qnEffCurveQnValues = null;
+  private double[] qnEffCurveEffValues = null;
+
   /**
    * Construct a TurboExpanderCompressor with the specified name and inlet stream.
    *
@@ -126,7 +135,8 @@ public class TurboExpanderCompressor extends Expander {
     double Q_comp = 0.0, m_comp = 0.0, eta_s = 0.0, Hp = 0.0, CF_eff_comp = 1.0, CF_head_comp = 1.0;
     // Newton-Raphson method for speed matching
     int maxIter = 50;
-    double dN = 1.0;
+    double dN = 10.0;
+
     int iter = 0;
     double Hp2 = 0.0, eta_p2 = 0.0, eta_s2 = 0.0, uc = 0.0, uc2 = 0.0, qn_ratio = 0.0,
         qn_ratio2 = 0.0;
@@ -154,7 +164,7 @@ public class TurboExpanderCompressor extends Expander {
       Q_comp = compressorFeedStream.getFluid().getFlowRate("m3/sec");
       qn_ratio = (Q_comp * 60.0 / N) / designQn;
       CF_eff_comp = getEfficiencyFromQN(qn_ratio);
-      CF_head_comp = 1.0;
+      CF_head_comp = getHeadFromQN(qn_ratio);
       Hp = Hp_design * (N / N_design) * (N / N_design) * CF_head_comp;
       eta_p = CF_eff_comp * eta_p_design;
       W_compressor = m_comp * Hp / eta_p * 1000.0;
@@ -186,6 +196,7 @@ public class TurboExpanderCompressor extends Expander {
       if (N < N_min) {
         N = N_min;
       }
+      // System.out.println("speed: " + N + " iter: " + iter);
       iter++;
     } while (Math.abs(W_expander - (W_compressor + W_bearing)) * 100 > 1e-3 && iter < maxIter);
     if (iter >= maxIter) {
@@ -344,81 +355,166 @@ public class TurboExpanderCompressor extends Expander {
    * @return the efficiency
    */
   public double getEfficiencyFromUC(double uc) {
-    return ucCurveA * (uc - ucCurveH) * (uc - ucCurveH) + ucCurveK;
+    // return ucCurveA * (uc - ucCurveH) * (uc - ucCurveH) + ucCurveK;
+    return -3.56 * (uc - 1) * (uc - 1) + 1;
   }
 
   /**
-   * Fit a constrained parabola: efficiency = a*(qn - h)^2 + k, with vertex at (h, k) = (1, 1).
+   * Fit a Q/N efficiency curve using cubic spline interpolation.
    *
-   * @param qnValues array of Q/N values
+   * @param qnValues array of Q/N values (does not need to be sorted)
    * @param efficiencyValues array of efficiency values
    */
   public void setQNEfficiencycurve(double[] qnValues, double[] efficiencyValues) {
-    double h = qnCurveH;
-    double k = qnCurveK;
-    int n = qnValues.length;
-    if (n < 2) {
+    if (qnValues == null || efficiencyValues == null || qnValues.length < 2
+        || efficiencyValues.length < 2 || qnValues.length != efficiencyValues.length) {
+      qnEffCurveQnValues = null;
+      qnEffCurveEffValues = null;
       return;
     }
-    double num = 0.0;
-    double denom = 0.0;
+    // Defensive copy and sort by qnValues
+    int n = qnValues.length;
+    double[][] pairs = new double[n][2];
     for (int i = 0; i < n; i++) {
-      double dx = qnValues[i] - h;
-      num += (efficiencyValues[i] - k) * (dx);
-      denom += dx * dx;
+      pairs[i][0] = qnValues[i];
+      pairs[i][1] = efficiencyValues[i];
     }
-    if (denom != 0.0) {
-      qnCurveA = num / denom;
-    } else {
-      qnCurveA = 0.0;
+    Arrays.sort(pairs, (a, b) -> Double.compare(a[0], b[0]));
+    qnEffCurveQnValues = new double[n];
+    qnEffCurveEffValues = new double[n];
+    for (int i = 0; i < n; i++) {
+      qnEffCurveQnValues[i] = pairs[i][0];
+      qnEffCurveEffValues[i] = pairs[i][1];
     }
   }
 
   /**
-   * Evaluate the fitted Q/N curve at a given qn value.
+   * Evaluate the fitted Q/N efficiency curve at a given qn value using cubic spline interpolation.
+   * Linear extrapolation is used outside the data range.
    *
    * @param qn the Q/N value
    * @return the efficiency
    */
   public double getEfficiencyFromQN(double qn) {
-    return qnCurveA * (qn - qnCurveH) * (qn - qnCurveH) + qnCurveK;
+    if (qnEffCurveQnValues == null || qnEffCurveEffValues == null
+        || qnEffCurveQnValues.length < 2) {
+      return 0.0;
+    }
+    double[] x = qnEffCurveQnValues;
+    double[] y = qnEffCurveEffValues;
+    int n = x.length;
+
+    // Extrapolate left
+    if (qn <= x[0]) {
+      double slope = (y[1] - y[0]) / (x[1] - x[0]);
+      return y[0] + slope * (qn - x[0]);
+    }
+    // Extrapolate right
+    if (qn >= x[n - 1]) {
+      double slope = (y[n - 1] - y[n - 2]) / (x[n - 1] - x[n - 2]);
+      return y[n - 1] + slope * (qn - x[n - 1]);
+    }
+    // Spline interpolation (piecewise cubic Hermite, monotonic)
+    int i = Arrays.binarySearch(x, qn);
+    if (i < 0) {
+      i = -i - 2;
+    }
+    if (i < 0)
+      i = 0;
+    if (i > n - 2)
+      i = n - 2;
+    double x0 = x[i], x1 = x[i + 1];
+    double y0 = y[i], y1 = y[i + 1];
+    double h = x1 - x0;
+    double t = (qn - x0) / h;
+    // Estimate tangents (finite difference)
+    double m0 = (i == 0) ? (y1 - y0) / (x1 - x0) : (y1 - y[i - 1]) / (x1 - x[i - 1]);
+    double m1 = (i == n - 2) ? (y1 - y0) / (x1 - x0) : (y[i + 2] - y0) / (x[i + 2] - x0);
+    // Hermite basis
+    double h00 = (1 + 2 * t) * (1 - t) * (1 - t);
+    double h10 = t * (1 - t) * (1 - t);
+    double h01 = t * t * (3 - 2 * t);
+    double h11 = t * t * (t - 1);
+    return h00 * y0 + h10 * h * m0 + h01 * y1 + h11 * h * m1;
   }
 
   /**
-   * Fit a constrained parabola: head = a*(qn - h)^2 + k, with vertex at (h, k) = (1, 1).
+   * Fit a Q/N head curve using cubic spline interpolation.
    *
-   * @param qnValues array of Q/N values
+   * @param qnValues array of Q/N values (does not need to be sorted)
    * @param headValues array of head values
    */
   public void setQNHeadcurve(double[] qnValues, double[] headValues) {
-    double h = qnHeadCurveH;
-    double k = qnHeadCurveK;
-    int n = qnValues.length;
-    if (n < 2) {
+    if (qnValues == null || headValues == null || qnValues.length < 2 || headValues.length < 2
+        || qnValues.length != headValues.length) {
+      qnHeadCurveQnValues = null;
+      qnHeadCurveHeadValues = null;
       return;
     }
-    double num = 0.0;
-    double denom = 0.0;
+    // Defensive copy and sort by qnValues
+    int n = qnValues.length;
+    double[][] pairs = new double[n][2];
     for (int i = 0; i < n; i++) {
-      double dx = qnValues[i] - h;
-      num += (headValues[i] - k) * (dx);
-      denom += dx * dx;
+      pairs[i][0] = qnValues[i];
+      pairs[i][1] = headValues[i];
     }
-    if (denom != 0.0) {
-      qnHeadCurveA = num / denom;
-    } else {
-      qnHeadCurveA = 0.0;
+    Arrays.sort(pairs, (a, b) -> Double.compare(a[0], b[0]));
+    qnHeadCurveQnValues = new double[n];
+    qnHeadCurveHeadValues = new double[n];
+    for (int i = 0; i < n; i++) {
+      qnHeadCurveQnValues[i] = pairs[i][0];
+      qnHeadCurveHeadValues[i] = pairs[i][1];
     }
   }
 
   /**
-   * Evaluate the fitted Q/N head curve at a given qn value.
+   * Evaluate the fitted Q/N head curve at a given qn value using cubic spline interpolation. Linear
+   * extrapolation is used outside the data range.
    *
    * @param qn the Q/N value
    * @return the head
    */
   public double getHeadFromQN(double qn) {
-    return qnHeadCurveA * (qn - qnHeadCurveH) * (qn - qnHeadCurveH) + qnHeadCurveK;
+    if (qnHeadCurveQnValues == null || qnHeadCurveHeadValues == null
+        || qnHeadCurveQnValues.length < 2) {
+      return 0.0;
+    }
+    double[] x = qnHeadCurveQnValues;
+    double[] y = qnHeadCurveHeadValues;
+    int n = x.length;
+
+    // Extrapolate left
+    if (qn <= x[0]) {
+      double slope = (y[1] - y[0]) / (x[1] - x[0]);
+      return y[0] + slope * (qn - x[0]);
+    }
+    // Extrapolate right
+    if (qn >= x[n - 1]) {
+      double slope = (y[n - 1] - y[n - 2]) / (x[n - 1] - x[n - 2]);
+      return y[n - 1] + slope * (qn - x[n - 1]);
+    }
+    // Spline interpolation (piecewise cubic Hermite, monotonic)
+    int i = Arrays.binarySearch(x, qn);
+    if (i < 0) {
+      i = -i - 2;
+    }
+    if (i < 0)
+      i = 0;
+    if (i > n - 2)
+      i = n - 2;
+    double x0 = x[i], x1 = x[i + 1];
+    double y0 = y[i], y1 = y[i + 1];
+    double h = x1 - x0;
+    double t = (qn - x0) / h;
+    // Estimate tangents (finite difference)
+    double m0 = (i == 0) ? (y1 - y0) / (x1 - x0) : (y1 - y[i - 1]) / (x1 - x[i - 1]);
+    double m1 = (i == n - 2) ? (y1 - y0) / (x1 - x0) : (y[i + 2] - y0) / (x[i + 2] - x0);
+    // Hermite basis
+    double h00 = (1 + 2 * t) * (1 - t) * (1 - t);
+    double h10 = t * (1 - t) * (1 - t);
+    double h01 = t * t * (3 - 2 * t);
+    double h11 = t * t * (t - 1);
+    return h00 * y0 + h10 * h * m0 + h01 * y1 + h11 * h * m1;
   }
 
   /**
@@ -541,6 +637,7 @@ public class TurboExpanderCompressor extends Expander {
    */
   public void setExpanderOutPressure(double expanderOutPressure) {
     this.expanderOutPressure = expanderOutPressure;
+    this.compressorFeedStream.setPressure(expanderOutPressure, "bara");
   }
 
   /**
@@ -550,6 +647,7 @@ public class TurboExpanderCompressor extends Expander {
    */
   public void setCompressorFeedStream(StreamInterface compressorFeedStream) {
     this.compressorFeedStream = compressorFeedStream;
+    this.compressorFeedStream.setPressure(expanderOutPressure, "bara");
   }
 
   /**
