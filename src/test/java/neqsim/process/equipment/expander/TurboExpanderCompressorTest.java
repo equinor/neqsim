@@ -73,7 +73,9 @@ public class TurboExpanderCompressorTest {
     turboExpander.setCompressorDesingPolytropicHead(20.47);
 
 
-    turboExpander.run(UUID.randomUUID());
+    turboExpander.run();
+
+    turboExpander.toJson();
 
     Stream outStream = new Stream("outstream", turboExpander.getOutletStream());
     outStream.run();
