@@ -48,7 +48,8 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit {
       case "kcal":
         return 4184.0;
       default:
-        throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", name, "unit not supported"));
+        throw new RuntimeException(
+            new InvalidInputException(this, "getConversionFactor", name, "unit not supported"));
     }
   }
 
