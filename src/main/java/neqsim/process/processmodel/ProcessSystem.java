@@ -1038,13 +1038,19 @@ public class ProcessSystem extends SimulationBaseClass {
   public <T extends ProcessEquipmentInterface> T addUnit(String name, String equipmentType) {
     ProcessEquipmentInterface unit = EquipmentFactory.createEquipment(name, equipmentType);
 
+    /**
+     * If the provided name is null or empty, generate a unique name based on the equipment type.
+     */
     if (name == null || name.trim().isEmpty()) {
       name = generateUniqueName(equipmentType);
     }
 
     unit.setName(name);
 
-    // Auto-connect streams if possible
+    /**
+     * Auto-connect streams if possible.
+     */
+
     autoConnect(lastAddedUnit, unit);
 
     this.add(unit);
@@ -1069,6 +1075,39 @@ public class ProcessSystem extends SimulationBaseClass {
     return (T) addUnit(null, equipmentEnum);
   }
 
+  /**
+   * Adds a new process equipment unit of the specified type and name, and sets its inlet stream.
+   *
+   * @param <T> the type of process equipment
+   * @param name the name of the equipment (if null or empty, a unique name is generated)
+   * @param equipmentType the type of equipment to create (as a String)
+   * @param stream the inlet stream to set for the new equipment
+   * @return the created and added process equipment unit
+   */
+  public <T extends ProcessEquipmentInterface> T addUnit(String name, String equipmentType,
+      neqsim.process.equipment.stream.StreamInterface stream) {
+    ProcessEquipmentInterface unit = EquipmentFactory.createEquipment(name, equipmentType);
+
+    if (name == null || name.trim().isEmpty()) {
+      name = generateUniqueName(equipmentType);
+    }
+    unit.setName(name);
+
+    // Set the inlet stream if possible
+    try {
+      java.lang.reflect.Method setInlet = unit.getClass().getMethod("setInletStream",
+          neqsim.process.equipment.stream.StreamInterface.class);
+      setInlet.invoke(unit, stream);
+    } catch (NoSuchMethodException ignored) {
+      // If the method does not exist, do nothing
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    this.add(unit);
+    lastAddedUnit = unit;
+    return (T) unit;
+  }
 
   private String generateUniqueName(String equipmentType) {
     int count = equipmentCounter.getOrDefault(equipmentType, 0) + 1;
@@ -1076,7 +1115,6 @@ public class ProcessSystem extends SimulationBaseClass {
     String formatted = equipmentType.substring(0, 1).toLowerCase() + equipmentType.substring(1);
     return formatted + "_" + count;
   }
-
 
   public ProcessEquipmentInterface addUnit(String name, ProcessEquipmentInterface equipment) {
     unitOperations.add(equipment);

@@ -970,6 +970,10 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Compressor compressor1 = process1.addUnit("Compressor 1", "Compressor");
     compressor1.setOutletPressure(50.0, "bara");
 
+    Compressor compressor2 =
+        process1.addUnit("Compressor 2", "Compressor", separator1.getGasOutStream());
+    compressor2.setOutletPressure(50.0, "bara");
+
     Stream liquidOut = (Stream) process1.addUnit(separator1.getLiquidOutStream());
     ThrottlingValve valve2 = process1.addUnit("Valve 2", "ThrottlingValve");
     valve2.setOutletPressure(1.0, "bara");
@@ -983,6 +987,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     assertEquals(4.78589648, valve1.getOutletStream().getTemperature("C"), 1e-6);
 
+    assertEquals(compressor1.getPower(), compressor2.getPower(), 1e-6);
     // process1.validateConnections();
     // process1.checkMassBalance();
   }
