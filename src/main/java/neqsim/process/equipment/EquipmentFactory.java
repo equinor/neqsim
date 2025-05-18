@@ -32,67 +32,72 @@ import neqsim.process.equipment.reservoir.SimpleReservoir;
 public class EquipmentFactory {
 
   public static ProcessEquipmentInterface createEquipment(String name, String equipmentType) {
-    switch (equipmentType) {
-      case "ThrottlingValve":
+    String normalizedType = equipmentType == null ? null : equipmentType.trim();
+    if (normalizedType != null)
+      normalizedType = normalizedType.toLowerCase();
+    switch (normalizedType) {
+      case "throttlingvalve":
+      case "valve":
         return new ThrottlingValve(name);
-      case "Stream":
+      case "stream":
         return new Stream(name);
-      case "Compressor":
+      case "compressor":
         return new Compressor(name);
-      case "Pump":
+      case "pump":
         return new Pump(name);
-      case "Separator":
+      case "separator":
         return new Separator(name);
-      case "HeatExchanger":
+      case "heatexchanger":
         return new HeatExchanger(name);
-      case "Mixer":
+      case "mixer":
         return new Mixer(name);
-      case "Splitter":
+      case "splitter":
         return new Splitter(name);
-      case "Cooler":
+      case "cooler":
         return new Cooler(name);
-      case "Heater":
+      case "heater":
         return new Heater(name);
-      case "Recycle":
+      case "recycle":
         return new Recycle(name);
-      case "ThreePhaseSeparator":
+      case "threephaseseparator":
+      case "separator_3phase":
         return new ThreePhaseSeparator(name);
-      case "Ejector":
+      case "ejector":
         // Requires motiveStream and suctionStream, placeholders added
         return new Ejector(name, null, null);
-      case "GORfitter":
+      case "gorfitter":
         // Requires stream, placeholder added
         return new GORfitter(name, null);
-      case "Adjuster":
+      case "adjuster":
         return new Adjuster(name);
-      case "SetPoint":
+      case "setpoint":
         return new SetPoint(name);
-      case "FlowRateAdjuster":
+      case "flowrateadjuster":
         return new FlowRateAdjuster(name);
-      case "Calculator":
+      case "calculator":
         return new Calculator(name);
-      case "Expander":
+      case "expander":
         return new Expander(name);
-      case "SimpleTEGAbsorber":
+      case "simpletegabsorber":
         return new SimpleTEGAbsorber(name);
-      case "Tank":
+      case "tank":
         return new Tank(name);
-      case "ComponentSplitter":
+      case "componentsplitter":
         return new ComponentSplitter(name);
-      case "ReservoirCVDsim":
+      case "reservoircvdsim":
         // Requires reservoirFluid, placeholder added
         return new ReservoirCVDsim(name, null);
-      case "ReservoirDiffLibsim":
+      case "reservoirdifflibsim":
         // Requires reservoirFluid, placeholder added
         return new ReservoirDiffLibsim(name, null);
-      case "VirtualStream":
+      case "virtualstream":
         return new VirtualStream(name);
-      case "ReservoirTPsim":
+      case "reservoirtpsim":
         // Requires reservoirFluid, placeholder added
         return new ReservoirTPsim(name, null);
-      case "SimpleReservoir":
+      case "simplereservoir":
         return new SimpleReservoir(name);
-      case "Manifold":
+      case "manifold":
         return new Manifold(name);
 
       // Add other equipment types here
