@@ -25,10 +25,10 @@ public class HeaterResponse extends BaseResponse {
   public HeaterResponse(Heater inputHeater) {
     super(inputHeater);
 
-    data.add(new String[] {"flow rate",
+    data.add(new String[] {"mass flow",
         Double.toString(inputHeater.getInletStream()
-            .getFlowRate(neqsim.util.unit.Units.getSymbol("flow rate"))),
-        neqsim.util.unit.Units.getSymbol("flow rate")});
+            .getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+        neqsim.util.unit.Units.getSymbol("mass flow")});
 
 
     data.add(new String[] {"inlet temperature",

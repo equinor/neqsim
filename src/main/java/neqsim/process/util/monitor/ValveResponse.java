@@ -23,10 +23,10 @@ public class ValveResponse extends BaseResponse {
    */
   public ValveResponse(ValveInterface valve) {
     super(valve);
-    data.add(new String[] {"flow rate",
+    data.add(new String[] {"mass flow",
         Double.toString(
-            valve.getInletStream().getFlowRate(neqsim.util.unit.Units.getSymbol("flow rate"))),
-        neqsim.util.unit.Units.getSymbol("flow rate")});
+            valve.getInletStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+        neqsim.util.unit.Units.getSymbol("mass flow")});
     data.add(new String[] {"inlet temperature",
         Double.toString(
             valve.getInletStream().getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
