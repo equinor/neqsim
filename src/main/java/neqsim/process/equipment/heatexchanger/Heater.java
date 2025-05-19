@@ -266,6 +266,19 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
 
   /**
    * <p>
+   * getDuty.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getDuty(String unit) {
+    // Use PowerUnit for conversion
+    neqsim.util.unit.PowerUnit powerUnit = new neqsim.util.unit.PowerUnit(energyInput, "W");
+    return powerUnit.getValue(unit);
+  }
+
+  /**
+   * <p>
    * Setter for the field <code>energyInput</code>.
    * </p>
    *

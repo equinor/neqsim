@@ -71,6 +71,7 @@ public class NeqSimUnitSet {
   public void setComponentConcentrationUnit(String componentConcentrationUnit) {
     this.componentConcentrationUnit = componentConcentrationUnit;
   }
+
   /**
    * <p>
    * Setter for the field <code>flowRateUnit</code>.
@@ -81,6 +82,7 @@ public class NeqSimUnitSet {
   public void setFlowRateUnit(String flowRateUnit) {
     this.flowRateUnit = flowRateUnit;
   }
+
   /**
    * <p>
    * Setter for the field <code>pressureUnit</code>.
@@ -91,6 +93,7 @@ public class NeqSimUnitSet {
   public void setPressureUnit(String pressureUnit) {
     this.pressureUnit = pressureUnit;
   }
+
   /**
    * <p>
    * Setter for the field <code>temperatureUnit</code>.
@@ -100,5 +103,23 @@ public class NeqSimUnitSet {
    */
   public void setTemperatureUnit(String temperatureUnit) {
     this.temperatureUnit = temperatureUnit;
+  }
+
+  /**
+   * Sets the global NeqSim unit system.
+   *
+   * @param unitSystem the unit system to activate. Options: "default", "field", "SI".
+   */
+  public static void setNeqSimUnits(String unitSystem) {
+    if (unitSystem == null || unitSystem.equalsIgnoreCase("default")) {
+      Units.activateDefaultUnits();
+    } else if (unitSystem.equalsIgnoreCase("field")) {
+      Units.activateFieldUnits();
+    } else if (unitSystem.equalsIgnoreCase("SI")) {
+      Units.activateSIUnits();
+    } else {
+      System.err.println("Warning: Unknown unit system '" + unitSystem + "'. Using default units.");
+      Units.activateDefaultUnits();
+    }
   }
 }

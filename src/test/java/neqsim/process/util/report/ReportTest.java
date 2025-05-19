@@ -2,6 +2,7 @@ package neqsim.process.util.report;
 
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
@@ -36,11 +37,15 @@ public class ReportTest {
     Mixer mixer1 = new Mixer("mixer 1");
     mixer1.addStream(valve.getOutletStream());
 
+    Heater heater1 = new Heater("heater 1", compressor.getOutStream());
+    heater1.setOutTemperature(10.0, "C");
+
     processOps.add(inletStream);
     processOps.add(separator);
     processOps.add(compressor);
     processOps.add(valve);
     processOps.add(mixer1);
+    processOps.add(heater1);
     processOps.run();
 
     Report report = new Report(processOps);
