@@ -138,6 +138,7 @@ public class TurboExpanderCompressor extends Expander {
     double Q_comp = 0.0, m_comp = 0.0, eta_s = 0.0, Hp = 0.0, CF_eff_comp = 1.0, CF_head_comp = 1.0;
     // Newton-Raphson method for speed matching
     int maxIter = 50;
+    int minIter = 3;
     double dN = 10.0;
 
     int iter = 0;
@@ -188,23 +189,27 @@ public class TurboExpanderCompressor extends Expander {
       double fN2 = W_expander2 - (W_compressor2 + W_bearing2);
       double df_dN = (fN2 - fN) / dN;
       if (Math.abs(df_dN) < 1e-8) {
+        dN += 10.0;
         N += 10.0;
       } else {
-        N = N - fN / df_dN;
+        N = N - (1.0 + iter) / (iter + 5) * fN / df_dN;
       }
       if (N > N_max) {
         N = N_max;
+        break;
       }
       if (N < N_min) {
         N = N_min;
+        break;
       }
       // System.out.println("speed: " + N + " iter: " + iter);
       iter++;
-    } while (Math.abs(W_expander - (W_compressor + W_bearing)) * 100 > 1e-3 && iter < maxIter);
+    } while (Math.abs(W_expander - (W_compressor + W_bearing)) * 100 > 1e-3 && iter < maxIter
+        || iter < minIter);
     if (iter >= maxIter) {
       System.out.println("Warning: TurboExpanderCompressor did not converge.");
     }
-
+    // System.out.println("speed: " + N + " iter: " + iter);
     expanderIsentropicEfficiency = eta_s;
     compressorPolytropicHead = Hp;
     compressorPolytropicEfficiency = eta_p;
