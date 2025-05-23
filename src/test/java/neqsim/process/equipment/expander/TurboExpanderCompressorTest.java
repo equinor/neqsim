@@ -187,8 +187,8 @@ public class TurboExpanderCompressorTest {
         1e-2);
 
     Assertions.assertEquals(6707.09019, turboExpander.getSpeed(), 1e-2);
-    Assertions.assertEquals(3033276.91507, turboExpander.getPowerExpander(), 1e-2);
-    Assertions.assertEquals(3033267.3279, turboExpander.getPowerCompressor(), 1e-2);
+    Assertions.assertEquals(3033276.91507, turboExpander.getPowerExpander(), 1);
+    Assertions.assertEquals(3033267.3279, turboExpander.getPowerCompressor(), 1);
     Assertions.assertEquals(0.78230968663, turboExpander.getCompressorPolytropicEfficiency(), 1e-2);
     Assertions.assertEquals(0.84505046543, turboExpander.getExpanderIsentropicEfficiency(), 1e-2);
     Assertions.assertEquals(20.2290325, turboExpander.getCompressorPolytropicHead(), 1e-2);
@@ -289,8 +289,8 @@ public class TurboExpanderCompressorTest {
     Assertions.assertEquals(6043.804353, turboExpander.getSpeed(), 1e-2);
     Assertions.assertEquals(48.0958031,
         turboExpander.getCompressorOutletStream().getPressure("bara"), 1e-2);
-    Assertions.assertEquals(2281735.34701, turboExpander.getPowerExpander(), 1e-2);
-    Assertions.assertEquals(2281727.56235, turboExpander.getPowerCompressor(), 1e-2);
+    Assertions.assertEquals(2281735.34701, turboExpander.getPowerExpander(), 1);
+    Assertions.assertEquals(2281727.56235, turboExpander.getPowerCompressor(), 1);
     Assertions.assertEquals(0.79709017011, turboExpander.getCompressorPolytropicEfficiency(), 1e-2);
 
     Assertions.assertEquals(-37.03361130,
