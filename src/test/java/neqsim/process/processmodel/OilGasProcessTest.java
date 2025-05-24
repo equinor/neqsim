@@ -58,8 +58,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     feedStream.setPressure(26.0, "bara");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator seprator1stStage =
-        new neqsim.process.equipment.separator.ThreePhaseSeparator(
-            "1st stage separator", feedStream);
+        new neqsim.process.equipment.separator.ThreePhaseSeparator("1st stage separator",
+            feedStream);
 
     ThrottlingValve valve1 = new ThrottlingValve("valve1", seprator1stStage.getLiquidOutStream());
     valve1.setOutletPressure(19.0);
@@ -68,8 +68,8 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     oilHeater.setOutTemperature(359.0);
 
     neqsim.process.equipment.separator.ThreePhaseSeparator seprator2ndStage =
-        new neqsim.process.equipment.separator.ThreePhaseSeparator(
-            "2nd stage separator", oilHeater.getOutletStream());
+        new neqsim.process.equipment.separator.ThreePhaseSeparator("2nd stage separator",
+            oilHeater.getOutletStream());
 
     ThrottlingValve valve2 = new ThrottlingValve("valve2", seprator2ndStage.getLiquidOutStream());
     valve2.setOutletPressure(2.7);
@@ -78,8 +78,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     recircstream1.setFlowRate(1e-6, "kg/hr");
 
     neqsim.process.equipment.separator.ThreePhaseSeparator seprator3rdStage =
-        new neqsim.process.equipment.separator.ThreePhaseSeparator(
-            "3rd stage separator");
+        new neqsim.process.equipment.separator.ThreePhaseSeparator("3rd stage separator");
     seprator3rdStage.addStream(valve2.getOutletStream());
     seprator3rdStage.addStream(recircstream1);
 
@@ -162,8 +161,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
 
     double fluidh = gascompressor.getPolytropicFluidHead();
     neqsim.process.equipment.compressor.CompressorChartGenerator compchartgenerator =
-        new neqsim.process.equipment.compressor.CompressorChartGenerator(
-            gascompressor);
+        new neqsim.process.equipment.compressor.CompressorChartGenerator(gascompressor);
     gascompressor.setCompressorChart(compchartgenerator.generateCompressorChart("mid range"));
 
     Cooler gascooler = new Cooler("gas cooler");
@@ -214,7 +212,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     operations.run();
     assertEquals(6.9999999, gassplitter.getSplitStream(0).getFlowRate("MSm3/day"), 1e-2);
     assertEquals(0.0, gassplitter.getSplitStream(1).getFlowRate("MSm3/day"), 1e-2);
-    assertEquals(4009.59769517, gascompressor.getCompressorChart().getSurgeCurve()
+    assertEquals(4007.93039, gascompressor.getCompressorChart().getSurgeCurve()
         .getSurgeFlow(gascompressor.getPolytropicFluidHead()), 1);
     assertEquals(90.91657683, gascompressor.getOutletPressure(), 1e-1);
 
@@ -315,8 +313,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     double flowratetocompressor = gascompressor.getInletStream().getFlowRate("MSm3/day");
 
     neqsim.process.equipment.compressor.CompressorChartGenerator compchartgenerator =
-        new neqsim.process.equipment.compressor.CompressorChartGenerator(
-            gascompressor);
+        new neqsim.process.equipment.compressor.CompressorChartGenerator(gascompressor);
     gascompressor.setCompressorChart(compchartgenerator.generateCompressorChart("mid range"));
     gascompressor.setOutletPressure(90.0);
     gascompressor.getCompressorChart().setUseCompressorChart(false);

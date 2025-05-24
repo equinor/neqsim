@@ -138,7 +138,7 @@ public class CompressorChartAlternativeMapLookup
 
   ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
   ArrayList<Double> chartSpeeds = new ArrayList<Double>();
-  private SurgeCurve surgeCurve = new SurgeCurve();
+  private SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
   private StoneWallCurve stoneWallCurve = new StoneWallCurve();
   boolean isSurge = false;
   boolean isStoneWall = false;
@@ -328,7 +328,7 @@ public class CompressorChartAlternativeMapLookup
    * @param head an array of type double
    */
   public void addSurgeCurve(double[] flow, double[] head) {
-    surgeCurve = new SurgeCurve(flow, head);
+    surgeCurve = new SafeSplineSurgeCurve(flow, head);
   }
 
   /**
@@ -462,13 +462,13 @@ public class CompressorChartAlternativeMapLookup
 
   /** {@inheritDoc} */
   @Override
-  public SurgeCurve getSurgeCurve() {
+  public SafeSplineSurgeCurve getSurgeCurve() {
     return surgeCurve;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setSurgeCurve(SurgeCurve surgeCurve) {
+  public void setSurgeCurve(SafeSplineSurgeCurve surgeCurve) {
     this.surgeCurve = surgeCurve;
   }
 

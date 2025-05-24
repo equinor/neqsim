@@ -133,18 +133,18 @@ public interface CompressorChartInterface extends Cloneable {
    * getSurgeCurve.
    * </p>
    *
-   * @return a {@link neqsim.process.equipment.compressor.SurgeCurve} object
+   * @return a {@link neqsim.process.equipment.compressor.SafeSplineSurgeCurve} object
    */
-  public SurgeCurve getSurgeCurve();
+  public SafeSplineSurgeCurve getSurgeCurve();
 
   /**
    * <p>
    * setSurgeCurve.
    * </p>
    *
-   * @param surgeCurve a {@link neqsim.process.equipment.compressor.SurgeCurve} object
+   * @param surgeCurve a {@link neqsim.process.equipment.compressor.SafeSplineSurgeCurve} object
    */
-  public void setSurgeCurve(SurgeCurve surgeCurve);
+  public void setSurgeCurve(SafeSplineSurgeCurve surgeCurve);
 
   /**
    * <p>
