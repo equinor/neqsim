@@ -61,8 +61,8 @@ public class CompressorChartGenerator {
     compChart.setCurves(chartConditions, speed, flow, head, polyEff);
 
     // Generate and set the surge curve
-    SurgeCurve surgeCurve = generateSurgeCurve(compChart, refFlow, refSpeed, minFlow, maxFlow,
-        minSpeed, maxSpeed, isNormalCurves);
+    SafeSplineSurgeCurve surgeCurve = generateSurgeCurve(compChart, refFlow, refSpeed, minFlow,
+        maxFlow, minSpeed, maxSpeed, isNormalCurves);
     compChart.setSurgeCurve(surgeCurve);
 
     return compChart;
@@ -137,8 +137,9 @@ public class CompressorChartGenerator {
    * @param isNormalCurves whether to generate normal curves
    * @return a {@link SurgeCurve} object representing the surge curve
    */
-  private SurgeCurve generateSurgeCurve(CompressorChart compChart, double refFlow, double refSpeed,
-      double minFlow, double maxFlow, double minSpeed, double maxSpeed, boolean isNormalCurves) {
+  private SafeSplineSurgeCurve generateSurgeCurve(CompressorChart compChart, double refFlow,
+      double refSpeed, double minFlow, double maxFlow, double minSpeed, double maxSpeed,
+      boolean isNormalCurves) {
     double minSurgeFlow = 0.7 * refFlow;
     double refSurgeFlow = isNormalCurves ? refFlow / 1.3 : 0.8 * refFlow;
     double maxSurgeFlow = 0.9 * refFlow;
@@ -147,7 +148,7 @@ public class CompressorChartGenerator {
     double headSurgeRef = compChart.getPolytropicHead(refSurgeFlow, refSpeed);
     double headSurgeMax = compChart.getPolytropicHead(maxSurgeFlow, maxSpeed);
 
-    SurgeCurve surgeCurve = new SurgeCurve();
+    SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
     surgeCurve.setCurve(new double[3], new double[] {minSurgeFlow, refSurgeFlow, maxSurgeFlow},
         new double[] {headSurgeMin, headSurgeRef, headSurgeMax});
     return surgeCurve;
