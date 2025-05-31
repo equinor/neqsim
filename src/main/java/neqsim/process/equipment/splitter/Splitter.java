@@ -63,6 +63,10 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     this.setInletStream(inStream);
   }
 
+  public StreamInterface getInletStream() {
+    return inletStream;
+  }
+
   /**
    * <p>
    * Constructor for Splitter.
