@@ -63,8 +63,6 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   int MAX_ITERATIONS = 100;
   int iterations = 0;
 
-
-
   /**
    * Constructor for MultiStreamHeatExchanger.
    *

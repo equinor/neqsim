@@ -34,13 +34,13 @@ public class PhaseVegaEos extends PhaseEos {
 
   doubleW[] a0 = null;
 
-  doubleW[][] ar = null; 
+  doubleW[][] ar = null;
 
   double kappa = 0.0;
 
   double W = 0.0;
 
-  
+
 
   /**
    * <p>
@@ -171,17 +171,15 @@ public class PhaseVegaEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double calcPressure() {
-    return numberOfMolesInPhase / getVolume() * R * temperature
-      * (1 + ar[0][1].val);
+    return numberOfMolesInPhase / getVolume() * R * temperature * (1 + ar[0][1].val);
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcPressuredV() {
-    return -Math.pow(getDensity() / getMolarMass(), 2) * R * temperature * (1 + 2 * ar[0][1].val + ar[0][2].val)
-      / numberOfMolesInPhase;
+    return -Math.pow(getDensity() / getMolarMass(), 2) * R * temperature
+        * (1 + 2 * ar[0][1].val + ar[0][2].val) / numberOfMolesInPhase;
   }
-
 
   /** {@inheritDoc} */
   @Override
@@ -226,8 +224,8 @@ public class PhaseVegaEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double getdPdVTn() {
-    return -Math.pow(getNumberOfMolesInPhase() / getVolume(), 2) * R * temperature 
-      * (1 + 2 * ar[0][1].val + ar[0][2].val) / numberOfMolesInPhase;  
+    return -Math.pow(getNumberOfMolesInPhase() / getVolume(), 2) * R * temperature
+        * (1 + 2 * ar[0][1].val + ar[0][2].val) / numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
@@ -235,5 +233,4 @@ public class PhaseVegaEos extends PhaseEos {
   public double getdPdrho() {
     return R * temperature * (1 + 2 * ar[0][1].val + ar[0][2].val);
   }
-
 }

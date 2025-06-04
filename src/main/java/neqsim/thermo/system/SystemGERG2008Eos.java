@@ -11,12 +11,11 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * @version $Id: $Id
  */
 
-
-  // --- DISCLAIMER BEGIN ---
-  // This class is not yet done
-  // Some of the properties releated to the helmholtz energy and its derivatives
-  // are not yet implemented
-  // --- DISCLAIMER END ---
+// --- DISCLAIMER BEGIN ---
+// This class is not yet done
+// Some of the properties releated to the helmholtz energy and its derivatives
+// are not yet implemented
+// --- DISCLAIMER END ---
 public class SystemGERG2008Eos extends SystemEos {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;

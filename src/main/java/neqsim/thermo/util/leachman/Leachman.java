@@ -360,8 +360,6 @@ public class Leachman {
    * @param ar Output array for Helmholtz energy and its derivatives
    */
   void AlpharLeachman(int itau, int idelta, double T, double D, doubleW[][] ar) {
-
-
     // Select parameters based on hydrogen type
     // double[] N_i, t_i, d_i, p_i, phi_i, beta_i, gamma_i, D_i;
     // double Tc, Dc;

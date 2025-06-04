@@ -1,4 +1,5 @@
 package neqsim.thermodynamicoperations.flashops;
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -9,7 +10,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author victorigi99
  * @version $Id: $Id
  */
-public class PHflashLeachman extends Flash{
+public class PHflashLeachman extends Flash {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -86,7 +87,8 @@ public class PHflashLeachman extends Flash{
       oldTemp = nyTemp;
       double[] LeachmanProps = system.getPhase(0).getProperties_Leachman();
       cP_Leachman = LeachmanProps[10] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
-      enthalpy_Leachman = LeachmanProps[7] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
+      enthalpy_Leachman = LeachmanProps[7] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol
+                                                                                           // K
       newCorr = factor * calcdQdT() / calcdQdTT();
       nyTemp = oldTemp - newCorr;
       if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
@@ -150,6 +152,3 @@ public class PHflashLeachman extends Flash{
     return null;
   }
 }
-
-
-

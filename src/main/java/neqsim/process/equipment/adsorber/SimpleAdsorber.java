@@ -36,9 +36,11 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
   private double stageEfficiency = 0.25;
 
   /**
-   * {@inheritDoc}
+   * <p>
+   * Constructor for SimpleAdsorber.
+   * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name name of the unit operation
    */
   public SimpleAdsorber(String name) {
     super(name);

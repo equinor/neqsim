@@ -33,13 +33,13 @@ public class PhaseLeachmanEos extends PhaseEos {
 
   doubleW[] a0 = null;
 
-  doubleW[][] ar = null; 
+  doubleW[][] ar = null;
 
   double kappa = 0.0;
 
   double W = 0.0;
 
-  
+
 
   /**
    * <p>
@@ -104,9 +104,9 @@ public class PhaseLeachmanEos extends PhaseEos {
       entropy = temp[8]; // gergEOS.SOTPX(temperature,pressure/10.0,
                          // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
       CpLeachman = temp[10]; // gergEOS.CPOTPX(temperature,pressure/10.0,
-                         // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
+      // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
       CvLeachman = temp[9]; // gergEOS.CPOTPX(temperature,pressure/10.0,
-                        // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
+      // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     }
   }
@@ -170,17 +170,15 @@ public class PhaseLeachmanEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double calcPressure() {
-    return numberOfMolesInPhase / getVolume() * R * temperature
-      * (1 + ar[0][1].val);
+    return numberOfMolesInPhase / getVolume() * R * temperature * (1 + ar[0][1].val);
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcPressuredV() {
-    return -Math.pow(getDensity() / getMolarMass(), 2) * R * temperature * (1 + 2 * ar[0][1].val + ar[0][2].val)
-      / numberOfMolesInPhase;
+    return -Math.pow(getDensity() / getMolarMass(), 2) * R * temperature
+        * (1 + 2 * ar[0][1].val + ar[0][2].val) / numberOfMolesInPhase;
   }
-
 
   /** {@inheritDoc} */
   @Override
@@ -225,8 +223,8 @@ public class PhaseLeachmanEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double getdPdVTn() {
-    return -Math.pow(getNumberOfMolesInPhase() / getVolume(), 2) * R * temperature 
-      * (1 + 2 * ar[0][1].val + ar[0][2].val) / numberOfMolesInPhase;  
+    return -Math.pow(getNumberOfMolesInPhase() / getVolume(), 2) * R * temperature
+        * (1 + 2 * ar[0][1].val + ar[0][2].val) / numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
@@ -234,5 +232,4 @@ public class PhaseLeachmanEos extends PhaseEos {
   public double getdPdrho() {
     return R * temperature * (1 + 2 * ar[0][1].val + ar[0][2].val);
   }
-
 }

@@ -21,7 +21,6 @@ public class DistillationColumnResponse extends BaseResponse {
   public Double[] trayFeedFlow;
   public Double[] trayMassBalance;
 
-
   /**
    * <p>
    * Constructor for DistillationColumnResponse.

@@ -12,7 +12,6 @@ public abstract class NamedBaseClass implements NamedInterface, java.io.Serializ
   public String name;
   private String tagName = "";
 
-
   /**
    * Constructor for NamedBaseClass
    *

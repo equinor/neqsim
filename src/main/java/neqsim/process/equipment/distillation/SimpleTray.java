@@ -291,7 +291,4 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     massOutput += getLiquidOutStream().getFlowRate("kg/hr");
     return massInput - massOutput;
   }
-
-
-
 }

@@ -7,7 +7,6 @@ import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.PipeBeggsBrillsResponse;
-import neqsim.process.util.monitor.PumpResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -949,13 +948,7 @@ public class PipeBeggsAndBrills extends Pipeline {
     return enthalpy;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * runTransient.
-   * </p>
-   */
+  /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
     run(id);

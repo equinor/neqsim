@@ -240,7 +240,6 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     getFluid().setTemperature(temperature);
   }
 
-
   /** {@inheritDoc} */
   @Override
   public void setPressure(double pressure) {
@@ -354,7 +353,6 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
   }
-
 
   /**
    * <p>

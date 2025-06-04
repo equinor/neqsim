@@ -27,7 +27,6 @@ public interface NamedInterface {
    */
   public void setName(String name);
 
-
   /**
    * Sets the tag name for the process equipment.
    *
