@@ -6,7 +6,7 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson;
  * ComponentSoreideWhitson for Søreide-Whitson Peng-Robinson EoS with modified
  * alpha.
  */
-public class ComponentSoreideWhitson extends ComponentEos {
+public class ComponentSoreideWhitson extends ComponentPrEos {
   private static final long serialVersionUID = 1L;
 
   public ComponentSoreideWhitson(String name, double moles, double molesInPhase, int compIndex) {

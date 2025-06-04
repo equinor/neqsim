@@ -7,7 +7,7 @@ import neqsim.thermo.mixingrule.SoreideWhitsonMixingRule;
  * PhaseSoreideWhitson implements the Søreide-Whitson Peng-Robinson EoS with
  * modified alpha and mixing rule.
  */
-public class PhaseSoreideWhitson extends PhaseEos {
+public class PhaseSoreideWhitson extends PhasePrEos {
   private static final long serialVersionUID = 1L;
 
   public PhaseSoreideWhitson() {
