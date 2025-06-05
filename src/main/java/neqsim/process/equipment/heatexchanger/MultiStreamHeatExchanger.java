@@ -99,7 +99,16 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     outStream.setName(getName() + "_Sout" + (outStreams.size() + 1));
     this.outStreams.add(outStream);
   }
+  // HERMANN - The stream type needs to be added - hot or cold
+  // HERMANN - The stream outlet temp nesds to be added of defined
 
+  //  public void addInStream(StreamInterface inStream, String type, int outletTempertures) {
+  //super(name);
+  //this.hasReboiler = hasReboiler;
+  //this.hasCondenser = hasCondenser;
+  //distoperations = new neqsim.process.processmodel.ProcessSystem();
+  //this.numberOfTrays = numberOfTraysLocal;
+  
   /** {@inheritDoc} */
   public void setFeedStream(int index, StreamInterface inStream) {
     if (index < inStreams.size()) {
@@ -651,6 +660,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     }
     setCalculationIdentifier(id);
     firstTime = true;
+
   }
 
   /**
