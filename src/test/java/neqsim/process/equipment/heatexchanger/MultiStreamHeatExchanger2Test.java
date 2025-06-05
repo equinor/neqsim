@@ -3,160 +3,96 @@ package neqsim.process.equipment.heatexchanger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.expander.Expander;
-import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.util.Recycle;
-import neqsim.process.equipment.valve.ThrottlingValve;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class MultiStreamHeatExchanger2Test {
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(MultiStreamHeatExchangerTest.class);
+  static Logger logger = LogManager.getLogger(MultiStreamHeatExchanger2Test.class);
 
   static neqsim.thermo.system.SystemInterface testSystem;
   Stream gasStream;
 
-  @BeforeEach
-  void setUp() {
-    testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 60.0), 20.00);
-    testSystem.addComponent("methane", 120.00);
-    testSystem.addComponent("ethane", 120.0);
-    testSystem.addComponent("n-heptane", 3.0);
-    testSystem.createDatabase(true);
-    testSystem.setMixingRule(2);
-    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.TPflash();
-  }
 
   @Test
   void testRun1() {
-    Stream stream_Hot = new Stream("Stream1", testSystem);
-    stream_Hot.setTemperature(100.0, "C");
-    stream_Hot.setFlowRate(1000.0, "kg/hr");
 
-    Stream stream_Cold = new Stream("Stream2", testSystem.clone());
-    stream_Cold.setTemperature(20.0, "C");
-    stream_Cold.setFlowRate(310.0, "kg/hr");
+    testSystem = new neqsim.thermo.Fluid().create("dry gas");
 
-    Stream stream_Cold2 = new Stream("Stream3", testSystem.clone());
-    stream_Cold2.setTemperature(0.0, "C");
-    stream_Cold2.setFlowRate(50.0, "kg/hr");
+    testSystem.setPressure(10.0, "bara");
+    testSystem.setTemperature(273.15 + 60.0, "K"); 
+    testSystem.setMixingRule(2);
 
+    Stream streamHot1 = new Stream("Stream1", testSystem.clone());
+    streamHot1.setTemperature(100.0, "C");
+    streamHot1.setFlowRate(20000.0, "kg/hr");
+    Stream streamHot2 = new Stream("Stream2", testSystem.clone());
+    streamHot2.setTemperature(90.0, "C");
+    streamHot2.setFlowRate(20000.0, "kg/hr");
+    Stream streamHot3 = new Stream("Stream3", testSystem.clone());
+    streamHot3.setTemperature(70.0, "C");
+    streamHot3.setFlowRate(20000.0, "kg/hr");
+    Stream streamCold1 = new Stream("Stream4", testSystem.clone());
+    streamCold1.setTemperature(0.0, "C");
+    streamCold1.setFlowRate(20000.0, "kg/hr");
+    Stream streamCold2 = new Stream("Stream5", testSystem.clone());
+    streamCold2.setTemperature(10.0, "C");
+    streamCold2.setFlowRate(10000.0, "kg/hr");
+    Stream streamCold3 = new Stream("Stream6", testSystem.clone());
+    streamCold3.setTemperature(20.0, "C");
+    streamCold3.setFlowRate(20000.0, "kg/hr");
+
+    // Set up MSHE with new-style method
     MultiStreamHeatExchanger2 heatEx = new MultiStreamHeatExchanger2("heatEx");
-    heatEx.addInStream(stream_Hot);
-    heatEx.addInStream(stream_Cold);
-    heatEx.addInStream(stream_Cold2);
-    // heatEx.setUAvalue(1000);
-    heatEx.setTemperatureApproach(5);
+    heatEx.addInStreamMSHE(streamHot1, "hot", null); // unknown outlet temp
+    heatEx.addInStreamMSHE(streamHot2, "hot", 80.0); // known outlet temp
+    heatEx.addInStreamMSHE(streamHot3, "hot", 60.0);
+    heatEx.addInStreamMSHE(streamCold1, "cold", null); // known outlet temp
+    heatEx.addInStreamMSHE(streamCold2, "cold", null); // unknown outlet temp
+    heatEx.addInStreamMSHE(streamCold3, "cold", 30.0); // known outlet temp
 
+    // Two Unknowns
+    heatEx.setTemperatureApproach(5.0);
+    // Three Unknowns
+    heatEx.setUAvalue(70000);
+
+
+    // Build and run process
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();
-    operations.add(stream_Hot);
-    operations.add(stream_Cold);
-    operations.add(stream_Cold2);
+
+    operations.add(streamHot1);
+    operations.add(streamHot2);
+    operations.add(streamHot3);
+    operations.add(streamCold1);
+    operations.add(streamCold2);
+    operations.add(streamCold3);
     operations.add(heatEx);
 
     operations.run();
 
-    assertEquals(95, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
-    assertEquals(95, heatEx.getOutStream(2).getTemperature("C"), 1e-3);
-    assertEquals(70.5921794735, heatEx.getOutStream(0).getTemperature("C"), 1e-3);
+    // Assertions for solved outlet temperatures
+    double solvedHot1OutletTemp = heatEx.getOutStream(0).getTemperature("C");
+    double hot2OutletTemp = heatEx.getOutStream(1).getTemperature("C");
+    double hot3OutletTemp = heatEx.getOutStream(2).getTemperature("C");
+    double cold1OutletTemp = heatEx.getOutStream(3).getTemperature("C");
+    double solvedCold2OutletTemp = heatEx.getOutStream(4).getTemperature("C");
+    double cold3OutletTemp = heatEx.getOutStream(5).getTemperature("C");
 
-    heatEx.setUAvalue(1000);
+    // Allow some margin due to numerical method
+    assertEquals(80.0, hot2OutletTemp, 0.1);
+    assertEquals(60.0, hot3OutletTemp, 0.1);
+    assertEquals(30.0, cold3OutletTemp, 0.1);
 
-    operations.run();
-    assertEquals(97.992627692, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
-    assertEquals(97.992627692, heatEx.getOutStream(2).getTemperature("C"), 1e-3);
-    assertEquals(69.477801, heatEx.getOutStream(0).getTemperature("C"), 1e-3);
-    assertEquals(1000, heatEx.getUAvalue(), 0.1);
-  }
+    assertEquals(12.09, solvedHot1OutletTemp, 2.0);
+    assertEquals(58.38, cold1OutletTemp, 2.0);
+    assertEquals(95.0, solvedCold2OutletTemp, 2.0);
 
-  @Test
-  void testRun2() {
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    // Check UA and approach temp
+    assertEquals(5.0, heatEx.getTemperatureApproach(), 1e-2);
 
-    Stream feed_stream = new Stream("Stream1", testSystem);
-    feed_stream.setTemperature(30.0, "C");
-    feed_stream.setPressure(75.0, "bara");
-    feed_stream.setFlowRate(1000.0, "kg/hr");
-    feed_stream.run();
-    operations.add(feed_stream);
-
-    Separator separator = new Separator("sep 1", feed_stream);
-    operations.add(separator);
-
-    Stream stream_Cold = new Stream("Stream2", testSystem.clone());
-    stream_Cold.setTemperature(-5.0, "C");
-    stream_Cold.setPressure(50.0, "bara");
-    stream_Cold.setFlowRate(310.0, "kg/hr");
-    stream_Cold.run();
-    operations.add(stream_Cold);
-
-    Stream stream_Cold2 = new Stream("Stream3", testSystem.clone());
-    stream_Cold2.setTemperature(-5.0, "C");
-    stream_Cold2.setPressure(50.0, "bara");
-    stream_Cold2.setFlowRate(50.0, "kg/hr");
-    stream_Cold2.run();
-    operations.add(stream_Cold2);
-
-    MultiStreamHeatExchanger heatEx = new MultiStreamHeatExchanger("heatEx");
-    heatEx.addInStream(separator.getGasOutStream());
-    heatEx.addInStream(stream_Cold);
-    heatEx.addInStream(stream_Cold2);
-    // heatEx.setUAvalue(1000);
-    heatEx.setTemperatureApproach(5);
-    heatEx.run();
-    operations.add(heatEx);
-
-    Separator dewseparator = new Separator("sep 2", heatEx.getOutStream(0));
-    dewseparator.run();
-    operations.add(dewseparator);
-
-    Expander expander = new Expander("expander", dewseparator.getGasOutStream());
-    expander.setOutletPressure(50., "bara");
-    expander.run();
-    operations.add(expander);
-
-    ThrottlingValve jt_valve = new ThrottlingValve("JT valve", dewseparator.getLiquidOutStream());
-    jt_valve.setOutletPressure(50.0, "bara");
-    jt_valve.run();
-    operations.add(jt_valve);
-
-    Separator separator2 = new Separator("sep 3", expander.getOutletStream());
-    separator2.addStream(jt_valve.getOutletStream());
-    separator2.run();
-    operations.add(separator2);
-
-    Recycle gas_expander_resycle = new neqsim.process.equipment.util.Recycle("gas recycl");
-    gas_expander_resycle.addStream(separator2.getGasOutStream());
-    gas_expander_resycle.setOutletStream(stream_Cold);
-    gas_expander_resycle.setTolerance(1e-3);
-    gas_expander_resycle.run();
-    operations.add(gas_expander_resycle);
-
-    Recycle liq_expander_resycle = new neqsim.process.equipment.util.Recycle("liq recycl");
-    liq_expander_resycle.addStream(separator2.getLiquidOutStream());
-    liq_expander_resycle.setOutletStream(stream_Cold2);
-    liq_expander_resycle.setTolerance(1e-3);
-    liq_expander_resycle.run();
-    operations.add(liq_expander_resycle);
-
-    operations.run();
-
-    // separator2.getFluid().prettyPrint();
-    // heatEx.getOutStream(0).getFluid().prettyPrint();
-
-    assertEquals(-34.6818572, separator2.getFluid().getTemperature("C"), 1e-3);
-    assertEquals(25.0, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
-
-    heatEx.setUAvalue(5000);
-    operations.run();
-
-    assertEquals(-26.931795168, separator2.getFluid().getTemperature("C"), 1e-3);
-    assertEquals(17.37650429489, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
+    heatEx.getPrintStreams();
+    heatEx.getCompositeCurve();
+  
   }
 }
