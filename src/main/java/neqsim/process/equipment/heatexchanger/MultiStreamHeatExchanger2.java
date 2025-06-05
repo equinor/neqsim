@@ -28,9 +28,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 // ---- UNIT INITIATION ----
 // ================================================================
 
-/**
- * @param name MSHE2
- */
+
 public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeatExchangerInterface {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -476,8 +474,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         energyDiff();
         double imbalance = Math.abs(hotLoad / coldLoad);
         energyOk = (1 - extremeEnergy) <= imbalance && imbalance <= (1 + extremeEnergy);
-        if (!energyOk)
-          msgs.add(String.format("energy ratio = %.3f", imbalance));
+        if (!energyOk) {
+            msgs.add(String.format("energy ratio = %.3f", imbalance));
+        }
       } catch (Exception e) {
         msgs.add("energyDiff() raised " + e.getClass().getSimpleName());
       }
@@ -528,7 +527,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         double coldestCold = Collections.min(inletTemps);
         for (int idx : unknownIndices) {
           double inlet = inletTemps.get(idx);
-          double lower, upper;
+          double lower;
+          double upper;
           String type = (String) streamTypes.get(idx);
           if (type.equals("hot")) {
             lower = coldestCold + approachTemperature;
@@ -786,8 +786,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   private double intervalLoad(int i, double tempStart, double tempEnd) {
     double deltaT = Math.abs(tempEnd - tempStart);
     double fullDeltaT = Math.abs(inletTemps.get(i) - outletTemps.get(i));
-    if (fullDeltaT < 1e-8)
-      return 0.0;
+    if (fullDeltaT < 1e-8) {
+        return 0.0;
+    }
 
     double interpolationFactor = deltaT / fullDeltaT;
     return Math.abs(streamLoads.get(i) * interpolationFactor);
@@ -807,16 +808,20 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
     for (Map<String, Object> point : points) {
       double l = (Double) point.get("load");
-      if (l < load)
+      if (l < load) {
         below.add(point);
-      if (l > load)
+      }
+      if (l > load) {
         above.add(point);
+      }
     }
 
-    if (below.isEmpty())
-      return (Double) above.get(0).get("temperature");
-    if (above.isEmpty())
-      return (Double) below.get(below.size() - 1).get("temperature");
+    if (below.isEmpty()) {
+        return (Double) above.get(0).get("temperature");
+    }
+    if (above.isEmpty()) {
+        return (Double) below.get(below.size() - 1).get("temperature");
+    }
 
     double lo = (Double) below.get(below.size() - 1).get("load");
     double hi = (Double) above.get(0).get("load");
@@ -896,7 +901,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
     try {
       java.io.File dir = new java.io.File("output");                // ✅ 1.00
-      if (!dir.exists()) dir.mkdirs();                              // ✅ 1.00
+      if (!dir.exists()) {
+        dir.mkdirs();                              // ✅ 1.00
+      }
       java.io.File file = new java.io.File(dir, "composite_curves.png"); // ✅ 1.00
       ChartUtils.saveChartAsPNG(file, chart, 900, 600);             // ⚠️ 2.00 - Only medium risk now (headless-safe, file-safe)
       logger.debug("✅ Chart saved at: " + file.getAbsolutePath()); // ✅ 1.00
