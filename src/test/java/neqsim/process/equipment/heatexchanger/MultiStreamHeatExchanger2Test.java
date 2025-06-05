@@ -91,8 +91,8 @@ public class MultiStreamHeatExchanger2Test {
     // Check UA and approach temp
     assertEquals(5.0, heatEx.getTemperatureApproach(), 1e-2);
 
-    heatEx.getPrintStreams();
-    heatEx.getCompositeCurve();
+    //heatEx.getPrintStreams();
+    //heatEx.getCompositeCurve();
   
   }
 }

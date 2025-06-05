@@ -20,7 +20,6 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -35,12 +34,12 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeatExchangerInterface {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(ThrottlingValve.class);
+  static Logger logger = LogManager.getLogger(MultiStreamHeatExchanger2.class);
 
   SystemInterface thermoSystem;
 
   private double tolerance = 1e-3;
-  private int maxIterations = 5000;
+  private int maxIterations = 50000;
   private double jacobiDelta = 1e-4;
 
   private final double extremeEnergy = 0.3;
@@ -120,7 +119,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       }
     }
     if (undefinedCount == 0) {
-      System.out.println("No Unknown Temperatures to Solve");
+      logger.debug("No Unknown Temperatures to Solve");
     } else if (undefinedCount == 1) {
       oneUnknown();
     } else if (undefinedCount == 2) {
@@ -128,7 +127,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     } else if (undefinedCount == 3) {
       threeUnknowns();
     } else {
-      System.out.println("Too Many Unknown Temperatures");
+      logger.debug("Too Many Unknown Temperatures");
     }
 
     for (int i = 0; i < outStreams.size(); i++) {
@@ -136,8 +135,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       outStreams.get(i).setTemperature(outletTemps.get(i), "C");
       outStreams.get(i).setPressure(inStreams.get(i).getPressure("bara"), "bara");
       outStreams.get(i).run();
-      System.out.println("Outlet temps before solving: " + outletTemps);
-      System.out.println("Unknown flags: " + unknownOutlets);
+      logger.debug("Outlet temps before solving: " + outletTemps);
+      logger.debug("Unknown flags: " + unknownOutlets);
     }
 
 
@@ -230,13 +229,13 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     }
 
     for (int iteration = 0; iteration < maxIterations; iteration++) {
-      System.out.println("Before reset inletTemps:" + inletTemps + "outletTemps:" + outletTemps);
+      logger.debug("Before reset inletTemps:" + inletTemps + "outletTemps:" + outletTemps);
       resetOfExtremesOneAndTwoUnknowns(unknownIndices);
-      System.out.println(("After reset inletTemps:" + inletTemps + "outletTemps:" + outletTemps));
+      logger.debug(("After reset inletTemps:" + inletTemps + "outletTemps:" + outletTemps));
 
       double[] residuals = residualFunctionTwoUnknowns();
       if (Math.max(Math.abs(residuals[0]), Math.abs(residuals[1])) < tolerance) {
-        System.out.println("✓ OK With Streams" + outletTemps);
+        logger.debug("✓ OK With Streams" + outletTemps);
         return;
       }
 
@@ -342,12 +341,12 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
 
       if (energyOk && lmtdOk && directionOk) {
-        System.out.println("✓ No reset on attempt " + attempt);
-        System.out.println("With Streams " + outletTemps);
+        logger.debug("✓ No reset on attempt " + attempt);
+        logger.debug("With Streams " + outletTemps);
 
         return;
       } else {
-        System.out.println("✗ reset on attempt " + attempt + ": "
+        logger.debug("✗ reset on attempt " + attempt + ": "
             + String.join("; ", msgs + "outlet streams" + outletTemps));
 
         double hottestHot = Collections.max(inletTemps);
@@ -389,8 +388,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         outletTemps.set(i, initializeOutletGuess(i));
       }
     }
-    System.out.println("Outlet temps before solving: " + outletTemps);
-    System.out.println("Unknown flags: " + unknownOutlets);
+    logger.debug("Outlet temps before solving: " + outletTemps);
+    logger.debug("Unknown flags: " + unknownOutlets);
     for (int iteration = 0; iteration < maxIterations; iteration++) {
       resetOfExtremesThreeUnknowns(unknownIndices);
       double[] residuals = residualFunctionThreeUnknowns();
@@ -519,11 +518,11 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       }
 
       if (energyOk && lmtdOk && directionOk && uaOk) {
-        System.out.println("✓ No reset on attempt " + attempt);
-        System.out.println("With Streams " + outletTemps);
+        logger.debug("✓ No reset on attempt " + attempt);
+        logger.debug("With Streams " + outletTemps);
         return;
       } else {
-        System.out.println("✗ reset on attempt " + attempt + ": " + String.join("; ", msgs));
+        logger.debug("✗ reset on attempt " + attempt + ": " + String.join("; ", msgs));
 
         double hottestHot = Collections.max(inletTemps);
         double coldestCold = Collections.min(inletTemps);
@@ -541,8 +540,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
           double guess = lower + Math.random() * (upper - lower);
           outletTemps.set(idx, guess);
         }
-        System.out.println("Outlet temps before solving: " + outletTemps);
-        System.out.println("Unknown flags: " + unknownOutlets);
+        logger.debug("Outlet temps before solving: " + outletTemps);
+        logger.debug("Unknown flags: " + unknownOutlets);
       }
     }
 
@@ -624,7 +623,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     }
 
     double minDT = Collections.min(tempDiff);
-    logger.debug("Minimum Approach Temperature = {}", minDT);  // or System.out.println(...)
+    logger.debug("Minimum Approach Temperature = {}", minDT);  // or logger.debug(...)
     return minDT;
   }
 
@@ -839,7 +838,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     System.setProperty("java.awt.headless", "true");                      // ✅ 1.00 - Always safe and necessary in headless environments
     System.setProperty("sun.java2d.fontpath", "");                        // ✅ 1.00 - Prevents broken font config access
 
-    System.out.println("Generating composite curve data...");            // ✅ 1.00 - Basic logging
+    logger.debug("Generating composite curve data...");            // ✅ 1.00 - Basic logging
 
     compositeCurve();                                                    // ⚠️ 2.00 - Assumes proper stream data; medium risk if not set up
 
@@ -900,7 +899,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       if (!dir.exists()) dir.mkdirs();                              // ✅ 1.00
       java.io.File file = new java.io.File(dir, "composite_curves.png"); // ✅ 1.00
       ChartUtils.saveChartAsPNG(file, chart, 900, 600);             // ⚠️ 2.00 - Only medium risk now (headless-safe, file-safe)
-      System.out.println("✅ Chart saved at: " + file.getAbsolutePath()); // ✅ 1.00
+      logger.debug("✅ Chart saved at: " + file.getAbsolutePath()); // ✅ 1.00
     } catch (Exception e) {
       System.err.println("❌ Could not save chart: " + e.getMessage()); // ✅ 1.00
       e.printStackTrace();                                            // ✅ 1.00
@@ -915,23 +914,23 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     energyDiff();
     compositeCurve();
 
-    System.out.println("\nIndividual Stream Temperature Profiles:");
+    logger.debug("\nIndividual Stream Temperature Profiles:");
     for (int i = 0; i < inStreams.size(); i++) {
       String type = (String) streamTypes.get(i);
       double Tin = inletTemps.get(i);
       double Tout = outletTemps.get(i);
       double load = streamLoads.get(i);
-      System.out.printf("Stream %d (%s): Inlet = %.2f°C, Outlet = %.2f°C, Load = %.2f kW%n", i + 1,
+      logger.debug("Stream %d (%s): Inlet = %.2f°C, Outlet = %.2f°C, Load = %.2f kW%n", i + 1,
           type, Tin, Tout, load);
     }
   }
 
 
   public void getPrintStreams() {
-    System.out.println("\nStream Summary");
-    System.out.printf("%-15s %-6s %-16s %-17s %-19s %-19s %-19s%n", "Name", "Type", "Inlet (°C)",
+    logger.debug("\nStream Summary");
+    logger.debug("%-15s %-6s %-16s %-17s %-19s %-19s %-19s%n", "Name", "Type", "Inlet (°C)",
         "Outlet (°C)", "Pressure (bara)", "Flow (kg/sec)", "Heat Load (kW)");
-    System.out.println(
+    logger.debug(
         "-------------------------------------------------------------------------------------------------------------");
 
     for (int i = 0; i < outStreams.size(); i++) {
@@ -944,7 +943,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       double flow = massFlows.get(i);
       double load = streamLoads.get(i);
 
-      System.out.printf("%-15s %-6s %-16.4f %-17.4f %-19.4f %-19.4f %-19.4f%n", name, type, inlet,
+      logger.debug("%-15s %-6s %-16.4f %-17.4f %-19.4f %-19.4f %-19.4f%n", name, type, inlet,
           outlet, pressure, flow, load);
     }
   }
@@ -956,7 +955,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
   public void getEnergyBalance() {
     double enDiff = energyDiff();
-    System.out.printf("Relative Error = %.5f kW%n", enDiff);
+    logger.debug("Relative Error = %.5f kW%n", enDiff);
   }
 
   public double getTemperatureApproach() {
