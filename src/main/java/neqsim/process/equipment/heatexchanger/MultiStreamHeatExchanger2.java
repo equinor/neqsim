@@ -475,7 +475,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         double imbalance = Math.abs(hotLoad / coldLoad);
         energyOk = (1 - extremeEnergy) <= imbalance && imbalance <= (1 + extremeEnergy);
         if (!energyOk) {
-            msgs.add(String.format("energy ratio = %.3f", imbalance));
+          msgs.add(String.format("energy ratio = %.3f", imbalance));
         }
       } catch (Exception e) {
         msgs.add("energyDiff() raised " + e.getClass().getSimpleName());
@@ -571,17 +571,17 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     }
     return hotLoad + coldLoad;
   }
-  
+
   /** {@inheritDoc} */
   public double pinch() {
     /* --- build the composite curves ------------------------------------ */
-    compositeCurve();                                   // fills compositeCurvePoints
+    compositeCurve(); // fills compositeCurvePoints
 
     /* --- gather every distinct load on either curve -------------------- */
     java.util.Set<Double> loadSet = new java.util.TreeSet<>();
-    for (String t : new String[] { "hot", "cold" }) {
+    for (String t : new String[] {"hot", "cold"}) {
       for (Map<String, Object> p : compositeCurvePoints.get(t)) {
-        loadSet.add((Double) p.get("load"));            // cast because Map<String,Object>
+        loadSet.add((Double) p.get("load")); // cast because Map<String,Object>
       }
     }
 
@@ -596,14 +596,14 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     }
 
     /* --- temperatures at every common load ----------------------------- */
-    hotTempAll  = new ArrayList<>();
+    hotTempAll = new ArrayList<>();
     coldTempAll = new ArrayList<>();
 
     for (double load : allLoad) {
       for (int j = 0; j < 2; j++) {
-        String                     curveKey = j == 0 ? "hot"  : "cold";
-        List<Map<String, Object>>  points   = compositeCurvePoints.get(curveKey);
-        List<Double>               target   = j == 0 ? hotTempAll : coldTempAll;
+        String curveKey = j == 0 ? "hot" : "cold";
+        List<Map<String, Object>> points = compositeCurvePoints.get(curveKey);
+        List<Double> target = j == 0 ? hotTempAll : coldTempAll;
 
         Double exact = null;
         for (Map<String, Object> p : points) {
@@ -623,7 +623,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     }
 
     double minDT = Collections.min(tempDiff);
-    logger.debug("Minimum Approach Temperature = {}", minDT);  // or logger.debug(...)
+    logger.debug("Minimum Approach Temperature = {}", minDT); // or logger.debug(...)
     return minDT;
   }
 
@@ -687,16 +687,16 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     thermoSystem.initThermoProperties();
     return thermoSystem.getEnthalpy("kJ/kg");
   }
-  
+
   /** {@inheritDoc} */
-  public void compositeCurve() {
+  public java.util.Map<String, java.util.List<java.util.Map<String, Object>>> compositeCurve() {
 
     /* fresh container ----------------------------------------------- */
     compositeCurvePoints =
         new java.util.HashMap<String, java.util.List<java.util.Map<String, Object>>>();
 
     /* build one curve for "hot" and one for "cold" ------------------- */
-    for (String t : new String[] { "hot", "cold" }) {
+    for (String t : new String[] {"hot", "cold"}) {
 
       /* ---- collect every unique temperature seen on this curve ---- */
       java.util.Set<Double> tempSet = new java.util.HashSet<>();
@@ -708,15 +708,14 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       }
 
       java.util.List<Double> tempPoints = new java.util.ArrayList<>(tempSet);
-      java.util.Collections.sort(tempPoints);                 // ascending
+      java.util.Collections.sort(tempPoints); // ascending
 
       /* ---- find the true lowest temperature on this curve --------- */
-      double minTemp = Double.MAX_VALUE;                       // ← FIX: no default 0 °C
+      double minTemp = Double.MAX_VALUE; // ← FIX: no default 0 °C
       for (int i = 0; i < streamTypes.size(); i++) {
         if (t.equals(streamTypes.get(i))) {
-          double candidate =
-              t.equals("hot") ? outletTemps.get(i)   // coldest point of a hot stream
-                              : inletTemps.get(i);   // coldest point of a cold stream
+          double candidate = t.equals("hot") ? outletTemps.get(i) // coldest point of a hot stream
+              : inletTemps.get(i); // coldest point of a cold stream
           if (candidate < minTemp) {
             minTemp = candidate;
           }
@@ -729,8 +728,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
       /* ---- initialise the curve with (load=0 kW, temperature=min) -- */
       double cumulativeLoad = 0.0;
-      java.util.List<java.util.Map<String, Object>> curveData =
-          new java.util.ArrayList<>();
+      java.util.List<java.util.Map<String, Object>> curveData = new java.util.ArrayList<>();
 
       java.util.Map<String, Object> initialPoint = new java.util.HashMap<>();
       initialPoint.put("temperature", minTemp);
@@ -740,15 +738,15 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       /* ---- walk each temperature interval, accumulate its load ----- */
       for (int p = 0; p < tempPoints.size() - 1; p++) {
         double tStart = tempPoints.get(p);
-        double tEnd   = tempPoints.get(p + 1);
+        double tEnd = tempPoints.get(p + 1);
 
         double intervalLoad = 0.0;
         for (int j = 0; j < streamTypes.size(); j++) {
           if (t.equals(streamTypes.get(j))) {
-            double inlet  = inletTemps.get(j);
+            double inlet = inletTemps.get(j);
             double outlet = outletTemps.get(j);
-            double low    = Math.min(inlet, outlet);
-            double high   = Math.max(inlet, outlet);
+            double low = Math.min(inlet, outlet);
+            double high = Math.max(inlet, outlet);
 
             /* does this stream span the entire [tStart, tEnd] window? */
             if (tStart >= low && tEnd <= high) {
@@ -761,15 +759,15 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
         java.util.Map<String, Object> point = new java.util.HashMap<>();
         point.put("temperature", tEnd);
-        point.put("load",        cumulativeLoad);
+        point.put("load", cumulativeLoad);
         curveData.add(point);
       }
 
       /* ---- save the finished curve -------------------------------- */
       compositeCurvePoints.put(t, curveData);
     }
+    return compositeCurvePoints;
   }
-
 
 
 
@@ -787,7 +785,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     double deltaT = Math.abs(tempEnd - tempStart);
     double fullDeltaT = Math.abs(inletTemps.get(i) - outletTemps.get(i));
     if (fullDeltaT < 1e-8) {
-        return 0.0;
+      return 0.0;
     }
 
     double interpolationFactor = deltaT / fullDeltaT;
@@ -817,10 +815,10 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     }
 
     if (below.isEmpty()) {
-        return (Double) above.get(0).get("temperature");
+      return (Double) above.get(0).get("temperature");
     }
     if (above.isEmpty()) {
-        return (Double) below.get(below.size() - 1).get("temperature");
+      return (Double) below.get(below.size() - 1).get("temperature");
     }
 
     double lo = (Double) below.get(below.size() - 1).get("load");
@@ -840,80 +838,82 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   /** {@inheritDoc} */
   public void getCompositeCurve() {
 
-    System.setProperty("java.awt.headless", "true");                      // ✅ 1.00 - Always safe and necessary in headless environments
-    System.setProperty("sun.java2d.fontpath", "");                        // ✅ 1.00 - Prevents broken font config access
+    System.setProperty("java.awt.headless", "true"); // ✅ 1.00 - Always safe and necessary in
+                                                     // headless environments
+    System.setProperty("sun.java2d.fontpath", ""); // ✅ 1.00 - Prevents broken font config access
 
-    logger.debug("Generating composite curve data...");            // ✅ 1.00 - Basic logging
+    logger.debug("Generating composite curve data..."); // ✅ 1.00 - Basic logging
 
-    compositeCurve();                                                    // ⚠️ 2.00 - Assumes proper stream data; medium risk if not set up
+    compositeCurve(); // ⚠️ 2.00 - Assumes proper stream data; medium risk if not set up
 
-    List<Map<String, Object>> hot = compositeCurvePoints.get("hot");     // ✅ 1.00 - Standard map access
-    List<Map<String, Object>> cold = compositeCurvePoints.get("cold");   // ✅ 1.00
+    List<Map<String, Object>> hot = compositeCurvePoints.get("hot"); // ✅ 1.00 - Standard map access
+    List<Map<String, Object>> cold = compositeCurvePoints.get("cold"); // ✅ 1.00
 
-    if (hot == null || cold == null || hot.isEmpty() || cold.isEmpty()) {// ✅ 1.00 - Simple sanity check
+    if (hot == null || cold == null || hot.isEmpty() || cold.isEmpty()) {// ✅ 1.00 - Simple sanity
+                                                                         // check
       System.err.println("❌ Composite curve data is missing or incomplete."); // ✅ 1.00
-      return;                                                            // ✅ 1.00
+      return; // ✅ 1.00
     }
 
-    XYSeries hotSeries = new XYSeries("Hot Composite Curve");            // ✅ 1.00 - Constructor
-    for (Map<String, Object> point : hot) {                              // ✅ 1.00 - Loop itself is safe
+    XYSeries hotSeries = new XYSeries("Hot Composite Curve"); // ✅ 1.00 - Constructor
+    for (Map<String, Object> point : hot) { // ✅ 1.00 - Loop itself is safe
       try {
-        double load = (Double) point.get("load");                        // ⚠️ 2.00 - Cast risk, but caught
-        double temp = (Double) point.get("temperature");                // ⚠️ 2.00
-        hotSeries.add(load, temp);                                      // ✅ 1.00
+        double load = (Double) point.get("load"); // ⚠️ 2.00 - Cast risk, but caught
+        double temp = (Double) point.get("temperature"); // ⚠️ 2.00
+        hotSeries.add(load, temp); // ✅ 1.00
       } catch (Exception e) {
-        System.err.println("⚠️ Invalid hot point: " + point);           // ✅ 1.00
+        System.err.println("⚠️ Invalid hot point: " + point); // ✅ 1.00
       }
     }
 
-    XYSeries coldSeries = new XYSeries("Cold Composite Curve");          // ✅ 1.00
-    for (Map<String, Object> point : cold) {                             // ✅ 1.00
+    XYSeries coldSeries = new XYSeries("Cold Composite Curve"); // ✅ 1.00
+    for (Map<String, Object> point : cold) { // ✅ 1.00
       try {
-        double load = (Double) point.get("load");                        // ⚠️ 2.00
-        double temp = (Double) point.get("temperature");                // ⚠️ 2.00
-        coldSeries.add(load, temp);                                     // ✅ 1.00
+        double load = (Double) point.get("load"); // ⚠️ 2.00
+        double temp = (Double) point.get("temperature"); // ⚠️ 2.00
+        coldSeries.add(load, temp); // ✅ 1.00
       } catch (Exception e) {
-        System.err.println("⚠️ Invalid cold point: " + point);          // ✅ 1.00
+        System.err.println("⚠️ Invalid cold point: " + point); // ✅ 1.00
       }
     }
 
-    XYSeriesCollection dataset = new XYSeriesCollection();               // ✅ 1.00
-    dataset.addSeries(hotSeries);                                       // ✅ 1.00
-    dataset.addSeries(coldSeries);                                      // ✅ 1.00
+    XYSeriesCollection dataset = new XYSeriesCollection(); // ✅ 1.00
+    dataset.addSeries(hotSeries); // ✅ 1.00
+    dataset.addSeries(coldSeries); // ✅ 1.00
 
-    JFreeChart chart = ChartFactory.createXYLineChart(                  // ⚠️ 2.00 - Can fail on null or invalid dataset
-        "Composite Curves",
-        "Cumulative Heat Load (kW)",
-        "Temperature (°C)",
-        dataset
-    );
+    JFreeChart chart = ChartFactory.createXYLineChart( // ⚠️ 2.00 - Can fail on null or invalid
+                                                       // dataset
+        "Composite Curves", "Cumulative Heat Load (kW)", "Temperature (°C)", dataset);
 
-    java.awt.Font safeFont = new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 12);     // ✅ 1.00 - Safe fallback font
-    chart.getTitle().setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 14));    // ✅ 1.00
-    chart.getXYPlot().getDomainAxis().setLabelFont(safeFont);                             // ✅ 1.00
-    chart.getXYPlot().getDomainAxis().setTickLabelFont(safeFont);                         // ✅ 1.00
-    chart.getXYPlot().getRangeAxis().setLabelFont(safeFont);                              // ✅ 1.00
-    chart.getXYPlot().getRangeAxis().setTickLabelFont(safeFont);                          // ✅ 1.00
+    java.awt.Font safeFont = new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 12); // ✅ 1.00 -
+                                                                                      // Safe
+                                                                                      // fallback
+                                                                                      // font
+    chart.getTitle().setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 14)); // ✅ 1.00
+    chart.getXYPlot().getDomainAxis().setLabelFont(safeFont); // ✅ 1.00
+    chart.getXYPlot().getDomainAxis().setTickLabelFont(safeFont); // ✅ 1.00
+    chart.getXYPlot().getRangeAxis().setLabelFont(safeFont); // ✅ 1.00
+    chart.getXYPlot().getRangeAxis().setTickLabelFont(safeFont); // ✅ 1.00
 
-    XYPlot plot = chart.getXYPlot();                                 // ✅ 1.00
-    plot.setDomainGridlinesVisible(true);                            // ✅ 1.00
-    plot.setRangeGridlinesVisible(true);                             // ✅ 1.00
+    XYPlot plot = chart.getXYPlot(); // ✅ 1.00
+    plot.setDomainGridlinesVisible(true); // ✅ 1.00
+    plot.setRangeGridlinesVisible(true); // ✅ 1.00
 
     try {
-      java.io.File dir = new java.io.File("output");                // ✅ 1.00
+      java.io.File dir = new java.io.File("output"); // ✅ 1.00
       if (!dir.exists()) {
-        dir.mkdirs();                              // ✅ 1.00
+        dir.mkdirs(); // ✅ 1.00
       }
       java.io.File file = new java.io.File(dir, "composite_curves.png"); // ✅ 1.00
-      ChartUtils.saveChartAsPNG(file, chart, 900, 600);             // ⚠️ 2.00 - Only medium risk now (headless-safe, file-safe)
+      ChartUtils.saveChartAsPNG(file, chart, 900, 600); // ⚠️ 2.00 - Only medium risk now
+                                                        // (headless-safe, file-safe)
       logger.debug("✅ Chart saved at: " + file.getAbsolutePath()); // ✅ 1.00
     } catch (Exception e) {
       System.err.println("❌ Could not save chart: " + e.getMessage()); // ✅ 1.00
-      e.printStackTrace();                                            // ✅ 1.00
+      e.printStackTrace(); // ✅ 1.00
     }
 
   }
-
 
 
 
@@ -927,8 +927,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       double Tin = inletTemps.get(i);
       double Tout = outletTemps.get(i);
       double load = streamLoads.get(i);
-      logger.debug("Stream %d (%s): Inlet = %.2f°C, Outlet = %.2f°C, Load = %.2f kW%n", i + 1,
-          type, Tin, Tout, load);
+      logger.debug("Stream %d (%s): Inlet = %.2f°C, Outlet = %.2f°C, Load = %.2f kW%n", i + 1, type,
+          Tin, Tout, load);
     }
   }
 
