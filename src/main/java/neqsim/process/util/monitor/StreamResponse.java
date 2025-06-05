@@ -14,10 +14,9 @@ import neqsim.standards.gasquality.Standard_ISO6976;
  * @author asmund
  * @version $Id: $Id
  */
-public class StreamResponse {
+public class StreamResponse extends BaseResponse {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(StreamResponse.class);
-  public String name;
   public HashMap<String, HashMap<String, Value>> properties =
       new HashMap<String, HashMap<String, Value>>();
   public HashMap<String, HashMap<String, Value>> conditions =
@@ -33,7 +32,7 @@ public class StreamResponse {
    * @param inputStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public StreamResponse(StreamInterface inputStream) {
-    name = inputStream.getName();
+    super(inputStream);
 
     HashMap<String, Value> newdata = new HashMap<String, Value>();
     newdata.put("temperature",
@@ -226,10 +225,10 @@ public class StreamResponse {
       } else if (name.equals("gas")) {
         Standard_ISO6976 standard = inputStream.getISO6976("volume", 15.0, 15.0);
         standard.calculate();
-        newdata.put("GCV", new Value(
+        newdata.put("GCV (15/15)", new Value(
             Double.toString(standard.getValue("SuperiorCalorificValue") / 1e3), "MJ/Sm3 @15C,15C"));
-        newdata.put("WI", new Value(Double.toString(standard.getValue("SuperiorWobbeIndex") / 1e3),
-            "MJ/Sm3 @15C,15C"));
+        newdata.put("WI (15/15)", new Value(
+            Double.toString(standard.getValue("SuperiorWobbeIndex") / 1e3), "MJ/Sm3 @15C,15C"));
         newdata.put("standard flow rate",
             new Value(
                 Double.toString(inputStream.getFluid().getPhase(name)
@@ -237,6 +236,8 @@ public class StreamResponse {
                 neqsim.util.unit.Units.getSymbol("standard volume flow")));
         newdata.put("relative density",
             new Value(Double.toString(standard.getValue("RelativeDensity")), "[-]"));
+        newdata.put("gas flow",
+            new Value(Double.toString(inputStream.getFlowRate("Sm3/hr")), "Sm3/hr"));
       }
       properties.put(name, newdata);
     }

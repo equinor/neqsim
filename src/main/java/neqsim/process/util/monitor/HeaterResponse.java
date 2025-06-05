@@ -1,5 +1,6 @@
 package neqsim.process.util.monitor;
 
+import java.util.ArrayList;
 import neqsim.process.equipment.heatexchanger.Heater;
 
 /**
@@ -10,12 +11,9 @@ import neqsim.process.equipment.heatexchanger.Heater;
  * @author asmund
  * @version $Id: $Id
  */
-public class HeaterResponse {
-  public String name = "test";
+public class HeaterResponse extends BaseResponse {
 
-  public Double feedTemperature;
-  public Double dischargeTemperature;
-  public Double duty;
+  public ArrayList<String[]> data = new ArrayList<String[]>();
 
   /**
    * <p>
@@ -25,11 +23,34 @@ public class HeaterResponse {
    * @param inputHeater a {@link neqsim.process.equipment.heatexchanger.Heater} object
    */
   public HeaterResponse(Heater inputHeater) {
-    name = inputHeater.getName();
+    super(inputHeater);
 
-    feedTemperature = inputHeater.getInletStream().getTemperature("C");
-    dischargeTemperature = inputHeater.getOutletStream().getTemperature("C");
+    data.add(new String[] {"mass flow",
+        Double.toString(inputHeater.getInletStream()
+            .getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+        neqsim.util.unit.Units.getSymbol("mass flow")});
 
-    duty = inputHeater.getDuty();
+
+    data.add(new String[] {"inlet temperature",
+        Double.toString(inputHeater.getInletStream()
+            .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+        neqsim.util.unit.Units.getSymbol("temperature")});
+
+    data.add(new String[] {"inlet pressure",
+        Double.toString(
+            inputHeater.getInletStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+        neqsim.util.unit.Units.getSymbol("pressure")});
+    data.add(new String[] {"outlet temperature",
+        Double.toString(inputHeater.getOutletStream()
+            .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+        neqsim.util.unit.Units.getSymbol("temperature")});
+    data.add(new String[] {"outlet pressure",
+        Double.toString(inputHeater.getOutletStream()
+            .getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+        neqsim.util.unit.Units.getSymbol("pressure")});
+
+    data.add(new String[] {"duty",
+        Double.toString(inputHeater.getDuty(neqsim.util.unit.Units.getSymbol("duty"))),
+        neqsim.util.unit.Units.getSymbol("duty")});
   }
 }

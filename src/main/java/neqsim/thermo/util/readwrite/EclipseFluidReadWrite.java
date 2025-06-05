@@ -56,8 +56,9 @@ public class EclipseFluidReadWrite {
       ArrayList<String> names = new ArrayList<String>();
       ArrayList<Double> ZI = new ArrayList<Double>();
       while ((st = br.readLine()) != null) {
+        st = st.trim();
         if (st.equals("CNAMES")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = br.readLine().trim().replace("/", "")) != null) {
             if (st.startsWith("--")) {
               break;
             }
@@ -65,7 +66,7 @@ public class EclipseFluidReadWrite {
           }
         }
         if (st.equals("ZI")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+          while ((st = br.readLine().trim().replace("/", "")) != null) {
             if (st.startsWith("--")) {
               break;
             }
@@ -160,14 +161,16 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> BIC = new ArrayList<Double>();
       String EOS;
       while ((st = br.readLine()) != null) {
+        st = st.trim();
+
         // System.out.println("EOS " +EOS );
         if (st.trim().equals("EOS")) {
-          EOS = br.readLine().replace("/", "");
+          EOS = br.readLine().trim().replace("/", "");
           if (EOS.contains("SRK")) {
             fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
                 ThermodynamicConstantsInterface.referencePressure);
           } else if (EOS.contains("PR")) {
-            String corr = br.readLine().replace("/", "");
+            String corr = br.readLine().trim().replace("/", "");
             if (corr.equals("PRCORR")) {
               fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
                   ThermodynamicConstantsInterface.referencePressure);
@@ -180,16 +183,18 @@ public class EclipseFluidReadWrite {
                 ThermodynamicConstantsInterface.referencePressure);
           }
         }
-        if (st.equals("CNAMES")) {
+        if (st.trim().equals("CNAMES")) {
           while ((st = br.readLine().replace("/", "")) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             names.add(st);
           }
         }
-        if (st.equals("TCRIT")) {
+        if (st.trim().equals("TCRIT")) {
           while ((st = br.readLine().replace("/", "")) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
@@ -197,7 +202,9 @@ public class EclipseFluidReadWrite {
           }
         }
         if (st.equals("PCRIT")) {
+          st = st.trim();
           while ((st = br.readLine().replace("/", "")) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
@@ -205,7 +212,9 @@ public class EclipseFluidReadWrite {
           }
         }
         if (st.equals("ACF")) {
+          st = st.trim();
           while ((st = br.readLine().replace("/", "")) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
@@ -213,7 +222,9 @@ public class EclipseFluidReadWrite {
           }
         }
         if (st.equals("MW")) {
+          st = st.trim();
           while ((st = br.readLine().replace("/", "")) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
@@ -221,7 +232,9 @@ public class EclipseFluidReadWrite {
           }
         }
         if (st.equals("TBOIL")) {
+          st = st.trim();
           while ((st = br.readLine().replace("/", "")) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
@@ -229,7 +242,9 @@ public class EclipseFluidReadWrite {
           }
         }
         if (st.equals("VCRIT")) {
+          st = st.trim();
           while ((st = br.readLine().replace("/", "")) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
@@ -237,7 +252,9 @@ public class EclipseFluidReadWrite {
           }
         }
         if (st.equals("SSHIFT")) {
+          st = st.trim();
           while ((st = br.readLine().replace("/", "")) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
@@ -245,7 +262,8 @@ public class EclipseFluidReadWrite {
           }
         }
         if (st.equals("PARACHOR")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+          st = st.trim();
+          while ((st = br.readLine().trim().replace("/", "")) != null) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
@@ -253,7 +271,9 @@ public class EclipseFluidReadWrite {
           }
         }
         if (st.equals("ZI")) {
+          st = st.trim();
           while ((st = br.readLine().replace("/", "")) != null) {
+            st = st.trim();
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
@@ -261,6 +281,7 @@ public class EclipseFluidReadWrite {
           }
         }
         if (st.equals("BIC")) {
+          st = st.trim();
           int addedComps = 0;
           kij = new Double[names.size()][names.size()];
           for (Double[] row : kij) {
@@ -269,10 +290,13 @@ public class EclipseFluidReadWrite {
           int lengthLastLine = 0;
           List<String> list = new ArrayList<String>();
           while ((st = br.readLine().replace("/", "")) != null && addedComps < names.size() - 1) {
-            if (st.startsWith("--") || st.isEmpty()) {
+            st = st.trim();
+            if (st.startsWith("--") || st.isEmpty() || st.trim().startsWith("/")
+                || st.trim().startsWith(" ")) {
               break;
             }
-            String[] arr = st.split("  ");
+
+            String[] arr = st.trim().split("\\s+");
             List<String> templist = new ArrayList<String>(Arrays.asList(arr));
             list.addAll(templist);
             list.removeAll(Arrays.asList("", null));
@@ -289,9 +313,10 @@ public class EclipseFluidReadWrite {
             list.clear();
           }
         }
-        if (st.equals("SSHIFTS")) {
+        if (st.trim().equals("SSHIFTS")) {
           String line;
           while ((line = br.readLine()) != null) {
+            line = line.trim();
             st = line.replace("/", "");
             if (st.startsWith("--") || st.isEmpty()) {
               break;
@@ -425,14 +450,16 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> BIC = new ArrayList<Double>();
       String EOS;
       while ((st = br.readLine()) != null) {
+        st = st.trim();
         // System.out.println("EOS " +EOS );
-        if (st.trim().equals("EOS")) {
-          EOS = br.readLine().replace("/", "");
+        if (st.equals("EOS")) {
+          st = st.trim();
+          EOS = br.readLine().trim().replace("/", "");
           if (EOS.contains("SRK")) {
             fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
                 ThermodynamicConstantsInterface.referencePressure);
           } else if (EOS.contains("PR")) {
-            String corr = br.readLine().replace("/", "");
+            String corr = br.readLine().trim().replace("/", "");
             if (corr.equals("PRCORR")) {
               fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
                   ThermodynamicConstantsInterface.referencePressure);
@@ -445,87 +472,87 @@ public class EclipseFluidReadWrite {
                 ThermodynamicConstantsInterface.referencePressure);
           }
         }
-        if (st.equals("CNAMES")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+        if (st.trim().equals("CNAMES")) {
+          while ((st = br.readLine().trim().replace("/", "")) != null) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             names.add(st);
           }
         }
-        if (st.equals("TCRIT")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+        if (st.trim().equals("TCRIT")) {
+          while ((st = br.readLine().trim().replace("/", "")) != null) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             TC.add(Double.parseDouble(st));
           }
         }
-        if (st.equals("PCRIT")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+        if (st.trim().equals("PCRIT")) {
+          while ((st = br.readLine().trim().replace("/", "")) != null) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             PC.add(Double.parseDouble(st));
           }
         }
-        if (st.equals("ACF")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+        if (st.trim().equals("ACF")) {
+          while ((st = br.readLine().trim().replace("/", "")) != null) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             ACF.add(Double.parseDouble(st));
           }
         }
-        if (st.equals("MW")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+        if (st.trim().equals("MW")) {
+          while ((st = br.readLine().trim().replace("/", "")) != null) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             MW.add(Double.parseDouble(st));
           }
         }
-        if (st.equals("TBOIL")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+        if (st.trim().equals("TBOIL")) {
+          while ((st = br.readLine().trim().replace("/", "")) != null) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             TBOIL.add(Double.parseDouble(st));
           }
         }
-        if (st.equals("VCRIT")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+        if (st.trim().equals("VCRIT")) {
+          while ((st = br.readLine().trim().replace("/", "")) != null) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             VCRIT.add(Double.parseDouble(st));
           }
         }
-        if (st.equals("SSHIFT")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+        if (st.trim().equals("SSHIFT")) {
+          while ((st = br.readLine().trim().replace("/", "")) != null) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             SSHIFT.add(Double.parseDouble(st));
           }
         }
-        if (st.equals("PARACHOR")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+        if (st.trim().equals("PARACHOR")) {
+          while ((st = br.readLine().trim().replace("/", "")) != null) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             PARACHOR.add(Double.parseDouble(st));
           }
         }
-        if (st.equals("ZI")) {
-          while ((st = br.readLine().replace("/", "")) != null) {
+        if (st.trim().equals("ZI")) {
+          while ((st = br.readLine().trim().replace("/", "")) != null) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
             ZI.add(Double.parseDouble(st));
           }
         }
-        if (st.equals("BIC")) {
+        if (st.trim().equals("BIC")) {
           int addedComps = 0;
           kij = new Double[names.size()][names.size()];
           for (Double[] row : kij) {
@@ -533,7 +560,8 @@ public class EclipseFluidReadWrite {
           }
           int lengthLastLine = 0;
           List<String> list = new ArrayList<String>();
-          while ((st = br.readLine().replace("/", "")) != null && addedComps < names.size() - 1) {
+          while ((st = br.readLine().trim().replace("/", "")) != null
+              && addedComps < names.size() - 1) {
             if (st.startsWith("--") || st.isEmpty()) {
               break;
             }
@@ -554,9 +582,9 @@ public class EclipseFluidReadWrite {
             list.clear();
           }
         }
-        if (st.equals("SSHIFTS")) {
+        if (st.trim().equals("SSHIFTS")) {
           String line;
-          while ((line = br.readLine()) != null) {
+          while ((line = br.readLine().trim()) != null) {
             st = line.replace("/", "");
             if (st.startsWith("--") || st.isEmpty()) {
               break;
@@ -681,6 +709,104 @@ public class EclipseFluidReadWrite {
     Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
+    return fluid;
+  }
+
+  public static SystemInterface readE300File(String inputFile) {
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
+        ThermodynamicConstantsInterface.referencePressure);
+
+    try (BufferedReader br = new BufferedReader(new FileReader(new File(inputFile)))) {
+      String line;
+      ArrayList<String> names = new ArrayList<>();
+      ArrayList<Double> TC = new ArrayList<>();
+      ArrayList<Double> PC = new ArrayList<>();
+      ArrayList<Double> ACF = new ArrayList<>();
+      ArrayList<Double> MW = new ArrayList<>();
+      ArrayList<Double> ZI = new ArrayList<>();
+
+      while ((line = br.readLine().trim()) != null) {
+        line = line.trim(); // Ensure trimming of whitespace
+
+        if (line.equals("CNAMES")) {
+          while ((line = br.readLine().trim()) != null) {
+            line = line.trim();
+            if (line.endsWith("/")) {
+              names.add(line.substring(0, line.length() - 1).trim());
+              break;
+            }
+            names.add(line);
+          }
+        } else if (line.equals("TCRIT")) {
+          while ((line = br.readLine().trim()) != null) {
+            line = line.trim();
+            if (line.endsWith("/")) {
+              TC.add(Double.parseDouble(line.substring(0, line.length() - 1).trim()));
+              break;
+            }
+            TC.add(Double.parseDouble(line));
+          }
+        } else if (line.equals("PCRIT")) {
+          while ((line = br.readLine().trim()) != null) {
+            line = line.trim();
+            if (line.endsWith("/")) {
+              PC.add(Double.parseDouble(line.substring(0, line.length() - 1).trim()));
+              break;
+            }
+            PC.add(Double.parseDouble(line));
+          }
+        } else if (line.equals("ACF")) {
+          while ((line = br.readLine().trim()) != null) {
+            line = line.trim();
+            if (line.endsWith("/")) {
+              ACF.add(Double.parseDouble(line.substring(0, line.length() - 1).trim()));
+              break;
+            }
+            ACF.add(Double.parseDouble(line));
+          }
+        } else if (line.equals("MW")) {
+          while ((line = br.readLine().trim()) != null) {
+            line = line.trim();
+            if (line.endsWith("/")) {
+              MW.add(Double.parseDouble(line.substring(0, line.length() - 1).trim()));
+              break;
+            }
+            MW.add(Double.parseDouble(line));
+          }
+        } else if (line.equals("ZI")) {
+          while ((line = br.readLine().trim()) != null) {
+            line = line.trim();
+            if (line.endsWith("/")) {
+              ZI.add(Double.parseDouble(line.substring(0, line.length() - 1).trim()));
+              break;
+            }
+            ZI.add(Double.parseDouble(line));
+          }
+        }
+      }
+
+      // Add components to the fluid
+      for (int i = 0; i < names.size(); i++) {
+        String name = names.get(i);
+        double zi = ZI.get(i);
+        fluid.addComponent(name, zi);
+
+        for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+          fluid.getPhase(phase).getComponent(name).setTC(TC.get(i));
+          fluid.getPhase(phase).getComponent(name).setPC(PC.get(i));
+          fluid.getPhase(phase).getComponent(name).setAcentricFactor(ACF.get(i));
+          fluid.getPhase(phase).getComponent(name).setMolarMass(MW.get(i) / 1000.0);
+        }
+      }
+
+      fluid.setMixingRule(2);
+      fluid.useVolumeCorrection(true);
+      fluid.init(0);
+
+    } catch (Exception ex) {
+      logger.error("Error reading E300 file: " + ex.getMessage(), ex);
+    }
+
     return fluid;
   }
 }

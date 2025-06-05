@@ -1,9 +1,11 @@
 package neqsim.process.processmodel;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.util.report.Report;
 
 /**
  * <p>
@@ -186,4 +188,20 @@ public class ProcessModel implements Runnable {
     }
     return threads;
   }
+
+  /**
+   * Retrieves a list of all processes.
+   *
+   * @return a {@link java.util.Collection} of {@link neqsim.process.processmodel.ProcessSystem}
+   *         objects
+   */
+  public Collection<ProcessSystem> getAllProcesses() {
+    return processes.values();
+  }
+
+  public String getReport_json() {
+    return new Report(this).generateJsonReport();
+  }
+
+
 }

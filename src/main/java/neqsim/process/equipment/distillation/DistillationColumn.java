@@ -8,12 +8,14 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.monitor.DistillationColumnResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -59,8 +61,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double err = 1.0e10;
 
   /**
-   * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed streams per tray number. This
-   * allows multiple feeds to the same tray.
+   * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed streams per tray number.
+   * This allows multiple feeds to the same tray.
    */
   private Map<Integer, List<StreamInterface>> feedStreams = new HashMap<>();
 
@@ -572,6 +574,29 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return (massError < 1e-6);
   }
 
+  public double getMassBalanceError() {
+
+    double[] massInput = new double[numberOfTrays];
+    double[] massOutput = new double[numberOfTrays];
+    double[] massBalance = new double[numberOfTrays];
+
+    for (int i = 0; i < numberOfTrays; i++) {
+      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
+      for (int j = 0; j < numberOfInputStreams; j++) {
+        massInput[i] += trays.get(i).getStream(j).getFluid().getFlowRate("kg/hr");
+      }
+      massOutput[i] += trays.get(i).getGasOutStream().getFlowRate("kg/hr");
+      massOutput[i] += trays.get(i).getLiquidOutStream().getFlowRate("kg/hr");
+      massBalance[i] = massInput[i] - massOutput[i];
+
+    }
+    double massError = 0.0;
+    for (int i = 0; i < numberOfTrays; i++) {
+      massError += Math.abs(massBalance[i]);
+    }
+    return massError;
+  }
+
   /**
    * Optional: energy balance check.
    */
@@ -647,5 +672,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     column.getGasOutStream().getThermoSystem().display();
     System.out.println("Liquid out:");
     column.getLiquidOutStream().getThermoSystem().display();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new DistillationColumnResponse(this));
+  }
+
+  public int getNumerOfTrays() {
+    return numberOfTrays;
   }
 }

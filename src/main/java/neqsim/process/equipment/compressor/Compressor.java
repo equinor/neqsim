@@ -20,7 +20,6 @@ import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
 import neqsim.process.util.monitor.CompressorResponse;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.util.leachman.Leachman;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -70,7 +69,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   private boolean useGERG2008 = false;
   private boolean useLeachman = false;
   private boolean useVega = false;
-
+  private boolean limitSpeed = false;
 
   private String pressureUnit = "bara";
   private String polytropicMethod = "detailed";
@@ -292,6 +291,15 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public void run(UUID id) {
     thermoSystem = inStream.getThermoSystem().clone();
 
+    isActive(true);
+
+    if (inStream.getFlowRate("kg/hr") < getMinimumFlow()) {
+      isActive(false);
+      thermoSystem.setPressure(pressure, pressureUnit);
+      getOutletStream().setThermoSystem(thermoSystem);
+      return;
+    }
+
     if (Math.abs(pressure - thermoSystem.getPressure(pressureUnit)) < 1e-6
         && !compressorChart.isUseCompressorChart()) {
       thermoSystem.initProperties();
@@ -424,7 +432,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           double[] VegaProps;
           VegaProps = getThermoSystem().getPhase(0).getProperties_Vega();
           densOutIsentropic = getThermoSystem().getPhase(0).getDensity_Vega();
-          enthalpyOutIsentropic = 
+          enthalpyOutIsentropic =
               VegaProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
         }
         thermoSystem.setTemperature(outTemperature);
@@ -504,7 +512,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         double currentSpeed = getSpeed(); // Initial guess for speed
         double maxIterations = 100; // Maximum number of iterations
         double deltaSpeed = 100.0; // Small increment for numerical derivative
-        int iteration = 0;
+        int iteration = 1;
 
         while (iteration < maxIterations) {
           // Calculate the pressure at the current speed
@@ -541,12 +549,24 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           double polytropEff =
               getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed);
           setPolytropicEfficiency(polytropEff / 100.0);
+          if (polytropEff <= 0.0) {
+            polytropEff = 0.01;
+            setPolytropicEfficiency(0.01);
+          }
+          if (polytropEff > 100.0) {
+            polytropEff = 100;
+            setPolytropicEfficiency(100.0);
+          }
+
           polytropicHead = getCompressorChart().getPolytropicHead(actualFlowRate, currentSpeed);
           double temperature_inlet = thermoSystem.getTemperature();
           double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
           polytropicFluidHead =
               (getCompressorChart().getHeadUnit().equals("meter")) ? polytropicHead / 1000.0 * 9.81
                   : polytropicHead;
+          if (polytropicFluidHead <= 0.0) {
+            polytropicFluidHead = 0.0001;
+          }
           double pressureRatio = Math.pow((polytropicFluidHead * 1000.0 + (n / (n - 1.0) * z_inlet
               * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
               / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet)
@@ -569,20 +589,55 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
                   / (nDelta / (nDelta - 1.0) * z_inlet * ThermodynamicConstantsInterface.R
                       * (temperature_inlet) / MW),
                   nDelta / (nDelta - 1.0));
-          double pressureDelta = thermoSystem.getPressure() * pressureRatioDelta;
+          double pressureNew = thermoSystem.getPressure() * pressureRatioDelta;
 
-          double dPressure_dSpeed = (pressureDelta - currentPressure) / deltaSpeed;
+          double dPressure_dSpeed = (pressureNew - currentPressure) / deltaSpeed;
+
+          if (dPressure_dSpeed < 1e-6) {
+            setSpeed(getSpeed() * 1.1);
+            dPressure_dSpeed = Math.signum(dPressure_dSpeed) * 1e-6;
+          }
 
           // Update speed using Newton-Raphson method
+          double relaxationFactor = Math.min(0.8, iteration / (iteration + 3.0));
+
           double speedUpdate = (targetPressure - currentPressure) / dPressure_dSpeed;
-          currentSpeed += 0.8 * speedUpdate;
+
+          currentSpeed += relaxationFactor * speedUpdate;
+          if (currentSpeed < 0) {
+            if (minSpeed > 1) {
+              currentSpeed = minSpeed;
+            } else {
+              currentSpeed = getCompressorChart().getMinSpeedCurve();
+            }
+          }
+          if (iteration % 10 == 0 && deltaSpeed > 10) {
+            deltaSpeed = deltaSpeed / 2;
+          }
+
           powerSet = true;
           dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass()
               / getPolytropicEfficiency() * thermoSystem.getTotalNumberOfMoles();
           // Check if speed is within bounds
           if (currentSpeed < minSpeed || currentSpeed > maxSpeed) {
-            throw new IllegalArgumentException(
-                "Speed out of bounds during Newton-Raphson iteration.");
+            if (limitSpeed) {
+              setSolveSpeed(false);
+              setCalcPressureOut(true);
+              if (currentSpeed > maxSpeed) {
+                setSpeed(maxSpeed);
+              } else if (currentSpeed < minSpeed) {
+                setSpeed(minSpeed);
+              }
+              run();
+              setSolveSpeed(true);
+              setCalcPressureOut(false);
+              return;
+            } else {
+              // throw new IllegalArgumentException(
+              // "Speed out of bounds during Newton-Raphson iteration.");
+            }
+            // throw new IllegalArgumentException(
+            // "Speed out of bounds during Newton-Raphson iteration.");
           }
 
           // Check for convergence
@@ -616,7 +671,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
             kappa = gergProps[14];
             z_inlet = gergProps[1];
           }
-          
+
           if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
             double[] LeachmanProps;
             LeachmanProps = getThermoSystem().getPhase(0).getProperties_Leachman();
@@ -679,7 +734,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
       }
     }
 
-    if (usePolytropicCalc) {
+    if (usePolytropicCalc)
+
+    {
       if (powerSet) {
         double hout = hinn * (1 - 0 + fractionAntiSurge) + dH;
         thermoSystem.setPressure(pressure, pressureUnit);
@@ -1601,7 +1658,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     this.useLeachman = useLeachman;
   }
 
-
   /**
    * Getter for property useVega.
    *
@@ -1619,7 +1675,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public void setUseVega(boolean useVega) {
     this.useVega = useVega;
   }
-
 
   /**
    * <p>
@@ -1854,7 +1909,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * <p>isSolveSpeed.</p>
+   * <p>
+   * isSolveSpeed.
+   * </p>
    *
    * @return a boolean
    */
@@ -1863,7 +1920,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * <p>Setter for the field <code>solveSpeed</code>.</p>
+   * <p>
+   * Setter for the field <code>solveSpeed</code>.
+   * </p>
    *
    * @param solveSpeed a boolean
    */
@@ -1872,7 +1931,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * <p>isCalcPressureOut.</p>
+   * <p>
+   * isCalcPressureOut.
+   * </p>
    *
    * @return a boolean
    */
@@ -1881,11 +1942,32 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * <p>Setter for the field <code>calcPressureOut</code>.</p>
+   * <p>
+   * Setter for the field <code>calcPressureOut</code>.
+   * </p>
    *
    * @param calcPressureOut a boolean
    */
   public void setCalcPressureOut(boolean calcPressureOut) {
     this.calcPressureOut = calcPressureOut;
   }
+
+  /**
+   * Checks if the compressor speed is limited.
+   *
+   * @return {@code true} if the compressor speed is limited, {@code false} otherwise.
+   */
+  public boolean isLimitSpeed() {
+    return limitSpeed;
+  }
+
+  /**
+   * Sets whether the compressor speed should be limited.
+   *
+   * @param limitSpeed {@code true} to limit the compressor speed, {@code false} otherwise.
+   */
+  public void setLimitSpeed(boolean limitSpeed) {
+    this.limitSpeed = limitSpeed;
+  }
+
 }

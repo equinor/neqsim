@@ -6,8 +6,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * <p>
  * KTAViscosityMethod class.
  * </p>
+ *
+ * @author akselrs
  */
-
 public class KTAViscosityMethod extends Viscosity {
   /**
    * <p>

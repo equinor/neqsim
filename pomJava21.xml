@@ -13,19 +13,19 @@
 	<version>${revision}${sha1}${changelist}</version>
 
 	<properties>
-		<revision>3.0.20</revision>
+		<revision>3.0.27</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<sha1/>
-		<changelist/>
+		<sha1 />
+		<changelist />
 	</properties>
 	<licenses>
 		<license>
-	  		<name>The Apache Software License, Version 2.0</name>
-	  		<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-	  		<distribution>repo</distribution>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
 		</license>
-  	</licenses>
+	</licenses>
 	<developers>
 		<developer>
 			<name>Even Solbraa</name>
@@ -89,7 +89,7 @@
 		<dependency>
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-all</artifactId>
-			<version>0.43.1</version>
+			<version>0.44.0</version>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
@@ -115,6 +115,16 @@
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.12.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.15.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
+			<version>2.15.2</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -193,7 +203,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.13.0</version>
 				<configuration>
-					<release>21</release> <!-- Upgrade jdk version to 21 if you are having issues compiling -->
+					<release>21</release> <!-- Upgrade jdk version to 21 if you are having issues
+					compiling -->
 					<encoding>${project.build.sourceEncoding}</encoding>
 					<!-- Uncomment below to get compiler warnings
 					<compilerArgs>
