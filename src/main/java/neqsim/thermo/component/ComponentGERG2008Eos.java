@@ -25,7 +25,6 @@ public class ComponentGERG2008Eos extends ComponentEos {
    * @param compIndex Index number of component in phase object component array.
    */
 
-
   // --- DISCLAIMER BEGIN ---
   // This class is not yet done
   // Some of the properties releated to the helmholtz energy and its derivatives
@@ -71,19 +70,17 @@ public class ComponentGERG2008Eos extends ComponentEos {
   }
 
   @Override
-  public void Finit(PhaseInterface phase, double T, double p,
-                    double totalNumberOfMoles, double beta,
-                    int numberOfComponents, int initType) {
+  public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles,
+      double beta, int numberOfComponents, int initType) {
     super.Finit(phase, T, p, totalNumberOfMoles, beta, numberOfComponents, initType);
 
     if (initType == 3) {
       double phi = fugcoef(phase);
-      phase.getComponent(getComponentNumber())
-           .setFugacityCoefficient(phi);
+      phase.getComponent(getComponentNumber()).setFugacityCoefficient(phi);
     }
-  
+
   }
-  
+
 
   @Override
   public double calca() {
@@ -94,7 +91,6 @@ public class ComponentGERG2008Eos extends ComponentEos {
   public double calcb() {
     return 0.0;
   }
-
 
   /** {@inheritDoc} */
   @Override
@@ -123,21 +119,21 @@ public class ComponentGERG2008Eos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents,
-                       double temperature, double pressure) {
-    return 0;  
+  public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure) {
+    return 0;
   }
 
   @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents,
-                       double temperature, double pressure) {
-    return 0;  
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure) {
+    return 0;
   }
 
   @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents,
-                       double temperature, double pressure) {
-    return 0;  
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure) {
+    return 0;
   }
 
   /** {@inheritDoc} */
@@ -145,10 +141,9 @@ public class ComponentGERG2008Eos extends ComponentEos {
   public double fugcoef(PhaseInterface phase) {
     double temperature = phase.getTemperature();
     double pressure = phase.getPressure();
-    double logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
-         - Math.log(phase.getZ());
+    double logFugacityCoefficient =
+        dFdN(phase, phase.getNumberOfComponents(), temperature, pressure) - Math.log(phase.getZ());
     double fugacityCoefficient = Math.exp(logFugacityCoefficient);
     return fugacityCoefficient;
   }
-
 }

@@ -17,7 +17,6 @@ public class SetterTest {
   private Setter setter;
   SystemInterface testFluid;
 
-
   @BeforeEach
   public void setUp() {
     setter = new Setter("Test Setter");
@@ -105,5 +104,4 @@ public class SetterTest {
     // Assert that the outlet temperature was set correctly
     assertEquals(5.0, cooler.getOutletTemperature() - 273.15, 0.01);
   }
-
 }

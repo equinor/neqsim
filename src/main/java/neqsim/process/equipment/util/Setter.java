@@ -200,7 +200,6 @@ public class Setter extends ProcessEquipmentBaseClass {
         logger.error("Error setting specification for equipment: " + equipment.getName(), ex);
       }
     }
-
   }
 
   public static void main(String[] args) {

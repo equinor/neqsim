@@ -2227,22 +2227,19 @@ public abstract class Phase implements PhaseInterface {
     return test.propertiesGERG();
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public doubleW[] getAlpha0_GERG2008() {
+    neqsim.thermo.util.gerg.NeqSimGERG2008 test = new neqsim.thermo.util.gerg.NeqSimGERG2008(this);
+    return test.getAlpha0_GERG2008();
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public doubleW[] getAlpha0_GERG2008() {
-      neqsim.thermo.util.gerg.NeqSimGERG2008 test =
-          new neqsim.thermo.util.gerg.NeqSimGERG2008(this);
-      return test.getAlpha0_GERG2008();
-    }
-  
-    /** {@inheritDoc} */
-    @Override
-    public doubleW[][] getAlphares_GERG2008() {
-      neqsim.thermo.util.gerg.NeqSimGERG2008 test =
-          new neqsim.thermo.util.gerg.NeqSimGERG2008(this);
-      return test.getAlphares_GERG2008();
-    }
+  /** {@inheritDoc} */
+  @Override
+  public doubleW[][] getAlphares_GERG2008() {
+    neqsim.thermo.util.gerg.NeqSimGERG2008 test = new neqsim.thermo.util.gerg.NeqSimGERG2008(this);
+    return test.getAlphares_GERG2008();
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -2261,16 +2258,14 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public doubleW[] getAlpha0_Vega() {
-    neqsim.thermo.util.Vega.NeqSimVega test =
-        new neqsim.thermo.util.Vega.NeqSimVega(this);
+    neqsim.thermo.util.Vega.NeqSimVega test = new neqsim.thermo.util.Vega.NeqSimVega(this);
     return test.getAlpha0_Vega();
   }
 
   /** {@inheritDoc} */
   @Override
   public doubleW[][] getAlphares_Vega() {
-    neqsim.thermo.util.Vega.NeqSimVega test =
-        new neqsim.thermo.util.Vega.NeqSimVega(this);
+    neqsim.thermo.util.Vega.NeqSimVega test = new neqsim.thermo.util.Vega.NeqSimVega(this);
     return test.getAlphares_Vega();
   }
 
@@ -2363,7 +2358,6 @@ public abstract class Phase implements PhaseInterface {
     }
   }
 
-
   /** {@inheritDoc} */
   @Override
   public doubleW[] getAlpha0_Leachman(String hydrogenType) {
@@ -2371,7 +2365,7 @@ public abstract class Phase implements PhaseInterface {
         new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
     return test.getAlpha0_Leachman();
   }
-  
+
   /**
    * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
    * Checks for other components in the phase and throws an exception if the phase is not pure
@@ -2388,10 +2382,11 @@ public abstract class Phase implements PhaseInterface {
           compNames.append(", ");
         }
       }
-      throw new IllegalArgumentException("Leachman model only works for pure hydrogen streams. Found components: " 
-                                            + compNames.toString());
+      throw new IllegalArgumentException(
+          "Leachman model only works for pure hydrogen streams. Found components: "
+              + compNames.toString());
     }
-  
+
     // Retrieve the component name from the current phase
     String compName = this.getComponent(0).getComponentName();
 
@@ -2403,7 +2398,8 @@ public abstract class Phase implements PhaseInterface {
     } else if (compName.equalsIgnoreCase("hydrogen")) {
       return getAlpha0_Leachman("normal");
     } else {
-      throw new IllegalArgumentException("Leachman model only works for hydrogen. Found: " + compName);
+      throw new IllegalArgumentException(
+          "Leachman model only works for hydrogen. Found: " + compName);
     }
   }
 
@@ -2414,7 +2410,7 @@ public abstract class Phase implements PhaseInterface {
         new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
     return test.getAlphares_Leachman();
   }
-  
+
   /**
    * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
    * Checks for other components in the phase and throws an exception if the phase is not pure
@@ -2431,8 +2427,9 @@ public abstract class Phase implements PhaseInterface {
           compNames.append(", ");
         }
       }
-      throw new IllegalArgumentException("Leachman model only works for pure hydrogen streams. Found components: " 
-                                            + compNames.toString());
+      throw new IllegalArgumentException(
+          "Leachman model only works for pure hydrogen streams. Found components: "
+              + compNames.toString());
     }
 
     // Retrieve the component name from the current phase
@@ -2446,10 +2443,10 @@ public abstract class Phase implements PhaseInterface {
     } else if (compName.equalsIgnoreCase("hydrogen")) {
       return getAlphares_Leachman("normal");
     } else {
-      throw new IllegalArgumentException("Leachman model only works for hydrogen. Found: " + compName);
+      throw new IllegalArgumentException(
+          "Leachman model only works for hydrogen. Found: " + compName);
     }
   }
-
 
   /** {@inheritDoc} */
   @Override

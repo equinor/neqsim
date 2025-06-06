@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-
 /**
  * @author victorigi99
  */
@@ -29,16 +28,18 @@ public class PHFlashLeachmanTest {
   @Test
   void testRun() {
     double[] leachmanProps = testSystem.getPhase(0).getProperties_Leachman();
-    double leachmanEnthalpy = leachmanProps[7] * testSystem.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
+    double leachmanEnthalpy = leachmanProps[7] * testSystem.getPhase(0).getNumberOfMolesInPhase(); // J/mol
+                                                                                                   // K
     testSystem.setPressure(10.0);
     testOps.PHflashLeachman(leachmanEnthalpy);
     leachmanProps = testSystem.getPhase(0).getProperties_Leachman();
     double leachmanEnthalpy2 = leachmanProps[7] * testSystem.getPhase(0).getNumberOfMolesInPhase();
     assertEquals(leachmanEnthalpy, leachmanEnthalpy2, Math.abs(leachmanEnthalpy2) / 1000.0);
-  
+
     testOps.PHflashLeachman(leachmanEnthalpy + 100.0);
     leachmanProps = testSystem.getPhase(0).getProperties_Leachman();
     double leachmanEnthalpy3 = leachmanProps[7] * testSystem.getPhase(0).getNumberOfMolesInPhase();
-    assertEquals(leachmanEnthalpy3, leachmanEnthalpy2 + 100.0, Math.abs(leachmanEnthalpy2) / 1000.0);
+    assertEquals(leachmanEnthalpy3, leachmanEnthalpy2 + 100.0,
+        Math.abs(leachmanEnthalpy2) / 1000.0);
   }
 }

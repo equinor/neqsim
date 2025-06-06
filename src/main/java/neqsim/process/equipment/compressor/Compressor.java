@@ -1889,13 +1889,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     return actualCompressionRatio;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Set CompressorChartType
-   * </p>
-   */
+  /** {@inheritDoc} */
   public void setCompressorChartType(String type) {
     if (type.equals("simple") || type.equals("fan law")) {
       compressorChart = new CompressorChart();
@@ -1969,5 +1963,4 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public void setLimitSpeed(boolean limitSpeed) {
     this.limitSpeed = limitSpeed;
   }
-
 }

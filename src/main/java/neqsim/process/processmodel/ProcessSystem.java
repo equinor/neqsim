@@ -561,13 +561,7 @@ public class ProcessSystem extends SimulationBaseClass {
     runTransient(getTimeStep(), UUID.randomUUID());
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * runTransient.
-   * </p>
-   */
+  /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
 

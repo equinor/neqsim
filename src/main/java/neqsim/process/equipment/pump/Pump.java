@@ -461,13 +461,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
         .toJson(new PumpResponse(this));
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Set CompressorChartType
-   * </p>
-   */
+  /** {@inheritDoc} */
   public void setPumpChartType(String type) {
     if (type.equals("simple") || type.equals("fan law")) {
       pumpChart = new PumpChart();

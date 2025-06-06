@@ -129,8 +129,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     // Then you optionally split the feedmixer output into dummy streams_3,
     // gasOutStream, liquidOutStream (the existing pattern).
-    double moles = feedmixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
-    stream_3 = feedmixer.getOutStream(); // combined
+    double moles = feedmixer.getOutletStream().getThermoSystem().getTotalNumberOfMoles();
+    stream_3 = feedmixer.getOutletStream(); // combined
     gasOutStream.setThermoSystem(stream_3.getThermoSystem().clone());
     gasOutStream.getThermoSystem().setTotalNumberOfMoles(moles / 2.0);
 
@@ -449,7 +449,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public double getInternalDiameter() {
     return internalDiameter;
   }
-
 
   /**
    * Calculates the Fs factor for the distillation column. The Fs factor is a measure of the gas

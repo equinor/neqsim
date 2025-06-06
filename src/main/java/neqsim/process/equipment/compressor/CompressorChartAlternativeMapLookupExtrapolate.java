@@ -118,8 +118,10 @@ public class CompressorChartAlternativeMapLookupExtrapolate
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Calculates the polytropic efficiency for a given flow and speed by interpolating or
    * extrapolating between reference compressor curves.
+   * </p>
    */
   @Override
   public double getPolytropicEfficiency(double flow, double speed) {
