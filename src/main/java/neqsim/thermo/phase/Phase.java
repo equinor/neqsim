@@ -10,6 +10,7 @@ import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.netlib.util.doubleW;
 import neqsim.physicalproperties.PhysicalPropertyHandler;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.system.PhysicalProperties;
@@ -219,7 +220,11 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public void addMolesChemReac(int component, double dn, double totdn) {
-    if ((numberOfMolesInPhase + dn) / numberOfMolesInPhase < -1e-10) {
+    double numbmoles = numberOfMolesInPhase;
+    if (numbmoles < 0.0001) {
+      numbmoles = 1;
+    }
+    if ((numberOfMolesInPhase + dn) / numbmoles < -1e-10) {
       String msg = "will lead to negative number of moles in phase." + (numberOfMolesInPhase + dn);
       neqsim.util.exception.InvalidInputException ex =
           new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
@@ -2224,6 +2229,20 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
+  public doubleW[] getAlpha0_GERG2008() {
+    neqsim.thermo.util.gerg.NeqSimGERG2008 test = new neqsim.thermo.util.gerg.NeqSimGERG2008(this);
+    return test.getAlpha0_GERG2008();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public doubleW[][] getAlphares_GERG2008() {
+    neqsim.thermo.util.gerg.NeqSimGERG2008 test = new neqsim.thermo.util.gerg.NeqSimGERG2008(this);
+    return test.getAlphares_GERG2008();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getDensity_Vega() {
     neqsim.thermo.util.Vega.NeqSimVega test = new neqsim.thermo.util.Vega.NeqSimVega(this);
     return test.getDensity();
@@ -2237,6 +2256,20 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /** {@inheritDoc} */
+  @Override
+  public doubleW[] getAlpha0_Vega() {
+    neqsim.thermo.util.Vega.NeqSimVega test = new neqsim.thermo.util.Vega.NeqSimVega(this);
+    return test.getAlpha0_Vega();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public doubleW[][] getAlphares_Vega() {
+    neqsim.thermo.util.Vega.NeqSimVega test = new neqsim.thermo.util.Vega.NeqSimVega(this);
+    return test.getAlphares_Vega();
+  }
+
+  /** {@inheritDoc} */
   public double getDensity_Leachman(String hydrogenType) {
     neqsim.thermo.util.leachman.NeqSimLeachman test =
         new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
@@ -2244,15 +2277,40 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * Gets the density using the default hydrogen type ('normal'). This method prints a warning if no
-   * hydrogen type is specified.
+   * If no hydrogenType is specified it checks the component name and chooses the correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase is not pure
    *
    * @return the density calculated with the 'normal' hydrogen type.
    */
   public double getDensity_Leachman() {
-    // Warn the user that no hydrogen type was specified and use "normal" by default
-    System.out.println("No hydrogen type specified. Using default type: 'normal'.");
-    return getDensity_Leachman("normal");
+    // Check that the phase contains exactly one component
+    if (this.getNumberOfComponents() != 1) {
+      StringBuilder compNames = new StringBuilder();
+      for (int i = 0; i < this.getNumberOfComponents(); i++) {
+        compNames.append(this.getComponent(i).getComponentName());
+        if (i < this.getNumberOfComponents() - 1) {
+          compNames.append(", ");
+        }
+      }
+      throw new IllegalArgumentException(
+          "Leachman model only works for pure hydrogen streams. Found components: "
+              + compNames.toString());
+    }
+
+    // Retrieve the component name from the current phase
+    String compName = this.getComponent(0).getComponentName();
+
+    // Check the component type and choose the correct hydrogen type
+    if (compName.equalsIgnoreCase("para-hydrogen")) {
+      return getDensity_Leachman("para");
+    } else if (compName.equalsIgnoreCase("ortho-hydrogen")) {
+      return getDensity_Leachman("ortho");
+    } else if (compName.equalsIgnoreCase("hydrogen")) {
+      return getDensity_Leachman("normal");
+    } else {
+      throw new IllegalArgumentException(
+          "Leachman model only works for hydrogen. Found: " + compName);
+    }
   }
 
   /** {@inheritDoc} */
@@ -2264,15 +2322,130 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * Gets the Leachman properties of a phase using the default hydrogen type ('normal'). This method
-   * prints a warning if no hydrogen type is specified.
+   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase is not pure
    *
    * @return an array of properties of type double.
    */
   public double[] getProperties_Leachman() {
-    // Warn the user and use the default hydrogen type
-    System.out.println("No hydrogen type specified. Using default type: 'normal'.");
-    return getProperties_Leachman("normal");
+    // Check that the phase contains exactly one component
+    if (this.getNumberOfComponents() != 1) {
+      StringBuilder compNames = new StringBuilder();
+      for (int i = 0; i < this.getNumberOfComponents(); i++) {
+        compNames.append(this.getComponent(i).getComponentName());
+        if (i < this.getNumberOfComponents() - 1) {
+          compNames.append(", ");
+        }
+      }
+      throw new IllegalArgumentException(
+          "Leachman model only works for pure hydrogen streams. Found components: "
+              + compNames.toString());
+    }
+
+    // Retrieve the component name from the current phase
+    String compName = this.getComponent(0).getComponentName();
+
+    // Check the component type and choose the correct hydrogen type
+    if (compName.equalsIgnoreCase("para-hydrogen")) {
+      return getProperties_Leachman("para");
+    } else if (compName.equalsIgnoreCase("ortho-hydrogen")) {
+      return getProperties_Leachman("ortho");
+    } else if (compName.equalsIgnoreCase("hydrogen")) {
+      return getProperties_Leachman("normal");
+    } else {
+      throw new IllegalArgumentException(
+          "Leachman model only works for hydrogen. Found: " + compName);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public doubleW[] getAlpha0_Leachman(String hydrogenType) {
+    neqsim.thermo.util.leachman.NeqSimLeachman test =
+        new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
+    return test.getAlpha0_Leachman();
+  }
+
+  /**
+   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase is not pure
+   *
+   * @return a matrix of properties of type doubleW.
+   */
+  public doubleW[] getAlpha0_Leachman() {
+    // Check that the phase contains exactly one component
+    if (this.getNumberOfComponents() != 1) {
+      StringBuilder compNames = new StringBuilder();
+      for (int i = 0; i < this.getNumberOfComponents(); i++) {
+        compNames.append(this.getComponent(i).getComponentName());
+        if (i < this.getNumberOfComponents() - 1) {
+          compNames.append(", ");
+        }
+      }
+      throw new IllegalArgumentException(
+          "Leachman model only works for pure hydrogen streams. Found components: "
+              + compNames.toString());
+    }
+
+    // Retrieve the component name from the current phase
+    String compName = this.getComponent(0).getComponentName();
+
+    // Check the component type and choose the correct hydrogen type
+    if (compName.equalsIgnoreCase("para-hydrogen")) {
+      return getAlpha0_Leachman("para");
+    } else if (compName.equalsIgnoreCase("ortho-hydrogen")) {
+      return getAlpha0_Leachman("ortho");
+    } else if (compName.equalsIgnoreCase("hydrogen")) {
+      return getAlpha0_Leachman("normal");
+    } else {
+      throw new IllegalArgumentException(
+          "Leachman model only works for hydrogen. Found: " + compName);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public doubleW[][] getAlphares_Leachman(String hydrogenType) {
+    neqsim.thermo.util.leachman.NeqSimLeachman test =
+        new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
+    return test.getAlphares_Leachman();
+  }
+
+  /**
+   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase is not pure
+   *
+   * @return a matrix of properties of type doubleW.
+   */
+  public doubleW[][] getAlphares_Leachman() {
+    // Check that the phase contains exactly one component
+    if (this.getNumberOfComponents() != 1) {
+      StringBuilder compNames = new StringBuilder();
+      for (int i = 0; i < this.getNumberOfComponents(); i++) {
+        compNames.append(this.getComponent(i).getComponentName());
+        if (i < this.getNumberOfComponents() - 1) {
+          compNames.append(", ");
+        }
+      }
+      throw new IllegalArgumentException(
+          "Leachman model only works for pure hydrogen streams. Found components: "
+              + compNames.toString());
+    }
+
+    // Retrieve the component name from the current phase
+    String compName = this.getComponent(0).getComponentName();
+
+    // Check the component type and choose the correct hydrogen type
+    if (compName.equalsIgnoreCase("para-hydrogen")) {
+      return getAlphares_Leachman("para");
+    } else if (compName.equalsIgnoreCase("ortho-hydrogen")) {
+      return getAlphares_Leachman("ortho");
+    } else if (compName.equalsIgnoreCase("hydrogen")) {
+      return getAlphares_Leachman("normal");
+    } else {
+      throw new IllegalArgumentException(
+          "Leachman model only works for hydrogen. Found: " + compName);
+    }
   }
 
   /** {@inheritDoc} */

@@ -76,6 +76,12 @@ public class CompressorChartAlternativeMapLookupExtrapolate
    */
   @Override
   public double getPolytropicHead(double flow, double speed) {
+    // Ensure head is 0 when speed is 0
+    if (speed == 0) {
+      logger.debug("Speed is 0, returning head as 0.");
+      return 0.0;
+    }
+
     ArrayList<Double> closestRefSpeeds = getClosestRefSpeeds(speed);
     SplineInterpolator interpolator = new SplineInterpolator();
     ArrayList<Double> interpolatedHeads = new ArrayList<>();
@@ -91,7 +97,8 @@ public class CompressorChartAlternativeMapLookupExtrapolate
     }
 
     if (interpolatedHeads.size() == 1) {
-      return interpolatedHeads.get(0);
+      return interpolatedHeads.get(0) * (speed / speeds.get(0)); // Scale head proportionally to
+                                                                 // speed
     }
 
     double speed1 = speeds.get(0);
@@ -99,14 +106,22 @@ public class CompressorChartAlternativeMapLookupExtrapolate
     double head1 = interpolatedHeads.get(0);
     double head2 = interpolatedHeads.get(1);
 
-    return extrapolateOrInterpolateSpeed(speed, speed1, speed2, head1, head2);
+    // Interpolate or extrapolate the head based on speed
+    double interpolatedHead = extrapolateOrInterpolateSpeed(speed, speed1, speed2, head1, head2);
+
+    // Scale the interpolated head proportionally to speed
+    interpolatedHead *= (speed / Math.max(speed1, speed2));
+
+    return interpolatedHead;
   }
 
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Calculates the polytropic efficiency for a given flow and speed by interpolating or
    * extrapolating between reference compressor curves.
+   * </p>
    */
   @Override
   public double getPolytropicEfficiency(double flow, double speed) {

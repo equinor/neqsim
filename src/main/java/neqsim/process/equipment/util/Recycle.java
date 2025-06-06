@@ -44,6 +44,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   private double temperatureTolerance = 1e-2;
   private double pressureTolerance = 1e-2;
 
+  private double minimumFlow = 1e-20;
+
   /**
    * <p>
    * Constructor for Recycle.
@@ -315,16 +317,21 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   @Override
   public void run(UUID id) {
     iterations++;
+    isActive(true);
     /*
      * if(firstTime || iterations>maxIterations) { firstTime=false; return; }
      */
     double enthalpy = 0.0;
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
-    if (numberOfInputStreams == 1 && thermoSystem2.getFlowRate("kg/hr") < 1e-100) {
+    if (numberOfInputStreams == 1 && thermoSystem2.getFlowRate("kg/hr") < minimumFlow) {
+      isActive(false);
+      mixedStream.setThermoSystem(thermoSystem2);
       setErrorCompositon(0.0);
-      setErrorFlow(0.0);
-      setErrorTemperature(0.0);
-      setErrorPressure(0.0);
+      setErrorFlow(flowBalanceCheck());
+      setErrorTemperature(temperatureBalanceCheck());
+      setErrorPressure(pressureBalanceCheck());
+      outletStream.setThermoSystem(mixedStream.getThermoSystem());
+      outletStream.setCalculationIdentifier(id);
       return;
     }
     mixedStream.setThermoSystem(thermoSystem2);
@@ -335,6 +342,18 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       mixedStream.getThermoSystem().init(0);
 
       mixStream();
+
+      if (mixedStream.getFlowRate("kg/hr") < minimumFlow) {
+        isActive(false);
+        mixedStream.setThermoSystem(thermoSystem2);
+        setErrorCompositon(0.0);
+        setErrorFlow(flowBalanceCheck());
+        setErrorTemperature(temperatureBalanceCheck());
+        setErrorPressure(pressureBalanceCheck());
+        outletStream.setThermoSystem(mixedStream.getThermoSystem());
+        outletStream.setCalculationIdentifier(id);
+        return;
+      }
 
       setDownstreamProperties();
       try {
@@ -648,5 +667,23 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   @Override
   public void removeInputStream(int i) {
     streams.remove(i);
+  }
+
+  /**
+   * Gets the minimum flow rate for the pump.
+   *
+   * @return the minimum flow rate
+   */
+  public double getMinimumFlow() {
+    return minimumFlow;
+  }
+
+  /**
+   * Sets the minimum flow rate for the pump.
+   *
+   * @param minimumFlow the minimum flow rate to be set, in appropriate units.
+   */
+  public void setMinimumFlow(double minimumFlow) {
+    this.minimumFlow = minimumFlow;
   }
 }

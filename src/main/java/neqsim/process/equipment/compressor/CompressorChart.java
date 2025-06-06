@@ -24,7 +24,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   static Logger logger = LogManager.getLogger(CompressorChart.class);
 
   ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
-  private SurgeCurve surgeCurve = new SurgeCurve();
+  // private SurgeCurve surgeCurve = new SurgeCurve();
+  private SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
   private StoneWallCurve stoneWallCurve = new StoneWallCurve();
   boolean isSurge = false;
   double maxSpeedCurve = 0;
@@ -82,13 +83,16 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   /**
    * {@inheritDoc}
    *
+   * <p>
    * This method initializes the compressor performance curves, including speed, flow, head, and
    * polytropic efficiency.
+   * </p>
    *
    * <p>
    * The method takes chart conditions and initializes internal variables for different performance
    * parameters based on input arrays for speed, flow, head, and polytropic efficiency. It also
    * normalizes these parameters by calculating reduced values based on speed.
+   * </p>
    */
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
@@ -99,13 +103,16 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   /**
    * {@inheritDoc}
    *
+   * <p>
    * This method initializes the compressor performance curves, including speed, flow, head, and
    * polytropic efficiency.
+   * </p>
    *
    * <p>
    * The method takes chart conditions and initializes internal variables for different performance
    * parameters based on input arrays for speed, flow, head, and polytropic efficiency. It also
    * normalizes these parameters by calculating reduced values based on speed.
+   * </p>
    */
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
@@ -268,7 +275,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * @param head an array of type double
    */
   public void addSurgeCurve(double[] flow, double[] head) {
-    surgeCurve = new SurgeCurve(flow, head);
+    // surgeCurve = new SurgeCurve(flow, head);
+    surgeCurve = new SafeSplineSurgeCurve(flow, head);
   }
 
   /**
@@ -335,13 +343,13 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
   /** {@inheritDoc} */
   @Override
-  public SurgeCurve getSurgeCurve() {
+  public SafeSplineSurgeCurve getSurgeCurve() {
     return surgeCurve;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setSurgeCurve(SurgeCurve surgeCurve) {
+  public void setSurgeCurve(SafeSplineSurgeCurve surgeCurve) {
     this.surgeCurve = surgeCurve;
   }
 

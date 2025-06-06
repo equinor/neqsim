@@ -26,4 +26,19 @@ public interface NamedInterface {
    * @param name a {@link java.lang.String} object
    */
   public void setName(String name);
+
+  /**
+   * Sets the tag name for the process equipment.
+   *
+   * @param tagName a {@link java.lang.String} representing the tag name
+   * @throws IllegalArgumentException if the tag name is null
+   */
+  public void setTagName(String tagName);
+
+  /**
+   * Retrieves the tag name of the process equipment.
+   *
+   * @return the tag name as a String.
+   */
+  public String getTagName();
 }

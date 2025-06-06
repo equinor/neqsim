@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class DistillationColumnTest {
   /**
@@ -206,5 +209,103 @@ public class DistillationColumnTest {
         / gasToDebutanizerStream.getFlowRate("kg/hr") * 100;
 
     assertEquals(0.0, massbalance, 0.2);
+  }
+
+  /**
+   *
+   */
+  @Test
+  public void testMEGregeneration() {
+
+    SystemSrkCPAstatoil fluid1 = new SystemSrkCPAstatoil(273.15 + 40, 6.0);
+
+    // Add components
+    fluid1.addComponent("nitrogen", 0.1);
+    fluid1.addComponent("CO2", 0.05);
+    fluid1.addComponent("methane", 9.0);
+    fluid1.addComponent("ethane", 0.5);
+    fluid1.addComponent("propane", 0.3);
+    fluid1.addComponent("water", 75.0);
+    fluid1.addComponent("MEG", 25.0);
+
+    // Set mixing rule (10 => classic CPA mixing rule)
+    fluid1.setMixingRule(10);
+
+    // Perform TP flash
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid1);
+    try {
+      ops.TPflash();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    SystemInterface feedGas = fluid1.phaseToSystem(0);
+    SystemInterface feedMEG = fluid1.phaseToSystem(1);
+
+    // Calculate weight fraction of MEG in the first liquid phase
+    double wtMEG = feedMEG.getPhase(0).getWtFrac("MEG") * 100.0;
+
+    assertEquals(53.3718940, wtMEG, 0.2);
+
+    // 1) Create a stream named 'stream1' using feedMEG
+    Stream stream1 = new Stream("stream 1", feedMEG);
+    stream1.setFlowRate(6000.0, "kg/hr");
+    stream1.setTemperature(80.0, "C");
+    stream1.setPressure(1.021, "bara");
+    stream1.run();
+
+    // 1) Create a stream named 'stream1' using feedMEG
+    Stream stripgas = new Stream("stream 2", feedGas);
+    stripgas.setFlowRate(10.0, "kg/hr");
+    stripgas.setTemperature(80.0, "C");
+    stripgas.setPressure(1.021, "bara");
+    stripgas.run();
+
+    DistillationColumn distillationColumn = new DistillationColumn("MEG column", 2, true, true);
+    distillationColumn.addFeedStream(stream1, 1);
+    distillationColumn.addFeedStream(stripgas, 1);
+    distillationColumn.getReboiler().setOutTemperature(273.15 + 140.0);
+    distillationColumn.getCondenser().setOutTemperature(273.15 + 35.0);
+    distillationColumn.setTopPressure(1.021);
+    distillationColumn.setBottomPressure(1.021);
+    distillationColumn.getCondenser().setSeparation_with_liquid_reflux(true, 370.0, "kg/hr");
+
+    distillationColumn.run();
+
+    distillationColumn.toJson();
+    /*
+     * System.out.println("---------- PROCESS RESULTS ----------");
+     * System.out.println("density feed " + stream1.getFluid().getDensity("kg/m3") + " kg/m3");
+     * System.out.println("Distillation column top gas flow:    " +
+     * distillationColumn.getGasOutStream().getFlowRate("kg/hr") + " kg/hr");
+     * System.out.println("Distillation column top temperature:    " +
+     * distillationColumn.getGasOutStream().getTemperature("C") + " C");
+     * System.out.println("Distillation column bottom liquid flow: " +
+     * distillationColumn.getLiquidOutStream().getFlowRate("kg/hr") + " kg/hr");
+     * System.out.println("Split to water treatment: " +
+     * distillationColumn.getCondenser().getLiquidProductStream().getFlowRate("kg/hr") + " kg/hr");
+     * System.out.println("Split to resycle to column: " +
+     * distillationColumn.getCondenser().getLiquidOutStream().getFlowRate("kg/hr") + " kg/hr");
+     * System.out.println("wt% MEG to treatment " + (distillationColumn.getCondenser()
+     * .getLiquidProductStream().getFluid().getPhase(0).getWtFrac("MEG") * 100) + " wt%");
+     * System.out.println("wt% MEG to treatment " + (distillationColumn.getCondenser()
+     * .getLiquidProductStream().getFluid().getPhase(0).getWtFrac("MEG") * 100) + " wt%");
+     * System.out.println("flow MEG to treatment " + distillationColumn.getCondenser()
+     * .getLiquidProductStream().getFluid().getComponent("MEG").getFlowRate("kg/hr") + " kg/hr");
+     * System.out.println("density reflux " +
+     * distillationColumn.getCondenser().getLiquidProductStream().getFluid().getDensity("kg/m3") +
+     * " kg/m3"); System.out.println("wt% MEG " +
+     * (distillationColumn.getLiquidOutStream().getFluid().getPhase(0).getWtFrac("MEG") * 100) +
+     * " wt%"); System.out.println("KOF " +
+     * (distillationColumn.getCondenser().getLiquidProductStream()
+     * .getFluid().getPhase(0).getWtFrac("MEG") * 1e6 / 1.547) + " KOF"); System.out
+     * .println("Reboiler duty " + (distillationColumn.getReboiler().getDuty() / 1e6) + " MW");
+     * System.out .println("Condenser duty " + (distillationColumn.getCondenser().getDuty() / 1e6) +
+     * " MW"); System.out.println( "Condenser temperature " +
+     * (distillationColumn.getCondenser().getTemperature()) + " C"); System.out
+     * .println("Tray 1 temperature " + (distillationColumn.getTray(1).getTemperature()) + " C");
+     * System.out .println("Tray 2 temperature " + (distillationColumn.getTray(2).getTemperature())
+     * + " C");
+     */
   }
 }

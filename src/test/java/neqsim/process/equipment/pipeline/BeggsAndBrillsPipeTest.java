@@ -389,6 +389,8 @@ public class BeggsAndBrillsPipeTest {
     pipe2.setNumberOfIncrements(1);
     pipe2.setConstantSurfaceTemperature(constantSurfaceTemperature, "C");
 
+    pipe2.toJson();
+
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);

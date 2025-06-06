@@ -67,6 +67,8 @@ public class Units {
       activeUnits.put("volume flow", new UnitDescription("m3/hr", "cubic metre per hour"));
       activeUnits.put("standard volume flow",
           new UnitDescription("Sm3/hr", "standard cubic metre per hour"));
+      activeUnits.put("duty", new UnitDescription("W", "watt"));
+      activeUnits.put("power", new UnitDescription("W", "watt"));
 
       metricUnits.putAll(activeUnits);
       metricUnits.put("Molar Mass", new UnitDescription("gr/mol", "gr/mol"));
@@ -101,6 +103,8 @@ public class Units {
       fieldUnits.put("mass flow", new UnitDescription("lb/hr", "lb/hr"));
       fieldUnits.put("molar flow", new UnitDescription("lbmole/hr", "lbmole/hr"));
       fieldUnits.put("volume flow", new UnitDescription("barrel/day", "barrel/day"));
+      fieldUnits.put("power", new UnitDescription("hp", "horsepower"));
+      fieldUnits.put("duty", new UnitDescription("BTU/hr", "BTU per hour"));
 
       defaultUnits.putAll(activeUnits); // Makes a copy of activeUnits
     }

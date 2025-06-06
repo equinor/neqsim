@@ -1,9 +1,11 @@
 package neqsim.process.processmodel;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.util.report.Report;
 
 /**
  * <p>
@@ -81,12 +83,12 @@ public class ProcessModel implements Runnable {
   }
 
   /**
-   * {@inheritDoc}
-   *
    * The core run method.
    *
+   * <p>
    * - If runStep == true, each process is run in "step" mode exactly once. - Otherwise (continuous
    * mode), it loops up to maxIterations or until all processes are finished (isFinished() == true).
+   * </p>
    */
   @Override
   public void run() {
@@ -185,5 +187,19 @@ public class ProcessModel implements Runnable {
       logger.debug(ex.getMessage(), ex);
     }
     return threads;
+  }
+
+  /**
+   * Retrieves a list of all processes.
+   *
+   * @return a {@link java.util.Collection} of {@link neqsim.process.processmodel.ProcessSystem}
+   *         objects
+   */
+  public Collection<ProcessSystem> getAllProcesses() {
+    return processes.values();
+  }
+
+  public String getReport_json() {
+    return new Report(this).generateJsonReport();
   }
 }

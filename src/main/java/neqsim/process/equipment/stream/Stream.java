@@ -39,7 +39,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
   protected SystemInterface thermoSystem;
 
-  // todo: is streamNumber ever anything besides 0 and 1? consider removing along with
+  // todo: is streamNumber ever anything besides 0 and 1? consider removing along
+  // with
   // numberOfStreams?
   protected int streamNumber = 0;
   /** Constant <code>numberOfStreams=0</code>. */
@@ -339,6 +340,23 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
     thermoSystem = getFluid().clone();
 
+    if (getFlowRate("kg/hr") < getMinimumFlow()) {
+      isActive(false);
+
+      lastFlowRate = thermoSystem.getFlowRate("kg/hr");
+      lastTemperature = thermoSystem.getTemperature();
+      lastPressure = thermoSystem.getPressure();
+      lastComposition = thermoSystem.getMolarComposition();
+
+      if (stream != null) {
+        stream.setFluid(thermoSystem);
+      }
+      // logger.info("number of phases: " + thermoSystem.getNumberOfPhases());
+      // logger.info("beta: " + thermoSystem.getBeta());
+      setCalculationIdentifier(id);
+      return;
+    }
+
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
 
     if (stream != null && thermoSystem.getNumberOfComponents() == 1
@@ -472,7 +490,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     SystemInterface localSyst = getFluid().clone();
     ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
     ops.setRunAsThread(true);
-    ops.calcPTphaseEnvelope(true);
+    ops.calcPTphaseEnvelope2();
     ops.waitAndCheckForFinishedCalculation(10000);
     ops.displayResult();
     // ops.getJfreeChart();
@@ -484,7 +502,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     SystemInterface localSyst = getFluid().clone();
     ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
     ops.setRunAsThread(true);
-    ops.calcPTphaseEnvelope(true);
+    ops.calcPTphaseEnvelope2();
     ops.waitAndCheckForFinishedCalculation(10000);
     if (unit.equals("bara") || unit.equals("bar")) {
       return ops.get("cricondenbar")[1];
@@ -505,7 +523,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     SystemInterface localSyst = getFluid().clone();
     ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
     ops.setRunAsThread(true);
-    ops.calcPTphaseEnvelope(true);
+    ops.calcPTphaseEnvelope2();
     ops.waitAndCheckForFinishedCalculation(10000);
     if (unit.equals("bara") || unit.equals("bar")) {
       return ops.get("cricondentherm")[1];
@@ -529,7 +547,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     try {
       ops.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      // todo: not swallow exception
+      logger.error(ex.getMessage(), ex);
+      return 0.0;
     }
     return localSyst.getPressure();
   }
@@ -543,7 +562,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     try {
       ops.bubblePointPressureFlash(false);
     } catch (Exception ex) {
-      // todo: not swallow exception
+      logger.error(ex.getMessage(), ex);
+      return 0.0;
     }
     return localSyst.getPressure(returnUnit);
   }
@@ -554,7 +574,12 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     SystemInterface localSyst = getFluid().clone();
     Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(localSyst);
     standard.setReferenceTemperature(referenceTemperature, unit);
-    standard.calculate();
+    try {
+      standard.calculate();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
+      return 0.0;
+    }
     return standard.getValue("RVP", returnUnit);
   }
 
@@ -566,7 +591,12 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(localSyst);
     standard.setReferenceTemperature(referenceTemperature, unit);
     standard.setMethodRVP(rvpMethod);
-    standard.calculate();
+    try {
+      standard.calculate();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
+      return 0.0;
+    }
     return standard.getValue("RVP", returnUnit);
   }
 
@@ -666,6 +696,26 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     this.stream = stream;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>stream</code>.
+   * </p>
+   *
+   * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
+  public void setInletStream(StreamInterface stream) {
+    this.setStream(stream);
+  }
+
+  /**
+   * Gets the outlet stream.
+   *
+   * @return the outlet stream as a {@link neqsim.process.equipment.stream.StreamInterface} object.
+   */
+  public StreamInterface getOutletStream() {
+    return this;
+  }
+
   /** {@inheritDoc} */
   @Override
   public SystemInterface getFluid() {
@@ -725,4 +775,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   public String toJson() {
     return new GsonBuilder().create().toJson(new StreamResponse(this));
   }
+
+
 }

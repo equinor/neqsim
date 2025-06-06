@@ -11,9 +11,9 @@
 	<url>https://github.com/equinor/neqsim</url>
 	<packaging>jar</packaging>
 	<version>${revision}${sha1}${changelist}-Java8</version>
-	
+
 	<properties>
-		<revision>3.0.17</revision>
+		<revision>3.0.27</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<sha1 />
@@ -21,11 +21,11 @@
 	</properties>
 	<licenses>
 		<license>
-	  		<name>The Apache Software License, Version 2.0</name>
-	  		<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-	  		<distribution>repo</distribution>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
 		</license>
-  	</licenses>
+	</licenses>
 	<developers>
 		<developer>
 			<name>Even Solbraa</name>
@@ -116,7 +116,18 @@
 			<artifactId>gson</artifactId>
 			<version>2.12.1</version>
 		</dependency>
-	</dependencies>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.15.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
+			<version>2.15.2</version>
+			</dependency>
+		</dependencies>
 	<build>
 		<plugins>
 			<plugin>
@@ -193,7 +204,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.14.0</version>
 				<configuration>
-					<!--<release>8</release>--> 
+					<!--<release>8</release>-->
 					<source>1.8</source>
 					<target>1.8</target>
 				</configuration>

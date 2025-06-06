@@ -26,4 +26,4 @@ jobs:
           GITHUB_USERNAME: x-access-token
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
-          mvn --settings settings.xml -Drevision=${{ steps.get_version.outputs.VERSION }} deploy
+          mvn --settings settings.xml deploy

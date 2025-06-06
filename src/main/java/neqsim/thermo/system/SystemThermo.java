@@ -4027,10 +4027,11 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void reset() {
+    init(0);
     for (int i = 0; i < numberOfComponents; i++) {
       // TODO: numeric issue, nearly zero
       addComponent(getPhase(0).getComponent(i).getComponentName(),
-          -getPhase(0).getComponent(i).getNumberOfmoles());
+          -getPhase(0).getComponent(i).getNumberOfMolesInPhase());
     }
     // TODO: isInitialized = false;
   }

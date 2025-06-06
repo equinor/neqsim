@@ -13,7 +13,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Vega class.
  * </p>
  *
- * @author [author]
+ * @author victorigi99
  */
 public class Vega {
   double R;

@@ -6,11 +6,14 @@
 
 package neqsim.process.equipment;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
-import org.apache.commons.lang.SerializationUtils;
 import neqsim.process.SimulationBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.stream.EnergyStream;
@@ -41,6 +44,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   public EnergyStream energyStream = new EnergyStream();
   private boolean isSetEnergyStream = false;
   protected boolean isSolved = true;
+  private boolean isActive = true;
+  private double minimumFlow = 1e-20;
 
   /**
    * <p>
@@ -70,8 +75,17 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * @return a deep copy of the unit operation/process equipment
    */
   public ProcessEquipmentInterface copy() {
-    byte[] bytes = SerializationUtils.serialize(this);
-    return (ProcessEquipmentInterface) SerializationUtils.deserialize(bytes);
+    try {
+      ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+      ObjectOutputStream out = new ObjectOutputStream(byteOut);
+      out.writeObject(this);
+      out.flush();
+      ByteArrayInputStream byteIn = new ByteArrayInputStream(byteOut.toByteArray());
+      ObjectInputStream in = new ObjectInputStream(byteIn);
+      return (ProcessEquipmentInterface) in.readObject();
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to copy ProcessEquipmentBaseClass", e);
+    }
   }
 
   /**
@@ -204,8 +218,26 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public double getTemperature() {
+    return getFluid().getTemperature();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getTemperature(String unit) {
+    return getFluid().getTemperature(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getPressure(String unit) {
     return getFluid().getPressure(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setTemperature(double temperature) {
+    getFluid().setTemperature(temperature);
   }
 
   /** {@inheritDoc} */
@@ -299,4 +331,48 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public void run_step(UUID id) {}
+
+  /**
+   * <p>
+   * Getter for the field <code>minimumFlow</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getMinimumFlow() {
+    return minimumFlow;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>minimumFlow</code>.
+   * </p>
+   *
+   * @param minimumFlow a double
+   */
+  public void setMinimumFlow(double minimumFlow) {
+    this.minimumFlow = minimumFlow;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>isActive</code>.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isActive() {
+    return isActive;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>isActive</code>.
+   * </p>
+   * 
+   * @param isActive a boolean
+   */
+  public void isActive(boolean isActive) {
+    this.isActive = isActive;
+  }
 }

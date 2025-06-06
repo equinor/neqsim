@@ -42,13 +42,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    */
   public void setFlowRate(double flowrate, String unit);
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * getPressure.
-   * </p>
-   */
+  /** {@inheritDoc} */
   @Override
   public double getPressure(String unit);
 

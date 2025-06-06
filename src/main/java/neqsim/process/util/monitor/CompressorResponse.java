@@ -10,8 +10,7 @@ import neqsim.process.equipment.compressor.Compressor;
  * @author asmund
  * @version $Id: $Id
  */
-public class CompressorResponse {
-  public String name = "test";
+public class CompressorResponse extends BaseResponse {
 
   public Double suctionTemperature;
   public Double dischargeTemperature;
@@ -41,11 +40,10 @@ public class CompressorResponse {
    * Constructor for CompressorResponse.
    * </p>
    *
-   * @param inputCompressor a
-   *        {@link neqsim.process.equipment.compressor.Compressor} object
+   * @param inputCompressor a {@link neqsim.process.equipment.compressor.Compressor} object
    */
   public CompressorResponse(Compressor inputCompressor) {
-    name = inputCompressor.getName();
+    super(inputCompressor);
     molarMass = inputCompressor.getInletStream().getFluid().getMolarMass();
     suctionMassDensity = inputCompressor.getInletStream().getFluid().getDensity("kg/m3");
     dischargeMassDensity = inputCompressor.getOutletStream().getFluid().getDensity("kg/m3");

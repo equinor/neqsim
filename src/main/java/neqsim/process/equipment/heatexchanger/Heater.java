@@ -74,6 +74,8 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   /** {@inheritDoc} */
   @Override
   public void setdT(double dT) {
+    setTemperature = false;
+    setEnergyInput = false;
     this.dT = dT;
   }
 
@@ -86,6 +88,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
    */
   public void setOutPressure(double pressure) {
     setOutPressure = true;
+    this.pressureUnit = "bara";
     this.pressureOut = pressure;
   }
 
@@ -107,6 +110,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   public void setOutTemperature(double temperature) {
     setTemperature = true;
     setEnergyInput = false;
+    this.temperatureUnit = "K";
     this.temperatureOut = temperature;
   }
 
@@ -125,6 +129,8 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     setTemperature = true;
     setEnergyInput = false;
     this.temperatureOut = temperature;
+    temperatureUnit = "K";
+    this.pressureUnit = "bara";
     setOutPressure = true;
     this.pressureOut = pressure;
   }
@@ -151,6 +157,21 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   @Override
   public void run(UUID id) {
     system = inStream.getThermoSystem().clone();
+    isActive(true);
+
+    if (inStream.getFlowRate("kg/hr") < getMinimumFlow()) {
+      isActive(false);
+      getOutletStream().setThermoSystem(system);
+      lastTemperature = inStream.getFluid().getTemperature();
+      lastPressure = inStream.getFluid().getPressure();
+      lastFlowRate = inStream.getFluid().getFlowRate("kg/hr");
+      lastDuty = getDuty();
+      lastOutPressure = pressureOut;
+      lastOutTemperature = temperatureOut;
+      lastPressureDrop = pressureDrop;
+      setCalculationIdentifier(id);
+      return;
+    }
     system.init(3);
     double oldH = system.getEnthalpy();
     if (isSetEnergyStream()) {
@@ -241,6 +262,19 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
    */
   public double getDuty() {
     return energyInput;
+  }
+
+  /**
+   * <p>
+   * getDuty.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getDuty(String unit) {
+    // Use PowerUnit for conversion
+    neqsim.util.unit.PowerUnit powerUnit = new neqsim.util.unit.PowerUnit(energyInput, "W");
+    return powerUnit.getValue(unit);
   }
 
   /**

@@ -114,6 +114,7 @@ public class NeqSimVega {
    * </p>
    *
    * @return a double
+   * @return a double
    */
   public double getMolarDensity() {
     int flag = 0;
@@ -123,6 +124,76 @@ public class NeqSimVega {
     double pressure = phase.getPressure() * 100.0;
     Vega.DensityVega(flag, phase.getTemperature(), pressure, D, ierr, herr);
     return D.val;
+  }
+
+  /**
+   * <p>
+   * getAlpha0_Vega.
+   * </p>
+   *
+   * @return an array of {@link org.netlib.util.doubleW} objects
+   */
+  public doubleW[] getAlpha0_Vega() {
+    // Get temperature and molar density from the phase object
+    double temperature = phase.getTemperature();
+    double molarDensity = getMolarDensity(phase);
+
+    // Create and initialize a 4x4 array for the derivatives.
+    // Assuming doubleW is a simple wrapper with a public field 'val'.
+    int rows = 4;
+    int cols = 4;
+    doubleW[] a0 = new doubleW[rows];
+    for (int i = 0; i < rows; i++) {
+      a0[i] = new doubleW(0.0);
+    }
+
+    // Call the Vega function to fill in the ar array.
+    // The first two parameters (itau and idelta) are set to 0.
+    Vega.Alpha0Vega(temperature, molarDensity, a0);
+
+    // Return the computed dimensionless residual Helmholtz free energy.
+    // This is equivalent to alpha_res = A^r/(RT)
+    return a0;
+  }
+
+  /**
+   * Get reduced residual helmholtz free energy and its derivatives. The returned array has the
+   * following structure:
+   * <ul>
+   * <li>ar(0,0) - Residual Helmholtz energy (dimensionless, =a/RT)</li>
+   * <li>ar(0,1) - delta*partial (ar)/partial(delta)</li>
+   * <li>ar(0,2) - delta^2*partial^2(ar)/partial(delta)^2</li>
+   * <li>ar(0,3) - delta^3*partial^3(ar)/partial(delta)^3</li>
+   * <li>ar(1,0) - tau*partial (ar)/partial(tau)</li>
+   * <li>ar(1,1) - tau*delta*partial^2(ar)/partial(tau)/partial(delta)</li>
+   * <li>ar(2,0) - tau^2*partial^2(ar)/partial(tau)^2</li>
+   * </ul>
+   *
+   * @return a doubleW[][] representing the reduced residual helmholtz free energy
+   */
+  public doubleW[][] getAlphares_Vega() {
+    // Get temperature and molar density from the phase object
+    double temperature = phase.getTemperature();
+    double molarDensity = getMolarDensity(phase);
+
+    // Create and initialize a 4x4 array for the derivatives.
+    // Assuming doubleW is a simple wrapper with a public field 'val'.
+    int rows = 4;
+    int cols = 4;
+    doubleW[][] ar = new doubleW[rows][cols];
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        ar[i][j] = new doubleW(0.0);
+      }
+    }
+
+    // Call the Vega function to fill in the ar array.
+    // The first two parameters (itau and idelta) are set to 0.
+    Vega.AlpharVega(0, 0, temperature, molarDensity, ar);
+
+    // Return the computed dimensionless residual Helmholtz free energy.
+    // This is equivalent to alpha_res = A^r/(RT)
+    return ar;
   }
 
   /**

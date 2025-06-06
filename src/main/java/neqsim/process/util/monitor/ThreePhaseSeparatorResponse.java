@@ -11,8 +11,7 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
  * @author asmund
  * @version $Id: $Id
  */
-public class ThreePhaseSeparatorResponse {
-  public String name;
+public class ThreePhaseSeparatorResponse extends BaseResponse {
   public Double gasLoadFactor;
   public Double massflow;
   public FluidResponse gasFluid, oilFluid;
@@ -25,7 +24,7 @@ public class ThreePhaseSeparatorResponse {
    * @param inputSeparator a {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object
    */
   public ThreePhaseSeparatorResponse(ThreePhaseSeparator inputSeparator) {
-    name = inputSeparator.getName();
+    super(inputSeparator);
     massflow = inputSeparator.getFluid().getFlowRate("kg/hr");
     gasLoadFactor = inputSeparator.getGasLoadFactor();
     oilFluid = new FluidResponse(inputSeparator.getOilOutStream().getFluid());

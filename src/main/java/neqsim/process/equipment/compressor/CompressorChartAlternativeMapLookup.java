@@ -138,7 +138,7 @@ public class CompressorChartAlternativeMapLookup
 
   ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
   ArrayList<Double> chartSpeeds = new ArrayList<Double>();
-  private SurgeCurve surgeCurve = new SurgeCurve();
+  private SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
   private StoneWallCurve stoneWallCurve = new StoneWallCurve();
   boolean isSurge = false;
   boolean isStoneWall = false;
@@ -179,12 +179,13 @@ public class CompressorChartAlternativeMapLookup
     chartSpeeds.add(speed);
   }
 
-  /** {@inheritDoc} */
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Sets the compressor curves based on the provided chart conditions, speed, flow, head, and
    * polytropic efficiency values.
+   * </p>
    */
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
@@ -192,12 +193,13 @@ public class CompressorChartAlternativeMapLookup
     setCurves(chartConditions, speed, flow, head, flow, polyEff);
   }
 
-  /** {@inheritDoc} */
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Sets the compressor curves based on the provided chart conditions, speed, flow, head,
    * flowPolytrpicEfficiency and polytropic efficiency values.
+   * </p>
    */
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
@@ -207,6 +209,7 @@ public class CompressorChartAlternativeMapLookup
           new CompressorCurve(speed[i], flow[i], head[i], flowPolyEff[i], polyEff[i]);
       chartValues.add(curve);
       chartSpeeds.add(speed[i]);
+
     }
 
     setUseCompressorChart(true);
@@ -255,14 +258,13 @@ public class CompressorChartAlternativeMapLookup
     return closestRefSpeeds;
   }
 
-  /** {@inheritDoc} */
   /**
    * {@inheritDoc}
    *
-   * Calculates the polytropic head for a given flow and speed.
-   *
+   * <p>
    * This method interpolates the polytropic head values from reference speeds closest to the given
    * speed and averages them to estimate the polytropic head at the specified flow and speed.
+   * </p>
    */
   @Override
   public double getPolytropicHead(double flow, double speed) {
@@ -288,13 +290,14 @@ public class CompressorChartAlternativeMapLookup
     return sum / tempHeads.size();
   }
 
-  /** {@inheritDoc} */
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Calculates the polytropic efficiency of the compressor for a given flow and speed. The method
    * interpolates the efficiency values from reference speed curves and averages them to estimate
    * the efficiency at the specified conditions.
+   * </p>
    */
   @Override
   public double getPolytropicEfficiency(double flow, double speed) {
@@ -327,7 +330,7 @@ public class CompressorChartAlternativeMapLookup
    * @param head an array of type double
    */
   public void addSurgeCurve(double[] flow, double[] head) {
-    surgeCurve = new SurgeCurve(flow, head);
+    surgeCurve = new SafeSplineSurgeCurve(flow, head);
   }
 
   /**
@@ -461,13 +464,13 @@ public class CompressorChartAlternativeMapLookup
 
   /** {@inheritDoc} */
   @Override
-  public SurgeCurve getSurgeCurve() {
+  public SafeSplineSurgeCurve getSurgeCurve() {
     return surgeCurve;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setSurgeCurve(SurgeCurve surgeCurve) {
+  public void setSurgeCurve(SafeSplineSurgeCurve surgeCurve) {
     this.surgeCurve = surgeCurve;
   }
 
@@ -700,5 +703,16 @@ public class CompressorChartAlternativeMapLookup
   @Override
   public double getFlow(double head, double speed, double guessFlow) {
     return 0.0;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>minSpeedCurve</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getMinSpeedCurve() {
+    return 0;
   }
 }
