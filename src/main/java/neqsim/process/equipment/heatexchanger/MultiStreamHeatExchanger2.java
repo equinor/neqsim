@@ -32,7 +32,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   SystemInterface thermoSystem;
 
   private double tolerance = 1e-3;
-  private int maxIterations = 50000;
+  private int maxIterations = 1000;
   private double jacobiDelta = 1e-4;
 
   private final double extremeEnergy = 0.3;
@@ -43,9 +43,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   private int stallCounter = 0;
   private final int stallLimit = 50;
   private double localRange = 5.0;
-  
 
-  private double damping = 0.5;
+
+  private double damping = 1.0;
 
   private Double approachTemperature = 5.0;
   private Double UA = null;
@@ -54,6 +54,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   private double coldLoad;
   private java.util.Map<String, java.util.List<java.util.Map<String, Object>>> compositeCurvePoints =
       new java.util.HashMap<>();
+  private List<Double> hInlet = new ArrayList<>();
+  private List<SystemInterface> fluidInlet = new ArrayList<>();
+
   private List<Double> allLoad = new ArrayList<>();
   private List<Double> hotTempAll = new ArrayList<>();
   private List<Double> coldTempAll = new ArrayList<>();
@@ -114,7 +117,14 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    // Calculate hin for all streams and 
+    // Calculate hin for all streams and
+    for (int i = 0; i < inStreams.size(); i++) {
+      SystemInterface fluid = inStreams.get(i).getFluid().clone();
+      fluid.initThermoProperties();
+      hInlet.add(fluid.getEnthalpy("kJ/kg"));
+      fluidInlet.add(fluid);
+    }
+
     int undefinedCount = 0;
     for (Double temp : outletTemps) {
       if (temp == null) {
@@ -157,7 +167,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     for (int i = 0; i < unknownOutlets.size(); i++) {
       if ((Boolean) unknownOutlets.get(i)) {
         idx = i;
-        unknownIndices.add(i); 
+        unknownIndices.add(i);
         break;
       }
     }
@@ -378,7 +388,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     hotLoad = 0.0;
     coldLoad = 0.0;
     for (int i = 0; i < inStreams.size(); i++) {
-      double hIn = enthalpyTPFlash(i, pressures.get(i), inletTemps.get(i)); // save 
+      double hIn = hInlet.get(i);
       double hOut = enthalpyTPFlash(i, pressures.get(i), outletTemps.get(i));
       double load = (hOut - hIn) * massFlows.get(i);
       streamLoads.set(i, load);
@@ -451,7 +461,6 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   /** {@inheritDoc} */
   public double calculateUA() {
     double UAvalue = 0.0;
-    energyDiff();
     compositeCurve();
     pinch();
 
@@ -494,9 +503,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
 
   private double enthalpyTPFlash(int index, double pressure, double temperature) {
-    StreamInterface stream = inStreams.get(index);
-
-    thermoSystem = stream.getThermoSystem().clone();
+    SystemInterface thermoSystem = fluidInlet.get(index);
     thermoSystem.setPressure(pressure, "bara");
     thermoSystem.setTemperature(temperature, "C");
 
@@ -649,7 +656,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     return calculateIntervalTemp(lo, load, hi, tLo, tHi);
   }
 
-  private void resetOfExtremesAndStalls(List<Integer> unknownIndices, boolean localMin, boolean UATest){
+  private void resetOfExtremesAndStalls(List<Integer> unknownIndices, boolean localMin,
+      boolean UATest) {
     int attempt = 0;
     List<String> msgs = new ArrayList<>();
 
@@ -701,7 +709,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
           double dT2 = hotTempAll.get(i) - coldTempAll.get(i);
           if (dT1 <= tolerance || dT2 <= tolerance) {
             heatFeasible = false;
-            msgs.add(String.format("segment %d: ΔT1=%.2f °C, ΔT2=%.2f °C (must be > 0)", i, dT1, dT2));
+            msgs.add(
+                String.format("segment %d: ΔT1=%.2f °C, ΔT2=%.2f °C (must be > 0)", i, dT1, dT2));
           }
         }
       } else {
@@ -724,7 +733,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       if (directionOk && energyOk && heatFeasible && (!UATest || uaOk) && !localMin) {
         logger.debug("✓ No reset on attempt " + attempt);
         logger.debug("With Streams " + outletTemps);
-        localMin = false;  // once triggered, don't persist
+        localMin = false; // once triggered, don't persist
         return;
       } else {
         logger.debug("✗ reset on attempt " + attempt + ": " + String.join("; ", msgs));
