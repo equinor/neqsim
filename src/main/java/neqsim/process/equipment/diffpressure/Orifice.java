@@ -13,7 +13,8 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  */
 public class Orifice extends TwoPortEquipment {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
   private StreamInterface inputstream;
   private StreamInterface outputstream;
   private Double dp;

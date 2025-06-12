@@ -129,8 +129,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     // Then you optionally split the feedmixer output into dummy streams_3,
     // gasOutStream, liquidOutStream (the existing pattern).
-    double moles = feedmixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
-    stream_3 = feedmixer.getOutStream(); // combined
+    double moles = feedmixer.getOutletStream().getThermoSystem().getTotalNumberOfMoles();
+    stream_3 = feedmixer.getOutletStream(); // combined
     gasOutStream.setThermoSystem(stream_3.getThermoSystem().clone());
     gasOutStream.getThermoSystem().setTotalNumberOfMoles(moles / 2.0);
 
@@ -378,6 +378,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     setCalculationIdentifier(id);
   }
 
+  /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
@@ -449,7 +450,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public double getInternalDiameter() {
     return internalDiameter;
   }
-
 
   /**
    * Calculates the Fs factor for the distillation column. The Fs factor is a measure of the gas
@@ -621,14 +621,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * The main method demonstrates the creation and operation of a distillation column using the
    * NeqSim library. It performs the following steps:
-   * 
+   *
    * 1. Creates a test thermodynamic system with methane, ethane, and propane components. 2.
    * Performs a TP flash calculation on the test system. 3. Creates two separate feed streams from
    * the test system. 4. Constructs a distillation column with 5 trays, a reboiler, and a condenser.
    * 5. Adds the two feed streams to the distillation column at tray 3. 6. Builds and runs the
    * process system. 7. Displays the results of the distillation column, including the gas and
    * liquid output streams.
-   * 
+   *
    *
    * @param args command line arguments (not used)
    */

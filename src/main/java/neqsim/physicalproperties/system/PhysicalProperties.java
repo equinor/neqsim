@@ -95,6 +95,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
    *
    * @return a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
+  @Override
   public PhysicalProperties clone() {
     PhysicalProperties properties = null;
 

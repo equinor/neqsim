@@ -240,7 +240,6 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     getFluid().setTemperature(temperature);
   }
 
-
   /** {@inheritDoc} */
   @Override
   public void setPressure(double pressure) {
@@ -355,7 +354,6 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     this.minimumFlow = minimumFlow;
   }
 
-
   /**
    * <p>
    * Getter for the field <code>isActive</code>.
@@ -371,7 +369,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * <p>
    * Setter for the field <code>isActive</code>.
    * </p>
-   * 
+   *
    * @param isActive a boolean
    */
   public void isActive(boolean isActive) {

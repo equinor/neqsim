@@ -279,29 +279,29 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
     // (ProcessEquipmentBaseClass) operations.getUnit("2nd stage recompressor");
     // tempStr.displayResult();
     // wellStream.displayResult();
-    ((ProcessEquipmentInterface) separationModule.getOperations().getUnit("Inlet separator"))
+    separationModule.getOperations().getUnit("Inlet separator")
         .getMechanicalDesign().calcDesign();
-    ((ProcessEquipmentInterface) separationModule.getOperations().getUnit("Inlet separator"))
+    separationModule.getOperations().getUnit("Inlet separator")
         .getMechanicalDesign().displayResults();
 
-    ((ProcessEquipmentInterface) separationModule.getOperations().getUnit("1st stage separator"))
+    separationModule.getOperations().getUnit("1st stage separator")
         .getMechanicalDesign().calcDesign();
-    ((ProcessEquipmentInterface) separationModule.getOperations().getUnit("1st stage separator"))
+    separationModule.getOperations().getUnit("1st stage separator")
         .getMechanicalDesign().displayResults();
 
-    ((ProcessEquipmentInterface) separationModule.getOperations().getUnit("2nd stage Separator"))
+    separationModule.getOperations().getUnit("2nd stage Separator")
         .getMechanicalDesign().calcDesign();
-    ((ProcessEquipmentInterface) separationModule.getOperations().getUnit("2nd stage Separator"))
+    separationModule.getOperations().getUnit("2nd stage Separator")
         .getMechanicalDesign().displayResults();
 
-    ((ProcessEquipmentInterface) separationModule.getOperations().getUnit("3rd stage Separator"))
+    separationModule.getOperations().getUnit("3rd stage Separator")
         .getMechanicalDesign().calcDesign();
-    ((ProcessEquipmentInterface) separationModule.getOperations().getUnit("3rd stage Separator"))
+    separationModule.getOperations().getUnit("3rd stage Separator")
         .getMechanicalDesign().displayResults();
 
-    ((ProcessEquipmentInterface) separationModule.getOperations().getUnit("2nd stage recompressor"))
+    separationModule.getOperations().getUnit("2nd stage recompressor")
         .getMechanicalDesign().calcDesign();
-    ((ProcessEquipmentInterface) separationModule.getOperations().getUnit("2nd stage recompressor"))
+    separationModule.getOperations().getUnit("2nd stage recompressor")
         .getMechanicalDesign().displayResults();
 
     // operations.getSystemMechanicalDesign().runDesignCalculation();

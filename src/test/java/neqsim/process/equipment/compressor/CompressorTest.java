@@ -345,8 +345,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     assertEquals(81.61462472, compressor1.getOutletPressure(), 0.01);
   }
 
-
-    /**
+  /**
    * <p>
    * testCompressorWithLeachman.
    * </p>
@@ -356,14 +355,14 @@ class CompressorTest extends neqsim.NeqSimTest {
     // Initialize the test system with hydrogen
     testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("hydrogen", 100.0); // Add hydrogen component
-  
+
     // Create and configure the inlet stream
     Stream inletStream = new Stream("inletStream", testSystem);
     inletStream.setPressure(pressure_inlet, "bara");
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
     inletStream.run();
-  
+
     // Create and configure the compressor
     neqsim.process.equipment.compressor.Compressor compressor1 =
         new neqsim.process.equipment.compressor.Compressor("Compressor1", inletStream);
@@ -371,17 +370,16 @@ class CompressorTest extends neqsim.NeqSimTest {
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setOutTemperature(400.0);
     compressor1.setUseLeachman(true); // Enable the use of Leachman method
-  
+
     // Run the compressor
     compressor1.run();
-  
+
     // Assertions to verify the expected outcomes
     assertEquals(compressor1.getPolytropicEfficiency() * 100, 63.29499883086769, 0.01);
-    //assertEquals(compressor1.getPower("MW"), 6.820449828263508, 0.0001);
+    // assertEquals(compressor1.getPower("MW"), 6.820449828263508, 0.0001);
   }
 
-
-    /**
+  /**
    * <p>
    * testCompressorWithLeachman.
    * </p>
@@ -411,8 +409,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     assertEquals(compressor1.getPolytropicHead("kJ/kg"), 888.7059204667879, 0.01);
   }
 
-  
-    /**
+
+  /**
    * <p>
    * testCompressorWithVega.
    * </p>
@@ -422,14 +420,14 @@ class CompressorTest extends neqsim.NeqSimTest {
     // Initialize the test system with helium
     testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("helium", 100.0); // Add helium component
-  
+
     // Create and configure the inlet stream
     Stream inletStream = new Stream("inletStream", testSystem);
     inletStream.setPressure(pressure_inlet, "bara");
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
     inletStream.run();
-  
+
     // Create and configure the compressor
     neqsim.process.equipment.compressor.Compressor compressor1 =
         new neqsim.process.equipment.compressor.Compressor("Compressor1", inletStream);
@@ -437,17 +435,16 @@ class CompressorTest extends neqsim.NeqSimTest {
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setOutTemperature(400.0);
     compressor1.setUseVega(true); // Enable the use of Vega method
-  
+
     // Run the compressor
     compressor1.run();
-  
+
     // Assertions to verify the expected outcomes
     assertEquals(compressor1.getPolytropicEfficiency() * 100, 87.18264587172833, 0.01);
-    //assertEquals(compressor1.getPower("MW"), 6.820449828263508, 0.0001);
+    // assertEquals(compressor1.getPower("MW"), 6.820449828263508, 0.0001);
   }
 
-
-    /**
+  /**
    * <p>
    * testCompressorWithVega_2.
    * </p>
@@ -477,5 +474,3 @@ class CompressorTest extends neqsim.NeqSimTest {
     assertEquals(compressor1.getPolytropicHead("kJ/kg"), 466.82945407210633, 0.01);
   }
 }
-
-

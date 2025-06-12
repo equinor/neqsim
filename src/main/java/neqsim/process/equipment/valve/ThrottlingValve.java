@@ -328,9 +328,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   }
 
   /** {@inheritDoc} */
-  /**
-   * This annotation is used to exclude the method from Jacoco code coverage reports.
-   */
+  @Override
   @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     thermoSystem.display(getName());

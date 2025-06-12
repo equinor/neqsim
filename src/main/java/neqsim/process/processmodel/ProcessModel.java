@@ -83,12 +83,12 @@ public class ProcessModel implements Runnable {
   }
 
   /**
-   * {@inheritDoc}
-   *
    * The core run method.
    *
+   * <p>
    * - If runStep == true, each process is run in "step" mode exactly once. - Otherwise (continuous
    * mode), it loops up to maxIterations or until all processes are finished (isFinished() == true).
+   * </p>
    */
   @Override
   public void run() {
@@ -202,6 +202,4 @@ public class ProcessModel implements Runnable {
   public String getReport_json() {
     return new Report(this).generateJsonReport();
   }
-
-
 }

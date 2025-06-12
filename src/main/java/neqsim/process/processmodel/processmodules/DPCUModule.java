@@ -152,8 +152,8 @@ public class DPCUModule extends ProcessModuleBaseClass {
     distColumn.addFeedStream(valve1.getOutletStream(), 2);
     // distColumn.setCondenserTemperature(273.15 - 72.0);
     // distColumn.setReboilerTemperature(273.0+40.0);
-    ((Reboiler) distColumn.getReboiler()).setRefluxRatio(10.7);
-    ((Condenser) distColumn.getCondenser()).setRefluxRatio(10.7);
+    distColumn.getReboiler().setRefluxRatio(10.7);
+    distColumn.getCondenser().setRefluxRatio(10.7);
 
     // heatExchanger2.addInStream(distColumn.getGasOutStream());
     getOperations().add(inletValve);

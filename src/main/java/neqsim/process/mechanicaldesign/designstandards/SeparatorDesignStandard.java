@@ -93,7 +93,7 @@ public class SeparatorDesignStandard extends DesignStandard {
       }
     } catch (Exception e) {
       // TODO Auto-generated catch block
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
   }
 

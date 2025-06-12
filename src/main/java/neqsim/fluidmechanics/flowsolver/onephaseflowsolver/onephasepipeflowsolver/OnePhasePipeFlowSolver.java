@@ -82,7 +82,7 @@ public class OnePhasePipeFlowSolver
     try {
       clonedSystem = (OnePhasePipeFlowSolver) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
 
     return clonedSystem;

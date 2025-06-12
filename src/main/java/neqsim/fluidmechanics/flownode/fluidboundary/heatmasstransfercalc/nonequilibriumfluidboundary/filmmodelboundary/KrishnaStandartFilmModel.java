@@ -81,7 +81,7 @@ public class KrishnaStandartFilmModel extends
     try {
       clonedSystem = (KrishnaStandartFilmModel) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
 
     return clonedSystem;

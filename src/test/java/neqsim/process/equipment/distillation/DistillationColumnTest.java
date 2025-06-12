@@ -211,7 +211,6 @@ public class DistillationColumnTest {
     assertEquals(0.0, massbalance, 0.2);
   }
 
-
   /**
    *
    */
@@ -247,7 +246,6 @@ public class DistillationColumnTest {
     double wtMEG = feedMEG.getPhase(0).getWtFrac("MEG") * 100.0;
 
     assertEquals(53.3718940, wtMEG, 0.2);
-
 
     // 1) Create a stream named 'stream1' using feedMEG
     Stream stream1 = new Stream("stream 1", feedMEG);
@@ -310,5 +308,4 @@ public class DistillationColumnTest {
      * + " C");
      */
   }
-
 }

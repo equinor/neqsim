@@ -90,7 +90,7 @@ public class SafeSplineSurgeCurveTest {
 
     Stream resyclestream = (Stream) process1.addUnit("recycle stream", stream1.clone());
     resyclestream.setFlowRate(100.0, "kg/hr");
-    resyclestream.run();;
+    resyclestream.run();
 
     Mixer mixer = (Mixer) process1.addUnit("mixer", "mixer");
     mixer.addStream(stream1);

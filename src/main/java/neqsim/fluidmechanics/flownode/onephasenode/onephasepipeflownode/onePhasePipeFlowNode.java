@@ -57,7 +57,7 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
     try {
       clonedSystem = (onePhasePipeFlowNode) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
     return clonedSystem;
   }

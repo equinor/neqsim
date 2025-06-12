@@ -331,7 +331,7 @@ public class NeqSimGERG2008 {
     }
   }
 
-  
+
   /**
    * <p>getAlpha0_GERG2008.</p>
    *
@@ -358,7 +358,7 @@ public class NeqSimGERG2008 {
   // Return the computed dimensionless residual Helmholtz free energy.
   // This is equivalent to alpha_res = A^r/(RT)
   return a0;
-} 
+}
 
 /**
  * Get reduced residual helmholtz free energy and its derivatives.

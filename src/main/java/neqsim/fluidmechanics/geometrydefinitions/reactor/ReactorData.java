@@ -119,7 +119,7 @@ public class ReactorData extends GeometryDefinition {
     try {
       clonedPipe = (ReactorData) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
 
     return clonedPipe;

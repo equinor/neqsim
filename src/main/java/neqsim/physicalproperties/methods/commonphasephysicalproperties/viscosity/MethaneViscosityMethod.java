@@ -3,6 +3,9 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosit
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 public class MethaneViscosityMethod extends Viscosity {
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
+
   /**
    * <p>
    * Constructor for MethaneViscosityMethod.
@@ -19,13 +22,12 @@ public class MethaneViscosityMethod extends Viscosity {
   public double calcViscosity() {
 
     // Check if there are other components than methane
-    if (phase.getPhase().getNumberOfComponents() > 1 
-      || !phase.getPhase().getComponent(0).getName().equalsIgnoreCase("methane")) {
+    if (phase.getPhase().getNumberOfComponents() > 1
+        || !phase.getPhase().getComponent(0).getName().equalsIgnoreCase("methane")) {
       throw new Error("Methane viscosity model only supports PURE METHANE.");
     }
 
-    //The following is exactly the same as LBCViscosityMethod
-
+    // The following is exactly the same as LBCViscosityMethod
     double[] a = {0.10230, 0.023364, 0.058533, -0.040758, 0.0093324};
 
     double T = phase.getPhase().getTemperature();
@@ -75,19 +77,27 @@ public class MethaneViscosityMethod extends Viscosity {
     viscosity_LBC /= 1.0e3;
     // System.out.println("visc " + viscosity);
 
-
-    //HERE ARE THE CORRECTION TERMS:
-    double term_A = 0.0;  //Declaring the variable so that it can be changed 
+    // HERE ARE THE CORRECTION TERMS:
+    double term_A = 0.0; // Declaring the variable so that it can be changed
     if (T >= 345) {
-      term_A = 1.1 * Math.pow(T/345 - 1, 1.2);
+      term_A = 1.1 * Math.pow(T / 345 - 1, 1.2);
     } else {
-      term_A = 0.64*(T/345 - 1) * (1 - 0.4*Math.exp(-Math.pow(T-298.15, 2) / 100)/(1+Math.exp(-(P-21))));
+      term_A = 0.64 * (T / 345 - 1)
+          * (1 - 0.4 * Math.exp(-Math.pow(T - 298.15, 2) / 100) / (1 + Math.exp(-(P - 21))));
     }
 
-    double A = Math.pow(10, -6) * ( term_A + 0.27 * Math.exp(-Math.pow(T-430, 2) / 9000) * Math.exp(-Math.pow(P-21, 2) / 35)/(1+Math.exp(-(P-15))) );
-    double B = Math.pow(10, -8) * (  1.2 * Math.pow(300/T, 3) * Math.pow(P, 1.2)/(1+Math.exp(-0.6*(P-20))) + 30 * (1 - T/400) * Math.exp(-Math.pow(P-15, 2) / 20) + 13*Math.exp(-Math.pow(P-12.8, 2) / 7) );
-    double C = Math.pow(10, -8) * ( 1/(1+Math.exp((P-15)))*( 2*P * Math.exp(-Math.pow(T-375, 2) / 10000) + 8.0 * (P/4 - 1)) + 10.0 * Math.exp(-Math.pow(T-260, 2) / 300)/(1+Math.exp(0.9*(P-12))) );
-    double D = Math.pow(10, -6) * ( 0.62 * (1 - T/430) * 1/(1+Math.exp(-0.5*(P-26))) + 0.306*Math.exp(-Math.pow(T-270, 2)/50)/(1+Math.exp(-(P-25))) - (265.2/T) * Math.exp(-Math.pow(T-270, 2)/160)/(1+Math.exp(-0.5*(P-25))) );
+    double A = Math.pow(10, -6) * (term_A + 0.27 * Math.exp(-Math.pow(T - 430, 2) / 9000)
+        * Math.exp(-Math.pow(P - 21, 2) / 35) / (1 + Math.exp(-(P - 15))));
+    double B = Math.pow(10, -8)
+        * (1.2 * Math.pow(300 / T, 3) * Math.pow(P, 1.2) / (1 + Math.exp(-0.6 * (P - 20)))
+            + 30 * (1 - T / 400) * Math.exp(-Math.pow(P - 15, 2) / 20)
+            + 13 * Math.exp(-Math.pow(P - 12.8, 2) / 7));
+    double C = Math.pow(10, -8) * (1 / (1 + Math.exp((P - 15)))
+        * (2 * P * Math.exp(-Math.pow(T - 375, 2) / 10000) + 8.0 * (P / 4 - 1))
+        + 10.0 * Math.exp(-Math.pow(T - 260, 2) / 300) / (1 + Math.exp(0.9 * (P - 12))));
+    double D = Math.pow(10, -6) * (0.62 * (1 - T / 430) * 1 / (1 + Math.exp(-0.5 * (P - 26)))
+        + 0.306 * Math.exp(-Math.pow(T - 270, 2) / 50) / (1 + Math.exp(-(P - 25)))
+        - (265.2 / T) * Math.exp(-Math.pow(T - 270, 2) / 160) / (1 + Math.exp(-0.5 * (P - 25))));
 
     double eta = viscosity_LBC + A - B + C - D;
 

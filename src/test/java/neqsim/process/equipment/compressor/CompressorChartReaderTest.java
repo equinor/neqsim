@@ -58,11 +58,8 @@ public class CompressorChartReaderTest {
     assertNotNull(compressor.getCompressorChart().getSurgeCurve());
     assertEquals("kJ/kg", compressor.getCompressorChart().getHeadUnit());
 
-
     compressor.run();
 
     Assertions.assertEquals(5303.277373, compressor.getSpeed(), 0.1);
-
-
   }
 }

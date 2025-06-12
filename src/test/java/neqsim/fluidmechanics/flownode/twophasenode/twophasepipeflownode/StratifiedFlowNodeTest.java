@@ -192,7 +192,7 @@ public class StratifiedFlowNodeTest {
           }
           oilPhases[i] = nodes[i].getBulkSystem().phaseToSystem(1);
         } catch (Exception e) {
-          logger.error(e.getMessage());;
+          logger.error(e.getMessage());
         }
 
         // gasPhases[i + 1].prettyPrint();
@@ -237,7 +237,7 @@ public class StratifiedFlowNodeTest {
           }
           oilPhases[i] = nodes[i].getBulkSystem().phaseToSystem(1);
         } catch (Exception e) {
-          logger.error(e.getMessage());;
+          logger.error(e.getMessage());
         }
 
         // gasPhases[i + 1].prettyPrint();

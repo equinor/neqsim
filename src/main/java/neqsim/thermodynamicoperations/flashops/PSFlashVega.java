@@ -22,7 +22,7 @@ public class PSFlashVega extends QfuncFlash {
   Flash tpFlash;
 
   double entropy_Vega = 0.0;
-  double cP_Vega = 0.0; 
+  double cP_Vega = 0.0;
 
   /**
    * <p>

@@ -9,7 +9,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * suction stream and calculates the resulting mixed stream.
  */
 public class Ejector extends ProcessEquipmentBaseClass {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
 
   private StreamInterface motiveStream;
   private StreamInterface suctionStream;
@@ -69,17 +70,17 @@ public class Ejector extends ProcessEquipmentBaseClass {
     double hMixedActual = calculateActualMixedEnthalpy(hMotive, idealMixedEnthalpy);
 
     mixedStream = motiveStream.clone();
-    //mixedStream.add(suctionStream);
+    // mixedStream.add(suctionStream);
     mixedStream.getFluid().setTotalFlowRate(mDotMotive + mDotSuction, "kg/s");
-    //mixedStream.getFluid().setEnthalpy(hMixedActual, "J/kg");
+    // mixedStream.getFluid().setEnthalpy(hMixedActual, "J/kg");
     mixedStream.setPressure(dischargePressure);
-    //mixedStream.runPHflash();
+    // mixedStream.runPHflash();
 
     checkChokedFlow(mDotMotive, mDotSuction);
 
     double hActualDiffuserOut = calculateDiffuserOutput(hMixedActual);
-    //mixedStream.getFluid().setEnthalpy(hActualDiffuserOut, "J/kg");
-    //mixedStream.runPHflash();
+    // mixedStream.getFluid().setEnthalpy(hActualDiffuserOut, "J/kg");
+    // mixedStream.runPHflash();
 
     // Update final state
     mixedStream.setPressure(mixedStream.getFluid().getPressure());

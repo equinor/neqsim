@@ -47,7 +47,7 @@ public class DoubleCloneable implements Cloneable {
     try {
       clonedSystem = (DoubleCloneable) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
     return clonedSystem;
   }

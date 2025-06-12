@@ -48,7 +48,6 @@ public class SetPointTest {
     heater2.setdT(0.0);
     heater2.run();
 
-
     assertEquals(22.0, heater2.getOutletStream().getTemperature("C"), 0.01);
     assertEquals(23.0, heater2.getOutletStream().getPressure("bara"), 0.01);
 

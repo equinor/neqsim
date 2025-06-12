@@ -29,6 +29,15 @@ public class Condenser extends SimpleTray {
   private String reflux_unit;
 
   /**
+   * Constructor for the Condenser class.
+   *
+   * @param name a {@link java.lang.String} object
+   */
+  public Condenser(String name) {
+    super(name);
+  }
+
+  /**
    * Checks if the separation process involves liquid reflux.
    *
    * @return {@code true} if the separation process involves liquid reflux, {@code false} otherwise.
@@ -62,15 +71,6 @@ public class Condenser extends SimpleTray {
    */
   public void setTotalCondenser(boolean isTotalCondenser) {
     this.totalCondenser = isTotalCondenser;
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * @param name a {@link java.lang.String} object
-   */
-  public Condenser(String name) {
-    super(name);
   }
 
   /**
@@ -129,13 +129,7 @@ public class Condenser extends SimpleTray {
     return getGasOutStream();
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * getLiquidOutStream.
-   * </p>
-   */
+  /** {@inheritDoc} */
   @Override
   public StreamInterface getLiquidOutStream() {
     if (totalCondenser || separation_with_liquid_reflux) {
@@ -145,13 +139,7 @@ public class Condenser extends SimpleTray {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * getLiquidOutStream.
-   * </p>
-   */
+  /** {@inheritDoc} */
   public StreamInterface getLiquidProductStream() {
     if (separation_with_liquid_reflux) {
       return mixedStreamSplitter.getSplitStream(1);
@@ -159,7 +147,6 @@ public class Condenser extends SimpleTray {
       return null;
     }
   }
-
 
   /** {@inheritDoc} */
   @Override

@@ -24,10 +24,8 @@ public class BaseResponse {
     name = equipment.getName();
   }
 
-
   public BaseResponse(MeasurementDeviceInterface equipment) {
     tagName = equipment.getTagName();
     name = equipment.getName();
   }
-
 }

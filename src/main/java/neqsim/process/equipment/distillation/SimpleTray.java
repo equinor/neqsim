@@ -215,6 +215,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    *
    * @return the temperature
    */
+  @Override
   public double getTemperature() {
     return temperature;
   }
@@ -291,7 +292,4 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     massOutput += getLiquidOutStream().getFlowRate("kg/hr");
     return massInput - massOutput;
   }
-
-
-
 }

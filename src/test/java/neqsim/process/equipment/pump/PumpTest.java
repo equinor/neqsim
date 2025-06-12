@@ -132,9 +132,6 @@ public class PumpTest extends neqsim.NeqSimTest {
     res1.setMinimumFlow(1e-20);
     res1.run();
 
-
     Assertions.assertEquals(0.0, pump1.getOutletStream().getFlowRate("kg/sec"), 1e-20);
-
   }
-
 }

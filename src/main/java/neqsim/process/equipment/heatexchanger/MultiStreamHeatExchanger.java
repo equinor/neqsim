@@ -63,8 +63,6 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   int MAX_ITERATIONS = 100;
   int iterations = 0;
 
-
-
   /**
    * Constructor for MultiStreamHeatExchanger.
    *
@@ -93,14 +91,25 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /** {@inheritDoc} */
+  @Override
   public void addInStream(StreamInterface inStream) {
     this.inStreams.add(inStream);
     StreamInterface outStream = inStream.clone();
     outStream.setName(getName() + "_Sout" + (outStreams.size() + 1));
     this.outStreams.add(outStream);
   }
+  // HERMANN - The stream type needs to be added - hot or cold
+  // HERMANN - The stream outlet temp nesds to be added of defined
+
+  //  public void addInStream(StreamInterface inStream, String type, int outletTempertures) {
+  //super(name);
+  //this.hasReboiler = hasReboiler;
+  //this.hasCondenser = hasCondenser;
+  //distoperations = new neqsim.process.processmodel.ProcessSystem();
+  //this.numberOfTrays = numberOfTraysLocal;
 
   /** {@inheritDoc} */
+  @Override
   public void setFeedStream(int index, StreamInterface inStream) {
     if (index < inStreams.size()) {
       this.inStreams.set(index, inStream);
@@ -178,6 +187,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /** {@inheritDoc} */
+  @Override
   public void setUAvalue(double UAvalue) {
     UAvalueIsSet = true;
     this.UAvalue = UAvalue;
@@ -302,6 +312,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   /**
    * Runs condition analysis by comparing the exchanger with itself.
    */
+  @Override
   public void runConditionAnalysis() {
     runConditionAnalysis(this);
   }
@@ -311,6 +322,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
    *
    * @return Thermal effectiveness
    */
+  @Override
   public double getThermalEffectiveness() {
     return thermalEffectiveness;
   }
@@ -651,6 +663,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     }
     setCalculationIdentifier(id);
     firstTime = true;
+
   }
 
   /**
