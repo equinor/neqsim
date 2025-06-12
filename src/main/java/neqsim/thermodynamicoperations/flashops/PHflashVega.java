@@ -1,4 +1,5 @@
 package neqsim.thermodynamicoperations.flashops;
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -9,7 +10,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author victorigi99
  * @version $Id: $Id
  */
-public class PHflashVega extends Flash{
+public class PHflashVega extends Flash {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -150,6 +151,3 @@ public class PHflashVega extends Flash{
     return null;
   }
 }
-
-
-

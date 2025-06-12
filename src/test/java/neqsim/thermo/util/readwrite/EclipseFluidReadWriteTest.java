@@ -28,8 +28,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   String file_brd = file.getAbsolutePath() + "/Brd.e300";
   String delete = file.getAbsolutePath() + "/deleteme.e300";
 
-
-
   @Test
   void testReadBrd() throws IOException {
     testSystem = EclipseFluidReadWrite.read(file_brd);
@@ -46,7 +44,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     stream1.run();
     assertEquals(-3.84116452828, stream1.CCT("C"), 1e-3);
   }
-
 
   /**
    * Test method for

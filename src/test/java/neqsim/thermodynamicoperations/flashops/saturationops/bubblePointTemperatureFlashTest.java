@@ -27,7 +27,7 @@ public class bubblePointTemperatureFlashTest {
     try {
       ops.bubblePointTemperatureFlash();
     } catch (Exception e) {
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
     assertEquals(-117.7205968083, fluid0_HC.getTemperature("C"), 1e-2);
   }

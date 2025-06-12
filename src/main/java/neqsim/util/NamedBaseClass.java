@@ -12,7 +12,6 @@ public abstract class NamedBaseClass implements NamedInterface, java.io.Serializ
   public String name;
   private String tagName = "";
 
-
   /**
    * Constructor for NamedBaseClass
    *
@@ -40,6 +39,7 @@ public abstract class NamedBaseClass implements NamedInterface, java.io.Serializ
    * @param tagName a {@link java.lang.String} representing the tag name
    * @throws IllegalArgumentException if the tag name is null
    */
+  @Override
   public void setTagName(String tagName) {
     if (tagName == null) {
       throw new IllegalArgumentException("Tag name cannot be null.");
@@ -52,6 +52,7 @@ public abstract class NamedBaseClass implements NamedInterface, java.io.Serializ
    *
    * @return the tag name as a String.
    */
+  @Override
   public String getTagName() {
     return tagName;
   }

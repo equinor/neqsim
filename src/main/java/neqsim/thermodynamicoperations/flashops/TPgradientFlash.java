@@ -60,7 +60,7 @@ public class TPgradientFlash extends Flash {
     double gasConstant = neqsim.thermo.ThermodynamicConstantsInterface.R;
 
     for (int i = 0; i < numComponents; i++) {
-      ComponentInterface component = (ComponentInterface) localSystem.getPhase(0).getComponent(i);
+      ComponentInterface component = localSystem.getPhase(0).getComponent(i);
       double fugacityCoeff = component.getFugacityCoefficient();
       double componentX = component.getx();
       double pressure = localSystem.getPressure();
@@ -129,7 +129,7 @@ public class TPgradientFlash extends Flash {
     double relaxationFactor = 0.8; // Relaxation factor for numerical stability
 
     for (int i = 0; i < numComponents; i++) {
-      ComponentInterface component = (ComponentInterface) localSystem.getPhase(0).getComponent(i);
+      ComponentInterface component = localSystem.getPhase(0).getComponent(i);
       double newX = component.getx() - relaxationFactor * dx.get(i, 0);
       component.setx(newX);
     }

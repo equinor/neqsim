@@ -27,7 +27,7 @@ public class bubblePointPressureFlashTest {
     try {
       ops.bubblePointPressureFlash(false);
     } catch (Exception e) {
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
     assertEquals(65.150271897839, fluid0_HC.getPressure(), 1e-2);
   }

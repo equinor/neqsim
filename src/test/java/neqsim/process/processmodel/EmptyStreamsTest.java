@@ -47,7 +47,7 @@ public class EmptyStreamsTest extends neqsim.NeqSimTest {
     operations.add(pump1);
 
     Mixer mixer1 = new Mixer("Mixer");
-    mixer1.addStream(pump1.getOutStream());
+    mixer1.addStream(pump1.getOutletStream());
     mixer1.run();
     operations.add(mixer1);
 
@@ -99,7 +99,7 @@ public class EmptyStreamsTest extends neqsim.NeqSimTest {
     operations.add(pump1);
 
     Mixer mixer1 = new Mixer("Mixer");
-    mixer1.addStream(pump1.getOutStream());
+    mixer1.addStream(pump1.getOutletStream());
     mixer1.addStream(stream2);
     mixer1.run();
     operations.add(mixer1);
@@ -227,7 +227,7 @@ public class EmptyStreamsTest extends neqsim.NeqSimTest {
 
     Mixer mixer1 = new Mixer("Mixer");
     mixer1.addStream(stream2);
-    mixer1.addStream(pump1.getOutStream());
+    mixer1.addStream(pump1.getOutletStream());
     mixer1.run();
     operations.add(mixer1);
 

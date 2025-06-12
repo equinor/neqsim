@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 
 // ================================================================
@@ -80,6 +81,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   /** {@inheritDoc} */
+  @Override
   public void addInStream(StreamInterface inStream) {}
 
   /** {@inheritDoc} */
@@ -100,6 +102,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     this.approachTemperature = temperatureApproach;
   }
 
+  @Override
   public void setUAvalue(double UAvalue) {
     this.UA = UAvalue;
   }
@@ -109,6 +112,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   // ================================================================
 
   /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     // Calculate hin for all streams and 
     int undefinedCount = 0;
@@ -278,6 +282,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     return new double[] {dx / det, dy / det};
   }
 
+
   // ================================================================
   // ---- THREE UNKNOWN ----
   // ================================================================
@@ -363,7 +368,6 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
     return new double[] {Dx / D, Dy / D, Dz / D};
   }
-
 
   // ================================================================
   // ---- KEY METHODS ----
@@ -490,7 +494,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
 
   private double enthalpyTPFlash(int index, double pressure, double temperature) {
-    StreamInterface stream = (StreamInterface) inStreams.get(index);
+    StreamInterface stream = inStreams.get(index);
 
     thermoSystem = stream.getThermoSystem().clone();
     thermoSystem.setPressure(pressure, "bara");
@@ -587,7 +591,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
 
   private double initializeOutletGuess(int i) {
-    String type = (String) streamTypes.get(i);
+    String type = streamTypes.get(i);
     double inletTemp = inletTemps.get(i);
     if ("hot".equals(type)) {
       return inletTemp - approachTemperature;
@@ -783,6 +787,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     prevOutletTemps = new ArrayList<>();
     for (int idx : unknownIndices) {
       prevOutletTemps.add(outletTemps.get(idx));
+
     }
 
     return false;
@@ -797,6 +802,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   public Map<String, List<Map<String, Object>>> getCompositeCurve() {
     logger.debug("Composite Corve Points: " + compositeCurve());
     return compositeCurve();
+
   }
 
   public double getUA() {
@@ -813,7 +819,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     if (i < 0 || i >= outStreams.size()) {
       throw new IndexOutOfBoundsException("Invalid outStream index: " + i);
     }
-    return (StreamInterface) outStreams.get(i);
+    return outStreams.get(i);
   }
 
 
@@ -841,7 +847,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     return 0.0;
   }
 
+  /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {}
 
   @Override

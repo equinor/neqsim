@@ -27,7 +27,7 @@ public class dewPointPressureFlashTest {
     try {
       ops.dewPointPressureFlash();
     } catch (Exception e) {
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
     assertEquals(9.332383561, fluid0_HC.getPressure(), 1e-2);
   }

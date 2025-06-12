@@ -47,7 +47,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     try {
       clonedClass = (LevenbergMarquardt) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
 
     return clonedClass;

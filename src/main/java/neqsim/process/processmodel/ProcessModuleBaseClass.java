@@ -230,13 +230,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
     return null;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * getPressure.
-   * </p>
-   */
+  /** {@inheritDoc} */
   @Override
   public double getPressure(String unit) {
     return 1.0;
@@ -257,7 +251,6 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public void run_step(UUID id) {}
-
 
   /** {@inheritDoc} */
   @Override

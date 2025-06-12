@@ -80,7 +80,7 @@ public class ProcessLoader {
         List<?> list = (List<?>) value;
         java.lang.reflect.Method method =
             unit.getClass().getMethod(setterName, double.class, String.class);
-        method.invoke(unit, ((Number) list.get(0)).doubleValue(), (String) list.get(1));
+        method.invoke(unit, ((Number) list.get(0)).doubleValue(), list.get(1));
       } else if (value instanceof Map) {
         if (property.equalsIgnoreCase("fluid")) {
           // Assume user gives Map<String, Double> for fluid components

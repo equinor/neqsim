@@ -16,6 +16,7 @@ import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.pipeline.PipelineMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -252,6 +253,7 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
 
   /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {}
 
   /** {@inheritDoc} */

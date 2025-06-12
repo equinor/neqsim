@@ -88,11 +88,11 @@ public class StreamTransition extends TwoPortEquipment {
 
     offshoreProcessoperations.run(id);
     trans.run(id);
-    ((StreamInterface) offshoreProcessoperations.getUnit("rich gas")).displayResult();
+    offshoreProcessoperations.getUnit("rich gas").displayResult();
     // ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
     trans.displayResult();
     TEGprocess.run(id);
-    ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
+    TEGprocess.getUnit("dry feed gas").displayResult();
 
     // ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
   }

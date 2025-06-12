@@ -29,7 +29,6 @@ public class CombustionEmissionsCalculatorTest {
     assertEquals(2.77772643250, comp.getMeasuredValue("kg/hr"), 0.0001);
   }
 
-
   @Test
   void testAntiSurgeCalc() {
 
@@ -74,7 +73,5 @@ public class CombustionEmissionsCalculatorTest {
     assertEquals(3535.055413, compressor1.getSurgeFlowRate(), 0.1);
     assertEquals(104.9725, compressor1.getPolytropicFluidHead(), 0.1);
     assertEquals(-0.56224816592, compressor1.getDistanceToSurge(), 0.1);
-
-
   }
 }

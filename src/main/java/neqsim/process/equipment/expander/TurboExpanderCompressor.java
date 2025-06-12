@@ -526,7 +526,7 @@ public class TurboExpanderCompressor extends Expander {
 
   /**
    * Calculate the current IGV (Inlet Guide Vane) open area.
-   * 
+   *
    * @return the IGV open area in mm²
    */
   public double calcIGVOpenArea() {
@@ -644,6 +644,7 @@ public class TurboExpanderCompressor extends Expander {
    *
    * @return the matched expander speed [rpm]
    */
+  @Override
   public double getSpeed() {
     return expanderSpeed;
   }
@@ -653,6 +654,7 @@ public class TurboExpanderCompressor extends Expander {
    *
    * @return the compressor outlet stream
    */
+  @Override
   public StreamInterface getOutletStream() {
     return compressorOutletStream;
   }

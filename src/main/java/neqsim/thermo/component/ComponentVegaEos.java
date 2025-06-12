@@ -64,19 +64,17 @@ public class ComponentVegaEos extends ComponentEos {
   }
 
   @Override
-  public void Finit(PhaseInterface phase, double T, double p,
-                    double totalNumberOfMoles, double beta,
-                    int numberOfComponents, int initType) {
+  public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles,
+      double beta, int numberOfComponents, int initType) {
     super.Finit(phase, T, p, totalNumberOfMoles, beta, numberOfComponents, initType);
 
     if (initType == 3) {
       double phi = fugcoef(phase);
-      phase.getComponent(getComponentNumber())
-           .setFugacityCoefficient(phi);
+      phase.getComponent(getComponentNumber()).setFugacityCoefficient(phi);
     }
-  
+
   }
-  
+
 
   @Override
   public double calca() {
@@ -87,7 +85,6 @@ public class ComponentVegaEos extends ComponentEos {
   public double calcb() {
     return 0.0;
   }
-
 
   /** {@inheritDoc} */
   @Override
@@ -111,28 +108,30 @@ public class ComponentVegaEos extends ComponentEos {
   @Override
   public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    return phase.getAlphares_Vega()[0][0].val + phase.getAlphares_Vega()[0][1].val; //single component EOS
+    return phase.getAlphares_Vega()[0][0].val + phase.getAlphares_Vega()[0][1].val; // single
+                                                                                    // component EOS
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents,
-                       double temperature, double pressure) {
-    return (2 * phase.getAlphares_Vega()[0][1].val + phase.getAlphares_Vega()[0][2].val) 
-      / phase.getNumberOfMolesInPhase(); 
+  public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure) {
+    return (2 * phase.getAlphares_Vega()[0][1].val + phase.getAlphares_Vega()[0][2].val)
+        / phase.getNumberOfMolesInPhase();
   }
 
   @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents,
-                       double temperature, double pressure) {
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure) {
     return -(2 * phase.getAlphares_Vega()[0][1].val + phase.getAlphares_Vega()[0][2].val)
-      / phase.getVolume();
+        / phase.getVolume();
   }
 
   @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure) {
     return -(phase.getAlphares_Vega()[1][0].val + phase.getAlphares_Vega()[1][1].val)
-      / phase.getTemperature();
+        / phase.getTemperature();
   }
 
   /** {@inheritDoc} */
@@ -140,10 +139,9 @@ public class ComponentVegaEos extends ComponentEos {
   public double fugcoef(PhaseInterface phase) {
     double temperature = phase.getTemperature();
     double pressure = phase.getPressure();
-    double logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
-         - Math.log(phase.getZ());
+    double logFugacityCoefficient =
+        dFdN(phase, phase.getNumberOfComponents(), temperature, pressure) - Math.log(phase.getZ());
     double fugacityCoefficient = Math.exp(logFugacityCoefficient);
     return fugacityCoefficient;
   }
-
 }

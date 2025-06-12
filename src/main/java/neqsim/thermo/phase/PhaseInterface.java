@@ -422,7 +422,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   public double[] getProperties_GERG2008();
 
-
   /**
    * Overloaded method to get the Leachman a0matrix with default hydrogen type ('normal').
    *
@@ -476,7 +475,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   doubleW[] getAlpha0_Leachman();
 
-
   /**
    * <p>
    * method to get Leachman a0matrix of a phase using the Leachman EoS.
@@ -486,8 +484,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return matrix of the reduced ideal helmholtz free energy and its derivatives
    */
   doubleW[] getAlpha0_Leachman(String hydrogenType);
-
-
 
   /**
    * <p>
@@ -521,7 +517,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return an array of type double
    */
   public double[] getProperties_Vega();
-
 
   /**
    * Overloaded method to get the Leachman a0matrix with default hydrogen type ('normal').

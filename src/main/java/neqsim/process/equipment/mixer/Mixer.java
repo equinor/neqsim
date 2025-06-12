@@ -387,6 +387,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
    *
    * @param temp a double
    */
+  @Override
   public void setTemperature(double temp) {
     for (int k = 0; k < streams.size(); k++) {
       streams.get(k).getThermoSystem().setTemperature(temp);

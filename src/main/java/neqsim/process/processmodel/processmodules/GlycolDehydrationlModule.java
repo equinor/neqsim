@@ -500,7 +500,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     operations.run();
     saturator.getOutletStream().displayResult();
     separator.getThermoSystem().display();
-    ((ProcessEquipmentBaseClass) operations.getUnit("reboiler")).run();
+    operations.getUnit("reboiler").run();
     // separator.getGasOutStream().displayResult();
     // TEGplant.displayResult();
     // TEGplant.calcDesign();
@@ -514,14 +514,14 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     System.out.println(
         "reboiler duty " + ((Heater) operations.getUnit("reboiler")).getDuty() / 1000.0 + " kW");
     System.out.println("Lean TEG flow "
-        + ((Pump) operations.getUnit("HP lean TEG pump")).getFluid().getFlowRate("kg/hr")
+        + operations.getUnit("HP lean TEG pump").getFluid().getFlowRate("kg/hr")
         + " kg/hr");
     System.out.println("Lean TEG pump power "
         + ((Pump) operations.getUnit("HP lean TEG pump")).getPower() / 1000.0 + " kW");
 
     ((Separator) operations.getUnit("flash drum")).displayResult();
     ((Separator) operations.getUnit("watersep")).displayResult();
-    ((ProcessEquipmentBaseClass) operations.getUnit("reboiler")).run();
+    operations.getUnit("reboiler").run();
     ((ProcessEquipmentBaseClass) operations.getUnit("reboiler")).displayResult();
     // TEGplant.getOutputStream("condenserStripper").displayResult();
   }

@@ -31,7 +31,7 @@ public class AmmoniaTest extends neqsim.NeqSimTest {
     try {
       testOps.bubblePointTemperatureFlash();
     } catch (Exception e) {
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
     assertEquals(-33.039831, thermoSystem.getTemperature("C"), 0.01);
   }

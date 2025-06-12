@@ -110,7 +110,6 @@ public class LeachmanTest {
     assertEquals(1.0058554805933522, Z.val, 1e-5);
   }
 
-
   @Test
   void testThermoLeachman() {
 
@@ -122,7 +121,6 @@ public class LeachmanTest {
     Leachmanfluid.init(1);
     Leachmanfluid.init(2);
     Leachmanfluid.init(3);
-
 
     SRKfluid.addComponent("hydrogen", 1.0);
     SRKfluid.init(0);
@@ -138,9 +136,9 @@ public class LeachmanTest {
     // Leachmanfluid.setP
 
     double enthalpgas = Leachmanfluid.getPhase("gas").getEnthalpy("J/mol");
-    assertEquals(Leachmanfluid.getPhase("gas").getDensity(), SRKfluid.getPhase("gas").getDensity_Leachman(), 1e-9);
+    assertEquals(Leachmanfluid.getPhase("gas").getDensity(),
+        SRKfluid.getPhase("gas").getDensity_Leachman(), 1e-9);
     assertEquals(SRKfluid.getPhase("gas").getProperties_Leachman()[7], enthalpgas, 1e-9);
-
 
     Leachmanfluid.setNumberOfPhases(1);
     Leachmanfluid.setMaxNumberOfPhases(1);
@@ -148,9 +146,8 @@ public class LeachmanTest {
     Leachmanfluid.setPhaseType(0, "GAS");
     Leachmanfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("PFCT");
     Leachmanfluid.getPhase("gas").initPhysicalProperties();
-    //Leachmanfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("KTA_mod");
-    //Leachmanfluid.getPhase("gas").initPhysicalProperties();
-
+    // Leachmanfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("KTA_mod");
+    // Leachmanfluid.getPhase("gas").initPhysicalProperties();
 
     SRKfluid.setNumberOfPhases(1);
     SRKfluid.setMaxNumberOfPhases(1);
@@ -176,14 +173,14 @@ public class LeachmanTest {
     compressor.setPolytropicMethod("schultz");
     compressor.run();
 
-
     neqsim.process.equipment.compressor.Compressor compressor_SRK =
-    new neqsim.process.equipment.compressor.Compressor("compressor 2", gasstream_SKR);
+        new neqsim.process.equipment.compressor.Compressor("compressor 2", gasstream_SKR);
     compressor_SRK.setUseLeachman(true);
     compressor_SRK.setOutletPressure(20.0);
     compressor_SRK.run();
 
-    assertEquals(compressor_SRK.getOutletStream().getTemperature("C"), compressor.getOutletStream().getTemperature("C"), 1e-5);
+    assertEquals(compressor_SRK.getOutletStream().getTemperature("C"),
+        compressor.getOutletStream().getTemperature("C"), 1e-5);
 
     neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline =
         new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("pipe 1",
@@ -194,9 +191,7 @@ public class LeachmanTest {
     pipeline.run();
 
     assertEquals(pipeline.getOutletPressure(), 6.321467176, 1e-5);
-
   }
-
 
   @Test
   void testLeachmanCompressor() {
@@ -247,17 +242,16 @@ public class LeachmanTest {
     SRKcompressor.setUseLeachman(true);
     SRKcompressor.run();
 
-    assertEquals(Leachmancompressor.getOutletStream().getTemperature("C"), SRKcompressor.getOutletStream().getTemperature("C"), 1e-5);
+    assertEquals(Leachmancompressor.getOutletStream().getTemperature("C"),
+        SRKcompressor.getOutletStream().getTemperature("C"), 1e-5);
     assertEquals(Leachmancompressor.getPower("MW"), SRKcompressor.getPower("MW"), 1e-8);
     assertEquals(Leachmancompressor.getPolytropicHead(), SRKcompressor.getPolytropicHead());
   }
 
-
-  @Test 
+  @Test
   void CompressorSchultz() {
     SystemInterface Leachmanfluid = new neqsim.thermo.system.SystemLeachmanEos(298.15, 90.0);
-    
-    
+
     Leachmanfluid.addComponent("hydrogen", 1.0);
     Leachmanfluid.init(0);
     Leachmanfluid.init(1);
@@ -268,21 +262,21 @@ public class LeachmanTest {
     Leachmanfluid.setMaxNumberOfPhases(1);
     Leachmanfluid.setForcePhaseTypes(true);
     Leachmanfluid.setPhaseType(0, "GAS");
-    //Leachmanfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("PFCT");
+    // Leachmanfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("PFCT");
     Leachmanfluid.getPhase("gas").initPhysicalProperties();
 
     neqsim.process.equipment.stream.Stream gasstream_Leachman =
         new neqsim.process.equipment.stream.Stream("gas", Leachmanfluid);
-        gasstream_Leachman.setFlowRate(60.0, "MSm3/day");
-        gasstream_Leachman.run();
+    gasstream_Leachman.setFlowRate(60.0, "MSm3/day");
+    gasstream_Leachman.run();
 
     neqsim.process.equipment.compressor.Compressor compressor_Leachman =
         new neqsim.process.equipment.compressor.Compressor("compressor 1", gasstream_Leachman);
-        compressor_Leachman.setOutletPressure(120.0);
-        compressor_Leachman.setPolytropicEfficiency(0.77);
-        compressor_Leachman.run();
+    compressor_Leachman.setOutletPressure(120.0);
+    compressor_Leachman.setPolytropicEfficiency(0.77);
+    compressor_Leachman.run();
 
-    neqsim.process.equipment.compressor.Compressor compressor_Schultz = 
+    neqsim.process.equipment.compressor.Compressor compressor_Schultz =
         new neqsim.process.equipment.compressor.Compressor("compressor 2", gasstream_Leachman);
     compressor_Schultz.setOutletPressure(120.0);
     compressor_Schultz.setPolytropicEfficiency(0.77);
@@ -292,13 +286,17 @@ public class LeachmanTest {
 
     System.out.println("Density before compressor " + Leachmanfluid.getDensity("kg/m3"));
     System.out.println("-----------------Normal-----------------");
-    System.out.println("Temperature out of Compr." + compressor_Leachman.getOutletStream().getTemperature("C"));
+    System.out.println(
+        "Temperature out of Compr." + compressor_Leachman.getOutletStream().getTemperature("C"));
     System.out.println("Power out of Compr." + compressor_Leachman.getPower("MW"));
-    System.out.println("Polytropic Head out of Compr." + compressor_Leachman.getPolytropicHead("kJ/kg"));
+    System.out
+        .println("Polytropic Head out of Compr." + compressor_Leachman.getPolytropicHead("kJ/kg"));
 
     System.out.println("-----------------Schultz-----------------");
-    System.out.println("Temperature out of Compr." + compressor_Schultz.getOutletStream().getTemperature("C"));
+    System.out.println(
+        "Temperature out of Compr." + compressor_Schultz.getOutletStream().getTemperature("C"));
     System.out.println("Power out of Compr." + compressor_Schultz.getPower("MW"));
-    System.out.println("Polytropic Head out of Compr." + compressor_Schultz.getPolytropicHead("kJ/kg"));
+    System.out
+        .println("Polytropic Head out of Compr." + compressor_Schultz.getPolytropicHead("kJ/kg"));
   }
 }

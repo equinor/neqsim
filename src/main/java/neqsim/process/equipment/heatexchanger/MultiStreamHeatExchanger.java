@@ -63,8 +63,6 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   int MAX_ITERATIONS = 100;
   int iterations = 0;
 
-
-
   /**
    * Constructor for MultiStreamHeatExchanger.
    *
@@ -93,6 +91,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /** {@inheritDoc} */
+  @Override
   public void addInStream(StreamInterface inStream) {
     this.inStreams.add(inStream);
     StreamInterface outStream = inStream.clone();
@@ -108,8 +107,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   //this.hasCondenser = hasCondenser;
   //distoperations = new neqsim.process.processmodel.ProcessSystem();
   //this.numberOfTrays = numberOfTraysLocal;
-  
+
   /** {@inheritDoc} */
+  @Override
   public void setFeedStream(int index, StreamInterface inStream) {
     if (index < inStreams.size()) {
       this.inStreams.set(index, inStream);
@@ -187,6 +187,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /** {@inheritDoc} */
+  @Override
   public void setUAvalue(double UAvalue) {
     UAvalueIsSet = true;
     this.UAvalue = UAvalue;
@@ -311,6 +312,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   /**
    * Runs condition analysis by comparing the exchanger with itself.
    */
+  @Override
   public void runConditionAnalysis() {
     runConditionAnalysis(this);
   }
@@ -320,6 +322,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
    *
    * @return Thermal effectiveness
    */
+  @Override
   public double getThermalEffectiveness() {
     return thermalEffectiveness;
   }

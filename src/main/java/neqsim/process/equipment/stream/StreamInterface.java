@@ -42,13 +42,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    */
   public void setFlowRate(double flowrate, String unit);
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * getPressure.
-   * </p>
-   */
+  /** {@inheritDoc} */
   @Override
   public double getPressure(String unit);
 
@@ -71,6 +65,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * @param unit a {@link java.lang.String} object
    * @return a double
    */
+  @Override
   public double getTemperature(String unit);
 
   /**
@@ -80,6 +75,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    *
    * @return a double
    */
+  @Override
   public double getTemperature();
 
   /** {@inheritDoc} */

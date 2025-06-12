@@ -251,25 +251,25 @@ public class FlowSetter extends TwoPortEquipment {
       error = 0.0;
       ((StreamInterface) referenceProcess.getUnit("feed stream")).setFluid(tempFluid);
       referenceProcess.run();
-      ((StreamInterface) referenceProcess.getUnit("gas")).getFluid()
+      referenceProcess.getUnit("gas").getFluid()
           .initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-      ((StreamInterface) referenceProcess.getUnit("oil")).getFluid()
+      referenceProcess.getUnit("oil").getFluid()
           .initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
       double[] moleChange = new double[tempFluid.getNumberOfComponents()];
       for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
-        moleChange[i] = ((StreamInterface) referenceProcess.getUnit("gas")).getFluid()
+        moleChange[i] = referenceProcess.getUnit("gas").getFluid()
             .getComponent(i).getNumberOfMolesInPhase()
             * (getGasFlowRate("Sm3/hr")
                 / ((StreamInterface) referenceProcess.getUnit("gas")).getFlowRate("Sm3/hr"))
-            - ((StreamInterface) referenceProcess.getUnit("gas")).getFluid().getComponent(i)
+            - referenceProcess.getUnit("gas").getFluid().getComponent(i)
                 .getNumberOfMolesInPhase()
 
-            + ((StreamInterface) referenceProcess.getUnit("oil")).getFluid().getComponent(i)
+            + referenceProcess.getUnit("oil").getFluid().getComponent(i)
                 .getNumberOfMolesInPhase()
                 * (getOilFlowRate("m3/hr")
                     / ((StreamInterface) referenceProcess.getUnit("oil")).getFlowRate("m3/hr"))
-            - ((StreamInterface) referenceProcess.getUnit("oil")).getFluid().getComponent(i)
+            - referenceProcess.getUnit("oil").getFluid().getComponent(i)
                 .getNumberOfMolesInPhase();
         error += Math.abs(moleChange[i]);
       }
@@ -277,7 +277,7 @@ public class FlowSetter extends TwoPortEquipment {
       for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
         tempFluid.addComponent(i, moleChange[i]);
       }
-    } while (error > ((StreamInterface) referenceProcess.getUnit("feed stream")).getFluid()
+    } while (error > referenceProcess.getUnit("feed stream").getFluid()
         .getTotalNumberOfMoles() / 1e6);
 
     if (waterFlowRate > 0) {
