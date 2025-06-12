@@ -88,7 +88,7 @@ public class TwoPhasePipeFlowSolver
     try {
       clonedSystem = (TwoPhasePipeFlowSolver) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
 
     return clonedSystem;

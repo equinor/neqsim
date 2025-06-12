@@ -100,6 +100,7 @@ public class GORfitter extends TwoPortEquipment {
    *
    * @return a double
    */
+  @Override
   public double getTemperature() {
     return temperature;
   }

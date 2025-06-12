@@ -2,12 +2,12 @@
  * This class provides methods for sizing control valves according to the IEC 60534 standard. It
  * supports both liquid and gas fluids and includes methods for calculating flow rates and valve
  * openings based on various parameters.
- * 
+ *
  * Constants: - N1: Constant for liquids (m^3/hr, kPa) - N9: Constant for gases (m^3/hr, kPa) -
  * rho0: Water density at 288.15 K - R: Gas constant [J/(mol*K)]
- * 
+ *
  * Enum: - FluidType: Enum representing the type of fluid (LIQUID or GAS)
- * 
+ *
  * Methods: - sizeControlValve: Sizes a control valve based on the provided parameters. -
  * sizeControlValveLiquid: Sizes a control valve for liquid based on the provided parameters. -
  * calculateFlowRateFromValveOpeningLiquid: Calculates the flow rate for a control valve based on
@@ -19,7 +19,7 @@
  * on Cv and valve opening percentage. - calculateValveOpeningFromFlowRateGas: Calculates the valve
  * opening percentage for gas based on the flow rate and Cv. - findOutletPressureForFixedCvGas:
  * Finds the outlet pressure for a given flow rate and a fixed Cv in a gas valve.
- * 
+ *
  * Private Methods: - isChokedTurbulentL: Determines if the flow is choked for turbulent liquid
  * flow. - isChokedTurbulentG: Determines if the flow is choked for turbulent gas flow. -
  * ffCriticalPressureRatioL: Calculates the critical pressure ratio for liquids. - Kv_to_Cv:
@@ -41,13 +41,13 @@ import java.util.Map;
  */
 public class ControlValveSizing_IEC_60534 {
   // Constants
-  /** Constant for liquids (m^3/hr, kPa) */
+  /** Constant for liquids (m^3/hr, kPa). */
   private static final double N1 = 0.1;
-  /** Constant for gases (m^3/hr, kPa) */
+  /** Constant for gases (m^3/hr, kPa). */
   private static final double N9 = 2.46E1;
-  /** Water density at 288.15 K */
+  /** Water density at 288.15 K. */
   private static final double rho0 = 999.10329075702327;
-  /** Gas constant [J/(mol*K)] */
+  /** Gas constant [J/(mol*K)]. */
   private static final double R = 8.314;
 
   /**

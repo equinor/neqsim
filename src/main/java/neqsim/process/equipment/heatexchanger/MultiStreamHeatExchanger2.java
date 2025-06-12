@@ -22,6 +22,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 
 // ================================================================
@@ -80,6 +81,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   /** {@inheritDoc} */
+  @Override
   public void addInStream(StreamInterface inStream) {}
 
   /** {@inheritDoc} */
@@ -100,6 +102,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     this.approachTemperature = temperatureApproach;
   }
 
+  @Override
   public void setUAvalue(double UAvalue) {
     this.UA = UAvalue;
   }
@@ -109,6 +112,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   // ================================================================
 
   /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     int undefinedCount = 0;
     for (Double temp : outletTemps) {
@@ -327,7 +331,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       for (int i : unknownIndices) {
         double inT = inletTemps.get(i);
         double outT = outletTemps.get(i);
-        String type = (String) streamTypes.get(i);
+        String type = streamTypes.get(i);
         if (type.equals("hot") && outT >= inT) {
           directionOk = false;
           msgs.add("hot outlet ≥ inlet");
@@ -354,7 +358,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
           double inlet = inletTemps.get(idx);
           double lower;
           double upper;
-          String type = (String) streamTypes.get(idx);
+          String type = streamTypes.get(idx);
           if (type.equals("hot")) {
             lower = coldestCold + approachTemperature;
             upper = inlet;
@@ -498,7 +502,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       for (int i : unknownIndices) {
         double inT = inletTemps.get(i);
         double outT = outletTemps.get(i);
-        String type = (String) streamTypes.get(i);
+        String type = streamTypes.get(i);
         if (type.equals("hot") && outT >= inT) {
           directionOk = false;
           msgs.add("hot outlet ≥ inlet");
@@ -529,7 +533,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
           double inlet = inletTemps.get(idx);
           double lower;
           double upper;
-          String type = (String) streamTypes.get(idx);
+          String type = streamTypes.get(idx);
           if (type.equals("hot")) {
             lower = coldestCold + approachTemperature;
             upper = inlet;
@@ -675,7 +679,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
 
   private double enthalpyTPFlash(int index, double pressure, double temperature) {
-    StreamInterface stream = (StreamInterface) inStreams.get(index);
+    StreamInterface stream = inStreams.get(index);
 
     thermoSystem = stream.getThermoSystem().clone();
     thermoSystem.setPressure(pressure, "bara");
@@ -772,7 +776,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
 
   private double initializeOutletGuess(int i) {
-    String type = (String) streamTypes.get(i);
+    String type = streamTypes.get(i);
     double inletTemp = inletTemps.get(i);
     if ("hot".equals(type)) {
       return inletTemp - approachTemperature;
@@ -923,7 +927,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
     logger.debug("\nIndividual Stream Temperature Profiles:");
     for (int i = 0; i < inStreams.size(); i++) {
-      String type = (String) streamTypes.get(i);
+      String type = streamTypes.get(i);
       double Tin = inletTemps.get(i);
       double Tout = outletTemps.get(i);
       double load = streamLoads.get(i);
@@ -941,9 +945,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         "-------------------------------------------------------------------------------------------------------------");
 
     for (int i = 0; i < outStreams.size(); i++) {
-      StreamInterface stream = (StreamInterface) outStreams.get(i);
+      StreamInterface stream = outStreams.get(i);
       String name = stream.getName();
-      String type = (String) streamTypes.get(i);
+      String type = streamTypes.get(i);
       double inlet = inletTemps.get(i);
       double outlet = outletTemps.get(i);
       double pressure = pressures.get(i);
@@ -974,7 +978,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     if (i < 0 || i >= outStreams.size()) {
       throw new IndexOutOfBoundsException("Invalid outStream index: " + i);
     }
-    return (StreamInterface) outStreams.get(i);
+    return outStreams.get(i);
   }
 
 
@@ -1002,7 +1006,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     return 0.0;
   }
 
+  /** {@inheritDoc} */
   @Override
+  @ExcludeFromJacocoGeneratedReport
   public void displayResult() {}
 
   @Override

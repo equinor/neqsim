@@ -113,7 +113,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
     if (getAllUnitNames().contains(operation.getName())) {
       ProcessEquipmentInterface existing =
-          (ProcessEquipmentInterface) this.getUnit(operation.getName());
+          this.getUnit(operation.getName());
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("ProcessSystem",
           "add", "operation", "- Process equipment of type " + existing.getClass().getSimpleName()
               + " named " + operation.getName() + " already included in ProcessSystem"));
@@ -160,7 +160,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public boolean replaceUnit(String name, ProcessEquipmentInterface newObject) {
     try {
-      ProcessEquipmentInterface unit = (ProcessEquipmentInterface) getUnit(name);
+      ProcessEquipmentInterface unit = getUnit(name);
       unit = newObject;
     } catch (Exception e) {
       logger.error(e.getMessage(), e);

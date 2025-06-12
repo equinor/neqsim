@@ -542,6 +542,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /** {@inheritDoc} */
+  @Override
   public void setPhysicalProperties(PhysicalPropertyModel ppm) {
     physicalPropertyHandler.setPhysicalProperties(this, ppm);
   }
@@ -2270,6 +2271,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /** {@inheritDoc} */
+  @Override
   public double getDensity_Leachman(String hydrogenType) {
     neqsim.thermo.util.leachman.NeqSimLeachman test =
         new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
@@ -2282,6 +2284,7 @@ public abstract class Phase implements PhaseInterface {
    *
    * @return the density calculated with the 'normal' hydrogen type.
    */
+  @Override
   public double getDensity_Leachman() {
     // Check that the phase contains exactly one component
     if (this.getNumberOfComponents() != 1) {
@@ -2327,6 +2330,7 @@ public abstract class Phase implements PhaseInterface {
    *
    * @return an array of properties of type double.
    */
+  @Override
   public double[] getProperties_Leachman() {
     // Check that the phase contains exactly one component
     if (this.getNumberOfComponents() != 1) {
@@ -2372,6 +2376,7 @@ public abstract class Phase implements PhaseInterface {
    *
    * @return a matrix of properties of type doubleW.
    */
+  @Override
   public doubleW[] getAlpha0_Leachman() {
     // Check that the phase contains exactly one component
     if (this.getNumberOfComponents() != 1) {
@@ -2417,6 +2422,7 @@ public abstract class Phase implements PhaseInterface {
    *
    * @return a matrix of properties of type doubleW.
    */
+  @Override
   public doubleW[][] getAlphares_Leachman() {
     // Check that the phase contains exactly one component
     if (this.getNumberOfComponents() != 1) {

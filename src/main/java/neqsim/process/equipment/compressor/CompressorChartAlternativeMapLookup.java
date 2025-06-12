@@ -16,22 +16,22 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * This class is an implementation of the compressor chart class that uses Fan laws and "double"
  * interpolation to navigate the compressor map (as opposed to the standard class using reduced
  * variables according to Fan laws).
- * 
+ *
  * <p>
  * The class provides methods to add compressor curves, set reference conditions, and calculate
  * polytropic head and efficiency based on flow and speed. It also includes methods to check surge
  * and stone wall conditions.
  * </p>
- * 
+ *
  * <p>
  * The main method demonstrates the usage of the class by creating a test fluid, setting up a
  * compressor, and running a process system.
  * </p>
- * 
+ *
  * <p>
  * The class implements the CompressorChartInterface and is Serializable.
  * </p>
- * 
+ *
  * <p>
  * Fields:
  * </p>
@@ -64,7 +64,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>fanLawCorrectionFunc: Polynomial function for fan law correction fitting.</li>
  * <li>gearRatio: Gear ratio (default is 1.0).</li>
  * </ul>
- * 
+ *
  * <p>
  * Methods:
  * </p>
@@ -100,14 +100,14 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>plot: Placeholder method for plotting (not implemented).</li>
  * <li>getFlow: Placeholder method for getting flow (not implemented).</li>
  * </ul>
- * 
+ *
  * <p>
  * Exceptions:
  * </p>
  * <ul>
  * <li>RuntimeException: Thrown for invalid input or unsupported head unit value.</li>
  * </ul>
- * 
+ *
  * @see neqsim.process.equipment.compressor.CompressorChartInterface
  * @see java.io.Serializable
  * @see org.apache.commons.math3.analysis.interpolation.SplineInterpolator
@@ -712,6 +712,7 @@ public class CompressorChartAlternativeMapLookup
    *
    * @return a double
    */
+  @Override
   public double getMinSpeedCurve() {
     return 0;
   }

@@ -3635,6 +3635,7 @@ public abstract class SystemThermo implements SystemInterface {
    *
    * @return a boolean
    */
+  @Override
   public boolean isInitialized() {
     return isInitialized;
   }
@@ -5091,6 +5092,7 @@ public abstract class SystemThermo implements SystemInterface {
    * @param nameDef the definition to match component names against
    * @param molarComposition an array of molar compositions to set for the matching components
    */
+  @Override
   public void setMolarCompositionOfNamedComponents(String nameDef, double[] molarComposition) {
     int place = 0;
     double[] comp = new double[getNumberOfComponents()];

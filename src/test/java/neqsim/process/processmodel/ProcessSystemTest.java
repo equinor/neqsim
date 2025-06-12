@@ -938,7 +938,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
       thread2.join();
       thread3.join();
     } catch (Exception e) {
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
   }
 

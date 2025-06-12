@@ -62,7 +62,7 @@ public class SampleSet implements Cloneable {
     try {
       clonedSet = (SampleSet) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
 
     clonedSet.samples = new ArrayList<SampleValue>(samples);

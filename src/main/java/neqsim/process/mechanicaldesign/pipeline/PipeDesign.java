@@ -1,6 +1,6 @@
 /**
  * This file is a direct translation of the Python code in the original snippet.
- * 
+ *
  * Chemical Engineering Design Library (ChEDL). Utilities for process modeling. Copyright (C) 2016,
  * 2017, 2018, 2020 Caleb Bell <Caleb.Andrew.Bell@gmail.com>
  *

@@ -48,7 +48,7 @@ public class AcidTest extends neqsim.NeqSimTest {
       testOps.bubblePointPressureFlash(false);
       testSystem.initProperties();
     } catch (Exception e) {
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
 
     assertEquals(33.2215005, testSystem.getPressure(), 0.001);
@@ -105,7 +105,7 @@ public class AcidTest extends neqsim.NeqSimTest {
       testOps.bubblePointPressureFlash();
       testSystem.initProperties();
     } catch (Exception e) {
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
 
     assertEquals(0.999088711628, testSystem.getPressure(), 0.001);
@@ -153,7 +153,7 @@ public class AcidTest extends neqsim.NeqSimTest {
     try {
       testOps.bubblePointTemperatureFlash();
     } catch (Exception e) {
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
 
     String scheme = testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0).getAssociationScheme();
@@ -189,7 +189,7 @@ public class AcidTest extends neqsim.NeqSimTest {
     try {
       testOps.bubblePointTemperatureFlash();
     } catch (Exception e) {
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
 
     String scheme = testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0).getAssociationScheme();

@@ -27,7 +27,7 @@ public class dewPointTemperatureFlashTest {
     try {
       ops.dewPointTemperatureFlash();
     } catch (Exception e) {
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
     assertEquals(1.7007677589821242, fluid0_HC.getTemperature("C"), 1e-2);
   }

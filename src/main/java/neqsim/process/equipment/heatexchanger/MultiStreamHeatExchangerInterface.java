@@ -184,9 +184,11 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   double getDuty();
 
   /** {@inheritDoc} */
+  @Override
   double getMassBalance(String unit);
 
   /** {@inheritDoc} */
+  @Override
   double getEntropyProduction(String unit);
 
   // ================================
@@ -217,6 +219,7 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
    * Runs a condition analysis by comparing the current heat exchanger with a reference exchanger.
    * </p>
    */
+  @Override
   void runConditionAnalysis(ProcessEquipmentInterface refExchanger);
 
   /**
@@ -259,15 +262,10 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
    *
    * @return JSON representation of the heat exchanger
    */
+  @Override
   String toJson();
 
   // ================================
   // Additional Methods
   // ================================
-
-  /**
-   * Displays the results of the heat exchanger simulation. Typically outputs temperatures,
-   * pressures, flow rates, etc.
-   */
-  void displayResult();
 }

@@ -50,7 +50,7 @@ public class EquilibriumStream extends Stream {
     try {
       clonedStream = (EquilibriumStream) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
 
     thermoSystem = thermoSystem.clone();

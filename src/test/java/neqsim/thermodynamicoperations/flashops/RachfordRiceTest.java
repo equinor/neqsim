@@ -18,7 +18,7 @@ public class RachfordRiceTest {
       RachfordRice rachfordRice = new RachfordRice();
       Assertions.assertEquals(0.407070707, rachfordRice.calcBeta(K, z), 1e-6);
     } catch (Exception e) {
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
 
     try {
@@ -30,7 +30,7 @@ public class RachfordRiceTest {
       Assertions.assertEquals(0.407070707, rachfordRice.calcBeta(K, z), 1e-6);
       RachfordRice.setMethod(startMetod);
     } catch (Exception e) {
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
   }
 
@@ -43,7 +43,7 @@ public class RachfordRiceTest {
       RachfordRice rachfordRice = new RachfordRice();
       Assertions.assertEquals(0.407070707, rachfordRice.calcBeta(K, z), 1e-6);
     } catch (Exception e) {
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
   }
 }

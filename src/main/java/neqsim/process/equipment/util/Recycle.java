@@ -487,6 +487,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    *
    * @param temp a double
    */
+  @Override
   public void setTemperature(double temp) {
     for (int k = 0; k < streams.size(); k++) {
       streams.get(k).getThermoSystem().setTemperature(temp);
@@ -674,6 +675,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    *
    * @return the minimum flow rate
    */
+  @Override
   public double getMinimumFlow() {
     return minimumFlow;
   }
@@ -683,6 +685,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    *
    * @param minimumFlow the minimum flow rate to be set, in appropriate units.
    */
+  @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
   }
