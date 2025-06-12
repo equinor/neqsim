@@ -13,7 +13,9 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.monitor.MultiStreamHeatExchanger2Response;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -921,5 +923,12 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   @Override
   public double getUAvalue() {
     return 0.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new MultiStreamHeatExchanger2Response(this));
   }
 }
