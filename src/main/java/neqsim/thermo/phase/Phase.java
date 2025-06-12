@@ -26,14 +26,19 @@ import neqsim.util.exception.InvalidInputException;
  * Abstract Phase class. All Phase classes shall subclass this class.
  *
  * <p>
- * From wiki: A phase is a region of a space (a thermodynamic system), in neqsim named a
- * SystemInterface, throughout which all physical properties of a material are essentially uniform.
+ * From wiki: A phase is a region of a space (a thermodynamic system), in neqsim
+ * named a
+ * SystemInterface, throughout which all physical properties of a material are
+ * essentially uniform.
  * A SystemInterface can contain a single or multiple PhaseInterface objects.
  *
- * See PhaseType for the types of Phases that NeqSim is aware of. See also StateOfMatter.
+ * See PhaseType for the types of Phases that NeqSim is aware of. See also
+ * StateOfMatter.
  *
- * In NeqSim, there are multiple Phase classes, each representing a specific set of Equations Of
- * State. Phases have corresponding Component classes and System classes to ensure same EoS is used
+ * In NeqSim, there are multiple Phase classes, each representing a specific set
+ * of Equations Of
+ * State. Phases have corresponding Component classes and System classes to
+ * ensure same EoS is used
  * throughout.
  * </p>
  *
@@ -66,13 +71,15 @@ public abstract class Phase implements PhaseInterface {
 
   /**
    * Mole fraction of this phase of system.
-   * <code>beta = numberOfMolesInPhase/numberOfMolesInSystem</code>. NB! numberOfMolesInSystem is
+   * <code>beta = numberOfMolesInPhase/numberOfMolesInSystem</code>. NB!
+   * numberOfMolesInSystem is
    * not known to the phase.
    */
   double beta = 1.0;
 
   /**
-   * Number of moles in phase. <code>numberOfMolesInPhase = numberOfMolesInSystem*beta</code>. NB!
+   * Number of moles in phase.
+   * <code>numberOfMolesInPhase = numberOfMolesInSystem*beta</code>. NB!
    * numberOfMolesInSystem is not known to the phase.
    */
   public double numberOfMolesInPhase = 0;
@@ -89,6 +96,9 @@ public abstract class Phase implements PhaseInterface {
   /** Reference phase per component. Relevant for solids and chemicalreactions. */
   protected PhaseInterface[] refPhase = null;
   protected PhaseType pt = PhaseType.GAS;
+
+  /** Salinity of the phase (mol/kg or as used in Soreide-Whitson). */
+  protected double salinity = 0.0;
 
   /**
    * <p>
@@ -129,8 +139,8 @@ public abstract class Phase implements PhaseInterface {
    * NB! Does not actually add component to componentarray.
    * </p>
    *
-   * @param name Name of component to add.
-   * @param moles Number of moles of component to add to phase.
+   * @param name       Name of component to add.
+   * @param moles      Number of moles of component to add to phase.
    * @param compNumber component number in fluid
    */
   public void addComponent(String name, double moles, int compNumber) {
@@ -226,8 +236,8 @@ public abstract class Phase implements PhaseInterface {
     }
     if ((numberOfMolesInPhase + dn) / numbmoles < -1e-10) {
       String msg = "will lead to negative number of moles in phase." + (numberOfMolesInPhase + dn);
-      neqsim.util.exception.InvalidInputException ex =
-          new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
+      neqsim.util.exception.InvalidInputException ex = new neqsim.util.exception.InvalidInputException(this,
+          "addMolesChemReac", "dn", msg);
       throw new RuntimeException(ex);
     }
     numberOfMolesInPhase += dn;
@@ -328,8 +338,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getTemperature(String unit) {
-    neqsim.util.unit.TemperatureUnit tempConversion =
-        new neqsim.util.unit.TemperatureUnit(getTemperature(), "K");
+    neqsim.util.unit.TemperatureUnit tempConversion = new neqsim.util.unit.TemperatureUnit(getTemperature(), "K");
     return tempConversion.getValue(unit);
   }
 
@@ -342,8 +351,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public final double getPressure(String unit) {
-    neqsim.util.unit.PressureUnit presConversion =
-        new neqsim.util.unit.PressureUnit(getPressure(), "bara");
+    neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(getPressure(), "bara");
     return presConversion.getValue(unit);
   }
 
@@ -564,11 +572,11 @@ public abstract class Phase implements PhaseInterface {
    * calcA.
    * </p>
    *
-   * @param comp a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param comp        a int
+   * @param phase       a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
-   * @param pressure a double
-   * @param numbcomp a int
+   * @param pressure    a double
+   * @param numbcomp    a int
    * @return a double
    */
   public double calcA(int comp, PhaseInterface phase, double temperature, double pressure,
@@ -1310,7 +1318,7 @@ public abstract class Phase implements PhaseInterface {
    * </p>
    *
    * @param onlyPure a boolean
-   * @param name a {@link java.lang.String} object
+   * @param name     a {@link java.lang.String} object
    */
   public void initRefPhases(boolean onlyPure, String name) {
     refPhase = new PhaseInterface[numberOfComponents];
@@ -1363,7 +1371,7 @@ public abstract class Phase implements PhaseInterface {
    * getLogPureComponentFugacity.
    * </p>
    *
-   * @param k a int
+   * @param k    a int
    * @param pure a boolean
    * @return a double
    */
@@ -1935,7 +1943,8 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT,
-      String[][] mixRule, double[][] intparam) {}
+      String[][] mixRule, double[][] intparam) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -2197,6 +2206,7 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
+
   public void setInitType(int initType) {
     this.initType = initType;
   }
@@ -2273,14 +2283,16 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getDensity_Leachman(String hydrogenType) {
-    neqsim.thermo.util.leachman.NeqSimLeachman test =
-        new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
+    neqsim.thermo.util.leachman.NeqSimLeachman test = new neqsim.thermo.util.leachman.NeqSimLeachman(this,
+        hydrogenType);
     return test.getDensity();
   }
 
   /**
-   * If no hydrogenType is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure
+   * If no hydrogenType is specified it checks the component name and chooses the
+   * correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase
+   * is not pure
    *
    * @return the density calculated with the 'normal' hydrogen type.
    */
@@ -2319,14 +2331,16 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double[] getProperties_Leachman(String hydrogenType) {
-    neqsim.thermo.util.leachman.NeqSimLeachman test =
-        new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
+    neqsim.thermo.util.leachman.NeqSimLeachman test = new neqsim.thermo.util.leachman.NeqSimLeachman(this,
+        hydrogenType);
     return test.propertiesLeachman();
   }
 
   /**
-   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure
+   * If no hydrogentype is specified it checks the component name and chooses the
+   * correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase
+   * is not pure
    *
    * @return an array of properties of type double.
    */
@@ -2365,14 +2379,16 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public doubleW[] getAlpha0_Leachman(String hydrogenType) {
-    neqsim.thermo.util.leachman.NeqSimLeachman test =
-        new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
+    neqsim.thermo.util.leachman.NeqSimLeachman test = new neqsim.thermo.util.leachman.NeqSimLeachman(this,
+        hydrogenType);
     return test.getAlpha0_Leachman();
   }
 
   /**
-   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure
+   * If no hydrogentype is specified it checks the component name and chooses the
+   * correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase
+   * is not pure
    *
    * @return a matrix of properties of type doubleW.
    */
@@ -2411,14 +2427,16 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public doubleW[][] getAlphares_Leachman(String hydrogenType) {
-    neqsim.thermo.util.leachman.NeqSimLeachman test =
-        new neqsim.thermo.util.leachman.NeqSimLeachman(this, hydrogenType);
+    neqsim.thermo.util.leachman.NeqSimLeachman test = new neqsim.thermo.util.leachman.NeqSimLeachman(this,
+        hydrogenType);
     return test.getAlphares_Leachman();
   }
 
   /**
-   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure
+   * If no hydrogentype is specified it checks the component name and chooses the
+   * correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase
+   * is not pure
    *
    * @return a matrix of properties of type doubleW.
    */
@@ -2457,8 +2475,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getDensity_AGA8() {
-    neqsim.thermo.util.gerg.NeqSimAGA8Detail test =
-        new neqsim.thermo.util.gerg.NeqSimAGA8Detail(this);
+    neqsim.thermo.util.gerg.NeqSimAGA8Detail test = new neqsim.thermo.util.gerg.NeqSimAGA8Detail(this);
     return test.getDensity();
   }
 
@@ -2555,5 +2572,16 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public String getModelName() {
     return thermoPropertyModelName;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSalinity() {
+    return salinity;
+  }
+
+  @Override
+  public void setSalinity(double salinity) {
+    this.salinity = salinity;
   }
 }
