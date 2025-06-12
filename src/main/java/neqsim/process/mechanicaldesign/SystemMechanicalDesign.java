@@ -72,18 +72,18 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     ArrayList<String> names = this.processSystem.getAllUnitNames();
     for (int i = 0; i < names.size(); i++) {
       try {
-        if (!((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)) == null)) {
-          ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
+        if (!(this.processSystem.getUnit(names.get(i)) == null)) {
+          this.processSystem.getUnit(names.get(i))
               .initMechanicalDesign();
-          ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
+          this.processSystem.getUnit(names.get(i))
               .getMechanicalDesign().calcDesign();
-          totalPlotSpace += ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
+          totalPlotSpace += this.processSystem.getUnit(names.get(i))
               .getMechanicalDesign().getModuleHeight()
-              * ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
+              * this.processSystem.getUnit(names.get(i))
                   .getMechanicalDesign().getModuleLength();
-          totalVolume += ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
+          totalVolume += this.processSystem.getUnit(names.get(i))
               .getMechanicalDesign().getVolumeTotal();
-          totalWeight += ((ProcessEquipmentInterface) this.processSystem.getUnit(names.get(i)))
+          totalWeight += this.processSystem.getUnit(names.get(i))
               .getMechanicalDesign().getWeightTotal();
           numberOfModules++;
         }

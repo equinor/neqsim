@@ -462,6 +462,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   }
 
   /** {@inheritDoc} */
+  @Override
   public void setPumpChartType(String type) {
     if (type.equals("simple") || type.equals("fan law")) {
       pumpChart = new PumpChart();
@@ -477,6 +478,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    *
    * @return the minimum flow rate
    */
+  @Override
   public double getMinimumFlow() {
     return minimumFlow;
   }
@@ -486,6 +488,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    *
    * @param minimumFlow the minimum flow rate to be set, in appropriate units.
    */
+  @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
   }

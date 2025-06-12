@@ -103,7 +103,7 @@ public abstract class NonEquilibriumFluidBoundary
     try {
       clonedSystem = (NonEquilibriumFluidBoundary) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
 
     return clonedSystem;

@@ -90,7 +90,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
     try {
       clonedSystem = (ReactiveFluidBoundary) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
 
     return clonedSystem;

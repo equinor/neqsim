@@ -369,7 +369,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * <p>
    * Setter for the field <code>isActive</code>.
    * </p>
-   * 
+   *
    * @param isActive a boolean
    */
   public void isActive(boolean isActive) {

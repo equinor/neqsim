@@ -180,7 +180,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     try {
       clonedSystem = (Stream) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
     if (stream != null) {
       clonedSystem.setStream(stream.clone());

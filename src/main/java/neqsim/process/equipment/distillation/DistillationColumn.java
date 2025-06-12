@@ -378,6 +378,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     setCalculationIdentifier(id);
   }
 
+  /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
@@ -620,14 +621,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * The main method demonstrates the creation and operation of a distillation column using the
    * NeqSim library. It performs the following steps:
-   * 
+   *
    * 1. Creates a test thermodynamic system with methane, ethane, and propane components. 2.
    * Performs a TP flash calculation on the test system. 3. Creates two separate feed streams from
    * the test system. 4. Constructs a distillation column with 5 trays, a reboiler, and a condenser.
    * 5. Adds the two feed streams to the distillation column at tray 3. 6. Builds and runs the
    * process system. 7. Displays the results of the distillation column, including the gas and
    * liquid output streams.
-   * 
+   *
    *
    * @param args command line arguments (not used)
    */

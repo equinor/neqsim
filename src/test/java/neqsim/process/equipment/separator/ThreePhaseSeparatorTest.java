@@ -170,7 +170,7 @@ class ThreePhaseSeparatorTest {
      * file path to read Path filePath = Paths.get(
      * "/workspaces/neqsim/src/test/java/neqsim/thermodynamicOperations/flashOps/my_process.xml" );
      * String xmlContents = ""; try { xmlContents = new String(Files.readAllBytes(filePath),
-     * StandardCharsets.UTF_8); } catch (IOException e) { logger.error(e.getMessage());; }
+     * StandardCharsets.UTF_8); } catch (IOException e) { logger.error(e.getMessage()); }
      *
      * // Deserialize from xml neqsim.processSimulation.processSystem.ProcessSystem operationsCopy =
      * (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xmlContents);

@@ -81,7 +81,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
     try {
       clonedSystem = (TwoPhasePackedBedFlowNode) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
 
     return clonedSystem;

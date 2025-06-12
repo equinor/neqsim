@@ -47,6 +47,7 @@ public enum EosMixingRuleType implements MixingRuleTypeInterface {
    *
    * @return Numeric index of phase type
    */
+  @Override
   @Deprecated
   public int getValue() {
     return this.value;

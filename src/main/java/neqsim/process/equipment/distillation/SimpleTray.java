@@ -215,6 +215,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    *
    * @return the temperature
    */
+  @Override
   public double getTemperature() {
     return temperature;
   }

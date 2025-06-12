@@ -22,7 +22,7 @@ public class PSFlashLeachman extends QfuncFlash {
   Flash tpFlash;
 
   double entropy_Leachman = 0.0;
-  double cP_Leachman = 0.0; 
+  double cP_Leachman = 0.0;
 
   /**
    * <p>
