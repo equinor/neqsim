@@ -140,9 +140,9 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
 
         public SurfaceTensionInterface getSurfaceTensionModel(int i) {
                 String type = system.getPhase(i).getPhaseTypeName();
-                if ("gas".equals(type)) {
+                if ("gas".equalsIgnoreCase(type)) {
                         return gasLiquidSurfaceTensionCalc;
-                } else if ("aqueous".equals(type)) {
+                } else if ("aqueous".equalsIgnoreCase(type)) {
                         return gasAqueousSurfaceTensionCalc != null ? gasAqueousSurfaceTensionCalc
                                         : gasLiquidSurfaceTensionCalc;
                 } else {
