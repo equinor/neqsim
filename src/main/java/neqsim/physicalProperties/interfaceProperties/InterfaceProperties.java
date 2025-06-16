@@ -117,20 +117,39 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
 		}
 	}
 
-	//TODO add unit conversion implementation to interfacial tension
-	public double getSurfaceTension(int numb1, int numb2, String unit) {
-		double val = getSurfaceTension(numb1, numb2);
-		///...conversion methods
-		return val;
-	}
+        /**
+         * Returns the surface tension for the specified interface in the desired
+         * unit. Default unit in NeqSim is N/m.
+         *
+         * @param numb1 phase number of first phase
+         * @param numb2 phase number of second phase
+         * @param unit  the requested unit ("N/m", "mN/m" or "dyn/cm")
+         * @return surface tension in the requested unit
+         */
+        public double getSurfaceTension(int numb1, int numb2, String unit) {
+                double val = getSurfaceTension(numb1, numb2);
+                if (unit == null || unit.equalsIgnoreCase("N/m")) {
+                        return val;
+                } else if (unit.equalsIgnoreCase("mN/m")) {
+                        return val * 1000.0;
+                } else if (unit.equalsIgnoreCase("dyn/cm")) {
+                        return val * 1000.0; // 1 N/m = 1000 dyn/cm
+                }
+                return val;
+        }
 
-	public SurfaceTensionInterface getSurfaceTensionModel(int i) {
-		if (system.getPhase(i).getPhaseTypeName().equals("gas")) {
-			return gasLiquidSurfaceTensionCalc;
-		} else {
-			return gasLiquidSurfaceTensionCalc;
-		}
-	}
+        public SurfaceTensionInterface getSurfaceTensionModel(int i) {
+                String type = system.getPhase(i).getPhaseTypeName();
+                if ("gas".equals(type)) {
+                        return gasLiquidSurfaceTensionCalc;
+                } else if ("aqueous".equals(type)) {
+                        return gasAqueousSurfaceTensionCalc != null ? gasAqueousSurfaceTensionCalc
+                                        : gasLiquidSurfaceTensionCalc;
+                } else {
+                        return liquidLiquidSurfaceTensionCalc != null ? liquidLiquidSurfaceTensionCalc
+                                        : gasLiquidSurfaceTensionCalc;
+                }
+        }
 
 	/**
 	 * @return the interfacialTensionModel
