@@ -48,6 +48,7 @@ The test files are written in JUnit5 and placed in the [test directory](https://
 
 Test coverage can be examined using [jacoco](https://www.eclemma.org/jacoco/) from maven.  
 Generate a coverage report using `./mvnw jacoco:prepare-agent test install jacoco:report` and see results in target/site/jacoco/index.html.
+Run `./mvnw checkstyle:check` to verify that your code follows the project's formatting rules.
 > **Note**
 > The maven wrapper command is dependent on your OS, for Unix use: ```./mvnw```
 > Windows:
@@ -64,7 +65,8 @@ The NeqSim source code is compiled and distributed as a Java library. [NeqSim re
 
 ## Contributing
 
-See the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests. An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).  
+See the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests. An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).
+Pull requests will only be accepted if all tests and `./mvnw checkstyle:check` pass.
 
 ## Discussion forum
 
