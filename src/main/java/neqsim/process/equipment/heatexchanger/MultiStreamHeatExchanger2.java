@@ -296,7 +296,14 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   private double[] linearSystemTwoUnknowns(double[][] A, double[] b) {
     double det = A[0][0] * A[1][1] - A[0][1] * A[1][0];
     if (Math.abs(det) < 1e-12) {
-      throw new ArithmeticException(SINGULAR_JACOBIAN_MSG);
+      // Add a small regularisation to the diagonal to avoid singular matrices
+      double eps = 1e-8;
+      A[0][0] += eps;
+      A[1][1] += eps;
+      det = A[0][0] * A[1][1] - A[0][1] * A[1][0];
+      if (Math.abs(det) < 1e-12) {
+        throw new ArithmeticException("Jacobian determinant is zero");
+      }
     }
     double dx = b[0] * A[1][1] - b[1] * A[0][1];
     double dy = A[0][0] * b[1] - A[1][0] * b[0];
