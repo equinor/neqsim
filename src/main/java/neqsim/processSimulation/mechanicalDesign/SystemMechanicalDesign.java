@@ -48,6 +48,11 @@ int numberOfModules = 0;
     }
 
     public void runDesignCalculation() {
+        totalPlotSpace = 0.0;
+        totalVolume = 0.0;
+        totalWeight = 0.0;
+        numberOfModules = 0;
+
         ArrayList names = processSystem.getAllUnitNames();
         for (int i = 0; i < names.size(); i++) {
             try {
