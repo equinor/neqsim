@@ -40,7 +40,21 @@ cd neqsim
 > Windows:
 > ```mvnw.cmd ```
 
-An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).  
+An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).
+
+### Opening in VS Code
+
+The repository contains a ready‑to‑use [dev container](.devcontainer/) configuration. After cloning
+the project you can open it in VS Code with container support enabled:
+
+```bash
+git clone https://github.com/equinor/neqsim.git
+cd neqsim
+# Open in VS Code with container support
+code .
+```
+
+The container image comes with Maven and the recommended extensions already installed.
 
 ## Running the tests
 
@@ -64,8 +78,8 @@ The NeqSim source code is compiled and distributed as a Java library. [NeqSim re
 [Maven](https://maven.apache.org/) - Dependency Management
 
 ## Contributing
-
 See the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests. An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).
+See [docs/DEVELOPER_SETUP.md](docs/DEVELOPER_SETUP.md) for a summary of how to clone the project, build it and run the tests. For more details see the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests. An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).
 Pull requests will only be accepted if all tests and `./mvnw checkstyle:check` pass.
 
 ## Discussion forum
