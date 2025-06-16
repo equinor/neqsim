@@ -24,6 +24,7 @@ NeqSim can be set up as a dependency in a Java project via the [NeqSim GitHub pa
 ## Getting Started as a NeqSim Java developer
 
 See the [NeqSim Java Wiki](https://github.com/equinor/neqsim/wiki) for how to use the NeqSim API.
+Additional pages are available in the [local wiki](docs/wiki/index.md).
 NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file. Learn and ask questions in [Discussions for use and development of NeqSim](https://github.com/equinor/neqsim/discussions).
 
 ### Initial setup
