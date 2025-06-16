@@ -37,6 +37,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   private int maxIterations = 1000;
   private double jacobiDelta = 1e-4;
 
+  /** Message used when the Jacobian is singular. */
+  private static final String SINGULAR_JACOBIAN_MSG = "Jacobian determinant is zero";
+
   private final double extremeEnergy = 0.3;
   private final double extremeUA = 2.0;
   private final int extremeAttempts = 1000;
@@ -225,7 +228,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
   private double[] linearSystemOneUnknown(double[][] A, double[] b) {
     if (Math.abs(A[0][0]) < 1e-12) {
-      throw new ArithmeticException("Jacobian element is zero");
+      throw new ArithmeticException(SINGULAR_JACOBIAN_MSG);
     }
     return new double[] {b[0] / A[0][0]};
   }
@@ -380,7 +383,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         - A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0])
         + A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
     if (Math.abs(D) < 1e-12) {
-      throw new ArithmeticException("Jacobian determinant is zero");
+      throw new ArithmeticException(SINGULAR_JACOBIAN_MSG);
     }
 
     double Dx = b[0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1])
