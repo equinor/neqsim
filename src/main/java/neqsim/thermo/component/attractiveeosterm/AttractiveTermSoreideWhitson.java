@@ -62,14 +62,11 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
    */
   private double getSalinityFromPhase() {
     double salinity = 0.0;
-    PhaseInterface phase = getComponent().getPhase();
+    PhaseInterface phase = null;
     if (phase != null) {
       try {
-        // Using reflection to call getSalinity() for flexibility in phase types.
-        // In a well-defined API, an interface like HasSalinity might be preferred.
-        if (phase.getClass().getMethod("getSalinity") != null) {
-          salinity = (double) phase.getClass().getMethod("getSalinity").invoke(phase);
-        }
+        System.out.println("no phase");
+    
       } catch (Exception e) {
         // Log the exception if method not found or invocation fails, or handle it based
         // on requirements.
