@@ -40,7 +40,21 @@ cd neqsim
 > Windows:
 > ```mvnw.cmd ```
 
-An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).  
+An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).
+
+### Opening in VS Code
+
+The repository contains a ready‑to‑use [dev container](.devcontainer/) configuration. After cloning
+the project you can open it in VS Code with container support enabled:
+
+```bash
+git clone https://github.com/equinor/neqsim.git
+cd neqsim
+# Open in VS Code with container support
+code .
+```
+
+The container image comes with Maven and the recommended extensions already installed.
 
 ## Running the tests
 
