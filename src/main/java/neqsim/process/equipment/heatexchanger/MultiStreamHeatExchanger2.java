@@ -37,6 +37,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   private int maxIterations = 1000;
   private double jacobiDelta = 1e-4;
 
+  /** Message used when the Jacobian is singular. */
+  private static final String SINGULAR_JACOBIAN_MSG = "Jacobian determinant is zero";
+
   private final double extremeEnergy = 0.3;
   private final double extremeUA = 2.0;
   private final int extremeAttempts = 1000;
@@ -224,6 +227,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   private double[] linearSystemOneUnknown(double[][] A, double[] b) {
+    if (Math.abs(A[0][0]) < 1e-12) {
+      throw new ArithmeticException(SINGULAR_JACOBIAN_MSG);
+    }
     return new double[] {b[0] / A[0][0]};
   }
 
@@ -289,6 +295,16 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
   private double[] linearSystemTwoUnknowns(double[][] A, double[] b) {
     double det = A[0][0] * A[1][1] - A[0][1] * A[1][0];
+    if (Math.abs(det) < 1e-12) {
+      // Add a small regularisation to the diagonal to avoid singular matrices
+      double eps = 1e-8;
+      A[0][0] += eps;
+      A[1][1] += eps;
+      det = A[0][0] * A[1][1] - A[0][1] * A[1][0];
+      if (Math.abs(det) < 1e-12) {
+        throw new ArithmeticException("Jacobian determinant is zero");
+      }
+    }
     double dx = b[0] * A[1][1] - b[1] * A[0][1];
     double dy = A[0][0] * b[1] - A[1][0] * b[0];
     return new double[] {dx / det, dy / det};
@@ -366,6 +382,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     double D = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1])
         - A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0])
         + A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
+    if (Math.abs(D) < 1e-12) {
+      throw new ArithmeticException(SINGULAR_JACOBIAN_MSG);
+    }
 
     double Dx = b[0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1])
         - A[0][1] * (b[1] * A[2][2] - A[1][2] * b[2]) + A[0][2] * (b[1] * A[2][1] - A[1][1] * b[2]);
