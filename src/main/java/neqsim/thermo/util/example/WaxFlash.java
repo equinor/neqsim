@@ -14,7 +14,12 @@ public class WaxFlash {
 
     public static void main(String args[]) {
     	
-    	NeqSimDataBase.setConnectionString("jdbc:derby:/workspace/neqsim/src/main/resources/data/neqsimthermodatabase");
+        String connectionString = System.getenv("NEQSIM_DB_CONNECTION_STRING");
+        if (connectionString == null || connectionString.isEmpty()) {
+            logger.error("Environment variable NEQSIM_DB_CONNECTION_STRING is not set or empty.");
+            throw new IllegalStateException("Database connection string is not configured.");
+        }
+        NeqSimDataBase.setConnectionString(connectionString);
     	NeqSimDataBase.setCreateTemporaryTables(true);
     	
     	
