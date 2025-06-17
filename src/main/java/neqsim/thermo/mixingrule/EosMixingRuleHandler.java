@@ -575,6 +575,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     }
 
     /**
+     * Getter for bmixType.
+     *
      * @return the bmixType
      */
     @Override
@@ -583,6 +585,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     }
 
     /**
+     * Setter for bmixType.
+     *
      * @param bmixType2 the bmixType to set
      */
     @Override
@@ -842,6 +846,19 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       }
 
       return clonedSystem;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+      // ClassicVdW has no fields of its own, but subclasses may add fields.
+      // If you add fields to ClassicVdW, compare them here.
+      return true;
     }
   }
 
@@ -1647,6 +1664,21 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   / hwfc);
       return aij;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+      SRKHuronVidal other = (SRKHuronVidal) obj;
+      if (Double.compare(hwfc, other.hwfc) != 0) {
+        return false;
+      }
+      return super.equals(obj);
+    }
   }
 
   public class SRKHuronVidal2 extends ClassicSRK implements HVMixingRulesInterface {
@@ -1717,6 +1749,14 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
     double[] BDERT;
 
+    /**
+     * Constructor for SRKHuronVidal2.
+     *
+     * @param phase the phase interface
+     * @param HValpha the HV alpha parameter matrix
+     * @param HVDij the HV Dij parameter matrix
+     * @param mixRule the mixing rule matrix
+     */
     public SRKHuronVidal2(PhaseInterface phase, double[][] HValpha, double[][] HVDij,
         String[][] mixRule) {
       this.orgPhase = phase;
@@ -2794,5 +2834,86 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     dialog.setSize(800, 600); // pack();
     // \\dialog.pack();
     dialog.setVisible(true);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    EosMixingRuleHandler other = (EosMixingRuleHandler) obj;
+    if (bmixType != other.bmixType) {
+      return false;
+    }
+    if (Double.compare(nEOSkij, other.nEOSkij) != 0) {
+      return false;
+    }
+
+    if (mixingRuleGEModel == null) {
+      if (other.mixingRuleGEModel != null) {
+        return false;
+      }
+    } else if (!mixingRuleGEModel.equals(other.mixingRuleGEModel)) {
+      return false;
+    }
+    if (mixingRuleName == null) {
+      if (other.mixingRuleName != null) {
+        return false;
+      }
+    } else if (!mixingRuleName.equals(other.mixingRuleName)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(intparam, other.intparam)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(intparamT, other.intparamT)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(WSintparam, other.WSintparam)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(intparamij, other.intparamij)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(intparamji, other.intparamji)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(HVDij, other.HVDij)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(HVDijT, other.HVDijT)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(HValpha, other.HValpha)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(NRTLDij, other.NRTLDij)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(NRTLDijT, other.NRTLDijT)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(NRTLalpha, other.NRTLalpha)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(wij, other.wij)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(wijCalcOrFitted, other.wijCalcOrFitted)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(classicOrHV, other.classicOrHV)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(classicOrWS, other.classicOrWS)) {
+      return false;
+    }
+    if (!java.util.Arrays.deepEquals(intparamTType, other.intparamTType)) {
+      return false;
+    }
+    return true;
   }
 }

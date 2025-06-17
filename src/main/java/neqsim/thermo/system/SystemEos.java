@@ -30,4 +30,19 @@ public abstract class SystemEos extends neqsim.thermo.system.SystemThermo {
   public SystemEos(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    if (!super.equals(obj)) {
+      return false;
+    }
+    // No additional fields to compare in System
+    return true;
+  }
 }

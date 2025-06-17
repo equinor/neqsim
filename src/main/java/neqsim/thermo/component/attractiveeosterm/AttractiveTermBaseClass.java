@@ -135,4 +135,33 @@ public abstract class AttractiveTermBaseClass implements AttractiveTermInterface
   void setComponent(ComponentEosInterface component) {
     this.component = component;
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    AttractiveTermBaseClass other = (AttractiveTermBaseClass) obj;
+    if (Double.compare(m, other.m) != 0) {
+      return false;
+    }
+    if (!java.util.Arrays.equals(parameters, other.parameters)) {
+      return false;
+    }
+    if (!java.util.Arrays.equals(parametersSolid, other.parametersSolid)) {
+      return false;
+    }
+    if (component == null) {
+      if (other.component != null) {
+        return false;
+      }
+    } /*
+       * else if (!component.equals(other.component)) { // Typically equality is checked from
+       * component so this will infinitely recursive return false; }
+       */
+    return true;
+  }
 }
