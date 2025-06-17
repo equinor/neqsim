@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.simple.SimpleMatrix;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
@@ -509,9 +511,19 @@ public class TPmultiflash extends TPflash {
               dx = df.plus(identitytimesConst.scale(0.2)).solve(f).negative();
             } catch (Exception ex) {
               logger.error("Fallback matrix solve failed: " + ex.getMessage());
-              logger.warn("Setting dx to zero matrix as a fallback.");
-              // Set dx to a zero matrix
-              dx = new SimpleMatrix(f.numRows(), f.numCols());
+              logger.debug("Attempting pseudo-inverse fallback...");
+              try {
+                DMatrixRMaj pinv = new DMatrixRMaj(df.numCols(), df.numRows());
+                CommonOps_DDRM.pinv(df.getDDRM(), pinv);
+                DMatrixRMaj result = new DMatrixRMaj(df.numCols(), 1);
+                CommonOps_DDRM.mult(pinv, f.getDDRM(), result);
+                dx = SimpleMatrix.wrap(result).negative();
+                logger.warn("Used pseudo-inverse matrix solve.");
+              } catch (Exception ex2) {
+                logger.error("Pseudo-inverse fallback failed: " + ex2.getMessage());
+                logger.warn("Setting dx to zero matrix as a last resort.");
+                dx = new SimpleMatrix(f.numRows(), f.numCols());
+              }
             }
           }
 
@@ -877,7 +889,19 @@ public class TPmultiflash extends TPflash {
               dx = df.plus(identitytimesConst.scale(0.5)).solve(f).negative();
             } catch (Exception ex) {
               logger.error("Fallback matrix solve failed: " + ex.getMessage());
-              throw new RuntimeException("Matrix solve failed after fallback attempts", ex);
+              logger.debug("Attempting pseudo-inverse fallback...");
+              try {
+                DMatrixRMaj pinv = new DMatrixRMaj(df.numCols(), df.numRows());
+                CommonOps_DDRM.pinv(df.getDDRM(), pinv);
+                DMatrixRMaj result = new DMatrixRMaj(df.numCols(), 1);
+                CommonOps_DDRM.mult(pinv, f.getDDRM(), result);
+                dx = SimpleMatrix.wrap(result).negative();
+                logger.warn("Used pseudo-inverse matrix solve.");
+              } catch (Exception ex2) {
+                logger.error("Pseudo-inverse fallback failed: " + ex2.getMessage());
+                logger.warn("Setting dx to zero matrix as a last resort.");
+                dx = new SimpleMatrix(f.numRows(), f.numCols());
+              }
             }
           }
 
