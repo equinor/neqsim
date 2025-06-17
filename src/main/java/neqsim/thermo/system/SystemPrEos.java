@@ -44,7 +44,7 @@ public class SystemPrEos extends SystemEos {
    * @param T the temperature in Kelvin
    * @param P the pressure in bara (absolute pressure)
    */
-  public SystemPrEos(double T, double P) {
+  public SystemPrEos(final double T, final double P) {
     this(T, P, false);
   }
 
@@ -55,7 +55,7 @@ public class SystemPrEos extends SystemEos {
    * @param P the pressure in bara (absolute pressure)
    * @param checkForSolids set {@code true} to enable solid phase calculations
    */
-  public SystemPrEos(double T, double P, boolean checkForSolids) {
+  public SystemPrEos(final double T, final double P, final boolean checkForSolids) {
     super(T, P, checkForSolids);
     modelName = "PR-EOS";
     getCharacterization().setTBPModel("PedersenPR");

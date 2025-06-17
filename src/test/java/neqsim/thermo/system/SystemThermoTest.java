@@ -9,6 +9,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.flashops.TPflash;
 
 class SystemThermoTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
@@ -59,6 +60,30 @@ class SystemThermoTest extends neqsim.NeqSimTest {
     assertEquals(10.0, testSystem.getPressure("bara"));
     testSystem.setPressure(110000.0, "Pa");
     assertEquals(1.1, testSystem.getPressure());
+  }
+
+  /**
+   * <p>
+   * testAddFluids_Flash
+   * </p>
+   */
+  @Test
+  @DisplayName("test addFluids input order")
+  public void testAddFluids_Flash() {
+    neqsim.thermo.system.SystemPrEos fluid1 = new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
+    fluid1.addComponent("propane", 1.0);
+    fluid1.addComponent("N2", 2.0);
+
+    neqsim.thermo.system.SystemPrEos fluid2 = new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
+    fluid2.addComponent("methane", 1.0);
+    fluid2.addComponent("ethane", 3.0);
+
+    assertEquals(fluid1.clone().addFluid(fluid2), fluid2.clone().addFluid(fluid1));
+
+    TPflash flash1 = new TPflash(fluid1.clone().addFluid(fluid2));
+    TPflash flash2 = new TPflash(fluid2.clone().addFluid(fluid1));
+
+    assertEquals(flash1, flash2);
   }
 
   /**

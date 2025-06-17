@@ -2556,4 +2556,49 @@ public abstract class Phase implements PhaseInterface {
   public String getModelName() {
     return thermoPropertyModelName;
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    Phase other = (Phase) obj;
+    if (numberOfComponents != other.numberOfComponents) {
+      return false;
+    }
+    if (Double.compare(temperature, other.temperature) != 0) {
+      return false;
+    }
+    if (Double.compare(pressure, other.pressure) != 0) {
+      return false;
+    }
+    if (Double.compare(numberOfMolesInPhase, other.numberOfMolesInPhase) != 0) {
+      return false;
+    }
+    if (Double.compare(beta, other.beta) != 0) {
+      return false;
+    }
+    if (pt != other.pt) {
+      return false;
+    }
+    for (ComponentInterface c : this.getComponents()) {
+      if (c == null) {
+        continue;
+      }
+      boolean found = false;
+      for (int j = 0; j < other.numberOfComponents; j++) {
+        if (other.componentArray[j] != null && c.equals(other.componentArray[j])) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
