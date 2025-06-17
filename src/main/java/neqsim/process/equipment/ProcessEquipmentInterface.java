@@ -163,7 +163,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
 
   /**
    * <p>
-   * Getter for the field <code>temperature</code>
+   * Getter for the field <code>temperature</code>.
    * </p>
    *
    * @return a double
