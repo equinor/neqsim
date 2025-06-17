@@ -529,4 +529,30 @@ public class TPflash extends Flash {
   public org.jfree.chart.JFreeChart getJFreeChart(String name) {
     return null;
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    TPflash other = (TPflash) obj;
+    // Compare relevant fields for equality
+    if (Double.compare(presdiff, other.presdiff) != 0) {
+      return false;
+    }
+    if (solidCheck != other.solidCheck) {
+      return false;
+    }
+    if (system == null) {
+      if (other.system != null) {
+        return false;
+      }
+    } else if (!system.equals(other.system)) {
+      return false;
+    }
+    return true;
+  }
 }

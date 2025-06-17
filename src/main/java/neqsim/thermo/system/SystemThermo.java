@@ -5117,6 +5117,36 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       // getPhase(i).getMixingRule().setMixingRuleParametersForComponent(compName);
     }
+  }
 
+  /** {@inheritDoc} */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    SystemThermo other = (SystemThermo) obj;
+    if (numberOfComponents != other.numberOfComponents) {
+      return false;
+    }
+    if (numberOfPhases != other.numberOfPhases) {
+      return false;
+    }
+    if (Double.compare(totalNumberOfMoles, other.totalNumberOfMoles) != 0) {
+      return false;
+    }
+    if (!fluidName.equals(other.fluidName)) {
+      return false;
+    }
+
+    for (int i = 0; i < numberOfPhases; i++) {
+      if (!getPhase(i).equals(other.getPhase(i))) {
+        return false;
+      }
+    }
+    return true;
   }
 }
