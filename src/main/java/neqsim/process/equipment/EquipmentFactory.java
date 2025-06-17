@@ -32,9 +32,11 @@ import neqsim.process.equipment.reservoir.SimpleReservoir;
 public class EquipmentFactory {
 
   public static ProcessEquipmentInterface createEquipment(String name, String equipmentType) {
-    String normalizedType = equipmentType == null ? null : equipmentType.trim();
-    if (normalizedType != null)
-      normalizedType = normalizedType.toLowerCase();
+    if (equipmentType == null || equipmentType.trim().isEmpty()) {
+      throw new IllegalArgumentException("Equipment type cannot be null or empty");
+    }
+
+    String normalizedType = equipmentType.trim().toLowerCase();
     switch (normalizedType) {
       case "throttlingvalve":
       case "valve":
