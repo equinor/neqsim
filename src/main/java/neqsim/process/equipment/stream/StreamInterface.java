@@ -84,21 +84,21 @@ public interface StreamInterface extends ProcessEquipmentInterface {
 
   /**
    * <p>
-   * CCT.
+   * Calculate and return cricondentherm.
    * </p>
    *
    * @param unit a {@link java.lang.String} object
-   * @return a double
+   * @return Calculated cricondentherm in specified unit
    */
   public double CCT(String unit);
 
   /**
    * <p>
-   * CCB.
+   * Calculate and return cricondenbar.
    * </p>
    *
    * @param unit a {@link java.lang.String} object
-   * @return a double
+   * @return Calculated cricondenbar in specified unit
    */
   public double CCB(String unit);
 
@@ -117,18 +117,18 @@ public interface StreamInterface extends ProcessEquipmentInterface {
 
   /**
    * <p>
-   * TVP.
+   * Calculates the True Vapor Pressure (TVP) of the stream.
    * </p>
    *
-   * @param temperature a double
+   * @param referenceTemperature a double
    * @param unit a {@link java.lang.String} object
    * @return a double
    */
-  public double TVP(double temperature, String unit);
+  public double TVP(double referenceTemperature, String unit);
 
   /**
    * <p>
-   * TVP.
+   * Calculates the True Vapor Pressure (TVP) of the stream.
    * </p>
    *
    * @param referenceTemperature a double
@@ -140,7 +140,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
 
   /**
    * <p>
-   * TVP.
+   * Calculates the Reid Vapor Pressure (RVP) of the stream.
    * </p>
    *
    * @param referenceTemperature a double
