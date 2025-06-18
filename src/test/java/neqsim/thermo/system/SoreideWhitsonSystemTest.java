@@ -9,11 +9,11 @@ public class SoreideWhitsonSystemTest {
   public void testSoreideWhitsonSetup() {
     // Create a Soreide-Whitson system
 
-    //SystemPrEos testSystem = new neqsim.thermo.system.SystemPrEos1978(298.0, 10.0);
+    //SystemPrEos testSystem = new neqsim.thermo.system.SystemPrEos1978(298.0, 20.0);
     SystemSoreideWhitson testSystem = new SystemSoreideWhitson(298.0, 20.0);
     testSystem.addComponent("methane", 0.8);
     testSystem.addComponent("water", 0.2);
-    testSystem.setMixingRule("classic");
+    testSystem.setMixingRule(2); // Set mixing rule to 2
 
     
 

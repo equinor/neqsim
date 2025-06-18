@@ -498,7 +498,11 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         mixingRuleName = "classic-CPA_Tx";
         return new ClassicSRKT2x();
       }
-    } else {
+    } else if (i == 11) {
+      mixingRuleName = "Whitson-Soreide Mixing Rule";
+      return new WhitsonSoreideMixingRule();
+    }
+    else {
       return new ClassicVdW();
     }
   }
@@ -1455,6 +1459,19 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       return clonedSystem;
     }
   }
+
+  public class WhitsonSoreideMixingRule extends ClassicSRKT {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000;
+
+    /** {@inheritDoc} */
+    @Override
+    public double getkij(double temperature, int i, int j) {
+        return intparam[i][j] + intparamT[i][j] * temperature;
+      }
+  }
+
+  
 
   public class SRKHuronVidal extends ClassicSRK implements HVMixingRulesInterface {
     /** Serialization version UID. */

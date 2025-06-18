@@ -1,7 +1,6 @@
 package neqsim.thermo.component.attractiveeosterm;
 
 import neqsim.thermo.component.ComponentEosInterface;
-import neqsim.thermo.phase.PhaseInterface;
 
 /**
  * <p>
@@ -62,17 +61,6 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
    */
   private double getSalinityFromPhase() {
     double salinity = 0.0;
-    PhaseInterface phase = null;
-    if (phase != null) {
-      try {
-        System.out.println("no phase");
-    
-      } catch (Exception e) {
-        // Log the exception if method not found or invocation fails, or handle it based
-        // on requirements.
-        // For now, it silently defaults to 0.0 as per original code's behavior.
-      }
-    }
     return salinity;
   }
 

@@ -34,8 +34,13 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
   public SystemSoreideWhitson(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
     modelName = "Soreide-Whitson-PR-EoS";
-    //phaseArray[0] = new PhaseSoreideWhitson();
-    //phaseArray[1] = new PhaseSoreideWhitson();
+    attractiveTermNumber = 20;
+
+    for (int i = 0; i < numberOfPhases; i++) {
+      phaseArray[i] = new neqsim.thermo.phase.PhaseWhitsonSoreide();
+      phaseArray[i].setTemperature(T);
+      phaseArray[i].setPressure(P);
+    }
   }
 
   @Override

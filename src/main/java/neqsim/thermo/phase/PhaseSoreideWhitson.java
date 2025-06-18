@@ -1,7 +1,6 @@
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentSoreideWhitson;
-import neqsim.thermo.mixingrule.SoreideWhitsonMixingRule;
 
 /**
  * PhaseSoreideWhitson implements the Søreide-Whitson Peng-Robinson EoS with
@@ -16,7 +15,6 @@ public class PhaseSoreideWhitson extends PhasePrEos {
     wEOS = -1;
     delta1 = 1.0 + Math.sqrt(2.0);
     delta2 = 1.0 - Math.sqrt(2.0);
-    mixRule = new SoreideWhitsonMixingRule();
   }
 
   @Override
