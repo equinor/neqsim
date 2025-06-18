@@ -131,7 +131,7 @@ public class PropertyGenerator {
       enthalpy[i] = fluid.getEnthalpy("J/mol");
       entropy[i] = fluid.getEntropy("J/molK");
       Cp[i] = fluid.getCp("kJ/kgK");
-      Cv[i] = fluid.getCv("kJ/kgK");
+      Cv[i] = fluid.getCp("kJ/kgK");
       density[i] = fluid.getDensity("kg/m3");
       numberOfPhases[i] = fluid.getNumberOfPhases();
       locpressure[i] = fluid.getPressure("Pa");
