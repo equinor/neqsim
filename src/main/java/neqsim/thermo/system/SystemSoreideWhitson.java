@@ -1,7 +1,5 @@
 package neqsim.thermo.system;
 
-import neqsim.thermo.phase.PhaseSoreideWhitson;
-
 /**
  * This class defines a thermodynamic system using the Søreide-Whitson
  * Peng-Robinson EoS (modified alpha and mixing rule).
@@ -36,9 +34,8 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
   public SystemSoreideWhitson(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
     modelName = "Soreide-Whitson-PR-EoS";
-    attractiveTermNumber = 20; // Use the code for Soreide-Whitson alpha term
-    phaseArray[0] = new PhaseSoreideWhitson();
-    phaseArray[1] = new PhaseSoreideWhitson();
+    //phaseArray[0] = new PhaseSoreideWhitson();
+    //phaseArray[1] = new PhaseSoreideWhitson();
   }
 
   @Override
