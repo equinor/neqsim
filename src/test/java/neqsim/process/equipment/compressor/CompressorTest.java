@@ -409,7 +409,6 @@ class CompressorTest extends neqsim.NeqSimTest {
     assertEquals(compressor1.getPolytropicHead("kJ/kg"), 888.7059204667879, 0.01);
   }
 
-
   /**
    * <p>
    * testCompressorWithVega.

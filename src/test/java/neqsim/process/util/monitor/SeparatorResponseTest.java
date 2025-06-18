@@ -60,6 +60,5 @@ public class SeparatorResponseTest {
     Double reldens = jsonObject.getAsJsonObject("feed").getAsJsonObject("properties")
         .getAsJsonObject("oil").getAsJsonObject("relative density").get("value").getAsDouble();
     assertEquals(0.688292615281, reldens, 0.01);
-
   }
 }

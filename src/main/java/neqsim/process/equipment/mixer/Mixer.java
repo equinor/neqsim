@@ -380,13 +380,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     mixedStream.getThermoSystem().setPressure(pres);
   }
 
-  /**
-   * <p>
-   * setTemperature.
-   * </p>
-   *
-   * @param temp a double
-   */
+  /** {@inheritDoc} */
   @Override
   public void setTemperature(double temp) {
     for (int k = 0; k < streams.size(); k++) {

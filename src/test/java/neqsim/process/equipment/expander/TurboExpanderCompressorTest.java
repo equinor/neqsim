@@ -60,7 +60,6 @@ public class TurboExpanderCompressorTest {
     turboExpander.setQNHeadcurve(new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
         new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
 
-
     turboExpander.setImpellerDiameter(0.424); // m
     turboExpander.setDesignSpeed(6850.0); // rpm
     turboExpander.setExpanderDesignIsentropicEfficiency(0.88);
@@ -72,9 +71,7 @@ public class TurboExpanderCompressorTest {
     turboExpander.setMaximumIGVArea(1.637e4); // mm2
     turboExpander.setCompressorDesignPolytropicHead(20.47);
 
-
     turboExpander.run();
-
     turboExpander.toJson();
 
     Stream outStream = new Stream("outstream", turboExpander.getOutletStream());
@@ -139,7 +136,6 @@ public class TurboExpanderCompressorTest {
     turboExpander.setQNHeadcurve(new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
         new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
 
-
     turboExpander.setImpellerDiameter(0.424); // m
     turboExpander.setDesignSpeed(6850.0); // rpm
     turboExpander.setExpanderDesignIsentropicEfficiency(0.88);
@@ -151,9 +147,7 @@ public class TurboExpanderCompressorTest {
     turboExpander.setMaximumIGVArea(1.637e4); // mm2
     turboExpander.setCompressorDesignPolytropicHead(20.47);
 
-
     turboExpander.run(UUID.randomUUID());
-
 
     Separator separator = new Separator("separator", turboExpander.getExpanderOutletStream());
     separator.run();
@@ -165,13 +159,11 @@ public class TurboExpanderCompressorTest {
     turboExpander.setCompressorFeedStream(heater.getOutStream());
     turboExpander.run();
 
-
     ProcessSystem mode1 = new ProcessSystem();
     mode1.add(feedStream);
     mode1.add(turboExpander);
     mode1.add(separator);
     mode1.add(heater);
-
 
     mode1.run();
     mode1.run();
@@ -243,7 +235,6 @@ public class TurboExpanderCompressorTest {
     turboExpander.setQNHeadcurve(new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
         new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
 
-
     turboExpander.setImpellerDiameter(0.424); // m
     turboExpander.setDesignSpeed(6850.0); // rpm
     turboExpander.setExpanderDesignIsentropicEfficiency(0.88);
@@ -255,9 +246,7 @@ public class TurboExpanderCompressorTest {
     turboExpander.setMaximumIGVArea(1.637e4); // mm2
     turboExpander.setCompressorDesignPolytropicHead(20.47);
 
-
     turboExpander.run(UUID.randomUUID());
-
 
     Separator separator = new Separator("separator", turboExpander.getExpanderOutletStream());
     separator.run();
@@ -269,13 +258,11 @@ public class TurboExpanderCompressorTest {
     turboExpander.setCompressorFeedStream(heater.getOutStream());
     turboExpander.run();
 
-
     ProcessSystem mode1 = new ProcessSystem();
     mode1.add(feedStream);
     mode1.add(turboExpander);
     mode1.add(separator);
     mode1.add(heater);
-
 
     mode1.run();
     mode1.run();
@@ -296,5 +283,4 @@ public class TurboExpanderCompressorTest {
     Assertions.assertEquals(-37.03361130,
         turboExpander.getExpanderOutletStream().getTemperature("C"), 1e-2);
   }
-
 }

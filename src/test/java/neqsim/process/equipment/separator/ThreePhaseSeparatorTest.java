@@ -227,6 +227,5 @@ class ThreePhaseSeparatorTest {
      * test_separator.getOilOutStream().getFluid().getPhase("aqueous").getFlowRate("m3/hr"))) 100);
      */
     // test_separator.getOilOutStream().getThermoSystem().prettyPrint();
-
   }
 }

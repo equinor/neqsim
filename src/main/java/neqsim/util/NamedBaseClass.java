@@ -33,12 +33,7 @@ public abstract class NamedBaseClass implements NamedInterface, java.io.Serializ
     this.name = name;
   }
 
-  /**
-   * Sets the tag name for the process equipment.
-   *
-   * @param tagName a {@link java.lang.String} representing the tag name
-   * @throws IllegalArgumentException if the tag name is null
-   */
+  /** {@inheritDoc} */
   @Override
   public void setTagName(String tagName) {
     if (tagName == null) {
@@ -47,11 +42,7 @@ public abstract class NamedBaseClass implements NamedInterface, java.io.Serializ
     this.tagName = tagName;
   }
 
-  /**
-   * Retrieves the tag name of the process equipment.
-   *
-   * @return the tag name as a String.
-   */
+  /** {@inheritDoc} */
   @Override
   public String getTagName() {
     return tagName;

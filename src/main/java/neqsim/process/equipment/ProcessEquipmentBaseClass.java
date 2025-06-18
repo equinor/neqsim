@@ -334,7 +334,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /**
    * <p>
-   * Getter for the field <code>minimumFlow</code>.
+   * Getter for the field <code>minimumFlow</code>, e.g., the minimum flow rate for the pump.
    * </p>
    *
    * @return a double
@@ -345,7 +345,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /**
    * <p>
-   * Setter for the field <code>minimumFlow</code>.
+   * Setter for the field <code>minimumFlow</code>, e.g., the minimum flow rate for the pump.
    * </p>
    *
    * @param minimumFlow a double

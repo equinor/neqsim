@@ -778,6 +778,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     this.attractiveParameter = attractiveParameter;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {

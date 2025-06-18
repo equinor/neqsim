@@ -31,7 +31,7 @@ public interface NamedInterface {
    * Sets the tag name for the process equipment.
    *
    * @param tagName a {@link java.lang.String} representing the tag name
-   * @throws IllegalArgumentException if the tag name is null
+   * @throws java.lang.IllegalArgumentException if the tag name is null
    */
   public void setTagName(String tagName);
 

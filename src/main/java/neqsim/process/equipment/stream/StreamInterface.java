@@ -57,24 +57,11 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    */
   public void runTPflash();
 
-  /**
-   * <p>
-   * getTemperature.
-   * </p>
-   *
-   * @param unit a {@link java.lang.String} object
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double getTemperature(String unit);
 
-  /**
-   * <p>
-   * getTemperature.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double getTemperature();
 

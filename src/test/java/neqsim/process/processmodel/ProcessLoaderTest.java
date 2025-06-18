@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.valve.ThrottlingValve;
 
-
 class ProcessLoaderTest {
 
   @Test
@@ -35,5 +34,4 @@ class ProcessLoaderTest {
 
     processSystem.exportToGraphviz("src/test/java/neqsim/process/processmodel/process.dot");
   }
-
 }

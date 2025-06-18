@@ -42,6 +42,5 @@ public class PipeBeggsBrillsResponse extends BaseResponse {
     outletVolumeFlow = pipe.getOutletStream().getFluid().getFlowRate("m3/hr");
     inletMassFlow = pipe.getInletStream().getFluid().getFlowRate("kg/hr");
     outletMassFlow = pipe.getOutletStream().getFluid().getFlowRate("kg/hr");
-
   }
 }

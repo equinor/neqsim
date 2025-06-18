@@ -42,11 +42,7 @@ public enum EosMixingRuleType implements MixingRuleTypeInterface {
     this.value = value;
   }
 
-  /**
-   * Getter for property value.
-   *
-   * @return Numeric index of phase type
-   */
+  /** {@inheritDoc} */
   @Override
   @Deprecated
   public int getValue() {

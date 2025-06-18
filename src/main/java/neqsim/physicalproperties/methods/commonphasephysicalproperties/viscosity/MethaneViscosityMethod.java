@@ -2,6 +2,13 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosit
 
 import neqsim.physicalproperties.system.PhysicalProperties;
 
+/**
+ * <p>
+ * MethaneViscosityMethod class.
+ * </p>
+ *
+ * @author esol
+ */
 public class MethaneViscosityMethod extends Viscosity {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;

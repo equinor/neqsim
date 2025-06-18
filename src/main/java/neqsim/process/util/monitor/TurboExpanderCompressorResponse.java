@@ -2,6 +2,13 @@ package neqsim.process.util.monitor;
 
 import neqsim.process.equipment.expander.TurboExpanderCompressor;
 
+/**
+ * <p>
+ * TurboExpanderCompressorResponse class.
+ * </p>
+ *
+ * @author esol
+ */
 public class TurboExpanderCompressorResponse extends BaseResponse {
 
   /**
@@ -60,5 +67,4 @@ public class TurboExpanderCompressorResponse extends BaseResponse {
   private Double compresorFeedTemperature = 0.0;
   private Double compresorDischargePressure = 0.0;
   private Double compresorDischargeTemperature = 0.0;
-
 }

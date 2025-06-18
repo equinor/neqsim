@@ -137,8 +137,6 @@ public class SafeSplineSurgeCurveTest {
     recycle1.setTolerance(1e-5);
     recycle1.run();
 
-
-
     process1.run();
 
     // Check interpolation within ran
@@ -148,7 +146,6 @@ public class SafeSplineSurgeCurveTest {
 
     assertEquals(33258.04680, resyclestream.getFlowRate("kg/hr"), 1);
     assertEquals(35985.43680, firstStageCompressor.getInletStream().getFlowRate("kg/hr"), 1);
-
 
     stream1.setFlowRate(39985.43, "kg/hr");
     process1.run();
@@ -179,7 +176,5 @@ public class SafeSplineSurgeCurveTest {
     assertEquals(9024.9754, firstStageCompressor.getSurgeFlowRate(), 1);
     assertEquals(0.04206591466, resyclestream.getFlowRate("kg/hr"), 0.001);
     assertEquals(39001.4299, firstStageCompressor.getInletStream().getFlowRate("kg/hr"), 1);
-
-
   }
 }

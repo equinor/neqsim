@@ -8,6 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * <p>
+ * CompressorChartReader class.
+ * </p>
+ *
+ * @author esol
+ */
 public class CompressorChartReader {
 
   private double[] speeds;
@@ -24,6 +31,14 @@ public class CompressorChartReader {
 
   private String headUnit = "kJ/kg";
 
+  /**
+   * <p>
+   * Constructor for CompressorChartReader.
+   * </p>
+   *
+   * @param csvFilePath a {@link java.lang.String} object
+   * @throws java.lang.Exception if any.
+   */
   public CompressorChartReader(String csvFilePath) throws Exception {
     parseCSV(csvFilePath);
   }
@@ -116,6 +131,13 @@ public class CompressorChartReader {
     return maxIdx;
   }
 
+  /**
+   * <p>
+   * setCurvesToCompressor.
+   * </p>
+   *
+   * @param compressor a {@link neqsim.process.equipment.compressor.Compressor} object
+   */
   public void setCurvesToCompressor(Compressor compressor) {
     compressor.getCompressorChart().setCurves(new double[0], speeds, flowLines, headLines,
         polyEffLines);
@@ -125,46 +147,123 @@ public class CompressorChartReader {
     compressor.getCompressorChart().setHeadUnit(headUnit);
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>headUnit</code>.
+   * </p>
+   *
+   * @param headUnit a {@link java.lang.String} object
+   */
   public void setHeadUnit(String headUnit) {
     this.headUnit = headUnit;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>surgeFlow</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getSurgeFlow() {
     return surgeFlow;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>surgeHead</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getSurgeHead() {
     return surgeHead;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>chokeFlow</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getChokeFlow() {
     return chokeFlow;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>chokeHead</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getChokeHead() {
     return chokeHead;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>speeds</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getSpeeds() {
     return speeds;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>flowLines</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[][] getFlowLines() {
     return flowLines;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>headLines</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[][] getHeadLines() {
     return headLines;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>polyEffLines</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[][] getPolyEffLines() {
     return polyEffLines;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>stonewallCurve</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getStonewallCurve() {
     return stonewallCurve;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>surgeCurve</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getSurgeCurve() {
     return surgeCurve;
   }

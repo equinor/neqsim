@@ -1303,6 +1303,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
         temperature, pressure);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {

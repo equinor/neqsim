@@ -2836,6 +2836,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     dialog.setVisible(true);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {

@@ -3628,13 +3628,7 @@ public abstract class SystemThermo implements SystemInterface {
     return forcePhaseTypes;
   }
 
-  /**
-   * <p>
-   * isInitialized.
-   * </p>
-   *
-   * @return a boolean
-   */
+  /** {@inheritDoc} */
   @Override
   public boolean isInitialized() {
     return isInitialized;
@@ -5087,10 +5081,9 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * Sets the molar composition of components whose names contain the specified definition.
+   * {@inheritDoc}
    *
-   * @param nameDef the definition to match component names against
-   * @param molarComposition an array of molar compositions to set for the matching components
+   * Sets the molar composition of components whose names contain the specified definition.
    */
   @Override
   public void setMolarCompositionOfNamedComponents(String nameDef, double[] molarComposition) {
