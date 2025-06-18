@@ -256,6 +256,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         testOps.TPflash();
         mixedStream.getThermoSystem().init(2);
       } else {
+        mixedStream.getThermoSystem().initProperties();
         isActive(false);
       }
     }

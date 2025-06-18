@@ -110,7 +110,7 @@ public class StaticPhaseMixer extends StaticMixer {
 
     mixStream();
 
-    mixedStream.getThermoSystem().init(3);
+    mixedStream.getThermoSystem().initProperties();
     mixedStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }

@@ -124,11 +124,13 @@ public class NeqGasScrubber extends Separator {
     thermoSystem = inletStream.getThermoSystem().clone();
     gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
     gasSystem.setNumberOfPhases(1);
+    gasSystem.initProperties();
     gasOutStream.setThermoSystem(gasSystem);
 
     thermoSystem = inletStream.getThermoSystem().clone();
     liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
     liquidSystem.setNumberOfPhases(1);
+    liquidSystem.initProperties();
     liquidOutStream.setThermoSystem(liquidSystem);
     setCalculationIdentifier(id);
   }

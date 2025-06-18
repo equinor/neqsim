@@ -830,7 +830,7 @@ public class PipeBeggsAndBrills extends Pipeline {
     lengthProfile.add(cumulativeLength);
     elevationProfile.add(cumulativeElevation);
     incrementsProfile.add(getNumberOfIncrements());
-
+    system.initProperties();
     outStream.setThermoSystem(system);
     outStream.setCalculationIdentifier(id);
   }

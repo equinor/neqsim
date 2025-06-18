@@ -114,8 +114,10 @@ public class Hydrocyclone extends Separator {
     // liquidSystem = thermoSystem.phaseToSystem(1);
     // liquidOutStream.setThermoSystem(liquidSystem);
     if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
-      liquidOutStream.setThermoSystemFromPhase(thermoSystem, "liquid");
-      liquidOutStream.getFluid().init(2);
+      neqsim.thermo.system.SystemInterface fluid =
+          thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
+      liquidOutStream.setThermoSystemFromPhase(fluid, "liquid");
+      liquidOutStream.getFluid().initProperties();
     } else {
       liquidOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
     }

@@ -217,6 +217,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     // system.setTemperature(temperatureOut);
     // testOps.TPflash();
     // system.setTemperature(temperatureOut);
+    system.initProperties();
     getOutletStream().setThermoSystem(system);
     lastTemperature = inStream.getFluid().getTemperature();
     lastPressure = inStream.getFluid().getPressure();
