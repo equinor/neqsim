@@ -119,6 +119,7 @@ public class GasScrubberSimple extends Separator {
     }
     gasSystem = thermoSystem.phaseToSystem(0);
     gasSystem.setNumberOfPhases(1);
+    gasSystem.initProperties();
     gasOutStream.setThermoSystem(gasSystem);
 
     thermoSystem = inletStream.getThermoSystem().clone();
@@ -127,6 +128,7 @@ public class GasScrubberSimple extends Separator {
       liquidSystem = thermoSystem.phaseToSystem(1);
     }
     liquidSystem.setNumberOfPhases(1);
+    liquidSystem.initProperties();
     liquidOutStream.setThermoSystem(liquidSystem);
     setCalculationIdentifier(id);
   }

@@ -123,7 +123,7 @@ public class StaticMixer extends Mixer {
       logger.error(ex.getMessage(), ex);
     }
     // System.out.println("temp " + mixedStream.getThermoSystem().getTemperature());
-    mixedStream.getThermoSystem().init(3);
+    mixedStream.getThermoSystem().initProperties();
     setCalculationIdentifier(id);
   }
 }

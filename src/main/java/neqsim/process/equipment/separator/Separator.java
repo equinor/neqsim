@@ -215,6 +215,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     lastPressure = inletStreamMixer.getOutletStream().getPressure();
     thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
     thermoSystem2.setPressure(thermoSystem2.getPressure() - pressureDrop);
+    if (Math.abs(pressureDrop) > 1e-6) {
+      ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
+      ops.TPflash();
+      thermoSystem2.initProperties();
+    }
 
     if (thermoSystem2.hasPhaseType("gas")) {
       gasOutStream.setThermoSystemFromPhase(thermoSystem2, "gas");

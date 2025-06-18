@@ -70,6 +70,7 @@ public class OnePhasePipeLine extends Pipeline {
     // pipe.print();
     outStream
         .setThermoSystem(pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem().clone());
+    outStream.getThermoSystem().initProperties();
     outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }

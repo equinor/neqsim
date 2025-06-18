@@ -104,9 +104,11 @@ public class StaticNeqMixer extends StaticMixer {
     syst.setPressure(streams.get(0).getThermoSystem().getPressure());
     ThermodynamicOperations testOps = new ThermodynamicOperations(syst);
     testOps.PHflash(enthalpy, 0);
-    System.out.println("temp " + syst.getTemperature());
+    // System.out.println("temp " + syst.getTemperature());
     mixedStream.getThermoSystem().setTemperature(syst.getTemperature());
     mixedStream.getThermoSystem().init(3);
+    mixedStream.getThermoSystem().initProperties();
+    mixedStream.setThermoSystem(mixedStream.getThermoSystem());
     // double enthalpy = calcMixStreamEnthalpy();
     // System.out.println("temp guess " + guessTemperature());
     // mixedStream.getThermoSystem().setTemperature(guessTemperature());
