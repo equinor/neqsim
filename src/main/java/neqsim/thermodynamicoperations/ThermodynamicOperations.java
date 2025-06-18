@@ -163,6 +163,36 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    */
   public void TPflash() {
+    // Check if system is Soreide-Whitson and use the special flash if so
+    if (system instanceof neqsim.thermo.system.SystemSoreideWhitson) {
+      TPflashSoreideWhitson();
+      return;
+    }
+    double flowRate = system.getTotalNumberOfMoles();
+    if (flowRate < 1e-5) {
+      system.setTotalNumberOfMoles(1.0);
+      system.init(1);
+    }
+    operation =
+        new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+    if (!isRunAsThread()) {
+      getOperation().run();
+    } else {
+      run();
+    }
+
+    if (flowRate < 1e-5) {
+      final double minimumFlowRate = 1e-50;
+      if (flowRate < minimumFlowRate) {
+        system.setTotalNumberOfMoles(minimumFlowRate);
+      } else {
+        system.setTotalNumberOfMoles(flowRate);
+      }
+      system.init(1);
+    }
+  }
+
+  public void TPflashSoreideWhitson() {
     double flowRate = system.getTotalNumberOfMoles();
     if (flowRate < 1e-5) {
       system.setTotalNumberOfMoles(1.0);

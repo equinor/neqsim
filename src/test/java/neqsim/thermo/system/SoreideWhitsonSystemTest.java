@@ -13,7 +13,8 @@ public class SoreideWhitsonSystemTest {
     SystemSoreideWhitson testSystem = new SystemSoreideWhitson(298.0, 20.0);
     testSystem.addComponent("methane", 0.8);
     testSystem.addComponent("water", 0.2);
-    testSystem.setMixingRule(2); // Set mixing rule to 2
+    testSystem.addSalinity(100,"mole/sec" );
+    testSystem.setMixingRule(11); // Set mixing rule to 2
 
     
 
@@ -21,10 +22,7 @@ public class SoreideWhitsonSystemTest {
     testOps.TPflash();
     testSystem.initProperties();
 
-
-    // Set salinity for both phases
-    testSystem.getPhase(0).setSalinity(0.0);
-    testSystem.getPhase(1).setSalinity(1.4);
+    System.out.println(testSystem.getPhase(0).getSalinityConcentration());
 
 
 

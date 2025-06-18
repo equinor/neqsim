@@ -8,6 +8,8 @@ import neqsim.thermo.component.ComponentSoreideWhitson;
  */
 public class PhaseSoreideWhitson extends PhasePrEos {
   private static final long serialVersionUID = 1L;
+  private double salinityConcentration = 0.0;
+  private double salinity = 0.0;
 
   public PhaseSoreideWhitson() {
     thermoPropertyModelName = "Soreide-Whitson-PR-EoS";
@@ -35,12 +37,20 @@ public class PhaseSoreideWhitson extends PhasePrEos {
   }
 
   // Set salinity for the phase (mol/kg or as used in Soreide-Whitson)
-  public void setSalinity(double salinity) {
-    this.salinity = salinity;
+  public void setSalinityConcentration(double salinityConcentration) {
+    this.salinityConcentration = salinityConcentration;
   }
 
-  public double getSalinity() {
-    return this.salinity;
+  public double getSalinityConcentration() {
+    return this.salinityConcentration;
+  }
+
+  public void addSalinity(double salinity) {
+    this.salinity += salinity; // Example of adding salinity
+  }
+
+  public double getSalinity(double salinity) {
+    return this.salinity; // Example of adding salinity
   }
 
   // Optionally, add helper methods to set temperature, pressure, and fractions as
