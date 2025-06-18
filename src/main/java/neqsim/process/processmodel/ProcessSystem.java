@@ -34,6 +34,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Represents a process system containing unit operations.
+ *
+ * @author esol
  */
 public class ProcessSystem extends SimulationBaseClass {
   /**
@@ -112,8 +114,7 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     if (getAllUnitNames().contains(operation.getName())) {
-      ProcessEquipmentInterface existing =
-          this.getUnit(operation.getName());
+      ProcessEquipmentInterface existing = this.getUnit(operation.getName());
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("ProcessSystem",
           "add", "operation", "- Process equipment of type " + existing.getClass().getSimpleName()
               + " named " + operation.getName() + " already included in ProcessSystem"));
@@ -1028,6 +1029,16 @@ public class ProcessSystem extends SimulationBaseClass {
     return new Report(this).generateJsonReport();
   }
 
+  /**
+   * <p>
+   * addUnit.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param equipmentType a {@link java.lang.String} object
+   * @param <T> a T class
+   * @return a T object
+   */
   @SuppressWarnings("unchecked")
   public <T extends ProcessEquipmentInterface> T addUnit(String name, String equipmentType) {
     ProcessEquipmentInterface unit = EquipmentFactory.createEquipment(name, equipmentType);
@@ -1052,18 +1063,46 @@ public class ProcessSystem extends SimulationBaseClass {
     return (T) unit;
   }
 
+  /**
+   * <p>
+   * addUnit.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param equipmentEnum a {@link neqsim.process.equipment.EquipmentEnum} object
+   * @param <T> a T class
+   * @return a T object
+   */
   @SuppressWarnings("unchecked")
   public <T extends ProcessEquipmentInterface> T addUnit(String name, EquipmentEnum equipmentEnum) {
     return (T) addUnit(name, equipmentEnum.name());
   }
 
   // New overload: addUnit only with equipmentType String
+  /**
+   * <p>
+   * addUnit.
+   * </p>
+   *
+   * @param equipmentType a {@link java.lang.String} object
+   * @param <T> a T class
+   * @return a T object
+   */
   @SuppressWarnings("unchecked")
   public <T extends ProcessEquipmentInterface> T addUnit(String equipmentType) {
     return (T) addUnit(null, equipmentType);
   }
 
   // New overload: addUnit only with EquipmentEnum
+  /**
+   * <p>
+   * addUnit.
+   * </p>
+   *
+   * @param equipmentEnum a {@link neqsim.process.equipment.EquipmentEnum} object
+   * @param <T> a T class
+   * @return a T object
+   */
   @SuppressWarnings("unchecked")
   public <T extends ProcessEquipmentInterface> T addUnit(EquipmentEnum equipmentEnum) {
     return (T) addUnit(null, equipmentEnum);
@@ -1103,13 +1142,15 @@ public class ProcessSystem extends SimulationBaseClass {
     return (T) unit;
   }
 
-  private String generateUniqueName(String equipmentType) {
-    int count = equipmentCounter.getOrDefault(equipmentType, 0) + 1;
-    equipmentCounter.put(equipmentType, count);
-    String formatted = equipmentType.substring(0, 1).toLowerCase() + equipmentType.substring(1);
-    return formatted + "_" + count;
-  }
-
+  /**
+   * <p>
+   * addUnit.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   */
   public ProcessEquipmentInterface addUnit(String name, ProcessEquipmentInterface equipment) {
     unitOperations.add(equipment);
     equipment.setName(name);
@@ -1118,15 +1159,29 @@ public class ProcessSystem extends SimulationBaseClass {
     return equipment;
   }
 
+  /**
+   * <p>
+   * addUnit.
+   * </p>
+   *
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   */
   public ProcessEquipmentInterface addUnit(ProcessEquipmentInterface equipment) {
     String generatedName = generateUniqueName(equipment.getClass().getSimpleName());
     return addUnit(generatedName, equipment);
   }
 
+  private String generateUniqueName(String equipmentType) {
+    int count = equipmentCounter.getOrDefault(equipmentType, 0) + 1;
+    equipmentCounter.put(equipmentType, count);
+    String formatted = equipmentType.substring(0, 1).toLowerCase() + equipmentType.substring(1);
+    return formatted + "_" + count;
+  }
+
   // --- Auto Connection (Outlet -> Inlet) ---
 
   private void autoConnect(ProcessEquipmentInterface fromUnit, ProcessEquipmentInterface toUnit) {
-
     if (fromUnit == null) {
       return;
     }
@@ -1146,6 +1201,13 @@ public class ProcessSystem extends SimulationBaseClass {
     }
   }
 
+  /**
+   * <p>
+   * exportToGraphviz.
+   * </p>
+   *
+   * @param filename a {@link java.lang.String} object
+   */
   public void exportToGraphviz(String filename) {
     try (PrintWriter writer = new PrintWriter(filename)) {
       writer.println("digraph process {");

@@ -117,13 +117,7 @@ public class MPFMfitter extends TwoPortEquipment {
     this.unitP = unitP;
   }
 
-  /**
-   * <p>
-   * getTemperature.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double getTemperature() {
     return temperature;

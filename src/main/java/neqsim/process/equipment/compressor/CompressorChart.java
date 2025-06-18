@@ -517,13 +517,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     this.maxSpeedCurve = maxSpeedCurve;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>minSpeedCurve</code>.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double getMinSpeedCurve() {
     return minSpeedCurve;

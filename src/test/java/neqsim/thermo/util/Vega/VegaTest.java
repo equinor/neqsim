@@ -73,7 +73,6 @@ public class VegaTest {
     assertTrue(Kappa.val != 0);
     assertTrue(A.val != 0);
     assertEquals(1.005253888311987, Z.val, 1e-5);
-
   }
 
   @Test

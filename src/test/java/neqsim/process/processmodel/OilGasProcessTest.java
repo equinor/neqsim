@@ -192,7 +192,6 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     recycl.setOutletStream(recyclegasstream);
     recycl.run();
 
-
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();
     operations.add(gas_from_separator);

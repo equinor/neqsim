@@ -20,6 +20,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
  * <p>
  * Setter class.
  * </p>
+ *
+ * @author esol
  */
 public class Setter extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */
@@ -202,6 +204,13 @@ public class Setter extends ProcessEquipmentBaseClass {
     }
   }
 
+  /**
+   * <p>
+   * main.
+   * </p>
+   *
+   * @param args an array of {@link java.lang.String} objects
+   */
   public static void main(String[] args) {
     Setter setter = new Setter("Test Setter");
 

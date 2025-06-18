@@ -180,7 +180,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // testSystem.prettyPrint();
     // String fileName = "OLGAneqsim.tab";
     // testOps.OLGApropTable(273.15 + 20, 273.15 + 100.0, 20, 1.0, 100.0, 20, fileName, 1);
-
   }
 
   @Test
@@ -253,7 +252,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testOps.TPflash();
 
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
-
   }
 
   @Test
@@ -302,6 +300,5 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(3, throttlingValve.getOutletStream().getFluid().getNumberOfPhases());
     Assertions.assertEquals(54.5362976,
         throttlingValve.getOutletStream().getFluid().getTemperature("C"), 1e-3);
-
   }
 }

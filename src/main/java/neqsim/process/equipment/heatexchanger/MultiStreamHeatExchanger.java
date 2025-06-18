@@ -101,12 +101,12 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   // HERMANN - The stream type needs to be added - hot or cold
   // HERMANN - The stream outlet temp nesds to be added of defined
 
-  //  public void addInStream(StreamInterface inStream, String type, int outletTempertures) {
-  //super(name);
-  //this.hasReboiler = hasReboiler;
-  //this.hasCondenser = hasCondenser;
-  //distoperations = new neqsim.process.processmodel.ProcessSystem();
-  //this.numberOfTrays = numberOfTraysLocal;
+  // public void addInStream(StreamInterface inStream, String type, int outletTempertures) {
+  // super(name);
+  // this.hasReboiler = hasReboiler;
+  // this.hasCondenser = hasCondenser;
+  // distoperations = new neqsim.process.processmodel.ProcessSystem();
+  // this.numberOfTrays = numberOfTraysLocal;
 
   /** {@inheritDoc} */
   @Override
@@ -309,19 +309,13 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     // This can be customized based on specific requirements
   }
 
-  /**
-   * Runs condition analysis by comparing the exchanger with itself.
-   */
+  /** {@inheritDoc} */
   @Override
   public void runConditionAnalysis() {
     runConditionAnalysis(this);
   }
 
-  /**
-   * Gets the thermal effectiveness of the heat exchanger.
-   *
-   * @return Thermal effectiveness
-   */
+  /** {@inheritDoc} */
   @Override
   public double getThermalEffectiveness() {
     return thermalEffectiveness;
@@ -663,7 +657,6 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     }
     setCalculationIdentifier(id);
     firstTime = true;
-
   }
 
   /**
@@ -715,7 +708,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
    * @param streamNumber the index of the stream for which the heat duty is to be calculated. Must
    *        be less than the total number of input streams.
    * @return the heat duty (in appropriate energy units) for the specified stream in W
-   * @throws IndexOutOfBoundsException if the specified stream index is out of bounds.
+   * @throws java.lang.IndexOutOfBoundsException if the specified stream index is out of bounds.
    */
   public double getDuty(int streamNumber) {
     if (streamNumber < inStreams.size()) {

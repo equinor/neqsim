@@ -20,12 +20,17 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
-
 // ================================================================
 // ---- UNIT INITIATION ----
 // ================================================================
 
-
+/**
+ * <p>
+ * MultiStreamHeatExchanger2 class.
+ * </p>
+ *
+ * @author esol
+ */
 public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeatExchangerInterface {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -48,10 +53,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   private int stallCounter = 0;
   private final int stallLimit = 50;
   private double localRange = 5.0;
-
-
   private double damping = 1.0;
-
   private Double approachTemperature = 5.0;
   private Double UA = null;
 
@@ -67,7 +69,6 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   private List<Double> coldTempAll = new ArrayList<>();
   private List<Double> tempDiff = new ArrayList<>();
 
-
   private List<StreamInterface> inStreams = new ArrayList<>();
   private List<StreamInterface> outStreams = new ArrayList<>();
   private List<String> streamTypes = new ArrayList<>();
@@ -77,7 +78,6 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   private List<Double> pressures = new ArrayList<>();
   private List<Double> massFlows = new ArrayList<>();
   private List<Double> streamLoads = new ArrayList<>();
-
 
   /**
    * Constructor for MultiStreamHeatExchanger2.
@@ -92,7 +92,13 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   @Override
   public void addInStream(StreamInterface inStream) {}
 
-  /** {@inheritDoc} */
+  /**
+   * Adds an inlet stream to the multi-stream heat exchanger.
+   *
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param streamType a {@link java.lang.String} object
+   * @param outletTemp a {@link java.lang.Double} object
+   */
   public void addInStreamMSHE(StreamInterface inStream, String streamType, Double outletTemp) {
     this.inStreams.add(inStream);
     StreamInterface outStream = inStream.clone();
@@ -106,10 +112,18 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     streamLoads.add(0.0);
   }
 
+  /**
+   * <p>
+   * setTemperatureApproach.
+   * </p>
+   *
+   * @param temperatureApproach a double
+   */
   public void setTemperatureApproach(double temperatureApproach) {
     this.approachTemperature = temperatureApproach;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setUAvalue(double UAvalue) {
     this.UA = UAvalue;
@@ -156,16 +170,13 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       logger.debug("Outlet temps before solving: " + outletTemps);
       logger.debug("Unknown flags: " + unknownOutlets);
     }
-
-
-
   }
 
   // ================================================================
   // ---- ONE UNKNOWN ----
   // ================================================================
 
-  /** {@inheritDoc} */
+  /** Calculates the outlet temperatures for the heat exchanger when there is one unknown. */
   public void oneUnknown() {
     List<Integer> unknownIndices = new ArrayList<>();
     int idx = -1;
@@ -237,7 +248,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   // ---- TWO UNKNOWN ----
   // ================================================================
 
-  /** {@inheritDoc} */
+  /**
+   * Calculates the outlet temperatures for the heat exchanger when there are two unknowns.
+   */
   public void twoUnknowns() {
     List<Integer> unknownIndices = new ArrayList<>();
     for (int i = 0; i < unknownOutlets.size(); i++) {
@@ -310,12 +323,11 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     return new double[] {dx / det, dy / det};
   }
 
-
   // ================================================================
   // ---- THREE UNKNOWN ----
   // ================================================================
 
-  /** {@inheritDoc} */
+  /** * Calculates the outlet temperatures for the heat exchanger when there are three unknowns. */
   public void threeUnknowns() {
     List<Integer> unknownIndices = new ArrayList<>();
     for (int i = 0; i < unknownOutlets.size(); i++) {
@@ -404,7 +416,11 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   // ---- KEY METHODS ----
   // ================================================================
 
-  /** {@inheritDoc} */
+  /**
+   * Calculates the energy difference between the inlet and outlet streams.
+   *
+   * @return a double representing the total energy difference
+   */
   public double energyDiff() {
     hotLoad = 0.0;
     coldLoad = 0.0;
@@ -422,7 +438,11 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     return hotLoad + coldLoad;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Calculates the minimum approach temperature for the heat exchanger.
+   *
+   * @return a double
+   */
   public double pinch() {
     /* --- build the composite curves ------------------------------------ */
     compositeCurve(); // fills compositeCurvePoints
@@ -477,9 +497,11 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     return minDT;
   }
 
-
-
-  /** {@inheritDoc} */
+  /**
+   * Calculates the overall heat transfer coefficient (UA) for the heat exchanger.
+   *
+   * @return the overall heat transfer coefficient (UA) value in W/K
+   */
   public double calculateUA() {
     double UAvalue = 0.0;
     compositeCurve();
@@ -516,12 +538,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     return UAvalue;
   }
 
-
-
   // ================================================================
   // ---- METHODS ----
   // ================================================================
-
 
   private double enthalpyTPFlash(int index, double pressure, double temperature) {
     SystemInterface thermoSystem = fluidInlet.get(index);
@@ -535,7 +554,11 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     return thermoSystem.getEnthalpy("kJ/kg");
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Calculates the composite curve data for the heat exchanger.
+   *
+   * @return a {@link java.util.Map} object
+   */
   public java.util.Map<String, java.util.List<java.util.Map<String, Object>>> compositeCurve() {
 
     /* fresh container ----------------------------------------------- */
@@ -616,8 +639,6 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     return compositeCurvePoints;
   }
 
-
-
   private double initializeOutletGuess(int i) {
     String type = streamTypes.get(i);
     double inletTemp = inletTemps.get(i);
@@ -639,13 +660,11 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     return Math.abs(streamLoads.get(i) * interpolationFactor);
   }
 
-
   private double calculateIntervalTemp(double loadStart, double targetLoad, double loadEnd,
       double tempStart, double tempEnd) {
     double factor = Math.abs(targetLoad - loadStart) / Math.abs(loadEnd - loadStart);
     return tempStart + (tempEnd - tempStart) * factor;
   }
-
 
   private double interpolateTemperature(List<Map<String, Object>> points, double load) {
     List<Map<String, Object>> below = new ArrayList<>();
@@ -689,7 +708,6 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       boolean directionOk = true;
       boolean energyOk = true;
       boolean heatFeasible = true;
-      boolean uaOk = true;
 
       // 1. Check stream direction
       for (int i : unknownIndices) {
@@ -739,6 +757,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       }
 
       // 4. UA check (only if everything else is OK)
+      boolean uaOk = true;
       if (UATest && directionOk && energyOk && heatFeasible) {
         double uaVal = calculateUA();
         double uaTol = UA * extremeUA;
@@ -764,7 +783,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         double coldestCold = Collections.min(inletTemps);
         for (int idx : unknownIndices) {
           double inlet = inletTemps.get(idx);
-          double lower, upper;
+          double lower;
+          double upper;
           String type = (String) streamTypes.get(idx);
           if (type.equals("hot")) {
             lower = coldestCold + approachTemperature;
@@ -784,10 +804,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
     // If all attempts fail
     throw new RuntimeException("resetOfExtremes: gave up after " + extremeAttempts
-        + " attempts – last issues: " + String.join("; ", msgs));
+        + " attempts - last issues: " + String.join("; ", msgs));
   }
-
-
 
   private boolean stallDetection(List<Integer> unknownIndices) {
     if (prevOutletTemps != null) {
@@ -817,33 +835,47 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     prevOutletTemps = new ArrayList<>();
     for (int idx : unknownIndices) {
       prevOutletTemps.add(outletTemps.get(idx));
-
     }
 
     return false;
   }
 
-
   // ================================================================
   // ---- OUTPUT METHODS ----
   // ================================================================
-
-  /** Returns hot and cold composite curves. */
+  /**
+   * Returns hot and cold composite curves.
+   *
+   * @return a {@link java.util.Map} object
+   */
   public Map<String, List<Map<String, Object>>> getCompositeCurve() {
-    logger.debug("Composite Corve Points: " + compositeCurve());
+    logger.debug("Composite Curve Points: " + compositeCurve());
     return compositeCurve();
-
   }
 
+  /**
+   * <p>
+   * getUA.
+   * </p>
+   *
+   * @return a double
+   */
   public double getUA() {
     return calculateUA();
   }
 
-
+  /**
+   * <p>
+   * getTemperatureApproach.
+   * </p>
+   *
+   * @return a double
+   */
   public double getTemperatureApproach() {
     return pinch();
   }
 
+  /** {@inheritDoc} */
   @Override
   public StreamInterface getOutStream(int i) {
     if (i < 0 || i >= outStreams.size()) {
@@ -852,26 +884,28 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     return outStreams.get(i);
   }
 
-
   // ================================================================
-  // ---- MANDITORY UNUSED ----
+  // ---- MANDATORY UNUSED ----
   // ================================================================
-
+  /** {@inheritDoc} */
   @Override
   public StreamInterface getInStream(int i) {
     return null;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getInTemperature(int i) {
     return 0.0;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getOutTemperature(int i) {
     return 0.0;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getDuty() {
     return 0.0;
@@ -882,63 +916,79 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   @ExcludeFromJacocoGeneratedReport
   public void displayResult() {}
 
+  /** {@inheritDoc} */
   @Override
   public void runConditionAnalysis() {}
 
+  /** {@inheritDoc} */
   @Override
   public double getGuessOutTemperature() {
     return 0.0;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setGuessOutTemperature(double temp) {}
 
+  /** {@inheritDoc} */
   @Override
   public void setGuessOutTemperature(double temp, String unit) {}
 
+  /** {@inheritDoc} */
   @Override
   public void setFlowArrangement(String arrangement) {}
 
+  /** {@inheritDoc} */
   @Override
   public String getFlowArrangement() {
     return null;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setThermalEffectiveness(double effectiveness) {}
 
+  /** {@inheritDoc} */
   @Override
   public double getThermalEffectiveness() {
     return 0.0;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getHotColdDutyBalance() {
     return 0.0;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setHotColdDutyBalance(double value) {}
 
+  /** {@inheritDoc} */
   @Override
   public double calcThermalEffectiveness(double NTU, double Cr) {
     return 0.0;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setUseDeltaT(boolean use) {}
 
+  /** {@inheritDoc} */
   @Override
   public void setFeedStream(int index, StreamInterface stream) {}
 
+  /** {@inheritDoc} */
   @Override
   public void setDeltaT(double dT) {}
 
+  /** {@inheritDoc} */
   @Override
   public double getDeltaT() {
     return 0.0;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getUAvalue() {
     return 0.0;

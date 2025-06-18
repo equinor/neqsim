@@ -7,6 +7,8 @@ import neqsim.process.equipment.stream.StreamInterface;
 /**
  * Ejector class represents an ejector in a process simulation. It mixes a motive stream with a
  * suction stream and calculates the resulting mixed stream.
+ *
+ * @author esol
  */
 public class Ejector extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */
@@ -35,22 +37,51 @@ public class Ejector extends ProcessEquipmentBaseClass {
     this.mixedStream = motiveStream.clone();
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>dischargePressure</code>.
+   * </p>
+   *
+   * @param dischargePressure a double
+   */
   public void setDischargePressure(double dischargePressure) {
     this.dischargePressure = dischargePressure;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>efficiencyIsentropic</code>.
+   * </p>
+   *
+   * @param efficiencyIsentropic a double
+   */
   public void setEfficiencyIsentropic(double efficiencyIsentropic) {
     this.efficiencyIsentropic = efficiencyIsentropic;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>diffuserEfficiency</code>.
+   * </p>
+   *
+   * @param diffuserEfficiency a double
+   */
   public void setDiffuserEfficiency(double diffuserEfficiency) {
     this.diffuserEfficiency = diffuserEfficiency;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>throatArea</code>.
+   * </p>
+   *
+   * @param throatArea a double
+   */
   public void setThroatArea(double throatArea) {
     this.throatArea = throatArea;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     motiveStream.run();
@@ -115,10 +146,24 @@ public class Ejector extends ProcessEquipmentBaseClass {
     return hMixedActual + (hIdealDiffuserOut - hMixedActual) / diffuserEfficiency;
   }
 
+  /**
+   * <p>
+   * getOutStream.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public StreamInterface getOutStream() {
     return mixedStream;
   }
 
+  /**
+   * <p>
+   * getEntrainmentRatio.
+   * </p>
+   *
+   * @return a double
+   */
   public double getEntrainmentRatio() {
     return suctionStream.getFlowRate("kg/s") / motiveStream.getFlowRate("kg/s");
   }

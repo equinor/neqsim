@@ -1,36 +1,52 @@
 package neqsim.process.equipment;
 
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.separator.ThreePhaseSeparator;
-import neqsim.process.equipment.splitter.Splitter;
-import neqsim.process.equipment.pump.Pump;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
 import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.equipment.ejector.Ejector;
+import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
-import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.manifold.Manifold;
-import neqsim.process.equipment.ejector.Ejector;
-import neqsim.process.equipment.util.GORfitter;
-import neqsim.process.equipment.util.Adjuster;
-import neqsim.process.equipment.util.SetPoint;
-import neqsim.process.equipment.util.FlowRateAdjuster;
-import neqsim.process.equipment.util.Calculator;
-import neqsim.process.equipment.expander.Expander;
-import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
-import neqsim.process.equipment.tank.Tank;
-import neqsim.process.equipment.splitter.ComponentSplitter;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.ReservoirCVDsim;
 import neqsim.process.equipment.reservoir.ReservoirDiffLibsim;
-import neqsim.process.equipment.stream.VirtualStream;
 import neqsim.process.equipment.reservoir.ReservoirTPsim;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.splitter.ComponentSplitter;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.VirtualStream;
+import neqsim.process.equipment.tank.Tank;
+import neqsim.process.equipment.util.Adjuster;
+import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.FlowRateAdjuster;
+import neqsim.process.equipment.util.GORfitter;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.util.SetPoint;
+import neqsim.process.equipment.valve.ThrottlingValve;
 
+/**
+ * <p>
+ * EquipmentFactory class.
+ * </p>
+ *
+ * @author esol
+ */
 public class EquipmentFactory {
 
+  /**
+   * <p>
+   * createEquipment.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param equipmentType a {@link java.lang.String} object
+   * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   */
   public static ProcessEquipmentInterface createEquipment(String name, String equipmentType) {
     if (equipmentType == null || equipmentType.trim().isEmpty()) {
       throw new IllegalArgumentException("Equipment type cannot be null or empty");

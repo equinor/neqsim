@@ -19,6 +19,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * expander and compressor power using a robust Newton-Raphson approach, updating all result fields
  * and output streams.
  * </p>
+ *
+ * @author esol
  */
 public class TurboExpanderCompressor extends Expander {
 
@@ -118,32 +120,47 @@ public class TurboExpanderCompressor extends Expander {
 
   // --- Main Calculation ---
   /**
+   * {@inheritDoc}
+   *
+   * <p>
    * Run the expander/compressor calculation, matching expander and compressor power using
    * Newton-Raphson iteration. Updates all result fields and output streams.
-   *
-   * @param id calculation identifier
+   * </p>
    */
   @Override
   public void run(UUID id) {
     double N = designSpeed; // initial guess for speed [rpm]
     final double N_max = 9000.0;
     final double N_min = 1000.0;
-    double eta_p = 0.0, W_compressor = 0.0, W_expander = 0.0, W_bearing = 0.0;
+    double eta_p = 0.0;
+    double W_compressor = 0.0;
+    double W_expander = 0.0;
+    double W_bearing = 0.0;
     double D = impellerDiameter;
     double eta_s_design = expanderDesignIsentropicEfficiency;
     double Hp_design = compressorDesignPolytropicHead;
     double eta_p_design = compressorDesignPolytropicEfficiency;
     double N_design = designSpeed;
     double m1 = expanderFeedStream.getFlowRate("kg/sec");
-    double Q_comp = 0.0, m_comp = 0.0, eta_s = 0.0, Hp = 0.0, CF_eff_comp = 1.0, CF_head_comp = 1.0;
+    double Q_comp = 0.0;
+    double m_comp = 0.0;
+    double eta_s = 0.0;
+    double Hp = 0.0;
+    double CF_eff_comp = 1.0;
+    double CF_head_comp = 1.0;
     // Newton-Raphson method for speed matching
     int maxIter = 50;
     int minIter = 3;
     double dN = 10.0;
 
     int iter = 0;
-    double Hp2 = 0.0, eta_p2 = 0.0, eta_s2 = 0.0, uc = 0.0, uc2 = 0.0, qn_ratio = 0.0,
-        qn_ratio2 = 0.0;
+    double Hp2 = 0.0;
+    double eta_p2 = 0.0;
+    double eta_s2 = 0.0;
+    double uc = 0.0;
+    double uc2 = 0.0;
+    double qn_ratio = 0.0;
+    double qn_ratio2 = 0.0;
     do {
       double outPress = expanderOutPressure;
       SystemInterface fluid2 = expanderFeedStream.getThermoSystem().clone();
@@ -239,6 +256,13 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   // --- Getters and Setters for all configuration and result fields ---
+  /**
+   * <p>
+   * Getter for the field <code>compressorPolytropicHead</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getCompressorPolytropicHead() {
     return compressorPolytropicHead;
   }
@@ -279,42 +303,112 @@ public class TurboExpanderCompressor extends Expander {
     return QNratiocompressor;
   }
 
+  /**
+   * <p>
+   * getQn.
+   * </p>
+   *
+   * @return a double
+   */
   public double getQn() {
     return Qn;
   }
 
+  /**
+   * <p>
+   * setQn.
+   * </p>
+   *
+   * @param qn a double
+   */
   public void setQn(double qn) {
     Qn = qn;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>powerExpander</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getPowerExpander() {
     return powerExpander;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>powerCompressor</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getPowerCompressor() {
     return powerCompressor;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>expanderIsentropicEfficiency</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getExpanderIsentropicEfficiency() {
     return expanderIsentropicEfficiency;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>expanderIsentropicEfficiency</code>.
+   * </p>
+   *
+   * @param expanderIsentropicEfficiency a double
+   */
   public void setExpanderIsentropicEfficiency(double expanderIsentropicEfficiency) {
     this.expanderIsentropicEfficiency = expanderIsentropicEfficiency;
   }
 
+  /**
+   * <p>
+   * getDesignCompressorPolytropicEfficiency.
+   * </p>
+   *
+   * @return a double
+   */
   public double getDesignCompressorPolytropicEfficiency() {
     return compressorDesignPolytropicEfficiency;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>compressorDesignPolytropicEfficiency</code>.
+   * </p>
+   *
+   * @param compressorPolytropicEfficiency a double
+   */
   public void setCompressorDesignPolytropicEfficiency(double compressorPolytropicEfficiency) {
     this.compressorDesignPolytropicEfficiency = compressorPolytropicEfficiency;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>compressorDesignPolytropicHead</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getCompressorDesignPolytropicHead() {
     return compressorDesignPolytropicHead;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>compressorDesignPolytropicHead</code>.
+   * </p>
+   *
+   * @param compressorDesignPolytropicHead a double
+   */
   public void setCompressorDesignPolytropicHead(double compressorDesignPolytropicHead) {
     this.compressorDesignPolytropicHead = compressorDesignPolytropicHead;
   }
@@ -417,12 +511,16 @@ public class TurboExpanderCompressor extends Expander {
     if (i < 0) {
       i = -i - 2;
     }
-    if (i < 0)
+    if (i < 0) {
       i = 0;
-    if (i > n - 2)
+    }
+    if (i > n - 2) {
       i = n - 2;
-    double x0 = x[i], x1 = x[i + 1];
-    double y0 = y[i], y1 = y[i + 1];
+    }
+    double x0 = x[i];
+    double x1 = x[i + 1];
+    double y0 = y[i];
+    double y1 = y[i + 1];
     double h = x1 - x0;
     double t = (qn - x0) / h;
     // Estimate tangents (finite difference)
@@ -496,12 +594,16 @@ public class TurboExpanderCompressor extends Expander {
     if (i < 0) {
       i = -i - 2;
     }
-    if (i < 0)
+    if (i < 0) {
       i = 0;
-    if (i > n - 2)
+    }
+    if (i > n - 2) {
       i = n - 2;
-    double x0 = x[i], x1 = x[i + 1];
-    double y0 = y[i], y1 = y[i + 1];
+    }
+    double x0 = x[i];
+    double x1 = x[i + 1];
+    double y0 = y[i];
+    double y1 = y[i + 1];
     double h = x1 - x0;
     double t = (qn - x0) / h;
     // Estimate tangents (finite difference)
@@ -554,60 +656,158 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   // --- Setters ---
+  /**
+   * <p>
+   * Setter for the field <code>impellerDiameter</code>.
+   * </p>
+   *
+   * @param impellerDiameter a double
+   */
   public void setImpellerDiameter(double impellerDiameter) {
     this.impellerDiameter = impellerDiameter;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>designSpeed</code>.
+   * </p>
+   *
+   * @param designSpeed a double
+   */
   public void setDesignSpeed(double designSpeed) {
     this.designSpeed = designSpeed;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>designUC</code>.
+   * </p>
+   *
+   * @param designUC a double
+   */
   public void setDesignUC(double designUC) {
     this.designUC = designUC;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>designQn</code>.
+   * </p>
+   *
+   * @param designQn a double
+   */
   public void setDesignQn(double designQn) {
     this.designQn = designQn;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>maximumIGVArea</code>.
+   * </p>
+   *
+   * @param maximumIGVArea a double
+   */
   public void setMaximumIGVArea(double maximumIGVArea) {
     this.maximumIGVArea = maximumIGVArea;
   }
 
   // --- Getters ---
+  /**
+   * <p>
+   * Getter for the field <code>impellerDiameter</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getImpellerDiameter() {
     return impellerDiameter;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>designSpeed</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getDesignSpeed() {
     return designSpeed;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>designUC</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getDesignUC() {
     return designUC;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>designQn</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getDesignQn() {
     return designQn;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>maximumIGVArea</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getMaximumIGVArea() {
     return maximumIGVArea;
   }
 
+  /**
+   * <p>
+   * getCompressorPolytropicEfficieny.
+   * </p>
+   *
+   * @return a double
+   */
   public double getCompressorPolytropicEfficieny() {
     return compressorPolytropicEfficiency;
   }
 
+  /**
+   * <p>
+   * getCompressorDesingPolytropicHead.
+   * </p>
+   *
+   * @return a double
+   */
   public double getCompressorDesingPolytropicHead() {
     return compressorDesignPolytropicHead;
   }
 
+  /**
+   * <p>
+   * getIGVopening.
+   * </p>
+   *
+   * @return a double
+   */
   public double getIGVopening() {
 
     return IGVopening;
   }
 
+  /**
+   * <p>
+   * setIGVopening.
+   * </p>
+   *
+   * @param iGVopening a double
+   */
   public void setIGVopening(double iGVopening) {
     IGVopening = iGVopening;
   }
@@ -639,110 +839,256 @@ public class TurboExpanderCompressor extends Expander {
     return compressorOutletStream;
   }
 
-  /**
-   * Get the current speed (expander speed) after calculation.
-   *
-   * @return the matched expander speed [rpm]
-   */
+  /** {@inheritDoc} */
   @Override
   public double getSpeed() {
     return expanderSpeed;
   }
 
-  /**
-   * Get the outlet stream (for compatibility with Stream constructor in test).
-   *
-   * @return the compressor outlet stream
-   */
+  /** {@inheritDoc} */
   @Override
   public StreamInterface getOutletStream() {
     return compressorOutletStream;
   }
 
+  /**
+   * <p>
+   * setUCratioexpander.
+   * </p>
+   *
+   * @param UCratioexpander a double
+   */
   public void setUCratioexpander(double UCratioexpander) {
     this.UCratioexpander = UCratioexpander;
   }
 
+  /**
+   * <p>
+   * setUCratiocompressor.
+   * </p>
+   *
+   * @param UCratiocompressor a double
+   */
   public void setUCratiocompressor(double UCratiocompressor) {
     this.UCratiocompressor = UCratiocompressor;
   }
 
+  /**
+   * <p>
+   * setQNratioexpander.
+   * </p>
+   *
+   * @param QNratioexpander a double
+   */
   public void setQNratioexpander(double QNratioexpander) {
     this.QNratioexpander = QNratioexpander;
   }
 
+  /**
+   * <p>
+   * setQNratiocompressor.
+   * </p>
+   *
+   * @param QNratiocompressor a double
+   */
   public void setQNratiocompressor(double QNratiocompressor) {
     this.QNratiocompressor = QNratiocompressor;
   }
 
+  /**
+   * <p>
+   * getSerialversionuid.
+   * </p>
+   *
+   * @return a long
+   */
   public static long getSerialversionuid() {
     return serialVersionUID;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>expanderOutPressure</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getExpanderOutPressure() {
     return expanderOutPressure;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>bearingLossPower</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getBearingLossPower() {
     return bearingLossPower;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>expanderSpeed</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getExpanderSpeed() {
     return expanderSpeed;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>compressorSpeed</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getCompressorSpeed() {
     return compressorSpeed;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>gearRatio</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getGearRatio() {
     return gearRatio;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>compressorFeedStream</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public StreamInterface getCompressorFeedStream() {
     return compressorFeedStream;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>expanderFeedStream</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public StreamInterface getExpanderFeedStream() {
     return expanderFeedStream;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>expanderOutletStream</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public StreamInterface getExpanderOutletStream() {
     return expanderOutletStream;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>ucCurveA</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getUcCurveA() {
     return ucCurveA;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>ucCurveH</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getUcCurveH() {
     return ucCurveH;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>ucCurveK</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getUcCurveK() {
     return ucCurveK;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>qnCurveA</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getQnCurveA() {
     return qnCurveA;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>qnCurveH</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getQnCurveH() {
     return qnCurveH;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>qnCurveK</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getQnCurveK() {
     return qnCurveK;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>qnHeadCurveA</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getQnHeadCurveA() {
     return qnHeadCurveA;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>qnHeadCurveH</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getQnHeadCurveH() {
     return qnHeadCurveH;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>qnHeadCurveK</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getQnHeadCurveK() {
     return qnHeadCurveK;
   }
@@ -753,22 +1099,47 @@ public class TurboExpanderCompressor extends Expander {
     return new GsonBuilder().create().toJson(new TurboExpanderCompressorResponse(this));
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>compressorDesignPolytropicEfficiency</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getCompressorDesignPolytropicEfficiency() {
     return compressorDesignPolytropicEfficiency;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>compressorPolytropicEfficiency</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getCompressorPolytropicEfficiency() {
     return compressorPolytropicEfficiency;
   }
 
-
+  /**
+   * <p>
+   * Getter for the field <code>expanderDesignIsentropicEfficiency</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getExpanderDesignIsentropicEfficiency() {
     return expanderDesignIsentropicEfficiency;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>expanderDesignIsentropicEfficiency</code>.
+   * </p>
+   *
+   * @param expanderDesignIsentropicEfficiency a double
+   */
   public void setExpanderDesignIsentropicEfficiency(double expanderDesignIsentropicEfficiency) {
     this.expanderDesignIsentropicEfficiency = expanderDesignIsentropicEfficiency;
   }
-
-
 }

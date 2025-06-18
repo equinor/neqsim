@@ -7,6 +7,7 @@ import neqsim.thermo.component.ComponentLeachmanEos;
 /**
  * <p>
  * PhaseLeachmanEos class.
+ * </p>
  *
  * @version $Id: $Id
  * @author vscode
@@ -18,28 +19,16 @@ public class PhaseLeachmanEos extends PhaseEos {
   int IPHASE = 0;
   boolean okVolume = true;
   double enthalpy = 0.0;
-
   double entropy = 0.0;
-
   double gibbsEnergy = 0.0;
-
   double CpLeachman = 0.0;
-
   double CvLeachman = 0.0;
-
   double internalEnery = 0.0;
-
   double JTcoef = 0.0;
-
   doubleW[] a0 = null;
-
   doubleW[][] ar = null;
-
   double kappa = 0.0;
-
   double W = 0.0;
-
-
 
   /**
    * <p>

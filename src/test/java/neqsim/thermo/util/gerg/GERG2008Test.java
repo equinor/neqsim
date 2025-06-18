@@ -178,7 +178,6 @@ public class GERG2008Test {
     pipeline.run();
 
     assertEquals(pipeline.getOutletPressure(), 18.55863368801788, 1e-5);
-
   }
 
   @Test
@@ -241,7 +240,6 @@ public class GERG2008Test {
   @Test
   void CompressorSchultz() {
     SystemInterface GERG2008fluid = new neqsim.thermo.system.SystemGERG2008Eos(298.15, 90.0);
-
 
     GERG2008fluid.addComponent("methane", 0.85);
     GERG2008fluid.addComponent("hydrogen", 0.15);

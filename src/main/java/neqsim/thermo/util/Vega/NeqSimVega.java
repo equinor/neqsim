@@ -114,7 +114,6 @@ public class NeqSimVega {
    * </p>
    *
    * @return a double
-   * @return a double
    */
   public double getMolarDensity() {
     int flag = 0;

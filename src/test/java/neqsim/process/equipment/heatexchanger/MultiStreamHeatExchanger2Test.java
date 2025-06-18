@@ -14,7 +14,6 @@ public class MultiStreamHeatExchanger2Test {
   static neqsim.thermo.system.SystemInterface testSystem;
   Stream gasStream;
 
-
   @Test
   void testRun1() {
     // Three Uknown temperatures
@@ -58,7 +57,6 @@ public class MultiStreamHeatExchanger2Test {
     // Three Unknowns
     heatEx.setUAvalue(70000);
 
-
     // Build and run process
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();
@@ -96,9 +94,7 @@ public class MultiStreamHeatExchanger2Test {
 
     // Composite Curve Points for Ploting
     heatEx.getCompositeCurve();
-
   }
-
 
   @Test
   void testRun2() {
@@ -140,7 +136,6 @@ public class MultiStreamHeatExchanger2Test {
 
     // Two Unknowns
     heatEx.setTemperatureApproach(5.0);
-
 
     // Build and run process
     neqsim.process.processmodel.ProcessSystem operations =
@@ -219,7 +214,6 @@ public class MultiStreamHeatExchanger2Test {
     heatEx.addInStreamMSHE(streamCold2, "cold", 90.0); // unknown outlet temp
     heatEx.addInStreamMSHE(streamCold3, "cold", 30.0); // known outlet temp
 
-
     // Build and run process
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();
@@ -251,14 +245,12 @@ public class MultiStreamHeatExchanger2Test {
 
     assertEquals(63.0, solvedHot1OutletTemp, 1.0);
 
-
     // Check UA and approach temp
     assertEquals(10.0, heatEx.getTemperatureApproach(), 1);
     assertEquals(21825, heatEx.getUA(), 1.0);
 
     // Composite Curve Points for Ploting
     heatEx.getCompositeCurve();
-
   }
 
   @Test
@@ -285,7 +277,6 @@ public class MultiStreamHeatExchanger2Test {
     H1.setPressure(30, "bara");
     H1.run();
 
-
     // ---------- H2 ----------
     neqsim.thermo.system.SystemInterface H2Fluid =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
@@ -301,7 +292,6 @@ public class MultiStreamHeatExchanger2Test {
     H2.setTemperature(160, "C");
     H2.setPressure(28, "bara");
     H2.run();
-
 
     // ---------- H3 ----------
     neqsim.thermo.system.SystemInterface H3Fluid =
@@ -319,7 +309,6 @@ public class MultiStreamHeatExchanger2Test {
     H3.setPressure(35, "bara");
     H3.run();
 
-
     // ---------- H4 ----------
     neqsim.thermo.system.SystemInterface H4Fluid =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
@@ -335,8 +324,6 @@ public class MultiStreamHeatExchanger2Test {
     H4.setTemperature(150, "C");
     H4.setPressure(32, "bara");
     H4.run();
-
-
 
     /*
      * ================================================= COLD STREAMS (C1 – C4)
@@ -359,7 +346,6 @@ public class MultiStreamHeatExchanger2Test {
     C1.setPressure(15, "bara");
     C1.run();
 
-
     // ---------- C2 ----------
     neqsim.thermo.system.SystemInterface C2Fluid =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
@@ -375,7 +361,6 @@ public class MultiStreamHeatExchanger2Test {
     C2.setTemperature(50, "C");
     C2.setPressure(20, "bara");
     C2.run();
-
 
     // ---------- C3 ----------
     neqsim.thermo.system.SystemInterface C3Fluid =
@@ -393,7 +378,6 @@ public class MultiStreamHeatExchanger2Test {
     C3.setPressure(18, "bara");
     C3.run();
 
-
     // ---------- C4 ----------
     neqsim.thermo.system.SystemInterface C4Fluid =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
@@ -409,7 +393,6 @@ public class MultiStreamHeatExchanger2Test {
     C4.setTemperature(40, "C");
     C4.setPressure(25, "bara");
     C4.run();
-
 
     /*
      * ----------------------------------------------------------------- MULTI-STREAM HEAT EXCHANGER
@@ -457,7 +440,6 @@ public class MultiStreamHeatExchanger2Test {
 
     operations.run(); // <–– calls the exchanger solver
 
-
     /*
      * ----------------------------------------------------------------- ASSERTIONS – outlet
      * temperatures, ΔTmin -----------------------------------------------------------------
@@ -494,9 +476,5 @@ public class MultiStreamHeatExchanger2Test {
 
     /* 4. (Optional) get composite-curve data for plotting */
     heatEx.getCompositeCurve();
-
-
   }
-
-
 }

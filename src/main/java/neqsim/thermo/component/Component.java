@@ -2395,6 +2395,7 @@ public abstract class Component implements ComponentInterface {
     return matiascopemanParamsUMRPRU;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {

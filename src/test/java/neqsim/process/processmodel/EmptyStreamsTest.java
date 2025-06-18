@@ -56,7 +56,6 @@ public class EmptyStreamsTest extends neqsim.NeqSimTest {
     recycle1.setOutletStream(stream2);
     recycle1.run();
     operations.add(recycle1);
-
   }
 
   @Test
@@ -116,7 +115,6 @@ public class EmptyStreamsTest extends neqsim.NeqSimTest {
     // System.out.println("flow rate " + stream3.getFlowRate("kg/hr"));
     // System.out.println(recycle1.isActive());
     operations.run();
-
   }
 
   @Test
@@ -182,7 +180,6 @@ public class EmptyStreamsTest extends neqsim.NeqSimTest {
 
     System.out.println(mixer2.getOutletStream().getFlowRate("kg/hr"));
     // mixer2.getOutletStream().getFluid().prettyPrint();
-
   }
 
   @Test
@@ -243,6 +240,5 @@ public class EmptyStreamsTest extends neqsim.NeqSimTest {
     // System.out.println("flow rate " + stream3.getFlowRate("kg/hr"));
     // System.out.println(recycle1.isActive());
     operations.run();
-
   }
 }

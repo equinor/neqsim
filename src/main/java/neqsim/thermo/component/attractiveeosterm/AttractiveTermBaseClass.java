@@ -136,6 +136,7 @@ public abstract class AttractiveTermBaseClass implements AttractiveTermInterface
     this.component = component;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {

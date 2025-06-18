@@ -775,6 +775,4 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   public String toJson() {
     return new GsonBuilder().create().toJson(new StreamResponse(this));
   }
-
-
 }

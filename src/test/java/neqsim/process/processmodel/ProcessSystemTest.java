@@ -952,7 +952,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     fluid1.addComponent("nC10", 0.1);
     fluid1.setMixingRule("classic");
 
-
     ProcessSystem process1 = new ProcessSystem();
 
     Stream stream1 = process1.addUnit("stream_1", "Stream");
@@ -991,5 +990,4 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     // process1.validateConnections();
     // process1.checkMassBalance();
   }
-
 }

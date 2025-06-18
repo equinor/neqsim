@@ -63,6 +63,7 @@ public class ComponentLeachmanEos extends ComponentEos {
     return 0.0;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles,
       double beta, int numberOfComponents, int initType) {
@@ -72,15 +73,15 @@ public class ComponentLeachmanEos extends ComponentEos {
       double phi = fugcoef(phase);
       phase.getComponent(getComponentNumber()).setFugacityCoefficient(phi);
     }
-
   }
 
-
+  /** {@inheritDoc} */
   @Override
   public double calca() {
     return 0.0;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double calcb() {
     return 0.0;
@@ -121,6 +122,7 @@ public class ComponentLeachmanEos extends ComponentEos {
         / phase.getNumberOfMolesInPhase();
   }
 
+  /** {@inheritDoc} */
   @Override
   public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
@@ -128,6 +130,7 @@ public class ComponentLeachmanEos extends ComponentEos {
         / phase.getVolume();
   }
 
+  /** {@inheritDoc} */
   @Override
   public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {

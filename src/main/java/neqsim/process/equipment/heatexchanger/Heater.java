@@ -28,9 +28,17 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  boolean setTemperature = false, setOutPressure = false;
+  boolean setTemperature = false;
+
+  boolean setOutPressure = false;
+
   SystemInterface system;
-  protected double temperatureOut = 0, dT = 0.0, pressureOut = 0;
+  protected double temperatureOut = 0;
+
+  protected double dT = 0.0;
+
+  protected double pressureOut = 0;
+
   private boolean setEnergyInput = false;
   private double energyInput = 0.0;
   private double pressureDrop = 0.0;
@@ -269,6 +277,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
    * getDuty.
    * </p>
    *
+   * @param unit a {@link java.lang.String} object
    * @return a double
    */
   public double getDuty(String unit) {

@@ -530,6 +530,7 @@ public class TPflash extends Flash {
     return null;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {

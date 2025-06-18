@@ -247,6 +247,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     trays.get(0).run();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     if (feedStreams.isEmpty()) {
@@ -397,6 +398,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return trays.get(trayNumber);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setNumberOfTrays(int number) {
     int oldNumberOfTrays = numberOfTrays;
@@ -422,31 +424,74 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     init();
   }
 
+  /**
+   * <p>
+   * setTopCondenserDuty.
+   * </p>
+   *
+   * @param duty a double
+   */
   public void setTopCondenserDuty(double duty) {
     condenserCoolingDuty = duty;
   }
 
+  /**
+   * <p>
+   * setTopPressure.
+   * </p>
+   *
+   * @param topPressure a double
+   */
   public void setTopPressure(double topPressure) {
     topTrayPressure = topPressure;
   }
 
+  /**
+   * <p>
+   * setBottomPressure.
+   * </p>
+   *
+   * @param bottomPressure a double
+   */
   public void setBottomPressure(double bottomPressure) {
     bottomTrayPressure = bottomPressure;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean solved() {
     return (err < 1e-4);
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>maxNumberOfIterations</code>.
+   * </p>
+   *
+   * @param maxIter a int
+   */
   public void setMaxNumberOfIterations(int maxIter) {
     this.maxNumberOfIterations = maxIter;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>internalDiameter</code>.
+   * </p>
+   *
+   * @param internalDiameter a double
+   */
   public void setInternalDiameter(double internalDiameter) {
     this.internalDiameter = internalDiameter;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>internalDiameter</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getInternalDiameter() {
     return internalDiameter;
   }
@@ -463,42 +508,112 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         * Math.sqrt(getGasOutStream().getThermoSystem().getDensity("kg/m3"));
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>gasOutStream</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public StreamInterface getGasOutStream() {
     return gasOutStream;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>liquidOutStream</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public StreamInterface getLiquidOutStream() {
     return liquidOutStream;
   }
 
+  /**
+   * <p>
+   * getReboiler.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.distillation.Reboiler} object
+   */
   public Reboiler getReboiler() {
     return (Reboiler) trays.get(0);
   }
 
+  /**
+   * <p>
+   * getCondenser.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.distillation.Condenser} object
+   */
   public Condenser getCondenser() {
     return (Condenser) trays.get(trays.size() - 1);
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>reboilerTemperature</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getReboilerTemperature() {
     return reboilerTemperature;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>reboilerTemperature</code>.
+   * </p>
+   *
+   * @param reboilerTemperature a double
+   */
   public void setReboilerTemperature(double reboilerTemperature) {
     this.reboilerTemperature = reboilerTemperature;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>condenserTemperature</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getCondenserTemperature() {
     return condenserTemperature;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>condenserTemperature</code>.
+   * </p>
+   *
+   * @param condenserTemperature a double
+   */
   public void setCondenserTemperature(double condenserTemperature) {
     this.condenserTemperature = condenserTemperature;
   }
 
+  /**
+   * <p>
+   * isDoInitializion.
+   * </p>
+   *
+   * @return a boolean
+   */
   public boolean isDoInitializion() {
     return doInitializion;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>doInitializion</code>.
+   * </p>
+   *
+   * @param doInitializion a boolean
+   */
   public void setDoInitializion(boolean doInitializion) {
     this.doInitializion = doInitializion;
   }
@@ -574,6 +689,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return (massError < 1e-6);
   }
 
+  /**
+   * <p>
+   * getMassBalanceError.
+   * </p>
+   *
+   * @return a double
+   */
   public double getMassBalanceError() {
 
     double[] massInput = new double[numberOfTrays];
@@ -588,7 +710,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       massOutput[i] += trays.get(i).getGasOutStream().getFlowRate("kg/hr");
       massOutput[i] += trays.get(i).getLiquidOutStream().getFlowRate("kg/hr");
       massBalance[i] = massInput[i] - massOutput[i];
-
     }
     double massError = 0.0;
     for (int i = 0; i < numberOfTrays; i++) {
@@ -628,7 +749,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * 5. Adds the two feed streams to the distillation column at tray 3. 6. Builds and runs the
    * process system. 7. Displays the results of the distillation column, including the gas and
    * liquid output streams.
-   *
    *
    * @param args command line arguments (not used)
    */
@@ -680,6 +800,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return new GsonBuilder().create().toJson(new DistillationColumnResponse(this));
   }
 
+  /**
+   * <p>
+   * getNumerOfTrays.
+   * </p>
+   *
+   * @return a int
+   */
   public int getNumerOfTrays() {
     return numberOfTrays;
   }
