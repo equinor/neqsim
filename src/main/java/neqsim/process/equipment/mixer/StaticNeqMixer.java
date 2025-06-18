@@ -108,7 +108,6 @@ public class StaticNeqMixer extends StaticMixer {
     mixedStream.getThermoSystem().setTemperature(syst.getTemperature());
     mixedStream.getThermoSystem().init(3);
     mixedStream.getThermoSystem().initProperties();
-    mixedStream.setThermoSystem(mixedStream.getThermoSystem());
     // double enthalpy = calcMixStreamEnthalpy();
     // System.out.println("temp guess " + guessTemperature());
     // mixedStream.getThermoSystem().setTemperature(guessTemperature());
