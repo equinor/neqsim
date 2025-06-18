@@ -200,11 +200,46 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
     operation =
         new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+
     if (!isRunAsThread()) {
       getOperation().run();
     } else {
       run();
     }
+
+    // --- Salinity logic for Soreide-Whitson ---
+    boolean rerun = false;
+    double systemSalinity = 0.0;
+    if (system instanceof neqsim.thermo.system.SystemSoreideWhitson) {
+      systemSalinity = ((neqsim.thermo.system.SystemSoreideWhitson) system).getSalinity();
+    }
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      if (systemSalinity > 0.0) {
+        // Check for aqueous phase
+        neqsim.thermo.phase.PhaseInterface aqueousPhase =
+            system.getPhase(neqsim.thermo.phase.PhaseType.AQUEOUS);
+        if (aqueousPhase != null) {
+          double massKgWater =
+              aqueousPhase.getNumberOfMolesInPhase() * aqueousPhase.getMolarMass();
+          if (massKgWater > 0.0) {
+          
+            double salinityConcentration = systemSalinity / massKgWater;
+            aqueousPhase.setSalinityConcentration(salinityConcentration);
+            rerun = true;
+          }
+        }
+      }
+    }
+    if (rerun) {
+      operation =
+          new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+      if (!isRunAsThread()) {
+        getOperation().run();
+      } else {
+        run();
+      }
+    }
+    // --- End salinity logic ---
 
     if (flowRate < 1e-5) {
       final double minimumFlowRate = 1e-50;
