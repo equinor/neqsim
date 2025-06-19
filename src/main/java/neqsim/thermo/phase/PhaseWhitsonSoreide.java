@@ -10,7 +10,7 @@ public class PhaseWhitsonSoreide extends PhasePrEos {
 
   public PhaseWhitsonSoreide() {
     super();
-    thermoPropertyModelName = "Whitson-Soreide EoS";
+    thermoPropertyModelName = "Soreide-Whitson-PR-EoS";
   }
 
   @Override
