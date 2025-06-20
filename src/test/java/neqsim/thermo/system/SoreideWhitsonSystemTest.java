@@ -2,8 +2,9 @@ package neqsim.thermo.system;
 
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.mixer.StaticMixer;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SoreideWhitsonSystemTest {
@@ -170,17 +171,21 @@ public class SoreideWhitsonSystemTest {
     // 4. Check the salinity concentration in the mixed stream's aqueous phase
     SystemSoreideWhitson mixedSystem = (SystemSoreideWhitson) mixer.getOutletStream().getFluid();
     double mixedSalinity = mixedSystem.getPhase(1).getSalinityConcentration();
-    double Salinity1 = stream1.getFluid().getPhase(1).getSalinityConcentration();
-    double Salinity2 = stream2.getFluid().getPhase(1).getSalinityConcentration();
 
-    System.out.println("Mixed stream salinity concentration: " + mixedSalinity);
+    org.junit.jupiter.api.Assertions.assertTrue(mixedSalinity > 0.96 && mixedSalinity < 0.97,
+        "Mixed salinity should be around 0.96 , but was: " + mixedSalinity);
 
-    // 5. Setup and run the process
-    ProcessSystem process = new ProcessSystem();
-    process.add(stream1);
-    process.add(stream2);
-    process.add(mixer);
-    process.run();
+    Separator separator = new Separator("Stream Separator");
+    separator.addStream(mixer.getOutletStream());
+    separator.run();
+
+    StreamInterface streamGas = separator.getGasOutStream();
+    double gasSalinity = ((SystemSoreideWhitson) streamGas.getFluid()).getSalinity();
+    StreamInterface streamAqueous = separator.getLiquidOutStream();
+    double waterSalinity = ((SystemSoreideWhitson) streamAqueous.getFluid()).getSalinity();
+
+    org.junit.jupiter.api.Assertions.assertEquals(0.0, gasSalinity, 1e-8, "Gas salinity should be 0.0");
+    org.junit.jupiter.api.Assertions.assertEquals(0.05, waterSalinity, 1e-8, "Water salinity should be 0.05");
   }
 
 }

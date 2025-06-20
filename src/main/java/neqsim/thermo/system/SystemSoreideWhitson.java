@@ -105,13 +105,18 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
     for (int i = 0; i < this.getNumberOfPhases(); i++) {
       if (systemSalinity > 0.0) {
         // Check for aqueous phase
-        neqsim.thermo.phase.PhaseInterface aqueousPhase =
-            this.getPhase(neqsim.thermo.phase.PhaseType.AQUEOUS);
+        neqsim.thermo.phase.PhaseInterface aqueousPhase;
+        try {
+          aqueousPhase = this.getPhase(neqsim.thermo.phase.PhaseType.AQUEOUS);
+        } catch (Exception e) {
+          aqueousPhase = null;
+        }
         if (aqueousPhase != null) {
           double massKgWater = aqueousPhase.getNumberOfMolesInPhase() * aqueousPhase.getMolarMass();
           if (massKgWater > 0.0) {
             salinityConcentration = systemSalinity / massKgWater;
-            errorSalinityConcentration = Math.abs(aqueousPhase.getSalinityConcentration() - salinityConcentration);
+            errorSalinityConcentration =
+                Math.abs(aqueousPhase.getSalinityConcentration() - salinityConcentration);
             if (errorSalinityConcentration > 1e-6) {
 
               aqueousPhase.setSalinityConcentration(salinityConcentration);

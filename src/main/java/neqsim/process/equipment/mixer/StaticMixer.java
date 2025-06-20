@@ -114,10 +114,7 @@ public class StaticMixer extends Mixer {
     mixedStream.getThermoSystem().reInitPhaseType();
     mixStream();
     // System.out.println("filan temp " + mixedStream.getTemperature());
-    if (mixedStream.getFluid().getClass().getName().equals("neqsim.thermo.system.SystemSoreideWhitson")) {
-          ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(), "mole/sec");
-          mixedStream.run();
-  } 
+   
     ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
     try {
       if (Double.isNaN(enthalpy)) {
@@ -133,6 +130,12 @@ public class StaticMixer extends Mixer {
     // System.out.println("temp " + mixedStream.getThermoSystem().getTemperature());
 
     mixedStream.getThermoSystem().init(3);
+     if (mixedStream.getFluid().getClass().getName().equals("neqsim.thermo.system.SystemSoreideWhitson")) {
+          ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(), "mole/sec");
+          mixedStream.run();
+    } 
+  
     setCalculationIdentifier(id);
+    
   }
 }
