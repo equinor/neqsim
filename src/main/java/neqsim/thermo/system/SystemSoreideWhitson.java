@@ -75,6 +75,51 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
     return this.salinity;
   }
 
+  public boolean calcSalinity() {
+    boolean updatedSalinity = false;
+    double systemSalinity = this.getSalinity();
+    double salinityConcentration = 0.0;
+    double errorSalinityConcentration = 0.0;
+    for (int i = 0; i < this.getNumberOfPhases(); i++) {
+      if (systemSalinity > 0.0) {
+        // Check for aqueous phase
+        neqsim.thermo.phase.PhaseInterface aqueousPhase =
+            this.getPhase(neqsim.thermo.phase.PhaseType.AQUEOUS);
+        if (aqueousPhase != null) {
+          double massKgWater = aqueousPhase.getNumberOfMolesInPhase() * aqueousPhase.getMolarMass();
+          if (massKgWater > 0.0) {
+            salinityConcentration = systemSalinity / massKgWater;
+            errorSalinityConcentration = Math.abs(aqueousPhase.getSalinityConcentration() - salinityConcentration);
+            if (errorSalinityConcentration > 1e-6) {
+
+              aqueousPhase.setSalinityConcentration(salinityConcentration);
+              // Set salinityConcentration for each component's attractive term if SoreideWhitso
+
+              updatedSalinity = true;
+            }
+          }
+          // Assign the calculated salinityConcentration to every SoreideWhitson attractive term in
+          // all phases
+          for (int phaseN = 0; phaseN < this.getNumberOfPhases(); phaseN++) {
+            neqsim.thermo.phase.PhaseInterface phase = this.getPhase(phaseN);
+            for (int compN = 0; compN < phase.getNumberOfComponents(); compN++) {
+              neqsim.thermo.component.ComponentInterface comp = phase.getComponent(compN);
+              if (comp instanceof neqsim.thermo.component.ComponentEosInterface) {
+                neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface attractiveTerm =
+                    ((neqsim.thermo.component.ComponentEosInterface) comp).getAttractiveTerm();
+                if (attractiveTerm instanceof neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson) {
+                  ((neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson) attractiveTerm)
+                      .setSalinityFromPhase(salinityConcentration);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return updatedSalinity;
+  }
+
   @Override
   public SystemSoreideWhitson clone() {
     SystemSoreideWhitson clonedSystem = null;

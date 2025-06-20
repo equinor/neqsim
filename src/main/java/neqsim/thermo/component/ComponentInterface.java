@@ -2325,8 +2325,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   }
 
   /**
-     * Returns the reduced temperature (T/Tc) for a given temperature.
-     * @return reduced temperature
-     */
-    public double getReducedTemperature();
+   * Returns the reduced temperature (T/Tc) for a given temperature.
+   * 
+   * @return reduced temperature
+   */
+  public double getReducedTemperature();
 }

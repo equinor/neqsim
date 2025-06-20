@@ -201,62 +201,23 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     operation =
         new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
 
-    if (!isRunAsThread()) {
-      getOperation().run();
-    } else {
-      run();
-    }
 
-    // --- Salinity logic for Soreide-Whitson ---
-    boolean rerun = false;
-    double systemSalinity = 0.0;
-    double salinityConcentration = 0.0;
-    if (system instanceof neqsim.thermo.system.SystemSoreideWhitson) {
-      systemSalinity = ((neqsim.thermo.system.SystemSoreideWhitson) system).getSalinity();
-    }
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      if (systemSalinity > 0.0) {
-        // Check for aqueous phase
-        neqsim.thermo.phase.PhaseInterface aqueousPhase =
-            system.getPhase(neqsim.thermo.phase.PhaseType.AQUEOUS);
-        if (aqueousPhase != null) {
-          double massKgWater = aqueousPhase.getNumberOfMolesInPhase() * aqueousPhase.getMolarMass();
-          if (massKgWater > 0.0) {
-            salinityConcentration = systemSalinity / massKgWater;
-            aqueousPhase.setSalinityConcentration(salinityConcentration);
-            // Set salinityConcentration for each component's attractive term if SoreideWhitso
-            rerun = true;
-          }
-          // Assign the calculated salinityConcentration to every SoreideWhitson attractive term in
-          // all phases
-          for (int phaseN = 0; phaseN < system.getNumberOfPhases(); phaseN++) {
-            neqsim.thermo.phase.PhaseInterface phase = system.getPhase(phaseN);
-            for (int compN = 0; compN < phase.getNumberOfComponents(); compN++) {
-              neqsim.thermo.component.ComponentInterface comp = phase.getComponent(compN);
-              if (comp instanceof neqsim.thermo.component.ComponentEosInterface) {
-                neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface attractiveTerm =
-                    ((neqsim.thermo.component.ComponentEosInterface) comp).getAttractiveTerm();
-                if (attractiveTerm instanceof neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson) {
-                  ((neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson) attractiveTerm)
-                      .setSalinityFromPhase(salinityConcentration);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (rerun) {
-
-
-
+    boolean rerun = true;
+    int iterationCount = 0;
+    while (rerun) {
       operation =
           new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
       if (!isRunAsThread()) {
         getOperation().run();
       } else {
         run();
+      }
+      rerun = ((neqsim.thermo.system.SystemSoreideWhitson) system).calcSalinity();
+      iterationCount++;
+      if (iterationCount >= 10) {
+        System.err.println(
+            "Warning: Maximum number of iterations (10) reached in TPflash salinity loop. Stopping further execution.");
+        break;
       }
     }
     // --- End salinity logic ---

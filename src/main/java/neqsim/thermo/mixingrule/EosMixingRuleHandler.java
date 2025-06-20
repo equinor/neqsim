@@ -240,7 +240,15 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                               + 0.44338 * (1 + 0.08126 * Math.pow(salinityConcentration, 0.75)) * reducedTemperaturei);
 
                       } else if (componenti.equalsIgnoreCase("CO2")) {
-                          kij = 0.989*(-0.31092 * (1 + 0.15587 * Math.pow(salinityConcentration, 0.75))
+
+                        double multipK = 1.0;
+                        if (salinityConcentration > 2.0) {
+                          multipK = 0.9;
+                        } else if (salinityConcentration > 3.5) {
+                          multipK = 0.8;
+                        }
+
+                          kij = multipK*0.989*(-0.31092 * (1 + 0.15587 * Math.pow(salinityConcentration, 0.75))
                               + 0.2358 * (1 + 0.17837 * Math.pow(salinityConcentration, 0.98)) * reducedTemperaturei
                               - 21.2566 * Math.exp(-Math.pow(6.7222,reducedTemperaturei) - salinityConcentration));
                       } else if (componenti.equalsIgnoreCase("water") || componenti.equalsIgnoreCase("H2O")) {
@@ -1537,7 +1545,13 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   + 0.44338 * (1 + 0.08126 * Math.pow(salinityConcentration, 0.75)) * reducedTemperaturei);
 
           } else if (componenti.equalsIgnoreCase("CO2")) {
-              kij = 0.989*(-0.31092 * (1 + 0.15587 * Math.pow(salinityConcentration, 0.75))
+            double multipK = 1.0;
+            if (salinityConcentration > 2.0) {
+              multipK = 0.9;
+            } else if (salinityConcentration > 3.5) {
+              multipK = 0.8;
+            }
+            kij = multipK*0.989*(-0.31092 * (1 + 0.15587 * Math.pow(salinityConcentration, 0.75))
                   + 0.2358 * (1 + 0.17837 * Math.pow(salinityConcentration, 0.98)) * reducedTemperaturei
                   - 21.2566 * Math.exp(-Math.pow(6.7222,reducedTemperaturei) - salinityConcentration));
           } else if (componenti.equalsIgnoreCase("water") || componenti.equalsIgnoreCase("H2O")) {
