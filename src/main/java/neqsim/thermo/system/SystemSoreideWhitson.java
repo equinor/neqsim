@@ -45,7 +45,7 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
   }
 
   /**
-   * Set the salinity value.
+   * Add the salinity value.
    *
    * @param value the salinity value
    * @param unit the unit of the value ("mole/hr" or "mole/sec")
@@ -60,6 +60,28 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
         break;
       case "mole/sec":
         this.salinity = this.salinity + value;
+        break;
+      default:
+        throw new IllegalArgumentException("Unsupported unit: " + unit);
+    }
+  }
+
+  /**
+   * Set the salinity value.
+   *
+   * @param value the salinity value
+   * @param unit the unit of the value ("mole/hr" or "mole/sec")
+   */
+  public void setSalinity(double value, String unit) {
+    if (unit == null) {
+      throw new IllegalArgumentException("Unit cannot be null");
+    }
+    switch (unit.toLowerCase()) {
+      case "mole/hr":
+        this.salinity = value / 3600.0;
+        break;
+      case "mole/sec":
+        this.salinity = value;
         break;
       default:
         throw new IllegalArgumentException("Unsupported unit: " + unit);
