@@ -225,10 +225,44 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   intparam[l][k] = intparam[k][l];
 
                   intparamij[k][l] = Double.parseDouble(dataSet.getString("KIJWhitsonSoriede"));
-                  intparamij[l][k] = Double.parseDouble(dataSet.getString("KIJWhitsonSoriede"));
-                
-                  intparamji[k][l] = Double.parseDouble(dataSet.getString("KIJWhitsonSoriede"));
-                  intparamji[l][k] = Double.parseDouble(dataSet.getString("KIJWhitsonSoriede"));
+                  intparamij[l][k] = intparamij[k][l];
+                  
+                  String componenti = component_name;
+                  String componentj = component_name2;
+                  double acentricFactori = phase.getComponent(k).getAcentricFactor();
+                  double reducedTemperaturei = phase.getComponent(k).getReducedTemperature();
+                  double salinityConcentration = phase.getSalinityConcentration();
+                  double kij = 0.0;
+
+                  if (componentj.equalsIgnoreCase("water") || componentj.equalsIgnoreCase("H2O")) {
+                      if (componenti.equalsIgnoreCase("N2") || componenti.equalsIgnoreCase("nitrogen")) {
+                          kij = 0.997*(-1.70235 * (1 + 0.025587 * Math.pow(salinityConcentration, 0.75))
+                              + 0.44338 * (1 + 0.08126 * Math.pow(salinityConcentration, 0.75)) * reducedTemperaturei);
+
+                      } else if (componenti.equalsIgnoreCase("CO2")) {
+                          kij = 0.989*(-0.31092 * (1 + 0.15587 * Math.pow(salinityConcentration, 0.75))
+                              + 0.2358 * (1 + 0.17837 * Math.pow(salinityConcentration, 0.98)) * reducedTemperaturei
+                              - 21.2566 * Math.exp(-Math.pow(6.7222,reducedTemperaturei) - salinityConcentration));
+                      } else if (componenti.equalsIgnoreCase("water") || componenti.equalsIgnoreCase("H2O")) {
+                          kij = 0.0;
+                      } else {
+                          double a0 = 0.017407;
+                          double a1 = 0.033516;
+                          double a2 = 0.011478;
+                          double A0 = 1.112 - 1.7369 * Math.pow(acentricFactori, -0.1);
+                          double A1 = 1.1001 + 0.83 * acentricFactori;
+                          double A2 = -0.15742 - 1.0988 * acentricFactori;
+                          kij = 0.777*(((1 + a0 * salinityConcentration) * A0
+                              + (1 + a1 * salinityConcentration) * A1 * reducedTemperaturei
+                              + (1 + a2 * salinityConcentration) * A2 * Math.pow(reducedTemperaturei, 2)));
+                      }
+                  }
+
+                  intparamji[k][l] = kij;  
+                  intparamji[l][k] = intparamji[k][l];
+
+                  intparamT[k][l] = 0.0;
+                  intparamT[l][k] = 0.0;
 
                 }
                 if (phase.getClass().getName().equals("neqsim.thermo.phase.PhasePCSAFTRahmat")
@@ -250,8 +284,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               }
 
               // System.out.println("class name " + phase.getClass().getName());
-              if (!phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                  || !hasKIJTTypeCPAcol) {
+              if ((!phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
+                  || !hasKIJTTypeCPAcol) &&  !phase.getClass().getName().equals("neqsim.thermo.phase.PhaseWhitsonSoreide")) {
                 intparamTType[k][l] = Integer.parseInt(dataSet.getString("KIJTType"));
               } else {
                 intparamTType[k][l] = Integer.parseInt(dataSet.getString("KIJTTypeCPA"));
@@ -421,10 +455,12 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
               // intparam[l][k] = intparam[k][l];
               // intparamT[l][k] = intparamT[k][l];
+              if (!phase.getClass().getName().equals("neqsim.thermo.phase.PhaseWhitsonSoreide")){
               intparamij[k][l] = intparam[k][l];
               intparamij[l][k] = intparam[k][l];
               intparamji[k][l] = intparam[k][l];
               intparamji[l][k] = intparam[k][l];
+              }
               // System.out.println("kij set to " + intparam[l][k] + " " +
               // component_name2 + " " +
               // component_name);
@@ -1477,11 +1513,15 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
+
+
+
     /** {@inheritDoc} */
     @Override
     public double getkij(double temperature, int i, int j) {
         return intparam[i][j]; // PR
       }
+      
     
     public double getkijWhitsonSoreideAqueous(ComponentEosInterface[] compArray, double salinityConcentration, double temperature, int i, int j) {
         
@@ -1489,16 +1529,17 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         String componentj = compArray[j].getComponentName();
         double acentricFactori = compArray[i].getAcentricFactor();
         double reducedTemperaturei = ((ComponentEos) compArray[i]).getReducedTemperature();
-        double kij = 0.0;
+        double kij = intparam[i][j];
 
       if (componentj.equalsIgnoreCase("water") || componentj.equalsIgnoreCase("H2O")) {
-          if (componenti.equalsIgnoreCase("N2") || componentj.equalsIgnoreCase("nitrogen")) {
-              kij = -1.70235 * (1 + 0.025587 * Math.pow(salinityConcentration, 0.75))
-                  + 0.44338 * (1 + 0.08126 * Math.pow(salinityConcentration, 0.75)) * reducedTemperaturei;
+          if (componenti.equalsIgnoreCase("N2") || componenti.equalsIgnoreCase("nitrogen")) {
+              kij = 0.997*(-1.70235 * (1 + 0.025587 * Math.pow(salinityConcentration, 0.75))
+                  + 0.44338 * (1 + 0.08126 * Math.pow(salinityConcentration, 0.75)) * reducedTemperaturei);
+
           } else if (componenti.equalsIgnoreCase("CO2")) {
-              kij = (-0.31092 * (1 + 0.15587 * Math.pow(salinityConcentration, 0.75))
+              kij = 0.989*(-0.31092 * (1 + 0.15587 * Math.pow(salinityConcentration, 0.75))
                   + 0.2358 * (1 + 0.17837 * Math.pow(salinityConcentration, 0.98)) * reducedTemperaturei
-                  - 21.2566 * Math.exp(-6.7222 * reducedTemperaturei - salinityConcentration));
+                  - 21.2566 * Math.exp(-Math.pow(6.7222,reducedTemperaturei) - salinityConcentration));
           } else if (componenti.equalsIgnoreCase("water") || componenti.equalsIgnoreCase("H2O")) {
               kij = 0.0;
           } else {
@@ -1508,12 +1549,10 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               double A0 = 1.112 - 1.7369 * Math.pow(acentricFactori, -0.1);
               double A1 = 1.1001 + 0.83 * acentricFactori;
               double A2 = -0.15742 - 1.0988 * acentricFactori;
-              kij = ((1 + a0 * salinityConcentration) * A0
+              kij = 0.777*(((1 + a0 * salinityConcentration) * A0
                   + (1 + a1 * salinityConcentration) * A1 * reducedTemperaturei
-                  + (1 + a2 * salinityConcentration) * A2 * Math.pow(reducedTemperaturei, 2));
+                  + (1 + a2 * salinityConcentration) * A2 * Math.pow(reducedTemperaturei, 2)));
           }
-      } else {
-          kij = intparamij[i][j];
       }
 
       return kij;
@@ -1525,7 +1564,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double aij = 0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
-      boolean isAqueous = phase.getComponent("water").getx() > 0.5;
+      boolean isAqueous = phase.getComponent("water").getx() > 0.8;
       double salinityConcentration = 0.0;
       if (isAqueous) {
         salinityConcentration = phase.getSalinityConcentration();
@@ -1544,6 +1583,137 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         }
       }
       Atot = A;
+      return A;
+    }
+
+    @Override
+    public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
+        int numbcomp) {
+      double aij = 0.0;
+      ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+
+      A = 0.0;
+      boolean isAqueous = phase.getComponent("water").getx() > 0.8;
+      double salinityConcentration = 0.0;
+      if (isAqueous) {
+        salinityConcentration = phase.getSalinityConcentration();
+      }
+      for (int j = 0; j < numbcomp; j++) {
+        aij = Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT());
+        if (isAqueous) {
+            aij *= (1.0 - getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, compNumb, j));
+          } else {
+            aij *= (1.0 - getkij(temperature, compNumb, j));
+          }
+        A += compArray[j].getNumberOfMolesInPhase() * aij;
+      }
+      return 2.0 * A;
+    }
+
+     @Override
+    public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
+        int numbcomp) {
+      double A = 0.0;
+      double aij = 0;
+      boolean isAqueous = phase.getComponent("water").getx() > 0.8;
+      double salinityConcentration = 0.0;
+      if (isAqueous) {
+        salinityConcentration = phase.getSalinityConcentration();
+      }
+      ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+
+      for (int j = 0; j < numbcomp; j++) {
+        aij = 0.5 / Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT())
+            * (compArray[compNumb].getaT() * compArray[j].getaDiffT()
+                + compArray[j].getaT() * compArray[compNumb].getaDiffT());
+        if (isAqueous) {
+            aij *= (1.0 - getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, compNumb, j));
+          } else {
+            aij *= (1.0 - getkij(temperature, compNumb, j));
+        }
+        A += compArray[j].getNumberOfMolesInPhase() * aij;
+      }
+      // System.out.println("Ait SRK : " + (2*A));
+      return 2.0 * A;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
+        double pressure, int numbcomp) {
+      double aij = 0;
+      boolean isAqueous = phase.getComponent("water").getx() > 0.8;
+      double salinityConcentration = 0.0;
+      if (isAqueous) {
+        salinityConcentration = phase.getSalinityConcentration();
+      }
+      ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+      aij = Math.sqrt(compArray[compNumb].getaT() * compArray[compNumbj].getaT());
+      if (isAqueous) {
+            aij *= (1.0 - getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, compNumb, compNumbj));
+          } else {
+            aij *= (1.0 - getkij(temperature, compNumb, compNumbj));
+        }
+      return 2.0 * aij;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+      double A = 0.0;
+      ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+
+      for (int i = 0; i < numbcomp; i++) {
+        A += compArray[i].getNumberOfMolesInPhase()
+            * ((ComponentEosInterface) phase.getComponent(i)).getAiT();
+        // phase.calcAiT(i, phase, temperature, pressure, numbcomp);
+      }
+      // System.out.println("AT SRK: " + (0.5*A));
+      return 0.5 * A;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+      double aij = 0;
+      double temp1;
+      double[] sqrtai = new double[numbcomp];
+      ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+      boolean isAqueous = phase.getComponent("water").getx() > 0.8;
+      double salinityConcentration = 0.0;
+      if (isAqueous) {
+        salinityConcentration = phase.getSalinityConcentration();
+      }
+      for (int i = 0; i < numbcomp; i++) {
+        sqrtai[i] = Math.sqrt(compArray[i].getaT());
+      }
+
+      A = 0.0;
+      for (int i = 0; i < numbcomp; i++) {
+        if (compArray[i].getNumberOfmoles() < 1e-100) {
+          continue;
+        }
+        for (int j = 0; j < numbcomp; j++) {
+          if (compArray[j].getNumberOfmoles() < 1e-100) {
+            continue;
+          }
+          temp1 = compArray[i].getaT() * compArray[j].getaDiffT()
+              + compArray[j].getaT() * compArray[i].getaDiffT();
+          aij = 0.5
+              * ((2.0 * compArray[i].getaDiffT() * compArray[j].getaDiffT()
+                  + compArray[i].getaT() * compArray[j].getaDiffDiffT()
+                  + compArray[j].getaT() * compArray[i].getaDiffDiffT()) / sqrtai[i] / sqrtai[j]
+                  - temp1 * temp1
+                      / (2.0 * sqrtai[i] * sqrtai[j] * compArray[i].getaT() * compArray[j].getaT()));
+          if (isAqueous) {
+            aij *= (1.0 - getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, i, j));
+          } else {
+            aij *= (1.0 - getkij(temperature, i, j));
+          }
+          A += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
+              * aij;
+        }
+      }
       return A;
     }
 
