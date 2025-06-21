@@ -77,7 +77,7 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
    *        "KNO3")
    * @param unit the unit of the value ("mole/hr" or "mole/sec")
    */
-  public void addSalinityBySaltType(double value, String saltType, String unit) {
+  public void addSalinity(String saltType, double value, String unit) {
     if (saltType == null) {
       throw new IllegalArgumentException("Salt type cannot be null");
     }
