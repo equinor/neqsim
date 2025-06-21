@@ -46,15 +46,13 @@ public class PhaseSoreideWhitson extends PhasePrEos {
   }
 
   public void addSalinity(double salinity) {
-    this.salinity += salinity; // Example of adding salinity
+    this.salinity += salinity;
   }
 
   public double getSalinity(double salinity) {
-    return this.salinity; // Example of adding salinity
+    return this.salinity;
   }
 
-  // Optionally, add helper methods to set temperature, pressure, and fractions as
-  // in the Python PREOS
   public void setTemperature(double temperature) {
     this.temperature = temperature;
   }

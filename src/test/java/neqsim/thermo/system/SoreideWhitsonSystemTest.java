@@ -54,15 +54,12 @@ public class SoreideWhitsonSystemTest {
   }
 
   /**
-   * Test Soreide-Whitson system with zero salinity. Checks that the phase mole fractions for
-   * nitrogen, CO2, methane, ethane, and water in both gas and aqueous phases match the expected
-   * values for a system with no added salt.
+   * Test Soreide-Whitson system with zero salinity (multiphase).
    */
   @Test
   public void testMultiphaseWhitson() {
     // Create a Soreide-Whitson system
 
-    // SystemPrEos testSystem = new neqsim.thermo.system.SystemPrEos(298.0, 20.0);
     SystemSoreideWhitson testSystem = new SystemSoreideWhitson(298.0, 20.0);
     testSystem.addComponent("nitrogen", 0.1, "mole/sec");
     testSystem.addComponent("CO2", 0.2, "mole/sec");
@@ -132,7 +129,6 @@ public class SoreideWhitsonSystemTest {
 
   @Test
   public void testStreamMixingAndSeparationWithSalinity() {
-    // 1. Define stream 1: gas-rich, low salinity
 
     SystemSoreideWhitson testSystem = new SystemSoreideWhitson(298.0, 20.0);
     testSystem.addComponent("nitrogen", 0.1, "mole/sec");
