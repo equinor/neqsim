@@ -68,6 +68,60 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
     }
   }
 
+
+  /**
+   * Add the salinity value for a specific salt type and unit.
+   *
+   * @param value the amount of salt added
+   * @param saltType the type of salt (e.g., "Na2SO4", "MgSO4", "Mg(NO3)2", "NaCl", "NaNO3", "KCl",
+   *        "KNO3")
+   * @param unit the unit of the value ("mole/hr" or "mole/sec")
+   */
+  public void addSalinityBySaltType(double value, String saltType, String unit) {
+    if (saltType == null) {
+      throw new IllegalArgumentException("Salt type cannot be null");
+    }
+    if (unit == null) {
+      throw new IllegalArgumentException("Unit cannot be null");
+    }
+    double valueInMoleSec;
+    switch (unit.toLowerCase()) {
+      case "mole/hr":
+        valueInMoleSec = value / 3600.0;
+        break;
+      case "mole/sec":
+        valueInMoleSec = value;
+        break;
+      default:
+        throw new IllegalArgumentException("Unsupported unit: " + unit);
+    }
+    switch (saltType.trim().toUpperCase()) {
+      case "Na2SO4":
+        this.salinity = this.salinity + 3.0 * valueInMoleSec;
+        break;
+      case "MgSO4":
+        this.salinity = this.salinity + 2.75 * valueInMoleSec;
+        break;
+      case "Mg(NO3)2":
+        this.salinity = this.salinity + 1.3 * valueInMoleSec;
+        break;
+      case "NaCl":
+        this.salinity = this.salinity + 1.0 * valueInMoleSec;
+        break;
+      case "NaNO3":
+        this.salinity = this.salinity + 0.6 * valueInMoleSec;
+        break;
+      case "KCl":
+        this.salinity = this.salinity + 0.5 * valueInMoleSec;
+        break;
+      case "KNO3":
+        this.salinity = this.salinity + 0.3 * valueInMoleSec;
+        break;
+      default:
+        throw new IllegalArgumentException("Unsupported salt type: " + saltType);
+    }
+  }
+
   /**
    * Set the salinity value.
    *
@@ -118,7 +172,8 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
           if (massKgWater > 0.0) {
             salinityConcentration = systemSalinity / massKgWater;
             errorSalinityConcentration =
-                Math.abs(((PhaseSoreideWhitson) aqueousPhase).getSalinityConcentration() - salinityConcentration);
+                Math.abs(((PhaseSoreideWhitson) aqueousPhase).getSalinityConcentration()
+                    - salinityConcentration);
             if (errorSalinityConcentration > 1e-6) {
 
               ((PhaseSoreideWhitson) aqueousPhase).setSalinityConcentration(salinityConcentration);
