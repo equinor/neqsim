@@ -164,7 +164,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void TPflash() {
     // Check if system is Soreide-Whitson and use the special flash if so
-    if (system instanceof neqsim.thermo.system.SystemSoreideWhitson) {
+    if (system != null
+        && system.getClass().getName().equals("neqsim.thermo.system.SystemSoreideWhitson")) {
       TPflashSoreideWhitson();
       return;
     }

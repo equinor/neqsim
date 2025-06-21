@@ -131,10 +131,12 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
             neqsim.thermo.phase.PhaseInterface phase = this.getPhase(phaseN);
             for (int compN = 0; compN < phase.getNumberOfComponents(); compN++) {
               neqsim.thermo.component.ComponentInterface comp = phase.getComponent(compN);
-              if (comp instanceof neqsim.thermo.component.ComponentEosInterface) {
+              if (comp != null && comp.getClass().getName()
+                  .equals("neqsim.thermo.component.ComponentEosInterface")) {
                 neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface attractiveTerm =
                     ((neqsim.thermo.component.ComponentEosInterface) comp).getAttractiveTerm();
-                if (attractiveTerm instanceof neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson) {
+                if (attractiveTerm != null && attractiveTerm.getClass().getName().equals(
+                    "neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson")) {
                   ((neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson) attractiveTerm)
                       .setSalinityFromPhase(salinityConcentration);
                 }
