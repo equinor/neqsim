@@ -473,21 +473,13 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
     }
   }
 
-  /**
-   * Gets the minimum flow rate for the pump.
-   *
-   * @return the minimum flow rate
-   */
+  /** {@inheritDoc} */
   @Override
   public double getMinimumFlow() {
     return minimumFlow;
   }
 
-  /**
-   * Sets the minimum flow rate for the pump.
-   *
-   * @param minimumFlow the minimum flow rate to be set, in appropriate units.
-   */
+  /** {@inheritDoc} */
   @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;

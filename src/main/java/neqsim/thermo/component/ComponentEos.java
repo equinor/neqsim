@@ -223,7 +223,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     } else if (i == 20) {
       setAttractiveParameter(new AttractiveTermSoreideWhitson(this));
     } else {
-      logger.error("error selecting an alpha formultaion term");
+      logger.error("error selecting an alpha formulation term");
       logger.info("ok setting alpha function");
     }
   }
@@ -793,5 +793,44 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    */
   public void setAttractiveParameter(AttractiveTermInterface attractiveParameter) {
     this.attractiveParameter = attractiveParameter;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    ComponentEos other = (ComponentEos) obj;
+    boolean result = true;
+    result = result && Double.compare(a, other.a) == 0;
+    result = result && Double.compare(b, other.b) == 0;
+    result = result && Double.compare(m, other.m) == 0;
+    result = result && Double.compare(alpha, other.alpha) == 0;
+    result = result && Double.compare(aT, other.aT) == 0;
+    result = result && Double.compare(aDiffT, other.aDiffT) == 0;
+    result = result && Double.compare(Bi, other.Bi) == 0;
+    result = result && Double.compare(Ai, other.Ai) == 0;
+    result = result && Double.compare(AiT, other.AiT) == 0;
+    result = result && Double.compare(aDiffDiffT, other.aDiffDiffT) == 0;
+    result = result && Double.compare(delta1, other.delta1) == 0;
+    result = result && Double.compare(delta2, other.delta2) == 0;
+    result = result && Double.compare(aDern, other.aDern) == 0;
+    result = result && Double.compare(aDerT, other.aDerT) == 0;
+    result = result && Double.compare(aDerTT, other.aDerTT) == 0;
+    result = result && Double.compare(aDerTn, other.aDerTn) == 0;
+    result = result && Double.compare(bDern, other.bDern) == 0;
+    result = result && Double.compare(bDerTn, other.bDerTn) == 0;
+    result = result && java.util.Arrays.equals(Aij, other.Aij);
+    result = result && java.util.Arrays.equals(Bij, other.Bij);
+    result = result && java.util.Arrays.equals(dAdndn, other.dAdndn);
+    result = result && java.util.Arrays.equals(dBdndn, other.dBdndn);
+    result = result && (attractiveParameter == null ? other.attractiveParameter == null
+        : attractiveParameter.equals(other.attractiveParameter));
+    result = result && super.equals(obj);
+    return result;
   }
 }

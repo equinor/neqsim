@@ -209,7 +209,6 @@ public class CompressorChartAlternativeMapLookup
           new CompressorCurve(speed[i], flow[i], head[i], flowPolyEff[i], polyEff[i]);
       chartValues.add(curve);
       chartSpeeds.add(speed[i]);
-
     }
 
     setUseCompressorChart(true);
@@ -219,11 +218,15 @@ public class CompressorChartAlternativeMapLookup
    * <p>
    * getClosestRefSpeeds.
    * </p>
-   * Returns a list of the closest reference speeds to the given speed. If the given speed matches a
-   * reference speed, only that speed is returned. If the given speed is between two reference
-   * speeds, both are returned. If the given speed is lower than the lowest reference speed, the
-   * lowest reference speed is returned. If the given speed is higher than the highest reference
-   * speed, the highest reference speed is returned.
+   * 
+   * <p>
+   * Retrieves the closest reference speeds to the given speed from the compressor chart values. The
+   * method returns a list containing one or two speeds: - If the given speed matches a reference
+   * speed, the list contains only that speed. - If the given speed is between two reference speeds,
+   * the list contains both speeds. - If the given speed is less than the lowest reference speed,
+   * the list contains the lowest reference speed. - If the given speed is greater than the highest
+   * reference speed, the list contains the highest reference speed.
+   * </p>
    *
    * @param speed the speed to find the closest reference speeds for
    * @return a {@link java.util.ArrayList} of the closest reference speeds
@@ -705,13 +708,7 @@ public class CompressorChartAlternativeMapLookup
     return 0.0;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>minSpeedCurve</code>.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
   @Override
   public double getMinSpeedCurve() {
     return 0;

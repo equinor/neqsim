@@ -63,6 +63,11 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     this.setInletStream(inStream);
   }
 
+  /**
+   * <p>Getter for the field <code>inletStream</code>.</p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public StreamInterface getInletStream() {
     return inletStream;
   }

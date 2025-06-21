@@ -88,13 +88,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
     this.multicomponentDiffusionMethod = multicomponentDiffusionMethod;
   }
 
-  /**
-   * <p>
-   * clone.
-   * </p>
-   *
-   * @return a {@link neqsim.physicalproperties.system.PhysicalProperties} object
-   */
+  /** {@inheritDoc} */
   @Override
   public PhysicalProperties clone() {
     PhysicalProperties properties = null;

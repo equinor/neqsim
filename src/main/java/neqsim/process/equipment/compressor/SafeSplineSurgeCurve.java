@@ -10,6 +10,13 @@ import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * <p>
+ * SafeSplineSurgeCurve class.
+ * </p>
+ *
+ * @author esol
+ */
 public class SafeSplineSurgeCurve implements java.io.Serializable {
 
   private static final long serialVersionUID = 1001;
@@ -27,12 +34,34 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
 
   private boolean isActive = false;
 
+  /**
+   * <p>
+   * Constructor for SafeSplineSurgeCurve.
+   * </p>
+   */
   public SafeSplineSurgeCurve() {}
 
+  /**
+   * <p>
+   * Constructor for SafeSplineSurgeCurve.
+   * </p>
+   *
+   * @param flow an array of {@link double} objects
+   * @param head an array of {@link double} objects
+   */
   public SafeSplineSurgeCurve(double[] flow, double[] head) {
     setCurve(null, flow, head);
   }
 
+  /**
+   * <p>
+   * setCurve.
+   * </p>
+   *
+   * @param chartConditions an array of {@link double} objects
+   * @param flow an array of {@link double} objects
+   * @param head an array of {@link double} objects
+   */
   public void setCurve(double[] chartConditions, double[] flow, double[] head) {
     if (flow.length != head.length || flow.length < 2) {
       throw new IllegalArgumentException(
@@ -89,9 +118,18 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
     this.isActive = true;
   }
 
+  /**
+   * <p>
+   * getSurgeFlow.
+   * </p>
+   *
+   * @param headValue a double
+   * @return a double
+   */
   public double getSurgeFlow(double headValue) {
-    if (!isActive)
+    if (!isActive) {
       return 0.0;
+    }
 
     try {
       double minHead = sortedHead[0];
@@ -121,9 +159,18 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
     }
   }
 
+  /**
+   * <p>
+   * getSurgeHead.
+   * </p>
+   *
+   * @param flowValue a double
+   * @return a double
+   */
   public double getSurgeHead(double flowValue) {
-    if (!isActive)
+    if (!isActive) {
       return 0.0;
+    }
 
     try {
       double minFlow = flow[0];
@@ -157,28 +204,54 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
     }
   }
 
+  /**
+   * <p>
+   * isSurge.
+   * </p>
+   *
+   * @param headValue a double
+   * @param flowValue a double
+   * @return a boolean
+   */
   public boolean isSurge(double headValue, double flowValue) {
     return getSurgeFlow(headValue) > flowValue;
   }
 
+  /**
+   * <p>
+   * isActive.
+   * </p>
+   *
+   * @return a boolean
+   */
   public boolean isActive() {
     return isActive;
   }
 
+  /**
+   * <p>
+   * setActive.
+   * </p>
+   *
+   * @param isActive a boolean
+   */
   public void setActive(boolean isActive) {
     this.isActive = isActive;
   }
 
+  /** {@inheritDoc} */
   @Override
   public int hashCode() {
     return Objects.hash(Arrays.hashCode(flow), Arrays.hashCode(head),
         Arrays.hashCode(chartConditions), isActive);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof SafeSplineSurgeCurve))
+    if (!(obj instanceof SafeSplineSurgeCurve)) {
       return false;
+    }
     SafeSplineSurgeCurve other = (SafeSplineSurgeCurve) obj;
     return Arrays.equals(flow, other.flow) && Arrays.equals(head, other.head)
         && Arrays.equals(chartConditions, other.chartConditions) && isActive == other.isActive;

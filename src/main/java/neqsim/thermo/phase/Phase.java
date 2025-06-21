@@ -2280,10 +2280,12 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * If no hydrogenType is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure
+   * {@inheritDoc}
    *
-   * @return the density calculated with the 'normal' hydrogen type.
+   * <p>
+   * If no hydrogenType is specified it checks the component name and chooses the correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase is not pure.
+   * </p>
    */
   @Override
   public double getDensity_Leachman() {
@@ -2326,10 +2328,12 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure
+   * {@inheritDoc}
    *
-   * @return an array of properties of type double.
+   * <p>
+   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase is not pure.
+   * </p>
    */
   @Override
   public double[] getProperties_Leachman() {
@@ -2372,10 +2376,12 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure
+   * {@inheritDoc}
    *
-   * @return a matrix of properties of type doubleW.
+   * <p>
+   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase is not pure.
+   * </p>
    */
   @Override
   public doubleW[] getAlpha0_Leachman() {
@@ -2418,10 +2424,12 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure
+   * {@inheritDoc}
    *
-   * @return a matrix of properties of type doubleW.
+   * <p>
+   * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
+   * Checks for other components in the phase and throws an exception if the phase is not pure.
+   * </p>
    */
   @Override
   public doubleW[][] getAlphares_Leachman() {
@@ -2558,4 +2566,49 @@ public abstract class Phase implements PhaseInterface {
     return thermoPropertyModelName;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    Phase other = (Phase) obj;
+    if (numberOfComponents != other.numberOfComponents) {
+      return false;
+    }
+    if (Double.compare(temperature, other.temperature) != 0) {
+      return false;
+    }
+    if (Double.compare(pressure, other.pressure) != 0) {
+      return false;
+    }
+    if (Double.compare(numberOfMolesInPhase, other.numberOfMolesInPhase) != 0) {
+      return false;
+    }
+    if (Double.compare(beta, other.beta) != 0) {
+      return false;
+    }
+    if (pt != other.pt) {
+      return false;
+    }
+    for (ComponentInterface c : this.getComponents()) {
+      if (c == null) {
+        continue;
+      }
+      boolean found = false;
+      for (int j = 0; j < other.numberOfComponents; j++) {
+        if (other.componentArray[j] != null && c.equals(other.componentArray[j])) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

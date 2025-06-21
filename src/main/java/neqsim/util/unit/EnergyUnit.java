@@ -53,12 +53,14 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getValue(double val, String fromunit, String tounit) {
     invalue = val;
     return getConversionFactor(fromunit) / getConversionFactor(tounit) * invalue;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getValue(String tounit) {
     return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;

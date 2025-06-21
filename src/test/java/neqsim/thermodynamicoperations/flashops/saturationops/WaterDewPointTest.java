@@ -191,7 +191,6 @@ public class WaterDewPointTest {
 
     // Assert the expected value (this value should be adjusted based on expected results)
     assertEquals(-23.5090125, dewPointTemperature, 0.1, "Dew point temperature is not as expected");
-
   }
 
   @Test
@@ -218,6 +217,5 @@ public class WaterDewPointTest {
     }
     double waterContent = testSystem.getPhase("gas").getComponent("water").getx() * 1e6;
     assertEquals(22.0, waterContent, 0.1, "Water content is not as expected");
-
   }
 }

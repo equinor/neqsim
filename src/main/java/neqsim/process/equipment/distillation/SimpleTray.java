@@ -208,13 +208,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     return new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>temperature</code>.
-   * </p>
-   *
-   * @return the temperature
-   */
+  /** {@inheritDoc} */
   @Override
   public double getTemperature() {
     return temperature;
@@ -250,20 +244,46 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     }
   }
 
+  /**
+   * <p>
+   * getVaporFlowRate.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
   public double getVaporFlowRate(String unit) {
     if (getFluid().hasPhaseType("gas")) {
       return getFluid().getPhase("gas").getFlowRate(unit);
-    } else
+    } else {
       return 0.0;
+    }
   }
 
+  /**
+   * <p>
+   * getLiquidFlowRate.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
   public double getLiquidFlowRate(String unit) {
     if (getFluid().hasPhaseType("aqueous") || getFluid().hasPhaseType("oil")) {
       return getFluid().getPhase(1).getFlowRate(unit);
-    } else
+    } else {
       return 0.0;
+    }
   }
 
+  /**
+   * <p>
+   * getFeedRate.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
   public double getFeedRate(String unit) {
     double feed = 0.0;
     for (int j = 0; j < getNumberOfInputStreams(); j++) {

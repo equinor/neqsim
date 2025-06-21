@@ -1302,4 +1302,65 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     return ((ComponentEosInterface) getComponent(i)).dFdNdT(this, this.getNumberOfComponents(),
         temperature, pressure);
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    PhaseEos other = (PhaseEos) obj;
+    if (Double.compare(loc_A, other.loc_A) != 0) {
+      return false;
+    }
+    if (Double.compare(loc_AT, other.loc_AT) != 0) {
+      return false;
+    }
+    if (Double.compare(loc_ATT, other.loc_ATT) != 0) {
+      return false;
+    }
+    if (Double.compare(loc_B, other.loc_B) != 0) {
+      return false;
+    }
+    if (Double.compare(f_loc, other.f_loc) != 0) {
+      return false;
+    }
+    if (Double.compare(g, other.g) != 0) {
+      return false;
+    }
+    if (Double.compare(delta1, other.delta1) != 0) {
+      return false;
+    }
+    if (Double.compare(delta2, other.delta2) != 0) {
+      return false;
+    }
+    if (Double.compare(uEOS, other.uEOS) != 0) {
+      return false;
+    }
+    if (Double.compare(wEOS, other.wEOS) != 0) {
+      return false;
+    }
+    if (mixRule == null) {
+      if (other.mixRule != null) {
+        return false;
+      }
+    } else if (!mixRule.equals(other.mixRule)) {
+      return false;
+    }
+    if (mixSelect == null) {
+      if (other.mixSelect != null) {
+        return false;
+      }
+    } else if (!mixSelect.equals(other.mixSelect)) {
+      return false;
+    }
+    // Compare superclass fields
+    if (!super.equals(obj)) {
+      return false;
+    }
+    return true;
+  }
 }

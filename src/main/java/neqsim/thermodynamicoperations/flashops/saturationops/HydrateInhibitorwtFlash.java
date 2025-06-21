@@ -78,7 +78,6 @@ public class HydrateInhibitorwtFlash extends ConstantDutyTemperatureFlash {
         ops.TPflash();
         double wtp = 0.0;
         if (system.hasPhaseType(PhaseType.AQUEOUS)) {
-          // TODO: is this correct? seems to multplying and factoring with the same numbers twice
           wtp = system.getPhase(PhaseType.AQUEOUS).getComponent(inhibitor).getx()
               * system.getPhase(PhaseType.AQUEOUS).getComponent(inhibitor).getMolarMass()
               / (system.getPhase(PhaseType.AQUEOUS).getComponent(inhibitor).getx()
@@ -88,7 +87,6 @@ public class HydrateInhibitorwtFlash extends ConstantDutyTemperatureFlash {
         } else {
           system.addComponent(inhibitor, system.getTotalNumberOfMoles());
           ops.TPflash();
-          // TODO: is this correct? seems to multplying and factoring with the same numbers twice
           wtp = system.getPhase(PhaseType.AQUEOUS).getComponent(inhibitor).getx()
               * system.getPhase(PhaseType.AQUEOUS).getComponent(inhibitor).getMolarMass()
               / (system.getPhase(PhaseType.AQUEOUS).getComponent(inhibitor).getx()

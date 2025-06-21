@@ -128,13 +128,12 @@ public class StaticMixer extends Mixer {
       logger.error(ex.getMessage(), ex);
     }
     // System.out.println("temp " + mixedStream.getThermoSystem().getTemperature());
-
-    mixedStream.getThermoSystem().init(3);
+     mixedStream.getThermoSystem().initProperties();
      if (mixedStream.getFluid().getClass().getName().equals("neqsim.thermo.system.SystemSoreideWhitson")) {
           ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(), "mole/sec");
           mixedStream.run();
     } 
-  
+
     setCalculationIdentifier(id);
     
   }

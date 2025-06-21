@@ -1,0 +1,6 @@
+language: java
+
+setup:
+  - apt-get update
+  - apt-get install -y maven
+  - mvn --version

@@ -75,6 +75,7 @@ public class SimpleTPoutPipeline extends Pipeline {
     testOps.TPflash();
     // system.setMultiPhaseCheck(false);
     outStream.setThermoSystem(system);
+    outStream.getThermoSystem().initProperties();
     setCalculationIdentifier(id);
   }
 

@@ -237,7 +237,6 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         ((Heater) targetEquipment).setOutletPressure(sourceEquipment.getPressure());
       } else if (targetVariable.equals("temperature")) {
         ((Heater) targetEquipment).setOutTemperature(sourceEquipment.getTemperature());
-
       } else {
         throw new RuntimeException(targetVariable + " adjustment is not supported for Heater.");
       }

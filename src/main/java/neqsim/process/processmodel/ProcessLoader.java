@@ -12,6 +12,8 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * The ProcessLoader class is responsible for loading process configurations from a YAML file and
  * initializing the process system with the specified units and their properties.
+ *
+ * @author esol
  */
 public class ProcessLoader {
 
@@ -23,7 +25,7 @@ public class ProcessLoader {
    * @param yamlString the YAML string containing the process configuration (nullable if yamlFile is
    *        used)
    * @param process the process system to initialize
-   * @throws Exception if loading or parsing fails
+   * @throws java.lang.Exception if loading or parsing fails
    */
   public static void loadProcessFromYaml(File yamlFile, String yamlString, ProcessSystem process)
       throws Exception {
@@ -54,7 +56,7 @@ public class ProcessLoader {
    *
    * @param yamlFile the YAML file containing the process configuration
    * @param process the process system to initialize
-   * @throws Exception if loading or parsing fails
+   * @throws java.lang.Exception if loading or parsing fails
    */
   public static void loadProcessFromYaml(File yamlFile, ProcessSystem process) throws Exception {
     loadProcessFromYaml(yamlFile, null, process);
@@ -65,7 +67,7 @@ public class ProcessLoader {
    *
    * @param yamlString the YAML string containing the process configuration
    * @param process the process system to initialize
-   * @throws Exception if loading or parsing fails
+   * @throws java.lang.Exception if loading or parsing fails
    */
   public static void loadProcessFromYaml(String yamlString, ProcessSystem process)
       throws Exception {

@@ -483,6 +483,5 @@ public class CompressorChartTest {
 
     Assertions.assertEquals(130.0, comp1.getOutletStream().getPressure("bara"), 0.1);
     Assertions.assertEquals(8067.65882, comp1.getSpeed(), 0.1);
-
   }
 }

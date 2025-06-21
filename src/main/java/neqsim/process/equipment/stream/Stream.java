@@ -426,6 +426,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     lastComposition = thermoSystem.getMolarComposition();
 
     if (stream != null) {
+      thermoSystem.initProperties();
       stream.setFluid(thermoSystem);
     }
     // logger.info("number of phases: " + thermoSystem.getNumberOfPhases());
@@ -775,6 +776,4 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   public String toJson() {
     return new GsonBuilder().create().toJson(new StreamResponse(this));
   }
-
-
 }

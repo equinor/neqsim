@@ -139,7 +139,11 @@ public class Condenser extends SimpleTray {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Get the liquid product stream from the condenser.
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public StreamInterface getLiquidProductStream() {
     if (separation_with_liquid_reflux) {
       return mixedStreamSplitter.getSplitStream(1);

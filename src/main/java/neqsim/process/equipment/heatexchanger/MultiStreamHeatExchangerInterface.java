@@ -121,7 +121,7 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   // ================================
 
   /**
-   * Calculates and retrieves the thermal effectiveness of the heat exchanger.
+   * Gets the thermal effectiveness of the heat exchanger.
    *
    * @return Thermal effectiveness
    */
@@ -257,11 +257,7 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   // JSON Serialization Methods
   // ================================
 
-  /**
-   * Serializes the heat exchanger's state to a JSON string.
-   *
-   * @return JSON representation of the heat exchanger
-   */
+  /** {@inheritDoc} */
   @Override
   String toJson();
 

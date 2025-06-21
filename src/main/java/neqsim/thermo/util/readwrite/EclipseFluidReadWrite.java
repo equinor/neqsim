@@ -712,6 +712,14 @@ public class EclipseFluidReadWrite {
     return fluid;
   }
 
+  /**
+   * <p>
+   * readE300File.
+   * </p>
+   *
+   * @param inputFile a {@link java.lang.String} object
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public static SystemInterface readE300File(String inputFile) {
     neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
         ThermodynamicConstantsInterface.referencePressure);
@@ -802,7 +810,6 @@ public class EclipseFluidReadWrite {
       fluid.setMixingRule(2);
       fluid.useVolumeCorrection(true);
       fluid.init(0);
-
     } catch (Exception ex) {
       logger.error("Error reading E300 file: " + ex.getMessage(), ex);
     }
