@@ -5,6 +5,7 @@ import neqsim.process.equipment.mixer.StaticMixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.phase.PhaseSoreideWhitson;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SoreideWhitsonSystemTest {
@@ -123,7 +124,7 @@ public class SoreideWhitsonSystemTest {
 
     // Check salinity concentration in aqueous phase
     double expectedSalinity = 1.8877351154938637;
-    double actualSalinity = testSystem.getPhase(1).getSalinityConcentration();
+    double actualSalinity = ((PhaseSoreideWhitson) testSystem.getPhase(1)).getSalinityConcentration();
     org.junit.jupiter.api.Assertions.assertEquals(expectedSalinity, actualSalinity, 0.01,
         "Aqueous phase salinity concentration");
 
@@ -168,7 +169,7 @@ public class SoreideWhitsonSystemTest {
 
     // 4. Check the salinity concentration in the mixed stream's aqueous phase
     SystemSoreideWhitson mixedSystem = (SystemSoreideWhitson) mixer.getOutletStream().getFluid();
-    double mixedSalinity = mixedSystem.getPhase(1).getSalinityConcentration();
+    double mixedSalinity = ((PhaseSoreideWhitson) mixedSystem.getPhase(1)).getSalinityConcentration();
 
     org.junit.jupiter.api.Assertions.assertTrue(mixedSalinity > 0.96 && mixedSalinity < 0.97,
         "Mixed salinity should be around 0.96 , but was: " + mixedSalinity);

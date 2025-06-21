@@ -2152,31 +2152,5 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    */
   public double getZvolcorr();
 
-  /**
-   * Get the salinity of the phase (mol/kg or as used in Soreide-Whitson).
-   * 
-   * @return the salinity
-   */
-  public double getSalinity();
-
-  /**
-   * Set the salinity of the phase (mol/kg or as used in Soreide-Whitson).
-   * 
-   * @param salinity the salinity value
-   */
-  public void setSalinity(double salinity);
-
-  /**
-   * Get the salinity concentration of the phase (mol/kg or as used in Soreide-Whitson).
-   *
-   * @return the salinity concentration
-   */
-  public double getSalinityConcentration();
-
-  /**
-   * Set the salinity concentration of the phase (mol/kg or as used in Soreide-Whitson).
-   *
-   * @param salinityConcentration the salinity concentration value
-   */
-  public void setSalinityConcentration(double salinityConcentration);
+ 
 }

@@ -22,6 +22,7 @@ import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifacPSRK;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseSoreideWhitson;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
@@ -219,7 +220,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   intparamji[tempk][templ] = Double.parseDouble(dataSet.getString("cpakjix_SRK"));
                   intparamij[templ][tempk] = intparamji[tempk][templ];
 
-                } else if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseWhitsonSoreide")) {
+                } else if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSoreideWhitson")) {
 
                   intparam[k][l] = Double.parseDouble(dataSet.getString("KIJWhitsonSoriede"));
                   intparam[l][k] = intparam[k][l];
@@ -231,7 +232,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   String componentj = component_name2;
                   double acentricFactori = phase.getComponent(k).getAcentricFactor();
                   double reducedTemperaturei = phase.getComponent(k).getReducedTemperature();
-                  double salinityConcentration = phase.getSalinityConcentration();
+                  double salinityConcentration = ((PhaseSoreideWhitson) phase).getSalinityConcentration();
                   double kij = 0.0;
 
                   if (componentj.equalsIgnoreCase("water") || componentj.equalsIgnoreCase("H2O")) {
@@ -293,7 +294,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
               // System.out.println("class name " + phase.getClass().getName());
               if ((!phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                  || !hasKIJTTypeCPAcol) &&  !phase.getClass().getName().equals("neqsim.thermo.phase.PhaseWhitsonSoreide")) {
+                  || !hasKIJTTypeCPAcol) &&  !phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSoreideWhitson")) {
                 intparamTType[k][l] = Integer.parseInt(dataSet.getString("KIJTType"));
               } else {
                 intparamTType[k][l] = Integer.parseInt(dataSet.getString("KIJTTypeCPA"));
@@ -463,7 +464,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
               // intparam[l][k] = intparam[k][l];
               // intparamT[l][k] = intparamT[k][l];
-              if (!phase.getClass().getName().equals("neqsim.thermo.phase.PhaseWhitsonSoreide")){
+              if (!phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSoreideWhitson")){
               intparamij[k][l] = intparam[k][l];
               intparamij[l][k] = intparam[k][l];
               intparamji[k][l] = intparam[k][l];
@@ -1581,7 +1582,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       boolean isAqueous = phase.getComponent("water").getx() > 0.8;
       double salinityConcentration = 0.0;
       if (isAqueous) {
-        salinityConcentration = phase.getSalinityConcentration();
+        salinityConcentration = ((PhaseSoreideWhitson) phase).getSalinityConcentration();
       }
       A = 0.0;
       for (int i = 0; i < numbcomp; i++) {
@@ -1610,7 +1611,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       boolean isAqueous = phase.getComponent("water").getx() > 0.8;
       double salinityConcentration = 0.0;
       if (isAqueous) {
-        salinityConcentration = phase.getSalinityConcentration();
+        salinityConcentration = ((PhaseSoreideWhitson) phase).getSalinityConcentration();
       }
       for (int j = 0; j < numbcomp; j++) {
         aij = Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT());
@@ -1632,7 +1633,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       boolean isAqueous = phase.getComponent("water").getx() > 0.8;
       double salinityConcentration = 0.0;
       if (isAqueous) {
-        salinityConcentration = phase.getSalinityConcentration();
+        salinityConcentration = ((PhaseSoreideWhitson) phase).getSalinityConcentration();
       }
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -1659,7 +1660,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       boolean isAqueous = phase.getComponent("water").getx() > 0.8;
       double salinityConcentration = 0.0;
       if (isAqueous) {
-        salinityConcentration = phase.getSalinityConcentration();
+        salinityConcentration = ((PhaseSoreideWhitson) phase).getSalinityConcentration();
       }
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
       aij = Math.sqrt(compArray[compNumb].getaT() * compArray[compNumbj].getaT());
@@ -1696,7 +1697,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       boolean isAqueous = phase.getComponent("water").getx() > 0.8;
       double salinityConcentration = 0.0;
       if (isAqueous) {
-        salinityConcentration = phase.getSalinityConcentration();
+        salinityConcentration = ((PhaseSoreideWhitson) phase).getSalinityConcentration();
       }
       for (int i = 0; i < numbcomp; i++) {
         sqrtai[i] = Math.sqrt(compArray[i].getaT());

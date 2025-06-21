@@ -1,5 +1,7 @@
 package neqsim.thermo.system;
 
+import neqsim.thermo.phase.PhaseSoreideWhitson;
+
 /**
  * This class defines a thermodynamic system using the Søreide-Whitson Peng-Robinson EoS (modified
  * alpha and mixing rule).
@@ -38,7 +40,7 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
     attractiveTermNumber = 20;
 
     for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new neqsim.thermo.phase.PhaseWhitsonSoreide();
+      phaseArray[i] = new neqsim.thermo.phase.PhaseSoreideWhitson();
       phaseArray[i].setTemperature(T);
       phaseArray[i].setPressure(P);
     }
@@ -116,10 +118,10 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
           if (massKgWater > 0.0) {
             salinityConcentration = systemSalinity / massKgWater;
             errorSalinityConcentration =
-                Math.abs(aqueousPhase.getSalinityConcentration() - salinityConcentration);
+                Math.abs(((PhaseSoreideWhitson) aqueousPhase).getSalinityConcentration() - salinityConcentration);
             if (errorSalinityConcentration > 1e-6) {
 
-              aqueousPhase.setSalinityConcentration(salinityConcentration);
+              ((PhaseSoreideWhitson) aqueousPhase).setSalinityConcentration(salinityConcentration);
               // Set salinityConcentration for each component's attractive term if SoreideWhitso
 
               updatedSalinity = true;

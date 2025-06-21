@@ -90,11 +90,6 @@ public abstract class Phase implements PhaseInterface {
   protected PhaseInterface[] refPhase = null;
   protected PhaseType pt = PhaseType.GAS;
 
-  /** Salinity of the phase (mol/kg or as used in Soreide-Whitson). */
-  protected double salinity = 0.0;
-  /** Salinity concentration of the phase (mol/kg or as used in Soreide-Whitson). */
-  protected double salinityConcentration = 0.0;
-
   /**
    * <p>
    * Constructor for Phase.
@@ -2563,25 +2558,4 @@ public abstract class Phase implements PhaseInterface {
     return thermoPropertyModelName;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getSalinity() {
-    return salinity;
-  }
-
-  @Override
-  public void setSalinity(double salinity) {
-    this.salinity = salinity;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getSalinityConcentration() {
-    return salinityConcentration;
-  }
-
-  @Override
-  public void setSalinityConcentration(double salinityConcentration) {
-    this.salinityConcentration = salinityConcentration;
-  }
 }
