@@ -25,6 +25,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
 import neqsim.process.util.monitor.SeparatorResponse;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSoreideWhitson;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -156,6 +157,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public StreamInterface getLiquidOutStream() {
+    if (liquidOutStream.getFluid().getClass().getName().equals("neqsim.thermo.system.SystemSoreideWhitson")) {
+      if (!liquidOutStream.getFluid().hasPhaseType("aqueous")) {
+        ((SystemSoreideWhitson) liquidOutStream.getFluid()).setSalinity(0.0, "mole/sec");
+      }
+    } 
     return liquidOutStream;
   }
 
@@ -167,6 +173,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public StreamInterface getGasOutStream() {
+    if (gasOutStream.getFluid().getClass().getName().equals("neqsim.thermo.system.SystemSoreideWhitson")) {
+      // if the fluid is a soreide whitson system, we need to clone it to avoid
+      // problems with the thermo system
+      ((SystemSoreideWhitson) gasOutStream.getFluid()).setSalinity(0.0, "mole/sec");
+    } 
     return gasOutStream;
   }
 

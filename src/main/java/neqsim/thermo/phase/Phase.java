@@ -2197,6 +2197,7 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
+
   public void setInitType(int initType) {
     this.initType = initType;
   }
