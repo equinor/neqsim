@@ -72,9 +72,9 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
   /**
    * Add the salinity value for a specific salt type and unit.
    *
-   * @param value the amount of salt added
    * @param saltType the type of salt (e.g., "Na2SO4", "MgSO4", "Mg(NO3)2", "NaCl", "NaNO3", "KCl",
    *        "KNO3")
+   * @param value the amount of salt added
    * @param unit the unit of the value ("mole/hr" or "mole/sec")
    */
   public void addSalinity(String saltType, double value, String unit) {
