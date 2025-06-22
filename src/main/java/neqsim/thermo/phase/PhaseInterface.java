@@ -548,6 +548,14 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getDensity(String unit);
 
   /**
+   * method to get density of a water phase using specific water method.
+   *
+   * @param unit Supported units are kg/m3, mol/m3
+   * @return density in specified unit
+   */
+  public double getWaterDensity(String unit);
+
+  /**
    * <p>
    * Remove component from Phase.
    * </p>
