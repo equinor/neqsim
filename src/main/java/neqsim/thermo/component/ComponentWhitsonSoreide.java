@@ -6,8 +6,8 @@ package neqsim.thermo.component;
 public class ComponentWhitsonSoreide extends ComponentPR {
   private static final long serialVersionUID = 1L;
 
-  public ComponentWhitsonSoreide(String componentName, double moles, double molesInPhase, int compIndex) {
+  public ComponentWhitsonSoreide(String componentName, double moles, double molesInPhase,
+      int compIndex) {
     super(componentName, moles, molesInPhase, compIndex);
   }
-
 }

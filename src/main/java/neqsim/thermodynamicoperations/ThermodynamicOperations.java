@@ -202,7 +202,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     operation =
         new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
 
-
     boolean rerun = true;
     int iterationCount = 0;
     while (rerun) {
@@ -2132,7 +2131,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             calculationError[t] = "Input component list does not match fluid component list.";
           }
         }
-
       }
     } else {
       components = Arrays.asList(systemComponents);

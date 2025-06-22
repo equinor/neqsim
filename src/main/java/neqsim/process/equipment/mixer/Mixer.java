@@ -229,11 +229,12 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
           mixedStream.getThermoSystem().setTemperature(guessTemperature());
         }
         // System.out.println("filan temp " + mixedStream.getTemperature());
-        if (mixedStream.getFluid().getClass().getName().equals("neqsim.thermo.system.SystemSoreideWhitson")) {
-          ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(), "mole/sec");
+        if (mixedStream.getFluid().getClass().getName()
+            .equals("neqsim.thermo.system.SystemSoreideWhitson")) {
+          ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(),
+              "mole/sec");
           mixedStream.run();
-        } 
-
+        }
 
         if (isSetOutTemperature) {
           if (!Double.isNaN(getOutTemperature())) {
@@ -496,14 +497,14 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   }
 
   /**
-   * Calculates the flow-weighted average salinity of the mixed stream.
-   * Assumes each input stream provides getSalinity() and getFlowRate("kg/hr").
+   * Calculates the flow-weighted average salinity of the mixed stream. Assumes each input stream
+   * provides getSalinity() and getFlowRate("kg/hr").
    *
    * @return mixed salinity (same unit as getSalinity() returns)
    */
   public double getMixedSalinity() {
     double totalSalinity = 0.0;
-  
+
     for (StreamInterface stream : streams) {
       // Assumes getSalinity() exists in StreamInterface
       double salinity = 0.0;

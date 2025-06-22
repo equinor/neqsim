@@ -50,7 +50,6 @@ public class SoreideWhitsonSystemTest {
             "Phase " + phaseIdx + " component " + componentNames[compIdx] + " mole fraction");
       }
     }
-
   }
 
   /**
@@ -121,7 +120,8 @@ public class SoreideWhitsonSystemTest {
 
     // Check salinity concentration in aqueous phase
     double expectedSalinity = 1.8877351154938637;
-    double actualSalinity = ((PhaseSoreideWhitson) testSystem.getPhase(1)).getSalinityConcentration();
+    double actualSalinity =
+        ((PhaseSoreideWhitson) testSystem.getPhase(1)).getSalinityConcentration();
     org.junit.jupiter.api.Assertions.assertEquals(expectedSalinity, actualSalinity, 0.01,
         "Aqueous phase salinity concentration");
 
@@ -129,7 +129,6 @@ public class SoreideWhitsonSystemTest {
 
   @Test
   public void testStreamMixingAndSeparationWithSalinity() {
-
     SystemSoreideWhitson testSystem = new SystemSoreideWhitson(298.0, 20.0);
     testSystem.addComponent("nitrogen", 0.1, "mole/sec");
     testSystem.addComponent("CO2", 0.2, "mole/sec");
@@ -139,7 +138,6 @@ public class SoreideWhitsonSystemTest {
     testSystem.addSalinity(0.05, "mole/sec");
     testSystem.setTotalFlowRate(15, "mole/sec");
     testSystem.setMixingRule(11);
-
 
     SystemSoreideWhitson testSystem2 = testSystem.clone();
     double[] molarComposition = {0.2, 0.4, 0.1, 0.2, 0.1};
@@ -165,7 +163,8 @@ public class SoreideWhitsonSystemTest {
 
     // 4. Check the salinity concentration in the mixed stream's aqueous phase
     SystemSoreideWhitson mixedSystem = (SystemSoreideWhitson) mixer.getOutletStream().getFluid();
-    double mixedSalinity = ((PhaseSoreideWhitson) mixedSystem.getPhase(1)).getSalinityConcentration();
+    double mixedSalinity =
+        ((PhaseSoreideWhitson) mixedSystem.getPhase(1)).getSalinityConcentration();
 
     org.junit.jupiter.api.Assertions.assertTrue(mixedSalinity > 0.96 && mixedSalinity < 0.97,
         "Mixed salinity should be around 0.96 , but was: " + mixedSalinity);
@@ -184,6 +183,5 @@ public class SoreideWhitsonSystemTest {
     org.junit.jupiter.api.Assertions.assertEquals(0.05, waterSalinity, 1e-8,
         "Water salinity should be 0.05");
   }
-
 }
 

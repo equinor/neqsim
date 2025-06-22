@@ -68,7 +68,6 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
     }
   }
 
-
   /**
    * Add the salinity value for a specific salt type and unit.
    *

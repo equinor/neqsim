@@ -17,7 +17,7 @@ import neqsim.util.exception.InvalidInputException;
  * database</li>
  * <li>CLASSIC_TX_CPA - 10 - classic mixing rule with temperature and composition dependent kij of
  * CPA from NeqSim database</li>
- * <li>SOREIDE_WHITSON - 11 - Soeride Whitson mixing rule</li>
+ * <li>SOREIDE_WHITSON - 11 - Soreide Whitson mixing rule</li>
  * </ul>
  *
  * @author ASMF
