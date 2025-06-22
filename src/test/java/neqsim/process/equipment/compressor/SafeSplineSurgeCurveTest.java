@@ -2,6 +2,7 @@ package neqsim.process.equipment.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.mixer.Mixer;
@@ -10,9 +11,11 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.serialization.NeqSimXtream;
 
 public class SafeSplineSurgeCurveTest {
 
@@ -177,4 +180,17 @@ public class SafeSplineSurgeCurveTest {
     assertEquals(0.04206591466, resyclestream.getFlowRate("kg/hr"), 0.001);
     assertEquals(39001.4299, firstStageCompressor.getInletStream().getFlowRate("kg/hr"), 1);
   }
+
+  // @Test
+  public void testSurgeCurve3() {
+    try {
+      ProcessModel processModel = (ProcessModel) NeqSimXtream.openNeqsim(
+          "/workspaces/neqsim/src/test/java/neqsim/process/equipment/compressor/neqsim_model_base_2.neqsim");
+      processModel.run();
+    } catch (IOException e) {
+      e.printStackTrace();
+      assertTrue(false, "Failed to open neqsim model: " + e.getMessage());
+    }
+  }
+
 }
