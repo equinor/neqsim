@@ -229,9 +229,7 @@ public abstract class Phase implements PhaseInterface {
       neqsim.util.exception.InvalidInputException ex =
           new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
       logger.error(msg);
-      numberOfMolesInPhase = 0.0;
-      componentArray[component].addMolesChemReac(-numberOfMolesInPhase, totdn);
-      return;
+      dn = -numberOfMolesInPhase;
       // throw new RuntimeException(ex);
     }
     numberOfMolesInPhase += dn;
