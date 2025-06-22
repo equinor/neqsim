@@ -2,6 +2,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -95,21 +96,22 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
       iter++;
       ops.TPflash();
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        if (system.getPhases()[5].getComponent(i).getName().equals("water")
-            || system.getPhases()[5].getComponent(i).getName().equals("MEG")) {
-          system.getPhases()[5].getComponent(i).setx(0.5);
+        if (system.getPhase(PhaseType.SOLIDCOMPLEX).getComponent(i).getName().equals("water")
+            || system.getPhase(PhaseType.SOLIDCOMPLEX).getComponent(i).getName().equals("MEG")) {
+          system.getPhase(PhaseType.SOLIDCOMPLEX).getComponent(i).setx(0.5);
         } else {
-          system.getPhases()[5].getComponent(i).setx(1e-20);
+          system.getPhase(PhaseType.SOLIDCOMPLEX).getComponent(i).setx(1e-20);
         }
       }
       logger.info("Temperaure  " + system.getTemperature() + " sumx " + sumx);
       sumx = 0.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        // system.getPhases()[5].getComponent(i).setx(Ksolid[i] *
+        // system.getPhase(PhaseType.SOLIDCOMPLEX).getComponent(i).setx(Ksolid[i] *
         // system.getPhase(0).getComponent(i).getx());
-        // if (system.getPhases()[5].getComponent(i).getx() > 0.000001) {
+        // if (system.getPhase(PhaseType.SOLIDCOMPLEX).getComponent(i).getx() > 0.000001) {
         Ksolid[i] = system.getPhase(0).getComponent(i).getFugacityCoefficient()
-            / system.getPhases()[5].getComponent(i).fugcoef(system.getPhases()[5]);
+            / system.getPhase(PhaseType.SOLIDCOMPLEX).getComponent(i)
+                .fugcoef(system.getPhase(PhaseType.SOLIDCOMPLEX));
         sumx += Ksolid[i] * system.getPhase(0).getComponent(i).getx();
         // }
       }

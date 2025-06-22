@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -71,7 +72,8 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
       // logger.info("Checking all the components " + k);
       if (system.getPhase(0).getComponent(k).doSolidCheck()) {
         ops.TPflash(false);
-        SolidFugCoeff = system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
+        SolidFugCoeff = system.getPhase(PhaseType.SOLID).getComponent(k)
+            .fugcoef(system.getPhase(PhaseType.SOLID));
         funk = system.getPhase(0).getComponent(k).getz();
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
           funk -= system.getPhase(i).getBeta() * SolidFugCoeff
@@ -122,7 +124,8 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
           iterations++;
           // oldPhaseType = system.getPhase(0).getType();
           ops.TPflash(false);
-          SolidFugCoeff = system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
+          SolidFugCoeff = system.getPhase(PhaseType.SOLID).getComponent(k)
+              .fugcoef(system.getPhase(PhaseType.SOLID));
           funk = system.getPhase(0).getComponent(k).getz();
           for (int i = 0; i < system.getNumberOfPhases(); i++) {
             funk -= system.getPhase(i).getBeta() * SolidFugCoeff
