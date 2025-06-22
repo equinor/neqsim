@@ -518,8 +518,11 @@ public abstract class Component implements ComponentInterface {
         String msg = "will lead to negative number of moles of component in phase for component "
             + getComponentName() + "  who has " + numberOfMolesInPhase
             + " in phase  and chage request was " + dn;
-        throw new RuntimeException(
-            new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg));
+        logger.error(msg);
+        dn = 0;
+        totdn = 0;
+        // throw new RuntimeException(
+        // new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg));
       }
     }
     numberOfMoles += totdn;

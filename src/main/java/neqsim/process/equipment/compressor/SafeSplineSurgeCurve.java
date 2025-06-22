@@ -131,6 +131,10 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
       return 0.0;
     }
 
+    if (flowFromHead == null) {
+      setCurve(chartConditions, flow, head);
+    }
+
     try {
       double minHead = sortedHead[0];
       double maxHead = sortedHead[sortedHead.length - 1];
@@ -170,6 +174,10 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
   public double getSurgeHead(double flowValue) {
     if (!isActive) {
       return 0.0;
+    }
+
+    if (headFromFlow == null) {
+      setCurve(chartConditions, flow, head);
     }
 
     try {

@@ -226,9 +226,11 @@ public abstract class Phase implements PhaseInterface {
     }
     if ((numberOfMolesInPhase + dn) / numbmoles < -1e-10) {
       String msg = "will lead to negative number of moles in phase." + (numberOfMolesInPhase + dn);
-      neqsim.util.exception.InvalidInputException ex =
-          new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
-      throw new RuntimeException(ex);
+      // neqsim.util.exception.InvalidInputException ex =
+      // new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
+      logger.error(msg);
+      numberOfMolesInPhase = 1e-50;
+      // throw new RuntimeException(ex);
     }
     numberOfMolesInPhase += dn;
     componentArray[component].addMolesChemReac(dn, totdn);
