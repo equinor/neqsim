@@ -2151,6 +2151,4 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return double Z volume corrected
    */
   public double getZvolcorr();
-
- 
 }

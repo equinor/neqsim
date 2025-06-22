@@ -2197,7 +2197,6 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-
   public void setInitType(int initType) {
     this.initType = initType;
   }
@@ -2280,12 +2279,10 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * <p>
    * If no hydrogenType is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure.
-   * </p>
+   * Checks for other components in the phase and throws an exception if the phase is not pure
+   *
+   * @return the density calculated with the 'normal' hydrogen type.
    */
   @Override
   public double getDensity_Leachman() {
@@ -2328,12 +2325,10 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * <p>
    * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure.
-   * </p>
+   * Checks for other components in the phase and throws an exception if the phase is not pure
+   *
+   * @return an array of properties of type double.
    */
   @Override
   public double[] getProperties_Leachman() {
@@ -2376,12 +2371,10 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * <p>
    * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure.
-   * </p>
+   * Checks for other components in the phase and throws an exception if the phase is not pure
+   *
+   * @return a matrix of properties of type doubleW.
    */
   @Override
   public doubleW[] getAlpha0_Leachman() {
@@ -2424,12 +2417,10 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * <p>
    * If no hydrogentype is specified it checks the component name and chooses the correct hydrogen.
-   * Checks for other components in the phase and throws an exception if the phase is not pure.
-   * </p>
+   * Checks for other components in the phase and throws an exception if the phase is not pure
+   *
+   * @return a matrix of properties of type doubleW.
    */
   @Override
   public doubleW[][] getAlphares_Leachman() {
@@ -2566,7 +2557,6 @@ public abstract class Phase implements PhaseInterface {
     return thermoPropertyModelName;
   }
 
-  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {
