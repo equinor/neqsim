@@ -26,7 +26,7 @@ class ProcessLoaderTest {
     // Call the method under test
     ProcessLoader.loadProcessFromYaml(tempYamlFile, processSystem);
     processSystem.run();
-    System.out.println(processSystem.getAllUnitNames());
+    // System.out.println(processSystem.getAllUnitNames());
     // Verify the unit was added
     ThrottlingValve unit = (ThrottlingValve) processSystem.getUnit("throttlingValve_1");
     assertNotNull(unit, "Unit should be added to the process system");
