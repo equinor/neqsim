@@ -112,8 +112,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
               pt);
         } catch (Exception ex) {
           // reraise IsNaNException and TooManyIterationsException as RuntimeException
-          // throw new RuntimeException(ex);
-          logger.error(ex.getMessage());
+          throw new RuntimeException(ex);
         }
       }
 
