@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class ProcessLoader {
-
   /**
    * Loads a process from a YAML file or YAML string and initializes the process system.
    *

@@ -37,7 +37,6 @@ import neqsim.process.equipment.valve.ThrottlingValve;
  * @author esol
  */
 public class EquipmentFactory {
-
   /**
    * <p>
    * createEquipment.

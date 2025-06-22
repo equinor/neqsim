@@ -944,7 +944,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
   @Test
   public void testSimplifiedModel() {
-
     neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkEos(190, 10);
     fluid1.addComponent("methane", 0.5);
     fluid1.addComponent("ethane", 0.2);

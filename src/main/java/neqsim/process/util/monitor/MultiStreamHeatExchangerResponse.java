@@ -11,7 +11,6 @@ import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger;
  * @version $Id: $Id
  */
 public class MultiStreamHeatExchangerResponse extends BaseResponse {
-
   public Double[] feedTemperature;
   public Double[] dischargeTemperature;
   public Double[] duty;

@@ -527,39 +527,42 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
   public void writeOLGAinpFile(String filename) {
     try (Writer writer =
         new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), "utf-8"))) {
-
       writer.write("PVTTABLE LABEL = \"NewFluid\", PHASE = THREE,\\\n");
       writer.write("EOS = \"Equation\",\\\n");
 
       writer.write("COMPONENTS = (");
       for (int i = 0; i < molfracs.length; i++) {
         writer.write("\"" + components[i] + "\"");
-        if (i < molfracs.length - 1)
+        if (i < molfracs.length - 1) {
           writer.write(",");
+        }
       }
       writer.write("),\\\n");
 
       writer.write("MOLES = (");
       for (int i = 0; i < molfracs.length; i++) {
         writer.write(Double.toString(molfracs[i]));
-        if (i < molfracs.length - 1)
+        if (i < molfracs.length - 1) {
           writer.write(",");
+        }
       }
       writer.write("),\\\n");
 
       writer.write("MOLWEIGHT = (");
       for (int i = 0; i < molfracs.length; i++) {
         writer.write(Double.toString(MW[i]));
-        if (i < molfracs.length - 1)
+        if (i < molfracs.length - 1) {
           writer.write(",");
+        }
       }
       writer.write(") g/mol,\\\n");
 
       writer.write("DENSITY = (");
       for (int i = 0; i < molfracs.length; i++) {
         writer.write(Double.toString(dens[i]));
-        if (i < molfracs.length - 1)
+        if (i < molfracs.length - 1) {
           writer.write(",");
+        }
       }
       writer.write(") g/cm3,\\\n");
 
@@ -577,40 +580,45 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
       writer.write("PRESSURE = (");
       for (int i = 0; i < pressures.length; i++) {
         writer.write(Double.toString(pressureLOG[i]));
-        if (i < pressures.length - 1)
+        if (i < pressures.length - 1) {
           writer.write(",");
+        }
       }
       writer.write(") Pa,\\\n");
 
       writer.write("TEMPERATURE = (");
       for (int i = 0; i < temperatures.length; i++) {
         writer.write(Double.toString(temperatureLOG[i]));
-        if (i < temperatures.length - 1)
+        if (i < temperatures.length - 1) {
           writer.write(",");
+        }
       }
       writer.write(") C,\\\n");
 
       writer.write("BUBBLEPRESSURES = (");
       for (int i = 0; i < temperatures.length; i++) {
         writer.write(Double.toString(bubPLOG[i]));
-        if (i < temperatures.length - 1)
+        if (i < temperatures.length - 1) {
           writer.write(",");
+        }
       }
       writer.write(") Pa,\\\n");
 
       writer.write("BUBBLETEMPERATURES = (");
       for (int i = 0; i < pressures.length; i++) {
         writer.write(Double.toString(bubTLOG[i]));
-        if (i < pressures.length - 1)
+        if (i < pressures.length - 1) {
           writer.write(",");
+        }
       }
       writer.write(") C,\\\n");
 
       writer.write("COLUMNS = (PT,TM,");
       for (int k = 0; k < nProps; k++) {
         writer.write(namesKeyword[k]);
-        if (k < nProps - 1)
+        if (k < nProps - 1) {
           writer.write(",");
+        }
       }
       writer.write(")\n");
 

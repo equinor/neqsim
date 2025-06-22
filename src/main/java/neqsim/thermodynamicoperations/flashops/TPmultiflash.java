@@ -327,7 +327,6 @@ public class TPmultiflash extends TPflash {
       }
     }
     for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
-
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(i).isHydrocarbon()
           && minimumGibbsEnergySystem.getPhase(0).getComponent(i).getz() > 1e-50) {
         if (Math.abs(

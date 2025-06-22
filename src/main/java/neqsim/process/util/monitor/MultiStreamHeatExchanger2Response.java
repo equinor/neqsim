@@ -11,7 +11,6 @@ import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2;
  * @version $Id: $Id
  */
 public class MultiStreamHeatExchanger2Response extends BaseResponse {
-
   public Double temperatureApproach;
 
   public java.util.Map<String, java.util.List<java.util.Map<String, Object>>> compositeCurveResults;

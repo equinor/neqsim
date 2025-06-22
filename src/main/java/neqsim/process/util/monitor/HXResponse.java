@@ -11,7 +11,6 @@ import neqsim.process.equipment.heatexchanger.HeatExchanger;
  * @version $Id: $Id
  */
 public class HXResponse extends BaseResponse {
-
   public Double feedTemperature1;
   public Double dischargeTemperature1;
   public Double HXthermalEfectiveness;

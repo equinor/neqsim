@@ -18,7 +18,6 @@ import org.apache.logging.log4j.Logger;
  * @author esol
  */
 public class SafeSplineSurgeCurve implements java.io.Serializable {
-
   private static final long serialVersionUID = 1001;
   static Logger logger = LogManager.getLogger(SafeSplineSurgeCurve.class);
 

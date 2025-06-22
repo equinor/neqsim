@@ -16,7 +16,6 @@ import java.util.TreeMap;
  * @author esol
  */
 public class CompressorChartReader {
-
   private double[] speeds;
   private double[][] flowLines;
   private double[][] headLines;

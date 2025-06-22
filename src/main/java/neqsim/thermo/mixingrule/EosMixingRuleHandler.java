@@ -594,6 +594,13 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       bmixType = bmixType2;
     }
 
+    /**
+     * getbij.
+     * 
+     * @param compi
+     * @param compj
+     * @return
+     */
     public double getbij(ComponentEosInterface compi, ComponentEosInterface compj) {
       switch (getBmixType()) {
         case 0:

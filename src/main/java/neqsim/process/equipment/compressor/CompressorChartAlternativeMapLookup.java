@@ -218,7 +218,7 @@ public class CompressorChartAlternativeMapLookup
    * <p>
    * getClosestRefSpeeds.
    * </p>
-   * 
+   *
    * <p>
    * Retrieves the closest reference speeds to the given speed from the compressor chart values. The
    * method returns a list containing one or two speeds: - If the given speed matches a reference
