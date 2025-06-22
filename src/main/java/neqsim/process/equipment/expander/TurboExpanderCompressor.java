@@ -23,7 +23,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author esol
  */
 public class TurboExpanderCompressor extends Expander {
-
   private static final long serialVersionUID = 1001;
 
   // --- Expander/Compressor Configuration ---
@@ -49,7 +48,7 @@ public class TurboExpanderCompressor extends Expander {
   private double impellerDiameter = 0.424;
   /** Design speed [rpm]. */
   private double designSpeed = 6850.0;
-  /** Design isentropic efficiency (expander). */
+  // /** Design isentropic efficiency (expander). */
   // private double designIsentropicEfficiency = 0.88;
   /** Design UC (velocity ratio, expander). */
   private double designUC = 0.7;
@@ -797,7 +796,6 @@ public class TurboExpanderCompressor extends Expander {
    * @return a double
    */
   public double getIGVopening() {
-
     return IGVopening;
   }
 

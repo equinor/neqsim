@@ -697,7 +697,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return a double
    */
   public double getMassBalanceError() {
-
     double[] massInput = new double[numberOfTrays];
     double[] massOutput = new double[numberOfTrays];
     double[] massBalance = new double[numberOfTrays];
@@ -743,12 +742,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * The main method demonstrates the creation and operation of a distillation column using the
    * NeqSim library. It performs the following steps:
    *
-   * 1. Creates a test thermodynamic system with methane, ethane, and propane components. 2.
-   * Performs a TP flash calculation on the test system. 3. Creates two separate feed streams from
-   * the test system. 4. Constructs a distillation column with 5 trays, a reboiler, and a condenser.
-   * 5. Adds the two feed streams to the distillation column at tray 3. 6. Builds and runs the
-   * process system. 7. Displays the results of the distillation column, including the gas and
-   * liquid output streams.
+   * <p>
+   * <ol>
+   * <li>Creates a test thermodynamic system with methane, ethane, and propane components.</li>
+   * <li>Performs a TP flash calculation on the test system.</li>
+   * <li>Creates two separate feed streams from the test system.</li>
+   * <li>Constructs a distillation column with 5 trays, a reboiler, and a condenser.</li>
+   * <li>Adds the two feed streams to the distillation column at tray 3.</li>
+   * <li>Builds and runs the process system.</li>
+   * <li>Displays the results of the distillation column, including the gas and liquid output
+   * streams.</li>
+   * </ol>
+   * </p>
    *
    * @param args command line arguments (not used)
    */

@@ -12,7 +12,6 @@ import neqsim.process.equipment.heatexchanger.Heater;
  * @version $Id: $Id
  */
 public class HeaterResponse extends BaseResponse {
-
   public ArrayList<String[]> data = new ArrayList<String[]>();
 
   /**

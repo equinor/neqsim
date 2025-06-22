@@ -11,7 +11,6 @@ import neqsim.process.equipment.distillation.DistillationColumn;
  * @version $Id: $Id
  */
 public class DistillationColumnResponse extends BaseResponse {
-
   public Double massBalanceError;
   public Double[] trayTemperature;
   public Double[] trayPressure;

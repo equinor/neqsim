@@ -11,7 +11,6 @@ import neqsim.process.equipment.compressor.Compressor;
  * @version $Id: $Id
  */
 public class CompressorResponse extends BaseResponse {
-
   public Double suctionTemperature;
   public Double dischargeTemperature;
   public Double suctionPressure;

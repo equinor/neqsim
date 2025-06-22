@@ -255,7 +255,6 @@ public class MultiStreamHeatExchanger2Test {
 
   @Test
   void testRun4() {
-
     /*
      * ================================================= HOT STREAMS (H1 – H4)
      * =================================================

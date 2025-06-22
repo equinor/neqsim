@@ -12,7 +12,6 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class WaterDewPointTest {
-
   @Test
   void testWaterDewPointCalculation() {
     // Create a new thermodynamic system

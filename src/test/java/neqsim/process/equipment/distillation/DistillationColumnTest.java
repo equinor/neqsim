@@ -216,7 +216,6 @@ public class DistillationColumnTest {
    */
   @Test
   public void testMEGregeneration() {
-
     SystemSrkCPAstatoil fluid1 = new SystemSrkCPAstatoil(273.15 + 40, 6.0);
 
     // Add components

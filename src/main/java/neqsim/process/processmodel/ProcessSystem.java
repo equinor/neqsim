@@ -152,7 +152,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * <p>
-   * Replace a unitoperation
+   * Replace a unitoperation.
    * </p>
    *
    * @param name Name of the object to replace
@@ -421,8 +421,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-
-    // Run setters firt to set conditions
+    // Run setters first to set conditions
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getClass().getSimpleName().equals("Setter")) {
         unitOperations.get(i).run(id);
@@ -565,7 +564,6 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
-
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getClass().getSimpleName().equals("Setter")) {
         unitOperations.get(i).run(id);
@@ -1043,19 +1041,14 @@ public class ProcessSystem extends SimulationBaseClass {
   public <T extends ProcessEquipmentInterface> T addUnit(String name, String equipmentType) {
     ProcessEquipmentInterface unit = EquipmentFactory.createEquipment(name, equipmentType);
 
-    /**
-     * If the provided name is null or empty, generate a unique name based on the equipment type.
-     */
+    // If the provided name is null or empty, generate a unique name based on the equipment type.
     if (name == null || name.trim().isEmpty()) {
       name = generateUniqueName(equipmentType);
     }
 
     unit.setName(name);
 
-    /**
-     * Auto-connect streams if possible.
-     */
-
+    // Auto-connect streams if possible.
     autoConnect(lastAddedUnit, unit);
 
     this.add(unit);

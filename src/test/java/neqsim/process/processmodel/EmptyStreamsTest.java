@@ -119,7 +119,6 @@ public class EmptyStreamsTest extends neqsim.NeqSimTest {
 
   @Test
   void testEmptyHeater() {
-
     ProcessSystem operations = new ProcessSystem();
 
     SystemInterface fluid1 = new neqsim.thermo.system.SystemPrEos(273.15 + 20, 10.0);
@@ -144,7 +143,6 @@ public class EmptyStreamsTest extends neqsim.NeqSimTest {
 
   @Test
   void testSingleStreamMixer() {
-
     ProcessSystem operations = new ProcessSystem();
 
     SystemInterface fluid1 = new neqsim.thermo.system.SystemPrEos(273.15 + 20, 10.0);
