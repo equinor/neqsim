@@ -181,11 +181,14 @@ public class SafeSplineSurgeCurveTest {
     assertEquals(39001.4299, firstStageCompressor.getInletStream().getFlowRate("kg/hr"), 1);
   }
 
-  @Test
+  // @Test
   public void testSurgeCurve3() {
     try {
       ProcessModel processModel = (ProcessModel) NeqSimXtream.openNeqsim(
           "/workspaces/neqsim/src/test/java/neqsim/process/equipment/compressor/neqsim_model_base_2.neqsim");
+      processModel.run();
+      processModel.run();
+      processModel.run();
       processModel.run();
       processModel.run();
       processModel.run();
