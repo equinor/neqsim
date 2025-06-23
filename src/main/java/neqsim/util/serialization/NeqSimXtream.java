@@ -14,7 +14,23 @@ import java.util.zip.ZipOutputStream;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.security.AnyTypePermission;
 
+/**
+ * <p>
+ * NeqSimXtream class.
+ * </p>
+ *
+ * @author esol
+ */
 public class NeqSimXtream {
+  /**
+   * <p>
+   * openNeqsim.
+   * </p>
+   *
+   * @param filename a {@link java.lang.String} object
+   * @return a {@link java.lang.Object} object
+   * @throws java.io.IOException if any.
+   */
   public static Object openNeqsim(String filename) throws IOException {
     XStream xstream = new XStream();
     xstream.addPermission(AnyTypePermission.ANY);
@@ -33,6 +49,15 @@ public class NeqSimXtream {
     }
   }
 
+  /**
+   * <p>
+   * saveNeqsim.
+   * </p>
+   *
+   * @param javaobject a {@link java.lang.Object} object
+   * @param filename a {@link java.lang.String} object
+   * @return a boolean
+   */
   public static boolean saveNeqsim(Object javaobject, String filename) {
     XStream xstream = new XStream();
     xstream.allowTypesByWildcard(new String[] {"neqsim.**"});
