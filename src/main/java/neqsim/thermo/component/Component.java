@@ -1125,20 +1125,14 @@ public abstract class Component implements ComponentInterface {
     return acentricFactor;
   }
 
-  /**
-   * Returns the reduced temperature (T/Tc) for a given temperature.
-   * 
-   * @return reduced temperature
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getReducedTemperature() {
     return reducedTemperature;
   }
 
-  /**
-   * Returns the reduced pressure (P/Pc) for a given pressure.
-   * 
-   * @return reduced pressure
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getReducedPressure() {
     return reducedPressure;
   }
