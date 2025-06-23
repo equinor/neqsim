@@ -22,30 +22,30 @@ public interface HeaterInterface extends SimulationInterface {
 
   /**
    * <p>
-   * setOutTP.
+   * Set the outlet temperature and pressure of the heater.
    * </p>
    *
-   * @param temperature a double
-   * @param pressure a double
+   * @param temperature Temperature in Kelvin
+   * @param pressure Pressure in bara
    */
   public void setOutTP(double temperature, double pressure);
 
   /**
    * <p>
-   * setOutTemperature.
+   * Set the outlet temperature of the heater in a specified unit.
    * </p>
    *
-   * @param temperature a double
+   * @param temperature Outlet temperature.
    * @param unit a {@link java.lang.String} object
    */
   public void setOutTemperature(double temperature, String unit);
 
   /**
    * <p>
-   * setOutPressure.
+   * Set the outlet pressure of the heater in a specified unit.
    * </p>
    *
-   * @param pressure a double
+   * @param pressure Outlet pressure.
    * @param unit a {@link java.lang.String} object
    */
   public void setOutPressure(double pressure, String unit);

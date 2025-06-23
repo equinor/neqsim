@@ -34,8 +34,8 @@ public class ComponentGERG2004 extends ComponentEos {
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC Critical temperature
-   * @param PC Critical pressure
+   * @param TC Critical temperature [K]
+   * @param PC Critical pressure [bara]
    * @param M Molar mass
    * @param a Acentric factor
    * @param moles Total number of moles of component.

@@ -218,6 +218,18 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public double getPressure(String unit) {
+    return getFluid().getPressure(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPressure(double pressure) {
+    getFluid().setPressure(pressure);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getTemperature() {
     return getFluid().getTemperature();
   }
@@ -230,20 +242,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public double getPressure(String unit) {
-    return getFluid().getPressure(unit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void setTemperature(double temperature) {
     getFluid().setTemperature(temperature);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setPressure(double pressure) {
-    getFluid().setPressure(pressure);
   }
 
   /** {@inheritDoc} */
