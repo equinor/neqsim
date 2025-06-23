@@ -1550,11 +1550,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
-    /** {@inheritDoc} */
-    @Override
-    public double getkij(double temperature, int i, int j) {
-      return intparam[i][j]; // PR
-    }
+
+
 
     public double getkijWhitsonSoreideAqueous(ComponentEosInterface[] compArray,
         double salinityConcentration, double temperature, int i, int j) {
@@ -1602,6 +1599,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+      if (!phase.hasComponent("water")) {
+        return super.calcA(phase, temperature, pressure, numbcomp);
+      }
       double aij = 0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
       boolean isAqueous = phase.getComponent("water").getx() > 0.8;
@@ -1630,6 +1630,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     @Override
     public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
+      if (!phase.hasComponent("water")) {
+        return super.calcAi(compNumb, phase, temperature, pressure, numbcomp);
+      }
       double aij = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -1655,6 +1658,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     @Override
     public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
+      if (!phase.hasComponent("water")) {
+        return super.calcAiT(compNumb, phase, temperature, pressure, numbcomp);
+      }
       double A = 0.0;
       double aij = 0;
       boolean isAqueous = phase.getComponent("water").getx() > 0.8;
@@ -1684,6 +1690,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     @Override
     public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
         double pressure, int numbcomp) {
+      if (!phase.hasComponent("water")) {
+        return super.calcAij(compNumb, compNumbj, phase, temperature, pressure, numbcomp);
+      }
       double aij = 0;
       boolean isAqueous = phase.getComponent("water").getx() > 0.8;
       double salinityConcentration = 0.0;
@@ -1704,6 +1713,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** {@inheritDoc} */
     @Override
     public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+      if (!phase.hasComponent("water")) {
+        return super.calcAT(phase, temperature, pressure, numbcomp);
+      }
       double A = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -1719,6 +1731,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** {@inheritDoc} */
     @Override
     public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+      if (!phase.hasComponent("water")) {
+        return super.calcATT(phase, temperature, pressure, numbcomp);
+      }
       double aij = 0;
       double temp1;
       double[] sqrtai = new double[numbcomp];
@@ -1760,7 +1775,10 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       }
       return A;
     }
+
   }
+
+
 
   public class SRKHuronVidal extends ClassicSRK implements HVMixingRulesInterface {
     /** Serialization version UID. */

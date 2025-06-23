@@ -30,7 +30,8 @@ public class SoreideWhitsonSystemThermoTest {
     testSystem = new neqsim.thermo.system.SystemSoreideWhitson(298.0, 10.0);
     testSystem.addComponent("nitrogen", 0.7);
     testSystem.addComponent("ethane", 0.3);
-    testSystem.setMixingRule(1);
+    testSystem.init(0);
+    testSystem.setMixingRule(11);
     testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
@@ -74,7 +75,7 @@ public class SoreideWhitsonSystemThermoTest {
     testSystem = new neqsim.thermo.system.SystemSoreideWhitson(298, 10);
     testSystem.addComponent("nitrogen", 0.7);
     testSystem.addComponent("ethane", 0.3);
-    testSystem.setMixingRule(1);
+    testSystem.setMixingRule(11);
     testSystem.init(0);
     testSystem.init(3);
     logger.info("molar volume gas+oil is " + testSystem.getMolarVolume());
