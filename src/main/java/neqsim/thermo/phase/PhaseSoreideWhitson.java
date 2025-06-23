@@ -52,12 +52,4 @@ public class PhaseSoreideWhitson extends PhasePrEos {
   public double getSalinity(double salinity) {
     return this.salinity;
   }
-
-  public void setTemperature(double temperature) {
-    this.temperature = temperature;
-  }
-
-  public void setPressure(double pressure) {
-    this.pressure = pressure;
-  }
 }
