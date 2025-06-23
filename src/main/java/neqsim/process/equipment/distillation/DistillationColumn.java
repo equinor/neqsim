@@ -741,8 +741,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * The main method demonstrates the creation and operation of a distillation column using the
    * NeqSim library. It performs the following steps:
-   *
-   * <p>
    * <ol>
    * <li>Creates a test thermodynamic system with methane, ethane, and propane components.</li>
    * <li>Performs a TP flash calculation on the test system.</li>
@@ -753,7 +751,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * <li>Displays the results of the distillation column, including the gas and liquid output
    * streams.</li>
    * </ol>
-   * </p>
    *
    * @param args command line arguments (not used)
    */
