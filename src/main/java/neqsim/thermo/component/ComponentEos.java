@@ -138,8 +138,6 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     super.init(temp, pres, totMoles, beta, initType);
     a = calca();
     b = calcb();
-    reducedTemperature = reducedTemperature(temp);
-    reducedPressure = reducedPressure(pres);
     aT = a * alpha(temp);
     if (initType >= 2) {
       aDiffT = diffaT(temp);
@@ -228,28 +226,6 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   @Override
   public AttractiveTermInterface getAttractiveTerm() {
     return this.getAttractiveParameter();
-  }
-
-  /**
-   * Get reduced temperature.
-   *
-   * @param temperature temperature of fluid
-   * @return double reduced temperature T/TC
-   */
-  double reducedTemperature(double temperature) {
-    return temperature / criticalTemperature;
-  }
-
-  /**
-   * <p>
-   * Get reduced pressure.
-   * </p>
-   *
-   * @param pressure pressure in unit bara
-   * @return double
-   */
-  double reducedPressure(double pressure) {
-    return pressure / criticalPressure;
   }
 
   /** {@inheritDoc} */
