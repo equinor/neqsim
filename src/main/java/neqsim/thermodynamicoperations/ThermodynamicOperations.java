@@ -163,6 +163,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    */
   public void TPflash() {
+    // Check if system is Soreide-Whitson and use the special flash if so
+    if (system != null
+        && system.getClass().getName().equals("neqsim.thermo.system.SystemSoreideWhitson")) {
+      TPflashSoreideWhitson();
+      return;
+    }
     double flowRate = system.getTotalNumberOfMoles();
     if (flowRate < 1e-5) {
       system.setTotalNumberOfMoles(1.0);
@@ -175,6 +181,46 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } else {
       run();
     }
+
+    if (flowRate < 1e-5) {
+      final double minimumFlowRate = 1e-50;
+      if (flowRate < minimumFlowRate) {
+        system.setTotalNumberOfMoles(minimumFlowRate);
+      } else {
+        system.setTotalNumberOfMoles(flowRate);
+      }
+      system.init(1);
+    }
+  }
+
+  public void TPflashSoreideWhitson() {
+    double flowRate = system.getTotalNumberOfMoles();
+    if (flowRate < 1e-5) {
+      system.setTotalNumberOfMoles(1.0);
+      system.init(1);
+    }
+    operation =
+        new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+
+    boolean rerun = true;
+    int iterationCount = 0;
+    while (rerun) {
+      operation =
+          new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+      if (!isRunAsThread()) {
+        getOperation().run();
+      } else {
+        run();
+      }
+      rerun = ((neqsim.thermo.system.SystemSoreideWhitson) system).calcSalinity();
+      iterationCount++;
+      if (iterationCount >= 10) {
+        System.err.println(
+            "Warning: Maximum number of iterations (10) reached in TPflash salinity loop. Stopping further execution.");
+        break;
+      }
+    }
+    // --- End salinity logic ---
 
     if (flowRate < 1e-5) {
       final double minimumFlowRate = 1e-50;

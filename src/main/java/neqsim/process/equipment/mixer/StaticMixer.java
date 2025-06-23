@@ -7,6 +7,7 @@
 package neqsim.process.equipment.mixer;
 
 import java.util.UUID;
+import neqsim.thermo.system.SystemSoreideWhitson;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -110,6 +111,8 @@ public class StaticMixer extends Mixer {
     mixedStream.getThermoSystem().setNumberOfPhases(2);
     mixedStream.getThermoSystem().reInitPhaseType();
     mixStream();
+    // System.out.println("filan temp " + mixedStream.getTemperature());
+
     ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
     try {
       if (Double.isNaN(enthalpy)) {
@@ -124,6 +127,12 @@ public class StaticMixer extends Mixer {
     }
     // System.out.println("temp " + mixedStream.getThermoSystem().getTemperature());
     mixedStream.getThermoSystem().initProperties();
+    if (mixedStream.getFluid().getClass().getName()
+        .equals("neqsim.thermo.system.SystemSoreideWhitson")) {
+      ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(), "mole/sec");
+      mixedStream.run();
+    }
+
     setCalculationIdentifier(id);
   }
 }

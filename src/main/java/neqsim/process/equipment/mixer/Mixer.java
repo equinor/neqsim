@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSoreideWhitson;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -228,6 +229,12 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
           mixedStream.getThermoSystem().setTemperature(guessTemperature());
         }
         // System.out.println("filan temp " + mixedStream.getTemperature());
+        if (mixedStream.getFluid().getClass().getName()
+            .equals("neqsim.thermo.system.SystemSoreideWhitson")) {
+          ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(),
+              "mole/sec");
+          mixedStream.run();
+        }
 
         if (isSetOutTemperature) {
           if (!Double.isNaN(getOutTemperature())) {
@@ -487,5 +494,27 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         && numberOfInputStreams == other.numberOfInputStreams
         && Double.doubleToLongBits(outTemperature) == Double.doubleToLongBits(other.outTemperature)
         && Objects.equals(streams, other.streams);
+  }
+
+  /**
+   * Calculates the flow-weighted average salinity of the mixed stream. Assumes each input stream
+   * provides getSalinity() and getFlowRate("kg/hr").
+   *
+   * @return mixed salinity (same unit as getSalinity() returns)
+   */
+  public double getMixedSalinity() {
+    double totalSalinity = 0.0;
+
+    for (StreamInterface stream : streams) {
+      // Assumes getSalinity() exists in StreamInterface
+      double salinity = 0.0;
+      try {
+        salinity = ((SystemSoreideWhitson) stream.getFluid()).getSalinity();
+      } catch (Exception e) {
+        logger.warn("Error mixing salinity for stream: " + stream.getName(), e);
+      }
+      totalSalinity += salinity;
+    }
+    return totalSalinity;
   }
 }

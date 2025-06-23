@@ -17,13 +17,14 @@ import neqsim.util.exception.InvalidInputException;
  * database</li>
  * <li>CLASSIC_TX_CPA - 10 - classic mixing rule with temperature and composition dependent kij of
  * CPA from NeqSim database</li>
+ * <li>SOREIDE_WHITSON - 11 - Soreide Whitson mixing rule</li>
  * </ul>
  *
  * @author ASMF
  */
 public enum EosMixingRuleType implements MixingRuleTypeInterface {
   NO(1), CLASSIC(2), CLASSIC_HV(3), HV(4), WS(5), CPA_MIX(7), CLASSIC_T(8), CLASSIC_T_CPA(
-      9), CLASSIC_TX_CPA(10);
+      9), CLASSIC_TX_CPA(10), SOREIDE_WHITSON(11);
 
   /** Holder for old style integer pt. */
   private final int value;
