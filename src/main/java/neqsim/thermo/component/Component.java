@@ -1127,6 +1127,18 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getReducedTemperature() {
+    return reducedTemperature;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getReducedPressure() {
+    return reducedPressure;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getdfugdx(int i) {
     return dfugdx[i];
   }

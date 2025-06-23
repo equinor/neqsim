@@ -2323,4 +2323,18 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     c.put("O2", "oxygen");
     return c;
   }
+
+  /**
+   * Returns the reduced temperature (T/Tc) for a given temperature.
+   *
+   * @return reduced temperature
+   */
+  public double getReducedTemperature();
+
+  /**
+   * Returns the reduced pressure (P/Pc) for a given pressure.
+   *
+   * @return reduced pressure
+   */
+  public double getReducedPressure();
 }
