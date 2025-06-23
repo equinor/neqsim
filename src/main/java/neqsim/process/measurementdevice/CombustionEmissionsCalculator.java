@@ -73,7 +73,27 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
       NATURAL_GAS_COMPOSITION.put("i-butane", stream.getFluid().getComponent("i-butane").getz());
       CO2_EMISSIONS_FACTORS.put("i-butane", 6.5);
     }
-    // ....
+    if (stream.getFluid().getPhase(0).hasComponent("n-pentane")) {
+      NATURAL_GAS_COMPOSITION.put("n-pentane", stream.getFluid().getComponent("n-pentane").getz());
+      CO2_EMISSIONS_FACTORS.put("n-pentane", 7.5);
+    }
+    if (stream.getFluid().getPhase(0).hasComponent("i-pentane")) {
+      NATURAL_GAS_COMPOSITION.put("i-pentane", stream.getFluid().getComponent("i-pentane").getz());
+      CO2_EMISSIONS_FACTORS.put("i-pentane", 7.5);
+    }
+    if (stream.getFluid().getPhase(0).hasComponent("hexane")) {
+      NATURAL_GAS_COMPOSITION.put("hexane", stream.getFluid().getComponent("hexane").getz());
+      CO2_EMISSIONS_FACTORS.put("hexane", 8.5);
+    }
+    if (stream.getFluid().getPhase(0).hasComponent("nitrogen")) {
+      NATURAL_GAS_COMPOSITION.put("Nitrogen", stream.getFluid().getComponent("nitrogen").getz());
+      CO2_EMISSIONS_FACTORS.put("Nitrogen", 0.0);
+    }
+    if (stream.getFluid().getPhase(0).hasComponent("CO2")) {
+      NATURAL_GAS_COMPOSITION.put("CO2", stream.getFluid().getComponent("CO2").getz());
+      CO2_EMISSIONS_FACTORS.put("CO2", 0.0);
+    }
+    // Add more components as needed following the same pattern
   }
 
   /** {@inheritDoc} */

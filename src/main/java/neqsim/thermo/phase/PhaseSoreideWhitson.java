@@ -3,20 +3,20 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentSoreideWhitson;
 
 /**
- * PhaseSoreideWhitson implements the Søreide-Whitson Peng-Robinson EoS with
- * modified alpha and mixing rule.
+ * PhaseSoreideWhitson implements the Søreide-Whitson Peng-Robinson EoS with modified alpha and
+ * mixing rule.
  */
 public class PhaseSoreideWhitson extends PhasePrEos {
   private static final long serialVersionUID = 1L;
   private double salinityConcentration = 0.0;
   private double salinity = 0.0;
 
+  /**
+   * Constructs a PhaseSoreideWhitson object and initializes EoS parameters.
+   */
   public PhaseSoreideWhitson() {
+    super();
     thermoPropertyModelName = "Soreide-Whitson-PR-EoS";
-    uEOS = 2;
-    wEOS = -1;
-    delta1 = 1.0 + Math.sqrt(2.0);
-    delta2 = 1.0 - Math.sqrt(2.0);
   }
 
   @Override
