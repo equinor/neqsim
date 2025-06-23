@@ -178,7 +178,7 @@ public class EmptyStreamsTest extends neqsim.NeqSimTest {
     mixer2.run();
     operations.add(mixer2);
 
-    System.out.println(mixer2.getOutletStream().getFlowRate("kg/hr"));
+    // System.out.println(mixer2.getOutletStream().getFlowRate("kg/hr"));
     // mixer2.getOutletStream().getFluid().prettyPrint();
   }
 
