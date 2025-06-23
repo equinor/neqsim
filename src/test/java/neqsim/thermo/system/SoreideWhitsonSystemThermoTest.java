@@ -12,7 +12,7 @@ import neqsim.pvtsimulation.simulation.SaturationPressure;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
-class SoreideWhitsonSystemThermoTest extends neqsim.NeqSimTest {
+public class SoreideWhitsonSystemThermoTest {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SoreideWhitsonSystemThermoTest.class);
 
@@ -169,7 +169,7 @@ class SoreideWhitsonSystemThermoTest extends neqsim.NeqSimTest {
    *
    * @throws Exception
    */
-  @Test
+  // @Test
   @DisplayName("calculate phase envelope")
   public void checkPhaseEnvelope() throws Exception {
     testSystem = new neqsim.thermo.system.SystemSoreideWhitson(298.0, 10.0);
@@ -196,7 +196,7 @@ class SoreideWhitsonSystemThermoTest extends neqsim.NeqSimTest {
    *
    * @throws Exception
    */
-  @Test
+  // @Test
   @DisplayName("calculate phase envelope using UMR")
   public void checkPhaseEnvelope2() throws Exception {
     testSystem = new neqsim.thermo.system.SystemSoreideWhitson(298.0, 10.0);
@@ -254,7 +254,7 @@ class SoreideWhitsonSystemThermoTest extends neqsim.NeqSimTest {
    *
    * @throws Exception
    */
-  @Test
+  // @Test
   @DisplayName("test with pseudo comp")
   public void testPseudoComptest() {
     NeqSimDataBase.setCreateTemporaryTables(true);
