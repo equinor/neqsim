@@ -44,11 +44,11 @@ public interface StreamInterface extends ProcessEquipmentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getPressure(String unit);
+  public double getPressure();
 
   /** {@inheritDoc} */
   @Override
-  public double getPressure();
+  public double getPressure(String unit);
 
   /**
    * <p>

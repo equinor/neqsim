@@ -144,10 +144,10 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
 
   /**
    * <p>
-   * setOutTemperature.
+   * Setter for property <code>temperatureOut</code>.
    * </p>
    *
-   * @param temperature a double
+   * @param temperature Temperature in Kelvin
    */
   public void setOutTemperature(double temperature) {
     this.temperatureOut = temperature;
@@ -159,7 +159,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    * </p>
    *
    * @param i a int
-   * @return Temprature of outstream i in Kelvin
+   * @return Temperature of outstream i in Kelvin
    */
   public double getOutTemperature(int i) {
     return outStream[i].getThermoSystem().getTemperature();

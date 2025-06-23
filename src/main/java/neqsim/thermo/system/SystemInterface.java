@@ -734,14 +734,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getCv(String unit);
 
   /**
-   * method to get density of a fluid note: without Peneloux volume correction.
+   * Get density of a fluid note: without Peneloux volume correction.
    *
    * @return density with unit kg/m3
    */
   public double getDensity();
 
   /**
-   * method to get density of a fluid note: with Peneloux volume correction.
+   * Get density of a fluid note: with Peneloux volume correction.
    *
    * @param unit Supported units are kg/m3, mol/m3
    * @return density in specified unit
@@ -776,7 +776,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public SystemInterface getEmptySystemClone();
 
   /**
-   * method to get the total enthalpy of a fluid.
+   * Get the total enthalpy of a fluid.
    *
    * @return molar mass in unit J (Joule)
    */
@@ -975,16 +975,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public InterphasePropertiesInterface getInterphaseProperties();
 
   /**
-   * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis
-   * average
+   * Get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis average
    *
    * @return Joule Thomson coefficient in K/bar
    */
   public double getJouleThomsonCoefficient();
 
   /**
-   * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis
-   * average.
+   * Get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis average.
    *
    * @param unit Supported units are K/bar, C/bar
    * @return Joule Thomson coefficient in specified unit
@@ -1103,7 +1101,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getMolarMass();
 
   /**
-   * method to get molar mass of a fluid phase.
+   * Get molar mass of a fluid phase.
    *
    * @param unit Supported units are kg/mol, gr/mol
    * @return molar mass in specified unit
@@ -1111,7 +1109,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getMolarMass(String unit);
 
   /**
-   * method to get the total molar flow rate of individual components in a fluid.
+   * Get the total molar flow rate of individual components in a fluid.
    *
    * @return molar flow of individual components in unit mol/sec
    */
@@ -1434,16 +1432,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public String[][] getResultTable();
 
   /**
-   * method to get the speed of sound of a system. The sound speed is implemented based on a molar
-   * average over the phases
+   * Get the speed of sound of a system. The sound speed is implemented based on a molar average
+   * over the phases
    *
    * @return speed of sound in m/s
    */
   public double getSoundSpeed();
 
   /**
-   * method to get the speed of sound of a system. The sound speed is implemented based on a molar
-   * average over the phases
+   * Get the speed of sound of a system. The sound speed is implemented based on a molar average
+   * over the phases
    *
    * @param unit Supported units are m/s, km/h
    * @return speed of sound in m/s
@@ -2524,30 +2522,30 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * method to set the temperature of a fluid (same temperature for all phases).
+   * Set the temperature of a fluid (same temperature for all phases).
    * </p>
    *
-   * @param temp a double
+   * @param temp Temperature in unit Kelvin
    */
   public void setTemperature(double temp);
 
   /**
    * <p>
-   * setTemperature.
+   * Set the temperature of a single phase in the fluid.
    * </p>
    *
-   * @param newTemperature a double
+   * @param temp Temperature in unit Kelvin
    * @param phaseNumber a int
    */
-  public void setTemperature(double newTemperature, int phaseNumber);
+  public void setTemperature(double temp, int phaseNumber);
 
   /**
    * method to set the temperature of a fluid (same temperature for all phases).
    *
-   * @param newTemperature in specified unit
+   * @param temp Temperature in specified unit
    * @param unit unit can be C or K (Celsius or Kelvin)
    */
-  public void setTemperature(double newTemperature, String unit);
+  public void setTemperature(double temp, String unit);
 
   /**
    * <p>
