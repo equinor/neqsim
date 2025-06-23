@@ -249,19 +249,17 @@ public class VegaTest {
     compressor_Schultz.setPolytropicMethod("schultz");
     compressor_Schultz.run();
 
-    System.out.println("Density before compressor " + Vegafluid.getDensity("kg/m3"));
-    System.out.println("-----------------Normal-----------------");
-    System.out.println(
-        "Temperature out of Compr." + compressor_Vega.getOutletStream().getTemperature("C"));
-    System.out.println("Power out of Compr." + compressor_Vega.getPower("MW"));
-    System.out
-        .println("Polytropic Head out of Compr." + compressor_Vega.getPolytropicHead("kJ/kg"));
-
-    System.out.println("-----------------Schultz-----------------");
-    System.out.println(
-        "Temperature out of Compr." + compressor_Schultz.getOutletStream().getTemperature("C"));
-    System.out.println("Power out of Compr." + compressor_Schultz.getPower("MW"));
-    System.out
-        .println("Polytropic Head out of Compr." + compressor_Schultz.getPolytropicHead("kJ/kg"));
+    /*
+     * System.out.println("Density before compressor " + Vegafluid.getDensity("kg/m3"));
+     * System.out.println("-----------------Normal-----------------"); System.out.println(
+     * "Temperature out of Compr." + compressor_Vega.getOutletStream().getTemperature("C"));
+     * System.out.println("Power out of Compr." + compressor_Vega.getPower("MW")); System.out
+     * .println("Polytropic Head out of Compr." + compressor_Vega.getPolytropicHead("kJ/kg"));
+     * 
+     * System.out.println("-----------------Schultz-----------------"); System.out.println(
+     * "Temperature out of Compr." + compressor_Schultz.getOutletStream().getTemperature("C"));
+     * System.out.println("Power out of Compr." + compressor_Schultz.getPower("MW")); System.out
+     * .println("Polytropic Head out of Compr." + compressor_Schultz.getPolytropicHead("kJ/kg"));
+     */
   }
 }
