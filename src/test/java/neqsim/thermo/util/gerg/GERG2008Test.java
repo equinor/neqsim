@@ -97,7 +97,6 @@ public class GERG2008Test {
 
   @Test
   void testThermoGERG2008() {
-
     SystemInterface GERG2008fluid = new neqsim.thermo.system.SystemGERG2008Eos(298.15, 10.0);
     SystemInterface SRKfluid = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
 

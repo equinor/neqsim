@@ -31,7 +31,6 @@ public class CombustionEmissionsCalculatorTest {
 
   @Test
   void testAntiSurgeCalc() {
-
     ProcessSystem process = new ProcessSystem();
     SystemInterface fluid = new SystemSrkEos(290, 50);
     fluid.addComponent("methane", 0.01);

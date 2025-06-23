@@ -232,7 +232,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   String componenti = component_name;
                   String componentj = component_name2;
                   double acentricFactori = phase.getComponent(k).getAcentricFactor();
-                  double reducedTemperaturei = phase.getComponent(k).getReducedTemperature();
+                  double reducedTemperaturei =
+                      phase.getComponent(k).reducedTemperature(phase.getTemperature());
                   double salinityConcentration =
                       ((PhaseSoreideWhitson) phase).getSalinityConcentration();
                   double kij = 0.0;
@@ -667,6 +668,13 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       bmixType = bmixType2;
     }
 
+    /**
+     * getbij.
+     * 
+     * @param compi
+     * @param compj
+     * @return
+     */
     public double getbij(ComponentEosInterface compi, ComponentEosInterface compj) {
       switch (getBmixType()) {
         case 0:
@@ -1552,14 +1560,13 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
 
 
-
     public double getkijWhitsonSoreideAqueous(ComponentEosInterface[] compArray,
         double salinityConcentration, double temperature, int i, int j) {
 
       String componenti = (compArray[i]).getComponentName();
       String componentj = compArray[j].getComponentName();
       double acentricFactori = compArray[i].getAcentricFactor();
-      double reducedTemperaturei = ((ComponentEos) compArray[i]).getReducedTemperature();
+      double reducedTemperaturei = ((ComponentEos) compArray[i]).reducedTemperature(temperature);
       double kij = intparam[i][j];
 
       if (componentj.equalsIgnoreCase("water") || componentj.equalsIgnoreCase("H2O")) {

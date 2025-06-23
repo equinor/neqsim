@@ -78,21 +78,21 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getCp0();
 
   /**
-   * method to get density of a phase using the AGA8-Detail EoS.
+   * Get density of a phase using the AGA8-Detail EoS.
    *
    * @return density with unit kg/m3
    */
   public double getDensity_AGA8();
 
   /**
-   * method to get the Joule Thomson Coefficient of a phase.
+   * Get the Joule Thomson Coefficient of a phase.
    *
    * @return Joule Thomson coefficient in K/bar
    */
   public double getJouleThomsonCoefficient();
 
   /**
-   * method to get the Joule Thomson Coefficient of a phase.
+   * Get the Joule Thomson Coefficient of a phase.
    *
    * @param unit Supported units are K/bar, C/bar
    * @return Joule Thomson coefficient in specified unit
@@ -407,7 +407,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public void setComponentArray(ComponentInterface[] components);
 
   /**
-   * method to get density of a phase using the GERG-2008 EoS.
+   * Get density of a phase using the GERG-2008 EoS.
    *
    * @return density with unit kg/m3
    */
@@ -415,7 +415,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * method to get GERG properties of a phase using the GERG-2008 EoS.
+   * Get GERG properties of a phase using the GERG-2008 EoS.
    * </p>
    *
    * @return an array of type double
@@ -533,14 +533,14 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public doubleW[][] getAlphares_Vega();
 
   /**
-   * method to get density of a phase note: does not use Peneloux volume correction.
+   * Get density of a phase note: does not use Peneloux volume correction.
    *
    * @return density with unit kg/m3
    */
   public double getDensity();
 
   /**
-   * method to get density of a fluid note: with Peneloux volume correction.
+   * Get density of a fluid note: with Peneloux volume correction.
    *
    * @param unit Supported units are kg/m3, mol/m3
    * @return density in specified unit
@@ -1009,7 +1009,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public void resetMixingRule(MixingRuleTypeInterface mr);
 
   /**
-   * Set the temperature of a phase.
+   * Set the temperature of the phase.
    *
    * @param temperature in unit Kelvin
    */
@@ -1530,7 +1530,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getTemperature();
 
   /**
-   * method to return temperature in a specified unit.
+   * Get temperature in a specified unit.
    *
    * @param unit Supported units are K, C, R
    * @return temperature in specified unit
@@ -1560,7 +1560,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getMolarMass();
 
   /**
-   * method to get molar mass of a fluid phase.
+   * Get molar mass of a fluid phase.
    *
    * @param unit Supported units are kg/mol, gr/mol
    * @return molar mass in specified unit
@@ -2123,15 +2123,15 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public void setConstantPhaseVolume(boolean constantPhaseVolume);
 
   /**
-   * method to get the speed of sound of a phase note: implemented in phaseEos.
+   * Get the speed of sound of a phase note: implemented in phaseEos.
    *
    * @return speed of sound in m/s
    */
   public double getSoundSpeed();
 
   /**
-   * method to get the speed of sound of a system. The sound speed is implemented based on a molar
-   * average over the phases
+   * Get the speed of sound of a system. The sound speed is implemented based on a molar average
+   * over the phases
    *
    * @param unit Supported units are m/s, km/h
    * @return speed of sound in m/s

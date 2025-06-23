@@ -11,7 +11,6 @@ import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
  * @version $Id: $Id
  */
 public class PipeBeggsBrillsResponse extends BaseResponse {
-
   public Double inletPressure;
   public Double outletPressure;
   public Double inletTemperature;

@@ -112,7 +112,6 @@ public class LeachmanTest {
 
   @Test
   void testThermoLeachman() {
-
     SystemInterface Leachmanfluid = new neqsim.thermo.system.SystemLeachmanEos(298.15, 10.0);
     SystemInterface SRKfluid = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
 

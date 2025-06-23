@@ -194,6 +194,12 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public double getPressure(String unit) {
+    return 1.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setPressure(double pressure) {}
 
   /** {@inheritDoc} */
@@ -228,12 +234,6 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   @Override
   public String[][] getResultTable() {
     return null;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getPressure(String unit) {
-    return 1.0;
   }
 
   /** {@inheritDoc} */

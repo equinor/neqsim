@@ -10,7 +10,6 @@ import neqsim.process.equipment.expander.TurboExpanderCompressor;
  * @author esol
  */
 public class TurboExpanderCompressorResponse extends BaseResponse {
-
   /**
    * Constructs a TurboExpanderCompressorResponse from a TurboExpanderCompressor.
    *

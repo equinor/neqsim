@@ -13,7 +13,6 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 
 public class SetterTest {
-
   private Setter setter;
   SystemInterface testFluid;
 

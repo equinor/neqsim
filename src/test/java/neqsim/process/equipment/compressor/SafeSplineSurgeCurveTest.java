@@ -18,7 +18,6 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.serialization.NeqSimXtream;
 
 public class SafeSplineSurgeCurveTest {
-
   @Test
   public void testSurgeCurve10250() {
     double[] flow10250 = {9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81,
@@ -69,7 +68,6 @@ public class SafeSplineSurgeCurveTest {
 
   @Test
   public void testSurgeCurve2() {
-
     SystemInterface testFluid = new SystemSrkEos(298.15, 50.0);
 
     testFluid.addComponent("nitrogen", 1.205);

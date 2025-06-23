@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.valve.ThrottlingValve;
 
 class ProcessLoaderTest {
-
   @Test
   void testLoadProcessFromYaml() throws Exception {
     // Create a temporary YAML file for testing

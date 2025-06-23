@@ -9,7 +9,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class CompressorChartReaderTest {
-
   @Test
   void testSetCurvesToCompressor() throws Exception {
     // Create a fluid using SRK-EoS

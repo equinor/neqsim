@@ -77,7 +77,6 @@ public class VegaTest {
 
   @Test
   void testThermoVega() {
-
     SystemInterface vegafluid = new neqsim.thermo.system.SystemVegaEos(298.15, 10.0);
     SystemInterface SRKfluid = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
 

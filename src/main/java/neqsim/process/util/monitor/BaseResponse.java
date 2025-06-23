@@ -11,7 +11,6 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * @author esol
  */
 public class BaseResponse {
-
   public String tagName = "";
   public String name = "";
 

@@ -176,7 +176,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   // ---- ONE UNKNOWN ----
   // ================================================================
 
-  /** Calculates the outlet temperatures for the heat exchanger when there is one unknown. */
+  /**
+   * Calculates the outlet temperatures for the heat exchanger when there is one unknown.
+   */
   public void oneUnknown() {
     List<Integer> unknownIndices = new ArrayList<>();
     int idx = -1;
@@ -327,7 +329,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   // ---- THREE UNKNOWN ----
   // ================================================================
 
-  /** * Calculates the outlet temperatures for the heat exchanger when there are three unknowns. */
+  /**
+   * Calculates the outlet temperatures for the heat exchanger when there are three unknowns.
+   */
   public void threeUnknowns() {
     List<Integer> unknownIndices = new ArrayList<>();
     for (int i = 0; i < unknownOutlets.size(); i++) {
@@ -560,14 +564,12 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
    * @return a {@link java.util.Map} object
    */
   public java.util.Map<String, java.util.List<java.util.Map<String, Object>>> compositeCurve() {
-
     /* fresh container ----------------------------------------------- */
     compositeCurvePoints =
         new java.util.HashMap<String, java.util.List<java.util.Map<String, Object>>>();
 
     /* build one curve for "hot" and one for "cold" ------------------- */
     for (String t : new String[] {"hot", "cold"}) {
-
       /* ---- collect every unique temperature seen on this curve ---- */
       java.util.Set<Double> tempSet = new java.util.HashSet<>();
       for (int i = 0; i < streamTypes.size(); i++) {

@@ -27,7 +27,6 @@ public class MethaneViscosityMethod extends Viscosity {
   /** {@inheritDoc} */
   @Override
   public double calcViscosity() {
-
     // Check if there are other components than methane
     if (phase.getPhase().getNumberOfComponents() > 1
         || !phase.getPhase().getComponent(0).getName().equalsIgnoreCase("methane")) {

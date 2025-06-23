@@ -1758,7 +1758,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void OLGApropTable(double minTemp, double maxTemp, int temperatureSteps, double minPres,
       double maxPres, int pressureSteps, String filename, int TABtype) {
-
     if (TABtype == 0) {
       operation = new OLGApropertyTableGeneratorWaterKeywordFormat(system);
 
