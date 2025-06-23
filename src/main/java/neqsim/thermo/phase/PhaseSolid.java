@@ -87,7 +87,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
   }
 
   /**
-   * method to get density of a phase note: at the moment return density of water (997 kg/m3).
+   * Get density of a phase note: at the moment return density of water (997 kg/m3).
    *
    * @return density with unit kg/m3
    */

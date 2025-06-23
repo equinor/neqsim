@@ -790,20 +790,20 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * setPC.
+   * Setter for critical pressure.
    * </p>
    *
-   * @param val a double
+   * @param val Critical pressure in unit bara.
    */
   public void setPC(double val);
 
   /**
    * <p>
-   * setPC.
+   * Setter for critical pressure in specified unit.
    * </p>
    *
-   * @param val a double
-   * @param unit a String
+   * @param val Critical pressure in unit specified by <code>unit</code>.
+   * @param unit Engineering unit.
    */
   public void setPC(double val, String unit);
 
@@ -902,7 +902,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Returns the critical temperature of the component.
    * </p>
    *
-   * @return The critical temperature of the component
+   * @return The critical temperature of the component in Kelvin.
    */
   public double getTC();
 
@@ -912,7 +912,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param unit Unit of return temperature
-   * @return The critical temperature of the component
+   * @return The critical temperature of the component in specified unit.
    */
   public double getTC(String unit);
 
@@ -931,7 +931,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param unit Unit of return pressure
-   * @return The normal boiling point of the component
+   * @return The normal boiling point of the component in specified unit.
    */
   public double getNormalBoilingPoint(String unit);
 
@@ -949,7 +949,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Returns the critical pressure of the component.
    * </p>
    *
-   * @return The critical pressure of the component
+   * @return The critical pressure of the component in unit bara.
    */
   public double getPC();
 
@@ -959,7 +959,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param unit Unit of return pressure
-   * @return The critical pressure of the component
+   * @return The critical pressure of the component in specified unit.
    */
   public double getPC(String unit);
 
@@ -2323,4 +2323,20 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     c.put("O2", "oxygen");
     return c;
   }
+
+  /**
+   * Returns the reduced temperature (T/Tc) for a given temperature.
+   *
+   * @param temperature Temperature in Kelvin
+   * @return reduced temperature []
+   */
+  public double reducedTemperature(double temperature);
+
+  /**
+   * Returns the reduced pressure (P/Pc) for a given pressure.
+   *
+   * @param pressure Pressure in bara
+   * @return reduced pressure []
+   */
+  public double reducedPressure(double pressure);
 }

@@ -98,8 +98,6 @@ public abstract class Component implements ComponentInterface {
   protected double molarMass;
   protected double acentricFactor;
   protected double normalLiquidDensity = 0;
-  protected double reducedPressure;
-  protected double reducedTemperature;
   protected double fugacityCoefficient;
   protected double debyeDipoleMoment = 0;
   protected double viscosityCorrectionFactor = 0;
@@ -186,8 +184,8 @@ public abstract class Component implements ComponentInterface {
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC Critical temperature
-   * @param PC Critical pressure
+   * @param TC Critical temperature [K]
+   * @param PC Critical pressure [bara]
    * @param M Molar mass
    * @param a Acentric factor
    * @param moles Total number of moles of component.
@@ -1123,6 +1121,18 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double getAcentricFactor() {
     return acentricFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double reducedTemperature(double temperature) {
+    return temperature / criticalTemperature;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double reducedPressure(double pressure) {
+    return pressure / criticalPressure;
   }
 
   /** {@inheritDoc} */

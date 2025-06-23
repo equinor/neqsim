@@ -9,6 +9,16 @@ package neqsim.fluidmechanics.geometrydefinitions.surrounding;
  * @version $Id: $Id
  */
 public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment {
+  private double heatTransferCoefficient = 20.0;
+  private double temperature = 298.15;
+
+  /**
+   * <p>
+   * Constructor for SurroundingEnvironmentBaseClass.
+   * </p>
+   */
+  public SurroundingEnvironmentBaseClass() {}
+
   /** {@inheritDoc} */
   @Override
   public double getTemperature() {
@@ -20,16 +30,6 @@ public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment {
   public void setTemperature(double temperature) {
     this.temperature = temperature;
   }
-
-  private double heatTransferCoefficient = 20.0;
-  private double temperature = 298.15;
-
-  /**
-   * <p>
-   * Constructor for SurroundingEnvironmentBaseClass.
-   * </p>
-   */
-  public SurroundingEnvironmentBaseClass() {}
 
   /** {@inheritDoc} */
   @Override
