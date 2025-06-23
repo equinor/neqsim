@@ -159,7 +159,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    * </p>
    *
    * @param i a int
-   * @return a double
+   * @return Temprature of outstream i in Kelvin
    */
   public double getOutTemperature(int i) {
     return outStream[i].getThermoSystem().getTemperature();
@@ -171,7 +171,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    * </p>
    *
    * @param i a int
-   * @return a double
+   * @return Temperature of instream i in Kelvin
    */
   public double getInTemperature(int i) {
     return inStream[i].getThermoSystem().getTemperature();

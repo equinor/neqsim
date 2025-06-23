@@ -2328,15 +2328,15 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * Returns the reduced temperature (T/Tc) for a given temperature.
    *
    * @param temperature Temperature in Kelvin
-   * @return reduced temperature
+   * @return reduced temperature []
    */
   public double reducedTemperature(double temperature);
 
   /**
    * Returns the reduced pressure (P/Pc) for a given pressure.
    *
-   * @param pressure Pressure in bar
-   * @return reduced pressure
+   * @param pressure Pressure in bara
+   * @return reduced pressure []
    */
   public double reducedPressure(double pressure);
 }

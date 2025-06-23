@@ -92,7 +92,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
    * setOutPressure.
    * </p>
    *
-   * @param pressure a double
+   * @param pressure Pressure in bara
    */
   public void setOutPressure(double pressure) {
     setOutPressure = true;
@@ -110,10 +110,10 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
 
   /**
    * <p>
-   * setOutTemperature.
+   * Set the outlet temperature of the heater.
    * </p>
    *
-   * @param temperature a double
+   * @param temperature Temperature in Kelvin
    */
   public void setOutTemperature(double temperature) {
     setTemperature = true;
