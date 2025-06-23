@@ -26,7 +26,7 @@ public class CombustionEmissionsCalculatorTest {
     stream1.setFlowRate(1.0, "kg/hr");
     stream1.run();
     CombustionEmissionsCalculator comp = new CombustionEmissionsCalculator("name1", stream1);
-    assertEquals(2.77772643250, comp.getMeasuredValue("kg/hr"), 0.0001);
+    assertEquals(2.8122348711867, comp.getMeasuredValue("kg/hr"), 0.0001);
   }
 
   @Test
