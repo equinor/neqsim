@@ -56,7 +56,7 @@ public class NeqSimLogging {
   public static void resetAllLoggers() {
     try {
       LoggerContext context = (LoggerContext) LogManager.getContext(false);
-      var resource = NeqSimLogging.class.getClassLoader().getResource("log4j2.properties");
+      java.net.URL resource = NeqSimLogging.class.getClassLoader().getResource("log4j2.properties");
       if (resource == null) {
         logger.error("Resource 'log4j2.properties' not found. Unable to reset loggers.");
         return;
