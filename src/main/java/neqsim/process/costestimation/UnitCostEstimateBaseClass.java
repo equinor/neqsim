@@ -38,12 +38,12 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
 
   /**
    * <p>
-   * getTotaltCost.
+   * getTotalCost.
    * </p>
    *
    * @return the totaltCost
    */
-  public double getTotaltCost() {
+  public double getTotalCost() {
     return this.mechanicalEquipment.getWeightTotal() * costPerWeightUnit;
   }
 
@@ -56,12 +56,15 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     UnitCostEstimateBaseClass other = (UnitCostEstimateBaseClass) obj;
     return Double.doubleToLongBits(costPerWeightUnit) == Double
         .doubleToLongBits(other.costPerWeightUnit)

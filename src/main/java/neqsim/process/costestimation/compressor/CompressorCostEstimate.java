@@ -29,7 +29,7 @@ public class CompressorCostEstimate extends UnitCostEstimateBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public double getTotaltCost() {
+  public double getTotalCost() {
     CompressorMechanicalDesign sepMecDesign = (CompressorMechanicalDesign) mechanicalEquipment;
 
     sepMecDesign.getWeightTotal();

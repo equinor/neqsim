@@ -29,7 +29,7 @@ public class SeparatorCostEstimate extends UnitCostEstimateBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public double getTotaltCost() {
+  public double getTotalCost() {
     SeparatorMechanicalDesign sepMecDesign = (SeparatorMechanicalDesign) mechanicalEquipment;
 
     sepMecDesign.getWeightTotal();
