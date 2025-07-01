@@ -193,6 +193,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
   }
 
+  /**
+   * <p>TPflashSoreideWhitson.</p>
+   */
   public void TPflashSoreideWhitson() {
     double flowRate = system.getTotalNumberOfMoles();
     if (flowRate < 1e-5) {

@@ -140,7 +140,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
       }
     }
     if (alfaMix < 1e-10) {
-      return 0.0; // this can happen befor init is doen on system
+      return 0.0; // this can happen before init is done on system
       // alfaMix= alfaMix*2;
     }
 

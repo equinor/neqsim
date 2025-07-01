@@ -168,7 +168,7 @@ public class PipeBeggsAndBrills extends Pipeline {
   double cp; // heat capacity
   double q1; // heat transfer
   double q2;
-  double ReNoSlip; //
+  double ReNoSlip;
   double S = 0;
   double rhoNoSlip = 0;
   double muNoSlip = 0;

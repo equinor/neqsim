@@ -20,7 +20,8 @@ import neqsim.thermo.component.ComponentEosInterface;
  * </p>
  *
  * <p>
- * This class extends {@link AttractiveTermPr1978} and overrides its methods for water component.
+ * This class extends {@link neqsim.thermo.component.attractiveeosterm.AttractiveTermPr1978} and
+ * overrides its methods for water component.
  * </p>
  *
  * @author Even Solbraa
@@ -48,7 +49,7 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
 
   /**
    * Sets the salinity value to be used in calculations.
-   * 
+   *
    * @param salinity the salinity value to set
    */
   public void setSalinityFromPhase(double salinity) {
@@ -65,6 +66,8 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Calculates the alpha function value for the Søreide-Whitson attractive term.
    * </p>
@@ -81,9 +84,6 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
    * <p>
    * and {@code Tr = T / Tc} (Reduced Temperature).
    * </p>
-   *
-   * @param temperature The temperature in Kelvin.
-   * @return The calculated alpha value.
    */
   @Override
   public double alpha(double temperature) {
@@ -91,7 +91,6 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
       return super.alpha(temperature);
     }
     double Tr = temperature / getComponent().getTC();
-    double salinity = getSalinityFromPhase();
 
     // Define A(Tr)
     double alpha_A = 1.0 + 0.453 * (1.0 - Tr * (1.0 - 0.0103 * Math.pow(salinityFromPhase, 1.1)))
@@ -101,9 +100,7 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
   }
 
   /**
-   * <p>
-   * Calculates the first derivative of the alpha function with respect to temperature.
-   * </p>
+   * {@inheritDoc}
    *
    * <p>
    * This override applies only if the component is "water". For other components, it delegates to
@@ -119,9 +116,6 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
    * </p>
    * {@code dA/dTr = -0.453 * (1.0 - 0.0103 * salinity^1.1) - 3.0 * 0.0034 * Tr^(-4)}
    * {@code dTr/dT = 1 / Tc}
-   *
-   * @param temperature The temperature in Kelvin.
-   * @return The first derivative of alpha with respect to temperature.
    */
   @Override
   public double diffalphaT(double temperature) {
@@ -150,9 +144,7 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
   }
 
   /**
-   * <p>
-   * Calculates the second derivative of the alpha function with respect to temperature.
-   * </p>
+   * {@inheritDoc}
    *
    * <p>
    * This override applies only if the component is "water". For other components, it delegates to
@@ -173,9 +165,6 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
    * </p>
    * {@code d^2A/dTr^2 = d/dTr [ -0.453 * S_term - 3.0 * 0.0034 * Tr^(-4) ]}
    * {@code           = 12.0 * 0.0034 * Tr^(-5)} {@code dTr/dT = 1 / Tc}
-   *
-   * @param temperature The temperature in Kelvin.
-   * @return The second derivative of alpha with respect to temperature.
    */
   @Override
   public double diffdiffalphaT(double temperature) {
