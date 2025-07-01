@@ -34,7 +34,7 @@ public interface AttractiveTermInterface extends Cloneable, java.io.Serializable
 
   /**
    * <p>
-   * aT.
+   * Calculates the the alpha function with respect to temperature.
    * </p>
    *
    * @param temperature a double
@@ -44,7 +44,7 @@ public interface AttractiveTermInterface extends Cloneable, java.io.Serializable
 
   /**
    * <p>
-   * diffalphaT.
+   * Calculates the first derivative of the alpha function with respect to temperature.
    * </p>
    *
    * @param temperature a double
@@ -54,7 +54,7 @@ public interface AttractiveTermInterface extends Cloneable, java.io.Serializable
 
   /**
    * <p>
-   * diffdiffalphaT.
+   * Calculates the second derivative of the alpha function with respect to temperature.
    * </p>
    *
    * @param temperature a double
@@ -121,7 +121,9 @@ public interface AttractiveTermInterface extends Cloneable, java.io.Serializable
   public AttractiveTermInterface clone();
 
   /**
-   * <p>getm.</p>
+   * <p>
+   * getm.
+   * </p>
    *
    * @return a double
    */

@@ -5,6 +5,8 @@ import neqsim.thermo.phase.PhaseSoreideWhitson;
 /**
  * This class defines a thermodynamic system using the Søreide-Whitson Peng-Robinson EoS (modified
  * alpha and mixing rule).
+ *
+ * @author sviat
  */
 public class SystemSoreideWhitson extends SystemPrEos1978 {
   private static final long serialVersionUID = 1000L;
@@ -152,6 +154,13 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
     return this.salinity;
   }
 
+  /**
+   * <p>
+   * calcSalinity.
+   * </p>
+   *
+   * @return a boolean
+   */
   public boolean calcSalinity() {
     boolean updatedSalinity = false;
     double systemSalinity = this.getSalinity();
@@ -205,6 +214,7 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
     return updatedSalinity;
   }
 
+  /** {@inheritDoc} */
   @Override
   public SystemSoreideWhitson clone() {
     SystemSoreideWhitson clonedSystem = null;

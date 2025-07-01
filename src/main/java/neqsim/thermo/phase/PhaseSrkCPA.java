@@ -454,7 +454,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       // Matrix tempMatrix20 = miMatrix.getMatrix(assSites, assSites, 0,
       // totalNumberOfAccociationSites -
       // 1).times(uMatrix).minus(ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5));
-      // //
+      //
       // ksiMatrix.transpose().times(KlkTMatrix.times(ksiMatrix)).times(-0.5);
       // System.out.println("dQdn ");
       // tempMatrix20.print(10, 10);
@@ -1812,7 +1812,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       // Matrix tempMatrix20 = miMatrix.getMatrix(assSites, assSites, 0,
       // totalNumberOfAccociationSites -
       // 1).times(uMatrix).minus(ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5));
-      // //
+      //
       // ksiMatrix.transpose().times(KlkTMatrix.times(ksiMatrix)).times(-0.5);
       // System.out.println("dQdn ");
       // tempMatrix20.print(10, 10);

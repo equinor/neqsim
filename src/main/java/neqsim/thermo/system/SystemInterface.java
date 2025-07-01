@@ -1329,7 +1329,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * Get phase number of phase of specific type. *
+   * Get phase number of phase of specific type.
    * </p>
    *
    * @param phaseTypeName Name of phase type to look for
