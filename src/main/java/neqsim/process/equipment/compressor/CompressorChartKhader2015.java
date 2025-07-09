@@ -19,7 +19,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   double impellerOuterDiameter = 1.0;
 
   /**
-   * Constructs a CompressorChartKader2015 object with the specified fluid and impeller diameter.
+   * Constructs a CompressorChartKhader2015 object with the specified fluid and impeller diameter.
    *
    * @param fluid the working fluid for the compressor
    * @param impellerdiam the outer diameter of the impeller
@@ -31,21 +31,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * <p>
    * Sets the compressor curves based on the provided chart conditions, speed, flow, head,
    * flowPolytrpicEfficiency and polytropic efficiency values.
-   * </p>
-   */
-  @Override
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Sets the compressor curves based on the provided chart conditions, speed, flow, head,
-   * flowPolytrpicEfficiency and polytropic efficiency values.
-   * </p>
    *
    * <p>
    * <b>Mathematical background (see Kader 2015):</b><br>
@@ -69,7 +56,13 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * </ul>
    * These dimensionless numbers allow for comparison and extrapolation of compressor performance
    * across different conditions, as described in Kader (2015) and the referenced NeqSim discussion.
-   * </p>
+   *
+   * @param chartConditions array with temperature, pressure, (optionally density, molecular weight)
+   * @param speed array of speeds
+   * @param flow 2D array of flows
+   * @param head 2D array of heads
+   * @param flowPolyEff 2D array of flows for efficiency
+   * @param polyEff 2D array of polytropic efficiencies
    */
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] flowPolyEff, double[][] polyEff) {
@@ -104,11 +97,12 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * Creates and initializes a default fluid for compressor chart calculations.
    *
-   * @param chartConditions array with temperature and pressure
+   * @param chartConditions array with temperature, pressure, (optionally density, molecular weight)
    * @return the sound speed of the fluid
    */
   private double createDefaultFluid(double[] chartConditions) {
-    // Set moles so that the molecular weight matches chartConditions[3] (if provided), by varying
+    // Set moles so that the molecular weight matches chartConditions[3] (if
+    // provided), by varying
     // propane
     double methaneFrac = 0.90;
     double ethaneFrac = 0.05;
@@ -121,7 +115,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     double mwPropane = 44.097;
 
     if (targetMolWeight > 0.0) {
-      // Solve for propaneFrac so that total mole fraction = 1.0 and molecular weight matches target
+      // Solve for propaneFrac so that total mole fraction = 1.0 and molecular weight
+      // matches target
       // MW = x1*mw1 + x2*mw2 + x3*mw3
       // x1 = methaneFrac, x2 = ethaneFrac, x3 = 1 - x1 - x2
       // targetMolWeight = x1*mw1 + x2*mw2 + (1-x1-x2)*mw3
@@ -159,7 +154,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     return fluid.getSoundSpeed();
   }
 
-
   /**
    * Calculates the polytropic head for a given flow and speed.
    *
@@ -173,7 +167,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * It then interpolates/extrapolates the polytropic head from the reference compressor curves in
    * this dimensionless space, and finally converts the result back to physical units by multiplying
    * with c<sub>s</sub><sup>2</sup>.
-   * </p>
    *
    * @param flow volumetric flow rate
    * @param speed rotational speed
@@ -189,7 +182,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
         * fluidSoundSpeed * fluidSoundSpeed;
   }
 
-
   /**
    * Calculates the polytropic efficiency for a given flow and speed.
    *
@@ -202,7 +194,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * </ul>
    * It then interpolates/extrapolates the polytropic efficiency from the reference compressor
    * curves in this dimensionless space.
-   * </p>
    *
    * @param flow volumetric flow rate
    * @param speed rotational speed

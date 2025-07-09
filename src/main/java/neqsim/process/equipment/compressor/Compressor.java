@@ -1,5 +1,6 @@
 package neqsim.process.equipment.compressor;
 
+
 import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
@@ -1320,7 +1321,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    * Setter for the field <code>compressorChart</code>.
    * </p>
    *
-   * @param compressorChart a {@link neqsim.process.equipment.compressor.CompressorChart} object
+   * @param compressorChart a {@link neqsim.process.equipment.compressor.CompressorChartInterface}
+   *        object
    */
   public void setCompressorChart(CompressorChartInterface compressorChart) {
     this.compressorChart = compressorChart;
