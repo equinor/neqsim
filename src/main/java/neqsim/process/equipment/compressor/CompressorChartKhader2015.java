@@ -22,7 +22,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   double impellerOuterDiameter = 1.0;
 
   /**
-   * Constructs a CompressorChartKader2015 object with the specified fluid and
+   * Constructs a CompressorChartKhader2015 object with the specified fluid and
    * impeller diameter.
    *
    * @param fluid        the working fluid for the compressor
@@ -35,23 +35,9 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * <p>
    * Sets the compressor curves based on the provided chart conditions, speed,
    * flow, head,
    * flowPolytrpicEfficiency and polytropic efficiency values.
-   * </p>
-   */
-  @Override
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Sets the compressor curves based on the provided chart conditions, speed,
-   * flow, head,
-   * flowPolytrpicEfficiency and polytropic efficiency values.
-   * </p>
    *
    * <p>
    * <b>Mathematical background (see Kader 2015):</b><br>
@@ -62,8 +48,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * <li><b>Corrected Flow Factor:</b> Q<sub>corr</sub> = Q / (c<sub>s</sub>
    * D<sup>2</sup>)</li>
    * <li><b>Corrected Flow Factor for Efficiency:</b> Q<sub>corr,eff</sub> =
-   * Q<sub>eff</sub> /
-   * (c<sub>s</sub> D<sup>2</sup>)</li>
+   * Q<sub>eff</sub> / (c<sub>s</sub> D<sup>2</sup>)</li>
    * <li><b>Polytropic Efficiency:</b> &eta;<sub>p</sub> = &eta;<sub>p</sub></li>
    * <li><b>Machine Mach Number:</b> Ma = N D / c<sub>s</sub></li>
    * </ul>
@@ -81,6 +66,14 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * across different conditions, as described in Kader (2015) and the referenced
    * NeqSim discussion.
    * </p>
+   *
+   * @param chartConditions array with temperature, pressure, (optionally density,
+   *                        molecular weight)
+   * @param speed           array of speeds
+   * @param flow            2D array of flows
+   * @param head            2D array of heads
+   * @param flowPolyEff     2D array of flows for efficiency
+   * @param polyEff         2D array of polytropic efficiencies
    */
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] flowPolyEff, double[][] polyEff) {
@@ -114,7 +107,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * Creates and initializes a default fluid for compressor chart calculations.
    *
-   * @param chartConditions array with temperature and pressure
+   * @param chartConditions array with temperature, pressure, (optionally density,
+   *                        molecular weight)
    * @return the sound speed of the fluid
    */
   private double createDefaultFluid(double[] chartConditions) {
@@ -176,19 +170,16 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    *
    * <p>
    * The method first converts the input flow and speed to dimensionless numbers
-   * using the sound
-   * speed and impeller diameter:
+   * using the sound speed and impeller diameter:
    * <ul>
    * <li><b>Corrected Flow Factor:</b> Q<sub>corr</sub> = Q / (c<sub>s</sub>
    * D<sup>2</sup>)</li>
    * <li><b>Machine Mach Number:</b> Ma = N D / c<sub>s</sub></li>
    * </ul>
    * It then interpolates/extrapolates the polytropic head from the reference
-   * compressor curves in
-   * this dimensionless space, and finally converts the result back to physical
-   * units by multiplying
-   * with c<sub>s</sub><sup>2</sup>.
-   *
+   * compressor curves in this dimensionless space,
+   * and finally converts the result back to physical units by multiplying with
+   * c<sub>s</sub><sup>2</sup>.
    *
    * @param flow  volumetric flow rate
    * @param speed rotational speed
@@ -208,17 +199,14 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    *
    * <p>
    * The method first converts the input flow and speed to dimensionless numbers
-   * using the sound
-   * speed and impeller diameter:
+   * using the sound speed and impeller diameter:
    * <ul>
    * <li><b>Corrected Flow Factor:</b> Q<sub>corr</sub> = Q / (c<sub>s</sub>
    * D<sup>2</sup>)</li>
    * <li><b>Machine Mach Number:</b> Ma = N D / c<sub>s</sub></li>
    * </ul>
    * It then interpolates/extrapolates the polytropic efficiency from the
-   * reference compressor
-   * curves in this dimensionless space.
-   *
+   * reference compressor curves in this dimensionless space.
    *
    * @param flow  volumetric flow rate
    * @param speed rotational speed
