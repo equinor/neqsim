@@ -1322,7 +1322,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    *
    * @param compressorChart a {@link neqsim.process.equipment.compressor.CompressorChart} object
    */
-  public void setCompressorChart(CompressorChart compressorChart) {
+  public void setCompressorChart(CompressorChartInterface compressorChart) {
     this.compressorChart = compressorChart;
   }
 
