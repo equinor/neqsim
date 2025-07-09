@@ -106,6 +106,12 @@ public class SaturationPressure extends BasePVTsimulation {
     tempSystem.addComponent("i-pentane", 0.74);
     tempSystem.addComponent("n-pentane", 0.85);
     tempSystem.addComponent("n-hexane", 1.38);
+    
+    // Using the new method with boiling point and molar mass
+    // C7: TB ≈ 371.6 K, MW ≈ 0.109 kg/mol
+    tempSystem.addTBPfractionFromBoilingPoint("C7_new", 1.5, 371.6, 109.00 / 1000.0);
+    
+    // Traditional method for comparison
     tempSystem.addTBPfraction("C7", 1.5, 109.00 / 1000.0, 0.6912);
     tempSystem.addTBPfraction("C8", 1.69, 120.20 / 1000.0, 0.7255);
     tempSystem.addTBPfraction("C9", 1.14, 129.5 / 1000.0, 0.7454);

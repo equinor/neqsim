@@ -150,4 +150,18 @@ public interface TBPModelInterface {
    * @return a {@link java.lang.String} object
    */
   public String getName();
+  /**
+   * <p>
+   * calcDensityFromTBAndMW.
+   * </p>
+   * <p>
+   * Calculates density (specific gravity) from boiling point and molar mass using
+   * inverse TBP correlations.
+   * </p>
+   *
+   * @param boilingPoint boiling point in K
+   * @param molarMass molar mass in kg/mol
+   * @return density (specific gravity) relative to water
+   */
+  public double calcDensityFromTBAndMW(double boilingPoint, double molarMass);
 }

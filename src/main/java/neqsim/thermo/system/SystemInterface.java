@@ -336,6 +336,23 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
       double density, double criticalTemperature, double criticalPressure, double acentricFactor);
 
   /**
+   * <p>
+   * addTBPfractionFromBoilingPoint.
+   * </p>
+   * <p>
+   * Adds a TBP fraction using boiling point and molar mass. The density is calculated
+   * using the TBP characterization model.
+   * </p>
+   *
+   * @param componentName name of the TBP fraction component
+   * @param numberOfMoles number of moles to be added
+   * @param boilingPoint boiling point of the component in K
+   * @param molarMass molar mass of the component in kg/mol
+   */
+  public void addTBPfractionFromBoilingPoint(String componentName, double numberOfMoles, 
+      double boilingPoint, double molarMass);
+
+  /**
    * Add to component names.
    *
    * @param name Component name to add

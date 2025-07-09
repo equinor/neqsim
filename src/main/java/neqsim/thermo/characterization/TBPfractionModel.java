@@ -133,6 +133,15 @@ public class TBPfractionModel implements java.io.Serializable {
     public boolean isCalcm() {
       return calcm;
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public double calcDensityFromTBAndMW(double boilingPoint, double molarMass) {
+      // Default implementation using simple correlation
+      // TB = Math.pow((molarMass / 5.805e-5 * Math.pow(density, 0.9371)), 1.0 / 2.3776);
+      // Solving for density: density = Math.pow((molarMass / (5.805e-5 * Math.pow(TB, 2.3776))), 1.0 / 0.9371);
+      return Math.pow((molarMass * 1000.0 / (5.805e-5 * Math.pow(boilingPoint, 2.3776))), 1.0 / 0.9371);
+    }
   }
 
   /**
@@ -212,6 +221,51 @@ public class TBPfractionModel implements java.io.Serializable {
       return TPBracketcoefs[0] - penelouxC
           / (TPBracketcoefs[1] * neqsim.thermo.ThermodynamicConstantsInterface.R * TC / PC);
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public double calcDensityFromTBAndMW(double boilingPoint, double molarMass) {
+      // For molar mass in g/mol range, use polynomial correlation
+      double molarMassGmol = molarMass * 1000.0; // Convert kg/mol to g/mol
+      
+      if (molarMassGmol < 540) {
+        // For lighter fractions, use polynomial: TB = 2E-06 * MW^3 - 0.0035 * MW^2 + 2.4003 * MW + 171.74
+        // This is implicit, so we'll use iterative solution to find density that gives the right TB
+        double density = 0.7; // Initial guess
+        double tolerance = 1e-6;
+        int maxIterations = 100;
+        
+        for (int i = 0; i < maxIterations; i++) {
+          double calculatedTB = calcTB(molarMass, density);
+          double error = calculatedTB - boilingPoint;
+          
+          if (Math.abs(error) < tolerance) {
+            return density;
+          }
+          
+          // Simple derivative approximation for Newton-Raphson
+          double delta = 0.001;
+          double tbPlus = calcTB(molarMass, density + delta);
+          double derivative = (tbPlus - calculatedTB) / delta;
+          
+          if (Math.abs(derivative) > 1e-10) {
+            density = density - error / derivative;
+          } else {
+            density = density + (error > 0 ? -0.01 : 0.01); // Simple step if derivative is too small
+          }
+          
+          // Keep density in reasonable bounds
+          density = Math.max(0.5, Math.min(0.95, density));
+        }
+        return density;
+      } else {
+        // For heavier fractions: TB = 97.58 * MW^0.3323 * density^0.04609
+        // Solving for density: density = (TB / (97.58 * MW^0.3323))^(1/0.04609)
+        return Math.pow(boilingPoint / (97.58 * Math.pow(molarMassGmol, 0.3323)), 1.0 / 0.04609);
+      }
+    }
+
+    // ...existing code...
   }
 
   public class PedersenTBPModelSRKHeavyOil extends PedersenTBPModelSRK {

@@ -105,6 +105,13 @@ public class SystemPCSAFT extends SystemSrkEos {
 
   /** {@inheritDoc} */
   @Override
+  public void addTBPfractionFromBoilingPoint(String componentName, double numberOfMoles, 
+      double boilingPoint, double molarMass) {
+    super.addTBPfractionFromBoilingPoint(componentName, numberOfMoles, boilingPoint, molarMass);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public SystemPCSAFT clone() {
     SystemPCSAFT clonedSystem = null;
     try {
