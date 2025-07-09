@@ -33,7 +33,11 @@ public class CompressorChartKhader2015Test {
     comp1.setSpeed(11918);
 
 
-    double[] chartConditions = new double[] {25.0, 30.0, 1.0, 1.0};
+    // compressor chart conditions: temperature [C], pressure [bara], density [kg/m3], molecular
+    // weight [g/mol]
+    // Note: Only temperature and pressure are used by CompressorChartKhader2015, but values should
+    // be realistic.
+    double[] chartConditions = new double[] {25.0, 30.0, 50.0, 23.0};
 
     double[] speed = new double[] {12913, 12298, 11683, 11098, 10453, 9224, 8609, 8200};
     double[][] flow = new double[][] {

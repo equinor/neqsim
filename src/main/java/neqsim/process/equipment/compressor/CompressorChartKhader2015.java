@@ -108,10 +108,48 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * @return the sound speed of the fluid
    */
   private double createDefaultFluid(double[] chartConditions) {
+    // Set moles so that the molecular weight matches chartConditions[3] (if provided), by varying
+    // propane
+    double methaneFrac = 0.90;
+    double ethaneFrac = 0.05;
+    double propaneFrac = 0.05;
+    double targetMolWeight = (chartConditions.length > 3) ? chartConditions[3] : -1.0;
+
+    // Molar masses [g/mol]
+    double mwMethane = 16.043;
+    double mwEthane = 30.07;
+    double mwPropane = 44.097;
+
+    if (targetMolWeight > 0.0) {
+      // Solve for propaneFrac so that total mole fraction = 1.0 and molecular weight matches target
+      // MW = x1*mw1 + x2*mw2 + x3*mw3
+      // x1 = methaneFrac, x2 = ethaneFrac, x3 = 1 - x1 - x2
+      // targetMolWeight = x1*mw1 + x2*mw2 + (1-x1-x2)*mw3
+      // => x3 = (targetMolWeight - x1*mw1 - x2*mw2) / (mw3 - mw1 - mw2)
+      double x1 = methaneFrac;
+      double x2 = ethaneFrac;
+      double numerator = targetMolWeight - x1 * mwMethane - x2 * mwEthane;
+      double denominator = mwPropane - mwMethane - mwEthane;
+      double x3 = numerator / denominator;
+      // Clamp x3 to [0,1], adjust x1 and x2 if needed
+      if (x3 < 0.0)
+        x3 = 0.0;
+      if (x3 > 1.0)
+        x3 = 1.0;
+      double sum = x1 + x2 + x3;
+      // Normalize if sum != 1.0
+      x1 /= sum;
+      x2 /= sum;
+      x3 /= sum;
+      methaneFrac = x1;
+      ethaneFrac = x2;
+      propaneFrac = x3;
+    }
+
     fluid = new neqsim.thermo.system.SystemPrEos(273.15 + 20.0, 1.0e5);
-    fluid.addComponent("methane", 90.0);
-    fluid.addComponent("ethane", 5.0);
-    fluid.addComponent("propane", 2.0);
+    fluid.addComponent("methane", methaneFrac);
+    fluid.addComponent("ethane", ethaneFrac);
+    fluid.addComponent("propane", propaneFrac);
     fluid.init(0);
     fluid.setTemperature(chartConditions[0]);
     fluid.setPressure(chartConditions[1]);
