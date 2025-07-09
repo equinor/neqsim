@@ -1,5 +1,6 @@
 package neqsim.process.equipment.compressor;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -82,13 +83,12 @@ public class CompressorChartKhader2015Test {
     comp1.getCompressorChart().setHeadUnit("kJ/kg");
 
     double compspeed = 10000;
-    System.out
-        .println("flow " + stream_1.getFlowRate("m3/hr") + " m3/hr at speed " + compspeed + " rpm");
 
-    System.out.println("polytropic head "
-        + comp1.getCompressorChart().getPolytropicHead(stream_1.getFlowRate("m3/hr"), compspeed));
-    System.out.println("polytropic efficiency " + comp1.getCompressorChart()
-        .getPolytropicEfficiency(stream_1.getFlowRate("m3/hr"), compspeed));
+    Assertions.assertEquals(27.28216853,
+        comp1.getCompressorChart().getPolytropicHead(stream_1.getFlowRate("m3/hr"), compspeed),
+        0.01);
+    Assertions.assertEquals(80.39996136487, comp1.getCompressorChart()
+        .getPolytropicEfficiency(stream_1.getFlowRate("m3/hr"), compspeed), 0.01);
 
   }
 }
