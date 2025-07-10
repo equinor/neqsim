@@ -21,7 +21,7 @@ public class LagrangeMultiplierTest {
       system.addComponent("oxygen", 1.0);  
       system.addComponent("water", 0.0);
       
-      system.setMixingRule(1);
+      system.setMixingRule(2);
       system.init(0);
       
       // Create inlet stream
@@ -34,9 +34,27 @@ public class LagrangeMultiplierTest {
       // Run the reactor first to initialize
       reactor.run();
       
+      // Get outlet system first
+      SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
+      
+      // Print inlet and outlet mole lists for debugging
+      System.out.println("\n=== Inlet and Outlet Mole Lists ===");
+      java.util.List<Double> inletMoles = reactor.getInletMoles();
+      java.util.List<Double> outletMoles = reactor.getOutletMoles();
+      
+      System.out.println("Inlet moles: " + inletMoles);
+      System.out.println("Outlet moles: " + outletMoles);
+      
+      // Check which components are being processed
+      System.out.println("\nComponents in outlet system:");
+      for (int i = 0; i < outletSystem.getNumberOfComponents(); i++) {
+        String compName = outletSystem.getComponent(i).getComponentName();
+        double moles = outletSystem.getComponent(i).getNumberOfMolesInPhase();
+        System.out.printf("  %d. %s: %12.6e mol%n", i, compName, moles);
+      }
+      
       System.out.println("\n=== Final Component Concentrations (After Minimum Enforcement) ===");
       System.out.println("Note: All concentrations are enforced to be >= 1e-15 mol to prevent numerical issues");
-      SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
       for (int i = 0; i < outletSystem.getNumberOfComponents(); i++) {
         String compName = outletSystem.getComponent(i).getComponentName();
         double moles = outletSystem.getComponent(i).getNumberOfMolesInPhase();
@@ -133,12 +151,72 @@ public class LagrangeMultiplierTest {
       
       // Print updated objective function values
       System.out.println("\n=== Updated Objective Function Values (with λ = 1.0 for all elements) ===");
-            Map<String, Double> objectiveValues = reactor.getObjectiveFunctionValues();
+      Map<String, Double> objectiveValues = reactor.getObjectiveFunctionValues();
       
       for (Map.Entry<String, Double> entry : objectiveValues.entrySet()) {
         String componentName = entry.getKey();
         Double value = entry.getValue();
         System.out.printf("  %s: F = %10.6f%n", componentName, value);
+      }
+      
+      // Print detailed breakdown for water component
+      System.out.println("\n=== Detailed F Value Breakdown for Water ===");
+      System.out.println("F = Gf0 + RT*ln(phi) + RT*ln(yi) - lagrangeSum");
+      
+      // Get the outlet system to calculate individual terms
+      SystemInterface finalSystem = reactor.getOutletStream().getThermoSystem();
+      double T = finalSystem.getTemperature();
+      double RT = 8.314462618e-3 * T; // kJ/mol
+      
+      // Find water component
+      int waterIndex = -1;
+      for (int i = 0; i < finalSystem.getNumberOfComponents(); i++) {
+        if ("water".equals(finalSystem.getComponent(i).getComponentName())) {
+          waterIndex = i;
+          break;
+        }
+      }
+      
+      if (waterIndex >= 0) {
+        // Get water moles and calculate mole fraction
+        double waterMoles = finalSystem.getComponent(waterIndex).getNumberOfMolesInPhase();
+        double totalMoles = 0.0;
+        for (int i = 0; i < finalSystem.getNumberOfComponents(); i++) {
+          totalMoles += finalSystem.getComponent(i).getNumberOfMolesInPhase();
+        }
+        double yi = waterMoles / totalMoles;
+        
+        // Get Gibbs energy of formation (Gf0) - using deltaGf298 from database
+        // For water: H2O has elements [1,0,0,2,0,0] = [O,N,C,H,S,Ar]
+        // From database: deltaGf298 = -237.129 kJ/mol
+        double Gf0 = -237.129; // kJ/mol for water at 298K
+        
+        // Calculate fugacity coefficient (assume 1 for now)
+        double phi = 1.0;
+        
+        // Calculate Lagrange multiplier contribution
+        double lagrangeSum = 0.0;
+        // Water has 1 O and 2 H atoms
+        double[] waterElements = {1.0, 0.0, 0.0, 2.0, 0.0, 0.0}; // [O,N,C,H,S,Ar]
+        double[] currentLambdaValues = reactor.getLagrangianMultipliers();
+        for (int i = 0; i < waterElements.length; i++) {
+          lagrangeSum += currentLambdaValues[i] * waterElements[i];
+        }
+        
+        // Calculate individual terms
+        double RTlnPhi = RT * Math.log(phi);
+        double RTlnYi = RT * Math.log(yi);
+        double F = Gf0 + RTlnPhi + RTlnYi - lagrangeSum;
+        
+        System.out.printf("  Water component breakdown:%n");
+        System.out.printf("    Gf0 (Gibbs energy of formation): %12.6f kJ/mol%n", Gf0);
+        System.out.printf("    RT*ln(phi) (fugacity term):      %12.6f kJ/mol%n", RTlnPhi);
+        System.out.printf("    RT*ln(yi) (mole fraction term):  %12.6f kJ/mol%n", RTlnYi);
+        System.out.printf("    Lagrange contribution:          %12.6f kJ/mol%n", lagrangeSum);
+        System.out.printf("    Total F value:                  %12.6f kJ/mol%n", F);
+        System.out.printf("    (yi = %8.6f, phi = %8.6f, T = %8.2f K)%n", yi, phi, T);
+      } else {
+        System.out.println("  Water component not found in system");
       }
       
       // Print mole balance calculations
@@ -173,7 +251,7 @@ public class LagrangeMultiplierTest {
           Double elementOut = balance.get(element + "_OUT");
           Double elementDiff = balance.get(element + "_DIFF");
           
-          if (elementIn != null && Math.abs(elementIn) > 1e-10) {
+          if (elementIn != null && Math.abs(elementIn) > 1e-15) {
             System.out.printf("    %s: In = %8.6f, Out = %8.6f, Diff = %8.6f%n", 
                 element, elementIn, elementOut, elementDiff);
           }

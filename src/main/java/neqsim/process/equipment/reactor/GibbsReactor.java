@@ -7,14 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -47,7 +44,11 @@ public class GibbsReactor extends TwoPortEquipment {
   private Map<String, Double> finalMoles = new HashMap<>();
   private double[] elementMoleBalanceIn = new double[6]; // Total moles of each element in
   private double[] elementMoleBalanceOut = new double[6]; // Total moles of each element out
-  private double[] elementMoleBalanceDiff = new double[6]; // Difference (in - out) for each element
+  private double[] elementMoleBalanceDiff = new double[6]; // Difference (out - in) for each element
+  
+  // Mole lists for calculations
+  private List<Double> inlet_mole = new ArrayList<>();
+  private List<Double> outlet_mole = new ArrayList<>();
   
   // Objective minimization vector
   private double[] objectiveMinimizationVector;
@@ -139,13 +140,18 @@ public class GibbsReactor extends TwoPortEquipment {
   private void loadGibbsDatabase() {
     try {
       // Load from resources
-      InputStream inputStream = getClass().getResourceAsStream("/neqsim/data/GibbsReactDatabase.csv");
+      InputStream inputStream = getClass().getResourceAsStream("/data/GibbsReactDatabase/GibbsReactDatabase.csv");
       if (inputStream == null) {
         // Try alternative path
         inputStream = getClass().getResourceAsStream("/neqsim/data/GibbsReactDatabase/GibbsReactDatabase.csv");
       }
       if (inputStream == null) {
+        // Try another alternative path
+        inputStream = getClass().getResourceAsStream("/neqsim/data/GibbsReactDatabase.csv");
+      }
+      if (inputStream == null) {
         logger.warn("Could not find GibbsReactDatabase.csv in resources");
+        System.out.println("DEBUG: Could not find GibbsReactDatabase.csv in any of the expected paths");
         return;
       }
 
@@ -162,25 +168,29 @@ public class GibbsReactor extends TwoPortEquipment {
           continue;
         }
         
-        String[] parts = line.split(",");
-        if (parts.length >= 12) {
+        String[] parts = line.split(";");
+        if (parts.length >= 13) {
           try {
             final String molecule = parts[0].trim();
             
             // Parse element composition [O, N, C, H, S, Ar]
             double[] elements = new double[6];
             for (int i = 0; i < 6; i++) {
-              elements[i] = Double.parseDouble(parts[i + 1].trim());
+              String value = parts[i + 1].trim().replace(",", ".");
+              elements[i] = Double.parseDouble(value);
             }
             
             // Parse heat capacity coefficients
             double[] heatCapCoeffs = new double[4];
             for (int i = 0; i < 4; i++) {
-              heatCapCoeffs[i] = Double.parseDouble(parts[i + 7].trim());
+              String value = parts[i + 7].trim().replace(",", ".");
+              heatCapCoeffs[i] = Double.parseDouble(value);
             }
             
-            double deltaHf298 = Double.parseDouble(parts[11].trim());
-            double deltaGf298 = Double.parseDouble(parts[12].trim());
+            String deltaHf298Str = parts[11].trim().replace(",", ".");
+            String deltaGf298Str = parts[12].trim().replace(",", ".");
+            double deltaHf298 = Double.parseDouble(deltaHf298Str);
+            double deltaGf298 = Double.parseDouble(deltaGf298Str);
             
             GibbsComponent component = new GibbsComponent(molecule, elements, heatCapCoeffs, deltaHf298, deltaGf298);
             gibbsDatabase.add(component);
@@ -226,10 +236,14 @@ public class GibbsReactor extends TwoPortEquipment {
     
     // Store initial moles for each component
     initialMoles.clear();
+    inlet_mole.clear();
+    outlet_mole.clear();
+    
     for (int i = 0; i < system.getNumberOfComponents(); i++) {
       String compName = system.getComponent(i).getComponentName();
       double moles = system.getComponent(i).getNumberOfMolesInPhase();
       initialMoles.put(compName, moles);
+      inlet_mole.add(moles);
     }
     
     // Calculate initial element mole balance
@@ -240,7 +254,7 @@ public class GibbsReactor extends TwoPortEquipment {
       // Add all database species to system
       for (GibbsComponent component : gibbsDatabase) {
         try {
-          system.addComponent(component.getMolecule(), 1e-10);
+          system.addComponent(component.getMolecule(), 1e-15);
         } catch (Exception e) {
           logger.debug("Could not add component " + component.getMolecule() + ": " + e.getMessage());
         }
@@ -256,19 +270,25 @@ public class GibbsReactor extends TwoPortEquipment {
     // Store final moles for each component
     finalMoles.clear();
     processedComponents.clear();
+    outlet_mole.clear(); // Clear and repopulate with actual final values
+    
     for (int i = 0; i < system.getNumberOfComponents(); i++) {
       String compName = system.getComponent(i).getComponentName();
       double moles = system.getComponent(i).getNumberOfMolesInPhase();
       finalMoles.put(compName, moles);
       processedComponents.add(compName);
+      
+      // Update outlet_mole with actual final values, enforcing minimum
+      double outletMoles = Math.max(moles, 1e-15);
+      outlet_mole.add(outletMoles);
     }
     
     // Calculate final element mole balance
     calculateElementMoleBalance(system, elementMoleBalanceOut, false);
     
-    // Calculate difference
+    // Calculate difference (outlet - inlet)
     for (int i = 0; i < elementNames.length; i++) {
-      elementMoleBalanceDiff[i] = elementMoleBalanceIn[i] - elementMoleBalanceOut[i];
+      elementMoleBalanceDiff[i] = elementMoleBalanceOut[i] - elementMoleBalanceIn[i];
     }
     
     // Calculate objective function values
@@ -302,8 +322,8 @@ public class GibbsReactor extends TwoPortEquipment {
       
       if (initialGuess.containsKey(compName)) {
         double currentMoles = system.getComponent(i).getNumberOfMolesInPhase();
-        if (currentMoles < 1e-10) {
-          system.addComponent(i, 1e-10 - currentMoles, 0);
+        if (currentMoles < 1e-15) {
+          system.addComponent(i, 1e-15 - currentMoles, 0);
         }
       }
     }
@@ -328,10 +348,17 @@ public class GibbsReactor extends TwoPortEquipment {
       elementBalance[i] = 0.0;
     }
     
-    // Process each component
+    // Process each component using appropriate mole list
     for (int i = 0; i < system.getNumberOfComponents(); i++) {
       String compName = system.getComponent(i).getComponentName();
-      double moles = system.getComponent(i).getNumberOfMolesInPhase();
+      
+      // Use inlet_mole for input, outlet_mole for output
+      double moles;
+      if (isInput) {
+        moles = (i < inlet_mole.size()) ? inlet_mole.get(i) : 0.0;
+      } else {
+        moles = (i < outlet_mole.size()) ? outlet_mole.get(i) : 0.0;
+      }
       
       // Get element composition from database
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
@@ -355,10 +382,18 @@ public class GibbsReactor extends TwoPortEquipment {
     double T = system.getTemperature();
     double RT = 8.314462618e-3 * T; // kJ/mol
     
+    // Calculate total moles from outlet_mole list
+    double totalMoles = 0.0;
+    for (Double moles : outlet_mole) {
+      totalMoles += moles;
+    }
+    
     // Calculate for each component
     for (int i = 0; i < system.getNumberOfComponents(); i++) {
       String compName = system.getComponent(i).getComponentName();
-      double moles = system.getComponent(i).getNumberOfMolesInPhase();
+      
+      // Use outlet_mole for formulas
+      double moles = (i < outlet_mole.size()) ? outlet_mole.get(i) : 1e-15;
       
       // Get Gibbs component
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
@@ -370,10 +405,6 @@ public class GibbsReactor extends TwoPortEquipment {
         double phi = 1.0;
         
         // Calculate mole fraction
-        double totalMoles = 0.0;
-        for (int j = 0; j < system.getNumberOfComponents(); j++) {
-          totalMoles += system.getComponent(j).getNumberOfMolesInPhase();
-        }
         double yi = moles / totalMoles;
         
         // Calculate Lagrange multiplier contribution
@@ -499,30 +530,33 @@ public class GibbsReactor extends TwoPortEquipment {
   public Map<String, Map<String, Double>> getDetailedMoleBalance() {
     Map<String, Map<String, Double>> detailedBalance = new HashMap<>();
     
-    for (String compName : processedComponents) {
+    for (int i = 0; i < processedComponents.size(); i++) {
+      String compName = processedComponents.get(i);
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
-      Double molesIn = initialMoles.get(compName);
-      Double molesOut = finalMoles.get(compName);
       
-      if (comp != null && molesIn != null && molesOut != null) {
+      // Use inlet_mole and outlet_mole lists
+      Double molesIn = (i < inlet_mole.size()) ? inlet_mole.get(i) : 0.0;
+      Double molesOut = (i < outlet_mole.size()) ? outlet_mole.get(i) : 1e-15;
+      
+      if (comp != null) {
         Map<String, Double> componentBalance = new HashMap<>();
         final double[] elements = comp.getElements(); // [O, N, C, H, S, Ar]
         
         // Store initial and final moles
         componentBalance.put("MOLES_IN", molesIn);
         componentBalance.put("MOLES_OUT", molesOut);
-        componentBalance.put("MOLES_DIFF", molesIn - molesOut);
+        componentBalance.put("MOLES_DIFF", molesOut - molesIn); // outlet - inlet for mass balance
         
-        // Calculate element contributions
-        for (int i = 0; i < elementNames.length; i++) {
-          double elementIn = elements[i] * molesIn;
-          double elementOut = elements[i] * molesOut;
-          double elementDiff = elementIn - elementOut;
+        // Calculate element contributions using outlet - inlet difference
+        for (int j = 0; j < elementNames.length; j++) {
+          double elementIn = elements[j] * molesIn;
+          double elementOut = elements[j] * molesOut;
+          double elementDiff = elementOut - elementIn; // outlet - inlet
           
-          componentBalance.put(elementNames[i] + "_IN", elementIn);
-          componentBalance.put(elementNames[i] 
+          componentBalance.put(elementNames[j] + "_IN", elementIn);
+          componentBalance.put(elementNames[j] 
               + "_OUT", elementOut);
-          componentBalance.put(elementNames[i] 
+          componentBalance.put(elementNames[j] 
               + "_DIFF", elementDiff);
         }
         
@@ -611,18 +645,18 @@ public class GibbsReactor extends TwoPortEquipment {
     double T = system.getTemperature();
     double RT = 8.314462618e-3 * T; // kJ/mol
     
-    // Calculate total moles for mole fraction derivatives
+    // Calculate total moles for mole fraction derivatives using outlet_mole
     double totalMoles = 0.0;
-    for (String compName : processedComponents) {
-      int compIndex = system.getPhase(0).getComponent(compName).getComponentNumber();
-      totalMoles += system.getComponent(compIndex).getNumberOfMolesInPhase();
+    for (Double moles : outlet_mole) {
+      totalMoles += moles;
     }
     
     // Fill Jacobian matrix
     for (int i = 0; i < numComponents; i++) {
       String compI = processedComponents.get(i);
-      int compIndexI = system.getPhase(0).getComponent(compI).getComponentNumber();
-      double ni = system.getComponent(compIndexI).getNumberOfMolesInPhase();
+      
+      // Use outlet_mole for calculations
+      double ni = (i < outlet_mole.size()) ? outlet_mole.get(i) : 1e-15;
       
       for (int j = 0; j < numComponents; j++) {
         if (i == j) {
@@ -818,6 +852,62 @@ public class GibbsReactor extends TwoPortEquipment {
       // Reinitialize the system after modifying concentrations
       system.init(0);
       logger.info("System reinitialized after enforcing minimum concentrations");
+    }
+  }
+  
+  /**
+   * Get the inlet mole list.
+   *
+   * @return List of inlet moles for each component
+   */
+  public List<Double> getInletMole() {
+    return new ArrayList<>(inlet_mole);
+  }
+
+  /**
+   * Get the outlet mole list.
+   *
+   * @return List of outlet moles for each component (with 0 values replaced by 1e-15)
+   */
+  public List<Double> getOutletMole() {
+    return new ArrayList<>(outlet_mole);
+  }
+
+  /**
+   * Get the inlet mole list for debugging.
+   *
+   * @return List of inlet moles
+   */
+  public List<Double> getInletMoles() {
+    return new ArrayList<>(inlet_mole);
+  }
+
+  /**
+   * Get the outlet mole list for debugging.
+   *
+   * @return List of outlet moles
+   */
+  public List<Double> getOutletMoles() {
+    return new ArrayList<>(outlet_mole);
+  }
+  
+  /**
+   * Print loaded database components for debugging.
+   */
+  public void printDatabaseComponents() {
+    System.out.println("\n=== Loaded Database Components ===");
+    System.out.println("Total components in database: " + gibbsDatabase.size());
+    
+    for (GibbsComponent comp : gibbsDatabase) {
+      String molecule = comp.getMolecule();
+      double[] elements = comp.getElements();
+      System.out.printf("  %s: O=%.1f, N=%.1f, C=%.1f, H=%.1f, S=%.1f, Ar=%.1f%n", 
+          molecule, elements[0], elements[1], elements[2], elements[3], elements[4], elements[5]);
+    }
+    
+    System.out.println("\nComponent map keys:");
+    for (String key : componentMap.keySet()) {
+      System.out.println("  '" + key + "'");
     }
   }
 }
