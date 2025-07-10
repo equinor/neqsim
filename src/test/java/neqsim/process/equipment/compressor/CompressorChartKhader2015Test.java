@@ -21,7 +21,6 @@ public class CompressorChartKhader2015Test {
     testFluid.addComponent("i-pentane", 0.056);
     testFluid.addComponent("n-pentane", 0.053);
     testFluid.setMixingRule(2);
-    testFluid.setMultiPhaseCheck(true);
 
     testFluid.setTemperature(24.0, "C");
     testFluid.setPressure(48.0, "bara");
@@ -31,14 +30,15 @@ public class CompressorChartKhader2015Test {
     stream_1.run();
     Compressor comp1 = new Compressor("cmp1", stream_1);
     comp1.setUsePolytropicCalc(true);
-    comp1.setSpeed(11918);
+    double compspeed = 10000;
+    comp1.setSpeed(compspeed);
 
 
     // compressor chart conditions: temperature [C], pressure [bara], density [kg/m3], molecular
     // weight [g/mol]
     // Note: Only temperature and pressure are used by CompressorChartKhader2015, but values should
     // be realistic.
-    double[] chartConditions = new double[] {25.0, 30.0, 50.0, 23.0};
+    double[] chartConditions = new double[] {25.0, 50.0, 50.0, 20.0};
 
     double[] speed = new double[] {12913, 12298, 11683, 11098, 10453, 9224, 8609, 8200};
     double[][] flow = new double[][] {
@@ -77,18 +77,56 @@ public class CompressorChartKhader2015Test {
         {78.0924334304045, 80.9353551568667, 80.7904437766234, 78.8639325223295, 75.2170936751143,
             70.3105081673411, 65.5507568533569, 61.0391468300337}};
 
-    CompressorChartKhader2015 compChart = new CompressorChartKhader2015(stream_1.getFluid(), 0.5);
+    CompressorChartKhader2015 compChart = new CompressorChartKhader2015(stream_1, 0.9);
     compChart.setCurves(chartConditions, speed, flow, head, flow, polyEff);
     comp1.setCompressorChart(compChart);
     comp1.getCompressorChart().setHeadUnit("kJ/kg");
 
-    double compspeed = 10000;
 
-    Assertions.assertEquals(27.28216853,
+
+    Assertions.assertEquals(2431.46694, stream_1.getFlowRate("m3/hr"), 0.01);
+    Assertions.assertEquals(80.998042, comp1.getCompressorChart()
+        .getPolytropicEfficiency(stream_1.getFlowRate("m3/hr"), compspeed), 0.01);
+    Assertions.assertEquals(30.2943949,
         comp1.getCompressorChart().getPolytropicHead(stream_1.getFlowRate("m3/hr"), compspeed),
         0.01);
-    Assertions.assertEquals(80.39996136487, comp1.getCompressorChart()
+
+
+    Assertions.assertEquals(9.230843374,
+        compChart.getCorrectedCurves(chartConditions, speed, flow, head, polyEff, polyEff)
+            .get(0).correctedFlowFactor[0],
+        0.0001);
+
+    Assertions.assertEquals(1752.150749, compChart.getRealCurvesForFluid().get(0).flow[0], 0.0001);
+    Assertions.assertEquals(36.8991231355, compChart.getRealCurvesForFluid().get(0).head[0],
+        0.0001);
+
+    testFluid = new SystemSrkEos(298.15, 50.0);
+
+    testFluid.addComponent("methane", 8.35736E-1);
+    testFluid.addComponent("ethane", 4.64298E-2);
+    testFluid.addComponent("propane", 1.17835E-1);
+    testFluid.setMixingRule(2);
+
+    testFluid.setTemperature(25.0, "C");
+    testFluid.setPressure(50.0, "bara");
+    testFluid.setTotalFlowRate(3.0, "MSm3/day");
+
+    stream_1.setFluid(testFluid);
+    stream_1.run();
+    // stream_1.getFluid().prettyPrint();
+
+    compChart = new CompressorChartKhader2015(stream_1.getFluid(), 0.9);
+    compChart.setCurves(chartConditions, speed, flow, head, flow, polyEff);
+    comp1.setCompressorChart(compChart);
+    comp1.getCompressorChart().setHeadUnit("kJ/kg");
+
+    Assertions.assertEquals(2244.86217, stream_1.getFlowRate("m3/hr"), 0.01);
+    Assertions.assertEquals(81.0611169, comp1.getCompressorChart()
         .getPolytropicEfficiency(stream_1.getFlowRate("m3/hr"), compspeed), 0.01);
+    Assertions.assertEquals(28.463254446,
+        comp1.getCompressorChart().getPolytropicHead(stream_1.getFlowRate("m3/hr"), compspeed),
+        0.01);
 
   }
 }
