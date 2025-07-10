@@ -1,0 +1,276 @@
+package neqsim.process.equipment.reactor;
+
+import java.util.Map;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+
+/**
+ * Test class to demonstrate Lagrange multiplier contributions.
+ */
+public class LagrangeMultiplierTest {
+  public static void main(String[] args) {
+    System.out.println("=== Lagrange Multiplier Contributions Test ===");
+    
+    try {
+      // Create a system with hydrogen, oxygen, and water at 298K and 1 bar
+      SystemInterface system = new SystemSrkEos(298.15, 1.0);
+      
+      // Add components
+      system.addComponent("hydrogen", 1.0);
+      system.addComponent("oxygen", 1.0);  
+      system.addComponent("water", 0.0);
+      
+      system.setMixingRule(1);
+      system.init(0);
+      
+      // Create inlet stream
+      Stream inletStream = new Stream("Inlet", system);
+      
+      // Create GibbsReactor
+      GibbsReactor reactor = new GibbsReactor("TestReactor", inletStream);
+      reactor.setUseAllDatabaseSpecies(false); // Use only system components initially
+      
+      // Run the reactor first to initialize
+      reactor.run();
+      
+      System.out.println("\n=== Final Component Concentrations (After Minimum Enforcement) ===");
+      System.out.println("Note: All concentrations are enforced to be >= 1e-15 mol to prevent numerical issues");
+      SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
+      for (int i = 0; i < outletSystem.getNumberOfComponents(); i++) {
+        String compName = outletSystem.getComponent(i).getComponentName();
+        double moles = outletSystem.getComponent(i).getNumberOfMolesInPhase();
+        System.out.printf("  %s: %12.6e mol", compName, moles);
+        if (moles <= 1e-15) {
+          System.out.print(" (enforced minimum)");
+        }
+        System.out.println();
+      }
+      
+      System.out.println("\n=== Initial Lagrange Multipliers (all zeros) ===");
+      double[] lambdaValues = reactor.getLagrangianMultipliers();
+      String[] elementNames = reactor.getElementNames();
+      for (int i = 0; i < lambdaValues.length; i++) {
+        System.out.println("  λ[" + elementNames[i] + "] = " + lambdaValues[i]);
+      }
+      
+
+      // Get and print detailed contributions
+      System.out.println("\n=== Detailed Lagrange Multiplier Contributions by Component ===");
+      Map<String, Map<String, Double>> detailedContributions = reactor.getLagrangeMultiplierContributions();
+      
+      for (Map.Entry<String, Map<String, Double>> componentEntry : detailedContributions.entrySet()) {
+        String componentName = componentEntry.getKey();
+        Map<String, Double> contributions = componentEntry.getValue();
+        
+        System.out.println("\n" + componentName + ":");
+        
+        // Print individual element contributions
+        for (int i = 0; i < elementNames.length; i++) {
+          String element = elementNames[i];
+          Double contribution = contributions.get(element);
+          if (contribution != null) {
+            System.out.printf("    %s: %8.4f (elements: %.1f × λ = %.1f × 1.0)%n", 
+                element, contribution, contribution, contribution);
+          }
+        }
+        
+        // Print total
+        Double total = contributions.get("TOTAL");
+        if (total != null) {
+          System.out.printf("    TOTAL: %8.4f%n", total);
+        }
+      }
+      
+      // Print objective function values
+      System.out.println("\n=== Objective Function Values F = Gf0 + RT*ln(phi) + RT*ln(yi) - lagrangeSum ===");
+      
+  
+      
+      // Set all Lagrange multipliers to 1 for testing
+      System.out.println("\n=== Setting all Lagrange multipliers to 1.0 ===");
+      for (int i = 0; i < elementNames.length; i++) {
+        reactor.setLagrangeMultiplier(i, 1.0);
+        System.out.println("  Set λ[" + elementNames[i] + "] = 1.0");
+      }
+      
+      // Print updated multipliers to verify they were set
+      System.out.println("\n=== Verifying Updated Lagrange Multipliers ===");
+      lambdaValues = reactor.getLagrangianMultipliers();
+      for (int i = 0; i < lambdaValues.length; i++) {
+        System.out.println("  λ[" + elementNames[i] + "] = " + lambdaValues[i]);
+      }
+      
+      // Get updated contributions (should recalculate with new lambda values)
+      System.out.println("\n=== Updated Lagrange Multiplier Contributions (with λ = 1.0) ===");
+      detailedContributions = reactor.getLagrangeMultiplierContributions();
+      
+      for (Map.Entry<String, Map<String, Double>> componentEntry : detailedContributions.entrySet()) {
+        String componentName = componentEntry.getKey();
+        Map<String, Double> contributions = componentEntry.getValue();
+        
+        System.out.println("\n" + componentName + ":");
+        
+        // Print individual element contributions
+        for (int i = 0; i < elementNames.length; i++) {
+          String element = elementNames[i];
+          Double contribution = contributions.get(element);
+          if (contribution != null && Math.abs(contribution) > 1e-10) {
+            System.out.printf("    %s: %8.4f%n", element, contribution);
+          }
+        }
+        
+        // Print total
+        Double total = contributions.get("TOTAL");
+        if (total != null) {
+          System.out.printf("    TOTAL: %8.4f%n", total);
+        }
+      }
+      
+      // Re-run to recalculate with new lambda values
+      reactor.run();
+
+      
+      // Print updated objective function values
+      System.out.println("\n=== Updated Objective Function Values (with λ = 1.0 for all elements) ===");
+            Map<String, Double> objectiveValues = reactor.getObjectiveFunctionValues();
+      
+      for (Map.Entry<String, Double> entry : objectiveValues.entrySet()) {
+        String componentName = entry.getKey();
+        Double value = entry.getValue();
+        System.out.printf("  %s: F = %10.6f%n", componentName, value);
+      }
+      
+      // Print mole balance calculations
+      System.out.println("\n=== Element Mole Balance Calculations ===");
+      double[] moleBalanceIn = reactor.getElementMoleBalanceIn();
+      double[] moleBalanceOut = reactor.getElementMoleBalanceOut();
+      double[] moleBalanceDiff = reactor.getElementMoleBalanceDiff();
+      
+      System.out.println("Element   | Moles In | Moles Out | Difference (In-Out)");
+      System.out.println("----------|----------|-----------|-------------------");
+      for (int i = 0; i < elementNames.length; i++) {
+        System.out.printf("%-9s | %8.6f | %9.6f | %11.6f%n", 
+            elementNames[i], moleBalanceIn[i], moleBalanceOut[i], moleBalanceDiff[i]);
+      }
+      
+      // Print detailed mole balance for each component
+      System.out.println("\n=== Detailed Component Mole Balance ===");
+      Map<String, Map<String, Double>> detailedBalance = reactor.getDetailedMoleBalance();
+      
+      for (Map.Entry<String, Map<String, Double>> componentEntry : detailedBalance.entrySet()) {
+        String componentName = componentEntry.getKey();
+        Map<String, Double> balance = componentEntry.getValue();
+        
+        System.out.println("\n" + componentName + ":");
+        System.out.printf("  Total Moles: In = %8.6f, Out = %8.6f, Diff = %8.6f%n", 
+            balance.get("MOLES_IN"), balance.get("MOLES_OUT"), balance.get("MOLES_DIFF"));
+        
+        // Show element-wise breakdown for this component
+        System.out.println("  Element breakdown:");
+        for (String element : elementNames) {
+          Double elementIn = balance.get(element + "_IN");
+          Double elementOut = balance.get(element + "_OUT");
+          Double elementDiff = balance.get(element + "_DIFF");
+          
+          if (elementIn != null && Math.abs(elementIn) > 1e-10) {
+            System.out.printf("    %s: In = %8.6f, Out = %8.6f, Diff = %8.6f%n", 
+                element, elementIn, elementOut, elementDiff);
+          }
+        }
+      }
+      
+      // Print objective minimization vector
+      System.out.println("\n=== Objective Minimization Vector [F values + Mass Balance constraints] ===");
+      double[] objVector = reactor.getObjectiveMinimizationVector();
+      java.util.List<String> objLabels = reactor.getObjectiveMinimizationVectorLabels();
+      
+      System.out.println("Vector has " + objVector.length + " elements:");
+      for (int i = 0; i < objVector.length && i < objLabels.size(); i++) {
+        System.out.printf("  %2d. %-15s = %12.8f%n", i+1, objLabels.get(i), objVector[i]);
+      }
+      
+      // Print Jacobian matrix
+      System.out.println("\n=== Jacobian Matrix ===");
+      double[][] jacobian = reactor.getJacobianMatrix();
+      java.util.List<String> rowLabels = reactor.getJacobianRowLabels();
+      java.util.List<String> colLabels = reactor.getJacobianColLabels();
+      
+      if (jacobian.length > 0) {
+        System.out.println("Matrix size: " + jacobian.length + "x" + jacobian[0].length);
+        
+        // Print column headers
+        System.out.print("         ");
+        for (String colLabel : colLabels) {
+          System.out.printf("%15s", colLabel);
+        }
+        System.out.println();
+        
+        // Print separator
+        System.out.print("         ");
+        for (int j = 0; j < colLabels.size(); j++) {
+          System.out.print("---------------");
+        }
+        System.out.println();
+        
+        // Print matrix rows in scientific notation
+        for (int i = 0; i < jacobian.length && i < rowLabels.size(); i++) {
+          System.out.printf("%-8s ", rowLabels.get(i));
+          for (int j = 0; j < jacobian[i].length; j++) {
+            if (Math.abs(jacobian[i][j]) > 1e-15) {
+              System.out.printf("%15.6e", jacobian[i][j]);
+            } else {
+              System.out.printf("%15s", "0.000000e+00");
+            }
+          }
+          System.out.println();
+        }
+      } else {
+        System.out.println("Jacobian matrix is empty");
+      }
+
+      // Print Jacobian inverse matrix
+      System.out.println("\n=== Jacobian Inverse Matrix ===");
+      double[][] jacobianInverse = reactor.getJacobianInverse();
+      
+      if (jacobianInverse != null && jacobianInverse.length > 0) {
+        System.out.println("Inverse matrix size: " + jacobianInverse.length + "x" + jacobianInverse[0].length);
+        
+        // Print column headers
+        System.out.print("         ");
+        for (String colLabel : colLabels) {
+          System.out.printf("%15s", colLabel);
+        }
+        System.out.println();
+        
+        // Print separator
+        System.out.print("         ");
+        for (int j = 0; j < colLabels.size(); j++) {
+          System.out.print("---------------");
+        }
+        System.out.println();
+        
+        // Print inverse matrix rows in scientific notation
+        for (int i = 0; i < jacobianInverse.length && i < rowLabels.size(); i++) {
+          System.out.printf("%-8s ", rowLabels.get(i));
+          for (int j = 0; j < jacobianInverse[i].length; j++) {
+            if (Math.abs(jacobianInverse[i][j]) > 1e-15) {
+              System.out.printf("%15.6e", jacobianInverse[i][j]);
+            } else {
+              System.out.printf("%15s", "0.000000e+00");
+            }
+          }
+          System.out.println();
+        }
+      } else {
+        System.out.println("Jacobian inverse matrix could not be calculated (matrix is singular or empty)");
+      }
+
+      System.out.println("\nTest completed successfully!");
+      
+    } catch (Exception e) {
+      System.err.println("Error: " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
+}
