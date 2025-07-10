@@ -2,7 +2,9 @@ package neqsim.process.equipment.compressor;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * * CompressorChartKader2015 is a class that implements the compressor chart calculations based on
@@ -16,7 +18,9 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CompressorChartKhader2015.class);
   SystemInterface fluid = null;
-  double impellerOuterDiameter = 1.0;
+  SystemInterface ref_fluid = null;
+  StreamInterface stream = null;
+  double impellerOuterDiameter = 0.3;
 
   /**
    * Constructs a CompressorChartKhader2015 object with the specified fluid and impeller diameter.
@@ -27,6 +31,18 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   public CompressorChartKhader2015(SystemInterface fluid, double impellerdiam) {
     super();
     this.fluid = fluid;
+    this.impellerOuterDiameter = impellerdiam;
+  }
+
+  /**
+   * Constructs a CompressorChartKhader2015 object with the specified stream and impeller diameter.
+   *
+   * @param stream the stream for the compressor
+   * @param impellerdiam the outer diameter of the impeller
+   */
+  public CompressorChartKhader2015(StreamInterface stream, double impellerdiam) {
+    super();
+    this.stream = stream;
     this.impellerOuterDiameter = impellerdiam;
   }
 
@@ -66,8 +82,12 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    */
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] flowPolyEff, double[][] polyEff) {
+    if (fluid == null) {
+      fluid = stream.getFluid();
+    }
+    ref_fluid = createDefaultFluid(chartConditions);
 
-    double fluidSoundSpeed = createDefaultFluid(chartConditions);
+    double fluidSoundSpeed = ref_fluid.getPhase(0).getSoundSpeed();
 
     double[] machNumberCorrectedHeadFactor = new double[speed.length];
     double[] machNumberCorrectedFlowFactor = new double[speed.length];
@@ -83,7 +103,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
             flowPolyEff[i][j] / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
         polEff[j] = polyEff[i][j];
       }
-      double machineMachNumber = speed[i] * impellerOuterDiameter / fluidSoundSpeed;
+      double machineMachNumber = speed[i] / 60.0 * impellerOuterDiameter / fluidSoundSpeed;
 
       CompressorCurve curve = new CompressorCurve(machineMachNumber, machNumberCorrectedFlowFactor,
           machNumberCorrectedHeadFactor, machNumberCorrectedFlowFactorEfficiency, polEff);
@@ -95,12 +115,79 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
+   * Returns a list of corrected compressor curves (dimensionless) based on the provided chart
+   * conditions and map data. Each CorrectedCurve contains the machine Mach number, corrected flow
+   * factor, corrected head factor, corrected flow factor for efficiency, and polytropic efficiency
+   * arrays for each speed.
+   *
+   * @param chartConditions array with temperature, pressure, (optionally density, molecular weight)
+   * @param speed array of speeds
+   * @param flow 2D array of flows
+   * @param head 2D array of heads
+   * @param flowPolyEff 2D array of flows for efficiency
+   * @param polyEff 2D array of polytropic efficiencies
+   * @return List of CorrectedCurve objects containing dimensionless map data
+   */
+  public java.util.List<CorrectedCurve> getCorrectedCurves(double[] chartConditions, double[] speed,
+      double[][] flow, double[][] head, double[][] flowPolyEff, double[][] polyEff) {
+    SystemInterface ref_fluid = createDefaultFluid(chartConditions);
+    double fluidSoundSpeed = ref_fluid.getPhase(0).getSoundSpeed();
+    java.util.List<CorrectedCurve> correctedCurves = new java.util.ArrayList<>();
+    for (int i = 0; i < speed.length; i++) {
+      double[] machNumberCorrectedHeadFactor = new double[flow[i].length];
+      double[] machNumberCorrectedFlowFactor = new double[flow[i].length];
+      double[] machNumberCorrectedFlowFactorEfficiency = new double[flow[i].length];
+      double[] polEff = new double[flow[i].length];
+      for (int j = 0; j < flow[i].length; j++) {
+        machNumberCorrectedHeadFactor[j] = head[i][j] / fluidSoundSpeed / fluidSoundSpeed;
+        machNumberCorrectedFlowFactor[j] =
+            flow[i][j] / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
+        machNumberCorrectedFlowFactorEfficiency[j] =
+            flowPolyEff[i][j] / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
+        polEff[j] = polyEff[i][j];
+      }
+      double machineMachNumber = speed[i] / 60.0 * impellerOuterDiameter / fluidSoundSpeed;
+      correctedCurves.add(new CorrectedCurve(machineMachNumber, machNumberCorrectedFlowFactor,
+          machNumberCorrectedHeadFactor, machNumberCorrectedFlowFactorEfficiency, polEff));
+    }
+    return correctedCurves;
+  }
+
+  /**
+   * Converts a list of dimensionless (corrected) compressor curves to real (physical units) curves
+   * for a given fluid and speeds.
+   *
+   * @return List of RealCurve objects containing physical units map data
+   */
+  public java.util.List<RealCurve> getRealCurvesForFluid() {
+    double fluidSoundSpeed = fluid.getSoundSpeed();
+    // System.out.println("Sound speed of actual fluid: " + fluidSoundSpeed + " m/s");
+    java.util.List<RealCurve> realCurves = new java.util.ArrayList<>();
+    for (int i = 0; i < chartValues.size(); i++) {
+      CompressorCurve corr = chartValues.get(i);
+      double[] flow = new double[corr.flow.length];
+      double[] head = new double[corr.head.length];
+      double[] flowPolyEff = new double[corr.flowPolytropicEfficiency.length];
+      double[] polEff = new double[corr.polytropicEfficiency.length];
+      for (int j = 0; j < flow.length; j++) {
+        flow[j] = corr.flow[j] * fluidSoundSpeed * impellerOuterDiameter * impellerOuterDiameter;
+        head[j] = corr.head[j] * fluidSoundSpeed * fluidSoundSpeed;
+        flowPolyEff[j] = corr.flowPolytropicEfficiency[j] * fluidSoundSpeed * impellerOuterDiameter
+            * impellerOuterDiameter;
+        polEff[j] = corr.polytropicEfficiency[j];
+      }
+      realCurves.add(new RealCurve(chartSpeeds.get(i), flow, head, flowPolyEff, polEff));
+    }
+    return realCurves;
+  }
+
+  /**
    * Creates and initializes a default fluid for compressor chart calculations.
    *
    * @param chartConditions array with temperature, pressure, (optionally density, molecular weight)
    * @return the sound speed of the fluid
    */
-  private double createDefaultFluid(double[] chartConditions) {
+  private SystemInterface createDefaultFluid(double[] chartConditions) {
     // Set moles so that the molecular weight matches chartConditions[3] (if
     // provided), by varying
     // propane
@@ -114,44 +201,53 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     double mwEthane = 30.07;
     double mwPropane = 44.097;
 
+    double x1 = methaneFrac;
+    double x2 = ethaneFrac;
+    double x3 = 1.0 - x1 - x2;
+
+    // Scale all to match targetMolWeight
     if (targetMolWeight > 0.0) {
-      // Solve for propaneFrac so that total mole fraction = 1.0 and molecular weight
-      // matches target
-      // MW = x1*mw1 + x2*mw2 + x3*mw3
-      // x1 = methaneFrac, x2 = ethaneFrac, x3 = 1 - x1 - x2
-      // targetMolWeight = x1*mw1 + x2*mw2 + (1-x1-x2)*mw3
-      // => x3 = (targetMolWeight - x1*mw1 - x2*mw2) / (mw3 - mw1 - mw2)
-      double x1 = methaneFrac;
-      double x2 = ethaneFrac;
-      double numerator = targetMolWeight - x1 * mwMethane - x2 * mwEthane;
-      double denominator = mwPropane - mwMethane - mwEthane;
-      double x3 = numerator / denominator;
-      // Clamp x3 to [0,1], adjust x1 and x2 if needed
-      if (x3 < 0.0)
-        x3 = 0.0;
-      if (x3 > 1.0)
-        x3 = 1.0;
-      double sum = x1 + x2 + x3;
-      // Normalize if sum != 1.0
-      x1 /= sum;
-      x2 /= sum;
-      x3 /= sum;
+      // Scale all fractions proportionally while preserving ratios between methane/ethane
+      // Let x1 = a * methaneFrac, x2 = a * ethaneFrac, x3 = 1 - x1 - x2
+      double a = (targetMolWeight - mwPropane)
+          / (methaneFrac * (mwMethane - mwPropane) + ethaneFrac * (mwEthane - mwPropane));
+      x1 = a * methaneFrac;
+      x2 = a * ethaneFrac;
+      x3 = 1.0 - x1 - x2;
+      // If x3 < 0, something is off
+      if (x3 < 0.0 || x3 > 1.0) {
+        logger.warn("Target molecular weight not achievable with given component ratios.");
+        x3 = Math.max(0.0, Math.min(1.0, x3));
+        double total = x1 + x2 + x3;
+        x1 /= total;
+        x2 /= total;
+        x3 /= total;
+      }
       methaneFrac = x1;
       ethaneFrac = x2;
       propaneFrac = x3;
     }
-
-    fluid = new neqsim.thermo.system.SystemPrEos(273.15 + 20.0, 1.0e5);
-    fluid.addComponent("methane", methaneFrac);
-    fluid.addComponent("ethane", ethaneFrac);
-    fluid.addComponent("propane", propaneFrac);
-    fluid.init(0);
-    fluid.setTemperature(chartConditions[0]);
-    fluid.setPressure(chartConditions[1]);
-    fluid.setMixingRule("classic");
-    fluid.init(0);
-    fluid.initThermoProperties();
-    return fluid.getSoundSpeed();
+    SystemInterface localfluid = null;
+    try {
+      localfluid = (SystemInterface) fluid.getClass().getConstructor().newInstance();
+    } catch (Exception e) {
+      logger.error("Error creating fluid instance: ", e);
+      throw new RuntimeException("Failed to create fluid instance", e);
+    }
+    localfluid.addComponent("methane", methaneFrac);
+    localfluid.addComponent("ethane", ethaneFrac);
+    localfluid.addComponent("propane", propaneFrac);
+    localfluid.setMixingRule("classic");
+    localfluid.init(0);
+    localfluid.setTemperature(chartConditions[0], "C");
+    localfluid.setPressure(chartConditions[1], "bara");
+    ThermodynamicOperations ops = new ThermodynamicOperations(localfluid);
+    ops.TPflash();
+    localfluid.initThermoProperties();
+    // System.out.println(
+    // "Sound speed of refernece fluid: " + localfluid.getPhase(0).getSoundSpeed() + " m/s");
+    // localfluid.prettyPrint();
+    return localfluid;
   }
 
   /**
@@ -174,12 +270,18 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    */
   @Override
   public double getPolytropicHead(double flow, double speed) {
-    double fluidSoundSpeed = fluid.getSoundSpeed();
+    if (fluid == null) {
+      fluid = stream.getFluid();
+    }
+    // System.out.println("Sound speed of actiual fluid: " + fluid.getSoundSpeed() + " m/s");
     double machNumberCorrectedFlowFactor =
-        flow / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
-    double machineMachNumber = speed * impellerOuterDiameter / fluidSoundSpeed;
+        flow / fluid.getSoundSpeed() / impellerOuterDiameter / impellerOuterDiameter;
+    double machineMachNumber = speed / 60 * impellerOuterDiameter / fluid.getSoundSpeed();
+    // System.out.println("mac numer corrected flow factor: " + machNumberCorrectedFlowFactor
+    // + " machine Mach number: " + machineMachNumber + " impeller diameter: "
+    // + impellerOuterDiameter);
     return super.getPolytropicHead(machNumberCorrectedFlowFactor, machineMachNumber)
-        * fluidSoundSpeed * fluidSoundSpeed;
+        * fluid.getSoundSpeed() * fluid.getSoundSpeed();
   }
 
   /**
@@ -201,10 +303,71 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    */
   @Override
   public double getPolytropicEfficiency(double flow, double speed) {
-    double fluidSoundSpeed = fluid.getSoundSpeed();
+    if (fluid == null) {
+      fluid = stream.getFluid();
+    }
     double machNumberCorrectedFlowFactor =
-        flow / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
-    double machineMachNumber = speed * impellerOuterDiameter / fluidSoundSpeed;
+        flow / fluid.getSoundSpeed() / impellerOuterDiameter / impellerOuterDiameter;
+    double machineMachNumber = speed / 60 * impellerOuterDiameter / fluid.getSoundSpeed();
     return super.getPolytropicEfficiency(machNumberCorrectedFlowFactor, machineMachNumber);
+  }
+
+  /**
+   * Simple POJO to hold corrected (dimensionless) compressor curve data for a given speed.
+   */
+  public static class CorrectedCurve {
+    public final double machineMachNumber;
+    public final double[] correctedFlowFactor;
+    public final double[] correctedHeadFactor;
+    public final double[] correctedFlowFactorEfficiency;
+    public final double[] polytropicEfficiency;
+
+    /**
+     * Constructs a CorrectedCurve object with the specified dimensionless compressor map data.
+     *
+     * @param machineMachNumber the machine Mach number
+     * @param correctedFlowFactor array of corrected flow factors
+     * @param correctedHeadFactor array of corrected head factors
+     * @param correctedFlowFactorEfficiency array of corrected flow factors for efficiency
+     * @param polytropicEfficiency array of polytropic efficiencies
+     */
+    public CorrectedCurve(double machineMachNumber, double[] correctedFlowFactor,
+        double[] correctedHeadFactor, double[] correctedFlowFactorEfficiency,
+        double[] polytropicEfficiency) {
+      this.machineMachNumber = machineMachNumber;
+      this.correctedFlowFactor = correctedFlowFactor;
+      this.correctedHeadFactor = correctedHeadFactor;
+      this.correctedFlowFactorEfficiency = correctedFlowFactorEfficiency;
+      this.polytropicEfficiency = polytropicEfficiency;
+    }
+  }
+
+  /**
+   * Simple POJO to hold real (physical units) compressor curve data for a given speed.
+   */
+  public static class RealCurve {
+    public final double speed;
+    public final double[] flow;
+    public final double[] head;
+    public final double[] flowPolyEff;
+    public final double[] polytropicEfficiency;
+
+    /**
+     * Constructs a RealCurve object with the specified physical units compressor map data.
+     *
+     * @param speed the rotational speed
+     * @param flow array of flow values
+     * @param head array of head values
+     * @param flowPolyEff array of flow values for efficiency
+     * @param polytropicEfficiency array of polytropic efficiencies
+     */
+    public RealCurve(double speed, double[] flow, double[] head, double[] flowPolyEff,
+        double[] polytropicEfficiency) {
+      this.speed = speed;
+      this.flow = flow;
+      this.head = head;
+      this.flowPolyEff = flowPolyEff;
+      this.polytropicEfficiency = polytropicEfficiency;
+    }
   }
 }
