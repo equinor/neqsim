@@ -20,7 +20,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   SystemInterface fluid = null;
   SystemInterface ref_fluid = null;
   StreamInterface stream = null;
-  double impellerOuterDiameter = 0.3;
+  private double impellerOuterDiameter = 0.3;
 
   /**
    * Constructs a CompressorChartKhader2015 object with the specified fluid and impeller diameter.
@@ -89,16 +89,15 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
 
     double fluidSoundSpeed = ref_fluid.getPhase(0).getSoundSpeed();
 
-    double[] machNumberCorrectedHeadFactor = new double[speed.length];
-    double[] machNumberCorrectedFlowFactor = new double[speed.length];
-    double[] machNumberCorrectedFlowFactorEfficiency = new double[speed.length];
-    double[] polEff = new double[speed.length];
-
     for (int i = 0; i < speed.length; i++) {
+      double[] machNumberCorrectedHeadFactor = new double[flow[i].length];
+      double[] machNumberCorrectedFlowFactor = new double[flow[i].length];
+      double[] machNumberCorrectedFlowFactorEfficiency = new double[flow[i].length];
+      double[] polEff = new double[flow[i].length];
       for (int j = 0; j < flow[i].length; j++) {
         machNumberCorrectedHeadFactor[j] = head[i][j] / fluidSoundSpeed / fluidSoundSpeed;
         machNumberCorrectedFlowFactor[j] =
-            flow[i][j] / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
+            flow[i][j] / 3600.0 / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
         machNumberCorrectedFlowFactorEfficiency[j] =
             flowPolyEff[i][j] / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
         polEff[j] = polyEff[i][j];
@@ -141,7 +140,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       for (int j = 0; j < flow[i].length; j++) {
         machNumberCorrectedHeadFactor[j] = head[i][j] / fluidSoundSpeed / fluidSoundSpeed;
         machNumberCorrectedFlowFactor[j] =
-            flow[i][j] / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
+            flow[i][j] / 3600.0 / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
         machNumberCorrectedFlowFactorEfficiency[j] =
             flowPolyEff[i][j] / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
         polEff[j] = polyEff[i][j];
@@ -170,15 +169,33 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       double[] flowPolyEff = new double[corr.flowPolytropicEfficiency.length];
       double[] polEff = new double[corr.polytropicEfficiency.length];
       for (int j = 0; j < flow.length; j++) {
-        flow[j] = corr.flow[j] * fluidSoundSpeed * impellerOuterDiameter * impellerOuterDiameter;
+        flow[j] =
+            3600.0 * corr.flow[j] * fluidSoundSpeed * impellerOuterDiameter * impellerOuterDiameter;
         head[j] = corr.head[j] * fluidSoundSpeed * fluidSoundSpeed;
-        flowPolyEff[j] = corr.flowPolytropicEfficiency[j] * fluidSoundSpeed * impellerOuterDiameter
-            * impellerOuterDiameter;
+        flowPolyEff[j] = 3600.0 * corr.flowPolytropicEfficiency[j] * fluidSoundSpeed
+            * impellerOuterDiameter * impellerOuterDiameter;
         polEff[j] = corr.polytropicEfficiency[j];
       }
       realCurves.add(new RealCurve(chartSpeeds.get(i), flow, head, flowPolyEff, polEff));
     }
     return realCurves;
+  }
+
+  /**
+   * Pretty print all RealCurve objects for the current fluid.
+   */
+  public void prettyPrintRealCurvesForFluid() {
+    java.util.List<RealCurve> realCurves = getRealCurvesForFluid();
+    System.out.println("All RealCurve objects for current fluid:");
+    for (RealCurve curve : realCurves) {
+      System.out.println("RealCurve:");
+      System.out.println("  Speed: " + curve.speed);
+      System.out.println("  Flow: " + java.util.Arrays.toString(curve.flow));
+      System.out.println("  Head: " + java.util.Arrays.toString(curve.head));
+      System.out.println("  Flow Poly Eff: " + java.util.Arrays.toString(curve.flowPolyEff));
+      System.out.println(
+          "  Polytropic Efficiency: " + java.util.Arrays.toString(curve.polytropicEfficiency));
+    }
   }
 
   /**
@@ -275,7 +292,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     }
     // System.out.println("Sound speed of actiual fluid: " + fluid.getSoundSpeed() + " m/s");
     double machNumberCorrectedFlowFactor =
-        flow / fluid.getSoundSpeed() / impellerOuterDiameter / impellerOuterDiameter;
+        flow / 3600.0 / fluid.getSoundSpeed() / impellerOuterDiameter / impellerOuterDiameter;
     double machineMachNumber = speed / 60 * impellerOuterDiameter / fluid.getSoundSpeed();
     // System.out.println("mac numer corrected flow factor: " + machNumberCorrectedFlowFactor
     // + " machine Mach number: " + machineMachNumber + " impeller diameter: "
@@ -307,9 +324,28 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       fluid = stream.getFluid();
     }
     double machNumberCorrectedFlowFactor =
-        flow / fluid.getSoundSpeed() / impellerOuterDiameter / impellerOuterDiameter;
+        flow / 3600.0 / fluid.getSoundSpeed() / impellerOuterDiameter / impellerOuterDiameter;
     double machineMachNumber = speed / 60 * impellerOuterDiameter / fluid.getSoundSpeed();
     return super.getPolytropicEfficiency(machNumberCorrectedFlowFactor, machineMachNumber);
+  }
+
+
+  /**
+   * Returns the outer diameter of the impeller.
+   *
+   * @return the impeller outer diameter
+   */
+  public double getImpellerOuterDiameter() {
+    return impellerOuterDiameter;
+  }
+
+  /**
+   * Sets the outer diameter of the impeller.
+   *
+   * @param impellerOuterDiameter the new outer diameter of the impeller unit meters
+   */
+  public void setImpellerOuterDiameter(double impellerOuterDiameter) {
+    this.impellerOuterDiameter = impellerOuterDiameter;
   }
 
   /**

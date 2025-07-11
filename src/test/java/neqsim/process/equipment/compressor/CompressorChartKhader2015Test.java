@@ -85,21 +85,20 @@ public class CompressorChartKhader2015Test {
 
 
     Assertions.assertEquals(2431.46694, stream_1.getFlowRate("m3/hr"), 0.01);
-    Assertions.assertEquals(80.998042, comp1.getCompressorChart()
+    Assertions.assertEquals(80.326453, comp1.getCompressorChart()
         .getPolytropicEfficiency(stream_1.getFlowRate("m3/hr"), compspeed), 0.01);
-    Assertions.assertEquals(30.2943949,
+    Assertions.assertEquals(41.56192413,
         comp1.getCompressorChart().getPolytropicHead(stream_1.getFlowRate("m3/hr"), compspeed),
         0.01);
 
 
-    Assertions.assertEquals(9.230843374,
+    Assertions.assertEquals(0.00256412315,
         compChart.getCorrectedCurves(chartConditions, speed, flow, head, polyEff, polyEff)
             .get(0).correctedFlowFactor[0],
         0.0001);
 
-    Assertions.assertEquals(1752.150749, compChart.getRealCurvesForFluid().get(0).flow[0], 0.0001);
-    Assertions.assertEquals(36.8991231355, compChart.getRealCurvesForFluid().get(0).head[0],
-        0.0001);
+    Assertions.assertEquals(2986.0877, compChart.getRealCurvesForFluid().get(0).flow[0], 0.0001);
+    Assertions.assertEquals(91.7406053, compChart.getRealCurvesForFluid().get(0).head[0], 0.0001);
 
     testFluid = new SystemSrkEos(298.15, 50.0);
 
@@ -122,11 +121,14 @@ public class CompressorChartKhader2015Test {
     comp1.getCompressorChart().setHeadUnit("kJ/kg");
 
     Assertions.assertEquals(2244.86217, stream_1.getFlowRate("m3/hr"), 0.01);
-    Assertions.assertEquals(81.0611169, comp1.getCompressorChart()
+    Assertions.assertEquals(79.1115252, comp1.getCompressorChart()
         .getPolytropicEfficiency(stream_1.getFlowRate("m3/hr"), compspeed), 0.01);
-    Assertions.assertEquals(28.463254446,
+    Assertions.assertEquals(45.197307809,
         comp1.getCompressorChart().getPolytropicHead(stream_1.getFlowRate("m3/hr"), compspeed),
         0.01);
 
+    // compChart.prettyPrintChartValues();
+    // compChart.prettyPrintRealCurvesForFluid();
   }
+
 }
