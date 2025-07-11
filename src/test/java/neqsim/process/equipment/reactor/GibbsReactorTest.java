@@ -82,7 +82,7 @@ public class GibbsReactorTest {
         for (int i = 0; i < elementNames.length; i++) {
           String element = elementNames[i];
           Double contribution = contributions.get(element);
-          if (contribution != null && Math.abs(contribution) > 1e-10) {
+          if (contribution != null && Math.abs(contribution) > 1e-15) {
             System.out.printf("    %s: %8.4f%n", element, contribution);
           }
         }
@@ -109,7 +109,7 @@ public class GibbsReactorTest {
         for (int i = 0; i < elementNames.length; i++) {
           String element = elementNames[i];
           Double contribution = contributions.get(element);
-          if (contribution != null && Math.abs(contribution) > 1e-10) {
+          if (contribution != null && Math.abs(contribution) > 1e-15) {
             System.out.printf("    %s: %8.4f%n", element, contribution);
           }
         }

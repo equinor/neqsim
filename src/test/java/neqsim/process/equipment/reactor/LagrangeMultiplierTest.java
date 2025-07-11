@@ -311,6 +311,10 @@ public class LagrangeMultiplierTest {
       System.out.println("\n=== Jacobian Inverse Matrix ===");
       double[][] jacobianInverse = reactor.getJacobianInverse();
       
+      // Verify the inverse is correct
+      boolean inverseCorrect = reactor.verifyJacobianInverse();
+      System.out.println("Jacobian inverse verification: " + (inverseCorrect ? "PASSED" : "FAILED"));
+      
       if (jacobianInverse != null && jacobianInverse.length > 0) {
         System.out.println("Inverse matrix size: " + jacobianInverse.length + "x" + jacobianInverse[0].length);
         

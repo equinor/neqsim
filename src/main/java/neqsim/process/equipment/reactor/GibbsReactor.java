@@ -9,6 +9,7 @@ import java.util.Scanner;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import Jama.Matrix;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -229,6 +230,33 @@ public class GibbsReactor extends TwoPortEquipment {
     return useAllDatabaseSpecies;
   }
 
+  /**
+   * Get the method used for Gibbs minimization.
+   *
+   * @return The method name
+   */
+  public String getMethod() {
+    return method;
+  }
+
+  /**
+   * Set the method used for Gibbs minimization.
+   *
+   * @param method The method name
+   */
+  public void setMethod(String method) {
+    this.method = method;
+  }
+
+  /**
+   * Get the Lagrange contributions (legacy method).
+   *
+   * @return Map of Lagrange contributions
+   */
+  public Map<String, Double> getLagrangeContributions() {
+    return new HashMap<>(lagrangeContributions);
+  }
+
   @Override
   public void run(UUID id) {
     SystemInterface system = getInletStream().getThermoSystem().clone();
@@ -254,7 +282,7 @@ public class GibbsReactor extends TwoPortEquipment {
       // Add all database species to system
       for (GibbsComponent component : gibbsDatabase) {
         try {
-          system.addComponent(component.getMolecule(), 1e-15);
+          system.addComponent(component.getMolecule(), 1E-6);
         } catch (Exception e) {
           logger.debug("Could not add component " + component.getMolecule() + ": " + e.getMessage());
         }
@@ -279,7 +307,7 @@ public class GibbsReactor extends TwoPortEquipment {
       processedComponents.add(compName);
       
       // Update outlet_mole with actual final values, enforcing minimum
-      double outletMoles = Math.max(moles, 1e-15);
+      double outletMoles = Math.max(moles, 1E-6);
       outlet_mole.add(outletMoles);
     }
     
@@ -322,8 +350,8 @@ public class GibbsReactor extends TwoPortEquipment {
       
       if (initialGuess.containsKey(compName)) {
         double currentMoles = system.getComponent(i).getNumberOfMolesInPhase();
-        if (currentMoles < 1e-15) {
-          system.addComponent(i, 1e-15 - currentMoles, 0);
+        if (currentMoles < 1E-6) {
+          system.addComponent(i, 1E-6 - currentMoles, 0);
         }
       }
     }
@@ -393,7 +421,7 @@ public class GibbsReactor extends TwoPortEquipment {
       String compName = system.getComponent(i).getComponentName();
       
       // Use outlet_mole for formulas
-      double moles = (i < outlet_mole.size()) ? outlet_mole.get(i) : 1e-15;
+      double moles = (i < outlet_mole.size()) ? outlet_mole.get(i) : 1E-6;
       
       // Get Gibbs component
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
@@ -536,7 +564,7 @@ public class GibbsReactor extends TwoPortEquipment {
       
       // Use inlet_mole and outlet_mole lists
       Double molesIn = (i < inlet_mole.size()) ? inlet_mole.get(i) : 0.0;
-      Double molesOut = (i < outlet_mole.size()) ? outlet_mole.get(i) : 1e-15;
+      Double molesOut = (i < outlet_mole.size()) ? outlet_mole.get(i) : 1E-6;
       
       if (comp != null) {
         Map<String, Double> componentBalance = new HashMap<>();
@@ -571,13 +599,17 @@ public class GibbsReactor extends TwoPortEquipment {
    * Calculate the objective minimization vector.
    * This vector contains the F values for each component and the mass balance constraints.
    * The system is in equilibrium when this vector is zero.
+   * Only includes elements that are actually present in the system.
    */
   private void calculateObjectiveMinimizationVector() {
+    // Find which elements are actually present in the system
+    List<Integer> activeElements = findActiveElements();
+    
     int numComponents = processedComponents.size();
-    int numElements = elementNames.length;
+    int numActiveElements = activeElements.size();
     
     // Create vector: [F_values, mass_balance_constraints]
-    objectiveMinimizationVector = new double[numComponents + numElements];
+    objectiveMinimizationVector = new double[numComponents + numActiveElements];
     objectiveMinimizationVectorLabels.clear();
     
     // First part: F values for each component
@@ -588,10 +620,11 @@ public class GibbsReactor extends TwoPortEquipment {
       objectiveMinimizationVectorLabels.add("F_" + compName);
     }
     
-    // Second part: Mass balance constraints
-    for (int i = 0; i < numElements; i++) {
-      objectiveMinimizationVector[numComponents + i] = elementMoleBalanceDiff[i];
-      objectiveMinimizationVectorLabels.add("Balance_" + elementNames[i]);
+    // Second part: Mass balance constraints (only for active elements)
+    for (int i = 0; i < numActiveElements; i++) {
+      int elementIndex = activeElements.get(i);
+      objectiveMinimizationVector[numComponents + i] = elementMoleBalanceDiff[elementIndex];
+      objectiveMinimizationVectorLabels.add("Balance_" + elementNames[elementIndex]);
     }
   }
 
@@ -617,15 +650,19 @@ public class GibbsReactor extends TwoPortEquipment {
   /**
    * Calculate the Jacobian matrix for the Newton-Raphson method.
    * The Jacobian represents the derivatives of the objective function with respect to the variables.
+   * Only includes elements that are actually present in the system to avoid singular matrices.
    */
   private void calculateJacobian() {
     if (processedComponents.isEmpty()) {
       return;
     }
     
+    // Find which elements are actually present in the system
+    List<Integer> activeElements = findActiveElements();
+    
     int numComponents = processedComponents.size();
-    int numElements = elementNames.length;
-    int totalVars = numComponents + numElements; // components + Lagrange multipliers
+    int numActiveElements = activeElements.size();
+    int totalVars = numComponents + numActiveElements; // components + active Lagrange multipliers
     
     jacobianMatrix = new double[totalVars][totalVars];
     jacobianRowLabels.clear();
@@ -636,9 +673,10 @@ public class GibbsReactor extends TwoPortEquipment {
       jacobianRowLabels.add("F_" + processedComponents.get(i));
       jacobianColLabels.add("n_" + processedComponents.get(i));
     }
-    for (int i = 0; i < numElements; i++) {
-      jacobianRowLabels.add("Balance_" + elementNames[i]);
-      jacobianColLabels.add("lambda_" + elementNames[i]);
+    for (int i = 0; i < numActiveElements; i++) {
+      int elementIndex = activeElements.get(i);
+      jacobianRowLabels.add("Balance_" + elementNames[elementIndex]);
+      jacobianColLabels.add("lambda_" + elementNames[elementIndex]);
     }
     
     SystemInterface system = getOutletStream().getThermoSystem();
@@ -655,42 +693,45 @@ public class GibbsReactor extends TwoPortEquipment {
     for (int i = 0; i < numComponents; i++) {
       String compI = processedComponents.get(i);
       
-      // Use outlet_mole for calculations
-      double ni = (i < outlet_mole.size()) ? outlet_mole.get(i) : 1e-15;
+      // Use outlet_mole for calculations, but with a minimum value to avoid numerical issues
+      double ni = (i < outlet_mole.size()) ? outlet_mole.get(i) : 1E-6;
+      double niForJacobian = Math.max(ni, 1e-6); // Use minimum of 1e-6 for Jacobian calculation
       
       for (int j = 0; j < numComponents; j++) {
         if (i == j) {
           // Diagonal elements: ∂f_i/∂n_i = RT * (1/n_i - 1/n_total)
-          jacobianMatrix[i][j] = RT * (1.0 / ni - 1.0 / totalMoles);
+          jacobianMatrix[i][j] = RT * (1.0 / niForJacobian - 1.0 / totalMoles);
         } else {
           // Off-diagonal elements: ∂f_i/∂n_j = -RT/n_total
           jacobianMatrix[i][j] = -RT / totalMoles;
         }
       }
       
-      // Derivatives with respect to Lagrange multipliers
+      // Derivatives with respect to Lagrange multipliers (only active elements)
       GibbsComponent gibbsComp = componentMap.get(compI.toLowerCase());
       if (gibbsComp != null) {
         double[] elements = gibbsComp.getElements();
-        for (int k = 0; k < numElements; k++) {
-          jacobianMatrix[i][numComponents + k] = -elements[k];
+        for (int k = 0; k < numActiveElements; k++) {
+          int elementIndex = activeElements.get(k);
+          jacobianMatrix[i][numComponents + k] = -elements[elementIndex];
         }
       }
     }
     
-    // Mass balance constraint derivatives
-    for (int i = 0; i < numElements; i++) {
+    // Mass balance constraint derivatives (only for active elements)
+    for (int i = 0; i < numActiveElements; i++) {
+      int elementIndex = activeElements.get(i);
       for (int j = 0; j < numComponents; j++) {
         String compName = processedComponents.get(j);
         GibbsComponent gibbsComp = componentMap.get(compName.toLowerCase());
         if (gibbsComp != null) {
           double[] elements = gibbsComp.getElements();
-          jacobianMatrix[numComponents + i][j] = elements[i];
+          jacobianMatrix[numComponents + i][j] = elements[elementIndex];
         }
       }
       
       // Derivatives with respect to Lagrange multipliers are zero
-      for (int k = 0; k < numElements; k++) {
+      for (int k = 0; k < numActiveElements; k++) {
         jacobianMatrix[numComponents + i][numComponents + k] = 0.0;
       }
     }
@@ -756,7 +797,7 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Calculate the inverse of the Jacobian matrix using Gauss-Jordan elimination.
+   * Calculate the inverse of the Jacobian matrix using JAMA Matrix library.
    *
    * @return Inverse matrix, or null if matrix is singular
    */
@@ -765,76 +806,30 @@ public class GibbsReactor extends TwoPortEquipment {
       return null;
     }
     
-    int n = jacobianMatrix.length;
-    double[][] augmented = new double[n][2 * n];
-    
-    // Create augmented matrix [A | I]
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
-        augmented[i][j] = jacobianMatrix[i][j];
-        augmented[i][j + n] = (i == j) ? 1.0 : 0.0;
-      }
+    try {
+      // Create JAMA Matrix object
+      Matrix jamaMatrix = new Matrix(jacobianMatrix);
+      
+      // Calculate inverse using JAMA
+      Matrix inverseMatrix = jamaMatrix.inverse();
+      
+      // Convert back to double[][]
+      return inverseMatrix.getArray();
+      
+    } catch (RuntimeException e) {
+      logger.warn("Jacobian matrix is singular or nearly singular: " + e.getMessage());
+      return null;
     }
-    
-    // Gauss-Jordan elimination
-    for (int i = 0; i < n; i++) {
-      // Find pivot
-      int maxRow = i;
-      for (int k = i + 1; k < n; k++) {
-        if (Math.abs(augmented[k][i]) > Math.abs(augmented[maxRow][i])) {
-          maxRow = k;
-        }
-      }
-      
-      // Check for singular matrix
-      if (Math.abs(augmented[maxRow][i]) < 1e-12) {
-        logger.warn("Jacobian matrix is singular or nearly singular");
-        return null;
-      }
-      
-      // Swap rows
-      if (maxRow != i) {
-        double[] temp = augmented[i];
-        augmented[i] = augmented[maxRow];
-        augmented[maxRow] = temp;
-      }
-      
-      // Make diagonal element 1
-      double pivot = augmented[i][i];
-      for (int j = 0; j < 2 * n; j++) {
-        augmented[i][j] /= pivot;
-      }
-      
-      // Eliminate column
-      for (int k = 0; k < n; k++) {
-        if (k != i) {
-          double factor = augmented[k][i];
-          for (int j = 0; j < 2 * n; j++) {
-            augmented[k][j] -= factor * augmented[i][j];
-          }
-        }
-      }
-    }
-    
-    // Extract inverse matrix from right side of augmented matrix
-    double[][] inverse = new double[n][n];
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
-        inverse[i][j] = augmented[i][j + n];
-      }
-    }
-    
-    return inverse;
   }
 
   /**
    * Enforce minimum concentration threshold to prevent numerical issues.
-   * If any component has moles less than 1e-15, it will be set to 1e-15.
+   * If any component has moles less than 1E-6, it will be set to 1E-6.
    *
    * @param system The thermodynamic system to check and modify
    */
   private void enforceMinimumConcentrations(SystemInterface system) {
-    double minConcentration = 1e-15;
+    double minConcentration = 1e-6;
     boolean modified = false;
     
     for (int i = 0; i < system.getNumberOfComponents(); i++) {
@@ -867,7 +862,7 @@ public class GibbsReactor extends TwoPortEquipment {
   /**
    * Get the outlet mole list.
    *
-   * @return List of outlet moles for each component (with 0 values replaced by 1e-15)
+   * @return List of outlet moles for each component (with 0 values replaced by 1E-6)
    */
   public List<Double> getOutletMole() {
     return new ArrayList<>(outlet_mole);
@@ -909,5 +904,71 @@ public class GibbsReactor extends TwoPortEquipment {
     for (String key : componentMap.keySet()) {
       System.out.println("  '" + key + "'");
     }
+  }
+  
+  /**
+   * Find which elements are actually present in the system (have non-zero coefficients).
+   *
+   * @return List of indices of active elements
+   */
+  private List<Integer> findActiveElements() {
+    List<Integer> activeElements = new ArrayList<>();
+    
+    // Check each element to see if any component has a non-zero coefficient
+    for (int elementIndex = 0; elementIndex < elementNames.length; elementIndex++) {
+      boolean elementPresent = false;
+      
+      for (String compName : processedComponents) {
+        GibbsComponent comp = componentMap.get(compName.toLowerCase());
+        if (comp != null) {
+          double[] elements = comp.getElements();
+          if (Math.abs(elements[elementIndex]) > 1E-6) {
+            elementPresent = true;
+            break;
+          }
+        }
+      }
+      
+      if (elementPresent) {
+        activeElements.add(elementIndex);
+      }
+    }
+    
+    return activeElements;
+  }
+
+  /**
+   * Verify that the Jacobian inverse is correct by multiplying J * J^-1.
+   * Should return the identity matrix if the inverse is correct.
+   *
+   * @return True if the inverse is correct (within tolerance)
+   */
+  public boolean verifyJacobianInverse() {
+    if (jacobianMatrix == null || jacobianInverse == null) {
+      return false;
+    }
+    
+    int n = jacobianMatrix.length;
+    double tolerance = 1e-10;
+    
+    // Multiply J * J^-1
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        double sum = 0.0;
+        for (int k = 0; k < n; k++) {
+          sum += jacobianMatrix[i][k] * jacobianInverse[k][j];
+        }
+        
+        // Check if this should be 1 (diagonal) or 0 (off-diagonal)
+        double expected = (i == j) ? 1.0 : 0.0;
+        if (Math.abs(sum - expected) > tolerance) {
+          logger.warn("Jacobian inverse verification failed at [" + i + "," + j + "]: " +
+                      "expected " + expected + ", got " + sum);
+          return false;
+        }
+      }
+    }
+    
+    return true;
   }
 }
