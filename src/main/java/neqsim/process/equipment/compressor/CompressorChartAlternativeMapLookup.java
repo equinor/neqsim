@@ -713,4 +713,25 @@ public class CompressorChartAlternativeMapLookup
   public double getMinSpeedCurve() {
     return 0;
   }
+
+  /**
+   * Pretty print all CompressorCurve objects in chartValues.
+   */
+  public void prettyPrintChartValues() {
+    System.out.println("All CompressorCurve objects in chartValues:");
+    for (CompressorCurve curve : chartValues) {
+      System.out.println("CompressorCurve:");
+      System.out.println("  Speed: " + curve.speed);
+      System.out.println("  Flow: " + java.util.Arrays.toString(curve.flow));
+      System.out.println("  Head: " + java.util.Arrays.toString(curve.head));
+      System.out
+          .println("  Flow Poly Eff: " + java.util.Arrays.toString(curve.flowPolytropicEfficiency));
+      System.out.println(
+          "  Polytropic Efficiency: " + java.util.Arrays.toString(curve.polytropicEfficiency));
+    }
+  }
+
+  public ArrayList<CompressorCurve> getChartValues() {
+    return chartValues;
+  }
 }
