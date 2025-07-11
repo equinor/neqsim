@@ -33,10 +33,11 @@ public class CompressorChartKhader2015Test {
     double compspeed = 10000;
     comp1.setSpeed(compspeed);
 
-
-    // compressor chart conditions: temperature [C], pressure [bara], density [kg/m3], molecular
+    // compressor chart conditions: temperature [C], pressure [bara], density
+    // [kg/m3], molecular
     // weight [g/mol]
-    // Note: Only temperature and pressure are used by CompressorChartKhader2015, but values should
+    // Note: Only temperature and pressure are used by CompressorChartKhader2015,
+    // but values should
     // be realistic.
     double[] chartConditions = new double[] {25.0, 50.0, 50.0, 20.0};
 
@@ -82,15 +83,12 @@ public class CompressorChartKhader2015Test {
     comp1.setCompressorChart(compChart);
     comp1.getCompressorChart().setHeadUnit("kJ/kg");
 
-
-
     Assertions.assertEquals(2431.46694, stream_1.getFlowRate("m3/hr"), 0.01);
     Assertions.assertEquals(80.326453, comp1.getCompressorChart()
         .getPolytropicEfficiency(stream_1.getFlowRate("m3/hr"), compspeed), 0.01);
     Assertions.assertEquals(41.56192413,
         comp1.getCompressorChart().getPolytropicHead(stream_1.getFlowRate("m3/hr"), compspeed),
         0.01);
-
 
     Assertions.assertEquals(0.00256412315,
         compChart.getCorrectedCurves(chartConditions, speed, flow, head, polyEff, polyEff)
@@ -127,6 +125,10 @@ public class CompressorChartKhader2015Test {
         comp1.getCompressorChart().getPolytropicHead(stream_1.getFlowRate("m3/hr"), compspeed),
         0.01);
 
+    ((CompressorChartKhader2015) comp1.getCompressorChart()).setImpellerOuterDiameter(0.9);
+    comp1.getCompressorChart().setCurves(chartConditions, speed, flow, head, polyEff);
+    comp1.run();
+    Assertions.assertEquals(75.11224727, comp1.getOutletStream().getPressure("bara"), 0.01);
     // compChart.prettyPrintChartValues();
     // compChart.prettyPrintRealCurvesForFluid();
   }
