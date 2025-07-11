@@ -1,6 +1,5 @@
 package neqsim.process.equipment.compressor;
 
-
 import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
@@ -1900,6 +1899,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
       compressorChart = new CompressorChartAlternativeMapLookup();
     } else if (type.equals("interpolate and extrapolate")) {
       compressorChart = new CompressorChartAlternativeMapLookupExtrapolate();
+    } else if (type.equals("khader 2015")) {
+      compressorChart = new CompressorChartKhader2015(inStream, 1.0);
     } else {
       compressorChart = new CompressorChart();
     }
