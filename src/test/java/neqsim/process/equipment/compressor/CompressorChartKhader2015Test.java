@@ -129,6 +129,7 @@ public class CompressorChartKhader2015Test {
     comp1.getCompressorChart().setCurves(chartConditions, speed, flow, head, polyEff);
     comp1.run();
     Assertions.assertEquals(75.11224727, comp1.getOutletStream().getPressure("bara"), 0.01);
+
     // compChart.prettyPrintChartValues();
     // compChart.prettyPrintRealCurvesForFluid();
   }
