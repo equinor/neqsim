@@ -212,8 +212,10 @@ public class Orifice extends TwoPortEquipment {
    */
   public static double calculateMassFlowRate(double D, double Do, double P1, double P2,
       double rho, double mu, double k, String taps) {
+    final int MAX_ITERATIONS = 50;
     double m = 1.0;
-    for (int i = 0; i < 50; i++) {
+    boolean converged = false;
+    for (int i = 0; i < MAX_ITERATIONS; i++) {
       double C = calculateDischargeCoefficient(D, Do, rho, mu, m, taps);
       double epsilon = calculateExpansibility(D, Do, P1, P2, k);
       double beta = calculateBetaRatio(D, Do);
