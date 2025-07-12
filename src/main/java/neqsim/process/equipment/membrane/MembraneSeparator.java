@@ -11,8 +11,10 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Simple membrane separation unit with one inlet stream and two outlet streams (retentate and
- * permeate). Each component can be assigned a permeate fraction representing the fraction of that
+ * Simple membrane separation unit with one inlet stream and two outlet streams
+ * (retentate and
+ * permeate). Each component can be assigned a permeate fraction representing
+ * the fraction of that
  * component transported to the permeate side.
  */
 public class MembraneSeparator extends ProcessEquipmentBaseClass {
@@ -38,10 +40,8 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
 
   public void setInletStream(StreamInterface inletStream) {
     this.inletStream = inletStream;
-    this.permeateStream =
-        new Stream(getName() + " permeate", inletStream.getThermoSystem().clone());
-    this.retentateStream =
-        new Stream(getName() + " retentate", inletStream.getThermoSystem().clone());
+    this.permeateStream = new Stream(getName() + " permeate", inletStream.getThermoSystem().clone());
+    this.retentateStream = new Stream(getName() + " retentate", inletStream.getThermoSystem().clone());
   }
 
   public StreamInterface getPermeateStream() {
@@ -64,7 +64,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
   /**
    * Specify permeability coefficient for a component.
    *
-   * @param component component name
+   * @param component    component name
    * @param permeability permeability in mol/(m2*s*Pa)
    */
   public void setPermeability(String component, double permeability) {
@@ -92,7 +92,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
    * Specify permeate fraction for a component.
    *
    * @param component component name
-   * @param fraction permeate fraction (0-1)
+   * @param fraction  permeate fraction (0-1)
    */
   public void setPermeateFraction(String component, double fraction) {
     permeateFractions.put(component, Math.max(0.0, Math.min(1.0, fraction)));
@@ -128,15 +128,15 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
           molesPerm = moles * frac;
         }
 
-        retentateStream.getThermoSystem().setComponent(name, moles - molesPerm);
-        permeateStream.getThermoSystem().setComponent(name, molesPerm);
+        retentateStream.getThermoSystem().addComponent(name, -(moles));
+        retentateStream.getThermoSystem().addComponent(name, moles - molesPerm);
+        permeateStream.getThermoSystem().addComponent(name, -(moles));
+        permeateStream.getThermoSystem().addComponent(name, molesPerm);
       }
 
-      ThermodynamicOperations opsRet =
-          new ThermodynamicOperations(retentateStream.getThermoSystem());
+      ThermodynamicOperations opsRet = new ThermodynamicOperations(retentateStream.getThermoSystem());
       opsRet.TPflash();
-      ThermodynamicOperations opsPerm =
-          new ThermodynamicOperations(permeateStream.getThermoSystem());
+      ThermodynamicOperations opsPerm = new ThermodynamicOperations(permeateStream.getThermoSystem());
       opsPerm.TPflash();
 
       retentateStream.setCalculationIdentifier(id);
