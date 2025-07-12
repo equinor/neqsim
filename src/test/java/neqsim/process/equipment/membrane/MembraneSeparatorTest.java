@@ -51,9 +51,9 @@ class MembraneSeparatorTest extends neqsim.NeqSimTest {
     double xCO2Perm = membrane.getPermeateStream().getFluid().getPhase(0).getComponent("CO2").getz();
     double xCO2Ret = membrane.getRetentateStream().getFluid().getPhase(0).getComponent("CO2").getz();
     // Permeate should have higher CO2 fraction
-    assertEquals(true, xCO2Perm > xCO2Feed);
+    assertTrue(xCO2Perm > xCO2Feed);
     // Retentate should have lower CO2 fraction
-    assertEquals(true, xCO2Ret < xCO2Feed);
+    assertTrue(xCO2Ret < xCO2Feed);
   }
 
   @Test
