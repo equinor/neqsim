@@ -322,7 +322,8 @@ public class DistillationColumnTest {
 
     DistillationColumn column = new DistillationColumn("test column", 1, true, true);
     column.addFeedStream(feed, 1);
-    column.runBroyden();
+    column.runBroyden(java.util.UUID.randomUUID());
+
 
     assertEquals(true, column.solved());
   }
