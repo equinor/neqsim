@@ -307,4 +307,23 @@ public class DistillationColumnTest {
      * + " C");
      */
   }
+
+  @Test
+  public void testBroydenSolver() {
+    neqsim.thermo.system.SystemInterface simpleSystem =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 5.0);
+    simpleSystem.addComponent("methane", 1.0);
+    simpleSystem.addComponent("ethane", 1.0);
+    simpleSystem.createDatabase(true);
+    simpleSystem.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", simpleSystem);
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("test column", 1, true, true);
+    column.addFeedStream(feed, 1);
+    column.runBroyden();
+
+    assertEquals(true, column.solved());
+  }
 }
