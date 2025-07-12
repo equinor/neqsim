@@ -70,7 +70,7 @@ public class SteamHeater extends Heater {
     double hin = Iapws_if97.h_pt(pinMPa, steamInletTemperature);
     double hout = Iapws_if97.h_pt(pinMPa, steamOutletTemperature);
     double deltaH = hin - hout; // kJ/kg released per kg steam
-    System.out.println("DEBUG SteamHeater: getEnergyInput()=" + getEnergyInput() + ", hin=" + hin
+    logger.fine("DEBUG SteamHeater: getEnergyInput()=" + getEnergyInput() + ", hin=" + hin
         + ", hout=" + hout + ", deltaH=" + deltaH);
     if (Math.abs(deltaH) < 1e-6) {
       steamFlowRate = 0.0;
