@@ -13,3 +13,4 @@ This folder holds additional documentation for the NeqSim project. Below are use
 
 - [JUnit test overview](test-overview.md)
 - [Distillation column algorithm](distillation_column.md)
+- [Humid air mathematics](humid_air_math.md)
