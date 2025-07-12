@@ -20,12 +20,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
- * DistillationColumn class.
- * </p>
+ * Models a tray based distillation column with optional condenser and reboiler.
  *
- * @author ESOL
- * @version $Id: $Id
+ * <p>The column is solved using a sequential substitution approach. The
+ * {@link #init()} method sets initial tray temperatures by running the feed tray
+ * and linearly distributing temperatures towards the top and bottom. During
+ * {@link #run(UUID)} the trays are iteratively solved in upward and downward
+ * sweeps until the summed temperature change between iterations is below
+ * {@code 1e-4} or the iteration limit is reached.
  */
 public class DistillationColumn extends ProcessEquipmentBaseClass implements DistillationInterface {
   /** Serialization version UID. */
@@ -142,8 +144,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Initialize column temperature guesses, pressures, etc. Tries to ensure each tray has two-phase
-   * conditions.
+   * Prepare the column for calculation by estimating tray temperatures and
+   * linking streams between trays.
+   *
+   * <p>The feed tray is solved first to obtain a temperature estimate. This
+   * temperature is then used to linearly guess temperatures upwards to the
+   * condenser and downwards to the reboiler. Gas and liquid outlet streams are
+   * connected to neighbouring trays so that a subsequent call to
+   * {@link #run(UUID)} can iterate to convergence.
    */
   public void init() {
     if (!isDoInitializion()) {
@@ -247,7 +255,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     trays.get(0).run();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Solve the column until tray temperatures converge.
+   *
+   * <p>The method applies sequential substitution. Pressures are set linearly
+   * between bottom and top. Each iteration performs an upward sweep where liquid
+   * flows downward followed by a downward sweep where vapour flows upward. The
+   * sum of absolute temperature changes is used as error measure.</p>
+   *
+   * @param id calculation identifier used for caching results
+   */
   @Override
   public void run(UUID id) {
     if (feedStreams.isEmpty()) {
@@ -718,7 +735,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Optional: energy balance check.
+   * Prints a simple energy balance for each tray to the console. The method
+   * calculates the total enthalpy of all inlet streams and compares it with the
+   * outlet enthalpy in order to highlight any discrepancies in the column
+   * setup.
    */
   public void energyBalanceCheck() {
     double[] energyInput = new double[numberOfTrays];
