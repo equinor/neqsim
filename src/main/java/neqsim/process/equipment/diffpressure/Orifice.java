@@ -214,7 +214,6 @@ public class Orifice extends TwoPortEquipment {
       double rho, double mu, double k, String taps) {
     final int MAX_ITERATIONS = 50;
     double m = 1.0;
-    boolean converged = false;
     for (int i = 0; i < MAX_ITERATIONS; i++) {
       double C = calculateDischargeCoefficient(D, Do, rho, mu, m, taps);
       double epsilon = calculateExpansibility(D, Do, P1, P2, k);
