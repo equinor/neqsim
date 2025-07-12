@@ -222,7 +222,6 @@ public class Orifice extends TwoPortEquipment {
       double mCalc = 0.25 * Math.PI * Do * Do * C * epsilon
           * Math.sqrt(2.0 * rho * (P1 - P2) / (1.0 - beta2 * beta2));
       if (Math.abs(mCalc - m) / m < 1e-8) {
-        m = mCalc;
         break;
       }
       m = mCalc;
