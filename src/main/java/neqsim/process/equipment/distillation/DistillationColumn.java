@@ -26,8 +26,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * {@link #init()} method sets initial tray temperatures by running the feed tray
  * and linearly distributing temperatures towards the top and bottom. During
  * {@link #run(UUID)} the trays are iteratively solved in upward and downward
- * sweeps until the summed temperature change between iterations is below
- * {@code 1e-4} or the iteration limit is reached.
+ * sweeps until the summed temperature change between iterations is below the
+ * configured {@link #temperatureTolerance} or the iteration limit is reached.
  */
 public class DistillationColumn extends ProcessEquipmentBaseClass implements DistillationInterface {
   /** Serialization version UID. */
@@ -43,6 +43,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
   double topTrayPressure = -1.0;
+
+  /** Temperature convergence tolerance. */
+  private double temperatureTolerance = 1.0e-4;
+  /** Mass balance convergence tolerance. */
+  private double massBalanceTolerance = 1.0e-3;
+  /** Enthalpy balance convergence tolerance. */
+  private double enthalpyBalanceTolerance = 1.0e-3;
 
   Mixer feedmixer = new Mixer("temp mixer");
   double bottomTrayPressure = -1.0;
@@ -325,6 +332,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     err = 1.0e10;
     double errOld;
     int iter = 0;
+    double massErr = 1.0e10;
+    double energyErr = 1.0e10;
 
     // We'll use this array to measure temperature changes in each iteration
     double[] oldtemps = new double[numberOfTrays];
@@ -379,8 +388,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         err += Math.abs(oldtemps[i] - trays.get(i).getThermoSystem().getTemperature());
       }
 
-      logger.info("error iteration = " + iter + "   err = " + err);
-    } while (err > 1e-4 && err < errOld && iter < maxNumberOfIterations);
+      massErr = getMassBalanceError();
+      energyErr = getEnergyBalanceError();
+
+      logger.info("error iteration = " + iter + "   err = " + err + " massErr= " + massErr
+          + " energyErr= " + energyErr);
+    } while ((err > temperatureTolerance || massErr > massBalanceTolerance
+        || energyErr > enthalpyBalanceTolerance) && err < errOld && iter < maxNumberOfIterations);
 
     // Once converged, fill final gasOut/liquidOut streams
     gasOutStream
@@ -390,6 +404,110 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     liquidOutStream.setCalculationIdentifier(id);
 
     // Mark everything as solved
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+  }
+
+  /**
+   * Solve the column using a simple Broyden mixing of tray temperatures.
+   *
+   * @param id calculation identifier
+   */
+  public void runBroyden(UUID id) {
+    if (feedStreams.isEmpty()) {
+      return;
+    }
+
+    int firstFeedTrayNumber = feedStreams.keySet().stream().min(Integer::compareTo).get();
+
+    if (bottomTrayPressure < 0) {
+      bottomTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
+    }
+    if (topTrayPressure < 0) {
+      topTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
+    }
+
+    double dp = 0.0;
+    if (numberOfTrays > 1) {
+      dp = (bottomTrayPressure - topTrayPressure) / (numberOfTrays - 1.0);
+    }
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setPressure(bottomTrayPressure - i * dp);
+    }
+
+    if (isDoInitializion()) {
+      this.init();
+    }
+
+    err = 1.0e10;
+    double errOld;
+    int iter = 0;
+    double massErr = 1.0e10;
+    double energyErr = 1.0e10;
+
+    double[] oldtemps = new double[numberOfTrays];
+    double[] oldDelta = new double[numberOfTrays];
+
+    trays.get(firstFeedTrayNumber).run(id);
+
+    do {
+      iter++;
+      errOld = err;
+      err = 0.0;
+      for (int i = 0; i < numberOfTrays; i++) {
+        oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
+      }
+
+      for (int i = firstFeedTrayNumber; i > 1; i--) {
+        int replaceStream1 = trays.get(i - 1).getNumberOfInputStreams() - 1;
+        trays.get(i - 1).replaceStream(replaceStream1, trays.get(i).getLiquidOutStream());
+        trays.get(i - 1).run(id);
+      }
+
+      int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
+      trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
+      trays.get(0).run(id);
+
+      for (int i = 1; i <= numberOfTrays - 1; i++) {
+        int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
+        if (i == (numberOfTrays - 1)) {
+          replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
+        }
+        trays.get(i).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
+        trays.get(i).run(id);
+      }
+
+      for (int i = numberOfTrays - 2; i >= firstFeedTrayNumber; i--) {
+        int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
+        trays.get(i).replaceStream(replaceStream, trays.get(i + 1).getLiquidOutStream());
+        trays.get(i).run(id);
+      }
+
+      double[] delta = new double[numberOfTrays];
+      for (int i = 0; i < numberOfTrays; i++) {
+        delta[i] = trays.get(i).getThermoSystem().getTemperature() - oldtemps[i];
+        double newTemp = oldtemps[i] + delta[i] + 0.3 * (delta[i] - oldDelta[i]);
+        trays.get(i).setTemperature(newTemp);
+        oldDelta[i] = delta[i];
+        err += Math.abs(newTemp - oldtemps[i]);
+      }
+
+      massErr = getMassBalanceError();
+      energyErr = getEnergyBalanceError();
+
+      logger.info("error iteration = " + iter + "   err = " + err + " massErr= " + massErr
+          + " energyErr= " + energyErr);
+    } while ((err > temperatureTolerance || massErr > massBalanceTolerance
+        || energyErr > enthalpyBalanceTolerance) && err < errOld && iter < maxNumberOfIterations);
+
+    gasOutStream
+        .setThermoSystem(trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
+    gasOutStream.setCalculationIdentifier(id);
+    liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
+    liquidOutStream.setCalculationIdentifier(id);
+
     for (int i = 0; i < numberOfTrays; i++) {
       trays.get(i).setCalculationIdentifier(id);
     }
@@ -477,7 +595,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    return (err < 1e-4);
+    return (err < temperatureTolerance);
   }
 
   /**
@@ -636,6 +754,60 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Set temperature convergence tolerance.
+   *
+   * @param tol the tolerance
+   */
+  public void setTemperatureTolerance(double tol) {
+    this.temperatureTolerance = tol;
+  }
+
+  /**
+   * Set mass balance convergence tolerance.
+   *
+   * @param tol the tolerance
+   */
+  public void setMassBalanceTolerance(double tol) {
+    this.massBalanceTolerance = tol;
+  }
+
+  /**
+   * Set enthalpy balance convergence tolerance.
+   *
+   * @param tol the tolerance
+   */
+  public void setEnthalpyBalanceTolerance(double tol) {
+    this.enthalpyBalanceTolerance = tol;
+  }
+
+  /**
+   * Get temperature convergence tolerance.
+   *
+   * @return tolerance value
+   */
+  public double getTemperatureTolerance() {
+    return temperatureTolerance;
+  }
+
+  /**
+   * Get mass balance convergence tolerance.
+   *
+   * @return tolerance value
+   */
+  public double getMassBalanceTolerance() {
+    return massBalanceTolerance;
+  }
+
+  /**
+   * Get enthalpy balance convergence tolerance.
+   *
+   * @return tolerance value
+   */
+  public double getEnthalpyBalanceTolerance() {
+    return enthalpyBalanceTolerance;
+  }
+
+  /**
    * Check mass balance for all components.
    *
    * @return true if mass balance is within 1e-6
@@ -732,6 +904,32 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       massError += Math.abs(massBalance[i]);
     }
     return massError;
+  }
+
+  /**
+   * Calculates the total enthalpy imbalance across all trays.
+   *
+   * @return the summed absolute enthalpy imbalance
+   */
+  public double getEnergyBalanceError() {
+    double[] energyInput = new double[numberOfTrays];
+    double[] energyOutput = new double[numberOfTrays];
+    double[] energyBalance = new double[numberOfTrays];
+
+    for (int i = 0; i < numberOfTrays; i++) {
+      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
+      for (int j = 0; j < numberOfInputStreams; j++) {
+        energyInput[i] += trays.get(i).getStream(j).getFluid().getEnthalpy();
+      }
+      energyOutput[i] += trays.get(i).getGasOutStream().getFluid().getEnthalpy();
+      energyOutput[i] += trays.get(i).getLiquidOutStream().getFluid().getEnthalpy();
+      energyBalance[i] = energyInput[i] - energyOutput[i];
+    }
+    double energyError = 0.0;
+    for (int i = 0; i < numberOfTrays; i++) {
+      energyError += Math.abs(energyBalance[i]);
+    }
+    return energyError;
   }
 
   /**
