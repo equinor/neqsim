@@ -27,14 +27,12 @@ public class SteamHeater extends Heater {
 
   /** Set inlet steam temperature. */
   public void setSteamInletTemperature(double temperature, String unit) {
-    steamInletTemperature =
-        new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
+    steamInletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
   /** Set outlet condensate temperature. */
   public void setSteamOutletTemperature(double temperature, String unit) {
-    steamOutletTemperature =
-        new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
+    steamOutletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
   /** Set steam pressure. */
@@ -43,7 +41,7 @@ public class SteamHeater extends Heater {
   }
 
   public double getSteamFlowRate(String unit) {
-    return new neqsim.util.unit.MassFlowUnit(steamFlowRate, "kg/sec").getValue(unit);
+    return new neqsim.util.unit.RateUnit(steamFlowRate, "kg/sec", 1.0, 1.0, 0.0).getValue(unit);
   }
 
   private void setWaterModel() {
