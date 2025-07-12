@@ -15,5 +15,6 @@ This folder holds additional documentation for the NeqSim project. Below are use
 - [Distillation column algorithm](distillation_column.md)
 - [Humid air mathematics](humid_air_math.md)
 - [Flow meter models](flow_meter_models.md)
+- [Air cooler unit operation](air_cooler.md)
 - [Water cooler](water_cooler.md)
 - [Steam heater](steam_heater.md)
