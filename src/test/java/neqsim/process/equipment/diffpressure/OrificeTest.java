@@ -1,5 +1,6 @@
 package neqsim.process.equipment.diffpressure;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
@@ -37,5 +38,28 @@ public class OrificeTest {
 
     // Output the pressure after the orifice
     System.out.println("Pressure out of orifice: " + stream2.getPressure("bara") + " bara");
+  }
+
+  @Test
+  void testOrificeCorrelation() {
+    // Calculate the discharge coefficient for an orifice
+    // Parameters: orifice diameter (m), pipe diameter (m), fluid density (kg/m^3), fluid viscosity (Pa·s),
+    // Reynolds number, and orifice type ("flange").
+    double C = Orifice.calculateDischargeCoefficient(0.07391, 0.0222, 1.165, 1.85E-5, 0.12,
+        "flange");
+    Assertions.assertEquals(0.5990326277, C, 1e-6);
+
+    // Calculate the expansibility factor for an orifice
+    // Parameters: orifice diameter (m), pipe diameter (m), upstream pressure (Pa), downstream pressure (Pa),
+    // and isentropic exponent (dimensionless).
+    double eps = Orifice.calculateExpansibility(0.0739, 0.0222, 1.0E5, 9.9E4, 1.4);
+    Assertions.assertEquals(0.9974739057, eps, 1e-9);
+
+    // Calculate the mass flow rate through an orifice
+    // Parameters: orifice diameter (m), pipe diameter (m), upstream pressure (Pa), downstream pressure (Pa),
+    // fluid density (kg/m^3), fluid viscosity (Pa·s), isentropic exponent (dimensionless), and orifice type ("D").
+    double m = Orifice.calculateMassFlowRate(0.07366, 0.05, 200000.0, 183000.0, 999.1, 0.0011,
+        1.33, "D");
+    Assertions.assertEquals(7.702338, m, 1e-6);
   }
 }
