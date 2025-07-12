@@ -1,6 +1,7 @@
 package neqsim.process.equipment.membrane;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
