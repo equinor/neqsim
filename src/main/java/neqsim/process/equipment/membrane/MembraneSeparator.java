@@ -17,7 +17,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 public class MembraneSeparator extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(MembraneSeparator.class);
+  private static final Logger LOGGER = LogManager.getLogger(MembraneSeparator.class);
 
   private StreamInterface inletStream;
   private StreamInterface permeateStream;
