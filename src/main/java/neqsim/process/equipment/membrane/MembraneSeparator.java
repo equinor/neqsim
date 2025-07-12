@@ -142,8 +142,18 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
       retentateStream.setCalculationIdentifier(id);
       permeateStream.setCalculationIdentifier(id);
       setCalculationIdentifier(id);
+    } catch (NullPointerException ex) {
+      logger.error("Null pointer exception in membrane separator: ", ex);
+      throw ex;
+    } catch (IllegalArgumentException ex) {
+      logger.error("Illegal argument exception in membrane separator: ", ex);
+      throw ex;
+    } catch (IllegalStateException ex) {
+      logger.error("Illegal state exception in membrane separator: ", ex);
+      throw ex;
     } catch (Exception ex) {
-      logger.error("Error in membrane separator", ex);
+      logger.error("Unexpected error in membrane separator: ", ex);
+      throw ex;
     }
   }
 
