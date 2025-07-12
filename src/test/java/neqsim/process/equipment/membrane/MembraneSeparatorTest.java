@@ -76,6 +76,6 @@ class MembraneSeparatorTest extends neqsim.NeqSimTest {
     assertEquals(in, out, 1e-6);
     double xCO2Perm = mem2.getPermeateStream().getFluid().getPhase(0).getComponent("CO2").getx();
     double xCO2Feed = inlet.getFluid().getPhase(0).getComponent("CO2").getx();
-    assertEquals(true, xCO2Perm > xCO2Feed);
+    assertTrue(xCO2Perm > xCO2Feed);
   }
 }
