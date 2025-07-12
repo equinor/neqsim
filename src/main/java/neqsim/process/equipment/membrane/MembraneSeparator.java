@@ -17,7 +17,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 public class MembraneSeparator extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
-  private static final Logger LOGGER = LogManager.getLogger(MembraneSeparator.class);
+  private static final Logger logger = LogManager.getLogger(MembraneSeparator.class);
 
   private StreamInterface inletStream;
   private StreamInterface permeateStream;
@@ -62,7 +62,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
   /**
    * Specify permeability coefficient for a component.
    *
-   * @param component component name
+   * @param component    component name
    * @param permeability permeability in mol/(m2*s*Pa)
    */
   public void setPermeability(String component, double permeability) {
@@ -90,7 +90,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
    * Specify permeate fraction for a component.
    *
    * @param component component name
-   * @param fraction permeate fraction (0-1)
+   * @param fraction  permeate fraction (0-1)
    */
   public void setPermeateFraction(String component, double fraction) {
     permeateFractions.put(component, Math.max(0.0, Math.min(1.0, fraction)));
