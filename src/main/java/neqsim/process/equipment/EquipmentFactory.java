@@ -28,6 +28,7 @@ import neqsim.process.equipment.util.GORfitter;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.equipment.flare.Flare;
 
 /**
  * <p>
@@ -116,6 +117,8 @@ public class EquipmentFactory {
         return new SimpleReservoir(name);
       case "manifold":
         return new Manifold(name);
+      case "flare":
+        return new Flare(name);
 
       // Add other equipment types here
       default:
