@@ -128,10 +128,8 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
           molesPerm = moles * frac;
         }
 
-        retentateStream.getThermoSystem().addComponent(name, -(moles));
-        retentateStream.getThermoSystem().addComponent(name, moles - molesPerm);
-        permeateStream.getThermoSystem().addComponent(name, -(moles));
-        permeateStream.getThermoSystem().addComponent(name, molesPerm);
+        retentateStream.getThermoSystem().setComponent(name, moles - molesPerm);
+        permeateStream.getThermoSystem().setComponent(name, molesPerm);
       }
 
       ThermodynamicOperations opsRet =
