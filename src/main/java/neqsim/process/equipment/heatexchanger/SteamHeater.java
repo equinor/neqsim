@@ -2,7 +2,6 @@ package neqsim.process.equipment.heatexchanger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import java.util.UUID;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -12,6 +11,7 @@ import neqsim.thermo.util.steam.Iapws_if97;
  * Heater for process streams using condensing steam as heating medium.
  */
 public class SteamHeater extends Heater {
+
   private static final Logger logger = LogManager.getLogger(SteamHeater.class);
   private static final long serialVersionUID = 1000L;
 

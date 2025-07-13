@@ -7,8 +7,10 @@
 package neqsim.process.equipment.mixer;
 
 import java.util.UUID;
+import com.google.gson.GsonBuilder;
 import neqsim.thermo.system.SystemSoreideWhitson;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.process.util.monitor.MixerResponse;
 
 /**
  * <p>
@@ -134,5 +136,11 @@ public class StaticMixer extends Mixer {
     }
 
     setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new MixerResponse(this));
   }
 }
