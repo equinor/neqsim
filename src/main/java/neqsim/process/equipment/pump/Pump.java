@@ -162,11 +162,16 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
         thermoOps.PHflash(hout, 0);
       } else if (pumpChart.isUsePumpChart()) {
         thermoSystem = inStream.getThermoSystem().clone();
-        double pumpHead = 0.0;
-        pumpHead = getPumpChart().getHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
+        double pumpHead = getPumpChart().getHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
         isentropicEfficiency =
             getPumpChart().getEfficiency(thermoSystem.getFlowRate("m3/hr"), getSpeed());
-        double deltaP = pumpHead * 1000.0 * ThermodynamicConstantsInterface.gravity / 1.0E5;
+        double deltaP;
+        if (getPumpChart().getHeadUnit().equals("meter")) {
+          deltaP = pumpHead * 1000.0 * ThermodynamicConstantsInterface.gravity / 1.0E5;
+        } else {
+          double rho = inStream.getThermoSystem().getDensity("kg/m3");
+          deltaP = pumpHead * rho * 1000.0 / 1.0E5;
+        }
         thermoSystem = inStream.getThermoSystem().clone();
         thermoSystem.setPressure(inStream.getPressure() + deltaP);
         double dH = thermoSystem.getFlowRate("kg/sec") / thermoSystem.getDensity("kg/m3")

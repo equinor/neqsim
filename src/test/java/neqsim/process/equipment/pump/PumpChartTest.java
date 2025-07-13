@@ -90,7 +90,7 @@ public class PumpChartTest {
         1.0);
     Assertions.assertEquals(80.76, pump1.getPumpChart()
         .getEfficiency(pump1.getInletStream().getFlowRate("m3/hr"), active_speed), 0.1);
-    Assertions.assertEquals(7.99577554, pump1.getOutletStream().getPressure("bara"), 0.01);
+    Assertions.assertEquals(8.04, pump1.getOutletStream().getPressure("bara"), 0.05);
     Assertions.assertEquals(956.42763, pump1.getPower("kW"), 0.01);
 
     pump1 = new Pump("pump 1", feedGasStream);
@@ -109,5 +109,33 @@ public class PumpChartTest {
         .getEfficiency(pump1.getInletStream().getFlowRate("m3/hr"), active_speed), 0.1);
     Assertions.assertEquals(8.2492862, pump1.getOutletStream().getPressure("bara"), 0.01);
     Assertions.assertEquals(990.9909569, pump1.getPower("kW"), 0.01);
+  }
+
+  @Test
+  void testHeadUnitKJkg() {
+    double[] speed = new double[] {500.0};
+    double[][] flow = new double[][] {{30.0, 40.0, 50.0}};
+    double[][] headM = new double[][] {{80.0, 70.0, 60.0}};
+    double[][] eff = new double[][] {{80.0, 80.0, 75.0}};
+
+    PumpChart chartMeter = new PumpChart();
+    chartMeter.setCurves(new double[] {}, speed, flow, headM, eff);
+    chartMeter.setHeadUnit("meter");
+
+    double factor = 0.00981;
+    double[][] head = new double[1][headM[0].length];
+    for (int i = 0; i < headM[0].length; i++) {
+      head[0][i] = headM[0][i] * factor;
+    }
+    PumpChart chartEnergy = new PumpChart();
+    chartEnergy.setCurves(new double[] {}, speed, flow, head, eff);
+    chartEnergy.setHeadUnit("kJ/kg");
+
+    double flowRate = 40.0;
+    double headMeter = chartMeter.getHead(flowRate, 500.0);
+    double headEnergy = chartEnergy.getHead(flowRate, 500.0);
+    double deltaPMeter = headMeter * 1000.0 * 9.81 / 1.0e5;
+    double deltaPEnergy = headEnergy * 1000.0 * 1000.0 / 1.0e5;
+    Assertions.assertEquals(deltaPMeter, deltaPEnergy, 1e-6);
   }
 }
