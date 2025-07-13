@@ -10,6 +10,8 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import com.google.gson.GsonBuilder;
+import neqsim.process.util.monitor.RecycleResponse;
 
 /**
  * <p>
@@ -674,5 +676,11 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new RecycleResponse(this));
   }
 }

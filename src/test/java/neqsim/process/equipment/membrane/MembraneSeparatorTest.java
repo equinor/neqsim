@@ -1,7 +1,6 @@
 package neqsim.process.equipment.membrane;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -52,9 +51,9 @@ class MembraneSeparatorTest extends neqsim.NeqSimTest {
     double xCO2Perm = membrane.getPermeateStream().getFluid().getPhase(0).getComponent("CO2").getz();
     double xCO2Ret = membrane.getRetentateStream().getFluid().getPhase(0).getComponent("CO2").getz();
     // Permeate should have higher CO2 fraction
-    assertTrue(xCO2Perm > xCO2Feed);
+    assertEquals(true, xCO2Perm > xCO2Feed);
     // Retentate should have lower CO2 fraction
-    assertTrue(xCO2Ret < xCO2Feed);
+    assertEquals(true, xCO2Ret < xCO2Feed);
   }
 
   @Test
@@ -77,6 +76,6 @@ class MembraneSeparatorTest extends neqsim.NeqSimTest {
     assertEquals(in, out, 1e-6);
     double xCO2Perm = mem2.getPermeateStream().getFluid().getPhase(0).getComponent("CO2").getx();
     double xCO2Feed = inlet.getFluid().getPhase(0).getComponent("CO2").getx();
-    assertTrue(xCO2Perm > xCO2Feed);
+    assertEquals(true, xCO2Perm > xCO2Feed);
   }
 }

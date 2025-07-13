@@ -41,7 +41,7 @@ public class WaterCooler extends Cooler {
   }
 
   public double getCoolingWaterFlowRate(String unit) {
-    return new neqsim.util.unit.RateUnit(coolingWaterFlowRate, "kg/sec", 1.0, 1.0, 0.0).getValue(unit);
+    return new neqsim.util.unit.MassFlowUnit(coolingWaterFlowRate, "kg/sec").getValue(unit);
   }
 
   private void setWaterModel() {

@@ -3,10 +3,12 @@ package neqsim.process.equipment.manifold;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.monitor.ManifoldResponse;
 
 /**
  * <p>
@@ -102,5 +104,20 @@ public class Manifold extends ProcessEquipmentBaseClass {
     super.setName(name);
     localmixer.setName(name + "local mixer");
     localsplitter.setName(name + "local splitter");
+  }
+
+  /**
+   * Get the number of output streams from the manifold.
+   *
+   * @return number of split streams
+   */
+  public int getNumberOfOutputStreams() {
+    return localsplitter.getSplitFactors().length;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new ManifoldResponse(this));
   }
 }

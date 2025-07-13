@@ -34,13 +34,16 @@ public class WaterCoolerTest {
     ps.run();
 
     assertEquals(20.0, cooler.getOutletStream().getTemperature("C"), 1e-3);
-    assertEquals(PhysicalPropertyModel.WATER,
+
+    assertEquals(
+        PhysicalPropertyModel.WATER,
         cooler.getOutletStream().getThermoSystem().getPhase(0).getPhysicalPropertyModel());
 
     double hin = Iapws_if97.h_pt(0.1, 298.15); // 25C
     double hout = Iapws_if97.h_pt(0.1, 308.15); // 35C
     double expectedFlow = -cooler.getDuty() / ((hout - hin) * 1000.0);
-    assertEquals(expectedFlow, cooler.getCoolingWaterFlowRate("kg/sec"), 1e-2);
+    assertEquals(expectedFlow, cooler.getCoolingWaterFlowRate("kg/sec"), 1e-6);
+
   }
 }
 
