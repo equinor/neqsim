@@ -3,6 +3,7 @@ package neqsim.process.equipment.tank;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.Stream;
@@ -10,6 +11,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import neqsim.process.util.monitor.TankResponse;
 
 /**
  * <p>
@@ -452,5 +454,11 @@ public class Tank extends ProcessEquipmentBaseClass {
    */
   public void setVolume(double volume) {
     this.volume = volume;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new TankResponse(this));
   }
 }
