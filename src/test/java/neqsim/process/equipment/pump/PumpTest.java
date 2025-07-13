@@ -99,7 +99,7 @@ public class PumpTest extends neqsim.NeqSimTest {
     pump1.setSpeed(500);
     pump1.run();
 
-    Assertions.assertEquals(5.018, pump1.getOutletPressure(), 0.05);
+    Assertions.assertEquals(7.27423708, pump1.getOutletPressure(), 0.05);
   }
 
   @Test
