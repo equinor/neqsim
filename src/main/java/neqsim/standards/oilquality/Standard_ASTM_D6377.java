@@ -147,13 +147,13 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   /** {@inheritDoc} */
   @Override
   public double getValue(String returnParameter, String returnUnit) {
-    if (returnParameter == "RVP") {
+    if ("RVP".equals(returnParameter)) {
       double RVPlocal = getValue("RVP");
       neqsim.util.unit.PressureUnit presConversion =
           new neqsim.util.unit.PressureUnit(RVPlocal, "bara");
       return presConversion.getValue(returnUnit);
     }
-    if (returnParameter == "TVP") {
+    if ("TVP".equals(returnParameter)) {
       neqsim.util.unit.PressureUnit presConversion =
           new neqsim.util.unit.PressureUnit(getValue("TVP"), "bara");
       return presConversion.getValue(returnUnit);
