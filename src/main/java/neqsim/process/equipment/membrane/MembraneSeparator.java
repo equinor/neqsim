@@ -125,7 +125,6 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
           double frac = permeateFractions.getOrDefault(name, defaultPermeateFraction);
           molesPerm = moles * frac;
         }
-
         retentateStream.getThermoSystem().addComponent(name, -molesPerm);
         permeateStream.getThermoSystem().addComponent(name, molesPerm);
       }

@@ -77,4 +77,3 @@ public class WaterCooler extends Cooler {
     coolingWaterFlowRate = -getEnergyInput() / (deltaH * 1000.0);
   }
 }
-

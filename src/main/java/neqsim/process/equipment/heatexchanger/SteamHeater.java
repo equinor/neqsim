@@ -1,14 +1,18 @@
 package neqsim.process.equipment.heatexchanger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import java.util.UUID;
-import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.util.steam.Iapws_if97;
 
 /**
  * Heater for process streams using condensing steam as heating medium.
  */
 public class SteamHeater extends Heater {
+  
+  private static final Logger logger = LogManager.getLogger(SteamHeater.class);
   private static final long serialVersionUID = 1000L;
 
   private double steamInletTemperature = 453.15; // K
@@ -72,6 +76,8 @@ public class SteamHeater extends Heater {
     double hin = Iapws_if97.h_pt(pinMPa, steamInletTemperature);
     double hout = Iapws_if97.h_pt(pinMPa, steamOutletTemperature);
     double deltaH = hin - hout; // kJ/kg released per kg steam
+    logger.debug("DEBUG SteamHeater: getEnergyInput()=" + getEnergyInput() + ", hin=" + hin
+        + ", hout=" + hout + ", deltaH=" + deltaH);
     if (Math.abs(deltaH) < 1e-6) {
       steamFlowRate = 0.0;
       return;

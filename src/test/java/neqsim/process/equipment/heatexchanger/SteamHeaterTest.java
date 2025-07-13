@@ -34,6 +34,7 @@ public class SteamHeaterTest {
     ps.run();
 
     assertEquals(80.0, heater.getOutletStream().getTemperature("C"), 1e-3);
+
     assertEquals(
         PhysicalPropertyModel.WATER,
         heater.getOutletStream().getThermoSystem().getPhase(0).getPhysicalPropertyModel());
@@ -42,5 +43,6 @@ public class SteamHeaterTest {
     double hout = Iapws_if97.h_pt(0.2, 373.15); // 2 bara, 100C
     double expectedFlow = heater.getDuty() / ((hin - hout) * 1000.0);
     assertEquals(expectedFlow, heater.getSteamFlowRate("kg/sec"), 1e-6);
+
   }
 }
