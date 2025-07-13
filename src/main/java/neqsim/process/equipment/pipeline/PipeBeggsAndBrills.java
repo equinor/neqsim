@@ -22,6 +22,16 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 public class PipeBeggsAndBrills extends Pipeline {
   private static final long serialVersionUID = 1001;
 
+  /** Flow regimes available in Beggs and Brill correlations. */
+  public enum FlowRegime {
+    SEGREGATED,
+    INTERMITTENT,
+    DISTRIBUTED,
+    TRANSITION,
+    SINGLE_PHASE,
+    UNKNOWN
+  }
+
   int iteration;
 
   private double nominalDiameter;
@@ -53,7 +63,7 @@ public class PipeBeggsAndBrills extends Pipeline {
   private boolean runIsothermal = true;
 
   // Flow pattern of the fluid in the pipe
-  private String regime;
+  private FlowRegime regime;
 
   // Volume fraction of liquid in the input mixture
   private double inputVolumeFractionLiquid;
@@ -131,7 +141,7 @@ public class PipeBeggsAndBrills extends Pipeline {
   private List<Double> pressureProfile;
   private List<Double> temperatureProfile;
   private List<Double> pressureDropProfile;
-  private List<String> flowRegimeProfile;
+  private List<FlowRegime> flowRegimeProfile;
 
   private List<Double> liquidSuperficialVelocityProfile;
   private List<Double> gasSuperficialVelocityProfile;
@@ -475,9 +485,9 @@ public class PipeBeggsAndBrills extends Pipeline {
    * calcFlowRegime.
    * </p>
    *
-   * @return a {@link java.lang.String} object
+   * @return the determined flow regime
    */
-  public String calcFlowRegime() {
+  public FlowRegime calcFlowRegime() {
     // Calc input volume fraction
     area = (Math.PI / 4.0) * Math.pow(insideDiameter, 2.0);
     if (system.getNumberOfPhases() != 1) {
@@ -499,12 +509,12 @@ public class PipeBeggsAndBrills extends Pipeline {
         supGasVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
         supMixVel = supGasVel;
         inputVolumeFractionLiquid = 0.0;
-        regime = "Single Phase";
+        regime = FlowRegime.SINGLE_PHASE;
       } else {
         supLiquidVel = system.getPhase(1).getFlowRate("ft3/sec") / area;
         supMixVel = supLiquidVel;
         inputVolumeFractionLiquid = 1.0;
-        regime = "Single Phase";
+        regime = FlowRegime.SINGLE_PHASE;
       }
     }
 
@@ -517,24 +527,24 @@ public class PipeBeggsAndBrills extends Pipeline {
     double L3 = 0.1 * Math.pow(inputVolumeFractionLiquid, -1.4516);
     double L4 = 0.5 * Math.pow(inputVolumeFractionLiquid, -6.738);
 
-    if (regime != "Single Phase") {
+    if (regime != FlowRegime.SINGLE_PHASE) {
       if ((inputVolumeFractionLiquid < 0.01 && mixtureFroudeNumber < L1)
           || (inputVolumeFractionLiquid >= 0.01 && mixtureFroudeNumber < L2)) {
-        regime = "SEGREGATED";
+        regime = FlowRegime.SEGREGATED;
       } else if ((inputVolumeFractionLiquid < 0.4 && inputVolumeFractionLiquid >= 0.01
           && mixtureFroudeNumber <= L1 && mixtureFroudeNumber > L3)
           || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber <= L4
               && mixtureFroudeNumber > L3)) {
-        regime = "INTERMITTENT";
+        regime = FlowRegime.INTERMITTENT;
       } else if ((inputVolumeFractionLiquid < 0.4 && mixtureFroudeNumber >= L4)
           || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber > L4)) {
-        regime = "DISTRIBUTED";
+        regime = FlowRegime.DISTRIBUTED;
       } else if (mixtureFroudeNumber > L2 && mixtureFroudeNumber < L3) {
-        regime = "TRANSITION";
+        regime = FlowRegime.TRANSITION;
       } else if (inputVolumeFractionLiquid < 0.1 || inputVolumeFractionLiquid > 0.9) {
-        regime = "INTERMITTENT";
+        regime = FlowRegime.INTERMITTENT;
       } else if (mixtureFroudeNumber > 110) {
-        regime = "INTERMITTENT";
+        regime = FlowRegime.INTERMITTENT;
       } else {
         throw new RuntimeException(new neqsim.util.exception.InvalidOutputException(
             "PipeBeggsAndBrills", "run: calcFlowRegime", "FlowRegime", "Flow regime is not found"));
@@ -559,21 +569,21 @@ public class PipeBeggsAndBrills extends Pipeline {
 
     double BThetta;
 
-    if (regime == "SEGREGATED") {
+    if (regime == FlowRegime.SEGREGATED) {
       El = 0.98 * Math.pow(inputVolumeFractionLiquid, 0.4846)
           / Math.pow(mixtureFroudeNumber, 0.0868);
-    } else if (regime == "INTERMITTENT") {
+    } else if (regime == FlowRegime.INTERMITTENT) {
       El = 0.845 * Math.pow(inputVolumeFractionLiquid, 0.5351)
           / (Math.pow(mixtureFroudeNumber, 0.0173));
-    } else if (regime == "DISTRIBUTED") {
+    } else if (regime == FlowRegime.DISTRIBUTED) {
       El = 1.065 * Math.pow(inputVolumeFractionLiquid, 0.5824)
           / (Math.pow(mixtureFroudeNumber, 0.0609));
-    } else if (regime == "TRANSITION") {
+    } else if (regime == FlowRegime.TRANSITION) {
       El = A * 0.98 * Math.pow(inputVolumeFractionLiquid, 0.4846)
           / Math.pow(mixtureFroudeNumber, 0.0868)
           + B * 0.845 * Math.pow(inputVolumeFractionLiquid, 0.5351)
               / (Math.pow(mixtureFroudeNumber, 0.0173));
-    } else if (regime == "Single Phase") {
+    } else if (regime == FlowRegime.SINGLE_PHASE) {
       if (inputVolumeFractionLiquid < 0.1) {
         El = inputVolumeFractionLiquid;
       } else {
@@ -581,7 +591,7 @@ public class PipeBeggsAndBrills extends Pipeline {
       }
     }
 
-    if (regime != "Single Phase") {
+    if (regime != FlowRegime.SINGLE_PHASE) {
       double SG;
       if (system.getNumberOfPhases() == 3) {
         mixtureOilMassFraction = system.getPhase(1).getFlowRate("kg/hr")
@@ -620,15 +630,15 @@ public class PipeBeggsAndBrills extends Pipeline {
       double betta = 0;
 
       if (elevation > 0) {
-        if (regime == "SEGREGATED") {
+        if (regime == FlowRegime.SEGREGATED) {
           betta = (1 - inputVolumeFractionLiquid)
               * Math.log(0.011 * Math.pow(Nvl, 3.539) / (Math.pow(inputVolumeFractionLiquid, 3.768)
                   * Math.pow(mixtureFroudeNumber, 1.614)));
-        } else if (regime == "INTERMITTENT") {
+        } else if (regime == FlowRegime.INTERMITTENT) {
           betta = (1 - inputVolumeFractionLiquid)
               * Math.log(2.96 * Math.pow(inputVolumeFractionLiquid, 0.305)
                   * Math.pow(mixtureFroudeNumber, 0.0978) / (Math.pow(Nvl, 0.4473)));
-        } else if (regime == "DISTRIBUTED") {
+        } else if (regime == FlowRegime.DISTRIBUTED) {
           betta = 0;
         }
       } else {
@@ -675,7 +685,7 @@ public class PipeBeggsAndBrills extends Pipeline {
     double muNoSlip = 0;
 
     if (system.getNumberOfPhases() != 1) {
-      if (regime != "Single Phase") {
+      if (regime != FlowRegime.SINGLE_PHASE) {
         double y = inputVolumeFractionLiquid / (Math.pow(El, 2));
         if (1 < y && y < 1.2) {
           S = Math.log(2.2 * y - 1.2);
@@ -742,7 +752,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    */
   public double calcPressureDrop() {
     convertSystemUnitToImperial();
-    regime = "unknown";
+    regime = FlowRegime.UNKNOWN;
     calcFlowRegime();
     hydrostaticPressureDrop = calcHydrostaticPressureDifference();
     frictionPressureLoss = calcFrictionPressureLoss();
@@ -1055,9 +1065,9 @@ public class PipeBeggsAndBrills extends Pipeline {
    * getFlowRegime.
    * </p>
    *
-   * @return a {@link java.lang.String} object
+   * @return flow regime
    */
-  public String getFlowRegime() {
+  public FlowRegime getFlowRegime() {
     return regime;
   }
 
@@ -1169,7 +1179,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    *
    * @return list of flow regime names
    */
-  public List<String> getFlowRegimeProfile() {
+  public List<FlowRegime> getFlowRegimeProfile() {
     return new ArrayList<>(flowRegimeProfile);
   }
 
@@ -1181,7 +1191,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @param index segment number
    * @return String
    */
-  public String getSegmentFlowRegime(int index) {
+  public FlowRegime getSegmentFlowRegime(int index) {
     if (index >= 0 && index < flowRegimeProfile.size()) {
       return flowRegimeProfile.get(index);
     } else {
