@@ -11,7 +11,7 @@ import neqsim.thermo.util.steam.Iapws_if97;
  * Heater for process streams using condensing steam as heating medium.
  */
 public class SteamHeater extends Heater {
-  
+
   private static final Logger logger = LogManager.getLogger(SteamHeater.class);
   private static final long serialVersionUID = 1000L;
 
@@ -31,14 +31,12 @@ public class SteamHeater extends Heater {
 
   /** Set inlet steam temperature. */
   public void setSteamInletTemperature(double temperature, String unit) {
-    steamInletTemperature =
-        new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
+    steamInletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
   /** Set outlet condensate temperature. */
   public void setSteamOutletTemperature(double temperature, String unit) {
-    steamOutletTemperature =
-        new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
+    steamOutletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
   /** Set steam pressure. */
@@ -47,7 +45,7 @@ public class SteamHeater extends Heater {
   }
 
   public double getSteamFlowRate(String unit) {
-    return new neqsim.util.unit.MassFlowUnit(steamFlowRate, "kg/sec").getValue(unit);
+    return new neqsim.util.unit.RateUnit(steamFlowRate, "kg/sec", 1.0, 1.0, 0.0).getValue(unit);
   }
 
   private void setWaterModel() {

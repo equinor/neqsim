@@ -12,12 +12,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Simple membrane separation unit with one inlet stream and two outlet streams
- * (retentate and permeate). Each component can be assigned a permeate fraction
- * representing the fraction of that component transported to the permeate side.
+ * (retentate and
+ * permeate). Each component can be assigned a permeate fraction representing
+ * the fraction of that
+ * component transported to the permeate side.
  */
 public class MembraneSeparator extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
-  static Logger logger = LogManager.getLogger(MembraneSeparator.class);
+  private static final Logger logger = LogManager.getLogger(MembraneSeparator.class);
 
   private StreamInterface inletStream;
   private StreamInterface permeateStream;
@@ -62,7 +64,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
   /**
    * Specify permeability coefficient for a component.
    *
-   * @param component component name
+   * @param component    component name
    * @param permeability permeability in mol/(m2*s*Pa)
    */
   public void setPermeability(String component, double permeability) {
@@ -90,7 +92,7 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
    * Specify permeate fraction for a component.
    *
    * @param component component name
-   * @param fraction permeate fraction (0-1)
+   * @param fraction  permeate fraction (0-1)
    */
   public void setPermeateFraction(String component, double fraction) {
     permeateFractions.put(component, Math.max(0.0, Math.min(1.0, fraction)));
@@ -125,7 +127,10 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
           double frac = permeateFractions.getOrDefault(name, defaultPermeateFraction);
           molesPerm = moles * frac;
         }
-        retentateStream.getThermoSystem().addComponent(name, -molesPerm);
+
+        retentateStream.getThermoSystem().addComponent(name, -(moles));
+        retentateStream.getThermoSystem().addComponent(name, moles - molesPerm);
+        permeateStream.getThermoSystem().addComponent(name, -(moles));
         permeateStream.getThermoSystem().addComponent(name, molesPerm);
       }
 
@@ -137,8 +142,18 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
       retentateStream.setCalculationIdentifier(id);
       permeateStream.setCalculationIdentifier(id);
       setCalculationIdentifier(id);
+    } catch (NullPointerException ex) {
+      logger.error("Null pointer exception in membrane separator: ", ex);
+      throw ex;
+    } catch (IllegalArgumentException ex) {
+      logger.error("Illegal argument exception in membrane separator: ", ex);
+      throw ex;
+    } catch (IllegalStateException ex) {
+      logger.error("Illegal state exception in membrane separator: ", ex);
+      throw ex;
     } catch (Exception ex) {
-      logger.error("Error in membrane separator", ex);
+      logger.error("Unexpected error in membrane separator: ", ex);
+      throw ex;
     }
   }
 
