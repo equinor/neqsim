@@ -18,15 +18,50 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class CompressorChart implements CompressorChartInterface, java.io.Serializable {
+  /**
+   * Generates the surge curve by taking the head value at the lowest flow for each speed from the
+   * compressor chart values.
+   */
+  public void generateSurgeCurve() {
+    int n = chartValues.size();
+    double[] surgeFlow = new double[n];
+    double[] surgeHead = new double[n];
+    for (int i = 0; i < n; i++) {
+      CompressorCurve curve = chartValues.get(i);
+      // Find index of lowest flow (usually index 0, but robust for unsorted)
+      int minIdx = 0;
+      for (int j = 1; j < curve.flow.length; j++) {
+        if (curve.flow[j] < curve.flow[minIdx]) {
+          minIdx = j;
+        }
+      }
+      surgeFlow[i] = curve.flow[minIdx];
+      surgeHead[i] = curve.head[minIdx];
+    }
+    // Sort surgeFlow and surgeHead by increasing surgeFlow
+    double[][] pairs = new double[n][2];
+    for (int i = 0; i < n; i++) {
+      pairs[i][0] = surgeFlow[i];
+      pairs[i][1] = surgeHead[i];
+    }
+    java.util.Arrays.sort(pairs, java.util.Comparator.comparingDouble(a -> a[0]));
+    for (int i = 0; i < n; i++) {
+      surgeFlow[i] = pairs[i][0];
+      surgeHead[i] = pairs[i][1];
+    }
+    setSurgeCurve(new SafeSplineSurgeCurve(surgeFlow, surgeHead));
+  }
+
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CompressorChart.class);
 
   ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
+  ArrayList<Double> chartSpeeds = new ArrayList<Double>();
+  SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
+  StoneWallCurve stoneWallCurve = new StoneWallCurve();
   // private SurgeCurve surgeCurve = new SurgeCurve();
-  private SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
-  private StoneWallCurve stoneWallCurve = new StoneWallCurve();
   boolean isSurge = false;
   double maxSpeedCurve = 0;
   double minSpeedCurve = 1e10;

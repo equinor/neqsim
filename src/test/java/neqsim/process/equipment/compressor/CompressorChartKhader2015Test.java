@@ -132,6 +132,9 @@ public class CompressorChartKhader2015Test {
     comp1.run();
     Assertions.assertEquals(75.11224727, comp1.getOutletStream().getPressure("bara"), 0.01);
 
+    comp1.getCompressorChart().generateSurgeCurve();
+    comp1.getSurgeFlowRate();
+    // Assertions.assertEquals(161.038905, comp1.getSurgeFlowRate(), 1.0);
     // compChart.prettyPrintChartValues();
     // compChart.prettyPrintRealCurvesForFluid();
   }

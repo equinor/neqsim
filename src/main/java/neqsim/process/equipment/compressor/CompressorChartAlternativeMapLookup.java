@@ -129,17 +129,14 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author asmund
  * @version $Id: $Id
  */
-public class CompressorChartAlternativeMapLookup
+public class CompressorChartAlternativeMapLookup extends CompressorChart
     implements CompressorChartInterface, java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CompressorChart.class);
 
-  ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
-  ArrayList<Double> chartSpeeds = new ArrayList<Double>();
-  private SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
-  private StoneWallCurve stoneWallCurve = new StoneWallCurve();
+
   boolean isSurge = false;
   boolean isStoneWall = false;
   double refMW;
