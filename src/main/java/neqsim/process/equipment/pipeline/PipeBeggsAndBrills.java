@@ -1329,7 +1329,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return Double
    */
   public Double getSegmentLiquidSuperficialVelocity(int index) {
-    if (index >= 0 && index <= liquidSuperficialVelocityProfile.size()) {
+    if (index >= 0 && index < liquidSuperficialVelocityProfile.size()) {
       return liquidSuperficialVelocityProfile.get(index);
     } else {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
@@ -1345,7 +1345,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return Double
    */
   public Double getSegmentGasSuperficialVelocity(int index) {
-    if (index >= 0 && index <= gasSuperficialVelocityProfile.size()) {
+    if (index >= 0 && index < gasSuperficialVelocityProfile.size()) {
       return gasSuperficialVelocityProfile.get(index);
     } else {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
@@ -1361,7 +1361,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return Double
    */
   public Double getSegmentMixtureSuperficialVelocity(int index) {
-    if (index >= 0 && index <= mixtureSuperficialVelocityProfile.size()) {
+    if (index >= 0 && index < mixtureSuperficialVelocityProfile.size()) {
       return mixtureSuperficialVelocityProfile.get(index);
     } else {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
@@ -1377,7 +1377,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return Double
    */
   public Double getSegmentMixtureViscosity(int index) {
-    if (index >= 0 && index <= mixtureViscosityProfile.size()) {
+    if (index >= 0 && index < mixtureViscosityProfile.size()) {
       return mixtureViscosityProfile.get(index);
     } else {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
@@ -1393,7 +1393,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return Double
    */
   public Double getSegmentMixtureDensity(int index) {
-    if (index >= 0 && index <= mixtureDensityProfile.size()) {
+    if (index >= 0 && index < mixtureDensityProfile.size()) {
       return mixtureDensityProfile.get(index);
     } else {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
@@ -1409,7 +1409,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return Double
    */
   public Double getSegmentLiquidDensity(int index) {
-    if (index >= 0 && index <= liquidDensityProfile.size()) {
+    if (index >= 0 && index < liquidDensityProfile.size()) {
       return liquidDensityProfile.get(index);
     } else {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
@@ -1425,7 +1425,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return Double
    */
   public Double getSegmentLiquidHoldup(int index) {
-    if (index >= 0 && index <= liquidHoldupProfile.size()) {
+    if (index >= 0 && index < liquidHoldupProfile.size()) {
       return liquidHoldupProfile.get(index);
     } else {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
@@ -1441,7 +1441,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return Double
    */
   public Double getSegmentMixtureReynoldsNumber(int index) {
-    if (index >= 0 && index <= mixtureReynoldsNumber.size()) {
+    if (index >= 0 && index < mixtureReynoldsNumber.size()) {
       return mixtureReynoldsNumber.get(index);
     } else {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
@@ -1457,7 +1457,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return Double
    */
   public Double getSegmentLength(int index) {
-    if (index >= 0 && index <= lengthProfile.size()) {
+    if (index >= 0 && index < lengthProfile.size()) {
       return lengthProfile.get(index);
     } else {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
@@ -1473,7 +1473,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return Double
    */
   public Double getSegmentElevation(int index) {
-    if (index >= 0 && index <= elevationProfile.size()) {
+    if (index >= 0 && index < elevationProfile.size()) {
       return elevationProfile.get(index);
     } else {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
