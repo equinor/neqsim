@@ -387,6 +387,40 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
+   * Generates the surge curve by taking the head value at the lowest flow for each speed from the
+   * compressor chart values.
+   */
+  public void generateSurgeCurve() {
+    int n = chartValues.size();
+    java.util.TreeMap<Double, Double> uniqueSurgePoints = new java.util.TreeMap<>();
+    for (int i = 0; i < n; i++) {
+      CompressorCurve curve = chartValues.get(i);
+      // Find index of lowest flow (usually index 0, but robust for unsorted)
+      int minIdx = 0;
+      for (int j = 1; j < curve.flow.length; j++) {
+        if (curve.flow[j] < curve.flow[minIdx]) {
+          minIdx = j;
+        }
+      }
+      double flowVal = curve.flow[minIdx];
+      double headVal = curve.head[minIdx];
+      // Only add if not already present (ensures one point per speed, no duplicate flows)
+      if (!uniqueSurgePoints.containsKey(flowVal)) {
+        uniqueSurgePoints.put(flowVal, headVal);
+      }
+    }
+    double[] surgeFlow = new double[uniqueSurgePoints.size()];
+    double[] surgeHead = new double[uniqueSurgePoints.size()];
+    int idx = 0;
+    for (java.util.Map.Entry<Double, Double> entry : uniqueSurgePoints.entrySet()) {
+      surgeFlow[idx] = entry.getKey();
+      surgeHead[idx] = entry.getValue();
+      idx++;
+    }
+    setSurgeCurve(new SafeSplineSurgeCurve(surgeFlow, surgeHead));
+  }
+
+  /**
    * Simple POJO to hold corrected (dimensionless) compressor curve data for a given speed.
    */
   public static class CorrectedCurve {
