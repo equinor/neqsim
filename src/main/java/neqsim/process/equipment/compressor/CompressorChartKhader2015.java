@@ -35,6 +35,21 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
+   * Constructs a CompressorChartKhader2015 object with the specified fluid and impeller diameter.
+   *
+   * @param fluid the working fluid for the compressor
+   * @param referenceFluid the referenceFluid for the compressorcurve
+   * @param impellerdiam the outer diameter of the impeller
+   */
+  public CompressorChartKhader2015(SystemInterface fluid, SystemInterface referenceFluid,
+      double impellerdiam) {
+    super();
+    this.fluid = fluid;
+    this.ref_fluid = referenceFluid;
+    this.impellerOuterDiameter = impellerdiam;
+  }
+
+  /**
    * Constructs a CompressorChartKhader2015 object with the specified stream and impeller diameter.
    *
    * @param stream the stream for the compressor
@@ -82,10 +97,18 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    */
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] flowPolyEff, double[][] polyEff) {
-    if (fluid == null) {
+    if (fluid == null && stream != null) {
       fluid = stream.getFluid();
     }
-    ref_fluid = createDefaultFluid(chartConditions);
+    if (ref_fluid == null) {
+      ref_fluid = createDefaultFluid(chartConditions);
+    }
+    // ref_fluid = createDe
+    ref_fluid.setTemperature(chartConditions[0], "C");
+    ref_fluid.setPressure(chartConditions[1], "bara");
+    ThermodynamicOperations ops = new ThermodynamicOperations(ref_fluid);
+    ops.TPflash();
+    ref_fluid.initThermoProperties();
 
     double fluidSoundSpeed = ref_fluid.getPhase(0).getSoundSpeed();
 
@@ -129,7 +152,14 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    */
   public java.util.List<CorrectedCurve> getCorrectedCurves(double[] chartConditions, double[] speed,
       double[][] flow, double[][] head, double[][] flowPolyEff, double[][] polyEff) {
-    SystemInterface ref_fluid = createDefaultFluid(chartConditions);
+    if (ref_fluid == null) {
+      ref_fluid = createDefaultFluid(chartConditions);
+    }
+    ref_fluid.setTemperature(chartConditions[0], "C");
+    ref_fluid.setPressure(chartConditions[1], "bara");
+    ThermodynamicOperations ops = new ThermodynamicOperations(ref_fluid);
+    ops.TPflash();
+    ref_fluid.initThermoProperties();
     double fluidSoundSpeed = ref_fluid.getPhase(0).getSoundSpeed();
     java.util.List<CorrectedCurve> correctedCurves = new java.util.ArrayList<>();
     for (int i = 0; i < speed.length; i++) {
@@ -346,6 +376,48 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    */
   public void setImpellerOuterDiameter(double impellerOuterDiameter) {
     this.impellerOuterDiameter = impellerOuterDiameter;
+  }
+
+  public SystemInterface getReferenceFluid() {
+    return ref_fluid;
+  }
+
+  public void setReferenceFluid(SystemInterface ref_fluid) {
+    this.ref_fluid = ref_fluid;
+  }
+
+  /**
+   * Generates the surge curve by taking the head value at the lowest flow for each speed from the
+   * compressor chart values.
+   */
+  public void generateSurgeCurve() {
+    int n = chartValues.size();
+    java.util.TreeMap<Double, Double> uniqueSurgePoints = new java.util.TreeMap<>();
+    for (int i = 0; i < n; i++) {
+      CompressorCurve curve = chartValues.get(i);
+      // Find index of lowest flow (usually index 0, but robust for unsorted)
+      int minIdx = 0;
+      for (int j = 1; j < curve.flow.length; j++) {
+        if (curve.flow[j] < curve.flow[minIdx]) {
+          minIdx = j;
+        }
+      }
+      double flowVal = curve.flow[minIdx];
+      double headVal = curve.head[minIdx];
+      // Only add if not already present (ensures one point per speed, no duplicate flows)
+      if (!uniqueSurgePoints.containsKey(flowVal)) {
+        uniqueSurgePoints.put(flowVal, headVal);
+      }
+    }
+    double[] surgeFlow = new double[uniqueSurgePoints.size()];
+    double[] surgeHead = new double[uniqueSurgePoints.size()];
+    int idx = 0;
+    for (java.util.Map.Entry<Double, Double> entry : uniqueSurgePoints.entrySet()) {
+      surgeFlow[idx] = entry.getKey();
+      surgeHead[idx] = entry.getValue();
+      idx++;
+    }
+    setSurgeCurve(new SafeSplineSurgeCurve(surgeFlow, surgeHead));
   }
 
   /**
