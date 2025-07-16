@@ -34,8 +34,16 @@ public class TBPfractionModel implements java.io.Serializable {
   public abstract class TBPBaseModel implements TBPModelInterface, Cloneable, java.io.Serializable {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
-
+    private double boilingPoint = 0.0;
     protected boolean calcm = true;
+
+    public void setBoilingPoint(double boilingPoint) {
+      this.boilingPoint = boilingPoint;
+    }
+    
+    public double getBoilingPoint() {
+      return boilingPoint;
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -46,6 +54,9 @@ public class TBPfractionModel implements java.io.Serializable {
     /** {@inheritDoc} */
     @Override
     public double calcTB(double molarMass, double density) {
+      if (getBoilingPoint() > 0.0) {
+        return getBoilingPoint();
+      }
       return Math.pow((molarMass / 5.805e-5 * Math.pow(density, 0.9371)), 1.0 / 2.3776);
     }
 
@@ -189,10 +200,13 @@ public class TBPfractionModel implements java.io.Serializable {
       return TBPfractionCoefs[2][0] + TBPfractionCoefs[2][1] * molarMass
           + TBPfractionCoefs[2][2] * density + TBPfractionCoefs[2][3] * Math.pow(molarMass, 2.0);
     }
-
+    
     /** {@inheritDoc} */
     @Override
     public double calcTB(double molarMass, double density) {
+      if (getBoilingPoint() > 0.0) {
+        return getBoilingPoint();
+      }
       if (molarMass < 540) {
         return 2E-06 * Math.pow(molarMass, 3) - 0.0035 * Math.pow(molarMass, 2) + 2.4003 * molarMass
             + 171.74;
@@ -248,6 +262,41 @@ public class TBPfractionModel implements java.io.Serializable {
       TPBracketcoefs = TPBracketcoefs2;
     }
   }
+
+  
+  public class PedersenTBPModelPR2 extends PedersenTBPModelSRK {
+    /** Serialization version UID. */
+    
+    private static final long serialVersionUID = 1000;
+
+    public PedersenTBPModelPR2() {
+      double[][] TBPfractionCoefOil2 = {{73.4043, 97.3562, 0.618744, -2059.32, 0.0},
+          {0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0},
+          {0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0}};
+      double[][] TBPfractionCoefHeavyOil2 = {{9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0},
+          {1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25},
+          {-2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0}};
+      double[] TPBracketcoefs2 = {0.25969, 0.50033};
+      TBPfractionCoefOil = TBPfractionCoefOil2;
+      TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
+      TPBracketcoefs = TPBracketcoefs2;
+    }
+    
+    /** {@inheritDoc} */
+    @Override
+    public double calcTB(double molarMass, double density) {
+      if (getBoilingPoint() > 0.0) {
+        return getBoilingPoint();
+      }
+      //Søreide correlation
+      double calculated_TB = (1928.3 - 1.695e5 * Math.pow(molarMass, -0.03522)
+      * Math.pow(density, 3.266) * Math.exp(-4.922e-3 * molarMass  - 4.7685 * density
+          + 3.462e-3 * molarMass * density));
+      return calculated_TB/1.8;
+    }
+  }
+
+
 
   public class PedersenTBPModelPRHeavyOil extends PedersenTBPModelPR {
     /** Serialization version UID. */
@@ -309,10 +358,10 @@ public class TBPfractionModel implements java.io.Serializable {
     /** {@inheritDoc} */
     @Override
     public double calcTB(double molarMass, double density) {
-      // Soreide method (Whitson book)
-      return 5.0 / 9.0 * (1928.3 - 1.695e5 * Math.pow(molarMass, -0.03522)
-          * Math.pow(density, 3.266)
-          * Math.exp(-4.922e-3 * molarMass - 4.7685 * density + 3.462e-3 * molarMass * density)); // 97.58*Math.pow(molarMass,0.3323)*Math.pow(density,0.04609);
+      if (getBoilingPoint() > 0.0) {
+        return getBoilingPoint();
+      }
+      return 97.58*Math.pow(molarMass,0.3323)*Math.pow(density,0.04609);
     }
 
     /** {@inheritDoc} */
@@ -521,6 +570,8 @@ public class TBPfractionModel implements java.io.Serializable {
       return new PedersenTBPModelSRKHeavyOil();
     } else if (name.equals("PedersenPR")) {
       return new PedersenTBPModelPR();
+    } else if (name.equals("PedersenPR2")) {
+      return new PedersenTBPModelPR2();
     } else if (name.equals("PedersenPRHeavyOil")) {
       logger.info("using PR heavy oil TBp.................");
       return new PedersenTBPModelPRHeavyOil();

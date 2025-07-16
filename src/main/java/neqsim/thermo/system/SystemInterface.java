@@ -336,6 +336,29 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
       double density, double criticalTemperature, double criticalPressure, double acentricFactor);
 
   /**
+   * <p>
+   * addTBPfraction2.
+   * </p>
+   *
+   * @param componentName a {@link java.lang.String} object
+   * @param numberOfMoles a double
+   * @param molarMass a double
+   * @param boilingPoint a double
+   */
+  public void addTBPfraction2(String componentName, double numberOfMoles, double molarMass,
+      double boilingPoint);
+
+  /**
+   * Calculate density from boiling point and molar mass using TBP correlation.
+   *
+   * @param molarMass molar mass in kg/mol
+   * @param boilingPoint boiling point in K
+   * @return density in g/cm3
+   */
+  public double calculateDensityFromBoilingPoint(double molarMass, double boilingPoint);
+
+
+  /**
    * Add to component names.
    *
    * @param name Component name to add
@@ -2679,4 +2702,19 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param molarComposition an array of molar compositions to set for the matching components
    */
   public void setMolarCompositionOfNamedComponents(String nameDef, double[] molarComposition);
+
+  /**
+   * Add TBP fraction using density and boiling point, calculating molar mass.
+   */
+  public void addTBPfraction3(String componentName, double numberOfMoles, double density,
+      double boilingPoint);
+
+  /**
+   * Add TBP fraction using molar mass , density and boiling point
+  */
+  public void addTBPfraction4(String componentName, double numberOfMoles, double molarMass, double density,
+      double boilingPoint);
+
+  public double calculateMolarMassFromDensityAndBoilingPoint(double density, double boilingPoint);
+
 }
