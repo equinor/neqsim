@@ -248,7 +248,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
   /** {@inheritDoc} */
   @Override
   public void setProperty(String specificationName, double value, String unit) {
-    if (unit == "") {
+    if ("".equals(unit)) {
       setProperty(specificationName, value);
     } else {
       setProperty(specificationName, value);
