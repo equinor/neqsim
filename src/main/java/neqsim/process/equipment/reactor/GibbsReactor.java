@@ -573,7 +573,7 @@ public class GibbsReactor extends TwoPortEquipment {
         double Gf0 = comp.calculateGibbsEnergy(T);
 
         // Calculate fugacity coefficient (assume 1 for now)
-        double phi = 1.0;
+        double phi = getFugacityCoefficient(compName, 0);
 
         // Calculate mole fraction
         double yi = moles / totalMoles;
