@@ -219,7 +219,7 @@ public abstract class Component implements ComponentInterface {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
           "createComponent", "name", "can not be null"));
     }
-    if (name.trim() == "") {
+    if (name.trim().isEmpty()) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
           "createComponent", "name", "can not be empty"));
     }
