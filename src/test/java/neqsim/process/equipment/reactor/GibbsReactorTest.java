@@ -20,7 +20,7 @@ public class GibbsReactorTest {
   @Test
   public void testAdiabaticMode() {
     // Create a system with hydrogen, oxygen, and water at 10 bar and 350 K
-    SystemInterface system = new SystemSrkEos(268, 1.0);
+    SystemInterface system = new SystemSrkEos(298, 1.0);
     system.addComponent("hydrogen", 0.1);
     system.addComponent("nitrogen", 1);
     system.addComponent("ammonia", 0);
