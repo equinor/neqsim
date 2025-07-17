@@ -1494,7 +1494,7 @@ public class GibbsReactor extends TwoPortEquipment {
         fluid.setMolarComposition(composition);
       }
       fluid.init(0);
-      fluid.init(1);
+
       double phi_plus = fluid.getPhase(phaseNumber).getComponent(iIndex).getFugacityCoefficient();
 
       // Reset to original
@@ -1513,7 +1513,7 @@ public class GibbsReactor extends TwoPortEquipment {
         fluid.setMolarComposition(origMoles);
       }
       fluid.init(0);
-      fluid.init(1);
+
       double phi_orig = fluid.getPhase(phaseNumber).getComponent(iIndex).getFugacityCoefficient();
       // Finite difference derivative
       double result = (phi_plus - phi_orig) / h;
@@ -1692,7 +1692,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
 
           system.init(0);
-          system.init(1);
+
           double T_out = system.getTemperature() - dH / (system.getCp("J/molK") / 1000);
           dT = Math.abs(T_out - system.getTemperature());
           system.setTemperature(T_out);

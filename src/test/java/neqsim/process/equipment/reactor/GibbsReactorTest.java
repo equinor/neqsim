@@ -25,7 +25,7 @@ public class GibbsReactorTest {
     system.addComponent("nitrogen", 1);
     system.addComponent("ammonia", 0);
     system.setMixingRule(2);
-    system.init(0);
+
 
     // Create inlet stream
     Stream inletStream = new Stream("Inlet Stream", system);
