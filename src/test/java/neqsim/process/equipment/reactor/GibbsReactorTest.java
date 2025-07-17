@@ -21,7 +21,7 @@ public class GibbsReactorTest {
   public void testAdiabaticMode() {
     // Create a system with hydrogen, oxygen, and water at 10 bar and 350 K
     SystemInterface system = new SystemSrkEos(298, 1.0);
-    system.addComponent("hydrogen", 0.1);
+    system.addComponent("hydrogen", 0.3);
     system.addComponent("nitrogen", 1);
     system.addComponent("ammonia", 0);
     system.setMixingRule(2);
@@ -34,8 +34,8 @@ public class GibbsReactorTest {
     // Create GibbsReactor in adiabatic mode
     GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
     reactor.setUseAllDatabaseSpecies(false);
-    reactor.setDampingComposition(0.002);
-    reactor.setMaxIterations(500);
+    reactor.setDampingComposition(0.0015);
+    reactor.setMaxIterations(2500);
     reactor.setConvergenceTolerance(1e-6);
     reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
 
@@ -102,7 +102,7 @@ public class GibbsReactorTest {
     system.addComponent("oxygen", 1.0);
     system.addComponent("water", 1.0);
     system.setMixingRule(2);
-    system.init(0);
+
 
     Stream inletStream = new Stream("Inlet Stream", system);
     GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);

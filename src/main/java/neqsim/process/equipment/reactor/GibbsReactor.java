@@ -495,17 +495,6 @@ public class GibbsReactor extends TwoPortEquipment {
 
     solveGibbsEquilibrium();
 
-    // Re-solve if temperature change is significant, allow up to 5 temperature update iterations
-    int tempUpdateMaxIter = 15;
-    while (dT > 0.1 && tempUpdateIter < tempUpdateMaxIter) {
-      tempUpdateIter++;
-      solveGibbsEquilibrium(); // Re-solve with new temperature
-      // Recalculate dT after each re-solve (assume dT is updated in solveGibbsEquilibrium)
-      // If not, you may need to recalculate dT here based on the latest system state
-    }
-
-
-
     // Set outlet stream
     // getOutletStream().setThermoSystem(system);
     getOutletStream().run(id);
@@ -1657,17 +1646,29 @@ public class GibbsReactor extends TwoPortEquipment {
       logger.debug("Iteration " + iteration + ": Delta vector norm = " + deltaXNorm);
 
       if (energyMode == EnergyMode.ADIABATIC) {
-        try {
           if (iteration == 1) {
             double T_in = system.getTemperature();
             inletEnthalpy =
                 calculateMixtureEnthalpy(processedComponents, outlet_mole, T_in, componentMap);
+            enthalpyOld = inletEnthalpy;
           }
-
-        } catch (Exception e) {
-          logger.warn("PH flash failed: " + e.getMessage());
-        }
+          else{
+            double T_in = system.getTemperature();
+            outletEnthalpy =
+              calculateMixtureEnthalpy(processedComponents, outlet_mole, T_in, componentMap);
+            double dH;
+            dH = outletEnthalpy - enthalpyOld;
+            enthalpyOld = outletEnthalpy;
+            
+            system.init(0);
+            double T_out = system.getTemperature() - dH / (system.getCp("J/molK") / 1000);
+            dT = Math.abs(T_out - system.getTemperature());
+            system.setTemperature(T_out);
+            this.getOutletStream().getThermoSystem().setTemperature(T_out);
+        } 
       }
+      
+      
 
 
       // Check convergence (require minimum 25 iterations)
@@ -1678,26 +1679,6 @@ public class GibbsReactor extends TwoPortEquipment {
         finalConvergenceError = deltaXNorm;
         updateSystemWithNewCompositions();
 
-        if (energyMode == EnergyMode.ADIABATIC) {
-          double T_in = system.getTemperature();
-          outletEnthalpy =
-              calculateMixtureEnthalpy(processedComponents, outlet_mole, T_in, componentMap);
-          double dH;
-          if (tempUpdateIter == 0) {
-            dH = outletEnthalpy - inletEnthalpy;
-            enthalpyOld = outletEnthalpy;
-          } else {
-            dH = outletEnthalpy - enthalpyOld;
-          }
-
-
-          system.init(0);
-
-          double T_out = system.getTemperature() - dH / (system.getCp("J/molK") / 1000);
-          dT = Math.abs(T_out - system.getTemperature());
-          system.setTemperature(T_out);
-          this.getOutletStream().getThermoSystem().setTemperature(T_out);
-        }
         return true;
       }
 
