@@ -150,4 +150,6 @@ public interface TBPModelInterface {
    * @return a {@link java.lang.String} object
    */
   public String getName();
+
+  public void setBoilingPoint(double boilingPoint);
 }
