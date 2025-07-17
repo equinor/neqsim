@@ -23,6 +23,50 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class GibbsReactor extends TwoPortEquipment {
+  /**
+   * Calculate the total enthalpy of a mixture: sum_i n_i * enthalpy_i(T)
+   * 
+   * @param componentNames List of component names (order matches n_i)
+   * @param n List of moles for each component
+   * @param T Temperature in K
+   * @param componentMap Map from component name (lowercase) to GibbsComponent
+   * @return Total enthalpy (kJ)
+   */
+  public static double calculateMixtureEnthalpy(List<String> componentNames, List<Double> n,
+      double T, Map<String, GibbsComponent> componentMap) {
+    double totalH = 0.0;
+    for (int i = 0; i < componentNames.size(); i++) {
+      String compName = componentNames.get(i);
+      GibbsComponent comp = componentMap.get(compName.toLowerCase());
+      if (comp != null) {
+        totalH += n.get(i) * comp.calculateEnthalpy(T);
+      }
+    }
+    return totalH;
+  }
+
+  public enum EnergyMode {
+    ISOTHERMAL, ADIABATIC
+  }
+
+  private EnergyMode energyMode = EnergyMode.ADIABATIC;
+
+  /**
+   * Set the energy mode of the reactor (isothermal or adiabatic).
+   * 
+   * @param mode EnergyMode.ISOTHERMAL or EnergyMode.ADIABATIC
+   */
+  public void setEnergyMode(EnergyMode mode) {
+    this.energyMode = mode;
+  }
+
+  /**
+   * Get the current energy mode of the reactor.
+   */
+  public EnergyMode getEnergyMode() {
+    return energyMode;
+  }
+
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -70,6 +114,11 @@ public class GibbsReactor extends TwoPortEquipment {
   private double finalConvergenceError = 0.0;
 
   private SystemInterface system;
+  private double inletEnthalpy;
+  private double outletEnthalpy;
+  private double dT = 0.0;
+  private int tempUpdateIter = 0;
+  double enthalpyOld = 0.0;
 
   /**
    * Constructor for GibbsReactor.
@@ -101,17 +150,28 @@ public class GibbsReactor extends TwoPortEquipment {
     private double[] heatCapacityCoeffs = new double[4]; // A, B, C, D
     private double deltaHf298; // Enthalpy of formation at 298K
     private double deltaGf298; // Gibbs energy of formation at 298K
+    private double deltaSf298; // Entropy of formation at 298K
 
     /**
      * Constructor for GibbsComponent.
      */
     public GibbsComponent(String molecule, double[] elements, double[] heatCapacityCoeffs,
-        double deltaHf298, double deltaGf298) {
+        double deltaHf298, double deltaGf298, double deltaSf298) {
       this.molecule = molecule;
       this.elements = elements.clone();
       this.heatCapacityCoeffs = heatCapacityCoeffs.clone();
       this.deltaHf298 = deltaHf298;
       this.deltaGf298 = deltaGf298;
+      this.deltaSf298 = deltaSf298;
+    }
+
+    /**
+     * Get the entropy of formation at 298K (deltaSf298) in J/(mol·K).
+     * 
+     * @return Entropy of formation at 298K
+     */
+    public double getDeltaSf298() {
+      return deltaSf298;
     }
 
     public String getMolecule() {
@@ -152,14 +212,13 @@ public class GibbsReactor extends TwoPortEquipment {
       double S_T = calculateEntropy(T);
 
       // Calculate Gibbs energy: G(T) = H(T) - T*S(T)
-      double G_T = H_T - T * S_T / 1000.0; // Convert S from J/(mol·K) to kJ/(mol·K)
+      double G_T = H_T - T * S_T; // Convert S from J/(mol·K) to kJ/(mol·K)
 
-      return deltaGf298;
+      return G_T;
     }
 
     /**
-     * Calculate enthalpy at temperature T using NeqSim's built-in enthalpy calculations. This
-     * leverages NeqSim's proper thermodynamic framework with accurate heat capacity integration.
+     * Calculate enthalpy at temperature T.
      * 
      * H(T) = Hf_298 + ∫Cp(T)dT from Tref to T
      * 
@@ -167,32 +226,15 @@ public class GibbsReactor extends TwoPortEquipment {
      * @return Enthalpy of formation at temperature T in kJ/mol
      */
     public double calculateEnthalpy(double temperature) {
-      try {
-        // Create a temporary single-component system to get ideal gas enthalpy
-        SystemInterface tempSystem = new neqsim.thermo.system.SystemSrkEos(temperature, 1.0);
-        tempSystem.addComponent(molecule, 1.0);
-        tempSystem.setMixingRule(2);
-        tempSystem.init(0);
-        tempSystem.init(1);
+      // Fallback to manual calculation if NeqSim method fails
+      double T = temperature;
+      double T0 = 298.15; // Reference temperature (K)
 
-        // Get ideal gas enthalpy from NeqSim's component (per mole)
-        double idealEnthalpy = tempSystem.getComponent(0).getEnthalpy(temperature)
-            / tempSystem.getComponent(0).getNumberOfMolesInPhase();
+      // Calculate average heat capacity (simplified constant Cp approach)
+      double Cp = calculateHeatCapacity(T);
 
-        // NeqSim returns enthalpy in J/mol, convert to kJ/mol
-        return idealEnthalpy / 1000.0;
-
-      } catch (Exception e) {
-        // Fallback to manual calculation if NeqSim method fails
-        double T = temperature;
-        double T0 = 298.15; // Reference temperature (K)
-
-        // Calculate average heat capacity (simplified constant Cp approach)
-        double Cp = calculateHeatCapacity(T);
-
-        // H(T) = deltaHf298 + Cp*(T - Tref)
-        return deltaHf298 + Cp * (T - T0) / 1000.0; // Convert Cp from J/(mol·K) to kJ/(mol·K)
-      }
+      // H(T) = deltaHf298 + Cp*(T - Tref)
+      return deltaHf298 + Cp * (T - T0) / 1000.0; // Convert Cp from J/(mol·K) to kJ/(mol·K)
     }
 
     /**
@@ -205,35 +247,18 @@ public class GibbsReactor extends TwoPortEquipment {
      * @return Entropy at temperature T in J/(mol·K)
      */
     public double calculateEntropy(double temperature) {
-      try {
-        // Create a temporary single-component system to get ideal gas entropy
-        SystemInterface tempSystem = new neqsim.thermo.system.SystemSrkEos(temperature, 1.0);
-        tempSystem.addComponent(molecule, 1.0);
-        tempSystem.setMixingRule(2);
-        tempSystem.init(0);
-        tempSystem.init(1);
+      // Fallback to manual calculation if NeqSim method fails
+      double T = temperature;
+      double T0 = 298.15; // Reference temperature (K)
 
-        // Get ideal gas entropy from NeqSim's component
-        double idEntropy = tempSystem.getComponent(0).getIdEntropy(temperature);
+      // Calculate heat capacity
+      double Cp = calculateHeatCapacity(T);
 
-        return idEntropy; // NeqSim returns entropy in J/(mol·K)
-
-      } catch (Exception e) {
-        // Fallback to manual calculation if NeqSim method fails
-        double T = temperature;
-        double T0 = 298.15; // Reference temperature (K)
-
-        // Calculate reference entropy from database values
-        // deltaS298 = (deltaHf298 - deltaGf298)/T0
-        double deltaS298 = (deltaHf298 - deltaGf298) * 1000.0 / T0; // Convert kJ to J
-
-        // Calculate heat capacity
-        double Cp = calculateHeatCapacity(T);
-
-        // S(T) = Sref + Cp*ln(T/Tref)
-        return deltaS298 + Cp * Math.log(T / T0);
-      }
+      // S(T) = Sref + Cp*ln(T/Tref)
+      return (deltaSf298 + Cp * Math.log(T / T0)) / 1000;
     }
+
+
 
     /**
      * Calculate heat capacity at temperature T using NeqSim's built-in getCp0() method. This is
@@ -270,6 +295,8 @@ public class GibbsReactor extends TwoPortEquipment {
       }
     }
   }
+
+
 
   /**
    * Load the Gibbs reaction database from resources.
@@ -309,7 +336,7 @@ public class GibbsReactor extends TwoPortEquipment {
         }
 
         String[] parts = line.split(";");
-        if (parts.length >= 13) {
+        if (parts.length >= 14) {
           try {
             final String molecule = parts[0].trim();
 
@@ -329,11 +356,13 @@ public class GibbsReactor extends TwoPortEquipment {
 
             String deltaHf298Str = parts[11].trim().replace(",", ".");
             String deltaGf298Str = parts[12].trim().replace(",", ".");
+            String deltaSf298Str = parts[13].trim().replace(",", ".");
             double deltaHf298 = Double.parseDouble(deltaHf298Str);
             double deltaGf298 = Double.parseDouble(deltaGf298Str);
+            double deltaSf298 = Double.parseDouble(deltaSf298Str);
 
-            GibbsComponent component =
-                new GibbsComponent(molecule, elements, heatCapCoeffs, deltaHf298, deltaGf298);
+            GibbsComponent component = new GibbsComponent(molecule, elements, heatCapCoeffs,
+                deltaHf298, deltaGf298, deltaSf298);
             gibbsDatabase.add(component);
             componentMap.put(molecule.toLowerCase(), component);
 
@@ -402,6 +431,8 @@ public class GibbsReactor extends TwoPortEquipment {
     system = getInletStream().getThermoSystem().clone();
     system.init(0);
 
+
+
     // Store initial moles for each component
     initialMoles.clear();
     inlet_mole.clear();
@@ -429,6 +460,7 @@ public class GibbsReactor extends TwoPortEquipment {
         }
       }
     }
+
 
     // Minimize Gibbs energy
     performGibbsMinimization(system);
@@ -465,10 +497,23 @@ public class GibbsReactor extends TwoPortEquipment {
 
     solveGibbsEquilibrium();
 
+    // Re-solve if temperature change is significant, allow up to 5 temperature update iterations
+    int tempUpdateMaxIter = 15;
+    while (dT > 0.1 && tempUpdateIter < tempUpdateMaxIter) {
+      tempUpdateIter++;
+      solveGibbsEquilibrium(); // Re-solve with new temperature
+      // Recalculate dT after each re-solve (assume dT is updated in solveGibbsEquilibrium)
+      // If not, you may need to recalculate dT here based on the latest system state
+    }
+
+
+
     // Set outlet stream
     // getOutletStream().setThermoSystem(system);
     getOutletStream().run(id);
   }
+
+
 
   /**
    * Perform Gibbs free energy minimization.
@@ -838,12 +883,14 @@ public class GibbsReactor extends TwoPortEquipment {
       double niForJacobian = Math.max(ni, 1e-6); // Use minimum of 1e-6 for Jacobian calculation
 
       for (int j = 0; j < numComponents; j++) {
+        String compJ = processedComponents.get(j);
         if (i == j) {
           // Diagonal elements: ∂f_i/∂n_i = RT * (1/n_i - 1/n_total)
-          jacobianMatrix[i][j] = RT * (1.0 / niForJacobian - 1.0 / totalMoles);
+          jacobianMatrix[i][j] = RT
+              * (1.0 / niForJacobian - 1.0 / totalMoles + getFugacityDerivative(compI, compJ, 0));
         } else {
           // Off-diagonal elements: ∂f_i/∂n_j = -RT/n_total
-          jacobianMatrix[i][j] = -RT / totalMoles;
+          jacobianMatrix[i][j] = -RT / totalMoles + getFugacityDerivative(compI, compJ, 0);
         }
       }
 
@@ -1218,6 +1265,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
     // Update outlet compositions with damping factor
     System.out.println("\n=== Updating Outlet Compositions ===");
+    double deltaNorm = 0.0;
     for (int i = 0; i < numComponents; i++) {
       double oldValue = outlet_mole.get(i);
       double deltaComposition = deltaX[i];
@@ -1231,7 +1279,9 @@ public class GibbsReactor extends TwoPortEquipment {
       System.out.printf("  %s: %12.6e → %12.6e (Δ = %12.6e, α*Δ = %12.6e)%n",
           processedComponents.get(i), oldValue, newValue, deltaComposition,
           deltaComposition * alphaComposition);
+      deltaNorm += Math.pow(deltaComposition * alphaComposition, 2);
     }
+    deltaNorm = Math.sqrt(deltaNorm);
 
     // Update Lagrange multipliers directly (no damping)
     System.out.println("\n=== Updating Lagrange Multipliers ===");
@@ -1245,7 +1295,22 @@ public class GibbsReactor extends TwoPortEquipment {
 
       System.out.printf("  λ[%s]: %12.6e → %12.6e (Δ = %12.6e)%n", elementNames[elementIndex],
           oldValue, newValue, deltaLambda);
+      deltaNorm += Math.pow(deltaLambda, 2);
     }
+    deltaNorm = Math.sqrt(deltaNorm);
+
+    // Show mass balance for each element
+    System.out.println("\n=== Mass Balance (element-wise, OUT - IN) ===");
+    for (int i = 0; i < elementNames.length; i++) {
+      System.out.printf("  %s: %12.6e\n", elementNames[i], elementMoleBalanceDiff[i]);
+    }
+
+    // Show total norm of delta vector
+    System.out.printf("\n=== Total Norm of Δ (all variables): %12.6e ===\n", deltaNorm);
+
+    // Print current temperature after update
+    SystemInterface system = getOutletStream().getThermoSystem();
+    System.out.printf("\n=== Current Temperature: %.4f K ===\n", system.getTemperature());
 
     // Update the system with new compositions
     return updateSystemWithNewCompositions();
@@ -1330,11 +1395,13 @@ public class GibbsReactor extends TwoPortEquipment {
       }
       // Normalize composition to avoid numerical issues
       double total = 0.0;
-      for (double v : composition)
+      for (double v : composition) {
         total += v;
+      }
       if (total > 0) {
-        for (int i = 0; i < composition.length; i++)
+        for (int i = 0; i < composition.length; i++) {
           composition[i] /= total;
+        }
       }
       // Assign composition to all phases (as in TPflash)
       for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
@@ -1366,8 +1433,9 @@ public class GibbsReactor extends TwoPortEquipment {
           break;
         }
       }
-      if (compIndex < 0)
+      if (compIndex < 0) {
         return Double.NaN;
+      }
 
       // Get fugacity coefficient
       double phi = fluid.getPhase(phaseIndex).getComponent(compIndex).getFugacityCoefficient();
@@ -1424,25 +1492,43 @@ public class GibbsReactor extends TwoPortEquipment {
       // Finite difference step
       double h = 1e-6;
       // Save original mole numbers
-      double[] origMoles = composition.clone();
       // Perturb n_j by +h
       composition[jIndex] += h;
       double totalPerturbed = 0.0;
-      for (double v : composition) totalPerturbed += v;
-      for (int i = 0; i < composition.length; i++) composition[i] /= totalPerturbed;
-      for (int p = 0; p < fluid.getNumberOfPhases(); p++) fluid.setMolarComposition(composition);
-      fluid.init(0); fluid.init(1);
+      for (double v : composition) {
+        totalPerturbed += v;
+      }
+      for (int i = 0; i < composition.length; i++) {
+        composition[i] /= totalPerturbed;
+      }
+      for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+        fluid.setMolarComposition(composition);
+      }
+      fluid.init(0);
+      fluid.init(1);
       double phi_plus = fluid.getPhase(phaseNumber).getComponent(iIndex).getFugacityCoefficient();
+
       // Reset to original
-      for (int i = 0; i < composition.length; i++) composition[i] = origMoles[i];
+      final double[] origMoles = composition.clone();
+      for (int i = 0; i < composition.length; i++) {
+        composition[i] = origMoles[i];
+      }
       totalPerturbed = 0.0;
-      for (double v : composition) totalPerturbed += v;
-      for (int i = 0; i < composition.length; i++) composition[i] /= totalPerturbed;
-      for (int p = 0; p < fluid.getNumberOfPhases(); p++) fluid.setMolarComposition(origMoles);
-      fluid.init(0); fluid.init(1);
+      for (double v : composition) {
+        totalPerturbed += v;
+      }
+      for (int i = 0; i < composition.length; i++) {
+        composition[i] /= totalPerturbed;
+      }
+      for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+        fluid.setMolarComposition(origMoles);
+      }
+      fluid.init(0);
+      fluid.init(1);
       double phi_orig = fluid.getPhase(phaseNumber).getComponent(iIndex).getFugacityCoefficient();
       // Finite difference derivative
-      return (phi_plus - phi_orig) / h;
+      double result = (phi_plus - phi_orig) / h;
+      return result;
     } catch (Exception e) {
       logger.error("Error getting fugacity derivative (finite diff): " + e.getMessage());
       return Double.NaN;
@@ -1581,13 +1667,48 @@ public class GibbsReactor extends TwoPortEquipment {
 
       logger.debug("Iteration " + iteration + ": Delta vector norm = " + deltaXNorm);
 
-      // Check convergence
-      if (deltaXNorm < convergenceTolerance) {
-        logger.info("Converged at iteration " + iteration + " with delta norm = " + deltaXNorm);
-        converged = true;
+      if (energyMode == EnergyMode.ADIABATIC) {
+        try {
+          if (iteration == 1) {
+            double T_in = system.getTemperature();
+            inletEnthalpy =
+                calculateMixtureEnthalpy(processedComponents, outlet_mole, T_in, componentMap);
+          }
+
+        } catch (Exception e) {
+          logger.warn("PH flash failed: " + e.getMessage());
+        }
+      }
+
+
+      // Check convergence (require minimum 25 iterations)
+      if ((deltaXNorm < convergenceTolerance || iteration == maxIterations) && iteration >= 100) {
+        logger.info((deltaXNorm < convergenceTolerance ? "Converged" : "Max iterations reached")
+            + " at iteration " + iteration + " with delta norm = " + deltaXNorm);
+        converged = deltaXNorm < convergenceTolerance;
         finalConvergenceError = deltaXNorm;
         updateSystemWithNewCompositions();
 
+        if (energyMode == EnergyMode.ADIABATIC) {
+          double T_in = system.getTemperature();
+          outletEnthalpy =
+              calculateMixtureEnthalpy(processedComponents, outlet_mole, T_in, componentMap);
+          double dH;
+          if (tempUpdateIter == 0) {
+            dH = outletEnthalpy - inletEnthalpy;
+            enthalpyOld = outletEnthalpy;
+          } else {
+            dH = outletEnthalpy - enthalpyOld;
+          }
+
+
+          system.init(0);
+          system.init(1);
+          double T_out = system.getTemperature() - dH / (system.getCp("J/molK") / 1000);
+          dT = Math.abs(T_out - system.getTemperature());
+          system.setTemperature(T_out);
+          this.getOutletStream().getThermoSystem().setTemperature(T_out);
+        }
         return true;
       }
 

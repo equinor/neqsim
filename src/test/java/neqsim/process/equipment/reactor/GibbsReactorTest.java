@@ -13,13 +13,57 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class GibbsReactorTest {
+
+  /**
+   * Test adiabatic mode in GibbsReactor (PH flash at inlet enthalpy).
+   */
+  @Test
+  public void testAdiabaticMode() {
+    // Create a system with hydrogen, oxygen, and water at 10 bar and 350 K
+    SystemInterface system = new SystemSrkEos(268, 1.0);
+    system.addComponent("hydrogen", 0.1);
+    system.addComponent("nitrogen", 1);
+    system.addComponent("ammonia", 0);
+    system.setMixingRule(2);
+    system.init(0);
+
+    // Create inlet stream
+    Stream inletStream = new Stream("Inlet Stream", system);
+    inletStream.run();
+
+    // Create GibbsReactor in adiabatic mode
+    GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
+    reactor.setUseAllDatabaseSpecies(false);
+    reactor.setDampingComposition(0.002);
+    reactor.setMaxIterations(500);
+    reactor.setConvergenceTolerance(1e-6);
+    reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
+
+    // Run the reactor
+    reactor.run();
+
+    SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
+
+    // Assert outlet temperature is close to 350.73 K
+    Assertions.assertEquals(350.73, outletSystem.getTemperature(), 5);
+
+    // Assert outlet mole fractions (rounded to 5 significant digits)
+    double h2 = outletSystem.getComponent("hydrogen").getz();
+    double n2 = outletSystem.getComponent("nitrogen").getz();
+    double nh3 = outletSystem.getComponent("ammonia").getz();
+
+    Assertions.assertEquals(0.011877, h2, 0.002);
+    Assertions.assertEquals(0.93204, n2, 0.1);
+    Assertions.assertEquals(0.056087, nh3, 0.01);
+  }
+
   /**
    * Test GibbsReactor with only system components.
    */
   @Test
   public void testGibbsReactorSystemComponentsOnly() {
     // Create a system with hydrogen, oxygen, and water at 1 bar and 15°C
-    SystemInterface system = new SystemSrkEos(398.15, 1.0);
+    SystemInterface system = new SystemSrkEos(298.15, 1.0);
     system.addComponent("hydrogen", 1.0);
     system.addComponent("oxygen", 1.0);
     system.addComponent("water", 0.0);
@@ -115,15 +159,20 @@ public class GibbsReactorTest {
     reactor.run();
 
     // Test fugacity coefficients for each component in vapor phase (phase 0)
-    double phiH2 = reactor.getFugacityCoefficient("hydrogen", 0);
-    double phiO2 = reactor.getFugacityCoefficient("oxygen", 0);
-    double phiH2O = reactor.getFugacityCoefficient("water", 0);
+    Assertions.assertTrue(Double.isFinite(reactor.getFugacityCoefficient("hydrogen", 0)),
+        "phi_hydrogen (vapor) should be finite");
+    Assertions.assertTrue(Double.isFinite(reactor.getFugacityCoefficient("oxygen", 0)),
+        "phi_oxygen (vapor) should be finite");
+    Assertions.assertTrue(Double.isFinite(reactor.getFugacityCoefficient("water", 0)),
+        "phi_water (vapor) should be finite");
 
-
-    // Test fugacity coefficients for each component in vapor phase (phase 0)
-    double phiH22 = reactor.getFugacityCoefficient("hydrogen", 1);
-    double phiO22 = reactor.getFugacityCoefficient("oxygen", 1);
-    double phiH2O2 = reactor.getFugacityCoefficient("water", 1);
+    // Test fugacity coefficients for each component in liquid phase (phase 1)
+    Assertions.assertTrue(Double.isFinite(reactor.getFugacityCoefficient("hydrogen", 1)),
+        "phi_hydrogen (liquid) should be finite");
+    Assertions.assertTrue(Double.isFinite(reactor.getFugacityCoefficient("oxygen", 1)),
+        "phi_oxygen (liquid) should be finite");
+    Assertions.assertTrue(Double.isFinite(reactor.getFugacityCoefficient("water", 1)),
+        "phi_water (liquid) should be finite");
 
   }
 }
