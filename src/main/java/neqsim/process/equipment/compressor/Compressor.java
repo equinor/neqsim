@@ -1772,10 +1772,10 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         && Objects.equals(polytropicMethod, other.polytropicMethod) && powerSet == other.powerSet
         && Double.doubleToLongBits(pressure) == Double.doubleToLongBits(other.pressure)
         && Objects.equals(pressureUnit, other.pressureUnit) && speed == other.speed
-        && Objects.equals(thermoSystem, other.thermoSystem) && useGERG2008 == other.useGERG2008
-        && Objects.equals(thermoSystem, other.thermoSystem) && useLeachman == other.useLeachman
-        && Objects.equals(thermoSystem, other.thermoSystem) && useVega == other.useVega
-
+        && Objects.equals(thermoSystem, other.thermoSystem)
+        && useGERG2008 == other.useGERG2008
+        && useLeachman == other.useLeachman
+        && useVega == other.useVega
         && useOutTemperature == other.useOutTemperature
         && usePolytropicCalc == other.usePolytropicCalc
         && useRigorousPolytropicMethod == other.useRigorousPolytropicMethod;
