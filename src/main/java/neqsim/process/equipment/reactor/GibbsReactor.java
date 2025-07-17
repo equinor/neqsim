@@ -273,8 +273,7 @@ public class GibbsReactor extends TwoPortEquipment {
         SystemInterface tempSystem = new neqsim.thermo.system.SystemSrkEos(temperature, 1.0);
         tempSystem.addComponent(molecule, 1.0);
         tempSystem.setMixingRule(2);
-        tempSystem.init(0);
-        tempSystem.init(1);
+        tempSystem.initPhysicalProperties();
 
         // Get heat capacity from NeqSim's component
         double cp0 = tempSystem.getComponent(0).getCp0(temperature);
@@ -429,7 +428,6 @@ public class GibbsReactor extends TwoPortEquipment {
   @Override
   public void run(UUID id) {
     system = getInletStream().getThermoSystem().clone();
-    system.init(0);
 
 
 
@@ -543,9 +541,6 @@ public class GibbsReactor extends TwoPortEquipment {
       }
     }
 
-    // Run thermodynamic equilibrium calculation
-    system.init(0);
-    system.init(1);
 
     logger.info("Gibbs minimization completed for iteration " + iteration);
   }
@@ -1033,7 +1028,6 @@ public class GibbsReactor extends TwoPortEquipment {
 
     if (modified) {
       // Reinitialize the system after modifying concentrations
-      system.init(0);
       logger.info("System reinitialized after enforcing minimum concentrations");
     }
   }
@@ -1350,9 +1344,6 @@ public class GibbsReactor extends TwoPortEquipment {
         }
       }
 
-      // Reinitialize the system
-      system.init(0);
-      system.init(1);
 
       // Recalculate objective function values with new compositions and Lagrange multipliers
       calculateObjectiveFunctionValues(system);
@@ -1407,8 +1398,6 @@ public class GibbsReactor extends TwoPortEquipment {
       for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
         fluid.setMolarComposition(composition);
       }
-      fluid.init(0);
-      fluid.init(1);
 
       // Determine phase index
       int phaseIndex = 0;
