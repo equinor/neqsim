@@ -1,7 +1,6 @@
 package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 
@@ -23,6 +22,7 @@ public class PipeBeggsAndBrillsBoundaryTest {
     Stream stream = new Stream("stream", system);
     PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipe", stream);
     pipe.setLength(100.0);
+    pipe.setElevation(0.1);
     pipe.setDiameter(0.1);
     pipe.setNumberOfIncrements(1);
 
