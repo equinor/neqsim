@@ -162,5 +162,73 @@ public class TBPBoilingPointCorrelationTest {
   }
 
 
-  
+  @Test
+  void testAddTBPfraction4WithGasMixture() {
+    // Example gas mixture data
+    java.util.Map<String, Double> data = new java.util.LinkedHashMap<>();
+    data.put("N2", 1.14 / 100);
+    data.put("CO2", 0.59 / 100);
+    data.put("methane", 94.65 / 100);
+    data.put("ethane", 2.54 / 100);
+    data.put("propane", 0.40 / 100);
+    data.put("i-butane", 0.15 / 100);
+    data.put("n-butane", 0.10 / 100);
+    data.put("i-pentane", 0.078 / 100);
+    data.put("n-pentane", 0.040 / 100);
+
+    SystemInterface feedGas = new neqsim.thermo.system.SystemUMRPRUMCEos(280.0, 10.0); 
+    for (java.util.Map.Entry<String, Double> entry : data.entrySet()) {
+      feedGas.addComponent(entry.getKey(), entry.getValue());
+    }
+    // Add TBP fraction with all parameters
+    feedGas.addTBPfraction4("test_PC", 0.01, 0.150, 0.75, 400.0);
+    feedGas.setModel("UMR-PRU-EoS");  
+    // Set pressure and temperature
+    feedGas.setPressure(80, "bara");
+    feedGas.setTemperature(100, "C");
+    
+
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(feedGas);
+    ops.TPflash();
+
+    feedGas.prettyPrint();
+
+
+  }
+
+  @Test
+  void testAddTBPfraction5WithGasMixture() {
+    // Example gas mixture data
+    java.util.Map<String, Double> data = new java.util.LinkedHashMap<>();
+    data.put("N2", 1.14 / 100);
+    data.put("CO2", 0.59 / 100);
+    data.put("methane", 94.65 / 100);
+    data.put("ethane", 2.54 / 100);
+    data.put("propane", 0.40 / 100);
+    data.put("i-butane", 0.15 / 100);
+    data.put("n-butane", 0.10 / 100);
+    data.put("i-pentane", 0.078 / 100);
+    data.put("n-pentane", 0.040 / 100);
+
+    SystemInterface feedGas = new neqsim.thermo.system.SystemUMRPRUMCEos(280.0, 10.0); 
+    for (java.util.Map.Entry<String, Double> entry : data.entrySet()) {
+      feedGas.addComponent(entry.getKey(), entry.getValue());
+    }
+    // Add TBP fraction with all parameters
+    feedGas.addTBPfraction4("test_PC", 0.01, 0.150, 0.75, 400.0);
+    feedGas.setMixingRule("HV", "UNIFAC");
+    // Set pressure and temperature
+    feedGas.setPressure(80, "bara");
+    feedGas.setTemperature(100, "C");
+    
+
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(feedGas);
+    ops.TPflash();
+
+    feedGas.prettyPrint();
+
+
+  }
 }
