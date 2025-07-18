@@ -74,9 +74,12 @@ class WellAllocatorTest extends neqsim.NeqSimTest {
     WellAllocatorResponse responsAl = new WellAllocatorResponse(wellAlloc);
 
     logger.info("name " + responsAl.name);
-    logger.info("gas flow " + responsAl.gasExportRate);
-    logger.info("oil flow " + responsAl.oilExportRate);
-    logger.info("total flow " + responsAl.totalExportRate);
+    logger.info("gas flow "
+        + responsAl.data.get("gas export rate").value);
+    logger.info("oil flow "
+        + responsAl.data.get("oil export rate").value);
+    logger.info("total flow "
+        + responsAl.data.get("total export rate").value);
     // stream_1.displayResult();
     // stream_1.displayResult();
   }

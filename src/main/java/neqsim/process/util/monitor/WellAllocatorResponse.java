@@ -1,5 +1,6 @@
 package neqsim.process.util.monitor;
 
+import java.util.HashMap;
 import neqsim.process.measurementdevice.WellAllocator;
 
 /**
@@ -12,7 +13,7 @@ import neqsim.process.measurementdevice.WellAllocator;
  */
 public class WellAllocatorResponse {
   public String name;
-  public Double gasExportRate, oilExportRate, totalExportRate;
+  public HashMap<String, Value> data = new HashMap<String, Value>();
 
   /**
    * <p>
@@ -23,8 +24,17 @@ public class WellAllocatorResponse {
    */
   public WellAllocatorResponse(WellAllocator inputAllocator) {
     name = inputAllocator.getName();
-    gasExportRate = inputAllocator.getMeasuredValue("gas export rate", "kg/hr");
-    oilExportRate = inputAllocator.getMeasuredValue("oil export rate", "kg/hr");
-    totalExportRate = inputAllocator.getMeasuredValue("total export rate", "kg/hr");
+    data.put("gas export rate",
+        new Value(
+            Double.toString(inputAllocator.getMeasuredValue("gas export rate", "kg/hr")),
+            "kg/hr"));
+    data.put("oil export rate",
+        new Value(
+            Double.toString(inputAllocator.getMeasuredValue("oil export rate", "kg/hr")),
+            "kg/hr"));
+    data.put("total export rate",
+        new Value(
+            Double.toString(inputAllocator.getMeasuredValue("total export rate", "kg/hr")),
+            "kg/hr"));
   }
 }

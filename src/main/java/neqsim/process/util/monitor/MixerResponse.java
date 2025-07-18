@@ -1,13 +1,13 @@
 package neqsim.process.util.monitor;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import neqsim.process.equipment.mixer.Mixer;
 
 /**
  * MixerResponse class provides basic reporting for a mixer unit.
  */
 public class MixerResponse extends BaseResponse {
-  public ArrayList<String[]> data = new ArrayList<String[]>();
+  public HashMap<String, Value> data = new HashMap<String, Value>();
 
   /**
    * Create a response based on a {@link neqsim.process.equipment.mixer.Mixer}.
@@ -17,17 +17,20 @@ public class MixerResponse extends BaseResponse {
   public MixerResponse(Mixer mixer) {
     super(mixer);
 
-    data.add(new String[] {"mass flow",
-        Double.toString(mixer.getOutletStream()
-            .getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
-        neqsim.util.unit.Units.getSymbol("mass flow")});
-    data.add(new String[] {"outlet temperature",
-        Double.toString(mixer.getOutletStream()
-            .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
-        neqsim.util.unit.Units.getSymbol("temperature")});
-    data.add(new String[] {"outlet pressure",
-        Double.toString(
-            mixer.getOutletStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
-        neqsim.util.unit.Units.getSymbol("pressure")});
+    data.put("mass flow",
+        new Value(
+            Double.toString(mixer.getOutletStream()
+                .getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+            neqsim.util.unit.Units.getSymbol("mass flow")));
+    data.put("outlet temperature",
+        new Value(
+            Double.toString(mixer.getOutletStream()
+                .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+            neqsim.util.unit.Units.getSymbol("temperature")));
+    data.put("outlet pressure",
+        new Value(
+            Double.toString(
+                mixer.getOutletStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+            neqsim.util.unit.Units.getSymbol("pressure")));
   }
 }
