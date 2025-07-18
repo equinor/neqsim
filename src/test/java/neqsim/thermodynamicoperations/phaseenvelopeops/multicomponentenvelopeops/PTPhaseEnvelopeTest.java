@@ -153,8 +153,13 @@ public class PTPhaseEnvelopeTest {
     fluid0_HC.addComponent("n-heptane", 0.02);
     fluid0_HC.addComponent("toluene", 0.01);
     fluid0_HC.addComponent("n-octane", 0.01);
+    fluid0_HC.addComponent("2.2-DM-C7", 0.0000001);
+
+
     fluid0_HC.setMixingRule("HV", "UNIFAC_UMRPRU");
     testOps = new ThermodynamicOperations(fluid0_HC);
+    testOps.TPflash();
+    fluid0_HC.prettyPrint();
     testOps.calcPTphaseEnvelope2();
     double[] dewPointPressures = testOps.get("dewP");
     double[] dewPointTemperatures = testOps.get("dewT");
@@ -170,4 +175,172 @@ public class PTPhaseEnvelopeTest {
     assertTrue(bubblePointEnthalpies.length > 20);
     assertTrue(bubblePointVolumes.length > 20);
   }
+
+  @Test
+  void testFailingCase3() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 50.0);
+    fluid.addComponent("ethane", 2.45516);
+    fluid.addComponent("methane", 89.26002);
+    fluid.addComponent("propane", 0.38468);
+    fluid.addComponent("i-butane", 0.14674);
+    fluid.addComponent("n-butane", 0.09195);
+    fluid.addComponent("22-dim-C3", 0.00254);
+    fluid.addComponent("i-pentane", 0.07672);
+    fluid.addComponent("n-pentane", 0.03854);
+    fluid.addComponent("22-dim-C4", 0.00334);
+    fluid.addComponent("c-C5", 0.00961);
+    fluid.addComponent("23-dim-C4", 0.00516);
+    fluid.addComponent("2-m-C5", 0.02051);
+    fluid.addComponent("3-m-C5", 0.0126);
+    fluid.addComponent("n-hexane", 0.02039);
+    fluid.addComponent("22-DM-C5", 0.001);
+    fluid.addComponent("M-cy-C5", 0.02885);
+    fluid.addComponent("24-DM-C5", 0.00165);
+    fluid.addComponent("223-TM-C4", 0.00041);
+    fluid.addComponent("benzene", 0.0017);
+    fluid.addComponent("33-DM-C5", 0.00058);
+    fluid.addComponent("c-hexane", 0.03273);
+    fluid.addComponent("2-M-C6", 0.00395);
+    fluid.addComponent("11-DM-cy-C5", 0.00171);
+    fluid.addComponent("3-M-C6", 0.0059);
+    fluid.addComponent("cis-13-DM-cy-C5", 0.00392);
+    fluid.addComponent("trans-13-DM-cy-C5", 0.00341);
+    fluid.addComponent("trans-12-DM-cy-C5", 0.00663);
+    fluid.addComponent("n-heptane", 0.00688);
+    fluid.addComponent("M-cy-C6", 0.03824);
+    fluid.addComponent("113-TM-cy-C5", 0.00119);
+    fluid.addComponent("E-cy-C5", 0.00179);
+    fluid.addComponent("25-DM-C6", 0.00047);
+    fluid.addComponent("24-DM-C6", 0.00082);
+    fluid.addComponent("33-DM-C6", 0.00026);
+    fluid.addComponent("234-TM-C5", 0.00013);
+    fluid.addComponent("toluene", 0.00427);
+    fluid.addComponent("2-M-C7", 0.00105);
+    fluid.addComponent("cis-13-DM-cy-C6", 0.00681);
+    fluid.addComponent("3-M-C7", 0.00216);
+    fluid.addComponent("trans-12-DM-cy-C6", 0.00234);
+    fluid.addComponent("n-octane", 0.00459);
+    fluid.addComponent("cis-12-DM-cy-C6", 0.0001);
+    fluid.addComponent("ethylcyclohexane", 0.00356);
+    fluid.addComponent("ethylbenzene", 0.00045);
+    fluid.addComponent("m-Xylene", 0.00119);
+    fluid.addComponent("p-Xylene", 0.0003);
+    fluid.addComponent("4-M-C8", 0.00018);
+    fluid.addComponent("2-M-C8", 0.00019);
+    fluid.addComponent("3-M-C8", 0.00023);
+    fluid.addComponent("o-Xylene", 0.00052);
+    fluid.addComponent("n-nonane", 0.0024);
+    fluid.addComponent("nC10", 0.00018);
+    fluid.addComponent("nC11", 0.00003);
+    fluid.addComponent("CO2", 0.58374);
+    fluid.addComponent("oxygen", 0.07139);
+    fluid.addComponent("nitrogen", 4.67105);
+    fluid.addComponent("c-C7", 0.00518);
+    fluid.addComponent("c-C8", 0.00321);
+
+    fluid.setMixingRule("HV", "UNIFAC_UMRPRU");
+    testOps = new ThermodynamicOperations(fluid);
+    testOps.TPflash();
+    fluid.prettyPrint();
+    testOps.calcPTphaseEnvelope2();
+    double[] dewPointPressures = testOps.get("dewP");
+    double[] dewPointTemperatures = testOps.get("dewT");
+    double[] bubblePointPressures = testOps.get("bubP");
+    double[] bubblePointTemperatures = testOps.get("bubT");
+    double[] bubblePointEnthalpies = testOps.get("bubH");
+    double[] bubblePointVolumes = testOps.get("bubDens");
+
+    assertTrue(dewPointTemperatures.length > 20);
+    assertTrue(bubblePointTemperatures.length > 20);
+    assertTrue(bubblePointEnthalpies.length > 20);
+    assertTrue(bubblePointVolumes.length > 20);
+  }
+
+  @Test
+  void testFailingCase4() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 50.0);
+    fluid.addComponent("ethane", 2.45516);
+    fluid.addComponent("methane", 89.26002);
+    fluid.addComponent("propane", 0.38468);
+    fluid.addComponent("i-butane", 0.14674);
+    fluid.addComponent("n-butane", 0.09195);
+    fluid.addComponent("22-dim-C3", 0.00254);
+    fluid.addComponent("i-pentane", 0.07672);
+    fluid.addComponent("n-pentane", 0.03854);
+    fluid.addComponent("22-dim-C4", 0.00334);
+    fluid.addComponent("c-C5", 0.00961);
+    fluid.addComponent("23-dim-C4", 0.00516);
+    fluid.addComponent("2-m-C5", 0.02051);
+    fluid.addComponent("3-m-C5", 0.0126);
+    fluid.addComponent("n-hexane", 0.02039);
+    fluid.addComponent("22-DM-C5", 0.001);
+    fluid.addComponent("M-cy-C5", 0.02885);
+    fluid.addComponent("24-DM-C5", 0.00165);
+    fluid.addComponent("223-TM-C4", 0.00041);
+    fluid.addComponent("benzene", 0.0017);
+    fluid.addComponent("33-DM-C5", 0.00058);
+    fluid.addComponent("c-hexane", 0.03273);
+    fluid.addComponent("2-M-C6", 0.00395);
+    fluid.addComponent("11-DM-cy-C5", 0.00171);
+    fluid.addComponent("3-M-C6", 0.0059);
+    fluid.addComponent("cis-13-DM-cy-C5", 0.00392);
+    fluid.addComponent("trans-13-DM-cy-C5", 0.00341);
+    fluid.addComponent("trans-12-DM-cy-C5", 0.00663);
+    fluid.addComponent("n-heptane", 0.00688);
+    fluid.addComponent("M-cy-C6", 0.03824);
+    fluid.addComponent("113-TM-cy-C5", 0.00119);
+    fluid.addComponent("E-cy-C5", 0.00179);
+    fluid.addComponent("25-DM-C6", 0.00047);
+    fluid.addComponent("24-DM-C6", 0.00082);
+    fluid.addComponent("33-DM-C6", 0.00026);
+    fluid.addComponent("234-TM-C5", 0.00013);
+    fluid.addComponent("toluene", 0.00427);
+    fluid.addComponent("2-M-C7", 0.00105);
+    fluid.addComponent("cis-13-DM-cy-C6", 0.00681);
+    fluid.addComponent("3-M-C7", 0.00216);
+    fluid.addComponent("trans-12-DM-cy-C6", 0.00234);
+    fluid.addComponent("n-octane", 0.00459);
+    fluid.addComponent("cis-12-DM-cy-C6", 0.0001);
+    fluid.addComponent("ethylcyclohexane", 0.00356);
+    fluid.addComponent("ethylbenzene", 0.00045);
+    fluid.addComponent("m-Xylene", 0.00119);
+    fluid.addComponent("p-Xylene", 0.0003);
+    fluid.addComponent("4-M-C8", 0.00018);
+    fluid.addComponent("2-M-C8", 0.00019);
+    fluid.addComponent("3-M-C8", 0.00023);
+    fluid.addComponent("o-Xylene", 0.00052);
+    fluid.addComponent("n-nonane", 0.0024);
+    fluid.addComponent("nC10", 0.00018);
+    fluid.addComponent("nC11", 0.00003);
+    fluid.addComponent("CO2", 0.58374);
+    fluid.addComponent("oxygen", 0.07139);
+    fluid.addComponent("nitrogen", 4.67105);
+    fluid.addComponent("c-C7", 0.00518);
+    fluid.addComponent("c-C8", 0.00321);
+    // Add TBP fractions for C10 (pseudo) and C11 (pseudo)
+    fluid.addTBPfraction("C10 (pseudo)", 0.00373, 0.136, 0.787);
+    fluid.addTBPfraction("C11 (pseudo)", 0.00013, 0.15, 0.793);
+
+    fluid.setMixingRule("HV", "UNIFAC_UMRPRU");
+    testOps = new ThermodynamicOperations(fluid);
+    testOps.TPflash();
+    fluid.prettyPrint();
+    testOps.calcPTphaseEnvelope2();
+    double[] dewPointPressures = testOps.get("dewP");
+    double[] dewPointTemperatures = testOps.get("dewT");
+    double[] bubblePointPressures = testOps.get("bubP");
+    double[] bubblePointTemperatures = testOps.get("bubT");
+    double[] bubblePointEnthalpies = testOps.get("bubH");
+    double[] bubblePointVolumes = testOps.get("bubDens");
+
+    assertTrue(dewPointTemperatures.length > 20);
+    assertTrue(bubblePointTemperatures.length > 20);
+    assertTrue(bubblePointEnthalpies.length > 20);
+    assertTrue(bubblePointVolumes.length > 20);
+  }
+
+
+
 }
