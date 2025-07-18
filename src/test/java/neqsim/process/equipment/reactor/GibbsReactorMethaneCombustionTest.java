@@ -27,7 +27,7 @@ public class GibbsReactorMethaneCombustionTest {
 
     GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
     reactor.setUseAllDatabaseSpecies(false);
-    reactor.setDampingComposition(0.001);
+    reactor.setDampingComposition(0.01);
     reactor.setMaxIterations(10000);
     reactor.setConvergenceTolerance(1e-3);
     reactor.run();
