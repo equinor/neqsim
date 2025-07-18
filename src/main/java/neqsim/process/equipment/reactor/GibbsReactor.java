@@ -54,6 +54,26 @@ public class GibbsReactor extends TwoPortEquipment {
     return totalH;
   }
 
+    /**
+   * Calculate the total standard enthalpy of a mixture: sum_i n_i * enthalpy_i(T)
+   * 
+   * @param componentNames List of component names (order matches n_i)
+   * @param n List of moles for each component
+   * @param componentMap Map from component name (lowercase) to GibbsComponent
+   * @return Total enthalpy (kJ)
+   */
+  public static double calculateMixtureEnthalpyStandard(List<String> componentNames, List<Double> n, Map<String, GibbsComponent> componentMap) {
+    double totalH = 0.0;
+    for (int i = 0; i < componentNames.size(); i++) {
+      String compName = componentNames.get(i);
+      GibbsComponent comp = componentMap.get(compName.toLowerCase());
+      if (comp != null) {
+        totalH += n.get(i) * comp.deltaHf298;
+      }
+    }
+    return totalH;
+  }
+
   public enum EnergyMode {
     ISOTHERMAL, ADIABATIC
   }
@@ -1662,13 +1682,13 @@ public class GibbsReactor extends TwoPortEquipment {
           if (iteration == 1) {
             double T_in = system.getTemperature();
             inletEnthalpy =
-                calculateMixtureEnthalpy(processedComponents, outlet_mole, T_in, componentMap);
+                calculateMixtureEnthalpyStandard(processedComponents, outlet_mole, componentMap);
             enthalpyOld = inletEnthalpy;
           }
           else{
             double T_in = system.getTemperature();
             outletEnthalpy =
-              calculateMixtureEnthalpy(processedComponents, outlet_mole, T_in, componentMap);
+              calculateMixtureEnthalpyStandard(processedComponents, outlet_mole, componentMap);
             double dH;
             dH = outletEnthalpy - enthalpyOld;
             enthalpyOfReaction += dH;
