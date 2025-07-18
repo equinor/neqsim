@@ -69,7 +69,7 @@ public class PHflashVega extends Flash {
     double nyTemp = 1.0 / system.getTemperature();
     double iterations = 1;
     double error = 1.0;
-    double erorOld = 1.0e10;
+    double errorOld = 1.0e10;
     double factor = 0.8;
     double newCorr = 1.0;
     system.init(2);
@@ -78,9 +78,9 @@ public class PHflashVega extends Flash {
     double maxTemperature = 1e10;
     double minTemperature = 0.0;
     do {
-      if (Math.abs(error) > Math.abs(erorOld) && factor > 0.1 && correctFactor) {
+      if (Math.abs(error) > Math.abs(errorOld) && factor > 0.1 && correctFactor) {
         factor *= 0.5;
-      } else if (Math.abs(error) < Math.abs(erorOld) && correctFactor) {
+      } else if (Math.abs(error) < Math.abs(errorOld) && correctFactor) {
         factor = iterations / (iterations + 1.0) * 1.0;
       }
       iterations++;
@@ -109,7 +109,7 @@ public class PHflashVega extends Flash {
       } else if (system.getTemperature() < minTemperature) {
         system.setTemperature(minTemperature + 0.1);
       }
-      erorOld = error;
+      errorOld = error;
       error = calcdQdT();
 
       if (error > 0 && system.getTemperature() > maxTemperature) {
@@ -119,15 +119,15 @@ public class PHflashVega extends Flash {
       }
 
       /*
-       * if (false && error * erorOld < 0) { system.setTemperature( (Math.abs(erorOld) * 1.0 /
-       * oldTemp + Math.abs(error) * 1.0 / nyTemp) / (Math.abs(erorOld) + Math.abs(error))); erorOld
+       * if (false && error * errorOld < 0) { system.setTemperature( (Math.abs(errorOld) * 1.0 /
+       * oldTemp + Math.abs(error) * 1.0 / nyTemp) / (Math.abs(errorOld) + Math.abs(error))); errorOld
        * = error; error = calcdQdT(); System.out.println("reset temperature -- new temp " +
        * system.getTemperature() + " error " + error + " iter " + iterations); } // error =
        * Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp)); // System.out.println("temp " +
        * system.getTemperature() + " iter "+ iterations + // " error "+ error + " correction " +
        * newCorr + " factor "+ factor);
        */
-    } while (((Math.abs(error) + Math.abs(erorOld)) > 1e-8 || iterations < 3) && iterations < 200);
+    } while (((Math.abs(error) + Math.abs(errorOld)) > 1e-8 || iterations < 3) && iterations < 200);
     // System.out.println("temp " + system.getTemperature() + " iter " + iterations
     // + " error " + error);
     return 1.0 / nyTemp;
