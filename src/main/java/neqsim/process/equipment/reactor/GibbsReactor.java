@@ -25,7 +25,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class GibbsReactor extends TwoPortEquipment {
   // Thread-local reusable system for fugacity calculations to minimize cloning
-  private static final ThreadLocal<neqsim.thermo.system.SystemInterface> tempFugacitySystem = new ThreadLocal<>();
+  private final ThreadLocal<neqsim.thermo.system.SystemInterface> tempFugacitySystem = new ThreadLocal<>();
 
   /**
    * Get the cumulative enthalpy of reaction (sum of dH for all iterations).
@@ -45,7 +45,7 @@ public class GibbsReactor extends TwoPortEquipment {
    * @param componentMap Map from component name (lowercase) to GibbsComponent
    * @return Total enthalpy (kJ)
    */
-  public static double calculateMixtureEnthalpy(List<String> componentNames, List<Double> n,
+  public double calculateMixtureEnthalpy(List<String> componentNames, List<Double> n,
       double T, Map<String, GibbsComponent> componentMap) {
     double totalH = 0.0;
     for (int i = 0; i < componentNames.size(); i++) {
@@ -66,7 +66,7 @@ public class GibbsReactor extends TwoPortEquipment {
    * @param componentMap Map from component name (lowercase) to GibbsComponent
    * @return Total enthalpy (kJ)
    */
-  public static double calculateMixtureEnthalpyStandard(List<String> componentNames, List<Double> n,
+  public double calculateMixtureEnthalpyStandard(List<String> componentNames, List<Double> n,
       Map<String, GibbsComponent> componentMap) {
     double totalH = 0.0;
     for (int i = 0; i < componentNames.size(); i++) {
@@ -182,7 +182,7 @@ public class GibbsReactor extends TwoPortEquipment {
   /**
    * Inner class to represent a component in the Gibbs reaction database.
    */
-  public static class GibbsComponent {
+  public class GibbsComponent {
     private String molecule;
     private double[] elements = new double[6]; // O, N, C, H, S, Ar
     private double[] heatCapacityCoeffs = new double[4]; // A, B, C, D
@@ -465,6 +465,8 @@ public class GibbsReactor extends TwoPortEquipment {
 
   @Override
   public void run(UUID id) {
+    // Clear thread-local temp system to avoid cross-test contamination
+    tempFugacitySystem.remove();
     system = getInletStream().getThermoSystem().clone();
 
 
