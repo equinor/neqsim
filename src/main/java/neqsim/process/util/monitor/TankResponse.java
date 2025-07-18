@@ -1,6 +1,6 @@
 package neqsim.process.util.monitor;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import neqsim.process.equipment.tank.Tank;
 
 /**
@@ -10,7 +10,7 @@ import neqsim.process.equipment.tank.Tank;
  * </p>
  */
 public class TankResponse extends BaseResponse {
-  public ArrayList<String[]> data = new ArrayList<String[]>();
+  public HashMap<String, Value> data = new HashMap<String, Value>();
 
   /**
    * Create a response based on a {@link neqsim.process.equipment.tank.Tank}.
@@ -20,27 +20,42 @@ public class TankResponse extends BaseResponse {
   public TankResponse(Tank tank) {
     super(tank);
 
-    data.add(new String[] {"liquid level", Double.toString(tank.getLiquidLevel()), ""});
-    data.add(new String[] {"volume", Double.toString(tank.getVolume()), "m3"});
+    data.put("liquid level", new Value(Double.toString(tank.getLiquidLevel()), ""));
+    data.put("volume", new Value(Double.toString(tank.getVolume()), "m3"));
 
-    data.add(new String[] {"gas outlet temperature",
-        Double.toString(tank.getGasOutStream().getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
-        neqsim.util.unit.Units.getSymbol("temperature")});
-    data.add(new String[] {"gas outlet pressure",
-        Double.toString(tank.getGasOutStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
-        neqsim.util.unit.Units.getSymbol("pressure")});
-    data.add(new String[] {"gas outlet mass flow",
-        Double.toString(tank.getGasOutStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
-        neqsim.util.unit.Units.getSymbol("mass flow")});
+    data.put("gas outlet temperature",
+        new Value(
 
-    data.add(new String[] {"liquid outlet temperature",
-        Double.toString(tank.getLiquidOutStream().getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
-        neqsim.util.unit.Units.getSymbol("temperature")});
-    data.add(new String[] {"liquid outlet pressure",
-        Double.toString(tank.getLiquidOutStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
-        neqsim.util.unit.Units.getSymbol("pressure")});
-    data.add(new String[] {"liquid outlet mass flow",
-        Double.toString(tank.getLiquidOutStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
-        neqsim.util.unit.Units.getSymbol("mass flow")});
+            Double.toString(tank.getGasOutStream()
+                .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+            neqsim.util.unit.Units.getSymbol("temperature")));
+    data.put("gas outlet pressure",
+        new Value(
+            Double.toString(tank.getGasOutStream()
+                .getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+            neqsim.util.unit.Units.getSymbol("pressure")));
+    data.put("gas outlet mass flow",
+        new Value(
+            Double.toString(tank.getGasOutStream()
+                .getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+
+            neqsim.util.unit.Units.getSymbol("mass flow")));
+
+    data.put("liquid outlet temperature",
+        new Value(
+            Double.toString(tank.getLiquidOutStream()
+                .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+            neqsim.util.unit.Units.getSymbol("temperature")));
+    data.put("liquid outlet pressure",
+        new Value(
+            Double.toString(tank.getLiquidOutStream()
+                .getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+            neqsim.util.unit.Units.getSymbol("pressure")));
+    data.put("liquid outlet mass flow",
+        new Value(
+            Double.toString(tank.getLiquidOutStream()
+                .getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+
+            neqsim.util.unit.Units.getSymbol("mass flow")));
   }
 }

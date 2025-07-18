@@ -515,7 +515,7 @@ public abstract class Component implements ComponentInterface {
       } else {
         String msg = "will lead to negative number of moles of component in phase for component "
             + getComponentName() + "  who has " + numberOfMolesInPhase
-            + " in phase  and chage request was " + dn;
+            + " in phase  and change request was " + dn;
         logger.error(msg);
         if (numberOfMolesInPhase + dn < 0) {
           dn = -numberOfMolesInPhase;
