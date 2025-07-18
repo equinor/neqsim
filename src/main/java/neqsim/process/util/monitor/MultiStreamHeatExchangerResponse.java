@@ -1,6 +1,6 @@
 package neqsim.process.util.monitor;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger;
 
 /**
@@ -12,7 +12,7 @@ import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger;
  * @version $Id: $Id
  */
 public class MultiStreamHeatExchangerResponse extends BaseResponse {
-  public ArrayList<String[]> data = new ArrayList<String[]>();
+  public HashMap<String, Value> data = new HashMap<String, Value>();
   public Double[] feedTemperature;
   public Double[] dischargeTemperature;
   public Double[] duty;
@@ -42,16 +42,16 @@ public class MultiStreamHeatExchangerResponse extends BaseResponse {
       flowRate[i] = inputHX.getInStream(i).getFlowRate("kg/hr");
 
       String streamId = Integer.toString(i + 1);
-      data.add(new String[] {"feed temperature stream " + streamId,
-          Double.toString(feedTemperature[i]), neqsim.util.unit.Units.getSymbol("temperature")});
-      data.add(new String[] {"discharge temperature stream " + streamId,
-          Double.toString(dischargeTemperature[i]), neqsim.util.unit.Units.getSymbol("temperature")});
-      data.add(new String[] {"duty stream " + streamId, Double.toString(duty[i]),
-          neqsim.util.unit.Units.getSymbol("duty")});
-      data.add(new String[] {"mass flow stream " + streamId, Double.toString(flowRate[i]),
-          neqsim.util.unit.Units.getSymbol("mass flow")});
+      data.put("feed temperature stream " + streamId,
+          new Value(Double.toString(feedTemperature[i]), neqsim.util.unit.Units.getSymbol("temperature")));
+      data.put("discharge temperature stream " + streamId,
+          new Value(Double.toString(dischargeTemperature[i]), neqsim.util.unit.Units.getSymbol("temperature")));
+      data.put("duty stream " + streamId,
+          new Value(Double.toString(duty[i]), neqsim.util.unit.Units.getSymbol("duty")));
+      data.put("mass flow stream " + streamId,
+          new Value(Double.toString(flowRate[i]), neqsim.util.unit.Units.getSymbol("mass flow")));
     }
 
-    data.add(new String[] {"UA value", Double.toString(inputHX.getUAvalue()), "W/K"});
+    data.put("UA value", new Value(Double.toString(inputHX.getUAvalue()), "W/K"));
   }
 }
