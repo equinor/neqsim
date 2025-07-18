@@ -32,6 +32,13 @@ public class PTphaseEnvelope extends BaseOperation {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PTphaseEnvelope.class);
 
+  /** Maximum number of phase envelope points. */
+  private static final int MAX_NUMBER_OF_POINTS = 10000;
+  /** Maximum number of attempts when estimating the first point. */
+  private static final int FIRST_POINT_ATTEMPTS = 5;
+  /** Constant in the Wilson K-value correlation. */
+  private static final double WILSON_CONST = 5.373;
+
   double maxPressure = 1000.0;
   double minPressure = 1.0;
   double[][] copiedPoints = null;
@@ -142,12 +149,12 @@ public class PTphaseEnvelope extends BaseOperation {
   @Override
   public void run() {
     speceq = 0; // initialization
-    points[0] = new double[10000]; // declarations for points
-    points[1] = new double[10000]; // declarations for points
+    points[0] = new double[MAX_NUMBER_OF_POINTS]; // temperature points
+    points[1] = new double[MAX_NUMBER_OF_POINTS]; // pressure points
 
-    pointsH = new double[10000]; // declarations for points
-    pointsV = new double[10000]; // declarations for points
-    pointsS = new double[10000]; // declarations for points
+    pointsH = new double[MAX_NUMBER_OF_POINTS]; // enthalpy points
+    pointsV = new double[MAX_NUMBER_OF_POINTS]; // density points
+    pointsS = new double[MAX_NUMBER_OF_POINTS]; // entropy points
     system.init(0); // initialization
 
     // selects the most volatile and least volatile component based on Tc values
@@ -190,19 +197,19 @@ public class PTphaseEnvelope extends BaseOperation {
     // if the plasefraction is more than 0.5 it does a dew point initiallization
     // else a bubble point initiallization
 
-    for (int i = 0; i < 5; i++) {
+    for (int attempt = 0; attempt < FIRST_POINT_ATTEMPTS; attempt++) {
       try {
         if (phaseFraction < 0.5) {
-          temp += i * 2;
+          temp += attempt * 2.0;
           system.setTemperature(temp);
           testOps.bubblePointTemperatureFlash();
         } else {
-          temp += i * 2;
+          temp += attempt * 2.0;
           system.setTemperature(temp);
           testOps.dewPointTemperatureFlash();
         }
       } catch (Exception ex) {
-        // ex.toString();
+        // Ignore and try next attempt
       }
       double tempNy = system.getTemperature();
 
@@ -742,13 +749,15 @@ public class PTphaseEnvelope extends BaseOperation {
   }
 
   /**
+   * Estimate the initial temperature using the Wilson correlation.
    * <p>
-   * tempKWilson.
+   * The implementation follows the approach described by Michelsen and Mollerup
+   * (1981) for phase envelope calculations.
    * </p>
    *
-   * @param beta a double
-   * @param P a double
-   * @return a double
+   * @param beta overall vapor fraction
+   * @param P pressure in barA
+   * @return estimated temperature in Kelvin
    */
   public double tempKWilson(double beta, double P) {
     // Initiallizes the temperature of a saturation point for given pressure
@@ -797,7 +806,7 @@ public class PTphaseEnvelope extends BaseOperation {
       }
 
       // initial T based on the lightest/heaviest component
-      Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc));
+      Tstart = initTc * WILSON_CONST * (1 + initAc) / (WILSON_CONST * (1 + initAc) - Math.log(P / initPc));
 
       // solve for Tstart with Newton
       for (int i = 0; i < 1000; i++) {
@@ -805,7 +814,7 @@ public class PTphaseEnvelope extends BaseOperation {
         dinitT = 0.;
         for (int j = 0; j < numberOfComponents; j++) {
           Kwil[j] = system.getPhase(0).getComponent(j).getPC() / P
-              * Math.exp(5.373 * (1. + system.getPhase(0).getComponent(j).getAcentricFactor())
+              * Math.exp(WILSON_CONST * (1. + system.getPhase(0).getComponent(j).getAcentricFactor())
                   * (1. - system.getPhase(0).getComponent(j).getTC() / Tstart));
           // system.getPhases()[0].getComponent(j).setK(Kwil[j]);
         }
@@ -813,12 +822,12 @@ public class PTphaseEnvelope extends BaseOperation {
         for (int j = 0; j < numberOfComponents; j++) {
           if (beta < 0.5) {
             initT = initT + system.getPhase(0).getComponent(j).getz() * Kwil[j];
-            dinitT = dinitT + system.getPhase(0).getComponent(j).getz() * Kwil[j] * 5.373
+            dinitT = dinitT + system.getPhase(0).getComponent(j).getz() * Kwil[j] * WILSON_CONST
                 * (1 + system.getPhase(0).getComponent(j).getAcentricFactor())
                 * system.getPhase(0).getComponent(j).getTC() / (Tstart * Tstart);
           } else {
             initT = initT + system.getPhase(0).getComponent(j).getz() / Kwil[j];
-            dinitT = dinitT - system.getPhase(0).getComponent(j).getz() / Kwil[j] * 5.373
+            dinitT = dinitT - system.getPhase(0).getComponent(j).getz() / Kwil[j] * WILSON_CONST
                 * (1 + system.getPhase(0).getComponent(j).getAcentricFactor())
                 * system.getPhase(0).getComponent(j).getTC() / (Tstart * Tstart);
           }
@@ -836,10 +845,10 @@ public class PTphaseEnvelope extends BaseOperation {
         Tstartold = Tstart;
       }
     } catch (Exception ex) {
-      Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc));
+      Tstart = initTc * WILSON_CONST * (1 + initAc) / (WILSON_CONST * (1 + initAc) - Math.log(P / initPc));
     }
     if (Double.isNaN(Tstart) || Double.isInfinite(Tstart)) {
-      Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc));
+      Tstart = initTc * WILSON_CONST * (1 + initAc) / (WILSON_CONST * (1 + initAc) - Math.log(P / initPc));
     }
     return Tstart;
   }
