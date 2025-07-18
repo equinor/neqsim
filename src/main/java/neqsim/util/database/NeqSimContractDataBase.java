@@ -43,7 +43,7 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
    */
   public NeqSimContractDataBase() {
     // Fill tables from csv-files if not initialized and not currently being initialized.
-    if (dataBaseType == "H2fromCSV" && !h2IsInitialized && !h2IsInitalizing) {
+    if ("H2fromCSV".equals(dataBaseType) && !h2IsInitialized && !h2IsInitalizing) {
       initH2DatabaseFromCSVfiles();
     }
     setDataBaseType(dataBaseType);

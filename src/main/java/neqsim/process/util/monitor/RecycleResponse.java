@@ -1,13 +1,13 @@
 package neqsim.process.util.monitor;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import neqsim.process.equipment.util.Recycle;
 
 /**
  * RecycleResponse class provides basic reporting for a recycle unit.
  */
 public class RecycleResponse extends BaseResponse {
-  public ArrayList<String[]> data = new ArrayList<String[]>();
+  public HashMap<String, Value> data = new HashMap<String, Value>();
 
   /**
    * Create a response based on a {@link neqsim.process.equipment.util.Recycle}.
@@ -17,22 +17,28 @@ public class RecycleResponse extends BaseResponse {
   public RecycleResponse(Recycle recycle) {
     super(recycle);
 
-    data.add(new String[] {"outlet mass flow",
-        Double.toString(recycle.getOutletStream()
-            .getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
-        neqsim.util.unit.Units.getSymbol("mass flow")});
-    data.add(new String[] {"outlet temperature",
-        Double.toString(recycle.getOutletStream()
-            .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
-        neqsim.util.unit.Units.getSymbol("temperature")});
-    data.add(new String[] {"outlet pressure",
-        Double.toString(recycle.getOutletStream()
-            .getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
-        neqsim.util.unit.Units.getSymbol("pressure")});
+    data.put("outlet mass flow",
+        new Value(
+            Double.toString(recycle.getOutletStream()
+                .getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+            neqsim.util.unit.Units.getSymbol("mass flow")));
+    data.put("outlet temperature",
+        new Value(
+            Double.toString(recycle.getOutletStream()
+                .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+            neqsim.util.unit.Units.getSymbol("temperature")));
+    data.put("outlet pressure",
+        new Value(
+            Double.toString(recycle.getOutletStream()
+                .getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+            neqsim.util.unit.Units.getSymbol("pressure")));
 
-    data.add(new String[] {"error composition", Double.toString(recycle.getErrorComposition()), ""});
-    data.add(new String[] {"error flow", Double.toString(recycle.getErrorFlow()), ""});
-    data.add(new String[] {"error temperature", Double.toString(recycle.getErrorTemperature()), ""});
-    data.add(new String[] {"error pressure", Double.toString(recycle.getErrorPressure()), ""});
+    data.put("error composition",
+        new Value(Double.toString(recycle.getErrorComposition()), ""));
+    data.put("error flow", new Value(Double.toString(recycle.getErrorFlow()), ""));
+    data.put("error temperature",
+        new Value(Double.toString(recycle.getErrorTemperature()), ""));
+    data.put("error pressure",
+        new Value(Double.toString(recycle.getErrorPressure()), ""));
   }
 }

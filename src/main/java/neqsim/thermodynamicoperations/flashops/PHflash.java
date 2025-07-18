@@ -76,7 +76,7 @@ public class PHflash extends Flash {
     double nyTemp = 1.0 / system.getTemperature();
     double iterations = 1;
     double error = 1.0;
-    double erorOld = 1.0e10;
+    double errorOld = 1.0e10;
     double factor = 0.8;
     double newCorr = 1.0;
     system.init(2);
@@ -85,9 +85,9 @@ public class PHflash extends Flash {
     double minTemperature = 0.0;
 
     do {
-      if (Math.abs(error) > Math.abs(erorOld) && factor > 0.1 && correctFactor) {
+      if (Math.abs(error) > Math.abs(errorOld) && factor > 0.1 && correctFactor) {
         factor *= 0.5;
-      } else if (Math.abs(error) < Math.abs(erorOld) && correctFactor) {
+      } else if (Math.abs(error) < Math.abs(errorOld) && correctFactor) {
         factor = iterations / (iterations + 1.0) * 1.0;
       }
       iterations++;
@@ -120,7 +120,7 @@ public class PHflash extends Flash {
       }
       tpFlash.run();
       system.init(2);
-      erorOld = error;
+      errorOld = error;
       error = calcdQdT();
 
       if (error > 0 && system.getTemperature() > maxTemperature) {
@@ -128,7 +128,7 @@ public class PHflash extends Flash {
       } else if (error < 0 && system.getTemperature() < minTemperature) {
         minTemperature = system.getTemperature();
       }
-    } while (((Math.abs(error) + Math.abs(erorOld)) > 1e-8 || iterations < 3) && iterations < 200);
+    } while (((Math.abs(error) + Math.abs(errorOld)) > 1e-8 || iterations < 3) && iterations < 200);
     return 1.0 / nyTemp;
   }
 
@@ -144,16 +144,16 @@ public class PHflash extends Flash {
     double nyTemp = 1.0 / system.getTemperature();
     double iterations = 1;
     double error = 1.0;
-    double erorOld = 1.0e10;
+    double errorOld = 1.0e10;
     double factor = 0.8;
     double newCorr = 1.0;
     system.init(2);
     boolean correctFactor = true;
     // System.out.println("temp start " + system.getTemperature());
     do {
-      if (error > erorOld && factor > 0.1 && correctFactor) {
+      if (error > errorOld && factor > 0.1 && correctFactor) {
         factor *= 0.5;
-      } else if (error < erorOld && correctFactor) {
+      } else if (error < errorOld && correctFactor) {
         factor = iterations / (iterations + 1.0) * 1.0;
       }
       iterations++;
@@ -176,13 +176,13 @@ public class PHflash extends Flash {
       system.setTemperature(1.0 / nyTemp);
       tpFlash.run();
       system.init(2);
-      erorOld = error;
+      errorOld = error;
       error = Math.abs(calcdQdT());
       // error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
       // if(iterations>100) System.out.println("temp " + system.getTemperature() + "
       // iter "+ iterations + " error "+ error + " correction " + newCorr + " factor
       // "+ factor);
-    } while (((error + erorOld) > 1e-8 || iterations < 3) && iterations < 200);
+    } while (((error + errorOld) > 1e-8 || iterations < 3) && iterations < 200);
     // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
     // " error "+ error );
     return 1.0 / nyTemp;

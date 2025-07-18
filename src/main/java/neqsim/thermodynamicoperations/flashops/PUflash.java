@@ -74,12 +74,12 @@ public class PUflash extends Flash {
     double nyTemp = 1.0 / system.getTemperature();
     double iterations = 1;
     double error = 1.0;
-    double erorOld = 10.0e10;
+    double errorOld = 10.0e10;
     double factor = 0.8;
     do {
-      if (error > erorOld) {
+      if (error > errorOld) {
         factor /= 2.0;
-      } else if (error < erorOld && factor < 0.8) {
+      } else if (error < errorOld && factor < 0.8) {
         factor *= 1.1;
       }
       iterations++;
@@ -93,7 +93,7 @@ public class PUflash extends Flash {
       }
       system.setTemperature(1.0 / nyTemp);
       tpFlash.run();
-      erorOld = error;
+      errorOld = error;
       error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
       // System.out.println("error " + error);
       // System.out.println("temperature " + system.getTemperature() + " " +
