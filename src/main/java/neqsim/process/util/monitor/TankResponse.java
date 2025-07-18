@@ -25,6 +25,7 @@ public class TankResponse extends BaseResponse {
 
     data.put("gas outlet temperature",
         new Value(
+
             Double.toString(tank.getGasOutStream()
                 .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
             neqsim.util.unit.Units.getSymbol("temperature")));
@@ -37,6 +38,7 @@ public class TankResponse extends BaseResponse {
         new Value(
             Double.toString(tank.getGasOutStream()
                 .getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+
             neqsim.util.unit.Units.getSymbol("mass flow")));
 
     data.put("liquid outlet temperature",
@@ -53,6 +55,7 @@ public class TankResponse extends BaseResponse {
         new Value(
             Double.toString(tank.getLiquidOutStream()
                 .getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+
             neqsim.util.unit.Units.getSymbol("mass flow")));
   }
 }
