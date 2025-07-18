@@ -2,6 +2,7 @@ package neqsim.process.equipment.reactor;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +10,7 @@ import java.util.Scanner;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import org.ejml.simple.SimpleMatrix;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -23,6 +24,106 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class GibbsReactor extends TwoPortEquipment {
+  // Thread-local reusable system for fugacity calculations to minimize cloning
+  private final ThreadLocal<neqsim.thermo.system.SystemInterface> tempFugacitySystem =
+      new ThreadLocal<>();
+
+  /**
+   * Get the cumulative enthalpy of reaction (sum of dH for all iterations).
+   *
+   * @return enthalpyOfReactions in kJ
+   */
+  public double getenthalpyOfReactions() {
+    return enthalpyOfReactions;
+  }
+
+  /**
+   * Calculate the total enthalpy of a mixture: sum_i n_i * enthalpy_i(T)
+   * 
+   * @param componentNames List of component names (order matches n_i)
+   * @param n List of moles for each component
+   * @param T Temperature in K
+   * @param componentMap Map from component name (lowercase) to GibbsComponent
+   * @return Total enthalpy (kJ)
+   */
+  public double calculateMixtureEnthalpy(List<String> componentNames, List<Double> n, double T,
+      Map<String, GibbsComponent> componentMap) {
+    double totalH = 0.0;
+    for (int i = 0; i < componentNames.size(); i++) {
+      String compName = componentNames.get(i);
+      GibbsComponent comp = componentMap.get(compName.toLowerCase());
+      if (comp != null) {
+        totalH += n.get(i) * comp.calculateEnthalpy(T);
+      }
+    }
+    return totalH;
+  }
+
+  /**
+   * Calculate the total standard enthalpy of a mixture: sum_i n_i * enthalpy_i(T)
+   * 
+   * @param componentNames List of component names (order matches n_i)
+   * @param n List of moles for each component
+   * @param componentMap Map from component name (lowercase) to GibbsComponent
+   * @return Total enthalpy (kJ)
+   */
+  public double calculateMixtureEnthalpyStandard(List<String> componentNames, List<Double> n,
+      Map<String, GibbsComponent> componentMap) {
+    double totalH = 0.0;
+    for (int i = 0; i < componentNames.size(); i++) {
+      String compName = componentNames.get(i);
+      GibbsComponent comp = componentMap.get(compName.toLowerCase());
+      if (comp != null) {
+        totalH += n.get(i) * comp.deltaHf298;
+      }
+    }
+    return totalH;
+  }
+
+  public enum EnergyMode {
+    ISOTHERMAL, ADIABATIC
+  }
+
+  private EnergyMode energyMode = EnergyMode.ADIABATIC;
+
+  /**
+   * Set the energy mode of the reactor (isothermal or adiabatic).
+   * 
+   * @param mode EnergyMode.ISOTHERMAL or EnergyMode.ADIABATIC
+   */
+  public void setEnergyMode(EnergyMode mode) {
+    this.energyMode = mode;
+  }
+
+  /**
+   * Set the energy mode of the reactor using a string (case-insensitive). Accepts "adiabatic" or
+   * "isothermal" (case-insensitive).
+   *
+   * @param mode String representing the energy mode
+   * @throws IllegalArgumentException if the mode is not recognized
+   */
+  public void setEnergyMode(String mode) {
+    if (mode == null)
+      throw new IllegalArgumentException("Energy mode string cannot be null");
+    switch (mode.trim().toLowerCase()) {
+      case "adiabatic":
+        setEnergyMode(EnergyMode.ADIABATIC);
+        break;
+      case "isothermal":
+        setEnergyMode(EnergyMode.ISOTHERMAL);
+        break;
+      default:
+        throw new IllegalArgumentException("Unknown energy mode: " + mode);
+    }
+  }
+
+  /**
+   * Get the current energy mode of the reactor.
+   */
+  public EnergyMode getEnergyMode() {
+    return energyMode;
+  }
+
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -51,6 +152,9 @@ public class GibbsReactor extends TwoPortEquipment {
   private List<Double> inlet_mole = new ArrayList<>();
   private List<Double> outlet_mole = new ArrayList<>();
 
+  // Precomputed index map for processedComponents
+  private Map<String, Integer> processedComponentIndexMap = new HashMap<>();
+
   // Objective minimization vector
   private double[] objectiveMinimizationVector;
   private List<String> objectiveMinimizationVectorLabels = new ArrayList<>();
@@ -70,6 +174,12 @@ public class GibbsReactor extends TwoPortEquipment {
   private double finalConvergenceError = 0.0;
 
   private SystemInterface system;
+  private double inletEnthalpy;
+  private double outletEnthalpy;
+  private double dT = 0.0;
+  private int tempUpdateIter = 0;
+  double enthalpyOld = 0.0;
+  private double enthalpyOfReactions = 0.0;
 
   /**
    * Constructor for GibbsReactor.
@@ -95,23 +205,34 @@ public class GibbsReactor extends TwoPortEquipment {
   /**
    * Inner class to represent a component in the Gibbs reaction database.
    */
-  public static class GibbsComponent {
+  public class GibbsComponent {
     private String molecule;
     private double[] elements = new double[6]; // O, N, C, H, S, Ar
     private double[] heatCapacityCoeffs = new double[4]; // A, B, C, D
     private double deltaHf298; // Enthalpy of formation at 298K
     private double deltaGf298; // Gibbs energy of formation at 298K
+    private double deltaSf298; // Entropy of formation at 298K
 
     /**
      * Constructor for GibbsComponent.
      */
     public GibbsComponent(String molecule, double[] elements, double[] heatCapacityCoeffs,
-        double deltaHf298, double deltaGf298) {
+        double deltaHf298, double deltaGf298, double deltaSf298) {
       this.molecule = molecule;
       this.elements = elements.clone();
       this.heatCapacityCoeffs = heatCapacityCoeffs.clone();
       this.deltaHf298 = deltaHf298;
       this.deltaGf298 = deltaGf298;
+      this.deltaSf298 = deltaSf298;
+    }
+
+    /**
+     * Get the entropy of formation at 298K (deltaSf298) in J/(mol·K).
+     * 
+     * @return Entropy of formation at 298K
+     */
+    public double getDeltaSf298() {
+      return deltaSf298;
     }
 
     public String getMolecule() {
@@ -152,14 +273,13 @@ public class GibbsReactor extends TwoPortEquipment {
       double S_T = calculateEntropy(T);
 
       // Calculate Gibbs energy: G(T) = H(T) - T*S(T)
-      double G_T = H_T - T * S_T / 1000.0; // Convert S from J/(mol·K) to kJ/(mol·K)
+      double G_T = H_T - T * S_T; // Convert S from J/(mol·K) to kJ/(mol·K)
 
-      return deltaGf298;
+      return G_T;
     }
 
     /**
-     * Calculate enthalpy at temperature T using NeqSim's built-in enthalpy calculations. This
-     * leverages NeqSim's proper thermodynamic framework with accurate heat capacity integration.
+     * Calculate enthalpy at temperature T.
      * 
      * H(T) = Hf_298 + ∫Cp(T)dT from Tref to T
      * 
@@ -167,32 +287,15 @@ public class GibbsReactor extends TwoPortEquipment {
      * @return Enthalpy of formation at temperature T in kJ/mol
      */
     public double calculateEnthalpy(double temperature) {
-      try {
-        // Create a temporary single-component system to get ideal gas enthalpy
-        SystemInterface tempSystem = new neqsim.thermo.system.SystemSrkEos(temperature, 1.0);
-        tempSystem.addComponent(molecule, 1.0);
-        tempSystem.setMixingRule(2);
-        tempSystem.init(0);
-        tempSystem.init(1);
+      // Fallback to manual calculation if NeqSim method fails
+      double T = temperature;
+      double T0 = 298.15; // Reference temperature (K)
 
-        // Get ideal gas enthalpy from NeqSim's component (per mole)
-        double idealEnthalpy = tempSystem.getComponent(0).getEnthalpy(temperature)
-            / tempSystem.getComponent(0).getNumberOfMolesInPhase();
+      // Calculate average heat capacity (simplified constant Cp approach)
+      double Cp = calculateHeatCapacity(T);
 
-        // NeqSim returns enthalpy in J/mol, convert to kJ/mol
-        return idealEnthalpy / 1000.0;
-
-      } catch (Exception e) {
-        // Fallback to manual calculation if NeqSim method fails
-        double T = temperature;
-        double T0 = 298.15; // Reference temperature (K)
-
-        // Calculate average heat capacity (simplified constant Cp approach)
-        double Cp = calculateHeatCapacity(T);
-
-        // H(T) = deltaHf298 + Cp*(T - Tref)
-        return deltaHf298 + Cp * (T - T0) / 1000.0; // Convert Cp from J/(mol·K) to kJ/(mol·K)
-      }
+      // H(T) = deltaHf298 + Cp*(T - Tref)
+      return deltaHf298 + Cp * (T - T0) / 1000.0; // Convert Cp from J/(mol·K) to kJ/(mol·K)
     }
 
     /**
@@ -205,35 +308,18 @@ public class GibbsReactor extends TwoPortEquipment {
      * @return Entropy at temperature T in J/(mol·K)
      */
     public double calculateEntropy(double temperature) {
-      try {
-        // Create a temporary single-component system to get ideal gas entropy
-        SystemInterface tempSystem = new neqsim.thermo.system.SystemSrkEos(temperature, 1.0);
-        tempSystem.addComponent(molecule, 1.0);
-        tempSystem.setMixingRule(2);
-        tempSystem.init(0);
-        tempSystem.init(1);
+      // Fallback to manual calculation if NeqSim method fails
+      double T = temperature;
+      double T0 = 298.15; // Reference temperature (K)
 
-        // Get ideal gas entropy from NeqSim's component
-        double idEntropy = tempSystem.getComponent(0).getIdEntropy(temperature);
+      // Calculate heat capacity
+      double Cp = calculateHeatCapacity(T);
 
-        return idEntropy; // NeqSim returns entropy in J/(mol·K)
-
-      } catch (Exception e) {
-        // Fallback to manual calculation if NeqSim method fails
-        double T = temperature;
-        double T0 = 298.15; // Reference temperature (K)
-
-        // Calculate reference entropy from database values
-        // deltaS298 = (deltaHf298 - deltaGf298)/T0
-        double deltaS298 = (deltaHf298 - deltaGf298) * 1000.0 / T0; // Convert kJ to J
-
-        // Calculate heat capacity
-        double Cp = calculateHeatCapacity(T);
-
-        // S(T) = Sref + Cp*ln(T/Tref)
-        return deltaS298 + Cp * Math.log(T / T0);
-      }
+      // S(T) = Sref + Cp*ln(T/Tref)
+      return (deltaSf298 + Cp * Math.log(T / T0)) / 1000;
     }
+
+
 
     /**
      * Calculate heat capacity at temperature T using NeqSim's built-in getCp0() method. This is
@@ -244,12 +330,12 @@ public class GibbsReactor extends TwoPortEquipment {
      */
     public double calculateHeatCapacity(double temperature) {
       try {
-        // Create a temporary single-component system to get Cp0
-        SystemInterface tempSystem = new neqsim.thermo.system.SystemSrkEos(temperature, 1.0);
+        // Create a temporary single-component system using the same class as 'system'
+        SystemInterface tempSystem = system.getClass()
+            .getDeclaredConstructor(double.class, double.class).newInstance(temperature, 1.0);
         tempSystem.addComponent(molecule, 1.0);
         tempSystem.setMixingRule(2);
-        tempSystem.init(0);
-        tempSystem.init(1);
+        tempSystem.initPhysicalProperties();
 
         // Get heat capacity from NeqSim's component
         double cp0 = tempSystem.getComponent(0).getCp0(temperature);
@@ -271,6 +357,8 @@ public class GibbsReactor extends TwoPortEquipment {
     }
   }
 
+
+
   /**
    * Load the Gibbs reaction database from resources.
    */
@@ -289,9 +377,9 @@ public class GibbsReactor extends TwoPortEquipment {
         inputStream = getClass().getResourceAsStream("/neqsim/data/GibbsReactDatabase.csv");
       }
       if (inputStream == null) {
-        logger.warn("Could not find GibbsReactDatabase.csv in resources");
-        System.out
-            .println("DEBUG: Could not find GibbsReactDatabase.csv in any of the expected paths");
+        // logger.warn("Could not find GibbsReactDatabase.csv in resources");
+        // System.out
+        // .println("DEBUG: Could not find GibbsReactDatabase.csv in any of the expected paths");
         return;
       }
 
@@ -309,7 +397,7 @@ public class GibbsReactor extends TwoPortEquipment {
         }
 
         String[] parts = line.split(";");
-        if (parts.length >= 13) {
+        if (parts.length >= 14) {
           try {
             final String molecule = parts[0].trim();
 
@@ -329,26 +417,28 @@ public class GibbsReactor extends TwoPortEquipment {
 
             String deltaHf298Str = parts[11].trim().replace(",", ".");
             String deltaGf298Str = parts[12].trim().replace(",", ".");
+            String deltaSf298Str = parts[13].trim().replace(",", ".");
             double deltaHf298 = Double.parseDouble(deltaHf298Str);
             double deltaGf298 = Double.parseDouble(deltaGf298Str);
+            double deltaSf298 = Double.parseDouble(deltaSf298Str);
 
-            GibbsComponent component =
-                new GibbsComponent(molecule, elements, heatCapCoeffs, deltaHf298, deltaGf298);
+            GibbsComponent component = new GibbsComponent(molecule, elements, heatCapCoeffs,
+                deltaHf298, deltaGf298, deltaSf298);
             gibbsDatabase.add(component);
             componentMap.put(molecule.toLowerCase(), component);
 
-            logger.debug("Loaded component: " + molecule);
+            // logger.debug("Loaded component: " + molecule);
           } catch (NumberFormatException e) {
-            logger.warn("Error parsing line: " + line + " - " + e.getMessage());
+            // logger.warn("Error parsing line: " + line + " - " + e.getMessage());
           }
         }
       }
 
       scanner.close();
-      logger.info("Loaded " + gibbsDatabase.size() + " components from Gibbs database");
+      // logger.info("Loaded " + gibbsDatabase.size() + " components from Gibbs database");
 
     } catch (Exception e) {
-      logger.error("Error loading Gibbs database: " + e.getMessage());
+      // logger.error("Error loading Gibbs database: " + e.getMessage());
     }
   }
 
@@ -399,8 +489,11 @@ public class GibbsReactor extends TwoPortEquipment {
 
   @Override
   public void run(UUID id) {
+    // Clear thread-local temp system to avoid cross-test contamination
+    tempFugacitySystem.remove();
     system = getInletStream().getThermoSystem().clone();
-    system.init(0);
+
+
 
     // Store initial moles for each component
     initialMoles.clear();
@@ -430,6 +523,7 @@ public class GibbsReactor extends TwoPortEquipment {
       }
     }
 
+
     // Minimize Gibbs energy
     performGibbsMinimization(system);
 
@@ -441,11 +535,13 @@ public class GibbsReactor extends TwoPortEquipment {
     processedComponents.clear();
     outlet_mole.clear(); // Clear and repopulate with actual final values
 
+    processedComponentIndexMap.clear();
     for (int i = 0; i < system.getNumberOfComponents(); i++) {
       String compName = system.getComponent(i).getComponentName();
       double moles = system.getComponent(i).getNumberOfMolesInPhase();
       finalMoles.put(compName, moles);
       processedComponents.add(compName);
+      processedComponentIndexMap.put(compName, i);
 
       // Update outlet_mole with actual final values, enforcing minimum
       double outletMoles = Math.max(moles, 1E-6);
@@ -469,6 +565,8 @@ public class GibbsReactor extends TwoPortEquipment {
     // getOutletStream().setThermoSystem(system);
     getOutletStream().run(id);
   }
+
+
 
   /**
    * Perform Gibbs free energy minimization.
@@ -498,11 +596,8 @@ public class GibbsReactor extends TwoPortEquipment {
       }
     }
 
-    // Run thermodynamic equilibrium calculation
-    system.init(0);
-    system.init(1);
 
-    logger.info("Gibbs minimization completed for iteration " + iteration);
+    // logger.info("Gibbs minimization completed for iteration " + iteration);
   }
 
   /**
@@ -573,7 +668,7 @@ public class GibbsReactor extends TwoPortEquipment {
         double Gf0 = comp.calculateGibbsEnergy(T);
 
         // Calculate fugacity coefficient (assume 1 for now)
-        double phi = 1.0;
+        double phi = getFugacityCoefficient(compName, 0);
 
         // Calculate mole fraction
         double yi = moles / totalMoles;
@@ -838,12 +933,14 @@ public class GibbsReactor extends TwoPortEquipment {
       double niForJacobian = Math.max(ni, 1e-6); // Use minimum of 1e-6 for Jacobian calculation
 
       for (int j = 0; j < numComponents; j++) {
+        String compJ = processedComponents.get(j);
         if (i == j) {
           // Diagonal elements: ∂f_i/∂n_i = RT * (1/n_i - 1/n_total)
-          jacobianMatrix[i][j] = RT * (1.0 / niForJacobian - 1.0 / totalMoles);
+          jacobianMatrix[i][j] = RT
+              * (1.0 / niForJacobian - 1.0 / totalMoles + getFugacityDerivative(compI, compJ, 0));
         } else {
           // Off-diagonal elements: ∂f_i/∂n_j = -RT/n_total
-          jacobianMatrix[i][j] = -RT / totalMoles;
+          jacobianMatrix[i][j] = -RT / totalMoles + getFugacityDerivative(compI, compJ, 0);
         }
       }
 
@@ -945,19 +1042,22 @@ public class GibbsReactor extends TwoPortEquipment {
     if (jacobianMatrix == null) {
       return null;
     }
-
     try {
-      // Create JAMA Matrix object
-      Matrix jamaMatrix = new Matrix(jacobianMatrix);
-
-      // Calculate inverse using JAMA
-      Matrix inverseMatrix = jamaMatrix.inverse();
-
-      // Convert back to double[][]
-      return inverseMatrix.getArray();
-
+      // Only create SimpleMatrix objects once per call, not in a loop
+      SimpleMatrix ejmlMatrix = new SimpleMatrix(jacobianMatrix);
+      SimpleMatrix inverseMatrix = ejmlMatrix.invert();
+      int nRows = inverseMatrix.numRows();
+      int nCols = inverseMatrix.numCols();
+      double[][] result = new double[nRows][nCols];
+      double[] data = inverseMatrix.getDDRM().getData();
+      for (int i = 0; i < nRows; i++) {
+        for (int j = 0; j < nCols; j++) {
+          result[i][j] = data[i * nCols + j];
+        }
+      }
+      return result;
     } catch (RuntimeException e) {
-      logger.warn("Jacobian matrix is singular or nearly singular: " + e.getMessage());
+      // logger.warn("Jacobian matrix is singular or nearly singular: " + e.getMessage());
       return null;
     }
   }
@@ -976,9 +1076,9 @@ public class GibbsReactor extends TwoPortEquipment {
       double currentMoles = system.getComponent(i).getNumberOfMolesInPhase();
 
       if (currentMoles < minConcentration) {
-        logger.info("Component " + system.getComponent(i).getComponentName()
-            + " has very low concentration (" + currentMoles + "), setting to minimum: "
-            + minConcentration);
+        // logger.info("Component " + system.getComponent(i).getComponentName()
+        // + " has very low concentration (" + currentMoles + "), setting to minimum: "
+        // + minConcentration);
         system.addComponent(i, minConcentration - currentMoles, 0);
         modified = true;
       }
@@ -986,8 +1086,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
     if (modified) {
       // Reinitialize the system after modifying concentrations
-      system.init(0);
-      logger.info("System reinitialized after enforcing minimum concentrations");
+      // logger.info("System reinitialized after enforcing minimum concentrations");
     }
   }
 
@@ -997,7 +1096,7 @@ public class GibbsReactor extends TwoPortEquipment {
    * @return List of inlet moles for each component
    */
   public List<Double> getInletMole() {
-    return new ArrayList<>(inlet_mole);
+    return Collections.unmodifiableList(inlet_mole);
   }
 
   /**
@@ -1006,7 +1105,7 @@ public class GibbsReactor extends TwoPortEquipment {
    * @return List of outlet moles for each component (with 0 values replaced by 1E-6)
    */
   public List<Double> getOutletMole() {
-    return new ArrayList<>(outlet_mole);
+    return Collections.unmodifiableList(outlet_mole);
   }
 
   /**
@@ -1015,7 +1114,7 @@ public class GibbsReactor extends TwoPortEquipment {
    * @return List of inlet moles
    */
   public List<Double> getInletMoles() {
-    return new ArrayList<>(inlet_mole);
+    return Collections.unmodifiableList(inlet_mole);
   }
 
   /**
@@ -1024,26 +1123,26 @@ public class GibbsReactor extends TwoPortEquipment {
    * @return List of outlet moles
    */
   public List<Double> getOutletMoles() {
-    return new ArrayList<>(outlet_mole);
+    return Collections.unmodifiableList(outlet_mole);
   }
 
   /**
    * Print loaded database components for debugging.
    */
   public void printDatabaseComponents() {
-    System.out.println("\n=== Loaded Database Components ===");
-    System.out.println("Total components in database: " + gibbsDatabase.size());
+    // System.out.println("\n=== Loaded Database Components ===");
+    // System.out.println("Total components in database: " + gibbsDatabase.size());
 
     for (GibbsComponent comp : gibbsDatabase) {
       String molecule = comp.getMolecule();
       double[] elements = comp.getElements();
-      System.out.printf("  %s: O=%.1f, N=%.1f, C=%.1f, H=%.1f, S=%.1f, Ar=%.1f%n", molecule,
-          elements[0], elements[1], elements[2], elements[3], elements[4], elements[5]);
+      // System.out.printf(" %s: O=%.1f, N=%.1f, C=%.1f, H=%.1f, S=%.1f, Ar=%.1f%n", molecule,
+      // elements[0], elements[1], elements[2], elements[3], elements[4], elements[5]);
     }
 
-    System.out.println("\nComponent map keys:");
+    // System.out.println("\nComponent map keys:");
     for (String key : componentMap.keySet()) {
-      System.out.println("  '" + key + "'");
+      // System.out.println(" '" + key + "'");
     }
   }
 
@@ -1120,34 +1219,27 @@ public class GibbsReactor extends TwoPortEquipment {
     }
 
     try {
-      // Create JAMA Matrix objects
-      Matrix jacobianMatrix_JAMA = new Matrix(jacobianMatrix);
-      Matrix jacobianInverseMatrix = new Matrix(jacobianInverse);
-
-      // Calculate J * J^(-1) using JAMA
-      Matrix resultMatrix = jacobianMatrix_JAMA.times(jacobianInverseMatrix);
-
-      // Check if result is identity matrix
+      // Only create SimpleMatrix objects once per call, not in a loop
+      SimpleMatrix jacobianMatrixEJML = new SimpleMatrix(jacobianMatrix);
+      SimpleMatrix jacobianInverseEJML = new SimpleMatrix(jacobianInverse);
+      SimpleMatrix resultMatrix = jacobianMatrixEJML.mult(jacobianInverseEJML);
+      double[] resultData = resultMatrix.getDDRM().getData();
       double tolerance = 1e-10;
       int n = jacobianMatrix.length;
-
       for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-          double value = resultMatrix.get(i, j);
+          double value = resultData[i * n + j];
           double expected = (i == j) ? 1.0 : 0.0;
-
           if (Math.abs(value - expected) > tolerance) {
-            logger.warn("Jacobian inverse verification failed at [" + i + "," + j + "]: "
-                + "expected " + expected + ", got " + value);
+            // logger.warn("Jacobian inverse verification failed at [" + i + "," + j + "]: "
+            // + "expected " + expected + ", got " + value);
             return false;
           }
         }
       }
-
       return true;
-
     } catch (RuntimeException e) {
-      logger.warn("Error during Jacobian inverse verification: " + e.getMessage());
+      // logger.warn("Error during Jacobian inverse verification: " + e.getMessage());
       return false;
     }
   }
@@ -1163,7 +1255,7 @@ public class GibbsReactor extends TwoPortEquipment {
     calculateJacobian();
 
     if (jacobianMatrix == null || jacobianInverse == null) {
-      logger.warn("Cannot perform Newton-Raphson iteration: Jacobian or its inverse is null");
+      // logger.warn("Cannot perform Newton-Raphson iteration: Jacobian or its inverse is null");
       return null;
     }
 
@@ -1171,23 +1263,25 @@ public class GibbsReactor extends TwoPortEquipment {
     double[] objectiveVector = getObjectiveMinimizationVector();
 
     if (objectiveVector == null || objectiveVector.length != jacobianInverse.length) {
-      logger.warn("Objective vector size mismatch with Jacobian matrix");
+      // logger.warn("Objective vector size mismatch with Jacobian matrix");
       return null;
     }
 
     try {
-      // Create JAMA Matrix objects
-      Matrix jacobianInverseMatrix = new Matrix(jacobianInverse);
-      Matrix objectiveVectorMatrix = new Matrix(objectiveVector, objectiveVector.length);
-
-      // Calculate dX = -J^(-1) * F using JAMA matrix multiplication
-      Matrix deltaXMatrix = jacobianInverseMatrix.times(objectiveVectorMatrix).times(-1.0);
-
-      // Convert back to double array
-      return deltaXMatrix.getColumnPackedCopy();
-
+      // Only create SimpleMatrix objects once per call, not in a loop
+      SimpleMatrix jacobianInverseEJML = new SimpleMatrix(jacobianInverse);
+      SimpleMatrix objectiveVectorEJML =
+          new SimpleMatrix(objectiveVector.length, 1, true, objectiveVector);
+      SimpleMatrix deltaXMatrix = jacobianInverseEJML.mult(objectiveVectorEJML).scale(-1.0);
+      int nRows = deltaXMatrix.numRows();
+      double[] result = new double[nRows];
+      double[] data = deltaXMatrix.getDDRM().getData();
+      for (int i = 0; i < nRows; i++) {
+        result[i] = data[i];
+      }
+      return result;
     } catch (RuntimeException e) {
-      logger.warn("Error during Newton-Raphson iteration calculation: " + e.getMessage());
+      // logger.warn("Error during Newton-Raphson iteration calculation: " + e.getMessage());
       return null;
     }
   }
@@ -1202,7 +1296,7 @@ public class GibbsReactor extends TwoPortEquipment {
    */
   public boolean performIterationUpdate(double[] deltaX, double alphaComposition) {
     if (deltaX == null || outlet_mole.isEmpty()) {
-      logger.warn("Cannot perform iteration update: deltaX or outlet_mole is null/empty");
+      // logger.warn("Cannot perform iteration update: deltaX or outlet_mole is null/empty");
       return false;
     }
 
@@ -1211,13 +1305,14 @@ public class GibbsReactor extends TwoPortEquipment {
     int numActiveElements = activeElementIndices.size();
 
     if (deltaX.length != numComponents + numActiveElements) {
-      logger.warn("Delta vector size mismatch: expected " + (numComponents + numActiveElements)
-          + ", got " + deltaX.length);
+      // logger.warn("Delta vector size mismatch: expected " + (numComponents + numActiveElements)
+      // + ", got " + deltaX.length);
       return false;
     }
 
     // Update outlet compositions with damping factor
-    System.out.println("\n=== Updating Outlet Compositions ===");
+    // System.out.println("\n=== Updating Outlet Compositions ===");
+    double deltaNorm = 0.0;
     for (int i = 0; i < numComponents; i++) {
       double oldValue = outlet_mole.get(i);
       double deltaComposition = deltaX[i];
@@ -1228,13 +1323,15 @@ public class GibbsReactor extends TwoPortEquipment {
 
       outlet_mole.set(i, newValue);
 
-      System.out.printf("  %s: %12.6e → %12.6e (Δ = %12.6e, α*Δ = %12.6e)%n",
-          processedComponents.get(i), oldValue, newValue, deltaComposition,
-          deltaComposition * alphaComposition);
+      // System.out.printf(" %s: %12.6e → %12.6e (Δ = %12.6e, α*Δ = %12.6e)%n",
+      // processedComponents.get(i), oldValue, newValue, deltaComposition,
+      // deltaComposition * alphaComposition);
+      deltaNorm += Math.pow(deltaComposition * alphaComposition, 2);
     }
+    deltaNorm = Math.sqrt(deltaNorm);
 
     // Update Lagrange multipliers directly (no damping)
-    System.out.println("\n=== Updating Lagrange Multipliers ===");
+    // System.out.println("\n=== Updating Lagrange Multipliers ===");
     for (int i = 0; i < numActiveElements; i++) {
       int elementIndex = activeElementIndices.get(i);
       double oldValue = lambda[elementIndex];
@@ -1243,9 +1340,27 @@ public class GibbsReactor extends TwoPortEquipment {
 
       lambda[elementIndex] = newValue;
 
-      System.out.printf("  λ[%s]: %12.6e → %12.6e (Δ = %12.6e)%n", elementNames[elementIndex],
-          oldValue, newValue, deltaLambda);
+      // System.out.printf(" λ[%s]: %12.6e → %12.6e (Δ = %12.6e)%n", elementNames[elementIndex],
+      // oldValue, newValue, deltaLambda);
+      deltaNorm += Math.pow(deltaLambda, 2);
     }
+    deltaNorm = Math.sqrt(deltaNorm);
+
+    // Show mass balance for each element
+    // System.out.println("\n=== Mass Balance (element-wise, OUT - IN) ===");
+    for (int i = 0; i < elementNames.length; i++) {
+      // System.out.printf(" %s: %12.6e\n", elementNames[i], elementMoleBalanceDiff[i]);
+    }
+
+    // Show total norm of delta vector
+    // System.out.printf("\n=== Total Norm of Δ (all variables): %12.6e ===\n", deltaNorm);
+
+    // Print current temperature after update
+    SystemInterface system = getOutletStream().getThermoSystem();
+    // System.out.printf("\n=== Current Temperature: %.4f K ===\n", system.getTemperature());
+
+    // Print enthalpy of reaction after temperature
+    // System.out.printf("\n=== Enthalpy of Reaction: %.6f kJ ===\n", enthalpyOfReactions);
 
     // Update the system with new compositions
     return updateSystemWithNewCompositions();
@@ -1285,9 +1400,6 @@ public class GibbsReactor extends TwoPortEquipment {
         }
       }
 
-      // Reinitialize the system
-      system.init(0);
-      system.init(1);
 
       // Recalculate objective function values with new compositions and Lagrange multipliers
       calculateObjectiveFunctionValues(system);
@@ -1301,12 +1413,174 @@ public class GibbsReactor extends TwoPortEquipment {
       return true;
 
     } catch (Exception e) {
-      logger.error("Error updating system with new compositions: " + e.getMessage());
+      // logger.error("Error updating system with new compositions: " + e.getMessage());
       return false;
     }
   }
 
+  /**
+   * Get the fugacity coefficient of a component in a specified phase using the current outlet
+   * composition. Uses direct phase composition assignment for efficiency.
+   *
+   * @param componentName Name of the component
+   * @param phaseNameOrIndex Name or index of the phase (e.g., "gas", "oil", "aqueous", or 0/1/2)
+   * @return Fugacity coefficient (phi) for the specified component and phase, or Double.NaN if not
+   *         found
+   */
+  public double getFugacityCoefficient(String componentName, Object phaseNameOrIndex) {
+    try {
+      neqsim.thermo.system.SystemInterface fluid = tempFugacitySystem.get();
+      if (fluid == null) {
+        fluid = (neqsim.thermo.system.SystemInterface) getInletStream().getFluid().clone();
+        tempFugacitySystem.set(fluid);
+      }
+      // Build composition array in the order of fluid components
+      double[] composition = new double[fluid.getNumberOfComponents()];
+      for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+        String compName = fluid.getComponent(i).getComponentName();
+        Integer idx = processedComponentIndexMap.get(compName);
+        composition[i] = (idx != null && idx < outlet_mole.size()) ? outlet_mole.get(idx) : 1e-15;
+      }
+      // Normalize composition to avoid numerical issues
+      double total = 0.0;
+      for (double v : composition) {
+        total += v;
+      }
+      if (total > 0) {
+        for (int i = 0; i < composition.length; i++) {
+          composition[i] /= total;
+        }
+      }
+      // Assign composition to all phases (as in TPflash)
+      for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+        fluid.setMolarComposition(composition);
+      }
 
+      // Determine phase index
+      int phaseIndex = 0;
+      if (phaseNameOrIndex instanceof Integer) {
+        phaseIndex = (Integer) phaseNameOrIndex;
+      } else if (phaseNameOrIndex instanceof String) {
+        String phaseName = ((String) phaseNameOrIndex).toLowerCase();
+        for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+          String name = fluid.getPhase(i).getPhaseTypeName().toLowerCase();
+          if (name.contains(phaseName)) {
+            phaseIndex = i;
+            break;
+          }
+        }
+      }
+
+      // Find component index by name
+      int compIndex = -1;
+      for (int j = 0; j < fluid.getNumberOfComponents(); j++) {
+        if (fluid.getComponent(j).getComponentName().equalsIgnoreCase(componentName)) {
+          compIndex = j;
+          break;
+        }
+      }
+      if (compIndex < 0) {
+        return Double.NaN;
+      }
+
+      // Get fugacity coefficient
+      double phi = fluid.getPhase(phaseIndex).getComponent(compIndex).getFugacityCoefficient();
+      return phi;
+    } catch (Exception e) {
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Get the derivative of the fugacity coefficient of componenti with respect to the mole number of
+   * componentj in the specified phase. Uses NeqSim's built-in getdfugdn if available.
+   *
+   * @param componenti Name of the component whose fugacity coefficient is differentiated
+   * @param componentj Name of the component to perturb
+   * @param phaseNumber Phase index (0 = vapor, 1 = liquid, ...)
+   * @return Derivative d(phi_i)/dn_j or Double.NaN if not available
+   */
+  public double getFugacityDerivative(String componenti, String componentj, int phaseNumber) {
+    try {
+      neqsim.thermo.system.SystemInterface fluid = tempFugacitySystem.get();
+      if (fluid == null) {
+        fluid = (neqsim.thermo.system.SystemInterface) getInletStream().getFluid().clone();
+        tempFugacitySystem.set(fluid);
+      }
+      double[] composition = new double[fluid.getNumberOfComponents()];
+      for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+        String compName = fluid.getComponent(i).getComponentName();
+        Integer idx = processedComponentIndexMap.get(compName);
+        composition[i] = (idx != null && idx < outlet_mole.size()) ? outlet_mole.get(idx) : 1e-15;
+      }
+      double total = 0.0;
+      for (double v : composition) {
+        total += v;
+      }
+      if (total > 0) {
+        for (int i = 0; i < composition.length; i++) {
+          composition[i] /= total;
+        }
+      }
+      // Find indices
+      int iIndex = -1;
+      int jIndex = -1;
+      for (int k = 0; k < fluid.getNumberOfComponents(); k++) {
+        String name = fluid.getComponent(k).getComponentName();
+        if (name.equalsIgnoreCase(componenti)) {
+          iIndex = k;
+        }
+        if (name.equalsIgnoreCase(componentj)) {
+          jIndex = k;
+        }
+      }
+      if (iIndex < 0 || jIndex < 0) {
+        return Double.NaN;
+      }
+      // Finite difference step
+      double h = 1e-6;
+      // Save original mole numbers
+      // Perturb n_j by +h
+      composition[jIndex] += h;
+      double totalPerturbed = 0.0;
+      for (double v : composition) {
+        totalPerturbed += v;
+      }
+      for (int i = 0; i < composition.length; i++) {
+        composition[i] /= totalPerturbed;
+      }
+      for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+        fluid.setMolarComposition(composition);
+      }
+      fluid.init(0);
+
+      double phi_plus = fluid.getPhase(phaseNumber).getComponent(iIndex).getFugacityCoefficient();
+
+      // Reset to original
+      final double[] origMoles = composition.clone();
+      for (int i = 0; i < composition.length; i++) {
+        composition[i] = origMoles[i];
+      }
+      totalPerturbed = 0.0;
+      for (double v : composition) {
+        totalPerturbed += v;
+      }
+      for (int i = 0; i < composition.length; i++) {
+        composition[i] /= totalPerturbed;
+      }
+      for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+        fluid.setMolarComposition(origMoles);
+      }
+      fluid.init(0);
+
+      double phi_orig = fluid.getPhase(phaseNumber).getComponent(iIndex).getFugacityCoefficient();
+      // Finite difference derivative
+      double result = (phi_plus - phi_orig) / h;
+      return result;
+    } catch (Exception e) {
+      return Double.NaN;
+    }
+  }
 
   /**
    * Set maximum number of Newton-Raphson iterations.
@@ -1400,10 +1674,10 @@ public class GibbsReactor extends TwoPortEquipment {
     actualIterations = 0;
     finalConvergenceError = Double.MAX_VALUE;
 
-    logger.info("Starting Gibbs equilibrium solution with Newton-Raphson iterations");
-    logger.info("Maximum iterations: " + maxIterations);
-    logger.info("Convergence tolerance: " + convergenceTolerance);
-    logger.info("Composition step size: " + alphaComposition);
+    // logger.info("Starting Gibbs equilibrium solution with Newton-Raphson iterations");
+    // logger.info("Maximum iterations: " + maxIterations);
+    // logger.info("Convergence tolerance: " + convergenceTolerance);
+    // logger.info("Composition step size: " + alphaComposition);
 
     for (int iteration = 1; iteration <= maxIterations; iteration++) {
       actualIterations = iteration;
@@ -1420,13 +1694,13 @@ public class GibbsReactor extends TwoPortEquipment {
       }
       fNorm = Math.sqrt(fNorm);
 
-      logger.debug("Iteration " + iteration + ": F vector norm = " + fNorm);
+      // logger.debug("Iteration " + iteration + ": F vector norm = " + fNorm);
 
       // Perform Newton-Raphson iteration step
       double[] deltaX = performNewtonRaphsonIteration();
 
       if (deltaX == null) {
-        logger.warn("Newton-Raphson iteration failed at iteration " + iteration);
+        // logger.warn("Newton-Raphson iteration failed at iteration " + iteration);
         finalConvergenceError = fNorm;
         return false;
       }
@@ -1438,12 +1712,38 @@ public class GibbsReactor extends TwoPortEquipment {
       }
       deltaXNorm = Math.sqrt(deltaXNorm);
 
-      logger.debug("Iteration " + iteration + ": Delta vector norm = " + deltaXNorm);
+      // logger.debug("Iteration " + iteration + ": Delta vector norm = " + deltaXNorm);
 
-      // Check convergence
-      if (deltaXNorm < convergenceTolerance) {
-        logger.info("Converged at iteration " + iteration + " with delta norm = " + deltaXNorm);
-        converged = true;
+      if (energyMode == EnergyMode.ADIABATIC) {
+        if (iteration == 1) {
+          double T_in = system.getTemperature();
+          inletEnthalpy =
+              calculateMixtureEnthalpyStandard(processedComponents, outlet_mole, componentMap);
+          enthalpyOld = inletEnthalpy;
+        } else {
+          double T_in = system.getTemperature();
+          outletEnthalpy =
+              calculateMixtureEnthalpyStandard(processedComponents, outlet_mole, componentMap);
+          double dH;
+          dH = outletEnthalpy - enthalpyOld;
+          enthalpyOfReactions += dH;
+          enthalpyOld = outletEnthalpy;
+
+          system.init(0);
+          double T_out = system.getTemperature() - dH / (system.getCp("J/molK") / 1000);
+          dT = Math.abs(T_out - system.getTemperature());
+          system.setTemperature(T_out);
+          this.getOutletStream().getThermoSystem().setTemperature(T_out);
+        }
+      }
+
+
+
+      // Check convergence (require minimum 25 iterations)
+      if (deltaXNorm < convergenceTolerance || iteration == maxIterations) {
+        logger.info((deltaXNorm < convergenceTolerance ? "Converged" : "Max iterations reached")
+            + " at iteration " + iteration + " with delta norm = " + deltaXNorm);
+        converged = deltaXNorm < convergenceTolerance;
         finalConvergenceError = deltaXNorm;
         updateSystemWithNewCompositions();
 
@@ -1453,7 +1753,7 @@ public class GibbsReactor extends TwoPortEquipment {
       // Perform iteration update
       boolean updateSuccess = performIterationUpdate(deltaX, alphaComposition);
       if (!updateSuccess) {
-        logger.warn("Iteration update failed at iteration " + iteration);
+        // logger.warn("Iteration update failed at iteration " + iteration);
         finalConvergenceError = deltaXNorm;
         return false;
       }
@@ -1462,8 +1762,8 @@ public class GibbsReactor extends TwoPortEquipment {
     }
 
     // Maximum iterations reached without convergence
-    logger.warn("Maximum iterations (" + maxIterations + ") reached without convergence");
-    logger.warn("Final convergence error: " + finalConvergenceError);
+    // logger.warn("Maximum iterations (" + maxIterations + ") reached without convergence");
+    // logger.warn("Final convergence error: " + finalConvergenceError);
 
     return false;
   }
