@@ -34,7 +34,7 @@ public class GibbsReactorTest {
     // Create GibbsReactor in adiabatic mode
     GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
     reactor.setUseAllDatabaseSpecies(false);
-    reactor.setDampingComposition(0.008);
+    reactor.setDampingComposition(0.01);
     reactor.setMaxIterations(2500);
     reactor.setConvergenceTolerance(1e-6);
     reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
