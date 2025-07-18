@@ -33,9 +33,12 @@ public class RecycleResponse extends BaseResponse {
                 .getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
             neqsim.util.unit.Units.getSymbol("pressure")));
 
-    data.put("error composition", new Value(Double.toString(recycle.getErrorComposition()), ""));
+    data.put("error composition",
+        new Value(Double.toString(recycle.getErrorComposition()), ""));
     data.put("error flow", new Value(Double.toString(recycle.getErrorFlow()), ""));
-    data.put("error temperature", new Value(Double.toString(recycle.getErrorTemperature()), ""));
-    data.put("error pressure", new Value(Double.toString(recycle.getErrorPressure()), ""));
+    data.put("error temperature",
+        new Value(Double.toString(recycle.getErrorTemperature()), ""));
+    data.put("error pressure",
+        new Value(Double.toString(recycle.getErrorPressure()), ""));
   }
 }

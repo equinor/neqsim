@@ -25,28 +25,37 @@ public class TankResponse extends BaseResponse {
 
     data.put("gas outlet temperature",
         new Value(
-            Double.toString(tank.getGasOutStream().getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+
+            Double.toString(tank.getGasOutStream()
+                .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
             neqsim.util.unit.Units.getSymbol("temperature")));
     data.put("gas outlet pressure",
         new Value(
-            Double.toString(tank.getGasOutStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+            Double.toString(tank.getGasOutStream()
+                .getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
             neqsim.util.unit.Units.getSymbol("pressure")));
     data.put("gas outlet mass flow",
         new Value(
-            Double.toString(tank.getGasOutStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+            Double.toString(tank.getGasOutStream()
+                .getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+
             neqsim.util.unit.Units.getSymbol("mass flow")));
 
     data.put("liquid outlet temperature",
         new Value(
-            Double.toString(tank.getLiquidOutStream().getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+            Double.toString(tank.getLiquidOutStream()
+                .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
             neqsim.util.unit.Units.getSymbol("temperature")));
     data.put("liquid outlet pressure",
         new Value(
-            Double.toString(tank.getLiquidOutStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+            Double.toString(tank.getLiquidOutStream()
+                .getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
             neqsim.util.unit.Units.getSymbol("pressure")));
     data.put("liquid outlet mass flow",
         new Value(
-            Double.toString(tank.getLiquidOutStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+            Double.toString(tank.getLiquidOutStream()
+                .getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+
             neqsim.util.unit.Units.getSymbol("mass flow")));
   }
 }
