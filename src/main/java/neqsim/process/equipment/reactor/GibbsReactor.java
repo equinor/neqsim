@@ -23,6 +23,15 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class GibbsReactor extends TwoPortEquipment {
+
+  /**
+   * Get the cumulative enthalpy of reaction (sum of dH for all iterations).
+   *
+   * @return enthalpyOfReaction in kJ
+   */
+  public double getEnthalpyOfReaction() {
+    return enthalpyOfReaction;
+  }
   /**
    * Calculate the total enthalpy of a mixture: sum_i n_i * enthalpy_i(T)
    * 
@@ -119,6 +128,7 @@ public class GibbsReactor extends TwoPortEquipment {
   private double dT = 0.0;
   private int tempUpdateIter = 0;
   double enthalpyOld = 0.0;
+  private double enthalpyOfReaction = 0.0;
 
   /**
    * Constructor for GibbsReactor.
@@ -1295,6 +1305,9 @@ public class GibbsReactor extends TwoPortEquipment {
     SystemInterface system = getOutletStream().getThermoSystem();
     System.out.printf("\n=== Current Temperature: %.4f K ===\n", system.getTemperature());
 
+    // Print enthalpy of reaction after temperature
+    System.out.printf("\n=== Enthalpy of Reaction: %.6f kJ ===\n", enthalpyOld);
+
     // Update the system with new compositions
     return updateSystemWithNewCompositions();
   }
@@ -1658,6 +1671,7 @@ public class GibbsReactor extends TwoPortEquipment {
               calculateMixtureEnthalpy(processedComponents, outlet_mole, T_in, componentMap);
             double dH;
             dH = outletEnthalpy - enthalpyOld;
+            enthalpyOfReaction += dH;
             enthalpyOld = outletEnthalpy;
             
             system.init(0);
@@ -1672,7 +1686,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
 
       // Check convergence (require minimum 25 iterations)
-      if ((deltaXNorm < convergenceTolerance || iteration == maxIterations) && iteration >= 100) {
+      if (deltaXNorm < convergenceTolerance || iteration == maxIterations) {
         logger.info((deltaXNorm < convergenceTolerance ? "Converged" : "Max iterations reached")
             + " at iteration " + iteration + " with delta norm = " + deltaXNorm);
         converged = deltaXNorm < convergenceTolerance;
