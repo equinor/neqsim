@@ -228,12 +228,13 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       return;
     }
     thermoSystem.init(3);
+    if (!valveCvSet) {
+      calcCv(thermoSystem);
+      valveCvSet = true;
+    }
+
     double enthalpy = thermoSystem.getEnthalpy();
     inStream.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-    double outp = 0.0;
-    if (pressure == 0) {
-      pressure = inStream.getThermoSystem().getPressure();
-    }
 
     if (inStream.getThermoSystem().hasPhaseType(PhaseType.GAS)
         && inStream.getThermoSystem().getVolumeFraction(0) > 0.9) {
@@ -242,26 +243,69 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       setGasValve(false);
     }
 
+    double outPres = getOutletStream().getThermoSystem().getPressure();
+
+    // first estimate of flow from current outlet pressure
+    if (gasValve) {
+      molarFlow = ControlValveSizing_IEC_60534.calculateFlowRateFromCvAndValveOpeningGas(Cv,
+          percentValveOpening, inStream.getThermoSystem().getTemperature(),
+          inStream.getFluid().getMolarMass("gr/mol"), inStream.getFluid().getViscosity("kg/msec"),
+          inStream.getFluid().getGamma2(), inStream.getFluid().getZ(),
+          inStream.getThermoSystem().getPressure() * 1e5, outPres * 1e5, 1.0, 0.137, true)
+          * 101325.0 / 8.314 / 288.15;
+    } else {
+      molarFlow =
+          ControlValveSizing_IEC_60534.calculateFlowRateFromValveOpeningLiquid(percentValveOpening,
+              Cv, inStream.getThermoSystem().getDensity("kg/m3"), 1.0e5,
+              inStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
+              inStream.getThermoSystem().getViscosity("kg/msec"),
+              inStream.getThermoSystem().getPressure("Pa"), outPres * 1e5, 1.0, 1.0, true)
+              * inStream.getThermoSystem().getDensity("kg/m3")
+              / inStream.getThermoSystem().getMolarMass("kg/mol");
+    }
+
+    // update outlet pressure if required
     if (valveCvSet && isCalcPressure) {
       if (gasValve) {
-        outp = getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedCvGas(
-            inStream.getTemperature(), inStream.getFluid().getMolarMass("gr/mol"),
-            inStream.getFluid().getViscosity("kg/msec"), inStream.getFluid().getGamma2(),
-            inStream.getFluid().getZ(), inStream.getThermoSystem().getPressure("Pa"),
-            inStream.getFlowRate("Sm3/sec"), Cv, 0.137, true) / 1e5;
-      } else
-
-      {
-        outp = getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedCvLiquid(
-            inStream.getFluid().getDensity("kg/m3"), 1e5,
-            inStream.getFluid().getPhase(0).getPseudoCriticalPressure() * 1e5,
-            inStream.getFluid().getViscosity("kg/msec"),
-            inStream.getThermoSystem().getPressure("Pa"),
-            inStream.getFlowRate("kg/sec") / inStream.getFluid().getDensity("kg/m3"), Cv, 1.0, 1.0,
-            true, true) / 1e5;
+        double Q = molarFlow * 8.314 * 288.15 / 101325.0; // Sm3/sec
+        outPres =
+            getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedCvGas(
+                inStream.getTemperature(), inStream.getFluid().getMolarMass("gr/mol"),
+                inStream.getFluid().getViscosity("kg/msec"), inStream.getFluid().getGamma2(),
+                inStream.getFluid().getZ(), inStream.getThermoSystem().getPressure("Pa"), Q, Cv,
+                0.137, true) / 1e5;
+      } else {
+        double Q = molarFlow * inStream.getThermoSystem().getMolarMass("kg/mol")
+            / inStream.getThermoSystem().getDensity("kg/m3");
+        outPres =
+            getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedCvLiquid(
+                inStream.getThermoSystem().getDensity("kg/m3"), 1.0e5,
+                inStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
+                inStream.getThermoSystem().getViscosity("kg/msec"),
+                inStream.getThermoSystem().getPressure("Pa"), Q, Cv, 1.0, 1.0, true, true) / 1e5;
       }
 
-      setOutletPressure(outp);
+      setOutletPressure(outPres);
+
+      // recalc flow with updated pressure
+      if (gasValve) {
+        molarFlow = ControlValveSizing_IEC_60534.calculateFlowRateFromCvAndValveOpeningGas(Cv,
+            percentValveOpening, inStream.getThermoSystem().getTemperature(),
+            inStream.getFluid().getMolarMass("gr/mol"),
+            inStream.getFluid().getViscosity("kg/msec"), inStream.getFluid().getGamma2(),
+            inStream.getFluid().getZ(), inStream.getThermoSystem().getPressure() * 1e5,
+            outPres * 1e5, 1.0, 0.137, true) * 101325.0 / 8.314 / 288.15;
+      } else {
+        molarFlow = ControlValveSizing_IEC_60534.calculateFlowRateFromValveOpeningLiquid(
+            percentValveOpening, Cv, inStream.getThermoSystem().getDensity("kg/m3"), 1.0e5,
+            inStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
+            inStream.getThermoSystem().getViscosity("kg/msec"),
+            inStream.getThermoSystem().getPressure("Pa"), outPres * 1e5, 1.0, 1.0, true)
+            * inStream.getThermoSystem().getDensity("kg/m3")
+            / inStream.getThermoSystem().getMolarMass("kg/mol");
+      }
+    } else {
+      thermoSystem.setPressure(outPres);
     }
     if (deltaPressure != 0)
 
@@ -299,31 +343,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     // System.out.println("density valve " +
     // inletStream.getThermoSystem().getDensity());
 
-    if (!valveCvSet) {
-      calcCv(thermoSystem);
-      valveCvSet = true;
-    }
-
-    if (isGasValve()) {
-      double xT = .137;
-      double Q = inStream.getFlowRate("Sm3/sec");
-      percentValveOpening =
-          getMechanicalDesign().getValveSizingMethod().calculateValveOpeningFromFlowRateGas(Q, Cv,
-              getInletStream().getTemperature(), getInletStream().getFluid().getMolarMass("gr/mol"),
-              getInletStream().getFluid().getViscosity("kg/msec"),
-              getInletStream().getFluid().getGamma2(), getInletStream().getFluid().getZ(),
-              inStream.getThermoSystem().getPressure("Pa"),
-              outStream.getThermoSystem().getPressure("Pa"), 1.0, xT, true);
-    } else {
-      double Q = inStream.getFlowRate("kg/sec") / inStream.getFluid().getDensity("kg/m3");
-      percentValveOpening =
-          getMechanicalDesign().getValveSizingMethod().calculateValveOpeningFromFlowRateLiquid(Q,
-              Cv, inStream.getThermoSystem().getDensity("kg/m3"), 1.0e5,
-              inStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
-              inStream.getThermoSystem().getViscosity("kg/msec"),
-              inStream.getThermoSystem().getPressure("Pa"),
-              outStream.getThermoSystem().getPressure("Pa"), 1.0, 1.0, true);
-    }
     setCalculationIdentifier(id);
   }
 
@@ -355,9 +374,104 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoSystem.init(3);
 
+    if (!valveCvSet) {
+      calcCv(thermoSystem);
+      valveCvSet = true;
+    }
+
     double enthalpy = thermoSystem.getEnthalpy();
+
+    if (inStream.getThermoSystem().hasPhaseType(PhaseType.GAS)
+        && inStream.getThermoSystem().getVolumeFraction(0) > 0.9) {
+      setGasValve(true);
+    } else {
+      setGasValve(false);
+    }
+
+    double outPres = getOutletStream().getThermoSystem().getPressure();
+
+    // first estimate of flow from current outlet pressure
+    if (gasValve) {
+      molarFlow = ControlValveSizing_IEC_60534.calculateFlowRateFromCvAndValveOpeningGas(Cv,
+          percentValveOpening, inStream.getThermoSystem().getTemperature(),
+          inStream.getFluid().getMolarMass("gr/mol"), inStream.getFluid().getViscosity("kg/msec"),
+          inStream.getFluid().getGamma2(), inStream.getFluid().getZ(),
+          inStream.getThermoSystem().getPressure() * 1e5, outPres * 1e5, 1.0, 0.137, true)
+          * 101325.0 / 8.314 / 288.15;
+    } else {
+      molarFlow =
+          ControlValveSizing_IEC_60534.calculateFlowRateFromValveOpeningLiquid(percentValveOpening,
+              Cv, inStream.getThermoSystem().getDensity("kg/m3"), 1.0e5,
+              inStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
+              inStream.getThermoSystem().getViscosity("kg/msec"),
+              inStream.getThermoSystem().getPressure("Pa"), outPres * 1e5, 1.0, 1.0, true)
+              * inStream.getThermoSystem().getDensity("kg/m3")
+              / inStream.getThermoSystem().getMolarMass("kg/mol");
+    }
+
+    // update outlet pressure if required
+    if (valveCvSet && isCalcPressure) {
+      if (gasValve) {
+        double Q = molarFlow * 8.314 * 288.15 / 101325.0; // Sm3/sec
+        outPres =
+            getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedCvGas(
+                inStream.getTemperature(), inStream.getFluid().getMolarMass("gr/mol"),
+                inStream.getFluid().getViscosity("kg/msec"), inStream.getFluid().getGamma2(),
+                inStream.getFluid().getZ(), inStream.getThermoSystem().getPressure("Pa"), Q, Cv,
+                0.137, true) / 1e5;
+      } else {
+        double Q = molarFlow * inStream.getThermoSystem().getMolarMass("kg/mol")
+            / inStream.getThermoSystem().getDensity("kg/m3");
+        outPres =
+            getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedCvLiquid(
+                inStream.getThermoSystem().getDensity("kg/m3"), 1.0e5,
+                inStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
+                inStream.getThermoSystem().getViscosity("kg/msec"),
+                inStream.getThermoSystem().getPressure("Pa"), Q, Cv, 1.0, 1.0, true, true) / 1e5;
+      }
+
+      setOutletPressure(outPres);
+
+      // recalc flow with updated pressure
+      if (gasValve) {
+        molarFlow = ControlValveSizing_IEC_60534.calculateFlowRateFromCvAndValveOpeningGas(Cv,
+            percentValveOpening, inStream.getThermoSystem().getTemperature(),
+            inStream.getFluid().getMolarMass("gr/mol"),
+            inStream.getFluid().getViscosity("kg/msec"), inStream.getFluid().getGamma2(),
+            inStream.getFluid().getZ(), inStream.getThermoSystem().getPressure() * 1e5,
+            outPres * 1e5, 1.0, 0.137, true) * 101325.0 / 8.314 / 288.15;
+      } else {
+        molarFlow = ControlValveSizing_IEC_60534.calculateFlowRateFromValveOpeningLiquid(
+            percentValveOpening, Cv, inStream.getThermoSystem().getDensity("kg/m3"), 1.0e5,
+            inStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
+            inStream.getThermoSystem().getViscosity("kg/msec"),
+            inStream.getThermoSystem().getPressure("Pa"), outPres * 1e5, 1.0, 1.0, true)
+            * inStream.getThermoSystem().getDensity("kg/m3")
+            / inStream.getThermoSystem().getMolarMass("kg/mol");
+      }
+    } else {
+      thermoSystem.setPressure(outPres);
+    }
+
     thermoSystem.setPressure(getOutletStream().getThermoSystem().getPressure());
-    // System.out.println("enthalpy inn.." + enthalpy);
+    if (deltaPressure != 0) {
+      thermoSystem.setPressure(thermoSystem.getPressure(pressureUnit) - deltaPressure, pressureUnit);
+      setOutletPressure(thermoSystem.getPressure());
+    }
+
+    if ((thermoSystem.getPressure(pressureUnit) - pressure) < 0) {
+      if (isAcceptNegativeDP()) {
+        thermoSystem.setPressure(pressure, pressureUnit);
+      }
+    } else {
+      thermoSystem.setPressure(pressure, pressureUnit);
+    }
+
+    if (getSpecification().equals("out stream")) {
+      thermoSystem.setPressure(outStream.getPressure(), pressureUnit);
+    }
+
+    // flash with updated pressure
     if (isIsoThermal()) {
       thermoOps.TPflash();
     } else {
@@ -365,27 +479,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     outStream.setThermoSystem(thermoSystem);
-
-    if (gasValve) {
-      molarFlow = ControlValveSizing_IEC_60534.calculateFlowRateFromCvAndValveOpeningGas(Cv,
-          percentValveOpening, inStream.getThermoSystem().getTemperature(),
-          inStream.getFluid().getMolarMass("gr/mol"), inStream.getFluid().getViscosity("kg/msec"),
-          inStream.getFluid().getGamma2(), inStream.getFluid().getZ(),
-          inStream.getThermoSystem().getPressure() * 1e5,
-          outStream.getThermoSystem().getPressure() * 1e5, 1.0, 0.137, true) * 101325.0 / 8.314
-          / 288.15;
-    } else {
-      double oldFLow = inStream.getFlowRate("mole/sec");
-      molarFlow =
-          ControlValveSizing_IEC_60534.calculateFlowRateFromValveOpeningLiquid(percentValveOpening,
-              Cv, inStream.getThermoSystem().getDensity("kg/m3"), 1.0e5,
-              inStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
-              inStream.getThermoSystem().getViscosity("kg/msec"),
-              inStream.getThermoSystem().getPressure("Pa"),
-              outStream.getThermoSystem().getPressure("Pa"), 1.0, 1.0, true)
-              * inStream.getThermoSystem().getDensity("kg/m3")
-              / inStream.getThermoSystem().getMolarMass("kg/mol");
-    }
 
     try {
       inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
