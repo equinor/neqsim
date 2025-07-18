@@ -36,8 +36,14 @@ public class PTphaseEnvelope extends BaseOperation {
   private static final int MAX_NUMBER_OF_POINTS = 10000;
   /** Maximum number of attempts when estimating the first point. */
   private static final int FIRST_POINT_ATTEMPTS = 5;
+  /** Temperature step (K) used when searching for the first point. */
+  private static final double FIRST_POINT_STEP = 2.0;
   /** Constant in the Wilson K-value correlation. */
   private static final double WILSON_CONST = 5.373;
+  /** Maximum iterations used when solving Wilson temperature estimate. */
+  private static final int MAX_WILSON_ITERATIONS = 1000;
+  /** Maximum index for envelope iteration. */
+  private static final int MAX_ENVELOPE_ITERATIONS = MAX_NUMBER_OF_POINTS - 20;
 
   double maxPressure = 1000.0;
   double minPressure = 1.0;
@@ -200,11 +206,11 @@ public class PTphaseEnvelope extends BaseOperation {
     for (int attempt = 0; attempt < FIRST_POINT_ATTEMPTS; attempt++) {
       try {
         if (phaseFraction < 0.5) {
-          temp += attempt * 2.0;
+          temp += attempt * FIRST_POINT_STEP;
           system.setTemperature(temp);
           testOps.bubblePointTemperatureFlash();
         } else {
-          temp += attempt * 2.0;
+          temp += attempt * FIRST_POINT_STEP;
           system.setTemperature(temp);
           testOps.dewPointTemperatureFlash();
         }
@@ -229,7 +235,7 @@ public class PTphaseEnvelope extends BaseOperation {
     startPres = system.getPressure();
     nonLinSolver.setu();
 
-    for (np = 1; np < 9980; np++) {
+    for (np = 1; np < MAX_ENVELOPE_ITERATIONS; np++) {
       try {
         // solves the np point of the envelope
         nonLinSolver.calcInc(np);
@@ -806,10 +812,11 @@ public class PTphaseEnvelope extends BaseOperation {
       }
 
       // initial T based on the lightest/heaviest component
-      Tstart = initTc * WILSON_CONST * (1 + initAc) / (WILSON_CONST * (1 + initAc) - Math.log(P / initPc));
+      double lnPratio = Math.log(P / initPc);
+      Tstart = initTc * WILSON_CONST * (1 + initAc) / (WILSON_CONST * (1 + initAc) - lnPratio);
 
       // solve for Tstart with Newton
-      for (int i = 0; i < 1000; i++) {
+      for (int i = 0; i < MAX_WILSON_ITERATIONS; i++) {
         initT = 0.;
         dinitT = 0.;
         for (int j = 0; j < numberOfComponents; j++) {
@@ -845,10 +852,12 @@ public class PTphaseEnvelope extends BaseOperation {
         Tstartold = Tstart;
       }
     } catch (Exception ex) {
-      Tstart = initTc * WILSON_CONST * (1 + initAc) / (WILSON_CONST * (1 + initAc) - Math.log(P / initPc));
+      double lnPratio = Math.log(P / initPc);
+      Tstart = initTc * WILSON_CONST * (1 + initAc) / (WILSON_CONST * (1 + initAc) - lnPratio);
     }
     if (Double.isNaN(Tstart) || Double.isInfinite(Tstart)) {
-      Tstart = initTc * WILSON_CONST * (1 + initAc) / (WILSON_CONST * (1 + initAc) - Math.log(P / initPc));
+      double lnPratio = Math.log(P / initPc);
+      Tstart = initTc * WILSON_CONST * (1 + initAc) / (WILSON_CONST * (1 + initAc) - lnPratio);
     }
     return Tstart;
   }
