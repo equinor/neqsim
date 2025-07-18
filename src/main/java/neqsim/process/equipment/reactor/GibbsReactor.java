@@ -1046,8 +1046,8 @@ public class GibbsReactor extends TwoPortEquipment {
       // Only create SimpleMatrix objects once per call, not in a loop
       SimpleMatrix ejmlMatrix = new SimpleMatrix(jacobianMatrix);
       SimpleMatrix inverseMatrix = ejmlMatrix.invert();
-      int nRows = inverseMatrix.getNumRows();
-      int nCols = inverseMatrix.getNumCols();
+      int nRows = inverseMatrix.numRows();
+      int nCols = inverseMatrix.numCols();
       double[][] result = new double[nRows][nCols];
       double[] data = inverseMatrix.getDDRM().getData();
       for (int i = 0; i < nRows; i++) {
@@ -1273,7 +1273,7 @@ public class GibbsReactor extends TwoPortEquipment {
       SimpleMatrix objectiveVectorEJML =
           new SimpleMatrix(objectiveVector.length, 1, true, objectiveVector);
       SimpleMatrix deltaXMatrix = jacobianInverseEJML.mult(objectiveVectorEJML).scale(-1.0);
-      int nRows = deltaXMatrix.getNumRows();
+      int nRows = deltaXMatrix.numRows();
       double[] result = new double[nRows];
       double[] data = deltaXMatrix.getDDRM().getData();
       for (int i = 0; i < nRows; i++) {
