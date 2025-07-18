@@ -27,11 +27,12 @@ public class GibbsReactor extends TwoPortEquipment {
   /**
    * Get the cumulative enthalpy of reaction (sum of dH for all iterations).
    *
-   * @return enthalpyOfReaction in kJ
+   * @return enthalpyOfReactions in kJ
    */
-  public double getEnthalpyOfReaction() {
-    return enthalpyOfReaction;
+  public double getenthalpyOfReactions() {
+    return enthalpyOfReactions;
   }
+
   /**
    * Calculate the total enthalpy of a mixture: sum_i n_i * enthalpy_i(T)
    * 
@@ -54,7 +55,7 @@ public class GibbsReactor extends TwoPortEquipment {
     return totalH;
   }
 
-    /**
+  /**
    * Calculate the total standard enthalpy of a mixture: sum_i n_i * enthalpy_i(T)
    * 
    * @param componentNames List of component names (order matches n_i)
@@ -62,7 +63,8 @@ public class GibbsReactor extends TwoPortEquipment {
    * @param componentMap Map from component name (lowercase) to GibbsComponent
    * @return Total enthalpy (kJ)
    */
-  public static double calculateMixtureEnthalpyStandard(List<String> componentNames, List<Double> n, Map<String, GibbsComponent> componentMap) {
+  public static double calculateMixtureEnthalpyStandard(List<String> componentNames, List<Double> n,
+      Map<String, GibbsComponent> componentMap) {
     double totalH = 0.0;
     for (int i = 0; i < componentNames.size(); i++) {
       String compName = componentNames.get(i);
@@ -148,7 +150,7 @@ public class GibbsReactor extends TwoPortEquipment {
   private double dT = 0.0;
   private int tempUpdateIter = 0;
   double enthalpyOld = 0.0;
-  private double enthalpyOfReaction = 0.0;
+  private double enthalpyOfReactions = 0.0;
 
   /**
    * Constructor for GibbsReactor.
@@ -1326,7 +1328,7 @@ public class GibbsReactor extends TwoPortEquipment {
     System.out.printf("\n=== Current Temperature: %.4f K ===\n", system.getTemperature());
 
     // Print enthalpy of reaction after temperature
-    System.out.printf("\n=== Enthalpy of Reaction: %.6f kJ ===\n", enthalpyOld);
+    System.out.printf("\n=== Enthalpy of Reaction: %.6f kJ ===\n", enthalpyOfReactions);
 
     // Update the system with new compositions
     return updateSystemWithNewCompositions();
@@ -1679,30 +1681,28 @@ public class GibbsReactor extends TwoPortEquipment {
       logger.debug("Iteration " + iteration + ": Delta vector norm = " + deltaXNorm);
 
       if (energyMode == EnergyMode.ADIABATIC) {
-          if (iteration == 1) {
-            double T_in = system.getTemperature();
-            inletEnthalpy =
-                calculateMixtureEnthalpyStandard(processedComponents, outlet_mole, componentMap);
-            enthalpyOld = inletEnthalpy;
-          }
-          else{
-            double T_in = system.getTemperature();
-            outletEnthalpy =
+        if (iteration == 1) {
+          double T_in = system.getTemperature();
+          inletEnthalpy =
               calculateMixtureEnthalpyStandard(processedComponents, outlet_mole, componentMap);
-            double dH;
-            dH = outletEnthalpy - enthalpyOld;
-            enthalpyOfReaction += dH;
-            enthalpyOld = outletEnthalpy;
-            
-            system.init(0);
-            double T_out = system.getTemperature() - dH / (system.getCp("J/molK") / 1000);
-            dT = Math.abs(T_out - system.getTemperature());
-            system.setTemperature(T_out);
-            this.getOutletStream().getThermoSystem().setTemperature(T_out);
-        } 
+          enthalpyOld = inletEnthalpy;
+        } else {
+          double T_in = system.getTemperature();
+          outletEnthalpy =
+              calculateMixtureEnthalpyStandard(processedComponents, outlet_mole, componentMap);
+          double dH;
+          dH = outletEnthalpy - enthalpyOld;
+          enthalpyOfReactions += dH;
+          enthalpyOld = outletEnthalpy;
+
+          system.init(0);
+          double T_out = system.getTemperature() - dH / (system.getCp("J/molK") / 1000);
+          dT = Math.abs(T_out - system.getTemperature());
+          system.setTemperature(T_out);
+          this.getOutletStream().getThermoSystem().setTemperature(T_out);
+        }
       }
-      
-      
+
 
 
       // Check convergence (require minimum 25 iterations)
