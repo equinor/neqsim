@@ -9,7 +9,7 @@ import java.util.Scanner;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import org.ejml.simple.SimpleMatrix;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -1008,17 +1008,16 @@ public class GibbsReactor extends TwoPortEquipment {
     if (jacobianMatrix == null) {
       return null;
     }
-
     try {
-      // Create JAMA Matrix object
-      Matrix jamaMatrix = new Matrix(jacobianMatrix);
-
-      // Calculate inverse using JAMA
-      Matrix inverseMatrix = jamaMatrix.inverse();
-
-      // Convert back to double[][]
-      return inverseMatrix.getArray();
-
+      SimpleMatrix ejmlMatrix = new SimpleMatrix(jacobianMatrix);
+      SimpleMatrix inverseMatrix = ejmlMatrix.invert();
+      double[][] result = new double[inverseMatrix.getNumRows()][inverseMatrix.getNumCols()];
+      for (int i = 0; i < inverseMatrix.getNumRows(); i++) {
+        for (int j = 0; j < inverseMatrix.getNumCols(); j++) {
+          result[i][j] = inverseMatrix.get(i, j);
+        }
+      }
+      return result;
     } catch (RuntimeException e) {
       logger.warn("Jacobian matrix is singular or nearly singular: " + e.getMessage());
       return null;
@@ -1182,22 +1181,15 @@ public class GibbsReactor extends TwoPortEquipment {
     }
 
     try {
-      // Create JAMA Matrix objects
-      Matrix jacobianMatrix_JAMA = new Matrix(jacobianMatrix);
-      Matrix jacobianInverseMatrix = new Matrix(jacobianInverse);
-
-      // Calculate J * J^(-1) using JAMA
-      Matrix resultMatrix = jacobianMatrix_JAMA.times(jacobianInverseMatrix);
-
-      // Check if result is identity matrix
+      SimpleMatrix jacobianMatrixEJML = new SimpleMatrix(jacobianMatrix);
+      SimpleMatrix jacobianInverseEJML = new SimpleMatrix(jacobianInverse);
+      SimpleMatrix resultMatrix = jacobianMatrixEJML.mult(jacobianInverseEJML);
       double tolerance = 1e-10;
       int n = jacobianMatrix.length;
-
       for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
           double value = resultMatrix.get(i, j);
           double expected = (i == j) ? 1.0 : 0.0;
-
           if (Math.abs(value - expected) > tolerance) {
             logger.warn("Jacobian inverse verification failed at [" + i + "," + j + "]: "
                 + "expected " + expected + ", got " + value);
@@ -1205,9 +1197,7 @@ public class GibbsReactor extends TwoPortEquipment {
           }
         }
       }
-
       return true;
-
     } catch (RuntimeException e) {
       logger.warn("Error during Jacobian inverse verification: " + e.getMessage());
       return false;
@@ -1238,16 +1228,15 @@ public class GibbsReactor extends TwoPortEquipment {
     }
 
     try {
-      // Create JAMA Matrix objects
-      Matrix jacobianInverseMatrix = new Matrix(jacobianInverse);
-      Matrix objectiveVectorMatrix = new Matrix(objectiveVector, objectiveVector.length);
-
-      // Calculate dX = -J^(-1) * F using JAMA matrix multiplication
-      Matrix deltaXMatrix = jacobianInverseMatrix.times(objectiveVectorMatrix).times(-1.0);
-
-      // Convert back to double array
-      return deltaXMatrix.getColumnPackedCopy();
-
+      SimpleMatrix jacobianInverseEJML = new SimpleMatrix(jacobianInverse);
+      SimpleMatrix objectiveVectorEJML =
+          new SimpleMatrix(objectiveVector.length, 1, true, objectiveVector);
+      SimpleMatrix deltaXMatrix = jacobianInverseEJML.mult(objectiveVectorEJML).scale(-1.0);
+      double[] result = new double[deltaXMatrix.getNumRows()];
+      for (int i = 0; i < deltaXMatrix.getNumRows(); i++) {
+        result[i] = deltaXMatrix.get(i, 0);
+      }
+      return result;
     } catch (RuntimeException e) {
       logger.warn("Error during Newton-Raphson iteration calculation: " + e.getMessage());
       return null;
