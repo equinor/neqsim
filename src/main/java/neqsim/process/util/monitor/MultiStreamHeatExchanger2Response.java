@@ -1,6 +1,6 @@
 package neqsim.process.util.monitor;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2;
 
 /**
@@ -12,7 +12,7 @@ import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2;
  * @version $Id: $Id
  */
 public class MultiStreamHeatExchanger2Response extends BaseResponse {
-  public ArrayList<String[]> data = new ArrayList<String[]>();
+  public HashMap<String, Value> data = new HashMap<String, Value>();
   public Double temperatureApproach;
 
   public java.util.Map<String, java.util.List<java.util.Map<String, Object>>> compositeCurveResults;
@@ -36,7 +36,8 @@ public class MultiStreamHeatExchanger2Response extends BaseResponse {
     super(inputHeatExchanger);
     temperatureApproach = inputHeatExchanger.getTemperatureApproach();
     compositeCurveResults = inputHeatExchanger.getCompositeCurve();
-    data.add(new String[] {"temperature approach", Double.toString(temperatureApproach),
-        neqsim.util.unit.Units.getSymbol("temperature")});
+    data.put("temperature approach",
+        new Value(Double.toString(temperatureApproach),
+            neqsim.util.unit.Units.getSymbol("temperature")));
   }
 }
