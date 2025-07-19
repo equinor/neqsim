@@ -419,7 +419,7 @@ public class GibbsReactor extends TwoPortEquipment {
       }
       if (inputStream == null) {
         logger.warn("Could not find GibbsReactDatabase.csv in resources");
-        System.out.println("DEBUG: Could not find GibbsReactDatabase.csv in any of the expected paths");
+        // System.out.println("DEBUG: Could not find GibbsReactDatabase.csv in any of the expected paths");
         return;
       }
 
@@ -1170,19 +1170,19 @@ public class GibbsReactor extends TwoPortEquipment {
    * Print loaded database components for debugging.
    */
   public void printDatabaseComponents() {
-    System.out.println("\n=== Loaded Database Components ===");
-    System.out.println("Total components in database: " + gibbsDatabase.size());
+    // System.out.println("\n=== Loaded Database Components ===");
+    // System.out.println("Total components in database: " + gibbsDatabase.size());
 
     for (GibbsComponent comp : gibbsDatabase) {
       String molecule = comp.getMolecule();
       double[] elements = comp.getElements();
-      System.out.printf(" %s: O=%.1f, N=%.1f, C=%.1f, H=%.1f, S=%.1f, Ar=%.1f%n", molecule,
-        elements[0], elements[1], elements[2], elements[3], elements[4], elements[5]);
+      // System.out.printf(" %s: O=%.1f, N=%.1f, C=%.1f, H=%.1f, S=%.1f, Ar=%.1f%n", molecule,
+      //   elements[0], elements[1], elements[2], elements[3], elements[4], elements[5]);
     }
 
-    System.out.println("\nComponent map keys:");
+    // System.out.println("\nComponent map keys:");
     for (String key : componentMap.keySet()) {
-      System.out.println(" '" + key + "'");
+      // System.out.println(" '" + key + "'");
     }
   }
 
@@ -1363,15 +1363,15 @@ public class GibbsReactor extends TwoPortEquipment {
 
       outlet_mole.set(i, newValue);
 
-    System.out.printf(" %s: %12.6e → %12.6e (Δ = %12.6e, α*Δ = %12.6e)%n",
-      processedComponents.get(i), oldValue, newValue, deltaComposition,
-      deltaComposition * alphaComposition);
+    // System.out.printf(" %s: %12.6e → %12.6e (Δ = %12.6e, α*Δ = %12.6e)%n",
+    //   processedComponents.get(i), oldValue, newValue, deltaComposition,
+    //   deltaComposition * alphaComposition);
       deltaNorm += Math.pow(deltaComposition * alphaComposition, 2);
     }
     deltaNorm = Math.sqrt(deltaNorm);
 
     // Update Lagrange multipliers directly (no damping)
-    System.out.println("\n=== Updating Lagrange Multipliers ===");
+    // System.out.println("\n=== Updating Lagrange Multipliers ===");
     for (int i = 0; i < numActiveElements; i++) {
       int elementIndex = activeElementIndices.get(i);
       double oldValue = lambda[elementIndex];
@@ -1380,27 +1380,27 @@ public class GibbsReactor extends TwoPortEquipment {
 
       lambda[elementIndex] = newValue;
 
-      System.out.printf(" λ[%s]: %12.6e → %12.6e (Δ = %12.6e)%n", elementNames[elementIndex],
-        oldValue, newValue, deltaLambda);
+      // System.out.printf(" λ[%s]: %12.6e → %12.6e (Δ = %12.6e)%n", elementNames[elementIndex],
+      //   oldValue, newValue, deltaLambda);
       deltaNorm += Math.pow(deltaLambda, 2);
     }
     deltaNorm = Math.sqrt(deltaNorm);
 
     // Show mass balance for each element
-    System.out.println("\n=== Mass Balance (element-wise, OUT - IN) ===");
+    // System.out.println("\n=== Mass Balance (element-wise, OUT - IN) ===");
     for (int i = 0; i < elementNames.length; i++) {
-      System.out.printf(" %s: %12.6e\n", elementNames[i], elementMoleBalanceDiff[i]);
+      // System.out.printf(" %s: %12.6e\n", elementNames[i], elementMoleBalanceDiff[i]);
     }
 
     // Show total norm of delta vector
-    System.out.printf("\n=== Total Norm of Δ (all variables): %12.6e ===\n", deltaNorm);
+    // System.out.printf("\n=== Total Norm of Δ (all variables): %12.6e ===\n", deltaNorm);
 
     // Print current temperature after update
     SystemInterface system = getOutletStream().getThermoSystem();
-    System.out.printf("\n=== Current Temperature: %.4f K ===\n", system.getTemperature());
+    // System.out.printf("\n=== Current Temperature: %.4f K ===\n", system.getTemperature());
 
     // Print enthalpy of reaction after temperature
-    System.out.printf("\n=== Enthalpy of Reaction: %.6f kJ ===\n", enthalpyOfReactions);
+    // System.out.printf("\n=== Enthalpy of Reaction: %.6f kJ ===\n", enthalpyOfReactions);
 
     // Update the system with new compositions
     return updateSystemWithNewCompositions();
