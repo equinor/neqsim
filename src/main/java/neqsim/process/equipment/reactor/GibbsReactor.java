@@ -376,7 +376,7 @@ public class GibbsReactor extends TwoPortEquipment {
             .getDeclaredConstructor(double.class, double.class).newInstance(temperature, 1.0);
         tempSystem.addComponent(molecule, 1.0);
         tempSystem.setMixingRule(2);
-        tempSystem.initPhysicalProperties();
+        tempSystem.init(1);
 
         // Get heat capacity from NeqSim's component
         double cp0 = tempSystem.getComponent(0).getCp0(temperature);
@@ -419,7 +419,8 @@ public class GibbsReactor extends TwoPortEquipment {
       }
       if (inputStream == null) {
         logger.warn("Could not find GibbsReactDatabase.csv in resources");
-        // System.out.println("DEBUG: Could not find GibbsReactDatabase.csv in any of the expected paths");
+        System.out
+            .println("DEBUG: Could not find GibbsReactDatabase.csv in any of the expected paths");
         return;
       }
 
@@ -1117,8 +1118,8 @@ public class GibbsReactor extends TwoPortEquipment {
 
       if (currentMoles < minConcentration) {
         logger.info("Component " + system.getComponent(i).getComponentName()
-        + " has very low concentration (" + currentMoles + "), setting to minimum: "
-         + minConcentration);
+            + " has very low concentration (" + currentMoles + "), setting to minimum: "
+            + minConcentration);
         system.addComponent(i, minConcentration - currentMoles, 0);
         modified = true;
       }
@@ -1170,19 +1171,19 @@ public class GibbsReactor extends TwoPortEquipment {
    * Print loaded database components for debugging.
    */
   public void printDatabaseComponents() {
-    // System.out.println("\n=== Loaded Database Components ===");
-    // System.out.println("Total components in database: " + gibbsDatabase.size());
+    System.out.println("\n=== Loaded Database Components ===");
+    System.out.println("Total components in database: " + gibbsDatabase.size());
 
     for (GibbsComponent comp : gibbsDatabase) {
       String molecule = comp.getMolecule();
       double[] elements = comp.getElements();
-      // System.out.printf(" %s: O=%.1f, N=%.1f, C=%.1f, H=%.1f, S=%.1f, Ar=%.1f%n", molecule,
-      //   elements[0], elements[1], elements[2], elements[3], elements[4], elements[5]);
+      System.out.printf(" %s: O=%.1f, N=%.1f, C=%.1f, H=%.1f, S=%.1f, Ar=%.1f%n", molecule,
+          elements[0], elements[1], elements[2], elements[3], elements[4], elements[5]);
     }
 
-    // System.out.println("\nComponent map keys:");
+    System.out.println("\nComponent map keys:");
     for (String key : componentMap.keySet()) {
-      // System.out.println(" '" + key + "'");
+      System.out.println(" '" + key + "'");
     }
   }
 
@@ -1272,7 +1273,7 @@ public class GibbsReactor extends TwoPortEquipment {
           double expected = (i == j) ? 1.0 : 0.0;
           if (Math.abs(value - expected) > tolerance) {
             logger.warn("Jacobian inverse verification failed at [" + i + "," + j + "]: "
-              + "expected " + expected + ", got " + value);
+                + "expected " + expected + ", got " + value);
             return false;
           }
         }
@@ -1363,9 +1364,9 @@ public class GibbsReactor extends TwoPortEquipment {
 
       outlet_mole.set(i, newValue);
 
-    // System.out.printf(" %s: %12.6e → %12.6e (Δ = %12.6e, α*Δ = %12.6e)%n",
-    //   processedComponents.get(i), oldValue, newValue, deltaComposition,
-    //   deltaComposition * alphaComposition);
+      // System.out.printf(" %s: %12.6e → %12.6e (Δ = %12.6e, α*Δ = %12.6e)%n",
+      // processedComponents.get(i), oldValue, newValue, deltaComposition,
+      // deltaComposition * alphaComposition);
       deltaNorm += Math.pow(deltaComposition * alphaComposition, 2);
     }
     deltaNorm = Math.sqrt(deltaNorm);
@@ -1381,7 +1382,7 @@ public class GibbsReactor extends TwoPortEquipment {
       lambda[elementIndex] = newValue;
 
       // System.out.printf(" λ[%s]: %12.6e → %12.6e (Δ = %12.6e)%n", elementNames[elementIndex],
-      //   oldValue, newValue, deltaLambda);
+      // oldValue, newValue, deltaLambda);
       deltaNorm += Math.pow(deltaLambda, 2);
     }
     deltaNorm = Math.sqrt(deltaNorm);
@@ -1395,12 +1396,11 @@ public class GibbsReactor extends TwoPortEquipment {
     // Show total norm of delta vector
     // System.out.printf("\n=== Total Norm of Δ (all variables): %12.6e ===\n", deltaNorm);
 
-    // Print current temperature after update
-    SystemInterface system = getOutletStream().getThermoSystem();
-    // System.out.printf("\n=== Current Temperature: %.4f K ===\n", system.getTemperature());
+
+    System.out.printf("\n=== Current Temperature: %.4f K ===\n", system.getTemperature());
 
     // Print enthalpy of reaction after temperature
-    // System.out.printf("\n=== Enthalpy of Reaction: %.6f kJ ===\n", enthalpyOfReactions);
+    System.out.printf("\n=== Enthalpy of Reaction: %.6f kJ ===\n", enthalpyOfReactions);
 
     // Update the system with new compositions
     return updateSystemWithNewCompositions();
@@ -1726,6 +1726,22 @@ public class GibbsReactor extends TwoPortEquipment {
       SystemInterface outletSystem = getOutletStream().getThermoSystem();
       calculateObjectiveFunctionValues(outletSystem);
 
+      // Print component, Gibbs energy, enthalpy, and entropy for every iteration
+      System.out.println("\nIteration " + iteration + " component properties:");
+      for (int i = 0; i < outletSystem.getNumberOfComponents(); i++) {
+        String compName = outletSystem.getComponent(i).getComponentName();
+        GibbsComponent comp = componentMap.get(compName.toLowerCase());
+        if (comp != null) {
+          double T = outletSystem.getTemperature();
+          double gibbs = comp.calculateGibbsEnergy(T);
+          double enthalpy = comp.calculateEnthalpy(T);
+          double entropy = comp.calculateEntropy(T);
+          System.out.printf(
+              "Component: %s, GibbsEnergy: %.6f kJ/mol, Enthalpy: %.6f kJ/mol, Entropy: %.6f kJ/(mol·K)\n",
+              compName, gibbs, enthalpy, entropy);
+        }
+      }
+
       // Calculate F vector norm for convergence check
       Map<String, Double> fValues = getObjectiveFunctionValues();
       double fNorm = 0.0;
@@ -1756,12 +1772,10 @@ public class GibbsReactor extends TwoPortEquipment {
 
       if (energyMode == EnergyMode.ADIABATIC) {
         if (iteration == 1) {
-          double T_in = system.getTemperature();
           inletEnthalpy =
               calculateMixtureEnthalpyStandard(processedComponents, outlet_mole, componentMap);
           enthalpyOld = inletEnthalpy;
         } else {
-          double T_in = system.getTemperature();
           outletEnthalpy =
               calculateMixtureEnthalpyStandard(processedComponents, outlet_mole, componentMap);
           double dH;
@@ -1771,9 +1785,16 @@ public class GibbsReactor extends TwoPortEquipment {
           system.init(1);
           double T_out = system.getTemperature() - dH * 1000 / (system.getCp("J/K"));
           dT = Math.abs(T_out - system.getTemperature());
+          if (dT > 1000) {
+            throw new RuntimeException(
+                "Temperature change per iteration (dT) exceeded 1000 K. Please reduce the step of iteration (alphaComposition or damping factor).");
+          }
           temperatureChange += dT;
           system.setTemperature(T_out);
-          this.getOutletStream().getThermoSystem().setTemperature(T_out);
+          system.init(1);
+          this.getOutletStream().getThermoSystem().setTemperature(system.getTemperature());
+          this.getOutletStream().getThermoSystem().init(1);
+
         }
       }
 
@@ -1786,7 +1807,11 @@ public class GibbsReactor extends TwoPortEquipment {
         converged = deltaXNorm < convergenceTolerance;
         finalConvergenceError = deltaXNorm;
         updateSystemWithNewCompositions();
-
+        this.getOutletStream().getThermoSystem().setTemperature(system.getTemperature());
+        if (iteration == maxIterations) {
+          throw new RuntimeException(
+              "Maximum number of iterations reached without convergence. Please increase the maximum number of iterations (maxIterations) and try again.");
+        }
         return true;
       }
 
