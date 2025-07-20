@@ -1473,6 +1473,8 @@ public class GibbsReactor extends TwoPortEquipment {
       if (fluid == null) {
         fluid = (neqsim.thermo.system.SystemInterface) getInletStream().getFluid().clone();
         tempFugacitySystem.set(fluid);
+        fluid.setPressure(system.getPressure());
+        fluid.setTemperature(system.getTemperature());
       }
       // Build composition array in the order of fluid components
       double[] composition = new double[fluid.getNumberOfComponents()];
@@ -1545,6 +1547,8 @@ public class GibbsReactor extends TwoPortEquipment {
       neqsim.thermo.system.SystemInterface fluid = tempFugacitySystem.get();
       if (fluid == null) {
         fluid = (neqsim.thermo.system.SystemInterface) getInletStream().getFluid().clone();
+        fluid.setPressure(system.getPressure());
+        fluid.setTemperature(system.getTemperature());
         tempFugacitySystem.set(fluid);
       }
       double[] composition = new double[fluid.getNumberOfComponents()];
