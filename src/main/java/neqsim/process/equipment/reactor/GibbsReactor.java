@@ -1359,9 +1359,9 @@ public class GibbsReactor extends TwoPortEquipment {
 
       outlet_mole.set(i, newValue);
 
-      // System.out.printf(" %s: %12.6e → %12.6e (Δ = %12.6e, α*Δ = %12.6e)%n",
-      // processedComponents.get(i), oldValue, newValue, deltaComposition,
-      // deltaComposition * alphaComposition);
+    // System.out.printf(" %s: %12.6e → %12.6e (Δ = %12.6e, α*Δ = %12.6e)%n",
+    //   processedComponents.get(i), oldValue, newValue, deltaComposition,
+    //   deltaComposition * alphaComposition);
       deltaNorm += Math.pow(deltaComposition * alphaComposition, 2);
     }
     deltaNorm = Math.sqrt(deltaNorm);
@@ -1377,7 +1377,7 @@ public class GibbsReactor extends TwoPortEquipment {
       lambda[elementIndex] = newValue;
 
       // System.out.printf(" λ[%s]: %12.6e → %12.6e (Δ = %12.6e)%n", elementNames[elementIndex],
-      // oldValue, newValue, deltaLambda);
+      //   oldValue, newValue, deltaLambda);
       deltaNorm += Math.pow(deltaLambda, 2);
     }
     deltaNorm = Math.sqrt(deltaNorm);

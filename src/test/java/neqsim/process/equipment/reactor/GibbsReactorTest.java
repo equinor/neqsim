@@ -86,7 +86,6 @@ public class GibbsReactorTest {
     reactor.run();
 
     SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
-
     Assertions.assertEquals(986, outletSystem.getTemperature(), 5);
 
     // Assert outlet mole fractions (rounded to 5 significant digits)
@@ -98,7 +97,6 @@ public class GibbsReactorTest {
     Assertions.assertEquals(0.9, o2, 0.05);
     Assertions.assertEquals(0.095, h2o, 0.01);
   }
-
 
   /**
    * Test adiabatic mode in GibbsReactor (PH flash at inlet enthalpy).
