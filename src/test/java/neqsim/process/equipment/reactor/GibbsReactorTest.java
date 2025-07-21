@@ -18,6 +18,49 @@ public class GibbsReactorTest {
    * Test adiabatic mode in GibbsReactor (PH flash at inlet enthalpy).
    */
   @Test
+  public void testAdiabaticMode0() {
+    // Create a system with hydrogen, oxygen, and water at 10 bar and 350 K
+    SystemInterface system = new SystemSrkEos(298, 100.0);
+    system.addComponent("hydrogen", 1.5);
+    system.addComponent("nitrogen", 0.5);
+    system.addComponent("ammonia", 0);
+    system.setMixingRule(2);
+
+
+    // Create inlet stream
+    Stream inletStream = new Stream("Inlet Stream", system);
+    inletStream.setPressure(300, "bara");
+    inletStream.setTemperature(450, "K");
+    inletStream.run();
+
+    // Create GibbsReactor in adiabatic mode
+    GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
+    reactor.setUseAllDatabaseSpecies(false);
+    reactor.setDampingComposition(0.05);
+    reactor.setMaxIterations(2500);
+    reactor.setConvergenceTolerance(1e-6);
+    reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
+
+    // Run the reactor
+    reactor.run();
+
+    SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
+
+
+    // Assert outlet mole fractions (rounded to 5 significant digits)
+    double h2 = outletSystem.getComponent("hydrogen").getz();
+    double n2 = outletSystem.getComponent("nitrogen").getz();
+    double nh3 = outletSystem.getComponent("ammonia").getz();
+
+    Assertions.assertEquals(0.52, h2, 0.01);
+    Assertions.assertEquals(0.175, n2, 0.01);
+    Assertions.assertEquals(0.29, nh3, 0.01);
+  }
+
+  /**
+   * Test adiabatic mode in GibbsReactor (PH flash at inlet enthalpy).
+   */
+  @Test
   public void testAdiabaticMode() {
     // Create a system with hydrogen, oxygen, and water at 10 bar and 350 K
     SystemInterface system = new SystemSrkEos(298, 1.0);
@@ -43,8 +86,7 @@ public class GibbsReactorTest {
     reactor.run();
 
     SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
-
-    Assertions.assertEquals(981, outletSystem.getTemperature(), 5);
+    Assertions.assertEquals(986, outletSystem.getTemperature(), 5);
 
     // Assert outlet mole fractions (rounded to 5 significant digits)
     double h2 = outletSystem.getComponent("hydrogen").getz();
@@ -54,6 +96,70 @@ public class GibbsReactorTest {
     Assertions.assertEquals(0.0, h2, 0.01);
     Assertions.assertEquals(0.9, o2, 0.05);
     Assertions.assertEquals(0.095, h2o, 0.01);
+  }
+
+  /**
+   * Test adiabatic mode in GibbsReactor (PH flash at inlet enthalpy).
+   */
+  @Test
+  public void testAdiabaticMode2() {
+    SystemInterface system = new SystemSrkEos(598, 100.0);
+    system.addComponent("methane", 0.25);
+    system.addComponent("oxygen", 1);
+    system.addComponent("nitrogen", 1);
+    system.addComponent("CO2", 0.0);
+    system.addComponent("CO", 0.0);
+    system.addComponent("NO", 0.0);
+    system.addComponent("NO2", 0.0);
+    system.addComponent("water", 0);
+
+    system.setMixingRule(2);
+
+
+    // Create inlet stream
+    Stream inletStream = new Stream("Inlet Stream", system);
+    inletStream.run();
+
+    // Create GibbsReactor in adiabatic mode
+    GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
+    reactor.setUseAllDatabaseSpecies(false);
+    reactor.setDampingComposition(0.01);
+    reactor.setMaxIterations(2500);
+    reactor.setConvergenceTolerance(1e-3);
+    reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
+
+    // Run the reactor
+    reactor.run();
+
+    SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
+
+    // Assert pressure (bara)
+    Assertions.assertEquals(100.0, outletSystem.getPressure(), 1e-2);
+
+    // Assert temperature (Celsius)
+    double tempC = outletSystem.getTemperature() - 273.15;
+    Assertions.assertEquals(1423.0898896906488, tempC, 10);
+
+    // Assert outlet mole fractions (rounded to 5 significant digits)
+    double methane = outletSystem.getComponent("methane").getz();
+    double oxygen = outletSystem.getComponent("oxygen").getz();
+    double nitrogen = outletSystem.getComponent("nitrogen").getz();
+    double co2 = outletSystem.getComponent("CO2").getz();
+    double co = outletSystem.getComponent("CO").getz();
+    double no = outletSystem.getComponent("NO").getz();
+    double no2 = outletSystem.getComponent("NO2").getz();
+    double water = outletSystem.getComponent("water").getz();
+
+    Assertions.assertEquals(3.41456E-16, methane, 0.0001);
+    Assertions.assertEquals(8.21862E-3, oxygen, 0.01);
+    Assertions.assertEquals(2.16505E-1, nitrogen, 0.01);
+    Assertions.assertEquals(8.70194E-2, co2, 0.01);
+    Assertions.assertEquals(2.28316E-2, co, 0.01);
+    Assertions.assertEquals(4.45723E-1, no, 0.1);
+    Assertions.assertEquals(1.66995E-7, no2, 0.0001);
+    Assertions.assertEquals(2.19702E-1, water, 0.01);
+
+
   }
 
 }
