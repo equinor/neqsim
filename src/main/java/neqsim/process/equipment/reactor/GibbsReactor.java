@@ -958,8 +958,6 @@ public class GibbsReactor extends TwoPortEquipment {
       totalMoles += moles;
     }
 
-    system.init(3); // composition derivatives of figasity coefficients
-
     // Fill Jacobian matrix
     for (int i = 0; i < numComponents; i++) {
       String compI = processedComponents.get(i);
@@ -1463,44 +1461,14 @@ public class GibbsReactor extends TwoPortEquipment {
    *         found
    */
   public double[] getFugacityCoefficient(Object phaseNameOrIndex) {
-    try {
-      neqsim.thermo.system.SystemInterface fluid = tempFugacitySystem.get();
-      if (fluid == null) {
-        fluid = (neqsim.thermo.system.SystemInterface) getInletStream().getFluid().clone();
-        tempFugacitySystem.set(fluid);
-        fluid.setPressure(system.getPressure());
-        fluid.setTemperature(system.getTemperature());
-      }
-      // Build composition array in the order of fluid components
-      double[] composition = new double[fluid.getNumberOfComponents()];
-      for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-        String compName = fluid.getComponent(i).getComponentName();
-        Integer idx = processedComponentIndexMap.get(compName);
-        composition[i] = (idx != null && idx < outlet_mole.size()) ? outlet_mole.get(idx) : 1e-15;
-      }
-      // Normalize composition to avoid numerical issues
-      double total = 0.0;
-      for (double v : composition) {
-        total += v;
-      }
-      if (total > 0) {
-        for (int i = 0; i < composition.length; i++) {
-          composition[i] /= total;
-        }
-      }
-      // Assign composition to all phases (as in TPflash)
-      for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
-        fluid.setMolarComposition(composition);
-      }
-      fluid.init(1);
-      // Determine phase index
+
       int phaseIndex = 0;
       if (phaseNameOrIndex instanceof Integer) {
         phaseIndex = (Integer) phaseNameOrIndex;
       } else if (phaseNameOrIndex instanceof String) {
         String phaseName = ((String) phaseNameOrIndex).toLowerCase();
-        for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-          String name = fluid.getPhase(i).getPhaseTypeName().toLowerCase();
+        for (int i = 0; i < system.getNumberOfPhases(); i++) {
+          String name = system.getPhase(i).getPhaseTypeName().toLowerCase();
           if (name.contains(phaseName)) {
             phaseIndex = i;
             break;
@@ -1509,21 +1477,14 @@ public class GibbsReactor extends TwoPortEquipment {
       }
 
       // Get fugacity coefficients for all components in the selected phase
-      int numComponents = fluid.getNumberOfComponents();
+      int numComponents = system.getNumberOfComponents();
       double[] phiArray = new double[numComponents];
       for (int i = 0; i < numComponents; i++) {
-        phiArray[i] = fluid.getPhase(phaseIndex).getComponent(i).getFugacityCoefficient();
+        phiArray[i] = system.getPhase(phaseIndex).getComponent(i).getFugacityCoefficient();
       }
       return phiArray;
-    } catch (Exception e) {
-      neqsim.thermo.system.SystemInterface fluid = tempFugacitySystem.get();
-      int numComponents = fluid != null ? fluid.getNumberOfComponents() : 1;
-      double[] nanArray = new double[numComponents];
-      for (int i = 0; i < numComponents; i++)
-        nanArray[i] = Double.NaN;
-      return nanArray;
-    }
-  }
+    } 
+  
 
   /**
    * Set maximum number of Newton-Raphson iterations.
@@ -1685,7 +1646,6 @@ public class GibbsReactor extends TwoPortEquipment {
           dH = outletEnthalpy - enthalpyOld;
           enthalpyOfReactions += dH;
           enthalpyOld = outletEnthalpy;
-          system.init(2);
           double T_out = system.getTemperature() - dH * 1000 / (system.getCp("J/K"));
           dT = Math.abs(T_out - system.getTemperature());
           if (dT > 1000) {
@@ -1694,10 +1654,8 @@ public class GibbsReactor extends TwoPortEquipment {
           }
           temperatureChange += dT;
           system.setTemperature(T_out);
-          system.init(2);
+          system.init(3);
           this.getOutletStream().getThermoSystem().setTemperature(system.getTemperature());
-          this.getOutletStream().getThermoSystem().init(2);
-
         }
       }
 
