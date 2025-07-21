@@ -93,7 +93,7 @@ public class GibbsReactor extends TwoPortEquipment {
       String compName = componentNames.get(i);
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
       if (comp != null) {
-        totalH += n.get(i) * comp.calculateEnthalpy(T);
+        totalH += n.get(i) * comp.calculateEnthalpy(T, i);
       }
     }
     return totalH;
@@ -303,15 +303,15 @@ public class GibbsReactor extends TwoPortEquipment {
      * @param temperature Temperature in Kelvin
      * @return Gibbs energy of formation at temperature T in kJ/mol
      */
-    public double calculateGibbsEnergy(double temperature) {
+    public double calculateGibbsEnergy(double temperature, int compNumber) {
       double T = temperature;
       double T0 = 298.15; // Reference temperature (K)
 
       // Calculate enthalpy at temperature T
-      double H_T = calculateEnthalpy(T);
+      double H_T = calculateEnthalpy(T, compNumber);
 
       // Calculate entropy at temperature T
-      double S_T = calculateEntropy(T);
+      double S_T = calculateEntropy(T, compNumber);
 
       // Calculate Gibbs energy: G(T) = H(T) - T*S(T)
       double G_T = H_T - T * S_T; // Convert S from J/(mol·K) to kJ/(mol·K)
@@ -327,13 +327,13 @@ public class GibbsReactor extends TwoPortEquipment {
      * @param temperature Temperature in Kelvin
      * @return Enthalpy of formation at temperature T in kJ/mol
      */
-    public double calculateEnthalpy(double temperature) {
+    public double calculateEnthalpy(double temperature, int compNumber) {
       // Fallback to manual calculation if NeqSim method fails
       double T = temperature;
       double T0 = 298.15; // Reference temperature (K)
 
       // Calculate average heat capacity (simplified constant Cp approach)
-      double Cp = calculateHeatCapacity(T);
+      double Cp = calculateHeatCapacity(T, compNumber);
 
       // H(T) = deltaHf298 + Cp*(T - Tref)
       return deltaHf298 + Cp * (T - T0) / 1000.0; // Convert Cp from J/(mol·K) to kJ/(mol·K)
@@ -348,13 +348,13 @@ public class GibbsReactor extends TwoPortEquipment {
      * @param temperature Temperature in Kelvin
      * @return Entropy at temperature T in J/(mol·K)
      */
-    public double calculateEntropy(double temperature) {
+    public double calculateEntropy(double temperature, int compNumber) {
       // Fallback to manual calculation if NeqSim method fails
       double T = temperature;
       double T0 = 298.15; // Reference temperature (K)
 
       // Calculate heat capacity
-      double Cp = calculateHeatCapacity(T);
+      double Cp = calculateHeatCapacity(T, compNumber);
 
       // S(T) = Sref + Cp*ln(T/Tref)
       return (deltaSf298 + Cp * Math.log(T / T0)) / 1000;
@@ -369,17 +369,10 @@ public class GibbsReactor extends TwoPortEquipment {
      * @param temperature Temperature in Kelvin
      * @return Heat capacity at temperature T in J/(mol·K)
      */
-    public double calculateHeatCapacity(double temperature) {
+    public double calculateHeatCapacity(double temperature, int compNumber) {
       try {
-        // Create a temporary single-component system using the same class as 'system'
-        SystemInterface tempSystem = system.getClass()
-            .getDeclaredConstructor(double.class, double.class).newInstance(temperature, 1.0);
-        tempSystem.addComponent(molecule, 1.0);
-        tempSystem.setMixingRule(2);
-        tempSystem.init(1);
-
-        // Get heat capacity from NeqSim's component
-        double cp0 = tempSystem.getComponent(0).getCp0(temperature);
+     // Get heat capacity from NeqSim's component
+        double cp0 = system.getComponent(compNumber).getCp0(temperature);
 
         return cp0; // NeqSim returns Cp0 in J/(mol·K)
 
@@ -706,7 +699,7 @@ public class GibbsReactor extends TwoPortEquipment {
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
       if (comp != null) {
         // Calculate Gibbs energy of formation
-        double Gf0 = comp.calculateGibbsEnergy(T);
+        double Gf0 = comp.calculateGibbsEnergy(T, i);
 
         // Calculate fugacity coefficient (assume 1 for now)
         double phi = getFugacityCoefficient(compName, 0);
@@ -1737,9 +1730,9 @@ public class GibbsReactor extends TwoPortEquipment {
         GibbsComponent comp = componentMap.get(compName.toLowerCase());
         if (comp != null) {
           double T = outletSystem.getTemperature();
-          double gibbs = comp.calculateGibbsEnergy(T);
-          double enthalpy = comp.calculateEnthalpy(T);
-          double entropy = comp.calculateEntropy(T);
+          double gibbs = comp.calculateGibbsEnergy(T, i);
+          double enthalpy = comp.calculateEnthalpy(T, i);
+          double entropy = comp.calculateEntropy(T, i);
           System.out.printf(
               "Component: %s, GibbsEnergy: %.6f kJ/mol, Enthalpy: %.6f kJ/mol, Entropy: %.6f kJ/(mol·K)\n",
               compName, gibbs, enthalpy, entropy);
