@@ -1452,12 +1452,11 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
     /**
-   * Get the fugacity coefficient of a component in a specified phase using the current outlet
+   * Get the fugacity coefficient array for all components in a specified phase using the current outlet
    * composition. Uses direct phase composition assignment for efficiency.
    *
-   * @param componentName Name of the component
    * @param phaseNameOrIndex Name or index of the phase (e.g., "gas", "oil", "aqueous", or 0/1/2)
-   * @return Fugacity coefficient (phi) for the specified component and phase, or Double.NaN if not
+   * @return Fugacity coefficient (phi) array for all components in the specified phase, or Double.NaN if not
    *         found
    */
   public double[] getFugacityCoefficient(Object phaseNameOrIndex) {
