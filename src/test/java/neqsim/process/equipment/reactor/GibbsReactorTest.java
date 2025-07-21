@@ -52,9 +52,9 @@ public class GibbsReactorTest {
     double n2 = outletSystem.getComponent("nitrogen").getz();
     double nh3 = outletSystem.getComponent("ammonia").getz();
 
-    Assertions.assertEquals(0.52739, h2, 0.01);
-    Assertions.assertEquals(0.17580, n2, 0.01);
-    Assertions.assertEquals(0.29682, nh3, 0.01);
+    Assertions.assertEquals(0.4745, h2, 0.01);
+    Assertions.assertEquals(0.158, n2, 0.01);
+    Assertions.assertEquals(0.367, nh3, 0.01);
   }
 
   /**

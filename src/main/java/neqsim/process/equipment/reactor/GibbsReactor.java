@@ -702,7 +702,7 @@ public class GibbsReactor extends TwoPortEquipment {
         double Gf0 = comp.calculateGibbsEnergy(T, i);
 
         // Calculate fugacity coefficient (assume 1 for now)
-        double phi = getFugacityCoefficient(compName, 0);
+        double[] phi = getFugacityCoefficient(0);
 
         // Calculate mole fraction
         double yi = moles / totalMoles;
@@ -715,7 +715,7 @@ public class GibbsReactor extends TwoPortEquipment {
         }
 
         // Calculate objective function: F = Gf0 + RT*ln(phi) + RT*ln(yi) - lagrangeSum
-        double F = Gf0 + RT * Math.log(phi) + RT * Math.log(yi) - lagrangeSum;
+        double F = Gf0 + RT * Math.log(phi[i]) + RT * Math.log(yi) - lagrangeSum;
         objectiveFunctionValues.put(compName, F);
       }
     }
@@ -958,6 +958,8 @@ public class GibbsReactor extends TwoPortEquipment {
       totalMoles += moles;
     }
 
+    system.init(3); // composition derivatives of figasity coefficients
+
     // Fill Jacobian matrix
     for (int i = 0; i < numComponents; i++) {
       String compI = processedComponents.get(i);
@@ -965,16 +967,16 @@ public class GibbsReactor extends TwoPortEquipment {
       // Use outlet_mole for calculations, but with a minimum value to avoid numerical issues
       double ni = (i < outlet_mole.size()) ? outlet_mole.get(i) : 1E-6;
       double niForJacobian = Math.max(ni, 1e-6); // Use minimum of 1e-6 for Jacobian calculation
-
+      
       for (int j = 0; j < numComponents; j++) {
-        String compJ = processedComponents.get(j);
         if (i == j) {
           // Diagonal elements: ∂f_i/∂n_i = RT * (1/n_i - 1/n_total)
-          jacobianMatrix[i][j] = RT
-              * (1.0 / niForJacobian - 1.0 / totalMoles + getFugacityDerivative(compI, compJ, 0));
+          jacobianMatrix[i][j] = RT * (1.0 / niForJacobian - 1.0 / totalMoles
+              + system.getPhase(0).getComponent(i).getdfugdn(j));
         } else {
           // Off-diagonal elements: ∂f_i/∂n_j = -RT/n_total
-          jacobianMatrix[i][j] = -RT / totalMoles + getFugacityDerivative(compI, compJ, 0);
+          jacobianMatrix[i][j] =
+              -RT / totalMoles + system.getPhase(0).getComponent(i).getdfugdn(j);
         }
       }
 
@@ -1451,7 +1453,83 @@ public class GibbsReactor extends TwoPortEquipment {
     }
   }
 
-  /**
+  // /**
+  //  * Get the fugacity coefficient of a component in a specified phase using the current outlet
+  //  * composition. Uses direct phase composition assignment for efficiency.
+  //  *
+  //  * @param componentName Name of the component
+  //  * @param phaseNameOrIndex Name or index of the phase (e.g., "gas", "oil", "aqueous", or 0/1/2)
+  //  * @return Fugacity coefficient (phi) for the specified component and phase, or Double.NaN if not
+  //  *         found
+  //  */
+  // public double getFugacityCoefficient(String componentName, Object phaseNameOrIndex) {
+  //   try {
+  //     neqsim.thermo.system.SystemInterface fluid = tempFugacitySystem.get();
+  //     if (fluid == null) {
+  //       fluid = (neqsim.thermo.system.SystemInterface) getInletStream().getFluid().clone();
+  //       tempFugacitySystem.set(fluid);
+  //       fluid.setPressure(system.getPressure());
+  //       fluid.setTemperature(system.getTemperature());
+  //     }
+  //     // Build composition array in the order of fluid components
+  //     double[] composition = new double[fluid.getNumberOfComponents()];
+  //     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+  //       String compName = fluid.getComponent(i).getComponentName();
+  //       Integer idx = processedComponentIndexMap.get(compName);
+  //       composition[i] = (idx != null && idx < outlet_mole.size()) ? outlet_mole.get(idx) : 1e-15;
+  //     }
+  //     // Normalize composition to avoid numerical issues
+  //     double total = 0.0;
+  //     for (double v : composition) {
+  //       total += v;
+  //     }
+  //     if (total > 0) {
+  //       for (int i = 0; i < composition.length; i++) {
+  //         composition[i] /= total;
+  //       }
+  //     }
+  //     // Assign composition to all phases (as in TPflash)
+  //     for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+  //       fluid.setMolarComposition(composition);
+  //     }
+
+  //     // Determine phase index
+  //     int phaseIndex = 0;
+  //     if (phaseNameOrIndex instanceof Integer) {
+  //       phaseIndex = (Integer) phaseNameOrIndex;
+  //     } else if (phaseNameOrIndex instanceof String) {
+  //       String phaseName = ((String) phaseNameOrIndex).toLowerCase();
+  //       for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+  //         String name = fluid.getPhase(i).getPhaseTypeName().toLowerCase();
+  //         if (name.contains(phaseName)) {
+  //           phaseIndex = i;
+  //           break;
+  //         }
+  //       }
+  //     }
+
+  //     // Find component index by name
+  //     int compIndex = -1;
+  //     for (int j = 0; j < fluid.getNumberOfComponents(); j++) {
+  //       if (fluid.getComponent(j).getComponentName().equalsIgnoreCase(componentName)) {
+  //         compIndex = j;
+  //         break;
+  //       }
+  //     }
+  //     if (compIndex < 0) {
+  //       return Double.NaN;
+  //     }
+
+  //     // Get fugacity coefficient
+  //     double phi = fluid.getPhase(phaseIndex).getComponent(compIndex).getFugacityCoefficient();
+  //     return phi;
+  //   } catch (Exception e) {
+  //     return Double.NaN;
+  //   }
+  // }
+
+
+    /**
    * Get the fugacity coefficient of a component in a specified phase using the current outlet
    * composition. Uses direct phase composition assignment for efficiency.
    *
@@ -1460,7 +1538,7 @@ public class GibbsReactor extends TwoPortEquipment {
    * @return Fugacity coefficient (phi) for the specified component and phase, or Double.NaN if not
    *         found
    */
-  public double getFugacityCoefficient(String componentName, Object phaseNameOrIndex) {
+  public double[] getFugacityCoefficient(Object phaseNameOrIndex) {
     try {
       neqsim.thermo.system.SystemInterface fluid = tempFugacitySystem.get();
       if (fluid == null) {
@@ -1490,7 +1568,7 @@ public class GibbsReactor extends TwoPortEquipment {
       for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
         fluid.setMolarComposition(composition);
       }
-
+      fluid.init(1);
       // Determine phase index
       int phaseIndex = 0;
       if (phaseNameOrIndex instanceof Integer) {
@@ -1506,118 +1584,116 @@ public class GibbsReactor extends TwoPortEquipment {
         }
       }
 
-      // Find component index by name
-      int compIndex = -1;
-      for (int j = 0; j < fluid.getNumberOfComponents(); j++) {
-        if (fluid.getComponent(j).getComponentName().equalsIgnoreCase(componentName)) {
-          compIndex = j;
-          break;
-        }
+      // Get fugacity coefficients for all components in the selected phase
+      int numComponents = fluid.getNumberOfComponents();
+      double[] phiArray = new double[numComponents];
+      for (int i = 0; i < numComponents; i++) {
+        phiArray[i] = fluid.getPhase(phaseIndex).getComponent(i).getFugacityCoefficient();
       }
-      if (compIndex < 0) {
-        return Double.NaN;
-      }
-
-      // Get fugacity coefficient
-      double phi = fluid.getPhase(phaseIndex).getComponent(compIndex).getFugacityCoefficient();
-      return phi;
+      return phiArray;
     } catch (Exception e) {
-      return Double.NaN;
-    }
-  }
-
-  /**
-   * Get the derivative of the fugacity coefficient of componenti with respect to the mole number of
-   * componentj in the specified phase. Uses NeqSim's built-in getdfugdn if available.
-   *
-   * @param componenti Name of the component whose fugacity coefficient is differentiated
-   * @param componentj Name of the component to perturb
-   * @param phaseNumber Phase index (0 = vapor, 1 = liquid, ...)
-   * @return Derivative d(phi_i)/dn_j or Double.NaN if not available
-   */
-  public double getFugacityDerivative(String componenti, String componentj, int phaseNumber) {
-    try {
       neqsim.thermo.system.SystemInterface fluid = tempFugacitySystem.get();
-      if (fluid == null) {
-        fluid = (neqsim.thermo.system.SystemInterface) getInletStream().getFluid().clone();
-        fluid.setPressure(system.getPressure());
-        fluid.setTemperature(system.getTemperature());
-        tempFugacitySystem.set(fluid);
-      }
-      double[] composition = new double[fluid.getNumberOfComponents()];
-      for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-        String compName = fluid.getComponent(i).getComponentName();
-        Integer idx = processedComponentIndexMap.get(compName);
-        composition[i] = (idx != null && idx < outlet_mole.size()) ? outlet_mole.get(idx) : 1e-15;
-      }
-      double total = 0.0;
-      for (double v : composition) {
-        total += v;
-      }
-      if (total > 0) {
-        for (int i = 0; i < composition.length; i++) {
-          composition[i] /= total;
-        }
-      }
-      // Find indices
-      int iIndex = -1;
-      int jIndex = -1;
-      for (int k = 0; k < fluid.getNumberOfComponents(); k++) {
-        String name = fluid.getComponent(k).getComponentName();
-        if (name.equalsIgnoreCase(componenti)) {
-          iIndex = k;
-        }
-        if (name.equalsIgnoreCase(componentj)) {
-          jIndex = k;
-        }
-      }
-      if (iIndex < 0 || jIndex < 0) {
-        return Double.NaN;
-      }
-      // Finite difference step
-      double h = 1e-6;
-      // Save original mole numbers
-      // Perturb n_j by +h
-      composition[jIndex] += h;
-      double totalPerturbed = 0.0;
-      for (double v : composition) {
-        totalPerturbed += v;
-      }
-      for (int i = 0; i < composition.length; i++) {
-        composition[i] /= totalPerturbed;
-      }
-      for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
-        fluid.setMolarComposition(composition);
-      }
-      fluid.init(0);
-
-      double phi_plus = fluid.getPhase(phaseNumber).getComponent(iIndex).getFugacityCoefficient();
-
-      // Reset to original
-      final double[] origMoles = composition.clone();
-      for (int i = 0; i < composition.length; i++) {
-        composition[i] = origMoles[i];
-      }
-      totalPerturbed = 0.0;
-      for (double v : composition) {
-        totalPerturbed += v;
-      }
-      for (int i = 0; i < composition.length; i++) {
-        composition[i] /= totalPerturbed;
-      }
-      for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
-        fluid.setMolarComposition(origMoles);
-      }
-      fluid.init(0);
-
-      double phi_orig = fluid.getPhase(phaseNumber).getComponent(iIndex).getFugacityCoefficient();
-      // Finite difference derivative
-      double result = (phi_plus - phi_orig) / h;
-      return result;
-    } catch (Exception e) {
-      return Double.NaN;
+      int numComponents = fluid != null ? fluid.getNumberOfComponents() : 1;
+      double[] nanArray = new double[numComponents];
+      for (int i = 0; i < numComponents; i++)
+        nanArray[i] = Double.NaN;
+      return nanArray;
     }
   }
+
+
+  // /**
+  //  * Get the derivative of the fugacity coefficient of componenti with respect to the mole number of
+  //  * componentj in the specified phase. Uses NeqSim's built-in getdfugdn if available.
+  //  *
+  //  * @param componenti Name of the component whose fugacity coefficient is differentiated
+  //  * @param componentj Name of the component to perturb
+  //  * @param phaseNumber Phase index (0 = vapor, 1 = liquid, ...)
+  //  * @return Derivative d(phi_i)/dn_j or Double.NaN if not available
+  //  */
+  // public double getFugacityDerivative(String componenti, String componentj, int phaseNumber) {
+  //   try {
+  //     neqsim.thermo.system.SystemInterface fluid = tempFugacitySystem.get();
+  //     if (fluid == null) {
+  //       fluid = (neqsim.thermo.system.SystemInterface) getInletStream().getFluid().clone();
+  //       fluid.setPressure(system.getPressure());
+  //       fluid.setTemperature(system.getTemperature());
+  //       tempFugacitySystem.set(fluid);
+  //     }
+  //     double[] composition = new double[fluid.getNumberOfComponents()];
+  //     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+  //       String compName = fluid.getComponent(i).getComponentName();
+  //       Integer idx = processedComponentIndexMap.get(compName);
+  //       composition[i] = (idx != null && idx < outlet_mole.size()) ? outlet_mole.get(idx) : 1e-15;
+  //     }
+  //     double total = 0.0;
+  //     for (double v : composition) {
+  //       total += v;
+  //     }
+  //     if (total > 0) {
+  //       for (int i = 0; i < composition.length; i++) {
+  //         composition[i] /= total;
+  //       }
+  //     }
+  //     // Find indices
+  //     int iIndex = -1;
+  //     int jIndex = -1;
+  //     for (int k = 0; k < fluid.getNumberOfComponents(); k++) {
+  //       String name = fluid.getComponent(k).getComponentName();
+  //       if (name.equalsIgnoreCase(componenti)) {
+  //         iIndex = k;
+  //       }
+  //       if (name.equalsIgnoreCase(componentj)) {
+  //         jIndex = k;
+  //       }
+  //     }
+  //     if (iIndex < 0 || jIndex < 0) {
+  //       return Double.NaN;
+  //     }
+  //     // Finite difference step
+  //     double h = 1e-6;
+  //     // Save original mole numbers
+  //     // Perturb n_j by +h
+  //     composition[jIndex] += h;
+  //     double totalPerturbed = 0.0;
+  //     for (double v : composition) {
+  //       totalPerturbed += v;
+  //     }
+  //     for (int i = 0; i < composition.length; i++) {
+  //       composition[i] /= totalPerturbed;
+  //     }
+  //     for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+  //       fluid.setMolarComposition(composition);
+  //     }
+  //     fluid.init(0);
+
+  //     double phi_plus = fluid.getPhase(phaseNumber).getComponent(iIndex).getFugacityCoefficient();
+
+  //     // Reset to original
+  //     final double[] origMoles = composition.clone();
+  //     for (int i = 0; i < composition.length; i++) {
+  //       composition[i] = origMoles[i];
+  //     }
+  //     totalPerturbed = 0.0;
+  //     for (double v : composition) {
+  //       totalPerturbed += v;
+  //     }
+  //     for (int i = 0; i < composition.length; i++) {
+  //       composition[i] /= totalPerturbed;
+  //     }
+  //     for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+  //       fluid.setMolarComposition(origMoles);
+  //     }
+  //     fluid.init(0);
+
+  //     double phi_orig = fluid.getPhase(phaseNumber).getComponent(iIndex).getFugacityCoefficient();
+  //     // Finite difference derivative
+  //     double result = (phi_plus - phi_orig) / h;
+  //     return result;
+  //   } catch (Exception e) {
+  //     return Double.NaN;
+  //   }
+ // }
 
   /**
    * Set maximum number of Newton-Raphson iterations.
