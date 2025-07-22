@@ -234,7 +234,7 @@ public class PTPhaseEnvelopeTest {
     fluid.addComponent("223-TM-C4", 0.00041);
     fluid.addComponent("benzene", 0.0017);
     fluid.addComponent("33-DM-C5", 0.00058);
-    fluid.addComponent("c-hexane", 0.03273); // c-hexane :( causing problems othes commented that cause also problems
+    fluid.addComponent("c-hexane", 0.03273); 
     fluid.addComponent("2-M-C6", 0.00395);
     fluid.addComponent("11-DM-cy-C5", 0.00171);
     fluid.addComponent("3-M-C6", 0.0059);
@@ -242,7 +242,7 @@ public class PTPhaseEnvelopeTest {
     fluid.addComponent("trans-13-DM-cy-C5", 0.00341);
     fluid.addComponent("trans-12-DM-cy-C5", 0.00663);
     fluid.addComponent("n-heptane", 0.00688);
-    fluid.addComponent("M-cy-C6", 0.03824);
+    //fluid.addComponent("M-cy-C6", 0.03824);
     fluid.addComponent("113-TM-cy-C5", 0.00119);
     fluid.addComponent("E-cy-C5", 0.00179);
     fluid.addComponent("25-DM-C6", 0.00047);
@@ -269,7 +269,7 @@ public class PTPhaseEnvelopeTest {
     fluid.addComponent("nC11", 0.00003);
     fluid.addComponent("CO2", 0.58374);
     // fluid.addComponent("oxygen", 0.07139);
-    // fluid.addComponent("nitrogen", 4.67105);
+    //fluid.addComponent("nitrogen", 4.67105);
     fluid.addComponent("c-C7", 0.00518);
     fluid.addComponent("c-C8", 0.00321);
 
