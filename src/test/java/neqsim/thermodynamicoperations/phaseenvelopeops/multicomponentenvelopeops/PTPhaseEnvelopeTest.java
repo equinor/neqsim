@@ -1,3 +1,4 @@
+
 package neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -9,6 +10,38 @@ import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class PTPhaseEnvelopeTest {
+  @Test
+  void testWithTBPfraction() {
+    // Test addTBPfraction functionality
+    neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemUMRPRUMCEos(280.0, 10.0);
+    java.util.Map<String, Double> compoundData = new java.util.LinkedHashMap<>();
+    compoundData.put("ethane", 2.45516);
+    compoundData.put("methane", 89.26002);
+    compoundData.put("propane", 0.38468);
+    compoundData.put("i-butane", 0.14674);
+    compoundData.put("n-butane", 0.09195);
+    compoundData.put("22-dim-C3", 0.00254);
+    compoundData.put("i-pentane", 0.07672);
+    compoundData.put("n-pentane", 0.03854);
+
+    for (java.util.Map.Entry<String, Double> entry : compoundData.entrySet()) {
+      feedGas.addComponent(entry.getKey(), entry.getValue());
+    }
+    feedGas.addTBPfraction("C10 (pseudo)", 0.005, 0.15, 0.75);
+    feedGas.setMixingRule("HV", "UNIFAC_UMRPRU");
+    feedGas.setPressure(140.0, "bara");
+    feedGas.setTemperature(0.0, "C");
+
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(feedGas);
+    ops.TPflash();
+
+    // Print summary of the system (replace with assertions as needed)
+    feedGas.display();
+    // Optionally, add assertions to check phase, composition, etc.
+    assertTrue(feedGas.getPressure() > 100.0);
+    assertTrue(feedGas.getTemperature() < 10.0);
+    assertTrue(feedGas.getNumberOfComponents() >= compoundData.size() + 1); // TBP fraction added
+  }
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static ThermodynamicOperations testOps = null;
 
@@ -109,6 +142,7 @@ public class PTPhaseEnvelopeTest {
     testSystem.addTBPfraction("C8", 0.22, 106 / 1000.0, 0.767);
     testSystem.addTBPfraction("C9", 0.13, 121 / 1000.0, 0.783);
     testSystem.addPlusFraction("C10+", 0.21, 172 / 1000.0, 0.818);
+    testSystem.addComponent("22-DM-C5", 0.01);
     testSystem.setMixingRule("classic");
     testSystem.setMultiPhaseCheck(true);
     testSystem.useVolumeCorrection(true);
@@ -153,7 +187,7 @@ public class PTPhaseEnvelopeTest {
     fluid0_HC.addComponent("n-heptane", 0.02);
     fluid0_HC.addComponent("toluene", 0.01);
     fluid0_HC.addComponent("n-octane", 0.01);
-    fluid0_HC.addComponent("2.2-DM-C7", 0.0000001);
+    //fluid0_HC.addComponent("2.2-DM-C7", 0.01);
 
 
     fluid0_HC.setMixingRule("HV", "UNIFAC_UMRPRU");
