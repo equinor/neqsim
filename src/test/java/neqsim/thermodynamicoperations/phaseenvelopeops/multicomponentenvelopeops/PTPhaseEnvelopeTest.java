@@ -242,7 +242,7 @@ public class PTPhaseEnvelopeTest {
     fluid.addComponent("trans-13-DM-cy-C5", 0.00341);
     fluid.addComponent("trans-12-DM-cy-C5", 0.00663);
     fluid.addComponent("n-heptane", 0.00688);
-    //fluid.addComponent("M-cy-C6", 0.03824);
+    fluid.addComponent("M-cy-C6", 0.03824);
     fluid.addComponent("113-TM-cy-C5", 0.00119);
     fluid.addComponent("E-cy-C5", 0.00179);
     fluid.addComponent("25-DM-C6", 0.00047);
