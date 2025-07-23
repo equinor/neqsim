@@ -62,6 +62,7 @@ import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.HPTphaseEnvelope;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelope;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelopeNew2;
+import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelopeNew3;
 import neqsim.thermodynamicoperations.phaseenvelopeops.reactivecurves.PloadingCurve2;
 import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterKeywordFormat;
 import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterStudents;
@@ -194,7 +195,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * <p>TPflashSoreideWhitson.</p>
+   * <p>
+   * TPflashSoreideWhitson.
+   * </p>
    */
   public void TPflashSoreideWhitson() {
     double flowRate = system.getTotalNumberOfMoles();
@@ -1743,6 +1746,24 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     // double phasefraction = 1.0 - 1e-10;
     // operation = new pTphaseEnvelope(system, fileName, phasefraction, 1.0);
     getOperation().run();
+  }
+
+  /**
+   * Calculates a phase envelope matrix using PTphaseEnvelopeNew3.
+   * 
+   * @param minPressure minimum pressure (bar)
+   * @param maxPressure maximum pressure (bar)
+   * @param minTemp minimum temperature (C)
+   * @param maxTemp maximum temperature (C)
+   * @param pressureStep step size for pressure (bar)
+   * @param tempStep step size for temperature (C)
+   * @return PTphaseEnvelopeNew3 instance (call get methods for results)
+   */
+  public void calcPTphaseEnvelopeNew3(double minPressure, double maxPressure, double minTemp,
+      double maxTemp, double pressureStep, double tempStep) {
+    operation = new PTphaseEnvelopeNew3(system, minPressure, maxPressure, minTemp, maxTemp,
+        pressureStep, tempStep);
+    operation.run();
   }
 
   /**
