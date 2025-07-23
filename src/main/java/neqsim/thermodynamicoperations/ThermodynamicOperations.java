@@ -1757,7 +1757,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param maxTemp maximum temperature (C)
    * @param pressureStep step size for pressure (bar)
    * @param tempStep step size for temperature (C)
-   * @return PTphaseEnvelopeNew3 instance (call get methods for results)
+// removed invalid @return tag for void method
    */
   public void calcPTphaseEnvelopeNew3(double minPressure, double maxPressure, double minTemp,
       double maxTemp, double pressureStep, double tempStep) {
