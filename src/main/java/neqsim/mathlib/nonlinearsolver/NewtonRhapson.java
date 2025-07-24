@@ -24,6 +24,9 @@ public class NewtonRhapson implements java.io.Serializable {
   double[] polyConstants;
   double funkVal = 0;
 
+  /** Convergence tolerance. */
+  private static final double EPS = 1e-10;
+
   double derivVal = 0;
 
   double dubDerivVal = 0;
@@ -101,6 +104,15 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
+   * Set the maximum number of iterations.
+   *
+   * @param maxIterations the maximum number of iterations
+   */
+  public void setMaxIterations(int maxIterations) {
+    this.maxIterations = maxIterations;
+  }
+
+  /**
    * <p>
    * dubDerivValue.
    * </p>
@@ -164,7 +176,7 @@ public class NewtonRhapson implements java.io.Serializable {
         xNew = 1;
         // System.out.println("x--...........");
       }
-    } while (Math.abs(funkValue(x)) > 1e-10 && iterations <= maxIterations);
+    } while (Math.abs(funkValue(x)) > EPS && iterations <= maxIterations);
 
     if (iterations == maxIterations) {
       System.out.println("Too many iterations...");
@@ -194,7 +206,7 @@ public class NewtonRhapson implements java.io.Serializable {
       x = xNew;
       xNew = x - funkValue(x) / derivValue(x);
       xNew2 = xNew;
-    } while (Math.abs(funkValue(x)) > 1e-10 && iterations <= maxIterations);
+    } while (Math.abs(funkValue(x)) > EPS && iterations <= maxIterations);
 
     if (iterations == maxIterations) {
       System.out.println("Too many iterations...");
