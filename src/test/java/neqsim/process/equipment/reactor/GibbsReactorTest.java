@@ -13,6 +13,72 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class GibbsReactorTest {
+  /**
+   * Test GibbsReactor with CPA model and ppm-level NO2, water, NO, HNO3, rest CO2.
+   */
+  @Test
+  public void testCO2model() {
+    // Total moles = 1.0 for simplicity
+    double totalMoles = 1e6;
+    double no2 = 100 ; // 370 ppm
+    double water = 160 ; // 130 ppm
+    double no = 0.0;
+    double hno3 = 0.0;
+    double so2 = 80.0;
+    double so3 = 0.0;
+    double sulfuricAcid = 0.0;
+    double h2s = 0;
+    double co2 = totalMoles - (no2 + water + no + hno3 + h2s + so2 + so3 + sulfuricAcid);
+
+    neqsim.thermo.system.SystemInterface system =
+        new neqsim.thermo.system.SystemSrkCPAstatoil(298.15, 1.0);
+    system.addComponent("NO2", no2);
+    system.addComponent("water", water);
+    system.addComponent("NO", no);
+    system.addComponent("H2S", h2s);
+    system.addComponent("nitric acid", hno3);
+    system.addComponent("CO2", co2);
+    system.addComponent("SO2", so2);
+    system.addComponent("SO3", so3);
+    system.addComponent("sulfuric acid", sulfuricAcid);
+    system.setMixingRule(2);
+
+    // Create inlet stream
+    Stream inletStream = new Stream("Inlet Stream", system);
+    inletStream.setPressure(100, "bara");
+    inletStream.setTemperature(25, "C");
+    inletStream.run();
+    inletStream.getFluid().prettyPrint();
+
+    // Create GibbsReactor in isothermal mode (as default)
+    GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
+    reactor.setUseAllDatabaseSpecies(false);
+    reactor.setDampingComposition(0.001);
+    reactor.setMaxIterations(5000);
+    reactor.setConvergenceTolerance(1e-3);
+    reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
+
+    // Run the reactor
+    reactor.run();
+
+    SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
+    outletSystem.prettyPrint();
+
+    // Print composition in ppm for each component
+    double totalMolesOut = 0.0;
+    for (int i = 0; i < outletSystem.getNumberOfComponents(); i++) {
+      totalMolesOut += outletSystem.getComponent(i).getz();
+    }
+    System.out.println("\n--- Composition in ppm (mole fraction * 1e6) ---");
+    for (int i = 0; i < outletSystem.getNumberOfComponents(); i++) {
+      String name = outletSystem.getComponent(i).getComponentName();
+      double ppm = outletSystem.getComponent(i).getz() * 1e6;
+      System.out.printf("%20s: %12.3f ppm\n", name, ppm);
+    }
+
+  }
+
+
 
   /**
    * Test adiabatic mode in GibbsReactor (PH flash at inlet enthalpy).
