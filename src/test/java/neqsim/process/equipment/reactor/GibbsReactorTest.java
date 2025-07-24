@@ -14,6 +14,67 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class GibbsReactorTest {
   /**
+   * Test sulfur formation from H2S and oxygen in methane, including SO2, SO3, H2SO4, and water.
+   */
+  @Test
+  public void testSulfurFormation() {
+    // Example: Claus process-like mixture
+    neqsim.thermo.system.SystemInterface system =
+        new neqsim.thermo.system.SystemSrkCPAstatoil(298.15, 1.0);
+    system.addComponent("methane", 1e6);
+    system.addComponent("H2S", 10);
+    system.addComponent("oxygen", 10);
+    system.addComponent("SO2", 0.0);
+    system.addComponent("SO3", 0.0);
+    system.addComponent("sulfuric acid", 0.0);
+    system.addComponent("water", 0.0);
+    system.addComponent("S", 0.0);
+    system.addComponent("S8", 0.0); 
+    system.setMixingRule(2);
+
+    // Create inlet stream
+    Stream inletStream = new Stream("Inlet Stream", system);
+    inletStream.setPressure(10, "bara");
+    inletStream.setTemperature(100, "C");
+    inletStream.run();
+    inletStream.getFluid().prettyPrint();
+
+    // Create GibbsReactor in isothermal mode
+    GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
+    reactor.setUseAllDatabaseSpecies(false);
+    reactor.setDampingComposition(0.001);
+    reactor.setMaxIterations(5000);
+    reactor.setConvergenceTolerance(1e-3);
+    reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
+
+    // Run the reactor
+    reactor.run();
+
+    SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
+    outletSystem.prettyPrint();
+
+    // Assert ppm values for each component (mole fraction * 1e6)
+    double ppm_methane = outletSystem.getComponent("methane").getz() * 1e6;
+    double ppm_h2s = outletSystem.getComponent("H2S").getz() * 1e6;
+    double ppm_oxygen = outletSystem.getComponent("oxygen").getz() * 1e6;
+    double ppm_so2 = outletSystem.getComponent("SO2").getz() * 1e6;
+    double ppm_so3 = outletSystem.getComponent("SO3").getz() * 1e6;
+    double ppm_h2so4 = outletSystem.getComponent("sulfuric acid").getz() * 1e6;
+    double ppm_water = outletSystem.getComponent("water").getz() * 1e6;
+    double ppm_s = outletSystem.getComponent("S").getz() * 1e6;
+
+    // Reference values from user table
+    Assertions.assertEquals(9.9998E5, ppm_methane, 1.0);
+    Assertions.assertEquals(3.87443E-5, ppm_h2s, 1e-5);
+    Assertions.assertEquals(9.9998E-16, ppm_oxygen, 1e-5);
+    Assertions.assertEquals(4.99996, ppm_so2, 1e-1);
+    Assertions.assertEquals(8.23446E-9, ppm_so3, 1e-5);
+    Assertions.assertEquals(9.9998E-16, ppm_h2so4, 1e-5);
+    Assertions.assertEquals(9.99977, ppm_water, 1e-1);
+    Assertions.assertEquals(4.9998, ppm_s, 1e-1);
+
+  }
+  /**
    * Test GibbsReactor with CPA model and ppm-level NO2, water, NO, HNO3, rest CO2.
    */
   @Test
@@ -224,8 +285,6 @@ public class GibbsReactorTest {
     Assertions.assertEquals(4.45723E-1, no, 0.1);
     Assertions.assertEquals(1.66995E-7, no2, 0.0001);
     Assertions.assertEquals(2.19702E-1, water, 0.01);
-
-
   }
 
 }
