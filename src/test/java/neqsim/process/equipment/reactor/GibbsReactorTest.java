@@ -13,6 +13,40 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class GibbsReactorTest {
+
+  /**
+   * Test that a component not found in the Gibbs database (e.g., TBPfraction) does not change
+   * moles.
+   */
+  @Test
+  public void testComponentNotInDatabaseMolesUnchanged() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    system.addComponent("methane", 0.05);
+    system.addComponent("oxygen", 0.5);
+    system.addComponent("CO2", 0.0);
+    system.addComponent("water", 0.0);
+    system.addTBPfraction("test", 0.5, 0.2, 0.6); // Component not in database
+    system.setMixingRule(2);
+
+    // Create inlet stream
+    Stream inletStream = new Stream("Inlet Stream", system);
+    inletStream.run();
+
+    // Create GibbsReactor
+    GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
+    reactor.setUseAllDatabaseSpecies(false);
+    reactor.setDampingComposition(0.01);
+    reactor.setMaxIterations(10000);
+    reactor.setConvergenceTolerance(1e-3);
+    reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
+
+    // Run the reactor
+    reactor.run();
+
+    // Assert that mass balance is converged
+    Assertions.assertTrue(reactor.getMassBalanceConverged(), "Mass balance should be converged for TBPfraction test");
+  }
+
   /**
    * Test sulfur formation from H2S and oxygen in methane, including SO2, SO3, H2SO4, and water.
    */
@@ -29,7 +63,7 @@ public class GibbsReactorTest {
     system.addComponent("sulfuric acid", 0.0);
     system.addComponent("water", 0.0);
     system.addComponent("S", 0.0);
-    system.addComponent("S8", 0.0); 
+    system.addComponent("S8", 0.0);
     system.setMixingRule(2);
 
     // Create inlet stream
@@ -74,6 +108,7 @@ public class GibbsReactorTest {
     Assertions.assertEquals(4.9998, ppm_s, 1e-1);
 
   }
+
   /**
    * Test GibbsReactor with CPA model and ppm-level NO2, water, NO, HNO3, rest CO2.
    */
@@ -81,8 +116,8 @@ public class GibbsReactorTest {
   public void testCO2model() {
     // Total moles = 1.0 for simplicity
     double totalMoles = 1e6;
-    double no2 = 100 ; // 370 ppm
-    double water = 160 ; // 130 ppm
+    double no2 = 100; // 370 ppm
+    double water = 160; // 130 ppm
     double no = 0.0;
     double hno3 = 0.0;
     double so2 = 80.0;

@@ -24,6 +24,31 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class GibbsReactor extends TwoPortEquipment {
+  /**
+   * Get the absolute mass balance error (difference between inlet and outlet) in kg/sec.
+   *
+   * @return absolute difference in total mass flow rate (kg/sec)
+   */
+  public double getMassBalanceError() {
+    try {
+      double inletMass = getInletStream().getThermoSystem().getFlowRate("kg/sec");
+      double outletMass = getOutletStream().getThermoSystem().getFlowRate("kg/sec");
+      return Math.abs(inletMass - outletMass);
+    } catch (Exception e) {
+      System.err.println("WARNING: Could not calculate mass balance error: " + e.getMessage());
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Returns true if the absolute mass balance error is less than 1e-3 kg/sec.
+   *
+   * @return true if mass balance is converged, false otherwise
+   */
+  public boolean getMassBalanceConverged() {
+    double error = getMassBalanceError();
+    return !Double.isNaN(error) && error < 1e-3;
+  }
   // Thread-local reusable system for fugacity calculations to minimize cloning
   private final ThreadLocal<neqsim.thermo.system.SystemInterface> tempFugacitySystem =
       new ThreadLocal<>();
@@ -603,6 +628,11 @@ public class GibbsReactor extends TwoPortEquipment {
     // Set outlet stream
     // getOutletStream().setThermoSystem(system);
     getOutletStream().run(id);
+
+    // Mass balance check at the end
+    if (!getMassBalanceConverged()) {
+      System.err.println("WARNING: Mass balance not converged in GibbsReactor. Consider decreasing the iteration step (damping factor) for better closure.");
+    }
   }
 
 
@@ -668,8 +698,9 @@ public class GibbsReactor extends TwoPortEquipment {
       // Get element composition from database
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
       if (comp == null) {
-        throw new IllegalArgumentException(
-            "Component '" + compName + "' not found in gibbsReactDatabase.");
+        System.err.println("WARNING: Component '" + compName
+            + "' not found in gibbsReactDatabase. Skipping element balance for this component.");
+        continue;
       }
       double[] elements = comp.getElements();
       for (int j = 0; j < elementNames.length; j++) {
@@ -705,8 +736,9 @@ public class GibbsReactor extends TwoPortEquipment {
       // Get Gibbs component
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
       if (comp == null) {
-        throw new IllegalArgumentException(
-            "Component '" + compName + "' not found in gibbsReactDatabase.");
+        System.err.println("WARNING: Component '" + compName
+            + "' not found in gibbsReactDatabase. Skipping objective function value for this component.");
+        continue;
       }
       // Calculate Gibbs energy of formation
       double Gf0 = comp.calculateGibbsEnergy(T, i);
@@ -778,8 +810,9 @@ public class GibbsReactor extends TwoPortEquipment {
       // Get element composition from database
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
       if (comp == null) {
-        throw new IllegalArgumentException(
-            "Component '" + compName + "' not found in gibbsReactDatabase.");
+        System.err.println("WARNING: Component '" + compName
+            + "' not found in gibbsReactDatabase. Skipping Lagrange multiplier contributions for this component.");
+        continue;
       }
       double[] elements = comp.getElements();
       double totalContribution = 0.0;
@@ -850,8 +883,9 @@ public class GibbsReactor extends TwoPortEquipment {
       Double molesOut = (i < outlet_mole.size()) ? outlet_mole.get(i) : 1E-6;
 
       if (comp == null) {
-        throw new IllegalArgumentException(
-            "Component '" + compName + "' not found in gibbsReactDatabase.");
+        System.err.println("WARNING: Component '" + compName
+            + "' not found in gibbsReactDatabase. Skipping detailed mole balance for this component.");
+        continue;
       }
       Map<String, Double> componentBalance = new HashMap<>();
       final double[] elements = comp.getElements(); // [O, N, C, H, S, Ar]
@@ -1119,10 +1153,15 @@ public class GibbsReactor extends TwoPortEquipment {
     boolean modified = false;
 
     for (int i = 0; i < system.getNumberOfComponents(); i++) {
+      String compName = system.getComponent(i).getComponentName();
+      // Only enforce minimum if component is in the Gibbs database
+      if (componentMap.get(compName.toLowerCase()) == null) {
+        continue;
+      }
       double currentMoles = system.getComponent(i).getNumberOfMolesInPhase();
 
       if (currentMoles < minConcentration) {
-        logger.info("Component " + system.getComponent(i).getComponentName()
+        logger.info("Component " + compName
             + " has very low concentration (" + currentMoles + "), setting to minimum: "
             + minConcentration);
         system.addComponent(i, minConcentration - currentMoles, 0);
@@ -1207,8 +1246,9 @@ public class GibbsReactor extends TwoPortEquipment {
       for (String compName : processedComponents) {
         GibbsComponent comp = componentMap.get(compName.toLowerCase());
         if (comp == null) {
-          throw new IllegalArgumentException(
-              "Component '" + compName + "' not found in gibbsReactDatabase.");
+          System.err.println("WARNING: Component '" + compName
+              + "' not found in gibbsReactDatabase. Skipping active element check for this component.");
+          continue;
         }
         double[] elements = comp.getElements();
         if (Math.abs(elements[elementIndex]) > 1E-6) {
@@ -1239,8 +1279,9 @@ public class GibbsReactor extends TwoPortEquipment {
       for (String compName : processedComponents) {
         GibbsComponent comp = componentMap.get(compName.toLowerCase());
         if (comp == null) {
-          throw new IllegalArgumentException(
-              "Component '" + compName + "' not found in gibbsReactDatabase.");
+          System.err.println("WARNING: Component '" + compName
+              + "' not found in gibbsReactDatabase. Skipping active element index check for this component.");
+          continue;
         }
         double[] elements = comp.getElements();
         if (Math.abs(elements[elementIndex]) > 1e-10) {
@@ -1364,6 +1405,12 @@ public class GibbsReactor extends TwoPortEquipment {
     System.out.println("\n=== Updating Outlet Compositions ===");
     deltaNorm = 0.0;
     for (int i = 0; i < numComponents; i++) {
+      String compName = processedComponents.get(i);
+      // Only update if component is in the Gibbs database
+      if (componentMap.get(compName.toLowerCase()) == null) {
+        // Not in database, skip update to keep moles unchanged
+        continue;
+      }
       double oldValue = outlet_mole.get(i);
       double deltaComposition = deltaX[i];
       double newValue = oldValue + deltaComposition * alphaComposition;
@@ -1374,7 +1421,7 @@ public class GibbsReactor extends TwoPortEquipment {
       outlet_mole.set(i, newValue);
 
       System.out.printf(" %s: %12.6e → %12.6e (Δ = %12.6e, α*Δ = %12.6e)%n",
-          processedComponents.get(i), oldValue, newValue, deltaComposition,
+          compName, oldValue, newValue, deltaComposition,
           deltaComposition * alphaComposition);
       deltaNorm += Math.pow(deltaComposition * alphaComposition, 2);
     }
@@ -1426,6 +1473,11 @@ public class GibbsReactor extends TwoPortEquipment {
       // Update component moles in the system
       for (int i = 0; i < processedComponents.size(); i++) {
         String compName = processedComponents.get(i);
+        // Only update if component is in the Gibbs database
+        if (componentMap.get(compName.toLowerCase()) == null) {
+          // Not in database, skip update to keep moles unchanged
+          continue;
+        }
         double newMoles = outlet_mole.get(i);
 
         // Find component index in system
