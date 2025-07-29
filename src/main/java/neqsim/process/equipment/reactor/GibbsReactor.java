@@ -336,7 +336,6 @@ public class GibbsReactor extends TwoPortEquipment {
      */
     public double calculateGibbsEnergy(double temperature, int compNumber) {
       double T = temperature;
-      double T0 = 298.15; // Reference temperature (K)
 
       // Calculate enthalpy at temperature T
       double H_T = calculateEnthalpy(T, compNumber);
@@ -345,9 +344,9 @@ public class GibbsReactor extends TwoPortEquipment {
       double S_T = calculateEntropy(T, compNumber);
 
       // Calculate Gibbs energy: G(T) = H(T) - T*S(T)
-      double G_T = H_T - T * S_T; // Convert S from J/(mol·K) to kJ/(mol·K)
+      double dG_T = (H_T - deltaHf298)  - T * (S_T - deltaSf298/1000.0); 
 
-      return G_T;
+      return deltaGf298 + dG_T;
     }
 
     /**
@@ -1402,8 +1401,8 @@ public class GibbsReactor extends TwoPortEquipment {
     int numActiveElements = activeElementIndices.size();
 
     if (deltaX.length != numComponents + numActiveElements) {
-      // logger.warn("Delta vector size mismatch: expected " + (numComponents + numActiveElements)
-      // + ", got " + deltaX.length);
+      logger.warn("Delta vector size mismatch: expected " + (numComponents + numActiveElements)
+      + ", got " + deltaX.length);
       return false;
     }
 
@@ -1519,7 +1518,7 @@ public class GibbsReactor extends TwoPortEquipment {
       return true;
 
     } catch (Exception e) {
-      // logger.error("Error updating system with new compositions: " + e.getMessage());
+      logger.error("Error updating system with new compositions: " + e.getMessage());
       return false;
     }
   }
@@ -1650,10 +1649,10 @@ public class GibbsReactor extends TwoPortEquipment {
     actualIterations = 0;
     finalConvergenceError = Double.MAX_VALUE;
 
-    // logger.info("Starting Gibbs equilibrium solution with Newton-Raphson iterations");
-    // logger.info("Maximum iterations: " + maxIterations);
-    // logger.info("Convergence tolerance: " + convergenceTolerance);
-    // logger.info("Composition step size: " + alphaComposition);
+    logger.info("Starting Gibbs equilibrium solution with Newton-Raphson iterations");
+    logger.info("Maximum iterations: " + maxIterations);
+    logger.info("Convergence tolerance: " + convergenceTolerance);
+    logger.info("Composition step size: " + alphaComposition);
 
     for (int iteration = 1; iteration <= maxIterations; iteration++) {
       actualIterations = iteration;
@@ -1672,8 +1671,8 @@ public class GibbsReactor extends TwoPortEquipment {
           double gibbs = comp.calculateGibbsEnergy(T, i);
           double enthalpy = comp.calculateEnthalpy(T, i);
           double entropy = comp.calculateEntropy(T, i);
-          logger.debug("Component: {}, GibbsEnergy: {:.6f} kJ/mol, Enthalpy: {:.6f} kJ/mol, Entropy: {:.6f} kJ/(mol·K)",
-              compName, gibbs, enthalpy, entropy);
+          logger.debug(String.format("Component: %s, GibbsEnergy: %.2f kJ/mol, Enthalpy: %.2f kJ/mol, Entropy: %.2f kJ/(mol·K)",
+              compName, gibbs, enthalpy, entropy));
         }
       }
 
@@ -1685,13 +1684,13 @@ public class GibbsReactor extends TwoPortEquipment {
       }
       fNorm = Math.sqrt(fNorm);
 
-      // logger.debug("Iteration " + iteration + ": F vector norm = " + fNorm);
+      logger.debug("Iteration " + iteration + ": F vector norm = " + fNorm);
 
       // Perform Newton-Raphson iteration step
       double[] deltaX = performNewtonRaphsonIteration();
 
       if (deltaX == null) {
-        // logger.warn("Newton-Raphson iteration failed at iteration " + iteration);
+        logger.warn("Newton-Raphson iteration failed at iteration " + iteration);
         finalConvergenceError = fNorm;
         return false;
       }
@@ -1703,7 +1702,7 @@ public class GibbsReactor extends TwoPortEquipment {
       }
       deltaXNorm = Math.sqrt(deltaXNorm);
 
-      // logger.debug("Iteration " + iteration + ": Delta vector norm = " + deltaXNorm);
+      logger.debug("Iteration " + iteration + ": Delta vector norm = " + deltaXNorm);
       logger.debug("deltaXNorm (full update vector): {}", deltaXNorm);
 
       if (energyMode == EnergyMode.ADIABATIC) {
@@ -1751,7 +1750,7 @@ public class GibbsReactor extends TwoPortEquipment {
       // Perform iteration update
       boolean updateSuccess = performIterationUpdate(deltaX, alphaComposition);
       if (!updateSuccess) {
-        // logger.warn("Iteration update failed at iteration " + iteration);
+        logger.warn("Iteration update failed at iteration " + iteration);
         finalConvergenceError = deltaXNorm;
         return false;
       }
@@ -1760,8 +1759,8 @@ public class GibbsReactor extends TwoPortEquipment {
     }
 
     // Maximum iterations reached without convergence
-    // logger.warn("Maximum iterations (" + maxIterations + ") reached without convergence");
-    // logger.warn("Final convergence error: " + finalConvergenceError);
+    logger.warn("Maximum iterations (" + maxIterations + ") reached without convergence");
+    logger.warn("Final convergence error: " + finalConvergenceError);
 
     return false;
   }
