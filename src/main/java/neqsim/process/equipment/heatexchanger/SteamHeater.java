@@ -9,13 +9,13 @@ import neqsim.thermo.util.steam.Iapws_if97;
 
 /**
  * Heater for process streams using condensing steam as heating medium.
- */
-public class SteamHeater extends Heater {
-
-  private static final Logger logger = LogManager.getLogger(SteamHeater.class);
-  private static final long serialVersionUID = 1000L;
-
-  private double steamInletTemperature = 453.15; // K
+  /**
+   * Sets the steam inlet temperature.
+   *
+   * @param temperature steam inlet temperature
+   * @param unit unit of temperature
+   */
+  public void setSteamInletTemperature(double temperature, String unit) {
   private double steamOutletTemperature = 373.15; // K
   private double steamPressure = 1.0; // bara
   private double steamFlowRate = 0.0; // kg/s
@@ -31,13 +31,13 @@ public class SteamHeater extends Heater {
 
   /**
    * Sets the steam inlet temperature.
+  /**
+   * Sets the steam outlet temperature.
    *
-   * @param temperature the steam inlet temperature
-   * @param unit the unit of temperature
+   * @param temperature steam outlet temperature
+   * @param unit unit of temperature
    */
-  /** Set inlet steam temperature. */
-  public void setSteamInletTemperature(double temperature, String unit) {
-    steamInletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
+  public void setSteamOutletTemperature(double temperature, String unit) {
   }
 
   /** Set outlet condensate temperature. */
@@ -47,13 +47,13 @@ public class SteamHeater extends Heater {
 
   /**
    * Sets the steam outlet temperature.
+  /**
+   * Sets the steam pressure.
    *
-   * @param temperature the steam outlet temperature
-   * @param unit the unit of temperature
+   * @param pressure steam pressure
+   * @param unit unit of pressure
    */
-  /** Set steam pressure. */
   public void setSteamPressure(double pressure, String unit) {
-    steamPressure = new neqsim.util.unit.PressureUnit(pressure, unit).getValue("bara");
   }
 
   public double getSteamFlowRate(String unit) {
