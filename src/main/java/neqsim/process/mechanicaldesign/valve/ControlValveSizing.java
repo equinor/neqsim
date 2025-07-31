@@ -173,9 +173,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   }
 
   /**
-   * Finds the outlet pressure for a given flow rate, Cv, valve opening, and inlet stream.
-   *
-   * @param Q Flow rate (units depend on phase type)
+   * Finds the outlet pressure for a given Cv, valve opening, and inlet stream.
+   * 
    * @param Cv Flow coefficient (for 100% opening) [USGPM/(psi)^0.5]
    * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
    * @param inletStream Inlet stream to the valve
