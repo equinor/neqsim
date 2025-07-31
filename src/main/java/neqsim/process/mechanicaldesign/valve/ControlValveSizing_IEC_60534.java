@@ -29,6 +29,10 @@ package neqsim.process.mechanicaldesign.valve;
 
 import java.util.HashMap;
 import java.util.Map;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.valve.ValveInterface;
+import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.system.SystemInterface;
 
 // THis class is based on the implementation in the fluids package from
 // see: https://fluids.readthedocs.io/tutorial.html#control-valve-sizing-introduction
@@ -39,7 +43,7 @@ import java.util.Map;
  *
  * @author ESOL
  */
-public class ControlValveSizing_IEC_60534 {
+public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   // Constants
   /** Constant for liquids (m^3/hr, kPa). */
   private static final double N1 = 0.1;
@@ -47,14 +51,109 @@ public class ControlValveSizing_IEC_60534 {
   private static final double N9 = 2.46E1;
   /** Water density at 288.15 K. */
   private static final double rho0 = 999.10329075702327;
+
+  public static double getN1() {
+    return N1;
+  }
+
+  public static double getN9() {
+    return N9;
+  }
+
+  public double getFL() {
+    return FL;
+  }
+
+  public void setFL(double fL) {
+    FL = fL;
+  }
+
+  public double getFD() {
+    return FD;
+  }
+
+  public void setFD(double fD) {
+    FD = fD;
+  }
+
+  public double getD1() {
+    return D1;
+  }
+
+  public void setD1(double d1) {
+    D1 = d1;
+  }
+
+  public double getD2() {
+    return D2;
+  }
+
+  public void setD2(double d2) {
+    D2 = d2;
+  }
+
+  public double getD() {
+    return d;
+  }
+
+  public void setD(double d) {
+    this.d = d;
+  }
+
   /** Gas constant [J/(mol*K)]. */
   private static final double R = 8.314;
+
+  public double FL = 1.0; // liquid pressure recovery factor
+  public double FD = 1.0; // valve style modifier
+  public double xT = 0.137; // pressure drop ratio factor for gas
+
+  public double D1 = 1.0; // upstream pipe diameter
+  public double D2 = 1.0; // downstream pipe diameter
+  public double d = 1.0; // valve diameter
+
+  public ControlValveSizing_IEC_60534() {
+    super();
+  }
+
+  public ControlValveSizing_IEC_60534(ValveMechanicalDesign valveMechanicalDesign) {
+    super(valveMechanicalDesign);
+  }
 
   /**
    * Enum representing the type of fluid.
    */
   public enum FluidType {
     LIQUID, GAS
+  }
+
+  /**
+   * Calculates the valve size based on the fluid properties and operating conditions.
+   *
+   * @return a map containing the calculated valve size and related parameters. If fullOutput is
+   *         false, the map will be null.
+   */
+  public Map<String, Object> calcValveSize() {
+    // valveSizing.
+    SystemInterface fluid = valveMechanicalDesign.getProcessEquipment().getFluid();
+
+    Map<String, Object> result = valveMechanicalDesign.fullOutput ? new HashMap<>() : null;
+
+    if (fluid.hasPhaseType(PhaseType.GAS)) {
+      result = sizeControlValveGas(fluid.getTemperature("K"), fluid.getMolarMass("gr/mol"),
+          fluid.getViscosity("kg/msec"), fluid.getGamma2(), fluid.getZ(),
+          ((ValveInterface) valveMechanicalDesign.getProcessEquipment()).getInletPressure() * 1e5,
+          ((ValveInterface) valveMechanicalDesign.getProcessEquipment()).getOutletPressure() * 1e5,
+          fluid.getFlowRate("Sm3/sec"), diameterInlet, diameterOutlet, diameter, FL, FD, xT,
+          allowChoked, allowLaminar, true);
+    } else {
+      result = sizeControlValveLiquid(fluid.getDensity("kg/m3"), 1.0 * 1e5,
+          fluid.getPhase(0).getPseudoCriticalPressure() * 1e5, fluid.getViscosity("kg/msec"),
+          ((ValveInterface) valveMechanicalDesign.getProcessEquipment()).getInletPressure() * 1e5,
+          ((ValveInterface) valveMechanicalDesign.getProcessEquipment()).getOutletPressure() * 1e5,
+          fluid.getFlowRate("kg/sec") / fluid.getDensity("kg/m3"), diameterInlet, diameterOutlet,
+          diameter, FL, FD, allowChoked, allowLaminar, true);
+    }
+    return result;
   }
 
   /**
@@ -80,10 +179,10 @@ public class ControlValveSizing_IEC_60534 {
    * @param fullOutput whether to return full output
    * @return a map containing the sizing results
    */
-  public static Map<String, Object> sizeControlValve(FluidType type, double rhoOrT, double MW,
-      double mu, double gammaOrPsat, double ZOrPc, double P1, double P2, double Q, Double D1,
-      Double D2, Double d, double FL, double Fd, double xTOrNone, boolean allowChoked,
-      boolean allowLaminar, boolean fullOutput) {
+  public Map<String, Object> sizeControlValve(FluidType type, double rhoOrT, double MW, double mu,
+      double gammaOrPsat, double ZOrPc, double P1, double P2, double Q, Double D1, Double D2,
+      Double d, double FL, double Fd, double xTOrNone, boolean allowChoked, boolean allowLaminar,
+      boolean fullOutput) {
     Map<String, Object> result = fullOutput ? new HashMap<>() : null;
 
     if (type == FluidType.LIQUID) {
@@ -117,9 +216,9 @@ public class ControlValveSizing_IEC_60534 {
    * @param fullOutput whether to return full output
    * @return a map containing the sizing results
    */
-  public static Map<String, Object> sizeControlValveLiquid(double rho, double Psat, double Pc,
-      double mu, double P1, double P2, double Q, Double D1, Double D2, Double d, double FL,
-      double Fd, boolean allowChoked, boolean allowLaminar, boolean fullOutput) {
+  public Map<String, Object> sizeControlValveLiquid(double rho, double Psat, double Pc, double mu,
+      double P1, double P2, double Q, Double D1, Double D2, Double d, double FL, double Fd,
+      boolean allowChoked, boolean allowLaminar, boolean fullOutput) {
     Map<String, Object> ans = fullOutput ? new HashMap<>() : null;
 
     double locP1 = P1 / 1000.0;
@@ -127,6 +226,14 @@ public class ControlValveSizing_IEC_60534 {
     double locPsat = Psat / 1000.0;
     double locPc = Pc / 1000.0;
     double Qloc = Q * 3600.0;
+    this.FL = FL;
+    this.FD = Fd;
+    this.allowChoked = allowChoked;
+    this.allowLaminar = allowLaminar;
+    this.fullOutput = fullOutput;
+    this.D1 = D1 != null ? D1 : 1.0;
+    this.D2 = D2 != null ? D2 : 1.0;
+    this.d = d != null ? d : 1.0;
 
     double nu = mu / rho; // Kinematic viscosity
     double dP = locP1 - locP2;
@@ -148,6 +255,35 @@ public class ControlValveSizing_IEC_60534 {
   }
 
   /**
+   * Calculates the flow rate through a control valve based on the valve opening, Cv, and
+   * inlet/outlet streams.
+   *
+   * @param Cv Flow coefficient (for 100% opening) [USGPM/(psi)^0.5]
+   * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
+   * @param inletStream Inlet stream to the valve
+   * @param outletStream Outlet stream from the valve
+   * @return Calculated flow rate (units depend on phase type)
+   */
+  public double calculateFlowRateFromValveOpening(double Cv, double valveOpening,
+      StreamInterface inletStream, StreamInterface outletStream) {
+    if (inletStream.getThermoSystem().hasPhaseType(PhaseType.GAS)) {
+      return calculateFlowRateFromValveOpeningGas(Cv, valveOpening, inletStream, outletStream);
+    } else {
+      return calculateFlowRateFromValveOpeningLiquid(Cv, valveOpening, inletStream, outletStream);
+    }
+  }
+
+  public double calculateFlowRateFromValveOpeningGas(double Cv, double valveOpening,
+      StreamInterface inletStream, StreamInterface outletStream) {
+    return calculateFlowRateFromCvAndValveOpeningGas(Cv, valveOpening,
+        inletStream.getThermoSystem().getTemperature("K"),
+        inletStream.getThermoSystem().getMolarMass("gr/mol"),
+        inletStream.getThermoSystem().getViscosity("kg/msec"),
+        inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(),
+        inletStream.getPressure("Pa"), outletStream.getPressure("Pa"), FL, xT, allowChoked);
+  }
+
+  /**
    * Calculates the flow rate for a control valve based on the valve opening and given Cv.
    *
    * @param valveOpening percentage of valve opening (0 to 100)
@@ -163,8 +299,8 @@ public class ControlValveSizing_IEC_60534 {
    * @param allowChoked whether to allow choked flow
    * @return the calculated flow rate in m^3/s
    */
-  public static double calculateFlowRateFromValveOpeningLiquid(double valveOpening, double Cv,
-      double rho, double Psat, double Pc, double mu, double P1, double P2, double FL, double Fd,
+  public double calculateFlowRateFromValveOpeningLiquid(double valveOpening, double Cv, double rho,
+      double Psat, double Pc, double mu, double P1, double P2, double FL, double Fd,
       boolean allowChoked) {
     // Validate input for valve opening
     if (valveOpening < 0 || valveOpening > 100) {
@@ -200,6 +336,17 @@ public class ControlValveSizing_IEC_60534 {
     return Qloc / 3600.0;
   }
 
+  public double calculateFlowRateFromValveOpeningLiquid(double Cv, double valveOpening,
+      StreamInterface inletStream, StreamInterface outletStream) {
+
+    return calculateFlowRateFromValveOpeningLiquid(valveOpening, Cv,
+        inletStream.getThermoSystem().getDensity("kg/m3"),
+        inletStream.getThermoSystem().getPhase(0).getPressure("Pa"),
+        inletStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
+        inletStream.getThermoSystem().getViscosity("kg/msec"), inletStream.getPressure("Pa"),
+        outletStream.getPressure("Pa"), FL, FD, allowChoked);
+  }
+
   /**
    * Calculates the valve opening percentage based on the flow rate and Cv.
    *
@@ -216,7 +363,7 @@ public class ControlValveSizing_IEC_60534 {
    * @param allowChoked whether to allow choked flow
    * @return the valve opening percentage (0 to 100%)
    */
-  public static double calculateValveOpeningFromFlowRateLiquid(double Q, double Cv, double rho,
+  public double calculateValveOpeningFromFlowRateLiquid(double Q, double Cv, double rho,
       double Psat, double Pc, double mu, double P1, double P2, double FL, double Fd,
       boolean allowChoked) {
     // Constants
@@ -260,6 +407,17 @@ public class ControlValveSizing_IEC_60534 {
     return valveOpening;
   }
 
+
+  public double calculateValveOpeningFromFlowRateLiquid(double Q, double Cv, double valveOpening,
+      StreamInterface inletStream, StreamInterface outletStream) {
+    return calculateValveOpeningFromFlowRateLiquid(Q, Cv,
+        inletStream.getThermoSystem().getDensity("kg/m3"),
+        inletStream.getThermoSystem().getPhase(0).getPressure("Pa"),
+        inletStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
+        inletStream.getThermoSystem().getViscosity("kg/msec"), inletStream.getPressure("Pa"),
+        outletStream.getPressure("Pa"), FL, FD, allowChoked);
+  }
+
   /**
    * Finds the outlet pressure for a given flow rate Q and a fixed (actual) Cv in a liquid valve, by
    * iterating around your existing sizeControlValveLiquid(...) method.
@@ -277,8 +435,8 @@ public class ControlValveSizing_IEC_60534 {
    * @param allowLaminar whether to allow laminar flow
    * @return outlet pressure P2 [Pa]
    */
-  public static double findOutletPressureForFixedCvLiquid(double rho, double Psat, double Pc,
-      double mu, double P1, double Q, double actualCv, double FL, double Fd, boolean allowChoked,
+  public double findOutletPressureForFixedCvLiquid(double rho, double Psat, double Pc, double mu,
+      double P1, double Q, double actualCv, double FL, double Fd, boolean allowChoked,
       boolean allowLaminar) {
     // Convert upstream pressure to bar
     double locP1 = P1 / 1e3; // [bar]
@@ -308,13 +466,12 @@ public class ControlValveSizing_IEC_60534 {
 
       // Compare required Cv vs. actualCv:
       if (requiredCv < actualCv) {
-        // The valve "demands" more Cv than we actually have
-        // => means the guess dP is too large for that flow (or the flow is too big),
-        // => to reduce requiredCv, we must raise P2 => reduce deltaP
+        // The installed Cv is larger than required for the given flow and pressure drop.
+        // This means we can increase the outlet pressure (raise P2) to reduce the pressure drop.
         locP2_low = locP2mid;
       } else {
-        // requiredCv <= actualCv => we can pass that flow
-        // => we might be able to drop P2 further
+        // The required Cv is greater than or equal to the installed Cv.
+        // This means the pressure drop is too small for the desired flow, so we need to lower P2.
         locP2_high = locP2mid;
       }
 
@@ -335,6 +492,16 @@ public class ControlValveSizing_IEC_60534 {
 
     // Return final guess in Pa
     return locP2mid * 1e3;
+  }
+
+
+  public double findOutletPressureForFixedCvLiquid(double Cv, double valveOpening,
+      StreamInterface inletStream) {
+    return findOutletPressureForFixedCvLiquid(inletStream.getThermoSystem().getDensity("kg/m3"),
+        inletStream.getThermoSystem().getPhase(0).getPressure("Pa"),
+        inletStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
+        inletStream.getThermoSystem().getViscosity("kg/msec"), inletStream.getPressure("Pa"),
+        inletStream.getFlowRate("kg/sec"), Cv, FL, FD, allowChoked, allowLaminar);
   }
 
   /**
@@ -359,10 +526,9 @@ public class ControlValveSizing_IEC_60534 {
    * @param fullOutput whether to return full output
    * @return a map containing the sizing results
    */
-  public static Map<String, Object> sizeControlValveGas(double T, double MW, double mu,
-      double gamma, double Z, double P1, double P2, double Q, Double D1, Double D2, Double d,
-      double FL, double Fd, double xT, boolean allowChoked, boolean allowLaminar,
-      boolean fullOutput) {
+  public Map<String, Object> sizeControlValveGas(double T, double MW, double mu, double gamma,
+      double Z, double P1, double P2, double Q, Double D1, Double D2, Double d, double FL,
+      double Fd, double xT, boolean allowChoked, boolean allowLaminar, boolean fullOutput) {
     Map<String, Object> ans = fullOutput ? new HashMap<>() : null;
 
     // Convert units
@@ -384,6 +550,9 @@ public class ControlValveSizing_IEC_60534 {
 
     double C = choked && allowChoked ? Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / xT / Fgamma)
         : Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / x);
+    if (!allowChoked && choked) {
+      choked = false;
+    }
     if (fullOutput) {
       ans.put("choked", choked);
       ans.put("Y", Y);
@@ -411,9 +580,9 @@ public class ControlValveSizing_IEC_60534 {
    * @param allowChoked whether to allow choked flow
    * @return the calculated flow rate in m^3/s
    */
-  public static double calculateFlowRateFromCvAndValveOpeningGas(double Cv, double valveOpening,
-      double T, double MW, double mu, double gamma, double Z, double P1, double P2, double FL,
-      double xT, boolean allowChoked) {
+  public double calculateFlowRateFromCvAndValveOpeningGas(double Cv, double valveOpening, double T,
+      double MW, double mu, double gamma, double Z, double P1, double P2, double FL, double xT,
+      boolean allowChoked) {
     // Validate input for valve opening
     if (valveOpening < 0 || valveOpening > 100) {
       throw new IllegalArgumentException("Valve opening must be between 0 and 100%");
@@ -449,6 +618,16 @@ public class ControlValveSizing_IEC_60534 {
     return Qloc / 3600.0;
   }
 
+  public double calculateFlowRateFromCvAndValveOpeningGas(double Cv, double valveOpening,
+      StreamInterface inletStream, StreamInterface outletStream) {
+    return calculateFlowRateFromCvAndValveOpeningGas(Cv, valveOpening,
+        inletStream.getThermoSystem().getTemperature("K"),
+        inletStream.getThermoSystem().getMolarMass("g/mol"),
+        inletStream.getThermoSystem().getViscosity("kg/msec"),
+        inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(),
+        inletStream.getPressure("Pa"), outletStream.getPressure("Pa"), FL, FD, allowChoked);
+  }
+
   /**
    * Calculates the valve opening percentage for gas based on the flow rate and Cv.
    *
@@ -466,8 +645,8 @@ public class ControlValveSizing_IEC_60534 {
    * @param allowChoked whether to allow choked flow
    * @return the valve opening percentage (0 to 100%)
    */
-  public static double calculateValveOpeningFromFlowRateGas(double Q, double Cv, double T,
-      double MW, double mu, double gamma, double Z, double P1, double P2, double FL, double xT,
+  public double calculateValveOpeningFromFlowRateGas(double Q, double Cv, double T, double MW,
+      double mu, double gamma, double Z, double P1, double P2, double FL, double xT,
       boolean allowChoked) {
     // Convert pressures to bar
     double locP1 = P1 / 1000.0;
@@ -509,6 +688,16 @@ public class ControlValveSizing_IEC_60534 {
     return valveOpening;
   }
 
+  public double calculateValveOpeningFromFlowRateGas(double Q, double Cv, double valveOpening,
+      StreamInterface inletStream, StreamInterface outletStream) {
+    return calculateValveOpeningFromFlowRateGas(Q, Cv,
+        inletStream.getThermoSystem().getTemperature("K"),
+        inletStream.getThermoSystem().getMolarMass("g/mol"),
+        inletStream.getThermoSystem().getViscosity("kg/msec"),
+        inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(),
+        inletStream.getPressure("Pa"), outletStream.getPressure("Pa"), FL, FD, allowChoked);
+  }
+
   /**
    * <p>
    * findOutletPressureForFixedCvGas.
@@ -526,11 +715,11 @@ public class ControlValveSizing_IEC_60534 {
    * @param allowChoked a boolean
    * @return a double
    */
-  public static double findOutletPressureForFixedCvGas(double T, double MW, double mu, double gamma,
+  public double findOutletPressureForFixedCvGas(double T, double MW, double mu, double gamma,
       double Z, double P1, double Q, // known upstream pressure & desired flow
       double actualCv, // the actual installed valve's Cv
       double xT, boolean allowChoked) {
-    double locP1 = P1 / 1e3; // bar
+    double locP1 = P1;
     double locP2_low = 0.001; // lower bound ~ near vacuum [bar]
     double locP2_high = locP1 - 1e-4; // just below P1
     double tolerance = 1e-6;
@@ -540,23 +729,23 @@ public class ControlValveSizing_IEC_60534 {
       // call sizeControlValveGas for guess of P2mid
       Map<String, Object> result = sizeControlValveGas(T, MW, mu, gamma, Z,
           // P1 in Pa, P2 guess in Pa
-          P1, locP2mid * 1e3, Q, 0.1, 0.1, 0.1, 1.0, 1.0, xT, allowChoked, false, true);
+          P1, locP2mid, Q, 0.1, 0.1, 0.1, 1.0, 1.0, xT, true, true, true);
       double requiredCv = (double) result.get("Cv");
 
-      // see how it compares to our actual Cv
+      // Compare required Cv vs. actualCv:
       if (requiredCv < actualCv) {
-        // we need more Cv than we have => flow is too big =>
-        // or we must reduce deltaP => raise P2
+        // The installed Cv is larger than required for the given flow and pressure drop.
+        // This means we can increase the outlet pressure (raise P2) to reduce the pressure drop.
         locP2_low = locP2mid;
       } else {
-        // requiredCv <= actualCv => we can pass that flow with our valve =>
-        // maybe we can drop P2 further
+        // The required Cv is greater than or equal to the installed Cv.
+        // This means the pressure drop is too small for the desired flow, so we need to lower P2.
         locP2_high = locP2mid;
       }
       double oldMid = locP2mid;
       locP2mid = 0.5 * (locP2_low + locP2_high);
       // System.out.println("P2mid: " + locP2mid + " Cv " + requiredCv + " actual Cv " + actualCv);
-      if (Math.abs(locP2mid - oldMid) < tolerance)
+      if (Math.abs(locP2mid - oldMid) / locP2mid < tolerance)
         break;
     }
 
@@ -564,27 +753,36 @@ public class ControlValveSizing_IEC_60534 {
     return locP2mid * 1e3;
   }
 
-  private static boolean isChokedTurbulentL(double dP, double P1, double Psat, double FF,
-      double FL) {
+  public double findOutletPressureForFixedCvGas(double Cv, double valveOpening,
+      StreamInterface inletStream) {
+    return findOutletPressureForFixedCvGas(inletStream.getThermoSystem().getTemperature("K"),
+        inletStream.getThermoSystem().getMolarMass("g/mol"),
+        inletStream.getThermoSystem().getViscosity("kg/msec"),
+        inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(),
+        inletStream.getPressure("Pa"), inletStream.getFlowRate("Sm3/sec"), Cv, xT, allowChoked);
+  }
+
+  private boolean isChokedTurbulentL(double dP, double P1, double Psat, double FF, double FL) {
     return dP >= FL * FL * (P1 - FF * Psat);
   }
 
-  private static boolean isChokedTurbulentG(double x, double Fgamma, double xT) {
+  private boolean isChokedTurbulentG(double x, double Fgamma, double xT) {
     return x >= Fgamma * xT;
   }
 
-  private static double ffCriticalPressureRatioL(double Psat, double Pc) {
+  private double ffCriticalPressureRatioL(double Psat, double Pc) {
     return 0.96 - 0.28 * Math.sqrt(Psat / Pc);
   }
 
   // Kv to Cv Conversion
-  private static double Kv_to_Cv(double Kv) {
+  private double Kv_to_Cv(double Kv) {
     return 1.156 * Kv;
   }
 
   // Cv to Kv Conversion
-  private static double Cv_to_Kv(double Cv) {
+  private double Cv_to_Kv(double Cv) {
     return 0.864 * Cv;
   }
+
 }
 
