@@ -1,8 +1,8 @@
 package neqsim.process.equipment.heatexchanger;
 
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import java.util.UUID;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.util.steam.Iapws_if97;
@@ -29,6 +29,12 @@ public class SteamHeater extends Heater {
     setWaterModel();
   }
 
+  /**
+   * Sets the steam inlet temperature.
+   *
+   * @param temperature the steam inlet temperature
+   * @param unit the unit of temperature
+   */
   /** Set inlet steam temperature. */
   public void setSteamInletTemperature(double temperature, String unit) {
     steamInletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
@@ -39,6 +45,12 @@ public class SteamHeater extends Heater {
     steamOutletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
+  /**
+   * Sets the steam outlet temperature.
+   *
+   * @param temperature the steam outlet temperature
+   * @param unit the unit of temperature
+   */
   /** Set steam pressure. */
   public void setSteamPressure(double pressure, String unit) {
     steamPressure = new neqsim.util.unit.PressureUnit(pressure, unit).getValue("bara");
@@ -48,6 +60,12 @@ public class SteamHeater extends Heater {
     return new neqsim.util.unit.RateUnit(steamFlowRate, "kg/sec", 1.0, 1.0, 0.0).getValue(unit);
   }
 
+  /**
+   * Sets the steam pressure.
+   *
+   * @param pressure the steam pressure
+   * @param unit the unit of pressure
+   */
   private void setWaterModel() {
     if (inStream != null) {
       inStream.getThermoSystem().setPhysicalPropertyModel(PhysicalPropertyModel.WATER);
