@@ -1,8 +1,8 @@
 package neqsim.process.equipment.heatexchanger;
 
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import java.util.UUID;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.util.steam.Iapws_if97;
@@ -29,21 +29,42 @@ public class SteamHeater extends Heater {
     setWaterModel();
   }
 
-  /** Set inlet steam temperature. */
+  /**
+   * Set inlet steam temperature.
+   *
+   * @param temperature the steam inlet temperature
+   * @param unit the unit of temperature
+   */
   public void setSteamInletTemperature(double temperature, String unit) {
     steamInletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
-  /** Set outlet condensate temperature. */
+  /**
+   * Set outlet condensate temperature.
+   *
+   * @param temperature the steam outlet temperature
+   * @param unit the unit of temperature
+   */
   public void setSteamOutletTemperature(double temperature, String unit) {
     steamOutletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
-  /** Set steam pressure. */
+  /**
+   * Set steam pressure.
+   *
+   * @param pressure the steam pressure
+   * @param unit the unit of pressure
+   */
   public void setSteamPressure(double pressure, String unit) {
     steamPressure = new neqsim.util.unit.PressureUnit(pressure, unit).getValue("bara");
   }
 
+  /**
+   * Get the steam flow rate.
+   *
+   * @param unit the unit of flow rate
+   * @return the steam flow rate in the specified unit
+   */
   public double getSteamFlowRate(String unit) {
     return new neqsim.util.unit.RateUnit(steamFlowRate, "kg/sec", 1.0, 1.0, 0.0).getValue(unit);
   }
