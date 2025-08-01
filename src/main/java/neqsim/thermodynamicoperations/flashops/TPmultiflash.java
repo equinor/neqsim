@@ -212,6 +212,9 @@ public class TPmultiflash extends TPflash {
         if (currBeta < phaseFractionMinimumLimit) {
           system.setBeta(k, phaseFractionMinimumLimit);
           if (checkOneRemove) {
+            if (system.getPhase(k).getType() == PhaseType.GAS) {
+              system.setPhaseType(k, PhaseType.LIQUID);
+            }
             checkOneRemove = false;
             removePhase = true;
           }
@@ -1376,6 +1379,7 @@ public class TPmultiflash extends TPflash {
       double chemdev = 0;
       int iterOut = 0;
       double maxerr = 1e-12;
+
       do {
         iterOut++;
         if (system.isChemicalSystem()) {
