@@ -340,14 +340,15 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     double enthalpy = thermoSystem.getEnthalpy();
 
     double outPres = getOutletStream().getThermoSystem().getPressure();
+    pressure = outPres;
     double deltaP = Math.max(inStream.getPressure() - outPres, 0.0);
 
-    if ((thermoSystem.getPressure(pressureUnit) - pressure) < 0) {
+    if ((thermoSystem.getPressure(pressureUnit) - outPres) < 0) {
       if (isAcceptNegativeDP()) {
-        thermoSystem.setPressure(pressure, pressureUnit);
+        thermoSystem.setPressure(outPres, pressureUnit);
       }
     } else {
-      thermoSystem.setPressure(pressure, pressureUnit);
+      thermoSystem.setPressure(outPres, pressureUnit);
     }
 
     if (getSpecification().equals("out stream")) {
