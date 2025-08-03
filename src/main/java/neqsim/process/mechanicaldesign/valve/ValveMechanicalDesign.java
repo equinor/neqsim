@@ -39,7 +39,16 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   boolean allowChoked = false;
   boolean allowLaminar = true;
   boolean fullOutput = true;
-  String valveSizingStandard = "IEC 60534";
+  String valveSizingStandard = "default";// IEC 60534";
+
+  public String getValveSizingStandard() {
+    return valveSizingStandard;
+  }
+
+  public void setValveSizingStandard(String valveSizingStandard) {
+    this.valveSizingStandard = valveSizingStandard;
+  }
+
   ControlValveSizingInterface valveSizingMethod = null;
 
   /**
@@ -76,6 +85,8 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     // valveSizing.
     if (valveSizingStandard.equals("IEC 60534")) {
       valveSizingMethod = new ControlValveSizing_IEC_60534(this);
+    } else if (valveSizingStandard.equals("IEC 60534 full")) {
+      valveSizingMethod = new ControlValveSizing_IEC_60534_full(this);
     } else {
       valveSizingMethod = new ControlValveSizing(this);
     }

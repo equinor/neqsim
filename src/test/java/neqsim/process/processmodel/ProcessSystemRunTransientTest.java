@@ -22,6 +22,8 @@ import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.thermo.system.SystemInterface;
 
 public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
+  private static final org.apache.logging.log4j.Logger logger =
+      org.apache.logging.log4j.LogManager.getLogger(ProcessSystemRunTransientTest.class);
   ProcessSystem p;
 
   @BeforeEach
@@ -817,5 +819,104 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     p.runTransient(12.0);
     compPower2 = compressor1.getPower("kW");
     assertEquals(2.026475997140712, compPower1 - compPower2, 0.0001);
+  }
+
+
+  @Test
+  public void testDynamicCalculation1() {
+    neqsim.thermo.system.SystemSrkEos fluid1 =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    fluid1.addComponent("methane", 0.900);
+    fluid1.addComponent("ethane", 0.100);
+    fluid1.addComponent("n-heptane", 1.00);
+    fluid1.addComponent("nC10", 0.0);
+    fluid1.setMixingRule("classic");
+
+    neqsim.process.equipment.stream.Stream stream1 =
+        new neqsim.process.equipment.stream.Stream("Stream1", fluid1);
+    stream1.setFlowRate(51.0, "kg/hr");
+    stream1.setPressure(10.0, "bara");
+    stream1.setCalculateSteadyState(true);
+
+    neqsim.process.equipment.valve.ThrottlingValve valve1 =
+        new neqsim.process.equipment.valve.ThrottlingValve("valve_1", stream1);
+    valve1.setOutletPressure(5.0);
+    valve1.setPercentValveOpening(30.0);
+    valve1.setCalculateSteadyState(false);
+
+    neqsim.process.equipment.separator.Separator separator1 =
+        new neqsim.process.equipment.separator.Separator("separator_1");
+    separator1.addStream(valve1.getOutletStream());
+    separator1.setSeparatorLength(10.3);
+    separator1.setInternalDiameter(0.2);
+    separator1.setLiquidLevel(0.5);
+    separator1.setCalculateSteadyState(false);
+
+
+    neqsim.process.equipment.valve.ThrottlingValve valve2 =
+        new neqsim.process.equipment.valve.ThrottlingValve("valve_2",
+            separator1.getLiquidOutStream());
+    valve2.setOutletPressure(1.0);
+    valve2.setPercentValveOpening(30.0);
+    valve2.setCalculateSteadyState(false);
+
+    neqsim.process.equipment.valve.ThrottlingValve valve3 =
+        new neqsim.process.equipment.valve.ThrottlingValve("valve_3", separator1.getGasOutStream());
+    valve3.setOutletPressure(1.0);
+    valve3.setPercentValveOpening(30.0);
+    valve3.setCalculateSteadyState(false);
+
+    neqsim.process.measurementdevice.VolumeFlowTransmitter flowTransmitter =
+        new neqsim.process.measurementdevice.VolumeFlowTransmitter(stream1);
+    flowTransmitter.setUnit("kg/hr");
+    flowTransmitter.setMaximumValue(100.0);
+    flowTransmitter.setMinimumValue(1.0);
+
+
+    neqsim.process.processmodel.ProcessSystem p = new neqsim.process.processmodel.ProcessSystem();
+    p.add(stream1);
+    p.add(valve1);
+    p.add(separator1);
+    p.add(valve2);
+    p.add(valve3);
+    p.add(flowTransmitter);
+
+    p.run();
+
+    assertEquals(3.082204981, valve1.getCv("SI"), 1e-3);
+    assertEquals(0.02608207510602, valve2.getCv("SI"), 1e-3);
+    assertEquals(1.99388831, valve3.getCv("SI"), 1e-3);
+
+    assertEquals(3.082204981, valve1.getCv("US"), 1e-3);
+    assertEquals(0.02608207510602, valve2.getCv("US"), 1e-3);
+    assertEquals(1.99388831, valve3.getCv("US"), 1e-3);
+
+    logger.debug("sep pres {}", separator1.getPressure("bara"));
+
+    double deltaTsec = 10.0;
+    p.runTransient(deltaTsec);
+
+    logger.debug("sep pres {}", separator1.getPressure("bara"));
+
+    for (int i = 0; i < 10; i++) {
+      logger.debug(
+          "time {} sep pres {} valve1 opening {} valve2 opening {} valve3 opening {} flow {}", i,
+          separator1.getPressure("bara"), valve1.getPercentValveOpening(),
+          valve2.getPercentValveOpening(), valve3.getPercentValveOpening(),
+          flowTransmitter.getMeasuredValue());
+      p.runTransient(deltaTsec);
+    }
+
+    valve1.setPercentValveOpening(10.0);
+
+    for (int i = 0; i < 100; i++) {
+      logger.debug(
+          "time {} sep pres {} valve1 opening {} valve2 opening {} valve3 opening {} liq_level {} flow {}",
+          i, separator1.getPressure("bara"), valve1.getPercentValveOpening(),
+          valve2.getPercentValveOpening(), valve3.getPercentValveOpening(),
+          separator1.getLiquidLevel(), flowTransmitter.getMeasuredValue());
+      p.runTransient(deltaTsec);
+    }
+
   }
 }

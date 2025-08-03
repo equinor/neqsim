@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 
 public class ThrottlingValveTest {
   /**
@@ -24,25 +25,29 @@ public class ThrottlingValveTest {
     testSystem2.setMixingRule(2);
 
     Stream stream1 = new Stream("Stream1", testSystem2);
-    stream1.setFlowRate(7000, "Sm3/hr");
+    stream1.setFlowRate(7000.0, "Sm3/hr");
     stream1.setPressure(10.0, "bara");
-    stream1.setTemperature(55.0, "C");
+    stream1.setTemperature(20.0, "C");
     stream1.run();
 
     ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
-    valve1.setOutletPressure(5.0);
+    ((ValveMechanicalDesign) valve1.getMechanicalDesign()).setValveSizingStandard("IEC 60534");
+    valve1.setOutletPressure(9.0);
     valve1.setPercentValveOpening(100);
+    valve1.getMechanicalDesign().getValveSizingMethod().setxT(0.13);
+    valve1.setCalculateSteadyState(false);
+
     valve1.run();
     assertEquals(7000.0000000, valve1.getOutletStream().getFlowRate("Sm3/hr"), 7000 / 100);
-    assertEquals(870.9206, valve1.getCv(), 1e-2);
+    assertEquals(8.4009726982, valve1.getCv(), 1e-2);
 
     Map<String, Object> result = valve1.getMechanicalDesign().calcValveSize();
     double Cv = (double) result.get("Cv");
-    assertEquals(50.339544308, Cv, 1e-2);
+    assertEquals(10.78855032, Cv, 1e-2);
 
     // assertEquals(50.34619045, valve1.getCv(), 1e-2);
-    assertEquals(26127.620294, valve1.getCg(), 1e-2);
-    assertEquals(870.920676, valve1.getCv("SI"), 1e-2);
+    assertEquals(252.02918, valve1.getCg(), 1e-2);
+    assertEquals(8.400972698, valve1.getCv("SI"), 1e-2);
     assertEquals(100.0, valve1.getPercentValveOpening(), 1e-2);
 
     valve1.setCalculateSteadyState(false);
@@ -50,13 +55,56 @@ public class ThrottlingValveTest {
     assertEquals(7000.0000000, valve1.getOutletStream().getFlowRate("Sm3/hr"), 7000 / 100);
     valve1.setPercentValveOpening(80);
     valve1.runTransient(0.1);
-    assertEquals(5600.00000000, valve1.getOutletStream().getFlowRate("Sm3/hr"), 7000 / 100);
+    assertEquals(5600.0, valve1.getOutletStream().getFlowRate("Sm3/hr"), 7000 / 100);
+
+    valve1.setIsCalcOutPressure(true);
+    valve1.runTransient(0.1);
+    assertEquals(9.000001952, valve1.getOutletStream().getPressure("bara"), 0.01); // choked
+    // flow up
+    // to 9.5 bar?
+  }
+
+  @Test
+  void testCalcCvGas_stdvalve() {
+    neqsim.thermo.system.SystemInterface testSystem2 =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    testSystem2.addComponent("methane", 1.0);
+    testSystem2.setMixingRule(2);
+
+    Stream stream1 = new Stream("Stream1", testSystem2);
+    stream1.setFlowRate(7000.0, "Sm3/hr");
+    stream1.setPressure(10.0, "bara");
+    stream1.setTemperature(20.0, "C");
+    stream1.run();
+
+    ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
+    ((ValveMechanicalDesign) valve1.getMechanicalDesign()).setValveSizingStandard("default");
+    valve1.setOutletPressure(9.0);
+    valve1.setPercentValveOpening(100);
+
+    valve1.run();
+    assertEquals(7000.0000000, valve1.getOutletStream().getFlowRate("Sm3/hr"), 7000 / 100);
+    assertEquals(1834.27227947, valve1.getCv(), 1e-2);
+
+    Map<String, Object> result = valve1.getMechanicalDesign().calcValveSize();
+    double Cv = (double) result.get("Kv");
+    assertEquals(1834.272279, Cv, 1e-2);
+
+    // assertEquals(50.34619045, valve1.getCv(), 1e-2);
+    assertEquals(55028.16838, valve1.getCg(), 1e-2);
+    assertEquals(1834.27227, valve1.getCv("SI"), 1e-2);
+    assertEquals(100.0, valve1.getPercentValveOpening(), 1e-2);
+
+    valve1.setCalculateSteadyState(false);
+    valve1.runTransient(0.1);
+    assertEquals(7000.00000, valve1.getOutletStream().getFlowRate("Sm3/hr"), 7000 / 100);
+    valve1.setPercentValveOpening(80);
+    valve1.runTransient(0.1);
+    assertEquals(5600.00000, valve1.getOutletStream().getFlowRate("Sm3/hr"), 7000 / 100);
 
     valve1.setIsCalcOutPressure(true);
     valve1.run();
-    assertEquals(5.00000724433, valve1.getOutletStream().getPressure("bara"), 0.01); // choked
-                                                                                     // flow up
-    // to 9.5 bar?
+    assertEquals(9.0000019527, valve1.getOutletStream().getPressure("bara"), 0.01); // choked
   }
 
   /**
@@ -83,14 +131,15 @@ public class ThrottlingValveTest {
     stream1.run();
 
     ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
+    ((ValveMechanicalDesign) valve1.getMechanicalDesign()).setValveSizingStandard("IEC 60534");
     valve1.setOutletPressure(4.46);
     valve1.setPercentValveOpening(100);
     valve1.run();
 
-    assertEquals(11245.871568, valve1.getCv(), 1e-2);
-    assertEquals(337376.147048, valve1.getCg(), 1e-2);
-    assertEquals(11245.87156, valve1.getCv("SI"), 1e-2);
-    assertEquals(204.8428336660, valve1.getCv("US"), 1e-2);
+    assertEquals(88.35774556, valve1.getCv(), 1e-2);
+    assertEquals(2650.732, valve1.getCg(), 1e-2);
+    assertEquals(88.35774556, valve1.getCv("SI"), 1e-2);
+    assertEquals(102.141553, valve1.getCv("US"), 1e-2);
   }
 
   @Test
@@ -113,7 +162,7 @@ public class ThrottlingValveTest {
 
     assertEquals(0.27564816, valve1.getCv(), 1e-2);
     assertEquals(0.2756481, valve1.getCv("SI"), 1e-2);
-    assertEquals(0.00502091374, valve1.getCv("US"), 1e-2);
+    assertEquals(0.318792288, valve1.getCv("US"), 1e-2);
   }
 
   @Test
@@ -130,12 +179,13 @@ public class ThrottlingValveTest {
     stream1.run();
 
     ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
+    ((ValveMechanicalDesign) valve1.getMechanicalDesign()).setValveSizingStandard("IEC 60534");
     valve1.setOutletPressure(19);
     valve1.run();
 
-    assertEquals(117.041092, valve1.getCv(), 1e-2);
-    assertEquals(117.041092, valve1.getCv("SI"), 1e-2);
-    assertEquals(2.131896041, valve1.getCv("US"), 1e-2);
+    assertEquals(117.09360388, valve1.getCv(), 1e-2);
+    assertEquals(117.09360388, valve1.getCv("SI"), 1e-2);
+    assertEquals(135.36020609, valve1.getCv("US"), 1e-2);
   }
 
   @Test
@@ -153,6 +203,8 @@ public class ThrottlingValveTest {
 
     ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
     valve1.setOutletPressure(50.0);
+
+    ((ValveMechanicalDesign) valve1.getMechanicalDesign()).setValveSizingStandard("default");
     valve1.setPercentValveOpening(100);
     valve1.setCalculateSteadyState(false);
     valve1.run();
@@ -161,13 +213,13 @@ public class ThrottlingValveTest {
     assertEquals(0.016563208826, valve1.getCv("SI"), 1e-2);
     assertEquals(100.0, valve1.getPercentValveOpening(), 1e-2);
     assertEquals(100.0, stream1.getFlowRate("kg/hr"), 1e-2);
-    assertEquals(3.016977928380948E-4, valve1.getCv("US"), 1e-2);
+    assertEquals(0.01914706940, valve1.getCv("US"), 1e-2);
 
     // valve1.setCalculateSteadyState(false);
     // valve1.runTransient(0.1);
     valve1.setOutletPressure(55.0);
     valve1.runTransient(0.1);
-    assertEquals(94.868329805, valve1.getInletStream().getFlowRate("kg/hr"), 1e-5);
+    assertEquals(94.8683298, valve1.getInletStream().getFlowRate("kg/hr"), 1e-5);
 
     valve1.setIsCalcOutPressure(true);
     valve1.runTransient(0.1);
