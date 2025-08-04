@@ -55,4 +55,13 @@ public class NeqSimDataBaseTest extends NeqSimTest {
     Assertions.assertEquals(16.04, molmass, 0.1);
     Assertions.assertFalse(failed, "Failed getting data from NeqsimDataBase");
   }
+
+  @Test
+  void testGetResultSetAfterClose() throws Exception {
+    NeqSimDataBase database = new NeqSimDataBase();
+    database.close();
+    try (ResultSet rs = database.getResultSet("SELECT 1")) {
+      assertTrue(rs.next(), "Expected result from reopened connection");
+    }
+  }
 }
