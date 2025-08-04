@@ -43,7 +43,7 @@ public class ThrottlingValveTest {
 
     Map<String, Object> result = valve1.getMechanicalDesign().calcValveSize();
     double Cv = (double) result.get("Cv");
-    assertEquals(10.78855032, Cv, 1e-2);
+    assertEquals(9.7115244391, Cv, 1e-2);
 
     assertEquals(13207.6732372, valve1.getCg(), 1e-2);
     assertEquals(8.400972698, valve1.getCv("SI"), 1e-2);

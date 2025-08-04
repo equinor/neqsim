@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
@@ -23,12 +24,6 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class ThrottlingValve extends TwoPortEquipment implements ValveInterface {
-  // Add missing fields
-  private double Kv = 0.0;
-  private double percentValveOpening = 100.0;
-  private double Cg = 0.0;
-
-  // All fields defined once at the top
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -40,10 +35,12 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   private boolean isoThermal = false;
 
   double pressure = 0.0;
+  private double Kv;
   private double maxMolarFlow = 1000.0;
   private double minMolarFlow = 0.0;
   private double maxValveOpening = 100.0;
   private double minValveOpening = 0.0;
+  private double percentValveOpening = 100.0;
   double molarFlow = 0.0;
   private String pressureUnit = "bara";
   private boolean acceptNegativeDP = true;
@@ -95,40 +92,37 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   }
 
   /** {@inheritDoc} */
-  // ...existing code...
-  public double getCg() {
-    return Cg;
-  }
-
-  // ...existing code...
-  public void setCg(double cg) {
-    this.Cg = cg;
-  }
-
   @Override
-  public void setKv(double Kv) {
-    this.Kv = Kv;
+  public double getOutletPressure() {
+    return this.pressure;
   }
 
+  /** {@inheritDoc} */
   @Override
-  public double getPercentValveOpening() {
-    return percentValveOpening;
+  public SystemInterface getThermoSystem() {
+    return thermoSystem;
   }
 
+  /** {@inheritDoc} */
   @Override
-  public void setCv(double cv, String unit) {
-    if (unit.equalsIgnoreCase("US")) {
-      this.Kv = cv * 0.865;
-    } else {
-      this.Kv = cv;
-    }
+  public double getInletPressure() {
+    return getInletStream().getThermoSystem().getPressure();
   }
 
+  /** {@inheritDoc} */
   @Override
-  public void setCv(double cv) {
-    this.Kv = cv;
+  public void setPressure(double pressure) {
+    setOutletPressure(pressure);
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>pressure</code>.
+   * </p>
+   *
+   * @param pressure a double
+   * @param unit a {@link java.lang.String} object
+   */
   public void setPressure(double pressure, String unit) {
     setOutletPressure(pressure, unit);
   }
@@ -193,13 +187,27 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
         / inStream.getFluid().getMolarMass("kg/mol");
   }
 
+  /**
+   * Calculates the outlet pressure based on the adjusted Kv value.
+   *
+   * @param KvAdjusted the adjusted flow coefficient (Kv)
+   * @return the calculated outlet pressure
+   */
   public double calculateOutletPressure(double KvAdjusted) {
-    // If calculateOutletPressure is not defined, use calculateOutletPressureFromKv if available
     return getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedKv(Kv,
         percentValveOpening, inStream) / 1.0e5;
   }
 
-  // ...existing code...
+  /**
+   * Adjusts the flow coefficient (Kv) based on the percentage valve opening.
+   *
+   * @param Kv Flow coefficient in US gallons per minute (USG/min).
+   * @param percentValveOpening Percentage valve opening (0 to 100).
+   * @return Adjusted flow coefficient (Kv) in US gallons per minute (USG/min).
+   */
+  private double adjustKv(double Kv, double percentValveOpening) {
+    return Kv * (percentValveOpening / 100);
+  }
 
 
   /** {@inheritDoc} */
@@ -323,17 +331,56 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       thermoSystem.setPressure(outStream.getPressure(), pressureUnit);
     }
     double adjustKv = adjustKv(Kv, percentValveOpening);
-  }
+    if (deltaP > 0.0 && !isCalcPressure) {
+      molarFlow = calculateMolarFlow();
 
-  /**
-   * Adjusts the Kv value based on percent valve opening.
-   * 
-   * @param Kv the Kv value
-   * @param percentValveOpening the percent valve opening
-   * @return adjusted Kv value
-   */
-  public double adjustKv(double Kv, double percentValveOpening) {
-    return Kv * percentValveOpening / 100.0;
+      // inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+      inStream.getThermoSystem().setTotalFlowRate(molarFlow, "mole/sec");
+      inStream.getThermoSystem().init(1);
+      inStream.run(id);
+    }
+    // update outlet pressure if required
+    if (valveKvSet && isCalcPressure) {
+      inStream.getFluid().initProperties();
+      outPres = calculateOutletPressure(adjustKv);
+      thermoSystem.setPressure(outPres);
+      setOutletPressure(outPres);
+    }
+
+    ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+    if (isIsoThermal()) {
+      thermoOps.TPflash();
+    } else {
+      thermoOps.PHflash(enthalpy, 0);
+    }
+    thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+    outStream.setThermoSystem(thermoSystem);
+
+
+    if (deltaP > 0.0) {
+      molarFlow = calculateMolarFlow();
+    } else {
+      molarFlow = 0.0;
+    }
+
+    try {
+      // inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+      inStream.getThermoSystem().setTotalFlowRate(molarFlow, "mole/sec");
+      inStream.getThermoSystem().init(1);
+      inStream.run(id);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+    }
+    try {
+      // outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+      outStream.getThermoSystem().setTotalFlowRate(molarFlow, "mole/sec");
+      outStream.getThermoSystem().init(1);
+      outStream.run(id);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+    }
+    setCalculationIdentifier(id);
+
   }
 
   /**
@@ -371,13 +418,13 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   }
 
   /** {@inheritDoc} */
-  // ...existing code...
+  @Override
   public double getKv() {
     return Kv;
   }
 
   /** {@inheritDoc} */
-  // ...existing code...
+  @Override
   public double getCv() {
     return getCv("US");
   }
@@ -396,10 +443,40 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   }
 
   /** {@inheritDoc} */
-  // ...existing code...
-  // All methods and code blocks are now placed inside the class definition, with proper braces and
-  // structure.
-  // ...existing code...
+  @Override
+  public void setCv(double Cv) {
+    setCv(Cv, "US");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setKv(double Kv) {
+    setCv(Kv, "SI");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCv(double cv, String unit) {
+    if (unit.equals("US")) {
+      this.Kv = cv / 1.156;
+    } else {
+      this.Kv = cv;
+    }
+    valveKvSet = true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCg() {
+    double Cl = 1360.0;
+    return getCv() * Cl;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getPercentValveOpening() {
+    return percentValveOpening;
+  }
 
   /** {@inheritDoc} */
   @Override
