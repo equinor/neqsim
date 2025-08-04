@@ -466,7 +466,7 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
     double effectiveKv = Kv * (valveOpening / 100.0);
 
     double T = inletStream.getThermoSystem().getTemperature("K");
-    double MW = inletStream.getThermoSystem().getMolarMass("gr/mole");
+    double MW = inletStream.getThermoSystem().getMolarMass("gr/mol");
     double gamma = inletStream.getThermoSystem().getGamma2();
     double Z = inletStream.getThermoSystem().getZ();
     double P1 = inletStream.getPressure("Pa");
