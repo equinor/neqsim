@@ -883,13 +883,13 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     p.run();
 
-    assertEquals(3.082204981, valve1.getCv("SI"), 1e-3);
+    assertEquals(3.0822049, valve1.getCv("SI"), 1e-3);
     assertEquals(0.02608207510602, valve2.getCv("SI"), 1e-3);
     assertEquals(1.99388831, valve3.getCv("SI"), 1e-3);
 
-    assertEquals(3.082204981, valve1.getCv("US"), 1e-3);
-    assertEquals(0.02608207510602, valve2.getCv("US"), 1e-3);
-    assertEquals(1.99388831, valve3.getCv("US"), 1e-3);
+    assertEquals(3.563028959124985, valve1.getCv("US"), 1e-3);
+    assertEquals(0.03015087882256, valve2.getCv("US"), 1e-3);
+    assertEquals(2.304934894986, valve3.getCv("US"), 1e-3);
 
     logger.debug("sep pres {}", separator1.getPressure("bara"));
 

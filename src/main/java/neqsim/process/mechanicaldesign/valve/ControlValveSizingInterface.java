@@ -7,13 +7,13 @@ public interface ControlValveSizingInterface {
 
   public Map<String, Object> calcValveSize();
 
-  public double calculateFlowRateFromValveOpening(double Cv, double valveOpening,
+  public double calculateFlowRateFromValveOpening(double Kv, double valveOpening,
       StreamInterface inletStream, StreamInterface outletStream);
 
-  public double calculateValveOpeningFromFlowRate(double Q, double Cv, double valveOpening,
+  public double calculateValveOpeningFromFlowRate(double Q, double Kv, double valveOpening,
       StreamInterface inletStream, StreamInterface outletStream);
 
-  public double findOutletPressureForFixedCv(double Cv, double valveOpening,
+  public double findOutletPressureForFixedKv(double Kv, double valveOpening,
       StreamInterface inletStream);
 
   public boolean isAllowChoked();

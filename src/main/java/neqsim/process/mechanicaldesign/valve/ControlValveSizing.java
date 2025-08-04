@@ -52,14 +52,14 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   public Map<String, Object> calcValveSize() {
 
     Map<String, Object> result = valveMechanicalDesign.fullOutput ? new HashMap<>() : null;
-    double Cv = calcCv();
+    double Kv = calcKv();
     result.put("choked", false);
-    result.put("Kv", Cv);
-    result.put("Cv", Kv_to_Cv(Cv));
+    result.put("Kv", Kv);
+    result.put("Cv", Kv_to_Cv(Kv));
     return result;
   }
 
-  public double calcCv() {
+  public double calcKv() {
 
     SystemInterface fluid = valveMechanicalDesign.getProcessEquipment().getFluid();
 
@@ -80,23 +80,23 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   }
 
   /**
-   * Calculates the flow rate through a control valve based on the valve opening, Cv, and
+   * Calculates the flow rate through a control valve based on the valve opening, Kv, and
    * inlet/outlet streams.
    *
-   * @param Cv Flow coefficient (for 100% opening) [USGPM/(psi)^0.5]
+   * @param Kv Flow coefficient (for 100% opening)
    * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
    * @param inletStream Inlet stream to the valve
    * @param outletStream Outlet stream from the valve
    * @return Calculated flow rate (units depend on phase type)
    */
-  public double calculateFlowRateFromValveOpening(double Cv, double valveOpening,
+  public double calculateFlowRateFromValveOpening(double Kv, double valveOpening,
       StreamInterface inletStream, StreamInterface outletStream) {
-    return calculateMolarFlow(Cv * valveOpening / 100.0, inletStream, outletStream);
+    return calculateMolarFlow(Kv * valveOpening / 100.0, inletStream, outletStream);
   }
 
-  public double calculateMolarFlow(double CvAdjusted, StreamInterface inStream,
+  public double calculateMolarFlow(double KvAdjusted, StreamInterface inStream,
       StreamInterface outStream) {
-    // Convert ΔP from Pa to bar for consistency with Cv in m3/h/√bar
+    // Convert ΔP from Pa to bar for consistency with Kv in m3/h/√bar
 
     double density = inStream.getFluid().getDensity("kg/m3");
     if (!((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).isGasValve()) {
@@ -104,42 +104,42 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     }
 
     // Mass flow in kg/s
-    double flow_m3_s = (CvAdjusted / 3600.0)
+    double flow_m3_s = (KvAdjusted / 3600.0)
         * Math.sqrt((inStream.getPressure("bara") - outStream.getPressure("bara")) / density);
 
     return flow_m3_s;
   }
 
   /**
-   * Calculates the required valve opening fraction for a given flow rate, Cv, and inlet/outlet
+   * Calculates the required valve opening fraction for a given flow rate, Kv, and inlet/outlet
    * streams.
    *
    * @param Q Flow rate (units depend on phase type)
-   * @param Cv Flow coefficient (for 100% opening) [USGPM/(psi)^0.5]
+   * @param Kv Flow coefficient (for 100% opening)
    * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
    * @param inletStream Inlet stream to the valve
    * @param outletStream Outlet stream from the valve
    * @return Required valve opening fraction (0.0 - 1.0)
    */
-  public double calculateValveOpeningFromFlowRate(double Q, double Cv, double valveOpening,
+  public double calculateValveOpeningFromFlowRate(double Q, double Kv, double valveOpening,
       StreamInterface inletStream, StreamInterface outletStream) {
     return 100.0;
   }
 
   /**
-   * Finds the outlet pressure for a given Cv, valve opening, and inlet stream.
+   * Finds the outlet pressure for a given Kv, valve opening, and inlet stream.
    * 
-   * @param Cv Flow coefficient (for 100% opening) [USGPM/(psi)^0.5]
+   * @param Kv Flow coefficient (for 100% opening)
    * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
    * @param inletStream Inlet stream to the valve
    * @return Outlet pressure (units depend on phase type)
    */
-  public double findOutletPressureForFixedCv(double Cv, double valveOpening,
+  public double findOutletPressureForFixedKv(double Kv, double valveOpening,
       StreamInterface inletStream) {
-    return calculateOutletPressure(Cv * valveOpening / 100.0, inletStream);
+    return calculateOutletPressure(Kv * valveOpening / 100.0, inletStream);
   }
 
-  public double calculateOutletPressure(double CvAdjusted, StreamInterface inStream) {
+  public double calculateOutletPressure(double KvAdjusted, StreamInterface inStream) {
     // Fluid properties
     double density = inStream.getFluid().getDensity("kg/m3"); // kg/m³
     double densityKv = density; // for Kv formula
@@ -157,7 +157,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     double Q_m3_s = (molarFlow * molarMass) / density; // m³/s
 
     // Rearranged Kv equation to get ΔP [bar]
-    double dP_bar = Math.pow((Q_m3_s * 3600.0) / CvAdjusted, 2) * densityKv;
+    double dP_bar = Math.pow((Q_m3_s * 3600.0) / KvAdjusted, 2) * densityKv;
 
     // Return outlet pressure [bar]
     return P1_bar - dP_bar;

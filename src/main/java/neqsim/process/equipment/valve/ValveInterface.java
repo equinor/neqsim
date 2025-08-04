@@ -114,4 +114,18 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
   /** {@inheritDoc} */
   @Override
   public SystemInterface getThermoSystem();
+
+  /**
+   * Sets the Kv (metric flow coefficient) of the valve.
+   *
+   * @param Kv the metric flow coefficient
+   */
+  public void setKv(double Kv);
+
+  /**
+   * Gets the Kv (metric flow coefficient) of the valve.
+   *
+   * @return the metric flow coefficient
+   */
+  public double getKv();
 }
