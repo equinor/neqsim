@@ -56,6 +56,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     result.put("choked", false);
     result.put("Kv", Kv);
     result.put("Cv", Kv_to_Cv(Kv));
+    result.put("Cg", Kv_to_Cv(Kv) * 1360);
     return result;
   }
 

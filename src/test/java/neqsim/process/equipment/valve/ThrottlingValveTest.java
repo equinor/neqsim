@@ -43,7 +43,7 @@ public class ThrottlingValveTest {
 
     Map<String, Object> result = valve1.getMechanicalDesign().calcValveSize();
     double Cv = (double) result.get("Cv");
-    assertEquals(9.7115244391, Cv, 1e-2);
+    assertEquals(9.71152443916267, Cv, 1e-2);
 
     assertEquals(13207.6732372, valve1.getCg(), 1e-2);
     assertEquals(8.400972698, valve1.getCv("SI"), 1e-2);
@@ -59,8 +59,7 @@ public class ThrottlingValveTest {
     valve1.setIsCalcOutPressure(true);
     valve1.runTransient(0.1);
     assertEquals(9.000001952, valve1.getOutletStream().getPressure("bara"), 0.01); // choked
-    // flow up
-    // to 9.5 bar?
+
   }
 
   @Test
