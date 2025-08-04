@@ -77,7 +77,6 @@ public class ThrottlingValveTest {
     stream1.run();
 
     ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
-    ((ValveMechanicalDesign) valve1.getMechanicalDesign()).setValveSizingStandard("default");
     valve1.setOutletPressure(9.0);
     valve1.setPercentValveOpening(100);
 
@@ -139,6 +138,31 @@ public class ThrottlingValveTest {
     assertEquals(138912.5132642, valve1.getCg(), 1e-2);
     assertEquals(88.35774556, valve1.getCv("SI"), 1e-2);
     assertEquals(102.141553, valve1.getCv("US"), 1e-2);
+  }
+
+  @Test
+  void testCalcCvGas3() {
+    neqsim.thermo.system.SystemInterface testSystem2 =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    testSystem2.addComponent("methane", 1.0);
+    testSystem2.setMixingRule(2);
+
+    Stream stream1 = new Stream("Stream1", testSystem2);
+    stream1.setFlowRate(47.2, "Sm3/sec");
+    stream1.setPressure(14.8, "bara");
+    stream1.setTemperature(16.0, "C");
+    stream1.run();
+
+    ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
+    ((ValveMechanicalDesign) valve1.getMechanicalDesign()).setValveSizingStandard("IEC 60534 full");
+    valve1.setOutletPressure(4.46);
+    valve1.setPercentValveOpening(100);
+    valve1.run();
+
+    assertEquals(153.959772137, valve1.getKv(), 1e-2);
+    assertEquals(242049.395364, valve1.getCg(), 1e-2);
+    assertEquals(153.95977213, valve1.getCv("SI"), 1e-2);
+    assertEquals(177.9774965, valve1.getCv("US"), 1e-2);
   }
 
   @Test

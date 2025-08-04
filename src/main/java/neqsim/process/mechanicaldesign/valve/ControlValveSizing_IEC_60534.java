@@ -11,22 +11,22 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
   // === IEC 60534 Constants (Units: Q[m^3/h], P[kPa], rho[kg/m^3]) ===
   /** Constant for liquids (flow in m^3/h, pressure in kPa). */
-  private static final double N1 = 0.1;
+  static final double N1 = 0.1;
   /** Constant for gases (flow in m^3/h, pressure in kPa, T in K @ 0°C ref). */
-  private static final double N9 = 24.6;
+  static final double N9 = 24.6;
   /** Reference density of water [kg/m^3] used in the standard. */
-  private static final double rho0 = 999.103;
+  static final double rho0 = 999.103;
   /** Universal gas constant [J/(mol*K)]. */
-  private static final double R = 8.314462;
+  static final double R = 8.314462;
   /** Conversion factor from Kv to Cv. */
-  private static final double KV_TO_CV_FACTOR = 1.156;
+  static final double KV_TO_CV_FACTOR = 1.156;
 
   // === Valve Parameters ===
-  private double FL = 0.9;
-  private double Fd = 1.0;
-  private double D1 = 0.1; // Upstream pipe diameter [m]
-  private double D2 = 0.1; // Downstream pipe diameter [m]
-  private double d = 0.1; // Valve diameter [m]
+  double FL = 0.9;
+  double Fd = 1.0;
+  double D1 = 0.1; // Upstream pipe diameter [m]
+  double D2 = 0.1; // Downstream pipe diameter [m]
+  double d = 0.1; // Valve diameter [m]
 
   double diameter = 8 * 0.0254;
   double diameterInlet = 8 * 0.0254;
@@ -129,7 +129,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     }
   }
 
-  private ValveInterface getValve() {
+  public ValveInterface getValve() {
     return (ValveInterface) valveMechanicalDesign.getProcessEquipment();
   }
 
@@ -403,7 +403,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     }
 
     // Return the final converged guess, converted from kPa back to Pa.
-    return P2_mid_kPa * 1000.0 / 1e5;
+    return P2_mid_kPa * 1000.0;
   }
 
   // add a general method to find outlet pressure for fixed Kv that work for both gas and liquid
@@ -657,8 +657,8 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
       }
     }
 
-    // CORRECTED: Return the final guess of P2, which is already in Pascals.
-    return P2_mid / 1e5;
+    // CORRECTED: Return the final guess of P2, which is already in Pa.
+    return P2_mid;
   }
 
   public double findOutletPressureForFixedKvGas(double Kv, double valveOpening,
@@ -671,25 +671,25 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
         Kv * valveOpening / 100.0);
   }
 
-  private boolean isChokedTurbulentL(double dP, double P1, double Psat, double FF, double FL) {
+  boolean isChokedTurbulentL(double dP, double P1, double Psat, double FF, double FL) {
     // All pressures must be in consistent units (kPa)
     return dP >= FL * FL * (P1 - FF * Psat);
   }
 
-  private boolean isChokedTurbulentG(double x, double Fgamma, double xT) {
+  boolean isChokedTurbulentG(double x, double Fgamma, double xT) {
     return x >= Fgamma * xT;
   }
 
-  private double ffCriticalPressureRatioL(double Psat, double Pc) {
+  double ffCriticalPressureRatioL(double Psat, double Pc) {
     // All pressures must be in consistent units (kPa)
     return 0.96 - 0.28 * Math.sqrt(Psat / Pc);
   }
 
-  private double Kv_to_Cv(double Kv) {
+  double Kv_to_Cv(double Kv) {
     return Kv * KV_TO_CV_FACTOR;
   }
 
-  private double Cv_to_Kv(double Cv) {
+  double Cv_to_Kv(double Cv) {
     return Cv / KV_TO_CV_FACTOR;
   }
 

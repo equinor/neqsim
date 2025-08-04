@@ -191,7 +191,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   public double calculateOutletPressure(double KvAdjusted) {
     // If calculateOutletPressure is not defined, use calculateOutletPressureFromKv if available
     return getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedKv(Kv,
-        percentValveOpening, inStream);
+        percentValveOpening, inStream) / 1.0e5;
   }
 
   /**
