@@ -61,7 +61,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
   public double calcKv() {
 
-    SystemInterface fluid = valveMechanicalDesign.getProcessEquipment().getFluid();
+    SystemInterface fluid =
+        ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
 
     Map<String, Object> result = valveMechanicalDesign.fullOutput ? new HashMap<>() : null;
 
