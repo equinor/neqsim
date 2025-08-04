@@ -132,7 +132,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * @param Kv Flow coefficient (for 100% opening)
    * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
    * @param inletStream Inlet stream to the valve
-   * @return Outlet pressure (units depend on phase type)
+   * @return Outlet pressure (unit Pa)
    */
   public double findOutletPressureForFixedKv(double Kv, double valveOpening,
       StreamInterface inletStream) {
@@ -159,8 +159,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     // Rearranged Kv equation to get ΔP [bar]
     double dP_bar = Math.pow((Q_m3_s * 3600.0) / KvAdjusted, 2) * densityKv;
 
-    // Return outlet pressure [bar]
-    return P1_bar - dP_bar;
+    // Return outlet pressure [Pa]
+    return (P1_bar - dP_bar) * 1e5;
   }
 
   private double Kv_to_Cv(double Kv) {
