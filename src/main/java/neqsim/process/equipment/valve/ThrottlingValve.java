@@ -1,5 +1,6 @@
 package neqsim.process.equipment.valve;
 
+import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,12 +30,12 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   static Logger logger = LogManager.getLogger(ThrottlingValve.class);
   SystemInterface thermoSystem;
 
-  private boolean valveCvSet = false;
+  private boolean valveKvSet = false;
 
   private boolean isoThermal = false;
 
   double pressure = 0.0;
-  private double Cv;
+  private double Kv;
   private double maxMolarFlow = 1000.0;
   private double minMolarFlow = 0.0;
   private double maxValveOpening = 100.0;
@@ -50,6 +51,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   private double deltaPressure = 0.0;
   private boolean allowChoked = false;
   private boolean allowLaminar = true;
+  private double xt = 0.6; // critical pressure drop ratio for choked flow
 
   /**
    * * Constructor for ThrottlingValve.
@@ -162,75 +164,49 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   /**
    * <p>
-   * calcCv.
+   * calcKv.
    * </p>
    *
    */
-  public void calcCv() {
-    // Map<String, Object> result = getMechanicalDesign().calcValveSize();
-    // this.Cv = (double) result.get("Cv");
-
-    double density = inStream.getFluid().getDensity("kg/m3");
-    if (!isGasValve()) {
-      density = inStream.getFluid().getDensity("kg/m3") / 1000.0;
-    }
-
-    this.Cv = inStream.getThermoSystem().getFlowRate("m3/hr")
-        / Math.sqrt((inStream.getPressure("bara") - outStream.getPressure("bara")) / density);
-  }
-
-  public double calculateMolarFlow(double CvAdjusted) {
-    // Convert ΔP from Pa to bar for consistency with Cv in m3/h/√bar
-
-    double density = inStream.getFluid().getDensity("kg/m3");
-    if (!isGasValve()) {
-      density = inStream.getFluid().getDensity("kg/m3") / 1000.0;
-    }
-
-    // Mass flow in kg/s
-    double flow_m3_s =
-        (CvAdjusted / 3600.0) * Math.sqrt((inStream.getPressure("bara") - pressure) / density);
-
-    // Convert to mol/s
-    // System.out.println("molar flow1 " + inStream.getFlowRate("mole/sec"));
-    // System.out.println("molar flow2 " + massFlow_kg_s /
-    // inStream.getFluid().getMolarMass("kg/mol"));
-    return flow_m3_s * inStream.getFluid().getDensity("kg/m3")
-        / inStream.getFluid().getMolarMass("kg/mol");
-  }
-
-  public double calculateOutletPressure(double CvAdjusted) {
-    // Fluid properties
-    double density = inStream.getFluid().getDensity("kg/m3"); // kg/m³
-    double densityKv = density; // for Kv formula
-    if (!isGasValve()) {
-      densityKv = density / 1000.0; // use relative density for liquids
-    }
-    double molarMass = inStream.getFluid().getMolarMass("kg/mol"); // kg/mol
-
-    // Known inlet pressure
-    double P1_bar = inStream.getPressure("bara");
-
-    // Calculate volumetric flow Q [m³/s] from molar flow
-    double molarFlow = inStream.getFlowRate("mole/sec"); // mol/s
-    double Q_m3_s = (molarFlow * molarMass) / density; // m³/s
-
-    // Rearranged Kv equation to get ΔP [bar]
-    double dP_bar = Math.pow((Q_m3_s * 3600.0) / CvAdjusted, 2) * densityKv;
-
-    // Return outlet pressure [bar]
-    return P1_bar - dP_bar;
+  public void calcKv() {
+    Map<String, Object> design = getMechanicalDesign().calcValveSize();
+    setKv((double) design.get("Kv"));
   }
 
   /**
-   * Adjusts the flow coefficient (Cv) based on the percentage valve opening.
+   * Calculates molar flow for a gas based on IEC 60534 standards. This method accounts for choked
+   * (critical) flow.
    *
-   * @param Cv Flow coefficient in US gallons per minute (USG/min).
-   * @param percentValveOpening Percentage valve opening (0 to 100).
-   * @return Adjusted flow coefficient (Cv) in US gallons per minute (USG/min).
+   * @return Molar flow in mole/sec.
    */
-  private double adjustCv(double Cv, double percentValveOpening) {
-    return Cv * (percentValveOpening / 100);
+  public double calculateMolarFlow() {
+    double flow_m3_sec = getMechanicalDesign().getValveSizingMethod()
+        .calculateFlowRateFromValveOpening(Kv, percentValveOpening, inStream, outStream);
+
+    return flow_m3_sec * inStream.getFluid().getDensity("kg/m3")
+        / inStream.getFluid().getMolarMass("kg/mol");
+  }
+
+  /**
+   * Calculates the outlet pressure based on the adjusted Kv value.
+   *
+   * @param KvAdjusted the adjusted flow coefficient (Kv)
+   * @return the calculated outlet pressure
+   */
+  public double calculateOutletPressure(double KvAdjusted) {
+    return getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedKv(Kv,
+        percentValveOpening, inStream) / 1.0e5;
+  }
+
+  /**
+   * Adjusts the flow coefficient (Kv) based on the percentage valve opening.
+   *
+   * @param Kv Flow coefficient in US gallons per minute (USG/min).
+   * @param percentValveOpening Percentage valve opening (0 to 100).
+   * @return Adjusted flow coefficient (Kv) in US gallons per minute (USG/min).
+   */
+  private double adjustKv(double Kv, double percentValveOpening) {
+    return Kv * (percentValveOpening / 100);
   }
 
 
@@ -251,9 +227,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       setGasValve(false);
     }
 
-    if (!valveCvSet) {
-      calcCv();
-      valveCvSet = true;
+    if (!valveKvSet) {
+      calcKv();
+      valveKvSet = true;
     }
 
     inStream.getThermoSystem().initProperties();
@@ -263,20 +239,20 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     double molarFlowStart = getInletStream().getThermoSystem().getFlowRate("mole/sec");
     // first estimate of flow from current outlet pressure
     // Calculate molar flow rate for gas directly here (without calling calculateMolarFlowRateGas)
-    double CvAdjusted = adjustCv(Cv, percentValveOpening);
+    double KvAdjusted = adjustKv(Kv, percentValveOpening);
     double inletPressure = inStream.getThermoSystem().getPressure("bara");
     double outletPressure = outStream.getThermoSystem().getPressure("bara");
 
     double deltaP = Math.max(inletPressure - outletPressure, 0.0);
-    if (deltaP > 0.0) {
-      molarFlow = calculateMolarFlow(CvAdjusted);
+    if (deltaP > 0.0 && !isCalcPressure) {
+      molarFlow = calculateMolarFlow();
     } else {
       molarFlow = 0.0;
     }
 
     // update outlet pressure if required
-    if (valveCvSet && isCalcPressure) {
-      outPres = calculateOutletPressure(CvAdjusted);
+    if (valveKvSet && isCalcPressure) {
+      outPres = calculateOutletPressure(KvAdjusted);
       setOutletPressure(outPres);
     }
     if (deltaPressure != 0) {
@@ -354,10 +330,19 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     if (getSpecification().equals("out stream")) {
       thermoSystem.setPressure(outStream.getPressure(), pressureUnit);
     }
-    double adjustCv = adjustCv(Cv, percentValveOpening);
+    double adjustKv = adjustKv(Kv, percentValveOpening);
+    if (deltaP > 0.0 && !isCalcPressure) {
+      molarFlow = calculateMolarFlow();
+
+      // inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+      inStream.getThermoSystem().setTotalFlowRate(molarFlow, "mole/sec");
+      inStream.getThermoSystem().init(1);
+      inStream.run(id);
+    }
     // update outlet pressure if required
-    if (valveCvSet && isCalcPressure) {
-      outPres = calculateOutletPressure(adjustCv);
+    if (valveKvSet && isCalcPressure) {
+      inStream.getFluid().initProperties();
+      outPres = calculateOutletPressure(adjustKv);
       thermoSystem.setPressure(outPres);
       setOutletPressure(outPres);
     }
@@ -373,7 +358,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
 
     if (deltaP > 0.0) {
-      molarFlow = calculateMolarFlow(adjustCv);
+      molarFlow = calculateMolarFlow();
     } else {
       molarFlow = 0.0;
     }
@@ -434,52 +419,56 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   /** {@inheritDoc} */
   @Override
+  public double getKv() {
+    return Kv;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getCv() {
-    return Cv;
+    return getCv("US");
   }
 
   /** {@inheritDoc} */
   @Override
   public double getCv(String unit) {
     if (unit.equals("US")) {
-      return Cv / 54.9;
+      return Kv * 1.156;
     } else if (unit.equalsIgnoreCase("SI") || unit.isEmpty()) {
-      return Cv;
+      return Kv;
     } else {
-      logger.warn("Invalid unit specified for getCv. Returning SI value.");
-      return Cv;
+      logger.warn("Invalid unit specified for getKv. Returning SI value.");
+      return Kv;
     }
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setCv(double cv) {
-    this.Cv = cv;
-    valveCvSet = true;
+  public void setCv(double Cv) {
+    setCv(Cv, "US");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setKv(double Kv) {
+    setCv(Kv, "SI");
   }
 
   /** {@inheritDoc} */
   @Override
   public void setCv(double cv, String unit) {
     if (unit.equals("US")) {
-      this.Cv = cv * 54.9;
+      this.Kv = cv / 1.156;
     } else {
-      this.Cv = cv;
+      this.Kv = cv;
     }
-    valveCvSet = true;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setCg(double cg) {
-    double Cl = 30.0;
-    this.setCv(cg / Cl);
+    valveKvSet = true;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getCg() {
-    double Cl = 30.0;
+    double Cl = 1360.0;
     return getCv() * Cl;
   }
 
@@ -497,24 +486,24 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   /**
    * <p>
-   * isValveCvSet.
+   * isValveKvSet.
    * </p>
    *
    * @return a boolean
    */
-  public boolean isValveCvSet() {
-    return valveCvSet;
+  public boolean isValveKvSet() {
+    return valveKvSet;
   }
 
   /**
    * <p>
-   * Setter for the field <code>valveCvSet</code>.
+   * Setter for the field <code>valveKvSet</code>.
    * </p>
    *
-   * @param valveCvSet a boolean
+   * @param valveKvSet a boolean
    */
-  public void setValveCvSet(boolean valveCvSet) {
-    this.valveCvSet = valveCvSet;
+  public void setValveKvSet(boolean valveKvSet) {
+    this.valveKvSet = valveKvSet;
   }
 
   /** {@inheritDoc} */

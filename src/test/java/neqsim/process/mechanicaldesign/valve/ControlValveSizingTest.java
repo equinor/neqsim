@@ -23,17 +23,18 @@ public class ControlValveSizingTest {
 
   @Test
   public void testSizeControlValveGas2() {
-    ControlValveSizing sizemet = new ControlValveSizing();
+    ControlValveSizing_IEC_60534 sizemet = new ControlValveSizing_IEC_60534();
+    sizemet.setxT(0.136);
 
     Map<String, Object> result =
-        sizemet.sizeControlValveGas(300.0, 28.97, 1.4, 0.9, 500000.0, 400000.0, 10.0, 0.136);
+        sizemet.sizeControlValveGas(300.0, 28.97, 1.4, 0.9, 500000.0, 400000.0, 10.0);
 
     assertNotNull(result);
     assertTrue(result.containsKey("Y"));
     assertTrue(result.containsKey("Kv"));
 
-    assertEquals(1003.662306, (double) result.get("Cv"), 1e-3);
-    assertEquals(868.219988, (double) result.get("Kv"), 1e-3);
+    assertEquals(1217.11932474, (double) result.get("Cv"), 1e-3);
+    assertEquals(1052.8713881, (double) result.get("Kv"), 1e-3);
   }
 
   @Test
@@ -47,8 +48,8 @@ public class ControlValveSizingTest {
     assertTrue(result.containsKey("choked"));
     assertTrue(result.containsKey("Y"));
     assertTrue(result.containsKey("Kv"));
-    assertEquals(1217.1193247, (double) result.get("Cv"), 1e-3);
-    assertEquals(1052.871388185, (double) result.get("Kv"), 1e-3);
+    assertEquals(1212.66914, (double) result.get("Cv"), 1e-3);
+    assertEquals(1049.02175413, (double) result.get("Kv"), 1e-3);
   }
 
   @Test
@@ -74,7 +75,7 @@ public class ControlValveSizingTest {
     assertTrue(result.containsKey("Y"));
     assertTrue(result.containsKey("Kv"));
     assertTrue(result.containsKey("Cv"));
-    assertEquals(739.540647247, (double) result.get("Cv"), 1e-3);
+    assertEquals(1212.66914777, (double) result.get("Cv"), 1e-3);
   }
 
   @Test
