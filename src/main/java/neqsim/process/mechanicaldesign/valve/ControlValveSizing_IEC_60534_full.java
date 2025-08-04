@@ -279,6 +279,11 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   /**
    * Calculates the sum of loss coefficients from inlet/outlet reducers/expanders. IEC 60534-2-1,
    * Equation (6).
+   *
+   * @param d valve diameter (mm)
+   * @param D1 upstream pipe diameter (mm)
+   * @param D2 downstream pipe diameter (mm)
+   * @return the total loss coefficient
    */
   private double lossCoefficientPiping(double d, Double D1, Double D2) {
     double loss = 0.0;
@@ -299,6 +304,14 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
 
   /**
    * Calculates the Reynolds number of a control valve. IEC 60534-2-1, Equation (20).
+   *
+   * @param nu kinematic viscosity (mm^2/s)
+   * @param Q volumetric flow rate (m^3/h)
+   * @param D1 upstream pipe diameter (mm)
+   * @param FL liquid pressure recovery factor
+   * @param Fd valve style modifier
+   * @param C flow coefficient
+   * @return the Reynolds number
    */
   private double reynoldsValve(double nu, double Q, double D1, double FL, double Fd, double C) {
     // nu in the formula is in centistokes (mm^2/s), so convert from m^2/s
@@ -310,6 +323,13 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   /**
    * Calculates the Reynolds number factor FR for laminar or transitional flow. IEC 60534-2-1,
    * Section 7.3.
+   *
+   * @param FL liquid pressure recovery factor
+   * @param C flow coefficient
+   * @param d valve diameter (mm)
+   * @param Rev Reynolds number
+   * @param fullTrim true if full trim, false if reduced trim
+   * @return the Reynolds factor FR
    */
   private double reynoldsFactor(double FL, double C, double d, double Rev, boolean fullTrim) {
     double FR;
@@ -330,6 +350,14 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
 
   /**
    * Overloaded method to check for choked flow with piping factors.
+   *
+   * @param dP pressure drop (kPa)
+   * @param P1 upstream pressure (kPa)
+   * @param Psat saturation pressure (kPa)
+   * @param FF critical pressure ratio factor
+   * @param FLP liquid pressure recovery factor with piping
+   * @param FP piping geometry factor
+   * @return true if flow is choked, false otherwise
    */
   private boolean isChokedTurbulentL(double dP, double P1, double Psat, double FF, Double FLP,
       Double FP) {
@@ -413,6 +441,12 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
 
   /**
    * Numerically solves for liquid flow rate using a bisection search.
+   *
+   * @param Kv valve flow coefficient
+   * @param valveOpening valve opening percentage (0-100)
+   * @param inletStream inlet stream to the valve
+   * @param outletStream outlet stream from the valve
+   * @return calculated flow rate [m^3/s]
    */
   private double calculateFlowRateFromValveOpeningLiquid_full(double Kv, double valveOpening,
       StreamInterface inletStream, StreamInterface outletStream) {
@@ -458,6 +492,12 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
 
   /**
    * Numerically solves for gas flow rate using a bisection search.
+   *
+   * @param Kv valve flow coefficient
+   * @param valveOpening valve opening percentage (0-100)
+   * @param inletStream inlet stream to the valve
+   * @param outletStream outlet stream from the valve
+   * @return calculated flow rate [m^3/s]
    */
   private double calculateFlowRateFromValveOpeningGas_full(double Kv, double valveOpening,
       StreamInterface inletStream, StreamInterface outletStream) {
