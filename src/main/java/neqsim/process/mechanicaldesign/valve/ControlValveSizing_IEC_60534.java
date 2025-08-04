@@ -3,6 +3,7 @@ package neqsim.process.mechanicaldesign.valve;
 import java.util.HashMap;
 import java.util.Map;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.equipment.valve.ValveInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -115,7 +116,8 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
   // === Main API ===
   public Map<String, Object> calcValveSize() {
-    SystemInterface fluid = valveMechanicalDesign.getProcessEquipment().getFluid();
+    SystemInterface fluid =
+        ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
     Map<String, Object> result;
     if (fluid.hasPhaseType(PhaseType.GAS)) {
       return sizeControlValveGas(fluid.getTemperature(), fluid.getMolarMass("gr/mol"),
