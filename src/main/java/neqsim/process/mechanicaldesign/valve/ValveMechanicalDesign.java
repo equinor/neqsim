@@ -47,6 +47,16 @@ public class ValveMechanicalDesign extends MechanicalDesign {
 
   public void setValveSizingStandard(String valveSizingStandard) {
     this.valveSizingStandard = valveSizingStandard;
+    // valveSizing.
+    if (valveSizingStandard.equals("IEC 60534")) {
+      valveSizingMethod = new ControlValveSizing_IEC_60534(this);
+    } else if (valveSizingStandard.equals("IEC 60534 full")) {
+      valveSizingMethod = new ControlValveSizing_IEC_60534_full(this);
+    } else if (valveSizingStandard.equals("prod choke")) {
+      valveSizingMethod = new ControlValveSizing_simple(this);
+    } else {
+      valveSizingMethod = new ControlValveSizing(this);
+    }
   }
 
   ControlValveSizingInterface valveSizingMethod = null;
@@ -82,16 +92,6 @@ public class ValveMechanicalDesign extends MechanicalDesign {
    *         false, the map will be null.
    */
   public Map<String, Object> calcValveSize() {
-    // valveSizing.
-    if (valveSizingStandard.equals("IEC 60534")) {
-      valveSizingMethod = new ControlValveSizing_IEC_60534(this);
-    } else if (valveSizingStandard.equals("IEC 60534 full")) {
-      valveSizingMethod = new ControlValveSizing_IEC_60534_full(this);
-    } else if (valveSizingStandard.equals("prod choke")) {
-      valveSizingMethod = new ControlValveSizing_simple(this);
-    } else {
-      valveSizingMethod = new ControlValveSizing(this);
-    }
 
     Map<String, Object> result = fullOutput ? new HashMap<>() : null;
 

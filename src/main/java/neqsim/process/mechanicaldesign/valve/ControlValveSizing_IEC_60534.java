@@ -25,13 +25,9 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   // === Valve Parameters ===
   double FL = 0.9;
   double Fd = 1.0;
-  double D1 = 0.1; // Upstream pipe diameter [m]
-  double D2 = 0.1; // Downstream pipe diameter [m]
-  double d = 0.1; // Valve diameter [m]
-
-  double diameter = 8 * 0.0254;
-  double diameterInlet = 8 * 0.0254;
-  double diameterOutlet = 8 * 0.0254;
+  double D1 = 0.0; // Upstream pipe diameter [m]
+  double D2 = 0.0; // Downstream pipe diameter [m]
+  double d = 0.0; // Valve diameter [m]
 
   double FD = 1.0;
   boolean allowLaminar = true;
