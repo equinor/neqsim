@@ -34,19 +34,19 @@ public class ThrottlingValveTest {
     ((ValveMechanicalDesign) valve1.getMechanicalDesign()).setValveSizingStandard("IEC 60534");
     valve1.setOutletPressure(9.0);
     valve1.setPercentValveOpening(100);
-    valve1.getMechanicalDesign().getValveSizingMethod().setxT(0.13);
+    valve1.getMechanicalDesign().getValveSizingMethod().setxT(0.137);
     valve1.setCalculateSteadyState(false);
 
     valve1.run();
     assertEquals(7000.0000000, valve1.getOutletStream().getFlowRate("Sm3/hr"), 7000 / 100);
-    assertEquals(8.4009726982, valve1.getKv(), 1e-2);
+    assertEquals(8.400972698, valve1.getKv(), 1e-2);
 
     Map<String, Object> result = valve1.getMechanicalDesign().calcValveSize();
     double Cv = (double) result.get("Cv");
     assertEquals(9.71152443916267, Cv, 1e-2);
 
-    assertEquals(13207.6732372, valve1.getCg(), 1e-2);
-    assertEquals(8.400972698, valve1.getCv("SI"), 1e-2);
+    assertEquals(13207.673237, valve1.getCg(), 1e-2);
+    assertEquals(8.400972698237, valve1.getCv("SI"), 1e-2);
     assertEquals(100.0, valve1.getPercentValveOpening(), 1e-2);
 
     valve1.setCalculateSteadyState(false);
