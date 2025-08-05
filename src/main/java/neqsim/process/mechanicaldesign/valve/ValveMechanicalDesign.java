@@ -87,6 +87,8 @@ public class ValveMechanicalDesign extends MechanicalDesign {
       valveSizingMethod = new ControlValveSizing_IEC_60534(this);
     } else if (valveSizingStandard.equals("IEC 60534 full")) {
       valveSizingMethod = new ControlValveSizing_IEC_60534_full(this);
+    } else if (valveSizingStandard.equals("prod choke")) {
+      valveSizingMethod = new ControlValveSizing_simple(this);
     } else {
       valveSizingMethod = new ControlValveSizing(this);
     }
