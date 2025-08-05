@@ -201,9 +201,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   /**
    * Adjusts the flow coefficient (Kv) based on the percentage valve opening.
    *
-   * @param Kv Flow coefficient in US gallons per minute (USG/min).
+   * @param Kv Flow coefficient SI (for 100% opening)
    * @param percentValveOpening Percentage valve opening (0 to 100).
-   * @return Adjusted flow coefficient (Kv) in US gallons per minute (USG/min).
+   * @return Adjusted flow coefficient (Kv)
    */
   private double adjustKv(double Kv, double percentValveOpening) {
     return getMechanicalDesign().getValveCharacterizationMethod().getActualKv(Kv,
