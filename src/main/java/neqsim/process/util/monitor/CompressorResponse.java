@@ -25,6 +25,7 @@ public class CompressorResponse extends BaseResponse {
   public Double suctionMassDensity;
   public Double dischargeMassDensity;
   public Double massflow;
+  public Double stdFlow;
   public Double speed;
 
   /**
@@ -32,14 +33,17 @@ public class CompressorResponse extends BaseResponse {
    * Constructor for CompressorResponse.
    * </p>
    */
-  public CompressorResponse() {}
+  public CompressorResponse() {
+  }
 
   /**
    * <p>
    * Constructor for CompressorResponse.
    * </p>
    *
-   * @param inputCompressor a {@link neqsim.process.equipment.compressor.Compressor} object
+   * @param inputCompressor a
+   *                        {@link neqsim.process.equipment.compressor.Compressor}
+   *                        object
    */
   public CompressorResponse(Compressor inputCompressor) {
     super(inputCompressor);
@@ -47,6 +51,7 @@ public class CompressorResponse extends BaseResponse {
     suctionMassDensity = inputCompressor.getInletStream().getFluid().getDensity("kg/m3");
     dischargeMassDensity = inputCompressor.getOutletStream().getFluid().getDensity("kg/m3");
     massflow = inputCompressor.getInletStream().getFluid().getFlowRate("kg/hr");
+    stdFlow = inputCompressor.getInletStream().getFluid().getFlowRate("Sm3/hr");
     suctionVolumeFlow = inputCompressor.getInletStream().getFluid().getFlowRate("m3/hr");
     dischargeVolumeFlow = inputCompressor.getOutletStream().getFluid().getFlowRate("m3/hr");
     suctionPressure = inputCompressor.getInletStream().getPressure("bara");
@@ -58,8 +63,7 @@ public class CompressorResponse extends BaseResponse {
     power = inputCompressor.getPower("kW");
     speed = inputCompressor.getSpeed();
     if (inputCompressor.getAntiSurge().isActive()) {
-      internalVolumeFlow =
-          inputCompressor.getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
+      internalVolumeFlow = inputCompressor.getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
     }
   }
 }
