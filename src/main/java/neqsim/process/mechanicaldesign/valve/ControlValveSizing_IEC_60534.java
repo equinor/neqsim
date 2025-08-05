@@ -152,6 +152,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * @param allowChoked whether to allow choked flow
    * @param allowLaminar whether to allow laminar flow
    * @param fullOutput whether to return full output
+   * @param percentOpening Valve opening percentage (0-100)
    * @return a map containing the sizing results
    */
   public Map<String, Object> sizeControlValve(FluidType type, double rhoOrT, double MW, double mu,
@@ -182,6 +183,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * @param P1 Upstream pressure [Pa]
    * @param P2 Downstream pressure [Pa]
    * @param Q Volumetric flow rate [m^3/s]
+   * @param percentOpening Valve opening percentage (0-100)
    * @return A map containing the sizing results (Kv, Kv, choked, etc.).
    */
   public Map<String, Object> sizeControlValveLiquid(double rho, double Psat, double Pc, double P1,
@@ -222,8 +224,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * Calculates the flow rate through a control valve based on the valve opening, Kv, and
    * inlet/outlet streams.
    *
-   * @param Kv Flow coefficient (for 100% opening)
-   * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
+   * @param adjustedKv Flow coefficient (for 100% opening)
    * @param inletStream Inlet stream to the valve
    * @param outletStream Outlet stream from the valve
    * @return Calculated flow rate (units depend on phase type)
@@ -250,8 +251,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   /**
    * Calculates liquid flow rate from valve opening.
    *
-   * @param Kv Max flow coefficient of the valve
-   * @param valveOpening Valve opening percentage (0-100)
+   * @param adjustedKv Max flow coefficient of the valve
    * @param rho Liquid density [kg/m^3]
    * @param Psat Saturation pressure [Pa]
    * @param Pc Critical pressure [Pa]
@@ -426,6 +426,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * @param P1 Upstream pressure [Pa]
    * @param P2 Downstream pressure [Pa]
    * @param Q Volumetric flow rate at inlet conditions [m^3/s]
+   * @param percentOpening Valve opening percentage (0-100)
    * @return A map containing the sizing results (Kv, Kv, Y, choked, etc.).
    */
   public Map<String, Object> sizeControlValveGas(double T, double MW, double gamma, double Z,
@@ -470,8 +471,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   /**
    * Calculates the flow rate for gas based on Kv and valve opening percentage.
    *
-   * @param Kv full flow coefficient (at 100% opening)
-   * @param valveOpening valve opening percentage (0 to 100%)
+   * @param adjustedKv full flow coefficient (at 100% opening)
    * @param T temperature of the gas (K)
    * @param MW molecular weight of the gas (g/mol)
    * @param mu dynamic viscosity of the gas (Pa·s)
@@ -689,8 +689,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   /**
    * Finds the outlet pressure for a given flow rate and fixed Kv, for both gas and liquid.
    *
-   * @param Kv the valve flow coefficient
-   * @param valveOpening the valve opening percentage (0-100)
+   * @param actualKv the valve flow coefficient
    * @param inletStream the inlet stream to the valve
    * @return outlet pressure (Pa for liquid, Pa for gas)
    */

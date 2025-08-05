@@ -93,8 +93,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * Calculates the flow rate through a control valve based on the valve opening, Kv, and
    * inlet/outlet streams.
    *
-   * @param Kv Flow coefficient (for 100% opening)
-   * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
+   * @param actualKv Flow coefficient (for 100% opening)
    * @param inletStream Inlet stream to the valve
    * @param outletStream Outlet stream from the valve
    * @return Calculated flow rate (units depend on phase type)
@@ -125,8 +124,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * streams.
    *
    * @param Q Flow rate (units depend on phase type)
-   * @param Kv Flow coefficient (for 100% opening)
-   * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
+   * @param actualKv Flow coefficient (for 100% opening)
    * @param inletStream Inlet stream to the valve
    * @param outletStream Outlet stream from the valve
    * @return Required valve opening fraction (0.0 - 1.0)
@@ -139,8 +137,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   /**
    * Finds the outlet pressure for a given Kv, valve opening, and inlet stream.
    * 
-   * @param Kv Flow coefficient (for 100% opening)
-   * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
+   * @param actualKv Flow coefficient (for 100% opening)
    * @param inletStream Inlet stream to the valve
    * @return Outlet pressure (unit Pa)
    */

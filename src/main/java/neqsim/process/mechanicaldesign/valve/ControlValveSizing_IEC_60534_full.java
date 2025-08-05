@@ -382,8 +382,7 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
    * `sizeControlValveLiquid` will correctly resolve to the overridden, full implementations in this
    * class. It is overridden here for clarity and completeness.
    *
-   * @param Kv the valve flow coefficient
-   * @param valveOpening the valve opening percentage (0-100)
+   * @param adjustedKv the valve flow coefficient
    * @param inletStream the inlet stream to the valve
    * @return outlet pressure in Pascals.
    */
@@ -399,8 +398,7 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
    * Calculates the flow rate for a given valve opening using the full, iterative model. This method
    * overrides the simplified base class implementation to ensure consistency.
    *
-   * @param Kv The maximum flow coefficient of the valve.
-   * @param valveOpening The opening of the valve (0-100).
+   * @param adjustedKv The maximum flow coefficient of the valve.
    * @param inletStream The stream entering the valve.
    * @param outletStream The stream leaving the valve (used for outlet pressure).
    * @return The calculated flow rate [m^3/s].
@@ -423,6 +421,7 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
    * @param Kv The maximum flow coefficient of the valve.
    * @param inletStream The stream entering the valve.
    * @param outletStream The stream leaving the valve.
+   * @param percentValveOpening The current percent valve opening.
    * @return The required valve opening (0-100).
    */
   public double calculateValveOpeningFromFlowRate(double Q, double Kv, StreamInterface inletStream,
@@ -448,8 +447,7 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   /**
    * Numerically solves for liquid flow rate using a bisection search.
    *
-   * @param Kv valve flow coefficient
-   * @param valveOpening valve opening percentage (0-100)
+   * @param adjustedKv valve flow coefficient
    * @param inletStream inlet stream to the valve
    * @param outletStream outlet stream from the valve
    * @return calculated flow rate [m^3/s]
@@ -475,8 +473,9 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
 
     for (int i = 0; i < MAX_ITERATIONS; i++) {
       Q_mid = 0.5 * (Q_low + Q_high);
-      if (Q_mid < 1e-9)
+      if (Q_mid < 1e-9) {
         break;
+      }
 
       // For this guessed flow rate (Q_mid), what Kv would our full model require?
       Map<String, Object> result = sizeControlValveLiquid(rho, Psat, Pc, P1, P2, Q_mid,
@@ -491,8 +490,9 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
         // Q_mid is too high for this Kv; the actual flow must be lower.
         Q_high = Q_mid;
       }
-      if (Math.abs(Q_high - Q_low) < 1e-6)
+      if (Math.abs(Q_high - Q_low) < 1e-6) {
         break;
+      }
     }
     return Q_mid;
   }
@@ -500,8 +500,7 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   /**
    * Numerically solves for gas flow rate using a bisection search.
    *
-   * @param Kv valve flow coefficient
-   * @param valveOpening valve opening percentage (0-100)
+   * @param adjustedKv valve flow coefficient
    * @param inletStream inlet stream to the valve
    * @param outletStream outlet stream from the valve
    * @return calculated flow rate [m^3/s]
@@ -529,8 +528,9 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
 
     for (int i = 0; i < MAX_ITERATIONS; i++) {
       Q_mid = 0.5 * (Q_low + Q_high);
-      if (Q_mid < 1e-9)
+      if (Q_mid < 1e-9) {
         break;
+      }
 
       // For this guessed flow rate (Q_mid), what Kv would our full model require?
       Map<String, Object> result = sizeControlValveGas(T, MW, gamma, Z, P1, P2, Q_mid,
@@ -545,8 +545,9 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
         // Q_mid is too high; actual flow must be lower.
         Q_high = Q_mid;
       }
-      if (Math.abs(Q_high - Q_low) < 1e-6)
+      if (Math.abs(Q_high - Q_low) < 1e-6) {
         break;
+      }
     }
     return Q_mid;
   }
