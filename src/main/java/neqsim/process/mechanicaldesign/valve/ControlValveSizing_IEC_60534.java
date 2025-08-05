@@ -209,8 +209,10 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
       // Formula for non-choked flow
       Kv = Qloc / (N1 * Math.sqrt(dP * rho0 / rho));
     }
-    Kv = Kv
-        / valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
+    if (valveMechanicalDesign != null) {
+      Kv = Kv
+          / valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
+    }
 
     ans.put("FF", FF);
     ans.put("choked", choked);
@@ -454,8 +456,10 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
       Kv = Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / x);
     }
 
-    Kv = Kv
-        / valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
+    if (valveMechanicalDesign != null) {
+      Kv = Kv
+          / valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
+    }
 
     ans.put("choked", choked);
     ans.put("Y", Y);
