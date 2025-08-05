@@ -13,6 +13,11 @@ import neqsim.thermo.system.SystemInterface;
 public class ControlValveSizing implements ControlValveSizingInterface, Serializable {
 
   ValveMechanicalDesign valveMechanicalDesign = null;
+
+  public ValveMechanicalDesign getValveMechanicalDesign() {
+    return valveMechanicalDesign;
+  }
+
   private static final double KV_TO_CV_FACTOR = 1.156;
   double xT = 0.137;
   boolean allowChoked = true;
@@ -48,10 +53,10 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * @return a map containing the calculated valve size and related parameters. If fullOutput is
    *         false, the map will be null.
    */
-  public Map<String, Object> calcValveSize() {
+  public Map<String, Object> calcValveSize(double percentOpening) {
 
     Map<String, Object> result = valveMechanicalDesign.fullOutput ? new HashMap<>() : null;
-    double Kv = calcKv();
+    double Kv = calcKv(percentOpening);
     result.put("choked", false);
     result.put("Kv", Kv);
     result.put("Cv", Kv_to_Cv(Kv));
@@ -59,7 +64,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     return result;
   }
 
-  public double calcKv() {
+  public double calcKv(double percentOpening) {
 
     SystemInterface fluid =
         ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
@@ -80,7 +85,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
             .getInletStream().getPressure("bara")
             - ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getOutletStream()
                 .getPressure("bara"))
-            / density);
+            / density)
+        / valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
   }
 
   /**
@@ -93,12 +99,12 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * @param outletStream Outlet stream from the valve
    * @return Calculated flow rate (units depend on phase type)
    */
-  public double calculateFlowRateFromValveOpening(double Kv, double valveOpening,
-      StreamInterface inletStream, StreamInterface outletStream) {
-    return calculateMolarFlow(Kv * valveOpening / 100.0, inletStream, outletStream);
+  public double calculateFlowRateFromValveOpening(double actualKv, StreamInterface inletStream,
+      StreamInterface outletStream) {
+    return calculateMolarFlow(actualKv, inletStream, outletStream);
   }
 
-  public double calculateMolarFlow(double KvAdjusted, StreamInterface inStream,
+  public double calculateMolarFlow(double actualKv, StreamInterface inStream,
       StreamInterface outStream) {
     // Convert ΔP from Pa to bar for consistency with Kv in m3/h/√bar
 
@@ -108,7 +114,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     }
 
     // Mass flow in kg/s
-    double flow_m3_s = (KvAdjusted / 3600.0)
+    double flow_m3_s = (actualKv / 3600.0)
         * Math.sqrt((inStream.getPressure("bara") - outStream.getPressure("bara")) / density);
 
     return flow_m3_s;
@@ -125,7 +131,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * @param outletStream Outlet stream from the valve
    * @return Required valve opening fraction (0.0 - 1.0)
    */
-  public double calculateValveOpeningFromFlowRate(double Q, double Kv, double valveOpening,
+  public double calculateValveOpeningFromFlowRate(double Q, double actualKv,
       StreamInterface inletStream, StreamInterface outletStream) {
     return 100.0;
   }
@@ -138,9 +144,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * @param inletStream Inlet stream to the valve
    * @return Outlet pressure (unit Pa)
    */
-  public double findOutletPressureForFixedKv(double Kv, double valveOpening,
-      StreamInterface inletStream) {
-    return calculateOutletPressure(Kv * valveOpening / 100.0, inletStream);
+  public double findOutletPressureForFixedKv(double actualKv, StreamInterface inletStream) {
+    return calculateOutletPressure(actualKv, inletStream);
   }
 
   public double calculateOutletPressure(double KvAdjusted, StreamInterface inStream) {

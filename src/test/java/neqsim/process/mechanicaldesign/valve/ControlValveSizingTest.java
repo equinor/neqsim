@@ -13,7 +13,7 @@ public class ControlValveSizingTest {
     ControlValveSizing_IEC_60534 sizemet = new ControlValveSizing_IEC_60534();
     Map<String, Object> result = sizemet.sizeControlValve(
         ControlValveSizing_IEC_60534.FluidType.LIQUID, 1000.0, 0.0, 1.0, 100.0, 200.0, 500000.0,
-        400000.0, 10.0, null, null, null, 0.9, 0.8, 0.0, true, true, true);
+        400000.0, 10.0, null, null, null, 0.9, 0.8, 0.0, true, true, true, 100);
 
     assertNotNull(result);
     assertTrue(result.containsKey("FF"));
@@ -27,7 +27,7 @@ public class ControlValveSizingTest {
     sizemet.setxT(0.136);
 
     Map<String, Object> result =
-        sizemet.sizeControlValveGas(300.0, 28.97, 1.4, 0.9, 500000.0, 400000.0, 10.0);
+        sizemet.sizeControlValveGas(300.0, 28.97, 1.4, 0.9, 500000.0, 400000.0, 10.0, 100.0);
 
     assertNotNull(result);
     assertTrue(result.containsKey("Y"));
@@ -42,7 +42,7 @@ public class ControlValveSizingTest {
     ControlValveSizing_IEC_60534 sizemet = new ControlValveSizing_IEC_60534();
     Map<String, Object> result = sizemet.sizeControlValve(
         ControlValveSizing_IEC_60534.FluidType.GAS, 300.0, 28.97, 0.01, 1.4, 0.9, 500000.0,
-        400000.0, 10.0, null, null, null, 0.9, 0.8, 0.136, true, true, true);
+        400000.0, 10.0, null, null, null, 0.9, 0.8, 0.136, true, true, true, 100);
 
     assertNotNull(result);
     assertTrue(result.containsKey("choked"));
@@ -57,7 +57,7 @@ public class ControlValveSizingTest {
     ControlValveSizing_IEC_60534 sizemet = new ControlValveSizing_IEC_60534();
     Exception exception = assertThrows(IllegalArgumentException.class, () -> {
       sizemet.sizeControlValve(null, 300.0, 28.97, 0.01, 1.4, 0.9, 500000.0, 400000.0, 10.0, null,
-          null, null, 0.9, 0.8, 0.7, true, true, true);
+          null, null, 0.9, 0.8, 0.7, true, true, true, 100);
     });
 
     assertEquals("Invalid fluid type", exception.getMessage());
@@ -66,9 +66,9 @@ public class ControlValveSizingTest {
   @Test
   public void testSizeControlValveGasFullOutput() {
     ControlValveSizing_IEC_60534 sizemet = new ControlValveSizing_IEC_60534();
-    Map<String, Object> result =
-        sizemet.sizeControlValve(ControlValveSizing_IEC_60534.FluidType.GAS, 300.0, 28.97, 0.01,
-            1.4, 0.9, 500000.0, 400000.0, 10.0, null, null, null, 0.9, 0.8, 0.7, true, true, true);
+    Map<String, Object> result = sizemet.sizeControlValve(
+        ControlValveSizing_IEC_60534.FluidType.GAS, 300.0, 28.97, 0.01, 1.4, 0.9, 500000.0,
+        400000.0, 10.0, null, null, null, 0.9, 0.8, 0.7, true, true, true, 100);
 
     assertNotNull(result);
     assertTrue(result.containsKey("choked"));
@@ -81,9 +81,9 @@ public class ControlValveSizingTest {
   @Test
   public void testSizeControlValveGasChokedFlow() {
     ControlValveSizing_IEC_60534 sizemet = new ControlValveSizing_IEC_60534();
-    Map<String, Object> result =
-        sizemet.sizeControlValve(ControlValveSizing_IEC_60534.FluidType.GAS, 300.0, 28.97, 0.01,
-            1.4, 0.9, 500000.0, 100000.0, 10.0, null, null, null, 0.9, 0.8, 0.7, true, true, true);
+    Map<String, Object> result = sizemet.sizeControlValve(
+        ControlValveSizing_IEC_60534.FluidType.GAS, 300.0, 28.97, 0.01, 1.4, 0.9, 500000.0,
+        100000.0, 10.0, null, null, null, 0.9, 0.8, 0.7, true, true, true, 100);
 
     assertNotNull(result);
     assertTrue(result.containsKey("choked"));
@@ -93,9 +93,9 @@ public class ControlValveSizingTest {
   @Test
   public void testSizeControlValveGasNonChokedFlow() {
     ControlValveSizing_IEC_60534 sizemet = new ControlValveSizing_IEC_60534();
-    Map<String, Object> result =
-        sizemet.sizeControlValve(ControlValveSizing_IEC_60534.FluidType.GAS, 300.0, 28.97, 0.01,
-            1.4, 0.9, 500000.0, 490000.0, 10.0, null, null, null, 0.9, 0.8, 0.7, true, true, true);
+    Map<String, Object> result = sizemet.sizeControlValve(
+        ControlValveSizing_IEC_60534.FluidType.GAS, 300.0, 28.97, 0.01, 1.4, 0.9, 500000.0,
+        490000.0, 10.0, null, null, null, 0.9, 0.8, 0.7, true, true, true, 100);
 
     assertNotNull(result);
     assertTrue(result.containsKey("choked"));
