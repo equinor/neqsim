@@ -63,6 +63,52 @@ public class ThrottlingValveTest {
   }
 
   @Test
+  void testCalcProdChoke() {
+    neqsim.thermo.system.SystemInterface testSystem2 =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    testSystem2.addComponent("methane", 1.0);
+    testSystem2.addComponent("nC10", 1.0);
+    testSystem2.setMixingRule(2);
+
+    Stream stream1 = new Stream("Stream1", testSystem2);
+    stream1.setFlowRate(7000.0, "Sm3/hr");
+    stream1.setPressure(10.0, "bara");
+    stream1.setTemperature(20.0, "C");
+    stream1.run();
+
+    ThrottlingValve valve1 = new ThrottlingValve("valve_1", stream1);
+    ((ValveMechanicalDesign) valve1.getMechanicalDesign()).setValveSizingStandard("prod choke");
+    valve1.setOutletPressure(9.0);
+    valve1.setPercentValveOpening(100);
+    valve1.getMechanicalDesign().getValveSizingMethod().setxT(0.13);
+    valve1.setCalculateSteadyState(false);
+
+    valve1.run();
+    assertEquals(7000.0000000, valve1.getOutletStream().getFlowRate("Sm3/hr"), 7000 / 100);
+    assertEquals(3626.9597094, valve1.getKv(), 1e-2);
+
+    Map<String, Object> result = valve1.getMechanicalDesign().calcValveSize();
+    double Cv = (double) result.get("Cv");
+    assertEquals(4192.76542, Cv, 1e-2);
+
+    assertEquals(5702160.976848, valve1.getCg(), 1e-2);
+    assertEquals(3626.9597094, valve1.getCv("SI"), 1e-2);
+    assertEquals(100.0, valve1.getPercentValveOpening(), 1e-2);
+
+    valve1.setCalculateSteadyState(false);
+    valve1.runTransient(0.1);
+    assertEquals(7000.0000000, valve1.getOutletStream().getFlowRate("Sm3/hr"), 7000 / 100);
+    valve1.setPercentValveOpening(80);
+    valve1.runTransient(0.1);
+    assertEquals(5600.0, valve1.getOutletStream().getFlowRate("Sm3/hr"), 7000 / 100);
+
+    valve1.setIsCalcOutPressure(true);
+    valve1.runTransient(0.1);
+    assertEquals(9.000001952, valve1.getOutletStream().getPressure("bara"), 0.01); // choked
+
+  }
+
+  @Test
   void testCalcCvGas_stdvalve() {
     neqsim.thermo.system.SystemInterface testSystem2 =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);

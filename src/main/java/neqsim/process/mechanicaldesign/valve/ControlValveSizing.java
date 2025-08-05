@@ -12,7 +12,6 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ControlValveSizing implements ControlValveSizingInterface, Serializable {
 
-
   ValveMechanicalDesign valveMechanicalDesign = null;
   private static final double KV_TO_CV_FACTOR = 1.156;
   double xT = 0.137;
@@ -68,9 +67,12 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     Map<String, Object> result = valveMechanicalDesign.fullOutput ? new HashMap<>() : null;
 
     double density = fluid.getDensity("kg/m3");
+    double Y = 1.0;
+
     if (!((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).isGasValve()) {
       density = fluid.getDensity("kg/m3") / 1000.0;
     }
+
 
     return ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream()
         .getFlowRate("m3/hr")
@@ -144,25 +146,18 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   public double calculateOutletPressure(double KvAdjusted, StreamInterface inStream) {
     // Fluid properties
     double density = inStream.getFluid().getDensity("kg/m3"); // kg/m³
-    double densityKv = density; // for Kv formula
-    if (!((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).isGasValve()) {
-      densityKv = density / 1000.0; // use relative density for liquids
-    }
-
     double molarMass = inStream.getFluid().getMolarMass("kg/mol"); // kg/mol
-
-    // Known inlet pressure
-    double P1_bar = inStream.getPressure("bara");
-
-    // Calculate volumetric flow Q [m³/s] from molar flow
     double molarFlow = inStream.getFlowRate("mole/sec"); // mol/s
     double Q_m3_s = (molarFlow * molarMass) / density; // m³/s
+    if (!((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).isGasValve()) {
+      density = density / 1000.0; // use relative density for liquids
+    }
 
     // Rearranged Kv equation to get ΔP [bar]
-    double dP_bar = Math.pow((Q_m3_s * 3600.0) / KvAdjusted, 2) * densityKv;
+    double dP_bar = Math.pow((Q_m3_s * 3600.0) / KvAdjusted, 2) * density;
 
     // Return outlet pressure [Pa]
-    return (P1_bar - dP_bar) * 1e5;
+    return (inStream.getPressure("bara") - dP_bar) * 1e5;
   }
 
   private double Kv_to_Cv(double Kv) {
