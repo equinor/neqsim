@@ -263,4 +263,52 @@ public class CompressorChartKhader2015Test {
 
   }
 
+  @Test
+  void testSingleSpeedCurves() {
+    SystemInterface testFluid = new SystemSrkEos(298.15, 50.0);
+
+    testFluid.addComponent("nitrogen", 1.205);
+    testFluid.addComponent("CO2", 1.340);
+    testFluid.addComponent("methane", 87.974);
+    testFluid.addComponent("ethane", 5.258);
+    testFluid.addComponent("propane", 3.283);
+    testFluid.addComponent("i-butane", 0.082);
+    testFluid.addComponent("n-butane", 0.487);
+    testFluid.addComponent("i-pentane", 0.056);
+    testFluid.addComponent("n-pentane", 0.053);
+    testFluid.setMixingRule(2);
+
+    testFluid.setTemperature(24.0, "C");
+    testFluid.setPressure(48.0, "bara");
+    testFluid.setTotalFlowRate(3.0, "MSm3/day");
+
+    Stream stream_1 = new Stream("Stream1", testFluid);
+    stream_1.run();
+    Compressor comp1 = new Compressor("cmp1", stream_1);
+    comp1.setUsePolytropicCalc(true);
+    double compspeed = 10000;
+    comp1.setSpeed(compspeed);
+
+    // compressor chart conditions: temperature [C], pressure [bara], density
+    // [kg/m3], molecular
+    // weight [g/mol]
+    // Note: Only temperature and pressure are used by CompressorChartKhader2015,
+    // but values should
+    // be realistic.
+    double[] chartConditions = new double[] {25.0, 50.0, 50.0, 20.0};
+
+    double[] speed = new double[] {12913};
+    double[][] flow = new double[][] {
+        {2789.1285, 3174.0375, 3689.2288, 4179.4503, 4570.2768, 4954.7728, 5246.0329, 5661.0331}};
+    double[][] head = new double[][] {{93.2, 92.54, 91.66, 90.27, 88.18, 84.87, 83.2, 80.61}};
+    double[][] polyEff = new double[][] {{77.2452238409573, 79.4154186459363, 80.737960012489,
+        80.5229826589649, 79.2210931638144, 75.4719133864634, 69.6034181197298, 58.7322388482707}};
+
+    CompressorChartKhader2015 compChart = new CompressorChartKhader2015(stream_1, 0.9);
+    compChart.setCurves(chartConditions, speed, flow, head, flow, polyEff);
+    comp1.setCompressorChart(compChart);
+    comp1.getCompressorChart().setHeadUnit("kJ/kg");
+
+  }
+
 }

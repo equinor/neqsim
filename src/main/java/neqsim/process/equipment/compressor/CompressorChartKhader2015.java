@@ -210,8 +210,10 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       }
       realCurves.add(new RealCurve(chartSpeeds.get(i), flow, head, flowPolyEff, polEff));
     }
-    generateSurgeCurve();
-    generateStoneWallCurve();
+    if (chartValues.size() > 1) {
+      generateSurgeCurve();
+      generateStoneWallCurve();
+    }
   }
 
   /**
