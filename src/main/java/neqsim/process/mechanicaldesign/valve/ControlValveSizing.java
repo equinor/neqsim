@@ -161,7 +161,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     double low = 0.0;
     double high = 100.0;
     double percentOpening = 0.0;
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < MAX_BISECTION_ITERATIONS; i++) {
       percentOpening = (low + high) / 2.0;
       double factor = valveMechanicalDesign.getValveCharacterizationMethod()
           .getOpeningFactor(percentOpening);
