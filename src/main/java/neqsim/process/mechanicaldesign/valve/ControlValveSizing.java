@@ -19,6 +19,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   }
 
   private static final double KV_TO_CV_FACTOR = 1.156;
+  private static final int MAX_BISECTION_ITERATIONS = 100;
+  
   double xT = 0.137;
   boolean allowChoked = true;
 
