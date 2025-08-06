@@ -2,7 +2,9 @@ package neqsim.process.equipment.compressor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
@@ -50,6 +52,39 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
       surgeHead[i] = pairs[i][1];
     }
     setSurgeCurve(new SafeSplineSurgeCurve(surgeFlow, surgeHead));
+  }
+
+  /**
+   * Generates the stone wall curve by taking the head value at the highest flow for each speed
+   * from the compressor chart values.
+   */
+  @Override
+  public void generateStoneWallCurve() {
+    int n = chartValues.size();
+    TreeMap<Double, Double> uniqueStoneWallPoints = new TreeMap<>();
+    for (int i = 0; i < n; i++) {
+      CompressorCurve curve = chartValues.get(i);
+      int maxIdx = 0;
+      for (int j = 1; j < curve.flow.length; j++) {
+        if (curve.flow[j] > curve.flow[maxIdx]) {
+          maxIdx = j;
+        }
+      }
+      double flowVal = curve.flow[maxIdx];
+      double headVal = curve.head[maxIdx];
+      if (!uniqueStoneWallPoints.containsKey(flowVal)) {
+        uniqueStoneWallPoints.put(flowVal, headVal);
+      }
+    }
+    double[] stoneFlow = new double[uniqueStoneWallPoints.size()];
+    double[] stoneHead = new double[uniqueStoneWallPoints.size()];
+    int idx = 0;
+    for (Map.Entry<Double, Double> entry : uniqueStoneWallPoints.entrySet()) {
+      stoneFlow[idx] = entry.getKey();
+      stoneHead[idx] = entry.getValue();
+      idx++;
+    }
+    setStoneWallCurve(new StoneWallCurve(stoneFlow, stoneHead));
   }
 
   /** Serialization version UID. */
