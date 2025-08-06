@@ -134,6 +134,7 @@ public class CompressorChartKhader2015Test {
 
     comp1.getCompressorChart().generateSurgeCurve();
     comp1.getSurgeFlowRate();
+
     CompressorChartKhader2015 testChart = new CompressorChartKhader2015(stream_1.getFluid(), 0.9);
     testChart.setCurves(chartConditions, speed, flow, head, flow, polyEff);
     testChart.generateStoneWallCurve();

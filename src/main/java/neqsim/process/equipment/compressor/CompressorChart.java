@@ -26,8 +26,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    */
   public void generateSurgeCurve() {
     int n = chartValues.size();
-    double[] surgeFlow = new double[n];
-    double[] surgeHead = new double[n];
+    java.util.TreeMap<Double, Double> uniqueSurgePoints = new java.util.TreeMap<>();
     for (int i = 0; i < n; i++) {
       CompressorCurve curve = chartValues.get(i);
       // Find index of lowest flow (usually index 0, but robust for unsorted)
@@ -37,21 +36,54 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
           minIdx = j;
         }
       }
-      surgeFlow[i] = curve.flow[minIdx];
-      surgeHead[i] = curve.head[minIdx];
+      double flowVal = curve.flow[minIdx];
+      double headVal = curve.head[minIdx];
+      // Only add if not already present (ensures one point per speed, no duplicate flows)
+      if (!uniqueSurgePoints.containsKey(flowVal)) {
+        uniqueSurgePoints.put(flowVal, headVal);
+      }
     }
-    // Sort surgeFlow and surgeHead by increasing surgeFlow
-    double[][] pairs = new double[n][2];
-    for (int i = 0; i < n; i++) {
-      pairs[i][0] = surgeFlow[i];
-      pairs[i][1] = surgeHead[i];
-    }
-    java.util.Arrays.sort(pairs, java.util.Comparator.comparingDouble(a -> a[0]));
-    for (int i = 0; i < n; i++) {
-      surgeFlow[i] = pairs[i][0];
-      surgeHead[i] = pairs[i][1];
+    double[] surgeFlow = new double[uniqueSurgePoints.size()];
+    double[] surgeHead = new double[uniqueSurgePoints.size()];
+    int idx = 0;
+    for (java.util.Map.Entry<Double, Double> entry : uniqueSurgePoints.entrySet()) {
+      surgeFlow[idx] = entry.getKey();
+      surgeHead[idx] = entry.getValue();
+      idx++;
     }
     setSurgeCurve(new SafeSplineSurgeCurve(surgeFlow, surgeHead));
+  }
+
+  /**
+   * Generates the stone wall curve by taking the head value at the highest flow for each speed from
+   * the compressor chart values.
+   */
+  public void generateStoneWallCurve() {
+    int n = chartValues.size();
+    java.util.TreeMap<Double, Double> uniqueStoneWallPoints = new java.util.TreeMap<>();
+    for (int i = 0; i < n; i++) {
+      CompressorCurve curve = chartValues.get(i);
+      int maxIdx = 0;
+      for (int j = 1; j < curve.flow.length; j++) {
+        if (curve.flow[j] > curve.flow[maxIdx]) {
+          maxIdx = j;
+        }
+      }
+      double flowVal = curve.flow[maxIdx];
+      double headVal = curve.head[maxIdx];
+      if (!uniqueStoneWallPoints.containsKey(flowVal)) {
+        uniqueStoneWallPoints.put(flowVal, headVal);
+      }
+    }
+    double[] stoneFlow = new double[uniqueStoneWallPoints.size()];
+    double[] stoneHead = new double[uniqueStoneWallPoints.size()];
+    int idx = 0;
+    for (java.util.Map.Entry<Double, Double> entry : uniqueStoneWallPoints.entrySet()) {
+      stoneFlow[idx] = entry.getKey();
+      stoneHead[idx] = entry.getValue();
+      idx++;
+    }
+    setStoneWallCurve(new StoneWallCurve(stoneFlow, stoneHead));
   }
 
   /**
@@ -88,6 +120,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /** Serialization version UID. */
+
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CompressorChart.class);
