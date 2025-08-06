@@ -85,7 +85,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
       stoneHead[idx] = entry.getValue();
       idx++;
     }
-    setStoneWallCurve(new StoneWallCurve(stoneFlow, stoneHead));
+    setStoneWallCurve(new SafeSplineStoneWallCurve(stoneFlow, stoneHead));
   }
 
   /** Serialization version UID. */
