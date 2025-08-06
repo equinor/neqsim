@@ -222,7 +222,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
     thermoSystem.initProperties();
 
-    if (thermoSystem.hasPhaseType(PhaseType.GAS) && thermoSystem.getVolumeFraction(0) > 0.5) {
+    if (thermoSystem.hasPhaseType(PhaseType.GAS)) {
       setGasValve(true);
     } else {
       setGasValve(false);
