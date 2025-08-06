@@ -3,7 +3,6 @@ package neqsim.process.equipment.compressor;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.TreeMap;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
@@ -11,22 +10,29 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
- * SafeSplineSurgeCurve class.
- * </p>
- *
- * @author esol
+ * Spline based implementation of the surge curve with safe extrapolation.
  */
-public class SafeSplineSurgeCurve implements java.io.Serializable {
-  private static final long serialVersionUID = 1001;
+public class SafeSplineSurgeCurve extends SurgeCurve {
+  private static final long serialVersionUID = 1001L;
   static Logger logger = LogManager.getLogger(SafeSplineSurgeCurve.class);
 
-  public double[] getFlow() {
-    return flow;
-  }
+  private double[] sortedHead;
+  private double[] sortedFlow;
 
-  public double[] getHead() {
-    return head;
+  private transient UnivariateFunction headFromFlow; // head = f(flow)
+  private transient UnivariateFunction flowFromHead; // flow = f(head)
+
+  /** Default constructor. */
+  public SafeSplineSurgeCurve() {}
+
+  /**
+   * Create a spline based surge curve from flow and head arrays.
+   *
+   * @param flow array of flow values
+   * @param head array of head values
+   */
+  public SafeSplineSurgeCurve(double[] flow, double[] head) {
+    setCurve(null, flow, head);
   }
 
   public double[] getSortedHead() {
@@ -37,46 +43,7 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
     return sortedFlow;
   }
 
-  private double[] flow;
-  private double[] head;
-  private double[] chartConditions;
-
-  private double[] sortedHead;
-  private double[] sortedFlow;
-
-  private transient UnivariateFunction headFromFlow; // head = f(flow)
-  private transient UnivariateFunction flowFromHead; // flow = f(head)
-
-  private boolean isActive = false;
-
-  /**
-   * <p>
-   * Constructor for SafeSplineSurgeCurve.
-   * </p>
-   */
-  public SafeSplineSurgeCurve() {}
-
-  /**
-   * <p>
-   * Constructor for SafeSplineSurgeCurve.
-   * </p>
-   *
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
-   */
-  public SafeSplineSurgeCurve(double[] flow, double[] head) {
-    setCurve(null, flow, head);
-  }
-
-  /**
-   * <p>
-   * setCurve.
-   * </p>
-   *
-   * @param chartConditions an array of {@link double} objects
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
-   */
+  @Override
   public void setCurve(double[] chartConditions, double[] flow, double[] head) {
     if (flow.length != head.length || flow.length < 2) {
       throw new IllegalArgumentException(
@@ -85,7 +52,6 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
 
     int n = flow.length;
 
-    // Sort by flow (ascending)
     Double[][] flowHeadPairs = new Double[n][2];
     for (int i = 0; i < n; i++) {
       flowHeadPairs[i][0] = flow[i];
@@ -103,14 +69,12 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
     this.chartConditions =
         chartConditions == null ? null : Arrays.copyOf(chartConditions, chartConditions.length);
 
-    // Interpolation: head = f(flow)
     SplineInterpolator interpolator = new SplineInterpolator();
     this.headFromFlow = interpolator.interpolate(this.flow, this.head);
 
-    // Interpolation: flow = f(head), use TreeMap to ensure strictly increasing head values
     TreeMap<Double, Double> uniqueHeadFlow = new TreeMap<>();
     for (int i = 0; i < n; i++) {
-      uniqueHeadFlow.put(this.head[i], this.flow[i]); // if duplicate, last wins
+      uniqueHeadFlow.put(this.head[i], this.flow[i]);
     }
 
     int m = uniqueHeadFlow.size();
@@ -130,19 +94,12 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
     }
 
     this.flowFromHead = interpolator.interpolate(this.sortedHead, this.sortedFlow);
-    this.isActive = true;
+    setActive(true);
   }
 
-  /**
-   * <p>
-   * getSurgeFlow.
-   * </p>
-   *
-   * @param headValue a double
-   * @return a double
-   */
-  public double getSurgeFlow(double headValue) {
-    if (!isActive) {
+  @Override
+  public double getFlow(double headValue) {
+    if (!isActive()) {
       return 0.0;
     }
 
@@ -158,7 +115,6 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
         return Math.max(0.0, flowFromHead.value(headValue));
       }
 
-      // Linear extrapolation
       double slope;
       double extrapolated;
       if (headValue < minHead) {
@@ -178,16 +134,19 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
     }
   }
 
+  /** Wrapper retaining old API. */
+  public double getSurgeFlow(double headValue) {
+    return getFlow(headValue);
+  }
+
   /**
-   * <p>
-   * getSurgeHead.
-   * </p>
+   * Get head value corresponding to a given flow.
    *
-   * @param flowValue a double
-   * @return a double
+   * @param flowValue flow value
+   * @return corresponding head
    */
   public double getSurgeHead(double flowValue) {
-    if (!isActive) {
+    if (!isActive()) {
       return 0.0;
     }
 
@@ -208,7 +167,6 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
         return headFromFlow.value(flowValue);
       }
 
-      // Linear extrapolation
       double slope;
       double extrapolated;
       if (flowValue < minFlow) {
@@ -227,56 +185,9 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
     }
   }
 
-  /**
-   * <p>
-   * isSurge.
-   * </p>
-   *
-   * @param headValue a double
-   * @param flowValue a double
-   * @return a boolean
-   */
+  /** Wrapper retaining old API. */
   public boolean isSurge(double headValue, double flowValue) {
-    return getSurgeFlow(headValue) > flowValue;
-  }
-
-  /**
-   * <p>
-   * isActive.
-   * </p>
-   *
-   * @return a boolean
-   */
-  public boolean isActive() {
-    return isActive;
-  }
-
-  /**
-   * <p>
-   * setActive.
-   * </p>
-   *
-   * @param isActive a boolean
-   */
-  public void setActive(boolean isActive) {
-    this.isActive = isActive;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode() {
-    return Objects.hash(Arrays.hashCode(flow), Arrays.hashCode(head),
-        Arrays.hashCode(chartConditions), isActive);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof SafeSplineSurgeCurve)) {
-      return false;
-    }
-    SafeSplineSurgeCurve other = (SafeSplineSurgeCurve) obj;
-    return Arrays.equals(flow, other.flow) && Arrays.equals(head, other.head)
-        && Arrays.equals(chartConditions, other.chartConditions) && isActive == other.isActive;
+    return isLimit(headValue, flowValue);
   }
 }
+
