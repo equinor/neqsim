@@ -388,6 +388,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
 
   // ...existing code...
 
+
   /**
    * Simple POJO to hold corrected (dimensionless) compressor curve data for a given speed.
    */

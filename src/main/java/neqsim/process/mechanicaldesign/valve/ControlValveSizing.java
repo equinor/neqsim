@@ -14,16 +14,15 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
   ValveMechanicalDesign valveMechanicalDesign = null;
 
-  // Added missing constants
-  private static final double SECONDS_PER_HOUR = 3600.0;
-  private static final double MAX_VALVE_OPENING_PERCENTAGE = 100.0;
 
   public ValveMechanicalDesign getValveMechanicalDesign() {
     return valveMechanicalDesign;
   }
 
   private static final double KV_TO_CV_FACTOR = 1.156;
+  private static final double SECONDS_PER_HOUR = 3600.0;
   private static final int MAX_BISECTION_ITERATIONS = 100;
+  private static final double MAX_VALVE_OPENING_PERCENTAGE = 100.0;
 
   double xT = 0.137;
   boolean allowChoked = true;
@@ -154,6 +153,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     }
 
     // Convert requested flow to m3/h to match Kv units
+
     double Q_m3h = Q * SECONDS_PER_HOUR;
 
     // Required Kv for the requested flow
