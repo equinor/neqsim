@@ -100,6 +100,10 @@ public class CompressorChartKhader2015Test {
     Assertions.assertEquals(2986.0877, compChart.getRealCurves().get(0).flow[0], 0.0001);
     Assertions.assertEquals(91.7406053, compChart.getRealCurves().get(0).head[0], 0.0001);
 
+    StoneWallCurve sw = compChart.getStoneWallCurve();
+    SurgeCurve sc = compChart.getSurgeCurve();
+
+
     testFluid = new SystemSrkEos(298.15, 50.0);
 
     testFluid.addComponent("methane", 8.35736E-1);
@@ -131,17 +135,13 @@ public class CompressorChartKhader2015Test {
     comp1.getCompressorChart().setCurves(chartConditions, speed, flow, head, polyEff);
     comp1.run();
     Assertions.assertEquals(75.11224727, comp1.getOutletStream().getPressure("bara"), 0.01);
-
-    comp1.getCompressorChart().generateSurgeCurve();
     comp1.getSurgeFlowRate();
 
     CompressorChartKhader2015 testChart = new CompressorChartKhader2015(stream_1.getFluid(), 0.9);
     testChart.setCurves(chartConditions, speed, flow, head, flow, polyEff);
-    testChart.getRealCurves();
-    testChart.generateStoneWallCurve();
-    testChart.generateSurgeCurve();
-    StoneWallCurve sw = testChart.getStoneWallCurve();
-    SurgeCurve sc = testChart.getSurgeCurve();
+
+    sw = testChart.getStoneWallCurve();
+    sc = testChart.getSurgeCurve();
 
     double cs = testChart.getReferenceFluid().getPhase(0).getSoundSpeed();
     double D = testChart.getImpellerOuterDiameter();
