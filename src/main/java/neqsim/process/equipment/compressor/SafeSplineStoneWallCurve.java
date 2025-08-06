@@ -52,6 +52,14 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
     setCurve(null, flow, head);
   }
 
+  public double[] getSortedHead() {
+    return sortedHead;
+  }
+
+  public double[] getSortedFlow() {
+    return sortedFlow;
+  }
+
   /**
    * {@inheritDoc}
    *

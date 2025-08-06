@@ -52,6 +52,14 @@ public class StoneWallCurve implements java.io.Serializable {
     this.head = head;
   }
 
+  public double[] getFlow() {
+    return flow;
+  }
+
+  public double[] getHead() {
+    return head;
+  }
+
   /**
    * <p>
    * setCurve.

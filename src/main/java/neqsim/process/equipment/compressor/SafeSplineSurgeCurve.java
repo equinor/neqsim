@@ -21,6 +21,22 @@ public class SafeSplineSurgeCurve implements java.io.Serializable {
   private static final long serialVersionUID = 1001;
   static Logger logger = LogManager.getLogger(SafeSplineSurgeCurve.class);
 
+  public double[] getFlow() {
+    return flow;
+  }
+
+  public double[] getHead() {
+    return head;
+  }
+
+  public double[] getSortedHead() {
+    return sortedHead;
+  }
+
+  public double[] getSortedFlow() {
+    return sortedFlow;
+  }
+
   private double[] flow;
   private double[] head;
   private double[] chartConditions;
