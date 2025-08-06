@@ -10,6 +10,7 @@ import javax.swing.JTable;
 import neqsim.process.costestimation.valve.ValveCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.equipment.valve.ValveInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.designstandards.ValveDesignStandard;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -40,6 +41,20 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   boolean allowLaminar = true;
   boolean fullOutput = true;
   String valveSizingStandard = "default";// IEC 60534";
+  String valveCharacterization = "linear";
+  ValveCharacteristic valveCharacterizationMethod = null;
+
+  public String getValveCharacterization() {
+    return valveCharacterization;
+  }
+
+  public ValveCharacteristic getValveCharacterizationMethod() {
+    return valveCharacterizationMethod;
+  }
+
+  public void setValveCharacterizationMethod(ValveCharacteristic valveCharacterizationMethod) {
+    this.valveCharacterizationMethod = valveCharacterizationMethod;
+  }
 
   public String getValveSizingStandard() {
     return valveSizingStandard;
@@ -59,6 +74,18 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     }
   }
 
+  public void setValveCharacterization(String valveCharacterization) {
+    this.valveCharacterization = valveCharacterization;
+    // valveCharacterization.
+    if (valveCharacterization.equals("linear")) {
+      valveCharacterizationMethod = new LinearCharacteristic();
+    } else if (valveCharacterization.equals("equal percentage")) {
+      valveCharacterizationMethod = new LinearCharacteristic();
+    } else {
+      valveCharacterizationMethod = new LinearCharacteristic();
+    }
+  }
+
   ControlValveSizingInterface valveSizingMethod = null;
 
   /**
@@ -72,6 +99,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     super(equipment);
     costEstimate = new ValveCostEstimate(this);
     valveSizingMethod = new ControlValveSizing(this);
+    valveCharacterizationMethod = new LinearCharacteristic();
   }
 
   /**
@@ -95,7 +123,8 @@ public class ValveMechanicalDesign extends MechanicalDesign {
 
     Map<String, Object> result = fullOutput ? new HashMap<>() : null;
 
-    result = valveSizingMethod.calcValveSize();
+    result = valveSizingMethod
+        .calcValveSize(((ValveInterface) getProcessEquipment()).getPercentValveOpening());
 
     return result;
   }

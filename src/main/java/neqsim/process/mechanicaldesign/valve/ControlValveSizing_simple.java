@@ -19,7 +19,7 @@ public class ControlValveSizing_simple extends ControlValveSizing {
     super(valveMechanicalDesign);
   }
 
-  public double calcKv() {
+  public double calcKv(double percentOpening) {
 
     SystemInterface fluid =
         ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
@@ -49,7 +49,8 @@ public class ControlValveSizing_simple extends ControlValveSizing {
             - ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getOutletStream()
                 .getPressure("bara"))
             / density)
-        / Y;
+        / Y
+        / valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
   }
 
   /**

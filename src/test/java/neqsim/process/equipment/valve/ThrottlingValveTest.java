@@ -87,14 +87,14 @@ public class ThrottlingValveTest {
 
     valve1.run();
     assertEquals(7000.0000000, valve1.getOutletStream().getFlowRate("Sm3/hr"), 7000 / 100);
-    assertEquals(3626.9597094, valve1.getKv(), 1e-2);
+    assertEquals(3698.17669750, valve1.getKv(), 1e-2);
 
     Map<String, Object> result = valve1.getMechanicalDesign().calcValveSize();
     double Cv = (double) result.get("Cv");
-    assertEquals(4192.76542, Cv, 1e-2);
+    assertEquals(4275.09226231, Cv, 1e-2);
 
-    assertEquals(5702160.976848, valve1.getCg(), 1e-2);
-    assertEquals(3626.9597094, valve1.getCv("SI"), 1e-2);
+    assertEquals(5814125.4767, valve1.getCg(), 1e-2);
+    assertEquals(3698.17669750190, valve1.getCv("SI"), 1e-2);
     assertEquals(100.0, valve1.getPercentValveOpening(), 1e-2);
 
     valve1.setCalculateSteadyState(false);
