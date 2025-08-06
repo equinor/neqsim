@@ -3,7 +3,6 @@ package neqsim.process.equipment.compressor;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.TreeMap;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
@@ -11,17 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
- * SafeSplineStoneWallCurve class.
- * </p>
- *
- * <p>
- * This class provides a spline based representation of the stone wall curve similar to
- * {@link SafeSplineSurgeCurve}. It offers safe evaluation with linear extrapolation outside the
- * provided data range.
- * </p>
- *
- * @author esol
+ * Spline based representation of the stone wall curve with safe extrapolation.
  */
 public class SafeSplineStoneWallCurve extends StoneWallCurve {
   private static final long serialVersionUID = 1001L;
@@ -33,20 +22,14 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
   private transient UnivariateFunction headFromFlow; // head = f(flow)
   private transient UnivariateFunction flowFromHead; // flow = f(head)
 
-  /**
-   * <p>
-   * Constructor for SafeSplineStoneWallCurve.
-   * </p>
-   */
+  /** Default constructor. */
   public SafeSplineStoneWallCurve() {}
 
   /**
-   * <p>
-   * Constructor for SafeSplineStoneWallCurve.
-   * </p>
+   * Create a spline based stone wall curve from flow and head arrays.
    *
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
+   * @param flow array of flow values
+   * @param head array of head values
    */
   public SafeSplineStoneWallCurve(double[] flow, double[] head) {
     setCurve(null, flow, head);
@@ -60,14 +43,6 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
     return sortedFlow;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Sets the curve values and prepares spline interpolators in both directions. Flow and head
-   * arrays are sorted by flow to ensure monotonicity.
-   * </p>
-   */
   @Override
   public void setCurve(double[] chartConditions, double[] flow, double[] head) {
     if (flow.length != head.length || flow.length < 2) {
@@ -77,7 +52,6 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
 
     int n = flow.length;
 
-    // Sort by flow (ascending)
     Double[][] flowHeadPairs = new Double[n][2];
     for (int i = 0; i < n; i++) {
       flowHeadPairs[i][0] = flow[i];
@@ -95,14 +69,12 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
     this.chartConditions =
         chartConditions == null ? null : Arrays.copyOf(chartConditions, chartConditions.length);
 
-    // Interpolation: head = f(flow)
     SplineInterpolator interpolator = new SplineInterpolator();
     this.headFromFlow = interpolator.interpolate(this.flow, this.head);
 
-    // Interpolation: flow = f(head), use TreeMap to ensure strictly increasing head values
     TreeMap<Double, Double> uniqueHeadFlow = new TreeMap<>();
     for (int i = 0; i < n; i++) {
-      uniqueHeadFlow.put(this.head[i], this.flow[i]); // if duplicate, last wins
+      uniqueHeadFlow.put(this.head[i], this.flow[i]);
     }
 
     int m = uniqueHeadFlow.size();
@@ -125,15 +97,8 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
     setActive(true);
   }
 
-  /**
-   * <p>
-   * getStoneWallFlow.
-   * </p>
-   *
-   * @param headValue a double
-   * @return a double representing the stone wall flow for the given head
-   */
-  public double getStoneWallFlow(double headValue) {
+  @Override
+  public double getFlow(double headValue) {
     if (!isActive()) {
       return 0.0;
     }
@@ -150,7 +115,6 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
         return Math.max(0.0, flowFromHead.value(headValue));
       }
 
-      // Linear extrapolation
       double slope;
       double extrapolated;
       if (headValue < minHead) {
@@ -170,13 +134,16 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
     }
   }
 
+  /** Wrapper retaining old API. */
+  public double getStoneWallFlow(double headValue) {
+    return getFlow(headValue);
+  }
+
   /**
-   * <p>
-   * getStoneWallHead.
-   * </p>
+   * Get head value corresponding to a given flow.
    *
-   * @param flowValue a double
-   * @return a double representing the stone wall head for the given flow
+   * @param flowValue flow value
+   * @return corresponding head
    */
   public double getStoneWallHead(double flowValue) {
     if (!isActive()) {
@@ -200,7 +167,6 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
         return headFromFlow.value(flowValue);
       }
 
-      // Linear extrapolation
       double slope;
       double extrapolated;
       if (flowValue < minFlow) {
@@ -219,47 +185,9 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
     }
   }
 
-  /**
-   * <p>
-   * isStoneWall.
-   * </p>
-   *
-   * @param headValue a double
-   * @param flowValue a double
-   * @return a boolean
-   */
+  /** Wrapper retaining old API. */
   public boolean isStoneWall(double headValue, double flowValue) {
-    return getStoneWallFlow(headValue) < flowValue;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean isActive() {
-    return super.isActive();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setActive(boolean isActive) {
-    super.setActive(isActive);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode() {
-    return Objects.hash(Arrays.hashCode(flow), Arrays.hashCode(head),
-        Arrays.hashCode(chartConditions), isActive());
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof SafeSplineStoneWallCurve)) {
-      return false;
-    }
-    SafeSplineStoneWallCurve other = (SafeSplineStoneWallCurve) obj;
-    return Arrays.equals(flow, other.flow) && Arrays.equals(head, other.head)
-        && Arrays.equals(chartConditions, other.chartConditions) && isActive() == other.isActive();
+    return isLimit(headValue, flowValue);
   }
 }
 
