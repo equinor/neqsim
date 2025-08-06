@@ -60,7 +60,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
   ArrayList<Double> chartSpeeds = new ArrayList<Double>();
   SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
-  StoneWallCurve stoneWallCurve = new StoneWallCurve();
+  StoneWallCurve stoneWallCurve = new SafeSplineStoneWallCurve();
   // private SurgeCurve surgeCurve = new SurgeCurve();
   boolean isSurge = false;
   double maxSpeedCurve = 0;
