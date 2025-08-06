@@ -1,160 +1,55 @@
 package neqsim.process.equipment.compressor;
 
-import java.util.Arrays;
-import java.util.Objects;
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-import org.apache.commons.math3.fitting.PolynomialCurveFitter;
-import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
- * StoneWallCurve class.
- * </p>
- *
- * @author asmund
- * @version $Id: $Id
+ * StoneWallCurve defines the compressor stone wall (choke) limit.
  */
-public class StoneWallCurve implements java.io.Serializable {
-  /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
+public class StoneWallCurve extends BoundaryCurve {
+  private static final long serialVersionUID = 1000L;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(StoneWallCurve.class);
 
-  double[] flow;
-  double[] head;
-  double[] chartConditions = null;
-  private boolean isActive = false;
-  final WeightedObservedPoints flowFitter = new WeightedObservedPoints();
-  PolynomialFunction flowFitterFunc = null;
-
-  /**
-   * <p>
-   * Constructor for StoneWallCurve.
-   * </p>
-   */
+  /** Default constructor. */
   public StoneWallCurve() {
-    // flow = new double[] {453.2, 600.0, 750.0};
-    // head = new double[] {1000.0, 900.0, 800.0};
+    super();
   }
 
   /**
-   * <p>
-   * Constructor for StoneWallCurve.
-   * </p>
+   * Create a stone wall curve from flow and head arrays.
    *
-   * @param flow an array of type double
-   * @param head an array of type double
+   * @param flow array of flow values
+   * @param head array of head values
    */
   public StoneWallCurve(double[] flow, double[] head) {
-    this.flow = flow;
-    this.head = head;
-  }
-
-  public double[] getFlow() {
-    return flow;
-  }
-
-  public double[] getHead() {
-    return head;
+    super(flow, head);
   }
 
   /**
-   * <p>
-   * setCurve.
-   * </p>
+   * Get the stone wall flow for a given head.
    *
-   * @param chartConditions an array of type double
-   * @param flow an array of type double
-   * @param head an array of type double
-   */
-  public void setCurve(double[] chartConditions, double[] flow, double[] head) {
-    this.chartConditions = chartConditions;
-    for (int i = 0; i < flow.length; i++) {
-      flowFitter.add(head[i], flow[i]);
-    }
-    PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
-    flowFitterFunc = new PolynomialFunction(fitter.fit(flowFitter.toList()));
-    isActive = true;
-  }
-
-  /**
-   * <p>
-   * getStoneWallFlow.
-   * </p>
-   *
-   * @param head a double
-   * @return a double
+   * @param head head value
+   * @return stone wall flow
    */
   public double getStoneWallFlow(double head) {
-    return flowFitterFunc.value(head);
+    return getFlow(head);
   }
 
   /**
-   * <p>
-   * isStoneWall.
-   * </p>
+   * Check if the given point is beyond the stone wall limit.
    *
-   * @param head a double
-   * @param flow a double
-   * @return a boolean
+   * @param head head value
+   * @param flow flow value
+   * @return true if the point is beyond the stone wall limit
    */
   public boolean isStoneWall(double head, double flow) {
-    if (getStoneWallFlow(head) < flow) {
-      return true;
-    } else {
-      return false;
-    }
+    return isLimit(head, flow);
   }
 
-  /**
-   * Getter for property isActive.
-   *
-   * @return boolean
-   */
-  boolean isActive() {
-    return isActive;
-  }
-
-  /**
-   * Setter for property isActive.
-   *
-   * @param isActive true if stone wall curve should be used for compressor calculations
-   */
-  void setActive(boolean isActive) {
-    this.isActive = isActive;
-  }
-
-  /** {@inheritDoc} */
   @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + Arrays.hashCode(chartConditions);
-    result = prime * result + Arrays.hashCode(flow);
-    result = prime * result + Arrays.hashCode(head);
-    result = prime * result + Objects.hash(flowFitterFunc, isActive);
-    // result = prime * result + Objects.hash(flowFitter);
-    return result;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    StoneWallCurve other = (StoneWallCurve) obj;
-    return Arrays.equals(chartConditions, other.chartConditions) && Arrays.equals(flow, other.flow)
-        && Objects.equals(flowFitterFunc, other.flowFitterFunc) && Arrays.equals(head, other.head)
-        && isActive == other.isActive;
-    // && Objects.equals(flowFitter, other.flowFitter)
+  public boolean isLimit(double head, double flow) {
+    return getFlow(head) < flow;
   }
 }
+
