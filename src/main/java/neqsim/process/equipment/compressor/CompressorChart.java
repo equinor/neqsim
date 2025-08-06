@@ -54,41 +54,10 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     setSurgeCurve(new SafeSplineSurgeCurve(surgeFlow, surgeHead));
   }
 
+
   /**
    * Generates the stone wall curve by taking the head value at the highest flow for each speed from
    * the compressor chart values.
-   */
-  public void generateStoneWallCurve() {
-    int n = chartValues.size();
-    java.util.TreeMap<Double, Double> uniqueStoneWallPoints = new java.util.TreeMap<>();
-    for (int i = 0; i < n; i++) {
-      CompressorCurve curve = chartValues.get(i);
-      int maxIdx = 0;
-      for (int j = 1; j < curve.flow.length; j++) {
-        if (curve.flow[j] > curve.flow[maxIdx]) {
-          maxIdx = j;
-        }
-      }
-      double flowVal = curve.flow[maxIdx];
-      double headVal = curve.head[maxIdx];
-      if (!uniqueStoneWallPoints.containsKey(flowVal)) {
-        uniqueStoneWallPoints.put(flowVal, headVal);
-      }
-    }
-    double[] stoneFlow = new double[uniqueStoneWallPoints.size()];
-    double[] stoneHead = new double[uniqueStoneWallPoints.size()];
-    int idx = 0;
-    for (java.util.Map.Entry<Double, Double> entry : uniqueStoneWallPoints.entrySet()) {
-      stoneFlow[idx] = entry.getKey();
-      stoneHead[idx] = entry.getValue();
-      idx++;
-    }
-    setStoneWallCurve(new StoneWallCurve(stoneFlow, stoneHead));
-  }
-
-  /**
-   * Generates the stone wall curve by taking the head value at the highest flow for each speed
-   * from the compressor chart values.
    */
   @Override
   public void generateStoneWallCurve() {
