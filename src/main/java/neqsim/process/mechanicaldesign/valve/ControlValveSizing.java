@@ -148,7 +148,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     }
 
     // Convert requested flow to m3/h to match Kv units
-    double Q_m3h = Q * 3600.0;
+    double Q_m3h = Q * SECONDS_PER_HOUR;
 
     // Required Kv for the requested flow
     double requiredKv = Q_m3h / Math.sqrt(dP / density);
