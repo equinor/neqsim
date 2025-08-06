@@ -12,8 +12,12 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ControlValveSizing implements ControlValveSizingInterface, Serializable {
 
-
   ValveMechanicalDesign valveMechanicalDesign = null;
+
+  public ValveMechanicalDesign getValveMechanicalDesign() {
+    return valveMechanicalDesign;
+  }
+
   private static final double KV_TO_CV_FACTOR = 1.156;
   double xT = 0.137;
   boolean allowChoked = true;
@@ -49,10 +53,10 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * @return a map containing the calculated valve size and related parameters. If fullOutput is
    *         false, the map will be null.
    */
-  public Map<String, Object> calcValveSize() {
+  public Map<String, Object> calcValveSize(double percentOpening) {
 
     Map<String, Object> result = valveMechanicalDesign.fullOutput ? new HashMap<>() : null;
-    double Kv = calcKv();
+    double Kv = calcKv(percentOpening);
     result.put("choked", false);
     result.put("Kv", Kv);
     result.put("Cv", Kv_to_Cv(Kv));
@@ -60,7 +64,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     return result;
   }
 
-  public double calcKv() {
+  public double calcKv(double percentOpening) {
 
     SystemInterface fluid =
         ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
@@ -68,9 +72,12 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     Map<String, Object> result = valveMechanicalDesign.fullOutput ? new HashMap<>() : null;
 
     double density = fluid.getDensity("kg/m3");
+    double Y = 1.0;
+
     if (!((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).isGasValve()) {
       density = fluid.getDensity("kg/m3") / 1000.0;
     }
+
 
     return ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream()
         .getFlowRate("m3/hr")
@@ -78,25 +85,25 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
             .getInletStream().getPressure("bara")
             - ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getOutletStream()
                 .getPressure("bara"))
-            / density);
+            / density)
+        / valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
   }
 
   /**
    * Calculates the flow rate through a control valve based on the valve opening, Kv, and
    * inlet/outlet streams.
    *
-   * @param Kv Flow coefficient (for 100% opening)
-   * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
+   * @param actualKv Flow coefficient (for 100% opening)
    * @param inletStream Inlet stream to the valve
    * @param outletStream Outlet stream from the valve
    * @return Calculated flow rate (units depend on phase type)
    */
-  public double calculateFlowRateFromValveOpening(double Kv, double valveOpening,
-      StreamInterface inletStream, StreamInterface outletStream) {
-    return calculateMolarFlow(Kv * valveOpening / 100.0, inletStream, outletStream);
+  public double calculateFlowRateFromValveOpening(double actualKv, StreamInterface inletStream,
+      StreamInterface outletStream) {
+    return calculateMolarFlow(actualKv, inletStream, outletStream);
   }
 
-  public double calculateMolarFlow(double KvAdjusted, StreamInterface inStream,
+  public double calculateMolarFlow(double actualKv, StreamInterface inStream,
       StreamInterface outStream) {
     // Convert ΔP from Pa to bar for consistency with Kv in m3/h/√bar
 
@@ -106,7 +113,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     }
 
     // Mass flow in kg/s
-    double flow_m3_s = (KvAdjusted / 3600.0)
+    double flow_m3_s = (actualKv / 3600.0)
         * Math.sqrt((inStream.getPressure("bara") - outStream.getPressure("bara")) / density);
 
     return flow_m3_s;
@@ -117,13 +124,12 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * streams.
    *
    * @param Q Flow rate (units depend on phase type)
-   * @param Kv Flow coefficient (for 100% opening)
-   * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
+   * @param actualKv Flow coefficient (for 100% opening)
    * @param inletStream Inlet stream to the valve
    * @param outletStream Outlet stream from the valve
    * @return Required valve opening fraction (0.0 - 1.0)
    */
-  public double calculateValveOpeningFromFlowRate(double Q, double Kv, double valveOpening,
+  public double calculateValveOpeningFromFlowRate(double Q, double actualKv,
       StreamInterface inletStream, StreamInterface outletStream) {
     return 100.0;
   }
@@ -131,38 +137,29 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   /**
    * Finds the outlet pressure for a given Kv, valve opening, and inlet stream.
    * 
-   * @param Kv Flow coefficient (for 100% opening)
-   * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
+   * @param actualKv Flow coefficient (for 100% opening)
    * @param inletStream Inlet stream to the valve
    * @return Outlet pressure (unit Pa)
    */
-  public double findOutletPressureForFixedKv(double Kv, double valveOpening,
-      StreamInterface inletStream) {
-    return calculateOutletPressure(Kv * valveOpening / 100.0, inletStream);
+  public double findOutletPressureForFixedKv(double actualKv, StreamInterface inletStream) {
+    return calculateOutletPressure(actualKv, inletStream);
   }
 
   public double calculateOutletPressure(double KvAdjusted, StreamInterface inStream) {
     // Fluid properties
     double density = inStream.getFluid().getDensity("kg/m3"); // kg/m³
-    double densityKv = density; // for Kv formula
-    if (!((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).isGasValve()) {
-      densityKv = density / 1000.0; // use relative density for liquids
-    }
-
     double molarMass = inStream.getFluid().getMolarMass("kg/mol"); // kg/mol
-
-    // Known inlet pressure
-    double P1_bar = inStream.getPressure("bara");
-
-    // Calculate volumetric flow Q [m³/s] from molar flow
     double molarFlow = inStream.getFlowRate("mole/sec"); // mol/s
     double Q_m3_s = (molarFlow * molarMass) / density; // m³/s
+    if (!((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).isGasValve()) {
+      density = density / 1000.0; // use relative density for liquids
+    }
 
     // Rearranged Kv equation to get ΔP [bar]
-    double dP_bar = Math.pow((Q_m3_s * 3600.0) / KvAdjusted, 2) * densityKv;
+    double dP_bar = Math.pow((Q_m3_s * 3600.0) / KvAdjusted, 2) * density;
 
     // Return outlet pressure [Pa]
-    return (P1_bar - dP_bar) * 1e5;
+    return (inStream.getPressure("bara") - dP_bar) * 1e5;
   }
 
   private double Kv_to_Cv(double Kv) {

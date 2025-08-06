@@ -5,16 +5,15 @@ import neqsim.process.equipment.stream.StreamInterface;
 
 public interface ControlValveSizingInterface {
 
-  public Map<String, Object> calcValveSize();
+  public Map<String, Object> calcValveSize(double percentOpening);
 
-  public double calculateFlowRateFromValveOpening(double Kv, double valveOpening,
+  public double calculateFlowRateFromValveOpening(double ActualKv, StreamInterface inletStream,
+      StreamInterface outletStream);
+
+  public double calculateValveOpeningFromFlowRate(double Q, double ActualActualKv,
       StreamInterface inletStream, StreamInterface outletStream);
 
-  public double calculateValveOpeningFromFlowRate(double Q, double Kv, double valveOpening,
-      StreamInterface inletStream, StreamInterface outletStream);
-
-  public double findOutletPressureForFixedKv(double Kv, double valveOpening,
-      StreamInterface inletStream);
+  public double findOutletPressureForFixedKv(double ActualKv, StreamInterface inletStream);
 
   public boolean isAllowChoked();
 

@@ -181,7 +181,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    */
   public double calculateMolarFlow() {
     double flow_m3_sec = getMechanicalDesign().getValveSizingMethod()
-        .calculateFlowRateFromValveOpening(Kv, percentValveOpening, inStream, outStream);
+        .calculateFlowRateFromValveOpening(adjustKv(Kv, percentValveOpening), inStream, outStream);
 
     return flow_m3_sec * inStream.getFluid().getDensity("kg/m3")
         / inStream.getFluid().getMolarMass("kg/mol");
@@ -194,19 +194,20 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * @return the calculated outlet pressure
    */
   public double calculateOutletPressure(double KvAdjusted) {
-    return getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedKv(Kv,
-        percentValveOpening, inStream) / 1.0e5;
+    return getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedKv(KvAdjusted,
+        inStream) / 1.0e5;
   }
 
   /**
    * Adjusts the flow coefficient (Kv) based on the percentage valve opening.
    *
-   * @param Kv Flow coefficient in US gallons per minute (USG/min).
+   * @param Kv Flow coefficient SI (for 100% opening)
    * @param percentValveOpening Percentage valve opening (0 to 100).
-   * @return Adjusted flow coefficient (Kv) in US gallons per minute (USG/min).
+   * @return Adjusted flow coefficient (Kv)
    */
   private double adjustKv(double Kv, double percentValveOpening) {
-    return Kv * (percentValveOpening / 100);
+    return getMechanicalDesign().getValveCharacterizationMethod().getActualKv(Kv,
+        percentValveOpening);
   }
 
 
@@ -239,7 +240,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     double molarFlowStart = getInletStream().getThermoSystem().getFlowRate("mole/sec");
     // first estimate of flow from current outlet pressure
     // Calculate molar flow rate for gas directly here (without calling calculateMolarFlowRateGas)
-    double KvAdjusted = adjustKv(Kv, percentValveOpening);
     double inletPressure = inStream.getThermoSystem().getPressure("bara");
     double outletPressure = outStream.getThermoSystem().getPressure("bara");
 
@@ -252,7 +252,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
     // update outlet pressure if required
     if (valveKvSet && isCalcPressure) {
-      outPres = calculateOutletPressure(KvAdjusted);
+      outPres = calculateOutletPressure(adjustKv(Kv, percentValveOpening));
       setOutletPressure(outPres);
     }
     if (deltaPressure != 0) {

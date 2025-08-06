@@ -3,6 +3,7 @@ package neqsim.process.mechanicaldesign.valve;
 import java.util.HashMap;
 import java.util.Map;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.valve.ValveInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
@@ -61,7 +62,7 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
    */
   @Override
   public Map<String, Object> sizeControlValveLiquid(double rho, double Psat, double Pc, double P1,
-      double P2, double Q) {
+      double P2, double Q, double percentOpening) {
     Map<String, Object> ans = new HashMap<>();
 
     // Unit conversions to match IEC formulas
@@ -157,6 +158,9 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
       ans.put("FR", FR);
     }
 
+    kv = kv
+        / valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
+
     ans.put("FF", FF);
     ans.put("choked", isChokedTurbulentL(dP, locP1, locPsat, FF, (Double) ans.get("FLP"),
         (Double) ans.get("FP")));
@@ -171,7 +175,8 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
    */
   @Override
   public Map<String, Object> sizeControlValveGas(double T, double MW, double gamma, double Z,
-      double P1, double P2, double Q) {
+      double P1, double P2, double Q, double percentOpening) {
+
     Map<String, Object> ans = new HashMap<>();
 
     // Unit conversions
@@ -265,6 +270,9 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
       ans.put("Rev", Rev);
       ans.put("FR", FR);
     }
+
+    kv = kv
+        / valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
 
     ans.put("choked", isChokedTurbulentG(x, Fgamma, (Double) ans.getOrDefault("xTP", getxT())));
     ans.put("Y", Y);
@@ -374,38 +382,34 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
    * `sizeControlValveLiquid` will correctly resolve to the overridden, full implementations in this
    * class. It is overridden here for clarity and completeness.
    *
-   * @param Kv the valve flow coefficient
-   * @param valveOpening the valve opening percentage (0-100)
+   * @param adjustedKv the valve flow coefficient
    * @param inletStream the inlet stream to the valve
    * @return outlet pressure in Pascals.
    */
   @Override
-  public double findOutletPressureForFixedKv(double Kv, double valveOpening,
-      StreamInterface inletStream) {
+  public double findOutletPressureForFixedKv(double adjustedKv, StreamInterface inletStream) {
     // This correctly calls the overridden findOutletPressureForFixedKvGas/Liquid
     // in the base class, which in turn call the FULL sizeControlValve... methods
     // implemented here. No further logic is needed.
-    return super.findOutletPressureForFixedKv(Kv, valveOpening, inletStream);
+    return super.findOutletPressureForFixedKv(adjustedKv, inletStream);
   }
 
   /**
    * Calculates the flow rate for a given valve opening using the full, iterative model. This method
    * overrides the simplified base class implementation to ensure consistency.
    *
-   * @param Kv The maximum flow coefficient of the valve.
-   * @param valveOpening The opening of the valve (0-100).
+   * @param adjustedKv The maximum flow coefficient of the valve.
    * @param inletStream The stream entering the valve.
    * @param outletStream The stream leaving the valve (used for outlet pressure).
    * @return The calculated flow rate [m^3/s].
    */
   @Override
-  public double calculateFlowRateFromValveOpening(double Kv, double valveOpening,
-      StreamInterface inletStream, StreamInterface outletStream) {
+  public double calculateFlowRateFromValveOpening(double adjustedKv, StreamInterface inletStream,
+      StreamInterface outletStream) {
     if (inletStream.getThermoSystem().hasPhaseType(PhaseType.GAS)) {
-      return calculateFlowRateFromValveOpeningGas_full(Kv, valveOpening, inletStream, outletStream);
+      return calculateFlowRateFromValveOpeningGas_full(adjustedKv, inletStream, outletStream);
     } else {
-      return calculateFlowRateFromValveOpeningLiquid_full(Kv, valveOpening, inletStream,
-          outletStream);
+      return calculateFlowRateFromValveOpeningLiquid_full(adjustedKv, inletStream, outletStream);
     }
   }
 
@@ -417,17 +421,18 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
    * @param Kv The maximum flow coefficient of the valve.
    * @param inletStream The stream entering the valve.
    * @param outletStream The stream leaving the valve.
+   * @param percentValveOpening The current percent valve opening.
    * @return The required valve opening (0-100).
    */
   public double calculateValveOpeningFromFlowRate(double Q, double Kv, StreamInterface inletStream,
-      StreamInterface outletStream) {
+      StreamInterface outletStream, double percentValveOpening) {
     if (Q <= 0) {
       return 0.0;
     }
     // First, use the full sizing model to determine the exact Kv required for this flow
     // condition.
-    Map<String, Object> result = this.calcValveSize(); // Uses streams set in
-                                                       // valveMechanicalDesign
+    Map<String, Object> result = this.calcValveSize(percentValveOpening); // Uses streams set in
+    // valveMechanicalDesign
     double requiredKv = (double) result.get("Kv");
 
     // The required opening is the ratio of the required Kv to the valve's max Kv.
@@ -442,17 +447,15 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   /**
    * Numerically solves for liquid flow rate using a bisection search.
    *
-   * @param Kv valve flow coefficient
-   * @param valveOpening valve opening percentage (0-100)
+   * @param adjustedKv valve flow coefficient
    * @param inletStream inlet stream to the valve
    * @param outletStream outlet stream from the valve
    * @return calculated flow rate [m^3/s]
    */
-  private double calculateFlowRateFromValveOpeningLiquid_full(double Kv, double valveOpening,
+  private double calculateFlowRateFromValveOpeningLiquid_full(double adjustedKv,
       StreamInterface inletStream, StreamInterface outletStream) {
-    if (valveOpening <= 0)
-      return 0.0;
-    double effectiveKv = Kv * (valveOpening / 100.0);
+
+    double effectiveKv = adjustedKv;
 
     double rho = inletStream.getThermoSystem().getDensity("kg/m3");
     double Psat = inletStream.getThermoSystem().getPhase(0).getPressure("Pa");
@@ -470,11 +473,14 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
 
     for (int i = 0; i < MAX_ITERATIONS; i++) {
       Q_mid = 0.5 * (Q_low + Q_high);
-      if (Q_mid < 1e-9)
+      if (Q_mid < 1e-9) {
         break;
+      }
 
       // For this guessed flow rate (Q_mid), what Kv would our full model require?
-      Map<String, Object> result = sizeControlValveLiquid(rho, Psat, Pc, P1, P2, Q_mid);
+      Map<String, Object> result = sizeControlValveLiquid(rho, Psat, Pc, P1, P2, Q_mid,
+          ((ValveInterface) getValveMechanicalDesign().getProcessEquipment())
+              .getPercentValveOpening());
       double requiredKv = (double) result.get("Kv");
 
       if (requiredKv < effectiveKv) {
@@ -484,8 +490,9 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
         // Q_mid is too high for this Kv; the actual flow must be lower.
         Q_high = Q_mid;
       }
-      if (Math.abs(Q_high - Q_low) < 1e-6)
+      if (Math.abs(Q_high - Q_low) < 1e-6) {
         break;
+      }
     }
     return Q_mid;
   }
@@ -493,17 +500,15 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   /**
    * Numerically solves for gas flow rate using a bisection search.
    *
-   * @param Kv valve flow coefficient
-   * @param valveOpening valve opening percentage (0-100)
+   * @param adjustedKv valve flow coefficient
    * @param inletStream inlet stream to the valve
    * @param outletStream outlet stream from the valve
    * @return calculated flow rate [m^3/s]
    */
-  private double calculateFlowRateFromValveOpeningGas_full(double Kv, double valveOpening,
+  private double calculateFlowRateFromValveOpeningGas_full(double adjustedKv,
       StreamInterface inletStream, StreamInterface outletStream) {
-    if (valveOpening <= 0)
-      return 0.0;
-    double effectiveKv = Kv * (valveOpening / 100.0);
+
+    double effectiveKv = adjustedKv;
 
     double T = inletStream.getThermoSystem().getTemperature("K");
     double MW = inletStream.getThermoSystem().getMolarMass("gr/mol");
@@ -523,11 +528,14 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
 
     for (int i = 0; i < MAX_ITERATIONS; i++) {
       Q_mid = 0.5 * (Q_low + Q_high);
-      if (Q_mid < 1e-9)
+      if (Q_mid < 1e-9) {
         break;
+      }
 
       // For this guessed flow rate (Q_mid), what Kv would our full model require?
-      Map<String, Object> result = sizeControlValveGas(T, MW, gamma, Z, P1, P2, Q_mid);
+      Map<String, Object> result = sizeControlValveGas(T, MW, gamma, Z, P1, P2, Q_mid,
+          ((ValveInterface) getValveMechanicalDesign().getProcessEquipment())
+              .getPercentValveOpening());
       double requiredKv = (double) result.get("Kv");
 
       if (requiredKv < effectiveKv) {
@@ -537,8 +545,9 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
         // Q_mid is too high; actual flow must be lower.
         Q_high = Q_mid;
       }
-      if (Math.abs(Q_high - Q_low) < 1e-6)
+      if (Math.abs(Q_high - Q_low) < 1e-6) {
         break;
+      }
     }
     return Q_mid;
   }

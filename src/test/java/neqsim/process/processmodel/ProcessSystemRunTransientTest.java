@@ -115,7 +115,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
         assertEquals(sim.getCalculationIdentifier(), p.getCalculationIdentifier());
       }
     }
-    assertEquals(50.147984, flowTransmitter.getMeasuredValue(), 1.0);
+    assertEquals(73.49473569951, flowTransmitter.getMeasuredValue(), 1.0);
   }
 
   @Test
@@ -227,7 +227,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
         assertEquals(p.getCalculationIdentifier(), sim.getCalculationIdentifier());
       }
     }
-    assertEquals(0.43764909956, separatorLevelTransmitter.getMeasuredValue(), 0.01);
+    assertEquals(0.450353898313, separatorLevelTransmitter.getMeasuredValue(), 0.01);
   }
 
   @Test
@@ -814,11 +814,11 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     p.runTransient(1.0);
     double compPower2 = compressor1.getPower("kW");
-    assertEquals(2.026475997140, compPower1 - compPower2, 0.0001);
+    assertEquals(1.777610523, compPower1 - compPower2, 0.0001);
 
     p.runTransient(12.0);
     compPower2 = compressor1.getPower("kW");
-    assertEquals(2.026475997140712, compPower1 - compPower2, 0.0001);
+    assertEquals(1.77761052380, compPower1 - compPower2, 0.0001);
   }
 
 
@@ -883,13 +883,13 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     p.run();
 
-    assertEquals(3.0822049, valve1.getCv("SI"), 1e-3);
-    assertEquals(0.02608207510602, valve2.getCv("SI"), 1e-3);
-    assertEquals(1.99388831, valve3.getCv("SI"), 1e-3);
+    assertEquals(10.27401660647343, valve1.getCv("SI"), 1e-3);
+    assertEquals(0.08694025035, valve2.getCv("SI"), 1e-3);
+    assertEquals(6.6462943915, valve3.getCv("SI"), 1e-3);
 
-    assertEquals(3.563028959124985, valve1.getCv("US"), 1e-3);
-    assertEquals(0.03015087882256, valve2.getCv("US"), 1e-3);
-    assertEquals(2.304934894986, valve3.getCv("US"), 1e-3);
+    assertEquals(11.87676319, valve1.getCv("US"), 1e-3);
+    assertEquals(0.100502929408, valve2.getCv("US"), 1e-3);
+    assertEquals(7.6831163166211, valve3.getCv("US"), 1e-3);
 
     logger.debug("sep pres {}", separator1.getPressure("bara"));
 
