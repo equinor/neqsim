@@ -14,13 +14,17 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
   ValveMechanicalDesign valveMechanicalDesign = null;
 
+  // Added missing constants
+  private static final double SECONDS_PER_HOUR = 3600.0;
+  private static final double MAX_VALVE_OPENING_PERCENTAGE = 100.0;
+
   public ValveMechanicalDesign getValveMechanicalDesign() {
     return valveMechanicalDesign;
   }
 
   private static final double KV_TO_CV_FACTOR = 1.156;
   private static final int MAX_BISECTION_ITERATIONS = 100;
-  
+
   double xT = 0.137;
   boolean allowChoked = true;
 
@@ -165,8 +169,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     double percentOpening = 0.0;
     for (int i = 0; i < MAX_BISECTION_ITERATIONS; i++) {
       percentOpening = (low + high) / 2.0;
-      double factor = valveMechanicalDesign.getValveCharacterizationMethod()
-          .getOpeningFactor(percentOpening);
+      double factor =
+          valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
       if (factor < requiredOpeningFactor) {
         low = percentOpening;
       } else {
