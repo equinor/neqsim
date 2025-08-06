@@ -69,7 +69,7 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
         tempInKelvin = value * 5.0 / 9.0;
         break;
       default:
-        throw new IllegalArgumentException("Unsupported unit: " + fromUnit);
+        throw new IllegalArgumentException("Unsupported fromUnit: " + fromUnit);
     }
 
     // Convert from Kelvin to target unit
