@@ -131,7 +131,48 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    */
   public double calculateValveOpeningFromFlowRate(double Q, double actualKv,
       StreamInterface inletStream, StreamInterface outletStream) {
-    return 100.0;
+    if (actualKv <= 0) {
+      return 0.0;
+    }
+
+    // Determine fluid density [kg/m3] for gas and relative density for liquids
+    double density = inletStream.getFluid().getDensity("kg/m3");
+    if (!((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).isGasValve()) {
+      density = density / 1000.0; // use relative density for liquids
+    }
+
+    // Pressure drop across the valve [bar]
+    double dP = inletStream.getPressure("bara") - outletStream.getPressure("bara");
+    if (dP <= 0) {
+      return 0.0;
+    }
+
+    // Convert requested flow to m3/h to match Kv units
+    double Q_m3h = Q * 3600.0;
+
+    // Required Kv for the requested flow
+    double requiredKv = Q_m3h / Math.sqrt(dP / density);
+
+    // Opening factor relative to full-open Kv
+    double requiredOpeningFactor = requiredKv / actualKv;
+    requiredOpeningFactor = Math.max(0.0, Math.min(1.0, requiredOpeningFactor));
+
+    // Map opening factor to percent opening using valve characteristic
+    double low = 0.0;
+    double high = 100.0;
+    double percentOpening = 0.0;
+    for (int i = 0; i < 100; i++) {
+      percentOpening = (low + high) / 2.0;
+      double factor = valveMechanicalDesign.getValveCharacterizationMethod()
+          .getOpeningFactor(percentOpening);
+      if (factor < requiredOpeningFactor) {
+        low = percentOpening;
+      } else {
+        high = percentOpening;
+      }
+    }
+
+    return percentOpening;
   }
 
   /**
