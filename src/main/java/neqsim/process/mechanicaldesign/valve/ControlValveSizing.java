@@ -14,9 +14,6 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
   ValveMechanicalDesign valveMechanicalDesign = null;
 
-  // Added missing constants
-  private static final double SECONDS_PER_HOUR = 3600.0;
-  private static final double MAX_VALVE_OPENING_PERCENTAGE = 100.0;
 
   public ValveMechanicalDesign getValveMechanicalDesign() {
     return valveMechanicalDesign;
