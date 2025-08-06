@@ -189,8 +189,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * Converts a list of dimensionless (corrected) compressor curves to real (physical units) curves
    * for a given fluid and speeds.
-   *
-   * @return List of RealCurve objects containing physical units map data
    */
   public void generateRealCurvesForFluid() {
     double fluidSoundSpeed = fluid.getSoundSpeed();
