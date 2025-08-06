@@ -155,7 +155,9 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     }
 
     // Convert requested flow to m3/h to match Kv units
+
     double Q_m3h = Q * SECONDS_PER_HOUR;
+
 
     // Required Kv for the requested flow
     double requiredKv = Q_m3h / Math.sqrt(dP / density);
@@ -166,6 +168,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
     // Map opening factor to percent opening using valve characteristic
     double low = 0.0;
+etOpeningFactor(percentOpening);
+
     double high = MAX_VALVE_OPENING_PERCENTAGE;
     double percentOpening = 0.0;
     for (int i = 0; i < MAX_BISECTION_ITERATIONS; i++) {
