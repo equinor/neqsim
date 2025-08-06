@@ -211,6 +211,7 @@ public interface CompressorChartInterface extends Cloneable {
    */
   public double getMinSpeedCurve();
 
-
   public void generateSurgeCurve();
+
+  public void generateStoneWallCurve();
 }

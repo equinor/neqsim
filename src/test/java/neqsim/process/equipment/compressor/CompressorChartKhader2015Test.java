@@ -134,9 +134,26 @@ public class CompressorChartKhader2015Test {
 
     comp1.getCompressorChart().generateSurgeCurve();
     comp1.getSurgeFlowRate();
-    // Assertions.assertEquals(161.038905, comp1.getSurgeFlowRate(), 1.0);
-    // compChart.prettyPrintChartValues();
-    // compChart.prettyPrintRealCurvesForFluid();
+    CompressorChartKhader2015 testChart = new CompressorChartKhader2015(stream_1.getFluid(), 0.9);
+    testChart.setCurves(chartConditions, speed, flow, head, flow, polyEff);
+    testChart.generateStoneWallCurve();
+    StoneWallCurve sw = testChart.getStoneWallCurve();
+    double cs = testChart.getReferenceFluid().getPhase(0).getSoundSpeed();
+    double D = testChart.getImpellerOuterDiameter();
+    double[][] pairs = new double[speed.length][2];
+    for (int i = 0; i < speed.length; i++) {
+      pairs[i][0] = flow[i][flow[i].length - 1] / 3600.0 / cs / D / D;
+      pairs[i][1] = head[i][head[i].length - 1] / cs / cs;
+    }
+    java.util.Arrays.sort(pairs, java.util.Comparator.comparingDouble(a -> a[0]));
+    double[] expectedFlow = new double[speed.length];
+    double[] expectedHead = new double[speed.length];
+    for (int i = 0; i < speed.length; i++) {
+      expectedFlow[i] = pairs[i][0];
+      expectedHead[i] = pairs[i][1];
+    }
+    Assertions.assertArrayEquals(expectedFlow, sw.flow, 1e-12);
+    Assertions.assertArrayEquals(expectedHead, sw.head, 1e-12);
   }
 
   @Test
