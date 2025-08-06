@@ -161,7 +161,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
     // Map opening factor to percent opening using valve characteristic
     double low = 0.0;
-    double high = 100.0;
+    double high = MAX_VALVE_OPENING_PERCENTAGE;
     double percentOpening = 0.0;
     for (int i = 0; i < MAX_BISECTION_ITERATIONS; i++) {
       percentOpening = (low + high) / 2.0;
