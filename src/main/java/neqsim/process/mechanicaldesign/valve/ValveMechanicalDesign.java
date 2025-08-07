@@ -13,8 +13,6 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.equipment.valve.ValveInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.designstandards.ValveDesignStandard;
-import neqsim.thermo.phase.PhaseType;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -39,10 +37,56 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   double xT = 0.137;
   double FL = 1.0;
   double FD = 1.0;
-  boolean allowChoked = true;
+  boolean allowChoked = false;
   boolean allowLaminar = true;
   boolean fullOutput = true;
-  String valveSizingStandard = "IEC 60534";
+  String valveSizingStandard = "default";// IEC 60534";
+  String valveCharacterization = "linear";
+  ValveCharacteristic valveCharacterizationMethod = null;
+
+  public String getValveCharacterization() {
+    return valveCharacterization;
+  }
+
+  public ValveCharacteristic getValveCharacterizationMethod() {
+    return valveCharacterizationMethod;
+  }
+
+  public void setValveCharacterizationMethod(ValveCharacteristic valveCharacterizationMethod) {
+    this.valveCharacterizationMethod = valveCharacterizationMethod;
+  }
+
+  public String getValveSizingStandard() {
+    return valveSizingStandard;
+  }
+
+  public void setValveSizingStandard(String valveSizingStandard) {
+    this.valveSizingStandard = valveSizingStandard;
+    // valveSizing.
+    if (valveSizingStandard.equals("IEC 60534")) {
+      valveSizingMethod = new ControlValveSizing_IEC_60534(this);
+    } else if (valveSizingStandard.equals("IEC 60534 full")) {
+      valveSizingMethod = new ControlValveSizing_IEC_60534_full(this);
+    } else if (valveSizingStandard.equals("prod choke")) {
+      valveSizingMethod = new ControlValveSizing_simple(this);
+    } else {
+      valveSizingMethod = new ControlValveSizing(this);
+    }
+  }
+
+  public void setValveCharacterization(String valveCharacterization) {
+    this.valveCharacterization = valveCharacterization;
+    // valveCharacterization.
+    if (valveCharacterization.equals("linear")) {
+      valveCharacterizationMethod = new LinearCharacteristic();
+    } else if (valveCharacterization.equals("equal percentage")) {
+      valveCharacterizationMethod = new LinearCharacteristic();
+    } else {
+      valveCharacterizationMethod = new LinearCharacteristic();
+    }
+  }
+
+  ControlValveSizingInterface valveSizingMethod = null;
 
   /**
    * <p>
@@ -54,6 +98,8 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   public ValveMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
     costEstimate = new ValveCostEstimate(this);
+    valveSizingMethod = new ControlValveSizing(this);
+    valveCharacterizationMethod = new LinearCharacteristic();
   }
 
   /**
@@ -61,10 +107,10 @@ public class ValveMechanicalDesign extends MechanicalDesign {
    * getValveSizingMethod.
    * </p>
    *
-   * @return a {@link neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534} object
+   * @return a {@link neqsim.process.mechanicaldesign.valve.ControlValveSizingInterface} object
    */
-  public ControlValveSizing_IEC_60534 getValveSizingMethod() {
-    return new ControlValveSizing_IEC_60534();
+  public ControlValveSizingInterface getValveSizingMethod() {
+    return valveSizingMethod;
   }
 
   /**
@@ -74,28 +120,12 @@ public class ValveMechanicalDesign extends MechanicalDesign {
    *         false, the map will be null.
    */
   public Map<String, Object> calcValveSize() {
-    // valveSizing.
-    SystemInterface fluid = getProcessEquipment().getFluid();
 
     Map<String, Object> result = fullOutput ? new HashMap<>() : null;
 
-    if (fluid.hasPhaseType(PhaseType.GAS)) {
-      result = neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534
-          .sizeControlValveGas(fluid.getTemperature("K"), fluid.getMolarMass("gr/mol"),
-              fluid.getViscosity("kg/msec"), fluid.getGamma2(), fluid.getZ(),
-              ((ValveInterface) this.getProcessEquipment()).getInletPressure() * 1e5,
-              ((ValveInterface) this.getProcessEquipment()).getOutletPressure() * 1e5,
-              fluid.getFlowRate("Sm3/sec"), diameterInlet, diameterOutlet, diameter, FL, FD, xT,
-              true, true, true);
-    } else {
-      result = neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534
-          .sizeControlValveLiquid(fluid.getDensity("kg/m3"), 1.0 * 1e5,
-              fluid.getPhase(0).getPseudoCriticalPressure() * 1e5, fluid.getViscosity("kg/msec"),
-              ((ValveInterface) this.getProcessEquipment()).getInletPressure() * 1e5,
-              ((ValveInterface) this.getProcessEquipment()).getOutletPressure() * 1e5,
-              fluid.getFlowRate("kg/sec") / fluid.getDensity("kg/m3"), diameterInlet,
-              diameterOutlet, diameter, FL, FD, true, true, true);
-    }
+    result = valveSizingMethod
+        .calcValveSize(((ValveInterface) getProcessEquipment()).getPercentValveOpening());
+
     return result;
   }
 
@@ -122,25 +152,8 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     inletPressure = valve1.getInletPressure();
     outletPressure = valve1.getOutletPressure();
     dP = inletPressure - outletPressure;
-    SystemInterface fluid = getProcessEquipment().getFluid();
-    if (getProcessEquipment().getFluid().hasPhaseType(PhaseType.GAS)) {
-      Map<String, Object> result =
-          getValveSizingMethod().sizeControlValveGas(fluid.getTemperature("K"),
-              fluid.getMolarMass("gr/mol"), fluid.getViscosity("kg/msec"), fluid.getGamma2(),
-              fluid.getZ(), ((ValveInterface) getProcessEquipment()).getInletPressure() * 1e5,
-              ((ValveInterface) getProcessEquipment()).getOutletPressure() * 1e5,
-              fluid.getFlowRate("Sm3/sec"), diameterInlet, diameterOutlet, diameter, FL, FD, xT,
-              allowChoked, allowLaminar, fullOutput);
-      this.valveCvMax = (double) result.get("Cv");
-    } else {
-      Map<String, Object> result = getValveSizingMethod().sizeControlValveLiquid(
-          fluid.getDensity("kg/m3"), 1.0 * 1e5, fluid.getPC() * 1e5, fluid.getViscosity("kg/msec"),
-          ((ValveInterface) getProcessEquipment()).getInletPressure() * 1e5,
-          ((ValveInterface) getProcessEquipment()).getOutletPressure() * 1e5,
-          fluid.getFlowRate("kg/hr") / fluid.getDensity("kg/m3"), diameterInlet, diameterOutlet,
-          diameter, FL, FD, allowChoked, allowLaminar, fullOutput);
-      this.valveCvMax = (double) result.get("Cv");
-    }
+    Map<String, Object> result = calcValveSize();
+    this.valveCvMax = (double) result.get("Cv");
     valveWeight = valveCvMax * 100.0;
     setWeightTotal(valveWeight);
   }

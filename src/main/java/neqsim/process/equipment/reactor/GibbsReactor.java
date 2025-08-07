@@ -256,6 +256,11 @@ public class GibbsReactor extends TwoPortEquipment {
   /**
    * Get the current energy mode of the reactor.
    */
+  /**
+   * Gets the current energy mode of the reactor.
+   *
+   * @return the current EnergyMode (ISOTHERMAL or ADIABATIC)
+   */
   public EnergyMode getEnergyMode() {
     return energyMode;
   }
@@ -372,6 +377,16 @@ public class GibbsReactor extends TwoPortEquipment {
     /**
      * Constructor for GibbsComponent.
      */
+    /**
+     * Constructs a GibbsComponent.
+     *
+     * @param molecule the molecule name
+     * @param elements array of element counts
+     * @param heatCapacityCoeffs array of heat capacity coefficients
+     * @param deltaHf298 standard enthalpy of formation at 298 K
+     * @param deltaGf298 standard Gibbs energy of formation at 298 K
+     * @param deltaSf298 standard entropy at 298 K
+     */
     public GibbsComponent(String molecule, double[] elements, double[] heatCapacityCoeffs,
         double deltaHf298, double deltaGf298, double deltaSf298, double coeffAg, double coeffBg,
         double coeffCg, double coeffDg, double coeffEg, double coeffFg, double coeffAh,
@@ -433,6 +448,13 @@ public class GibbsReactor extends TwoPortEquipment {
      * @param temperature Temperature in Kelvin
      * @return Gibbs energy of formation at temperature T in kJ/mol
      */
+    /**
+     * Calculates Gibbs energy for a component.
+     *
+     * @param temperature temperature in K
+     * @param compNumber component index
+     * @return Gibbs energy
+     */
     public double calculateGibbsEnergy(double temperature, int compNumber) {
       double T = temperature;
       // If any Gibbs coefficients are not NaN, use polynomial formula
@@ -459,6 +481,13 @@ public class GibbsReactor extends TwoPortEquipment {
      * 
      * @param temperature Temperature in Kelvin
      * @return Enthalpy of formation at temperature T in kJ/mol
+     */
+    /**
+     * Calculates enthalpy for a component.
+     *
+     * @param temperature temperature in K
+     * @param compNumber component index
+     * @return enthalpy
      */
     public double calculateEnthalpy(double temperature, int compNumber) {
       double T = temperature;
@@ -488,6 +517,13 @@ public class GibbsReactor extends TwoPortEquipment {
      * @param temperature Temperature in Kelvin
      * @return Entropy at temperature T in J/(mol·K)
      */
+    /**
+     * Calculates entropy for a component.
+     *
+     * @param temperature temperature in K
+     * @param compNumber component index
+     * @return entropy
+     */
     public double calculateEntropy(double temperature, int compNumber) {
       // Fallback to manual calculation if NeqSim method fails
       double T = temperature;
@@ -508,6 +544,13 @@ public class GibbsReactor extends TwoPortEquipment {
      * 
      * @param temperature Temperature in Kelvin
      * @return Heat capacity at temperature T in J/(mol·K)
+     */
+    /**
+     * Calculates heat capacity for a component.
+     *
+     * @param temperature temperature in K
+     * @param compNumber component index
+     * @return heat capacity
      */
     public double calculateHeatCapacity(double temperature, int compNumber) {
       try {

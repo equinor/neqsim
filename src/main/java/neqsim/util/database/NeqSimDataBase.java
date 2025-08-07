@@ -215,6 +215,10 @@ public class NeqSimDataBase
    */
   public ResultSet getResultSet(String sqlString) {
     try {
+      if (databaseConnection == null) {
+        databaseConnection = this.openConnection();
+        setStatement(databaseConnection.createStatement());
+      }
       return getStatement().executeQuery(sqlString);
     } catch (JdbcSQLSyntaxErrorException ex) {
       if (ex.getMessage().startsWith("Table ") && ex.getMessage().contains(" not found;")) {
@@ -233,9 +237,11 @@ public class NeqSimDataBase
   public void close() throws SQLException {
     if (databaseConnection != null) {
       databaseConnection.close();
+      databaseConnection = null;
     }
     if (statement != null) {
       statement.close();
+      statement = null;
     }
   }
 

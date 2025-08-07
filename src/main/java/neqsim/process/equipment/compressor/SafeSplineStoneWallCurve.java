@@ -10,11 +10,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Spline based implementation of the surge curve with safe extrapolation.
+ * Spline based representation of the stone wall curve with safe extrapolation.
  */
-public class SafeSplineSurgeCurve extends SurgeCurve {
+public class SafeSplineStoneWallCurve extends StoneWallCurve {
   private static final long serialVersionUID = 1001L;
-  static Logger logger = LogManager.getLogger(SafeSplineSurgeCurve.class);
+  static Logger logger = LogManager.getLogger(SafeSplineStoneWallCurve.class);
 
   private double[] sortedHead;
   private double[] sortedFlow;
@@ -23,15 +23,15 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
   private transient UnivariateFunction flowFromHead; // flow = f(head)
 
   /** Default constructor. */
-  public SafeSplineSurgeCurve() {}
+  public SafeSplineStoneWallCurve() {}
 
   /**
-   * Create a spline based surge curve from flow and head arrays.
+   * Create a spline based stone wall curve from flow and head arrays.
    *
    * @param flow array of flow values
    * @param head array of head values
    */
-  public SafeSplineSurgeCurve(double[] flow, double[] head) {
+  public SafeSplineStoneWallCurve(double[] flow, double[] head) {
     setCurve(null, flow, head);
   }
 
@@ -129,13 +129,13 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
 
       return Math.max(0.0, extrapolated);
     } catch (Exception e) {
-      logger.error("Error evaluating surge flow from head = " + headValue, e);
+      logger.error("Error evaluating stone wall flow from head = " + headValue, e);
       return 0.0;
     }
   }
 
   /** Wrapper retaining old API. */
-  public double getSurgeFlow(double headValue) {
+  public double getStoneWallFlow(double headValue) {
     return getFlow(headValue);
   }
 
@@ -145,7 +145,7 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
    * @param flowValue flow value
    * @return corresponding head
    */
-  public double getSurgeHead(double flowValue) {
+  public double getStoneWallHead(double flowValue) {
     if (!isActive()) {
       return 0.0;
     }
@@ -180,13 +180,13 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
 
       return Math.max(0.0, extrapolated);
     } catch (Exception e) {
-      logger.error("Error evaluating surge head from flow = " + flowValue, e);
+      logger.error("Error evaluating stone wall head from flow = " + flowValue, e);
       return 0.0;
     }
   }
 
   /** Wrapper retaining old API. */
-  public boolean isSurge(double headValue, double flowValue) {
+  public boolean isStoneWall(double headValue, double flowValue) {
     return isLimit(headValue, flowValue);
   }
 }

@@ -2706,14 +2706,31 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * Add TBP fraction using density and boiling point, calculating molar mass.
    */
+  /**
+   * Adds a TBP fraction to the system.
+   *
+   * @param componentName the name of the component
+   * @param numberOfMoles number of moles
+   * @param density density of the component
+   * @param boilingPoint boiling point
+   */
   public void addTBPfraction3(String componentName, double numberOfMoles, double density,
       double boilingPoint);
 
   /**
    * Add TBP fraction using molar mass , density and boiling point
-  */
-  public void addTBPfraction4(String componentName, double numberOfMoles, double molarMass, double density,
-      double boilingPoint);
+   */
+  /**
+   * Adds a TBP fraction to the system.
+   *
+   * @param componentName the name of the component
+   * @param numberOfMoles number of moles
+   * @param molarMass molar mass
+   * @param density density of the component
+   * @param boilingPoint boiling point
+   */
+  public void addTBPfraction4(String componentName, double numberOfMoles, double molarMass,
+      double density, double boilingPoint);
 
   public double calculateMolarMassFromDensityAndBoilingPoint(double density, double boilingPoint);
 

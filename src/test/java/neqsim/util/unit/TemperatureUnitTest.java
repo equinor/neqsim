@@ -1,6 +1,7 @@
 package neqsim.util.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -48,6 +49,16 @@ class TemperatureUnitTest extends neqsim.NeqSimTest {
     assertEquals(77.4499999999, fluid.getTemperature("F"), 1e-4);
     assertEquals(537.12, fluid.getTemperature("R"), 1e-4);
     assertEquals(298.4, fluid.getTemperature("K"), 1e-4);
+  }
+
+  /**
+   * Verify that requesting conversions with unsupported units throws an exception.
+   */
+  @Test
+  public void testUnsupportedUnit() {
+    TemperatureUnit unit = new TemperatureUnit(0.0, "test");
+    assertThrows(IllegalArgumentException.class, () -> unit.getValue(0.0, "X", "K"));
+    assertThrows(IllegalArgumentException.class, () -> unit.getValue(0.0, "K", "X"));
   }
 }
 

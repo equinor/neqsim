@@ -22,6 +22,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   StreamInterface stream = null;
   private double impellerOuterDiameter = 0.3;
 
+  java.util.List<RealCurve> realCurves = new java.util.ArrayList<>();
+
   /**
    * Constructs a CompressorChartKhader2015 object with the specified fluid and impeller diameter.
    *
@@ -133,7 +135,9 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       chartSpeeds.add(speed[i]);
     }
 
+    generateRealCurvesForFluid();
     setUseCompressorChart(true);
+
   }
 
   /**
@@ -185,13 +189,11 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * Converts a list of dimensionless (corrected) compressor curves to real (physical units) curves
    * for a given fluid and speeds.
-   *
-   * @return List of RealCurve objects containing physical units map data
    */
-  public java.util.List<RealCurve> getRealCurvesForFluid() {
+  public void generateRealCurvesForFluid() {
     double fluidSoundSpeed = fluid.getSoundSpeed();
     // System.out.println("Sound speed of actual fluid: " + fluidSoundSpeed + " m/s");
-    java.util.List<RealCurve> realCurves = new java.util.ArrayList<>();
+    realCurves = new java.util.ArrayList<>();
     for (int i = 0; i < chartValues.size(); i++) {
       CompressorCurve corr = chartValues.get(i);
       double[] flow = new double[corr.flow.length];
@@ -208,14 +210,16 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       }
       realCurves.add(new RealCurve(chartSpeeds.get(i), flow, head, flowPolyEff, polEff));
     }
-    return realCurves;
+    if (chartValues.size() > 1) {
+      generateSurgeCurve();
+      generateStoneWallCurve();
+    }
   }
 
   /**
    * Pretty print all RealCurve objects for the current fluid.
    */
   public void prettyPrintRealCurvesForFluid() {
-    java.util.List<RealCurve> realCurves = getRealCurvesForFluid();
     System.out.println("All RealCurve objects for current fluid:");
     for (RealCurve curve : realCurves) {
       System.out.println("RealCurve:");
@@ -386,39 +390,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     this.ref_fluid = ref_fluid;
   }
 
-  /**
-   * Generates the surge curve by taking the head value at the lowest flow for each speed from the
-   * compressor chart values.
-   */
-  public void generateSurgeCurve() {
-    int n = chartValues.size();
-    java.util.TreeMap<Double, Double> uniqueSurgePoints = new java.util.TreeMap<>();
-    for (int i = 0; i < n; i++) {
-      CompressorCurve curve = chartValues.get(i);
-      // Find index of lowest flow (usually index 0, but robust for unsorted)
-      int minIdx = 0;
-      for (int j = 1; j < curve.flow.length; j++) {
-        if (curve.flow[j] < curve.flow[minIdx]) {
-          minIdx = j;
-        }
-      }
-      double flowVal = curve.flow[minIdx];
-      double headVal = curve.head[minIdx];
-      // Only add if not already present (ensures one point per speed, no duplicate flows)
-      if (!uniqueSurgePoints.containsKey(flowVal)) {
-        uniqueSurgePoints.put(flowVal, headVal);
-      }
-    }
-    double[] surgeFlow = new double[uniqueSurgePoints.size()];
-    double[] surgeHead = new double[uniqueSurgePoints.size()];
-    int idx = 0;
-    for (java.util.Map.Entry<Double, Double> entry : uniqueSurgePoints.entrySet()) {
-      surgeFlow[idx] = entry.getKey();
-      surgeHead[idx] = entry.getValue();
-      idx++;
-    }
-    setSurgeCurve(new SafeSplineSurgeCurve(surgeFlow, surgeHead));
-  }
+  // ...existing code...
+
 
   /**
    * Simple POJO to hold corrected (dimensionless) compressor curve data for a given speed.
@@ -477,5 +450,77 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       this.flowPolyEff = flowPolyEff;
       this.polytropicEfficiency = polytropicEfficiency;
     }
+  }
+
+  /**
+   * Generates and prints the surge curve based on RealCurve data. The surge curve is typically the
+   * minimum stable flow for each speed.
+   */
+  @Override
+  public void generateSurgeCurve() {
+    // Collect unique surge points (minimum flow for each speed)
+    java.util.TreeMap<Double, Double> uniqueSurgePoints = new java.util.TreeMap<>();
+    for (RealCurve curve : getRealCurves()) {
+      int minFlowIdx = 0;
+      double minFlow = curve.flow[0];
+      for (int i = 1; i < curve.flow.length; i++) {
+        if (curve.flow[i] < minFlow) {
+          minFlow = curve.flow[i];
+          minFlowIdx = i;
+        }
+      }
+      double flowVal = curve.flow[minFlowIdx];
+      double headVal = curve.head[minFlowIdx];
+      if (!uniqueSurgePoints.containsKey(flowVal)) {
+        uniqueSurgePoints.put(flowVal, headVal);
+      }
+    }
+    double[] surgeFlow = new double[uniqueSurgePoints.size()];
+    double[] surgeHead = new double[uniqueSurgePoints.size()];
+    int idx = 0;
+    for (java.util.Map.Entry<Double, Double> entry : uniqueSurgePoints.entrySet()) {
+      surgeFlow[idx] = entry.getKey();
+      surgeHead[idx] = entry.getValue();
+      idx++;
+    }
+    setSurgeCurve(new SafeSplineSurgeCurve(surgeFlow, surgeHead));
+  }
+
+  /**
+   * Generates and sets the stone wall curve based on RealCurve data. The stone wall curve is
+   * typically the maximum flow for each speed.
+   */
+  @Override
+  public void generateStoneWallCurve() {
+    // Collect unique stone wall points (maximum flow for each speed)
+    java.util.TreeMap<Double, Double> uniqueStoneWallPoints = new java.util.TreeMap<>();
+    for (RealCurve curve : getRealCurves()) {
+      int maxFlowIdx = 0;
+      double maxFlow = curve.flow[0];
+      for (int i = 1; i < curve.flow.length; i++) {
+        if (curve.flow[i] > maxFlow) {
+          maxFlow = curve.flow[i];
+          maxFlowIdx = i;
+        }
+      }
+      double flowVal = curve.flow[maxFlowIdx];
+      double headVal = curve.head[maxFlowIdx];
+      if (!uniqueStoneWallPoints.containsKey(flowVal)) {
+        uniqueStoneWallPoints.put(flowVal, headVal);
+      }
+    }
+    double[] stoneFlow = new double[uniqueStoneWallPoints.size()];
+    double[] stoneHead = new double[uniqueStoneWallPoints.size()];
+    int idx = 0;
+    for (java.util.Map.Entry<Double, Double> entry : uniqueStoneWallPoints.entrySet()) {
+      stoneFlow[idx] = entry.getKey();
+      stoneHead[idx] = entry.getValue();
+      idx++;
+    }
+    setStoneWallCurve(new SafeSplineStoneWallCurve(stoneFlow, stoneHead));
+  }
+
+  public java.util.List<RealCurve> getRealCurves() {
+    return realCurves;
   }
 }

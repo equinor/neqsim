@@ -141,7 +141,8 @@ public class CompressorChartReader {
     compressor.getCompressorChart().setCurves(new double[0], speeds, flowLines, headLines,
         polyEffLines);
 
-    compressor.getCompressorChart().setStoneWallCurve(new StoneWallCurve(chokeFlow, chokeHead));
+    compressor.getCompressorChart()
+        .setStoneWallCurve(new SafeSplineStoneWallCurve(chokeFlow, chokeHead));
     compressor.getCompressorChart().setSurgeCurve(new SafeSplineSurgeCurve(surgeFlow, surgeHead));
     compressor.getCompressorChart().setHeadUnit(headUnit);
   }
