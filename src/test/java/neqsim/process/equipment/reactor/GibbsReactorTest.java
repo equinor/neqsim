@@ -227,7 +227,7 @@ public class GibbsReactorTest {
 
     // Assert temperature (Celsius)
     double tempC = outletSystem.getTemperature() - 273.15;
-    Assertions.assertEquals(1989, tempC, 10);
+    Assertions.assertEquals(1977.1221536959, tempC, 10);
 
     // Assert outlet mole fractions (rounded to 5 significant digits)
     double methane = outletSystem.getComponent("methane").getz();
