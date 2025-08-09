@@ -190,7 +190,7 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
     StreamInterface out = getOutletStream();
 
     double pUpBar = in.getThermoSystem().getPressure();
-    double pDownBar = out != null ? out.getThermoSystem().getPressure() : 1.01325;
+    double pDownBar = out != null ? out.getThermoSystem().getPressure() : ATM_PRESSURE_BAR;
 
     // Raw commanded lift from pressure + hysteresis
     double cmd = computeOpeningFraction(pUpBar);
