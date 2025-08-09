@@ -29,6 +29,7 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.equipment.flare.Flare;
+import neqsim.process.equipment.flare.FlareStack;
 
 /**
  * <p>
@@ -119,6 +120,8 @@ public class EquipmentFactory {
         return new Manifold(name);
       case "flare":
         return new Flare(name);
+      case "flarestack":
+        return new FlareStack(name);
 
       // Add other equipment types here
       default:
