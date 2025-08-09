@@ -39,8 +39,8 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
   // ---- State & timers (hysteresis / anti-chatter) ----
   private double openFraction = 0.0;        // current lift 0..1
   private boolean wasOpenLastStep = false;
-  private double timeSinceOpenSec = 1e9;
-  private double timeSinceCloseSec = 1e9;
+  private double timeSinceOpenSec = LARGE_TIME_SEC;
+  private double timeSinceCloseSec = LARGE_TIME_SEC;
 
   // ---- Transient dynamics ----
   private double tauOpenSec = 0.15;         // opening time constant [s]
