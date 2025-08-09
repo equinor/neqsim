@@ -120,7 +120,7 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
         if (wasOpenLastStep && pUpBar <= pReseat) return 0.0;
         if (pUpBar <= setPressureBar) return 0.0;
         if (pUpBar >= pRel) return 1.0;
-        frac = (pUpBar - setPressureBar) / Math.max(1e-9, (pRel - setPressureBar));
+        frac = (pUpBar - setPressureBar) / Math.max(SMALL_DENOMINATOR, (pRel - setPressureBar));
         break;
     }
 
