@@ -212,7 +212,7 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
 
     // First-order lag
     double tau = (cmd >= openFraction) ? tauOpenSec : tauCloseSec;
-    double alpha = (tau <= 1e-9) ? 1.0 : (1.0 - Math.exp(-dt / tau));
+    double alpha = (tau <= MIN_TIME_CONSTANT_SEC) ? 1.0 : (1.0 - Math.exp(-dt / tau));
     double liftProposed = openFraction + alpha * (cmd - openFraction);
 
     // Rate limit
