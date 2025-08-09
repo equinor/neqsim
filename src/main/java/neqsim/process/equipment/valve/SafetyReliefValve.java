@@ -179,8 +179,8 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
     this.wasOpenLastStep = (newCmd > 0.0);
     this.openFraction = newCmd;
     // reset dwell timers heuristically in steady state
-    this.timeSinceOpenSec = wasOpenLastStep ? 1e9 : 0.0;
-    this.timeSinceCloseSec = wasOpenLastStep ? 0.0 : 1e9;
+    this.timeSinceOpenSec = wasOpenLastStep ? INFINITE_TIME_SEC : 0.0;
+    this.timeSinceCloseSec = wasOpenLastStep ? 0.0 : INFINITE_TIME_SEC;
   }
 
   // ---------------- Transient with inertia & anti-chatter ----------------
