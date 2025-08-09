@@ -106,7 +106,7 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
           frac = 1.0;
         } else if (wasOpenLastStep && pUpBar > pReseat) {
           // Ramp within band to reduce numerical jerk
-          frac = (pUpBar - setPressureBar) / Math.max(1e-9, (pRel - setPressureBar));
+          frac = (pUpBar - setPressureBar) / Math.max(DIVISOR_PROTECTION, (pRel - setPressureBar));
           frac = Math.max(frac, minStableOpenFrac);
         } else if (pUpBar <= pReseat) {
           frac = 0.0;
