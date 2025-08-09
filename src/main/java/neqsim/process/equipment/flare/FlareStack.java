@@ -12,19 +12,22 @@ import neqsim.thermo.system.SystemInterface;
  * FlareStack: Combusts relief gas and computes heat release, emissions, radiation and tip
  * backpressure.
  *
- * <p>Radiation models:
+ * <p>
+ * Radiation models:
  * <ul>
  * <li>POINT_SOURCE: q = chi_r * Q / (4 pi R^2)</li>
  * <li>CHAMBERLAIN: line-source style with emissive power, flame length, wind tilt, and atmospheric
  * attenuation.</li>
  * </ul>
  *
- * <p>Tip ΔP/backpressure:
+ * <p>
+ * Tip ΔP/backpressure:
  * <ul>
  * <li>ΔP_tip = K_tip * 0.5 * rho_exit * u_exit^2</li>
  * </ul>
  *
- * <p>NOTES:
+ * <p>
+ * NOTES:
  * <ul>
  * <li>Coefficients for Chamberlain are exposed so you can calibrate to your standard/vendor.</li>
  * <li>This is an engineering model; validate before use for regulatory work.</li>
@@ -61,8 +64,7 @@ public class FlareStack extends ProcessEquipmentBaseClass implements Serializabl
 
   // Radiation model selection
   public enum RadiationModel {
-    POINT_SOURCE,
-    CHAMBERLAIN
+    POINT_SOURCE, CHAMBERLAIN
   }
 
   private RadiationModel radiationModel = RadiationModel.POINT_SOURCE;
@@ -360,7 +362,7 @@ public class FlareStack extends ProcessEquipmentBaseClass implements Serializabl
 
       int nc = s.getPhase(0).getNumberOfComponents();
       for (int i = 0; i < nc; i++) {
-        var comp = s.getPhase(0).getComponent(i);
+        neqsim.thermo.component.ComponentInterface comp = s.getPhase(0).getComponent(i);
         String name = comp.getComponentName().toLowerCase();
         double zi = comp.getz();
         SpeciesData sd = SpeciesData.of(name);
@@ -396,7 +398,7 @@ public class FlareStack extends ProcessEquipmentBaseClass implements Serializabl
       double C_kmol = 0.0, H_kmol = 0.0, S_kmol = 0.0;
       int nc = s.getPhase(0).getNumberOfComponents();
       for (int i = 0; i < nc; i++) {
-        var c = s.getPhase(0).getComponent(i);
+        neqsim.thermo.component.ComponentInterface c = s.getPhase(0).getComponent(i);
         double z = c.getz() * kmolFuel_s;
         ElementStoich es = ElementStoich.of(c.getComponentName().toLowerCase());
         C_kmol += z * es.C;
