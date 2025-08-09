@@ -6,178 +6,97 @@ import neqsim.process.equipment.stream.StreamInterface;
 /**
  * Safety/Relief Valve built on top of ThrottlingValve.
  * 
- * Features: - Set pressure, overpressure (relieving threshold), blowdown (reseat). - Opening laws:
- * SNAP (pop) or MODULATING, with hysteresis. - Backpressure de-rating: Conventional, Balanced
- * Bellows, Pilot Modulating. - Transient anti-chatter: first-order inertia, min open/close dwell,
- * lift rate limit.
+ * Features:
+ *  - Set pressure, overpressure (relieving threshold), blowdown (reseat).
+ *  - Opening laws: SNAP (pop) or MODULATING, with hysteresis.
+ *  - Backpressure de-rating: Conventional, Balanced Bellows, Pilot Modulating.
+ *  - Transient anti-chatter: first-order inertia, min open/close dwell, lift rate limit.
  *
- * Assumptions: - Pressures in bar(a) as typically used in NeqSim SystemInterface. - Cv mapping is
- * linear w.r.t. opening; replace with vendor lift curve if available.
+ * Assumptions:
+ *  - Pressures in bar(a) as typically used in NeqSim SystemInterface.
+ *  - Cv mapping is linear w.r.t. opening; replace with vendor lift curve if available.
  */
 public class SafetyReliefValve extends ThrottlingValve implements Serializable {
 
   private static final long serialVersionUID = 1L;
-  private static final double LARGE_TIME_SEC = 10000000;
-  private static final double DIVISOR_PROTECTION = 1;
-  private static final double SMALL_DENOMINATOR = 0.001;
-  private static final double INFINITE_TIME_SEC = 1000000;
+  private static final double EPS = 1e-9;
+  private static final double LARGE_TIME_SEC = 1e9;
   private static final double ATM_PRESSURE_BAR = 1.01325;
-  private static final double MIN_TIME_CONSTANT_SEC = 10;
 
-  public enum ValveType {
-    CONVENTIONAL, BALANCED_BELLOWS, PILOT_MODULATING
-  }
-  public enum OpeningLaw {
-    SNAP, MODULATING
-  }
+  public enum ValveType { CONVENTIONAL, BALANCED_BELLOWS, PILOT_MODULATING }
+  public enum OpeningLaw { SNAP, MODULATING }
 
   // ---- PSV parameters (SI-ish; bar for pressure) ----
-  private double setPressureBar = 10.0; // set pressure (bara)
-  private double overpressureFrac = 0.10; // 10% overpressure => full lift
-  private double blowdownFrac = 0.07; // reseat at Pset*(1 - blowdown)
-  private double ratedCv = 100.0; // Cv at full lift (vendor)
-  private double kd = 0.975; // discharge/capacity factor (folded into Cv)
-  private double kbMax = 1.0; // capacity cap due to backpressure
+  private double setPressureBar = 10.0;     // set pressure (bara)
+  private double overpressureFrac = 0.10;   // 10% overpressure => full lift
+  private double blowdownFrac = 0.07;       // reseat at Pset*(1 - blowdown)
+  private double ratedCv = 100.0;           // Cv at full lift (vendor)
+  private double kd = 0.975;                // discharge/capacity factor (folded into Cv)
+  private double kbMax = 1.0;               // capacity cap due to backpressure
   private double backpressureSensitivity = 0.15; // capacity penalty ~ f(P2/P1)
-  private double minStableOpenFrac = 0.0; // numerical floor when open (e.g., 0.02)
+  private double minStableOpenFrac = 0.0;   // numerical floor when open (e.g., 0.02)
 
   private ValveType valveType = ValveType.CONVENTIONAL;
   private OpeningLaw openingLaw = OpeningLaw.SNAP;
 
   // ---- State & timers (hysteresis / anti-chatter) ----
-  private double openFraction = 0.0; // current lift 0..1
+  private double openFraction = 0.0;        // current lift 0..1
   private boolean wasOpenLastStep = false;
   private double timeSinceOpenSec = LARGE_TIME_SEC;
   private double timeSinceCloseSec = LARGE_TIME_SEC;
 
   // ---- Transient dynamics ----
-  private double tauOpenSec = 0.15; // opening time constant [s]
-  private double tauCloseSec = 0.40; // closing time constant [s]
-  private double minOpenTimeSec = 0.50; // minimum dwell when opened [s]
-  private double minCloseTimeSec = 0.20; // minimum dwell when closed [s]
-  private double maxLiftRatePerSec = 3.0; // |d(lift)/dt| limit [1/s]
+  private double tauOpenSec = 0.15;         // opening time constant [s]
+  private double tauCloseSec = 0.40;        // closing time constant [s]
+  private double minOpenTimeSec = 0.50;     // minimum dwell when opened [s]
+  private double minCloseTimeSec = 0.20;    // minimum dwell when closed [s]
+  private double maxLiftRatePerSec = 3.0;   // |d(lift)/dt| limit [1/s]
 
-  public SafetyReliefValve() {
-    super("SafetyReliefValve");
-  }
-
-  public SafetyReliefValve(String name, StreamInterface inletStream) {
-    super(name, inletStream);
-  }
+  public SafetyReliefValve() { super("SafetyReliefValve"); }
+  public SafetyReliefValve(String name, StreamInterface inletStream) { super(name, inletStream); }
 
   // ---------------- Getters / Setters ----------------
-  public double getSetPressureBar() {
-    return setPressureBar;
-  }
+  public double getSetPressureBar() { return setPressureBar; }
+  public void setSetPressureBar(double v) { setPressureBar = v; }
 
-  public void setSetPressureBar(double v) {
-    setPressureBar = v;
-  }
+  public double getOverpressureFrac() { return overpressureFrac; }
+  public void setOverpressureFrac(double v) { overpressureFrac = Math.max(0.0, v); }
 
-  public double getOverpressureFrac() {
-    return overpressureFrac;
-  }
+  public double getBlowdownFrac() { return blowdownFrac; }
+  public void setBlowdownFrac(double v) { blowdownFrac = Math.max(0.0, v); }
 
-  public void setOverpressureFrac(double v) {
-    overpressureFrac = Math.max(0.0, v);
-  }
+  public double getRatedCv() { return ratedCv; }
+  public void setRatedCv(double v) { ratedCv = Math.max(0.0, v); }
 
-  public double getBlowdownFrac() {
-    return blowdownFrac;
-  }
+  public double getKd() { return kd; }
+  public void setKd(double v) { kd = Math.max(0.0, v); }
 
-  public void setBlowdownFrac(double v) {
-    blowdownFrac = Math.max(0.0, v);
-  }
+  public double getKbMax() { return kbMax; }
+  public void setKbMax(double v) { kbMax = Math.max(0.0, v); }
 
-  public double getRatedCv() {
-    return ratedCv;
-  }
+  public double getBackpressureSensitivity() { return backpressureSensitivity; }
+  public void setBackpressureSensitivity(double v) { backpressureSensitivity = Math.max(0.0, v); }
 
-  public void setRatedCv(double v) {
-    ratedCv = Math.max(0.0, v);
-  }
+  public double getMinStableOpenFrac() { return minStableOpenFrac; }
+  public void setMinStableOpenFrac(double v) { minStableOpenFrac = Math.max(0.0, Math.min(1.0, v)); }
 
-  public double getKd() {
-    return kd;
-  }
+  public ValveType getValveType() { return valveType; }
+  public void setValveType(ValveType t) { valveType = t; }
 
-  public void setKd(double v) {
-    kd = Math.max(0.0, v);
-  }
+  public OpeningLaw getOpeningLaw() { return openingLaw; }
+  public void setOpeningLaw(OpeningLaw law) { openingLaw = law; }
 
-  public double getKbMax() {
-    return kbMax;
-  }
+  public double getOpenFraction() { return openFraction; }
 
-  public void setKbMax(double v) {
-    kbMax = Math.max(0.0, v);
-  }
-
-  public double getBackpressureSensitivity() {
-    return backpressureSensitivity;
-  }
-
-  public void setBackpressureSensitivity(double v) {
-    backpressureSensitivity = Math.max(0.0, v);
-  }
-
-  public double getMinStableOpenFrac() {
-    return minStableOpenFrac;
-  }
-
-  public void setMinStableOpenFrac(double v) {
-    minStableOpenFrac = Math.max(0.0, Math.min(1.0, v));
-  }
-
-  public ValveType getValveType() {
-    return valveType;
-  }
-
-  public void setValveType(ValveType t) {
-    valveType = t;
-  }
-
-  public OpeningLaw getOpeningLaw() {
-    return openingLaw;
-  }
-
-  public void setOpeningLaw(OpeningLaw law) {
-    openingLaw = law;
-  }
-
-  public double getOpenFraction() {
-    return openFraction;
-  }
-
-  public void setTauOpenSec(double v) {
-    tauOpenSec = Math.max(0.0, v);
-  }
-
-  public void setTauCloseSec(double v) {
-    tauCloseSec = Math.max(0.0, v);
-  }
-
-  public void setMinOpenTimeSec(double v) {
-    minOpenTimeSec = Math.max(0.0, v);
-  }
-
-  public void setMinCloseTimeSec(double v) {
-    minCloseTimeSec = Math.max(0.0, v);
-  }
-
-  public void setMaxLiftRatePerSec(double v) {
-    maxLiftRatePerSec = Math.max(0.0, v);
-  }
+  public void setTauOpenSec(double v){ tauOpenSec = Math.max(0.0, v); }
+  public void setTauCloseSec(double v){ tauCloseSec = Math.max(0.0, v); }
+  public void setMinOpenTimeSec(double v){ minOpenTimeSec = Math.max(0.0, v); }
+  public void setMinCloseTimeSec(double v){ minCloseTimeSec = Math.max(0.0, v); }
+  public void setMaxLiftRatePerSec(double v){ maxLiftRatePerSec = Math.max(0.0, v); }
 
   // ---------------- Internals ----------------
-  private double relievingPressureBar() {
-    return setPressureBar * (1.0 + overpressureFrac);
-  }
-
-  private double reseatPressureBar() {
-    return setPressureBar * (1.0 - blowdownFrac);
-  }
+  private double relievingPressureBar() { return setPressureBar * (1.0 + overpressureFrac); }
+  private double reseatPressureBar()    { return setPressureBar * (1.0 - blowdownFrac); }
 
   private double computeOpeningFraction(double pUpBar) {
     final double pRel = relievingPressureBar();
@@ -190,7 +109,7 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
           frac = 1.0;
         } else if (wasOpenLastStep && pUpBar > pReseat) {
           // Ramp within band to reduce numerical jerk
-          frac = (pUpBar - setPressureBar) / Math.max(DIVISOR_PROTECTION, (pRel - setPressureBar));
+          frac = (pUpBar - setPressureBar) / Math.max(EPS, (pRel - setPressureBar));
           frac = Math.max(frac, minStableOpenFrac);
         } else if (pUpBar <= pReseat) {
           frac = 0.0;
@@ -201,13 +120,10 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
 
       case MODULATING:
       default:
-        if (wasOpenLastStep && pUpBar <= pReseat)
-          return 0.0;
-        if (pUpBar <= setPressureBar)
-          return 0.0;
-        if (pUpBar >= pRel)
-          return 1.0;
-        frac = (pUpBar - setPressureBar) / Math.max(SMALL_DENOMINATOR, (pRel - setPressureBar));
+        if (wasOpenLastStep && pUpBar <= pReseat) return 0.0;
+        if (pUpBar <= setPressureBar) return 0.0;
+        if (pUpBar >= pRel) return 1.0;
+        frac = (pUpBar - setPressureBar) / Math.max(EPS, (pRel - setPressureBar));
         break;
     }
 
@@ -215,8 +131,7 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
   }
 
   private double capacityBackpressureFactor(double pUpBar, double pDownBar) {
-    if (pUpBar <= 0.0)
-      return 1.0;
+    if (pUpBar <= 0.0) return 1.0;
     double ratio = Math.max(0.0, Math.min(1.0, pDownBar / pUpBar));
     double kb;
     switch (valveType) {
@@ -252,13 +167,11 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
     StreamInterface in = getInletStream();
     StreamInterface out = getOutletStream();
 
-    // Ensure pressure is in bar. If your build uses Pa, convert by dividing by 1e5.
     double pUpBar = ensureBar(in.getThermoSystem().getPressure());
-    double pDownBar = out != null ? ensureBar(out.getThermoSystem().getPressure()) : 1.01325;
+    double pDownBar = out != null ? ensureBar(out.getThermoSystem().getPressure()) : ATM_PRESSURE_BAR;
 
     double newCmd = computeOpeningFraction(pUpBar);
-    if (newCmd > 0.0)
-      newCmd = Math.max(newCmd, minStableOpenFrac);
+    if (newCmd > 0.0) newCmd = Math.max(newCmd, minStableOpenFrac);
 
     double kb = capacityBackpressureFactor(pUpBar, pDownBar);
 
@@ -268,13 +181,12 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
     this.wasOpenLastStep = (newCmd > 0.0);
     this.openFraction = newCmd;
     // reset dwell timers heuristically in steady state
-    this.timeSinceOpenSec = wasOpenLastStep ? INFINITE_TIME_SEC : 0.0;
-    this.timeSinceCloseSec = wasOpenLastStep ? 0.0 : INFINITE_TIME_SEC;
+    this.timeSinceOpenSec = wasOpenLastStep ? LARGE_TIME_SEC : 0.0;
+    this.timeSinceCloseSec = wasOpenLastStep ? 0.0 : LARGE_TIME_SEC;
   }
 
   private double ensureBar(double pressure) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'ensureBar'");
+    return pressure > 1e3 ? pressure / 1e5 : pressure;
   }
 
   // ---------------- Transient with inertia & anti-chatter ----------------
@@ -283,8 +195,8 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
     StreamInterface in = getInletStream();
     StreamInterface out = getOutletStream();
 
-    double pUpBar = in.getThermoSystem().getPressure();
-    double pDownBar = out != null ? out.getThermoSystem().getPressure() : ATM_PRESSURE_BAR;
+    double pUpBar = ensureBar(in.getThermoSystem().getPressure());
+    double pDownBar = out != null ? ensureBar(out.getThermoSystem().getPressure()) : ATM_PRESSURE_BAR;
 
     // Raw commanded lift from pressure + hysteresis
     double cmd = computeOpeningFraction(pUpBar);
@@ -306,7 +218,7 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
 
     // First-order lag
     double tau = (cmd >= openFraction) ? tauOpenSec : tauCloseSec;
-    double alpha = (tau <= MIN_TIME_CONSTANT_SEC) ? 1.0 : (1.0 - Math.exp(-dt / tau));
+    double alpha = (tau <= EPS) ? 1.0 : (1.0 - Math.exp(-dt / tau));
     double liftProposed = openFraction + alpha * (cmd - openFraction);
 
     // Rate limit
@@ -320,8 +232,7 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
 
     // Clip and minimum stable opening if > 0
     liftProposed = Math.max(0.0, Math.min(1.0, liftProposed));
-    if (liftProposed > 0.0)
-      liftProposed = Math.max(liftProposed, minStableOpenFrac);
+    if (liftProposed > 0.0) liftProposed = Math.max(liftProposed, minStableOpenFrac);
 
     // Update Cv and run hydraulics
     applyOpeningToCv(liftProposed, kb);
@@ -331,13 +242,11 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
     boolean newOpen = (liftProposed > 0.0);
     if (newOpen) {
       timeSinceOpenSec += dt;
-      if (!wasOpenLastStep)
-        timeSinceOpenSec = 0.0;
+      if (!wasOpenLastStep) timeSinceOpenSec = 0.0;
       timeSinceCloseSec = 0.0;
     } else {
       timeSinceCloseSec += dt;
-      if (wasOpenLastStep)
-        timeSinceCloseSec = 0.0;
+      if (wasOpenLastStep) timeSinceCloseSec = 0.0;
       timeSinceOpenSec = 0.0;
     }
     wasOpenLastStep = newOpen;
@@ -345,8 +254,7 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
   }
 
   // ---------------- Quick configurators ----------------
-  public SafetyReliefValve configureConventionalSnap(double psetBar, double overFrac,
-      double blowFrac, double cvRated) {
+  public SafetyReliefValve configureConventionalSnap(double psetBar, double overFrac, double blowFrac, double cvRated) {
     setValveType(ValveType.CONVENTIONAL);
     setOpeningLaw(OpeningLaw.SNAP);
     setSetPressureBar(psetBar);
@@ -358,8 +266,7 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
     return this;
   }
 
-  public SafetyReliefValve configureBalancedModulating(double psetBar, double overFrac,
-      double blowFrac, double cvRated) {
+  public SafetyReliefValve configureBalancedModulating(double psetBar, double overFrac, double blowFrac, double cvRated) {
     setValveType(ValveType.BALANCED_BELLOWS);
     setOpeningLaw(OpeningLaw.MODULATING);
     setSetPressureBar(psetBar);
@@ -373,12 +280,7 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
   }
 
   // Handy monitors
-  public double getRelievingPressureBar() {
-    return relievingPressureBar();
-  }
-
-  public double getReseatPressureBar() {
-    return reseatPressureBar();
-  }
+  public double getRelievingPressureBar() { return relievingPressureBar(); }
+  public double getReseatPressureBar() { return reseatPressureBar(); }
 }
 
