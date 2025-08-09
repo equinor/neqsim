@@ -164,8 +164,9 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
     StreamInterface in = getInletStream();
     StreamInterface out = getOutletStream();
 
-    double pUpBar = in.getThermoSystem().getPressure(); // adjust if your build uses Pa
-    double pDownBar = out != null ? out.getThermoSystem().getPressure() : 1.01325;
+    // Ensure pressure is in bar. If your build uses Pa, convert by dividing by 1e5.
+    double pUpBar = ensureBar(in.getThermoSystem().getPressure());
+    double pDownBar = out != null ? ensureBar(out.getThermoSystem().getPressure()) : 1.01325;
 
     double newCmd = computeOpeningFraction(pUpBar);
     if (newCmd > 0.0) newCmd = Math.max(newCmd, minStableOpenFrac);
