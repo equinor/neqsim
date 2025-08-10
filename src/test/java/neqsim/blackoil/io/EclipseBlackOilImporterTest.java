@@ -1,15 +1,13 @@
 package neqsim.blackoil.io;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-
 import org.junit.jupiter.api.Test;
-
 import neqsim.blackoil.BlackOilPVTTable;
 import neqsim.blackoil.SystemBlackOil;
 
@@ -32,9 +30,9 @@ public class EclipseBlackOilImporterTest {
   @Test
   public void importTypicalDeck() throws IOException {
     Path tmp = Files.createTempFile("MY_FLUID", ".DAT");
-    Files.writeString(tmp, sampleDeck(), StandardCharsets.UTF_8);
+    Files.write(tmp, sampleDeck().getBytes(StandardCharsets.UTF_8));
 
-    var res = EclipseBlackOilImporter.fromFile(tmp);
+    EclipseBlackOilImporter.Result res = EclipseBlackOilImporter.fromFile(tmp);
     assertNotNull(res);
     assertNotNull(res.pvt);
     assertNotNull(res.system);

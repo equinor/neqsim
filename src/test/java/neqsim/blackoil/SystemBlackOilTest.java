@@ -1,14 +1,16 @@
 package neqsim.blackoil;
 
-import org.junit.jupiter.api.Test;
-import neqsim.blackoil.io.EclipseBlackOilImporter;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import org.junit.jupiter.api.Test;
+import neqsim.blackoil.io.EclipseBlackOilImporter;
 
 class SystemBlackOilTest {
 
@@ -29,9 +31,9 @@ class SystemBlackOilTest {
   @Test
   void testBasicFlash() throws java.io.IOException {
     Path tmp = Files.createTempFile("MY_FLUID", ".DAT");
-    Files.writeString(tmp, sampleDeck(), StandardCharsets.UTF_8);
+    Files.write(tmp, sampleDeck().getBytes(StandardCharsets.UTF_8));
 
-    var res = EclipseBlackOilImporter.fromFile(tmp);
+    EclipseBlackOilImporter.Result res = EclipseBlackOilImporter.fromFile(tmp);
     assertNotNull(res);
     assertNotNull(res.pvt);
     assertNotNull(res.system);
