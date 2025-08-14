@@ -80,8 +80,10 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
         } else {
           FVF = -27.882 * GVF * GVF + 45.545 * GVF - 17.495;
         }
+      } else if (GVF < 0.2) {
+        FVF = 0.2 + 4 * GVF; 
       }
-      double externalDiamater = (pipe.getDiameter() + 2 * pipe.getThickness()) * 1000;// mm
+      double externalDiamater = (pipe.getDiameter() + 2 * pipe.getThickness()) * 1000; // mm
       double alpha = 0.0;
       double betta = 0.0;
       if (supportArrangement.equals("Stiff")) {
@@ -103,12 +105,9 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
       double LOF = mixDensity * mixVelocity * mixVelocity * FVF / Fv;
       return LOF;
     } else if (method.equals("FRMS")) {
-      if (GVF < 0.8) {
-        return GVF;
-      } else {
-        return 1 + 5 * (1 - GVF) * Math.pow(pipe.getDiameter(), 1.6) * FRMSConstant
-            * Math.pow(pipe.getSegmentLiquidDensity(segment), 0.6) * Math.pow(mixVelocity, 1.2);
-      }
+      double C = Math.min(Math.min(1, 5 * (1 - GVF)), 5 * GVF) * FRMSConstant;
+      return C * Math.pow(pipe.getDiameter(), 1.6) * Math.pow(pipe.getSegmentLiquidDensity(segment), 0.6) 
+        * Math.pow(mixVelocity, 1.2);
     }
     return Double.NaN;
   }
