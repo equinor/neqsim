@@ -101,11 +101,13 @@ public class TPmultiflash extends TPflash {
               / Erow[i] / system.getPhase(k).getComponent(i).getFugacityCoefficient());
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            && system.getPhase(k).getType() != PhaseType.AQUEOUS) {
+            || system.getPhase(0).getComponent(i).isIsIon()
+                && system.getPhase(k).getType() != PhaseType.AQUEOUS) {
           system.getPhase(k).getComponent(i).setx(1e-50);
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            && system.getPhase(k).getType() == PhaseType.AQUEOUS) {
+            || system.getPhase(0).getComponent(i).isIsIon()
+                && system.getPhase(k).getType() == PhaseType.AQUEOUS) {
           system.getPhase(k).getComponent(i)
               .setx(system.getPhase(k).getComponent(i).getNumberOfmoles()
                   / system.getPhase(k).getNumberOfMolesInPhase());
@@ -536,7 +538,8 @@ public class TPmultiflash extends TPflash {
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
               logWi[i] = Math.log(Wi[j][i]);
             }
-            if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+            if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+                || system.getPhase(0).getComponent(i).isIsIon()) {
               logWi[i] = -1000.0;
             }
             err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
@@ -555,7 +558,8 @@ public class TPmultiflash extends TPflash {
           if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(Math.exp(logWi[i]) / sumw[j]);
           }
-          if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+          if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+              || system.getPhase(0).getComponent(i).isIsIon()) {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(1e-50);
           }
         }
@@ -914,7 +918,8 @@ public class TPmultiflash extends TPflash {
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
               logWi[i] = Math.log(Wi[j][i]);
             }
-            if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+            if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+                || system.getPhase(0).getComponent(i).isIsIon()) {
               logWi[i] = -1000.0;
             }
             err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
@@ -933,7 +938,8 @@ public class TPmultiflash extends TPflash {
           if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(Math.exp(logWi[i]) / sumw[j]);
           }
-          if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+          if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+              || system.getPhase(0).getComponent(i).isIsIon()) {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(1e-50);
           }
         }
@@ -1263,7 +1269,8 @@ public class TPmultiflash extends TPflash {
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
               logWi[i] = Math.log(Wi[j][i]);
             }
-            if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+            if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+                || system.getPhase(0).getComponent(i).isIsIon()) {
               logWi[i] = -1000.0;
             }
             err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
@@ -1282,7 +1289,8 @@ public class TPmultiflash extends TPflash {
           if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
             (clonedSystem.get(j)).getPhase(1).getComponent(i).setx(Math.exp(logWi[i]) / sumw[j]);
           }
-          if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+          if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+              || system.getPhase(0).getComponent(i).isIsIon()) {
             (clonedSystem.get(j)).getPhase(1).getComponent(i).setx(1e-50);
           }
         }

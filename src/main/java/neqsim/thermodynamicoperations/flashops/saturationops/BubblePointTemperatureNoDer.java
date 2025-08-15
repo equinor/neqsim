@@ -98,7 +98,8 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
       for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
         do {
           yold = system.getPhases()[0].getComponent(i).getx();
-          if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+          if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+              || system.getPhase(0).getComponent(i).isIsIon()) {
             system.getPhases()[0].getComponent(i).setK(1e-40);
           } else {
             system.getPhases()[0].getComponent(i).setK(

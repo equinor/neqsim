@@ -94,7 +94,8 @@ public class BubblePointPressureFlashDer extends ConstantDutyPressureFlash {
             if (!Double.isNaN(
                 Math.exp(Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient())
                     - Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient())))) {
-              if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+              if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+                  || system.getPhase(0).getComponent(i).isIsIon()) {
                 system.getPhases()[0].getComponent(i).setK(1e-40);
               } else {
                 system.getPhases()[0].getComponent(i).setK(Math.exp(

@@ -38,8 +38,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
    */
   @Test
   public void testCp() {
-    neqsim.thermo.system.SystemPrEos testSystem =
-        new neqsim.thermo.system.SystemPrEos(273.15 + 40.0, 1.0);
+    neqsim.thermo.system.SystemPrEos testSystem = new neqsim.thermo.system.SystemPrEos(273.15 + 40.0, 1.0);
     testSystem.addComponent("methane", 10.01);
     testSystem.addTBPfraction("C20", 10.68, 0.3, 0.85);
     testSystem.setMixingRule("classic");
@@ -189,5 +188,25 @@ class SystemThermoTest extends neqsim.NeqSimTest {
       testSystem.setMixingRule(mixingRule.name());
       assertEquals(mixingRule, testSystem.getMixingRule());
     }
+  }
+
+  @Test
+  void waterNaClTest() {
+    testSystem = new neqsim.thermo.system.SystemSrkEos(298.15, 1.0);
+    testSystem.addComponent("methane", 0.01);
+    testSystem.addComponent("water", 0.99);
+    testSystem.addComponent("NaCl", 0.05);
+    testSystem.setMixingRule("classic");
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.initProperties();
+    // testSystem.prettyPrint();
+    double density = testSystem.getDensity("kg/m3");
+
+    assertEquals(1109.7640, testSystem.getPhase(PhaseType.AQUEOUS).getDensity("kg/m3"), 1e-2);
+    assertEquals(1099.66150816, testSystem.getPhase(PhaseType.AQUEOUS).getWaterDensity("kg/m3"),
+        1e-2);
+
   }
 }
