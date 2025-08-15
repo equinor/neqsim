@@ -15,6 +15,9 @@ import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethodMod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.LBCViscosityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MethaneViscosityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MuznyModViscosityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MuznyViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodMod86;
 import neqsim.physicalproperties.methods.gasphysicalproperties.conductivity.ChungConductivityMethod;
@@ -85,13 +88,8 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
     this.multicomponentDiffusionMethod = multicomponentDiffusionMethod;
   }
 
-  /**
-   * <p>
-   * clone.
-   * </p>
-   *
-   * @return a {@link neqsim.physicalproperties.system.PhysicalProperties} object
-   */
+  /** {@inheritDoc} */
+  @Override
   public PhysicalProperties clone() {
     PhysicalProperties properties = null;
 
@@ -225,6 +223,12 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
       viscosityCalc = new KTAViscosityMethod(this);
     } else if ("KTA_mod".equals(model)) {
       viscosityCalc = new KTAViscosityMethodMod(this);
+    } else if ("Muzny".equals(model)) {
+      viscosityCalc = new MuznyViscosityMethod(this);
+    } else if ("Muzny_mod".equals(model)) {
+      viscosityCalc = new MuznyModViscosityMethod(this);
+    } else if ("MethaneModel".equals(model)) {
+      viscosityCalc = new MethaneViscosityMethod(this);
     }
   }
 

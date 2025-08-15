@@ -134,7 +134,7 @@ public class BeggsAndBrillsPipeTest {
     double temperatureOut = pipe.getOutletTemperature() - 273.15;
     Assertions.assertEquals(pressureOut, 13.366143179275166, 1);
     Assertions.assertEquals(temperatureOut, 38.8, 0.1);
-    Assertions.assertEquals(pipe.getFlowRegime(), "INTERMITTENT");
+    Assertions.assertEquals(pipe.getFlowRegime(), PipeBeggsAndBrills.FlowRegime.INTERMITTENT);
     Assertions.assertEquals(pipe.getOutletSuperficialVelocity(),
         pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
   }
@@ -189,7 +189,7 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pipe.getSegmentPressure(10), 34.4716898025371, 1.0);
     Assertions.assertEquals(pipe.getSegmentPressureDrop(10), 1.5468048987983438, 1.0);
     Assertions.assertEquals(pipe.getSegmentTemperature(10) - 273.15, 79.80343029302054, 1.0);
-    Assertions.assertEquals(pipe.getSegmentFlowRegime(10), "INTERMITTENT");
+    Assertions.assertEquals(pipe.getSegmentFlowRegime(10), PipeBeggsAndBrills.FlowRegime.INTERMITTENT);
     Assertions.assertEquals(pipe.getSegmentMixtureDensity(10), 224.31571593591167, 20.0);
     Assertions.assertEquals(pipe.getSegmentLiquidSuperficialVelocity(10), 3.357338501138603, 1.0);
     Assertions.assertEquals(pipe.getSegmentGasSuperficialVelocity(10), 7.109484383317198, 1.0);
@@ -255,7 +255,7 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pipe.getSegmentPressure(0), 150, 1.0);
     Assertions.assertEquals(pipe.getSegmentPressureDrop(10), 2.9204245897598162, 1.0);
     Assertions.assertEquals(pipe.getSegmentTemperature(10) - 273.15, 75.07486781297496, 1.0);
-    Assertions.assertEquals(pipe.getSegmentFlowRegime(10), "Single Phase");
+    Assertions.assertEquals(pipe.getSegmentFlowRegime(10), PipeBeggsAndBrills.FlowRegime.SINGLE_PHASE);
     Assertions.assertEquals(pipe.getSegmentMixtureDensity(10), 73.54613545016805, 1.0);
     Assertions.assertEquals(pipe.getSegmentLiquidSuperficialVelocity(10), 0.0, 1.0);
     Assertions.assertEquals(pipe.getSegmentGasSuperficialVelocity(10), 33.85480591912372, 1.0);
@@ -388,6 +388,8 @@ public class BeggsAndBrillsPipeTest {
     pipe2.setDiameter(0.05);
     pipe2.setNumberOfIncrements(1);
     pipe2.setConstantSurfaceTemperature(constantSurfaceTemperature, "C");
+
+    pipe2.toJson();
 
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();

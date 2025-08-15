@@ -2,7 +2,9 @@ package neqsim.process.equipment.compressor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
@@ -18,14 +20,85 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class CompressorChart implements CompressorChartInterface, java.io.Serializable {
+  /**
+   * Generates the surge curve by taking the head value at the lowest flow for each speed from the
+   * compressor chart values.
+   */
+  public void generateSurgeCurve() {
+    int n = chartValues.size();
+    java.util.TreeMap<Double, Double> uniqueSurgePoints = new java.util.TreeMap<>();
+    for (int i = 0; i < n; i++) {
+      CompressorCurve curve = chartValues.get(i);
+      // Find index of lowest flow (usually index 0, but robust for unsorted)
+      int minIdx = 0;
+      for (int j = 1; j < curve.flow.length; j++) {
+        if (curve.flow[j] < curve.flow[minIdx]) {
+          minIdx = j;
+        }
+      }
+      double flowVal = curve.flow[minIdx];
+      double headVal = curve.head[minIdx];
+      // Only add if not already present (ensures one point per speed, no duplicate flows)
+      if (!uniqueSurgePoints.containsKey(flowVal)) {
+        uniqueSurgePoints.put(flowVal, headVal);
+      }
+    }
+    double[] surgeFlow = new double[uniqueSurgePoints.size()];
+    double[] surgeHead = new double[uniqueSurgePoints.size()];
+    int idx = 0;
+    for (java.util.Map.Entry<Double, Double> entry : uniqueSurgePoints.entrySet()) {
+      surgeFlow[idx] = entry.getKey();
+      surgeHead[idx] = entry.getValue();
+      idx++;
+    }
+    setSurgeCurve(new SafeSplineSurgeCurve(surgeFlow, surgeHead));
+  }
+
+
+  /**
+   * Generates the stone wall curve by taking the head value at the highest flow for each speed from
+   * the compressor chart values.
+   */
+  @Override
+  public void generateStoneWallCurve() {
+    int n = chartValues.size();
+    TreeMap<Double, Double> uniqueStoneWallPoints = new TreeMap<>();
+    for (int i = 0; i < n; i++) {
+      CompressorCurve curve = chartValues.get(i);
+      int maxIdx = 0;
+      for (int j = 1; j < curve.flow.length; j++) {
+        if (curve.flow[j] > curve.flow[maxIdx]) {
+          maxIdx = j;
+        }
+      }
+      double flowVal = curve.flow[maxIdx];
+      double headVal = curve.head[maxIdx];
+      if (!uniqueStoneWallPoints.containsKey(flowVal)) {
+        uniqueStoneWallPoints.put(flowVal, headVal);
+      }
+    }
+    double[] stoneFlow = new double[uniqueStoneWallPoints.size()];
+    double[] stoneHead = new double[uniqueStoneWallPoints.size()];
+    int idx = 0;
+    for (Map.Entry<Double, Double> entry : uniqueStoneWallPoints.entrySet()) {
+      stoneFlow[idx] = entry.getKey();
+      stoneHead[idx] = entry.getValue();
+      idx++;
+    }
+    setStoneWallCurve(new SafeSplineStoneWallCurve(stoneFlow, stoneHead));
+  }
+
   /** Serialization version UID. */
+
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CompressorChart.class);
 
   ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
-  private SurgeCurve surgeCurve = new SurgeCurve();
-  private StoneWallCurve stoneWallCurve = new StoneWallCurve();
+  ArrayList<Double> chartSpeeds = new ArrayList<Double>();
+  SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
+  StoneWallCurve stoneWallCurve = new SafeSplineStoneWallCurve();
+  // private SurgeCurve surgeCurve = new SurgeCurve();
   boolean isSurge = false;
   double maxSpeedCurve = 0;
   double minSpeedCurve = 1e10;
@@ -82,13 +155,16 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   /**
    * {@inheritDoc}
    *
+   * <p>
    * This method initializes the compressor performance curves, including speed, flow, head, and
    * polytropic efficiency.
+   * </p>
    *
    * <p>
    * The method takes chart conditions and initializes internal variables for different performance
    * parameters based on input arrays for speed, flow, head, and polytropic efficiency. It also
    * normalizes these parameters by calculating reduced values based on speed.
+   * </p>
    */
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
@@ -99,13 +175,16 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   /**
    * {@inheritDoc}
    *
+   * <p>
    * This method initializes the compressor performance curves, including speed, flow, head, and
    * polytropic efficiency.
+   * </p>
    *
    * <p>
    * The method takes chart conditions and initializes internal variables for different performance
    * parameters based on input arrays for speed, flow, head, and polytropic efficiency. It also
    * normalizes these parameters by calculating reduced values based on speed.
+   * </p>
    */
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
@@ -268,7 +347,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * @param head an array of type double
    */
   public void addSurgeCurve(double[] flow, double[] head) {
-    surgeCurve = new SurgeCurve(flow, head);
+    // surgeCurve = new SurgeCurve(flow, head);
+    surgeCurve = new SafeSplineSurgeCurve(flow, head);
   }
 
   /**
@@ -335,13 +415,13 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
   /** {@inheritDoc} */
   @Override
-  public SurgeCurve getSurgeCurve() {
+  public SafeSplineSurgeCurve getSurgeCurve() {
     return surgeCurve;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setSurgeCurve(SurgeCurve surgeCurve) {
+  public void setSurgeCurve(SafeSplineSurgeCurve surgeCurve) {
     this.surgeCurve = surgeCurve;
   }
 
@@ -509,13 +589,8 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     this.maxSpeedCurve = maxSpeedCurve;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>minSpeedCurve</code>.
-   * </p>
-   *
-   * @return a double
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getMinSpeedCurve() {
     return minSpeedCurve;
   }

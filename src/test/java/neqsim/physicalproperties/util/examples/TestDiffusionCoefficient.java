@@ -12,7 +12,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * TestDiffusionCoefficient class.
  * </p>
  *
- * @author esol //
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

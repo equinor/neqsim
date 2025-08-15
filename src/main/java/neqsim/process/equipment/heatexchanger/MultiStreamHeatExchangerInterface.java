@@ -121,7 +121,7 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   // ================================
 
   /**
-   * Calculates and retrieves the thermal effectiveness of the heat exchanger.
+   * Gets the thermal effectiveness of the heat exchanger.
    *
    * @return Thermal effectiveness
    */
@@ -184,9 +184,11 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   double getDuty();
 
   /** {@inheritDoc} */
+  @Override
   double getMassBalance(String unit);
 
   /** {@inheritDoc} */
+  @Override
   double getEntropyProduction(String unit);
 
   // ================================
@@ -217,6 +219,7 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
    * Runs a condition analysis by comparing the current heat exchanger with a reference exchanger.
    * </p>
    */
+  @Override
   void runConditionAnalysis(ProcessEquipmentInterface refExchanger);
 
   /**
@@ -254,20 +257,11 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   // JSON Serialization Methods
   // ================================
 
-  /**
-   * Serializes the heat exchanger's state to a JSON string.
-   *
-   * @return JSON representation of the heat exchanger
-   */
+  /** {@inheritDoc} */
+  @Override
   String toJson();
 
   // ================================
   // Additional Methods
   // ================================
-
-  /**
-   * Displays the results of the heat exchanger simulation. Typically outputs temperatures,
-   * pressures, flow rates, etc.
-   */
-  void displayResult();
 }

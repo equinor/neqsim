@@ -50,7 +50,7 @@ public class EquilibriumStream extends Stream {
     try {
       clonedStream = (EquilibriumStream) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
 
     thermoSystem = thermoSystem.clone();
@@ -75,6 +75,7 @@ public class EquilibriumStream extends Stream {
     logger.info("start flashing stream... " + streamNumber);
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     thermoOps.TPflash();
+    thermoSystem.initProperties();
     logger.info("number of phases: " + thermoSystem.getNumberOfPhases());
     logger.info("beta: " + thermoSystem.getBeta());
     setCalculationIdentifier(id);

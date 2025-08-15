@@ -16,7 +16,8 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  * <p>
- * PhysicalPropertyHandler class. Group together the physical property functions (density for
+ * PhysicalPropertyHandler class. Containing the physical property functions for all kinds of
+ * phasetypes. WAX, HYDRATE, SOLID and SOLIDCOMPLEX are all considered as solid phases.
  * </p>
  *
  * @author ESOL
@@ -97,7 +98,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
 
   /**
    * <p>
-   * Get PhysicalProperty
+   * Get PhysicalProperties for a specific phase type.
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object

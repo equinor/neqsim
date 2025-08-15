@@ -1,5 +1,6 @@
 package neqsim.process.util.monitor;
 
+import java.util.HashMap;
 import neqsim.process.equipment.pump.Pump;
 
 /**
@@ -10,9 +11,8 @@ import neqsim.process.equipment.pump.Pump;
  * @author asmund
  * @version $Id: $Id
  */
-public class PumpResponse {
-  public String name = "test";
-
+public class PumpResponse extends BaseResponse {
+  public HashMap<String, Value> data = new HashMap<String, Value>();
   public Double suctionTemperature;
   public Double dischargeTemperature;
   public Double suctionPressure;
@@ -38,7 +38,7 @@ public class PumpResponse {
    * @param inputPump a {@link neqsim.process.equipment.pump.Pump} object
    */
   public PumpResponse(Pump inputPump) {
-    name = inputPump.getName();
+    super(inputPump);
     molarMass = inputPump.getInletStream().getFluid().getMolarMass();
     suctionMassDensity = inputPump.getInletStream().getFluid().getDensity("kg/m3");
     dischargeMassDensity = inputPump.getOutletStream().getFluid().getDensity("kg/m3");
@@ -59,5 +59,23 @@ public class PumpResponse {
     // internalVolumeFlow =
     // inputCompressor.getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
     // }
+
+    data.put("suction temperature",
+        new Value(Double.toString(suctionTemperature),
+            neqsim.util.unit.Units.getSymbol("temperature")));
+    data.put("discharge temperature",
+        new Value(Double.toString(dischargeTemperature),
+            neqsim.util.unit.Units.getSymbol("temperature")));
+    data.put("suction pressure",
+        new Value(Double.toString(suctionPressure),
+            neqsim.util.unit.Units.getSymbol("pressure")));
+    data.put("discharge pressure",
+        new Value(Double.toString(dischargePressure),
+            neqsim.util.unit.Units.getSymbol("pressure")));
+    data.put("mass flow",
+        new Value(Double.toString(massflow), neqsim.util.unit.Units.getSymbol("mass flow")));
+    data.put("duty",
+        new Value(Double.toString(duty), neqsim.util.unit.Units.getSymbol("duty")));
+    data.put("power", new Value(Double.toString(power), "W"));
   }
 }

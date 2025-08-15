@@ -11,9 +11,11 @@ import java.util.List;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.conditionmonitor.ConditionMonitorSpecifications;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.monitor.MultiStreamHeatExchangerResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -89,14 +91,25 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /** {@inheritDoc} */
+  @Override
   public void addInStream(StreamInterface inStream) {
     this.inStreams.add(inStream);
     StreamInterface outStream = inStream.clone();
     outStream.setName(getName() + "_Sout" + (outStreams.size() + 1));
     this.outStreams.add(outStream);
   }
+  // HERMANN - The stream type needs to be added - hot or cold
+  // HERMANN - The stream outlet temp nesds to be added of defined
+
+  // public void addInStream(StreamInterface inStream, String type, int outletTempertures) {
+  // super(name);
+  // this.hasReboiler = hasReboiler;
+  // this.hasCondenser = hasCondenser;
+  // distoperations = new neqsim.process.processmodel.ProcessSystem();
+  // this.numberOfTrays = numberOfTraysLocal;
 
   /** {@inheritDoc} */
+  @Override
   public void setFeedStream(int index, StreamInterface inStream) {
     if (index < inStreams.size()) {
       this.inStreams.set(index, inStream);
@@ -174,6 +187,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /** {@inheritDoc} */
+  @Override
   public void setUAvalue(double UAvalue) {
     UAvalueIsSet = true;
     this.UAvalue = UAvalue;
@@ -295,18 +309,14 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     // This can be customized based on specific requirements
   }
 
-  /**
-   * Runs condition analysis by comparing the exchanger with itself.
-   */
+  /** {@inheritDoc} */
+  @Override
   public void runConditionAnalysis() {
     runConditionAnalysis(this);
   }
 
-  /**
-   * Gets the thermal effectiveness of the heat exchanger.
-   *
-   * @return Thermal effectiveness
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getThermalEffectiveness() {
     return thermalEffectiveness;
   }
@@ -369,9 +379,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    // return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-    // .toJson(new HXResponse(this));
-    return super.toJson();
+    return new GsonBuilder().create().toJson(new MultiStreamHeatExchangerResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -681,5 +689,33 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
    */
   public void setTemperatureApproach(double temperatureApproach) {
     this.temperatureApproach = temperatureApproach;
+  }
+
+  /**
+   * Returns the number of feed streams connected to the heat exchanger.
+   *
+   * @return the number of input streams.
+   */
+  public int numerOfFeedStreams() {
+    return inStreams.size();
+  }
+
+  /**
+   * Calculates the heat duty for a specified stream in the multi-stream heat exchanger. The heat
+   * duty is determined as the difference in enthalpy between the outlet and inlet streams for the
+   * given stream index.
+   *
+   * @param streamNumber the index of the stream for which the heat duty is to be calculated. Must
+   *        be less than the total number of input streams.
+   * @return the heat duty (in appropriate energy units) for the specified stream in W
+   * @throws java.lang.IndexOutOfBoundsException if the specified stream index is out of bounds.
+   */
+  public double getDuty(int streamNumber) {
+    if (streamNumber < inStreams.size()) {
+      return outStreams.get(streamNumber).getThermoSystem().getEnthalpy()
+          - inStreams.get(streamNumber).getThermoSystem().getEnthalpy();
+    } else {
+      throw new IndexOutOfBoundsException("Stream index out of bounds.");
+    }
   }
 }

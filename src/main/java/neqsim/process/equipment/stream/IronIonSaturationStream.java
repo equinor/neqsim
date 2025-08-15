@@ -68,7 +68,7 @@ public class IronIonSaturationStream extends Stream {
     try {
       clonedSystem = (IronIonSaturationStream) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
     return clonedSystem;
   }
@@ -102,7 +102,8 @@ public class IronIonSaturationStream extends Stream {
     // reactiveThermoSystem.getPhase(0).getComponent("MEG").getNumberOfmoles());
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
     thermoOps.TPflash();
-    reactiveThermoSystem.display();
+    reactiveThermoSystem.initProperties();
+    // reactiveThermoSystem.display();
     try {
       logger.info("aqueous phase number " + reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"));
       thermoOps.addIonToScaleSaturation(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"),
@@ -110,7 +111,7 @@ public class IronIonSaturationStream extends Stream {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    reactiveThermoSystem.display();
+    // reactiveThermoSystem.display();
     logger.info("number of phases: " + reactiveThermoSystem.getNumberOfPhases());
     logger.info("beta: " + reactiveThermoSystem.getBeta());
     setCalculationIdentifier(id);

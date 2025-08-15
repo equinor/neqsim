@@ -22,12 +22,16 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
   private double duty = 0.0;
 
   /**
-   * <p>Constructor for EnergyStream.</p>
+   * <p>
+   * Constructor for EnergyStream.
+   * </p>
    */
   public EnergyStream() {}
 
   /**
-   * <p>Constructor for EnergyStream.</p>
+   * <p>
+   * Constructor for EnergyStream.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -42,7 +46,7 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
     try {
       clonedStream = (EnergyStream) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
     return clonedStream;
   }
@@ -92,7 +96,9 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>Getter for the field <code>name</code>.</p>
+   * <p>
+   * Getter for the field <code>name</code>.
+   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -101,7 +107,9 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>Setter for the field <code>name</code>.</p>
+   * <p>
+   * Setter for the field <code>name</code>.
+   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

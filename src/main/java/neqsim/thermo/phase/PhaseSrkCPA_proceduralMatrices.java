@@ -487,7 +487,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
       // Matrix tempMatrix20 = miMatrix.getMatrix(assSites, assSites, 0,
       // totalNumberOfAccociationSites -
       // 1).times(uMatrix).minus(ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5));
-      // //
+      //
       // ksiMatrix.transpose().times(KlkTMatrix.times(ksiMatrix)).times(-0.5);
       // System.out.println("dQdn ");
       // tempMatrix20.print(10, 10);

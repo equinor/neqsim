@@ -55,7 +55,7 @@ public class StirredCell extends GeometryDefinition {
     try {
       clonedPipe = (StirredCell) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
     return clonedPipe;
   }

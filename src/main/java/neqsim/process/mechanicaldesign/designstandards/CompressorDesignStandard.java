@@ -48,7 +48,7 @@ public class CompressorDesignStandard extends DesignStandard {
       // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
     } catch (Exception e) {
       // TODO Auto-generated catch block
-      logger.error(e.getMessage());;
+      logger.error(e.getMessage());
     }
   }
 

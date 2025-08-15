@@ -90,7 +90,9 @@ public abstract class SystemThermo implements SystemInterface {
   // or
   public String componentNameTag = "";
 
+  /** Critical pressure in bara. */
   protected double criticalPressure = 0;
+  /** Critical temperature in Kelvin. */
   protected double criticalTemperature = 0;
   // Object metadata
   protected String fluidInfo = "No Information Available";
@@ -1644,6 +1646,161 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public void addTBPfraction2(String componentName, double numberOfMoles, double molarMass,
+      double boilingPoint) {
+    if (boilingPoint <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "addTBPfraction2", "boilingPoint", "must be positive."));
+    }
+    if (molarMass <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "addTBPfraction2", "molarMass", "must be positive."));
+    }
+
+    // Calculate density from boiling point and molar mass using inverse Søreide
+    // correlation
+    double density = calculateDensityFromBoilingPoint(molarMass, boilingPoint);
+
+    // Call the existing addTBPfraction method with the calculated density
+    addTBPfraction(componentName, numberOfMoles, molarMass, density);
+  }
+
+  /**
+   * Calculates density from boiling point and molar mass 
+   * 
+   * @param molarMass molar mass in kg/mol
+   * @param boilingPoint boiling point in Kelvin
+   * @return density in g/cm³
+   */
+  public double calculateDensityFromBoilingPoint(double molarMass, double boilingPoint)
+  { 
+    double TB = boilingPoint; 
+
+    double lower = 0.5;
+    double upper = 1.5;
+    double tolerance = 1e-5;
+    int maxIterations = 1000;
+    double density = 0.8;
+    double calculated_density = 0.0;
+    double fmidOLD  = 9999.0;
+    double f_mid;
+    double calculated_TB;
+    double lowerOLD = 0.1;
+    double upperOLD = 1.5;
+
+    for (int i = 0; i < maxIterations; i++) {
+
+        density = 0.5 * (lower + upper);
+        calculated_TB = characterization.getTBPModel().calcTB(molarMass * 1000, density);
+        f_mid = calculated_TB - TB;
+
+        if (Math.abs(f_mid) < tolerance) {
+            return calculated_density;
+        }
+
+        if (Math.abs(lower - upper) < tolerance) {
+            return calculated_density; // Return the midpoint as density
+        }
+
+        if (f_mid < 0) {
+            lowerOLD = lower;
+            lower = density;
+        } else {
+            upperOLD = upper;
+            upper = density;
+        }
+
+        if ((Math.abs(f_mid) < Math.abs(fmidOLD))) {
+            fmidOLD = f_mid;
+            calculated_density = density;
+        } 
+    }
+    return calculated_density;
+     // Return the midpoint as density
+}
+
+
+  /**
+   * Add TBP fraction using density and boiling point, calculating molar mass.
+   */
+  @Override
+  public void addTBPfraction3(String componentName, double numberOfMoles, double density,
+      double boilingPoint) {
+    if (boilingPoint <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "addTBPfraction3", "boilingPoint", "must be positive."));
+    }
+    if (density <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "addTBPfraction3", "density", "must be positive."));
+    }
+    double molarMass = calculateMolarMassFromDensityAndBoilingPoint(density, boilingPoint);
+    addTBPfraction(componentName, numberOfMoles, molarMass, density);
+  }
+
+  /**
+   * Calculates molar mass from density and boiling point 
+   * 
+   * @param density density in g/cm³
+   * @param boilingPoint boiling point in Kelvin
+   * @return molar mass in kg/mol
+   */
+public double calculateMolarMassFromDensityAndBoilingPoint(double density, double boilingPoint) {
+       
+    double TB = boilingPoint; 
+
+
+    double lower = 0.01;
+    double upper = 0.5;
+    double tolerance = 1e-5;
+    int maxIterations = 1000;
+    double molarMass = 0.8;
+    double calculatedMolarMass = 0.0;
+    double fmidOLD  = 9999.0;
+    double f_mid;
+    double calculated_TB;
+
+
+    for (int i = 0; i < maxIterations; i++) {
+
+        molarMass = 0.5 * (lower + upper);
+        calculated_TB = characterization.getTBPModel().calcTB(molarMass * 1000, density);
+        f_mid = calculated_TB - TB;
+
+        if (Math.abs(f_mid) < tolerance) {
+            return calculatedMolarMass;
+        }
+
+        if (Math.abs(lower - upper) < tolerance) {
+            return calculatedMolarMass; // Return the midpoint as density
+        }
+
+        if (f_mid < 0) {
+            lower = molarMass;
+        } else {
+            upper = molarMass;
+        }
+
+        if ((Math.abs(f_mid) < Math.abs(fmidOLD))) {
+            fmidOLD = f_mid;
+            calculatedMolarMass = molarMass;
+        } 
+    }
+    return calculatedMolarMass;
+}
+
+  /**
+  * Add TBP fraction using density and boiling point, calculating molar mass.
+  */
+  @Override
+  public void addTBPfraction4(String componentName, double numberOfMoles, double molarMass, double density,
+      double boilingPoint) {
+    characterization.getTBPModel().setBoilingPoint(boilingPoint);   
+    addTBPfraction(componentName, numberOfMoles, molarMass, density);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void deleteFluidPhase(int phaseNum) {
     for (int i = phaseNum; i < numberOfPhases; i++) {
       phaseIndex[i] = phaseIndex[i + 1];
@@ -2671,7 +2828,7 @@ public abstract class SystemThermo implements SystemInterface {
     if (i < 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getPhase",
           "i", i + " is not valid, must be in the range 0-" + this.getNumberOfPhases()));
-    } else if (i >= getNumberOfPhases() && phaseArray[phaseIndex[i]] == null) {
+    } else if (i >= getNumberOfPhases() - 1 && phaseArray[phaseIndex[i]] == null) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getPhase",
           "i", " - Can not return phase number " + i + ". Current number of phases are "
               + getNumberOfPhases()));
@@ -3338,7 +3495,8 @@ public abstract class SystemThermo implements SystemInterface {
     }
     if (!isInitialized && this.getSumBeta() < 1.0 - phaseFractionMinimumLimit
         || this.getSumBeta() > 1.0 + phaseFractionMinimumLimit) {
-      // logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0. " + beta);
+      // logger.warn("SystemThermo:initBeta - Sum of beta does not equal 1.0. " +
+      // beta);
     }
   }
 
@@ -3628,13 +3786,8 @@ public abstract class SystemThermo implements SystemInterface {
     return forcePhaseTypes;
   }
 
-  /**
-   * <p>
-   * isInitialized.
-   * </p>
-   *
-   * @return a boolean
-   */
+  /** {@inheritDoc} */
+  @Override
   public boolean isInitialized() {
     return isInitialized;
   }
@@ -4027,10 +4180,11 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void reset() {
+    init(0);
     for (int i = 0; i < numberOfComponents; i++) {
       // TODO: numeric issue, nearly zero
       addComponent(getPhase(0).getComponent(i).getComponentName(),
-          -getPhase(0).getComponent(i).getNumberOfmoles());
+          -getPhase(0).getComponent(i).getNumberOfMolesInPhase());
     }
     // TODO: isInitialized = false;
   }
@@ -4622,6 +4776,64 @@ public abstract class SystemThermo implements SystemInterface {
     }
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public void setComponentFlowRates(double[] componentFlowRates, String unit) {
+    if (componentFlowRates == null || componentFlowRates.length != getNumberOfComponents()) {
+      throw new IllegalArgumentException(
+          "Component flow rates array must have length equal to number of components.");
+    }
+
+    double[] molarFlows = new double[componentFlowRates.length];
+    String u = unit == null ? "" : unit.trim().toLowerCase();
+
+    switch (u) {
+      case "mol/sec":
+        System.arraycopy(componentFlowRates, 0, molarFlows, 0, componentFlowRates.length);
+        break;
+      case "kmol/sec":
+        for (int i = 0; i < componentFlowRates.length; i++) {
+          molarFlows[i] = componentFlowRates[i] * 1_000.0;
+        }
+        break;
+      case "kmol/hr":
+        for (int i = 0; i < componentFlowRates.length; i++) {
+          molarFlows[i] = componentFlowRates[i] * 1_000.0 / 3600.0;
+        }
+        break;
+      case "mol/hr":
+        for (int i = 0; i < componentFlowRates.length; i++) {
+          molarFlows[i] = componentFlowRates[i] / 3600.0;
+        }
+        break;
+      case "kg/hr":
+        for (int i = 0; i < componentFlowRates.length; i++) {
+          molarFlows[i] = componentFlowRates[i] / getComponent(i).getMolarMass() / 3600.0;
+        }
+        break;
+      case "kg/sec":
+        for (int i = 0; i < componentFlowRates.length; i++) {
+          molarFlows[i] = componentFlowRates[i] / getComponent(i).getMolarMass();
+        }
+        break;
+      case "kmol/day":
+        for (int i = 0; i < componentFlowRates.length; i++) {
+          molarFlows[i] = componentFlowRates[i] * 1_000.0 / 86400.0;
+        }
+        break;
+      default:
+        throw new IllegalArgumentException("Unsupported unit: " + unit);
+    }
+
+    setEmptyFluid();
+    for (int compNumb = 0; compNumb < getNumberOfComponents(); compNumb++) {
+      addComponent(compNumb, molarFlows[compNumb]);
+    }
+    for (int i = 0; i < getNumberOfPhases(); i++) {
+      init(0, i);
+    }
+  }
+
   /**
    * Wrapper function for addComponent to set fluid type and specify mole fractions.
    *
@@ -5085,11 +5297,11 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * Sets the molar composition of components whose names contain the specified definition.
+   * {@inheritDoc}
    *
-   * @param nameDef the definition to match component names against
-   * @param molarComposition an array of molar compositions to set for the matching components
+   * Sets the molar composition of components whose names contain the specified definition.
    */
+  @Override
   public void setMolarCompositionOfNamedComponents(String nameDef, double[] molarComposition) {
     int place = 0;
     double[] comp = new double[getNumberOfComponents()];
@@ -5114,6 +5326,36 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       // getPhase(i).getMixingRule().setMixingRuleParametersForComponent(compName);
     }
+  }
 
+  /** {@inheritDoc} */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    SystemThermo other = (SystemThermo) obj;
+    if (numberOfComponents != other.numberOfComponents) {
+      return false;
+    }
+    if (numberOfPhases != other.numberOfPhases) {
+      return false;
+    }
+    if (Double.compare(totalNumberOfMoles, other.totalNumberOfMoles) != 0) {
+      return false;
+    }
+    if (!fluidName.equals(other.fluidName)) {
+      return false;
+    }
+
+    for (int i = 0; i < numberOfPhases; i++) {
+      if (!getPhase(i).equals(other.getPhase(i))) {
+        return false;
+      }
+    }
+    return true;
   }
 }

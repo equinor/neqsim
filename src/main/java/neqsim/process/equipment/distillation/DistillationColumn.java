@@ -1,26 +1,33 @@
 package neqsim.process.equipment.distillation;
 
 import java.util.ArrayList;
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.monitor.DistillationColumnResponse;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
- * DistillationColumn class.
- * </p>
+ * Models a tray based distillation column with optional condenser and reboiler.
  *
- * @author ESOL
- * @version $Id: $Id
+ * <p>The column is solved using a sequential substitution approach. The
+ * {@link #init()} method sets initial tray temperatures by running the feed tray
+ * and linearly distributing temperatures towards the top and bottom. During
+ * {@link #run(UUID)} the trays are iteratively solved in upward and downward
+ * sweeps until the summed temperature change between iterations is below the
+ * configured {@link #temperatureTolerance} or the iteration limit is reached.
  */
 public class DistillationColumn extends ProcessEquipmentBaseClass implements DistillationInterface {
   /** Serialization version UID. */
@@ -36,20 +43,37 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
   double topTrayPressure = -1.0;
+
+  /** Temperature convergence tolerance. */
+  private double temperatureTolerance = 1.0e-4;
+  /** Mass balance convergence tolerance. */
+  private double massBalanceTolerance = 1.0e-3;
+  /** Enthalpy balance convergence tolerance. */
+  private double enthalpyBalanceTolerance = 1.0e-3;
+
+  Mixer feedmixer = new Mixer("temp mixer");
   double bottomTrayPressure = -1.0;
   int numberOfTrays = 1;
   int maxNumberOfIterations = 10;
-  private int feedTrayNumber = 1;
   StreamInterface stream_3 = new Stream("stream_3");
   StreamInterface gasOutStream = new Stream("gasOutStream");
   StreamInterface liquidOutStream = new Stream("liquidOutStream");
-  StreamInterface feedStream = null;
   boolean stream_3isset = false;
   private double internalDiameter = 1.0;
   neqsim.process.processmodel.ProcessSystem distoperations;
   Heater heater;
   Separator separator2;
+
+  /**
+   * Error measure used in solver to check convergence in run().
+   */
   private double err = 1.0e10;
+
+  /**
+   * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed streams per tray number.
+   * This allows multiple feeds to the same tray.
+   */
+  private Map<Integer, List<StreamInterface>> feedStreams = new HashMap<>();
 
   /**
    * <p>
@@ -57,7 +81,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * </p>
    *
    * @param name Name of distillation column
-   * @param numberOfTraysLocal Number of SimpleTrays to add
+   * @param numberOfTraysLocal Number of SimpleTrays to add (excluding reboiler/condenser)
    * @param hasReboiler Set true to add reboiler
    * @param hasCondenser Set true to add Condenser
    */
@@ -68,17 +92,25 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.hasCondenser = hasCondenser;
     distoperations = new neqsim.process.processmodel.ProcessSystem();
     this.numberOfTrays = numberOfTraysLocal;
+
+    // If user sets hasReboiler, put that in as the first tray in 'trays' list
     if (hasReboiler) {
       trays.add(new Reboiler("Reboiler"));
       this.numberOfTrays++;
     }
+
+    // Then the middle "simple" trays
     for (int i = 0; i < numberOfTraysLocal; i++) {
-      trays.add(new SimpleTray("SimpleTray" + i + 1));
+      trays.add(new SimpleTray("SimpleTray" + (i + 1)));
     }
+
+    // If user sets hasCondenser, add it at the top
     if (hasCondenser) {
       trays.add(new Condenser("Condenser"));
       this.numberOfTrays++;
     }
+
+    // Add them all to the process system
     for (int i = 0; i < this.numberOfTrays; i++) {
       distoperations.add(trays.get(i));
     }
@@ -86,141 +118,407 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /**
    * <p>
-   * addFeedStream.
+   * Add a feed stream to the specified tray. (Now allows multiple streams on the same trayNumber,
+   * using a list.)
    * </p>
    *
-   * @param inputStream a {@link neqsim.process.equipment.stream.StreamInterface} object
-   * @param feedTrayNumber a int
+   * @param inputStream the feed stream
+   * @param feedTrayNumber the tray number (0-based in the code) to which this feed goes
    */
   public void addFeedStream(StreamInterface inputStream, int feedTrayNumber) {
-    feedStream = inputStream;
+    // Put this feed into our feedStreams list for that trayNumber
+    feedStreams.computeIfAbsent(feedTrayNumber, k -> new ArrayList<>()).add(inputStream);
+
+    // Also attach it to the tray itself
     getTray(feedTrayNumber).addStream(inputStream);
-    setFeedTrayNumber(feedTrayNumber);
-    double moles = inputStream.getThermoSystem().getTotalNumberOfMoles();
-    gasOutStream.setThermoSystem(inputStream.getThermoSystem().clone());
+
+    // If your design is that *all* feed streams get combined in feedmixer:
+    feedmixer.addStream(inputStream);
+    feedmixer.run();
+
+    // Then you optionally split the feedmixer output into dummy streams_3,
+    // gasOutStream, liquidOutStream (the existing pattern).
+    double moles = feedmixer.getOutletStream().getThermoSystem().getTotalNumberOfMoles();
+    stream_3 = feedmixer.getOutletStream(); // combined
+    gasOutStream.setThermoSystem(stream_3.getThermoSystem().clone());
     gasOutStream.getThermoSystem().setTotalNumberOfMoles(moles / 2.0);
-    liquidOutStream.setThermoSystem(inputStream.getThermoSystem().clone());
+
+    liquidOutStream.setThermoSystem(stream_3.getThermoSystem().clone());
     liquidOutStream.getThermoSystem().setTotalNumberOfMoles(moles / 2.0);
+
+    // Mark that we need to re-initialize if new feeds are added
+    setDoInitializion(true);
   }
 
   /**
-   * <p>
-   * init.
-   * </p>
+   * Prepare the column for calculation by estimating tray temperatures and
+   * linking streams between trays.
+   *
+   * <p>The feed tray is solved first to obtain a temperature estimate. This
+   * temperature is then used to linearly guess temperatures upwards to the
+   * condenser and downwards to the reboiler. Gas and liquid outlet streams are
+   * connected to neighbouring trays so that a subsequent call to
+   * {@link #run(UUID)} can iterate to convergence.
    */
   public void init() {
     if (!isDoInitializion()) {
       return;
     }
     setDoInitializion(false);
-    trays.get(feedTrayNumber).run();
-    if (getTray(feedTrayNumber).getFluid().getNumberOfPhases() == 1) {
+
+    // If feedStreams is empty, nothing to do
+    if (feedStreams.isEmpty()) {
+      return;
+    }
+
+    // Grab the tray with the lowest index among the feed trays
+    int firstFeedTrayNumber = feedStreams.keySet().stream().min(Integer::compareTo).get();
+
+    // We run the first feed tray to see its temperature:
+    getTray(firstFeedTrayNumber).run();
+
+    // If that tray ended up single-phase, see if adding some other feed helps
+    if (getTray(firstFeedTrayNumber).getFluid().getNumberOfPhases() == 1) {
       for (int i = 0; i < numberOfTrays; i++) {
-        if (getTray(i).getNumberOfInputStreams() > 0 && i != feedTrayNumber) {
-          getTray(feedTrayNumber).addStream(trays.get(i).getStream(0));
-          getTray(feedTrayNumber).run();
-          getTray(feedTrayNumber)
-              .removeInputStream(getTray(feedTrayNumber).getNumberOfInputStreams() - 1);
-          if (getTray(feedTrayNumber).getThermoSystem().getNumberOfPhases() > 1) {
+        if (getTray(i).getNumberOfInputStreams() > 0 && i != firstFeedTrayNumber) {
+          getTray(firstFeedTrayNumber).addStream(trays.get(i).getStream(0));
+          getTray(firstFeedTrayNumber).run();
+          // remove it again
+          getTray(firstFeedTrayNumber)
+              .removeInputStream(getTray(firstFeedTrayNumber).getNumberOfInputStreams() - 1);
+          if (getTray(firstFeedTrayNumber).getThermoSystem().getNumberOfPhases() > 1) {
             break;
           }
-        } else if (i == feedTrayNumber && getTray(i).getNumberOfInputStreams() > 1) {
-          getTray(feedTrayNumber).addStream(trays.get(i).getStream(1));
-          trays.get(feedTrayNumber).run();
-          getTray(feedTrayNumber)
-              .removeInputStream(getTray(feedTrayNumber).getNumberOfInputStreams() - 1);
-          if (getTray(feedTrayNumber).getThermoSystem().getNumberOfPhases() > 1) {
+        } else if (i == firstFeedTrayNumber && getTray(i).getNumberOfInputStreams() > 1) {
+          getTray(firstFeedTrayNumber).addStream(trays.get(i).getStream(1));
+          trays.get(firstFeedTrayNumber).run();
+          getTray(firstFeedTrayNumber)
+              .removeInputStream(getTray(firstFeedTrayNumber).getNumberOfInputStreams() - 1);
+          if (getTray(firstFeedTrayNumber).getThermoSystem().getNumberOfPhases() > 1) {
             break;
           }
         }
       }
     }
 
-    if (getTray(feedTrayNumber).getFluid().getNumberOfPhases() == 1) {
-      getTray(feedTrayNumber).getThermoSystem().init(0);
-      getTray(feedTrayNumber).getThermoSystem().init(3);
+    // Just in case it’s still single-phase, do an init(0), init(3).
+    if (getTray(firstFeedTrayNumber).getFluid().getNumberOfPhases() == 1) {
+      getTray(firstFeedTrayNumber).getThermoSystem().init(0);
+      getTray(firstFeedTrayNumber).getThermoSystem().init(3);
     }
 
-    // ((Mixer) trays.get(numberOfTrays - 1)).getStream(0).getThermoSystem()
-    // .setTotalNumberOfMoles(((Mixer) trays.get(numberOfTrays -
-    // 1)).getStream(0).getThermoSystem()
-    // .getTotalNumberOfMoles() * (1.0));
-    trays.get(0).addStream(trays.get(feedTrayNumber).getLiquidOutStream().clone());
-    // ((Mixer)
-    // trays.get(0)).getStream(streamNumbReboil).getThermoSystem().setTotalNumberOfMoles(
-    // ((Mixer)
-    // trays.get(0)).getStream(streamNumbReboil).getThermoSystem().getTotalNumberOfMoles()
-    // * (1.0));
-
-    // ((Runnable) trays.get(numberOfTrays - 1)).run();
+    // Set up reboiler tray’s temperature
+    trays.get(0).addStream(trays.get(firstFeedTrayNumber).getLiquidOutStream().clone());
     trays.get(0).run();
 
-    double feedTrayTemperature = getTray(getFeedTrayNumber()).getTemperature();
+    double feedTrayTemperature = getTray(firstFeedTrayNumber).getTemperature();
 
     if (trays.get(numberOfTrays - 1).getNumberOfInputStreams() > 0) {
       condenserTemperature = trays.get(numberOfTrays - 1).getThermoSystem().getTemperature();
     } else {
       condenserTemperature = feedTrayTemperature - 1.0;
     }
-
     reboilerTemperature = trays.get(0).getThermoSystem().getTemperature();
 
-    double deltaTempCondenser =
-        (feedTrayTemperature - condenserTemperature) / (numberOfTrays * 1.0 - feedTrayNumber - 1);
-    double deltaTempReboiler = (reboilerTemperature - feedTrayTemperature) / (feedTrayNumber * 1.0);
+    // Rough guess for temperature steps
+    double deltaTempCondenser = (feedTrayTemperature - condenserTemperature)
+        / (numberOfTrays * 1.0 - firstFeedTrayNumber - 1);
+    double deltaTempReboiler =
+        (reboilerTemperature - feedTrayTemperature) / (firstFeedTrayNumber * 1.0);
 
+    // set temperature from feed tray up
     double delta = 0;
-    for (int i = feedTrayNumber + 1; i < numberOfTrays; i++) {
+    for (int i = firstFeedTrayNumber + 1; i < numberOfTrays; i++) {
       delta += deltaTempCondenser;
       trays.get(i)
-          .setTemperature(getTray(getFeedTrayNumber()).getThermoSystem().getTemperature() - delta);
-    }
-    delta = 0;
-    for (int i = feedTrayNumber - 1; i >= 0; i--) {
-      delta += deltaTempReboiler;
-      trays.get(i)
-          .setTemperature(getTray(getFeedTrayNumber()).getThermoSystem().getTemperature() + delta);
+          .setTemperature(getTray(firstFeedTrayNumber).getThermoSystem().getTemperature() - delta);
     }
 
+    // set temperature from feed tray down
+    delta = 0;
+    for (int i = firstFeedTrayNumber - 1; i >= 0; i--) {
+      delta += deltaTempReboiler;
+      trays.get(i)
+          .setTemperature(getTray(firstFeedTrayNumber).getThermoSystem().getTemperature() + delta);
+    }
+
+    // Link upward
     for (int i = 1; i < numberOfTrays; i++) {
       trays.get(i).addStream(trays.get(i - 1).getGasOutStream());
       trays.get(i).init();
       trays.get(i).run();
     }
 
+    // Link downward
     for (int i = numberOfTrays - 2; i >= 1; i--) {
       trays.get(i).addStream(trays.get(i + 1).getLiquidOutStream());
       trays.get(i).init();
       trays.get(i).run();
     }
+
     int streamNumb = (trays.get(0)).getNumberOfInputStreams() - 1;
     trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
     trays.get(0).init();
     trays.get(0).run();
-
-    // massBalanceCheck();
   }
 
   /**
-   * <p>
-   * Getter for the field <code>gasOutStream</code>.
-   * </p>
+   * Solve the column until tray temperatures converge.
    *
-   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * <p>The method applies sequential substitution. Pressures are set linearly
+   * between bottom and top. Each iteration performs an upward sweep where liquid
+   * flows downward followed by a downward sweep where vapour flows upward. The
+   * sum of absolute temperature changes is used as error measure.</p>
+   *
+   * @param id calculation identifier used for caching results
    */
-  public StreamInterface getGasOutStream() {
-    return gasOutStream;
+  @Override
+  public void run(UUID id) {
+    if (feedStreams.isEmpty()) {
+      // no feeds, nothing to do
+      return;
+    }
+
+    // Find the *lowest* tray number among feed trays, for reference.
+    int firstFeedTrayNumber = feedStreams.keySet().stream().min(Integer::compareTo).get();
+
+    if (bottomTrayPressure < 0) {
+      bottomTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
+    }
+    if (topTrayPressure < 0) {
+      topTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
+    }
+
+    double dp = 0.0;
+    if (numberOfTrays > 1) {
+      dp = (bottomTrayPressure - topTrayPressure) / (numberOfTrays - 1.0);
+    }
+    // Set tray pressures linearly from bottom to top
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setPressure(bottomTrayPressure - i * dp);
+    }
+
+    // numberOfFeedsUsed[i] will track how many streams we have assigned
+    // to tray i so we call getStream(...) index properly
+    int[] numeroffeeds = new int[numberOfTrays];
+
+    // For each tray in feedStreams, pass each feed into that tray
+    for (Entry<Integer, List<StreamInterface>> entry : feedStreams.entrySet()) {
+      int feedTrayNumber = entry.getKey();
+      List<StreamInterface> trayFeeds = entry.getValue();
+      for (StreamInterface feedStream : trayFeeds) {
+        numeroffeeds[feedTrayNumber]++;
+        SystemInterface inpS = feedStream.getThermoSystem().clone();
+        trays.get(feedTrayNumber).getStream(numeroffeeds[feedTrayNumber] - 1).setThermoSystem(inpS);
+      }
+    }
+
+    // If there's only one tray total, just run it
+    if (numberOfTrays == 1) {
+      trays.get(0).run(id);
+      gasOutStream.setThermoSystem(trays.get(0).getGasOutStream().getThermoSystem().clone());
+      liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
+      gasOutStream.setCalculationIdentifier(id);
+      liquidOutStream.setCalculationIdentifier(id);
+      setCalculationIdentifier(id);
+      return;
+    }
+
+    // If we haven't done an init or we added feeds, do it now
+    if (isDoInitializion()) {
+      this.init();
+    }
+
+    err = 1.0e10;
+    double errOld;
+    int iter = 0;
+    double massErr = 1.0e10;
+    double energyErr = 1.0e10;
+
+    // We'll use this array to measure temperature changes in each iteration
+    double[] oldtemps = new double[numberOfTrays];
+
+    // Make sure feed tray is up to date
+    trays.get(firstFeedTrayNumber).run(id);
+
+    // Start the iterative solution
+    do {
+      iter++;
+      errOld = err;
+      err = 0.0;
+      // Snapshot old temperatures
+      for (int i = 0; i < numberOfTrays; i++) {
+        oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
+      }
+
+      // Move upward (bottom to feed tray)
+      for (int i = firstFeedTrayNumber; i > 1; i--) {
+        int replaceStream1 = trays.get(i - 1).getNumberOfInputStreams() - 1;
+        trays.get(i - 1).replaceStream(replaceStream1, trays.get(i).getLiquidOutStream());
+        trays.get(i - 1).setPressure(bottomTrayPressure - (i - 1) * dp);
+        trays.get(i - 1).run(id);
+      }
+
+      // reboiler tray hooking up to tray 1
+      int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
+      trays.get(0).setPressure(bottomTrayPressure);
+      trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
+      trays.get(0).run(id);
+
+      // Move downward (feed tray to top)
+      for (int i = 1; i <= numberOfTrays - 1; i++) {
+        // The top tray has 1 input less
+        int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
+        if (i == (numberOfTrays - 1)) {
+          replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
+        }
+        trays.get(i).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
+        trays.get(i).run(id);
+      }
+
+      // Then from top minus 1 down to feed tray
+      for (int i = numberOfTrays - 2; i >= firstFeedTrayNumber; i--) {
+        int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
+        trays.get(i).replaceStream(replaceStream, trays.get(i + 1).getLiquidOutStream());
+        trays.get(i).run(id);
+      }
+
+      // Sum up changes in temperature
+      for (int i = 0; i < numberOfTrays; i++) {
+        err += Math.abs(oldtemps[i] - trays.get(i).getThermoSystem().getTemperature());
+      }
+
+      massErr = getMassBalanceError();
+      energyErr = getEnergyBalanceError();
+
+      logger.info("error iteration = " + iter + "   err = " + err + " massErr= " + massErr
+          + " energyErr= " + energyErr);
+    } while ((err > temperatureTolerance || massErr > massBalanceTolerance
+        || energyErr > enthalpyBalanceTolerance) && err < errOld && iter < maxNumberOfIterations);
+
+    // Once converged, fill final gasOut/liquidOut streams
+    gasOutStream
+        .setThermoSystem(trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
+    gasOutStream.setCalculationIdentifier(id);
+    liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
+    liquidOutStream.setCalculationIdentifier(id);
+
+    // Mark everything as solved
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
   }
 
   /**
-   * <p>
-   * Getter for the field <code>liquidOutStream</code>.
-   * </p>
+   * Solve the column using a simple Broyden mixing of tray temperatures.
    *
-   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param id calculation identifier
    */
-  public StreamInterface getLiquidOutStream() {
-    return liquidOutStream;
+  public void runBroyden(UUID id) {
+    if (feedStreams.isEmpty()) {
+      return;
+    }
+
+    int firstFeedTrayNumber = feedStreams.keySet().stream().min(Integer::compareTo).get();
+
+    if (bottomTrayPressure < 0) {
+      bottomTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
+    }
+    if (topTrayPressure < 0) {
+      topTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
+    }
+
+    double dp = 0.0;
+    if (numberOfTrays > 1) {
+      dp = (bottomTrayPressure - topTrayPressure) / (numberOfTrays - 1.0);
+    }
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setPressure(bottomTrayPressure - i * dp);
+    }
+
+    if (isDoInitializion()) {
+      this.init();
+    }
+
+    err = 1.0e10;
+    double errOld;
+    int iter = 0;
+    double massErr = 1.0e10;
+    double energyErr = 1.0e10;
+
+    double[] oldtemps = new double[numberOfTrays];
+    double[] oldDelta = new double[numberOfTrays];
+
+    trays.get(firstFeedTrayNumber).run(id);
+
+    do {
+      iter++;
+      errOld = err;
+      err = 0.0;
+      for (int i = 0; i < numberOfTrays; i++) {
+        oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
+      }
+
+      for (int i = firstFeedTrayNumber; i > 1; i--) {
+        int replaceStream1 = trays.get(i - 1).getNumberOfInputStreams() - 1;
+        trays.get(i - 1).replaceStream(replaceStream1, trays.get(i).getLiquidOutStream());
+        trays.get(i - 1).run(id);
+      }
+
+      int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
+      trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
+      trays.get(0).run(id);
+
+      for (int i = 1; i <= numberOfTrays - 1; i++) {
+        int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
+        if (i == (numberOfTrays - 1)) {
+          replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
+        }
+        trays.get(i).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
+        trays.get(i).run(id);
+      }
+
+      for (int i = numberOfTrays - 2; i >= firstFeedTrayNumber; i--) {
+        int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
+        trays.get(i).replaceStream(replaceStream, trays.get(i + 1).getLiquidOutStream());
+        trays.get(i).run(id);
+      }
+
+      double[] delta = new double[numberOfTrays];
+      for (int i = 0; i < numberOfTrays; i++) {
+        delta[i] = trays.get(i).getThermoSystem().getTemperature() - oldtemps[i];
+        double newTemp = oldtemps[i] + delta[i] + 0.3 * (delta[i] - oldDelta[i]);
+        trays.get(i).setTemperature(newTemp);
+        oldDelta[i] = delta[i];
+        err += Math.abs(newTemp - oldtemps[i]);
+      }
+
+      massErr = getMassBalanceError();
+      energyErr = getEnergyBalanceError();
+
+      logger.info("error iteration = " + iter + "   err = " + err + " massErr= " + massErr
+          + " energyErr= " + energyErr);
+    } while ((err > temperatureTolerance || massErr > massBalanceTolerance
+        || energyErr > enthalpyBalanceTolerance) && err < errOld && iter < maxNumberOfIterations);
+
+    gasOutStream
+        .setThermoSystem(trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
+    gasOutStream.setCalculationIdentifier(id);
+    liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
+    liquidOutStream.setCalculationIdentifier(id);
+
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  @ExcludeFromJacocoGeneratedReport
+  public void displayResult() {
+    distoperations.displayResult();
   }
 
   /**
@@ -239,21 +537,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   @Override
   public void setNumberOfTrays(int number) {
     int oldNumberOfTrays = numberOfTrays;
-
     int tempNumberOfTrays = number;
-
     if (hasReboiler) {
       tempNumberOfTrays++;
     }
     if (hasCondenser) {
       tempNumberOfTrays++;
     }
-
     int change = tempNumberOfTrays - oldNumberOfTrays;
-
     if (change > 0) {
       for (int i = 0; i < change; i++) {
-        trays.add(1, new SimpleTray("SimpleTray" + oldNumberOfTrays + i + 1));
+        trays.add(1, new SimpleTray("SimpleTray" + (oldNumberOfTrays + i + 1)));
       }
     } else if (change < 0) {
       for (int i = 0; i > change; i--) {
@@ -261,7 +555,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
     }
     numberOfTrays = tempNumberOfTrays;
-
     setDoInitializion(true);
     init();
   }
@@ -301,288 +594,75 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /** {@inheritDoc} */
   @Override
-  public void run(UUID id) {
-    if (bottomTrayPressure < 0) {
-      bottomTrayPressure = getTray(feedTrayNumber).getStream(0).getPressure();
-    }
-    if (topTrayPressure < 0) {
-      topTrayPressure = getTray(feedTrayNumber).getStream(0).getPressure();
-    }
-
-    double dp = 0.0;
-    if (numberOfTrays > 1) {
-      dp = (bottomTrayPressure - topTrayPressure) / (numberOfTrays - 1.0);
-    }
-    for (int i = 0; i < numberOfTrays; i++) {
-      trays.get(i).setPressure(bottomTrayPressure - i * dp);
-    }
-    SystemInterface inpS = feedStream.getThermoSystem().clone();
-    getTray(feedTrayNumber).getStream(0).setThermoSystem(inpS);
-
-    if (numberOfTrays == 1) {
-      trays.get(0).run(id);
-      gasOutStream.setThermoSystem(trays.get(0).getGasOutStream().getThermoSystem().clone());
-      liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
-    } else {
-      if (isDoInitializion()) {
-        this.init();
-      }
-      err = 1.0e10;
-      double errOld;
-      int iter = 0;
-      double[] oldtemps = new double[numberOfTrays];
-      trays.get(feedTrayNumber).run(id);
-
-      do {
-        iter++;
-        errOld = err;
-        err = 0.0;
-        for (int i = 0; i < numberOfTrays; i++) {
-          oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
-        }
-
-        for (int i = feedTrayNumber; i > 1; i--) {
-          int replaceStream1 = trays.get(i - 1).getNumberOfInputStreams() - 1;
-          trays.get(i - 1).replaceStream(replaceStream1, trays.get(i).getLiquidOutStream());
-          trays.get(i - 1).setPressure(bottomTrayPressure - (i - 1) * dp);
-          trays.get(i - 1).run(id);
-        }
-        int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
-        trays.get(0).setPressure(bottomTrayPressure);
-        trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
-        trays.get(0).run(id);
-
-        for (int i = 1; i <= numberOfTrays - 1; i++) {
-          int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
-          if (i == (numberOfTrays - 1)) {
-            replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
-          }
-          trays.get(i).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
-          trays.get(i).run(id);
-        }
-
-        for (int i = numberOfTrays - 2; i >= feedTrayNumber; i--) {
-          int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
-          trays.get(i).replaceStream(replaceStream, trays.get(i + 1).getLiquidOutStream());
-          trays.get(i).run(id);
-        }
-        for (int i = 0; i < numberOfTrays; i++) {
-          err += Math.abs(oldtemps[i] - trays.get(i).getThermoSystem().getTemperature());
-        }
-        logger.info("error iter " + err + " iteration " + iter);
-        // System.out.println("error iter " + err + " iteration " + iter);
-        // massBalanceCheck();
-      } while (err > 1e-4 && err < errOld && iter < maxNumberOfIterations); // &&
-      // !massBalanceCheck());
-      // massBalanceCheck();
-      // componentMassBalanceCheck("water");
-      gasOutStream.setThermoSystem(
-          trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
-      gasOutStream.setCalculationIdentifier(id);
-      liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
-      liquidOutStream.setCalculationIdentifier(id);
-
-      for (int i = 0; i < numberOfTrays; i++) {
-        // TODO: set calculation ids of child elements of trays
-        trays.get(i).setCalculationIdentifier(id);
-      }
-    }
-    setCalculationIdentifier(id);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {
-    distoperations.displayResult();
+  public boolean solved() {
+    return (err < temperatureTolerance);
   }
 
   /**
    * <p>
-   * component componentMassBalanceCheck.
+   * Setter for the field <code>maxNumberOfIterations</code>.
    * </p>
    *
-   * @param componentName component name to heck mass balance for
-   * @return a boolean
+   * @param maxIter a int
    */
-  public boolean componentMassBalanceCheck(String componentName) {
-    double[] massInput = new double[numberOfTrays];
-    double[] massOutput = new double[numberOfTrays];
-    double[] massBalance = new double[numberOfTrays];
-    double[] massFeedInput = new double[numberOfTrays];
-    for (int i = 0; i < numberOfTrays; i++) {
-      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams() - 2;
-      if (i == 0 || i == numberOfTrays - 1) {
-        numberOfInputStreams = trays.get(i).getNumberOfInputStreams() - 1;
-      }
-
-      for (int j = 0; j < numberOfInputStreams; j++) {
-        for (int k = 0; k < trays.get(i).getStream(j).getFluid().getNumberOfPhases(); k++) {
-          massFeedInput[i] += trays.get(i).getStream(j).getFluid().getPhase(k)
-              .getComponent(componentName).getFlowRate("kg/hr");
-        }
-      }
-    }
-
-    for (int i = 0; i < numberOfTrays; i++) {
-      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
-      for (int j = 0; j < numberOfInputStreams; j++) {
-        for (int k = 0; k < trays.get(i).getStream(j).getFluid().getNumberOfPhases(); k++) {
-          massInput[i] += trays.get(i).getStream(j).getFluid().getPhase(k)
-              .getComponent(componentName).getFlowRate("kg/hr");
-        }
-      }
-      massOutput[i] += trays.get(i).getGasOutStream().getFluid().getComponent(componentName)
-          .getFlowRate("kg/hr");
-      massOutput[i] += trays.get(i).getLiquidOutStream().getFluid().getComponent(componentName)
-          .getFlowRate("kg/hr");
-      massBalance[i] = massInput[i] - massOutput[i];
-
-      System.out.println("component " + componentName + " tray " + i + " number of input streams "
-          + numberOfInputStreams + " massinput " + massInput[i] + " massoutput " + massOutput[i]
-          + " massbalance " + massBalance[i] + " gasout "
-          + trays.get(i).getGasOutStream().getFluid().getComponent("water").getFlowRate("kg/hr")
-          + " liquidout "
-          + trays.get(i).getLiquidOutStream().getFluid().getComponent("water").getFlowRate("kg/hr")
-          + " pressure " + trays.get(i).getGasOutStream().getPressure() + " temperature "
-          + trays.get(i).getGasOutStream().getTemperature("C") + " feedtotray " + massFeedInput[i]);
-    }
-
-    double massError = 0.0;
-    for (int i = 0; i < numberOfTrays; i++) {
-      massError += Math.abs(massBalance[i]);
-    }
-    if (massError > 1e-6) {
-      return false;
-    } else {
-      return true;
-    }
+  public void setMaxNumberOfIterations(int maxIter) {
+    this.maxNumberOfIterations = maxIter;
   }
 
   /**
    * <p>
-   * massBalanceCheck.
+   * Setter for the field <code>internalDiameter</code>.
    * </p>
    *
-   * @return a boolean
+   * @param internalDiameter a double
    */
-  public boolean massBalanceCheck() {
-    double[] massInput = new double[numberOfTrays];
-    double[] massOutput = new double[numberOfTrays];
-    double[] massBalance = new double[numberOfTrays];
-    // System.out.println("water in feed "
-    // +
-    // feedStream.getFluid().getPhase(0).getComponent("water").getNumberOfmoles());
-    // System.out.println("water in strip gas feed " +
-    // trays.get(0).getStream(0).getFluid().getPhase(0)
-    // .getComponent("water").getNumberOfmoles());
-
-    for (int i = 0; i < numberOfTrays; i++) {
-      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
-      for (int j = 0; j < numberOfInputStreams; j++) {
-        massInput[i] += trays.get(i).getStream(j).getFluid().getFlowRate("kg/hr");
-      }
-      massOutput[i] += trays.get(i).getGasOutStream().getFlowRate("kg/hr");
-      massOutput[i] += trays.get(i).getLiquidOutStream().getFlowRate("kg/hr");
-      massBalance[i] = massInput[i] - massOutput[i];
-      System.out.println("tray " + i + " number of input streams " + numberOfInputStreams
-          + " massinput " + massInput[i] + " massoutput " + massOutput[i] + " massbalance "
-          + massBalance[i] + " gasout " + trays.get(i).getGasOutStream().getFlowRate("kg/hr")
-          + " liquidout " + trays.get(i).getLiquidOutStream().getFlowRate("kg/hr") + " pressure "
-          + trays.get(i).getGasOutStream().getPressure() + " temperature "
-          + trays.get(i).getGasOutStream().getTemperature("C"));
-      /*
-       * System.out.println( "tray " + i + " number of input streams " + numberOfInputStreams +
-       * " water in gasout " +
-       * trays.get(i).getGasOutStream().getFluid().getPhase(0).getComponent("water")
-       * .getNumberOfmoles() + " water in liquidout " +
-       * trays.get(i).getLiquidOutStream().getFluid().getPhase(0).getComponent( "water")
-       * .getNumberOfmoles() + " pressure " + trays.get(i).getGasOutStream().getPressure() +
-       * " temperature " + trays.get(i).getGasOutStream().getTemperature("C"));
-       */
-    }
-
-    double massError = 0.0;
-    for (int i = 0; i < numberOfTrays; i++) {
-      massError += Math.abs(massBalance[i]);
-    }
-    if (massError > 1e-6) {
-      return false;
-    } else {
-      return true;
-    }
+  public void setInternalDiameter(double internalDiameter) {
+    this.internalDiameter = internalDiameter;
   }
 
   /**
    * <p>
-   * energyBalanceCheck.
-   * </p>
-   */
-  public void energyBalanceCheck() {
-    double[] energyInput = new double[numberOfTrays];
-    double[] energyOutput = new double[numberOfTrays];
-    double[] energyBalance = new double[numberOfTrays];
-    for (int i = 0; i < numberOfTrays; i++) {
-      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
-      for (int j = 0; j < numberOfInputStreams; j++) {
-        energyInput[i] += trays.get(i).getStream(j).getFluid().getEnthalpy();
-      }
-      energyOutput[i] += trays.get(i).getGasOutStream().getFluid().getEnthalpy();
-      energyOutput[i] += trays.get(i).getLiquidOutStream().getFluid().getEnthalpy();
-      energyBalance[i] = energyInput[i] - energyOutput[i];
-      System.out.println(
-          "tray " + i + " number of input streams " + numberOfInputStreams + " energyinput "
-              + energyInput[i] + " energyoutput " + energyOutput[i] + " energybalance "
-              + energyBalance[i] + " gasout " + trays.get(i).getGasOutStream().getFlowRate("kg/hr")
-              + " liquidout " + trays.get(i).getLiquidOutStream().getFlowRate("kg/hr")
-              + " pressure " + trays.get(i).getGasOutStream().getPressure() + " temperature "
-              + trays.get(i).getGasOutStream().getTemperature("C"));
-    }
-  }
-
-  /**
-   * <p>
-   * main.
+   * Getter for the field <code>internalDiameter</code>.
    * </p>
    *
-   * @param args an array of {@link java.lang.String} objects
+   * @return a double
    */
-  @ExcludeFromJacocoGeneratedReport
-  public static void main(String[] args) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 - 0.0), 15.000);
-    // testSystem.addComponent("methane", 10.00);
-    testSystem.addComponent("ethane", 10.0);
-    testSystem.addComponent("CO2", 10.0);
-    testSystem.addComponent("propane", 20.0);
-    // testSystem.addComponent("i-butane", 5.0);
-    // testSystem.addComponent("n-hexane", 15.0);
-    // testSystem.addComponent("n-heptane", 30.0);
-    // testSystem.addComponent("n-octane", 4.0);
-    // testSystem.addComponent("n-nonane", 3.0);
-    testSystem.createDatabase(true);
-    testSystem.setMixingRule(2);
-    ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
-    ops.TPflash();
-    testSystem.display();
-    Stream stream_1 = new Stream("Stream1", testSystem);
+  public double getInternalDiameter() {
+    return internalDiameter;
+  }
 
-    DistillationColumn column = new DistillationColumn("distColumn", 5, true, true);
-    column.addFeedStream(stream_1, 3);
-    // column.getReboiler().setHeatInput(520000.0);
-    ((Reboiler) column.getReboiler()).setRefluxRatio(0.5);
-    // column.getCondenser().setHeatInput(-70000.0);
-    // ((Condenser) column.getCondenser()).setRefluxRatio(0.2);
+  /**
+   * Calculates the Fs factor for the distillation column. The Fs factor is a measure of the gas
+   * flow rate through the column relative to the cross-sectional area and the density of the gas.
+   *
+   * @return the Fs factor as a double value
+   */
+  public double getFsFactor() {
+    double intArea = Math.PI * getInternalDiameter() * getInternalDiameter() / 4.0;
+    return getGasOutStream().getThermoSystem().getFlowRate("m3/sec") / intArea
+        * Math.sqrt(getGasOutStream().getThermoSystem().getDensity("kg/m3"));
+  }
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
-    operations.add(stream_1);
-    operations.add(column);
-    operations.run();
+  /**
+   * <p>
+   * Getter for the field <code>gasOutStream</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
+  public StreamInterface getGasOutStream() {
+    return gasOutStream;
+  }
 
-    column.displayResult();
-    System.out.println("reboiler duty" + ((Reboiler) column.getReboiler()).getDuty());
-    System.out.println("condenser duty" + ((Condenser) column.getCondenser()).getDuty());
+  /**
+   * <p>
+   * Getter for the field <code>liquidOutStream</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
+  public StreamInterface getLiquidOutStream() {
+    return liquidOutStream;
   }
 
   /**
@@ -590,10 +670,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * getReboiler.
    * </p>
    *
-   * @return a {@link neqsim.process.equipment.distillation.SimpleTray} object
+   * @return a {@link neqsim.process.equipment.distillation.Reboiler} object
    */
-  public SimpleTray getReboiler() {
-    return trays.get(0);
+  public Reboiler getReboiler() {
+    return (Reboiler) trays.get(0);
   }
 
   /**
@@ -601,10 +681,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * getCondenser.
    * </p>
    *
-   * @return a {@link neqsim.process.equipment.distillation.SimpleTray} object
+   * @return a {@link neqsim.process.equipment.distillation.Condenser} object
    */
-  public SimpleTray getCondenser() {
-    return trays.get(trays.size() - 1);
+  public Condenser getCondenser() {
+    return (Condenser) trays.get(trays.size() - 1);
   }
 
   /**
@@ -612,7 +692,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Getter for the field <code>reboilerTemperature</code>.
    * </p>
    *
-   * @return the reboilerTemperature
+   * @return a double
    */
   public double getReboilerTemperature() {
     return reboilerTemperature;
@@ -623,7 +703,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Setter for the field <code>reboilerTemperature</code>.
    * </p>
    *
-   * @param reboilerTemperature the reboilerTemperature to set
+   * @param reboilerTemperature a double
    */
   public void setReboilerTemperature(double reboilerTemperature) {
     this.reboilerTemperature = reboilerTemperature;
@@ -631,10 +711,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /**
    * <p>
-   * getCondenserTemperature.
+   * Getter for the field <code>condenserTemperature</code>.
    * </p>
    *
-   * @return the condenserTemperature
+   * @return a double
    */
   public double getCondenserTemperature() {
     return condenserTemperature;
@@ -642,35 +722,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /**
    * <p>
-   * setCondenserTemperature.
+   * Setter for the field <code>condenserTemperature</code>.
    * </p>
    *
-   * @param condenserTemperature the condenserTemperature to set
+   * @param condenserTemperature a double
    */
   public void setCondenserTemperature(double condenserTemperature) {
     this.condenserTemperature = condenserTemperature;
-  }
-
-  /**
-   * <p>
-   * Getter for the field <code>feedTrayNumber</code>.
-   * </p>
-   *
-   * @return the feedTrayNumber
-   */
-  public int getFeedTrayNumber() {
-    return feedTrayNumber;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>feedTrayNumber</code>.
-   * </p>
-   *
-   * @param feedTrayNumber the feedTrayNumber to set
-   */
-  public void setFeedTrayNumber(int feedTrayNumber) {
-    this.feedTrayNumber = feedTrayNumber;
   }
 
   /**
@@ -696,103 +754,280 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Set temperature convergence tolerance.
+   *
+   * @param tol the tolerance
+   */
+  public void setTemperatureTolerance(double tol) {
+    this.temperatureTolerance = tol;
+  }
+
+  /**
+   * Set mass balance convergence tolerance.
+   *
+   * @param tol the tolerance
+   */
+  public void setMassBalanceTolerance(double tol) {
+    this.massBalanceTolerance = tol;
+  }
+
+  /**
+   * Set enthalpy balance convergence tolerance.
+   *
+   * @param tol the tolerance
+   */
+  public void setEnthalpyBalanceTolerance(double tol) {
+    this.enthalpyBalanceTolerance = tol;
+  }
+
+  /**
+   * Get temperature convergence tolerance.
+   *
+   * @return tolerance value
+   */
+  public double getTemperatureTolerance() {
+    return temperatureTolerance;
+  }
+
+  /**
+   * Get mass balance convergence tolerance.
+   *
+   * @return tolerance value
+   */
+  public double getMassBalanceTolerance() {
+    return massBalanceTolerance;
+  }
+
+  /**
+   * Get enthalpy balance convergence tolerance.
+   *
+   * @return tolerance value
+   */
+  public double getEnthalpyBalanceTolerance() {
+    return enthalpyBalanceTolerance;
+  }
+
+  /**
+   * Check mass balance for all components.
+   *
+   * @return true if mass balance is within 1e-6
+   */
+  public boolean massBalanceCheck() {
+    double[] massInput = new double[numberOfTrays];
+    double[] massOutput = new double[numberOfTrays];
+    double[] massBalance = new double[numberOfTrays];
+
+    for (int i = 0; i < numberOfTrays; i++) {
+      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
+      for (int j = 0; j < numberOfInputStreams; j++) {
+        massInput[i] += trays.get(i).getStream(j).getFluid().getFlowRate("kg/hr");
+      }
+      massOutput[i] += trays.get(i).getGasOutStream().getFlowRate("kg/hr");
+      massOutput[i] += trays.get(i).getLiquidOutStream().getFlowRate("kg/hr");
+      massBalance[i] = massInput[i] - massOutput[i];
+
+      System.out.println("Tray " + i + ": #in=" + numberOfInputStreams + ", massIn=" + massInput[i]
+          + ", massOut=" + massOutput[i] + ", balance=" + massBalance[i]);
+    }
+    double massError = 0.0;
+    for (int i = 0; i < numberOfTrays; i++) {
+      massError += Math.abs(massBalance[i]);
+    }
+    return (massError <= 1e-6);
+  }
+
+  /**
+   * Check mass balance for a specific component.
+   *
+   * @param componentName the component name
+   * @return true if mass balance is within 1e-6
+   */
+  public boolean componentMassBalanceCheck(String componentName) {
+    double[] massInput = new double[numberOfTrays];
+    double[] massOutput = new double[numberOfTrays];
+    double[] massBalance = new double[numberOfTrays];
+
+    for (int i = 0; i < numberOfTrays; i++) {
+      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
+      for (int j = 0; j < numberOfInputStreams; j++) {
+        for (int k = 0; k < trays.get(i).getStream(j).getFluid().getNumberOfPhases(); k++) {
+          massInput[i] += trays.get(i).getStream(j).getFluid().getPhase(k)
+              .getComponent(componentName).getFlowRate("kg/hr");
+        }
+      }
+      // outputs
+      for (int k = 0; k < trays.get(i).getGasOutStream().getFluid().getNumberOfPhases(); k++) {
+        massOutput[i] += trays.get(i).getGasOutStream().getFluid().getPhase(k)
+            .getComponent(componentName).getFlowRate("kg/hr");
+      }
+      for (int k = 0; k < trays.get(i).getLiquidOutStream().getFluid().getNumberOfPhases(); k++) {
+        massOutput[i] += trays.get(i).getLiquidOutStream().getFluid().getPhase(k)
+            .getComponent(componentName).getFlowRate("kg/hr");
+      }
+
+      massBalance[i] = massInput[i] - massOutput[i];
+      System.out.println(
+          "Tray " + i + ", comp=" + componentName + ", #in=" + numberOfInputStreams + ", massIn="
+              + massInput[i] + ", massOut=" + massOutput[i] + ", balance=" + massBalance[i]);
+    }
+
+    double massError = 0.0;
+    for (int i = 0; i < numberOfTrays; i++) {
+      massError += Math.abs(massBalance[i]);
+    }
+    return (massError < 1e-6);
+  }
+
+  /**
    * <p>
-   * getFsFactor.
+   * getMassBalanceError.
    * </p>
    *
    * @return a double
    */
-  public double getFsFactor() {
-    double intArea = 3.14 * getInternalDiameter() * getInternalDiameter() / 4.0;
-    return getGasOutStream().getThermoSystem().getFlowRate("m3/sec") / intArea
-        * Math.sqrt(getGasOutStream().getThermoSystem().getDensity("kg/m3"));
+  public double getMassBalanceError() {
+    double[] massInput = new double[numberOfTrays];
+    double[] massOutput = new double[numberOfTrays];
+    double[] massBalance = new double[numberOfTrays];
+
+    for (int i = 0; i < numberOfTrays; i++) {
+      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
+      for (int j = 0; j < numberOfInputStreams; j++) {
+        massInput[i] += trays.get(i).getStream(j).getFluid().getFlowRate("kg/hr");
+      }
+      massOutput[i] += trays.get(i).getGasOutStream().getFlowRate("kg/hr");
+      massOutput[i] += trays.get(i).getLiquidOutStream().getFlowRate("kg/hr");
+      massBalance[i] = massInput[i] - massOutput[i];
+    }
+    double massError = 0.0;
+    for (int i = 0; i < numberOfTrays; i++) {
+      massError += Math.abs(massBalance[i]);
+    }
+    return massError;
   }
 
   /**
-   * <p>
-   * Getter for the field <code>internalDiameter</code>.
-   * </p>
+   * Calculates the total enthalpy imbalance across all trays.
    *
-   * @return a double
+   * @return the summed absolute enthalpy imbalance
    */
-  public double getInternalDiameter() {
-    return internalDiameter;
+  public double getEnergyBalanceError() {
+    double[] energyInput = new double[numberOfTrays];
+    double[] energyOutput = new double[numberOfTrays];
+    double[] energyBalance = new double[numberOfTrays];
+
+    for (int i = 0; i < numberOfTrays; i++) {
+      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
+      for (int j = 0; j < numberOfInputStreams; j++) {
+        energyInput[i] += trays.get(i).getStream(j).getFluid().getEnthalpy();
+      }
+      energyOutput[i] += trays.get(i).getGasOutStream().getFluid().getEnthalpy();
+      energyOutput[i] += trays.get(i).getLiquidOutStream().getFluid().getEnthalpy();
+      energyBalance[i] = energyInput[i] - energyOutput[i];
+    }
+    double energyError = 0.0;
+    for (int i = 0; i < numberOfTrays; i++) {
+      energyError += Math.abs(energyBalance[i]);
+    }
+    return energyError;
+  }
+
+  /**
+   * Prints a simple energy balance for each tray to the console. The method
+   * calculates the total enthalpy of all inlet streams and compares it with the
+   * outlet enthalpy in order to highlight any discrepancies in the column
+   * setup.
+   */
+  public void energyBalanceCheck() {
+    double[] energyInput = new double[numberOfTrays];
+    double[] energyOutput = new double[numberOfTrays];
+    double[] energyBalance = new double[numberOfTrays];
+    for (int i = 0; i < numberOfTrays; i++) {
+      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
+      for (int j = 0; j < numberOfInputStreams; j++) {
+        energyInput[i] += trays.get(i).getStream(j).getFluid().getEnthalpy();
+      }
+      energyOutput[i] += trays.get(i).getGasOutStream().getFluid().getEnthalpy();
+      energyOutput[i] += trays.get(i).getLiquidOutStream().getFluid().getEnthalpy();
+      energyBalance[i] = energyInput[i] - energyOutput[i];
+
+      System.out.println("Tray " + i + ", #in=" + numberOfInputStreams + ", eIn=" + energyInput[i]
+          + ", eOut=" + energyOutput[i] + ", balance=" + energyBalance[i]);
+    }
+  }
+
+  /**
+   * The main method demonstrates the creation and operation of a distillation column using the
+   * NeqSim library. It performs the following steps:
+   * <ol>
+   * <li>Creates a test thermodynamic system with methane, ethane, and propane components.</li>
+   * <li>Performs a TP flash calculation on the test system.</li>
+   * <li>Creates two separate feed streams from the test system.</li>
+   * <li>Constructs a distillation column with 5 trays, a reboiler, and a condenser.</li>
+   * <li>Adds the two feed streams to the distillation column at tray 3.</li>
+   * <li>Builds and runs the process system.</li>
+   * <li>Displays the results of the distillation column, including the gas and liquid output
+   * streams.</li>
+   * </ol>
+   *
+   * @param args command line arguments (not used)
+   */
+  @ExcludeFromJacocoGeneratedReport
+  public static void main(String[] args) {
+    // Create a test system
+    neqsim.thermo.system.SystemInterface testSystem =
+        new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 15.0);
+    testSystem.addComponent("methane", 10.00);
+    testSystem.addComponent("ethane", 10.0);
+    testSystem.addComponent("propane", 10.0);
+    testSystem.createDatabase(true);
+    testSystem.setMixingRule(2);
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(testSystem);
+    ops.TPflash();
+    testSystem.display();
+
+    // Make two separate feed streams
+    Stream feed1 = new Stream("Feed1", testSystem.clone());
+    Stream feed2 = new Stream("Feed2", testSystem.clone());
+
+    // Create the column with 5 "simple" trays, reboiler, condenser
+    DistillationColumn column = new DistillationColumn("distColumn", 5, true, true);
+
+    // Add feed1 to tray 3, feed2 also to tray 3
+    column.addFeedStream(feed1, 3);
+    column.addFeedStream(feed2, 3);
+
+    // Build process
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
+    operations.add(feed1);
+    operations.add(feed2);
+    operations.add(column);
+    operations.run();
+
+    // Display
+    column.displayResult();
+    System.out.println("Gas out:");
+    column.getGasOutStream().getThermoSystem().display();
+    System.out.println("Liquid out:");
+    column.getLiquidOutStream().getThermoSystem().display();
   }
 
   /** {@inheritDoc} */
   @Override
-  public boolean solved() {
-    return (err < 1e-4);
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new DistillationColumnResponse(this));
   }
 
   /**
    * <p>
-   * Setter for the field <code>maxNumberOfIterations</code>.
+   * getNumerOfTrays.
    * </p>
    *
-   * @param maxIter a double
+   * @return a int
    */
-  public void setMaxNumberOfIterations(int maxIter) {
-    this.maxNumberOfIterations = maxIter;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>internalDiameter</code>.
-   * </p>
-   *
-   * @param internalDiameter a double
-   */
-  public void setInternalDiameter(double internalDiameter) {
-    this.internalDiameter = internalDiameter;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = super.hashCode();
-    result = prime * result
-        + Objects.hash(bottomTrayPressure, condenserCoolingDuty, condenserTemperature,
-            distoperations, doInitializion, feedStream, feedTrayNumber, gasOutStream, hasCondenser,
-            hasReboiler, heater, internalDiameter, liquidOutStream, numberOfTrays,
-            reboilerTemperature, separator2, stream_3, stream_3isset, topTrayPressure, trays);
-    return result;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (!super.equals(obj)) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    DistillationColumn other = (DistillationColumn) obj;
-    return Double.doubleToLongBits(bottomTrayPressure) == Double
-        .doubleToLongBits(other.bottomTrayPressure)
-        && Double.doubleToLongBits(condenserCoolingDuty) == Double
-            .doubleToLongBits(other.condenserCoolingDuty)
-        && Double.doubleToLongBits(condenserTemperature) == Double
-            .doubleToLongBits(other.condenserTemperature)
-        && Objects.equals(distoperations, other.distoperations)
-        && doInitializion == other.doInitializion && Objects.equals(feedStream, other.feedStream)
-        && feedTrayNumber == other.feedTrayNumber
-        && Objects.equals(gasOutStream, other.gasOutStream) && hasCondenser == other.hasCondenser
-        && hasReboiler == other.hasReboiler && Objects.equals(heater, other.heater)
-        && Double.doubleToLongBits(internalDiameter) == Double
-            .doubleToLongBits(other.internalDiameter)
-        && Objects.equals(liquidOutStream, other.liquidOutStream)
-        && numberOfTrays == other.numberOfTrays
-        && Double.doubleToLongBits(reboilerTemperature) == Double
-            .doubleToLongBits(other.reboilerTemperature)
-        && Objects.equals(separator2, other.separator2) && Objects.equals(stream_3, other.stream_3)
-        && stream_3isset == other.stream_3isset && Double
-            .doubleToLongBits(topTrayPressure) == Double.doubleToLongBits(other.topTrayPressure)
-        && Objects.equals(trays, other.trays);
+  public int getNumerOfTrays() {
+    return numberOfTrays;
   }
 }

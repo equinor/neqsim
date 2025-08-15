@@ -24,6 +24,7 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDelft1998;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrGassem2001;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermRk;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermSchwartzentruber;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermSrk;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwu;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoon;
@@ -107,8 +108,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC Critical temperature
-   * @param PC Critical pressure
+   * @param TC Critical temperature [K]
+   * @param PC Critical pressure [bara]
    * @param M Molar mass
    * @param a Acentric factor
    * @param moles Total number of moles of component.
@@ -138,8 +139,6 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     super.init(temp, pres, totMoles, beta, initType);
     a = calca();
     b = calcb();
-    reducedTemperature = reducedTemperature(temp);
-    reducedPressure = reducedPressure(pres);
     aT = a * alpha(temp);
     if (initType >= 2) {
       aDiffT = diffaT(temp);
@@ -218,8 +217,10 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       }
     } else if (i == 19) {
       setAttractiveParameter(new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU()));
+    } else if (i == 20) {
+      setAttractiveParameter(new AttractiveTermSoreideWhitson(this));
     } else {
-      logger.error("error selecting an alpha formultaion term");
+      logger.error("error selecting an alpha formulation term");
       logger.info("ok setting alpha function");
     }
   }
@@ -228,28 +229,6 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   @Override
   public AttractiveTermInterface getAttractiveTerm() {
     return this.getAttractiveParameter();
-  }
-
-  /**
-   * Get reduced temperature.
-   *
-   * @param temperature temperature of fluid
-   * @return double reduced temperature T/TC
-   */
-  double reducedTemperature(double temperature) {
-    return temperature / criticalTemperature;
-  }
-
-  /**
-   * <p>
-   * Get reduced pressure.
-   * </p>
-   *
-   * @param pressure pressure in unit bara
-   * @return double
-   */
-  double reducedPressure(double pressure) {
-    return pressure / criticalPressure;
   }
 
   /** {@inheritDoc} */
@@ -647,7 +626,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       TR = 0.5;
     }
 
-    // double scale1 = aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * Math.exp(a_inf + b_inf *
+    // double scale1 = aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * Math.exp(a_inf +
+    // b_inf *
     // Math.log(TR) + c_inf * (Math.pow(Math.log(TR), 2.0))) /
     // Math.pow(ThermodynamicConstantsInterface.avagadroNumber, 8.0 / 3.0);
 
@@ -660,7 +640,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     double AA = -1.0e-16 / (1.2326 + 1.3757 * getAcentricFactor());
     double BB = 1.0e-16 / (0.9051 + 1.541 * getAcentricFactor());
 
-    // double scale2 = getAttractiveTerm().alpha(temperature) * 1e-5 * Math.pow(b * 1e-5, 2.0 /
+    // double scale2 = getAttractiveTerm().alpha(temperature) * 1e-5 * Math.pow(b *
+    // 1e-5, 2.0 /
     // 3.0) * (AA * TR + BB);
     // System.out.println("scale2 " + scale2);
     return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB);
@@ -685,9 +666,12 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   public double getChemicalPotential(PhaseInterface phase) {
     double entalp = getHID(phase.getTemperature()) * numberOfMolesInPhase;
     double entrop = numberOfMolesInPhase * getIdEntropy(phase.getTemperature());
-    // double chempot = ((entalp - phase.getTemperature() * entrop) + numberOfMolesInPhase * R *
-    // phase.getTemperature() * Math.log(numberOfMolesInPhase * R * phase.getTemperature() /
-    // phase.getVolume() / referencePressure) + getAresnTV(phase) * numberOfMolesInPhase) /
+    // double chempot = ((entalp - phase.getTemperature() * entrop) +
+    // numberOfMolesInPhase * R *
+    // phase.getTemperature() * Math.log(numberOfMolesInPhase * R *
+    // phase.getTemperature() /
+    // phase.getVolume() / referencePressure) + getAresnTV(phase) *
+    // numberOfMolesInPhase) /
     // numberOfMolesInPhase;
 
     // double chempot2 = super.getChemicalPotential(phase);
@@ -776,5 +760,44 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    */
   public void setAttractiveParameter(AttractiveTermInterface attractiveParameter) {
     this.attractiveParameter = attractiveParameter;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    ComponentEos other = (ComponentEos) obj;
+    boolean result = true;
+    result = result && Double.compare(a, other.a) == 0;
+    result = result && Double.compare(b, other.b) == 0;
+    result = result && Double.compare(m, other.m) == 0;
+    result = result && Double.compare(alpha, other.alpha) == 0;
+    result = result && Double.compare(aT, other.aT) == 0;
+    result = result && Double.compare(aDiffT, other.aDiffT) == 0;
+    result = result && Double.compare(Bi, other.Bi) == 0;
+    result = result && Double.compare(Ai, other.Ai) == 0;
+    result = result && Double.compare(AiT, other.AiT) == 0;
+    result = result && Double.compare(aDiffDiffT, other.aDiffDiffT) == 0;
+    result = result && Double.compare(delta1, other.delta1) == 0;
+    result = result && Double.compare(delta2, other.delta2) == 0;
+    result = result && Double.compare(aDern, other.aDern) == 0;
+    result = result && Double.compare(aDerT, other.aDerT) == 0;
+    result = result && Double.compare(aDerTT, other.aDerTT) == 0;
+    result = result && Double.compare(aDerTn, other.aDerTn) == 0;
+    result = result && Double.compare(bDern, other.bDern) == 0;
+    result = result && Double.compare(bDerTn, other.bDerTn) == 0;
+    result = result && java.util.Arrays.equals(Aij, other.Aij);
+    result = result && java.util.Arrays.equals(Bij, other.Bij);
+    result = result && java.util.Arrays.equals(dAdndn, other.dAdndn);
+    result = result && java.util.Arrays.equals(dBdndn, other.dBdndn);
+    result = result && (attractiveParameter == null ? other.attractiveParameter == null
+        : attractiveParameter.equals(other.attractiveParameter));
+    result = result && super.equals(obj);
+    return result;
   }
 }

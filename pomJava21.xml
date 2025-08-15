@@ -13,19 +13,19 @@
 	<version>${revision}${sha1}${changelist}</version>
 
 	<properties>
-		<revision>3.0.18</revision>
+		<revision>3.0.37</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<sha1/>
-		<changelist/>
+		<sha1 />
+		<changelist />
 	</properties>
 	<licenses>
 		<license>
-	  		<name>The Apache Software License, Version 2.0</name>
-	  		<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-	  		<distribution>repo</distribution>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
 		</license>
-  	</licenses>
+	</licenses>
 	<developers>
 		<developer>
 			<name>Even Solbraa</name>
@@ -67,7 +67,7 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
-			<version>5.11.3</version>
+			<version>5.12.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -89,7 +89,7 @@
 		<dependency>
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-all</artifactId>
-			<version>0.43.1</version>
+			<version>0.44.0</version>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
@@ -104,7 +104,7 @@
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
-			<version>1.5.4</version>
+			<version>1.5.6</version>
 		</dependency>
 		<dependency>
 			<groupId>com.googlecode.matrix-toolkits-java</groupId>
@@ -115,6 +115,16 @@
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.12.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.15.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
+			<version>2.15.2</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -191,9 +201,10 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.13.0</version>
+				<version>3.14.0</version>
 				<configuration>
-					<release>21</release> <!-- Upgrade jdk version to 21 if you are having issues compiling -->
+					<release>21</release> <!-- Upgrade jdk version to 21 if you are having issues
+					compiling -->
 					<encoding>${project.build.sourceEncoding}</encoding>
 					<!-- Uncomment below to get compiler warnings
 					<compilerArgs>
@@ -206,7 +217,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.10.0</version>
+				<version>3.11.2</version>
 				<configuration>
 					<show>private</show>
 					<nohelp>true</nohelp>
@@ -222,11 +233,11 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.5.0</version>
+				<version>3.5.2</version>
 			</plugin>
 			<plugin>
 				<artifactId>maven-failsafe-plugin</artifactId>
-				<version>3.5.0</version>
+				<version>3.5.2</version>
 			</plugin>
 			<plugin>
 				<groupId>org.jacoco</groupId>

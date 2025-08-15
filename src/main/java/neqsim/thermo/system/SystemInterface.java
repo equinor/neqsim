@@ -111,8 +111,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * @param name Name of the component to add. See NeqSim database for component in the database.
    * @param moles number of moles (per second) of the component to be added to the fluid
-   * @param TC Critical temperature
-   * @param PC Critical pressure
+   * @param TC Critical temperature [K]
+   * @param PC Critical pressure [bara]
    * @param acs a double
    */
   public void addComponent(String name, double moles, double TC, double PC, double acs);
@@ -334,6 +334,29 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass,
       double density, double criticalTemperature, double criticalPressure, double acentricFactor);
+
+  /**
+   * <p>
+   * addTBPfraction2.
+   * </p>
+   *
+   * @param componentName a {@link java.lang.String} object
+   * @param numberOfMoles a double
+   * @param molarMass a double
+   * @param boilingPoint a double
+   */
+  public void addTBPfraction2(String componentName, double numberOfMoles, double molarMass,
+      double boilingPoint);
+
+  /**
+   * Calculate density from boiling point and molar mass using TBP correlation.
+   *
+   * @param molarMass molar mass in kg/mol
+   * @param boilingPoint boiling point in K
+   * @return density in g/cm3
+   */
+  public double calculateDensityFromBoilingPoint(double molarMass, double boilingPoint);
+
 
   /**
    * Add to component names.
@@ -734,14 +757,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getCv(String unit);
 
   /**
-   * method to get density of a fluid note: without Peneloux volume correction.
+   * Get density of a fluid note: without Peneloux volume correction.
    *
    * @return density with unit kg/m3
    */
   public double getDensity();
 
   /**
-   * method to get density of a fluid note: with Peneloux volume correction.
+   * Get density of a fluid note: with Peneloux volume correction.
    *
    * @param unit Supported units are kg/m3, mol/m3
    * @return density in specified unit
@@ -776,7 +799,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public SystemInterface getEmptySystemClone();
 
   /**
-   * method to get the total enthalpy of a fluid.
+   * Get the total enthalpy of a fluid.
    *
    * @return molar mass in unit J (Joule)
    */
@@ -975,16 +998,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public InterphasePropertiesInterface getInterphaseProperties();
 
   /**
-   * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis
-   * average
+   * Get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis average
    *
    * @return Joule Thomson coefficient in K/bar
    */
   public double getJouleThomsonCoefficient();
 
   /**
-   * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis
-   * average.
+   * Get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis average.
    *
    * @param unit Supported units are K/bar, C/bar
    * @return Joule Thomson coefficient in specified unit
@@ -1103,7 +1124,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getMolarMass();
 
   /**
-   * method to get molar mass of a fluid phase.
+   * Get molar mass of a fluid phase.
    *
    * @param unit Supported units are kg/mol, gr/mol
    * @return molar mass in specified unit
@@ -1111,7 +1132,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getMolarMass(String unit);
 
   /**
-   * method to get the total molar flow rate of individual components in a fluid.
+   * Get the total molar flow rate of individual components in a fluid.
    *
    * @return molar flow of individual components in unit mol/sec
    */
@@ -1250,7 +1271,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Getter for property <code>PC</code>.
    * </p>
    *
-   * @return Critical pressure
+   * @return Critical pressure in unit bara.
    */
   public double getPC();
 
@@ -1331,7 +1352,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * Get phase number of phase of specific type. *
+   * Get phase number of phase of specific type.
    * </p>
    *
    * @param phaseTypeName Name of phase type to look for
@@ -1434,16 +1455,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public String[][] getResultTable();
 
   /**
-   * method to get the speed of sound of a system. The sound speed is implemented based on a molar
-   * average over the phases
+   * Get the speed of sound of a system. The sound speed is implemented based on a molar average
+   * over the phases
    *
    * @return speed of sound in m/s
    */
   public double getSoundSpeed();
 
   /**
-   * method to get the speed of sound of a system. The sound speed is implemented based on a molar
-   * average over the phases
+   * Get the speed of sound of a system. The sound speed is implemented based on a molar average
+   * over the phases
    *
    * @param unit Supported units are m/s, km/h
    * @return speed of sound in m/s
@@ -1474,12 +1495,12 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Get critical temperature.
    * </p>
    *
-   * @return Critical temperature
+   * @return Critical temperature in unit Kelvin
    */
   public double getTC();
 
   /**
-   * method to return temperature.
+   * Get temperature.
    *
    * @return temperature in unit Kelvin
    */
@@ -2358,6 +2379,17 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMolarFlowRates(double[] moles);
 
   /**
+   * <p>
+   * setComponentFlowRates.
+   * </p>
+   *
+   * @param componentFlowRates an array of type double
+   * @param unit a {@link java.lang.String} object. Allowed units are: "mol/sec", "kmol/sec",
+   *        "kmol/hr", "mol/hr", "kg/hr", "kg/sec", "kmol/day"
+   */
+  public void setComponentFlowRates(double[] componentFlowRates, String unit);
+
+  /**
    * method to specify if calculations should check for more than two fluid phases.
    *
    * @param doMultiPhaseCheck Specify if the calculations should check for more than two fluid
@@ -2398,7 +2430,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Getter for property <code>PC</code>.
    * </p>
    *
-   * @param PC Critical pressure to set
+   * @param PC Critical pressure to set in unit bara.
    */
   public void setPC(double PC);
 
@@ -2513,30 +2545,30 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * method to set the temperature of a fluid (same temperature for all phases).
+   * Set the temperature of a fluid (same temperature for all phases).
    * </p>
    *
-   * @param temp a double
+   * @param temp Temperature in unit Kelvin
    */
   public void setTemperature(double temp);
 
   /**
    * <p>
-   * setTemperature.
+   * Set the temperature of a single phase in the fluid.
    * </p>
    *
-   * @param newTemperature a double
+   * @param temp Temperature in unit Kelvin
    * @param phaseNumber a int
    */
-  public void setTemperature(double newTemperature, int phaseNumber);
+  public void setTemperature(double temp, int phaseNumber);
 
   /**
    * method to set the temperature of a fluid (same temperature for all phases).
    *
-   * @param newTemperature in specified unit
+   * @param temp Temperature in specified unit
    * @param unit unit can be C or K (Celsius or Kelvin)
    */
-  public void setTemperature(double newTemperature, String unit);
+  public void setTemperature(double temp, String unit);
 
   /**
    * <p>
@@ -2670,4 +2702,36 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param molarComposition an array of molar compositions to set for the matching components
    */
   public void setMolarCompositionOfNamedComponents(String nameDef, double[] molarComposition);
+
+  /**
+   * Add TBP fraction using density and boiling point, calculating molar mass.
+   */
+  /**
+   * Adds a TBP fraction to the system.
+   *
+   * @param componentName the name of the component
+   * @param numberOfMoles number of moles
+   * @param density density of the component
+   * @param boilingPoint boiling point
+   */
+  public void addTBPfraction3(String componentName, double numberOfMoles, double density,
+      double boilingPoint);
+
+  /**
+   * Add TBP fraction using molar mass , density and boiling point
+   */
+  /**
+   * Adds a TBP fraction to the system.
+   *
+   * @param componentName the name of the component
+   * @param numberOfMoles number of moles
+   * @param molarMass molar mass
+   * @param density density of the component
+   * @param boilingPoint boiling point
+   */
+  public void addTBPfraction4(String componentName, double numberOfMoles, double molarMass,
+      double density, double boilingPoint);
+
+  public double calculateMolarMassFromDensityAndBoilingPoint(double density, double boilingPoint);
+
 }

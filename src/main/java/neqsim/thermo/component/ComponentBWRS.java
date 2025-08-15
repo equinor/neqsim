@@ -77,8 +77,8 @@ public class ComponentBWRS extends ComponentSrk {
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC Critical temperature
-   * @param PC Critical pressure
+   * @param TC Critical temperature [K]
+   * @param PC Critical pressure [bara]
    * @param M Molar mass
    * @param a Acentric factor
    * @param moles Total number of moles of component.
@@ -475,5 +475,48 @@ public class ComponentBWRS extends ComponentSrk {
    */
   public void setRhoc(double rhoc) {
     this.rhoc = rhoc;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    if (!super.equals(obj)) {
+      return false;
+    }
+    ComponentBWRS other = (ComponentBWRS) obj;
+    if (Double.compare(rhoc, other.rhoc) != 0) {
+      return false;
+    }
+    if (Double.compare(gammaBWRS, other.gammaBWRS) != 0) {
+      return false;
+    }
+    if (!java.util.Arrays.equals(aBWRS, other.aBWRS)) {
+      return false;
+    }
+    if (!java.util.Arrays.equals(BP, other.BP)) {
+      return false;
+    }
+    if (!java.util.Arrays.equals(BE, other.BE)) {
+      return false;
+    }
+    if (!java.util.Arrays.equals(BPdT, other.BPdT)) {
+      return false;
+    }
+    if (!java.util.Arrays.equals(BEdT, other.BEdT)) {
+      return false;
+    }
+    if (!java.util.Arrays.equals(BPdTdT, other.BPdTdT)) {
+      return false;
+    }
+    if (!java.util.Arrays.equals(BEdTdT, other.BEdTdT)) {
+      return false;
+    }
+    return true;
   }
 }

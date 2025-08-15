@@ -16,22 +16,22 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * This class is an implementation of the compressor chart class that uses Fan laws and "double"
  * interpolation to navigate the compressor map (as opposed to the standard class using reduced
  * variables according to Fan laws).
- * 
+ *
  * <p>
  * The class provides methods to add compressor curves, set reference conditions, and calculate
  * polytropic head and efficiency based on flow and speed. It also includes methods to check surge
  * and stone wall conditions.
  * </p>
- * 
+ *
  * <p>
  * The main method demonstrates the usage of the class by creating a test fluid, setting up a
  * compressor, and running a process system.
  * </p>
- * 
+ *
  * <p>
  * The class implements the CompressorChartInterface and is Serializable.
  * </p>
- * 
+ *
  * <p>
  * Fields:
  * </p>
@@ -64,7 +64,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>fanLawCorrectionFunc: Polynomial function for fan law correction fitting.</li>
  * <li>gearRatio: Gear ratio (default is 1.0).</li>
  * </ul>
- * 
+ *
  * <p>
  * Methods:
  * </p>
@@ -100,14 +100,14 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>plot: Placeholder method for plotting (not implemented).</li>
  * <li>getFlow: Placeholder method for getting flow (not implemented).</li>
  * </ul>
- * 
+ *
  * <p>
  * Exceptions:
  * </p>
  * <ul>
  * <li>RuntimeException: Thrown for invalid input or unsupported head unit value.</li>
  * </ul>
- * 
+ *
  * @see neqsim.process.equipment.compressor.CompressorChartInterface
  * @see java.io.Serializable
  * @see org.apache.commons.math3.analysis.interpolation.SplineInterpolator
@@ -129,17 +129,14 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author asmund
  * @version $Id: $Id
  */
-public class CompressorChartAlternativeMapLookup
+public class CompressorChartAlternativeMapLookup extends CompressorChart
     implements CompressorChartInterface, java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CompressorChart.class);
 
-  ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
-  ArrayList<Double> chartSpeeds = new ArrayList<Double>();
-  private SurgeCurve surgeCurve = new SurgeCurve();
-  private StoneWallCurve stoneWallCurve = new StoneWallCurve();
+
   boolean isSurge = false;
   boolean isStoneWall = false;
   double refMW;
@@ -179,12 +176,13 @@ public class CompressorChartAlternativeMapLookup
     chartSpeeds.add(speed);
   }
 
-  /** {@inheritDoc} */
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Sets the compressor curves based on the provided chart conditions, speed, flow, head, and
    * polytropic efficiency values.
+   * </p>
    */
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
@@ -192,12 +190,13 @@ public class CompressorChartAlternativeMapLookup
     setCurves(chartConditions, speed, flow, head, flow, polyEff);
   }
 
-  /** {@inheritDoc} */
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Sets the compressor curves based on the provided chart conditions, speed, flow, head,
    * flowPolytrpicEfficiency and polytropic efficiency values.
+   * </p>
    */
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
@@ -216,11 +215,15 @@ public class CompressorChartAlternativeMapLookup
    * <p>
    * getClosestRefSpeeds.
    * </p>
-   * Returns a list of the closest reference speeds to the given speed. If the given speed matches a
-   * reference speed, only that speed is returned. If the given speed is between two reference
-   * speeds, both are returned. If the given speed is lower than the lowest reference speed, the
-   * lowest reference speed is returned. If the given speed is higher than the highest reference
-   * speed, the highest reference speed is returned.
+   *
+   * <p>
+   * Retrieves the closest reference speeds to the given speed from the compressor chart values. The
+   * method returns a list containing one or two speeds: - If the given speed matches a reference
+   * speed, the list contains only that speed. - If the given speed is between two reference speeds,
+   * the list contains both speeds. - If the given speed is less than the lowest reference speed,
+   * the list contains the lowest reference speed. - If the given speed is greater than the highest
+   * reference speed, the list contains the highest reference speed.
+   * </p>
    *
    * @param speed the speed to find the closest reference speeds for
    * @return a {@link java.util.ArrayList} of the closest reference speeds
@@ -255,14 +258,13 @@ public class CompressorChartAlternativeMapLookup
     return closestRefSpeeds;
   }
 
-  /** {@inheritDoc} */
   /**
    * {@inheritDoc}
    *
-   * Calculates the polytropic head for a given flow and speed.
-   *
+   * <p>
    * This method interpolates the polytropic head values from reference speeds closest to the given
    * speed and averages them to estimate the polytropic head at the specified flow and speed.
+   * </p>
    */
   @Override
   public double getPolytropicHead(double flow, double speed) {
@@ -288,13 +290,14 @@ public class CompressorChartAlternativeMapLookup
     return sum / tempHeads.size();
   }
 
-  /** {@inheritDoc} */
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Calculates the polytropic efficiency of the compressor for a given flow and speed. The method
    * interpolates the efficiency values from reference speed curves and averages them to estimate
    * the efficiency at the specified conditions.
+   * </p>
    */
   @Override
   public double getPolytropicEfficiency(double flow, double speed) {
@@ -327,7 +330,7 @@ public class CompressorChartAlternativeMapLookup
    * @param head an array of type double
    */
   public void addSurgeCurve(double[] flow, double[] head) {
-    surgeCurve = new SurgeCurve(flow, head);
+    surgeCurve = new SafeSplineSurgeCurve(flow, head);
   }
 
   /**
@@ -461,13 +464,13 @@ public class CompressorChartAlternativeMapLookup
 
   /** {@inheritDoc} */
   @Override
-  public SurgeCurve getSurgeCurve() {
+  public SafeSplineSurgeCurve getSurgeCurve() {
     return surgeCurve;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setSurgeCurve(SurgeCurve surgeCurve) {
+  public void setSurgeCurve(SafeSplineSurgeCurve surgeCurve) {
     this.surgeCurve = surgeCurve;
   }
 
@@ -700,5 +703,32 @@ public class CompressorChartAlternativeMapLookup
   @Override
   public double getFlow(double head, double speed, double guessFlow) {
     return 0.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMinSpeedCurve() {
+    return 0;
+  }
+
+  /**
+   * Pretty print all CompressorCurve objects in chartValues.
+   */
+  public void prettyPrintChartValues() {
+    System.out.println("All CompressorCurve objects in chartValues:");
+    for (CompressorCurve curve : chartValues) {
+      System.out.println("CompressorCurve:");
+      System.out.println("  Speed: " + curve.speed);
+      System.out.println("  Flow: " + java.util.Arrays.toString(curve.flow));
+      System.out.println("  Head: " + java.util.Arrays.toString(curve.head));
+      System.out
+          .println("  Flow Poly Eff: " + java.util.Arrays.toString(curve.flowPolytropicEfficiency));
+      System.out.println(
+          "  Polytropic Efficiency: " + java.util.Arrays.toString(curve.polytropicEfficiency));
+    }
+  }
+
+  public ArrayList<CompressorCurve> getChartValues() {
+    return chartValues;
   }
 }

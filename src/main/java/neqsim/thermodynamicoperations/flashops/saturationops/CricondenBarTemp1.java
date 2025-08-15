@@ -211,11 +211,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
    */
   public void printToFile(String name) {}
 
-  /**
-   * <p>
-   * displayResult.
-   * </p>
-   */
+  /** {@inheritDoc} */
   @ExcludeFromJacocoGeneratedReport
   public void displayResult() {}
 

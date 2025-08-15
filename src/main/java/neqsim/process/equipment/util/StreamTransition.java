@@ -12,6 +12,21 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * StreamTransition class.
  * </p>
  *
+ * <p>
+ * This class provides functionality for transferring fluid properties between streams with
+ * potentially different thermodynamic models and component sets. It enables seamless transitions
+ * between process units that may use different thermodynamic frameworks.
+ * </p>
+ *
+ * <p>
+ * <b>Note:</b> Currently, transitions are performed on a temperature-pressure (TP) basis only.
+ * </p>
+ *
+ * <p>
+ * TODO: Consider implementing pressure-enthalpy (PH) based transitions as an alternative mode of
+ * operation for cases where energy conservation is critical.
+ * </p>
+ *
  * @author asmund
  * @version $Id: $Id
  */
@@ -35,6 +50,22 @@ public class StreamTransition extends TwoPortEquipment {
   }
 
   /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Performs the stream transition by transferring properties from the inlet stream to the outlet
+   * stream. Only components that exist in both systems will be transferred.
+   * </p>
+   *
+   * <p>
+   * <b>Note:</b> Currently operates on TP (temperature-pressure) basis only.
+   * </p>
+   *
+   * <p>
+   * TODO: Add support for PH (pressure-enthalpy) based transitions in the future.
+   * </p>
+   */
   @Override
   public void run(UUID id) {
     SystemInterface outThermoSystem = null;
@@ -44,9 +75,8 @@ public class StreamTransition extends TwoPortEquipment {
       outThermoSystem = inStream.getFluid().clone();
     }
     outThermoSystem.setEmptyFluid();
-
-    // SystemInterface fluid1 = outletStream.getFluid();
-    // SystemInterface fluid2 = inletStream.getFluid();
+    outThermoSystem.setTemperature(inStream.getTemperature());
+    outThermoSystem.setPressure(inStream.getPressure());
 
     for (int i = 0; i < inStream.getFluid().getNumberOfComponents(); i++) {
       if (outThermoSystem.getPhase(0).hasComponent(inStream.getFluid().getComponent(i).getName())) {
@@ -54,9 +84,6 @@ public class StreamTransition extends TwoPortEquipment {
             inStream.getFluid().getComponent(i).getNumberOfmoles());
       }
     }
-    // fluid1.init(0);
-    // fluid1.setTemperature(fluid2.getTemperature());
-    // fluid1.setPressure(fluid2.getPressure());
     outStream.setThermoSystem(outThermoSystem);
     outStream.run(id);
     setCalculationIdentifier(id);
@@ -88,11 +115,11 @@ public class StreamTransition extends TwoPortEquipment {
 
     offshoreProcessoperations.run(id);
     trans.run(id);
-    ((StreamInterface) offshoreProcessoperations.getUnit("rich gas")).displayResult();
+    offshoreProcessoperations.getUnit("rich gas").displayResult();
     // ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
     trans.displayResult();
     TEGprocess.run(id);
-    ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
+    TEGprocess.getUnit("dry feed gas").displayResult();
 
     // ((StreamInterface) TEGprocess.getUnit("dry feed gas")).displayResult();
   }

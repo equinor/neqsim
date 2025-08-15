@@ -10,6 +10,8 @@ import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -210,6 +212,9 @@ public class TPmultiflash extends TPflash {
         if (currBeta < phaseFractionMinimumLimit) {
           system.setBeta(k, phaseFractionMinimumLimit);
           if (checkOneRemove) {
+            if (system.getPhase(k).getType() == PhaseType.GAS) {
+              system.setPhaseType(k, PhaseType.LIQUID);
+            }
             checkOneRemove = false;
             removePhase = true;
           }
@@ -325,7 +330,6 @@ public class TPmultiflash extends TPflash {
       }
     }
     for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
-
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(i).isHydrocarbon()
           && minimumGibbsEnergySystem.getPhase(0).getComponent(i).getz() > 1e-50) {
         if (Math.abs(
@@ -344,7 +348,7 @@ public class TPmultiflash extends TPflash {
         }
       }
     }
-    boolean checkdForHCmix = false;
+    // boolean checkdForHCmix = false;
     for (int j = system.getPhase(0).getNumberOfComponents() - 1; j >= 0; j--) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getx() < 1e-100
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getIonicCharge() != 0)
@@ -361,22 +365,23 @@ public class TPmultiflash extends TPflash {
 
         if (clonedSystem.get(0).isPhase(1)) {
           try {
-            if (system.getPhase(1).getType() == PhaseType.AQUEOUS && !checkdForHCmix) {
-              clonedSystem.get(0).getPhase(1).getComponent(cc)
-                  .setx(clonedSystem.get(0).getPhase(0).getComponent(cc).getK()
-                      / clonedSystem.get(0).getPhase(0).getComponent(cc).getx());
-            } else {
-              clonedSystem.get(0).getPhase(1).getComponent(cc).setx(nomb);
-            }
+            clonedSystem.get(0).getPhase(1).getComponent(cc).setx(nomb);
+            /*
+             * if (system.getPhase(1).getType() == PhaseType.AQUEOUS && !checkdForHCmix) {
+             * clonedSystem.get(0).getPhase(1).getComponent(cc)
+             * .setx(clonedSystem.get(0).getPhase(0).getComponent(cc).getK() /
+             * clonedSystem.get(0).getPhase(0).getComponent(cc).getx()); } else {
+             * clonedSystem.get(0).getPhase(1).getComponent(cc).setx(nomb); }
+             */
           } catch (Exception ex) {
             logger.warn(ex.getMessage());
           }
         }
       }
 
-      if (system.getPhase(1).getType() == PhaseType.AQUEOUS && !checkdForHCmix) {
-        checkdForHCmix = true;
-      }
+      // if (system.getPhase(1).getType() == PhaseType.AQUEOUS && !checkdForHCmix) {
+      // checkdForHCmix = true;
+      // }
 
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName().equals("water")
       // && minimumGibbsEnergySystem.isChemicalSystem()) continue;
@@ -492,13 +497,38 @@ public class TPmultiflash extends TPflash {
           // df.print(10, 10);
           SimpleMatrix dx = null;
           try {
-            dx = df.plus(identitytimesConst).solve(f).negative();
+            // Check if the determinant is close to zero
+            double determinant = df.determinant();
+            if (Math.abs(determinant) < 1e-10) {
+              logger.warn("Matrix is nearly singular. Determinant: " + determinant);
+              // Add a small regularization term to stabilize the solution
+              dx = df.plus(identitytimesConst.scale(1e-6)).solve(f).negative();
+            } else {
+              dx = df.plus(identitytimesConst).solve(f).negative();
+            }
           } catch (Exception e) {
-            logger.error(e.getMessage());
-            dx = df.plus(identitytimesConst.scale(0.5)).solve(f).negative();
+            logger.error("Error solving matrix equation: " + e.getMessage());
+            logger.debug("Attempting fallback with scaled regularization...");
+            try {
+              // Fallback: Add a larger regularization term and retry
+              dx = df.plus(identitytimesConst.scale(0.2)).solve(f).negative();
+            } catch (Exception ex) {
+              logger.error("Fallback matrix solve failed: " + ex.getMessage());
+              logger.debug("Attempting pseudo-inverse fallback...");
+              try {
+                DMatrixRMaj pinv = new DMatrixRMaj(df.numCols(), df.numRows());
+                CommonOps_DDRM.pinv(df.getDDRM(), pinv);
+                DMatrixRMaj result = new DMatrixRMaj(df.numCols(), 1);
+                CommonOps_DDRM.mult(pinv, f.getDDRM(), result);
+                dx = SimpleMatrix.wrap(result).negative();
+                logger.warn("Used pseudo-inverse matrix solve.");
+              } catch (Exception ex2) {
+                logger.error("Pseudo-inverse fallback failed: " + ex2.getMessage());
+                logger.warn("Setting dx to zero matrix as a last resort.");
+                dx = new SimpleMatrix(f.numRows(), f.numCols());
+              }
+            }
           }
-
-          // dx.print(10, 10);
 
           for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             double alphaNew = alpha[i] + dx.get(i, 0);
@@ -843,9 +873,37 @@ public class TPmultiflash extends TPflash {
           // df.print(10, 10);
           SimpleMatrix dx = null;
           try {
-            dx = df.plus(identitytimesConst).solve(f).negative();
+            // Check if the determinant is close to zero
+            double determinant = df.determinant();
+            if (Math.abs(determinant) < 1e-10) {
+              logger.warn("Matrix is nearly singular. Determinant: " + determinant);
+              // Add a small regularization term to stabilize the solution
+              dx = df.plus(identitytimesConst.scale(1e-6)).solve(f).negative();
+            } else {
+              dx = df.plus(identitytimesConst).solve(f).negative();
+            }
           } catch (Exception e) {
-            dx = df.plus(identitytimesConst.scale(0.5)).solve(f).negative();
+            logger.error("Error solving matrix equation: " + e.getMessage());
+            logger.debug("Attempting fallback with scaled regularization...");
+            try {
+              // Fallback: Add a larger regularization term and retry
+              dx = df.plus(identitytimesConst.scale(0.5)).solve(f).negative();
+            } catch (Exception ex) {
+              logger.error("Fallback matrix solve failed: " + ex.getMessage());
+              logger.debug("Attempting pseudo-inverse fallback...");
+              try {
+                DMatrixRMaj pinv = new DMatrixRMaj(df.numCols(), df.numRows());
+                CommonOps_DDRM.pinv(df.getDDRM(), pinv);
+                DMatrixRMaj result = new DMatrixRMaj(df.numCols(), 1);
+                CommonOps_DDRM.mult(pinv, f.getDDRM(), result);
+                dx = SimpleMatrix.wrap(result).negative();
+                logger.warn("Used pseudo-inverse matrix solve.");
+              } catch (Exception ex2) {
+                logger.error("Pseudo-inverse fallback failed: " + ex2.getMessage());
+                logger.warn("Setting dx to zero matrix as a last resort.");
+                dx = new SimpleMatrix(f.numRows(), f.numCols());
+              }
+            }
           }
 
           // dx.print(10, 10);
@@ -1174,7 +1232,29 @@ public class TPmultiflash extends TPflash {
           }
           // f.print(10, 10);
           // df.print(10, 10);
-          SimpleMatrix dx = df.plus(identitytimesConst).solve(f).negative();
+          SimpleMatrix dx = null;
+          try {
+            // Check if the determinant is close to zero
+            double determinant = df.determinant();
+            if (Math.abs(determinant) < 1e-10) {
+              logger.warn("Matrix is nearly singular. Determinant: " + determinant);
+              // Add a small regularization term to stabilize the solution
+              dx = df.plus(identitytimesConst.scale(1e-6)).solve(f).negative();
+            } else {
+              dx = df.plus(identitytimesConst).solve(f).negative();
+            }
+          } catch (Exception e) {
+            logger.error("Error solving matrix equation: " + e.getMessage());
+            logger.debug("Attempting fallback with scaled regularization...");
+            try {
+              // Fallback: Add a larger regularization term and retry
+              dx = df.plus(identitytimesConst.scale(0.5)).solve(f).negative();
+            } catch (Exception ex) {
+              logger.error("Fallback matrix solve failed: " + ex.getMessage());
+              throw new RuntimeException("Matrix solve failed after fallback attempts", ex);
+            }
+          }
+
           // dx.print(10, 10);
 
           for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -1300,6 +1380,7 @@ public class TPmultiflash extends TPflash {
       double chemdev = 0;
       int iterOut = 0;
       double maxerr = 1e-12;
+
       do {
         iterOut++;
         if (system.isChemicalSystem()) {

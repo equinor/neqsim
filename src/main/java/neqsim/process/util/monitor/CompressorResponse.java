@@ -10,9 +10,7 @@ import neqsim.process.equipment.compressor.Compressor;
  * @author asmund
  * @version $Id: $Id
  */
-public class CompressorResponse {
-  public String name = "test";
-
+public class CompressorResponse extends BaseResponse {
   public Double suctionTemperature;
   public Double dischargeTemperature;
   public Double suctionPressure;
@@ -27,6 +25,7 @@ public class CompressorResponse {
   public Double suctionMassDensity;
   public Double dischargeMassDensity;
   public Double massflow;
+  public Double stdFlow;
   public Double speed;
 
   /**
@@ -34,7 +33,8 @@ public class CompressorResponse {
    * Constructor for CompressorResponse.
    * </p>
    */
-  public CompressorResponse() {}
+  public CompressorResponse() {
+  }
 
   /**
    * <p>
@@ -42,14 +42,16 @@ public class CompressorResponse {
    * </p>
    *
    * @param inputCompressor a
-   *        {@link neqsim.process.equipment.compressor.Compressor} object
+   *                        {@link neqsim.process.equipment.compressor.Compressor}
+   *                        object
    */
   public CompressorResponse(Compressor inputCompressor) {
-    name = inputCompressor.getName();
+    super(inputCompressor);
     molarMass = inputCompressor.getInletStream().getFluid().getMolarMass();
     suctionMassDensity = inputCompressor.getInletStream().getFluid().getDensity("kg/m3");
     dischargeMassDensity = inputCompressor.getOutletStream().getFluid().getDensity("kg/m3");
     massflow = inputCompressor.getInletStream().getFluid().getFlowRate("kg/hr");
+    stdFlow = inputCompressor.getInletStream().getFluid().getFlowRate("Sm3/hr");
     suctionVolumeFlow = inputCompressor.getInletStream().getFluid().getFlowRate("m3/hr");
     dischargeVolumeFlow = inputCompressor.getOutletStream().getFluid().getFlowRate("m3/hr");
     suctionPressure = inputCompressor.getInletStream().getPressure("bara");
@@ -61,8 +63,7 @@ public class CompressorResponse {
     power = inputCompressor.getPower("kW");
     speed = inputCompressor.getSpeed();
     if (inputCompressor.getAntiSurge().isActive()) {
-      internalVolumeFlow =
-          inputCompressor.getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
+      internalVolumeFlow = inputCompressor.getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
     }
   }
 }

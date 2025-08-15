@@ -13,8 +13,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 public class Water {
   /**
    * <p>
-   * waterDensity. Correlation of Kell (1975) for density of air free water at 1 atmosphere
-   *
+   * waterDensity. Correlation of Kell (1975) for density of air free water at 1 atmosphere.
    * </p>
    *
    * @param temperature a double

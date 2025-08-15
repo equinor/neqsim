@@ -137,7 +137,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * Getter for the field <code>pressure</code>.
    * </p>
    *
-   * @return a double
+   * @return Pressure in bara
    */
   public double getPressure();
 
@@ -153,12 +153,40 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
 
   /**
    * <p>
+   * Getter for the field <code>temperature</code> converted to specified unit.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
+  public double getTemperature(String unit);
+
+  /**
+   * <p>
+   * Getter for the field <code>temperature</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getTemperature();
+
+  /**
+   * <p>
    * Setter for the field <code>pressure</code>.
    * </p>
    *
    * @param pressure a double
    */
   public void setPressure(double pressure);
+
+  /**
+   * <p>
+   * Setter for the field <code>temperature</code>.
+   * </p>
+   *
+   * @param temperature Temperature in Kelvin
+   */
+  public void setTemperature(double temperature);
 
   /**
    * <p>

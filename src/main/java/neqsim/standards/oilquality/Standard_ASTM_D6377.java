@@ -7,6 +7,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import neqsim.util.exception.IsNaNException;
 
 /**
  * <p>
@@ -27,7 +28,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   double TVP = 1.0;
   double referenceTemperature = 37.8;
   String referenceTemperatureUnit = "C";
-  String methodRVP = "VPCR4"; // RVP_ASTM_D6377 // RVP_ASTM_D323_73_79 //
+  String methodRVP = "VPCR4"; // RVP_ASTM_D6377 // RVP_ASTM_D323_73_79
                               // RVP_ASTM_D323_82 // VPCR4_no_water // VPCR4
 
   private double VPCR4_no_water = 0.0;
@@ -93,8 +94,9 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     this.thermoOps = new ThermodynamicOperations(thermoSystem);
     try {
       this.thermoOps.bubblePointPressureFlash(false);
-    } catch (Exception ex) {
+    } catch (IsNaNException ex) {
       logger.error(ex.getMessage(), ex);
+      return;
     }
 
     TVP = this.thermoSystem.getPressure();
@@ -145,13 +147,13 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   /** {@inheritDoc} */
   @Override
   public double getValue(String returnParameter, String returnUnit) {
-    if (returnParameter == "RVP") {
+    if ("RVP".equals(returnParameter)) {
       double RVPlocal = getValue("RVP");
       neqsim.util.unit.PressureUnit presConversion =
           new neqsim.util.unit.PressureUnit(RVPlocal, "bara");
       return presConversion.getValue(returnUnit);
     }
-    if (returnParameter == "TVP") {
+    if ("TVP".equals(returnParameter)) {
       neqsim.util.unit.PressureUnit presConversion =
           new neqsim.util.unit.PressureUnit(getValue("TVP"), "bara");
       return presConversion.getValue(returnUnit);

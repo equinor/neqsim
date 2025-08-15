@@ -67,7 +67,7 @@ public class TSFlash extends QfuncFlash {
     // this method is not yet implemented
     double oldTemp = system.getPressure(), nyTemp = system.getPressure();
     int iterations = 1;
-    double error = 1.0, erorOld = 10.0e10;
+    double error = 1.0, errorOld = 10.0e10;
     do {
       iterations++;
       oldTemp = system.getPressure();
@@ -77,9 +77,9 @@ public class TSFlash extends QfuncFlash {
 
       system.setPressure(nyTemp);
       tpFlash.run();
-      erorOld = error;
+      errorOld = error;
       error = Math.abs(calcdQdT());
-    } while (((error + erorOld) > 1e-8 || iterations < 3) && iterations < 200);
+    } while (((error + errorOld) > 1e-8 || iterations < 3) && iterations < 200);
     return nyTemp;
   }
 

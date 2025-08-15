@@ -44,12 +44,20 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-
-    properties.binaryDiffusionCoefficients = this.binaryDiffusionCoefficients.clone();
-    for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
-      System.arraycopy(this.binaryDiffusionCoefficients[i], 0,
-          properties.binaryDiffusionCoefficients[i], 0,
-          liquidPhase.getPhase().getNumberOfComponents());
+    if (this.binaryDiffusionCoefficients != null && this.binaryDiffusionCoefficients.length > 0) {
+      properties.binaryDiffusionCoefficients = this.binaryDiffusionCoefficients.clone();
+      for (int i = 0; i < this.binaryDiffusionCoefficients.length; i++) {
+        if (this.binaryDiffusionCoefficients[i] != null
+            && properties.binaryDiffusionCoefficients[i] != null) {
+          System.arraycopy(this.binaryDiffusionCoefficients[i], 0,
+              properties.binaryDiffusionCoefficients[i], 0,
+              this.binaryDiffusionCoefficients[i].length);
+        }
+      }
+    }
+    if (this.effectiveDiffusionCoefficient != null
+        && this.effectiveDiffusionCoefficient.length > 0) {
+      properties.effectiveDiffusionCoefficient = this.effectiveDiffusionCoefficient.clone();
     }
     return properties;
   }

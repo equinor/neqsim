@@ -59,7 +59,7 @@ public class NeqStream extends Stream {
     try {
       clonedStream = (NeqStream) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
 
     thermoSystem = thermoSystem.clone();
@@ -88,7 +88,7 @@ public class NeqStream extends Stream {
     }
     this.thermoSystem.init_x_y();
     this.thermoSystem.initBeta();
-    this.thermoSystem.init(3);
+    this.thermoSystem.initProperties();
     // thermoOps = new ThermodynamicOperations(thermoSystem);
     // thermoOps.TPflash();
     logger.info("number of phases: " + thermoSystem.getNumberOfPhases());

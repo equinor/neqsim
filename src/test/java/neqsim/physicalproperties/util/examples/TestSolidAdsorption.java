@@ -12,7 +12,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * TestSolidAdsorption class.
  * </p>
  *
- * @author esol //
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

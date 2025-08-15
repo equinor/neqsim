@@ -13,7 +13,7 @@
 	<version>${revision}</version>
 
 	<properties>
-		<revision>3.0.18</revision>
+		<revision>3.0.37</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
@@ -21,10 +21,10 @@
 	<licenses>
 		<license>
 			<name>The Apache Software License, Version 2.0</name>
-		  	<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-		  	<distribution>repo</distribution>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
 		</license>
-	  </licenses>
+	</licenses>
 	<developers>
 		<developer>
 			<name>Even Solbraa</name>
@@ -51,12 +51,12 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
-			<version>2.24.3</version>
+			<version>2.25.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.24.3</version>
+			<version>2.25.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.thoughtworks.xstream</groupId>
@@ -66,7 +66,7 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
-			<version>5.11.3</version>
+			<version>5.12.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -88,7 +88,7 @@
 		<dependency>
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-all</artifactId>
-			<version>0.43.1</version>
+			<version>0.44.0</version>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
@@ -103,7 +103,7 @@
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
-			<version>1.5.5</version>
+			<version>1.5.6</version>
 		</dependency>
 		<dependency>
 			<groupId>com.googlecode.matrix-toolkits-java</groupId>
@@ -113,78 +113,88 @@
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
-			<version>2.12.1</version>
+			<version>2.13.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.19.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
+			<version>2.19.2</version>
 		</dependency>
 	</dependencies>
 	<profiles>
-		  <profile>
-			   <id>release</id>
-			   <build>
+		<profile>
+			<id>release</id>
+			<build>
 				<plugins>
-					 <plugin>
-						  <groupId>org.sonatype.central</groupId>
-						  <artifactId>central-publishing-maven-plugin</artifactId>
-						  <version>0.6.0</version>
-						  <extensions>true</extensions>
-						  <configuration>
-							   <publishingServerId>central</publishingServerId>
-							   <autoPublish>true</autoPublish>
-						  </configuration>
-					 </plugin>
-					 <plugin>
-						  <groupId>org.apache.maven.plugins</groupId>
-						  <artifactId>maven-source-plugin</artifactId>
-						  <version>3.3.0</version>
-						  <executions>
-							   <execution>
+					<plugin>
+						<groupId>org.sonatype.central</groupId>
+						<artifactId>central-publishing-maven-plugin</artifactId>
+						<version>0.6.0</version>
+						<extensions>true</extensions>
+						<configuration>
+							<publishingServerId>central</publishingServerId>
+							<autoPublish>true</autoPublish>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>3.3.0</version>
+						<executions>
+							<execution>
 								<id>attach-sources</id>
 								<phase>verify</phase>
 								<goals>
-									 <goal>jar-no-fork</goal>
+									<goal>jar-no-fork</goal>
 								</goals>
-							   </execution>
-						  </executions>
-					 </plugin>
-					 <plugin>
-						  <groupId>org.apache.maven.plugins</groupId>
-						  <artifactId>maven-javadoc-plugin</artifactId>
-						  <version>3.10.0</version>
-						  <executions>
-							   <execution>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<version>3.11.2</version>
+						<executions>
+							<execution>
 								<id>attach-javadoc</id>
 								<goals>
-									 <goal>jar</goal>
+									<goal>jar</goal>
 								</goals>
-							   </execution>
+							</execution>
 						</executions>
-						  <configuration>
-							   <doclint>none</doclint>
-						  </configuration>
-					 </plugin>
-					 <plugin>
-						  <groupId>org.apache.maven.plugins</groupId>
-						  <artifactId>maven-gpg-plugin</artifactId>
-						  <version>3.2.6</version>
-						  <executions>
-							   <execution>
+						<configuration>
+							<doclint>none</doclint>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>3.2.7</version>
+						<executions>
+							<execution>
 								<id>sign-artifacts</id>
 								<phase>verify</phase>
 								<goals>
-									 <goal>sign</goal>
+									<goal>sign</goal>
 								</goals>
-							   </execution>
-						  </executions>
-						  <configuration>
-							   <gpgArguments>
+							</execution>
+						</executions>
+						<configuration>
+							<gpgArguments>
 								<arg>--pinentry-mode</arg>
 								<arg>loopback</arg>
-							   </gpgArguments>
-						  </configuration>
-					 </plugin>
+							</gpgArguments>
+						</configuration>
+					</plugin>
 				</plugins>
-			   </build>
-		  </profile>
-	 </profiles>
+			</build>
+		</profile>
+	</profiles>
 	<build>
 		<plugins>
 			<plugin>
@@ -259,9 +269,10 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.13.0</version>
+				<version>3.14.0</version>
 				<configuration>
-					<release>11</release> <!-- Upgrade jdk version to 11 if you are having issues compiling -->
+					<release>11</release> <!-- Upgrade jdk version to 11 if you are having issues
+					compiling -->
 					<encoding>${project.build.sourceEncoding}</encoding>
 					<!-- Uncomment below to get compiler warnings
 					<compilerArgs>
@@ -274,7 +285,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.10.0</version>
+				<version>3.11.2</version>
 				<configuration>
 					<show>private</show>
 					<nohelp>true</nohelp>
@@ -290,11 +301,11 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.5.0</version>
+				<version>3.5.2</version>
 			</plugin>
 			<plugin>
 				<artifactId>maven-failsafe-plugin</artifactId>
-				<version>3.5.0</version>
+				<version>3.5.2</version>
 			</plugin>
 			<plugin>
 				<groupId>org.jacoco</groupId>
@@ -345,11 +356,11 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>3.5.0</version>
+				<version>3.6.0</version>
 				<configuration>
 					<failsOnError>true</failsOnError>
 				</configuration>
-			</plugin>  
+			</plugin>
 		</plugins>
 	</build>
 	<distributionManagement>

@@ -13,7 +13,8 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  */
 public class Orifice extends TwoPortEquipment {
-  private static final long serialVersionUID = 1L;
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
   private StreamInterface inputstream;
   private StreamInterface outputstream;
   private Double dp;
@@ -190,6 +191,42 @@ public class Orifice extends TwoPortEquipment {
    */
   public static double calculateBetaRatio(double D, double Do) {
     return Do / D;
+  }
+
+  /**
+   * Calculates the mass flow rate through an orifice plate using the ISO 5167
+   * formulation.
+   *
+   * <p>Inputs and output are all in SI units. The method iterates the
+   * Reader-Harris/Gallagher discharge coefficient until convergence.</p>
+   *
+   * @param D upstream internal pipe diameter in meters
+   * @param Do orifice diameter in meters
+   * @param P1 upstream static pressure in Pa
+   * @param P2 downstream static pressure in Pa
+   * @param rho fluid density in kg/m3 at P1
+   * @param mu fluid viscosity in Pa*s at P1
+   * @param k isentropic exponent of the fluid
+   * @param taps pressure tap type ("corner", "flange", "D", or "D/2")
+   * @return mass flow rate in kg/s
+   */
+  public static double calculateMassFlowRate(double D, double Do, double P1, double P2,
+      double rho, double mu, double k, String taps) {
+    final int MAX_ITERATIONS = 50;
+    double m = 1.0;
+    for (int i = 0; i < MAX_ITERATIONS; i++) {
+      double C = calculateDischargeCoefficient(D, Do, rho, mu, m, taps);
+      double epsilon = calculateExpansibility(D, Do, P1, P2, k);
+      double beta = calculateBetaRatio(D, Do);
+      double beta2 = beta * beta;
+      double mCalc = 0.25 * Math.PI * Do * Do * C * epsilon
+          * Math.sqrt(2.0 * rho * (P1 - P2) / (1.0 - beta2 * beta2));
+      if (Math.abs(mCalc - m) / m < 1e-8) {
+        break;
+      }
+      m = mCalc;
+    }
+    return m;
   }
 
   /** {@inheritDoc} */

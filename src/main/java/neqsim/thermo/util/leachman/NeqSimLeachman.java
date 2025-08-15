@@ -26,16 +26,26 @@ public class NeqSimLeachman {
   public NeqSimLeachman() {}
 
   /**
-   * Constructor for NeqSimLeachman.
+   * Constructor for NeqSimLeachman. If hydrogenType is provided (non-empty), it uses that;
+   * otherwise, it auto-detects based on the phase's component name.
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param hydrogenType a {@link java.lang.String} object representing the type of hydrogen
+   * @param phase a PhaseInterface representing the stream.
+   * @param hydrogenType a String representing the desired hydrogen type; can be empty.
    */
   public NeqSimLeachman(PhaseInterface phase, String hydrogenType) {
-    this.setPhase(phase);
-    if (Double.isNaN(Leachman.R_L) || Leachman.R_L == 0) {
-      Leachman.SetupLeachman(hydrogenType);
+    setPhase(phase);
+    // If hydrogenType is null or empty, auto-detect based on the phase's component name
+    if (hydrogenType == null || hydrogenType.trim().isEmpty()) {
+      String componentName = phase.getComponent(0).getComponentName().toLowerCase();
+      if (componentName.equals("para-hydrogen")) {
+        hydrogenType = "para";
+      } else if (componentName.equals("ortho-hydrogen")) {
+        hydrogenType = "ortho";
+      } else {
+        hydrogenType = "normal";
+      }
     }
+    Leachman.SetupLeachman(hydrogenType);
   }
 
   /**
@@ -183,13 +193,85 @@ public class NeqSimLeachman {
 
     // 2) Check the name of that single component
     String componentName = phase.getComponent(0).getComponentName();
-    if (!"hydrogen".equalsIgnoreCase(componentName)) {
+    if (!"hydrogen".equalsIgnoreCase(componentName)
+        && !"para-hydrogen".equalsIgnoreCase(componentName)
+        && !"ortho-hydrogen".equalsIgnoreCase(componentName)) {
       throw new IllegalArgumentException(
           "Leachman model requires 'hydrogen'. Found: " + componentName);
     }
 
     // If everything checks out, we can safely set 'this.phase'
     this.phase = phase;
+  }
+
+  /**
+   * <p>
+   * getAlpha0_Leachman.
+   * </p>
+   *
+   * @return an array of {@link org.netlib.util.doubleW} objects
+   */
+  public doubleW[] getAlpha0_Leachman() {
+    // Get temperature and molar density from the phase object
+    double temperature = phase.getTemperature();
+    double molarDensity = getMolarDensity(phase);
+
+    // Create and initialize a 4x4 array for the derivatives.
+    // Assuming doubleW is a simple wrapper with a public field 'val'.
+    int rows = 4;
+    int cols = 4;
+    doubleW[] a0 = new doubleW[rows];
+    for (int i = 0; i < rows; i++) {
+      a0[i] = new doubleW(0.0);
+    }
+
+    // Call the Vega function to fill in the ar array.
+    // The first two parameters (itau and idelta) are set to 0.
+    Leachman.Alpha0Leachman(temperature, molarDensity, a0);
+
+    // Return the computed dimensionless residual Helmholtz free energy.
+    // This is equivalent to alpha_res = A^r/(RT)
+    return a0;
+  }
+
+  /**
+   * Get reduced residual helmholtz free energy and its derivatives. The returned array has the
+   * following structure:
+   * <ul>
+   * <li>ar(0,0) - Residual Helmholtz energy (dimensionless, =a/RT)</li>
+   * <li>ar(0,1) - delta*partial (ar)/partial(delta)</li>
+   * <li>ar(0,2) - delta^2*partial^2(ar)/partial(delta)^2</li>
+   * <li>ar(0,3) - delta^3*partial^3(ar)/partial(delta)^3</li>
+   * <li>ar(1,0) - tau*partial (ar)/partial(tau)</li>
+   * <li>ar(1,1) - tau*delta*partial^2(ar)/partial(tau)/partial(delta)</li>
+   * <li>ar(2,0) - tau^2*partial^2(ar)/partial(tau)^2</li>
+   * </ul>
+   *
+   * @return a doubleW[][] representing the reduced residual helmholtz free energy
+   */
+  public doubleW[][] getAlphares_Leachman() {
+    // Get temperature and molar density from the phase object
+    double temperature = phase.getTemperature();
+    double molarDensity = getMolarDensity(phase);
+
+    // Create and initialize a 4x4 array for the derivatives.
+    // Assuming doubleW is a simple wrapper with a public field 'val'.
+    int rows = 4;
+    int cols = 4;
+    doubleW[][] ar = new doubleW[rows][cols];
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        ar[i][j] = new doubleW(0.0);
+      }
+    }
+
+    // Call the Vega function to fill in the ar array.
+    // The first two parameters (itau and idelta) are set to 0.
+    Leachman.AlpharLeachman(0, 0, temperature, molarDensity, ar);
+
+    // Return the computed dimensionless residual Helmholtz free energy.
+    // This is equivalent to alpha_res = A^r/(RT)
+    return ar;
   }
 
   /**

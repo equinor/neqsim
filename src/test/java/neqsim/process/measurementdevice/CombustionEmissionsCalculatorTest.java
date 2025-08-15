@@ -26,13 +26,11 @@ public class CombustionEmissionsCalculatorTest {
     stream1.setFlowRate(1.0, "kg/hr");
     stream1.run();
     CombustionEmissionsCalculator comp = new CombustionEmissionsCalculator("name1", stream1);
-    assertEquals(2.77772643250, comp.getMeasuredValue("kg/hr"), 0.0001);
+    assertEquals(2.8122348711867, comp.getMeasuredValue("kg/hr"), 0.0001);
   }
-
 
   @Test
   void testAntiSurgeCalc() {
-
     ProcessSystem process = new ProcessSystem();
     SystemInterface fluid = new SystemSrkEos(290, 50);
     fluid.addComponent("methane", 0.01);
@@ -71,10 +69,8 @@ public class CombustionEmissionsCalculatorTest {
     process.add(calc2);
 
     assertEquals(1547.476990846, stream1.getFlowRate("m3/hr"), 0.1);
-    assertEquals(2125.44928443, compressor1.getSurgeFlowRate(), 0.1);
+    assertEquals(3535.055413, compressor1.getSurgeFlowRate(), 0.1);
     assertEquals(104.9725, compressor1.getPolytropicFluidHead(), 0.1);
-    assertEquals(-0.27192946819265, compressor1.getDistanceToSurge(), 0.1);
-
-
+    assertEquals(-0.56224816592, compressor1.getDistanceToSurge(), 0.1);
   }
 }

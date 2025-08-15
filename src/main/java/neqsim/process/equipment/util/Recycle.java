@@ -10,6 +10,8 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import com.google.gson.GsonBuilder;
+import neqsim.process.util.monitor.RecycleResponse;
 
 /**
  * <p>
@@ -317,12 +319,14 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   @Override
   public void run(UUID id) {
     iterations++;
+    isActive(true);
     /*
      * if(firstTime || iterations>maxIterations) { firstTime=false; return; }
      */
     double enthalpy = 0.0;
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
     if (numberOfInputStreams == 1 && thermoSystem2.getFlowRate("kg/hr") < minimumFlow) {
+      isActive(false);
       mixedStream.setThermoSystem(thermoSystem2);
       setErrorCompositon(0.0);
       setErrorFlow(flowBalanceCheck());
@@ -340,6 +344,18 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       mixedStream.getThermoSystem().init(0);
 
       mixStream();
+
+      if (mixedStream.getFlowRate("kg/hr") < minimumFlow) {
+        isActive(false);
+        mixedStream.setThermoSystem(thermoSystem2);
+        setErrorCompositon(0.0);
+        setErrorFlow(flowBalanceCheck());
+        setErrorTemperature(temperatureBalanceCheck());
+        setErrorPressure(pressureBalanceCheck());
+        outletStream.setThermoSystem(mixedStream.getThermoSystem());
+        outletStream.setCalculationIdentifier(id);
+        return;
+      }
 
       setDownstreamProperties();
       try {
@@ -466,13 +482,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     mixedStream.getThermoSystem().setPressure(pres);
   }
 
-  /**
-   * <p>
-   * setTemperature.
-   * </p>
-   *
-   * @param temp a double
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setTemperature(double temp) {
     for (int k = 0; k < streams.size(); k++) {
       streams.get(k).getThermoSystem().setTemperature(temp);
@@ -655,21 +666,21 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     streams.remove(i);
   }
 
-  /**
-   * Gets the minimum flow rate for the pump.
-   *
-   * @return the minimum flow rate
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getMinimumFlow() {
     return minimumFlow;
   }
 
-  /**
-   * Sets the minimum flow rate for the pump.
-   *
-   * @param minimumFlow the minimum flow rate to be set, in appropriate units.
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new RecycleResponse(this));
   }
 }

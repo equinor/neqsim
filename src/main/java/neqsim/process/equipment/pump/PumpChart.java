@@ -53,6 +53,10 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   double[][] redflow;
   double[][] redhead;
   double[][] redEfficiency;
+  double minFlow = Double.MAX_VALUE;
+  double maxFlow = -Double.MAX_VALUE;
+  double minReducedFlow = Double.MAX_VALUE;
+  double maxReducedFlow = -Double.MAX_VALUE;
 
   /**
    * <p>
@@ -96,19 +100,28 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
         redhead[i][j] = head[i][j] / speed[i] / speed[i];
         reducedHeadFitter.add(redflow[i][j], redhead[i][j]);
         reducedEfficiencyFitter.add(redflow[i][j], redEfficiency[i][j]);
-        // TODO: MLLU: not correct. speed[0] should be the requested speed
-        double flowFanLaw = flow[i][j] * speed[i] / speed[0];
-        fanLawCorrectionFitter.add(speed[i] / speed[0], flow[i][j] / flowFanLaw);
+        if (flow[i][j] < minFlow) {
+          minFlow = flow[i][j];
+        }
+        if (flow[i][j] > maxFlow) {
+          maxFlow = flow[i][j];
+        }
+        if (redflow[i][j] < minReducedFlow) {
+          minReducedFlow = redflow[i][j];
+        }
+        if (redflow[i][j] > maxReducedFlow) {
+          maxReducedFlow = redflow[i][j];
+        }
+        if (i > 0 && j < flow[0].length) {
+          double flowFanLaw = flow[0][j] * speed[i] / speed[0];
+          fanLawCorrectionFitter.add(speed[i] / speed[0], flow[i][j] / flowFanLaw);
+        }
       }
     }
 
     referenceSpeed = (maxSpeedCurve + minSpeedCurve) / 2.0;
 
-    PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
-
-    reducedHeadFitterFunc = new PolynomialFunction(fitter.fit(reducedHeadFitter.toList()));
-    reducedEfficiencyFunc = new PolynomialFunction(fitter.fit(reducedEfficiencyFitter.toList()));
-    fanLawCorrectionFunc = new PolynomialFunction(fitter.fit(fanLawCorrectionFitter.toList()));
+    fitReducedCurve();
     setUsePumpChart(true);
   }
 
@@ -117,42 +130,72 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * fitReducedCurve.
    * </p>
    */
-  public void fitReducedCurve() {}
+  public void fitReducedCurve() {
+    PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
+    reducedHeadFitterFunc = new PolynomialFunction(fitter.fit(reducedHeadFitter.toList()));
+    reducedEfficiencyFunc = new PolynomialFunction(fitter.fit(reducedEfficiencyFitter.toList()));
+    if (!fanLawCorrectionFitter.toList().isEmpty()) {
+      fanLawCorrectionFunc = new PolynomialFunction(fitter.fit(fanLawCorrectionFitter.toList()));
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
   public double getHead(double flow, double speed) {
-    return reducedHeadFitterFunc.value(flow / speed) * speed * speed;
+    double rFlow = flow / speed;
+    if (rFlow < minReducedFlow || rFlow > maxReducedFlow) {
+      logger.warn("Flow {} at speed {} outside pump curve range", flow, speed);
+    }
+    return reducedHeadFitterFunc.value(rFlow) * speed * speed;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getEfficiency(double flow, double speed) {
-    return reducedEfficiencyFunc.value(flow / speed);
+    double rFlow = flow / speed;
+    if (rFlow < minReducedFlow || rFlow > maxReducedFlow) {
+      logger.warn("Flow {} at speed {} outside pump curve range", flow, speed);
+    }
+    return reducedEfficiencyFunc.value(rFlow);
   }
 
   /** {@inheritDoc} */
   @Override
   public int getSpeed(double flow, double head) {
     int iter = 1;
-    double error = 1.0;
-    double derrordspeed = 1.0;
+    double error;
+    double derrordspeed;
     double newspeed = referenceSpeed;
-    double newhead = 0.0;
     double oldspeed = newspeed + 1.0;
-    double oldhead = getHead(flow, oldspeed);
-    double olderror = oldhead - head;
+    double olderror = getHead(flow, oldspeed) - head;
     do {
       iter++;
-      newhead = getHead(flow, newspeed);
+      double newhead = getHead(flow, newspeed);
       error = newhead - head;
       derrordspeed = (error - olderror) / (newspeed - oldspeed);
+      if (Math.abs(derrordspeed) < 1e-10) {
+        break;
+      }
+      oldspeed = newspeed;
+      olderror = error;
       newspeed -= error / derrordspeed;
-      // System.out.println("speed " + newspeed);
-    } while (Math.abs(error) > 1e-6 && iter < 100);
+    } while (Math.abs(error) > 1e-6 && iter < 20);
 
-    // change speed to minimize
-    // Math.abs(head - reducedHeadFitterFunc.value(flow / speed) * speed * speed);
+    if (Math.abs(error) > 1e-6) {
+      double low = minSpeedCurve;
+      double high = maxSpeedCurve;
+      for (int i = 0; i < 50; i++) {
+        newspeed = 0.5 * (low + high);
+        double testHead = getHead(flow, newspeed);
+        if (testHead > head) {
+          high = newspeed;
+        } else {
+          low = newspeed;
+        }
+      }
+      newspeed = 0.5 * (low + high);
+    }
+
     return (int) Math.round(newspeed);
   }
 
@@ -166,7 +209,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * @return a double
    */
   public double efficiency(double flow, double speed) {
-    return 100.0;
+    return getEfficiency(flow, speed);
   }
 
   /**
@@ -179,7 +222,8 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * @return a boolean
    */
   public boolean checkSurge1(double flow, double head) {
-    return false;
+    double derivative = reducedHeadFitterFunc.polynomialDerivative().value(flow / referenceSpeed);
+    return derivative > 0.0;
   }
 
   /**
@@ -192,7 +236,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * @return a boolean
    */
   public boolean checkSurge2(double flow, double speed) {
-    return false;
+    return checkSurge1(flow, getHead(flow, speed));
   }
 
   /**
@@ -205,7 +249,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * @return a boolean
    */
   public boolean checkStoneWall(double flow, double speed) {
-    return false;
+    return flow > maxFlow;
   }
 
   /** {@inheritDoc} */

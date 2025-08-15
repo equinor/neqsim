@@ -24,6 +24,43 @@ public class Condenser extends SimpleTray {
   double duty = 0.0;
   boolean totalCondenser = false;
   Splitter mixedStreamSplitter = null;
+  private boolean separation_with_liquid_reflux = false;
+  private double reflux_value;
+  private String reflux_unit;
+
+  /**
+   * Constructor for the Condenser class.
+   *
+   * @param name a {@link java.lang.String} object
+   */
+  public Condenser(String name) {
+    super(name);
+  }
+
+  /**
+   * Checks if the separation process involves liquid reflux.
+   *
+   * @return {@code true} if the separation process involves liquid reflux, {@code false} otherwise.
+   */
+  public boolean isSeparation_with_liquid_reflux() {
+    return separation_with_liquid_reflux;
+  }
+
+  /**
+   * Sets the separation with liquid reflux parameters.
+   *
+   * @param separation_with_liquid_reflux a boolean indicating if separation with liquid reflux is
+   *        set
+   * @param value the value of the reflux
+   * @param unit the unit of the reflux value
+   */
+  public void setSeparation_with_liquid_reflux(boolean separation_with_liquid_reflux, double value,
+      String unit) {
+    this.refluxIsSet = separation_with_liquid_reflux;
+    this.separation_with_liquid_reflux = separation_with_liquid_reflux;
+    this.reflux_value = value;
+    this.reflux_unit = unit;
+  }
 
   /**
    * <p>
@@ -34,15 +71,6 @@ public class Condenser extends SimpleTray {
    */
   public void setTotalCondenser(boolean isTotalCondenser) {
     this.totalCondenser = isTotalCondenser;
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * @param name a {@link java.lang.String} object
-   */
-  public Condenser(String name) {
-    super(name);
   }
 
   /**
@@ -101,19 +129,26 @@ public class Condenser extends SimpleTray {
     return getGasOutStream();
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * getLiquidOutStream.
-   * </p>
-   */
+  /** {@inheritDoc} */
   @Override
   public StreamInterface getLiquidOutStream() {
-    if (totalCondenser) {
-      return new Stream("", mixedStreamSplitter.getSplitStream(0));
+    if (totalCondenser || separation_with_liquid_reflux) {
+      return mixedStreamSplitter.getSplitStream(0);
     } else {
       return super.getLiquidOutStream();
+    }
+  }
+
+  /**
+   * Get the liquid product stream from the condenser.
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
+  public StreamInterface getLiquidProductStream() {
+    if (separation_with_liquid_reflux) {
+      return mixedStreamSplitter.getSplitStream(1);
+    } else {
+      return null;
     }
   }
 
@@ -147,6 +182,17 @@ public class Condenser extends SimpleTray {
       UUID oldID = getCalculationIdentifier();
       super.run(id);
       setCalculationIdentifier(oldID);
+    } else if (separation_with_liquid_reflux) {
+      super.run(id);
+      Stream liquidstream = new Stream("temp liq stream", mixedStream.getFluid().phaseToSystem(1));
+      liquidstream.run();
+      if (liquidstream.getFlowRate("kg/hr") < this.reflux_value) {
+        liquidstream.setFlowRate(this.reflux_value + 1, this.reflux_unit);
+        liquidstream.run();
+      }
+      mixedStreamSplitter = new Splitter("splitter", liquidstream, 2);
+      mixedStreamSplitter.setFlowRates(new double[] {this.reflux_value, -1}, this.reflux_unit);
+      mixedStreamSplitter.run();
     } else {
       SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
       // System.out.println("total number of moles " +

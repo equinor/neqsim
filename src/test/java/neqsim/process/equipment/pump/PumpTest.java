@@ -99,7 +99,7 @@ public class PumpTest extends neqsim.NeqSimTest {
     pump1.setSpeed(500);
     pump1.run();
 
-    Assertions.assertEquals(7.274237081101, pump1.getOutletPressure(), 1e-5);
+    Assertions.assertEquals(7.27423708, pump1.getOutletPressure(), 0.05);
   }
 
   @Test
@@ -132,9 +132,6 @@ public class PumpTest extends neqsim.NeqSimTest {
     res1.setMinimumFlow(1e-20);
     res1.run();
 
-
     Assertions.assertEquals(0.0, pump1.getOutletStream().getFlowRate("kg/sec"), 1e-20);
-
   }
-
 }

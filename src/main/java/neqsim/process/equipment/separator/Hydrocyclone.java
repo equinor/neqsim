@@ -85,7 +85,7 @@ public class Hydrocyclone extends Separator {
     inletStreamMixer.run(id);
     thermoSystem = inletStreamMixer.getOutletStream().getThermoSystem().clone();
 
-    // double oilInWaterIn = 0.0001; //
+    // double oilInWaterIn = 0.0001;
     // thermoSystem.getPhase("aqueous").getOilMolarConcentration();
     // double oilInWaterOut = 0.0;
     double inPressure = thermoSystem.getPressure("bara");
@@ -114,8 +114,10 @@ public class Hydrocyclone extends Separator {
     // liquidSystem = thermoSystem.phaseToSystem(1);
     // liquidOutStream.setThermoSystem(liquidSystem);
     if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
-      liquidOutStream.setThermoSystemFromPhase(thermoSystem, "liquid");
-      liquidOutStream.getFluid().init(2);
+      neqsim.thermo.system.SystemInterface fluid =
+          thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
+      liquidOutStream.setThermoSystemFromPhase(fluid, "liquid");
+      liquidOutStream.getFluid().initProperties();
     } else {
       liquidOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
     }

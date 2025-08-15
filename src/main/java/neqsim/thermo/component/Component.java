@@ -98,8 +98,6 @@ public abstract class Component implements ComponentInterface {
   protected double molarMass;
   protected double acentricFactor;
   protected double normalLiquidDensity = 0;
-  protected double reducedPressure;
-  protected double reducedTemperature;
   protected double fugacityCoefficient;
   protected double debyeDipoleMoment = 0;
   protected double viscosityCorrectionFactor = 0;
@@ -186,8 +184,8 @@ public abstract class Component implements ComponentInterface {
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC Critical temperature
-   * @param PC Critical pressure
+   * @param TC Critical temperature [K]
+   * @param PC Critical pressure [bara]
    * @param M Molar mass
    * @param a Acentric factor
    * @param moles Total number of moles of component.
@@ -221,7 +219,7 @@ public abstract class Component implements ComponentInterface {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
           "createComponent", "name", "can not be null"));
     }
-    if (name.trim() == "") {
+    if (name.trim().isEmpty()) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
           "createComponent", "name", "can not be empty"));
     }
@@ -511,16 +509,23 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void addMolesChemReac(double dn, double totdn) {
     if (numberOfMoles + totdn < 0 || numberOfMolesInPhase + dn < 0) {
-      if (Math.abs(dn) < 1e-12) {
+      if (Math.abs(dn) < 1e-50) {
         dn = 0;
         totdn = 0;
       } else {
         String msg = "will lead to negative number of moles of component in phase for component "
             + getComponentName() + "  who has " + numberOfMolesInPhase
-            + " in phase  and chage request was " + dn;
-        throw new RuntimeException(
-            new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg));
+            + " in phase  and change request was " + dn;
+        logger.error(msg);
+        if (numberOfMolesInPhase + dn < 0) {
+          dn = -numberOfMolesInPhase;
+        }
+        if (numberOfMoles + totdn < 0) {
+          totdn = -numberOfMoles;
+        }
       }
+      // throw new RuntimeException(
+      // new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg));
     }
     numberOfMoles += totdn;
     numberOfMolesInPhase += dn;
@@ -1116,6 +1121,18 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double getAcentricFactor() {
     return acentricFactor;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double reducedTemperature(double temperature) {
+    return temperature / criticalTemperature;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double reducedPressure(double pressure) {
+    return pressure / criticalPressure;
   }
 
   /** {@inheritDoc} */
@@ -2393,5 +2410,38 @@ public abstract class Component implements ComponentInterface {
    */
   public final double[] getMatiascopemanParamsUMRPRU() {
     return matiascopemanParamsUMRPRU;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    Component other = (Component) obj;
+    return Double.compare(criticalPressure, other.criticalPressure) == 0
+        && Double.compare(criticalTemperature, other.criticalTemperature) == 0
+        && Double.compare(molarMass, other.molarMass) == 0
+        && Double.compare(acentricFactor, other.acentricFactor) == 0
+        && componentName.equals(other.componentName) && index == other.index
+        && Double.compare(normalLiquidDensity, other.normalLiquidDensity) == 0
+        && Double.compare(criticalVolume, other.criticalVolume) == 0
+        && Double.compare(racketZ, other.racketZ) == 0 && Double.compare(K, other.K) == 0
+        && Double.compare(x, other.x) == 0 && Double.compare(z, other.z) == 0
+        && Double.compare(numberOfMoles, other.numberOfMoles) == 0
+        && Double.compare(numberOfMolesInPhase, other.numberOfMolesInPhase) == 0
+        && componentType.equals(other.componentType)
+        && Double.compare(associationVolume, other.associationVolume) == 0
+        && Double.compare(associationEnergy, other.associationEnergy) == 0
+        && Double.compare(aCPA, other.aCPA) == 0 && Double.compare(bCPA, other.bCPA) == 0
+        && Double.compare(mCPA, other.mCPA) == 0
+        && Double.compare(srkacentricFactor, other.srkacentricFactor) == 0
+        && referenceStateType.equals(other.referenceStateType)
+        && associationScheme.equals(other.associationScheme)
+        && ((CASnumber == null && other.CASnumber == null)
+            || (CASnumber != null && CASnumber.equals(other.CASnumber)));
   }
 }

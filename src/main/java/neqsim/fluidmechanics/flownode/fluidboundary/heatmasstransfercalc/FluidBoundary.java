@@ -83,7 +83,10 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     jFlux = new Matrix(system.getPhases()[0].getNumberOfComponents() - 1, 1);
     nFlux = new Matrix(system.getPhases()[0].getNumberOfComponents(), 1);
     nFlux.set(0, 0, 0.0);
-    nFlux.set(1, 0, 0.0);
+    if (system.getPhases()[0].getNumberOfComponents() > 1) {
+      nFlux.set(1, 0, 0.0);
+    }
+    // nFlux.set(1, 0, 0.0);
     heatTransferCoefficient = new double[2];
     heatTransferCorrection = new double[2];
     thermodynamicCorrections = new boolean[2];
@@ -140,7 +143,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     try {
       clonedSystem = (FluidBoundary) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());;
+      logger.error(ex.getMessage());
     }
 
     clonedSystem.interphaseSystem = interphaseSystem.clone();

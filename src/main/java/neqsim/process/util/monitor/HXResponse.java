@@ -10,9 +10,7 @@ import neqsim.process.equipment.heatexchanger.HeatExchanger;
  * @author asmund
  * @version $Id: $Id
  */
-public class HXResponse {
-  public String name = "test";
-
+public class HXResponse extends BaseResponse {
   public Double feedTemperature1;
   public Double dischargeTemperature1;
   public Double HXthermalEfectiveness;
@@ -36,11 +34,10 @@ public class HXResponse {
    * Constructor for HXResponse.
    * </p>
    *
-   * @param inputHeatExchanger a
-   *        {@link neqsim.process.equipment.heatexchanger.HeatExchanger} object
+   * @param inputHeatExchanger a {@link neqsim.process.equipment.heatexchanger.HeatExchanger} object
    */
   public HXResponse(HeatExchanger inputHeatExchanger) {
-    name = inputHeatExchanger.getName();
+    super(inputHeatExchanger);
     feedTemperature1 = inputHeatExchanger.getInStream(0).getTemperature("C");
     dischargeTemperature1 = inputHeatExchanger.getOutStream(0).getTemperature("C");
     feedTemperature2 = inputHeatExchanger.getInStream(1).getTemperature("C");

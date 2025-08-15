@@ -246,4 +246,29 @@ public class WellFlowTest {
     // wellflow.setDarcyLawParameters(permeability, );
     // wellflow.setWellProductionIndex(10.000100751427403E-3);
   }
+
+  @Test
+  void testVogelCorrelation() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemPrEos(298.15, 200.0);
+    fluid.addComponent("methane", 100.0);
+    fluid.setMixingRule(2);
+
+    SimpleReservoir reservoir = new SimpleReservoir("res");
+    reservoir.setReservoirFluid(fluid, 1.0e9, 0.0, 0.0);
+
+    StreamInterface prod = reservoir.addGasProducer("well1");
+    prod.setFlowRate(0.5, "MSm3/day");
+
+    WellFlow wellflow = new WellFlow("wf");
+    wellflow.setInletStream(prod);
+    wellflow.setVogelParameters(0.5, 100.0, 200.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(reservoir);
+    process.add(wellflow);
+    process.run();
+
+    assert (Math.abs(wellflow.getOutletStream().getPressure("bara") - 100.0) < 1.0);
+  }
 }

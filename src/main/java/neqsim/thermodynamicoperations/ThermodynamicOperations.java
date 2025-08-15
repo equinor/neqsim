@@ -21,6 +21,8 @@ import neqsim.thermodynamicoperations.flashops.PHflashSingleComp;
 import neqsim.thermodynamicoperations.flashops.PHsolidFlash;
 import neqsim.thermodynamicoperations.flashops.PSFlash;
 import neqsim.thermodynamicoperations.flashops.PSFlashGERG2008;
+import neqsim.thermodynamicoperations.flashops.PSFlashLeachman;
+import neqsim.thermodynamicoperations.flashops.PSFlashVega;
 import neqsim.thermodynamicoperations.flashops.PSflashSingleComp;
 import neqsim.thermodynamicoperations.flashops.PVrefluxflash;
 import neqsim.thermodynamicoperations.flashops.SaturateWithWater;
@@ -60,7 +62,9 @@ import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.HPTphaseEnvelope;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelope;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelopeNew2;
+import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelopeNew3;
 import neqsim.thermodynamicoperations.phaseenvelopeops.reactivecurves.PloadingCurve2;
+import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterKeywordFormat;
 import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterStudents;
 import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterStudentsPH;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -160,6 +164,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    */
   public void TPflash() {
+    // Check if system is Soreide-Whitson and use the special flash if so
+    if (system != null
+        && system.getClass().getName().equals("neqsim.thermo.system.SystemSoreideWhitson")) {
+      TPflashSoreideWhitson();
+      return;
+    }
     double flowRate = system.getTotalNumberOfMoles();
     if (flowRate < 1e-5) {
       system.setTotalNumberOfMoles(1.0);
@@ -172,6 +182,51 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } else {
       run();
     }
+
+    if (flowRate < 1e-5) {
+      final double minimumFlowRate = 1e-50;
+      if (flowRate < minimumFlowRate) {
+        system.setTotalNumberOfMoles(minimumFlowRate);
+      } else {
+        system.setTotalNumberOfMoles(flowRate);
+      }
+      system.init(1);
+    }
+  }
+
+  /**
+   * <p>
+   * TPflashSoreideWhitson.
+   * </p>
+   */
+  public void TPflashSoreideWhitson() {
+    double flowRate = system.getTotalNumberOfMoles();
+    if (flowRate < 1e-5) {
+      system.setTotalNumberOfMoles(1.0);
+      system.init(1);
+    }
+    operation =
+        new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+
+    boolean rerun = true;
+    int iterationCount = 0;
+    while (rerun) {
+      operation =
+          new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+      if (!isRunAsThread()) {
+        getOperation().run();
+      } else {
+        run();
+      }
+      rerun = ((neqsim.thermo.system.SystemSoreideWhitson) system).calcSalinity();
+      iterationCount++;
+      if (iterationCount >= 10) {
+        System.err.println(
+            "Warning: Maximum number of iterations (10) reached in TPflash salinity loop. Stopping further execution.");
+        break;
+      }
+    }
+    // --- End salinity logic ---
 
     if (flowRate < 1e-5) {
       final double minimumFlowRate = 1e-50;
@@ -306,6 +361,26 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void PHflashGERG2008(double Hspec) {
     operation = new neqsim.thermodynamicoperations.flashops.PHflashGERG2008(system, Hspec);
+    getOperation().run();
+  }
+
+  /**
+   * Method to perform a PH flash calculation based on Leachman EoS.
+   *
+   * @param Hspec is the enthalpy in unit Joule to be held constant
+   */
+  public void PHflashLeachman(double Hspec) {
+    operation = new neqsim.thermodynamicoperations.flashops.PHflashLeachman(system, Hspec);
+    getOperation().run();
+  }
+
+  /**
+   * Method to perform a PH flash calculation based on Vega EoS.
+   *
+   * @param Hspec is the enthalpy in unit Joule to be held constant
+   */
+  public void PHflashVega(double Hspec) {
+    operation = new neqsim.thermodynamicoperations.flashops.PHflashVega(system, Hspec);
     getOperation().run();
   }
 
@@ -492,6 +567,32 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void PSflashGERG2008(double Sspec) {
     operation = new PSFlashGERG2008(system, Sspec);
+    getOperation().run();
+  }
+
+  /**
+   * <p>
+   * PSflashLeachman.
+   * </p>
+   * Run a flash at constant pressure and entropy using the Leachman EoS
+   *
+   * @param Sspec is the specidfied entropy
+   */
+  public void PSflashLeachman(double Sspec) {
+    operation = new PSFlashLeachman(system, Sspec);
+    getOperation().run();
+  }
+
+  /**
+   * <p>
+   * PSflashVega.
+   * </p>
+   * Run a flash at constant pressure and entropy using the Vega EoS
+   *
+   * @param Sspec is the specidfied entropy
+   */
+  public void PSflashVega(double Sspec) {
+    operation = new PSFlashVega(system, Sspec);
     getOperation().run();
   }
 
@@ -1032,7 +1133,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     systemTemp = system.clone();
 
     for (int i = 0; i < temperature.length; i++) {
-      // todo: this function does not actually set hydTemps which is the returned variable
+      // todo: this function does not actually set hydTemps which is the returned
+      // variable
       /*
        * opsTemp = new ThermodynamicOperations(systemTemp);
        * systemTemp.setTemperature(temperature[i]); systemTemp.setPressure(pressure[i]);
@@ -1380,8 +1482,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       fraction = 1.0 - 1.0e-10;
     }
     ConstantDutyFlashInterface operation = new ConstantDutyTemperatureFlash(system);
-    // TODO: bug, sum of beta will not equal 1
-    system.setBeta(1, fraction);
+    // ensure the phase fractions sum to unity
+    system.setBeta(1, 1.0 - fraction);
     system.setBeta(0, fraction);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
@@ -1647,6 +1749,24 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Calculates a phase envelope matrix using PTphaseEnvelopeNew3.
+   * 
+   * @param minPressure minimum pressure (bar)
+   * @param maxPressure maximum pressure (bar)
+   * @param minTemp minimum temperature (C)
+   * @param maxTemp maximum temperature (C)
+   * @param pressureStep step size for pressure (bar)
+   * @param tempStep step size for temperature (C)
+// removed invalid @return tag for void method
+   */
+  public void calcPTphaseEnvelopeNew3(double minPressure, double maxPressure, double minTemp,
+      double maxTemp, double pressureStep, double tempStep) {
+    operation = new PTphaseEnvelopeNew3(system, minPressure, maxPressure, minTemp, maxTemp,
+        pressureStep, tempStep);
+    operation.run();
+  }
+
+  /**
    * <p>
    * OLGApropTable.
    * </p>
@@ -1662,13 +1782,25 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void OLGApropTable(double minTemp, double maxTemp, int temperatureSteps, double minPres,
       double maxPres, int pressureSteps, String filename, int TABtype) {
-    operation = new OLGApropertyTableGeneratorWaterStudents(system);
-    ((OLGApropertyTableGeneratorWaterStudents) operation).setFileName(filename);
-    ((OLGApropertyTableGeneratorWaterStudents) operation).setPressureRange(minPres, maxPres,
-        pressureSteps);
-    ((OLGApropertyTableGeneratorWaterStudents) operation).setTemperatureRange(minTemp, maxTemp,
-        temperatureSteps);
-    getOperation().run();
+    if (TABtype == 0) {
+      operation = new OLGApropertyTableGeneratorWaterKeywordFormat(system);
+
+      ((OLGApropertyTableGeneratorWaterKeywordFormat) operation).setPressureRange(minPres, maxPres,
+          pressureSteps);
+      ((OLGApropertyTableGeneratorWaterKeywordFormat) operation).setTemperatureRange(minTemp,
+          maxTemp, temperatureSteps);
+      ((OLGApropertyTableGeneratorWaterKeywordFormat) operation).run();
+      ((OLGApropertyTableGeneratorWaterKeywordFormat) operation).writeOLGAinpFile(filename);
+    } else {
+      operation = new OLGApropertyTableGeneratorWaterStudents(system);
+      ((OLGApropertyTableGeneratorWaterStudents) operation).setFileName(filename);
+      ((OLGApropertyTableGeneratorWaterStudents) operation).setPressureRange(minPres, maxPres,
+          pressureSteps);
+      ((OLGApropertyTableGeneratorWaterStudents) operation).setTemperatureRange(minTemp, maxTemp,
+          temperatureSteps);
+      getOperation().run();
+      ((OLGApropertyTableGeneratorWaterStudents) operation).writeOLGAinpFile(filename);
+    }
   }
 
   /**
