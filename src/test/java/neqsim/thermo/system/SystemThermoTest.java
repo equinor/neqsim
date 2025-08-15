@@ -38,8 +38,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
    */
   @Test
   public void testCp() {
-    neqsim.thermo.system.SystemPrEos testSystem =
-        new neqsim.thermo.system.SystemPrEos(273.15 + 40.0, 1.0);
+    neqsim.thermo.system.SystemPrEos testSystem = new neqsim.thermo.system.SystemPrEos(273.15 + 40.0, 1.0);
     testSystem.addComponent("methane", 10.01);
     testSystem.addTBPfraction("C20", 10.68, 0.3, 0.85);
     testSystem.setMixingRule("classic");
@@ -199,11 +198,10 @@ class SystemThermoTest extends neqsim.NeqSimTest {
     testSystem.addComponent("NaCl", 0.05);
     testSystem.setMixingRule("classic");
 
-
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    testSystem.prettyPrint();
+    // testSystem.prettyPrint();
     double density = testSystem.getDensity("kg/m3");
 
     assertEquals(1109.7640, testSystem.getPhase(PhaseType.AQUEOUS).getDensity("kg/m3"), 1e-2);
