@@ -89,7 +89,8 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
       if (comp.getName().equalsIgnoreCase("water")) {
         wH2O = w;
         // Try a more accurate density from NeqSim's pure-component function
-        double pureWaterDensity = 1000.0;// comp.getPureComponentLiquidDensity(tempK);
+        double pureWaterDensity = calculatePureWaterDensity(liquidPhase.getPhase().getTemperature(),
+            liquidPhase.getPhase().getPressure());
         if (pureWaterDensity > 1e-8) {
           rhoWater = pureWaterDensity;
         }
@@ -144,5 +145,59 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
     double denominator = (c0 * wSalt + c1) * Math.exp(1.0e-6 * Math.pow(temperatureC + c4, 2.0));
 
     return numerator / denominator; // in m^3/kg if parameters are consistent
+  }
+
+  /**
+   * Density of pure liquid water from IAPWS-IF97 Region 1. Inputs: temperatureK — absolute
+   * temperature [K] pressureBar — absolute pressure [bar] Returns: density [kg/m^3]
+   *
+   * Valid (Region 1): 273.15 K ≤ T ≤ 623.15 K and p ≥ p_sat(T) up to 1000 bar. This is the
+   * compressed-/subcooled-liquid region. For steam or T>623 K, use other IF97 regions.
+   */
+  public static double calculatePureWaterDensity(double temperatureK, double pressureBar) {
+    if (temperatureK <= 0.0 || pressureBar <= 0.0) {
+      throw new IllegalArgumentException("Temperature [K] and pressure [bar] must be positive.");
+    }
+
+    // Constants (IF97)
+    final double RkJ = 0.461526; // specific gas constant for water [kJ/(kg·K)]
+    final double pStarMPa = 16.53; // Region 1 pressure scaling [MPa]
+    final double TStarK = 1386.0; // Region 1 temperature scaling [K]
+
+    // Coefficients for Region 1 (Table 2 in IF97)
+    final int[] I = {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5,
+        8, 8, 21, 23, 29, 30, 31, 32};
+    final int[] J = {-2, -1, 0, 1, 2, 3, 4, 5, -9, -7, -1, 0, 1, 3, -3, 0, 1, 3, 17, -4, 0, 6, -5,
+        -2, 10, -8, -11, -6, -29, -31, -38, -39, -40, -41};
+    final double[] n = {0.14632971213167, -0.84548187169114, -0.37563603672040e1,
+        0.33855169168385e1, -0.95791963387872, 0.15772038513228e-1, -0.16616417199501e-1,
+        0.81214629983568e-3, 0.28319080123804e-3, -0.60706301565874e-3, -0.18990068218419e-1,
+        -0.32529748770505e-1, -0.21841717175414e-1, -0.52838357969930e-4, -0.47184321073267e-3,
+        -0.30001780793026e-3, 0.47661393906987e-4, -0.44141845330846e-5, -0.72694996297594e-15,
+        -0.31679644845054e-4, -0.28270797985312e-5, -0.85205128120103e-9, -0.22425281908000e-5,
+        -0.65171222895601e-6, -0.14341729937924e-12, -0.40516996860117e-6, -0.12734301741641e-8,
+        -0.17424871230634e-9, -0.68762131295531e-18, 0.14478307828521e-19, 0.26335781662795e-22,
+        -0.11947622640071e-22, 0.18228094581404e-23, -0.93537087292458e-25};
+
+    // Reduced variables
+    final double pMPa = pressureBar * 0.1; // bar -> MPa
+    final double pi = pMPa / pStarMPa;
+    final double tau = TStarK / temperatureK;
+
+    // γ_π (partial derivative of dimensionless Gibbs energy wrt π) — Table 4
+    double gamma_pi = 0.0;
+    for (int k = 0; k < n.length; k++) {
+      if (I[k] == 0)
+        continue; // term vanishes because multiplied by I[k]
+      gamma_pi += -n[k] * I[k] * Math.pow(7.1 - pi, I[k] - 1) * Math.pow(tau - 1.222, J[k]);
+    }
+
+    // Specific volume from Table 3: v * p / (R*T) = pi * gamma_pi
+    // Use p in kPa with R in kJ so that 1 kPa·m^3 = 1 kJ
+    final double p_kPa = pressureBar * 100.0; // bar -> kPa
+    final double v = (RkJ * temperatureK / p_kPa) * (pi * gamma_pi); // [m^3/kg]
+
+    // Density
+    return 1.0 / v; // [kg/m^3]
   }
 }
