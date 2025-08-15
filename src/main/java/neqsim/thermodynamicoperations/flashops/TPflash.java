@@ -73,7 +73,8 @@ public class TPflash extends Flash {
     deviation = 0;
 
     for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+      if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+          || system.getPhase(0).getComponent(i).isIsIon()) {
         Kold = system.getPhase(0).getComponent(i).getK();
         system.getPhase(0).getComponent(i).setK(1.0e-40);
         system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());

@@ -72,11 +72,13 @@ public class TPmultiflashWAX extends TPflash {
               / system.getPhase(k).getComponent(i).getFugacityCoefficient());
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            && system.getPhase(k).getType() != PhaseType.AQUEOUS) {
+            || system.getPhase(0).getComponent(i).isIsIon()
+                && system.getPhase(k).getType() != PhaseType.AQUEOUS) {
           system.getPhase(k).getComponent(i).setx(1e-50);
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            && system.getPhase(k).getType() == PhaseType.AQUEOUS) {
+            || system.getPhase(0).getComponent(i).isIsIon()
+                && system.getPhase(k).getType() == PhaseType.AQUEOUS) {
           system.getPhase(k).getComponent(i)
               .setx(system.getPhase(k).getComponent(i).getNumberOfmoles()
                   / system.getPhase(k).getNumberOfMolesInPhase());
