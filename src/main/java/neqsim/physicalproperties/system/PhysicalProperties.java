@@ -229,6 +229,9 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
       viscosityCalc = new MuznyModViscosityMethod(this);
     } else if ("MethaneModel".equals(model)) {
       viscosityCalc = new MethaneViscosityMethod(this);
+    } else if ("Salt Water".equals(model)) {
+      viscosityCalc =
+          new neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.Water(this);
     }
   }
 
