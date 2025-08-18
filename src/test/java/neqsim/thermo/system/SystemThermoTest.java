@@ -192,7 +192,7 @@ class SystemThermoTest extends neqsim.NeqSimTest {
 
   @Test
   void waterNaClTest() {
-    testSystem = new neqsim.thermo.system.SystemSrkEos(298.15, 1.0);
+    neqsim.thermo.system.SystemSrkEos testSystem = new neqsim.thermo.system.SystemSrkEos(298.15, 1.0);
     testSystem.addComponent("methane", 0.01);
     testSystem.addComponent("water", 0.99);
     testSystem.addComponent("NaCl", 0.05);
