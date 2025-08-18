@@ -2,6 +2,7 @@ package neqsim.pvtsimulation.simulation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
+import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -44,11 +45,9 @@ public class ViscositySimTest {
     sys.addComponent("water", nWater);
     sys.addComponent("NaCl", nNaCl);
     sys.init(0);
-
+    sys.setPhysicalPropertyModel(PhysicalPropertyModel.SALT_WATER);
     ThermodynamicOperations ops = new ThermodynamicOperations(sys);
     ops.TPflash(); // ensure single liquid phase
-
-    sys.getPhase(PhaseType.AQUEOUS).getPhysicalProperties().setViscosityModel("Salt Water");
     sys.initPhysicalProperties();
 
     double mu = sys.getPhase(PhaseType.AQUEOUS).getPhysicalProperties().getViscosity(); // Pa·s
@@ -67,14 +66,23 @@ public class ViscositySimTest {
 
     sys.addComponent("water", nWater);
     sys.addComponent("CaCl2", nCaCl2);
+    sys.setMixingRule("classic");
     sys.init(0);
 
+    sys.setPhysicalPropertyModel(PhysicalPropertyModel.SALT_WATER);
     ThermodynamicOperations ops = new ThermodynamicOperations(sys);
     ops.TPflash();
-    sys.getPhase(PhaseType.AQUEOUS).getPhysicalProperties().setViscosityModel("Salt Water");
     sys.initPhysicalProperties();
-
     double mu = sys.getPhase("aqueous").getPhysicalProperties().getViscosity(); // Pa·s
-    assertEquals(3.07e-3, mu, 6e-5);
+    assertEquals(3.07e-3, mu, 6e-6);
+
+    sys.addComponent("methane", 1);
+    sys.setMixingRule("classic");
+
+    ops = new ThermodynamicOperations(sys);
+    ops.TPflash();
+    sys.initPhysicalProperties();
+    mu = sys.getPhase("aqueous").getPhysicalProperties().getViscosity(); // Pa·s
+    assertEquals(3.07e-3, mu, 6e-6);
   }
 }

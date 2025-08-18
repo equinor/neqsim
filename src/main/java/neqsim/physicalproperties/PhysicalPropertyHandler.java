@@ -10,6 +10,7 @@ import neqsim.physicalproperties.system.liquidphysicalproperties.AminePhysicalPr
 import neqsim.physicalproperties.system.liquidphysicalproperties.CO2waterPhysicalProperties;
 import neqsim.physicalproperties.system.liquidphysicalproperties.GlycolPhysicalProperties;
 import neqsim.physicalproperties.system.liquidphysicalproperties.LiquidPhysicalProperties;
+import neqsim.physicalproperties.system.liquidphysicalproperties.SaltWaterPhysicalProperties;
 import neqsim.physicalproperties.system.liquidphysicalproperties.WaterPhysicalProperties;
 import neqsim.physicalproperties.system.solidphysicalproperties.SolidPhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
@@ -61,6 +62,11 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
         oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
         aqueousPhysicalProperties = new WaterPhysicalProperties(phase, 0, 0);
+        break;
+      case SALT_WATER: // Water
+        gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
+        oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
+        aqueousPhysicalProperties = new SaltWaterPhysicalProperties(phase, 0, 0);
         break;
       case GLYCOL: // Glycol
         gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);

@@ -10,7 +10,7 @@ import neqsim.util.exception.InvalidInputException;
  * @author ASMF
  */
 public enum PhysicalPropertyModel {
-  DEFAULT(0), WATER(1), GLYCOL(2), AMINE(3), CO2WATER(4), BASIC(6);
+  DEFAULT(0), WATER(1), GLYCOL(2), AMINE(3), CO2WATER(4), BASIC(6), SALT_WATER(7);
 
   /** Holder for old style integer pt. */
   private final int value;
