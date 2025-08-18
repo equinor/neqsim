@@ -52,6 +52,9 @@ public class ViscositySimTest {
 
     double mu = sys.getPhase(PhaseType.AQUEOUS).getPhysicalProperties().getViscosity(); // Pa·s
     assertEquals(9.38e-4, mu, 1.5e-6);
+
+    double density = sys.getPhase(PhaseType.AQUEOUS).getPhysicalProperties().getDensity(); // kg/m³
+    assertEquals(1020.82045364, density, 1.5e-2);
   }
 
   /**

@@ -6,7 +6,6 @@
 
 package neqsim.physicalproperties.system.liquidphysicalproperties;
 
-import neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.Water;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -33,6 +32,9 @@ public class SaltWaterPhysicalProperties extends WaterPhysicalProperties {
   public SaltWaterPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
     super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
-    viscosityCalc = new Water(this);
+    viscosityCalc =
+        new neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.Water(this);
+    densityCalc =
+        new neqsim.physicalproperties.methods.liquidphysicalproperties.density.Water(this);
   }
 }
