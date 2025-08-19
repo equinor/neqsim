@@ -584,7 +584,8 @@ public class EclipseFluidReadWrite {
         }
         if (st.trim().equals("SSHIFTS")) {
           String line;
-          while ((line = br.readLine().trim()) != null) {
+          while ((line = br.readLine()) != null) {
+            line = line.trim();
             st = line.replace("/", "");
             if (st.startsWith("--") || st.isEmpty()) {
               break;
@@ -733,11 +734,11 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> MW = new ArrayList<>();
       ArrayList<Double> ZI = new ArrayList<>();
 
-      while ((line = br.readLine().trim()) != null) {
+      while ((line = br.readLine()) != null) {
         line = line.trim(); // Ensure trimming of whitespace
 
         if (line.equals("CNAMES")) {
-          while ((line = br.readLine().trim()) != null) {
+          while ((line = br.readLine()) != null) {
             line = line.trim();
             if (line.endsWith("/")) {
               names.add(line.substring(0, line.length() - 1).trim());
@@ -746,7 +747,7 @@ public class EclipseFluidReadWrite {
             names.add(line);
           }
         } else if (line.equals("TCRIT")) {
-          while ((line = br.readLine().trim()) != null) {
+          while ((line = br.readLine()) != null) {
             line = line.trim();
             if (line.endsWith("/")) {
               TC.add(Double.parseDouble(line.substring(0, line.length() - 1).trim()));
@@ -755,7 +756,7 @@ public class EclipseFluidReadWrite {
             TC.add(Double.parseDouble(line));
           }
         } else if (line.equals("PCRIT")) {
-          while ((line = br.readLine().trim()) != null) {
+          while ((line = br.readLine()) != null) {
             line = line.trim();
             if (line.endsWith("/")) {
               PC.add(Double.parseDouble(line.substring(0, line.length() - 1).trim()));
@@ -764,7 +765,7 @@ public class EclipseFluidReadWrite {
             PC.add(Double.parseDouble(line));
           }
         } else if (line.equals("ACF")) {
-          while ((line = br.readLine().trim()) != null) {
+          while ((line = br.readLine()) != null) {
             line = line.trim();
             if (line.endsWith("/")) {
               ACF.add(Double.parseDouble(line.substring(0, line.length() - 1).trim()));
@@ -773,7 +774,7 @@ public class EclipseFluidReadWrite {
             ACF.add(Double.parseDouble(line));
           }
         } else if (line.equals("MW")) {
-          while ((line = br.readLine().trim()) != null) {
+          while ((line = br.readLine()) != null) {
             line = line.trim();
             if (line.endsWith("/")) {
               MW.add(Double.parseDouble(line.substring(0, line.length() - 1).trim()));
@@ -782,7 +783,7 @@ public class EclipseFluidReadWrite {
             MW.add(Double.parseDouble(line));
           }
         } else if (line.equals("ZI")) {
-          while ((line = br.readLine().trim()) != null) {
+          while ((line = br.readLine()) != null) {
             line = line.trim();
             if (line.endsWith("/")) {
               ZI.add(Double.parseDouble(line.substring(0, line.length() - 1).trim()));

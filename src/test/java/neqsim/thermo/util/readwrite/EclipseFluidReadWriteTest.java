@@ -27,6 +27,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   String fluid_water = file.getAbsolutePath() + "/fluid_water.E300";
   String file_brd = file.getAbsolutePath() + "/Brd.e300";
   String delete = file.getAbsolutePath() + "/deleteme.e300";
+  String example = file.getAbsolutePath() + "/example.e300";
 
   @Test
   void testReadBrd() throws IOException {
@@ -300,5 +301,14 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(3, throttlingValve.getOutletStream().getFluid().getNumberOfPhases());
     Assertions.assertEquals(54.5362976,
         throttlingValve.getOutletStream().getFluid().getTemperature("C"), 1e-3);
+  }
+
+
+  @Test
+  void testSetAllocationComposition2() throws IOException {
+    String[] fluids = new String[] {"A", "B"};
+    testSystem = EclipseFluidReadWrite.read(example, fluids);
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
   }
 }
