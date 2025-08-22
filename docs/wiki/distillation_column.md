@@ -19,6 +19,11 @@ This document outlines how the `DistillationColumn` class in NeqSim solves a mul
    - After each iteration the sum of absolute temperature changes on all trays is used as the convergence measure.
    - Iterations stop when the error falls below `1e-4` or the maximum number of iterations is reached.
 
+   The class also supports a damped variant of the sequential substitution algorithm.
+   The default `SolverType` is `DIRECT_SUBSTITUTION`, but you may activate the damped
+   solver by calling `setSolverType(SolverType.DAMPED_SUBSTITUTION)` and optionally
+   tune the relaxation factor via `setRelaxationFactor(double)`.
+
 4. **Results**
    - Once converged the gas stream from the top tray and the liquid stream from the bottom tray are reported as product streams.
 

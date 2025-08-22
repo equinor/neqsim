@@ -6,6 +6,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class DistillationColumnTest {
@@ -324,6 +325,29 @@ public class DistillationColumnTest {
     column.addFeedStream(feed, 1);
     column.runBroyden(java.util.UUID.randomUUID());
 
+
+    assertEquals(true, column.solved());
+  }
+
+  /**
+   * Basic check that the damped solver converges on a simple system.
+   */
+  @Test
+  public void testDampedSolver() {
+    SystemInterface simpleSystem = new SystemSrkEos(298.15, 5.0);
+    simpleSystem.addComponent("methane", 1.0);
+    simpleSystem.addComponent("ethane", 1.0);
+    simpleSystem.createDatabase(true);
+    simpleSystem.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", simpleSystem);
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("test column", 1, true, true);
+    column.addFeedStream(feed, 1);
+    column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    column.setRelaxationFactor(0.5);
+    column.run();
 
     assertEquals(true, column.solved());
   }

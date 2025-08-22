@@ -51,6 +51,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** Enthalpy balance convergence tolerance. */
   private double enthalpyBalanceTolerance = 1.0e-3;
 
+  /** Available solving strategies for the column. */
+  public enum SolverType {
+    /** Classic sequential substitution without damping. */
+    DIRECT_SUBSTITUTION,
+    /** Sequential substitution with temperature damping. */
+    DAMPED_SUBSTITUTION
+  }
+
+  /** Selected solver algorithm. Defaults to direct substitution. */
+  private SolverType solverType = SolverType.DIRECT_SUBSTITUTION;
+
+  /** Relaxation factor used when {@link SolverType#DAMPED_SUBSTITUTION} is active. */
+  private double relaxationFactor = 0.5;
+
   Mixer feedmixer = new Mixer("temp mixer");
   double bottomTrayPressure = -1.0;
   int numberOfTrays = 1;
@@ -274,6 +288,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   @Override
   public void run(UUID id) {
+    if (solverType == SolverType.DAMPED_SUBSTITUTION) {
+      runDamped(id);
+      return;
+    }
+
     if (feedStreams.isEmpty()) {
       // no feeds, nothing to do
       return;
@@ -514,6 +533,116 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     setCalculationIdentifier(id);
   }
 
+  /**
+   * Solve the column using a damped sequential substitution scheme.
+   *
+   * <p>This method implements a simple relaxation (or damping) of the tray
+   * temperatures between iterations. Literature on tray based distillation
+   * modelling (e.g. Seader, Henley and Roper, <em>Separation Process
+   * Principles</em>) recommends damping to avoid oscillations and improve
+   * convergence when applying the classic inside-out algorithm. A relaxation
+   * factor of 1.0 reproduces the behaviour of {@link #run(UUID)} while smaller
+   * factors provide additional stability.</p>
+   *
+   * @param id calculation identifier
+   */
+  private void runDamped(UUID id) {
+    if (feedStreams.isEmpty()) {
+      return;
+    }
+
+    int firstFeedTrayNumber = feedStreams.keySet().stream().min(Integer::compareTo).get();
+
+    if (bottomTrayPressure < 0) {
+      bottomTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
+    }
+    if (topTrayPressure < 0) {
+      topTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
+    }
+
+    double dp = 0.0;
+    if (numberOfTrays > 1) {
+      dp = (bottomTrayPressure - topTrayPressure) / (numberOfTrays - 1.0);
+    }
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setPressure(bottomTrayPressure - i * dp);
+    }
+
+    if (isDoInitializion()) {
+      this.init();
+    }
+
+    err = 1.0e10;
+    double errOld;
+    int iter = 0;
+    double massErr = 1.0e10;
+    double energyErr = 1.0e10;
+
+    double[] oldtemps = new double[numberOfTrays];
+
+    trays.get(firstFeedTrayNumber).run(id);
+
+    do {
+      iter++;
+      errOld = err;
+      err = 0.0;
+      for (int i = 0; i < numberOfTrays; i++) {
+        oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
+      }
+
+      for (int i = firstFeedTrayNumber; i > 1; i--) {
+        int replaceStream1 = trays.get(i - 1).getNumberOfInputStreams() - 1;
+        trays.get(i - 1).replaceStream(replaceStream1, trays.get(i).getLiquidOutStream());
+        trays.get(i - 1).run(id);
+      }
+
+      int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
+      trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
+      trays.get(0).run(id);
+
+      for (int i = 1; i <= numberOfTrays - 1; i++) {
+        int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
+        if (i == (numberOfTrays - 1)) {
+          replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
+        }
+        trays.get(i).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
+        trays.get(i).run(id);
+      }
+
+      for (int i = numberOfTrays - 2; i >= firstFeedTrayNumber; i--) {
+        int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
+        trays.get(i).replaceStream(replaceStream, trays.get(i + 1).getLiquidOutStream());
+        trays.get(i).run(id);
+      }
+
+      for (int i = 0; i < numberOfTrays; i++) {
+        double updated = trays.get(i).getThermoSystem().getTemperature();
+        double newTemp = oldtemps[i] + relaxationFactor * (updated - oldtemps[i]);
+        trays.get(i).setTemperature(newTemp);
+        err += Math.abs(newTemp - oldtemps[i]);
+      }
+
+      massErr = getMassBalanceError();
+      energyErr = getEnergyBalanceError();
+
+      logger.info(
+          "error iteration = " + iter + "   err = " + err + " massErr= " + massErr + " energyErr= "
+              + energyErr);
+    } while ((err > temperatureTolerance || massErr > massBalanceTolerance
+        || energyErr > enthalpyBalanceTolerance) && err < errOld && iter < maxNumberOfIterations);
+
+    gasOutStream
+        .setThermoSystem(trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
+    gasOutStream.setCalculationIdentifier(id);
+    liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
+    liquidOutStream.setCalculationIdentifier(id);
+
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+  }
+
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
@@ -557,6 +686,24 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     numberOfTrays = tempNumberOfTrays;
     setDoInitializion(true);
     init();
+  }
+
+  /**
+   * Select the algorithm used when solving the column.
+   *
+   * @param solverType choice of solver
+   */
+  public void setSolverType(SolverType solverType) {
+    this.solverType = solverType;
+  }
+
+  /**
+   * Set relaxation factor for the damped solver.
+   *
+   * @param relaxationFactor value between 0 and 1
+   */
+  public void setRelaxationFactor(double relaxationFactor) {
+    this.relaxationFactor = relaxationFactor;
   }
 
   /**
