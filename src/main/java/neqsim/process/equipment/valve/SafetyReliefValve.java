@@ -2,6 +2,7 @@ package neqsim.process.equipment.valve;
 
 import java.io.Serializable;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.valve.SafetyValveMechanicalDesign;
 
 /**
  * Safety/Relief Valve built on top of ThrottlingValve.
@@ -53,7 +54,15 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
   private double maxLiftRatePerSec = 3.0;   // |d(lift)/dt| limit [1/s]
 
   public SafetyReliefValve() { super("SafetyReliefValve"); }
-  public SafetyReliefValve(String name, StreamInterface inletStream) { super(name, inletStream); }
+  public SafetyReliefValve(String name, StreamInterface inletStream) {
+    super(name, inletStream);
+    valveMechanicalDesign = new SafetyValveMechanicalDesign(this);
+  }
+
+  @Override
+  public void initMechanicalDesign() {
+    valveMechanicalDesign = new SafetyValveMechanicalDesign(this);
+  }
 
   // ---------------- Getters / Setters ----------------
   public double getSetPressureBar() { return setPressureBar; }
