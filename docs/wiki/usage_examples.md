@@ -18,3 +18,21 @@ System.out.println("Phase fractions: " + java.util.Arrays.toString(system.getPha
 ```
 
 More detailed examples are available in the test suite under `src/test/java`.
+
+## Wind turbine
+
+The `WindTurbine` unit converts kinetic energy in wind into electrical power using a simple
+actuator-disk formulation. Air density is assumed constant at 1.225 kg/m³ and all inefficiencies
+are lumped into the power coefficient.
+
+```java
+import neqsim.process.equipment.powergeneration.WindTurbine;
+
+WindTurbine turbine = new WindTurbine("turbine");
+turbine.setWindSpeed(12.0);    // m/s
+turbine.setRotorArea(50.0);    // m^2
+turbine.setPowerCoefficient(0.4);
+turbine.run();
+
+System.out.println("Power produced: " + turbine.getPower() + " W");
+```

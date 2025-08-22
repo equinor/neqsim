@@ -10,11 +10,14 @@ import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.electrolyzer.Electrolyzer;
+import neqsim.process.equipment.battery.BatteryStorage;
+import neqsim.process.equipment.powergeneration.SolarPanel;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.ReservoirCVDsim;
 import neqsim.process.equipment.reservoir.ReservoirDiffLibsim;
 import neqsim.process.equipment.reservoir.ReservoirTPsim;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
+import neqsim.process.equipment.powergeneration.WindTurbine;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.splitter.ComponentSplitter;
@@ -125,6 +128,12 @@ public class EquipmentFactory {
         return new FlareStack(name);
       case "electrolyzer":
         return new Electrolyzer(name);
+      case "windturbine":
+        return new WindTurbine(name);
+      case "batterystorage":
+        return new BatteryStorage(name);
+      case "solarpanel":
+        return new SolarPanel(name);
 
       // Add other equipment types here
       default:
