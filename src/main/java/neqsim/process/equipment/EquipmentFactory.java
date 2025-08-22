@@ -11,6 +11,7 @@ import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.electrolyzer.Electrolyzer;
 import neqsim.process.equipment.battery.BatteryStorage;
+import neqsim.process.equipment.powergeneration.SolarPanel;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.ReservoirCVDsim;
 import neqsim.process.equipment.reservoir.ReservoirDiffLibsim;
@@ -128,6 +129,8 @@ public class EquipmentFactory {
         return new Electrolyzer(name);
       case "batterystorage":
         return new BatteryStorage(name);
+      case "solarpanel":
+        return new SolarPanel(name);
 
       // Add other equipment types here
       default:

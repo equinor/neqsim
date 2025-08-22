@@ -19,3 +19,4 @@ This folder holds additional documentation for the NeqSim project. Below are use
 - [Water cooler](water_cooler.md)
 - [Steam heater](steam_heater.md)
 - [Battery storage unit](battery_storage.md)
+- [Solar panel unit operation](solar_panel.md)
