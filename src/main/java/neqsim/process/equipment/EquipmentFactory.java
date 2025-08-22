@@ -9,6 +9,7 @@ import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.electrolyzer.Electrolyzer;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.ReservoirCVDsim;
 import neqsim.process.equipment.reservoir.ReservoirDiffLibsim;
@@ -122,6 +123,8 @@ public class EquipmentFactory {
         return new Flare(name);
       case "flarestack":
         return new FlareStack(name);
+      case "electrolyzer":
+        return new Electrolyzer(name);
 
       // Add other equipment types here
       default:
