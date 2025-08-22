@@ -1,6 +1,7 @@
 package neqsim.process.equipment.valve;
 
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.valve.SafetyValveMechanicalDesign;
 
 /**
  * <p>
@@ -36,6 +37,12 @@ public class SafetyValve extends ThrottlingValve {
    */
   public SafetyValve(String name, StreamInterface inletStream) {
     super(name, inletStream);
+    valveMechanicalDesign = new SafetyValveMechanicalDesign(this);
+  }
+
+  @Override
+  public void initMechanicalDesign() {
+    valveMechanicalDesign = new SafetyValveMechanicalDesign(this);
   }
 
   /**
