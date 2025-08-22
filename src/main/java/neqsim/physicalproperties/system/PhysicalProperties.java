@@ -10,12 +10,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.CO2ConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.diffusivity.CorrespondingStatesDiffusivity;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethodMod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.LBCViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MethaneViscosityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MuznyModViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.MuznyViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
@@ -195,6 +197,8 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
               this);
     } else if ("Chung".equals(model)) {
       conductivityCalc = new ChungConductivityMethod(this);
+    } else if ("CO2Model".equals(model)) {
+      conductivityCalc = new CO2ConductivityMethod(this);
     } else {
       conductivityCalc = new PFCTConductivityMethodMod86(this);
     }
@@ -229,6 +233,8 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
       viscosityCalc = new MuznyModViscosityMethod(this);
     } else if ("MethaneModel".equals(model)) {
       viscosityCalc = new MethaneViscosityMethod(this);
+    } else if ("CO2Model".equals(model)) {
+      viscosityCalc = new CO2ViscosityMethod(this);
     } else if ("Salt Water".equals(model)) {
       viscosityCalc =
           new neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.Water(this);
