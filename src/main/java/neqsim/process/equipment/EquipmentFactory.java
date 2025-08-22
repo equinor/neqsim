@@ -17,6 +17,7 @@ import neqsim.process.equipment.reservoir.ReservoirCVDsim;
 import neqsim.process.equipment.reservoir.ReservoirDiffLibsim;
 import neqsim.process.equipment.reservoir.ReservoirTPsim;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
+import neqsim.process.equipment.powergeneration.WindTurbine;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.splitter.ComponentSplitter;
@@ -127,6 +128,8 @@ public class EquipmentFactory {
         return new FlareStack(name);
       case "electrolyzer":
         return new Electrolyzer(name);
+      case "windturbine":
+        return new WindTurbine(name);
       case "batterystorage":
         return new BatteryStorage(name);
       case "solarpanel":
