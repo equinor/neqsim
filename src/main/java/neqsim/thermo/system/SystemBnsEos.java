@@ -32,7 +32,13 @@ public class SystemBnsEos extends SystemEos {
   private final double[] omegaA;
   private final double[] omegaB;
   private final double[] vshift;
-  private final double[][] cpCoeffs;
+  private double[][] cpCoeffs;
+
+  private final double[] zfractions = new double[5];
+  private double relativeDensity = 0.65;
+  private boolean associatedGas = false;
+  private boolean mixingRuleDefined = false;
+  private boolean componentsInitialized = false;
 
   private static double tcAg(double x) {
     return degRToK(2695.14765 * x / (274.341701 + x) + 343.008);
@@ -98,20 +104,11 @@ public class SystemBnsEos extends SystemEos {
     }
   }
 
-  /**
-   * Constructs a BNS-PR system.
-   *
-   * @param T temperature [K]
-   * @param P pressure [bar]
-   * @param sg overall gas specific gravity
-   * @param yCO2 mole fraction CO2
-   * @param yH2S mole fraction H2S
-   * @param yN2 mole fraction N2
-   * @param yH2 mole fraction H2
-   * @param associatedGas true for associated gas, false for gas condensate
-   */
-  public SystemBnsEos(double T, double P, double sg, double yCO2, double yH2S, double yN2,
-      double yH2, boolean associatedGas) {
+  public SystemBnsEos() {
+    this(288.15, 1.0);
+  }
+
+  public SystemBnsEos(double T, double P) {
     super(T, P, false);
     modelName = "BNS-PR";
     attractiveTermNumber = 1;
@@ -127,19 +124,67 @@ public class SystemBnsEos extends SystemEos {
     omegaA = new double[] {0.427671, 0.436725, 0.457236, 0.457236, 0.457236};
     omegaB = new double[] {0.0696397, 0.0724345, 0.0777961, 0.0777961, 0.0777961};
 
+    for (int i = 0; i < numberOfPhases; i++) {
+      phaseArray[i] = new PhaseBNS(tcs, pcs, mws, acfs, omegaA, omegaB, vshift);
+      phaseArray[i].setTemperature(T);
+      phaseArray[i].setPressure(P);
+    }
+
+    this.useVolumeCorrection(true);
+  }
+
+  /**
+   * Constructs a BNS-PR system with composition.
+   */
+  public SystemBnsEos(double T, double P, double sg, double yCO2, double yH2S, double yN2,
+      double yH2, boolean associatedGas) {
+    this(T, P);
+    this.associatedGas = associatedGas;
+    this.relativeDensity = sg;
+    setComposition(yCO2, yH2S, yN2, yH2);
+  }
+
+  public void setComposition(double yCO2, double yH2S, double yN2, double yH2) {
+    zfractions[0] = yCO2;
+    zfractions[1] = yH2S;
+    zfractions[2] = yN2;
+    zfractions[3] = yH2;
+    componentsInitialized = true;
+    updateComposition();
+  }
+
+  public void setRelativeDensity(double sg) {
+    this.relativeDensity = sg;
+    if (componentsInitialized) {
+      updateComposition();
+    }
+  }
+
+  public void setAssociatedGas(boolean ag) {
+    this.associatedGas = ag;
+    if (componentsInitialized) {
+      updateComposition();
+    }
+  }
+
+  private void updateComposition() {
+    double sum = zfractions[0] + zfractions[1] + zfractions[2] + zfractions[3];
+    zfractions[4] = 1.0 - sum;
+
+    double[] zf = zfractions;
+    double sgHc = hydrocarbonSg(relativeDensity, zf,
+        new double[] {44.01, 34.082, 28.014, 2.016, 0.0});
+    double[] tcpc = pseudoCritical(sgHc, associatedGas);
+    tcs[4] = tcpc[0];
+    pcs[4] = tcpc[1];
+    mws[4] = sgHc * MW_AIR / 1000.0;
+
     double[][] cp = {
         {2.725473196, 0.004103751, 1.5602e-5, -4.19321e-8, 3.10542e-11},
         {4.446031265, -0.005296052, 2.0533e-5, -2.58993e-8, 1.25555e-11},
         {3.423811591, 0.001007461, -4.58491e-6, 8.4252e-9, -4.38083e-12},
         {1.421468418, 0.018192108, -6.04285e-5, 9.08033e-8, -5.18972e-11},
         {5.369051342, -0.014851371, 4.86358e-5, -3.70187e-8, 1.80641e-12}};
-
-    double[] zf = {yCO2, yH2S, yN2, yH2, 1.0 - (yCO2 + yH2S + yN2 + yH2)};
-    double sgHc = hydrocarbonSg(sg, zf, new double[] {44.01, 34.082, 28.014, 2.016, 0.0});
-    double[] tcpc = pseudoCritical(sgHc, associatedGas);
-    tcs[4] = tcpc[0];
-    pcs[4] = tcpc[1];
-    mws[4] = sgHc * MW_AIR / 1000.0;
 
     double hcMw = mws[4] * 1000.0;
     double x = hcMw - MW_CH4;
@@ -159,16 +204,34 @@ public class SystemBnsEos extends SystemEos {
     }
     cpCoeffs = cp;
 
-    for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseBNS(tcs, pcs, mws, acfs, omegaA, omegaB, vshift);
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
-
-    this.useVolumeCorrection(true);
-
     for (int j = 0; j < zf.length; j++) {
-      addBnsComponent(compName(j), zf[j], j);
+      String name = compName(j);
+      if (((PhaseBNS) phaseArray[0]).componentArray[j] != null) {
+        getComponent(name).setNumberOfmoles(zf[j]);
+        for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+          if (phaseArray[i] instanceof PhaseBNS) {
+            ComponentBNS comp = (ComponentBNS) ((PhaseBNS) phaseArray[i]).componentArray[j];
+            if (comp != null) {
+              comp.setNumberOfMolesInPhase(zf[j]);
+              comp.setCpA(cpCoeffs[j][0]);
+              comp.setCpB(cpCoeffs[j][1]);
+              comp.setCpC(cpCoeffs[j][2]);
+              comp.setCpD(cpCoeffs[j][3]);
+              comp.setCpE(cpCoeffs[j][4]);
+              comp.setTC(tcs[j]);
+              comp.setPC(pcs[j]);
+              comp.setMolarMass(mws[j]);
+            }
+          }
+        }
+      } else {
+        addBnsComponent(name, zf[j], j);
+      }
+    }
+    setTotalNumberOfMoles(1.0);
+
+    if (mixingRuleDefined) {
+      applyBnsBips();
     }
   }
 
@@ -196,6 +259,7 @@ public class SystemBnsEos extends SystemEos {
   @Override
   public void setMixingRule(int type) {
     super.setMixingRule(type);
+    mixingRuleDefined = true;
     applyBnsBips();
   }
 

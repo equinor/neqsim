@@ -8,7 +8,12 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class SystemBnsEosParityTest {
   @Test
   public void testProperties10Bar() {
-    SystemBnsEos sys = new SystemBnsEos(300.0, 10.0, 0.65, 0.02, 0.0, 0.01, 0.0, false);
+    SystemBnsEos sys = new SystemBnsEos();
+    sys.setTemperature(300.0);
+    sys.setPressure(10.0);
+    sys.setAssociatedGas(false);
+    sys.setRelativeDensity(0.65);
+    sys.setComposition(0.02, 0.0, 0.01, 0.0);
     sys.useVolumeCorrection(true);
     sys.setMixingRule(2);
     ThermodynamicOperations ops = new ThermodynamicOperations(sys);
@@ -28,7 +33,12 @@ public class SystemBnsEosParityTest {
 
   @Test
   public void testProperties100Bar() {
-    SystemBnsEos sys = new SystemBnsEos(300.0, 100.0, 0.65, 0.02, 0.0, 0.01, 0.0, false);
+    SystemBnsEos sys = new SystemBnsEos();
+    sys.setTemperature(300.0);
+    sys.setPressure(100.0);
+    sys.setAssociatedGas(false);
+    sys.setRelativeDensity(0.65);
+    sys.setComposition(0.02, 0.0, 0.01, 0.0);
     sys.useVolumeCorrection(true);
     sys.setMixingRule(2);
     ThermodynamicOperations ops = new ThermodynamicOperations(sys);
