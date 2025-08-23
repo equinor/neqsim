@@ -22,8 +22,7 @@ public class SystemBnsEos extends SystemEos {
   private static final double MW_CH4 = 16.0425;
   private static final double TcCH4 = degRToK(343.008);
   private static final double PcCH4 = psiaToBar(667.029);
-  private static final double VcZcCH4 =
-      ThermodynamicConstantsInterface.R * TcCH4 / (PcCH4 * 1.0e5);
+  private static final double VcZcCH4 = ThermodynamicConstantsInterface.R * TcCH4 / (PcCH4 * 1.0e5);
 
   private final double[] tcs;
   private final double[] pcs;
@@ -113,11 +112,9 @@ public class SystemBnsEos extends SystemEos {
     modelName = "BNS-PR";
     attractiveTermNumber = 1;
 
-    tcs = new double[] {degRToK(547.416), degRToK(672.120), degRToK(227.160), degRToK(47.430),
-        1.0};
-    pcs =
-        new double[] {psiaToBar(1069.51), psiaToBar(1299.97), psiaToBar(492.84), psiaToBar(187.53),
-            1.0};
+    tcs = new double[] {degRToK(547.416), degRToK(672.120), degRToK(227.160), degRToK(47.430), 1.0};
+    pcs = new double[] {psiaToBar(1069.51), psiaToBar(1299.97), psiaToBar(492.84),
+        psiaToBar(187.53), 1.0};
     mws = new double[] {44.01 / 1000.0, 34.082 / 1000.0, 28.014 / 1000.0, 2.016 / 1000.0, 0.0};
     acfs = new double[] {0.12253, 0.04909, 0.037, -0.217, -0.03899};
     vshift = new double[] {-0.27607, -0.22901, -0.21066, -0.36270, -0.19076};
@@ -144,6 +141,31 @@ public class SystemBnsEos extends SystemEos {
     setComposition(yCO2, yH2S, yN2, yH2);
   }
 
+  /**
+   * Sets the composition and associated gas flag for the system.
+   *
+   * @param sg relative density
+   * @param yCO2 mole fraction of CO2
+   * @param yH2S mole fraction of H2S
+   * @param yN2 mole fraction of N2
+   * @param yH2 mole fraction of H2
+   * @param ag true if associated gas, false otherwise
+   */
+  public void setComposition(double sg, double yCO2, double yH2S, double yN2, double yH2,
+      boolean ag) {
+    this.relativeDensity = sg;
+    this.associatedGas = ag;
+    setComposition(yCO2, yH2S, yN2, yH2);
+  }
+
+  /**
+   * Sets the composition of the system using mole fractions of CO2, H2S, N2, and H2.
+   *
+   * @param yCO2 mole fraction of CO2
+   * @param yH2S mole fraction of H2S
+   * @param yN2 mole fraction of N2
+   * @param yH2 mole fraction of H2
+   */
   public void setComposition(double yCO2, double yH2S, double yN2, double yH2) {
     zfractions[0] = yCO2;
     zfractions[1] = yH2S;
@@ -172,15 +194,14 @@ public class SystemBnsEos extends SystemEos {
     zfractions[4] = 1.0 - sum;
 
     double[] zf = zfractions;
-    double sgHc = hydrocarbonSg(relativeDensity, zf,
-        new double[] {44.01, 34.082, 28.014, 2.016, 0.0});
+    double sgHc =
+        hydrocarbonSg(relativeDensity, zf, new double[] {44.01, 34.082, 28.014, 2.016, 0.0});
     double[] tcpc = pseudoCritical(sgHc, associatedGas);
     tcs[4] = tcpc[0];
     pcs[4] = tcpc[1];
     mws[4] = sgHc * MW_AIR / 1000.0;
 
-    double[][] cp = {
-        {2.725473196, 0.004103751, 1.5602e-5, -4.19321e-8, 3.10542e-11},
+    double[][] cp = {{2.725473196, 0.004103751, 1.5602e-5, -4.19321e-8, 3.10542e-11},
         {4.446031265, -0.005296052, 2.0533e-5, -2.58993e-8, 1.25555e-11},
         {3.423811591, 0.001007461, -4.58491e-6, 8.4252e-9, -4.38083e-12},
         {1.421468418, 0.018192108, -6.04285e-5, 9.08033e-8, -5.18972e-11},
@@ -244,8 +265,8 @@ public class SystemBnsEos extends SystemEos {
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       if (phaseArray[i] != null) {
         ComponentBNS comp = new ComponentBNS(name, moles, moles, compIndex, tcs[compIndex],
-            pcs[compIndex], mws[compIndex], acfs[compIndex], omegaA[compIndex],
-            omegaB[compIndex], vshift[compIndex]);
+            pcs[compIndex], mws[compIndex], acfs[compIndex], omegaA[compIndex], omegaB[compIndex],
+            vshift[compIndex]);
         comp.setCpA(cpCoeffs[compIndex][0]);
         comp.setCpB(cpCoeffs[compIndex][1]);
         comp.setCpC(cpCoeffs[compIndex][2]);
