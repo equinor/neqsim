@@ -44,11 +44,16 @@ public class PhaseBNS extends PhasePrEos {
     double[] tcsPair = {tpcHc, tpcHc, tpcHc, tpcHc, degRToK(547.416), degRToK(547.416),
         degRToK(547.416), degRToK(672.12), degRToK(672.12), degRToK(227.16)};
     EosMixingRulesInterface mix = getMixingRule();
+    mix.setCalcEOSInteractionParameters(true);
     for (int k = 0; k < pairs.length; k++) {
       int i = pairs[k][0];
       int j = pairs[k][1];
       double kij = consts[k] + slopes[k] * tcsPair[k] / temperature;
+      double dkijdT = -slopes[k] * tcsPair[k] / (temperature * temperature);
       mix.setBinaryInteractionParameter(i, j, kij);
+      mix.setBinaryInteractionParameter(j, i, kij);
+      mix.setBinaryInteractionParameterT1(i, j, dkijdT);
+      mix.setBinaryInteractionParameterT1(j, i, dkijdT);
     }
   }
 
