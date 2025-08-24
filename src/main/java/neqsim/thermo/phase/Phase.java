@@ -1036,31 +1036,66 @@ public abstract class Phase implements PhaseInterface {
     return getCp0() * numberOfMolesInPhase + this.getCpres();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Calculates the heat capacity at constant pressure (Cp) in the specified units. {@inheritDoc}
+   */
   @Override
   public double getCp(String unit) {
-    double refCp = getCp(); // Cp in J/K
-    double conversionFactor = 1.0;
+    // The reference heat capacity (refCp) is the total heat capacity for the phase in J/K.
+    double refCp = getCp();
+
     switch (unit) {
       case "J/K":
-        conversionFactor = 1.0;
-        break;
+        // No conversion needed as the base unit is J/K.
+        return refCp;
+
       case "J/molK":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase();
-        break;
-      case "J/kgK":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass();
-        break;
-      case "kJ/kgK":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
-        break;
-      case "btu/lbmole-F":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0 * 0.2388;
-        break;
+        // To get molar heat capacity, divide the total heat capacity by the number of moles.
+        if (getNumberOfMolesInPhase() == 0) {
+          throw new ArithmeticException(
+              "Number of moles in phase cannot be zero for J/molK conversion.");
+        }
+        return refCp / getNumberOfMolesInPhase();
+
+      case "J/kgK": {
+        // To get specific heat capacity, divide the total heat capacity by the total mass.
+        // Total mass = moles in phase * molar mass (in kg/mol).
+        double totalMass = getNumberOfMolesInPhase() * getMolarMass();
+        if (totalMass == 0) {
+          throw new ArithmeticException("Total mass cannot be zero for J/kgK conversion.");
+        }
+        return refCp / totalMass;
+      }
+
+      case "kJ/kgK": {
+        // Same as J/kgK, but with an additional conversion from J to kJ.
+        double totalMass = getNumberOfMolesInPhase() * getMolarMass();
+        if (totalMass == 0) {
+          throw new ArithmeticException("Total mass cannot be zero for kJ/kgK conversion.");
+        }
+        // Divide by total mass for specific heat capacity, and by 1000 for kJ.
+        return refCp / totalMass / 1000.0;
+      }
+
+      case "btu/lbmole-F": {
+        // This conversion is performed from the molar heat capacity (J/molK).
+        if (getNumberOfMolesInPhase() == 0) {
+          throw new ArithmeticException(
+              "Number of moles in phase cannot be zero for btu/lbmole-F conversion.");
+        }
+        double molarCp = refCp / getNumberOfMolesInPhase(); // Cp in J/molK
+
+        // CORRECTION: The factor 2.39006E-4 is for mass-based units (J/kgK).
+        // The correct factor for molar-based units (J/molK) is 0.239006.
+        final double J_PER_MOLK_TO_BTU_PER_LBMOLEF = 0.239006;
+
+        return molarCp * J_PER_MOLK_TO_BTU_PER_LBMOLEF;
+      }
+
       default:
-        throw new RuntimeException("unit not supported " + unit);
+        // Throw an exception if the requested unit is not supported.
+        throw new IllegalArgumentException("Unit not supported: " + unit);
     }
-    return refCp * conversionFactor;
   }
 
   /** {@inheritDoc} */
@@ -1069,31 +1104,66 @@ public abstract class Phase implements PhaseInterface {
     return getCp0() * numberOfMolesInPhase - R * numberOfMolesInPhase + getCvres();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Calculates the heat capacity at constant volume (Cv) in the specified units. {@inheritDoc}
+   */
   @Override
   public double getCv(String unit) {
-    double refCv = getCv(); // Cv in J/K
-    double conversionFactor = 1.0;
+    // The reference heat capacity (refCv) is the total heat capacity for the phase in J/K.
+    double refCv = getCv();
+
     switch (unit) {
       case "J/K":
-        conversionFactor = 1.0;
-        break;
+        // No conversion needed as the base unit is J/K.
+        return refCv;
+
       case "J/molK":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase();
-        break;
-      case "J/kgK":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass();
-        break;
-      case "kJ/kgK":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
-        break;
-      case "btu/lbmole-F":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0 * 0.2388;
-        break;
+        // To get molar heat capacity, divide the total heat capacity by the number of moles.
+        if (getNumberOfMolesInPhase() == 0) {
+          throw new ArithmeticException(
+              "Number of moles in phase cannot be zero for J/molK conversion.");
+        }
+        return refCv / getNumberOfMolesInPhase();
+
+      case "J/kgK": {
+        // To get specific heat capacity, divide the total heat capacity by the total mass.
+        // Total mass = moles in phase * molar mass (in kg/mol).
+        double totalMass = getNumberOfMolesInPhase() * getMolarMass();
+        if (totalMass == 0) {
+          throw new ArithmeticException("Total mass cannot be zero for J/kgK conversion.");
+        }
+        return refCv / totalMass;
+      }
+
+      case "kJ/kgK": {
+        // Same as J/kgK, but with an additional conversion from J to kJ.
+        double totalMass = getNumberOfMolesInPhase() * getMolarMass();
+        if (totalMass == 0) {
+          throw new ArithmeticException("Total mass cannot be zero for kJ/kgK conversion.");
+        }
+        // Divide by total mass for specific heat capacity, and by 1000 for kJ.
+        return refCv / totalMass / 1000.0;
+      }
+
+      case "btu/lbmole-F": {
+        // This conversion is performed from the molar heat capacity (J/molK).
+        if (getNumberOfMolesInPhase() == 0) {
+          throw new ArithmeticException(
+              "Number of moles in phase cannot be zero for btu/lbmole-F conversion.");
+        }
+        double molarCv = refCv / getNumberOfMolesInPhase(); // Cv in J/molK
+
+        // CORRECTION: The factor 2.39006E-4 is for mass-based units (J/kgK).
+        // The correct factor for molar-based units (J/molK) is 0.239006.
+        final double J_PER_MOLK_TO_BTU_PER_LBMOLEF = 0.239006;
+
+        return molarCv * J_PER_MOLK_TO_BTU_PER_LBMOLEF;
+      }
+
       default:
-        throw new RuntimeException("unit not supported " + unit);
+        // Throw an exception if the requested unit is not supported.
+        throw new IllegalArgumentException("Unit not supported: " + unit);
     }
-    return refCv * conversionFactor;
   }
 
   /** {@inheritDoc} */
@@ -1114,35 +1184,67 @@ public abstract class Phase implements PhaseInterface {
     return getHID() * numberOfMolesInPhase + this.getHresTP();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Calculates the enthalpy in the specified units. {@inheritDoc}
+   */
   @Override
   public double getEnthalpy(String unit) {
-    double refEnthalpy = getEnthalpy(); // enthalpy in J
-    double conversionFactor = 1.0;
+    // The reference enthalpy (refEnthalpy) is the total enthalpy for the phase in Joules.
+    double refEnthalpy = getEnthalpy();
+
     switch (unit) {
       case "J":
-        conversionFactor = 1.0;
-        break;
-      case "kJ/kmol":
-      case "J/mol":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase();
-        break;
-      case "J/kg":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass();
-        break;
-      case "kJ/kg":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
-        break;
-      case "Btu/lbmol":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase() * 0.429923;
-        break;
+        // No conversion needed.
+        return refEnthalpy;
+
       case "Btu":
-        conversionFactor = 0.00094781712;
-        break;
+        // 1 J = 0.000947817 Btu
+        final double J_TO_BTU = 0.000947817;
+        return refEnthalpy * J_TO_BTU;
+
+      case "J/mol":
+      case "kJ/kmol": { // Note: J/mol and kJ/kmol are numerically equivalent units.
+        if (getNumberOfMolesInPhase() == 0) {
+          throw new ArithmeticException(
+              "Number of moles in phase cannot be zero for molar enthalpy conversion.");
+        }
+        return refEnthalpy / getNumberOfMolesInPhase();
+      }
+
+      case "J/kg": {
+        // To get specific enthalpy, divide total enthalpy by total mass.
+        // Total mass = moles in phase * molar mass (in kg/mol).
+        double totalMass = getNumberOfMolesInPhase() * getMolarMass();
+        if (totalMass == 0) {
+          throw new ArithmeticException("Total mass cannot be zero for J/kg conversion.");
+        }
+        return refEnthalpy / totalMass;
+      }
+
+      case "kJ/kg": {
+        double totalMass = getNumberOfMolesInPhase() * getMolarMass();
+        if (totalMass == 0) {
+          throw new ArithmeticException("Total mass cannot be zero for kJ/kg conversion.");
+        }
+        // Divide by total mass for specific enthalpy, and by 1000 for kJ.
+        return refEnthalpy / totalMass / 1000.0;
+      }
+
+      case "Btu/lbmol": {
+        if (getNumberOfMolesInPhase() == 0) {
+          throw new ArithmeticException(
+              "Number of moles in phase cannot be zero for Btu/lbmol conversion.");
+        }
+        double molarEnthalpy = refEnthalpy / getNumberOfMolesInPhase(); // Enthalpy in J/mol
+        // 1 J/mol = 0.429923 Btu/lbmol
+        final double J_PER_MOL_TO_BTU_PER_LBMOL = 0.429923;
+        return molarEnthalpy * J_PER_MOL_TO_BTU_PER_LBMOL;
+      }
+
       default:
-        throw new RuntimeException("unit not supported " + unit);
+        // Use a more specific exception for an invalid argument.
+        throw new IllegalArgumentException("Unit not supported: " + unit);
     }
-    return refEnthalpy * conversionFactor;
   }
 
   /** {@inheritDoc} */
@@ -1207,31 +1309,64 @@ public abstract class Phase implements PhaseInterface {
         + tempVar2 * numberOfMolesInPhase + this.getSresTP();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Calculates the entropy in the specified units. {@inheritDoc}
+   */
   @Override
   public double getEntropy(String unit) {
-    double refEntropy = getEntropy(); // entropy in J/K
-    double conversionFactor = 1.0;
+    // The reference entropy (refEntropy) is the total entropy for the phase in J/K.
+    double refEntropy = getEntropy();
+
     switch (unit) {
       case "J/K":
-        conversionFactor = 1.0;
-        break;
-      case "J/molK":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase();
-        break;
-      case "J/kgK":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass();
-        break;
-      case "kJ/kgK":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
-        break;
-      case "btu/lb-F":
-        conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0 * 0.2388;
-        break;
+        // No conversion needed.
+        return refEntropy;
+
+      case "J/molK": {
+        // To get molar entropy, divide the total entropy by the number of moles.
+        if (getNumberOfMolesInPhase() == 0) {
+          throw new ArithmeticException(
+              "Number of moles in phase cannot be zero for J/molK conversion.");
+        }
+        return refEntropy / getNumberOfMolesInPhase();
+      }
+
+      case "J/kgK": {
+        // To get specific entropy, divide the total entropy by the total mass.
+        // Total mass = moles in phase * molar mass (in kg/mol).
+        double totalMass = getNumberOfMolesInPhase() * getMolarMass();
+        if (totalMass == 0) {
+          throw new ArithmeticException("Total mass cannot be zero for J/kgK conversion.");
+        }
+        return refEntropy / totalMass;
+      }
+
+      case "kJ/kgK": {
+        double totalMass = getNumberOfMolesInPhase() * getMolarMass();
+        if (totalMass == 0) {
+          throw new ArithmeticException("Total mass cannot be zero for kJ/kgK conversion.");
+        }
+        // Divide by total mass for specific entropy, and by 1000 for kJ.
+        return refEntropy / totalMass / 1000.0;
+      }
+
+      case "btu/lb-F": { // Assuming "lb" is pound-mass and "F" interval is equivalent to Rankine.
+        // This conversion is best performed from the specific entropy (J/kgK).
+        double totalMass = getNumberOfMolesInPhase() * getMolarMass();
+        if (totalMass == 0) {
+          throw new ArithmeticException("Total mass cannot be zero for btu/lb-F conversion.");
+        }
+        double specificEntropySI = refEntropy / totalMass; // Entropy in J/kgK
+
+        // 1 J/kgK = 0.000238846 btu/lbm-R
+        final double J_PER_KGK_TO_BTU_PER_LBF = 0.000238846;
+        return specificEntropySI * J_PER_KGK_TO_BTU_PER_LBF;
+      }
+
       default:
-        throw new RuntimeException("unit not supported " + unit);
+        // Throw an exception if the requested unit is not supported.
+        throw new IllegalArgumentException("Unit not supported: " + unit);
     }
-    return refEntropy * conversionFactor;
   }
 
   /** {@inheritDoc} */
