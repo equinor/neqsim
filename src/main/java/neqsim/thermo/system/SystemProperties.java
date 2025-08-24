@@ -13,15 +13,19 @@ import neqsim.thermo.phase.PhaseInterface;
 public class SystemProperties {
   /** Constant <code>nCols=(16 * 4) + 6</code>. */
   public static final int nCols = (16 * 4) + 6;
+
   /**
    * Get names of properties.
    *
    * @return Array of names of properties
    */
   public static String[] getPropertyNames() {
-    SystemProperties p = new SystemProperties(new SystemSrkEos());
+    SystemSrkEos fluid = new SystemSrkEos();
+    fluid.addComponent("methane", 1);
+    SystemProperties p = new SystemProperties(fluid);
     return p.names;
   }
+
   private String[] names;
 
   private Double[] values;
