@@ -215,9 +215,7 @@ public class SystemBnsEos extends SystemEos {
       double scale = a0[k] * x * x + a1[k] * x + 1.0;
       cp[4][k] *= scale;
     }
-    double Rbtu = 1.98588;
-    double conv = 2.326;
-    double factor = Rbtu * conv;
+    double factor = ThermodynamicConstantsInterface.R;
     for (int i = 0; i < cp.length; i++) {
       for (int j = 0; j < cp[i].length; j++) {
         cp[i][j] *= factor;
