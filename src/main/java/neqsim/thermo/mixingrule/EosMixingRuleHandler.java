@@ -1132,7 +1132,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     public ClassicSRKT() {}
 
     public ClassicSRKT(int type) {
-      // this.type = type;
+      this.type = type;
     }
 
     /** Serialization version UID. */

@@ -51,9 +51,7 @@ public class PhaseBNS extends PhasePrEos {
       double kij = consts[k] + slopes[k] * tcsPair[k] / temperature;
       double dkijdT = -slopes[k] * tcsPair[k] / (temperature * temperature);
       mix.setBinaryInteractionParameter(i, j, consts[k]);
-      mix.setBinaryInteractionParameter(j, i, consts[k]);
       mix.setBinaryInteractionParameterT1(i, j, slopes[k] * tcsPair[k]);
-      mix.setBinaryInteractionParameterT1(j, i, slopes[k] * tcsPair[k]);
     }
   }
 
