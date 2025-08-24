@@ -1129,12 +1129,10 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   public class ClassicSRKT extends ClassicSRK {
     int type = 0;
 
-    public ClassicSRKT() {
-      this.type = type;
-    }
+    public ClassicSRKT() {}
 
     public ClassicSRKT(int type) {
-      this.type = type;
+      // this.type = type;
     }
 
     /** Serialization version UID. */
@@ -1146,7 +1144,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       if (type == 1)
         return intparam[i][j] + intparamT[i][j] / temperature;
       else
-        return intparam[i][j] - intparamT[i][j] * (temperature / 273.15 - 1.0);
+        return intparam[i][j] + intparamT[i][j] * (temperature / 273.15 - 1.0);
     }
 
     public double getkijdT(double temperature, int i, int j) {
