@@ -31,6 +31,7 @@ public class SystemBnsEosParityTest {
     assertEquals(9.424231892, jt, 0.01);
     assertEquals(7.750037498, density, 0.01);
     assertEquals(470.28174491, speed, 1.0);
+
   }
 
   @Test
@@ -55,12 +56,12 @@ public class SystemBnsEosParityTest {
     double speed =
         Math.sqrt(gamma * sys.getPhase(0).getZ() * neqsim.thermo.ThermodynamicConstantsInterface.R
             * sys.getTemperature() / sys.getMolarMass());
-
     assertEquals(0.790903069, Z, 0.01);
     assertEquals(95.451592440, density, 0.01);
     assertEquals(36.1808374, cp, 0.01);
     assertEquals(13.82605033, cv, 0.01);
     assertEquals(5.48933866798, jt, 0.01);
     assertEquals(516.2596126, speed, 1.0);
+
   }
 }
