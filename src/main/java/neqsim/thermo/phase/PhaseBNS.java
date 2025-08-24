@@ -3,6 +3,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentBNS;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
+import neqsim.thermo.mixingrule.EosMixingRuleHandler;
 
 /**
  * Phase implementation using the Burgoyne–Nielsen–Stanko PR correlation.
@@ -48,10 +49,12 @@ public class PhaseBNS extends PhasePrEos {
     for (int k = 0; k < pairs.length; k++) {
       int i = pairs[k][0];
       int j = pairs[k][1];
-      double kij = consts[k] + slopes[k] * tcsPair[k] / temperature;
-      double dkijdT = -slopes[k] * tcsPair[k] / (temperature * temperature);
       mix.setBinaryInteractionParameter(i, j, consts[k]);
       mix.setBinaryInteractionParameterT1(i, j, slopes[k] * tcsPair[k]);
+      if (mix instanceof EosMixingRuleHandler) {
+        ((EosMixingRuleHandler) mix).intparamTType[i][j] = 1;
+        ((EosMixingRuleHandler) mix).intparamTType[j][i] = 1;
+      }
     }
   }
 

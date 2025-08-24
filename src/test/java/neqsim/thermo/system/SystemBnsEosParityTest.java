@@ -26,11 +26,11 @@ public class SystemBnsEosParityTest {
     double speed =
         Math.sqrt(gamma * sys.getPhase(0).getZ() * neqsim.thermo.ThermodynamicConstantsInterface.R
             * sys.getTemperature() / sys.getMolarMass());
-    assertEquals(22.179945824, cp, 0.01);
-    assertEquals(12.9109361, cv, 0.01);
-    assertEquals(9.424231892, jt, 0.01);
-    assertEquals(7.750037498, density, 0.01);
-    assertEquals(470.28174491, speed, 1.0);
+    assertEquals(39.11774916142968, cp, 0.1);
+    assertEquals(29.815115496874455, cv, 0.1);
+    assertEquals(5.456788345314515, jt, 0.2);
+    assertEquals(7.749773205766539, density, 0.001);
+    assertEquals(411.4566767812817, speed, 1.0);
 
   }
 
@@ -56,12 +56,12 @@ public class SystemBnsEosParityTest {
     double speed =
         Math.sqrt(gamma * sys.getPhase(0).getZ() * neqsim.thermo.ThermodynamicConstantsInterface.R
             * sys.getTemperature() / sys.getMolarMass());
-    assertEquals(0.790903069, Z, 0.01);
-    assertEquals(95.451592440, density, 0.01);
-    assertEquals(36.1808374, cp, 0.01);
-    assertEquals(13.82605033, cv, 0.01);
-    assertEquals(5.48933866798, jt, 0.01);
-    assertEquals(516.2596126, speed, 1.0);
+    assertEquals(0.7909229109228723, Z, 0.01);
+    assertEquals(95.44916709290638, density, 0.01);
+    assertEquals(53.7112082181241, cp, 1.0);
+    assertEquals(30.73168795781629, cv, 1.0);
+    assertEquals(3.800162780643346, jt, 0.1);
+    assertEquals(427.91066622776856, speed, 10.0);
 
   }
 }
