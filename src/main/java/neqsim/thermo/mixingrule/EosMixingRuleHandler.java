@@ -1149,14 +1149,14 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
     public double getkijdT(double temperature, int i, int j) {
       if (type == 1)
-        return intparam[i][j] - intparamT[i][j] / (temperature * temperature);
+        return -intparamT[i][j] / (temperature * temperature);
       else
         return intparamT[i][j] * (1.0 / 273.15);
     }
 
     public double getkijdTdT(double temperature, int i, int j) {
       if (type == 1)
-        return intparamij[i][j] + 2 * intparamT[i][j] / (temperature * temperature * temperature);
+        return 2 * intparamT[i][j] / (temperature * temperature * temperature);
       else
         return 0.0;
     }
