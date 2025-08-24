@@ -572,6 +572,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     } else if (i == 11) {
       mixingRuleName = "Whitson-Soreide Mixing Rule";
       return new WhitsonSoreideMixingRule();
+    } else if (i == 12) {
+      mixingRuleName = "Temperature dependent classic";
+      return new ClassicSRKT(1);
     } else {
       return new ClassicVdW();
     }
@@ -1122,24 +1125,40 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     }
   }
 
+
   public class ClassicSRKT extends ClassicSRK {
+    int type = 0;
+
+    public ClassicSRKT() {}
+
+    public ClassicSRKT(int type) {
+      this.type = type;
+    }
+
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
     /** {@inheritDoc} */
     @Override
     public double getkij(double temperature, int i, int j) {
-      return intparam[i][j] + intparamT[i][j] * (temperature / 273.15 - 1.0);
-
-      // impl ttype check
+      if (type == 1)
+        return intparam[i][j] + intparamT[i][j] / temperature;
+      else
+        return intparam[i][j] + intparamT[i][j] * (temperature / 273.15 - 1.0);
     }
 
     public double getkijdT(double temperature, int i, int j) {
-      return intparamT[i][j] * (1.0 / 273.15);
+      if (type == 1)
+        return intparam[i][j] - intparamT[i][j] / (temperature * temperature);
+      else
+        return intparamT[i][j] * (1.0 / 273.15);
     }
 
     public double getkijdTdT(double temperature, int i, int j) {
-      return 0.0;
+      if (type == 1)
+        return intparamij[i][j] + 2 * intparamT[i][j] / (temperature * temperature * temperature);
+      else
+        return 0.0;
     }
 
     /** {@inheritDoc} */

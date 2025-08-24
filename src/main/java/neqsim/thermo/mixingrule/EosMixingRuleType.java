@@ -24,7 +24,7 @@ import neqsim.util.exception.InvalidInputException;
  */
 public enum EosMixingRuleType implements MixingRuleTypeInterface {
   NO(1), CLASSIC(2), CLASSIC_HV(3), HV(4), WS(5), CPA_MIX(7), CLASSIC_T(8), CLASSIC_T_CPA(
-      9), CLASSIC_TX_CPA(10), SOREIDE_WHITSON(11);
+      9), CLASSIC_TX_CPA(10), SOREIDE_WHITSON(11), CLASSIC_T2(12);
 
   /** Holder for old style integer pt. */
   private final int value;
