@@ -50,7 +50,10 @@ public class PhaseBNS extends PhasePrEos {
       int i = pairs[k][0];
       int j = pairs[k][1];
       mix.setBinaryInteractionParameter(i, j, consts[k]);
-      mix.setBinaryInteractionParameterT1(i, j, slopes[k] * tcsPair[k]);
+      mix.setBinaryInteractionParameter(j, i, consts[k]);
+      double t1 = slopes[k] * tcsPair[k];
+      mix.setBinaryInteractionParameterT1(i, j, t1);
+      mix.setBinaryInteractionParameterT1(j, i, t1);
       if (mix instanceof EosMixingRuleHandler) {
         ((EosMixingRuleHandler) mix).intparamTType[i][j] = 1;
         ((EosMixingRuleHandler) mix).intparamTType[j][i] = 1;
