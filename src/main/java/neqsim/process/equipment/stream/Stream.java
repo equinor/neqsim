@@ -16,6 +16,8 @@ import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.measurementdevice.HydrocarbonDewPointAnalyser;
 import neqsim.process.util.monitor.StreamResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.standards.gasquality.Standard_ISO6976;
 import neqsim.standards.oilquality.Standard_ASTM_D6377;
 import neqsim.thermo.system.SystemInterface;
@@ -775,5 +777,15 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new StreamResponse(this));
+  }
+
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    StreamResponse res = new StreamResponse(this);
+    res.applyConfig(cfg);
+    return new GsonBuilder().create().toJson(res);
   }
 }

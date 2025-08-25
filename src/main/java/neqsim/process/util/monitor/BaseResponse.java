@@ -2,6 +2,8 @@ package neqsim.process.util.monitor;
 
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
  * <p>
@@ -45,5 +47,13 @@ public class BaseResponse {
   public BaseResponse(MeasurementDeviceInterface equipment) {
     tagName = equipment.getTagName();
     name = equipment.getName();
+  }
+
+  /** Apply reporting configuration - default does nothing. */
+  public void applyConfig(ReportConfig cfg) {}
+
+  /** Determine detail level for this response based on config. */
+  protected DetailLevel getDetailLevel(ReportConfig cfg) {
+    return cfg == null ? DetailLevel.FULL : cfg.getDetailLevel(name);
   }
 }

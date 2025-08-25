@@ -1,6 +1,8 @@
 package neqsim.process.equipment.heatexchanger;
 
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
@@ -260,6 +262,14 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   /** {@inheritDoc} */
   @Override
   String toJson();
+
+  @Override
+  default String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    return toJson();
+  }
 
   // ================================
   // Additional Methods

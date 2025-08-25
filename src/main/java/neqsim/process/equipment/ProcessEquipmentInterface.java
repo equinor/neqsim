@@ -4,6 +4,8 @@ import neqsim.process.SimulationInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
  * <p>
@@ -248,6 +250,19 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * @return json string.
    */
   public String toJson();
+
+  /**
+   * Serializes the Process Equipment with configurable level of detail.
+   *
+   * @param cfg report configuration
+   * @return json string
+   */
+  public default String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    return toJson();
+  }
 
   /** {@inheritDoc} */
   @Override

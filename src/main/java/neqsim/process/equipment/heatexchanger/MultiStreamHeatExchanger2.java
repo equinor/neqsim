@@ -16,6 +16,8 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.MultiStreamHeatExchanger2Response;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -1001,5 +1003,15 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   public String toJson() {
     return new GsonBuilder().serializeSpecialFloatingPointValues().create()
         .toJson(new MultiStreamHeatExchanger2Response(this));
+  }
+
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    MultiStreamHeatExchanger2Response res = new MultiStreamHeatExchanger2Response(this);
+    res.applyConfig(cfg);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 }

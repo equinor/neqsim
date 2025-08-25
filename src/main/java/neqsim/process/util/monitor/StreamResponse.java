@@ -4,6 +4,8 @@ import java.util.HashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.standards.gasquality.Standard_ISO6976;
 
 /**
@@ -239,7 +241,38 @@ public class StreamResponse extends BaseResponse {
         newdata.put("gas flow",
             new Value(Double.toString(inputStream.getFlowRate("Sm3/hr")), "Sm3/hr"));
       }
-      properties.put(name, newdata);
+        properties.put(name, newdata);
+      }
+  }
+
+  @Override
+  public void applyConfig(ReportConfig cfg) {
+    DetailLevel level = getDetailLevel(cfg);
+    if (level == DetailLevel.SUMMARY) {
+      composition = null;
+      properties = null;
+    } else if (level == DetailLevel.MINIMUM) {
+      composition = null;
+      properties = null;
+      if (conditions != null) {
+        HashMap<String, Value> overall = conditions.get("overall");
+        if (overall != null) {
+          HashMap<String, Value> minimal = new HashMap<>();
+          if (overall.get("temperature") != null) {
+            minimal.put("temperature", overall.get("temperature"));
+          }
+          if (overall.get("pressure") != null) {
+            minimal.put("pressure", overall.get("pressure"));
+          }
+          if (overall.get("molar flow") != null) {
+            minimal.put("molar flow", overall.get("molar flow"));
+          }
+          conditions = new HashMap<>();
+          conditions.put("overall", minimal);
+        } else {
+          conditions = null;
+        }
+      }
     }
   }
 

@@ -1,6 +1,8 @@
 package neqsim.process.util.monitor;
 
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
  * <p>
@@ -64,6 +66,31 @@ public class CompressorResponse extends BaseResponse {
     speed = inputCompressor.getSpeed();
     if (inputCompressor.getAntiSurge().isActive()) {
       internalVolumeFlow = inputCompressor.getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
+    }
+  }
+
+  @Override
+  public void applyConfig(ReportConfig cfg) {
+    DetailLevel level = getDetailLevel(cfg);
+    if (level == DetailLevel.SUMMARY) {
+      polytropicHead = null;
+      polytropicEfficiency = null;
+      internalVolumeFlow = null;
+      speed = null;
+    } else if (level == DetailLevel.MINIMUM) {
+      polytropicHead = null;
+      polytropicEfficiency = null;
+      internalVolumeFlow = null;
+      speed = null;
+      suctionTemperature = null;
+      dischargeTemperature = null;
+      suctionVolumeFlow = null;
+      dischargeVolumeFlow = null;
+      molarMass = null;
+      suctionMassDensity = null;
+      dischargeMassDensity = null;
+      massflow = null;
+      stdFlow = null;
     }
   }
 }
