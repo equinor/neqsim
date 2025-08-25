@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import neqsim.thermo.system.SystemPCSAFT;
+import neqsim.thermo.component.ComponentPCSAFT;
 
 public class PhasePCSAFTRahmatTest {
   static PhasePCSAFTRahmat p;
@@ -206,6 +207,34 @@ public class PhasePCSAFTRahmatTest {
   void testCalcdF2dispZHCdT() {
     double value = p.calcdF2dispZHCdT();
     assertEquals(1.51244510048084E-23, value);
+  }
+
+  @Test
+  @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
+  void testdFdTdV() {
+    double value = p.dFdTdV();
+    assertEquals(-1.6510768140419002E-4, value, 1e-10);
+  }
+
+  @Test
+  @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
+  void testdFdTdT() {
+    double value = p.dFdTdT();
+    assertEquals(-0.5098829408072764, value, 1e-9);
+  }
+
+  @Test
+  void testdFdT() {
+    double value = p.dFdT();
+    assertEquals(43.43437720791384, value, 1e-8);
+  }
+
+  @Test
+  void testComponentdFdNdT() {
+    ComponentPCSAFT comp = (ComponentPCSAFT) p.getComponent(0);
+    double value =
+        comp.dFdNdT(p, p.getNumberOfComponents(), p.getTemperature(), p.getPressure());
+    assertEquals(0.007581918136656541, value, 1e-12);
   }
 
   @Test
