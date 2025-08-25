@@ -66,7 +66,7 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
         conversionFactor = 10.0;
         break;
       case "atm":
-        conversionFactor = 1.0;
+        conversionFactor = ThermodynamicConstantsInterface.referencePressure;
         break;
       default:
         throw new RuntimeException(
@@ -76,33 +76,57 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
     return conversionFactor;
   }
 
+  private double toAbsoluteBar(double value, String unit) {
+    switch (unit) {
+      case "bara":
+      case "bar":
+        return value;
+      case "barg":
+        return value + ThermodynamicConstantsInterface.referencePressure;
+      case "psi":
+      case "psia":
+        return value * getConversionFactor("psi");
+      case "psig":
+        return value * getConversionFactor("psi")
+            + ThermodynamicConstantsInterface.referencePressure;
+      case "atm":
+        return value * ThermodynamicConstantsInterface.referencePressure;
+      default:
+        return value * getConversionFactor(unit);
+    }
+  }
+
+  private double fromAbsoluteBar(double value, String unit) {
+    switch (unit) {
+      case "bara":
+      case "bar":
+        return value;
+      case "barg":
+        return value - ThermodynamicConstantsInterface.referencePressure;
+      case "psi":
+      case "psia":
+        return value / getConversionFactor("psi");
+      case "psig":
+        return value / getConversionFactor("psi")
+            - ThermodynamicConstantsInterface.referencePressure / getConversionFactor("psi");
+      case "atm":
+        return value / ThermodynamicConstantsInterface.referencePressure;
+      default:
+        return value / getConversionFactor(unit);
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getValue(double val, String fromunit, String tounit) {
-    invalue = val;
-    return getConversionFactor(fromunit) / getConversionFactor(tounit) * invalue;
+    double absBar = toAbsoluteBar(val, fromunit);
+    return fromAbsoluteBar(absBar, tounit);
   }
 
   /** {@inheritDoc} */
   @Override
   public double getValue(String tounit) {
-    if (tounit.equals("barg")) {
-      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
-          - ThermodynamicConstantsInterface.referencePressure;
-    } else if (tounit.equals("psig")) {
-      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue * 14.503773773
-          - 14.7;
-    } else if (inunit.equals("barg")) {
-      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
-          + ThermodynamicConstantsInterface.referencePressure;
-    } else if (tounit.equals("atm")) {
-      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
-          / ThermodynamicConstantsInterface.referencePressure;
-    } else if (inunit.equals("atm")) {
-      return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue
-          * ThermodynamicConstantsInterface.referencePressure;
-    } else {
-      return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
-    }
+    double absBar = toAbsoluteBar(invalue, inunit);
+    return fromAbsoluteBar(absBar, tounit);
   }
 }
