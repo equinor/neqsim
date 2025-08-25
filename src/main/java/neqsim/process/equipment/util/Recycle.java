@@ -12,6 +12,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import com.google.gson.GsonBuilder;
 import neqsim.process.util.monitor.RecycleResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
  * <p>
@@ -682,5 +684,15 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new RecycleResponse(this));
+  }
+
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    RecycleResponse res = new RecycleResponse(this);
+    res.applyConfig(cfg);
+    return new GsonBuilder().create().toJson(res);
   }
 }

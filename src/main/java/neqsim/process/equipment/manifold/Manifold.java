@@ -9,6 +9,8 @@ import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.ManifoldResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
  * <p>
@@ -119,5 +121,15 @@ public class Manifold extends ProcessEquipmentBaseClass {
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new ManifoldResponse(this));
+  }
+
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    ManifoldResponse res = new ManifoldResponse(this);
+    res.applyConfig(cfg);
+    return new GsonBuilder().create().toJson(res);
   }
 }

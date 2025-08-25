@@ -16,6 +16,8 @@ import neqsim.process.conditionmonitor.ConditionMonitorSpecifications;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.MultiStreamHeatExchangerResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -380,6 +382,16 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new MultiStreamHeatExchangerResponse(this));
+  }
+
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    MultiStreamHeatExchangerResponse res = new MultiStreamHeatExchangerResponse(this);
+    res.applyConfig(cfg);
+    return new GsonBuilder().create().toJson(res);
   }
 
   /** {@inheritDoc} */
