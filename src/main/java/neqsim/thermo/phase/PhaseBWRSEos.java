@@ -156,6 +156,19 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
+   * Derivative of the polynomial F-term with respect to molar density.
+   *
+   * @return dF<sub>pol</sub>/dρ
+   */
+  public double getFpoldRho() {
+    double temp = 0.0;
+    for (int i = 1; i < OP; i++) {
+      temp += ((ComponentBWRS) componentArray[0]).getBP(i) * Math.pow(getMolarDensity(), i - 1.0);
+    }
+    return numberOfMolesInPhase / (R * temperature) * temp;
+  }
+
+  /**
    * <p>
    * getFpoldVdV.
    * </p>
@@ -223,6 +236,15 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
+   * Total derivative of F with respect to molar density.
+   *
+   * @return dF/dρ
+   */
+  public double getFdRho() {
+    return getFpoldRho() + getFexpdRho();
+  }
+
+  /**
    * <p>
    * getEL.
    * </p>
@@ -244,6 +266,28 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   public double getELdRho() {
     return -2.0 * getMolarDensity() * ((ComponentBWRS) componentArray[0]).getGammaBWRS() * Math.exp(
         -((ComponentBWRS) componentArray[0]).getGammaBWRS() * Math.pow(getMolarDensity(), 2.0));
+  }
+
+  /**
+   * Second derivative of the exponential EL term with respect to molar density.
+   *
+   * @return d<sup>2</sup>EL/dρ<sup>2</sup>
+   */
+  public double getELdRhodedRho() {
+    double gamma = ((ComponentBWRS) componentArray[0]).getGammaBWRS();
+    double rho = getMolarDensity();
+    return (-2.0 * gamma + 4.0 * gamma * gamma * rho * rho) * getEL();
+  }
+
+  /**
+   * Third derivative of the exponential EL term with respect to molar density.
+   *
+   * @return d<sup>3</sup>EL/dρ<sup>3</sup>
+   */
+  public double getELdRhodedRhodedRho() {
+    double gamma = ((ComponentBWRS) componentArray[0]).getGammaBWRS();
+    double rho = getMolarDensity();
+    return (12.0 * gamma * gamma * rho - 8.0 * Math.pow(gamma, 3.0) * Math.pow(rho, 3.0)) * getEL();
   }
 
   /**
@@ -270,52 +314,102 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
-   * <p>
-   * getFexpdV.
-   * </p>
+   * First derivative of Fexp with respect to molar density.
    *
-   * @return a double
+   * @return dFexp/dρ
    */
-  public double getFexpdV() {
-    double oldTemp = 0.0;
-    double temp = 0.0;
-    oldTemp = -((ComponentBWRS) componentArray[0]).getBE(0)
-        / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS()) * getELdRho() * getdRhodV();
-
-    temp += oldTemp;
+  private double getFexpdRho() {
+    double gamma = ((ComponentBWRS) componentArray[0]).getGammaBWRS();
+    double rho = getMolarDensity();
+    double oldTemp = -((ComponentBWRS) componentArray[0]).getBE(0) / (2.0 * gamma) * getELdRho();
+    double temp = oldTemp;
     for (int i = 1; i < OE; i++) {
-      oldTemp = -((ComponentBWRS) componentArray[0]).getBE(i)
-          / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS())
-          * Math.pow(getMolarDensity(), 2 * i) * getELdRho() * getdRhodV()
-
-          - (2.0 * i) * ((ComponentBWRS) componentArray[0]).getBE(i)
-              / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS()) * getEL()
-              * Math.pow(getMolarDensity(), 2 * i - 1) * getdRhodV()
-
-          + ((ComponentBWRS) componentArray[0]).getBE(i)
-              / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS()) * 2.0 * i
-              / ((ComponentBWRS) componentArray[0]).getBE(i - 1) * oldTemp;
-
+      double prev = oldTemp;
+      oldTemp = -((ComponentBWRS) componentArray[0]).getBE(i) / (2.0 * gamma)
+          * (getELdRho() * Math.pow(rho, 2 * i)
+              + getEL() * (2.0 * i) * Math.pow(rho, 2 * i - 1)
+              - (2.0 * i) / ((ComponentBWRS) componentArray[0]).getBE(i - 1) * prev);
       temp += oldTemp;
     }
-
     return numberOfMolesInPhase / (R * temperature) * temp;
   }
 
   /**
-   * <p>
-   * getFexpdVdV.
-   * </p>
+   * Second derivative of Fexp with respect to molar density.
    *
-   * @return a double
+   * @return d<sup>2</sup>Fexp/dρ<sup>2</sup>
    */
-  public double getFexpdVdV() {
-    return 0.0;
+  private double getFexpdRhodRho() {
+    double gamma = ((ComponentBWRS) componentArray[0]).getGammaBWRS();
+    double rho = getMolarDensity();
+    double oldTemp = -((ComponentBWRS) componentArray[0]).getBE(0) / (2.0 * gamma) * getELdRhodedRho();
+    double temp = oldTemp;
+    for (int i = 1; i < OE; i++) {
+      double prev = oldTemp;
+      oldTemp = -((ComponentBWRS) componentArray[0]).getBE(i) / (2.0 * gamma)
+          * (getELdRhodedRho() * Math.pow(rho, 2 * i)
+              + 2.0 * getELdRho() * (2.0 * i) * Math.pow(rho, 2 * i - 1)
+              + getEL() * (2.0 * i) * (2.0 * i - 1) * Math.pow(rho, 2 * i - 2)
+              - (2.0 * i) / ((ComponentBWRS) componentArray[0]).getBE(i - 1) * prev);
+      temp += oldTemp;
+    }
+    return numberOfMolesInPhase / (R * temperature) * temp;
   }
 
-  // public double getFexpdVdVdV(){
-  // return 0.0;temp
-  // }
+  /**
+   * Third derivative of Fexp with respect to molar density.
+   *
+   * @return d<sup>3</sup>Fexp/dρ<sup>3</sup>
+   */
+  private double getFexpdRhodRhodRho() {
+    double gamma = ((ComponentBWRS) componentArray[0]).getGammaBWRS();
+    double rho = getMolarDensity();
+    double oldTemp = -((ComponentBWRS) componentArray[0]).getBE(0) / (2.0 * gamma)
+        * getELdRhodedRhodedRho();
+    double temp = oldTemp;
+    for (int i = 1; i < OE; i++) {
+      double prev = oldTemp;
+      oldTemp = -((ComponentBWRS) componentArray[0]).getBE(i) / (2.0 * gamma)
+          * (getELdRhodedRhodedRho() * Math.pow(rho, 2 * i)
+              + 3.0 * getELdRhodedRho() * (2.0 * i) * Math.pow(rho, 2 * i - 1)
+              + 3.0 * getELdRho() * (2.0 * i) * (2.0 * i - 1) * Math.pow(rho, 2 * i - 2)
+              + getEL() * (2.0 * i) * (2.0 * i - 1) * (2.0 * i - 2)
+                  * Math.pow(rho, 2 * i - 3)
+              - (2.0 * i) / ((ComponentBWRS) componentArray[0]).getBE(i - 1) * prev);
+      temp += oldTemp;
+    }
+    return numberOfMolesInPhase / (R * temperature) * temp;
+  }
+
+  /**
+   * First derivative of Fexp with respect to molar volume.
+   *
+   * @return dFexp/dV
+   */
+  public double getFexpdV() {
+    return getFexpdRho() * getdRhodV();
+  }
+
+  /**
+   * Second derivative of Fexp with respect to molar volume.
+   *
+   * @return d<sup>2</sup>Fexp/dV<sup>2</sup>
+   */
+  public double getFexpdVdV() {
+    return getFexpdRhodRho() * Math.pow(getdRhodV(), 2.0)
+        + getFexpdRho() * getdRhodVdV();
+  }
+
+  /**
+   * Third derivative of Fexp with respect to molar volume.
+   *
+   * @return d<sup>3</sup>Fexp/dV<sup>3</sup>
+   */
+  public double getFexpdVdVdV() {
+    return getFexpdRhodRhodRho() * Math.pow(getdRhodV(), 3.0)
+        + 3.0 * getFexpdRhodRho() * getdRhodV() * getdRhodVdV()
+        + getFexpdRho() * getdRhodVdVdV();
+  }
 
   /**
    * <p>
@@ -483,13 +577,11 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   @Override
   public double dFdTdV() {
     double dv = getMolarVolume() / 1000.0;
-
     setMolarVolume(getMolarVolume() + dv);
     double fold = dFdT();
     setMolarVolume(getMolarVolume() - 2 * dv);
     double fnew = dFdT();
     setMolarVolume(getMolarVolume() + dv);
-
     return (fold - fnew) / (2 * dv);
   }
 
@@ -516,23 +608,14 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   /** {@inheritDoc} */
   @Override
   public double dFdVdV() {
-    double dv = getMolarVolume() / 1000.0;
-
-    setMolarVolume(getMolarVolume() + dv);
-    double fold = dFdV();
-    setMolarVolume(getMolarVolume() - 2 * dv);
-    double fnew = dFdV();
-    setMolarVolume(getMolarVolume() + dv);
-
-    // System.out.println("dFdV " + ((fold-fnew)/(2*dv)) + " super " + super.dFdV()+
-    // " pt " +getType());
-    return (fold - fnew) / (2 * dv);
-    // return (getFpoldVdV()+getFexpdVdV())*1e3*1e-10;
+    return (getFpoldVdV() + getFexpdVdV()) * 1e3 * 1e-10;
   }
 
-  // public double dFdVdVdV(){
-  // return getFpoldVdVdV();
-  // }
+  /** {@inheritDoc} */
+  @Override
+  public double dFdVdVdV() {
+    return (getFpoldVdVdV() + getFexpdVdVdV()) * 1e3 * 1e-15;
+  }
 
   /** {@inheritDoc} */
   @Override
