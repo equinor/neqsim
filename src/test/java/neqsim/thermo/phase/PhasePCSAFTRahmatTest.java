@@ -213,14 +213,14 @@ public class PhasePCSAFTRahmatTest {
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testdFdTdV() {
     double value = p.dFdTdV();
-    assertEquals(-1.6510768140419002E-4, value, 1e-10);
+    assertEquals(-3.672119679672745E-4, value, 1e-12);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testdFdTdT() {
     double value = p.dFdTdT();
-    assertEquals(-0.5098829408072764, value, 1e-9);
+    assertEquals(-0.7424036008192018, value, 1e-9);
   }
 
   @Test
