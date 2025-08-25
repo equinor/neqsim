@@ -1,5 +1,7 @@
 package neqsim.thermo.component;
 
+import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -115,28 +117,44 @@ public class ComponentGERG2008Eos extends ComponentEos {
   @Override
   public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    return 0;
+    PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
+    double logXi = Math.log(getx());
+    double ideal = ph.getAlpha0() != null ? ph.getAlpha0()[0].val : 0.0;
+    double residual = ph.getAlphaRes() != null ? ph.getAlphaRes()[0][0].val : 0.0;
+    return logXi + ideal + residual;
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    return 0;
+    double term =
+        (getComponentNumber() == i ? 1.0 / phase.getNumberOfMolesInPhase() : 0.0);
+    PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
+    if (ph.getAlphaRes() != null) {
+      term += ph.getAlphaRes()[0][2].val / phase.getNumberOfMolesInPhase();
+    }
+    return term;
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    return 0;
+    PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
+    double alphar = ph.getAlphaRes() != null ? ph.getAlphaRes()[0][1].val : 0.0;
+    return ThermodynamicConstantsInterface.R * temperature / phase.getVolume()
+        * (1.0 + alphar);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    return 0;
+    PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
+    double a0T = ph.getAlpha0() != null ? ph.getAlpha0()[1].val : 0.0;
+    double arT = ph.getAlphaRes() != null ? ph.getAlphaRes()[1][0].val : 0.0;
+    return -(a0T + arT) / temperature;
   }
 
   /** {@inheritDoc} */
