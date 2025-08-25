@@ -4,6 +4,8 @@ import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.HeaterResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
  * <p>
@@ -59,5 +61,15 @@ public class Cooler extends Heater {
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new HeaterResponse(this));
+  }
+
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    HeaterResponse res = new HeaterResponse(this);
+    res.applyConfig(cfg);
+    return new GsonBuilder().create().toJson(res);
   }
 }

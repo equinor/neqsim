@@ -19,6 +19,8 @@ import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.util.report.Report;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -320,6 +322,14 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   @Override
   public String toJson() {
     return null;
+  }
+
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    return toJson();
   }
 
   /** {@inheritDoc} */

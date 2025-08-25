@@ -1,6 +1,8 @@
 package neqsim.process.equipment;
 
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
  * Abstract class defining ProcessEquipment with one inlet and one outlet.
@@ -112,5 +114,13 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   @Override
   public String toJson() {
     return null;
+  }
+
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    return toJson();
   }
 }

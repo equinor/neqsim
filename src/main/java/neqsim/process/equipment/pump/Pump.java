@@ -13,6 +13,8 @@ import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.PumpResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -464,6 +466,16 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   public String toJson() {
     return new GsonBuilder().serializeSpecialFloatingPointValues().create()
         .toJson(new PumpResponse(this));
+  }
+
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    PumpResponse res = new PumpResponse(this);
+    res.applyConfig(cfg);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 
   /** {@inheritDoc} */

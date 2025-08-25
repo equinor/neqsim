@@ -11,6 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.util.report.ReportConfig;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessModule;
 import neqsim.process.processmodel.ProcessModuleBaseClass;
@@ -109,15 +110,31 @@ public class Report {
    * @return a {@link java.lang.String} object
    */
   public String generateJsonReport() {
+    return generateJsonReport(new ReportConfig());
+  }
+
+  /**
+   * Generate a JSON report with configurable detail level.
+   *
+   * @param cfg report configuration
+   * @return JSON string
+   */
+  public String generateJsonReport(ReportConfig cfg) {
     Map<String, String> json_reports = new HashMap<>();
 
     if (process != null) {
       for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-        json_reports.put(unit.getName(), unit.toJson());
+        String unitJson = unit.toJson(cfg);
+        if (unitJson != null) {
+          json_reports.put(unit.getName(), unitJson);
+        }
       }
     }
     if (processEquipment != null) {
-      json_reports.put(processEquipment.getName(), processEquipment.toJson());
+      String eqJson = processEquipment.toJson(cfg);
+      if (eqJson != null) {
+        json_reports.put(processEquipment.getName(), eqJson);
+      }
     }
     if (fluid != null) {
       json_reports.put(fluid.getFluidName(), fluid.toJson());
@@ -129,7 +146,7 @@ public class Report {
 
         for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
           try {
-            String unitJson = unit.toJson();
+            String unitJson = unit.toJson(cfg);
             String unitName = unit.getName() != null ? unit.getName() : "UnnamedUnit";
 
             if (unitJson != null && !unitJson.isEmpty()) {

@@ -21,6 +21,8 @@ import neqsim.thermo.system.SystemSoreideWhitson;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.process.util.monitor.MixerResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
  * <p>
@@ -524,5 +526,15 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new MixerResponse(this));
+  }
+
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    MixerResponse res = new MixerResponse(this);
+    res.applyConfig(cfg);
+    return new GsonBuilder().create().toJson(res);
   }
 }

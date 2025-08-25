@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.SeparatorResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -276,5 +278,15 @@ public class ThreePhaseSeparator extends Separator {
   @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new SeparatorResponse(this));
+  }
+
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    SeparatorResponse res = new SeparatorResponse(this);
+    res.applyConfig(cfg);
+    return new GsonBuilder().create().toJson(res);
   }
 }
