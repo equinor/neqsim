@@ -227,4 +227,22 @@ public class PhaseGERG2008Eos extends PhaseEos {
   public double getdPdrho() {
     return R * temperature * (1 + 2 * ar[0][1].val + ar[0][2].val);
   }
+
+  /**
+   * Get cached ideal Helmholtz energy derivatives.
+   *
+   * @return array of {@link doubleW} containing \u03b1₀ and its derivatives
+   */
+  public doubleW[] getAlpha0() {
+    return a0;
+  }
+
+  /**
+   * Get cached residual Helmholtz energy derivatives.
+   *
+   * @return matrix of {@link doubleW} containing \u03b1ᵣ and its derivatives
+   */
+  public doubleW[][] getAlphaRes() {
+    return ar;
+  }
 }
