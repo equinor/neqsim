@@ -182,21 +182,8 @@ public class ComponentBWRS extends ComponentSrk {
   @Override
   public double dFdN(PhaseInterface phase, int numberOfComponentphases, double temperature,
       double pressure) {
-    // System.out.println("Fref " +
-    // refPhaseBWRS.getF()/phase.getNumberOfMolesInPhase());
-    // System.out.println("Fref2 " + 1e3*(getFpoldn(phase, numberOfComponentphases,
-    // temperature, pressure) + getFexpdn(phase, numberOfComponentphases,
-    // temperature, pressure)));
-    // System.out.println("Fref3 " + refPhaseBWRS.getdFdN());
-    return refPhaseBWRS.getF() / phase.getNumberOfMolesInPhase();
-    // return refPhaseBWRS.getdFdN();
-    // System.out.println("dFdN super " +
-    // super.dFdN(phase,numberOfComponentphases,temperature,pressure));
-    // System.out.println("this dFdN " + 1e3*(getFpoldn(phase, numberOfComponentphases,
-    // temperature, pressure) + getFexpdn(phase, numberOfComponentphases, temperature,
-    // pressure)));
-    // return 1e3*(getFpoldn(phase, numberOfComponentphases, temperature, pressure)
-    // + getFexpdn(phase, numberOfComponentphases, temperature, pressure));
+    return 1e3 * (getFpoldn(phase, numberOfComponentphases, temperature, pressure)
+        + getFexpdn(phase, numberOfComponentphases, temperature, pressure));
   }
 
   /**
