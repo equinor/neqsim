@@ -25,13 +25,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
   double dgHSSAFTdNdNdN = 1.0;
 
   // by Rahmat
-  double dNSAFTdT = 1.0;
-  double dF1dispVolTermdT = 0.0;
-  double dF1dispI1dT = 1.0;
-  double dF2dispI2dT = 1.0;
-  double dF2dispZHCdT = 1.0;
-  double dF1dispSumTermdT = 1.0;
-  double dF2dispSumTermdT = 1.0;
   protected double F2dispI2dVdV;
   protected double F2dispI2dVdVdV = 0.0;
   protected double F2dispZHCdVdV = 1.0;
@@ -161,12 +154,27 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     F1dispVolTermdVdVdV = -6.0 * ThermodynamicConstantsInterface.avagadroNumber
         * getNumberOfMolesInPhase() / Math.pow(getVolumeSAFT(), 4.0);
 
+    dNSAFTdTdV = -1.0 * ThermodynamicConstantsInterface.pi / 6.0
+        * ThermodynamicConstantsInterface.avagadroNumber * getNumberOfMolesInPhase()
+        / Math.pow(volumeSAFT, 2.0) * getdDSAFTdT();
+    dNSAFTdTdT = 1.0 * ThermodynamicConstantsInterface.pi / 6.0
+        * ThermodynamicConstantsInterface.avagadroNumber * getNumberOfMolesInPhase() / volumeSAFT
+        * getd2DSAFTdTdT();
+
     // added by rahmat
     dF1dispI1dT = calcdF1dispI1dT();
     dF2dispI2dT = calcdF2dispI2dT();
     dF1dispSumTermdT = calcdF1dispSumTermdT();
     dF2dispSumTermdT = calcdF2dispSumTermdT();
     dF2dispZHCdT = calcdF2dispZHCdT();
+    dF1dispSumTermdTdT = calcdF1dispSumTermdTdT();
+    dF1dispI1dTdV = calcdF1dispI1dTdV();
+    dF1dispI1dTdT = calcdF1dispI1dTdT();
+    dF2dispSumTermdTdT = calcdF2dispSumTermdTdT();
+    dF2dispI2dTdV = calcdF2dispI2dTdV();
+    dF2dispI2dTdT = calcdF2dispI2dTdT();
+    dF2dispZHCdTdV = calcdF2dispZHCdTdV();
+    dF2dispZHCdTdT = calcdF2dispZHCdTdT();
 
     F1dispI1dN = calcF1dispI1dN();
     F1dispI1dNdN = calcF1dispI1dNdN();
