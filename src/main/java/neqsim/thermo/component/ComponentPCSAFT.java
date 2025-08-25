@@ -228,6 +228,46 @@ public class ComponentPCSAFT extends ComponentSrk {
                 * F2dispZHCdn)); // (ThermodynamicConstantsInterface.R*temperature);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure) {
+    double h = temperature * 1e-6;
+    if (h == 0) {
+      h = 1e-6;
+    }
+    PhasePCSAFT plus = (PhasePCSAFT) ((PhasePCSAFT) phase).clone();
+    plus.setTemperature(temperature + h);
+    for (int i = 0; i < numberOfComponents; i++) {
+      ((ComponentPCSAFT) plus.getComponent(i)).init(plus.getTemperature(), pressure,
+          plus.getNumberOfMolesInPhase(), 1.0, 0);
+    }
+    plus.volInit();
+    for (int i = 0; i < numberOfComponents; i++) {
+      ((ComponentPCSAFT) plus.getComponent(i)).Finit(plus, plus.getTemperature(), pressure,
+          plus.getNumberOfMolesInPhase(), 1.0, numberOfComponents, 0);
+    }
+    double dFplus = ((ComponentPCSAFT) plus.getComponent(getComponentNumber())).dFdN(plus,
+        numberOfComponents, plus.getTemperature(), pressure);
+
+    PhasePCSAFT minus = (PhasePCSAFT) ((PhasePCSAFT) phase).clone();
+    minus.setTemperature(temperature - h);
+    for (int i = 0; i < numberOfComponents; i++) {
+      ((ComponentPCSAFT) minus.getComponent(i)).init(minus.getTemperature(), pressure,
+          minus.getNumberOfMolesInPhase(), 1.0, 0);
+    }
+    minus.volInit();
+    for (int i = 0; i < numberOfComponents; i++) {
+      ((ComponentPCSAFT) minus.getComponent(i)).Finit(minus, minus.getTemperature(), pressure,
+          minus.getNumberOfMolesInPhase(), 1.0, numberOfComponents, 0);
+    }
+    double dFminus = ((ComponentPCSAFT) minus.getComponent(getComponentNumber())).dFdN(minus,
+        numberOfComponents, minus.getTemperature(), pressure);
+
+    return (dFplus - dFminus) / (2.0 * h);
+  }
+
+
   /**
    * <p>
    * calcF1dispSumTermdn.
