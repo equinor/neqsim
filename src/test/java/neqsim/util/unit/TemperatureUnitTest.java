@@ -52,13 +52,41 @@ class TemperatureUnitTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * Verify direct temperature conversions between common units.
+   */
+  @Test
+  public void testDirectConversions() {
+    // 100 C to other units
+    TemperatureUnit celsius = new TemperatureUnit(100.0, "C");
+    assertEquals(373.15, celsius.getValue("K"), 1e-6);
+    assertEquals(212.0, celsius.getValue("F"), 1e-6);
+    assertEquals(671.67, celsius.getValue("R"), 1e-2);
+
+    // 373.15 K to Celsius and Fahrenheit
+    TemperatureUnit kelvin = new TemperatureUnit(373.15, "K");
+    assertEquals(100.0, kelvin.getValue("C"), 1e-6);
+    assertEquals(212.0, kelvin.getValue("F"), 1e-6);
+
+    // 212 F to Kelvin and Celsius
+    TemperatureUnit fahrenheit = new TemperatureUnit(212.0, "F");
+    assertEquals(373.15, fahrenheit.getValue("K"), 1e-6);
+    assertEquals(100.0, fahrenheit.getValue("C"), 1e-6);
+
+    // 671.67 R to Celsius and Kelvin
+    TemperatureUnit rankine = new TemperatureUnit(671.67, "R");
+    assertEquals(373.15, rankine.getValue("K"), 1e-2);
+    assertEquals(100.0, rankine.getValue("C"), 1e-2);
+  }
+
+  /**
    * Verify that requesting conversions with unsupported units throws an exception.
    */
   @Test
   public void testUnsupportedUnit() {
-    TemperatureUnit unit = new TemperatureUnit(0.0, "test");
+    TemperatureUnit unit = new TemperatureUnit(0.0, "K");
     assertThrows(IllegalArgumentException.class, () -> unit.getValue(0.0, "X", "K"));
     assertThrows(IllegalArgumentException.class, () -> unit.getValue(0.0, "K", "X"));
+    assertThrows(IllegalArgumentException.class, () -> new TemperatureUnit(0.0, "X"));
   }
 }
 
