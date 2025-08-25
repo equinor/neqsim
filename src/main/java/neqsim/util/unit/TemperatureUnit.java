@@ -19,9 +19,11 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
    *
    * @param value a double
    * @param name a {@link java.lang.String} object
-   */
+  */
   public TemperatureUnit(double value, String name) {
     super(value, name);
+    // store the temperature in Kelvin for reuse
+    this.SIvalue = getValue(value, name, "K");
   }
 
   /**
@@ -93,21 +95,19 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
    */
   @Override
   public double getValue(String toUnit) {
+    // convert the original value to Kelvin and reuse for subsequent conversions
+    double tempInKelvin = SIvalue;
+
     switch (toUnit) {
       case "K":
-        // Convert from Kelvin to Kelvin
-        return invalue;
+        return tempInKelvin;
       case "C":
-        // Convert from Kelvin to Celsius
-        return invalue - 273.15;
+        return tempInKelvin - 273.15;
       case "F":
-        // Convert from Kelvin to Fahrenheit
-        return invalue * 9.0 / 5.0 - 459.67;
+        return (tempInKelvin - 273.15) * 9.0 / 5.0 + 32;
       case "R":
-        // Convert from Kelvin to Rankine
-        return invalue * 9.0 / 5.0;
+        return tempInKelvin * 9.0 / 5.0;
       default:
-        // Handle unsupported units
         throw new IllegalArgumentException("Unsupported conversion unit: " + toUnit);
     }
   }
