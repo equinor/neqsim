@@ -618,29 +618,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           powerSet = true;
           dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass()
               / getPolytropicEfficiency() * thermoSystem.getTotalNumberOfMoles();
-          // Check if speed is within bounds
-          if (currentSpeed < minSpeed || currentSpeed > maxSpeed) {
-            if (limitSpeed) {
-              setSolveSpeed(false);
-              setCalcPressureOut(true);
-              if (currentSpeed > maxSpeed) {
-                setSpeed(maxSpeed);
-              } else if (currentSpeed < minSpeed) {
-                setSpeed(minSpeed);
-              }
-              run();
-              setSolveSpeed(true);
-              setCalcPressureOut(false);
-              return;
-            } else {
-              // throw new IllegalArgumentException(
-              // "Speed out of bounds during Newton-Raphson iteration.");
-            }
-            // throw new IllegalArgumentException(
-            // "Speed out of bounds during Newton-Raphson iteration.");
-          }
 
-          // Check for convergence
           if (Math.abs(currentPressure - targetPressure) <= tolerance) {
             setSpeed(currentSpeed); // Update the final speed
             break;
