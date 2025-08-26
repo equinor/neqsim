@@ -392,9 +392,13 @@ public class NeqSimGERG2008 {
       }
     }
 
-    // Call the GERG2008 function to fill in the ar array.
-    // The first two parameters (itau and idelta) are set to 0.
-    GERG2008.AlpharGERG(0, 0, temperature, molarDensity, normalizedGERGComposition, ar);
+    // Call the GERG2008 function to fill in the ar array. The first two
+    // arguments specify the highest order of \u03c4- and \u03b4-derivatives to
+    // return.  Thermodynamic consistency requires mixed temperature/volume
+    // derivatives as well as up to third-order volume derivatives, so request
+    // \u03c4-derivatives up to second order and \u03b4-derivatives up to third
+    // order.
+    GERG2008.AlpharGERG(2, 3, temperature, molarDensity, normalizedGERGComposition, ar);
 
     // Return the computed dimensionless residual Helmholtz free energy.
     // This is equivalent to alpha_res = A^r/(RT)
