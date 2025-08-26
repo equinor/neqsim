@@ -60,6 +60,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public boolean usePolytropicCalc = false;
   public boolean powerSet = false;
   public boolean calcPressureOut = false;
+  private boolean useEfficiencyCurve = false;
   private CompressorChartInterface compressorChart = new CompressorChart();
   private AntiSurge antiSurge = new AntiSurge();
   private double polytropicHead = 0;
@@ -548,16 +549,19 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
             z_inlet = VegaProps[1];
           }
 
-          double polytropEff =
-              getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed);
-          setPolytropicEfficiency(polytropEff / 100.0);
-          if (polytropEff <= 0.0) {
-            polytropEff = 0.01;
-            setPolytropicEfficiency(0.01);
-          }
-          if (polytropEff > 100.0) {
-            polytropEff = 100;
-            setPolytropicEfficiency(100.0);
+          double polytropEff = useEfficiencyCurve
+              ? getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed)
+              : getPolytropicEfficiency() * 100.0;
+          if (useEfficiencyCurve) {
+            setPolytropicEfficiency(polytropEff / 100.0);
+            if (polytropEff <= 0.0) {
+              polytropEff = 0.01;
+              setPolytropicEfficiency(0.01);
+            }
+            if (polytropEff > 100.0) {
+              polytropEff = 100;
+              setPolytropicEfficiency(100.0);
+            }
           }
 
           polytropicHead = getCompressorChart().getPolytropicHead(actualFlowRate, currentSpeed);
@@ -577,8 +581,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           double currentPressure = thermoSystem.getPressure() * pressureRatio;
 
           // Calculate the derivative of pressure with respect to speed
-          double polytropEffDelta = getCompressorChart().getPolytropicEfficiency(actualFlowRate,
-              currentSpeed + deltaSpeed);
+          double polytropEffDelta = useEfficiencyCurve
+              ? getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed + deltaSpeed)
+              : polytropEff;
           double polytropicHeadDelta =
               getCompressorChart().getPolytropicHead(actualFlowRate, currentSpeed + deltaSpeed);
           double nDelta = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEffDelta / 100.0));
@@ -690,26 +695,67 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
             z_inlet = VegaProps[1];
           }
 
-          double polytropEff =
-              getCompressorChart().getPolytropicEfficiency(actualFlowRate, getSpeed());
-          setPolytropicEfficiency(polytropEff / 100.0);
-          polytropicHead = getCompressorChart().getPolytropicHead(actualFlowRate, getSpeed());
           double temperature_inlet = thermoSystem.getTemperature();
-          double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
-          polytropicExponent = n;
-          if (getCompressorChart().getHeadUnit().equals("meter")) {
-            polytropicFluidHead = polytropicHead / 1000.0 * 9.81;
-            polytropicHeadMeter = polytropicHead;
+
+          if (!isCalcPressureOut() && pressure > 0.0
+              && Math.abs(pressure - thermoSystem.getPressure(pressureUnit)) > 1e-6) {
+            // pressure out is specified - iteratively calculate required head and speed
+            double pressureRatio = pressure / thermoSystem.getPressure(pressureUnit);
+            double currentSpeed = getSpeed();
+            int iterCount = 0;
+            do {
+              double polytropEff = useEfficiencyCurve
+                  ? getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed)
+                  : getPolytropicEfficiency() * 100.0;
+              if (useEfficiencyCurve) {
+                setPolytropicEfficiency(polytropEff / 100.0);
+              }
+              double n =
+                  1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
+              polytropicExponent = n;
+              polytropicFluidHead = n / (n - 1.0) * z_inlet
+                  * ThermodynamicConstantsInterface.R * temperature_inlet / MW
+                  * (Math.pow(pressureRatio, (n - 1.0) / n) - 1.0);
+              polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
+              if (getCompressorChart().getHeadUnit().equals("meter")) {
+                polytropicHead = polytropicHeadMeter;
+              } else {
+                polytropicHead = polytropicFluidHead;
+              }
+              double newSpeed =
+                  getCompressorChart().getSpeed(actualFlowRate, polytropicHead);
+              if (Math.abs(newSpeed - currentSpeed) < 1.0) {
+                currentSpeed = newSpeed;
+                break;
+              }
+              currentSpeed = newSpeed;
+            } while (++iterCount < 20);
+            setSpeed(currentSpeed);
           } else {
-            polytropicFluidHead = polytropicHead;
-            polytropicHeadMeter = polytropicHead * 1000.0 / 9.81;
+            double polytropEff = useEfficiencyCurve
+                ? getCompressorChart().getPolytropicEfficiency(actualFlowRate, getSpeed())
+                : getPolytropicEfficiency() * 100.0;
+            if (useEfficiencyCurve) {
+              setPolytropicEfficiency(polytropEff / 100.0);
+            }
+            double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
+            polytropicExponent = n;
+            polytropicHead = getCompressorChart().getPolytropicHead(actualFlowRate, getSpeed());
+            if (getCompressorChart().getHeadUnit().equals("meter")) {
+              polytropicFluidHead = polytropicHead / 1000.0 * 9.81;
+              polytropicHeadMeter = polytropicHead;
+            } else {
+              polytropicFluidHead = polytropicHead;
+              polytropicHeadMeter = polytropicHead * 1000.0 / 9.81;
+            }
+            double pressureRatio = Math.pow((polytropicFluidHead * 1000.0
+                + (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * temperature_inlet
+                    / MW))
+                / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * temperature_inlet
+                    / MW),
+                n / (n - 1.0));
+            setOutletPressure(thermoSystem.getPressure() * pressureRatio);
           }
-          double pressureRatio = Math.pow((polytropicFluidHead * 1000.0 + (n / (n - 1.0) * z_inlet
-              * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
-              / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet)
-                  / MW),
-              n / (n - 1.0));
-          setOutletPressure(thermoSystem.getPressure() * pressureRatio);
           if (getAntiSurge().isActive()) {
             logger.info("surge flow "
                 + getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead) + " m3/hr");
@@ -1047,9 +1093,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     thermoSystem = outStream.getThermoSystem().clone();
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
-    polytropicEfficiency =
-        compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0;
-    polytropicFluidHead = head * polytropicEfficiency;
+    if (useEfficiencyCurve) {
+      polytropicEfficiency =
+          compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0;
+    }
+    polytropicFluidHead = head * getPolytropicEfficiency();
     dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
         * inStream.getThermoSystem().getTotalNumberOfMoles();
     setCalculationIdentifier(id);
@@ -1960,6 +2008,27 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    */
   public void setCalcPressureOut(boolean calcPressureOut) {
     this.calcPressureOut = calcPressureOut;
+  }
+
+  /**
+   * Checks if the polytropic efficiency should be read from the compressor chart.
+   *
+   * @return {@code true} if efficiency curves are used, {@code false} if a fixed efficiency is
+   *         applied.
+   */
+  public boolean isUseEfficiencyCurve() {
+    return useEfficiencyCurve;
+  }
+
+  /**
+   * Sets whether the polytropic efficiency should be read from the compressor chart or kept at the
+   * specified value.
+   *
+   * @param useEfficiencyCurve {@code true} to read efficiency from the chart, {@code false} to use
+   *        the specified efficiency.
+   */
+  public void setUseEfficiencyCurve(boolean useEfficiencyCurve) {
+    this.useEfficiencyCurve = useEfficiencyCurve;
   }
 
   /**
