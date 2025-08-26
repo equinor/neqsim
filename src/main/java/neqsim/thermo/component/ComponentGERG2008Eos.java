@@ -143,8 +143,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
       double pressure) {
     PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
     double alphar = ph.getAlphaRes() != null ? ph.getAlphaRes()[0][1].val : 0.0;
-    return ThermodynamicConstantsInterface.R * temperature / phase.getVolume()
-        * (1.0 + alphar);
+    return -(1.0 + alphar) / phase.getVolume();
   }
 
   /** {@inheritDoc} */
@@ -166,5 +165,24 @@ public class ComponentGERG2008Eos extends ComponentEos {
         dFdN(phase, phase.getNumberOfComponents(), temperature, pressure) - Math.log(phase.getZ());
     double fugacityCoefficient = Math.exp(logFugacityCoefficient);
     return fugacityCoefficient;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double logfugcoefdP(PhaseInterface phase) {
+    double Z = phase.getZ();
+    double pressure = phase.getPressure();
+    dfugdp = (Z - 1.0) / pressure;
+    return dfugdp;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double logfugcoefdT(PhaseInterface phase) {
+    double hres = phase.getHresTP();
+    double temperature = phase.getTemperature();
+    double n = phase.getNumberOfMolesInPhase();
+    dfugdt = -hres / (n * ThermodynamicConstantsInterface.R * temperature * temperature);
+    return dfugdt;
   }
 }

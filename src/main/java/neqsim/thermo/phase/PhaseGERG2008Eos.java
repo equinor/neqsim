@@ -205,6 +205,31 @@ public class PhaseGERG2008Eos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
+  public double dFdTdV() {
+    // d/dT d/dV (F/RT) = -(1/(R T)) * (dP/dT)_V + P/(R T^2)
+    if (ar == null) {
+      return super.dFdTdV();
+    }
+    double dPdT = getdPdTVn();
+    double p = calcPressure();
+    return -dPdT / (R * temperature) + p / (R * temperature * temperature);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double dFdVdV() {
+    // During early initialisation the Helmholtz derivative array may not yet be
+    // populated.  In that case fall back to the default implementation.
+    if (ar == null) {
+      return super.dFdVdV();
+    }
+    // d^2(F/RT)/dV^2 = -(1/(R T)) * (dP/dV)_T
+    double dPdV = calcPressuredV();
+    return -dPdV / (R * temperature);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getDensity() {
     return getDensity_GERG2008();
   }
@@ -212,7 +237,7 @@ public class PhaseGERG2008Eos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double getdPdTVn() {
-    return (getNumberOfMolesInPhase() / getVolume()) * R * (1 + ar[0][1].val + ar[1][1].val);
+    return (getNumberOfMolesInPhase() / getVolume()) * R * (1 + ar[0][1].val - ar[1][1].val);
   }
 
   /** {@inheritDoc} */
@@ -226,6 +251,22 @@ public class PhaseGERG2008Eos extends PhaseEos {
   @Override
   public double getdPdrho() {
     return R * temperature * (1 + 2 * ar[0][1].val + ar[0][2].val);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getGresTP() {
+    double ar00 = ar != null ? ar[0][0].val : 0.0;
+    double ar01 = ar != null ? ar[0][1].val : 0.0;
+    return numberOfMolesInPhase * R * temperature * (ar00 + ar01);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getHresTP() {
+    double ar10 = ar != null ? ar[1][0].val : 0.0;
+    double ar01 = ar != null ? ar[0][1].val : 0.0;
+    return numberOfMolesInPhase * R * temperature * (ar10 + ar01);
   }
 
   /**

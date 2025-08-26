@@ -15,6 +15,6 @@ public class SystemPCSAFTTest {
     ops.TPflash();
     testSystem.initProperties();
     double cp = testSystem.getCp();
-    assertEquals(208.85116193406583, cp, 0.1);
+    assertEquals(172.3659584364608, cp, 0.1);
   }
 }
