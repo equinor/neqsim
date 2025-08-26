@@ -72,6 +72,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   private boolean useLeachman = false;
   private boolean useVega = false;
   private boolean limitSpeed = false;
+  private boolean includeMinSpeedLimit = true;
+  private boolean includeMaxSpeedLimit = true;
 
   private String pressureUnit = "bara";
   private String polytropicMethod = "detailed";
@@ -607,11 +609,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
           currentSpeed += relaxationFactor * speedUpdate;
           if (currentSpeed < 0) {
-            if (minSpeed > 1) {
-              currentSpeed = minSpeed;
-            } else {
-              currentSpeed = getCompressorChart().getMinSpeedCurve();
-            }
+            currentSpeed = 1;
           }
           if (iteration % 10 == 0 && deltaSpeed > 10) {
             deltaSpeed = deltaSpeed / 2;
@@ -620,29 +618,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           powerSet = true;
           dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass()
               / getPolytropicEfficiency() * thermoSystem.getTotalNumberOfMoles();
-          // Check if speed is within bounds
-          if (currentSpeed < minSpeed || currentSpeed > maxSpeed) {
-            if (limitSpeed) {
-              setSolveSpeed(false);
-              setCalcPressureOut(true);
-              if (currentSpeed > maxSpeed) {
-                setSpeed(maxSpeed);
-              } else if (currentSpeed < minSpeed) {
-                setSpeed(minSpeed);
-              }
-              run();
-              setSolveSpeed(true);
-              setCalcPressureOut(false);
-              return;
-            } else {
-              // throw new IllegalArgumentException(
-              // "Speed out of bounds during Newton-Raphson iteration.");
-            }
-            // throw new IllegalArgumentException(
-            // "Speed out of bounds during Newton-Raphson iteration.");
-          }
 
-          // Check for convergence
           if (Math.abs(currentPressure - targetPressure) <= tolerance) {
             setSpeed(currentSpeed); // Update the final speed
             break;
@@ -1383,6 +1359,100 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
+   * Checks whether the specified operating point is inside the compressor map.
+   *
+   * <p>
+   * The operating point is considered within the allowable envelope when it is neither in surge nor
+   * stone wall region and the required speed lies between the minimum and maximum speed curves.
+   * This method can be used in optimization routines to impose capacity constraints on the
+   * compressor.
+   * </p>
+   *
+   * @param flow volumetric flow rate in m3/hr
+   * @param head polytropic head
+   * @return {@code true} if the operating point is inside the map boundaries
+   */
+  public boolean isWithinOperatingEnvelope(double flow, double head) {
+    return isWithinOperatingEnvelope(flow, head, includeMinSpeedLimit, includeMaxSpeedLimit);
+  }
+
+  /**
+   * Checks whether an operating point lies between surge and stonewall limits and, optionally, the
+   * minimum and/or maximum speed curves. This method can be used in optimization routines to impose
+   * capacity constraints on the compressor.
+   *
+   * @param flow volumetric flow rate in m3/hr
+   * @param head polytropic head
+   * @param includeMinSpeedLimit whether to enforce the minimum speed limit
+   * @param includeMaxSpeedLimit whether to enforce the maximum speed limit
+   * @return {@code true} if the operating point is inside the map boundaries
+   */
+  public boolean isWithinOperatingEnvelope(double flow, double head, boolean includeMinSpeedLimit,
+      boolean includeMaxSpeedLimit) {
+    CompressorChartInterface chart = getCompressorChart();
+    double speed = chart.getSpeed(flow, head);
+    boolean withinSurge = !chart.getSurgeCurve().isSurge(head, flow);
+    boolean withinStoneWall = !chart.getStoneWallCurve().isStoneWall(head, flow);
+    boolean aboveMin = !includeMinSpeedLimit || speed >= chart.getMinSpeedCurve();
+    boolean belowMax = !includeMaxSpeedLimit || speed <= chart.getMaxSpeedCurve();
+    return withinSurge && withinStoneWall && aboveMin && belowMax;
+  }
+
+  /**
+   * Checks whether an operating point lies between surge and stonewall limits and, optionally, the
+   * minimum and maximum speed curves. This overload applies the same inclusion flag to both limits
+   * for backward compatibility.
+   *
+   * @param flow volumetric flow rate in m3/hr
+   * @param head polytropic head
+   * @param includeSpeedLimits whether to enforce minimum and maximum speed limits
+   * @return {@code true} if the operating point is inside the map boundaries
+   */
+  public boolean isWithinOperatingEnvelope(double flow, double head, boolean includeSpeedLimits) {
+    return isWithinOperatingEnvelope(flow, head, includeSpeedLimits, includeSpeedLimits);
+  }
+
+  /**
+   * Convenience overload that evaluates the envelope check for the compressor's current operating
+   * point. Useful for fixed-speed machines where the speed is not varied during the calculation.
+   *
+   * @return {@code true} if the compressor's present flow and head are inside the map boundaries
+   */
+  public boolean isWithinOperatingEnvelope() {
+    return isWithinOperatingEnvelope(includeMinSpeedLimit, includeMaxSpeedLimit);
+  }
+
+  /**
+   * Convenience overload that evaluates the envelope check for the compressor's current operating
+   * point with optional speed-limit enforcement. Useful for fixed-speed machines where the speed is
+   * not varied during the calculation.
+   *
+   * @param includeMinSpeedLimit whether to enforce the minimum speed limit
+   * @param includeMaxSpeedLimit whether to enforce the maximum speed limit
+   * @return {@code true} if the compressor's present flow and head are inside the map boundaries
+   */
+  public boolean isWithinOperatingEnvelope(boolean includeMinSpeedLimit,
+      boolean includeMaxSpeedLimit) {
+    if (thermoSystem == null) {
+      logger.warn("Thermo system not initialized for compressor {}", getName());
+      return false;
+    }
+    return isWithinOperatingEnvelope(thermoSystem.getFlowRate("m3/hr"), getPolytropicHead(),
+        includeMinSpeedLimit, includeMaxSpeedLimit);
+  }
+
+  /**
+   * Convenience overload that applies the same inclusion flag to both speed limits for backward
+   * compatibility.
+   *
+   * @param includeSpeedLimits whether to enforce minimum and maximum speed limits
+   * @return {@code true} if the compressor's present flow and head are inside the map boundaries
+   */
+  public boolean isWithinOperatingEnvelope(boolean includeSpeedLimits) {
+    return isWithinOperatingEnvelope(includeSpeedLimits, includeSpeedLimits);
+  }
+
+  /**
    * <p>
    * Setter for the field <code>antiSurge</code>.
    * </p>
@@ -1774,10 +1844,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         && Objects.equals(polytropicMethod, other.polytropicMethod) && powerSet == other.powerSet
         && Double.doubleToLongBits(pressure) == Double.doubleToLongBits(other.pressure)
         && Objects.equals(pressureUnit, other.pressureUnit) && speed == other.speed
-        && Objects.equals(thermoSystem, other.thermoSystem)
-        && useGERG2008 == other.useGERG2008
-        && useLeachman == other.useLeachman
-        && useVega == other.useVega
+        && Objects.equals(thermoSystem, other.thermoSystem) && useGERG2008 == other.useGERG2008
+        && useLeachman == other.useLeachman && useVega == other.useVega
         && useOutTemperature == other.useOutTemperature
         && usePolytropicCalc == other.usePolytropicCalc
         && useRigorousPolytropicMethod == other.useRigorousPolytropicMethod;
@@ -1978,5 +2046,43 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    */
   public void setLimitSpeed(boolean limitSpeed) {
     this.limitSpeed = limitSpeed;
+  }
+
+  /**
+   * Checks if the minimum speed limit is enforced when evaluating the operating envelope.
+   *
+   * @return {@code true} if the minimum speed limit is enforced, {@code false} otherwise.
+   */
+  public boolean isIncludeMinSpeedLimit() {
+    return includeMinSpeedLimit;
+  }
+
+  /**
+   * Sets whether the minimum speed limit should be enforced when evaluating the operating envelope.
+   *
+   * @param includeMinSpeedLimit {@code true} to enforce the minimum speed limit, {@code false} to
+   *        ignore it
+   */
+  public void setIncludeMinSpeedLimit(boolean includeMinSpeedLimit) {
+    this.includeMinSpeedLimit = includeMinSpeedLimit;
+  }
+
+  /**
+   * Checks if the maximum speed limit is enforced when evaluating the operating envelope.
+   *
+   * @return {@code true} if the maximum speed limit is enforced, {@code false} otherwise.
+   */
+  public boolean isIncludeMaxSpeedLimit() {
+    return includeMaxSpeedLimit;
+  }
+
+  /**
+   * Sets whether the maximum speed limit should be enforced when evaluating the operating envelope.
+   *
+   * @param includeMaxSpeedLimit {@code true} to enforce the maximum speed limit, {@code false} to
+   *        ignore it
+   */
+  public void setIncludeMaxSpeedLimit(boolean includeMaxSpeedLimit) {
+    this.includeMaxSpeedLimit = includeMaxSpeedLimit;
   }
 }
