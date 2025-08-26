@@ -574,6 +574,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    *
    * @return a double
    */
+  @Override
   public double getMaxSpeedCurve() {
     return maxSpeedCurve;
   }
