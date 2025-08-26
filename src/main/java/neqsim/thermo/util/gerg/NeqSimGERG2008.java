@@ -4,6 +4,7 @@ import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -120,6 +121,12 @@ public class NeqSimGERG2008 {
    */
   public double getMolarDensity() {
     int flag = 0;
+    if (phase != null) {
+      PhaseType type = phase.getType();
+      if (type == PhaseType.LIQUID || type == PhaseType.OIL || type == PhaseType.AQUEOUS) {
+        flag = 2; // search for high density root
+      }
+    }
     intW ierr = new intW(0);
     StringW herr = new StringW("");
     doubleW D = new doubleW(0.0);
