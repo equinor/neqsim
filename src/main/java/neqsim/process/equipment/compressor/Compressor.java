@@ -609,11 +609,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
           currentSpeed += relaxationFactor * speedUpdate;
           if (currentSpeed < 0) {
-            if (minSpeed > 1) {
-              currentSpeed = minSpeed;
-            } else {
-              currentSpeed = getCompressorChart().getMinSpeedCurve();
-            }
+            currentSpeed = 1;
           }
           if (iteration % 10 == 0 && deltaSpeed > 10) {
             deltaSpeed = deltaSpeed / 2;
@@ -1387,15 +1383,17 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   /**
    * Checks whether the specified operating point is inside the compressor map.
    *
-   * <p>The operating point is considered within the allowable envelope when it is neither in
-   * surge nor stone wall region and the required speed lies between the minimum and maximum speed
-   * curves. This method can be used in optimization routines to impose
-   * capacity constraints on the compressor.</p>
+   * <p>
+   * The operating point is considered within the allowable envelope when it is neither in surge nor
+   * stone wall region and the required speed lies between the minimum and maximum speed curves.
+   * This method can be used in optimization routines to impose capacity constraints on the
+   * compressor.
+   * </p>
    *
    * @param flow volumetric flow rate in m3/hr
-  * @param head polytropic head
-  * @return {@code true} if the operating point is inside the map boundaries
-  */
+   * @param head polytropic head
+   * @return {@code true} if the operating point is inside the map boundaries
+   */
   public boolean isWithinOperatingEnvelope(double flow, double head) {
     return isWithinOperatingEnvelope(flow, head, includeMinSpeedLimit, includeMaxSpeedLimit);
   }
@@ -1437,9 +1435,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * Convenience overload that evaluates the envelope check for the compressor's current
-   * operating point. Useful for fixed-speed machines where the speed is not varied during the
-   * calculation.
+   * Convenience overload that evaluates the envelope check for the compressor's current operating
+   * point. Useful for fixed-speed machines where the speed is not varied during the calculation.
    *
    * @return {@code true} if the compressor's present flow and head are inside the map boundaries
    */
@@ -1869,10 +1866,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         && Objects.equals(polytropicMethod, other.polytropicMethod) && powerSet == other.powerSet
         && Double.doubleToLongBits(pressure) == Double.doubleToLongBits(other.pressure)
         && Objects.equals(pressureUnit, other.pressureUnit) && speed == other.speed
-        && Objects.equals(thermoSystem, other.thermoSystem)
-        && useGERG2008 == other.useGERG2008
-        && useLeachman == other.useLeachman
-        && useVega == other.useVega
+        && Objects.equals(thermoSystem, other.thermoSystem) && useGERG2008 == other.useGERG2008
+        && useLeachman == other.useLeachman && useVega == other.useVega
         && useOutTemperature == other.useOutTemperature
         && usePolytropicCalc == other.usePolytropicCalc
         && useRigorousPolytropicMethod == other.useRigorousPolytropicMethod;
@@ -2085,8 +2080,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * Sets whether the minimum speed limit should be enforced when evaluating the operating
-   * envelope.
+   * Sets whether the minimum speed limit should be enforced when evaluating the operating envelope.
    *
    * @param includeMinSpeedLimit {@code true} to enforce the minimum speed limit, {@code false} to
    *        ignore it
@@ -2105,8 +2099,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
-   * Sets whether the maximum speed limit should be enforced when evaluating the operating
-   * envelope.
+   * Sets whether the maximum speed limit should be enforced when evaluating the operating envelope.
    *
    * @param includeMaxSpeedLimit {@code true} to enforce the maximum speed limit, {@code false} to
    *        ignore it
