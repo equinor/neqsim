@@ -31,6 +31,7 @@ public class SystemBnsEos extends SystemEos {
   private final double[] omegaA;
   private final double[] omegaB;
   private final double[] vshift;
+  private final double[] vshiftField;
   private double[][] cpCoeffs;
 
   private final double[] zfractions = new double[5];
@@ -50,6 +51,12 @@ public class SystemBnsEos extends SystemEos {
   private static double pcFn(double x, double vcSlope, double tc) {
     double vcOnZc = vcSlope * x + VcZcCH4;
     return ThermodynamicConstantsInterface.R * tc / vcOnZc / 1.0e5;
+  }
+
+  private static double calcVshift(double ciField, double omegaB, double tc, double pc) {
+    double ciSI = ciField * 0.0283168466 / 453.59237;
+    double bi = omegaB * ThermodynamicConstantsInterface.R * tc / (pc * 1.0e5);
+    return ciSI / bi;
   }
 
   private static double[] pseudoCritical(double sgHc, boolean ag) {
@@ -117,7 +124,6 @@ public class SystemBnsEos extends SystemEos {
         psiaToBar(187.53), 1.0};
     mws = new double[] {44.01 / 1000.0, 34.082 / 1000.0, 28.014 / 1000.0, 2.016 / 1000.0, 0.0};
     acfs = new double[] {0.12253, 0.04909, 0.037, -0.217, -0.03899};
-    vshift = new double[] {-0.27607, -0.22901, -0.21066, -0.36270, -0.19076};
     omegaA = new double[] {0.427671, 0.436725, 0.457236, 0.457236, 0.457236};
     omegaB = new double[] {0.0696397, 0.0724345, 0.0777961, 0.0777961, 0.0777961};
     vshiftField = new double[] {-0.27607, -0.22901, -0.21066, -0.36270, -0.19076};
@@ -205,7 +211,7 @@ public class SystemBnsEos extends SystemEos {
     tcs[4] = tcpc[0];
     pcs[4] = tcpc[1];
     mws[4] = sgHc * MW_AIR / 1000.0;
-    
+
     vshift[4] = -calcVshift(vshiftField[4], omegaB[4], tcs[4], pcs[4]);
 
     double[][] cp = {{2.725473196, 0.004103751, 1.5602e-5, -4.19321e-8, 3.10542e-11},
