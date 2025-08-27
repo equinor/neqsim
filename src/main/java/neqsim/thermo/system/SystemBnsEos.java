@@ -129,7 +129,7 @@ public class SystemBnsEos extends SystemEos {
     vshiftField = new double[] {-0.27607, -0.22901, -0.21066, -0.36270, -0.19076};
     vshift = new double[5];
     for (int i = 0; i < vshift.length; i++) {
-      vshift[i] = calcVshift(vshiftField[i], omegaB[i], tcs[i], pcs[i]);
+      vshift[i] = -calcVshift(vshiftField[i], omegaB[i], tcs[i], pcs[i]);
     }
 
     for (int i = 0; i < numberOfPhases; i++) {
@@ -211,7 +211,8 @@ public class SystemBnsEos extends SystemEos {
     tcs[4] = tcpc[0];
     pcs[4] = tcpc[1];
     mws[4] = sgHc * MW_AIR / 1000.0;
-    vshift[4] = calcVshift(vshiftField[4], omegaB[4], tcs[4], pcs[4]);
+    
+    vshift[4] = -calcVshift(vshiftField[4], omegaB[4], tcs[4], pcs[4]);
 
     double[][] cp = {{2.725473196, 0.004103751, 1.5602e-5, -4.19321e-8, 3.10542e-11},
         {4.446031265, -0.005296052, 2.0533e-5, -2.58993e-8, 1.25555e-11},
