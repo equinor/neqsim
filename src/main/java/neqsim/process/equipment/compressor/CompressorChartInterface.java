@@ -207,18 +207,9 @@ public interface CompressorChartInterface extends Cloneable {
    * Getter for the field <code>minSpeedCurve</code>.
    * </p>
    *
-  * @return a double
-  */
-  public double getMinSpeedCurve();
-
-  /**
-   * <p>
-   * Getter for the field <code>maxSpeedCurve</code>.
-   * </p>
-   *
    * @return a double
    */
-  public double getMaxSpeedCurve();
+  public double getMinSpeedCurve();
 
   public void generateSurgeCurve();
 

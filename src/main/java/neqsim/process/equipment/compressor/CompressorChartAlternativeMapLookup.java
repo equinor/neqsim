@@ -708,24 +708,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart
   /** {@inheritDoc} */
   @Override
   public double getMinSpeedCurve() {
-    double min = Double.MAX_VALUE;
-    for (CompressorCurve curve : chartValues) {
-      if (curve.speed < min) {
-        min = curve.speed;
-      }
-    }
-    return min == Double.MAX_VALUE ? 0.0 : min;
-  }
-
-  @Override
-  public double getMaxSpeedCurve() {
-    double max = 0.0;
-    for (CompressorCurve curve : chartValues) {
-      if (curve.speed > max) {
-        max = curve.speed;
-      }
-    }
-    return max;
+    return 0;
   }
 
   /**
