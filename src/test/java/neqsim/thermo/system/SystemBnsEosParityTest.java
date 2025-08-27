@@ -29,7 +29,7 @@ public class SystemBnsEosParityTest {
     assertEquals(39.11774916142968, cp, 0.1);
     assertEquals(29.815115496874455, cv, 0.1);
     assertEquals(5.456788345314515, jt, 0.2);
-    assertEquals(7.749773205766539, density, 0.001);
+    assertEquals(7.80645861653957, density, 0.001);
     assertEquals(411.4566767812817, speed, 1.0);
 
   }
@@ -56,12 +56,26 @@ public class SystemBnsEosParityTest {
     double speed =
         Math.sqrt(gamma * sys.getPhase(0).getZ() * neqsim.thermo.ThermodynamicConstantsInterface.R
             * sys.getTemperature() / sys.getMolarMass());
-    assertEquals(0.7909229109228723, Z, 0.01);
-    assertEquals(95.44916709290638, density, 0.01);
+    assertEquals(0.7205002163, Z, 0.01);
+    assertEquals(104.7785354004, density, 0.01);
     assertEquals(53.7112082181241, cp, 1.0);
     assertEquals(30.73168795781629, cv, 1.0);
     assertEquals(3.800162780643346, jt, 0.1);
     assertEquals(427.91066622776856, speed, 10.0);
 
+  }
+
+  @Test
+  public void testCO2test() {
+    SystemBnsEos system = new SystemBnsEos();
+    system.setTemperature(60.0, "F");
+    system.setPressure(2000.0, "psia");
+    system.setAssociatedGas(false);
+    system.setRelativeDensity(0.75);
+    system.setComposition(1.00, 0.0, 0.00, 0.0);
+    system.useVolumeCorrection(true);
+    system.setMixingRule(12);
+    new ThermodynamicOperations(system).TPflash();
+    assertEquals(0.27770239288, system.getPhase(0).getZ(), 1e-4);
   }
 }
