@@ -247,15 +247,15 @@ public class SystemBnsEos extends SystemEos {
               comp.setCpA(cpCoeffs[j][0]);
               comp.setCpB(cpCoeffs[j][1]);
               comp.setCpC(cpCoeffs[j][2]);
-            comp.setCpD(cpCoeffs[j][3]);
-            comp.setCpE(cpCoeffs[j][4]);
-            comp.setTC(tcs[j]);
-            comp.setPC(pcs[j]);
-            comp.setMolarMass(mws[j]);
-            comp.setVolumeCorrectionConst(vshift[j]);
+              comp.setCpD(cpCoeffs[j][3]);
+              comp.setCpE(cpCoeffs[j][4]);
+              comp.setTC(tcs[j]);
+              comp.setPC(pcs[j]);
+              comp.setMolarMass(mws[j]);
+              comp.setVolumeCorrectionConst(-vshift[j]);
+            }
           }
         }
-      }
       } else {
         addBnsComponent(name, zf[j], j);
       }
