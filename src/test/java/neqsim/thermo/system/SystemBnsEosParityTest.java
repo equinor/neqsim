@@ -75,11 +75,14 @@ public class SystemBnsEosParityTest {
     system.setTemperature(60.0, "F");
     system.setPressure(2000.0, "psia");
     system.setAssociatedGas(false);
-    system.setRelativeDensity(0.75);
+    // system.setRelativeDensity(0.65);
     system.setComposition(1.00, 0.0, 0.00, 0.0);
     system.useVolumeCorrection(true);
     system.setMixingRule(12);
     new ThermodynamicOperations(system).TPflash();
-    assertEquals(0.27770239288, system.getPhase(0).getZ(), 1e-4);
+
+    system.initProperties();
+    // system.prettyPrint();
+    assertEquals(0.277703403262325, system.getZvolcorr(), 1e-7);
   }
 }
