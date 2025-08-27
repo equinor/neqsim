@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermo.ThermodynamicConstantsInterface;
 
 public class CompressorCalculationTest extends neqsim.NeqSimTest {
   Compressor comp1;
@@ -96,7 +95,6 @@ public class CompressorCalculationTest extends neqsim.NeqSimTest {
   public void testRun() {
     setCurves();
     comp1.setUsePolytropicCalc(true);
-    comp1.setUseEfficiencyCurve(true);
     comp1.setSpeed(11918);
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();
@@ -129,92 +127,5 @@ public class CompressorCalculationTest extends neqsim.NeqSimTest {
      * comp1.getPolytropicEfficiency()); logger.info("temperature out " + (comp1.getOutTemperature()
      * - 273.15) + " C"); logger.info("calculated speed " + calcSpeed);
      */
-  }
-
-  @Test
-  public void testHeadFromFixedOutletPressure() {
-    SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
-    fluid.addComponent("methane", 1.0);
-    fluid.setMixingRule(2);
-    Stream stream = new Stream("stream", fluid);
-    stream.setPressure(10.0, "bara");
-    stream.setTemperature(25.0, "C");
-    stream.setFlowRate(1000.0, "Am3/hr");
-
-    Compressor compressor = new Compressor("comp", stream);
-    double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};
-    double[] speed = new double[] {1000.0};
-    double[][] flow = new double[][] {{800.0, 1200.0}};
-    double[][] head = new double[][] {{50.0, 60.0}};
-    double[][] polyEff = new double[][] {{80.0, 80.0}};
-    compressor.getCompressorChart().setCurves(chartConditions, speed, flow, head, polyEff);
-    compressor.getCompressorChart().setHeadUnit("kJ/kg");
-    compressor.setUsePolytropicCalc(true);
-    compressor.setUseEfficiencyCurve(true);
-    compressor.setSpeed(500.0);
-    double targetPressure = 20.0;
-    compressor.setOutletPressure(targetPressure);
-
-    stream.run();
-    double z = stream.getThermoSystem().getZ();
-    double MW = stream.getThermoSystem().getMolarMass();
-    double temperature = stream.getThermoSystem().getTemperature();
-    double kappa = stream.getThermoSystem().getGamma2();
-    double eff = 0.80;
-    double n = 1.0 / (1.0 - (kappa - 1.0) / kappa / eff);
-    double pressureRatio = targetPressure / stream.getThermoSystem().getPressure();
-    double expectedHead =
-        n / (n - 1.0) * z * ThermodynamicConstantsInterface.R * temperature / MW
-            * (Math.pow(pressureRatio, (n - 1.0) / n) - 1.0);
-    double expectedSpeed = compressor.getCompressorChart().getSpeed(
-        stream.getThermoSystem().getFlowRate("m3/hr"), expectedHead);
-
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
-    operations.add(stream);
-    operations.add(compressor);
-    operations.run();
-
-    Assertions.assertEquals(eff, compressor.getPolytropicEfficiency(), 1e-6);
-    Assertions.assertEquals(expectedHead, compressor.getPolytropicHead(), 1e-4);
-    Assertions.assertEquals(targetPressure, compressor.getOutletPressure(), 1e-6);
-    Assertions.assertEquals(expectedSpeed, compressor.getSpeed(), 1e-6);
-  }
-
-  @Test
-  public void testEfficiencyCurveToggle() {
-    SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
-    fluid.addComponent("methane", 1.0);
-    fluid.setMixingRule(2);
-    Stream stream = new Stream("stream", fluid);
-    stream.setPressure(10.0, "bara");
-    stream.setTemperature(25.0, "C");
-    stream.setFlowRate(1000.0, "Am3/hr");
-
-    Compressor compressor = new Compressor("comp", stream);
-    double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};
-    double[] speed = new double[] {1000.0};
-    double[][] flow = new double[][] {{800.0, 1200.0}};
-    double[][] head = new double[][] {{50.0, 60.0}};
-    double[][] polyEff = new double[][] {{80.0, 90.0}};
-    compressor.getCompressorChart().setCurves(chartConditions, speed, flow, head, polyEff);
-    compressor.getCompressorChart().setHeadUnit("kJ/kg");
-    compressor.setUsePolytropicCalc(true);
-    compressor.setPolytropicEfficiency(0.7);
-    compressor.setOutletPressure(20.0);
-
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
-    operations.add(stream);
-    operations.add(compressor);
-    operations.run();
-
-    Assertions.assertEquals(0.7, compressor.getPolytropicEfficiency(), 1e-6);
-
-    compressor.setUseEfficiencyCurve(true);
-    operations.run();
-    double expectedEff = compressor.getCompressorChart().getPolytropicEfficiency(
-        stream.getThermoSystem().getFlowRate("m3/hr"), compressor.getSpeed()) / 100.0;
-    Assertions.assertEquals(expectedEff, compressor.getPolytropicEfficiency(), 1e-6);
   }
 }

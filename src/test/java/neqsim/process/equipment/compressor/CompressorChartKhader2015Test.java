@@ -32,7 +32,6 @@ public class CompressorChartKhader2015Test {
     stream_1.run();
     Compressor comp1 = new Compressor("cmp1", stream_1);
     comp1.setUsePolytropicCalc(true);
-    comp1.setUseEfficiencyCurve(true);
     double compspeed = 10000;
     comp1.setSpeed(compspeed);
 
@@ -287,7 +286,6 @@ public class CompressorChartKhader2015Test {
     stream_1.run();
     Compressor comp1 = new Compressor("cmp1", stream_1);
     comp1.setUsePolytropicCalc(true);
-    comp1.setUseEfficiencyCurve(true);
     double compspeed = 10000;
     comp1.setSpeed(compspeed);
 

@@ -209,7 +209,6 @@ public class CompressorChartTest {
     Compressor comp1 = new Compressor("compressor 1", stream_1);
     comp1.setCompressorChartType("interpolate and extrapolate");
     comp1.setUsePolytropicCalc(true);
-    comp1.setUseEfficiencyCurve(true);
     comp1.setSpeed(8765);
     comp1.setUseGERG2008(false);
 
@@ -302,7 +301,6 @@ public class CompressorChartTest {
     Compressor comp1 = new Compressor("compressor 1", stream_1);
     comp1.setCompressorChartType("interpolate and extrapolate");
     comp1.setUsePolytropicCalc(true);
-    comp1.setUseEfficiencyCurve(true);
     comp1.setPolytropicEfficiency(0.85);
     comp1.setSpeed(9000);
     double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};
@@ -408,7 +406,6 @@ public class CompressorChartTest {
     Compressor comp1 = new Compressor("compressor 1", stream_1);
     // comp1.setCompressorChartType("interpolate and extrapolate");
     comp1.setUsePolytropicCalc(true);
-    comp1.setUseEfficiencyCurve(true);
     comp1.setPolytropicEfficiency(0.85);
     comp1.setSpeed(9000);
     double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};

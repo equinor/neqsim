@@ -39,7 +39,6 @@ public class CompressorChartReaderTest {
     Compressor compressor = new Compressor("compressor1", stream);
     compressor.setCompressorChartType("interpolate and extrapolate");
     compressor.setUsePolytropicCalc(true);
-    compressor.setUseEfficiencyCurve(true);
     // compressor.setMaximumSpeed(7383);
     // compressor.setMinimumSpeed(4922);
     compressor.setSpeed(3000);
