@@ -211,6 +211,7 @@ public class SystemBnsEos extends SystemEos {
     tcs[4] = tcpc[0];
     pcs[4] = tcpc[1];
     mws[4] = sgHc * MW_AIR / 1000.0;
+    
     vshift[4] = -calcVshift(vshiftField[4], omegaB[4], tcs[4], pcs[4]);
 
     double[][] cp = {{2.725473196, 0.004103751, 1.5602e-5, -4.19321e-8, 3.10542e-11},

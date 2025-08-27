@@ -60,6 +60,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public boolean usePolytropicCalc = false;
   public boolean powerSet = false;
   public boolean calcPressureOut = false;
+  private boolean useEfficiencyCurve = false;
   private CompressorChartInterface compressorChart = new CompressorChart();
   private AntiSurge antiSurge = new AntiSurge();
   private double polytropicHead = 0;
@@ -72,8 +73,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   private boolean useLeachman = false;
   private boolean useVega = false;
   private boolean limitSpeed = false;
-  private boolean includeMinSpeedLimit = true;
-  private boolean includeMaxSpeedLimit = true;
 
   private String pressureUnit = "bara";
   private String polytropicMethod = "detailed";
@@ -550,16 +549,19 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
             z_inlet = VegaProps[1];
           }
 
-          double polytropEff =
-              getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed);
-          setPolytropicEfficiency(polytropEff / 100.0);
-          if (polytropEff <= 0.0) {
-            polytropEff = 0.01;
-            setPolytropicEfficiency(0.01);
-          }
-          if (polytropEff > 100.0) {
-            polytropEff = 100;
-            setPolytropicEfficiency(100.0);
+          double polytropEff = useEfficiencyCurve
+              ? getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed)
+              : getPolytropicEfficiency() * 100.0;
+          if (useEfficiencyCurve) {
+            setPolytropicEfficiency(polytropEff / 100.0);
+            if (polytropEff <= 0.0) {
+              polytropEff = 0.01;
+              setPolytropicEfficiency(0.01);
+            }
+            if (polytropEff > 100.0) {
+              polytropEff = 100;
+              setPolytropicEfficiency(100.0);
+            }
           }
 
           polytropicHead = getCompressorChart().getPolytropicHead(actualFlowRate, currentSpeed);
@@ -579,8 +581,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           double currentPressure = thermoSystem.getPressure() * pressureRatio;
 
           // Calculate the derivative of pressure with respect to speed
-          double polytropEffDelta = getCompressorChart().getPolytropicEfficiency(actualFlowRate,
-              currentSpeed + deltaSpeed);
+          double polytropEffDelta = useEfficiencyCurve
+              ? getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed + deltaSpeed)
+              : polytropEff;
           double polytropicHeadDelta =
               getCompressorChart().getPolytropicHead(actualFlowRate, currentSpeed + deltaSpeed);
           double nDelta = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEffDelta / 100.0));
@@ -609,7 +612,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
           currentSpeed += relaxationFactor * speedUpdate;
           if (currentSpeed < 0) {
-            currentSpeed = 1;
+            if (minSpeed > 1) {
+              currentSpeed = minSpeed;
+            } else {
+              currentSpeed = getCompressorChart().getMinSpeedCurve();
+            }
           }
           if (iteration % 10 == 0 && deltaSpeed > 10) {
             deltaSpeed = deltaSpeed / 2;
@@ -618,7 +625,29 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
           powerSet = true;
           dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass()
               / getPolytropicEfficiency() * thermoSystem.getTotalNumberOfMoles();
+          // Check if speed is within bounds
+          if (currentSpeed < minSpeed || currentSpeed > maxSpeed) {
+            if (limitSpeed) {
+              setSolveSpeed(false);
+              setCalcPressureOut(true);
+              if (currentSpeed > maxSpeed) {
+                setSpeed(maxSpeed);
+              } else if (currentSpeed < minSpeed) {
+                setSpeed(minSpeed);
+              }
+              run();
+              setSolveSpeed(true);
+              setCalcPressureOut(false);
+              return;
+            } else {
+              // throw new IllegalArgumentException(
+              // "Speed out of bounds during Newton-Raphson iteration.");
+            }
+            // throw new IllegalArgumentException(
+            // "Speed out of bounds during Newton-Raphson iteration.");
+          }
 
+          // Check for convergence
           if (Math.abs(currentPressure - targetPressure) <= tolerance) {
             setSpeed(currentSpeed); // Update the final speed
             break;
@@ -666,26 +695,67 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
             z_inlet = VegaProps[1];
           }
 
-          double polytropEff =
-              getCompressorChart().getPolytropicEfficiency(actualFlowRate, getSpeed());
-          setPolytropicEfficiency(polytropEff / 100.0);
-          polytropicHead = getCompressorChart().getPolytropicHead(actualFlowRate, getSpeed());
           double temperature_inlet = thermoSystem.getTemperature();
-          double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
-          polytropicExponent = n;
-          if (getCompressorChart().getHeadUnit().equals("meter")) {
-            polytropicFluidHead = polytropicHead / 1000.0 * 9.81;
-            polytropicHeadMeter = polytropicHead;
+
+          if (!isCalcPressureOut() && pressure > 0.0
+              && Math.abs(pressure - thermoSystem.getPressure(pressureUnit)) > 1e-6) {
+            // pressure out is specified - iteratively calculate required head and speed
+            double pressureRatio = pressure / thermoSystem.getPressure(pressureUnit);
+            double currentSpeed = getSpeed();
+            int iterCount = 0;
+            do {
+              double polytropEff = useEfficiencyCurve
+                  ? getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed)
+                  : getPolytropicEfficiency() * 100.0;
+              if (useEfficiencyCurve) {
+                setPolytropicEfficiency(polytropEff / 100.0);
+              }
+              double n =
+                  1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
+              polytropicExponent = n;
+              polytropicFluidHead = n / (n - 1.0) * z_inlet
+                  * ThermodynamicConstantsInterface.R * temperature_inlet / MW
+                  * (Math.pow(pressureRatio, (n - 1.0) / n) - 1.0);
+              polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
+              if (getCompressorChart().getHeadUnit().equals("meter")) {
+                polytropicHead = polytropicHeadMeter;
+              } else {
+                polytropicHead = polytropicFluidHead;
+              }
+              double newSpeed =
+                  getCompressorChart().getSpeed(actualFlowRate, polytropicHead);
+              if (Math.abs(newSpeed - currentSpeed) < 1.0) {
+                currentSpeed = newSpeed;
+                break;
+              }
+              currentSpeed = newSpeed;
+            } while (++iterCount < 20);
+            setSpeed(currentSpeed);
           } else {
-            polytropicFluidHead = polytropicHead;
-            polytropicHeadMeter = polytropicHead * 1000.0 / 9.81;
+            double polytropEff = useEfficiencyCurve
+                ? getCompressorChart().getPolytropicEfficiency(actualFlowRate, getSpeed())
+                : getPolytropicEfficiency() * 100.0;
+            if (useEfficiencyCurve) {
+              setPolytropicEfficiency(polytropEff / 100.0);
+            }
+            double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
+            polytropicExponent = n;
+            polytropicHead = getCompressorChart().getPolytropicHead(actualFlowRate, getSpeed());
+            if (getCompressorChart().getHeadUnit().equals("meter")) {
+              polytropicFluidHead = polytropicHead / 1000.0 * 9.81;
+              polytropicHeadMeter = polytropicHead;
+            } else {
+              polytropicFluidHead = polytropicHead;
+              polytropicHeadMeter = polytropicHead * 1000.0 / 9.81;
+            }
+            double pressureRatio = Math.pow((polytropicFluidHead * 1000.0
+                + (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * temperature_inlet
+                    / MW))
+                / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * temperature_inlet
+                    / MW),
+                n / (n - 1.0));
+            setOutletPressure(thermoSystem.getPressure() * pressureRatio);
           }
-          double pressureRatio = Math.pow((polytropicFluidHead * 1000.0 + (n / (n - 1.0) * z_inlet
-              * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
-              / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet)
-                  / MW),
-              n / (n - 1.0));
-          setOutletPressure(thermoSystem.getPressure() * pressureRatio);
           if (getAntiSurge().isActive()) {
             logger.info("surge flow "
                 + getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead) + " m3/hr");
@@ -1023,9 +1093,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     thermoSystem = outStream.getThermoSystem().clone();
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
-    polytropicEfficiency =
-        compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0;
-    polytropicFluidHead = head * polytropicEfficiency;
+    if (useEfficiencyCurve) {
+      polytropicEfficiency =
+          compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0;
+    }
+    polytropicFluidHead = head * getPolytropicEfficiency();
     dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
         * inStream.getThermoSystem().getTotalNumberOfMoles();
     setCalculationIdentifier(id);
@@ -1356,100 +1428,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    */
   public boolean isStoneWall(double flow, double head) {
     return getCompressorChart().getStoneWallCurve().isStoneWall(flow, head);
-  }
-
-  /**
-   * Checks whether the specified operating point is inside the compressor map.
-   *
-   * <p>
-   * The operating point is considered within the allowable envelope when it is neither in surge nor
-   * stone wall region and the required speed lies between the minimum and maximum speed curves.
-   * This method can be used in optimization routines to impose capacity constraints on the
-   * compressor.
-   * </p>
-   *
-   * @param flow volumetric flow rate in m3/hr
-   * @param head polytropic head
-   * @return {@code true} if the operating point is inside the map boundaries
-   */
-  public boolean isWithinOperatingEnvelope(double flow, double head) {
-    return isWithinOperatingEnvelope(flow, head, includeMinSpeedLimit, includeMaxSpeedLimit);
-  }
-
-  /**
-   * Checks whether an operating point lies between surge and stonewall limits and, optionally, the
-   * minimum and/or maximum speed curves. This method can be used in optimization routines to impose
-   * capacity constraints on the compressor.
-   *
-   * @param flow volumetric flow rate in m3/hr
-   * @param head polytropic head
-   * @param includeMinSpeedLimit whether to enforce the minimum speed limit
-   * @param includeMaxSpeedLimit whether to enforce the maximum speed limit
-   * @return {@code true} if the operating point is inside the map boundaries
-   */
-  public boolean isWithinOperatingEnvelope(double flow, double head, boolean includeMinSpeedLimit,
-      boolean includeMaxSpeedLimit) {
-    CompressorChartInterface chart = getCompressorChart();
-    double speed = chart.getSpeed(flow, head);
-    boolean withinSurge = !chart.getSurgeCurve().isSurge(head, flow);
-    boolean withinStoneWall = !chart.getStoneWallCurve().isStoneWall(head, flow);
-    boolean aboveMin = !includeMinSpeedLimit || speed >= chart.getMinSpeedCurve();
-    boolean belowMax = !includeMaxSpeedLimit || speed <= chart.getMaxSpeedCurve();
-    return withinSurge && withinStoneWall && aboveMin && belowMax;
-  }
-
-  /**
-   * Checks whether an operating point lies between surge and stonewall limits and, optionally, the
-   * minimum and maximum speed curves. This overload applies the same inclusion flag to both limits
-   * for backward compatibility.
-   *
-   * @param flow volumetric flow rate in m3/hr
-   * @param head polytropic head
-   * @param includeSpeedLimits whether to enforce minimum and maximum speed limits
-   * @return {@code true} if the operating point is inside the map boundaries
-   */
-  public boolean isWithinOperatingEnvelope(double flow, double head, boolean includeSpeedLimits) {
-    return isWithinOperatingEnvelope(flow, head, includeSpeedLimits, includeSpeedLimits);
-  }
-
-  /**
-   * Convenience overload that evaluates the envelope check for the compressor's current operating
-   * point. Useful for fixed-speed machines where the speed is not varied during the calculation.
-   *
-   * @return {@code true} if the compressor's present flow and head are inside the map boundaries
-   */
-  public boolean isWithinOperatingEnvelope() {
-    return isWithinOperatingEnvelope(includeMinSpeedLimit, includeMaxSpeedLimit);
-  }
-
-  /**
-   * Convenience overload that evaluates the envelope check for the compressor's current operating
-   * point with optional speed-limit enforcement. Useful for fixed-speed machines where the speed is
-   * not varied during the calculation.
-   *
-   * @param includeMinSpeedLimit whether to enforce the minimum speed limit
-   * @param includeMaxSpeedLimit whether to enforce the maximum speed limit
-   * @return {@code true} if the compressor's present flow and head are inside the map boundaries
-   */
-  public boolean isWithinOperatingEnvelope(boolean includeMinSpeedLimit,
-      boolean includeMaxSpeedLimit) {
-    if (thermoSystem == null) {
-      logger.warn("Thermo system not initialized for compressor {}", getName());
-      return false;
-    }
-    return isWithinOperatingEnvelope(thermoSystem.getFlowRate("m3/hr"), getPolytropicHead(),
-        includeMinSpeedLimit, includeMaxSpeedLimit);
-  }
-
-  /**
-   * Convenience overload that applies the same inclusion flag to both speed limits for backward
-   * compatibility.
-   *
-   * @param includeSpeedLimits whether to enforce minimum and maximum speed limits
-   * @return {@code true} if the compressor's present flow and head are inside the map boundaries
-   */
-  public boolean isWithinOperatingEnvelope(boolean includeSpeedLimits) {
-    return isWithinOperatingEnvelope(includeSpeedLimits, includeSpeedLimits);
   }
 
   /**
@@ -1844,8 +1822,10 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
         && Objects.equals(polytropicMethod, other.polytropicMethod) && powerSet == other.powerSet
         && Double.doubleToLongBits(pressure) == Double.doubleToLongBits(other.pressure)
         && Objects.equals(pressureUnit, other.pressureUnit) && speed == other.speed
-        && Objects.equals(thermoSystem, other.thermoSystem) && useGERG2008 == other.useGERG2008
-        && useLeachman == other.useLeachman && useVega == other.useVega
+        && Objects.equals(thermoSystem, other.thermoSystem)
+        && useGERG2008 == other.useGERG2008
+        && useLeachman == other.useLeachman
+        && useVega == other.useVega
         && useOutTemperature == other.useOutTemperature
         && usePolytropicCalc == other.usePolytropicCalc
         && useRigorousPolytropicMethod == other.useRigorousPolytropicMethod;
@@ -2031,6 +2011,27 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
+   * Checks if the polytropic efficiency should be read from the compressor chart.
+   *
+   * @return {@code true} if efficiency curves are used, {@code false} if a fixed efficiency is
+   *         applied.
+   */
+  public boolean isUseEfficiencyCurve() {
+    return useEfficiencyCurve;
+  }
+
+  /**
+   * Sets whether the polytropic efficiency should be read from the compressor chart or kept at the
+   * specified value.
+   *
+   * @param useEfficiencyCurve {@code true} to read efficiency from the chart, {@code false} to use
+   *        the specified efficiency.
+   */
+  public void setUseEfficiencyCurve(boolean useEfficiencyCurve) {
+    this.useEfficiencyCurve = useEfficiencyCurve;
+  }
+
+  /**
    * Checks if the compressor speed is limited.
    *
    * @return {@code true} if the compressor speed is limited, {@code false} otherwise.
@@ -2046,43 +2047,5 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    */
   public void setLimitSpeed(boolean limitSpeed) {
     this.limitSpeed = limitSpeed;
-  }
-
-  /**
-   * Checks if the minimum speed limit is enforced when evaluating the operating envelope.
-   *
-   * @return {@code true} if the minimum speed limit is enforced, {@code false} otherwise.
-   */
-  public boolean isIncludeMinSpeedLimit() {
-    return includeMinSpeedLimit;
-  }
-
-  /**
-   * Sets whether the minimum speed limit should be enforced when evaluating the operating envelope.
-   *
-   * @param includeMinSpeedLimit {@code true} to enforce the minimum speed limit, {@code false} to
-   *        ignore it
-   */
-  public void setIncludeMinSpeedLimit(boolean includeMinSpeedLimit) {
-    this.includeMinSpeedLimit = includeMinSpeedLimit;
-  }
-
-  /**
-   * Checks if the maximum speed limit is enforced when evaluating the operating envelope.
-   *
-   * @return {@code true} if the maximum speed limit is enforced, {@code false} otherwise.
-   */
-  public boolean isIncludeMaxSpeedLimit() {
-    return includeMaxSpeedLimit;
-  }
-
-  /**
-   * Sets whether the maximum speed limit should be enforced when evaluating the operating envelope.
-   *
-   * @param includeMaxSpeedLimit {@code true} to enforce the maximum speed limit, {@code false} to
-   *        ignore it
-   */
-  public void setIncludeMaxSpeedLimit(boolean includeMaxSpeedLimit) {
-    this.includeMaxSpeedLimit = includeMaxSpeedLimit;
   }
 }
