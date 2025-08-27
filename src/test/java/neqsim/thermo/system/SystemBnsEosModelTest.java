@@ -35,7 +35,7 @@ public class SystemBnsEosModelTest {
 
   @Test
   public void testCO2test() {
-    system = new SystemBnsEos();
+    SystemBnsEos system = new SystemBnsEos();
     system.setTemperature(60.0, "F");
     system.setPressure(2000.0, "psia");
     system.setAssociatedGas(false);
