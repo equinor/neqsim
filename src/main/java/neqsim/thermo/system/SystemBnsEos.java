@@ -252,7 +252,7 @@ public class SystemBnsEos extends SystemEos {
               comp.setTC(tcs[j]);
               comp.setPC(pcs[j]);
               comp.setMolarMass(mws[j]);
-              comp.setVolumeCorrectionConst(-vshift[j]);
+              comp.setVolumeCorrectionConst(vshift[j]);
             }
           }
         }
