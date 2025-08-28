@@ -128,11 +128,11 @@ public class ComponentGERG2008Eos extends ComponentEos {
   @Override
   public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    double term =
-        (getComponentNumber() == i ? 1.0 / phase.getNumberOfMolesInPhase() : 0.0);
-    PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
-    if (ph.getAlphaRes() != null) {
-      term += ph.getAlphaRes()[0][2].val / phase.getNumberOfMolesInPhase();
+    double totalMoles = phase.getNumberOfMolesInPhase();
+    double term = -1.0 / totalMoles;
+    if (getComponentNumber() == i) {
+      double moles = getNumberOfMolesInPhase();
+      term += 1.0 / moles;
     }
     return term;
   }
@@ -184,5 +184,22 @@ public class ComponentGERG2008Eos extends ComponentEos {
     double n = phase.getNumberOfMolesInPhase();
     dfugdt = -hres / (n * ThermodynamicConstantsInterface.R * temperature * temperature);
     return dfugdt;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[] logfugcoefdN(PhaseInterface phase) {
+    double totalMoles = phase.getNumberOfMolesInPhase();
+    int numberOfComponents = phase.getNumberOfComponents();
+    for (int j = 0; j < numberOfComponents; j++) {
+      double val = -1.0 / totalMoles;
+      if (getComponentNumber() == j) {
+        double moles = getNumberOfMolesInPhase();
+        val += 1.0 / moles;
+      }
+      dfugdn[j] = val;
+      dfugdx[j] = val * totalMoles;
+    }
+    return dfugdn;
   }
 }

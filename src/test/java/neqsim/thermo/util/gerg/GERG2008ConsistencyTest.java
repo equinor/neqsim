@@ -21,4 +21,19 @@ class GERG2008ConsistencyTest {
     assertTrue(modelTest.checkFugacityCoefficientsDP());
     assertTrue(modelTest.checkFugacityCoefficientsDT());
   }
+
+  @Test
+  void testCompositionalDerivatives() {
+    SystemInterface system = new neqsim.thermo.system.SystemGERG2008Eos(293.15, 50.0);
+    system.addComponent("methane", 0.7);
+    system.addComponent("CO2", 0.2);
+    system.addComponent("ethane", 0.1);
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    system.init(0);
+    ops.TPflash();
+    system.init(3);
+
+    ThermodynamicModelTest modelTest = new ThermodynamicModelTest(system);
+    assertTrue(modelTest.checkFugacityCoefficientsDn());
+  }
 }
