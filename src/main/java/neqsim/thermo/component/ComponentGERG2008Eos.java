@@ -128,11 +128,17 @@ public class ComponentGERG2008Eos extends ComponentEos {
   @Override
   public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    double term =
-        (getComponentNumber() == i ? 1.0 / phase.getNumberOfMolesInPhase() : 0.0);
+    double nTot = phase.getNumberOfMolesInPhase();
+    double term = -1.0 / nTot;
+    if (getComponentNumber() == i) {
+      double n = getNumberOfMolesInPhase();
+      if (n > 0.0) {
+        term += 1.0 / n;
+      }
+    }
     PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
     if (ph.getAlphaRes() != null) {
-      term += ph.getAlphaRes()[0][2].val / phase.getNumberOfMolesInPhase();
+      term += ph.getAlphaRes()[0][2].val / nTot;
     }
     return term;
   }
@@ -184,5 +190,46 @@ public class ComponentGERG2008Eos extends ComponentEos {
     double n = phase.getNumberOfMolesInPhase();
     dfugdt = -hres / (n * ThermodynamicConstantsInterface.R * temperature * temperature);
     return dfugdt;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[] logfugcoefdN(PhaseInterface phase) {
+    int numberOfComponents = phase.getNumberOfComponents();
+    double nTot = phase.getNumberOfMolesInPhase();
+    double temperature = phase.getTemperature();
+    double pressure = phase.getPressure();
+
+    double[] residual = new double[numberOfComponents];
+    double sum = 0.0;
+
+    for (int i = 0; i < numberOfComponents; i++) {
+      double ideal = -1.0 / nTot;
+      if (getComponentNumber() == i) {
+        double n = getNumberOfMolesInPhase();
+        if (n > 0.0) {
+          ideal += 1.0 / n;
+        }
+      }
+      double total = dFdNdN(i, phase, numberOfComponents, temperature, pressure);
+      residual[i] = total - ideal;
+      double ni = phase.getComponent(i).getNumberOfMolesInPhase();
+      sum += ni * residual[i];
+      dfugdn[i] = ideal; // start with ideal contribution
+    }
+
+    double correction = sum / nTot;
+    for (int i = 0; i < numberOfComponents; i++) {
+      dfugdn[i] += residual[i] - correction;
+      dfugdx[i] = dfugdn[i] * nTot;
+    }
+    return dfugdn;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double logfugcoefdNi(PhaseInterface phase, int k) {
+    logfugcoefdN(phase);
+    return dfugdn[k];
   }
 }
