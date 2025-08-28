@@ -56,7 +56,7 @@ public class SystemBnsEos extends SystemEos {
   private static double calcVshift(double ciField, double omegaB, double tc, double pc) {
     double ciSI = ciField;
     double bi = omegaB * ThermodynamicConstantsInterface.R * tc / pc;
-    return ciSI / bi;
+    return ciSI * bi;
   }
 
   private static double[] pseudoCritical(double sgHc, boolean ag) {
