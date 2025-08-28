@@ -128,10 +128,11 @@ public class ComponentGERG2008Eos extends ComponentEos {
   @Override
   public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    double term = 0.0;
+    double totalMoles = phase.getNumberOfMolesInPhase();
+    double term = -1.0 / totalMoles;
     if (getComponentNumber() == i) {
       double moles = getNumberOfMolesInPhase();
-      term = 1.0 / moles;
+      term += 1.0 / moles;
     }
     return term;
   }
