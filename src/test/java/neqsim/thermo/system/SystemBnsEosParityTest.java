@@ -83,6 +83,6 @@ public class SystemBnsEosParityTest {
 
     system.initProperties();
     // system.prettyPrint();
-    assertEquals(0.278053036533, system.getZvolcorr(), 1e-7);
+    assertEquals(0.27805301704, system.getZvolcorr(), 1e-7);
   }
 }
