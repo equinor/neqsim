@@ -21,4 +21,40 @@ class GERG2008ConsistencyTest {
     assertTrue(modelTest.checkFugacityCoefficientsDP());
     assertTrue(modelTest.checkFugacityCoefficientsDT());
   }
+
+  @Test
+  void testCompositionalDerivatives() {
+    SystemInterface system = new neqsim.thermo.system.SystemGERG2008Eos(293.15, 50.0);
+    system.addComponent("methane", 0.7);
+    system.addComponent("CO2", 0.2);
+    system.addComponent("ethane", 0.1);
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    system.init(0);
+    ops.TPflash();
+    system.init(3);
+
+    ThermodynamicModelTest modelTest = new ThermodynamicModelTest(system);
+    assertTrue(modelTest.checkFugacityCoefficientsDn());
+  }
+
+  @Test
+  void testZeroMoleFractionDerivative() {
+    SystemInterface system = new neqsim.thermo.system.SystemGERG2008Eos(293.15, 50.0);
+    system.addComponent("methane", 0.7);
+    system.addComponent("CO2", 0.2);
+    system.addComponent("ethane", 0.1);
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    system.init(0);
+    ops.TPflash();
+    system.init(3);
+
+    system.getPhase(0).getComponent("ethane").setNumberOfMolesInPhase(0.0);
+    system.getPhase(0).getComponent("ethane").setx(0.0);
+
+    double[] vals = system.getPhase(0).getComponent("ethane").logfugcoefdN(system.getPhase(0));
+    for (double v : vals) {
+      assertTrue(Double.isFinite(v));
+    }
+  }
+
 }
