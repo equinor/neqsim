@@ -1057,6 +1057,13 @@ public abstract class Phase implements PhaseInterface {
         }
         return refCp / getNumberOfMolesInPhase();
 
+      case "kJ/molK":
+        if (getNumberOfMolesInPhase() == 0) {
+          throw new ArithmeticException(
+              "Number of moles in phase cannot be zero for kJ/molK conversion.");
+        }
+        return refCp / getNumberOfMolesInPhase() / 1000.0;
+
       case "J/kgK": {
         // To get specific heat capacity, divide the total heat capacity by the total mass.
         // Total mass = moles in phase * molar mass (in kg/mol).
@@ -1124,6 +1131,13 @@ public abstract class Phase implements PhaseInterface {
               "Number of moles in phase cannot be zero for J/molK conversion.");
         }
         return refCv / getNumberOfMolesInPhase();
+
+      case "kJ/molK":
+        if (getNumberOfMolesInPhase() == 0) {
+          throw new ArithmeticException(
+              "Number of moles in phase cannot be zero for kJ/molK conversion.");
+        }
+        return refCv / getNumberOfMolesInPhase() / 1000.0;
 
       case "J/kgK": {
         // To get specific heat capacity, divide the total heat capacity by the total mass.
