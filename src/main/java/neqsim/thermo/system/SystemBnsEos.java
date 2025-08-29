@@ -20,11 +20,15 @@ public class SystemBnsEos extends SystemEos {
     return psia * 0.06894757293168;
   }
 
-  private static final double MW_AIR = 28.97;
-  private static final double MW_CH4 = 16.0425;
-  private static final double TcCH4 = degRToK(343.008);
-  private static final double PcCH4 = psiaToBar(667.029);
+  // Conversion constants
+  private static final double MW_AIR = 28.97; // Molecular weight of air [g/mol]
+  private static final double MW_CH4 = 16.0425; // Molecular weight of methane [g/mol]
+  private static final double TcCH4 = degRToK(343.008); // Critical temperature of methane [K]
+  private static final double PcCH4 = psiaToBar(667.029); // Critical pressure of methane [bar]
   private static final double VcZcCH4 = ThermodynamicConstantsInterface.R * TcCH4 / (PcCH4 * 1.0e5);
+
+  // Component count for BNS system (CO2, H2S, N2, H2, HC)
+  private static final int NUM_BNS_COMPONENTS = 5;
 
   private final double[] tcs;
   private final double[] pcs;
@@ -36,7 +40,7 @@ public class SystemBnsEos extends SystemEos {
   private final double[] vshiftField;
   private double[][] cpCoeffs;
 
-  private final double[] zfractions = new double[5];
+  private final double[] zfractions = new double[NUM_BNS_COMPONENTS];
   private double relativeDensity = 0.65;
   private boolean associatedGas = false;
   private boolean mixingRuleDefined = false;
@@ -55,9 +59,20 @@ public class SystemBnsEos extends SystemEos {
     return ThermodynamicConstantsInterface.R * tc / vcOnZc / 1.0e5;
   }
 
+  /**
+   * Calculates the volume shift parameter.
+   *
+   * @param ciField volume shift field coefficient
+   * @param omegaB PR equation omega B parameter
+   * @param tc critical temperature [K]
+   * @param pc critical pressure [bar]
+   * @return volume shift parameter
+   */
   private static double calcVshift(double ciField, double omegaB, double tc, double pc) {
-    // something strange with this methods as it is corrected tr pr in real method
+    // TODO: Review this implementation - appears to be incomplete
+    // Original implementation was commented out:
     // double b = omegaB * ThermodynamicConstantsInterface.R * tc / pc;
+    // The volume shift should likely be: ciField * b
     return ciField; // * b;
   }
 
@@ -142,7 +157,7 @@ public class SystemBnsEos extends SystemEos {
     omegaA = new double[] {0.427671, 0.436725, 0.457236, 0.457236, 0.457236};
     omegaB = new double[] {0.0696397, 0.0724345, 0.0777961, 0.0777961, 0.0777961};
     vshiftField = new double[] {-0.27607, -0.22901, -0.21066, -0.36270, -0.19076};
-    vshift = new double[5];
+    vshift = new double[NUM_BNS_COMPONENTS];
     for (int i = 0; i < vshift.length; i++) {
       vshift[i] = calcVshift(vshiftField[i], omegaB[i], tcs[i], pcs[i]);
     }
@@ -196,12 +211,24 @@ public class SystemBnsEos extends SystemEos {
   /**
    * Sets the composition of the system using mole fractions of CO2, H2S, N2, and H2.
    *
-   * @param yCO2 mole fraction of CO2
-   * @param yH2S mole fraction of H2S
-   * @param yN2 mole fraction of N2
-   * @param yH2 mole fraction of H2
+   * @param yCO2 mole fraction of CO2 (must be >= 0)
+   * @param yH2S mole fraction of H2S (must be >= 0)
+   * @param yN2 mole fraction of N2 (must be >= 0)
+   * @param yH2 mole fraction of H2 (must be >= 0)
+   * @throws IllegalArgumentException if any mole fraction is negative or sum exceeds 1.0
    */
   public void setComposition(double yCO2, double yH2S, double yN2, double yH2) {
+    // Validate input parameters
+    if (yCO2 < 0 || yH2S < 0 || yN2 < 0 || yH2 < 0) {
+      throw new IllegalArgumentException("Mole fractions must be non-negative");
+    }
+
+    double sum = yCO2 + yH2S + yN2 + yH2;
+    if (sum > 1.0) {
+      throw new IllegalArgumentException(
+          String.format("Sum of mole fractions (%.4f) exceeds 1.0", sum));
+    }
+
     zfractions[0] = yCO2;
     zfractions[1] = yH2S;
     zfractions[2] = yN2;
@@ -215,9 +242,13 @@ public class SystemBnsEos extends SystemEos {
    * Setter for the field <code>relativeDensity</code>.
    * </p>
    *
-   * @param sg a double
+   * @param sg a double (relative density, must be positive)
+   * @throws IllegalArgumentException if relative density is not positive
    */
   public void setRelativeDensity(double sg) {
+    if (sg <= 0) {
+      throw new IllegalArgumentException("Relative density must be positive, got: " + sg);
+    }
     this.relativeDensity = sg;
     if (componentsInitialized) {
       updateComposition();
@@ -238,10 +269,10 @@ public class SystemBnsEos extends SystemEos {
     }
   }
 
-  private void updateComposition() {
-    double sum = zfractions[0] + zfractions[1] + zfractions[2] + zfractions[3];
-    zfractions[4] = 1.0 - sum;
-
+  /**
+   * Updates the hydrocarbon pseudo-component properties based on composition and relative density.
+   */
+  private void updateHydrocarbonProperties() {
     double[] zf = zfractions;
     double sgHc =
         hydrocarbonSg(relativeDensity, zf, new double[] {44.01, 34.082, 28.014, 2.016, 0.0});
@@ -249,23 +280,31 @@ public class SystemBnsEos extends SystemEos {
     tcs[4] = tcpc[0];
     pcs[4] = tcpc[1];
     mws[4] = sgHc * MW_AIR / 1000.0;
-
     vshift[4] = calcVshift(vshiftField[4], omegaB[4], tcs[4], pcs[4]);
+  }
 
+  /**
+   * Updates heat capacity coefficients for all components.
+   */
+  private void updateHeatCapacityCoefficients() {
+    // Base heat capacity coefficients for CO2, H2S, N2, H2, HC
     double[][] cp = {{2.725473196, 0.004103751, 1.5602e-5, -4.19321e-8, 3.10542e-11},
         {4.446031265, -0.005296052, 2.0533e-5, -2.58993e-8, 1.25555e-11},
         {3.423811591, 0.001007461, -4.58491e-6, 8.4252e-9, -4.38083e-12},
         {1.421468418, 0.018192108, -6.04285e-5, 9.08033e-8, -5.18972e-11},
         {5.369051342, -0.014851371, 4.86358e-5, -3.70187e-8, 1.80641e-12}};
 
+    // Apply scaling for hydrocarbon component based on molecular weight
     double hcMw = mws[4] * 1000.0;
     double x = hcMw - MW_CH4;
     double[] a0 = {7.8570e-4, 1.3123e-3, 9.8133e-4, 1.6463e-3, 1.7306e-2};
     double[] a1 = {-8.1649e-3, 5.5485e-3, 8.3258e-2, 2.0635e-1, 2.5551};
-    for (int k = 0; k < 5; k++) {
+    for (int k = 0; k < NUM_BNS_COMPONENTS; k++) {
       double scale = a0[k] * x * x + a1[k] * x + 1.0;
       cp[4][k] *= scale;
     }
+
+    // Convert to SI units (multiply by R)
     double factor = ThermodynamicConstantsInterface.R;
     for (int i = 0; i < cp.length; i++) {
       for (int j = 0; j < cp[i].length; j++) {
@@ -273,7 +312,17 @@ public class SystemBnsEos extends SystemEos {
       }
     }
     cpCoeffs = cp;
+  }
 
+  private void updateComposition() {
+    double sum = zfractions[0] + zfractions[1] + zfractions[2] + zfractions[3];
+    zfractions[4] = 1.0 - sum;
+
+    // Update hydrocarbon properties and heat capacity coefficients
+    updateHydrocarbonProperties();
+    updateHeatCapacityCoefficients();
+
+    double[] zf = zfractions;
     for (int j = 0; j < zf.length; j++) {
       String name = compName(j);
       if (((PhaseBNS) phaseArray[0]).componentArray[j] != null) {
