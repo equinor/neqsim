@@ -225,6 +225,7 @@ public class PhasePitzer extends PhaseGE {
           * componentArray[i].getPureComponentCpLiquid(temperature);
     }
     return cpIdeal * numberOfMolesInPhase + getCpres();
+
   }
 
   /** {@inheritDoc} */
