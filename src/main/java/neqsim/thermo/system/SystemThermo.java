@@ -2000,6 +2000,13 @@ public abstract class SystemThermo implements SystemInterface {
         }
         return refCp / getTotalNumberOfMoles();
 
+      case "kJ/molK":
+        if (getTotalNumberOfMoles() == 0) {
+          throw new ArithmeticException(
+              "Total number of moles cannot be zero for kJ/molK conversion.");
+        }
+        return refCp / getTotalNumberOfMoles() / 1000.0;
+
       case "J/kgK": {
         // To get specific heat capacity, divide the total heat capacity by the total mass.
         // Total mass = total moles * molar mass (in kg/mol).
@@ -2071,6 +2078,13 @@ public abstract class SystemThermo implements SystemInterface {
               "Total number of moles cannot be zero for J/molK conversion.");
         }
         return refCv / getTotalNumberOfMoles();
+
+      case "kJ/molK":
+        if (getTotalNumberOfMoles() == 0) {
+          throw new ArithmeticException(
+              "Total number of moles cannot be zero for kJ/molK conversion.");
+        }
+        return refCv / getTotalNumberOfMoles() / 1000.0;
 
       case "J/kgK": {
         // To get specific heat capacity, divide the total heat capacity by the total mass.
