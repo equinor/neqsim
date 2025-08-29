@@ -56,5 +56,4 @@ class GERG2008ConsistencyTest {
       assertTrue(Double.isFinite(v));
     }
   }
-
 }
