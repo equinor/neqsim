@@ -1,6 +1,5 @@
 package neqsim.process.equipment.flare;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -12,7 +11,6 @@ import neqsim.thermo.system.SystemInterface;
  * FlareStack: Combusts relief gas and computes heat release, emissions, radiation and tip
  * backpressure.
  *
- * <p>
  * Radiation models:
  * <ul>
  * <li>POINT_SOURCE: q = chi_r * Q / (4 pi R^2)</li>
@@ -30,11 +28,10 @@ import neqsim.thermo.system.SystemInterface;
  * <li>Coefficients for Chamberlain are exposed so you can calibrate to your standard/vendor.</li>
  * <li>This is an engineering model; validate before use for regulatory work.</li>
  * </ul>
- * </p>
  *
  * @author esol
  */
-public class FlareStack extends ProcessEquipmentBaseClass implements Serializable {
+public class FlareStack extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1L;
 
   // Connections

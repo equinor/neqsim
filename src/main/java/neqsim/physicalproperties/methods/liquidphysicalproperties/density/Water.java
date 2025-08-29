@@ -69,8 +69,10 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Calculate the density of the liquid phase (kg/m^3) using partial specific volumes of water +
    * dissolved salts.
+   * </p>
    */
   @Override
   public double calcDensity() {
@@ -133,10 +135,12 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
    * Calculate partial specific volume (in m^3/kg) for a given salt using Labiberte and Cooper's
    * correlation.
    *
+   * <p>
    * v_salt = ( w_i + c2 + c3*T ) / [ (c0*w_i + c1) * exp( 0.000001*(T + c4)^2 ) ]
    *
    * Here T is in °C and w_i is the mass fraction of the salt.
-   * 
+   * </p>
+   *
    * @param saltName the name of the salt
    * @param temperatureC temperature in Celsius
    * @param wSalt mass fraction of the salt
@@ -162,8 +166,10 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
    * Density of pure liquid water from IAPWS-IF97 Region 1. Inputs: temperatureK — absolute
    * temperature [K], pressureBar — absolute pressure [bar] Returns: density [kg/m^3]
    *
+   * <p>
    * Valid (Region 1): 273.15 K ≤ T ≤ 623.15 K and p ≥ p_sat(T) up to 1000 bar. This is the
    * compressed-/subcooled-liquid region. For steam or T greater than 623 K, use other IF97 regions.
+   * </p>
    *
    * @param temperatureK Temperature in Kelvin
    * @param pressureBar Pressure in bar

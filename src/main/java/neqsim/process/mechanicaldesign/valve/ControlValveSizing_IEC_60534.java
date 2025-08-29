@@ -359,8 +359,10 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Calculates the flow rate through a control valve based on the valve opening, Kv, and
    * inlet/outlet streams.
+   * </p>
    */
   public double calculateFlowRateFromValveOpening(double adjustedKv, StreamInterface inletStream,
       StreamInterface outletStream) {
@@ -894,8 +896,9 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
   /**
    * {@inheritDoc}
-   *
+   * <p>
    * Finds the outlet pressure for a given flow rate and fixed Kv, for both gas and liquid.
+   * </p>
    */
   public double findOutletPressureForFixedKv(double actualKv, StreamInterface inletStream) {
     if (inletStream.getThermoSystem().hasPhaseType(PhaseType.GAS)) {

@@ -8,8 +8,9 @@ package neqsim.blackoil;
  */
 public final class BlackOilFlash {
   private final BlackOilPVTTable pvt;
-  // Surface densities (kg per Sm3)
-  private final double rho_o_sc, rho_g_sc, rho_w_sc;
+  private final double rho_o_sc;
+  private final double rho_g_sc;
+  private final double rho_w_sc;
 
   /**
    * <p>
@@ -46,24 +47,30 @@ public final class BlackOilFlash {
     double Rs = pvt.RsEffective(P);
     double Rv = pvt.Rv(P); // set to 0.0 if you don't model oil-in-gas
 
-    double Gf_std, Ostd_liq;
+    double Gf_std;
+    double Ostd_liq;
     if (Gtot_std <= Rs * Otot_std) {
       Gf_std = 0.0;
       Ostd_liq = Otot_std;
     } else {
       double denom = 1.0 - Rs * Rv;
-      if (Math.abs(denom) < 1e-12)
+      if (Math.abs(denom) < 1e-12) {
         denom = 1e-12;
+      }
       Gf_std = (Gtot_std - Rs * Otot_std) / denom;
-      if (Gf_std < 0)
+      if (Gf_std < 0) {
         Gf_std = 0.0;
+      }
       Ostd_liq = Otot_std - Rv * Gf_std;
-      if (Ostd_liq < 0)
+      if (Ostd_liq < 0) {
         Ostd_liq = 0.0;
+      }
     }
 
-    double Bo = pvt.Bo(P), Bg = pvt.Bg(P), Bw = pvt.Bw(P);
+    double Bo = pvt.Bo(P);
 
+    double Bg = pvt.Bg(P);
+    double Bw = pvt.Bw(P);
     r.O_std = Ostd_liq;
     r.Gf_std = Gf_std;
     r.W_std = W_std;

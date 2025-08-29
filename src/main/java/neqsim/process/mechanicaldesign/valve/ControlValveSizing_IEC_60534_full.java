@@ -87,8 +87,10 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Overrides the simplified liquid sizing method to provide a full, iterative calculation
    * including piping geometry and Reynolds number corrections.
+   * </p>
    */
   @Override
   public Map<String, Object> sizeControlValveLiquid(double rho, double Psat, double Pc, double P1,
@@ -202,8 +204,10 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Overrides the simplified gas sizing method to provide a full, iterative calculation including
    * piping geometry and Reynolds number corrections.
+   * </p>
    */
   @Override
   public Map<String, Object> sizeControlValveGas(double T, double MW, double gamma, double Z,
@@ -411,10 +415,12 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Finds the outlet pressure for a given flow rate and fixed Kv. This method is inherited, but it
    * remains consistent due to polymorphism. Its internal calls to `sizeControlValveGas` or
    * `sizeControlValveLiquid` will correctly resolve to the overridden, full implementations in this
    * class. It is overridden here for clarity and completeness.
+   * </p>
    */
   @Override
   public double findOutletPressureForFixedKv(double adjustedKv, StreamInterface inletStream) {
@@ -427,8 +433,10 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Calculates the flow rate for a given valve opening using the full, iterative model. This method
    * overrides the simplified base class implementation to ensure consistency.
+   * </p>
    */
   @Override
   public double calculateFlowRateFromValveOpening(double adjustedKv, StreamInterface inletStream,

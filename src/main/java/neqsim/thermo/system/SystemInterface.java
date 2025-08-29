@@ -357,7 +357,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public double calculateDensityFromBoilingPoint(double molarMass, double boilingPoint);
 
-
   /**
    * Add to component names.
    *
@@ -505,7 +504,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * method to read pure component and interaction parameters from the NeqSim database and create
    * temporary tables with parameters for active fluid.
    *
+   * <p>
    * NB! Resets the mixing rule of each phase.
+   * </p>
    *
    * @param reset If reset is set to true, new temporary tables with parameters for the added
    *        components will be created. When parameters are needed (eg. when adding components or
@@ -1514,8 +1515,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param phaseNumber phase to get temperature of
    * @return temperature in unit Kelvin
    */
-  public double getTemperature(int phaseNumber); // TODO: is it possible for the phases to have
-                                                 // different temperatures?
+  public double getTemperature(int phaseNumber);
+  // TODO: is it possible for the phases to have different temperatures?
 
   /**
    * method to return temperature in a specified unit.
@@ -2704,9 +2705,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMolarCompositionOfNamedComponents(String nameDef, double[] molarComposition);
 
   /**
-   * Add TBP fraction using density and boiling point, calculating molar mass.
-   */
-  /**
    * Adds a TBP fraction to the system.
    *
    * @param componentName the name of the component
@@ -2717,9 +2715,6 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void addTBPfraction3(String componentName, double numberOfMoles, double density,
       double boilingPoint);
 
-  /**
-   * Add TBP fraction using molar mass , density and boiling point
-   */
   /**
    * Adds a TBP fraction to the system.
    *

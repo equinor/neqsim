@@ -58,7 +58,7 @@ public class SystemBnsEos extends SystemEos {
   private static double calcVshift(double ciField, double omegaB, double tc, double pc) {
     // something strange with this methods as it is corrected tr pr in real method
     // double b = omegaB * ThermodynamicConstantsInterface.R * tc / pc;
-    return ciField;// * b;
+    return ciField; // * b;
   }
 
   private static double[] pseudoCritical(double sgHc, boolean ag) {

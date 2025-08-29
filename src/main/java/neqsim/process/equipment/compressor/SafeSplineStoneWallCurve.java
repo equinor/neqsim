@@ -157,7 +157,9 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Wrapper retaining old API.
+   * </p>
    */
   public double getStoneWallFlow(double headValue) {
     return getFlow(headValue);
@@ -212,7 +214,9 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Wrapper retaining old API.
+   * </p>
    */
   public boolean isStoneWall(double headValue, double flowValue) {
     return isLimit(headValue, flowValue);

@@ -26,14 +26,16 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   private java.util.List<Double> pressurePhaseEnvelope = new java.util.ArrayList<>();
   private java.util.List<Double> temperaturePhaseEnvelope = new java.util.ArrayList<>();
 
-  // Data structure to store refined transition points
-  private java.util.List<double[]> refinedTransitionPoints = new java.util.ArrayList<>(); // [pressure,
-                                                                                          // temperature,
-                                                                                          // betta]
+  // Data structure to store refined transition points [pressure, temperature, betta]
+  private java.util.List<double[]> refinedTransitionPoints = new java.util.ArrayList<>();
 
-  private double minPressure, maxPressure, minTemp, maxTemp, pressureStep, tempStep;
+  private double minPressure;
+  private double maxPressure;
+  private double minTemp;
+  private double maxTemp;
+  private double pressureStep;
+  private double tempStep;
 
-  // Constructor
   /**
    * <p>
    * Constructor for PTphaseEnvelopeNew3.
@@ -125,8 +127,9 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
       for (int j = 1; j < temperatures.length; j++) {
         double bettaPrev = betta[j - 1][i];
         double bettaCurr = betta[j][i];
-        if (Double.isNaN(bettaPrev) || Double.isNaN(bettaCurr))
+        if (Double.isNaN(bettaPrev) || Double.isNaN(bettaCurr)) {
           continue;
+        }
         // Look for transition from >=1 to <1 or <1 to >=1
         if ((bettaPrev >= 1.0 && bettaCurr < 1.0) || (bettaPrev < 1.0 && bettaCurr >= 1.0)) {
           double tLow = temperatures[j - 1];
@@ -166,15 +169,18 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
       double tHigh, double target, double tol, int maxIter) {
     double fLow = getBettaAt(testOps, pressure, tLow) - target;
     double fHigh = getBettaAt(testOps, pressure, tHigh) - target;
-    if (Double.isNaN(fLow) || Double.isNaN(fHigh) || fLow * fHigh > 0)
+    if (Double.isNaN(fLow) || Double.isNaN(fHigh) || fLow * fHigh > 0) {
       return Double.NaN;
+    }
     for (int iter = 0; iter < maxIter; iter++) {
       double tMid = 0.5 * (tLow + tHigh);
       double fMid = getBettaAt(testOps, pressure, tMid) - target;
-      if (Double.isNaN(fMid))
+      if (Double.isNaN(fMid)) {
         return Double.NaN;
-      if (Math.abs(fMid) < tol)
+      }
+      if (Math.abs(fMid) < tol) {
         return tMid;
+      }
       if (fLow * fMid < 0) {
         tHigh = tMid;
         fHigh = fMid;
@@ -384,8 +390,9 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
    * @return a double
    */
   public double getCricondenbar() {
-    if (pressurePhaseEnvelope.isEmpty())
+    if (pressurePhaseEnvelope.isEmpty()) {
       return Double.NaN;
+    }
     return java.util.Collections.max(pressurePhaseEnvelope);
   }
 
@@ -398,8 +405,9 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
    * @return a double
    */
   public double getCricondentherm() {
-    if (temperaturePhaseEnvelope.isEmpty())
+    if (temperaturePhaseEnvelope.isEmpty()) {
       return Double.NaN;
+    }
     return java.util.Collections.max(temperaturePhaseEnvelope);
   }
 }

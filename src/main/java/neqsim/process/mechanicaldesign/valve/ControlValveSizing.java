@@ -137,9 +137,10 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
   /**
    * {@inheritDoc}
-   *
+   * <p>
    * Calculates the flow rate through a control valve based on the valve opening, Kv, and
    * inlet/outlet streams.
+   * </p>
    */
   public double calculateFlowRateFromValveOpening(double actualKv, StreamInterface inletStream,
       StreamInterface outletStream) {
@@ -174,9 +175,10 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
   /**
    * {@inheritDoc}
-   *
+   * <p>
    * Calculates the required valve opening fraction for a given flow rate, Kv, and inlet/outlet
    * streams.
+   * </p>
    */
   public double calculateValveOpeningFromFlowRate(double Q, double actualKv,
       StreamInterface inletStream, StreamInterface outletStream) {
@@ -227,8 +229,9 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
   /**
    * {@inheritDoc}
-   *
+   * <p>
    * Finds the outlet pressure for a given Kv, valve opening, and inlet stream.
+   * </p>
    */
   public double findOutletPressureForFixedKv(double actualKv, StreamInterface inletStream) {
     return calculateOutletPressure(actualKv, inletStream);

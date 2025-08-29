@@ -30,6 +30,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * the top and bottom. During {@link #run(UUID)} the trays are iteratively solved in upward and
  * downward sweeps until the summed temperature change between iterations is below the configured
  * {@link #temperatureTolerance} or the iteration limit is reached.
+ * </p>
  *
  * @author esol
  */
@@ -177,6 +178,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * to linearly guess temperatures upwards to the condenser and downwards to the reboiler. Gas and
    * liquid outlet streams are connected to neighbouring trays so that a subsequent call to
    * {@link #run(UUID)} can iterate to convergence.
+   * </p>
    */
   public void init() {
     if (!isDoInitializion()) {
@@ -283,9 +285,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * {@inheritDoc}
    *
-   * Solve the column until tray temperatures converge.
-   *
    * <p>
+   * Solve the column until tray temperatures converge.
+   * 
    * The method applies sequential substitution. Pressures are set linearly between bottom and top.
    * Each iteration performs an upward sweep where liquid flows downward followed by a downward
    * sweep where vapour flows upward. The sum of absolute temperature changes is used as error

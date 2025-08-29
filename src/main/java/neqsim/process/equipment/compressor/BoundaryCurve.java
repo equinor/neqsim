@@ -56,6 +56,15 @@ public abstract class BoundaryCurve implements BoundaryCurveInterface {
     isActive = true;
   }
 
+  /**
+   * Get flow values defining the curve.
+   *
+   * @return an array of {@link double} objects
+   */
+  public double[] getFlow() {
+    return flow;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getFlow(double head) {
@@ -74,14 +83,7 @@ public abstract class BoundaryCurve implements BoundaryCurveInterface {
     this.isActive = isActive;
   }
 
-  /**
-   * Get flow values defining the curve.
-   *
-   * @return an array of {@link double} objects
-   */
-  public double[] getFlow() {
-    return flow;
-  }
+
 
   /**
    * Get head values defining the curve.

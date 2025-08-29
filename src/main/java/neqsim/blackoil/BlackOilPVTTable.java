@@ -13,9 +13,33 @@ import java.util.function.ToDoubleFunction;
  * @author esol
  */
 public class BlackOilPVTTable {
+  /**
+   * Record class to hold PVT data for a specific pressure.
+   */
   public static final class Record {
-    public final double p, Rs, Bo, mu_o, Bg, mu_g, Rv, Bw, mu_w;
+    public final double p;
+    public final double Rs;
+    public final double Bo;
+    public final double mu_o;
+    public final double Bg;
+    public final double mu_g;
+    public final double Rv;
+    public final double Bw;
+    public final double mu_w;
 
+    /**
+     * Constructor for Record.
+     *
+     * @param p a double
+     * @param Rs a double
+     * @param Bo a double
+     * @param mu_o a double
+     * @param Bg a double
+     * @param mu_g a double
+     * @param Rv a double
+     * @param Bw a double
+     * @param mu_w a double
+     */
     public Record(double p, double Rs, double Bo, double mu_o, double Bg, double mu_g, double Rv,
         double Bw, double mu_w) {
       this.p = p;
@@ -44,8 +68,9 @@ public class BlackOilPVTTable {
   public BlackOilPVTTable(List<Record> records, double bubblePointP) {
     this.recs.addAll(records);
     this.recs.sort(Comparator.comparingDouble(r -> r.p));
-    if (this.recs.isEmpty())
+    if (this.recs.isEmpty()) {
       throw new IllegalArgumentException("Empty PVT table");
+    }
     this.bubblePointP = bubblePointP;
   }
 
@@ -61,12 +86,15 @@ public class BlackOilPVTTable {
   }
 
   private double lin(double p, ToDoubleFunction<Record> f) {
-    if (p <= recs.get(0).p)
+    if (p <= recs.get(0).p) {
       return f.applyAsDouble(recs.get(0));
-    if (p >= recs.get(recs.size() - 1).p)
+    }
+    if (p >= recs.get(recs.size() - 1).p) {
       return f.applyAsDouble(recs.get(recs.size() - 1));
+    }
     for (int i = 0; i < recs.size() - 1; i++) {
-      Record a = recs.get(i), b = recs.get(i + 1);
+      Record a = recs.get(i);
+      Record b = recs.get(i + 1);
       if (p >= a.p && p <= b.p) {
         double t = (p - a.p) / (b.p - a.p);
         return f.applyAsDouble(a) * (1.0 - t) + f.applyAsDouble(b) * t;

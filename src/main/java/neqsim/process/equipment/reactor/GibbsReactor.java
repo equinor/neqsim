@@ -103,7 +103,7 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Calculate the total enthalpy of a mixture: sum_i n_i * enthalpy_i(T)
+   * Calculate the total enthalpy of a mixture: sum_i n_i * enthalpy_i(T).
    *
    * @param componentNames List of component names (order matches n_i)
    * @param n List of moles for each component
@@ -128,7 +128,7 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Calculate the total Gibbs energy of a mixture: sum_i n_i * gibbs_i(T)
+   * Calculate the total Gibbs energy of a mixture: sum_i n_i * gibbs_i(T).
    *
    * @param componentNames List of component names (order matches n_i)
    * @param n List of moles for each component
@@ -173,7 +173,7 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Calculate the total standard enthalpy of a mixture: sum_i n_i * enthalpy_i(T)
+   * Calculate the total standard enthalpy of a mixture: sum_i n_i * enthalpy_i(T).
    *
    * @param componentNames List of component names (order matches n_i)
    * @param n List of moles for each component
@@ -196,7 +196,7 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Calculate the total standard enthalpy of a mixture: sum_i n_i * enthalpy_i(T)
+   * Calculate the total standard enthalpy of a mixture: sum_i n_i * enthalpy_i(T).
    *
    * @param componentNames List of component names (order matches n_i)
    * @param n List of moles for each component
@@ -218,7 +218,6 @@ public class GibbsReactor extends TwoPortEquipment {
     }
     return totalH;
   }
-
 
   public enum EnergyMode {
     ISOTHERMAL, ADIABATIC
@@ -257,9 +256,6 @@ public class GibbsReactor extends TwoPortEquipment {
     }
   }
 
-  /**
-   * Get the current energy mode of the reactor.
-   */
   /**
    * Gets the current energy mode of the reactor.
    *
@@ -379,9 +375,6 @@ public class GibbsReactor extends TwoPortEquipment {
     private double coeffGh;
 
     /**
-     * Constructor for GibbsComponent.
-     */
-    /**
      * Constructs a GibbsComponent.
      *
      * @param molecule the molecule name
@@ -418,7 +411,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
     /**
      * Get the entropy of formation at 298K (deltaSf298) in J/(mol·K).
-     * 
+     *
      * @return Entropy of formation at 298K
      */
     public double getDeltaSf298() {
@@ -446,13 +439,6 @@ public class GibbsReactor extends TwoPortEquipment {
     }
 
     /**
-     * Calculate Gibbs energy at temperature T using proper thermodynamic relations. G(T) = H(T) -
-     * T*S(T) where H(T) = deltaHf298 + Cp*(T - Tref) and S(T) = Sref + Cp*ln(T/Tref)
-     * 
-     * @param temperature Temperature in Kelvin
-     * @return Gibbs energy of formation at temperature T in kJ/mol
-     */
-    /**
      * Calculates Gibbs energy for a component.
      *
      * @param temperature temperature in K
@@ -478,14 +464,6 @@ public class GibbsReactor extends TwoPortEquipment {
       return deltaGf298 + dG_T;
     }
 
-    /**
-     * Calculate enthalpy at temperature T.
-     * 
-     * H(T) = Hf_298 + ∫Cp(T)dT from Tref to T
-     * 
-     * @param temperature Temperature in Kelvin
-     * @return Enthalpy of formation at temperature T in kJ/mol
-     */
     /**
      * Calculates enthalpy for a component.
      *
@@ -513,20 +491,11 @@ public class GibbsReactor extends TwoPortEquipment {
     }
 
     /**
-     * Calculate entropy at temperature T using NeqSim's built-in entropy calculations. This
-     * leverages NeqSim's proper thermodynamic framework instead of manual calculations.
-     * 
-     * S(T) = S_ref + ∫[Cp(T)/T]dT from Tref to T
-     * 
-     * @param temperature Temperature in Kelvin
-     * @return Entropy at temperature T in J/(mol·K)
-     */
-    /**
      * Calculates entropy for a component.
      *
      * @param temperature temperature in K
      * @param compNumber component index
-     * @return entropy
+     * @return entropy in J/(mol·K)
      */
     public double calculateEntropy(double temperature, int compNumber) {
       // Fallback to manual calculation if NeqSim method fails
@@ -540,21 +509,12 @@ public class GibbsReactor extends TwoPortEquipment {
       return (deltaSf298 + Cp * Math.log(T / T0)) / 1000;
     }
 
-
-
-    /**
-     * Calculate heat capacity at temperature T using NeqSim's built-in getCp0() method. This is
-     * more accurate than manual polynomial calculation as it uses NeqSim's thermodynamic framework.
-     * 
-     * @param temperature Temperature in Kelvin
-     * @return Heat capacity at temperature T in J/(mol·K)
-     */
     /**
      * Calculates heat capacity for a component.
      *
      * @param temperature temperature in K
      * @param compNumber component index
-     * @return heat capacity
+     * @return heat capacity in J/(mol·K)
      */
     public double calculateHeatCapacity(double temperature, int compNumber) {
       try {

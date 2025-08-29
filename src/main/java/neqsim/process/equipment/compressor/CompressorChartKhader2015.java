@@ -69,7 +69,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * Sets the compressor curves based on the provided chart conditions, speed, flow, head,
    * flowPolytrpicEfficiency and polytropic efficiency values.
    *
-   * <p>
    * <b>Mathematical background (see Kader 2015):</b><br>
    * The method normalizes compressor map data using the following relations:
    * <ul>
@@ -306,7 +305,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * {@inheritDoc}
    *
-   * <p>
    * The method first converts the input flow and speed to dimensionless numbers using the sound
    * speed and impeller diameter:
    * <ul>
@@ -316,7 +314,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * It then interpolates/extrapolates the polytropic head from the reference compressor curves in
    * this dimensionless space, and finally converts the result back to physical units by multiplying
    * with c<sub>s</sub><sup>2</sup>.
-   * </p>
    */
   @Override
   public double getPolytropicHead(double flow, double speed) {
@@ -337,9 +334,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * {@inheritDoc}
    *
-   * Calculates the polytropic efficiency for a given flow and speed.
-   *
-   * <p>
    * The method first converts the input flow and speed to dimensionless numbers using the sound
    * speed and impeller diameter:
    * <ul>
@@ -466,8 +460,10 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Generates and prints the surge curve based on RealCurve data. The surge curve is typically the
    * minimum stable flow for each speed.
+   * </p>
    */
   @Override
   public void generateSurgeCurve() {
@@ -502,8 +498,10 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * {@inheritDoc}
    *
+   * <p>
    * Generates and sets the stone wall curve based on RealCurve data. The stone wall curve is
    * typically the maximum flow for each speed.
+   * </p>
    */
   @Override
   public void generateStoneWallCurve() {

@@ -9,8 +9,11 @@ package neqsim.blackoil;
 public class SystemBlackOil {
   private final BlackOilPVTTable pvt;
   private final BlackOilFlash flash;
-  private double P, T;
-  private double Otot_std, Gtot_std, W_std; // Sm3
+  private double P;
+  private double T;
+  private double Otot_std;
+  private double Gtot_std;
+  private double W_std;
   private BlackOilFlashResult last;
 
   /**
@@ -149,8 +152,9 @@ public class SystemBlackOil {
    * @return a {@link neqsim.blackoil.BlackOilFlashResult} object
    */
   public BlackOilFlashResult flash() {
-    if (last == null)
+    if (last == null) {
       last = flash.flash(P, T, Otot_std, Gtot_std, W_std);
+    }
     return last;
   }
 

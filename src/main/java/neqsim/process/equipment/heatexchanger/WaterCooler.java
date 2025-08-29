@@ -42,7 +42,6 @@ public class WaterCooler extends Cooler {
     setWaterModel();
   }
 
-  /** Set inlet temperature of cooling water in Celsius. */
   /**
    * Sets the water inlet temperature.
    *
@@ -54,7 +53,6 @@ public class WaterCooler extends Cooler {
         new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
-  /** Set outlet temperature of cooling water in Celsius. */
   /**
    * Sets the water outlet temperature.
    *
@@ -66,7 +64,6 @@ public class WaterCooler extends Cooler {
         new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
-  /** Set cooling water pressure. */
   /**
    * Sets the water pressure.
    *
