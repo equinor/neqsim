@@ -215,9 +215,17 @@ public class PhasePitzer extends PhaseGE {
   /** {@inheritDoc} */
   @Override
   public double getCp() {
-    double idealCp = super.getCp() * numberOfMolesInPhase;
-    double excessCp = getCpres();
-    return idealCp + excessCp;
+    // Calculate the ideal heat-capacity contribution on a molar basis using
+    // the pure-component liquid heat capacities, then scale by the phase mole
+    // count and add the residual term. This mirrors the default Phase
+    // implementation without multiplying by the phase moles twice.
+    double cpIdeal = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      cpIdeal += componentArray[i].getx()
+          * componentArray[i].getPureComponentCpLiquid(temperature);
+    }
+    return cpIdeal * numberOfMolesInPhase + getCpres();
+
   }
 
   /** {@inheritDoc} */
