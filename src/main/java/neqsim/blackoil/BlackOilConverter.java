@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import neqsim.thermo.phase.PhaseInterface;
 
-/** Converter from a compositional (EOS) NeqSim fluid to a Black-Oil PVT table + stream. */
+/**
+ * Converter from a compositional (EOS) NeqSim fluid to a Black-Oil PVT table + stream.
+ *
+ * @author esol
+ */
 public class BlackOilConverter {
 
   public static class Result {
@@ -19,6 +22,18 @@ public class BlackOilConverter {
     public double bubblePoint;
   }
 
+  /**
+   * <p>
+   * convert.
+   * </p>
+   *
+   * @param eosFluid a {@link neqsim.thermo.system.SystemInterface} object
+   * @param Tref a double
+   * @param pGrid an array of {@link double} objects
+   * @param Pstd a double
+   * @param Tstd a double
+   * @return a {@link neqsim.blackoil.BlackOilConverter.Result} object
+   */
   public static Result convert(SystemInterface eosFluid, double Tref, double[] pGrid, double Pstd,
       double Tstd) {
     Objects.requireNonNull(eosFluid, "eosFluid == null");
