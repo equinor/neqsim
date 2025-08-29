@@ -9,6 +9,8 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermPr;
  */
 public class ComponentBNS extends ComponentPR {
   private static final long serialVersionUID = 1L;
+  double omegaA = 0.45724;
+  double omegaB = 0.07780;
 
   /**
    * Constructs a BNS component with explicit pure component parameters.
@@ -31,6 +33,8 @@ public class ComponentBNS extends ComponentPR {
     this.componentName = name;
     this.index = compIndex;
     this.numberOfMolesInPhase = molesInPhase;
+    this.omegaA = omegaA;
+    this.omegaB = omegaB;
     a = omegaA * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     b = omegaB * R * criticalTemperature / criticalPressure;
     delta1 = 1.0 + Math.sqrt(2.0);
@@ -43,5 +47,18 @@ public class ComponentBNS extends ComponentPR {
   @Override
   public ComponentBNS clone() {
     return (ComponentBNS) super.clone();
+  }
+
+  @Override
+  public double calca() {
+    a = omegaA * R * R * criticalTemperature * criticalTemperature / criticalPressure;
+    return a;
+  }
+
+  @Override
+  public double calcb() {
+    b = omegaB * R * criticalTemperature / criticalPressure;
+    return b;
+
   }
 }

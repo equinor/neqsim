@@ -107,6 +107,6 @@ public class SystemBnsEosParityTest {
     system.setMixingRule(12);
     new ThermodynamicOperations(system).TPflash();
     system.initProperties();
-    assertEquals(0.3200133065915, system.getZvolcorr(), 1e-7);
+    assertEquals(0.277826181569, system.getZvolcorr(), 1e-7);
   }
 }
