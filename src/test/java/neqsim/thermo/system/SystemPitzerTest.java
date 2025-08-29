@@ -1,12 +1,12 @@
 package neqsim.thermo.system;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashSet;
 import java.util.Set;
-
 import org.junit.jupiter.api.Test;
-
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePitzer;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -77,7 +77,13 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     assertDoesNotThrow(() -> ops.TPflash());
     String[][] table = system.createTable("test");
-    assertEquals(Set.of("GAS", "AQUEOUS"), Set.of(table[0][2], table[0][3]));
+    Set<String> expectedPhases = new HashSet<>();
+    expectedPhases.add("GAS");
+    expectedPhases.add("AQUEOUS");
+    Set<String> actualPhases = new HashSet<>();
+    actualPhases.add(table[0][2]);
+    actualPhases.add(table[0][3]);
+    assertEquals(expectedPhases, actualPhases);
     int compRows = system.getPhase(0).getNumberOfComponents();
     Set<String> names = new HashSet<>();
     for (int j = 1; j <= compRows; j++) {
