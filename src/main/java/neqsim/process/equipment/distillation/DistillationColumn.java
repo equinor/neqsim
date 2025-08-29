@@ -287,7 +287,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * <p>
    * Solve the column until tray temperatures converge.
-   * 
+   *
    * The method applies sequential substitution. Pressures are set linearly between bottom and top.
    * Each iteration performs an upward sweep where liquid flows downward followed by a downward
    * sweep where vapour flows upward. The sum of absolute temperature changes is used as error
