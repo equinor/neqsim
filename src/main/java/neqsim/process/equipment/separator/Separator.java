@@ -892,6 +892,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     return new GsonBuilder().create().toJson(new SeparatorResponse(this));
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson(ReportConfig cfg) {
     if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {

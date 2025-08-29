@@ -384,6 +384,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     return new GsonBuilder().create().toJson(new MultiStreamHeatExchangerResponse(this));
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson(ReportConfig cfg) {
     if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {

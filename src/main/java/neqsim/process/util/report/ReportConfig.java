@@ -5,6 +5,8 @@ import java.util.Map;
 
 /**
  * Configuration options for JSON reporting.
+ *
+ * @author esol
  */
 public class ReportConfig {
   /** Level of detail to include in reports. */
@@ -25,8 +27,20 @@ public class ReportConfig {
   /** Optional overrides per equipment name. */
   private Map<String, DetailLevel> unitDetailLevel = new HashMap<>();
 
+  /**
+   * <p>
+   * Constructor for ReportConfig.
+   * </p>
+   */
   public ReportConfig() {}
 
+  /**
+   * <p>
+   * Constructor for ReportConfig.
+   * </p>
+   *
+   * @param detailLevel a {@link neqsim.process.util.report.ReportConfig.DetailLevel} object
+   */
   public ReportConfig(DetailLevel detailLevel) {
     this.detailLevel = detailLevel;
   }

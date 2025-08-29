@@ -1,111 +1,386 @@
 package neqsim.process.equipment.valve;
 
-import java.io.Serializable;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.valve.SafetyValveMechanicalDesign;
 
 /**
  * Safety/Relief Valve built on top of ThrottlingValve.
- * 
- * Features:
- *  - Set pressure, overpressure (relieving threshold), blowdown (reseat).
- *  - Opening laws: SNAP (pop) or MODULATING, with hysteresis.
- *  - Backpressure de-rating: Conventional, Balanced Bellows, Pilot Modulating.
- *  - Transient anti-chatter: first-order inertia, min open/close dwell, lift rate limit.
  *
- * Assumptions:
- *  - Pressures in bar(a) as typically used in NeqSim SystemInterface.
- *  - Cv mapping is linear w.r.t. opening; replace with vendor lift curve if available.
+ * <p>
+ * Features: - Set pressure, overpressure (relieving threshold), blowdown (reseat). - Opening laws:
+ * SNAP (pop) or MODULATING, with hysteresis. - Backpressure de-rating: Conventional, Balanced
+ * Bellows, Pilot Modulating. - Transient anti-chatter: first-order inertia, min open/close dwell,
+ * lift rate limit.
+ *
+ * Assumptions: - Pressures in bar(a) as typically used in NeqSim SystemInterface. - Cv mapping is
+ * linear w.r.t. opening; replace with vendor lift curve if available.
+ * </p>
+ *
+ * @author esol
  */
-public class SafetyReliefValve extends ThrottlingValve implements Serializable {
+public class SafetyReliefValve extends ThrottlingValve {
 
   private static final long serialVersionUID = 1L;
   private static final double EPS = 1e-9;
   private static final double LARGE_TIME_SEC = 1e9;
   private static final double ATM_PRESSURE_BAR = 1.01325;
 
-  public enum ValveType { CONVENTIONAL, BALANCED_BELLOWS, PILOT_MODULATING }
-  public enum OpeningLaw { SNAP, MODULATING }
+  public enum ValveType {
+    CONVENTIONAL, BALANCED_BELLOWS, PILOT_MODULATING
+  }
+  public enum OpeningLaw {
+    SNAP, MODULATING
+  }
 
   // ---- PSV parameters (SI-ish; bar for pressure) ----
-  private double setPressureBar = 10.0;     // set pressure (bara)
-  private double overpressureFrac = 0.10;   // 10% overpressure => full lift
-  private double blowdownFrac = 0.07;       // reseat at Pset*(1 - blowdown)
-  private double ratedCv = 100.0;           // Cv at full lift (vendor)
-  private double kd = 0.975;                // discharge/capacity factor (folded into Cv)
-  private double kbMax = 1.0;               // capacity cap due to backpressure
+  private double setPressureBar = 10.0; // set pressure (bara)
+  private double overpressureFrac = 0.10; // 10% overpressure => full lift
+  private double blowdownFrac = 0.07; // reseat at Pset*(1 - blowdown)
+  private double ratedCv = 100.0; // Cv at full lift (vendor)
+  private double kd = 0.975; // discharge/capacity factor (folded into Cv)
+  private double kbMax = 1.0; // capacity cap due to backpressure
   private double backpressureSensitivity = 0.15; // capacity penalty ~ f(P2/P1)
-  private double minStableOpenFrac = 0.0;   // numerical floor when open (e.g., 0.02)
+  private double minStableOpenFrac = 0.0; // numerical floor when open (e.g., 0.02)
 
   private ValveType valveType = ValveType.CONVENTIONAL;
   private OpeningLaw openingLaw = OpeningLaw.SNAP;
 
   // ---- State & timers (hysteresis / anti-chatter) ----
-  private double openFraction = 0.0;        // current lift 0..1
+  private double openFraction = 0.0; // current lift 0..1
   private boolean wasOpenLastStep = false;
   private double timeSinceOpenSec = LARGE_TIME_SEC;
   private double timeSinceCloseSec = LARGE_TIME_SEC;
 
   // ---- Transient dynamics ----
-  private double tauOpenSec = 0.15;         // opening time constant [s]
-  private double tauCloseSec = 0.40;        // closing time constant [s]
-  private double minOpenTimeSec = 0.50;     // minimum dwell when opened [s]
-  private double minCloseTimeSec = 0.20;    // minimum dwell when closed [s]
-  private double maxLiftRatePerSec = 3.0;   // |d(lift)/dt| limit [1/s]
+  private double tauOpenSec = 0.15; // opening time constant [s]
+  private double tauCloseSec = 0.40; // closing time constant [s]
+  private double minOpenTimeSec = 0.50; // minimum dwell when opened [s]
+  private double minCloseTimeSec = 0.20; // minimum dwell when closed [s]
+  private double maxLiftRatePerSec = 3.0; // |d(lift)/dt| limit [1/s]
 
-  public SafetyReliefValve() { super("SafetyReliefValve"); }
+  /**
+   * <p>
+   * Constructor for SafetyReliefValve.
+   * </p>
+   */
+  public SafetyReliefValve() {
+    super("SafetyReliefValve");
+  }
+
+  /**
+   * <p>
+   * Constructor for SafetyReliefValve.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public SafetyReliefValve(String name, StreamInterface inletStream) {
     super(name, inletStream);
     valveMechanicalDesign = new SafetyValveMechanicalDesign(this);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void initMechanicalDesign() {
     valveMechanicalDesign = new SafetyValveMechanicalDesign(this);
   }
 
   // ---------------- Getters / Setters ----------------
-  public double getSetPressureBar() { return setPressureBar; }
-  public void setSetPressureBar(double v) { setPressureBar = v; }
+  /**
+   * <p>
+   * Getter for the field <code>setPressureBar</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getSetPressureBar() {
+    return setPressureBar;
+  }
 
-  public double getOverpressureFrac() { return overpressureFrac; }
-  public void setOverpressureFrac(double v) { overpressureFrac = Math.max(0.0, v); }
+  /**
+   * <p>
+   * Setter for the field <code>setPressureBar</code>.
+   * </p>
+   *
+   * @param v a double
+   */
+  public void setSetPressureBar(double v) {
+    setPressureBar = v;
+  }
 
-  public double getBlowdownFrac() { return blowdownFrac; }
-  public void setBlowdownFrac(double v) { blowdownFrac = Math.max(0.0, v); }
+  /**
+   * <p>
+   * Getter for the field <code>overpressureFrac</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getOverpressureFrac() {
+    return overpressureFrac;
+  }
 
-  public double getRatedCv() { return ratedCv; }
-  public void setRatedCv(double v) { ratedCv = Math.max(0.0, v); }
+  /**
+   * <p>
+   * Setter for the field <code>overpressureFrac</code>.
+   * </p>
+   *
+   * @param v a double
+   */
+  public void setOverpressureFrac(double v) {
+    overpressureFrac = Math.max(0.0, v);
+  }
 
-  public double getKd() { return kd; }
-  public void setKd(double v) { kd = Math.max(0.0, v); }
+  /**
+   * <p>
+   * Getter for the field <code>blowdownFrac</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getBlowdownFrac() {
+    return blowdownFrac;
+  }
 
-  public double getKbMax() { return kbMax; }
-  public void setKbMax(double v) { kbMax = Math.max(0.0, v); }
+  /**
+   * <p>
+   * Setter for the field <code>blowdownFrac</code>.
+   * </p>
+   *
+   * @param v a double
+   */
+  public void setBlowdownFrac(double v) {
+    blowdownFrac = Math.max(0.0, v);
+  }
 
-  public double getBackpressureSensitivity() { return backpressureSensitivity; }
-  public void setBackpressureSensitivity(double v) { backpressureSensitivity = Math.max(0.0, v); }
+  /**
+   * <p>
+   * Getter for the field <code>ratedCv</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getRatedCv() {
+    return ratedCv;
+  }
 
-  public double getMinStableOpenFrac() { return minStableOpenFrac; }
-  public void setMinStableOpenFrac(double v) { minStableOpenFrac = Math.max(0.0, Math.min(1.0, v)); }
+  /**
+   * <p>
+   * Setter for the field <code>ratedCv</code>.
+   * </p>
+   *
+   * @param v a double
+   */
+  public void setRatedCv(double v) {
+    ratedCv = Math.max(0.0, v);
+  }
 
-  public ValveType getValveType() { return valveType; }
-  public void setValveType(ValveType t) { valveType = t; }
+  /**
+   * <p>
+   * Getter for the field <code>kd</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getKd() {
+    return kd;
+  }
 
-  public OpeningLaw getOpeningLaw() { return openingLaw; }
-  public void setOpeningLaw(OpeningLaw law) { openingLaw = law; }
+  /**
+   * <p>
+   * Setter for the field <code>kd</code>.
+   * </p>
+   *
+   * @param v a double
+   */
+  public void setKd(double v) {
+    kd = Math.max(0.0, v);
+  }
 
-  public double getOpenFraction() { return openFraction; }
+  /**
+   * <p>
+   * Getter for the field <code>kbMax</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getKbMax() {
+    return kbMax;
+  }
 
-  public void setTauOpenSec(double v){ tauOpenSec = Math.max(0.0, v); }
-  public void setTauCloseSec(double v){ tauCloseSec = Math.max(0.0, v); }
-  public void setMinOpenTimeSec(double v){ minOpenTimeSec = Math.max(0.0, v); }
-  public void setMinCloseTimeSec(double v){ minCloseTimeSec = Math.max(0.0, v); }
-  public void setMaxLiftRatePerSec(double v){ maxLiftRatePerSec = Math.max(0.0, v); }
+  /**
+   * <p>
+   * Setter for the field <code>kbMax</code>.
+   * </p>
+   *
+   * @param v a double
+   */
+  public void setKbMax(double v) {
+    kbMax = Math.max(0.0, v);
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>backpressureSensitivity</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getBackpressureSensitivity() {
+    return backpressureSensitivity;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>backpressureSensitivity</code>.
+   * </p>
+   *
+   * @param v a double
+   */
+  public void setBackpressureSensitivity(double v) {
+    backpressureSensitivity = Math.max(0.0, v);
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>minStableOpenFrac</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getMinStableOpenFrac() {
+    return minStableOpenFrac;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>minStableOpenFrac</code>.
+   * </p>
+   *
+   * @param v a double
+   */
+  public void setMinStableOpenFrac(double v) {
+    minStableOpenFrac = Math.max(0.0, Math.min(1.0, v));
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>valveType</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.valve.SafetyReliefValve.ValveType} object
+   */
+  public ValveType getValveType() {
+    return valveType;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>valveType</code>.
+   * </p>
+   *
+   * @param t a {@link neqsim.process.equipment.valve.SafetyReliefValve.ValveType} object
+   */
+  public void setValveType(ValveType t) {
+    valveType = t;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>openingLaw</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.valve.SafetyReliefValve.OpeningLaw} object
+   */
+  public OpeningLaw getOpeningLaw() {
+    return openingLaw;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>openingLaw</code>.
+   * </p>
+   *
+   * @param law a {@link neqsim.process.equipment.valve.SafetyReliefValve.OpeningLaw} object
+   */
+  public void setOpeningLaw(OpeningLaw law) {
+    openingLaw = law;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>openFraction</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getOpenFraction() {
+    return openFraction;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>tauOpenSec</code>.
+   * </p>
+   *
+   * @param v a double
+   */
+  public void setTauOpenSec(double v) {
+    tauOpenSec = Math.max(0.0, v);
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>tauCloseSec</code>.
+   * </p>
+   *
+   * @param v a double
+   */
+  public void setTauCloseSec(double v) {
+    tauCloseSec = Math.max(0.0, v);
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>minOpenTimeSec</code>.
+   * </p>
+   *
+   * @param v a double
+   */
+  public void setMinOpenTimeSec(double v) {
+    minOpenTimeSec = Math.max(0.0, v);
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>minCloseTimeSec</code>.
+   * </p>
+   *
+   * @param v a double
+   */
+  public void setMinCloseTimeSec(double v) {
+    minCloseTimeSec = Math.max(0.0, v);
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>maxLiftRatePerSec</code>.
+   * </p>
+   *
+   * @param v a double
+   */
+  public void setMaxLiftRatePerSec(double v) {
+    maxLiftRatePerSec = Math.max(0.0, v);
+  }
 
   // ---------------- Internals ----------------
-  private double relievingPressureBar() { return setPressureBar * (1.0 + overpressureFrac); }
-  private double reseatPressureBar()    { return setPressureBar * (1.0 - blowdownFrac); }
+  private double relievingPressureBar() {
+    return setPressureBar * (1.0 + overpressureFrac);
+  }
+
+  private double reseatPressureBar() {
+    return setPressureBar * (1.0 - blowdownFrac);
+  }
 
   private double computeOpeningFraction(double pUpBar) {
     final double pRel = relievingPressureBar();
@@ -129,9 +404,12 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
 
       case MODULATING:
       default:
-        if (wasOpenLastStep && pUpBar <= pReseat) return 0.0;
-        if (pUpBar <= setPressureBar) return 0.0;
-        if (pUpBar >= pRel) return 1.0;
+        if (wasOpenLastStep && pUpBar <= pReseat)
+          return 0.0;
+        if (pUpBar <= setPressureBar)
+          return 0.0;
+        if (pUpBar >= pRel)
+          return 1.0;
         frac = (pUpBar - setPressureBar) / Math.max(EPS, (pRel - setPressureBar));
         break;
     }
@@ -140,7 +418,8 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
   }
 
   private double capacityBackpressureFactor(double pUpBar, double pDownBar) {
-    if (pUpBar <= 0.0) return 1.0;
+    if (pUpBar <= 0.0)
+      return 1.0;
     double ratio = Math.max(0.0, Math.min(1.0, pDownBar / pUpBar));
     double kb;
     switch (valveType) {
@@ -171,16 +450,19 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
   }
 
   // ---------------- Steady-state ----------------
+  /** {@inheritDoc} */
   @Override
   public void run() {
     StreamInterface in = getInletStream();
     StreamInterface out = getOutletStream();
 
     double pUpBar = ensureBar(in.getThermoSystem().getPressure());
-    double pDownBar = out != null ? ensureBar(out.getThermoSystem().getPressure()) : ATM_PRESSURE_BAR;
+    double pDownBar =
+        out != null ? ensureBar(out.getThermoSystem().getPressure()) : ATM_PRESSURE_BAR;
 
     double newCmd = computeOpeningFraction(pUpBar);
-    if (newCmd > 0.0) newCmd = Math.max(newCmd, minStableOpenFrac);
+    if (newCmd > 0.0)
+      newCmd = Math.max(newCmd, minStableOpenFrac);
 
     double kb = capacityBackpressureFactor(pUpBar, pDownBar);
 
@@ -199,13 +481,15 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
   }
 
   // ---------------- Transient with inertia & anti-chatter ----------------
+  /** {@inheritDoc} */
   @Override
   public void runTransient(double dt) {
     StreamInterface in = getInletStream();
     StreamInterface out = getOutletStream();
 
     double pUpBar = ensureBar(in.getThermoSystem().getPressure());
-    double pDownBar = out != null ? ensureBar(out.getThermoSystem().getPressure()) : ATM_PRESSURE_BAR;
+    double pDownBar =
+        out != null ? ensureBar(out.getThermoSystem().getPressure()) : ATM_PRESSURE_BAR;
 
     // Raw commanded lift from pressure + hysteresis
     double cmd = computeOpeningFraction(pUpBar);
@@ -241,7 +525,8 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
 
     // Clip and minimum stable opening if > 0
     liftProposed = Math.max(0.0, Math.min(1.0, liftProposed));
-    if (liftProposed > 0.0) liftProposed = Math.max(liftProposed, minStableOpenFrac);
+    if (liftProposed > 0.0)
+      liftProposed = Math.max(liftProposed, minStableOpenFrac);
 
     // Update Cv and run hydraulics
     applyOpeningToCv(liftProposed, kb);
@@ -251,11 +536,13 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
     boolean newOpen = (liftProposed > 0.0);
     if (newOpen) {
       timeSinceOpenSec += dt;
-      if (!wasOpenLastStep) timeSinceOpenSec = 0.0;
+      if (!wasOpenLastStep)
+        timeSinceOpenSec = 0.0;
       timeSinceCloseSec = 0.0;
     } else {
       timeSinceCloseSec += dt;
-      if (wasOpenLastStep) timeSinceCloseSec = 0.0;
+      if (wasOpenLastStep)
+        timeSinceCloseSec = 0.0;
       timeSinceOpenSec = 0.0;
     }
     wasOpenLastStep = newOpen;
@@ -263,7 +550,19 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
   }
 
   // ---------------- Quick configurators ----------------
-  public SafetyReliefValve configureConventionalSnap(double psetBar, double overFrac, double blowFrac, double cvRated) {
+  /**
+   * <p>
+   * configureConventionalSnap.
+   * </p>
+   *
+   * @param psetBar a double
+   * @param overFrac a double
+   * @param blowFrac a double
+   * @param cvRated a double
+   * @return a {@link neqsim.process.equipment.valve.SafetyReliefValve} object
+   */
+  public SafetyReliefValve configureConventionalSnap(double psetBar, double overFrac,
+      double blowFrac, double cvRated) {
     setValveType(ValveType.CONVENTIONAL);
     setOpeningLaw(OpeningLaw.SNAP);
     setSetPressureBar(psetBar);
@@ -275,7 +574,19 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
     return this;
   }
 
-  public SafetyReliefValve configureBalancedModulating(double psetBar, double overFrac, double blowFrac, double cvRated) {
+  /**
+   * <p>
+   * configureBalancedModulating.
+   * </p>
+   *
+   * @param psetBar a double
+   * @param overFrac a double
+   * @param blowFrac a double
+   * @param cvRated a double
+   * @return a {@link neqsim.process.equipment.valve.SafetyReliefValve} object
+   */
+  public SafetyReliefValve configureBalancedModulating(double psetBar, double overFrac,
+      double blowFrac, double cvRated) {
     setValveType(ValveType.BALANCED_BELLOWS);
     setOpeningLaw(OpeningLaw.MODULATING);
     setSetPressureBar(psetBar);
@@ -289,7 +600,26 @@ public class SafetyReliefValve extends ThrottlingValve implements Serializable {
   }
 
   // Handy monitors
-  public double getRelievingPressureBar() { return relievingPressureBar(); }
-  public double getReseatPressureBar() { return reseatPressureBar(); }
+  /**
+   * <p>
+   * getRelievingPressureBar.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getRelievingPressureBar() {
+    return relievingPressureBar();
+  }
+
+  /**
+   * <p>
+   * getReseatPressureBar.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getReseatPressureBar() {
+    return reseatPressureBar();
+  }
 }
 

@@ -468,6 +468,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
         .toJson(new PumpResponse(this));
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson(ReportConfig cfg) {
     if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {

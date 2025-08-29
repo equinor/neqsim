@@ -19,7 +19,7 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
    *
    * @param value a double
    * @param name a {@link java.lang.String} object
-  */
+   */
   public TemperatureUnit(double value, String name) {
     super(value, name);
     // store the temperature in Kelvin for reuse

@@ -59,7 +59,6 @@ public class GibbsReactor extends TwoPortEquipment {
    *
    * @return enthalpyOfReactions in kJ
    */
-
   public double getEnthalpyOfReactions() {
     return enthalpyOfReactions;
   }
@@ -75,7 +74,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Get the reactor power (default: W, negative enthalpyOfReactions*1000).
-   * 
+   *
    * @return Power in Watts (W)
    */
   public double getPower() {
@@ -85,7 +84,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Get the reactor power in the specified unit ("W", "kW", or "MW").
-   * 
+   *
    * @param unit Power unit: "W", "kW", or "MW" (case-insensitive, default is W)
    * @return Power in the specified unit
    */
@@ -105,7 +104,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Calculate the total enthalpy of a mixture: sum_i n_i * enthalpy_i(T)
-   * 
+   *
    * @param componentNames List of component names (order matches n_i)
    * @param n List of moles for each component
    * @param T Temperature in K
@@ -155,6 +154,8 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Get the last calculated mixture enthalpy (kJ).
+   *
+   * @return a double
    */
   public double getMixtureEnthalpy() {
     double T = system != null ? system.getTemperature() : 298.15;
@@ -163,6 +164,8 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Get the last calculated mixture Gibbs energy (kJ).
+   *
+   * @return a double
    */
   public double getMixtureGibbsEnergy() {
     double T = system != null ? system.getTemperature() : 298.15;
@@ -171,7 +174,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Calculate the total standard enthalpy of a mixture: sum_i n_i * enthalpy_i(T)
-   * 
+   *
    * @param componentNames List of component names (order matches n_i)
    * @param n List of moles for each component
    * @param componentMap Map from component name (lowercase) to GibbsComponent
@@ -194,11 +197,12 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Calculate the total standard enthalpy of a mixture: sum_i n_i * enthalpy_i(T)
-   * 
+   *
    * @param componentNames List of component names (order matches n_i)
    * @param n List of moles for each component
    * @param componentMap Map from component name (lowercase) to GibbsComponent
    * @return Total enthalpy (kJ)
+   * @param T a double
    */
   public double calculateMixtureEnthalpy(List<String> componentNames, List<Double> n,
       Map<String, GibbsComponent> componentMap, double T) {
@@ -224,7 +228,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Set the energy mode of the reactor (isothermal or adiabatic).
-   * 
+   *
    * @param mode EnergyMode.ISOTHERMAL or EnergyMode.ADIABATIC
    */
   public void setEnergyMode(EnergyMode mode) {
@@ -236,7 +240,7 @@ public class GibbsReactor extends TwoPortEquipment {
    * "isothermal" (case-insensitive).
    *
    * @param mode String representing the energy mode
-   * @throws IllegalArgumentException if the mode is not recognized
+   * @throws java.lang.IllegalArgumentException if the mode is not recognized
    */
   public void setEnergyMode(String mode) {
     if (mode == null)
@@ -728,6 +732,7 @@ public class GibbsReactor extends TwoPortEquipment {
     return new HashMap<>(lagrangeContributions);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     // Clear thread-local temp system to avoid cross-test contamination

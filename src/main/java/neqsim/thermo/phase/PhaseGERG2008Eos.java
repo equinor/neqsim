@@ -272,7 +272,7 @@ public class PhaseGERG2008Eos extends PhaseEos {
   /**
    * Get cached ideal Helmholtz energy derivatives.
    *
-   * @return array of {@link doubleW} containing \u03b1₀ and its derivatives
+   * @return array of {@link org.netlib.util.doubleW} containing \u03b1₀ and its derivatives
    */
   public doubleW[] getAlpha0() {
     return a0;
@@ -281,7 +281,7 @@ public class PhaseGERG2008Eos extends PhaseEos {
   /**
    * Get cached residual Helmholtz energy derivatives.
    *
-   * @return matrix of {@link doubleW} containing \u03b1ᵣ and its derivatives
+   * @return matrix of {@link org.netlib.util.doubleW} containing \u03b1ᵣ and its derivatives
    */
   public doubleW[][] getAlphaRes() {
     return ar;

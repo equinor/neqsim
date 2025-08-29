@@ -5,6 +5,8 @@ import neqsim.process.equipment.mixer.Mixer;
 
 /**
  * MixerResponse class provides basic reporting for a mixer unit.
+ *
+ * @author esol
  */
 public class MixerResponse extends BaseResponse {
   public HashMap<String, Value> data = new HashMap<String, Value>();
@@ -19,8 +21,8 @@ public class MixerResponse extends BaseResponse {
 
     data.put("mass flow",
         new Value(
-            Double.toString(mixer.getOutletStream()
-                .getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+            Double.toString(
+                mixer.getOutletStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
             neqsim.util.unit.Units.getSymbol("mass flow")));
     data.put("outlet temperature",
         new Value(

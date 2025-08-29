@@ -56,8 +56,12 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
 
   /**
+   * {@inheritDoc}
+   *
+   * <p>
    * Generates the stone wall curve by taking the head value at the highest flow for each speed from
    * the compressor chart values.
+   * </p>
    */
   @Override
   public void generateStoneWallCurve() {

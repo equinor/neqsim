@@ -4,6 +4,13 @@ import org.jfree.chart.JFreeChart;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.OperationInterface;
 
+/**
+ * <p>
+ * PTphaseEnvelopeNew3 class.
+ * </p>
+ *
+ * @author esol
+ */
 public class PTphaseEnvelopeNew3 implements OperationInterface {
   // Fields
   private final SystemInterface system;
@@ -27,6 +34,19 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   private double minPressure, maxPressure, minTemp, maxTemp, pressureStep, tempStep;
 
   // Constructor
+  /**
+   * <p>
+   * Constructor for PTphaseEnvelopeNew3.
+   * </p>
+   *
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param minPressure a double
+   * @param maxPressure a double
+   * @param minTemp a double
+   * @param maxTemp a double
+   * @param pressureStep a double
+   * @param tempStep a double
+   */
   public PTphaseEnvelopeNew3(SystemInterface system, double minPressure, double maxPressure,
       double minTemp, double maxTemp, double pressureStep, double tempStep) {
     this.system = system;
@@ -41,6 +61,11 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
 
 
   // Main calculation method
+  /**
+   * <p>
+   * run.
+   * </p>
+   */
   public void run() {
     coarse();
     findBettaTransitionsAndRefine();
@@ -48,6 +73,11 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
 
 
   // Coarse grid calculation
+  /**
+   * <p>
+   * coarse.
+   * </p>
+   */
   public void coarse() {
     neqsim.thermodynamicoperations.ThermodynamicOperations testOps =
         new neqsim.thermodynamicoperations.ThermodynamicOperations(system);
@@ -170,6 +200,13 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   }
 
   // Accessor for refined transition points
+  /**
+   * <p>
+   * Getter for the field <code>refinedTransitionPoints</code>.
+   * </p>
+   *
+   * @return a {@link java.util.List} object
+   */
   public java.util.List<double[]> getRefinedTransitionPoints() {
     return refinedTransitionPoints;
   }
@@ -179,54 +216,76 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
 
   // ...existing code...
 
+  /**
+   * <p>
+   * Getter for the field <code>pressures</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getPressures() {
     return pressures;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>temperatures</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getTemperatures() {
     return temperatures;
   }
 
   // Interface methods (stubs)
+  /** {@inheritDoc} */
   @Override
   public void displayResult() {
     // Not implemented
   }
 
+  /** {@inheritDoc} */
   @Override
   public double[][] getPoints(int i) {
     // Not implemented
     return new double[0][0];
   }
 
+  /** {@inheritDoc} */
   @Override
   public void addData(String name, double[][] data) {
     // Not implemented
   }
 
+  /** {@inheritDoc} */
   @Override
   public String[][] getResultTable() {
     // Not implemented
     return new String[0][0];
   }
 
+  /** {@inheritDoc} */
   @Override
   public void printToFile(String name) {
     // Not implemented
   }
 
+  /** {@inheritDoc} */
   @Override
   public double[] get(String name) {
     // Not implemented
     return new double[0];
   }
 
+  /** {@inheritDoc} */
   @Override
   public JFreeChart getJFreeChart(String name) {
     // Not implemented
     return null;
   }
 
+  /** {@inheritDoc} */
   @Override
   public neqsim.thermo.system.SystemInterface getThermoSystem() {
     return system;
@@ -234,24 +293,59 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
 
   // Accessors
 
+  /**
+   * <p>
+   * getPhaseMatrix.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[][] getPhaseMatrix() {
     return betta;
   }
 
   // Accessor for bettaTransitionRegion
+  /**
+   * <p>
+   * Getter for the field <code>bettaTransitionRegion</code>.
+   * </p>
+   *
+   * @return an array of {@link boolean} objects
+   */
   public boolean[][] getBettaTransitionRegion() {
     return bettaTransitionRegion;
   }
 
   // For clarity, also provide getBettaMatrix() as an alias
+  /**
+   * <p>
+   * getBettaMatrix.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[][] getBettaMatrix() {
     return betta;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>dewPointTemperatures</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getDewPointTemperatures() {
     return dewPointTemperatures;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>dewPointPressures</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getDewPointPressures() {
     return dewPointPressures;
   }
@@ -259,15 +353,36 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   // Accessors for phase envelope lists
 
   // Accessors for phase envelope lists
+  /**
+   * <p>
+   * Getter for the field <code>pressurePhaseEnvelope</code>.
+   * </p>
+   *
+   * @return a {@link java.util.List} object
+   */
   public java.util.List<Double> getPressurePhaseEnvelope() {
     return pressurePhaseEnvelope;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>temperaturePhaseEnvelope</code>.
+   * </p>
+   *
+   * @return a {@link java.util.List} object
+   */
   public java.util.List<Double> getTemperaturePhaseEnvelope() {
     return temperaturePhaseEnvelope;
   }
 
   // Returns the maximum pressure in the phase envelope (cricondenbar)
+  /**
+   * <p>
+   * getCricondenbar.
+   * </p>
+   *
+   * @return a double
+   */
   public double getCricondenbar() {
     if (pressurePhaseEnvelope.isEmpty())
       return Double.NaN;
@@ -275,6 +390,13 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   }
 
   // Returns the maximum temperature in the phase envelope (cricondentherm)
+  /**
+   * <p>
+   * getCricondentherm.
+   * </p>
+   *
+   * @return a double
+   */
   public double getCricondentherm() {
     if (temperaturePhaseEnvelope.isEmpty())
       return Double.NaN;

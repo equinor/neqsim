@@ -8,6 +8,13 @@ import neqsim.process.equipment.valve.ValveInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * ControlValveSizing_IEC_60534 class.
+ * </p>
+ *
+ * @author esol
+ */
 public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
   // === IEC 60534 Constants (Units: Q[m^3/h], P[kPa], rho[kg/m^3]) ===
@@ -34,26 +41,62 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   boolean fullOutput = true;
 
 
+  /**
+   * <p>
+   * isAllowChoked.
+   * </p>
+   *
+   * @return a boolean
+   */
   public boolean isAllowChoked() {
     return allowChoked;
   }
 
+  /** {@inheritDoc} */
   public void setAllowChoked(boolean allowChoked) {
     this.allowChoked = allowChoked;
   }
 
+  /**
+   * <p>
+   * isAllowLaminar.
+   * </p>
+   *
+   * @return a boolean
+   */
   public boolean isAllowLaminar() {
     return allowLaminar;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>allowLaminar</code>.
+   * </p>
+   *
+   * @param allowLaminar a boolean
+   */
   public void setAllowLaminar(boolean allowLaminar) {
     this.allowLaminar = allowLaminar;
   }
 
+  /**
+   * <p>
+   * isFullOutput.
+   * </p>
+   *
+   * @return a boolean
+   */
   public boolean isFullOutput() {
     return fullOutput;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>fullOutput</code>.
+   * </p>
+   *
+   * @param fullOutput a boolean
+   */
   public void setFullOutput(boolean fullOutput) {
     this.fullOutput = fullOutput;
   }
@@ -62,55 +105,139 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     LIQUID, GAS
   }
 
+  /**
+   * <p>
+   * Constructor for ControlValveSizing_IEC_60534.
+   * </p>
+   */
   public ControlValveSizing_IEC_60534() {
     super();
   }
 
+  /**
+   * <p>
+   * Constructor for ControlValveSizing_IEC_60534.
+   * </p>
+   *
+   * @param valveMechanicalDesign a
+   *        {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
+   */
   public ControlValveSizing_IEC_60534(ValveMechanicalDesign valveMechanicalDesign) {
     super(valveMechanicalDesign);
   }
 
+  /**
+   * <p>
+   * getFL.
+   * </p>
+   *
+   * @return a double
+   */
   public double getFL() {
     return FL;
   }
 
+  /**
+   * <p>
+   * setFL.
+   * </p>
+   *
+   * @param FL a double
+   */
   public void setFL(double FL) {
     this.FL = FL;
   }
 
+  /**
+   * <p>
+   * getFd.
+   * </p>
+   *
+   * @return a double
+   */
   public double getFd() {
     return Fd;
   }
 
+  /**
+   * <p>
+   * setFd.
+   * </p>
+   *
+   * @param Fd a double
+   */
   public void setFd(double Fd) {
     this.Fd = Fd;
   }
 
+  /**
+   * <p>
+   * getD1.
+   * </p>
+   *
+   * @return a double
+   */
   public double getD1() {
     return D1;
   }
 
+  /**
+   * <p>
+   * setD1.
+   * </p>
+   *
+   * @param D1 a double
+   */
   public void setD1(double D1) {
     this.D1 = D1;
   }
 
+  /**
+   * <p>
+   * getD2.
+   * </p>
+   *
+   * @return a double
+   */
   public double getD2() {
     return D2;
   }
 
+  /**
+   * <p>
+   * setD2.
+   * </p>
+   *
+   * @param D2 a double
+   */
   public void setD2(double D2) {
     this.D2 = D2;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>d</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getD() {
     return d;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>d</code>.
+   * </p>
+   *
+   * @param d a double
+   */
   public void setD(double d) {
     this.d = d;
   }
 
   // === Main API ===
+  /** {@inheritDoc} */
   public Map<String, Object> calcValveSize(double percentOpening) {
     SystemInterface fluid =
         ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
@@ -127,6 +254,13 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     }
   }
 
+  /**
+   * <p>
+   * getValve.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.valve.ValveInterface} object
+   */
   public ValveInterface getValve() {
     return (ValveInterface) valveMechanicalDesign.getProcessEquipment();
   }
@@ -223,13 +357,10 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Calculates the flow rate through a control valve based on the valve opening, Kv, and
    * inlet/outlet streams.
-   *
-   * @param adjustedKv Flow coefficient (for 100% opening)
-   * @param inletStream Inlet stream to the valve
-   * @param outletStream Outlet stream from the valve
-   * @return Calculated flow rate (units depend on phase type)
    */
   public double calculateFlowRateFromValveOpening(double adjustedKv, StreamInterface inletStream,
       StreamInterface outletStream) {
@@ -240,6 +371,16 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     }
   }
 
+  /**
+   * <p>
+   * calculateFlowRateFromValveOpeningGas.
+   * </p>
+   *
+   * @param adjustedKv a double
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @return a double
+   */
   public double calculateFlowRateFromValveOpeningGas(double adjustedKv, StreamInterface inletStream,
       StreamInterface outletStream) {
     return calculateFlowRateFromKvAndValveOpeningGas(adjustedKv,
@@ -285,6 +426,16 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     return Qloc / 3600.0; // Convert from m^3/h to m^3/s
   }
 
+  /**
+   * <p>
+   * calculateFlowRateFromValveOpeningLiquid.
+   * </p>
+   *
+   * @param adjustedKv a double
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @return a double
+   */
   public double calculateFlowRateFromValveOpeningLiquid(double adjustedKv,
       StreamInterface inletStream, StreamInterface outletStream) {
 
@@ -334,6 +485,17 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
 
 
+  /**
+   * <p>
+   * calculateValveOpeningFromFlowRateLiquid.
+   * </p>
+   *
+   * @param Q a double
+   * @param Kv a double
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @return a double
+   */
   public double calculateValveOpeningFromFlowRateLiquid(double Q, double Kv,
       StreamInterface inletStream, StreamInterface outletStream) {
     return calculateValveOpeningFromFlowRateLiquid(Q, Kv,
@@ -409,6 +571,15 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   // add a general method to find outlet pressure for fixed Kv that work for both gas and liquid
 
 
+  /**
+   * <p>
+   * findOutletPressureForFixedKvLiquid.
+   * </p>
+   *
+   * @param actualKv a double
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @return a double
+   */
   public double findOutletPressureForFixedKvLiquid(double actualKv, StreamInterface inletStream) {
     return findOutletPressureForFixedKvLiquid(inletStream.getThermoSystem().getDensity("kg/m3"),
         inletStream.getThermoSystem().getPhase(0).getPressure("Pa"),
@@ -521,6 +692,16 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     return Qloc / 3600.0;
   }
 
+  /**
+   * <p>
+   * calculateFlowRateFromKvAndValveOpeningGas.
+   * </p>
+   *
+   * @param adjustedKv a double
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @return a double
+   */
   public double calculateFlowRateFromKvAndValveOpeningGas(double adjustedKv,
       StreamInterface inletStream, StreamInterface outletStream) {
     return calculateFlowRateFromKvAndValveOpeningGas(adjustedKv,
@@ -589,6 +770,18 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     return valveOpening;
   }
 
+  /**
+   * <p>
+   * calculateValveOpeningFromFlowRateGas.
+   * </p>
+   *
+   * @param Q a double
+   * @param Kv a double
+   * @param valveOpening a double
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @return a double
+   */
   public double calculateValveOpeningFromFlowRateGas(double Q, double Kv, double valveOpening,
       StreamInterface inletStream, StreamInterface outletStream) {
     return calculateValveOpeningFromFlowRateGas(Q, Kv,
@@ -660,6 +853,15 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     return P2_mid;
   }
 
+  /**
+   * <p>
+   * findOutletPressureForFixedKvGas.
+   * </p>
+   *
+   * @param actualKv a double
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @return a double
+   */
   public double findOutletPressureForFixedKvGas(double actualKv, StreamInterface inletStream) {
 
     return findOutletPressureForFixedKvGas(inletStream.getThermoSystem().getTemperature("K"),
@@ -691,11 +893,9 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * Finds the outlet pressure for a given flow rate and fixed Kv, for both gas and liquid.
+   * {@inheritDoc}
    *
-   * @param actualKv the valve flow coefficient
-   * @param inletStream the inlet stream to the valve
-   * @return outlet pressure (Pa for liquid, Pa for gas)
+   * Finds the outlet pressure for a given flow rate and fixed Kv, for both gas and liquid.
    */
   public double findOutletPressureForFixedKv(double actualKv, StreamInterface inletStream) {
     if (inletStream.getThermoSystem().hasPhaseType(PhaseType.GAS)) {

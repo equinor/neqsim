@@ -263,6 +263,7 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   @Override
   String toJson();
 
+  /** {@inheritDoc} */
   @Override
   default String toJson(ReportConfig cfg) {
     if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {

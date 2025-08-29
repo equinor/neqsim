@@ -403,6 +403,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     return new GsonBuilder().create().toJson(new HeaterResponse(this));
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson(ReportConfig cfg) {
     if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {

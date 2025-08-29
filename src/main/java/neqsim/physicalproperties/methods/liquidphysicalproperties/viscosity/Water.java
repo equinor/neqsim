@@ -13,12 +13,12 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * Mixture rule (weight fractions): {@code η_m = η_w^{w_w} Π η_i^{w_i}}, where {@code η_w} is the
  * pure-water viscosity (from NeqSim's water correlation) and {@code η_i} are "solute viscosities"
  * from Laliberté:
- * 
+ *
  * <pre>
  * (η_i / mPa·s) = exp( [ν1 (1 - w_w)^{ν2} + ν3] / [ν4 (t/°C) + 1] )
  *                 / ( ν5 (1 - w_w)^{ν6} + 1 )
  * </pre>
- * 
+ *
  * with {@code w_w} = mass fraction of water in the liquid phase.
  * <p>
  * Supported salts (coefficients ν1–ν6): NaCl, KCl, KCOOH (potassium formate), NaBr, CaCl2, KBr. If
@@ -56,10 +56,16 @@ public class Water extends Viscosity {
     LALIBERTE_COEFFS.put("CALCIUMCHLORIDE", LALIBERTE_COEFFS.get("CACL2"));
   }
 
+  /**
+   * <p>Constructor for Water.</p>
+   *
+   * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
+   */
   public Water(PhysicalProperties liquidPhase) {
     super(liquidPhase);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Water clone() {
     Water properties = null;
@@ -147,6 +153,7 @@ public class Water extends Viscosity {
     return Math.exp(expo) / den; // mPa·s
   }
 
+  /** {@inheritDoc} */
   @Override
   public double calcViscosity() {
     // Only use the special correlation for "salt water". Otherwise, use the default.

@@ -528,6 +528,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     return new GsonBuilder().create().toJson(new MixerResponse(this));
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson(ReportConfig cfg) {
     if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
