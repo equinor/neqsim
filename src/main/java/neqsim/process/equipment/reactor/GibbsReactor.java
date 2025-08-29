@@ -383,6 +383,18 @@ public class GibbsReactor extends TwoPortEquipment {
      * @param deltaHf298 standard enthalpy of formation at 298 K
      * @param deltaGf298 standard Gibbs energy of formation at 298 K
      * @param deltaSf298 standard entropy at 298 K
+     * @param coeffAg coefficient Ag for Gibbs calculations
+     * @param coeffBg coefficient Bg for Gibbs calculations
+     * @param coeffCg coefficient Cg for Gibbs calculations
+     * @param coeffDg coefficient Dg for Gibbs calculations
+     * @param coeffEg coefficient Eg for Gibbs calculations
+     * @param coeffFg coefficient Fg for Gibbs calculations
+     * @param coeffAh coefficient Ah for Gibbs calculations
+     * @param coeffBh coefficient Bh for Gibbs calculations
+     * @param coeffCh coefficient Ch for Gibbs calculations
+     * @param coeffDh coefficient Dh for Gibbs calculations
+     * @param coeffEh coefficient Eh for Gibbs calculations
+     * @param coeffGh coefficient Gh for Gibbs calculations
      */
     public GibbsComponent(String molecule, double[] elements, double[] heatCapacityCoeffs,
         double deltaHf298, double deltaGf298, double deltaSf298, double coeffAg, double coeffBg,

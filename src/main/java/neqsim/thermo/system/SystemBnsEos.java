@@ -192,29 +192,31 @@ public class SystemBnsEos extends SystemEos {
   }
 
   /**
-   * Sets the composition and associated gas flag for the system.
+   * Sets the composition using BNS-specific parameters matching the Python interface. This method
+   * matches the Python call: setComposition(sg, yCO2, yH2S, yN2, yH2, associatedGas)
    *
-   * @param sg relative density
-   * @param yCO2 mole fraction of CO2
-   * @param yH2S mole fraction of H2S
-   * @param yN2 mole fraction of N2
-   * @param yH2 mole fraction of H2
-   * @param ag true if associated gas, false otherwise
+   * @param sg relative density (specific gravity)
+   * @param yCO2 mole fraction of CO2 (must be &gt;= 0)
+   * @param yH2S mole fraction of H2S (must be &gt;= 0)
+   * @param yN2 mole fraction of N2 (must be &gt;= 0)
+   * @param yH2 mole fraction of H2 (must be &gt;= 0)
+   * @param associatedGas true for associated gas, false for gas condensate
+   * @throws IllegalArgumentException if any mole fraction is negative or sum exceeds 1.0
    */
   public void setComposition(double sg, double yCO2, double yH2S, double yN2, double yH2,
-      boolean ag) {
+      boolean associatedGas) {
     this.relativeDensity = sg;
-    this.associatedGas = ag;
+    this.associatedGas = associatedGas;
     setComposition(yCO2, yH2S, yN2, yH2);
   }
 
   /**
    * Sets the composition of the system using mole fractions of CO2, H2S, N2, and H2.
    *
-   * @param yCO2 mole fraction of CO2 (must be >= 0)
-   * @param yH2S mole fraction of H2S (must be >= 0)
-   * @param yN2 mole fraction of N2 (must be >= 0)
-   * @param yH2 mole fraction of H2 (must be >= 0)
+   * @param yCO2 mole fraction of CO2 (must be &gt;= 0)
+   * @param yH2S mole fraction of H2S (must be &gt;= 0)
+   * @param yN2 mole fraction of N2 (must be &gt;= 0)
+   * @param yH2 mole fraction of H2 (must be &gt;= 0)
    * @throws IllegalArgumentException if any mole fraction is negative or sum exceeds 1.0
    */
   public void setComposition(double yCO2, double yH2S, double yN2, double yH2) {

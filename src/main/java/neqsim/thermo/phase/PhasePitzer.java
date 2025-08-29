@@ -89,17 +89,35 @@ public class PhasePitzer extends PhaseGE {
     cphi[j][i] = c;
   }
 
-  /** Get beta0 parameter. */
+  /**
+   * Get beta0 parameter.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @return beta0 parameter for components i and j
+   */
   public double getBeta0ij(int i, int j) {
     return beta0[i][j];
   }
 
-  /** Get beta1 parameter. */
+  /**
+   * Get beta1 parameter.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @return beta1 parameter for components i and j
+   */
   public double getBeta1ij(int i, int j) {
     return beta1[i][j];
   }
 
-  /** Get Cphi parameter. */
+  /**
+   * Get Cphi parameter.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @return Cphi parameter for components i and j
+   */
   public double getCphiij(int i, int j) {
     return cphi[i][j];
   }
