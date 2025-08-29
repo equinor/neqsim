@@ -7,10 +7,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * * CompressorChartKader2015 is a class that implements the compressor chart calculations based on
+ * CompressorChartKhader2015 is a class that implements the compressor chart calculations based on
  * the Kader 2015 method. It extends the CompressorChartAlternativeMapLookupExtrapolate class and
  * provides methods to set compressor curves based on speed, flow, head, and efficiency values. See:
  * https://github.com/EvenSol/NeqSim-Colab/discussions/12
+ *
+ * @author esol
  */
 public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLookupExtrapolate {
   /** Serialization version UID. */
@@ -302,7 +304,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
-   * Calculates the polytropic head for a given flow and speed.
+   * {@inheritDoc}
    *
    * <p>
    * The method first converts the input flow and speed to dimensionless numbers using the sound
@@ -314,10 +316,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * It then interpolates/extrapolates the polytropic head from the reference compressor curves in
    * this dimensionless space, and finally converts the result back to physical units by multiplying
    * with c<sub>s</sub><sup>2</sup>.
-   *
-   * @param flow volumetric flow rate
-   * @param speed rotational speed
-   * @return polytropic head in physical units
+   * </p>
    */
   @Override
   public double getPolytropicHead(double flow, double speed) {
@@ -336,6 +335,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Calculates the polytropic efficiency for a given flow and speed.
    *
    * <p>
@@ -347,10 +348,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * </ul>
    * It then interpolates/extrapolates the polytropic efficiency from the reference compressor
    * curves in this dimensionless space.
-   *
-   * @param flow volumetric flow rate
-   * @param speed rotational speed
-   * @return polytropic efficiency (dimensionless)
    */
   @Override
   public double getPolytropicEfficiency(double flow, double speed) {
@@ -382,10 +379,24 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     this.impellerOuterDiameter = impellerOuterDiameter;
   }
 
+  /**
+   * <p>
+   * getReferenceFluid.
+   * </p>
+   *
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public SystemInterface getReferenceFluid() {
     return ref_fluid;
   }
 
+  /**
+   * <p>
+   * setReferenceFluid.
+   * </p>
+   *
+   * @param ref_fluid a {@link neqsim.thermo.system.SystemInterface} object
+   */
   public void setReferenceFluid(SystemInterface ref_fluid) {
     this.ref_fluid = ref_fluid;
   }
@@ -453,6 +464,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Generates and prints the surge curve based on RealCurve data. The surge curve is typically the
    * minimum stable flow for each speed.
    */
@@ -487,6 +500,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Generates and sets the stone wall curve based on RealCurve data. The stone wall curve is
    * typically the maximum flow for each speed.
    */
@@ -520,6 +535,13 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     setStoneWallCurve(new SafeSplineStoneWallCurve(stoneFlow, stoneHead));
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>realCurves</code>.
+   * </p>
+   *
+   * @return a {@link java.util.List} object
+   */
   public java.util.List<RealCurve> getRealCurves() {
     return realCurves;
   }

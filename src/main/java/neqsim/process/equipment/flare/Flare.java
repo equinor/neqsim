@@ -9,6 +9,8 @@ import neqsim.util.unit.PowerUnit;
 
 /**
  * Flare unit operation for combustion of a process stream.
+ *
+ * @author esol
  */
 public class Flare extends TwoPortEquipment {
   private static final long serialVersionUID = 1000;
@@ -18,7 +20,7 @@ public class Flare extends TwoPortEquipment {
 
   /**
    * Default constructor.
-   * 
+   *
    * @param name name of the flare
    */
   public Flare(String name) {
@@ -27,7 +29,7 @@ public class Flare extends TwoPortEquipment {
 
   /**
    * Constructor setting inlet stream.
-   * 
+   *
    * @param name name of flare
    * @param inletStream inlet stream
    */
@@ -66,7 +68,7 @@ public class Flare extends TwoPortEquipment {
 
   /**
    * Get heat released from flare.
-   * 
+   *
    * @return heat duty in W
    */
   public double getHeatDuty() {
@@ -75,7 +77,7 @@ public class Flare extends TwoPortEquipment {
 
   /**
    * Get heat released in desired unit.
-   * 
+   *
    * @param unit engineering unit, e.g. "MW"
    * @return heat duty in specified unit
    */
@@ -86,7 +88,7 @@ public class Flare extends TwoPortEquipment {
 
   /**
    * Get CO2 emissions in kg/s.
-   * 
+   *
    * @return CO2 emission rate
    */
   public double getCO2Emission() {
@@ -94,9 +96,8 @@ public class Flare extends TwoPortEquipment {
   }
 
   /**
-   * Get CO2 emissions in specified unit.
-   * Supported units: kg/sec, kg/hr, kg/day
-   * 
+   * Get CO2 emissions in specified unit. Supported units: kg/sec, kg/hr, kg/day
+   *
    * @param unit desired unit
    * @return emission in specified unit
    */

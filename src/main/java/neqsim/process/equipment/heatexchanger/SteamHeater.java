@@ -9,6 +9,8 @@ import neqsim.thermo.util.steam.Iapws_if97;
 
 /**
  * Heater for process streams using condensing steam as heating medium.
+ *
+ * @author esol
  */
 public class SteamHeater extends Heater {
 
@@ -20,10 +22,25 @@ public class SteamHeater extends Heater {
   private double steamPressure = 1.0; // bara
   private double steamFlowRate = 0.0; // kg/s
 
+  /**
+   * <p>
+   * Constructor for SteamHeater.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public SteamHeater(String name) {
     super(name);
   }
 
+  /**
+   * <p>
+   * Constructor for SteamHeater.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public SteamHeater(String name, StreamInterface inStream) {
     super(name, inStream);
     setWaterModel();
@@ -78,12 +95,14 @@ public class SteamHeater extends Heater {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setInletStream(StreamInterface stream) {
     super.setInletStream(stream);
     setWaterModel();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     super.run(id);

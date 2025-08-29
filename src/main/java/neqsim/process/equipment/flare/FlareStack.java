@@ -20,18 +20,19 @@ import neqsim.thermo.system.SystemInterface;
  * attenuation.</li>
  * </ul>
  *
- * <p>
  * Tip ΔP/backpressure:
  * <ul>
  * <li>ΔP_tip = K_tip * 0.5 * rho_exit * u_exit^2</li>
  * </ul>
  *
- * <p>
  * NOTES:
  * <ul>
  * <li>Coefficients for Chamberlain are exposed so you can calibrate to your standard/vendor.</li>
  * <li>This is an engineering model; validate before use for regulatory work.</li>
  * </ul>
+ * </p>
+ *
+ * @author esol
  */
 public class FlareStack extends ProcessEquipmentBaseClass implements Serializable {
   private static final long serialVersionUID = 1L;
@@ -92,110 +93,283 @@ public class FlareStack extends ProcessEquipmentBaseClass implements Serializabl
   private double heatReleaseMW = 0.0;
   private Map<String, Double> emissionsKgPerHr = new HashMap<>();
 
+  /**
+   * <p>
+   * Constructor for FlareStack.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public FlareStack(String name) {
     super(name);
   }
 
   // --- Connections ---
+  /**
+   * <p>
+   * Setter for the field <code>reliefInlet</code>.
+   * </p>
+   *
+   * @param s a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public void setReliefInlet(StreamInterface s) {
     this.reliefInlet = s;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>airAssist</code>.
+   * </p>
+   *
+   * @param s a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public void setAirAssist(StreamInterface s) {
     this.airAssist = s;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>steamAssist</code>.
+   * </p>
+   *
+   * @param s a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public void setSteamAssist(StreamInterface s) {
     this.steamAssist = s;
   }
 
   // --- Config setters ---
+  /**
+   * <p>
+   * setTipDiameter.
+   * </p>
+   *
+   * @param m a double
+   */
   public void setTipDiameter(double m) {
     this.tipDiameter_m = m;
   }
 
+  /**
+   * <p>
+   * setTipElevation.
+   * </p>
+   *
+   * @param m a double
+   */
   public void setTipElevation(double m) {
     this.tipElevation_m = m;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>burningEfficiency</code>.
+   * </p>
+   *
+   * @param eff a double
+   */
   public void setBurningEfficiency(double eff) {
     this.burningEfficiency = clamp01(eff);
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>radiantFraction</code>.
+   * </p>
+   *
+   * @param f a double
+   */
   public void setRadiantFraction(double f) {
     this.radiantFraction = clamp01(f);
   }
 
+  /**
+   * <p>
+   * setSO2Conversion.
+   * </p>
+   *
+   * @param f a double
+   */
   public void setSO2Conversion(double f) {
     this.so2Conversion = clamp01(f);
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>unburnedTHCFraction</code>.
+   * </p>
+   *
+   * @param f a double
+   */
   public void setUnburnedTHCFraction(double f) {
     this.unburnedTHCFraction = Math.max(0.0, f);
   }
 
+  /**
+   * <p>
+   * setCOFraction.
+   * </p>
+   *
+   * @param f a double
+   */
   public void setCOFraction(double f) {
     this.coFraction = Math.max(0.0, f);
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>excessAirFrac</code>.
+   * </p>
+   *
+   * @param f a double
+   */
   public void setExcessAirFrac(double f) {
     this.excessAirFrac = Math.max(0.0, f);
   }
 
+  /**
+   * <p>
+   * setAmbient.
+   * </p>
+   *
+   * @param tempK a double
+   * @param pressBar a double
+   */
   public void setAmbient(double tempK, double pressBar) {
     this.ambientTempK = tempK;
     this.ambientPressBar = pressBar;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>windSpeed10m</code>.
+   * </p>
+   *
+   * @param u a double
+   */
   public void setWindSpeed10m(double u) {
     this.windSpeed10m = Math.max(0.0, u);
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>tipLossK</code>.
+   * </p>
+   *
+   * @param k a double
+   */
   public void setTipLossK(double k) {
     this.tipLossK = Math.max(0.0, k);
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>radiationModel</code>.
+   * </p>
+   *
+   * @param m a {@link neqsim.process.equipment.flare.FlareStack.RadiationModel} object
+   */
   public void setRadiationModel(RadiationModel m) {
     this.radiationModel = m;
   }
 
   // Chamberlain tuners
+  /**
+   * <p>
+   * setChamberlainEmissivePower.
+   * </p>
+   *
+   * @param epC_kWm2 a double
+   * @param epA a double
+   */
   public void setChamberlainEmissivePower(double epC_kWm2, double epA) {
     this.ch_epC_kWm2 = epC_kWm2;
     this.ch_epA = epA;
   }
 
+  /**
+   * <p>
+   * setChamberlainFlameLength.
+   * </p>
+   *
+   * @param lfC a double
+   * @param lfA a double
+   * @param lfB a double
+   */
   public void setChamberlainFlameLength(double lfC, double lfA, double lfB) {
     this.ch_lfC = lfC;
     this.ch_lfA = lfA;
     this.ch_lfB = lfB;
   }
 
+  /**
+   * <p>
+   * setChamberlainTilt.
+   * </p>
+   *
+   * @param kTilt a double
+   */
   public void setChamberlainTilt(double kTilt) {
     this.ch_kTilt = kTilt;
   }
 
+  /**
+   * <p>
+   * setChamberlainAttenuation.
+   * </p>
+   *
+   * @param kAtten_1_per_m a double
+   */
   public void setChamberlainAttenuation(double kAtten_1_per_m) {
     this.ch_kAtten = Math.max(0.0, kAtten_1_per_m);
   }
 
+  /**
+   * <p>
+   * setChamberlainSegments.
+   * </p>
+   *
+   * @param n a int
+   */
   public void setChamberlainSegments(int n) {
     this.ch_lineSegments = Math.max(5, n);
   }
 
   // --- Public results ---
+  /**
+   * <p>
+   * Getter for the field <code>heatReleaseMW</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getHeatReleaseMW() {
     return heatReleaseMW;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>emissionsKgPerHr</code>.
+   * </p>
+   *
+   * @return a {@link java.util.Map} object
+   */
   public Map<String, Double> getEmissionsKgPerHr() {
     return emissionsKgPerHr;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>tipBackpressureBar</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getTipBackpressureBar() {
     return tipBackpressureBar;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     if (reliefInlet == null) {
@@ -255,6 +429,9 @@ public class FlareStack extends ProcessEquipmentBaseClass implements Serializabl
   /**
    * Heat flux at ground point located downwind distance R (m) from the flare base. Uses the
    * currently selected radiation model.
+   *
+   * @param groundRange_m a double
+   * @return a double
    */
   public double heatFlux_W_m2(double groundRange_m) {
     switch (radiationModel) {
@@ -266,14 +443,24 @@ public class FlareStack extends ProcessEquipmentBaseClass implements Serializabl
     }
   }
 
-  /** Simple point-source radiation from flame centroid at height tipElevation. */
+  /**
+   * Simple point-source radiation from flame centroid at height tipElevation.
+   *
+   * @param groundRange_m a double
+   * @return a double
+   */
   public double pointSourceHeatFlux(double groundRange_m) {
     double Qdot = heatReleaseMW * 1e6;
     double R = Math.sqrt(groundRange_m * groundRange_m + tipElevation_m * tipElevation_m);
     return radiantFraction * Qdot / (4.0 * Math.PI * R * R);
   }
 
-  /** Chamberlain-style line source with tilt, emissive power and attenuation. */
+  /**
+   * Chamberlain-style line source with tilt, emissive power and attenuation.
+   *
+   * @param groundRange_m a double
+   * @return a double
+   */
   public double chamberlainHeatFlux(double groundRange_m) {
     if (heatReleaseMW <= 1e-9) {
       return 0.0;

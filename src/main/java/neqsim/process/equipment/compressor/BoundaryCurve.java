@@ -8,6 +8,8 @@ import org.apache.commons.math3.fitting.WeightedObservedPoints;
 
 /**
  * Abstract base implementation for compressor limit curves such as surge and stone wall curves.
+ *
+ * @author esol
  */
 public abstract class BoundaryCurve implements BoundaryCurveInterface {
   private static final long serialVersionUID = 1000L;
@@ -20,12 +22,26 @@ public abstract class BoundaryCurve implements BoundaryCurveInterface {
   protected WeightedObservedPoints flowFitter = new WeightedObservedPoints();
   protected PolynomialFunction flowFitterFunc = null;
 
+  /**
+   * <p>
+   * Constructor for BoundaryCurve.
+   * </p>
+   */
   protected BoundaryCurve() {}
 
+  /**
+   * <p>
+   * Constructor for BoundaryCurve.
+   * </p>
+   *
+   * @param flow an array of {@link double} objects
+   * @param head an array of {@link double} objects
+   */
   protected BoundaryCurve(double[] flow, double[] head) {
     setCurve(null, flow, head);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setCurve(double[] chartConditions, double[] flow, double[] head) {
     this.flow = flow;
@@ -40,31 +56,43 @@ public abstract class BoundaryCurve implements BoundaryCurveInterface {
     isActive = true;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getFlow(double head) {
     return flowFitterFunc.value(head);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isActive() {
     return isActive;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setActive(boolean isActive) {
     this.isActive = isActive;
   }
 
-  /** Get flow values defining the curve. */
+  /**
+   * Get flow values defining the curve.
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getFlow() {
     return flow;
   }
 
-  /** Get head values defining the curve. */
+  /**
+   * Get head values defining the curve.
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getHead() {
     return head;
   }
 
+  /** {@inheritDoc} */
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -76,6 +104,7 @@ public abstract class BoundaryCurve implements BoundaryCurveInterface {
     return result;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {

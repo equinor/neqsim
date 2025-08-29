@@ -6,6 +6,8 @@ import neqsim.thermo.util.humidair.HumidAir;
 
 /**
  * Air cooler using humid air properties to estimate required air flow.
+ *
+ * @author esol
  */
 public class AirCooler extends Cooler {
   private static final long serialVersionUID = 1000L;
@@ -18,34 +20,87 @@ public class AirCooler extends Cooler {
   private double airMassFlow = 0.0; // kg dry air/s
   private double airVolumeFlow = 0.0; // m3/s at inlet conditions
 
+  /**
+   * <p>
+   * Constructor for AirCooler.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public AirCooler(String name) {
     super(name);
   }
 
+  /**
+   * <p>
+   * Constructor for AirCooler.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public AirCooler(String name, StreamInterface inStream) {
     super(name, inStream);
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>airInletTemperature</code>.
+   * </p>
+   *
+   * @param temperature a double
+   * @param unit a {@link java.lang.String} object
+   */
   public void setAirInletTemperature(double temperature, String unit) {
     airInletTemperature = unit.equalsIgnoreCase("C") ? temperature + 273.15 : temperature;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>airOutletTemperature</code>.
+   * </p>
+   *
+   * @param temperature a double
+   * @param unit a {@link java.lang.String} object
+   */
   public void setAirOutletTemperature(double temperature, String unit) {
     airOutletTemperature = unit.equalsIgnoreCase("C") ? temperature + 273.15 : temperature;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>relativeHumidity</code>.
+   * </p>
+   *
+   * @param rh a double
+   */
   public void setRelativeHumidity(double rh) {
     relativeHumidity = rh;
   }
 
+  /** {@inheritDoc} */
   public void setPressure(double pressure) {
     this.pressure = pressure;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>airMassFlow</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getAirMassFlow() {
     return airMassFlow;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>airVolumeFlow</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getAirVolumeFlow() {
     return airVolumeFlow;
   }
@@ -68,6 +123,7 @@ public class AirCooler extends Cooler {
     airVolumeFlow = airMassFlow * volumePerKgDryAir;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     super.run(id);

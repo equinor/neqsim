@@ -24,12 +24,14 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 /**
  * Models a tray based distillation column with optional condenser and reboiler.
  *
- * <p>The column is solved using a sequential substitution approach. The
- * {@link #init()} method sets initial tray temperatures by running the feed tray
- * and linearly distributing temperatures towards the top and bottom. During
- * {@link #run(UUID)} the trays are iteratively solved in upward and downward
- * sweeps until the summed temperature change between iterations is below the
- * configured {@link #temperatureTolerance} or the iteration limit is reached.
+ * <p>
+ * The column is solved using a sequential substitution approach. The {@link #init()} method sets
+ * initial tray temperatures by running the feed tray and linearly distributing temperatures towards
+ * the top and bottom. During {@link #run(UUID)} the trays are iteratively solved in upward and
+ * downward sweeps until the summed temperature change between iterations is below the configured
+ * {@link #temperatureTolerance} or the iteration limit is reached.
+ *
+ * @author esol
  */
 public class DistillationColumn extends ProcessEquipmentBaseClass implements DistillationInterface {
   /** Serialization version UID. */
@@ -167,13 +169,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Prepare the column for calculation by estimating tray temperatures and
-   * linking streams between trays.
+   * Prepare the column for calculation by estimating tray temperatures and linking streams between
+   * trays.
    *
-   * <p>The feed tray is solved first to obtain a temperature estimate. This
-   * temperature is then used to linearly guess temperatures upwards to the
-   * condenser and downwards to the reboiler. Gas and liquid outlet streams are
-   * connected to neighbouring trays so that a subsequent call to
+   * <p>
+   * The feed tray is solved first to obtain a temperature estimate. This temperature is then used
+   * to linearly guess temperatures upwards to the condenser and downwards to the reboiler. Gas and
+   * liquid outlet streams are connected to neighbouring trays so that a subsequent call to
    * {@link #run(UUID)} can iterate to convergence.
    */
   public void init() {
@@ -279,14 +281,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Solve the column until tray temperatures converge.
    *
-   * <p>The method applies sequential substitution. Pressures are set linearly
-   * between bottom and top. Each iteration performs an upward sweep where liquid
-   * flows downward followed by a downward sweep where vapour flows upward. The
-   * sum of absolute temperature changes is used as error measure.</p>
-   *
-   * @param id calculation identifier used for caching results
+   * <p>
+   * The method applies sequential substitution. Pressures are set linearly between bottom and top.
+   * Each iteration performs an upward sweep where liquid flows downward followed by a downward
+   * sweep where vapour flows upward. The sum of absolute temperature changes is used as error
+   * measure.
+   * </p>
    */
   @Override
   public void run(UUID id) {
@@ -538,13 +542,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Solve the column using a damped sequential substitution scheme.
    *
-   * <p>This method implements a simple relaxation (or damping) of the tray
-   * temperatures between iterations. Literature on tray based distillation
-   * modelling (e.g. Seader, Henley and Roper, <em>Separation Process
-   * Principles</em>) recommends damping to avoid oscillations and improve
-   * convergence when applying the classic inside-out algorithm. A relaxation
-   * factor of 1.0 reproduces the behaviour of {@link #run(UUID)} while smaller
-   * factors provide additional stability.</p>
+   * <p>
+   * This method implements a simple relaxation (or damping) of the tray temperatures between
+   * iterations. Literature on tray based distillation modelling (e.g. Seader, Henley and Roper,
+   * <em>Separation Process Principles</em>) recommends damping to avoid oscillations and improve
+   * convergence when applying the classic inside-out algorithm. A relaxation factor of 1.0
+   * reproduces the behaviour of {@link #run(UUID)} while smaller factors provide additional
+   * stability.
+   * </p>
    *
    * @param id calculation identifier
    */
@@ -627,9 +632,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       massErr = getMassBalanceError();
       energyErr = getEnergyBalanceError();
 
-      logger.info(
-          "error iteration = " + iter + "   err = " + err + " massErr= " + massErr + " energyErr= "
-              + energyErr);
+      logger.info("error iteration = " + iter + "   err = " + err + " massErr= " + massErr
+          + " energyErr= " + energyErr);
     } while ((err > temperatureTolerance || massErr > massBalanceTolerance
         || energyErr > enthalpyBalanceTolerance) && err < errOld && iter < maxNumberOfIterations);
 
@@ -1082,10 +1086,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Prints a simple energy balance for each tray to the console. The method
-   * calculates the total enthalpy of all inlet streams and compares it with the
-   * outlet enthalpy in order to highlight any discrepancies in the column
-   * setup.
+   * Prints a simple energy balance for each tray to the console. The method calculates the total
+   * enthalpy of all inlet streams and compares it with the outlet enthalpy in order to highlight
+   * any discrepancies in the column setup.
    */
   public void energyBalanceCheck() {
     double[] energyInput = new double[numberOfTrays];
@@ -1169,6 +1172,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return new GsonBuilder().create().toJson(new DistillationColumnResponse(this));
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson(ReportConfig cfg) {
     if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {

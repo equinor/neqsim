@@ -1,12 +1,14 @@
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentBNS;
+import neqsim.thermo.mixingrule.EosMixingRuleHandler;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
-import neqsim.thermo.mixingrule.EosMixingRuleHandler;
 
 /**
  * Phase implementation using the Burgoyne–Nielsen–Stanko PR correlation.
+ *
+ * @author esol
  */
 public class PhaseBNS extends PhasePrEos {
   private static final long serialVersionUID = 1L;
@@ -19,6 +21,19 @@ public class PhaseBNS extends PhasePrEos {
   private final double[] omegaB;
   private final double[] vshift;
 
+  /**
+   * <p>
+   * Constructor for PhaseBNS.
+   * </p>
+   *
+   * @param tcs an array of {@link double} objects
+   * @param pcs an array of {@link double} objects
+   * @param mws an array of {@link double} objects
+   * @param acfs an array of {@link double} objects
+   * @param omegaA an array of {@link double} objects
+   * @param omegaB an array of {@link double} objects
+   * @param vshift an array of {@link double} objects
+   */
   public PhaseBNS(double[] tcs, double[] pcs, double[] mws, double[] acfs, double[] omegaA,
       double[] omegaB, double[] vshift) {
     super();
@@ -35,6 +50,13 @@ public class PhaseBNS extends PhasePrEos {
     return degR * 5.0 / 9.0;
   }
 
+  /**
+   * <p>
+   * setBnsBips.
+   * </p>
+   *
+   * @param temperature a double
+   */
   public void setBnsBips(double temperature) {
     double tpcHc = tcs[4];
     int[][] pairs =
@@ -61,6 +83,7 @@ public class PhaseBNS extends PhasePrEos {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, molesInPhase, compNumber);
@@ -69,11 +92,13 @@ public class PhaseBNS extends PhasePrEos {
         omegaB[compNumber], vshift[compNumber]);
   }
 
+  /** {@inheritDoc} */
   @Override
   public PhaseBNS clone() {
     return (PhaseBNS) super.clone();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setMixingRule(MixingRuleTypeInterface mr) {
     super.setMixingRule(mr);

@@ -3,15 +3,19 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosit
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * Reference viscosity correlation for pure carbon dioxide.
- * Based on correlations by Laesecke et al. (JPCRD 2017).
+ * Reference viscosity correlation for pure carbon dioxide. Based on correlations by Laesecke et al.
+ * (JPCRD 2017).
+ *
+ * @author esol
  */
 public class CO2ViscosityMethod extends Viscosity {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for CO2ViscosityMethod.</p>
+   * <p>
+   * Constructor for CO2ViscosityMethod.
+   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -31,8 +35,8 @@ public class CO2ViscosityMethod extends Viscosity {
     double rho = phase.getDensity();
 
     // Dilute-gas term (Laesecke JPCRD 2017 Eq. 4)
-    double[] a = {1749.354893188350, -369.069300007128, 5423856.34887691,
-        -2.21283852168356, -269503.247933569, 73145.021531826, 5.34368649509278};
+    double[] a = {1749.354893188350, -369.069300007128, 5423856.34887691, -2.21283852168356,
+        -269503.247933569, 73145.021531826, 5.34368649509278};
     double T13 = Math.pow(T, 1.0 / 3.0);
     double T16 = Math.pow(T, 1.0 / 6.0);
     double den = a[0] + a[1] * T16 + a[2] * Math.exp(a[3] * T13)
@@ -51,8 +55,8 @@ public class CO2ViscosityMethod extends Viscosity {
     double M = phase.getPhase().getComponent(0).getMolarMass(); // [kg/mol]
     double eta_tL = Math.pow(rho_tL, 2.0 / 3.0) * Math.sqrt(R * Tt)
         / (Math.pow(M, 1.0 / 6.0) * 84446887.43579945);
-    double residual = eta_tL
-        * (c1 * Tr * Math.pow(rhor, 3.0) + (Math.pow(rhor, 2.0) + Math.pow(rhor, gamma)) / (Tr - c2));
+    double residual = eta_tL * (c1 * Tr * Math.pow(rhor, 3.0)
+        + (Math.pow(rhor, 2.0) + Math.pow(rhor, gamma)) / (Tr - c2));
 
     return eta0 + residual;
   }
