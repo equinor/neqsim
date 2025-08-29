@@ -18,6 +18,7 @@ import neqsim.thermo.phase.PhaseType;
  *
  * @see <a href="https://github.com/CalebBell/fluids/blob/master/fluids/control_valve.py">fluids
  *      Python library</a>
+ * @author esol
  */
 public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60534 {
 
@@ -40,25 +41,56 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   // Additional valve parameter for laminar flow calculations
   private boolean isFullTrim = true;
 
+  /**
+   * <p>
+   * Constructor for ControlValveSizing_IEC_60534_full.
+   * </p>
+   */
   public ControlValveSizing_IEC_60534_full() {
     super();
   }
 
+  /**
+   * <p>
+   * Constructor for ControlValveSizing_IEC_60534_full.
+   * </p>
+   *
+   * @param valveMechanicalDesign a
+   *        {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
+   */
   public ControlValveSizing_IEC_60534_full(ValveMechanicalDesign valveMechanicalDesign) {
     super(valveMechanicalDesign);
   }
 
+  /**
+   * <p>
+   * isFullTrim.
+   * </p>
+   *
+   * @return a boolean
+   */
   public boolean isFullTrim() {
     return isFullTrim;
   }
 
+  /**
+   * <p>
+   * setFullTrim.
+   * </p>
+   *
+   * @param isFullTrim a boolean
+   */
   public void setFullTrim(boolean isFullTrim) {
     this.isFullTrim = isFullTrim;
   }
 
   /**
+   * {@inheritDoc}
+   *
+   * <p>
    * Overrides the simplified liquid sizing method to provide a full, iterative calculation
    * including piping geometry and Reynolds number corrections.
+   * </p>
    */
   @Override
   public Map<String, Object> sizeControlValveLiquid(double rho, double Psat, double Pc, double P1,
@@ -170,8 +202,12 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   }
 
   /**
+   * {@inheritDoc}
+   *
+   * <p>
    * Overrides the simplified gas sizing method to provide a full, iterative calculation including
    * piping geometry and Reynolds number corrections.
+   * </p>
    */
   @Override
   public Map<String, Object> sizeControlValveGas(double T, double MW, double gamma, double Z,
@@ -377,14 +413,14 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   }
 
   /**
+   * {@inheritDoc}
+   *
+   * <p>
    * Finds the outlet pressure for a given flow rate and fixed Kv. This method is inherited, but it
    * remains consistent due to polymorphism. Its internal calls to `sizeControlValveGas` or
    * `sizeControlValveLiquid` will correctly resolve to the overridden, full implementations in this
    * class. It is overridden here for clarity and completeness.
-   *
-   * @param adjustedKv the valve flow coefficient
-   * @param inletStream the inlet stream to the valve
-   * @return outlet pressure in Pascals.
+   * </p>
    */
   @Override
   public double findOutletPressureForFixedKv(double adjustedKv, StreamInterface inletStream) {
@@ -395,13 +431,12 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   }
 
   /**
+   * {@inheritDoc}
+   *
+   * <p>
    * Calculates the flow rate for a given valve opening using the full, iterative model. This method
    * overrides the simplified base class implementation to ensure consistency.
-   *
-   * @param adjustedKv The maximum flow coefficient of the valve.
-   * @param inletStream The stream entering the valve.
-   * @param outletStream The stream leaving the valve (used for outlet pressure).
-   * @return The calculated flow rate [m^3/s].
+   * </p>
    */
   @Override
   public double calculateFlowRateFromValveOpening(double adjustedKv, StreamInterface inletStream,

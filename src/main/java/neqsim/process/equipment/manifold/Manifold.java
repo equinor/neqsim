@@ -123,6 +123,7 @@ public class Manifold extends ProcessEquipmentBaseClass {
     return new GsonBuilder().create().toJson(new ManifoldResponse(this));
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson(ReportConfig cfg) {
     if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {

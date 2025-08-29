@@ -4,6 +4,8 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermPr;
 
 /**
  * Component class for the Burgoyne–Nielsen–Stanko PR correlation.
+ *
+ * @author esol
  */
 public class ComponentBNS extends ComponentPR {
   private static final long serialVersionUID = 1L;
@@ -23,9 +25,8 @@ public class ComponentBNS extends ComponentPR {
    * @param omegaB PR constant OmegaB
    * @param vShift volume shift constant
    */
-  public ComponentBNS(String name, double moles, double molesInPhase, int compIndex,
-      double tc, double pc, double mw, double acf, double omegaA, double omegaB,
-      double vShift) {
+  public ComponentBNS(String name, double moles, double molesInPhase, int compIndex, double tc,
+      double pc, double mw, double acf, double omegaA, double omegaB, double vShift) {
     super(compIndex, tc, pc, mw, acf, moles);
     this.componentName = name;
     this.index = compIndex;
@@ -38,6 +39,7 @@ public class ComponentBNS extends ComponentPR {
     setAttractiveParameter(new AttractiveTermPr(this));
   }
 
+  /** {@inheritDoc} */
   @Override
   public ComponentBNS clone() {
     return (ComponentBNS) super.clone();

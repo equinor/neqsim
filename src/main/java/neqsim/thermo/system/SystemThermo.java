@@ -1665,13 +1665,7 @@ public abstract class SystemThermo implements SystemInterface {
     addTBPfraction(componentName, numberOfMoles, molarMass, density);
   }
 
-  /**
-   * Calculates density from boiling point and molar mass
-   * 
-   * @param molarMass molar mass in kg/mol
-   * @param boilingPoint boiling point in Kelvin
-   * @return density in g/cm³
-   */
+  /** {@inheritDoc} */
   public double calculateDensityFromBoilingPoint(double molarMass, double boilingPoint) {
     double TB = boilingPoint;
 
@@ -1720,6 +1714,8 @@ public abstract class SystemThermo implements SystemInterface {
 
 
   /**
+   * {@inheritDoc}
+   *
    * Add TBP fraction using density and boiling point, calculating molar mass.
    */
   @Override
@@ -1738,11 +1734,9 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Calculates molar mass from density and boiling point
-   * 
-   * @param density density in g/cm³
-   * @param boilingPoint boiling point in Kelvin
-   * @return molar mass in kg/mol
    */
   public double calculateMolarMassFromDensityAndBoilingPoint(double density, double boilingPoint) {
 
@@ -1789,6 +1783,8 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Add TBP fraction using density and boiling point, calculating molar mass.
    */
   @Override

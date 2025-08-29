@@ -40,6 +40,7 @@ public class SafetyValve extends ThrottlingValve {
     valveMechanicalDesign = new SafetyValveMechanicalDesign(this);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void initMechanicalDesign() {
     valveMechanicalDesign = new SafetyValveMechanicalDesign(this);

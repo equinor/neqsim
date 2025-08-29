@@ -708,6 +708,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         .toJson(new HXResponse(this));
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson(ReportConfig cfg) {
     if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {

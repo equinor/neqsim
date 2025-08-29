@@ -3,15 +3,19 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.conducti
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * Reference thermal conductivity correlation for pure carbon dioxide.
- * Based on correlations by Huber (JPCRD 2016) and Scalabrin (JPCRD 2006).
+ * Reference thermal conductivity correlation for pure carbon dioxide. Based on correlations by
+ * Huber (JPCRD 2016) and Scalabrin (JPCRD 2006).
+ *
+ * @author esol
  */
 public class CO2ConductivityMethod extends Conductivity {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>Constructor for CO2ConductivityMethod.</p>
+   * <p>
+   * Constructor for CO2ConductivityMethod.
+   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -42,11 +46,13 @@ public class CO2ConductivityMethod extends Conductivity {
     double nc = 0.775547504e-3 * 4.81384;
     double Tr = T / Tc;
     double rhor = rho / 467.6;
-    double[] a = {0.0, 3.0, 6.70697, 0.94604, 0.30, 0.30, 0.39751, 0.33791, 0.77963, 0.79857, 0.90, 0.02, 0.20};
+    double[] a = {0.0, 3.0, 6.70697, 0.94604, 0.30, 0.30, 0.39751, 0.33791, 0.77963, 0.79857, 0.90,
+        0.02, 0.20};
     double acoshArg = 1 + a[11] * Math.pow(Math.pow(1 - Tr, 2.0), a[12]);
-    double alpha = 1 - a[10] * Math.log(acoshArg + Math.sqrt(acoshArg - 1.0) * Math.sqrt(acoshArg + 1.0));
-    double numer = rhor * Math.exp(-Math.pow(rhor, a[1]) / a[1]
-        - Math.pow(a[2] * (Tr - 1), 2.0) - Math.pow(a[3] * (rhor - 1), 2.0));
+    double alpha =
+        1 - a[10] * Math.log(acoshArg + Math.sqrt(acoshArg - 1.0) * Math.sqrt(acoshArg + 1.0));
+    double numer = rhor * Math.exp(-Math.pow(rhor, a[1]) / a[1] - Math.pow(a[2] * (Tr - 1), 2.0)
+        - Math.pow(a[3] * (rhor - 1), 2.0));
     double braced = (1 - 1 / Tr) + a[4] * Math.pow(Math.pow(rhor - 1, 2.0), 0.5 / a[5]);
     double denom = Math.pow(Math.pow(Math.pow(braced, 2.0), a[6])
         + Math.pow(Math.pow(a[7] * (rhor - alpha), 2.0), a[8]), a[9]);

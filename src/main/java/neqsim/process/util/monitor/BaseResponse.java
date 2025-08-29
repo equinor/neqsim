@@ -49,10 +49,19 @@ public class BaseResponse {
     name = equipment.getName();
   }
 
-  /** Apply reporting configuration - default does nothing. */
+  /**
+   * Apply reporting configuration - default does nothing.
+   *
+   * @param cfg a {@link neqsim.process.util.report.ReportConfig} object
+   */
   public void applyConfig(ReportConfig cfg) {}
 
-  /** Determine detail level for this response based on config. */
+  /**
+   * Determine detail level for this response based on config.
+   *
+   * @param cfg a {@link neqsim.process.util.report.ReportConfig} object
+   * @return a {@link neqsim.process.util.report.ReportConfig.DetailLevel} object
+   */
   protected DetailLevel getDetailLevel(ReportConfig cfg) {
     return cfg == null ? DetailLevel.FULL : cfg.getDetailLevel(name);
   }

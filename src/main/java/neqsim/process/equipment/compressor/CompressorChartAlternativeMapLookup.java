@@ -375,15 +375,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart
     gearRatio = GR;
   }
 
-  /**
-   * <p>
-   * polytropicEfficiency.
-   * </p>
-   *
-   * @param flow a double
-   * @param speed a double
-   * @return a double
-   */
+  /** {@inheritDoc} */
   public double polytropicEfficiency(double flow, double speed) {
     return 100.0;
   }
@@ -414,39 +406,33 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * checkSurge1.
    * </p>
-   *
-   * @param flow a double
-   * @param head a double
-   * @return a boolean
    */
   public boolean checkSurge1(double flow, double head) {
     return false;
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * checkSurge2.
    * </p>
-   *
-   * @param flow a double
-   * @param speed a double
-   * @return a boolean
    */
   public boolean checkSurge2(double flow, double speed) {
     return false;
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * checkStoneWall.
    * </p>
-   *
-   * @param flow a double
-   * @param speed a double
-   * @return a boolean
    */
   public boolean checkStoneWall(double flow, double speed) {
     return false;
@@ -728,6 +714,13 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart
     }
   }
 
+  /**
+   * <p>
+   * getChartValues.
+   * </p>
+   *
+   * @return a {@link java.util.ArrayList} object
+   */
   public ArrayList<CompressorCurve> getChartValues() {
     return chartValues;
   }

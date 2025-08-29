@@ -6,11 +6,20 @@ import neqsim.process.equipment.valve.SafetyValve;
 
 /**
  * Mechanical design for safety valves based on API 520 gas sizing.
+ *
+ * @author esol
  */
 public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
   private static final long serialVersionUID = 1L;
   private double orificeArea = 0.0; // m^2
 
+  /**
+   * <p>
+   * Constructor for SafetyValveMechanicalDesign.
+   * </p>
+   *
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   */
   public SafetyValveMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
   }
@@ -30,8 +39,8 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
    * @return required flow area [m^2]
    */
   public double calcGasOrificeAreaAPI520(double massFlow, double relievingPressure,
-      double relievingTemperature, double z, double molecularWeight, double k, double kd,
-      double kb, double kw) {
+      double relievingTemperature, double z, double molecularWeight, double k, double kd, double kb,
+      double kw) {
     double R = 8.314; // J/(mol K)
     double C = Math.sqrt(k) * Math.pow(2.0 / (k + 1.0), (k + 1.0) / (2.0 * (k - 1.0)));
     double numerator = massFlow * Math.sqrt(z * R * relievingTemperature / molecularWeight);
@@ -39,6 +48,7 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
     return numerator / denominator;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void calcDesign() {
     SafetyValve valve = (SafetyValve) getProcessEquipment();
@@ -55,9 +65,8 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
     double kb = 1.0;
     double kw = 1.0;
 
-    orificeArea =
-        calcGasOrificeAreaAPI520(massFlow, relievingPressure, relievingTemperature, z, mw, k, kd,
-            kb, kw);
+    orificeArea = calcGasOrificeAreaAPI520(massFlow, relievingPressure, relievingTemperature, z, mw,
+        k, kd, kb, kw);
   }
 
   /**

@@ -17,10 +17,11 @@ import neqsim.thermo.component.ComponentInterface;
 
 /**
  * <p>
- * Water Density Calculation class for aqueous salt solutions using
- * Labiberte/Cooper partial
+ * Water Density Calculation class for aqueous salt solutions using Labiberte/Cooper partial
  * specific volumes.
  * </p>
+ *
+ * @author esol
  */
 public class Water extends LiquidPhysicalPropertyMethod implements DensityInterface {
   private static final long serialVersionUID = 1000;
@@ -34,27 +35,26 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
   static {
     // Example: these entries must match how your components are named
     // in the phase, and use the correct c0..c4 from your table:
-    saltParameters.put("NaCl", new double[] { -0.00433, 0.06471, 1.0166, 0.014624, 3315.6 });
-    saltParameters.put("KCl", new double[] { -0.46782, 4.308, 2.378, 0.022044, 2714.0 });
-    saltParameters.put("NaBr", new double[] { 109.77, 513.04, 1.5454, 0.011019, 1618.1 });
-    saltParameters.put("CaCl2", new double[] { -0.63254, 0.93995, 4.2785, 0.048319, 3180.9 });
-    saltParameters.put("HCOONa", new double[] { 0.72701, 5.2872, 1.2768, 0.012640, 2554.3 });
-    saltParameters.put("HCOOK", new double[] { 13.500, 5.6764, 0.12357, 0.0055267, 2181.9 });
-    saltParameters.put("KBr", new double[] { -0.0034507, 0.41086, 3.0836, 0.037482, 3202.1 });
-    saltParameters.put("HCOOCs", new double[] { 30.138, 8.7212, 0.094231, 0.0063516, 2139.9 });
+    saltParameters.put("NaCl", new double[] {-0.00433, 0.06471, 1.0166, 0.014624, 3315.6});
+    saltParameters.put("KCl", new double[] {-0.46782, 4.308, 2.378, 0.022044, 2714.0});
+    saltParameters.put("NaBr", new double[] {109.77, 513.04, 1.5454, 0.011019, 1618.1});
+    saltParameters.put("CaCl2", new double[] {-0.63254, 0.93995, 4.2785, 0.048319, 3180.9});
+    saltParameters.put("HCOONa", new double[] {0.72701, 5.2872, 1.2768, 0.012640, 2554.3});
+    saltParameters.put("HCOOK", new double[] {13.500, 5.6764, 0.12357, 0.0055267, 2181.9});
+    saltParameters.put("KBr", new double[] {-0.0034507, 0.41086, 3.0836, 0.037482, 3202.1});
+    saltParameters.put("HCOOCs", new double[] {30.138, 8.7212, 0.094231, 0.0063516, 2139.9});
   }
 
   /**
    * Constructor for Water.
    *
-   * @param liquidPhase a
-   *                    {@link neqsim.physicalproperties.system.PhysicalProperties}
-   *                    object
+   * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
   public Water(PhysicalProperties liquidPhase) {
     super(liquidPhase);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Water clone() {
     Water properties = null;
@@ -67,9 +67,12 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
   }
 
   /**
-   * Calculate the density of the liquid phase (kg/m^3) using partial specific
-   * volumes of water +
+   * {@inheritDoc}
+   *
+   * <p>
+   * Calculate the density of the liquid phase (kg/m^3) using partial specific volumes of water +
    * dissolved salts.
+   * </p>
    */
   @Override
   public double calcDensity() {
@@ -129,16 +132,18 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
   }
 
   /**
-   * Calculate partial specific volume (in m^3/kg) for a given salt using
-   * Labiberte and Cooper's correlation.
+   * Calculate partial specific volume (in m^3/kg) for a given salt using Labiberte and Cooper's
+   * correlation.
    *
+   * <p>
    * v_salt = ( w_i + c2 + c3*T ) / [ (c0*w_i + c1) * exp( 0.000001*(T + c4)^2 ) ]
    *
    * Here T is in °C and w_i is the mass fraction of the salt.
-   * 
-   * @param saltName     the name of the salt
+   * </p>
+   *
+   * @param saltName the name of the salt
    * @param temperatureC temperature in Celsius
-   * @param wSalt        mass fraction of the salt
+   * @param wSalt mass fraction of the salt
    * @return partial specific volume in m^3/kg
    */
   private double calcPartialVolumeSalt(String saltName, double temperatureC, double wSalt) {
@@ -158,18 +163,16 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
   }
 
   /**
-   * Density of pure liquid water from IAPWS-IF97 Region 1.
-   * Inputs: temperatureK — absolute temperature [K], pressureBar — absolute
-   * pressure [bar]
-   * Returns: density [kg/m^3]
+   * Density of pure liquid water from IAPWS-IF97 Region 1. Inputs: temperatureK — absolute
+   * temperature [K], pressureBar — absolute pressure [bar] Returns: density [kg/m^3]
    *
-   * Valid (Region 1): 273.15 K ≤ T ≤ 623.15 K and p ≥ p_sat(T) up to 1000 bar.
-   * This is the
-   * compressed-/subcooled-liquid region. For steam or T greater than 623 K, use
-   * other IF97 regions.
-   * 
+   * <p>
+   * Valid (Region 1): 273.15 K ≤ T ≤ 623.15 K and p ≥ p_sat(T) up to 1000 bar. This is the
+   * compressed-/subcooled-liquid region. For steam or T greater than 623 K, use other IF97 regions.
+   * </p>
+   *
    * @param temperatureK Temperature in Kelvin
-   * @param pressureBar  Pressure in bar
+   * @param pressureBar Pressure in bar
    * @return density in kg/m^3
    */
   public static double calculatePureWaterDensity(double temperatureK, double pressureBar) {
@@ -183,11 +186,11 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
     final double TStarK = 1386.0; // Region 1 temperature scaling [K]
 
     // Coefficients for Region 1 (Table 2 in IF97)
-    final int[] I = { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5,
-        8, 8, 21, 23, 29, 30, 31, 32 };
-    final int[] J = { -2, -1, 0, 1, 2, 3, 4, 5, -9, -7, -1, 0, 1, 3, -3, 0, 1, 3, 17, -4, 0, 6, -5,
-        -2, 10, -8, -11, -6, -29, -31, -38, -39, -40, -41 };
-    final double[] n = { 0.14632971213167, -0.84548187169114, -0.37563603672040e1,
+    final int[] I = {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5,
+        8, 8, 21, 23, 29, 30, 31, 32};
+    final int[] J = {-2, -1, 0, 1, 2, 3, 4, 5, -9, -7, -1, 0, 1, 3, -3, 0, 1, 3, 17, -4, 0, 6, -5,
+        -2, 10, -8, -11, -6, -29, -31, -38, -39, -40, -41};
+    final double[] n = {0.14632971213167, -0.84548187169114, -0.37563603672040e1,
         0.33855169168385e1, -0.95791963387872, 0.15772038513228e-1, -0.16616417199501e-1,
         0.81214629983568e-3, 0.28319080123804e-3, -0.60706301565874e-3, -0.18990068218419e-1,
         -0.32529748770505e-1, -0.21841717175414e-1, -0.52838357969930e-4, -0.47184321073267e-3,
@@ -195,7 +198,7 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
         -0.31679644845054e-4, -0.28270797985312e-5, -0.85205128120103e-9, -0.22425281908000e-5,
         -0.65171222895601e-6, -0.14341729937924e-12, -0.40516996860117e-6, -0.12734301741641e-8,
         -0.17424871230634e-9, -0.68762131295531e-18, 0.14478307828521e-19, 0.26335781662795e-22,
-        -0.11947622640071e-22, 0.18228094581404e-23, -0.93537087292458e-25 };
+        -0.11947622640071e-22, 0.18228094581404e-23, -0.93537087292458e-25};
 
     // Reduced variables
     final double pMPa = pressureBar * 0.1; // bar -> MPa

@@ -5,13 +5,17 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * SurgeCurve defines the compressor surge limit.
+ *
+ * @author esol
  */
 public class SurgeCurve extends BoundaryCurve {
   private static final long serialVersionUID = 1000L;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SurgeCurve.class);
 
-  /** Default constructor. */
+  /**
+   * Default constructor.
+   */
   public SurgeCurve() {
     super();
   }
@@ -47,6 +51,7 @@ public class SurgeCurve extends BoundaryCurve {
     return isLimit(head, flow);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isLimit(double head, double flow) {
     return getFlow(head) > flow;

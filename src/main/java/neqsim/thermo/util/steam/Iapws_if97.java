@@ -6,6 +6,8 @@ package neqsim.thermo.util.steam;
  * The implementation is intentionally compact and only provides a few thermodynamic properties in
  * the SI unit system. Input pressure is in MPa and temperature in Kelvin.
  * </p>
+ *
+ * @author esol
  */
 public final class Iapws_if97 {
 

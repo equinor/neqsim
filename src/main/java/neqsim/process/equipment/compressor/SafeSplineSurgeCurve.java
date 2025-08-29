@@ -11,6 +11,8 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * Spline based implementation of the surge curve with safe extrapolation.
+ *
+ * @author esol
  */
 public class SafeSplineSurgeCurve extends SurgeCurve {
   private static final long serialVersionUID = 1001L;
@@ -22,7 +24,9 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
   private transient UnivariateFunction headFromFlow; // head = f(flow)
   private transient UnivariateFunction flowFromHead; // flow = f(head)
 
-  /** Default constructor. */
+  /**
+   * Default constructor.
+   */
   public SafeSplineSurgeCurve() {}
 
   /**
@@ -35,14 +39,29 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
     setCurve(null, flow, head);
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>sortedHead</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getSortedHead() {
     return sortedHead;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>sortedFlow</code>.
+   * </p>
+   *
+   * @return an array of {@link double} objects
+   */
   public double[] getSortedFlow() {
     return sortedFlow;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setCurve(double[] chartConditions, double[] flow, double[] head) {
     if (flow.length != head.length || flow.length < 2) {
@@ -97,6 +116,7 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
     setActive(true);
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getFlow(double headValue) {
     if (!isActive()) {
@@ -134,7 +154,13 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
     }
   }
 
-  /** Wrapper retaining old API. */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Wrapper retaining old API.
+   * </p>
+   */
   public double getSurgeFlow(double headValue) {
     return getFlow(headValue);
   }
@@ -185,7 +211,13 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
     }
   }
 
-  /** Wrapper retaining old API. */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Wrapper retaining old API.
+   * </p>
+   */
   public boolean isSurge(double headValue, double flowValue) {
     return isLimit(headValue, flowValue);
   }

@@ -14,7 +14,11 @@ import java.util.Objects;
 import neqsim.blackoil.BlackOilPVTTable;
 import neqsim.blackoil.SystemBlackOil;
 
-/** Minimal ECLIPSE deck importer to build a Black-Oil fluid. */
+/**
+ * Minimal ECLIPSE deck importer to build a Black-Oil fluid.
+ *
+ * @author esol
+ */
 public class EclipseBlackOilImporter {
 
   public enum Units {
@@ -24,17 +28,37 @@ public class EclipseBlackOilImporter {
   public static class Result {
     public BlackOilPVTTable pvt;
     public SystemBlackOil system;
-    public double rho_o_sc, rho_w_sc, rho_g_sc;
+    public double rho_o_sc;
+    public double rho_w_sc;
+    public double rho_g_sc;
     public double bubblePoint;
     public List<String> log = new ArrayList<>();
   }
 
+  /**
+   * <p>
+   * fromFile.
+   * </p>
+   *
+   * @param deckPath a {@link java.nio.file.Path} object
+   * @return a {@link neqsim.blackoil.io.EclipseBlackOilImporter.Result} object
+   * @throws java.io.IOException if any.
+   */
   public static Result fromFile(Path deckPath) throws IOException {
     try (BufferedReader br = Files.newBufferedReader(deckPath)) {
       return parse(br);
     }
   }
 
+  /**
+   * <p>
+   * fromReader.
+   * </p>
+   *
+   * @param reader a {@link java.io.Reader} object
+   * @return a {@link neqsim.blackoil.io.EclipseBlackOilImporter.Result} object
+   * @throws java.io.IOException if any.
+   */
   public static Result fromReader(Reader reader) throws IOException {
     return parse(new BufferedReader(reader));
   }
@@ -44,7 +68,9 @@ public class EclipseBlackOilImporter {
     final List<Row> rows = new ArrayList<>();
 
     static class Row {
-      double P, Bo, mu;
+      double P;
+      double Bo;
+      double mu;
     }
   }
   private static class PVTGCurve {
@@ -52,11 +78,15 @@ public class EclipseBlackOilImporter {
     final List<Row> rows = new ArrayList<>();
 
     static class Row {
-      double P, Bg, mu;
+      double P;
+      double Bg;
+      double mu;
     }
   }
   private static class PVTWRow {
-    double P, Bw, mu;
+    double P;
+    double Bw;
+    double mu;
   }
 
   private static Result parse(BufferedReader br) throws IOException {
@@ -65,28 +95,33 @@ public class EclipseBlackOilImporter {
     List<PVTOCurve> pvto = new ArrayList<>();
     List<PVTGCurve> pvtg = new ArrayList<>();
     List<PVTWRow> pvtw = new ArrayList<>();
-    double rho_o_sc = Double.NaN, rho_w_sc = Double.NaN, rho_g_sc = Double.NaN;
+    double rho_o_sc = Double.NaN;
 
+    double rho_w_sc = Double.NaN;
+    double rho_g_sc = Double.NaN;
     String line;
     while ((line = br.readLine()) != null) {
       line = stripComments(line);
-      if (line.trim().isEmpty())
+      if (line.trim().isEmpty()) {
         continue;
+      }
       String u = line.toUpperCase(Locale.ROOT).trim();
       if (u.startsWith("UNITS")) {
-        if (u.contains("FIELD"))
+        if (u.contains("FIELD")) {
           units = Units.FIELD;
-        else if (u.contains("LAB"))
+        } else if (u.contains("LAB")) {
           units = Units.LAB;
-        else
+        } else {
           units = Units.METRIC;
+        }
       } else if (u.startsWith("DENSITY")) {
         ArrayList<Double> vals = new ArrayList<Double>();
         vals.addAll(numbersFromLine(u.substring("DENSITY".length())));
         while (!u.contains("/")) {
           String l2 = br.readLine();
-          if (l2 == null)
+          if (l2 == null) {
             break;
+          }
           u = stripComments(l2).toUpperCase(Locale.ROOT);
           vals.addAll(numbersFromLine(u));
         }
@@ -104,26 +139,31 @@ public class EclipseBlackOilImporter {
       } else if (u.startsWith("PVTO")) {
         while (true) {
           String h = br.readLine();
-          if (h == null)
+          if (h == null) {
             break;
+          }
           h = stripComments(h);
-          if (h.trim().isEmpty())
+          if (h.trim().isEmpty()) {
             continue;
-          if (h.trim().startsWith("/"))
+          }
+          if (h.trim().startsWith("/")) {
             break;
+          }
           boolean headerEnds = h.contains("/");
           String hClean = h.split("/", 2)[0];
           List<Double> hdr = numbersFromLine(hClean);
           if (hdr.size() < 4) {
             String h2 = br.readLine();
-            if (h2 == null)
+            if (h2 == null) {
               break;
+            }
             h2 = stripComments(h2);
             String hc = hClean + " " + h2.split("/", 2)[0];
             hdr = numbersFromLine(hc);
           }
-          if (hdr.size() < 4)
+          if (hdr.size() < 4) {
             throw new IOException("PVTO header needs at least 4 numbers: Rs Pb Bo mu");
+          }
           PVTOCurve c = new PVTOCurve();
           c.Rs = hdr.get(0);
           double Pb = hdr.get(1);
@@ -135,11 +175,13 @@ public class EclipseBlackOilImporter {
           if (!headerEnds) {
             while (true) {
               String l2 = br.readLine();
-              if (l2 == null)
+              if (l2 == null) {
                 break;
+              }
               String lc = stripComments(l2);
-              if (lc.trim().isEmpty())
+              if (lc.trim().isEmpty()) {
                 continue;
+              }
               boolean end = lc.contains("/");
               String data = lc.split("/", 2)[0];
               List<Double> row = numbersFromLine(data);
@@ -150,8 +192,9 @@ public class EclipseBlackOilImporter {
                 rr.mu = row.get(2);
                 c.rows.add(rr);
               }
-              if (end)
+              if (end) {
                 break;
+              }
             }
           }
           pvto.add(c);
@@ -159,26 +202,31 @@ public class EclipseBlackOilImporter {
       } else if (u.startsWith("PVTG")) {
         while (true) {
           String h = br.readLine();
-          if (h == null)
+          if (h == null) {
             break;
+          }
           h = stripComments(h);
-          if (h.trim().isEmpty())
+          if (h.trim().isEmpty()) {
             continue;
-          if (h.trim().startsWith("/"))
+          }
+          if (h.trim().startsWith("/")) {
             break;
+          }
           boolean headerEnds = h.contains("/");
           String hClean = h.split("/", 2)[0];
           List<Double> hdr = numbersFromLine(hClean);
           if (hdr.size() < 4) {
             String h2 = br.readLine();
-            if (h2 == null)
+            if (h2 == null) {
               break;
+            }
             h2 = stripComments(h2);
             String hc = hClean + " " + h2.split("/", 2)[0];
             hdr = numbersFromLine(hc);
           }
-          if (hdr.size() < 4)
+          if (hdr.size() < 4) {
             throw new IOException("PVTG header needs at least 4 numbers: Rv Pd Bg mu");
+          }
           PVTGCurve c = new PVTGCurve();
           c.Rv = hdr.get(0);
           double Pd = hdr.get(1);
@@ -190,11 +238,13 @@ public class EclipseBlackOilImporter {
           if (!headerEnds) {
             while (true) {
               String l2 = br.readLine();
-              if (l2 == null)
+              if (l2 == null) {
                 break;
+              }
               String lc = stripComments(l2);
-              if (lc.trim().isEmpty())
+              if (lc.trim().isEmpty()) {
                 continue;
+              }
               boolean end = lc.contains("/");
               String data = lc.split("/", 2)[0];
               List<Double> row = numbersFromLine(data);
@@ -205,8 +255,9 @@ public class EclipseBlackOilImporter {
                 rr.mu = row.get(2);
                 c.rows.add(rr);
               }
-              if (end)
+              if (end) {
                 break;
+              }
             }
           }
           pvtg.add(c);
@@ -214,13 +265,16 @@ public class EclipseBlackOilImporter {
       } else if (u.startsWith("PVTW")) {
         while (true) {
           String l2 = br.readLine();
-          if (l2 == null)
+          if (l2 == null) {
             break;
+          }
           String lc = stripComments(l2);
-          if (lc.trim().isEmpty())
+          if (lc.trim().isEmpty()) {
             continue;
-          if (lc.trim().startsWith("/"))
+          }
+          if (lc.trim().startsWith("/")) {
             break;
+          }
           boolean end = lc.contains("/");
           String data = lc.split("/", 2)[0];
           List<Double> row = numbersFromLine(data);
@@ -231,8 +285,9 @@ public class EclipseBlackOilImporter {
             r.mu = row.get(2);
             pvtw.add(r);
           }
-          if (end)
+          if (end) {
             break;
+          }
         }
       }
     }
@@ -268,18 +323,25 @@ public class EclipseBlackOilImporter {
         r.mu *= 1e-3;
     }
 
-    if (pvto.isEmpty())
+    if (pvto.isEmpty()) {
       throw new IOException("PVTO not found in deck");
-    if (Double.isNaN(rho_o_sc))
+    }
+    if (Double.isNaN(rho_o_sc)) {
       rho_o_sc = 800.0;
-    if (Double.isNaN(rho_w_sc))
+    }
+    if (Double.isNaN(rho_w_sc)) {
       rho_w_sc = 1000.0;
-    if (Double.isNaN(rho_g_sc))
+    }
+    if (Double.isNaN(rho_g_sc)) {
       rho_g_sc = 1.2;
+    }
     PVTOCurve base = Collections.max(pvto, Comparator.comparingDouble(c -> c.Rs));
 
     class SatPoint {
-      double P, Rs, Bo, mu;
+      double P;
+      double Rs;
+      double Bo;
+      double mu;
 
       SatPoint(double P, double Rs, double Bo, double mu) {
         this.P = P;
@@ -290,8 +352,9 @@ public class EclipseBlackOilImporter {
     }
     ArrayList<SatPoint> sat = new ArrayList<SatPoint>();
     for (PVTOCurve c : pvto) {
-      if (c.rows.isEmpty())
+      if (c.rows.isEmpty()) {
         continue;
+      }
       PVTOCurve.Row r0 = c.rows.get(0);
       sat.add(new SatPoint(r0.P, c.Rs, r0.Bo, r0.mu));
     }
@@ -353,9 +416,10 @@ public class EclipseBlackOilImporter {
 
     java.util.ArrayList<BlackOilPVTTable.Record> recs =
         new java.util.ArrayList<BlackOilPVTTable.Record>();
-    for (int i = 0; i < Pg.size(); i++)
+    for (int i = 0; i < Pg.size(); i++) {
       recs.add(new BlackOilPVTTable.Record(Pg.get(i), RsOfP.get(i), BoOfP.get(i), muoOfP.get(i),
           BgOfP.get(i), mugOfP.get(i), 0.0, BwOfP.get(i), muwOfP.get(i)));
+    }
 
     BlackOilPVTTable table = new BlackOilPVTTable(recs, Pb);
     SystemBlackOil sys = new SystemBlackOil(table, rho_o_sc, rho_g_sc, rho_w_sc);
@@ -378,11 +442,13 @@ public class EclipseBlackOilImporter {
   }
 
   private static String stripComments(String s) {
-    if (s == null)
+    if (s == null) {
       return "";
+    }
     int i = s.indexOf("--");
-    if (i >= 0)
+    if (i >= 0) {
       s = s.substring(0, i);
+    }
     return s.replace('\t', ' ').trim();
   }
 
@@ -391,8 +457,9 @@ public class EclipseBlackOilImporter {
     String[] tok = clean.trim().split("\\s+");
     java.util.ArrayList<Double> out = new java.util.ArrayList<Double>();
     for (String t : tok) {
-      if (t.isEmpty())
+      if (t.isEmpty()) {
         continue;
+      }
       try {
         out.add(Double.parseDouble(t));
       } catch (NumberFormatException ignored) {
@@ -404,8 +471,9 @@ public class EclipseBlackOilImporter {
   private static void sortParallel(List<Double> P, List<Double> Rs, List<Double> Bo,
       List<Double> mu) {
     java.util.ArrayList<Integer> idx = new java.util.ArrayList<Integer>();
-    for (int i = 0; i < P.size(); i++)
+    for (int i = 0; i < P.size(); i++) {
       idx.add(i);
+    }
     idx.sort(Comparator.comparingDouble(P::get));
     reorder(P, idx);
     reorder(Rs, idx);
@@ -415,13 +483,15 @@ public class EclipseBlackOilImporter {
 
   private static void reorder(List<Double> a, List<Integer> idx) {
     java.util.ArrayList<Double> c = new java.util.ArrayList<Double>(a);
-    for (int i = 0; i < idx.size(); i++)
+    for (int i = 0; i < idx.size(); i++) {
       a.set(i, c.get(idx.get(i)));
+    }
   }
 
   private static PVTGCurve findRvZero(List<PVTGCurve> pvtg) {
-    if (pvtg.isEmpty())
+    if (pvtg.isEmpty()) {
       return null;
+    }
     PVTGCurve best = null;
     double bestAbs = Double.POSITIVE_INFINITY;
     for (PVTGCurve c : pvtg) {
@@ -429,8 +499,9 @@ public class EclipseBlackOilImporter {
       if (ab < bestAbs) {
         bestAbs = ab;
         best = c;
-        if (ab < 1e-9)
+        if (ab < 1e-9) {
           break;
+        }
       }
     }
     return best;
@@ -438,13 +509,16 @@ public class EclipseBlackOilImporter {
 
   private static double[] interpBgMu(PVTGCurve curve, double p) {
     List<PVTGCurve.Row> rows = curve.rows;
-    if (rows.isEmpty())
+    if (rows.isEmpty()) {
       return new double[] {0.005, 1e-5};
+    }
     rows.sort(Comparator.comparingDouble(r -> r.P));
-    if (p <= rows.get(0).P)
+    if (p <= rows.get(0).P) {
       return new double[] {rows.get(0).Bg, rows.get(0).mu};
-    if (p >= rows.get(rows.size() - 1).P)
+    }
+    if (p >= rows.get(rows.size() - 1).P) {
       return new double[] {rows.get(rows.size() - 1).Bg, rows.get(rows.size() - 1).mu};
+    }
     for (int i = 0; i < rows.size() - 1; i++) {
       PVTGCurve.Row a = rows.get(i);
       PVTGCurve.Row b = rows.get(i + 1);
@@ -460,10 +534,12 @@ public class EclipseBlackOilImporter {
 
   private static double[] interpBwMu(List<PVTWRow> rows, double p) {
     rows.sort(Comparator.comparingDouble(r -> r.P));
-    if (p <= rows.get(0).P)
+    if (p <= rows.get(0).P) {
       return new double[] {rows.get(0).Bw, rows.get(0).mu};
-    if (p >= rows.get(rows.size() - 1).P)
+    }
+    if (p >= rows.get(rows.size() - 1).P) {
       return new double[] {rows.get(rows.size() - 1).Bw, rows.get(rows.size() - 1).mu};
+    }
     for (int i = 0; i < rows.size() - 1; i++) {
       PVTWRow a = rows.get(i);
       PVTWRow b = rows.get(i + 1);

@@ -1099,6 +1099,7 @@ public class TurboExpanderCompressor extends Expander {
     return new GsonBuilder().create().toJson(new TurboExpanderCompressorResponse(this));
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson(ReportConfig cfg) {
     if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {

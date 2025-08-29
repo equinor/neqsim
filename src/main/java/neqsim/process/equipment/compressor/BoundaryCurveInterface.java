@@ -2,6 +2,8 @@ package neqsim.process.equipment.compressor;
 
 /**
  * Common interface for compressor limit curves such as surge and stone wall curves.
+ *
+ * @author esol
  */
 public interface BoundaryCurveInterface extends java.io.Serializable {
   /**

@@ -151,5 +151,10 @@ public interface TBPModelInterface {
    */
   public String getName();
 
+  /**
+   * <p>setBoilingPoint.</p>
+   *
+   * @param boilingPoint a double
+   */
   public void setBoilingPoint(double boilingPoint);
 }

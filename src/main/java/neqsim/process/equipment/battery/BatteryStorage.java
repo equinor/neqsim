@@ -6,10 +6,13 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
 /**
  * Simple battery storage unit maintaining a state of charge.
  *
- * <p>The unit can be charged or discharged by supplying a power level and a
- * duration. The state of charge is updated accordingly and the energy stream of
- * the unit reflects the power usage (positive duty while charging and negative
- * when discharging).</p>
+ * <p>
+ * The unit can be charged or discharged by supplying a power level and a duration. The state of
+ * charge is updated accordingly and the energy stream of the unit reflects the power usage
+ * (positive duty while charging and negative when discharging).
+ * </p>
+ *
+ * @author esol
  */
 public class BatteryStorage extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */
@@ -126,6 +129,7 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
     return capacity > 0.0 ? stateOfCharge / capacity : 0.0;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     getEnergyStream().setDuty(-currentPower);

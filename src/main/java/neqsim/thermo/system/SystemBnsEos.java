@@ -6,6 +6,8 @@ import neqsim.thermo.phase.PhaseBNS;
 
 /**
  * Thermodynamic system implementing the Burgoyne–Nielsen–Stanko PR correlation.
+ *
+ * @author esol
  */
 public class SystemBnsEos extends SystemEos {
   private static final long serialVersionUID = 1L;
@@ -56,7 +58,7 @@ public class SystemBnsEos extends SystemEos {
   private static double calcVshift(double ciField, double omegaB, double tc, double pc) {
     // something strange with this methods as it is corrected tr pr in real method
     // double b = omegaB * ThermodynamicConstantsInterface.R * tc / pc;
-    return ciField;// * b;
+    return ciField; // * b;
   }
 
   private static double[] pseudoCritical(double sgHc, boolean ag) {
@@ -110,10 +112,23 @@ public class SystemBnsEos extends SystemEos {
     }
   }
 
+  /**
+   * <p>
+   * Constructor for SystemBnsEos.
+   * </p>
+   */
   public SystemBnsEos() {
     this(288.15, 1.0);
   }
 
+  /**
+   * <p>
+   * Constructor for SystemBnsEos.
+   * </p>
+   *
+   * @param T a double
+   * @param P a double
+   */
   public SystemBnsEos(double T, double P) {
     super(T, P, false);
     modelName = "BNS-PR";
@@ -143,6 +158,15 @@ public class SystemBnsEos extends SystemEos {
 
   /**
    * Constructs a BNS-PR system with composition.
+   *
+   * @param T a double
+   * @param P a double
+   * @param sg a double
+   * @param yCO2 a double
+   * @param yH2S a double
+   * @param yN2 a double
+   * @param yH2 a double
+   * @param associatedGas a boolean
    */
   public SystemBnsEos(double T, double P, double sg, double yCO2, double yH2S, double yN2,
       double yH2, boolean associatedGas) {
@@ -186,6 +210,13 @@ public class SystemBnsEos extends SystemEos {
     updateComposition();
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>relativeDensity</code>.
+   * </p>
+   *
+   * @param sg a double
+   */
   public void setRelativeDensity(double sg) {
     this.relativeDensity = sg;
     if (componentsInitialized) {
@@ -193,6 +224,13 @@ public class SystemBnsEos extends SystemEos {
     }
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>associatedGas</code>.
+   * </p>
+   *
+   * @param ag a boolean
+   */
   public void setAssociatedGas(boolean ag) {
     this.associatedGas = ag;
     if (componentsInitialized) {
@@ -289,6 +327,7 @@ public class SystemBnsEos extends SystemEos {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setMixingRule(int type) {
     super.setMixingRule(type);
@@ -296,6 +335,7 @@ public class SystemBnsEos extends SystemEos {
     applyBnsBips();
   }
 
+  /** {@inheritDoc} */
   @Override
   public SystemBnsEos clone() {
     return (SystemBnsEos) super.clone();

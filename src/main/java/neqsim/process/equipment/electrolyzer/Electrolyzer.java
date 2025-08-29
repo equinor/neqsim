@@ -13,6 +13,8 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * Electrolyzer unit converting water to hydrogen and oxygen using electrical energy.
  * </p>
+ *
+ * @author esol
  */
 public class Electrolyzer extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */
@@ -52,7 +54,9 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Setter for the field <code>inletStream</code>.</p>
+   * <p>
+   * Setter for the field <code>inletStream</code>.
+   * </p>
    *
    * @param inletStream water inlet stream
    */
@@ -74,7 +78,9 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Getter for the field <code>hydrogenOutStream</code>.</p>
+   * <p>
+   * Getter for the field <code>hydrogenOutStream</code>.
+   * </p>
    *
    * @return hydrogen product stream
    */
@@ -83,7 +89,9 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>Getter for the field <code>oxygenOutStream</code>.</p>
+   * <p>
+   * Getter for the field <code>oxygenOutStream</code>.
+   * </p>
    *
    * @return oxygen product stream
    */

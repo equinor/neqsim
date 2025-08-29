@@ -241,10 +241,11 @@ public class StreamResponse extends BaseResponse {
         newdata.put("gas flow",
             new Value(Double.toString(inputStream.getFlowRate("Sm3/hr")), "Sm3/hr"));
       }
-        properties.put(name, newdata);
-      }
+      properties.put(name, newdata);
+    }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void applyConfig(ReportConfig cfg) {
     DetailLevel level = getDetailLevel(cfg);

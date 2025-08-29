@@ -4,26 +4,47 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import neqsim.thermo.phase.PhaseInterface;
 
-/** Converter from a compositional (EOS) NeqSim fluid to a Black-Oil PVT table + stream. */
+/**
+ * Converter from a compositional (EOS) NeqSim fluid to a Black-Oil PVT table + stream.
+ *
+ * @author esol
+ */
 public class BlackOilConverter {
 
+  /**
+   * Result class to hold the output of the conversion.
+   */
   public static class Result {
     public BlackOilPVTTable pvt;
     public SystemBlackOil blackOilSystem;
-    public double rho_o_sc, rho_g_sc, rho_w_sc;
+    public double rho_o_sc;
+    public double rho_g_sc;
+    public double rho_w_sc;
     public double bubblePoint;
   }
 
+  /**
+   * <p>
+   * convert.
+   * </p>
+   *
+   * @param eosFluid a {@link neqsim.thermo.system.SystemInterface} object
+   * @param Tref a double
+   * @param pGrid an array of {@link double} objects
+   * @param Pstd a double
+   * @param Tstd a double
+   * @return a {@link neqsim.blackoil.BlackOilConverter.Result} object
+   */
   public static Result convert(SystemInterface eosFluid, double Tref, double[] pGrid, double Pstd,
       double Tstd) {
     Objects.requireNonNull(eosFluid, "eosFluid == null");
-    if (pGrid == null || pGrid.length < 2)
+    if (pGrid == null || pGrid.length < 2) {
       throw new IllegalArgumentException("pGrid must have >= 2 points");
+    }
     double[] P = Arrays.stream(pGrid).sorted().toArray();
 
     StdTotals stdTotals = computeStdTotalsFromWhole(eosFluid, Pstd, Tstd);
@@ -31,21 +52,27 @@ public class BlackOilConverter {
     List<BlackOilPVTTable.Record> recs = new ArrayList<>();
     double bubblePoint = Double.NaN;
 
-    double rho_o_sc = Double.NaN, rho_g_sc = Double.NaN, rho_w_sc = Double.NaN;
+    double rho_o_sc = Double.NaN;
+    double rho_g_sc = Double.NaN;
+    double rho_w_sc = Double.NaN;
     BlackOilPVTTable.Record lastRecWithGas = null;
 
     for (double p : P) {
       PerPressureProps props = evalAtPressure(eosFluid, Tref, p, Pstd, Tstd);
-      if (!Double.isNaN(props.rho_o_sc))
+      if (!Double.isNaN(props.rho_o_sc)) {
         rho_o_sc = props.rho_o_sc;
-      if (!Double.isNaN(props.rho_g_sc))
+      }
+      if (!Double.isNaN(props.rho_g_sc)) {
         rho_g_sc = props.rho_g_sc;
-      if (!Double.isNaN(props.rho_w_sc))
+      }
+      if (!Double.isNaN(props.rho_w_sc)) {
         rho_w_sc = props.rho_w_sc;
+      }
       recs.add(new BlackOilPVTTable.Record(p, props.Rs, props.Bo, props.mu_o, props.Bg, props.mu_g,
           props.Rv, props.Bw, props.mu_w));
-      if (props.hasFreeGas)
+      if (props.hasFreeGas) {
         lastRecWithGas = recs.get(recs.size() - 1);
+      }
     }
 
     for (int i = P.length - 1; i >= 0; i--) {
@@ -55,8 +82,9 @@ public class BlackOilConverter {
         break;
       }
     }
-    if (Double.isNaN(bubblePoint))
+    if (Double.isNaN(bubblePoint)) {
       bubblePoint = P[0];
+    }
 
     double rsAtPb = interpolateRsAt(recs, bubblePoint);
     for (int i = 0; i < recs.size(); i++) {
@@ -68,7 +96,9 @@ public class BlackOilConverter {
     }
 
     if (lastRecWithGas != null) {
-      double lastBg = lastRecWithGas.Bg, lastMug = lastRecWithGas.mu_g, lastRv = lastRecWithGas.Rv;
+      double lastBg = lastRecWithGas.Bg;
+      double lastMug = lastRecWithGas.mu_g;
+      double lastRv = lastRecWithGas.Rv;
       for (int i = 0; i < recs.size(); i++) {
         BlackOilPVTTable.Record r = recs.get(i);
         if (r.p > bubblePoint) {
@@ -79,12 +109,15 @@ public class BlackOilConverter {
     }
 
     if (Double.isNaN(rho_o_sc) || Double.isNaN(rho_g_sc) || Double.isNaN(rho_w_sc)) {
-      if (Double.isNaN(rho_o_sc) && stdTotals.rho_o_sc > 0)
+      if (Double.isNaN(rho_o_sc) && stdTotals.rho_o_sc > 0) {
         rho_o_sc = stdTotals.rho_o_sc;
-      if (Double.isNaN(rho_g_sc) && stdTotals.rho_g_sc > 0)
+      }
+      if (Double.isNaN(rho_g_sc) && stdTotals.rho_g_sc > 0) {
         rho_g_sc = stdTotals.rho_g_sc;
-      if (Double.isNaN(rho_w_sc) && stdTotals.rho_w_sc > 0)
+      }
+      if (Double.isNaN(rho_w_sc) && stdTotals.rho_w_sc > 0) {
         rho_w_sc = stdTotals.rho_w_sc;
+      }
     }
 
     BlackOilPVTTable pvt = new BlackOilPVTTable(recs, bubblePoint);
@@ -104,8 +137,12 @@ public class BlackOilConverter {
   }
 
   private static class StdTotals {
-    double O_std, G_std, W_std;
-    double rho_o_sc, rho_g_sc, rho_w_sc;
+    double O_std;
+    double G_std;
+    double W_std;
+    double rho_o_sc;
+    double rho_g_sc;
+    double rho_w_sc;
   }
 
   private static StdTotals computeStdTotalsFromWhole(SystemInterface fluid, double Pstd,
@@ -144,12 +181,18 @@ public class BlackOilConverter {
   }
 
   private static class PerPressureProps {
-    double Rs = 0.0, Bo = 1.0, mu_o = Double.NaN;
-    double Bg = Double.NaN, mu_g = Double.NaN;
+    double Rs = 0.0;
+    double Bo = 1.0;
+    double mu_o = Double.NaN;
+    double Bg = Double.NaN;
+    double mu_g = Double.NaN;
     double Rv = 0.0;
-    double Bw = Double.NaN, mu_w = Double.NaN;
+    double Bw = Double.NaN;
+    double mu_w = Double.NaN;
     boolean hasFreeGas = false;
-    double rho_o_sc = Double.NaN, rho_g_sc = Double.NaN, rho_w_sc = Double.NaN;
+    double rho_o_sc = Double.NaN;
+    double rho_g_sc = Double.NaN;
+    double rho_w_sc = Double.NaN;
   }
 
   private static PerPressureProps evalAtPressure(SystemInterface base, double Tref, double p,
@@ -190,10 +233,12 @@ public class BlackOilConverter {
         out.Bo = (V_std_oil > 0.0) ? (V_res_liq / V_std_oil) : 1.0;
         out.Rs = (V_std_oil > 0.0) ? (V_std_gas / V_std_oil) : 0.0;
 
-        if (oilStdOil != null)
+        if (oilStdOil != null) {
           out.rho_o_sc = oilStdOil.getDensity();
-        if (oilStdGas != null)
+        }
+        if (oilStdGas != null) {
           out.rho_g_sc = oilStdGas.getDensity();
+        }
       }
 
       if (gas != null) {
@@ -220,10 +265,12 @@ public class BlackOilConverter {
         out.Bg = (V_std_gas > 0.0) ? (V_res_gas / V_std_gas) : out.Bg;
         out.Rv = (V_std_gas > 0.0) ? (V_std_oil / V_std_gas) : 0.0;
 
-        if (gasStdGas != null)
+        if (gasStdGas != null) {
           out.rho_g_sc = gasStdGas.getDensity();
-        if (gasStdOil != null && Double.isNaN(out.rho_o_sc))
+        }
+        if (gasStdOil != null && Double.isNaN(out.rho_o_sc)) {
           out.rho_o_sc = gasStdOil.getDensity();
+        }
       }
 
       if (wat != null) {
@@ -256,14 +303,18 @@ public class BlackOilConverter {
   }
 
   private static double interpolateRsAt(List<BlackOilPVTTable.Record> recs, double p) {
-    if (recs.isEmpty())
+    if (recs.isEmpty()) {
       return 0.0;
-    if (p <= recs.get(0).p)
+    }
+    if (p <= recs.get(0).p) {
       return recs.get(0).Rs;
-    if (p >= recs.get(recs.size() - 1).p)
+    }
+    if (p >= recs.get(recs.size() - 1).p) {
       return recs.get(recs.size() - 1).Rs;
+    }
     for (int i = 0; i < recs.size() - 1; i++) {
-      BlackOilPVTTable.Record a = recs.get(i), b = recs.get(i + 1);
+      BlackOilPVTTable.Record a = recs.get(i);
+      BlackOilPVTTable.Record b = recs.get(i + 1);
       if (p >= a.p && p <= b.p) {
         double t = (p - a.p) / (b.p - a.p);
         return a.Rs * (1.0 - t) + b.Rs * t;
@@ -276,8 +327,9 @@ public class BlackOilConverter {
     for (int i = 0; i < s.getNumberOfPhases(); i++) {
       PhaseInterface p = s.getPhase(i);
       String type = safeTypeName(p);
-      if (type.contains("liquid") && hydrocarbonFraction(p) > 1e-6 && !isMostlyWater(p))
+      if (type.contains("liquid") && hydrocarbonFraction(p) > 1e-6 && !isMostlyWater(p)) {
         return p;
+      }
     }
     return null;
   }
@@ -286,8 +338,9 @@ public class BlackOilConverter {
     for (int i = 0; i < s.getNumberOfPhases(); i++) {
       PhaseInterface p = s.getPhase(i);
       String type = safeTypeName(p);
-      if (type.contains("gas") && hydrocarbonFraction(p) > 1e-6)
+      if (type.contains("gas") && hydrocarbonFraction(p) > 1e-6) {
         return p;
+      }
     }
     return null;
   }
@@ -295,8 +348,9 @@ public class BlackOilConverter {
   private static PhaseInterface findWaterPhase(SystemInterface s) {
     for (int i = 0; i < s.getNumberOfPhases(); i++) {
       PhaseInterface p = s.getPhase(i);
-      if (isMostlyWater(p))
+      if (isMostlyWater(p)) {
         return p;
+      }
     }
     return null;
   }
@@ -313,8 +367,9 @@ public class BlackOilConverter {
     try {
       if (p.getComponent("water") != null) {
         double xw = p.getComponent("water").getx();
-        if (xw > 0.8)
+        if (xw > 0.8) {
           return true;
+        }
       }
     } catch (Throwable ignored) {
     }
@@ -337,8 +392,9 @@ public class BlackOilConverter {
   private static double phaseVolume(PhaseInterface p) {
     try {
       double V = p.getVolume();
-      if (V > 0.0 && Double.isFinite(V))
+      if (V > 0.0 && Double.isFinite(V)) {
         return V;
+      }
     } catch (Throwable ignored) {
     }
     double mass = p.getMass();
@@ -357,17 +413,20 @@ public class BlackOilConverter {
       String name = sys.getPhase(0).getComponent(i).getComponentName();
       double xi = 0.0;
       try {
-        if (phase.getComponent(name) != null)
+        if (phase.getComponent(name) != null) {
           xi = phase.getComponent(name).getx();
+        }
       } catch (Throwable ignored) {
       }
       z[i] = Math.max(0.0, xi);
     }
     double sum = Arrays.stream(z).sum();
-    if (sum <= 0)
+    if (sum <= 0) {
       throw new IllegalArgumentException("Phase composition empty when building standalone system");
-    for (int i = 0; i < z.length; i++)
+    }
+    for (int i = 0; i < z.length; i++) {
       z[i] /= sum;
+    }
     sys.setMolarComposition(z);
     try {
       sys.setTotalNumberOfMoles(1.0);

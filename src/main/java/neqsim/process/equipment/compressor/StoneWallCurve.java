@@ -5,13 +5,17 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * StoneWallCurve defines the compressor stone wall (choke) limit.
+ *
+ * @author esol
  */
 public class StoneWallCurve extends BoundaryCurve {
   private static final long serialVersionUID = 1000L;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(StoneWallCurve.class);
 
-  /** Default constructor. */
+  /**
+   * Default constructor.
+   */
   public StoneWallCurve() {
     super();
   }
@@ -47,6 +51,7 @@ public class StoneWallCurve extends BoundaryCurve {
     return isLimit(head, flow);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isLimit(double head, double flow) {
     return getFlow(head) < flow;

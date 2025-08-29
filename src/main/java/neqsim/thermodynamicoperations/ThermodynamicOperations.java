@@ -1750,14 +1750,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
   /**
    * Calculates a phase envelope matrix using PTphaseEnvelopeNew3.
-   * 
+   *
    * @param minPressure minimum pressure (bar)
    * @param maxPressure maximum pressure (bar)
    * @param minTemp minimum temperature (C)
    * @param maxTemp maximum temperature (C)
    * @param pressureStep step size for pressure (bar)
    * @param tempStep step size for temperature (C)
-// removed invalid @return tag for void method
    */
   public void calcPTphaseEnvelopeNew3(double minPressure, double maxPressure, double minTemp,
       double maxTemp, double pressureStep, double tempStep) {

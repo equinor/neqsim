@@ -8,17 +8,33 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * Provides methods for sizing control valves for liquids and gases according to standard equations.
+ *
+ * @author esol
  */
 public class ControlValveSizing_simple extends ControlValveSizing {
 
+  /**
+   * <p>
+   * Constructor for ControlValveSizing_simple.
+   * </p>
+   */
   public ControlValveSizing_simple() {
     super();
   }
 
+  /**
+   * <p>
+   * Constructor for ControlValveSizing_simple.
+   * </p>
+   *
+   * @param valveMechanicalDesign a
+   *        {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
+   */
   public ControlValveSizing_simple(ValveMechanicalDesign valveMechanicalDesign) {
     super(valveMechanicalDesign);
   }
 
+  /** {@inheritDoc} */
   public double calcKv(double percentOpening) {
 
     SystemInterface fluid =
@@ -68,6 +84,7 @@ public class ControlValveSizing_simple extends ControlValveSizing {
     return calculateMolarFlow(Kv * valveOpening / 100.0, inletStream, outletStream);
   }
 
+  /** {@inheritDoc} */
   public double calculateMolarFlow(double KvAdjusted, StreamInterface inStream,
       StreamInterface outStream) {
     // Convert ΔP from Pa to bar for consistency with Kv in m3/h/√bar
@@ -114,7 +131,7 @@ public class ControlValveSizing_simple extends ControlValveSizing {
 
   /**
    * Finds the outlet pressure for a given Kv, valve opening, and inlet stream.
-   * 
+   *
    * @param Kv Flow coefficient (for 100% opening)
    * @param valveOpening Opening fraction of the valve (0.0 - 1.0)
    * @param inletStream Inlet stream to the valve
@@ -125,6 +142,7 @@ public class ControlValveSizing_simple extends ControlValveSizing {
     return calculateOutletPressure(Kv * valveOpening / 100.0, inletStream);
   }
 
+  /** {@inheritDoc} */
   public double calculateOutletPressure(double KvAdjusted, StreamInterface inStream) {
     // Fluid properties
     double density = inStream.getFluid().getDensity("kg/m3"); // kg/m³
@@ -153,5 +171,4 @@ public class ControlValveSizing_simple extends ControlValveSizing {
     // Return outlet pressure [Pa]
     return (inStream.getPressure("bara") - dP_bar) * 1e5;
   }
-
 }

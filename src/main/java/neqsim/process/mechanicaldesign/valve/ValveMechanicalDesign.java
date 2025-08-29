@@ -20,7 +20,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * ValveMechanicalDesign class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class ValveMechanicalDesign extends MechanicalDesign {
@@ -40,26 +40,62 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   boolean allowChoked = false;
   boolean allowLaminar = true;
   boolean fullOutput = true;
-  String valveSizingStandard = "default";// IEC 60534";
+  String valveSizingStandard = "default"; // IEC 60534";
   String valveCharacterization = "linear";
   ValveCharacteristic valveCharacterizationMethod = null;
 
+  /**
+   * <p>
+   * Getter for the field <code>valveCharacterization</code>.
+   * </p>
+   *
+   * @return a {@link java.lang.String} object
+   */
   public String getValveCharacterization() {
     return valveCharacterization;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>valveCharacterizationMethod</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.mechanicaldesign.valve.ValveCharacteristic} object
+   */
   public ValveCharacteristic getValveCharacterizationMethod() {
     return valveCharacterizationMethod;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>valveCharacterizationMethod</code>.
+   * </p>
+   *
+   * @param valveCharacterizationMethod a
+   *        {@link neqsim.process.mechanicaldesign.valve.ValveCharacteristic} object
+   */
   public void setValveCharacterizationMethod(ValveCharacteristic valveCharacterizationMethod) {
     this.valveCharacterizationMethod = valveCharacterizationMethod;
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>valveSizingStandard</code>.
+   * </p>
+   *
+   * @return a {@link java.lang.String} object
+   */
   public String getValveSizingStandard() {
     return valveSizingStandard;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>valveSizingStandard</code>.
+   * </p>
+   *
+   * @param valveSizingStandard a {@link java.lang.String} object
+   */
   public void setValveSizingStandard(String valveSizingStandard) {
     this.valveSizingStandard = valveSizingStandard;
     // valveSizing.
@@ -74,6 +110,13 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     }
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>valveCharacterization</code>.
+   * </p>
+   *
+   * @param valveCharacterization a {@link java.lang.String} object
+   */
   public void setValveCharacterization(String valveCharacterization) {
     this.valveCharacterization = valveCharacterization;
     // valveCharacterization.

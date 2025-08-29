@@ -6,9 +6,12 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
 /**
  * Simple wind turbine model based on actuator disk theory.
  *
- * <p>The power produced is given by
- * 0.5 * rho_air * rotorArea * windSpeed^3 * powerCoefficient.
- * Air density is assumed constant.</p>
+ * <p>
+ * The power produced is given by 0.5 * rho_air * rotorArea * windSpeed^3 * powerCoefficient. Air
+ * density is assumed constant.
+ * </p>
+ *
+ * @author esol
  */
 public class WindTurbine extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */

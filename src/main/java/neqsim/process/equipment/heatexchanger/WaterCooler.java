@@ -7,6 +7,8 @@ import neqsim.thermo.util.steam.Iapws_if97;
 
 /**
  * Cooler for water streams using the water property package.
+ *
+ * @author esol
  */
 public class WaterCooler extends Cooler {
   private static final long serialVersionUID = 1000;
@@ -16,16 +18,30 @@ public class WaterCooler extends Cooler {
   private double waterPressure = 1.0; // bara
   private double coolingWaterFlowRate = 0.0; // kg/s
 
+  /**
+   * <p>
+   * Constructor for WaterCooler.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   */
   public WaterCooler(String name) {
     super(name);
   }
 
+  /**
+   * <p>
+   * Constructor for WaterCooler.
+   * </p>
+   *
+   * @param name a {@link java.lang.String} object
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
   public WaterCooler(String name, StreamInterface inStream) {
     super(name, inStream);
     setWaterModel();
   }
 
-  /** Set inlet temperature of cooling water in Celsius. */
   /**
    * Sets the water inlet temperature.
    *
@@ -37,7 +53,6 @@ public class WaterCooler extends Cooler {
         new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
-  /** Set outlet temperature of cooling water in Celsius. */
   /**
    * Sets the water outlet temperature.
    *
@@ -49,7 +64,6 @@ public class WaterCooler extends Cooler {
         new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
-  /** Set cooling water pressure. */
   /**
    * Sets the water pressure.
    *
@@ -60,6 +74,14 @@ public class WaterCooler extends Cooler {
     this.waterPressure = new neqsim.util.unit.PressureUnit(pressure, unit).getValue("bara");
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>coolingWaterFlowRate</code>.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
   public double getCoolingWaterFlowRate(String unit) {
     return new neqsim.util.unit.RateUnit(coolingWaterFlowRate, "kg/sec", 1.0, 1.0, 0.0)
         .getValue(unit);
@@ -74,12 +96,14 @@ public class WaterCooler extends Cooler {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setInletStream(StreamInterface stream) {
     super.setInletStream(stream);
     setWaterModel();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     super.run(id);

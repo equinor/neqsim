@@ -165,10 +165,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   }
 
   /**
-   * <p>
    * calcKv.
-   * </p>
-   *
    */
   public void calcKv() {
     Map<String, Object> design = getMechanicalDesign().calcValveSize();
@@ -589,6 +586,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     return new GsonBuilder().create().toJson(new ValveResponse(this));
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson(ReportConfig cfg) {
     if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
@@ -667,18 +665,46 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     this.pressureUnit = unit;
   }
 
+  /**
+   * <p>
+   * isAllowChoked.
+   * </p>
+   *
+   * @return a boolean
+   */
   public boolean isAllowChoked() {
     return allowChoked;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>allowChoked</code>.
+   * </p>
+   *
+   * @param allowChoked a boolean
+   */
   public void setAllowChoked(boolean allowChoked) {
     this.allowChoked = allowChoked;
   }
 
+  /**
+   * <p>
+   * isAllowLaminar.
+   * </p>
+   *
+   * @return a boolean
+   */
   public boolean isAllowLaminar() {
     return allowLaminar;
   }
 
+  /**
+   * <p>
+   * Setter for the field <code>allowLaminar</code>.
+   * </p>
+   *
+   * @param allowLaminar a boolean
+   */
   public void setAllowLaminar(boolean allowLaminar) {
     this.allowLaminar = allowLaminar;
   }

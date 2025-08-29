@@ -116,6 +116,7 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
     return null;
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson(ReportConfig cfg) {
     if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {

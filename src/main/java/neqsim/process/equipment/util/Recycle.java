@@ -4,16 +4,16 @@ import java.util.ArrayList;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import com.google.gson.GsonBuilder;
 import neqsim.process.util.monitor.RecycleResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -686,6 +686,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     return new GsonBuilder().create().toJson(new RecycleResponse(this));
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson(ReportConfig cfg) {
     if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {

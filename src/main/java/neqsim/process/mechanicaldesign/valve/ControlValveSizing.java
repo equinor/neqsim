@@ -9,12 +9,21 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * Provides methods for sizing control valves for liquids and gases according to standard equations.
+ *
+ * @author esol
  */
 public class ControlValveSizing implements ControlValveSizingInterface, Serializable {
 
   ValveMechanicalDesign valveMechanicalDesign = null;
 
 
+  /**
+   * <p>
+   * Getter for the field <code>valveMechanicalDesign</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
+   */
   public ValveMechanicalDesign getValveMechanicalDesign() {
     return valveMechanicalDesign;
   }
@@ -27,37 +36,61 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   double xT = 0.137;
   boolean allowChoked = true;
 
+  /**
+   * <p>
+   * Constructor for ControlValveSizing.
+   * </p>
+   */
   public ControlValveSizing() {
 
   }
 
+  /**
+   * <p>
+   * Constructor for ControlValveSizing.
+   * </p>
+   *
+   * @param valveMechanicalDesign a
+   *        {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
+   */
   public ControlValveSizing(ValveMechanicalDesign valveMechanicalDesign) {
     this.valveMechanicalDesign = valveMechanicalDesign;
   }
 
   // === Getters and Setters for Valve Parameters ===
+  /**
+   * <p>
+   * Getter for the field <code>xT</code>.
+   * </p>
+   *
+   * @return a double
+   */
   public double getxT() {
     return xT;
   }
 
+  /** {@inheritDoc} */
   public void setxT(double xT) {
     this.xT = xT;
   }
 
+  /**
+   * <p>
+   * isAllowChoked.
+   * </p>
+   *
+   * @return a boolean
+   */
   public boolean isAllowChoked() {
     return allowChoked;
   }
 
+  /** {@inheritDoc} */
   public void setAllowChoked(boolean allowChoked) {
     this.allowChoked = allowChoked;
   }
 
-  /**
-   * Calculates the valve size based on the fluid properties and operating conditions.
-   *
-   * @return a map containing the calculated valve size and related parameters. If fullOutput is
-   *         false, the map will be null.
-   */
+  /** {@inheritDoc} */
   public Map<String, Object> calcValveSize(double percentOpening) {
 
     Map<String, Object> result = valveMechanicalDesign.fullOutput ? new HashMap<>() : null;
@@ -69,6 +102,14 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     return result;
   }
 
+  /**
+   * <p>
+   * calcKv.
+   * </p>
+   *
+   * @param percentOpening a double
+   * @return a double
+   */
   public double calcKv(double percentOpening) {
 
     SystemInterface fluid =
@@ -95,19 +136,27 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   }
 
   /**
+   * {@inheritDoc}
+   * <p>
    * Calculates the flow rate through a control valve based on the valve opening, Kv, and
    * inlet/outlet streams.
-   *
-   * @param actualKv Flow coefficient (for 100% opening)
-   * @param inletStream Inlet stream to the valve
-   * @param outletStream Outlet stream from the valve
-   * @return Calculated flow rate (units depend on phase type)
+   * </p>
    */
   public double calculateFlowRateFromValveOpening(double actualKv, StreamInterface inletStream,
       StreamInterface outletStream) {
     return calculateMolarFlow(actualKv, inletStream, outletStream);
   }
 
+  /**
+   * <p>
+   * calculateMolarFlow.
+   * </p>
+   *
+   * @param actualKv a double
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param outStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @return a double
+   */
   public double calculateMolarFlow(double actualKv, StreamInterface inStream,
       StreamInterface outStream) {
     // Convert ΔP from Pa to bar for consistency with Kv in m3/h/√bar
@@ -125,14 +174,11 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   }
 
   /**
+   * {@inheritDoc}
+   * <p>
    * Calculates the required valve opening fraction for a given flow rate, Kv, and inlet/outlet
    * streams.
-   *
-   * @param Q Flow rate (units depend on phase type)
-   * @param actualKv Flow coefficient (for 100% opening)
-   * @param inletStream Inlet stream to the valve
-   * @param outletStream Outlet stream from the valve
-   * @return Required valve opening fraction (0.0 - 1.0)
+   * </p>
    */
   public double calculateValveOpeningFromFlowRate(double Q, double actualKv,
       StreamInterface inletStream, StreamInterface outletStream) {
@@ -182,16 +228,24 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   }
 
   /**
+   * {@inheritDoc}
+   * <p>
    * Finds the outlet pressure for a given Kv, valve opening, and inlet stream.
-   * 
-   * @param actualKv Flow coefficient (for 100% opening)
-   * @param inletStream Inlet stream to the valve
-   * @return Outlet pressure (unit Pa)
+   * </p>
    */
   public double findOutletPressureForFixedKv(double actualKv, StreamInterface inletStream) {
     return calculateOutletPressure(actualKv, inletStream);
   }
 
+  /**
+   * <p>
+   * calculateOutletPressure.
+   * </p>
+   *
+   * @param KvAdjusted a double
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @return a double
+   */
   public double calculateOutletPressure(double KvAdjusted, StreamInterface inStream) {
     // Fluid properties
     double density = inStream.getFluid().getDensity("kg/m3"); // kg/m³

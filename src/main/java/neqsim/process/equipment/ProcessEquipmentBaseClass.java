@@ -324,6 +324,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     return null;
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toJson(ReportConfig cfg) {
     if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
