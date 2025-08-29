@@ -57,7 +57,9 @@ public class Water extends Viscosity {
   }
 
   /**
-   * <p>Constructor for Water.</p>
+   * <p>
+   * Constructor for Water.
+   * </p>
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -80,6 +82,8 @@ public class Water extends Viscosity {
   /**
    * Returns {@code true} if this looks like an aqueous salt solution that we can handle with
    * Laliberté.
+   *
+   * @return true if this is an aqueous salt solution that can be handled with Laliberté
    */
   private boolean isAqueousSaltSolution() {
     int n = liquidPhase.getPhase().getNumberOfComponents();
@@ -118,7 +122,12 @@ public class Water extends Viscosity {
     return -1;
   }
 
-  /** Normalize component name to a Laliberté coefficient key, or null if unknown. */
+  /**
+   * Normalize component name to a Laliberté coefficient key, or null if unknown.
+   *
+   * @param name the component name to normalize
+   * @return the normalized salt key, or null if unknown
+   */
   private String canonicalSaltKey(String name) {
     if (name == null)
       return null;
@@ -135,7 +144,12 @@ public class Water extends Viscosity {
     return null;
   }
 
-  /** Get ν1..ν6 for a salt; default to NaCl set if salt is unknown. */
+  /**
+   * Get ν1..ν6 for a salt; default to NaCl set if salt is unknown.
+   *
+   * @param key the salt key
+   * @return the coefficients for the salt, or NaCl coefficients if unknown
+   */
   private double[] coeffsForSaltOrDefault(String key) {
     if (key == null)
       return LALIBERTE_COEFFS.get("NACL");
@@ -143,7 +157,14 @@ public class Water extends Viscosity {
     return (c != null) ? c : LALIBERTE_COEFFS.get("NACL");
   }
 
-  /** Solute viscosity (mPa·s) by Laliberté for given ν1..ν6, temperature (°C) and w_w. */
+  /**
+   * Solute viscosity (mPa·s) by Laliberté for given ν1..ν6, temperature (°C) and w_w.
+   *
+   * @param v the Laliberté coefficients ν1..ν6
+   * @param tempC temperature in Celsius
+   * @param w_w weight fraction of water
+   * @return solute viscosity in mPa·s
+   */
   private double soluteViscosity_mPaS(double[] v, double tempC, double w_w) {
     double oneMinusWw = Math.max(0.0, 1.0 - w_w); // guard
     double num = v[0] * Math.pow(oneMinusWw, v[1]) + v[2];

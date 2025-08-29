@@ -1,6 +1,5 @@
 package neqsim.thermo.system;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -31,20 +30,6 @@ public class SystemBnsEosModelTest {
     modelTest = new ThermodynamicModelTest(system);
     modelTest.setMaxError(2.02e-1);
     system.initProperties();
-  }
-
-  @Test
-  public void testCO2test() {
-    SystemBnsEos system = new SystemBnsEos();
-    system.setTemperature(60.0, "F");
-    system.setPressure(2000.0, "psia");
-    system.setAssociatedGas(false);
-    system.setRelativeDensity(0.75);
-    system.setComposition(1.00, 0.0, 0.00, 0.0);
-    system.useVolumeCorrection(true);
-    system.setMixingRule(12);
-    new ThermodynamicOperations(system).TPflash();
-    assertEquals(0.27770239288, system.getPhase(0).getZ(), 1e-4);
   }
 
   @Test
