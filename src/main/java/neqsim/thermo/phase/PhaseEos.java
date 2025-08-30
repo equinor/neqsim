@@ -233,15 +233,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public double molarVolume2(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV =
-        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
-    if (BonV < 0) {
-      BonV = 0.0;
-    }
-    if (BonV > 1.0) {
-      BonV = 1.0;
-    }
+    double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
+        : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+    BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));
+
     double BonVold = BonV;
     double Btemp = getB();
     double Dtemp = getA();
@@ -318,16 +313,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV =
-        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
 
-    if (BonV < 0) {
-      BonV = 1.0e-4;
-    }
-    if (BonV > 1.0) {
-      BonV = 1.0 - 1.0e-4;
-    }
+    double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
+        : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+    BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));
 
     double BonVold = BonV;
 
@@ -438,7 +427,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   /** {@inheritDoc} */
   @Override
   public String getMixingRuleName() {
-    return mixRule.getName();
+    return mixRule == null ? "none" : mixRule.getName();
   }
 
   /** {@inheritDoc} */

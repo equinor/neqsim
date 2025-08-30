@@ -1615,16 +1615,9 @@ public class PhasePCSAFT extends PhaseSrkEos {
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV =
-        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
-    // double BonV = phase== 0 ? 0.99:1e-5;
-    if (BonV < 0) {
-      BonV = 1.0e-6;
-    }
-    if (BonV > 1.0) {
-      BonV = 1.0 - 1.0e-6;
-    }
+    double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
+        : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+    BonV = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, BonV));
     double BonVold = BonV;
     double Btemp = 0;
     double h = 0;

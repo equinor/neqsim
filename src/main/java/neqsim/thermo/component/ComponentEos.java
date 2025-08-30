@@ -472,7 +472,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * @return a double
    */
   public double getdAdTdT() {
-    return aDerT;
+    return aDerTT;
   }
 
   /** {@inheritDoc} */
@@ -508,7 +508,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /** {@inheritDoc} */
   @Override
   public double getdBdT() {
-    return 1;
+    return 0.0;
   }
 
   /** {@inheritDoc} */
@@ -621,10 +621,9 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
      * Math.pow(getCriticalCompressibilityFactor(), 2.0) - 0.174 * getAcentricFactor() + 0.157 *
      * Math.pow(getAcentricFactor(), 2.0);
      */
+
     double TR = 1.0 - temperature / getTC();
-    if (TR < 1) {
-      TR = 0.5;
-    }
+    TR = Math.max(TR, 1e-6);
 
     // double scale1 = aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * Math.exp(a_inf +
     // b_inf *
