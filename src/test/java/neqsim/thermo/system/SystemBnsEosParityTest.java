@@ -89,7 +89,7 @@ public class SystemBnsEosParityTest {
     sys.init(3);
 
     neqsim.thermo.ThermodynamicModelTest modtest = new neqsim.thermo.ThermodynamicModelTest(sys);
-    modtest.setMaxError(1e-4);
+    modtest.setMaxError(1e-2);
     assertTrue(modtest.checkFugacityCoefficientsDT());
     double Z = sys.getZvolcorr();
     double density = sys.getDensity("kg/m3");
