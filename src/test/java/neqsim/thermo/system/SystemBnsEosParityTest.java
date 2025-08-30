@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -85,14 +86,20 @@ public class SystemBnsEosParityTest {
       throw new RuntimeException(e);
     }
     sys.initProperties();
+    sys.init(3);
 
+    neqsim.thermo.ThermodynamicModelTest modtest = new neqsim.thermo.ThermodynamicModelTest(sys);
+    modtest.setMaxError(1e-4);
+    assertTrue(modtest.checkFugacityCoefficientsDT());
     double Z = sys.getZvolcorr();
     double density = sys.getDensity("kg/m3");
     double jt = sys.getPhase(0).getJouleThomsonCoefficient() * 10.0;
+    double cp = sys.getPhase(0).getCp("J/molK");
 
     assertEquals(0.7941023149604872, Z, 1e-3);
     assertEquals(150.3029810272768, density, 0.3);
-    assertEquals(3.0063081864897288, jt, 0.2);
+    assertEquals(3.104453199, jt, 0.002);
+    assertEquals(55.59932830685, cp, 0.01);
   }
 
   @Test
@@ -108,5 +115,6 @@ public class SystemBnsEosParityTest {
     new ThermodynamicOperations(system).TPflash();
     system.initProperties();
     assertEquals(0.277826181569, system.getZvolcorr(), 1e-7);
+    assertEquals(2.0935369009, system.getCp("kJ/kgK"), 1e-7);
   }
 }
