@@ -1077,17 +1077,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV =
-        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
-
-    if (BonV < 0) {
-      BonV = 1.0e-8;
-    }
-
-    if (BonV >= 1.0) {
-      BonV = 0.9999;
-    }
+    double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
+        : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+    BonV = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, BonV));
     double BonVold;
     double BonV2;
     double h = 0;

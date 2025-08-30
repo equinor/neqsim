@@ -102,7 +102,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     } else if (mr == 3) {
       return new ClassicVdW();
     } else {
-      // TODO: not matching the initialization in getMixingRule(int mr, PhaseInterface phase)
+      // TODO: not matching the initialization in getMixingRule(int mr, PhaseInterface
+      // phase)
       return new ClassicVdW();
     }
   }
@@ -186,13 +187,12 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               classicOrHV[l][k] = classicOrHV[k][l];
 
               if (isCalcEOSInteractionParameters()) {
-                intparam[k][l] =
-                    1.0 - Math.pow(
-                        (2.0 * Math.sqrt(Math.pow(phase.getComponent(l).getCriticalVolume(), 1 / 3)
-                            * Math.pow(phase.getComponent(k).getCriticalVolume(), 1 / 3))
-                            / (Math.pow(phase.getComponent(l).getCriticalVolume(), 1 / 3)
-                                + Math.pow(phase.getComponent(k).getCriticalVolume(), 1 / 3))),
-                        nEOSkij);
+                intparam[k][l] = 1.0 - Math.pow((2.0
+                    * Math.sqrt(Math.pow(phase.getComponent(l).getCriticalVolume(), 1.0 / 3.0)
+                        * Math.pow(phase.getComponent(k).getCriticalVolume(), 1 / 3))
+                    / (Math.pow(phase.getComponent(l).getCriticalVolume(), 1 / 3)
+                        + Math.pow(phase.getComponent(k).getCriticalVolume(), 1 / 3))),
+                    nEOSkij);
                 intparamT[k][l] = 0.0;
                 // System.out.println("kij " + intparam[k][l]);
               } else {
@@ -249,10 +249,10 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                     } else if (componenti.equalsIgnoreCase("CO2")) {
 
                       double multipK = 1.0;
-                      if (salinityConcentration > 2.0) {
-                        multipK = 0.9;
-                      } else if (salinityConcentration > 3.5) {
+                      if (salinityConcentration > 3.5) {
                         multipK = 0.8;
+                      } else if (salinityConcentration > 2.0) {
+                        multipK = 0.9;
                       }
 
                       kij = multipK * 0.989
@@ -773,7 +773,28 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
     /** {@inheritDoc} */
     @Override
-    public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    public double calcB(PhaseInterface phase, double T, double P, int n) {
+      if (bmixType == 0) {
+        double B = 0.0;
+        final ComponentEosInterface[] comp = (ComponentEosInterface[]) phase.getcomponentArray();
+        for (int i = 0; i < n; i++)
+          B += comp[i].getNumberOfMolesInPhase() * comp[i].getb();
+        return Btot = B;
+      }
+      // fallback: your current general double-sum
+      return calcBFull(phase, T, P, n);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double calcBi(int i, PhaseInterface phase, double T, double P, int n) {
+      if (bmixType == 0)
+        return ((ComponentEosInterface[]) phase.getcomponentArray())[i].getb();
+      return calcBiFull(i, phase, T, P, n);
+    }
+
+    public double calcBFull(PhaseInterface phase, double temperature, double pressure,
+        int numbcomp) {
       B = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -805,9 +826,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     }
 
     /** {@inheritDoc} */
-    @Override
-    public double calcBi(int compNumb, PhaseInterface phase, double temperature, double pressure,
-        int numbcomp) {
+    public double calcBiFull(int compNumb, PhaseInterface phase, double temperature,
+        double pressure, int numbcomp) {
       double Bi = 0.0;
 
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -963,7 +983,13 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
       A = 0.0;
       for (int i = 0; i < numbcomp; i++) {
+        if (compArray[i].getNumberOfmoles() < 1e-100) {
+          continue;
+        }
         for (int j = 0; j < numbcomp; j++) {
+          if (compArray[j].getNumberOfmoles() < 1e-100) {
+            continue;
+          }
           aij = Math.sqrt(compArray[i].getaT() * compArray[j].getaT())
               * (1.0 - getkij(temperature, i, j));
           A += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
@@ -1125,7 +1151,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     }
   }
 
-
   public class ClassicSRKT extends ClassicSRK {
     int type = 0;
 
@@ -1185,64 +1210,91 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
     public double calcAiTT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
-      double A = 0.0;
-      double aij = 0.0;
-      double aij2 = 0.0;
-      ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+      final ComponentEosInterface[] c = (ComponentEosInterface[]) phase.getcomponentArray();
+      final ComponentEosInterface ci = c[compNumb];
+
+      // a_i and its T-derivatives are constant over the j-loop
+      final double ai = ci.getaT();
+      final double ai1 = ci.getaDiffT();
+      final double ai2 = ci.getaDiffDiffT();
+
+      double sum = 0.0;
 
       for (int j = 0; j < numbcomp; j++) {
-        aij = 0.5 / Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT())
-            * (compArray[compNumb].getaT() * compArray[j].getaDiffT()
-                + compArray[j].getaT() * compArray[compNumb].getaDiffT())
-            * (1.0 - getkij(temperature, compNumb, j));
-        aij2 = Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT())
-            * (-getkijdT(temperature, compNumb, j));
-        A += compArray[j].getNumberOfMolesInPhase() * (aij + aij2);
+        final ComponentEosInterface cj = c[j];
+
+        final double aj = cj.getaT();
+        final double aj1 = cj.getaDiffT();
+        final double aj2 = cj.getaDiffDiffT();
+
+        // s = sqrt(a_i a_j)
+        final double s = Math.sqrt(ai * aj);
+        final double invS = 1.0 / s;
+
+        // Useful middle terms
+        final double N = ai * aj1 + aj * ai1; // f' for f = a_i a_j
+        final double s1 = 0.5 * invS * N; // s' = 1/(2s) * f'
+        final double s2 = 0.5 * ((2.0 * ai1 * aj1 + ai * aj2 + aj * ai2) * invS // 1/(2) * f''/s
+            - 0.5 * invS * (N * N) / (ai * aj) // - 1/4 * f'^2/(s f)
+        ); // => s''
+
+        final double kij = getkij(temperature, compNumb, j);
+        final double dk = getkijdT(temperature, compNumb, j);
+        final double d2k = getkijdTdT(temperature, compNumb, j);
+
+        final double term = s2 * (1.0 - kij) - 2.0 * s1 * dk - s * d2k;
+
+        sum += cj.getNumberOfMolesInPhase() * term;
       }
-      // System.out.println("Ait SRK : " + (2*A));
-      return 2.0 * A;
+      // By convention this method returns 2 * Σ_j n_j * (...)
+      return 2.0 * sum;
     }
 
-    /** {@inheritDoc} */
+
     @Override
     public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-      double aij = 0.0;
-      double aij2 = 0.0;
-      double aij3 = 0.0;
-      double aij4 = 0.0;
-      ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
-      A = 0.0;
+      final ComponentEosInterface[] c = (ComponentEosInterface[]) phase.getcomponentArray();
+
+      // Pre-cache per-component values used many times
+      final double[] a = new double[numbcomp];
+      final double[] a1 = new double[numbcomp];
+      final double[] a2 = new double[numbcomp];
+      final double[] n = new double[numbcomp];
+      final double[] rtA = new double[numbcomp]; // sqrt(a)
+
+      for (int i = 0; i < numbcomp; i++) {
+        final ComponentEosInterface ci = c[i];
+        a[i] = ci.getaT();
+        a1[i] = ci.getaDiffT();
+        a2[i] = ci.getaDiffDiffT();
+        n[i] = ci.getNumberOfMolesInPhase();
+        rtA[i] = Math.sqrt(a[i]);
+      }
+
+      double Atot = 0.0;
+
       for (int i = 0; i < numbcomp; i++) {
         for (int j = 0; j < numbcomp; j++) {
-          aij = 0.5
-              * ((2.0 * compArray[i].getaDiffT() * compArray[j].getaDiffT()
-                  + compArray[i].getaT() * compArray[j].getaDiffDiffT()
-                  + compArray[j].getaT() * compArray[i].getaDiffDiffT())
-                  / Math.sqrt(compArray[i].getaT() * compArray[j].getaT())
-                  - Math
-                      .pow(compArray[i].getaT() * compArray[j].getaDiffT()
-                          + compArray[j].getaT() * compArray[i].getaDiffT(), 2)
-                      / (2 * Math.sqrt(compArray[i].getaT() * compArray[j].getaT())
-                          * compArray[i].getaT() * compArray[j].getaT()))
-              * (1.0 - getkij(temperature, i, j));
+          final double s = rtA[i] * rtA[j]; // sqrt(a_i a_j)
+          final double invS = 1.0 / s;
 
-          aij2 = 0.5 / Math.sqrt(compArray[i].getaT() * compArray[j].getaT())
-              * (compArray[i].getaT() * compArray[j].getaDiffT()
-                  + compArray[j].getaT() * compArray[i].getaDiffT())
-              * (-getkijdT(temperature, i, j));
+          final double N = a[i] * a1[j] + a[j] * a1[i];
+          final double s1 = 0.5 * invS * N;
+          final double s2 = 0.5 * ((2.0 * a1[i] * a1[j] + a[i] * a2[j] + a[j] * a2[i]) * invS
+              - 0.5 * invS * (N * N) / (a[i] * a[j]));
 
-          aij3 = 0.5 / Math.sqrt(compArray[i].getaT() * compArray[j].getaT())
-              * (compArray[i].getaT() * compArray[j].getaDiffT()
-                  + compArray[j].getaT() * compArray[i].getaDiffT())
-              * (-getkijdT(temperature, i, j));
-          aij4 = Math.sqrt(compArray[i].getaT() * compArray[j].getaT())
-              * (-getkijdTdT(temperature, i, j));
-          A += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
-              * (aij + aij2 + aij3 + aij4);
+          final double kij = getkij(temperature, i, j);
+          final double dk = getkijdT(temperature, i, j);
+          final double d2k = getkijdTdT(temperature, i, j);
+
+          final double term = s2 * (1.0 - kij) - 2.0 * s1 * dk - s * d2k;
+
+          Atot += n[i] * n[j] * term;
         }
       }
-      return A;
+      return Atot;
     }
+
 
     /** {@inheritDoc} */
     @Override
@@ -1577,8 +1629,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
-
-
     public double getkijWhitsonSoreideAqueous(ComponentEosInterface[] compArray,
         double salinityConcentration, double temperature, int i, int j) {
 
@@ -1803,8 +1853,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     }
 
   }
-
-
 
   public class SRKHuronVidal extends ClassicSRK implements HVMixingRulesInterface {
     /** Serialization version UID. */
