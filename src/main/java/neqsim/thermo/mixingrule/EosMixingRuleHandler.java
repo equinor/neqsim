@@ -776,7 +776,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     public double calcB(PhaseInterface phase, double T, double P, int n) {
       if (bmixType == 0) {
         double B = 0.0;
-        final var comp = (ComponentEosInterface[]) phase.getcomponentArray();
+        final ComponentEosInterface[] comp = (ComponentEosInterface[]) phase.getcomponentArray();
         for (int i = 0; i < n; i++)
           B += comp[i].getNumberOfMolesInPhase() * comp[i].getb();
         return Btot = B;
