@@ -773,7 +773,28 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
     /** {@inheritDoc} */
     @Override
-    public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    public double calcB(PhaseInterface phase, double T, double P, int n) {
+      if (bmixType == 0) {
+        double B = 0.0;
+        final var comp = (ComponentEosInterface[]) phase.getcomponentArray();
+        for (int i = 0; i < n; i++)
+          B += comp[i].getNumberOfMolesInPhase() * comp[i].getb();
+        return Btot = B;
+      }
+      // fallback: your current general double-sum
+      return calcBFull(phase, T, P, n);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double calcBi(int i, PhaseInterface phase, double T, double P, int n) {
+      if (bmixType == 0)
+        return ((ComponentEosInterface[]) phase.getcomponentArray())[i].getb();
+      return calcBiFull(i, phase, T, P, n);
+    }
+
+    public double calcBFull(PhaseInterface phase, double temperature, double pressure,
+        int numbcomp) {
       B = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -805,9 +826,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     }
 
     /** {@inheritDoc} */
-    @Override
-    public double calcBi(int compNumb, PhaseInterface phase, double temperature, double pressure,
-        int numbcomp) {
+    public double calcBiFull(int compNumb, PhaseInterface phase, double temperature,
+        double pressure, int numbcomp) {
       double Bi = 0.0;
 
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -955,7 +975,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       return intparam[i][j];
     }
 
- /** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double aij = 0;
