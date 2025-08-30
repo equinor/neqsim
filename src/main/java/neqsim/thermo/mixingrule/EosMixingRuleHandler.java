@@ -955,7 +955,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       return intparam[i][j];
     }
 
-    /** {@inheritDoc} */
+ /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       double aij = 0;
@@ -963,7 +963,13 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
       A = 0.0;
       for (int i = 0; i < numbcomp; i++) {
+        if (compArray[i].getNumberOfmoles() < 1e-100) {
+          continue;
+        }
         for (int j = 0; j < numbcomp; j++) {
+          if (compArray[j].getNumberOfmoles() < 1e-100) {
+            continue;
+          }
           aij = Math.sqrt(compArray[i].getaT() * compArray[j].getaT())
               * (1.0 - getkij(temperature, i, j));
           A += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
