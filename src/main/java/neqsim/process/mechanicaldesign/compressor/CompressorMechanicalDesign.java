@@ -165,6 +165,9 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
       innerDiameter = Daim;
       tantanLength = Length2;
     }
+    if (getWallThickness() <= 0.0) {
+      setWallThickness(0.01);
+    }
     // calculating from standard codes
     // sepLength = innerDiameter * 2.0;
     emptyVesselWeight = 0.032 * getWallThickness() * 1e3 * innerDiameter * 1e3 * tantanLength;

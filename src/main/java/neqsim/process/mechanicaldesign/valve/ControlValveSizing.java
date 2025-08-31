@@ -125,8 +125,11 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     }
 
 
-    return ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream()
-        .getFlowRate("m3/hr")
+    double massFlow =
+        ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream()
+            .getFlowRate("kg/hr");
+    double volumetricFlow = massFlow / density;
+    return volumetricFlow
         / Math.sqrt((((ThrottlingValve) valveMechanicalDesign.getProcessEquipment())
             .getInletStream().getPressure("bara")
             - ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getOutletStream()
