@@ -46,4 +46,3 @@ public class HeatExchangerMechanicalDesignTest {
     assertTrue(hx.getMechanicalDesign().getWeightTotal() > 0.0);
   }
 }
-
