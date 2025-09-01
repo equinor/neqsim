@@ -5,7 +5,8 @@ import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 
 /**
- * Mechanical design for a generic heat exchanger. Provides rough estimates of size
+ * Mechanical design for a generic heat exchanger. Provides rough estimates of
+ * size
  * and weight based on duty and assumed overall heat-transfer coefficients.
  */
 public class HeatExchangerMechanicalDesign extends MechanicalDesign {
@@ -15,7 +16,8 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
   /**
    * Constructor for HeatExchangerMechanicalDesign.
    *
-   * @param equipment {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param equipment {@link neqsim.process.equipment.ProcessEquipmentInterface}
+   *                  object
    */
   public HeatExchangerMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -31,8 +33,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
     double area = exchanger.getUAvalue() / U;
     if (area <= 0.0) {
       double duty = Math.abs(exchanger.getDuty());
-      double deltaT =
-          Math.abs(exchanger.getOutTemperature(0) - exchanger.getOutTemperature(1));
+      double deltaT = Math.abs(exchanger.getOutTemperature(0) - exchanger.getOutTemperature(1));
       if (deltaT > 0.0) {
         area = duty / (U * deltaT);
       }
@@ -56,4 +57,3 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
     setModuleHeight(innerDiameter + 1.0);
   }
 }
-

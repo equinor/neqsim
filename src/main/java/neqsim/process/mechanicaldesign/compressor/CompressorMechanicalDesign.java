@@ -33,7 +33,8 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    * Constructor for CompressorMechanicalDesign.
    * </p>
    *
-   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface}
+   *                  object
    */
   public CompressorMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -48,9 +49,8 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     if (getDesignStandard().containsKey("compressor design codes")) {
       System.out.println("compressor code standard: "
           + getDesignStandard().get("compressor design codes").getStandardName());
-      compressorFactor =
-          ((CompressorDesignStandard) getDesignStandard().get("compressor design codes"))
-              .getCompressorFactor();
+      compressorFactor = ((CompressorDesignStandard) getDesignStandard().get("compressor design codes"))
+          .getCompressorFactor();
     } else {
       System.out.println("no pressure vessel code standard specified......");
     }
@@ -64,7 +64,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = {"Name", "Value", "Unit"};
+    String[] names = { "Name", "Value", "Unit" };
     String[][] table = new String[16][3]; // createTable(getProcessEquipment().getName());
 
     table[1][0] = "Separator Inner Diameter";

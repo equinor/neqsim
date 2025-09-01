@@ -8,7 +8,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Provides methods for sizing control valves for liquids and gases according to standard equations.
+ * Provides methods for sizing control valves for liquids and gases according to
+ * standard equations.
  *
  * @author esol
  */
@@ -16,13 +17,13 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
   ValveMechanicalDesign valveMechanicalDesign = null;
 
-
   /**
    * <p>
    * Getter for the field <code>valveMechanicalDesign</code>.
    * </p>
    *
-   * @return a {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
+   * @return a {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign}
+   *         object
    */
   public ValveMechanicalDesign getValveMechanicalDesign() {
     return valveMechanicalDesign;
@@ -51,7 +52,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * </p>
    *
    * @param valveMechanicalDesign a
-   *        {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
+   *                              {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign}
+   *                              object
    */
   public ControlValveSizing(ValveMechanicalDesign valveMechanicalDesign) {
     this.valveMechanicalDesign = valveMechanicalDesign;
@@ -112,8 +114,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    */
   public double calcKv(double percentOpening) {
 
-    SystemInterface fluid =
-        ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
+    SystemInterface fluid = ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
 
     Map<String, Object> result = valveMechanicalDesign.fullOutput ? new HashMap<>() : null;
 
@@ -124,10 +125,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
       density = fluid.getDensity("kg/m3") / 1000.0;
     }
 
-
-    double massFlow =
-        ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream()
-            .getFlowRate("kg/hr");
+    double massFlow = ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream()
+        .getFlowRate("kg/hr");
     double volumetricFlow = massFlow / density;
     return volumetricFlow
         / Math.sqrt((((ThrottlingValve) valveMechanicalDesign.getProcessEquipment())
@@ -141,7 +140,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   /**
    * {@inheritDoc}
    * <p>
-   * Calculates the flow rate through a control valve based on the valve opening, Kv, and
+   * Calculates the flow rate through a control valve based on the valve opening,
+   * Kv, and
    * inlet/outlet streams.
    * </p>
    */
@@ -155,9 +155,11 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * calculateMolarFlow.
    * </p>
    *
-   * @param actualKv a double
-   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
-   * @param outStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param actualKv  a double
+   * @param inStream  a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                  object
+   * @param outStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                  object
    * @return a double
    */
   public double calculateMolarFlow(double actualKv, StreamInterface inStream,
@@ -179,7 +181,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   /**
    * {@inheritDoc}
    * <p>
-   * Calculates the required valve opening fraction for a given flow rate, Kv, and inlet/outlet
+   * Calculates the required valve opening fraction for a given flow rate, Kv, and
+   * inlet/outlet
    * streams.
    * </p>
    */
@@ -218,8 +221,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     double percentOpening = 0.0;
     for (int i = 0; i < MAX_BISECTION_ITERATIONS; i++) {
       percentOpening = (low + high) / 2.0;
-      double factor =
-          valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
+      double factor = valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
       if (factor < requiredOpeningFactor) {
         low = percentOpening;
       } else {
@@ -246,7 +248,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * </p>
    *
    * @param KvAdjusted a double
-   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param inStream   a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                   object
    * @return a double
    */
   public double calculateOutletPressure(double KvAdjusted, StreamInterface inStream) {
