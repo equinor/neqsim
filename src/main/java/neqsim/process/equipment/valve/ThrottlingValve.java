@@ -72,13 +72,13 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * Constructor for ThrottlingValve.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *                    object
+   * @param name a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public ThrottlingValve(String name, StreamInterface inletStream) {
     this(name);
     setInletStream(inletStream);
+    initMechanicalDesign();
   }
 
   /**
@@ -123,7 +123,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unit) {
     setOutletPressure(pressure, unit);
@@ -142,7 +142,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setOutletPressure(double pressure, String unit) {
     pressureUnit = unit;
@@ -173,8 +173,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   }
 
   /**
-   * Calculates molar flow for a gas based on IEC 60534 standards. This method
-   * accounts for choked
+   * Calculates molar flow for a gas based on IEC 60534 standards. This method accounts for choked
    * (critical) flow.
    *
    * @return Molar flow in mole/sec.
@@ -201,7 +200,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   /**
    * Adjusts the flow coefficient (Kv) based on the percentage valve opening.
    *
-   * @param Kv                  Flow coefficient SI (for 100% opening)
+   * @param Kv Flow coefficient SI (for 100% opening)
    * @param percentValveOpening Percentage valve opening (0 to 100).
    * @return Adjusted flow coefficient (Kv)
    */
@@ -658,7 +657,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * </p>
    *
    * @param deltaPressure a double
-   * @param unit          a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setDeltaPressure(double deltaPressure, String unit) {
     this.deltaPressure = deltaPressure;
