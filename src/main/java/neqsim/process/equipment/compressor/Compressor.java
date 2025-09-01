@@ -73,6 +73,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   private boolean useVega = false;
   private boolean limitSpeed = false;
 
+  CompressorMechanicalDesign mechanicalDesign;
+
   private String pressureUnit = "bara";
   private String polytropicMethod = "detailed";
 
@@ -83,6 +85,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    */
   public Compressor(String name) {
     super(name);
+    initMechanicalDesign();
   }
 
   /**
@@ -116,7 +119,13 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   /** {@inheritDoc} */
   @Override
   public CompressorMechanicalDesign getMechanicalDesign() {
-    return new CompressorMechanicalDesign(this);
+    return mechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    mechanicalDesign = new CompressorMechanicalDesign(this);
   }
 
   /** {@inheritDoc} */

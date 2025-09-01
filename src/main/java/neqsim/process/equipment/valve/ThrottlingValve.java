@@ -78,7 +78,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   public ThrottlingValve(String name, StreamInterface inletStream) {
     this(name);
     setInletStream(inletStream);
-    valveMechanicalDesign = new ValveMechanicalDesign(this);
   }
 
   /**

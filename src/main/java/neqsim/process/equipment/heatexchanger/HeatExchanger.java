@@ -12,6 +12,7 @@ import neqsim.process.conditionmonitor.ConditionMonitorSpecifications;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerMechanicalDesign;
 import neqsim.process.util.monitor.HXResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -52,6 +53,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   private String flowArrangement = "concentric tube counterflow";
   private boolean useDeltaT = false;
   private double deltaT = 1.0;
+
+  HeatExchangerMechanicalDesign mechanicalDesign;
 
   /**
    * Constructor for HeatExchanger.
@@ -113,6 +116,18 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     this.inStream[number] = inStream;
     outStream[number] = inStream.clone();
     setName(getName());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public HeatExchangerMechanicalDesign getMechanicalDesign() {
+    return mechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    mechanicalDesign = new HeatExchangerMechanicalDesign(this);
   }
 
   /** {@inheritDoc} */
