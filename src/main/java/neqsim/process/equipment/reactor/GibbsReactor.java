@@ -912,8 +912,10 @@ public class GibbsReactor extends TwoPortEquipment {
         lagrangeSum += lambda[j] * elements[j];
       }
 
-      // Calculate objective function: F = Gf0 + RT*ln(phi) + RT*ln(yi) - lagrangeSum
-      double F = Gf0 + RT * Math.log(phi[i]) + RT * Math.log(yi) - lagrangeSum;
+      // Calculate objective function: F = Gf0 + RT*ln(phi) + RT*ln(yi) + RT*ln(P/Pref) -
+      // lagrangeSum
+      double F = Gf0 + RT * Math.log(phi[i]) + RT * Math.log(yi)
+          + RT * Math.log(system.getPressure("bara") / 1.0) - lagrangeSum;
       objectiveFunctionValues.put(compName, F);
     }
   }
@@ -1156,6 +1158,7 @@ public class GibbsReactor extends TwoPortEquipment {
     SystemInterface system = getOutletStream().getThermoSystem();
     double T = system.getTemperature();
     double RT = 8.314462618e-3 * T; // kJ/mol
+
 
     // Calculate total moles for mole fraction derivatives using outlet_mole
     double totalMoles = 0.0;
