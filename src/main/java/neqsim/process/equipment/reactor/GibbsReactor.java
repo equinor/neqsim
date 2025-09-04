@@ -33,7 +33,7 @@ public class GibbsReactor extends TwoPortEquipment {
     try {
       double inletMass = getInletStream().getThermoSystem().getFlowRate("kg/sec");
       double outletMass = getOutletStream().getThermoSystem().getFlowRate("kg/sec");
-      return 100*Math.abs(inletMass - outletMass)/inletMass;
+      return 100 * Math.abs(inletMass - outletMass) / inletMass;
     } catch (Exception e) {
       logger.debug("WARNING: Could not calculate mass balance error: {}", e.getMessage());
       return Double.NaN;
@@ -730,32 +730,36 @@ public class GibbsReactor extends TwoPortEquipment {
           try {
             final String molecule = parts[0].trim();
             double[] elements = new double[7];
-            
+
             // Determine number of elements based on parts length
             // New format: Component + 7 elements (O,N,C,H,S,Ar,Z) + other data = 15+ parts
-            // Old format: Component + 6 elements (O,N,C,H,S,Ar) + other data = 14+ parts  
+            // Old format: Component + 6 elements (O,N,C,H,S,Ar) + other data = 14+ parts
             int numElements = (parts.length >= 15) ? 7 : 6;
-            logger.debug("Loading component: " + molecule + " with " + numElements + " elements (parts.length=" + parts.length + ")");
-            
+            logger.debug("Loading component: " + molecule + " with " + numElements
+                + " elements (parts.length=" + parts.length + ")");
+
             // Debug logging for ionic species - show raw parts
             if (molecule.contains("+") || molecule.contains("-")) {
               StringBuilder partsStr = new StringBuilder();
               for (int i = 0; i < Math.min(parts.length, 10); i++) {
                 partsStr.append("parts[").append(i).append("]=").append(parts[i]).append(" ");
               }
-              System.out.println("DATABASE LOADING - Raw parts for " + molecule + ": " + partsStr.toString());
-              System.out.println("DATABASE LOADING - parts.length=" + parts.length + ", numElements=" + numElements);
+              System.out.println(
+                  "DATABASE LOADING - Raw parts for " + molecule + ": " + partsStr.toString());
+              System.out.println("DATABASE LOADING - parts.length=" + parts.length
+                  + ", numElements=" + numElements);
             }
-            
+
             // Parse available elements
             for (int i = 0; i < numElements; i++) {
               String value = parts[i + 1].trim().replace(",", ".");
               elements[i] = Double.parseDouble(value);
               if (molecule.contains("+") || molecule.contains("-")) {
-                System.out.println("DATABASE LOADING - Element[" + i + "] (" + elementNames[i] + ") = " + value + " -> " + elements[i]);
+                System.out.println("DATABASE LOADING - Element[" + i + "] (" + elementNames[i]
+                    + ") = " + value + " -> " + elements[i]);
               }
             }
-            
+
             // If old format (6 elements), set Z element to 0
             if (numElements == 6) {
               elements[6] = 0.0; // Z element defaults to 0
@@ -763,21 +767,21 @@ public class GibbsReactor extends TwoPortEquipment {
                 System.out.println("DATABASE LOADING - Old format detected, setting Z to 0.0");
               }
             }
-            
+
             // Debug logging for ionic species
             if (molecule.contains("+") || molecule.contains("-")) {
-              System.out.println("DATABASE LOADING - Final elements for " + molecule + 
-                ": O=" + elements[0] + ", N=" + elements[1] + ", C=" + elements[2] + 
-                ", H=" + elements[3] + ", S=" + elements[4] + ", Ar=" + elements[5] + ", Z=" + elements[6]);
+              System.out.println("DATABASE LOADING - Final elements for " + molecule + ": O="
+                  + elements[0] + ", N=" + elements[1] + ", C=" + elements[2] + ", H=" + elements[3]
+                  + ", S=" + elements[4] + ", Ar=" + elements[5] + ", Z=" + elements[6]);
             }
-            
+
             double[] heatCapCoeffs = new double[4];
             int heatCapStartIndex = numElements + 1; // 7 for new format, 6 for old format
             for (int i = 0; i < 4; i++) {
               String value = parts[i + heatCapStartIndex].trim().replace(",", ".");
               heatCapCoeffs[i] = Double.parseDouble(value);
             }
-            
+
             int thermoStartIndex = heatCapStartIndex + 4;
             String deltaHf298Str = parts[thermoStartIndex].trim().replace(",", ".");
             String deltaGf298Str = parts[thermoStartIndex + 1].trim().replace(",", ".");
@@ -938,8 +942,8 @@ public class GibbsReactor extends TwoPortEquipment {
     // Debug logging for element balance
     logger.debug("=== Element Balance (mol/sec) ===");
     for (int i = 0; i < elementNames.length; i++) {
-      logger.debug(String.format("%s: IN=%.6e, OUT=%.6e, DIFF=%.6e", 
-          elementNames[i], elementMoleBalanceIn[i], elementMoleBalanceOut[i], elementMoleBalanceDiff[i]));
+      logger.debug(String.format("%s: IN=%.6e, OUT=%.6e, DIFF=%.6e", elementNames[i],
+          elementMoleBalanceIn[i], elementMoleBalanceOut[i], elementMoleBalanceDiff[i]));
     }
 
     // Calculate objective function values
@@ -1022,12 +1026,13 @@ public class GibbsReactor extends TwoPortEquipment {
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
       if (comp == null) {
         logger.debug("WARNING: Component '" + compName
-        + "' not found in gibbsReactDatabase. Skipping element balance for this component.");
+            + "' not found in gibbsReactDatabase. Skipping element balance for this component.");
         continue;
       }
       double[] elements = comp.getElements();
-      logger.debug("Component " + compName + " elements: O=" + elements[0] + ", N=" + elements[1] + 
-          ", C=" + elements[2] + ", H=" + elements[3] + ", S=" + elements[4] + ", Ar=" + elements[5] + ", Z=" + elements[6]);
+      logger.debug("Component " + compName + " elements: O=" + elements[0] + ", N=" + elements[1]
+          + ", C=" + elements[2] + ", H=" + elements[3] + ", S=" + elements[4] + ", Ar="
+          + elements[5] + ", Z=" + elements[6]);
       for (int j = 0; j < elementNames.length; j++) {
         elementBalance[j] += elements[j] * moles;
       }
@@ -1800,7 +1805,7 @@ public class GibbsReactor extends TwoPortEquipment {
    */
   private boolean updateSystemWithNewCompositions() {
     try {
-      SystemInterface system = getOutletStream().getThermoSystem();
+      //SystemInterface system = getInletStream().getThermoSystem();
 
       // Update component moles in the system
       for (int i = 0; i < processedComponents.size(); i++) {
@@ -1825,11 +1830,15 @@ public class GibbsReactor extends TwoPortEquipment {
           // Set new moles
           double currentMoles = system.getComponent(compIndex).getNumberOfMolesInPhase();
           double molesToAdd = newMoles - currentMoles;
-
+          if ((molesToAdd < 0.0) && (Math.abs(Math.abs(molesToAdd) - currentMoles)) < 1e-6) {
+            // Prevent removing more moles than present
+            molesToAdd = -currentMoles + 1e-6; // leave a tiny amount to avoid zero
+          }
           if (Math.abs(molesToAdd) > 1e-15) {
             system.addComponent(compIndex, molesToAdd, 0);
           }
         }
+      getOutletStream().setThermoSystem(system);
       }
 
 
@@ -1847,8 +1856,8 @@ public class GibbsReactor extends TwoPortEquipment {
       for (int i = 0; i < elementNames.length; i++) {
         // Always show Z element, and others only if significant differences
         if (elementNames[i].equals("Z") || Math.abs(elementMoleBalanceDiff[i]) > 1e-10) {
-          logger.debug(String.format("%s: IN=%.6e, OUT=%.6e, DIFF=%.6e", 
-              elementNames[i], elementMoleBalanceIn[i], elementMoleBalanceOut[i], elementMoleBalanceDiff[i]));
+          logger.debug(String.format("%s: IN=%.6e, OUT=%.6e, DIFF=%.6e", elementNames[i],
+              elementMoleBalanceIn[i], elementMoleBalanceOut[i], elementMoleBalanceDiff[i]));
         }
       }
 
@@ -2124,8 +2133,8 @@ public class GibbsReactor extends TwoPortEquipment {
         double diff = elementMoleBalanceOut[i] - elementMoleBalanceIn[i];
         // Always show Z element, and others only if significant differences
         if (elementNames[i].equals("Z") || Math.abs(diff) > 1e-10) {
-          logger.debug(String.format("  %s: IN=%.6e, OUT=%.6e, DIFF=%.6e", 
-              elementNames[i], elementMoleBalanceIn[i], elementMoleBalanceOut[i], diff));
+          logger.debug(String.format("  %s: IN=%.6e, OUT=%.6e, DIFF=%.6e", elementNames[i],
+              elementMoleBalanceIn[i], elementMoleBalanceOut[i], diff));
         }
       }
 
