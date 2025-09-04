@@ -307,7 +307,9 @@ public class GibbsReactorTest {
     system.addComponent("argon", 0, "mole/sec");
     system.addComponent("CH2O", 0, "mole/sec");
     system.addComponent("C2H4O", 0, "mole/sec");
-
+    system.addComponent("OH-", 0, "mole/sec");
+    system.addComponent("SO4--", 0, "mole/sec");
+    system.addComponent("NH4+", 0, "mole/sec");
     system.setMixingRule(2);
 
     Stream inletStream = new Stream("Inlet Stream", system);
