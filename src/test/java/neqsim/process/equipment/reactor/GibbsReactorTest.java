@@ -262,26 +262,30 @@ public class GibbsReactorTest {
     system.addComponent("CO2", 1e6, "mole/sec");
     system.addComponent("SO2", 0, "mole/sec");
     system.addComponent("SO3", 0, "mole/sec");
-    system.addComponent("NO2", 100, "mole/sec");
+    system.addComponent("NO2", 0, "mole/sec");
     system.addComponent("NO", 0, "mole/sec");
-    system.addComponent("water", 100, "mole/sec");
+    system.addComponent("water", 40, "mole/sec");
     system.addComponent("ammonia", 0, "mole/sec");
-    system.addComponent("H2S", 0, "mole/sec");
-    system.addComponent("oxygen", 300, "mole/sec");
-    system.addComponent("sulfuric acid", 0, "mole/sec");
-    system.addComponent("nitric acid", 0, "mole/sec");
-    system.addComponent("hydrogen", 0, "mole/sec");
+    // system.addComponent("H2S", 0, "mole/sec");
+    // system.addComponent("oxygen", 0, "mole/sec");
+    // system.addComponent("sulfuric acid", 0, "mole/sec");
+    // system.addComponent("nitric acid", 0, "mole/sec");
+    // system.addComponent("NH4NO3", 0.0, "mole/sec");
+    // system.addComponent("NH4HSO4", 0, "mole/sec");
+    // system.addComponent("formic acid", 0, "mole/sec");
+    system.addComponent("acetic acid", 0, "mole/sec");
+    system.addComponent("methanol", 100, "mole/sec");
     system.setMixingRule(2);
 
     Stream inletStream = new Stream("Inlet Stream", system);
-    inletStream.setPressure(100, "bara");
+    inletStream.setPressure(1, "bara");
     inletStream.setTemperature(25, "C");
     inletStream.run();
 
 
     GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
     reactor.setUseAllDatabaseSpecies(false);
-    reactor.setDampingComposition(0.1);
+    reactor.setDampingComposition(0.05);
     reactor.setMaxIterations(20000);
     reactor.setConvergenceTolerance(1e-3);
     reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
