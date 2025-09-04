@@ -33,7 +33,7 @@ public class GibbsReactor extends TwoPortEquipment {
     try {
       double inletMass = getInletStream().getThermoSystem().getFlowRate("kg/sec");
       double outletMass = getOutletStream().getThermoSystem().getFlowRate("kg/sec");
-      return Math.abs(inletMass - outletMass);
+      return 100*Math.abs(inletMass - outletMass)/inletMass;
     } catch (Exception e) {
       logger.debug("WARNING: Could not calculate mass balance error: {}", e.getMessage());
       return Double.NaN;

@@ -258,23 +258,56 @@ public class GibbsReactorTest {
   public void testGibbsReactorCO2WithAcidGases() {
 
 
-    SystemInterface system = new SystemSrkEos(298, 100.0);
+    SystemInterface system = new SystemSrkEos(298, 1.0);
     system.addComponent("CO2", 1e6, "mole/sec");
     system.addComponent("SO2", 0, "mole/sec");
     system.addComponent("SO3", 0, "mole/sec");
-    system.addComponent("NO2", 0, "mole/sec");
+    system.addComponent("NO2", 40, "mole/sec");
     system.addComponent("NO", 0, "mole/sec");
     system.addComponent("water", 40, "mole/sec");
     system.addComponent("ammonia", 0, "mole/sec");
-    // system.addComponent("H2S", 0, "mole/sec");
-    // system.addComponent("oxygen", 0, "mole/sec");
-    // system.addComponent("sulfuric acid", 0, "mole/sec");
-    // system.addComponent("nitric acid", 0, "mole/sec");
-    // system.addComponent("NH4NO3", 0.0, "mole/sec");
-    // system.addComponent("NH4HSO4", 0, "mole/sec");
-    // system.addComponent("formic acid", 0, "mole/sec");
+    system.addComponent("H2S", 40, "mole/sec");
+    system.addComponent("oxygen", 60, "mole/sec");
+    system.addComponent("sulfuric acid", 0, "mole/sec");
+    system.addComponent("nitric acid", 0, "mole/sec");
+    system.addComponent("NH4NO3", 0.0, "mole/sec");
+    system.addComponent("NH4HSO4", 0, "mole/sec");
+    system.addComponent("formic acid", 0, "mole/sec");
     system.addComponent("acetic acid", 0, "mole/sec");
-    system.addComponent("methanol", 100, "mole/sec");
+    system.addComponent("methanol", 0, "mole/sec");
+    system.addComponent("CO", 0, "mole/sec");
+    system.addComponent("hydrogen", 0, "mole/sec");
+    system.addComponent("N2O3", 0, "mole/sec");
+    system.addComponent("N2O", 0, "mole/sec");
+    system.addComponent("nitrogen", 0, "mole/sec");
+    system.addComponent("NH2OH", 0, "mole/sec");
+    system.addComponent("N2H4", 0, "mole/sec");
+    system.addComponent("S8", 0, "mole/sec");
+    system.addComponent("HNO2", 0, "mole/sec");
+    system.addComponent("MEG", 0, "mole/sec");
+    system.addComponent("DEG", 0, "mole/sec");
+    system.addComponent("TEG", 0, "mole/sec");
+    system.addComponent("MEA", 0, "mole/sec");
+    system.addComponent("MDEA", 0, "mole/sec");
+    system.addComponent("DEA", 0, "mole/sec");
+    system.addComponent("methane", 0, "mole/sec");
+    system.addComponent("ethane", 0, "mole/sec");
+    system.addComponent("propane", 0, "mole/sec");
+    system.addComponent("i-butane", 0, "mole/sec");
+    system.addComponent("n-butane", 0, "mole/sec");
+    system.addComponent("i-pentane", 0, "mole/sec");
+    system.addComponent("n-pentane", 0, "mole/sec");
+    system.addComponent("ethylene", 0, "mole/sec");
+    system.addComponent("benzene", 0, "mole/sec");
+    system.addComponent("toluene", 0, "mole/sec");
+    system.addComponent("o-Xylene", 0, "mole/sec");
+    system.addComponent("HCN", 0, "mole/sec");
+    system.addComponent("COS", 0, "mole/sec");
+    system.addComponent("CS2", 0, "mole/sec");
+    system.addComponent("argon", 0, "mole/sec");
+    system.addComponent("CH2O", 0, "mole/sec");
+    system.addComponent("C2H4O", 0, "mole/sec");
+
     system.setMixingRule(2);
 
     Stream inletStream = new Stream("Inlet Stream", system);
@@ -285,8 +318,8 @@ public class GibbsReactorTest {
 
     GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
     reactor.setUseAllDatabaseSpecies(false);
-    reactor.setDampingComposition(0.05);
-    reactor.setMaxIterations(20000);
+    reactor.setDampingComposition(0.01);
+    reactor.setMaxIterations(2000);
     reactor.setConvergenceTolerance(1e-3);
     reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
     reactor.run();
