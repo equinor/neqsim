@@ -62,8 +62,13 @@ public class VUflash extends Flash {
       do {
         iterations++;
 
-        this.pHFlash =
-            new PHflash(system, Uspec + wallHeat + system.getPressure() * system.getVolume(), 0);
+        if (system.getNumberOfPhases() == 1) {
+          this.pHFlash = new PHflashSingleComp(system,
+              Uspec + wallHeat + system.getPressure() * system.getVolume(), 0);
+        } else {
+          this.pHFlash =
+              new PHflash(system, Uspec + wallHeat + system.getPressure() * system.getVolume(), 0);
+        }
         // System.out.println("Hspec " + Hspec);
         this.pHFlash.run();
         // pOldOld = pOld;
