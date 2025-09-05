@@ -2,6 +2,11 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SingleComponentFlash {
@@ -120,6 +125,38 @@ public class SingleComponentFlash {
     }
     assertEquals(123.1499999, testSystem.getTemperature(), 1e-2);
     assertEquals(36.58179680, testSystem.getPressure(), 1e-2);
+  }
+
+  @Test
+  void testProcess1() {
+
+    SystemSrkEos fluid1 = new SystemSrkEos(278.15, 10.0);
+    fluid1.addComponent("propane", 1.0);
+
+    Stream stream1 = new Stream("feed stream", fluid1);
+    stream1.setTemperature(278.15);
+    stream1.setPressure(10.0);
+    stream1.setFlowRate(100.0, "kg/sec");
+    stream1.run();
+
+    ThrottlingValve valve1 = new ThrottlingValve("control valve 1", stream1);
+    valve1.setOutletPressure(3.0);
+    valve1.run();
+    valve1.getFluid().initProperties();
+    valve1.getOutletStream().getFluid().prettyPrint();
+
+    Separator separator1 = new Separator("separator 1", valve1.getOutletStream());
+    separator1.run();
+
+    Compressor compressor1 = new Compressor("compressor 1", separator1.getGasOutStream());
+    compressor1.setOutletPressure(10.0);
+    compressor1.run();
+
+    ThrottlingValve liquid_valve1 =
+        new ThrottlingValve("liq valve 1", separator1.getLiquidOutStream());
+    liquid_valve1.setOutletPressure(1.4);
+    liquid_valve1.run();
+    liquid_valve1.getOutletStream().getFluid().prettyPrint();
   }
 
 

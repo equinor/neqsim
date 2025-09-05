@@ -90,8 +90,10 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
       final double[] zi = new double[nc];
 
       for (int i = 0; i < nc; i++) {
-        var cL = system.getPhases()[0].getComponent(i); // treat [0]=liq
-        var cV = system.getPhases()[1].getComponent(i); // treat [1]=vap
+        neqsim.thermo.component.ComponentInterface cL = system.getPhases()[0].getComponent(i); // treat
+                                                                                               // [0]=liq
+        neqsim.thermo.component.ComponentInterface cV = system.getPhases()[1].getComponent(i); // treat
+                                                                                               // [1]=vap
 
         double phiL = cL.getFugacityCoefficient();
         double phiV = cV.getFugacityCoefficient();
@@ -128,8 +130,8 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
 
         double beta = system.getBeta();
         for (int i = 0; i < nc; i++) {
-          var cL = system.getPhases()[0].getComponent(i);
-          var cV = system.getPhases()[1].getComponent(i);
+          neqsim.thermo.component.ComponentInterface cL = system.getPhases()[0].getComponent(i);
+          neqsim.thermo.component.ComponentInterface cV = system.getPhases()[1].getComponent(i);
 
           double K = Ki[i];
           double dKdT = dKidt[i];
