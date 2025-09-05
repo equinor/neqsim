@@ -62,7 +62,7 @@ public class VUflash extends Flash {
       do {
         iterations++;
 
-        if (system.getNumberOfPhases() == 1) {
+        if (system.getNumberOfComponents() == 1) {
           this.pHFlash = new PHflashSingleComp(system,
               Uspec + wallHeat + system.getPressure() * system.getVolume(), 0);
         } else {
