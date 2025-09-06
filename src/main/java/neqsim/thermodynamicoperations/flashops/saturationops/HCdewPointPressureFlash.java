@@ -33,8 +33,8 @@ public class HCdewPointPressureFlash extends ConstantDutyTemperatureFlash {
   @Override
   public void run() {
     if (system.getPhase(0).getNumberOfComponents() == 1
-        && system.getPressure() > system.getPhase(0).getComponent(0).getPC()) {
-      setSuperCritical(true);
+        && system.getTemperature() >= system.getPhase(0).getComponent(0).getTC()) {
+      throw new IllegalStateException("System is supercritical");
     }
 
     int iterations = 0;
@@ -126,6 +126,9 @@ public class HCdewPointPressureFlash extends ConstantDutyTemperatureFlash {
     if (Math.abs(xtotal - 1.0) >= 1e-5
         || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
       setSuperCritical(true);
+    }
+    if (isSuperCritical()) {
+      throw new IllegalStateException("System is supercritical");
     }
   }
 

@@ -28,6 +28,10 @@ public class ConstantDutyPressureFlash extends ConstantDutyFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
+    if (system.getPhase(0).getNumberOfComponents() == 1
+        && system.getTemperature() >= system.getPhase(0).getComponent(0).getTC()) {
+      throw new IllegalStateException("System is supercritical");
+    }
     // system.calc_x_y();
     // system.init(2);
 
@@ -80,6 +84,9 @@ public class ConstantDutyPressureFlash extends ConstantDutyFlash {
       system.setPressure(pres);
     } while ((Math.abs((system.getPressure() - Pold) / system.getPressure()) > 1e-10
         && iterations < 300) || iterations < 3);
+    if (isSuperCritical()) {
+      throw new IllegalStateException("System is supercritical");
+    }
   }
 
   /** {@inheritDoc} */
