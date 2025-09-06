@@ -133,7 +133,13 @@ public class DewPointTemperatureFlash extends ConstantDutyTemperatureFlash {
       setSuperCritical(true);
     }
     if (ktot < 1.0e-3) {
-      setSuperCritical(true);
+      if (system.getTemperature() < 90.0) {
+        setSuperCritical(true);
+      } else {
+        setSuperCritical(false);
+        // system.setTemperature(system.getTemperature() - 10.0);
+        // run();
+      }
     }
     if (isSuperCritical()) {
       throw new IllegalStateException("System is supercritical");
