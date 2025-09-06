@@ -33,8 +33,8 @@ public class BubblePointPressureFlashDer extends ConstantDutyPressureFlash {
   @Override
   public void run() {
     if (system.getPhase(0).getNumberOfComponents() == 1
-        && system.getTemperature() > system.getPhase(0).getComponent(0).getTC()) {
-      setSuperCritical(true);
+        && system.getTemperature() >= system.getPhase(0).getComponent(0).getTC()) {
+      throw new IllegalStateException("System is supercritical");
     }
     int iterations = 0;
     int maxNumberOfIterations = 500;
@@ -190,6 +190,9 @@ public class BubblePointPressureFlashDer extends ConstantDutyPressureFlash {
       // Print command added by Neeraj
       logger.info("Supercritical vapor phase !!");
       setSuperCritical(true);
+    }
+    if (isSuperCritical()) {
+      throw new IllegalStateException("System is supercritical");
     }
   }
 
