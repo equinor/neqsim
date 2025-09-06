@@ -35,58 +35,174 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    system.init(0);
-    system.init(2);
+    // If you have chemical reactions coupled to T, keep this hook.
+    if (system.isChemicalSystem()) {
+      system.getChemicalReactionOperations().solveChemEq(0);
+    }
+
+    final int maxIter = 300;
+    final double tolRel = 1e-10;
+    final double damp2P = 0.47; // damping for 2-phase Newton
+    final double damp1P = 0.60; // damping for 1-phase (incipient) Newton
+    final double maxStep = 20.0; // max |ΔT| per iteration [K]
+    final double tiny = 1e-16;
 
     int iterations = 0;
-    double deriv = 0;
+    double dT = 0.0;
 
-    double funk = 0;
-    double dkidt = 0;
-    double dyidt = 0;
-    double dxidt = 0;
-    double Told = 0;
     do {
       iterations++;
-      // system.setBeta(beta+0.65);
       system.init(2);
 
-      for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        system.getPhases()[0].getComponent(i)
-            .setK(system.getPhases()[0].getComponent(i).getFugacityCoefficient()
-                / system.getPhases()[1].getComponent(i).getFugacityCoefficient());
-        system.getPhases()[1].getComponent(i)
-            .setK(system.getPhases()[0].getComponent(i).getFugacityCoefficient()
-                / system.getPhases()[1].getComponent(i).getFugacityCoefficient());
+      final int nc = system.getPhases()[0].getNumberOfComponents();
+      double Told = system.getTemperature();
+
+      // ---------- SPECIAL CASE: pure component ----------
+      if (nc == 1) {
+        // For a pure component at fixed P, saturation condition is: ln(phi^V) - ln(phi^L) = 0
+        // Use phase[1] as vapor, phase[0] as liquid (swap if your convention differs).
+        double lnphiV = system.getPhases()[1].getComponent(0).getLogFugacityCoefficient();
+        double lnphiL = system.getPhases()[0].getComponent(0).getLogFugacityCoefficient();
+        double dlnphiVdT = system.getPhases()[1].getComponent(0).getdfugdt();
+        double dlnphiLdT = system.getPhases()[0].getComponent(0).getdfugdt();
+
+        double g = (lnphiV - lnphiL);
+        double dg = (dlnphiVdT - dlnphiLdT);
+        if (Math.abs(dg) < tiny || Double.isNaN(dg))
+          dg = Math.copySign(tiny, (dg == 0.0 ? 1.0 : dg));
+
+        dT = -damp1P * (g / dg);
+        if (Double.isNaN(dT) || Double.isInfinite(dT))
+          dT = -1.0;
+        if (dT > maxStep)
+          dT = maxStep;
+        if (dT < -maxStep)
+          dT = -maxStep;
+
+        system.setTemperature(Told + dT);
+        continue;
       }
 
-      system.calc_x_y_nonorm();
+      // ---------- MULTICOMPONENT ----------
+      // Build K and dK/dT using fugacity coefficients (match your pressure code's orientation)
+      final double[] Ki = new double[nc];
+      final double[] dKidt = new double[nc];
+      final double[] zi = new double[nc];
 
-      funk = 0e0;
-      deriv = 0e0;
+      for (int i = 0; i < nc; i++) {
+        neqsim.thermo.component.ComponentInterface cL = system.getPhases()[0].getComponent(i); // treat
+                                                                                               // [0]=liq
+        neqsim.thermo.component.ComponentInterface cV = system.getPhases()[1].getComponent(i); // treat
+                                                                                               // [1]=vap
 
-      for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        dkidt = (system.getPhases()[0].getComponent(i).getdfugdt()
-            - system.getPhases()[1].getComponent(i).getdfugdt())
-            * system.getPhases()[0].getComponent(i).getK();
-        // dxidt=-system.getPhases()[0].getComponent(i).getx() *
-        // system.getPhases()[0].getComponent(i).getx()*1.0/system.getPhases()[0].getComponent(i).getz()*system.getBeta()*dkidt;
-        dxidt = -system.getPhases()[0].getComponent(i).getz() * system.getBeta() * dkidt
-            / Math.pow(1.0 - system.getBeta()
-                + system.getBeta() * system.getPhases()[0].getComponent(i).getK(), 2);
-        dyidt = dkidt * system.getPhases()[0].getComponent(i).getx()
-            + system.getPhases()[0].getComponent(i).getK() * dxidt;
-        funk = funk + system.getPhases()[1].getComponent(i).getx()
-            - system.getPhases()[0].getComponent(i).getx();
-        deriv = deriv + dyidt - dxidt;
+        double phiL = cL.getFugacityCoefficient();
+        double phiV = cV.getFugacityCoefficient();
+
+        double dlnphiLdT = cL.getdfugdt(); // assumed d(ln phi)/dT
+        double dlnphiVdT = cV.getdfugdt();
+
+        // Keep the same K-orientation as your pressure routine: K = phiV / phiL (i.e., y/x)
+        Ki[i] = phiV / phiL;
+        dKidt[i] = Ki[i] * (dlnphiVdT - dlnphiLdT);
+        zi[i] = cV.getz(); // overall z (same on both phases)
+
+        // Store K where your RR/x-y uses it
+        cL.setK(Ki[i]);
+        cV.setK(Ki[i]);
       }
 
-      Told = system.getTemperature();
-      system.setTemperature((Told - funk / deriv * 0.7));
-      // System.out.println("Temp: " + system.getTemperature() + " funk " + funk);
-    } while ((Math.abs((system.getTemperature() - Told) / system.getTemperature()) > 1e-7
-        && iterations < 300) || iterations < 3);
+      // Rachford–Rice endpoint checks to detect if a physical split exists (β in (0,1))
+      double f0 = 0.0; // sum z_i (K_i - 1)
+      double f1 = -1.0; // sum z_i / K_i - 1
+      for (int i = 0; i < nc; i++) {
+        f0 += zi[i] * (Ki[i] - 1.0);
+        f1 += zi[i] / Ki[i];
+      }
+
+      boolean twoPhasePossible = (f0 * f1) < 0.0;
+
+      if (twoPhasePossible) {
+        // ---------- Two-phase Newton on Σ(y - x) ----------
+        system.calc_x_y_nonorm();
+
+        double funk = 0.0;
+        double deriv = 0.0;
+
+        double beta = system.getBeta();
+        for (int i = 0; i < nc; i++) {
+          neqsim.thermo.component.ComponentInterface cL = system.getPhases()[0].getComponent(i);
+          neqsim.thermo.component.ComponentInterface cV = system.getPhases()[1].getComponent(i);
+
+          double K = Ki[i];
+          double dKdT = dKidt[i];
+          double z = zi[i];
+
+          double denom = 1.0 - beta + beta * K;
+          double dxidT = -z * beta * dKdT / (denom * denom);
+          double dyidT = dKdT * cV.getx() + K * dxidT; // note: uses x from phase[1] as in your P
+                                                       // solver
+
+          funk += cL.getx() - cV.getx(); // match your pressure code sign convention
+          deriv += dyidT - dxidT;
+        }
+
+        if (Math.abs(deriv) < tiny || Double.isNaN(deriv)) {
+          deriv = Math.copySign(tiny, (deriv == 0.0 ? 1.0 : deriv));
+        }
+
+        dT = -damp2P * (funk / deriv);
+      } else {
+        // ---------- Single-phase: move to incipient boundary directly ----------
+        // Decide bubble (liquid-like) vs dew (vapor-like)
+        boolean bubbleSide;
+        if ((f0 < 0.0 && f1 < 0.0) || (f0 > 0.0 && f1 > 0.0)) {
+          // both negative -> bubble; both positive -> dew
+          bubbleSide = (f0 < 0.0);
+        } else {
+          // rare numerical ambiguity
+          bubbleSide = Math.abs(f0) < Math.abs(f1);
+        }
+
+        double g = 0.0, dg = 0.0;
+        if (bubbleSide) {
+          // Bubble condition: Σ z_i K_i - 1 = 0
+          for (int i = 0; i < nc; i++) {
+            g += zi[i] * Ki[i];
+            dg += zi[i] * dKidt[i];
+          }
+          g -= 1.0;
+        } else {
+          // Dew condition: Σ z_i / K_i - 1 = 0
+          for (int i = 0; i < nc; i++) {
+            g += zi[i] / Ki[i];
+            dg += -zi[i] * dKidt[i] / (Ki[i] * Ki[i]);
+          }
+          g -= 1.0;
+        }
+
+        if (Math.abs(dg) < tiny || Double.isNaN(dg)) {
+          dg = Math.copySign(tiny, (dg == 0.0 ? 1.0 : dg));
+        }
+        dT = -damp1P * (g / dg);
+      }
+
+      // Step-limit, update, and loop
+      if (Double.isNaN(dT) || Double.isInfinite(dT))
+        dT = -1.0;
+      if (dT > maxStep)
+        dT = maxStep;
+      if (dT < -maxStep)
+        dT = -maxStep;
+
+      system.setTemperature(Told + dT);
+
+      // If you couple chemistry strongly to T, you may want:
+      // if (system.isChemicalSystem()) system.getChemicalReactionOperations().solveChemEq(0);
+
+    } while ((((Math.abs(dT) / Math.max(1.0, system.getTemperature())) > tolRel)
+        && iterations < maxIter) || iterations < 3);
   }
+
 
   /** {@inheritDoc} */
   @Override

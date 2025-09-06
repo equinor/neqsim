@@ -159,11 +159,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public StreamInterface getLiquidOutStream() {
-    if (liquidOutStream.getFluid().getClass().getName().equals("neqsim.thermo.system.SystemSoreideWhitson")) {
+    if (liquidOutStream.getFluid().getClass().getName()
+        .equals("neqsim.thermo.system.SystemSoreideWhitson")) {
       if (!liquidOutStream.getFluid().hasPhaseType("aqueous")) {
         ((SystemSoreideWhitson) liquidOutStream.getFluid()).setSalinity(0.0, "mole/sec");
       }
-    } 
+    }
     return liquidOutStream;
   }
 
@@ -175,11 +176,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public StreamInterface getGasOutStream() {
-    if (gasOutStream.getFluid().getClass().getName().equals("neqsim.thermo.system.SystemSoreideWhitson")) {
+    if (gasOutStream.getFluid().getClass().getName()
+        .equals("neqsim.thermo.system.SystemSoreideWhitson")) {
       // if the fluid is a soreide whitson system, we need to clone it to avoid
       // problems with the thermo system
       ((SystemSoreideWhitson) gasOutStream.getFluid()).setSalinity(0.0, "mole/sec");
-    } 
+    }
     return gasOutStream;
   }
 
@@ -246,12 +248,13 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     } else {
       liquidOutStream.setThermoSystem(thermoSystem2.getEmptySystemClone());
     }
-    if (thermoSystem2.hasPhaseType("gas")) {
+    if (thermoSystem2.hasPhaseType("gas") && thermoSystem2.getNumberOfComponents() > 1) {
       gasOutStream.run(id);
     } else {
       gasOutStream.getFluid().init(3);
     }
-    if (thermoSystem2.hasPhaseType("aqueous") || thermoSystem2.hasPhaseType("oil")) {
+    if (thermoSystem2.hasPhaseType("aqueous")
+        || thermoSystem2.hasPhaseType("oil") && thermoSystem2.getNumberOfComponents() > 1) {
       liquidOutStream.run(id);
     } else {
       try {

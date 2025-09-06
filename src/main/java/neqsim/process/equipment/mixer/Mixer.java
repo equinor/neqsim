@@ -16,13 +16,13 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.monitor.MixerResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSoreideWhitson;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import neqsim.process.util.monitor.MixerResponse;
-import neqsim.process.util.report.ReportConfig;
-import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
  * <p>
@@ -264,7 +264,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
     {
       if (mixedStream.getFlowRate("kg/hr") > getMinimumFlow()) {
-        testOps.TPflash();
+        // testOps.TPflash();
         mixedStream.getThermoSystem().init(2);
       } else {
         mixedStream.getThermoSystem().initProperties();
