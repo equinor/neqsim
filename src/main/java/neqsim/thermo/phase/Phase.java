@@ -1261,6 +1261,72 @@ public abstract class Phase implements PhaseInterface {
     }
   }
 
+  /**
+   * Calculates the internal energy in the specified units. {@inheritDoc}
+   */
+  @Override
+  public double getInternalEnergy(String unit) {
+    // The reference internal energy (refInternalEnergy) is the total internal energy for the phase
+    // in Joules.
+    double refInternalEnergy = getInternalEnergy();
+
+    switch (unit) {
+      case "J":
+        // No conversion needed.
+        return refInternalEnergy;
+
+      case "Btu":
+        // 1 J = 0.000947817 Btu
+        final double J_TO_BTU = 0.000947817;
+        return refInternalEnergy * J_TO_BTU;
+
+      case "J/mol":
+      case "kJ/kmol": { // Note: J/mol and kJ/kmol are numerically equivalent units.
+        if (getNumberOfMolesInPhase() == 0) {
+          throw new ArithmeticException(
+              "Number of moles in phase cannot be zero for molar internal energy conversion.");
+        }
+        return refInternalEnergy / getNumberOfMolesInPhase();
+      }
+
+      case "J/kg": {
+        // To get specific internal energy, divide total internal energy by total mass.
+        // Total mass = moles in phase * molar mass (in kg/mol).
+        double totalMass = getNumberOfMolesInPhase() * getMolarMass();
+        if (totalMass == 0) {
+          throw new ArithmeticException("Total mass cannot be zero for J/kg conversion.");
+        }
+        return refInternalEnergy / totalMass;
+      }
+
+      case "kJ/kg": {
+        double totalMass = getNumberOfMolesInPhase() * getMolarMass();
+        if (totalMass == 0) {
+          throw new ArithmeticException("Total mass cannot be zero for kJ/kg conversion.");
+        }
+        // Divide by total mass for specific enthalpy, and by 1000 for kJ.
+        return refInternalEnergy / totalMass / 1000.0;
+      }
+
+      case "Btu/lbmol": {
+        if (getNumberOfMolesInPhase() == 0) {
+          throw new ArithmeticException(
+              "Number of moles in phase cannot be zero for Btu/lbmol conversion.");
+        }
+        double molarInternalEnergy = refInternalEnergy / getNumberOfMolesInPhase(); // Internal
+                                                                                    // energy in
+                                                                                    // J/mol
+        // 1 J/mol = 0.429923 Btu/lbmol
+        final double J_PER_MOL_TO_BTU_PER_LBMOL = 0.429923;
+        return molarInternalEnergy * J_PER_MOL_TO_BTU_PER_LBMOL;
+      }
+
+      default:
+        // Use a more specific exception for an invalid argument.
+        throw new IllegalArgumentException("Unit not supported: " + unit);
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getEnthalpydP() {

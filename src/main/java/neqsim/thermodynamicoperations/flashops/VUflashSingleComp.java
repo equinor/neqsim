@@ -62,10 +62,8 @@ public class VUflashSingleComp extends Flash {
     }
 
     system.init(3);
-    double gasU = system.getPhase(0).getInternalEnergy()
-        / system.getPhase(0).getNumberOfMolesInPhase() * system.getTotalNumberOfMoles();
-    double liqU = system.getPhase(1).getInternalEnergy()
-        / system.getPhase(1).getNumberOfMolesInPhase() * system.getTotalNumberOfMoles();
+    double gasU = system.getPhase(0).getInternalEnergy("J/mol") * system.getTotalNumberOfMoles();
+    double liqU = system.getPhase(1).getInternalEnergy("J/mol") * system.getTotalNumberOfMoles();
 
     if (Uspec < liqU || Uspec > gasU) {
       system.setTemperature(initTemp);
@@ -75,7 +73,7 @@ public class VUflashSingleComp extends Flash {
 
     double beta = (Uspec - liqU) / (gasU - liqU);
     system.setBeta(beta);
-    system.init(3);
+    system.init(2);
   }
 
   /** {@inheritDoc} */
