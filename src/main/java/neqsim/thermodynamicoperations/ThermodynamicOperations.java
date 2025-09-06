@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.api.ioc.CalculationResult;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemProperties;
 import neqsim.thermodynamicoperations.flashops.CalcIonicComposition;
@@ -32,6 +33,8 @@ import neqsim.thermodynamicoperations.flashops.TSFlash;
 import neqsim.thermodynamicoperations.flashops.TVflash;
 import neqsim.thermodynamicoperations.flashops.VHflashQfunc;
 import neqsim.thermodynamicoperations.flashops.VUflashQfunc;
+import neqsim.thermodynamicoperations.flashops.VUflash;
+import neqsim.thermodynamicoperations.flashops.VUflashSingleComp;
 import neqsim.thermodynamicoperations.flashops.dTPflash;
 import neqsim.thermodynamicoperations.flashops.saturationops.AddIonToScaleSaturation;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlash;
@@ -310,12 +313,45 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param type a int
    */
   public void PHflash(double Hspec, int type) {
-    if (system.getPhase(0).getNumberOfComponents() == 1) {
+    if (isPureComponentWithinEnthalpyRange(Hspec)) {
       operation = new PHflashSingleComp(system, Hspec, type);
     } else {
       operation = new PHflash(system, Hspec, type);
     }
     getOperation().run();
+  }
+
+  private boolean isPureComponentWithinEnthalpyRange(double Hspec) {
+    if (system.getPhase(0).getNumberOfComponents() != 1) {
+      return false;
+    }
+    double pc = system.getPhase(0).getComponent(0).getPC();
+    double tc = system.getPhase(0).getComponent(0).getTC();
+    if (system.getPressure() >= pc || system.getTemperature() >= tc) {
+      return false;
+    }
+    SystemInterface tmpSystem = system.clone();
+    ThermodynamicOperations ops = new ThermodynamicOperations(tmpSystem);
+    try {
+      ops.TPflash();
+      if (tmpSystem.getPhase(0).getType() == PhaseType.GAS) {
+        try {
+          ops.dewPointTemperatureFlash();
+        } catch (Exception e) {
+          return false;
+        }
+      } else {
+        ops.bubblePointTemperatureFlash();
+      }
+    } catch (Exception ex) {
+      return false;
+    }
+    tmpSystem.init(3);
+    double gasEnthalpy = tmpSystem.getPhase(0).getEnthalpy()
+        / tmpSystem.getPhase(0).getNumberOfMolesInPhase() * tmpSystem.getTotalNumberOfMoles();
+    double liqEnthalpy = tmpSystem.getPhase(1).getEnthalpy()
+        / tmpSystem.getPhase(1).getNumberOfMolesInPhase() * tmpSystem.getTotalNumberOfMoles();
+    return Hspec >= liqEnthalpy && Hspec <= gasEnthalpy;
   }
 
   /**
@@ -830,8 +866,45 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param Uspec a double
    */
   public void VUflash(double Vspec, double Uspec) {
-    operation = new VUflashQfunc(system, Vspec, Uspec);
+    if (isPureComponentWithinInternalEnergyRange(Uspec)) {
+      operation = new VUflashSingleComp(system, Vspec, Uspec);
+    } else {
+      operation = new VUflashQfunc(system, Vspec, Uspec);
+    }
     getOperation().run();
+  }
+
+  private boolean isPureComponentWithinInternalEnergyRange(double Uspec) {
+    if (system.getPhase(0).getNumberOfComponents() != 1) {
+      return false;
+    }
+    double pc = system.getPhase(0).getComponent(0).getPC();
+    double tc = system.getPhase(0).getComponent(0).getTC();
+    if (system.getPressure() >= pc || system.getTemperature() >= tc) {
+      return false;
+    }
+    SystemInterface tmpSystem = system.clone();
+    ThermodynamicOperations ops = new ThermodynamicOperations(tmpSystem);
+    try {
+      ops.TPflash();
+      if (tmpSystem.getPhase(0).getType() == PhaseType.GAS) {
+        try {
+          ops.dewPointTemperatureFlash();
+        } catch (Exception e) {
+          return false;
+        }
+      } else {
+        ops.bubblePointTemperatureFlash();
+      }
+    } catch (Exception ex) {
+      return false;
+    }
+    tmpSystem.init(3);
+    double gasU = tmpSystem.getPhase(0).getInternalEnergy()
+        / tmpSystem.getPhase(0).getNumberOfMolesInPhase() * tmpSystem.getTotalNumberOfMoles();
+    double liqU = tmpSystem.getPhase(1).getInternalEnergy()
+        / tmpSystem.getPhase(1).getNumberOfMolesInPhase() * tmpSystem.getTotalNumberOfMoles();
+    return Uspec >= liqU && Uspec <= gasU;
   }
 
   /**
