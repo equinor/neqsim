@@ -33,8 +33,8 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
   @Override
   public void run() {
     if (system.getPhase(0).getNumberOfComponents() == 1
-        && system.getPressure() > system.getPhase(0).getComponent(0).getPC()) {
-      setSuperCritical(true);
+        && system.getPressure() >= system.getPhase(0).getComponent(0).getPC()) {
+      throw new IllegalStateException("System is supercritical");
     }
 
     int iterations = 0;
@@ -46,20 +46,10 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
     system.setBeta(1, 1.0 - 1e-10);
     system.setBeta(0, 1e-10);
     // need to fix this close to critical point
-    if (system.getPhase(0).getNumberOfComponents() == 1) {
-      double oldTemp = system.getTemperature();
-      if (system.getPressure() > system.getPhase(0).getComponent(0).getPC()) {
-        setSuperCritical(true);
-        return;
-      }
-      if (system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
-        system.setTemperature(
-            system.getPhase(0).getComponent(0).getAntoineVaporTemperature(system.getPressure()));
-      }
-      if (system.getTemperature() > system.getPhase(0).getComponent(0).getTC() || system
-          .getTemperature() < system.getPhase(0).getComponent(0).getTriplePointTemperature()) {
-        system.setTemperature(oldTemp);
-      }
+    if (system.getPhase(0).getNumberOfComponents() == 1
+        && system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
+      system.setTemperature(
+          system.getPhase(0).getComponent(0).getAntoineVaporTemperature(system.getPressure()));
     }
 
     if (system.isChemicalSystem()) {
@@ -150,6 +140,9 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
         && Math.abs(system.getPhases()[1].getComponent(0).getFugacityCoefficient()
             / system.getPhases()[0].getComponent(0).getFugacityCoefficient() - 1.0) < 1e-20) {
       setSuperCritical(true);
+    }
+    if (isSuperCritical()) {
+      throw new IllegalStateException("System is supercritical");
     }
   }
 

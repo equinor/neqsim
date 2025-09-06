@@ -32,6 +32,10 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
+    if (system.getPhase(0).getNumberOfComponents() == 1
+        && system.getPressure() >= system.getPhase(0).getComponent(0).getPC()) {
+      throw new IllegalStateException("System is supercritical");
+    }
     int iterations = 0;
     int maxNumberOfIterations = 10000;
     double yold = 0;
@@ -39,6 +43,7 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
     double deriv = 0;
 
     double funk = 0;
+    double ktot = 0.0;
     for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
       system.getPhases()[1].getComponent(i).setx(system.getPhases()[0].getComponent(i).getz());
       system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getK()
@@ -51,6 +56,7 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
       funk = 0;
       deriv = 0;
       ytotal = 0;
+      ktot = 0.0;
       system.init(2);
       for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
         do {
@@ -75,6 +81,7 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
             * system.getPhases()[1].getComponent(i).getK()
             * (system.getPhases()[1].getComponent(i).getdfugdt()
                 - system.getPhases()[0].getComponent(i).getdfugdt());
+        ktot += Math.abs(system.getPhases()[1].getComponent(i).getK() - 1.0);
       }
 
       // logger.info("FUNK: " + funk);
@@ -82,6 +89,18 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
       // system.setPressure(-Math.log(funk)/(deriv/funk)+system.getPressure());
       system.setTemperature(-(funk - 1) / deriv + system.getTemperature());
     } while ((Math.abs(ytotal - 1) > 1e-10) && (iterations < maxNumberOfIterations));
+    if (Math.abs(ytotal - 1.0) >= 1e-5
+        || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
+      setSuperCritical(true);
+    }
+    if (system.getPhase(0).getNumberOfComponents() == 1
+        && Math.abs(system.getPhases()[1].getComponent(0).getFugacityCoefficient()
+            / system.getPhases()[0].getComponent(0).getFugacityCoefficient() - 1.0) < 1e-20) {
+      setSuperCritical(true);
+    }
+    if (isSuperCritical()) {
+      throw new IllegalStateException("System is supercritical");
+    }
   }
 
   /** {@inheritDoc} */

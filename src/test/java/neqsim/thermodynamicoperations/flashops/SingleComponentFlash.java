@@ -6,7 +6,8 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
-import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SingleComponentFlash {
@@ -130,7 +131,7 @@ public class SingleComponentFlash {
   @Test
   void testProcess1() {
 
-    SystemSrkEos fluid1 = new SystemSrkEos(278.15, 10.0);
+    SystemInterface fluid1 = new SystemPrEos(278.15, 10.0);
     fluid1.addComponent("propane", 1.0);
 
     Stream stream1 = new Stream("feed stream", fluid1);
@@ -143,7 +144,8 @@ public class SingleComponentFlash {
     valve1.setOutletPressure(3.0);
     valve1.run();
     valve1.getFluid().initProperties();
-    valve1.getOutletStream().getFluid().prettyPrint();
+    // valve1.getOutletStream().getFluid().prettyPrint();
+    assertEquals(259.025123, valve1.getOutletStream().getTemperature(), 1e-2);
 
     Separator separator1 = new Separator("separator 1", valve1.getOutletStream());
     separator1.run();
@@ -156,7 +158,9 @@ public class SingleComponentFlash {
         new ThrottlingValve("liq valve 1", separator1.getLiquidOutStream());
     liquid_valve1.setOutletPressure(1.4);
     liquid_valve1.run();
-    liquid_valve1.getOutletStream().getFluid().prettyPrint();
+    
+    assertEquals(238.599901382, liquid_valve1.getOutletStream().getTemperature(), 1e-2);
+    // liquid_valve1.getOutletStream().getFluid().prettyPrint();
   }
 
 
