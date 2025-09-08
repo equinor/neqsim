@@ -263,14 +263,14 @@ public class GibbsReactorTest {
 
     SystemInterface system = new SystemSrkEos(298, 1.0);
     system.addComponent("CO2", 1e6, "mole/sec");
-    system.addComponent("SO2", 100, "mole/sec");
+    system.addComponent("SO2", 0, "mole/sec");
     system.addComponent("SO3", 0, "mole/sec");
-    system.addComponent("NO2", 0, "mole/sec");
+    system.addComponent("NO2",0.0, "mole/sec");
     system.addComponent("NO", 0, "mole/sec");
-    system.addComponent("water", 0, "mole/sec");
-    system.addComponent("ammonia", 0, "mole/sec");
-    system.addComponent("H2S", 100, "mole/sec");
-    system.addComponent("oxygen", 0, "mole/sec");
+    system.addComponent("water", 30, "mole/sec");
+    //system.addComponent("ammonia", 0, "mole/sec");
+    system.addComponent("H2S", 10, "mole/sec");
+    system.addComponent("oxygen", 0.0, "mole/sec");
     system.addComponent("sulfuric acid", 0, "mole/sec");
     system.addComponent("nitric acid", 0, "mole/sec");
     system.addComponent("NH4NO3", 0.0, "mole/sec");
@@ -285,7 +285,7 @@ public class GibbsReactorTest {
     // system.addComponent("N2O", 0, "mole/sec");
     // system.addComponent("nitrogen", 0, "mole/sec");
     system.addComponent("NH2OH", 0, "mole/sec");
-    system.addComponent("N2H4", 0, "mole/sec");
+    //system.addComponent("N2H4", 0, "mole/sec");
     system.addComponent("S8", 0, "mole/sec");
     system.addComponent("HNO2", 0, "mole/sec");
     system.addComponent("MEG", 0.0, "mole/sec");
@@ -317,8 +317,8 @@ public class GibbsReactorTest {
     system.setMixingRule(2);
 
     Stream inletStream = new Stream("Inlet Stream", system);
-    inletStream.setPressure(100, "bara");
-    inletStream.setTemperature(25, "C");
+    inletStream.setPressure(20, "bara");
+    inletStream.setTemperature(-25, "C");
     inletStream.run();
 
 
@@ -338,7 +338,7 @@ public class GibbsReactorTest {
     // Optionally, print mole fractions for inspection
     System.out.println("GibbsReactor outlet composition (mole fractions):");
     for (int i = 0; i < outletSystem.getNumberOfComponents(); i++) {
-      if (outletSystem.getComponent(i).getz() * 1e6 > 1.0) {
+      if (outletSystem.getComponent(i).getz() * 1e6 > 0.1) {
         System.out.println(outletSystem.getComponent(i).getComponentName() + ": "
             + outletSystem.getComponent(i).getz() * 1e6);
       }
