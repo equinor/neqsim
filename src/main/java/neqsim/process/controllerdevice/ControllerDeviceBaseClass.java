@@ -6,6 +6,9 @@
 
 package neqsim.process.controllerdevice;
 
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,9 +16,14 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.util.NamedBaseClass;
 
 /**
- * <p>
- * ControllerDeviceBaseClass class.
- * </p>
+ * Discrete PID controller implementation providing common features for process
+ * control in NeqSim. The class supports anti-windup clamping, derivative
+ * filtering, gain scheduling, event logging and performance metrics as well as
+ * auto-tuning utilities.
+ *
+ * <p>The controller operates on a {@link
+ * neqsim.process.measurementdevice.MeasurementDeviceInterface} transmitter and
+ * exposes a standard PID API through {@link ControllerDeviceInterface}.</p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -43,10 +51,19 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double Kp = 1.0;
   private double Ti = 300.0;
   private double Td = 0.0;
-
   // Internal state of integration contribution
   private double TintValue = 0.0;
+  private double derivativeState = 0.0;
+  private double derivativeFilterTime = 0.0;
+  private double minResponse = Double.NEGATIVE_INFINITY;
+  private double maxResponse = Double.POSITIVE_INFINITY;
   boolean isActive = true;
+  private NavigableMap<Double, double[]> gainSchedule = new TreeMap<>();
+  private java.util.List<ControllerEvent> eventLog = new java.util.ArrayList<>();
+  private double totalTime = 0.0;
+  private double integralAbsoluteError = 0.0;
+  private double lastTimeOutsideBand = 0.0;
+  private double settlingTolerance = 0.02;
 
   /**
    * <p>
@@ -94,30 +111,90 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
   /** {@inheritDoc} */
   @Override
+  public double getMeasuredValue(String unit) {
+    if (unit == null || unit.isEmpty() || unit.equals("[?]")) {
+      return this.transmitter.getMeasuredValue();
+    }
+    return this.transmitter.getMeasuredValue(unit);
+  }
+
+  /** {@inheritDoc}
+   *
+   * <p>If no engineering unit is configured, the controller falls back to the legacy
+   * percent-based error formulation used by earlier NeqSim versions.</p>
+   */
+  @Override
   public void runTransient(double initResponse, double dt, UUID id) {
     if (!isActive) {
+      totalTime += dt;
       response = initResponse;
       calcIdentifier = id;
       return;
     }
+    totalTime += dt;
     if (isReverseActing()) {
       propConstant = -1;
     }
+    double measurement = getMeasuredValue(unit);
+    applyGainSchedule(measurement);
     oldoldError = error;
     oldError = error;
 
-    // Error is normalized
-    error =
-        transmitter.getMeasuredPercentValue() - (controllerSetPoint - transmitter.getMinimumValue())
-            / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100;
+    if (unit == null || unit.isEmpty() || unit.equals("[?]")) {
+      double measurementPercent = transmitter.getMeasuredPercentValue();
+      double setPointPercent = (controllerSetPoint - transmitter.getMinimumValue())
+          / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100.0;
+      error = measurementPercent - setPointPercent;
+      if (Ti != 0) {
+        TintValue = Kp / Ti * error;
+      }
+      double TderivValue = Kp * Td * ((error - 2 * oldError + oldoldError) / (dt * dt));
+      response = initResponse + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
+    } else {
+      error = measurement - controllerSetPoint;
+      integralAbsoluteError += Math.abs(error) * dt;
+      double band = settlingTolerance * Math.max(Math.abs(controllerSetPoint), 1.0);
+      if (Math.abs(error) > band) {
+        lastTimeOutsideBand = totalTime;
+      }
+      double TintIncrement = 0.0;
+      if (Ti > 0) {
+        TintIncrement = Kp / Ti * error * dt;
+        TintValue += TintIncrement;
+      } else {
+        TintValue = 0.0;
+      }
 
-    if (Ti != 0) {
-      TintValue = Kp / Ti * error;
+      double derivative = (error - oldError) / dt;
+      if (Td > 0) {
+        if (derivativeFilterTime > 0) {
+          derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
+        } else {
+          derivativeState = derivative;
+        }
+      } else {
+        derivativeState = 0.0;
+      }
+
+      double delta = Kp * (error - oldError) + TintValue + Kp * Td * derivativeState;
+
+      response = initResponse + propConstant * delta;
+
+      if (response > maxResponse) {
+        response = maxResponse;
+        if (Ti > 0) {
+          TintValue -= TintIncrement;
+        }
+      } else if (response < minResponse) {
+        response = minResponse;
+        if (Ti > 0) {
+          TintValue -= TintIncrement;
+        }
+      }
+
+      eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
     }
-    double TderivValue = Kp * Td * ((error - 2 * oldError + oldoldError) / (dt * dt));
 
-    response = initResponse
-        + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
     calcIdentifier = id;
   }
 
@@ -125,6 +202,13 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   @Override
   public void setControllerSetPoint(double signal) {
     this.controllerSetPoint = signal;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setControllerSetPoint(double signal, String unit) {
+    this.controllerSetPoint = signal;
+    this.unit = unit;
   }
 
   /** {@inheritDoc} */
@@ -155,6 +239,34 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   @Override
   public void setReverseActing(boolean reverseActing) {
     this.reverseActing = reverseActing;
+  }
+
+  /**
+   * <p>
+   * Set minimum and maximum controller output for anti-windup handling.
+   * </p>
+   *
+   * @param min Minimum controller response
+   * @param max Maximum controller response
+   */
+  public void setOutputLimits(double min, double max) {
+    this.minResponse = min;
+    this.maxResponse = max;
+  }
+
+  /**
+   * <p>
+   * Set derivative filter time constant. Set to zero to disable filtering.
+   * </p>
+   *
+   * @param timeConstant Filter time constant in seconds
+   */
+  public void setDerivativeFilterTime(double timeConstant) {
+    if (timeConstant >= 0) {
+      this.derivativeFilterTime = timeConstant;
+    } else {
+      logger.warn("Negative filter time is not allowed.");
+    }
   }
 
   /**
@@ -240,6 +352,89 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       this.Td = Td;
     } else {
       logger.warn("Negative Td is not allowed.");
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoTune(double ultimateGain, double ultimatePeriod) {
+    if (ultimateGain > 0 && ultimatePeriod > 0) {
+      setControllerParameters(0.6 * ultimateGain, 0.5 * ultimatePeriod,
+          0.125 * ultimatePeriod);
+    } else {
+      logger.warn("Invalid ultimate gain or period for auto tune.");
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoTuneStepResponse(double processGain, double timeConstant, double deadTime) {
+    if (processGain != 0.0 && timeConstant > 0 && deadTime > 0) {
+      double Kp = 1.2 / processGain * (timeConstant / deadTime);
+      double Ti = 2.0 * deadTime;
+      double Td = 0.5 * deadTime;
+      setControllerParameters(Kp, Ti, Td);
+    } else {
+      logger.warn("Invalid step response parameters for auto tune.");
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addGainSchedulePoint(double processValue, double Kp, double Ti, double Td) {
+    gainSchedule.put(processValue, new double[] {Kp, Ti, Td});
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<ControllerEvent> getEventLog() {
+    return eventLog;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void resetEventLog() {
+    eventLog.clear();
+    totalTime = 0.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getIntegralAbsoluteError() {
+    return integralAbsoluteError;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSettlingTime() {
+    return lastTimeOutsideBand;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void resetPerformanceMetrics() {
+    integralAbsoluteError = 0.0;
+    lastTimeOutsideBand = 0.0;
+    totalTime = 0.0;
+  }
+
+  /**
+   * Apply gain-scheduled controller parameters based on the current measurement
+   * value. The schedule selects the parameter set with the highest threshold not
+   * exceeding the measurement.
+   *
+   * @param measurement current process value
+   */
+  private void applyGainSchedule(double measurement) {
+    if (gainSchedule.isEmpty()) {
+      return;
+    }
+    Map.Entry<Double, double[]> entry = gainSchedule.floorEntry(measurement);
+    if (entry != null) {
+      double[] params = entry.getValue();
+      this.Kp = params[0];
+      this.Ti = params[1];
+      this.Td = params[2];
     }
   }
 }

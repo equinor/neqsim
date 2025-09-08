@@ -54,6 +54,6 @@ public class TemperatureTransmitter extends StreamMeasurementDeviceBaseClass {
   /** {@inheritDoc} */
   @Override
   public double getMeasuredValue(String unit) {
-    return stream.getThermoSystem().getTemperature(unit);
+    return applySignalModifiers(stream.getThermoSystem().getTemperature(unit));
   }
 }
