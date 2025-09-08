@@ -169,7 +169,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    */
   public void calcKv() {
     Map<String, Object> design = getMechanicalDesign().calcValveSize();
-    setKv((double) design.get("Kv"));
+    setKv((Double) design.get("Kv"));
   }
 
   /**
@@ -230,7 +230,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       calcKv();
       valveKvSet = true;
     }
-
     inStream.getThermoSystem().initProperties();
     double enthalpy = thermoSystem.getEnthalpy();
 
@@ -311,7 +310,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
     inStream.getFluid().initProperties();
     thermoSystem = inStream.getThermoSystem().clone();
-    thermoSystem.init(3);
+    thermoSystem.init(2);
     double enthalpy = thermoSystem.getEnthalpy();
 
     double outPres = getOutletStream().getThermoSystem().getPressure();
@@ -333,10 +332,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     if (deltaP > 0.0 && !isCalcPressure) {
       molarFlow = calculateMolarFlow();
 
-      // inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-      inStream.getThermoSystem().setTotalFlowRate(molarFlow, "mole/sec");
-      inStream.getThermoSystem().init(1);
-      inStream.run(id);
+      inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+      inStream.getThermoSystem().initProperties();
     }
     // update outlet pressure if required
     if (valveKvSet && isCalcPressure) {
@@ -362,23 +359,18 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
 
     try {
-      // inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-      inStream.getThermoSystem().setTotalFlowRate(molarFlow, "mole/sec");
-      inStream.getThermoSystem().init(1);
-      inStream.run(id);
+      inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+      inStream.getThermoSystem().initProperties();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
     }
     try {
-      // outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-      outStream.getThermoSystem().setTotalFlowRate(molarFlow, "mole/sec");
-      outStream.getThermoSystem().init(1);
-      outStream.run(id);
+      outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+      outStream.getThermoSystem().initProperties();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
     }
     setCalculationIdentifier(id);
-
   }
 
   /**

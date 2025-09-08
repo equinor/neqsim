@@ -116,7 +116,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
         ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
 
     Map<String, Object> result = valveMechanicalDesign.fullOutput ? new HashMap<>() : null;
-
+    fluid.initPhysicalProperties("density");
     double density = fluid.getDensity("kg/m3");
     double Y = 1.0;
 
