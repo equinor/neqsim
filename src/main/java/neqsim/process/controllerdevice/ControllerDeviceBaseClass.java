@@ -139,6 +139,34 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     applyGainSchedule(measurement);
     oldoldError = error;
     oldError = error;
+    double measurement = transmitter.getMeasuredValue(unit);
+    // Error based on specified unit
+    error = measurement - controllerSetPoint;
+    integralAbsoluteError += Math.abs(error) * dt;
+    double band = settlingTolerance * Math.max(Math.abs(controllerSetPoint), 1.0);
+    if (Math.abs(error) > band) {
+      lastTimeOutsideBand = totalTime;
+    }
+    double TintIncrement = 0.0;
+    if (Ti > 0) {
+      TintIncrement = Kp / Ti * error * dt;
+      TintValue += TintIncrement;
+    } else {
+      TintValue = 0.0;
+    }
+
+    double derivative = (error - oldError) / dt;
+    if (Td > 0) {
+      if (derivativeFilterTime > 0) {
+        derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
+      } else {
+        derivativeState = derivative;
+      }
+    } else {
+      derivativeState = 0.0;
+    }
+
+    double delta = Kp * (error - oldError) + TintValue + Kp * Td * derivativeState;
 
     if (unit == null || unit.isEmpty() || unit.equals("[?]")) {
       double measurementPercent = transmitter.getMeasuredPercentValue();
@@ -194,7 +222,6 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
       eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
     }
-
     calcIdentifier = id;
   }
 
