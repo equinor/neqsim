@@ -239,10 +239,10 @@
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>3.5.2</version>
 			</plugin>
-			<plugin>
-				<groupId>org.jacoco</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.12</version>
+                        <plugin>
+                                <groupId>org.jacoco</groupId>
+                                <artifactId>jacoco-maven-plugin</artifactId>
+                                <version>0.8.12</version>
 				<configuration>
 					<excludes>
 						<exclude>neqsim/physicalproperties/util/parameterfitting/**/*</exclude>
@@ -271,7 +271,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
+                        </plugin>
                         <plugin>
                                 <groupId>org.apache.maven.plugins</groupId>
                                 <artifactId>maven-source-plugin</artifactId>
@@ -281,6 +281,38 @@
                                                 <id>attach-sources</id>
                                                 <goals>
                                                         <goal>jar-no-fork</goal>
+                                                </goals>
+                                        </execution>
+                                </executions>
+                        </plugin>
+                        <plugin>
+                                <groupId>com.github.spotbugs</groupId>
+                                <artifactId>spotbugs-maven-plugin</artifactId>
+                                <version>4.9.4.2</version>
+                                <configuration>
+                                        <failOnError>false</failOnError>
+                                </configuration>
+                                <executions>
+                                        <execution>
+                                                <phase>verify</phase>
+                                                <goals>
+                                                        <goal>check</goal>
+                                                </goals>
+                                        </execution>
+                                </executions>
+                        </plugin>
+                        <plugin>
+                                <groupId>org.apache.maven.plugins</groupId>
+                                <artifactId>maven-pmd-plugin</artifactId>
+                                <version>3.24.0</version>
+                                <configuration>
+                                        <failOnViolation>false</failOnViolation>
+                                </configuration>
+                                <executions>
+                                        <execution>
+                                                <phase>verify</phase>
+                                                <goals>
+                                                        <goal>check</goal>
                                                 </goals>
                                         </execution>
                                 </executions>
