@@ -16,14 +16,14 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.util.NamedBaseClass;
 
 /**
- * Discrete PID controller implementation providing common features for process
- * control in NeqSim. The class supports anti-windup clamping, derivative
- * filtering, gain scheduling, event logging and performance metrics as well as
- * auto-tuning utilities.
+ * Discrete PID controller implementation providing common features for process control in NeqSim.
+ * The class supports anti-windup clamping, derivative filtering, gain scheduling, event logging and
+ * performance metrics as well as auto-tuning utilities.
  *
- * <p>The controller operates on a {@link
- * neqsim.process.measurementdevice.MeasurementDeviceInterface} transmitter and
- * exposes a standard PID API through {@link ControllerDeviceInterface}.</p>
+ * <p>
+ * The controller operates on a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
+ * transmitter and exposes a standard PID API through {@link ControllerDeviceInterface}.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -118,10 +118,13 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     return this.transmitter.getMeasuredValue(unit);
   }
 
-  /** {@inheritDoc}
+  /**
+   * {@inheritDoc}
    *
-   * <p>If no engineering unit is configured, the controller falls back to the legacy
-   * percent-based error formulation used by earlier NeqSim versions.</p>
+   * <p>
+   * If no engineering unit is configured, the controller falls back to the legacy percent-based
+   * error formulation used by earlier NeqSim versions.
+   * </p>
    */
   @Override
   public void runTransient(double initResponse, double dt, UUID id) {
@@ -139,21 +142,6 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     applyGainSchedule(measurement);
     oldoldError = error;
     oldError = error;
-    double measurement = transmitter.getMeasuredValue(unit);
-    // Error based on specified unit
-    error = measurement - controllerSetPoint;
-    integralAbsoluteError += Math.abs(error) * dt;
-    double band = settlingTolerance * Math.max(Math.abs(controllerSetPoint), 1.0);
-    if (Math.abs(error) > band) {
-      lastTimeOutsideBand = totalTime;
-    }
-    double TintIncrement = 0.0;
-    if (Ti > 0) {
-      TintIncrement = Kp / Ti * error * dt;
-      TintValue += TintIncrement;
-    } else {
-      TintValue = 0.0;
-    }
 
     double band = 0.0;
     double TintIncrement = 0.0;
@@ -169,7 +157,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         TintValue = Kp / Ti * error;
       }
       double TderivValue = Kp * Td * ((error - 2 * oldError + oldoldError) / (dt * dt));
-      response = initResponse + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
+      response = initResponse
+          + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
     } else {
       error = measurement - controllerSetPoint;
       integralAbsoluteError += Math.abs(error) * dt;
@@ -212,8 +201,10 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         }
       }
 
-      eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
+      eventLog
+          .add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
     }
+
     calcIdentifier = id;
   }
 
@@ -378,8 +369,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   @Override
   public void autoTune(double ultimateGain, double ultimatePeriod) {
     if (ultimateGain > 0 && ultimatePeriod > 0) {
-      setControllerParameters(0.6 * ultimateGain, 0.5 * ultimatePeriod,
-          0.125 * ultimatePeriod);
+      setControllerParameters(0.6 * ultimateGain, 0.5 * ultimatePeriod, 0.125 * ultimatePeriod);
     } else {
       logger.warn("Invalid ultimate gain or period for auto tune.");
     }
@@ -438,9 +428,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * Apply gain-scheduled controller parameters based on the current measurement
-   * value. The schedule selects the parameter set with the highest threshold not
-   * exceeding the measurement.
+   * Apply gain-scheduled controller parameters based on the current measurement value. The schedule
+   * selects the parameter set with the highest threshold not exceeding the measurement.
    *
    * @param measurement current process value
    */
