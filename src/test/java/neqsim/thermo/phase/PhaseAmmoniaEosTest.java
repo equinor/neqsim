@@ -16,7 +16,6 @@ class PhaseAmmoniaEosTest {
   @Test
   void testPhaseProperties() {
     SystemInterface system = new SystemAmmoniaEos(298.15, 10.0);
-    system.addComponent("ammonia", 1.0);
     system.init(0);
     system.init(3);
 
@@ -31,7 +30,6 @@ class PhaseAmmoniaEosTest {
   @Test
   void testTPflashGasAt5bar20C() {
     SystemInterface system = new SystemAmmoniaEos(293.15, 5.0);
-    system.addComponent("ammonia", 1.0);
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     ops.TPflash();
     PhaseInterface gas = system.getPhase(0);

@@ -1,5 +1,6 @@
 package neqsim.thermo.system;
 
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseAmmoniaEos;
 
 /**
@@ -25,6 +26,7 @@ public class SystemAmmoniaEos extends SystemEos {
       phaseArray[i].setPressure(P);
     }
     this.useVolumeCorrection(false);
+    addComponent("ammonia", 1.0);
   }
 
   @Override
@@ -36,5 +38,23 @@ public class SystemAmmoniaEos extends SystemEos {
       logger.error("Cloning failed.", ex);
     }
     return cloned;
+  }
+
+  @Override
+  public void addComponent(String componentName, double moles) {
+    componentName = ComponentInterface.getComponentNameFromAlias(componentName);
+    if (!"ammonia".equals(componentName)) {
+      throw new RuntimeException("SystemAmmoniaEos supports only ammonia");
+    }
+    super.addComponent(componentName, moles);
+  }
+
+  @Override
+  public void addComponent(ComponentInterface inComponent) {
+    String name = ComponentInterface.getComponentNameFromAlias(inComponent.getComponentName());
+    if (!"ammonia".equals(name)) {
+      throw new RuntimeException("SystemAmmoniaEos supports only ammonia");
+    }
+    super.addComponent(inComponent);
   }
 }
