@@ -105,15 +105,17 @@ A number of master and PhD students at NTNU have contributed to development of N
 
 ## NeqSim modules
 
-NeqSim is built upon seven base modules:
+NeqSim is built upon seven base modules, each covering a key part of the library:
 
-1. Thermodynamic Routines
-2. Physical Properties Routines
-3. Fluid Mechanic Routines
-4. Unit Operations
-5. Chemical Reactions Routines
-6. Parameter Fitting Routines
-7. Process simulation routines
+1. **Thermodynamic routines** – phase-equilibrium models, equation-of-state implementations and flash calculations.
+2. **Physical properties routines** – transport and thermophysical property calculations such as density and viscosity.
+3. **Fluid mechanic routines** – models for single- and multiphase flow in pipes and networks.
+4. **Unit operations** – reusable models of separators, heat exchangers and other equipment.
+5. **Chemical reactions routines** – equilibrium and kinetic reaction calculations.
+6. **Parameter fitting routines** – tools for estimating model parameters from experimental data.
+7. **Process simulation routines** – framework for assembling unit operations into steady-state or dynamic flowsheets.
+
+For a deeper introduction to each module, see [docs/modules.md](docs/modules.md).
 
 ## File System
 
