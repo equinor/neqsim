@@ -1,5 +1,6 @@
 package neqsim.thermo.system;
 
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseVegaEos;
@@ -70,6 +71,7 @@ public class SystemVegaEos extends SystemEos {
       phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
     }
     this.useVolumeCorrection(false);
+    addComponent("helium", 1.0);
     commonInitialization();
   }
 
@@ -95,5 +97,23 @@ public class SystemVegaEos extends SystemEos {
     setImplementedCompositionDeriativesofFugacity(false);
     setImplementedPressureDeriativesofFugacity(false);
     setImplementedTemperatureDeriativesofFugacity(false);
+  }
+
+  @Override
+  public void addComponent(String componentName, double moles) {
+    componentName = ComponentInterface.getComponentNameFromAlias(componentName);
+    if (!"helium".equals(componentName)) {
+      throw new RuntimeException("SystemVegaEos supports only helium");
+    }
+    super.addComponent(componentName, moles);
+  }
+
+  @Override
+  public void addComponent(ComponentInterface inComponent) {
+    String name = ComponentInterface.getComponentNameFromAlias(inComponent.getComponentName());
+    if (!"helium".equals(name)) {
+      throw new RuntimeException("SystemVegaEos supports only helium");
+    }
+    super.addComponent(inComponent);
   }
 }

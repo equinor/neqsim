@@ -1,5 +1,6 @@
 package neqsim.thermo.system;
 
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseWaterIAPWS;
@@ -53,6 +54,7 @@ public class SystemWaterIF97 extends SystemEos {
       phaseArray[numberOfPhases - 1].setPressure(P);
       phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
     }
+    addComponent("water", 1.0);
     commonInitialization();
   }
 
@@ -72,5 +74,23 @@ public class SystemWaterIF97 extends SystemEos {
     setImplementedCompositionDeriativesofFugacity(false);
     setImplementedPressureDeriativesofFugacity(false);
     setImplementedTemperatureDeriativesofFugacity(false);
+  }
+
+  @Override
+  public void addComponent(String componentName, double moles) {
+    componentName = ComponentInterface.getComponentNameFromAlias(componentName);
+    if (!"water".equals(componentName)) {
+      throw new RuntimeException("SystemWaterIF97 supports only water");
+    }
+    super.addComponent(componentName, moles);
+  }
+
+  @Override
+  public void addComponent(ComponentInterface inComponent) {
+    String name = ComponentInterface.getComponentNameFromAlias(inComponent.getComponentName());
+    if (!"water".equals(name)) {
+      throw new RuntimeException("SystemWaterIF97 supports only water");
+    }
+    super.addComponent(inComponent);
   }
 }
