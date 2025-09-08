@@ -112,10 +112,17 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   /** {@inheritDoc} */
   @Override
   public double getMeasuredValue(String unit) {
+    if (unit == null || unit.isEmpty() || unit.equals("[?]")) {
+      return this.transmitter.getMeasuredValue();
+    }
     return this.transmitter.getMeasuredValue(unit);
   }
 
-  /** {@inheritDoc} */
+  /** {@inheritDoc}
+   *
+   * <p>If no engineering unit is configured, the controller falls back to the legacy
+   * percent-based error formulation used by earlier NeqSim versions.</p>
+   */
   @Override
   public void runTransient(double initResponse, double dt, UUID id) {
     if (!isActive) {
@@ -128,7 +135,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     if (isReverseActing()) {
       propConstant = -1;
     }
-    applyGainSchedule(getMeasuredValue(unit));
+    double measurement = getMeasuredValue(unit);
+    applyGainSchedule(measurement);
     oldoldError = error;
     oldError = error;
     double measurement = transmitter.getMeasuredValue(unit);
@@ -160,21 +168,60 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
     double delta = Kp * (error - oldError) + TintValue + Kp * Td * derivativeState;
 
-    response = initResponse + propConstant * delta;
+    if (unit == null || unit.isEmpty() || unit.equals("[?]")) {
+      double measurementPercent = transmitter.getMeasuredPercentValue();
+      double setPointPercent = (controllerSetPoint - transmitter.getMinimumValue())
+          / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100.0;
+      error = measurementPercent - setPointPercent;
+      if (Ti != 0) {
+        TintValue = Kp / Ti * error;
+      }
+      double TderivValue = Kp * Td * ((error - 2 * oldError + oldoldError) / (dt * dt));
+      response = initResponse + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
+    } else {
+      error = measurement - controllerSetPoint;
+      integralAbsoluteError += Math.abs(error) * dt;
+      double band = settlingTolerance * Math.max(Math.abs(controllerSetPoint), 1.0);
+      if (Math.abs(error) > band) {
+        lastTimeOutsideBand = totalTime;
+      }
+      double TintIncrement = 0.0;
+      if (Ti > 0) {
+        TintIncrement = Kp / Ti * error * dt;
+        TintValue += TintIncrement;
+      } else {
+        TintValue = 0.0;
+      }
 
-    if (response > maxResponse) {
-      response = maxResponse;
-      if (Ti > 0) {
-        TintValue -= TintIncrement;
+      double derivative = (error - oldError) / dt;
+      if (Td > 0) {
+        if (derivativeFilterTime > 0) {
+          derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
+        } else {
+          derivativeState = derivative;
+        }
+      } else {
+        derivativeState = 0.0;
       }
-    } else if (response < minResponse) {
-      response = minResponse;
-      if (Ti > 0) {
-        TintValue -= TintIncrement;
+
+      double delta = Kp * (error - oldError) + TintValue + Kp * Td * derivativeState;
+
+      response = initResponse + propConstant * delta;
+
+      if (response > maxResponse) {
+        response = maxResponse;
+        if (Ti > 0) {
+          TintValue -= TintIncrement;
+        }
+      } else if (response < minResponse) {
+        response = minResponse;
+        if (Ti > 0) {
+          TintValue -= TintIncrement;
+        }
       }
+
+      eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
     }
-
-    eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
     calcIdentifier = id;
   }
 
