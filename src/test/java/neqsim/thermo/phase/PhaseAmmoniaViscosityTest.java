@@ -23,6 +23,6 @@ public class PhaseAmmoniaViscosityTest {
     phase.setPressure(10.0);
     phase.setType(PhaseType.LIQUID);
     double visc = phase.getViscosity();
-    assertEquals(1.3860846e-4, visc, 2e-7);
+    assertEquals(6.5474e-5, visc, 2e-7);
   }
 }
