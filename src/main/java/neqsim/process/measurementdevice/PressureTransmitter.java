@@ -48,6 +48,6 @@ public class PressureTransmitter extends StreamMeasurementDeviceBaseClass {
   /** {@inheritDoc} */
   @Override
   public double getMeasuredValue(String unit) {
-    return stream.getThermoSystem().getPressure(unit);
+    return applySignalModifiers(stream.getThermoSystem().getPressure(unit));
   }
 }
