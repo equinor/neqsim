@@ -43,7 +43,6 @@ class PhaseAmmoniaEosTest {
   void testGasPropertiesAt1atm30C() {
     SystemInterface system = new SystemAmmoniaEos(303.15,
         ThermodynamicConstantsInterface.referencePressure);
-    system.addComponent("ammonia", 1.0);
     system.setNumberOfPhases(1);
     system.setMaxNumberOfPhases(1);
     system.setForcePhaseTypes(true);
@@ -64,7 +63,6 @@ class PhaseAmmoniaEosTest {
   @Test
   void testLiquidPropertiesAt10bar20C() {
     SystemInterface system = new SystemAmmoniaEos(293.15, 10.0);
-    system.addComponent("ammonia", 1.0);
     system.setNumberOfPhases(1);
     system.setMaxNumberOfPhases(1);
     system.setForcePhaseTypes(true);
