@@ -79,8 +79,6 @@ public class VegaTest {
   void testThermoVega() {
     SystemInterface vegafluid = new neqsim.thermo.system.SystemVegaEos(298.15, 10.0);
     SystemInterface SRKfluid = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
-
-    vegafluid.addComponent("helium", 1.0);
     vegafluid.init(0);
     vegafluid.init(1);
     vegafluid.init(2);
@@ -160,8 +158,6 @@ public class VegaTest {
   @Test
   void testVegaCompressor() {
     SystemInterface vegafluid = new neqsim.thermo.system.SystemVegaEos(298.15, 10.0);
-
-    vegafluid.addComponent("helium", 1.0);
     vegafluid.init(0);
     vegafluid.init(1);
 

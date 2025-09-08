@@ -64,7 +64,6 @@ class PhaseAmmoniaExperimentalComparisonTest {
     final double tol = 1e-1; // absolute tolerance
     for (DataPoint d : DATA) {
       SystemInterface system = new SystemAmmoniaEos(d.temperature, d.pressure);
-      system.addComponent("ammonia", 1.0);
       system.setNumberOfPhases(1);
       system.setMaxNumberOfPhases(1);
       system.setForcePhaseTypes(true);

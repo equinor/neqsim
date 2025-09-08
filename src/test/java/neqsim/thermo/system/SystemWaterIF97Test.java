@@ -15,7 +15,6 @@ public class SystemWaterIF97Test {
   @Test
   public void testPureWaterProperties() {
     SystemInterface sys = new SystemWaterIF97(373.15, 1.0);
-    sys.addComponent("water", 1.0);
     sys.init(0);
     sys.init(1);
     sys.init(2);
@@ -34,7 +33,6 @@ public class SystemWaterIF97Test {
   @Test
   public void testTpFlashPhaseAndProperties() {
     SystemInterface gas = new SystemWaterIF97(298.15, 1.0);
-    gas.addComponent("water", 1.0);
     gas.init(0);
     gas.init(1);
     gas.init(2);
@@ -54,7 +52,6 @@ public class SystemWaterIF97Test {
     assertEquals(expectedCpG, gas.getPhase(0).getCp(), 1e-4, "cp");
 
     SystemInterface liq = new SystemWaterIF97(298.15, 1.0);
-    liq.addComponent("water", 1.0);
     liq.init(0);
     liq.init(1);
     liq.init(2);
@@ -77,7 +74,6 @@ public class SystemWaterIF97Test {
   @Test
   public void testPhFlashPhase() {
     SystemInterface gas = new SystemWaterIF97(400.0, 1.0);
-    gas.addComponent("water", 1.0);
     gas.init(0);
     gas.init(1);
     gas.init(2);
@@ -90,7 +86,6 @@ public class SystemWaterIF97Test {
     assertEquals(400.0, gas.getTemperature(), 1e-6);
 
     SystemInterface liq = new SystemWaterIF97(300.0, 1.0);
-    liq.addComponent("water", 1.0);
     liq.init(0);
     liq.init(1);
     liq.init(2);

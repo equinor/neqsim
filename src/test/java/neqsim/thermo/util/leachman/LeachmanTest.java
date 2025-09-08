@@ -114,8 +114,6 @@ public class LeachmanTest {
   void testThermoLeachman() {
     SystemInterface Leachmanfluid = new neqsim.thermo.system.SystemLeachmanEos(298.15, 10.0);
     SystemInterface SRKfluid = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
-
-    Leachmanfluid.addComponent("hydrogen", 1.0);
     Leachmanfluid.init(0);
     Leachmanfluid.init(1);
     Leachmanfluid.init(2);
@@ -195,8 +193,6 @@ public class LeachmanTest {
   @Test
   void testLeachmanCompressor() {
     SystemInterface Leachmanfluid = new neqsim.thermo.system.SystemLeachmanEos(298.15, 10.0);
-
-    Leachmanfluid.addComponent("hydrogen", 1.0);
     Leachmanfluid.init(0);
     Leachmanfluid.init(1);
 
@@ -250,8 +246,6 @@ public class LeachmanTest {
   @Test
   void CompressorSchultz() {
     SystemInterface Leachmanfluid = new neqsim.thermo.system.SystemLeachmanEos(298.15, 90.0);
-
-    Leachmanfluid.addComponent("hydrogen", 1.0);
     Leachmanfluid.init(0);
     Leachmanfluid.init(1);
     Leachmanfluid.init(2);
