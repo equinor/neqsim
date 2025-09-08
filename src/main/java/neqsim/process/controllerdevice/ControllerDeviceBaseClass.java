@@ -155,18 +155,10 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       TintValue = 0.0;
     }
 
-    double derivative = (error - oldError) / dt;
-    if (Td > 0) {
-      if (derivativeFilterTime > 0) {
-        derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
-      } else {
-        derivativeState = derivative;
-      }
-    } else {
-      derivativeState = 0.0;
-    }
-
-    double delta = Kp * (error - oldError) + TintValue + Kp * Td * derivativeState;
+    double band = 0.0;
+    double TintIncrement = 0.0;
+    double derivative = 0.0;
+    double delta = 0.0;
 
     if (unit == null || unit.isEmpty() || unit.equals("[?]")) {
       double measurementPercent = transmitter.getMeasuredPercentValue();
@@ -181,11 +173,11 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     } else {
       error = measurement - controllerSetPoint;
       integralAbsoluteError += Math.abs(error) * dt;
-      double band = settlingTolerance * Math.max(Math.abs(controllerSetPoint), 1.0);
+      band = settlingTolerance * Math.max(Math.abs(controllerSetPoint), 1.0);
       if (Math.abs(error) > band) {
         lastTimeOutsideBand = totalTime;
       }
-      double TintIncrement = 0.0;
+      TintIncrement = 0.0;
       if (Ti > 0) {
         TintIncrement = Kp / Ti * error * dt;
         TintValue += TintIncrement;
@@ -193,7 +185,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         TintValue = 0.0;
       }
 
-      double derivative = (error - oldError) / dt;
+      derivative = (error - oldError) / dt;
       if (Td > 0) {
         if (derivativeFilterTime > 0) {
           derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
@@ -204,7 +196,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         derivativeState = 0.0;
       }
 
-      double delta = Kp * (error - oldError) + TintValue + Kp * Td * derivativeState;
+      delta = Kp * (error - oldError) + TintValue + Kp * Td * derivativeState;
 
       response = initResponse + propConstant * delta;
 
