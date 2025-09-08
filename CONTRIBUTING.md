@@ -53,3 +53,13 @@ Note: workspace/project specific settings are located in folder .vscode.
 ### Eclipse:
 
 Follow the instructions in http://www.practicesofmastery.com/post/eclipse-google-java-style-guide/
+
+## Static analysis
+
+Checkstyle, SpotBugs, and PMD run as part of the Maven build to catch formatting and common coding issues. Before submitting a pull request, verify your changes with:
+
+```bash
+./mvnw checkstyle:check spotbugs:check pmd:check
+```
+
+These checks are configured not to fail the build by default, but contributions should address any reported problems.
