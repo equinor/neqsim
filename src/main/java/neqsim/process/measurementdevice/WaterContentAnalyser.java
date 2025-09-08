@@ -56,7 +56,10 @@ public class WaterContentAnalyser extends StreamMeasurementDeviceBaseClass {
   /** {@inheritDoc} */
   @Override
   public double getMeasuredValue(String unit) {
-    return stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
-        * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600 * 24;
+    double raw =
+        stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
+            * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600
+            * 24;
+    return applySignalModifiers(raw);
   }
 }
