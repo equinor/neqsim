@@ -1,13 +1,16 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SingleComponentFlash {
@@ -41,7 +44,7 @@ public class SingleComponentFlash {
     }
     assertEquals(300.08299597, testSystem.getTemperature(), 1e-2);
     assertEquals(10.0, testSystem.getPressure(), 1e-2);
-    testSystem.prettyPrint();
+    // testSystem.prettyPrint();
   }
 
   @Test
@@ -58,7 +61,7 @@ public class SingleComponentFlash {
     }
     assertEquals(279.767487894, testSystem.getTemperature(), 1e-2);
     assertEquals(10.0, testSystem.getPressure(), 1e-2);
-    testSystem.prettyPrint();
+    // testSystem.prettyPrint();
   }
 
   @Test
@@ -75,7 +78,7 @@ public class SingleComponentFlash {
     }
     assertEquals(279.767487894, testSystem.getTemperature(), 1e-2);
     assertEquals(11.95267803, testSystem.getPressure(), 1e-2);
-    testSystem.prettyPrint();
+    // testSystem.prettyPrint();
   }
 
   @Test
@@ -92,7 +95,7 @@ public class SingleComponentFlash {
     }
     assertEquals(279.767487894, testSystem.getTemperature(), 1e-2);
     assertEquals(0.047926652566, testSystem.getPressure(), 1e-2);
-    testSystem.prettyPrint();
+    /// testSystem.prettyPrint();
   }
 
   @Test
@@ -109,7 +112,7 @@ public class SingleComponentFlash {
     }
     assertEquals(301.23082803, testSystem.getTemperature(), 1e-2);
     assertEquals(0.047926652566, testSystem.getPressure(), 1e-2);
-    testSystem.prettyPrint();
+    // testSystem.prettyPrint();
   }
 
 
@@ -158,11 +161,126 @@ public class SingleComponentFlash {
         new ThrottlingValve("liq valve 1", separator1.getLiquidOutStream());
     liquid_valve1.setOutletPressure(1.4);
     liquid_valve1.run();
-    
+
     assertEquals(238.599901382, liquid_valve1.getOutletStream().getTemperature(), 1e-2);
     // liquid_valve1.getOutletStream().getFluid().prettyPrint();
   }
 
+  @Test
+  void testPropaneTankProcessGasAndLiquidFeeds() {
+    // runCase(50.0, true, 0.01);
+    runCase(10.0, false, 10.0);
+  }
+
+  /**
+   * Run the tank process for a given feed temperature.
+   *
+   * @param feedTempC feed temperature in Celsius
+   * @param feedIsGas whether the feed enters as gas (otherwise liquid)
+   */
+  private void runCase(double feedTempC, boolean feedIsGas, double dt) {
+    SystemInterface fluid = new SystemSrkEos(feedTempC + 273.15, 10.0);
+    fluid.addComponent("propane", 100.0);
+    fluid.setMixingRule(2);
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setPressure(10.0, "bara");
+    feed.setTemperature(feedTempC, "C");
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.run();
+
+    if (feedIsGas) {
+      assertTrue(feed.getFluid().hasPhaseType("gas"));
+    } else {
+      assertTrue(feed.getFluid().hasPhaseType("oil"));
+    }
+
+    ThrottlingValve feedValve = new ThrottlingValve("feed valve", feed);
+    feedValve.setOutletPressure(5.0);
+    feedValve.setPercentValveOpening(50.0);
+
+    Separator separator = new Separator("propane separator", feedValve.getOutletStream());
+    separator.setSeparatorLength(2.0);
+    separator.setInternalDiameter(1.0);
+    if (feedIsGas) {
+      separator.setLiquidLevel(0.000001);
+    } else {
+      separator.setLiquidLevel(0.5);
+    }
+
+    ThrottlingValve gasValve = new ThrottlingValve("gas valve", separator.getGasOutStream());
+    gasValve.setOutletPressure(1.0);
+    gasValve.setPercentValveOpening(50.0);
+
+    ThrottlingValve liquidValve =
+        new ThrottlingValve("liquid valve", separator.getLiquidOutStream());
+    liquidValve.setOutletPressure(1.0);
+    liquidValve.setPercentValveOpening(50.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(feedValve);
+    process.add(separator);
+    process.add(gasValve);
+    process.add(liquidValve);
+
+    process.run();
+
+    // liquidValve.getOutletStream().getFluid().prettyPrint();
+
+    double initialOut = gasValve.getOutletStream().getFlowRate("kg/hr")
+        + liquidValve.getOutletStream().getFlowRate("kg/hr");
+    assertEquals(feed.getFlowRate("kg/hr"), initialOut, feed.getFlowRate("kg/hr") * 1e-6);
+
+    // close inlet valve and run dynamic simulation
+    feedValve.setPercentValveOpening(10.0);
+    feedValve.setCalculateSteadyState(false);
+    separator.setCalculateSteadyState(false);
+    gasValve.setCalculateSteadyState(false);
+    liquidValve.setCalculateSteadyState(false);
+
+    int lenghth = 10;
+    double[] time = null;
+    double[] temp = null;
+    time = new double[lenghth];
+    temp = new double[lenghth];
+    time[0] = 0.0;
+    temp[0] = separator.getThermoSystem().getTemperature("C");
+
+    process.setTimeStep(dt);
+    for (int i = 0; i < lenghth / 2; i++) {
+      process.runTransient();
+      time[i] = process.getTime();
+      temp[i] = separator.getThermoSystem().getTemperature("C");
+      System.out.println(
+          "time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel()
+              + " flow rate " + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure "
+              + feedValve.getOutletStream().getPressure() + " temp_out "
+              + liquidValve.getOutletStream().getTemperature("C"));
+    }
+
+    feedValve.setPercentValveOpening(50.0);
+    for (int i = 0; i < lenghth / 2; i++) {
+      process.runTransient();
+      time[i] = process.getTime();
+      temp[i] = separator.getThermoSystem().getTemperature("C");
+      System.out.println(
+          "time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel()
+              + " flow rate " + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure "
+              + feedValve.getOutletStream().getPressure() + " temp_out "
+              + liquidValve.getOutletStream().getTemperature("C"));
+
+    }
+
+    liquidValve.getOutletStream().getFluid().prettyPrint();
+    double finalOut = gasValve.getOutletStream().getFlowRate("kg/hr")
+        + liquidValve.getOutletStream().getFlowRate("kg/hr");
+    // assertTrue(finalOut < initialOut);
+    // assertTrue(finalOut > 0.0);
+
+
+
+  }
 
 
 }

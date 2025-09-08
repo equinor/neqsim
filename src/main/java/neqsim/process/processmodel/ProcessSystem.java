@@ -25,8 +25,14 @@ import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.RecycleController;
+import neqsim.process.equipment.util.Setter;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
@@ -423,8 +429,9 @@ public class ProcessSystem extends SimulationBaseClass {
   public void run(UUID id) {
     // Run setters first to set conditions
     for (int i = 0; i < unitOperations.size(); i++) {
-      if (unitOperations.get(i).getClass().getSimpleName().equals("Setter")) {
-        unitOperations.get(i).run(id);
+      ProcessEquipmentInterface unit = unitOperations.get(i);
+      if (unit instanceof Setter) {
+        unit.run(id);
       }
     }
 
@@ -434,11 +441,12 @@ public class ProcessSystem extends SimulationBaseClass {
     // Initializing recycle controller
     recycleController.clear();
     for (int i = 0; i < unitOperations.size(); i++) {
-      if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
+      ProcessEquipmentInterface unit = unitOperations.get(i);
+      if (unit instanceof Recycle) {
         hasRecycle = true;
-        recycleController.addRecycle((Recycle) unitOperations.get(i));
+        recycleController.addRecycle((Recycle) unit);
       }
-      if (unitOperations.get(i).getClass().getSimpleName().equals("Adjuster")) {
+      if (unit instanceof Adjuster) {
         // hasAdjuster = true;
       }
     }
@@ -450,26 +458,26 @@ public class ProcessSystem extends SimulationBaseClass {
       iter++;
       isConverged = true;
       for (int i = 0; i < unitOperations.size(); i++) {
+        ProcessEquipmentInterface unit = unitOperations.get(i);
         if (Thread.currentThread().isInterrupted()) {
           logger.debug("Process simulation was interrupted, exiting run()..." + getName());
           break;
         }
-        if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
+        if (!(unit instanceof Recycle)) {
           try {
-            if (iter == 1 || unitOperations.get(i).needRecalculation()) {
-              unitOperations.get(i).run(id);
+            if (iter == 1 || unit.needRecalculation()) {
+              unit.run(id);
             }
           } catch (Exception ex) {
             // String error = ex.getMessage();
-            logger.error("error running unit uperation " + unitOperations.get(i).getName() + " "
+            logger.error("error running unit uperation " + unit.getName() + " "
                 + ex.getMessage(), ex);
             ex.printStackTrace();
           }
         }
-        if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
-            && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {
+        if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
           try {
-            unitOperations.get(i).run(id);
+            unit.run(id);
           } catch (Exception ex) {
             // String error = ex.getMessage();
             logger.error(ex.getMessage(), ex);
@@ -488,8 +496,9 @@ public class ProcessSystem extends SimulationBaseClass {
       }
 
       for (int i = 0; i < unitOperations.size(); i++) {
-        if (unitOperations.get(i).getClass().getSimpleName().equals("Adjuster")) {
-          if (!((neqsim.process.equipment.util.Adjuster) unitOperations.get(i)).solved()) {
+        ProcessEquipmentInterface unit = unitOperations.get(i);
+        if (unit instanceof Adjuster) {
+          if (!((Adjuster) unit).solved()) {
             isConverged = false;
             break;
           }
@@ -565,8 +574,9 @@ public class ProcessSystem extends SimulationBaseClass {
   @Override
   public void runTransient(double dt, UUID id) {
     for (int i = 0; i < unitOperations.size(); i++) {
-      if (unitOperations.get(i).getClass().getSimpleName().equals("Setter")) {
-        unitOperations.get(i).run(id);
+      ProcessEquipmentInterface unit = unitOperations.get(i);
+      if (unit instanceof Setter) {
+        unit.run(id);
       }
     }
 
@@ -867,11 +877,11 @@ public class ProcessSystem extends SimulationBaseClass {
   public double getPower(String unit) {
     double power = 0.0;
     for (int i = 0; i < unitOperations.size(); i++) {
-      if (unitOperations.get(i).getClass().getSimpleName().equals("Compressor")) {
-        power +=
-            ((neqsim.process.equipment.compressor.Compressor) unitOperations.get(i)).getPower();
-      } else if (unitOperations.get(i).getClass().getSimpleName().equals("Pump")) {
-        power += ((neqsim.process.equipment.pump.Pump) unitOperations.get(i)).getPower();
+      ProcessEquipmentInterface unitOp = unitOperations.get(i);
+      if (unitOp instanceof Compressor) {
+        power += ((Compressor) unitOp).getPower();
+      } else if (unitOp instanceof Pump) {
+        power += ((Pump) unitOp).getPower();
       }
     }
     if (unit.equals("MW")) {
@@ -894,8 +904,9 @@ public class ProcessSystem extends SimulationBaseClass {
   public double getCoolerDuty(String unit) {
     double heat = 0.0;
     for (int i = 0; i < unitOperations.size(); i++) {
-      if (unitOperations.get(i).getClass().getSimpleName().equals("Cooler")) {
-        heat += ((neqsim.process.equipment.heatexchanger.Cooler) unitOperations.get(i)).getDuty();
+      ProcessEquipmentInterface unitOp = unitOperations.get(i);
+      if (unitOp instanceof Cooler) {
+        heat += ((Cooler) unitOp).getDuty();
       }
     }
     if (unit.equals("MW")) {
@@ -918,8 +929,9 @@ public class ProcessSystem extends SimulationBaseClass {
   public double getHeaterDuty(String unit) {
     double heat = 0.0;
     for (int i = 0; i < unitOperations.size(); i++) {
-      if (unitOperations.get(i).getClass().getSimpleName().equals("Heater")) {
-        heat += ((neqsim.process.equipment.heatexchanger.Heater) unitOperations.get(i)).getDuty();
+      ProcessEquipmentInterface unitOp = unitOperations.get(i);
+      if (unitOp instanceof Heater) {
+        heat += ((Heater) unitOp).getDuty();
       }
     }
     if (unit.equals("MW")) {

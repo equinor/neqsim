@@ -33,7 +33,6 @@ import neqsim.thermodynamicoperations.flashops.TSFlash;
 import neqsim.thermodynamicoperations.flashops.TVflash;
 import neqsim.thermodynamicoperations.flashops.VHflashQfunc;
 import neqsim.thermodynamicoperations.flashops.VUflashQfunc;
-import neqsim.thermodynamicoperations.flashops.VUflash;
 import neqsim.thermodynamicoperations.flashops.VUflashSingleComp;
 import neqsim.thermodynamicoperations.flashops.dTPflash;
 import neqsim.thermodynamicoperations.flashops.saturationops.AddIonToScaleSaturation;
@@ -899,11 +898,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } catch (Exception ex) {
       return false;
     }
-    tmpSystem.init(3);
-    double gasU = tmpSystem.getPhase(0).getInternalEnergy()
-        / tmpSystem.getPhase(0).getNumberOfMolesInPhase() * tmpSystem.getTotalNumberOfMoles();
-    double liqU = tmpSystem.getPhase(1).getInternalEnergy()
-        / tmpSystem.getPhase(1).getNumberOfMolesInPhase() * tmpSystem.getTotalNumberOfMoles();
+    tmpSystem.init(2);
+    double gasU =
+        tmpSystem.getPhase(0).getInternalEnergy("J/mol") * tmpSystem.getTotalNumberOfMoles();
+    double liqU =
+        tmpSystem.getPhase(1).getInternalEnergy("J/mol") * tmpSystem.getTotalNumberOfMoles();
     return Uspec >= liqU && Uspec <= gasU;
   }
 

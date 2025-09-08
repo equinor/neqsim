@@ -67,7 +67,6 @@ class TPsolidFlash {
     testSystem.addTBPfraction("C20", 0.0005, 263.65 / 1000.0, 0.918);
     testSystem.addTBPfraction("C21", 0.0009, 301.65 / 1000.0, 0.945);
     testSystem.addComponent("S8", 1.0e-5);
-    testSystem.createDatabase(true);
     testSystem.setMixingRule("classic");
     testSystem.setMultiPhaseCheck(true);
     testSystem.setTotalFlowRate(1.0, "MSm3/hr");
