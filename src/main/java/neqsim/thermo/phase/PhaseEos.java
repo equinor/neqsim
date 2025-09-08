@@ -296,8 +296,8 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     // " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" +
     // fVV());
     if (iterations >= maxIterations) {
-      throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume2",
-          maxIterations);
+      // Fallback to analytic cubic solver if numerical solver fails
+      return molarVolumeAnalytical(pressure, temperature, pt);
     }
     if (Double.isNaN(getMolarVolume())) {
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume2", "Molar volume");
@@ -306,6 +306,95 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       // fVV());
     }
     return getMolarVolume();
+  }
+
+  /**
+   * Analytic molar volume solver for cubic equations of state. Used as a
+   * fallback when the numerical solver does not converge.
+   *
+   * @param pressure system pressure
+   * @param temperature system temperature
+   * @param pt phase type (gas or liquid)
+   * @return molar volume [m3/mol * 1e5]
+   * @throws neqsim.util.exception.IsNaNException if no real roots are found
+   */
+  private double molarVolumeAnalytical(double pressure, double temperature, PhaseType pt)
+      throws neqsim.util.exception.IsNaNException {
+
+    double a = geta();
+    double b = getb();
+    double A = a * pressure / (R * R * temperature * temperature);
+    double B = b * pressure / (R * temperature);
+    double e = delta1 + delta2;
+    double f = delta1 * delta2;
+
+    // Coefficients for Z^3 + c2*Z^2 + c1*Z + c0 = 0
+    double c2 = (e - 1.0) * B - 1.0;
+    double c1 = A + f * B * B - e * B - e * B * B;
+    double c0 = -f * B * B * (1.0 + B) - A * B;
+
+    double[] roots = solveCubic(c2, c1, c0);
+    double z = Double.NaN;
+    for (double r : roots) {
+      if (!Double.isNaN(r) && r > 0) {
+        if (Double.isNaN(z)) {
+          z = r;
+        } else if (pt == PhaseType.GAS && r > z) {
+          z = r;
+        } else if (pt != PhaseType.GAS && r < z) {
+          z = r;
+        }
+      }
+    }
+
+    if (Double.isNaN(z)) {
+      throw new neqsim.util.exception.IsNaNException(this, "molarVolumeAnalytical",
+          "compressibility factor");
+    }
+
+    setMolarVolume(z * R * temperature / pressure);
+    Z = z;
+    return getMolarVolume();
+  }
+
+  /**
+   * Solve cubic equation z^3 + c2*z^2 + c1*z + c0 = 0 using Cardano's method.
+   *
+   * @param c2 coefficient for z^2
+   * @param c1 coefficient for z
+   * @param c0 constant term
+   * @return array containing real roots (non-real roots returned as NaN)
+   */
+  private double[] solveCubic(double c2, double c1, double c0) {
+    double a = 1.0;
+    double b = c2;
+    double c = c1;
+    double d = c0;
+
+    // Convert to depressed cubic t^3 + pt + q = 0
+    double p = (3.0 * a * c - b * b) / (3.0 * a * a);
+    double q = (2.0 * b * b * b - 9.0 * a * b * c + 27.0 * a * a * d)
+        / (27.0 * a * a * a);
+    double disc = q * q / 4.0 + p * p * p / 27.0;
+    double[] roots = new double[3];
+
+    if (disc >= 0) {
+      double sqrtDisc = Math.sqrt(disc);
+      double u = Math.cbrt(-q / 2.0 + sqrtDisc);
+      double v = Math.cbrt(-q / 2.0 - sqrtDisc);
+      roots[0] = u + v - b / (3.0 * a);
+      roots[1] = Double.NaN;
+      roots[2] = Double.NaN;
+    } else {
+      double r = Math.sqrt(-p * p * p / 27.0);
+      double phi = Math.acos(-q / (2.0 * r));
+      double m = 2.0 * Math.cbrt(r);
+      roots[0] = m * Math.cos(phi / 3.0) - b / (3.0 * a);
+      roots[1] = m * Math.cos((phi + 2.0 * Math.PI) / 3.0) - b / (3.0 * a);
+      roots[2] = m * Math.cos((phi + 4.0 * Math.PI) / 3.0) - b / (3.0 * a);
+    }
+
+    return roots;
   }
 
   /** {@inheritDoc} */
@@ -393,8 +482,8 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     // (-pressure+R*temperature/molarVolume-R*temperature*dFdV()) + " firstterm " +
     // (R*temperature/molarVolume) + " second " + R*temperature*dFdV());
     if (iterations >= maxIterations) {
-      throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume",
-          maxIterations);
+      // Fallback to analytic cubic solver if numerical solver fails
+      return molarVolumeAnalytical(pressure, temperature, pt);
     }
     if (Double.isNaN(getMolarVolume())) {
       // A = calcA(this, temperature, pressure, numberOfComponents);
