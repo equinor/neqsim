@@ -20,3 +20,4 @@ This folder holds additional documentation for the NeqSim project. Below are use
 - [Steam heater](steam_heater.md)
 - [Battery storage unit](battery_storage.md)
 - [Solar panel unit operation](solar_panel.md)
+- [Process control framework](process_control.md)

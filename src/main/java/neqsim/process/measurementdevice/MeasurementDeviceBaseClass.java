@@ -1,13 +1,17 @@
 package neqsim.process.measurementdevice;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Random;
 import neqsim.process.measurementdevice.online.OnlineSignal;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.NamedBaseClass;
 
 /**
- * <p>
- * Abstract MeasurementDeviceBaseClass class.
- * </p>
+ * Base implementation for measurement devices supplying values to controllers
+ * and process equipment. The class offers unit handling as well as configurable
+ * Gaussian noise and discrete sample delay to mimic realistic transmitter
+ * behaviour.
  *
  * @author ESOL
  * @version $Id: $Id
@@ -27,6 +31,11 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   private boolean isOnlineSignal = false;
   private double onlineMeasurementValue = 0.0;
   private String onlineMeasurementValueUnit = "";
+
+  private final Deque<Double> delayBuffer = new ArrayDeque<>();
+  private int delaySteps = 0;
+  private double noiseStdDev = 0.0;
+  private Random random = new Random();
 
   private boolean conditionAnalysis = true;
   private String conditionAnalysisMessage = "";
@@ -138,6 +147,68 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   @Override
   public double getMeasuredValue(String unit) {
     return 0.0;
+  }
+
+  /**
+   * Apply configured noise and delay to a raw measurement value.
+   *
+   * @param rawValue unmodified measurement value
+   * @return value after noise and delay are applied
+   */
+  protected double applySignalModifiers(double rawValue) {
+    double noisyValue = rawValue + random.nextGaussian() * noiseStdDev;
+    delayBuffer.addLast(noisyValue);
+    if (delayBuffer.size() > delaySteps) {
+      return delayBuffer.removeFirst();
+    }
+    return noisyValue;
+  }
+
+  /**
+   * Set Gaussian noise standard deviation for the measurement.
+   *
+   * @param noiseStdDev standard deviation of measurement noise
+   */
+  public void setNoiseStdDev(double noiseStdDev) {
+    this.noiseStdDev = noiseStdDev;
+  }
+
+  /**
+   * Get the configured noise standard deviation.
+   *
+   * @return noise standard deviation
+   */
+  public double getNoiseStdDev() {
+    return noiseStdDev;
+  }
+
+  /**
+   * Configure discrete delay in number of samples.
+   *
+   * @param delaySteps number of samples delay
+   */
+  public void setDelaySteps(int delaySteps) {
+    this.delaySteps = Math.max(0, delaySteps);
+    delayBuffer.clear();
+  }
+
+  /**
+   * Get the configured delay in number of samples.
+   *
+   * @return number of delayed samples
+   */
+  public int getDelaySteps() {
+    return delaySteps;
+  }
+
+  /**
+   * Set the random seed used for noise generation to achieve deterministic
+   * measurements when required.
+   *
+   * @param seed random seed
+   */
+  public void setRandomSeed(long seed) {
+    random = new Random(seed);
   }
 
   /** {@inheritDoc} */
