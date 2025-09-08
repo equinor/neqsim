@@ -34,3 +34,13 @@ To generate a code coverage report:
 ./mvnw jacoco:prepare-agent test install jacoco:report
 ```
 
+## Static analysis
+
+Checkstyle, SpotBugs, and PMD plugins are included in the Maven build and run during the `verify` phase. Run them locally with:
+
+```bash
+./mvnw checkstyle:check spotbugs:check pmd:check
+```
+
+The checks do not fail the build by default, but fixing any reported issues is encouraged.
+
