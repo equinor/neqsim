@@ -117,8 +117,19 @@ public class PhaseAmmoniaEos extends PhaseEos {
   }
 
   @Override
+  public double getThermalConductivity() {
+    ammoniaUtil.setPhase(this);
+    return ammoniaUtil.getThermalConductivity();
+  }
+
+  @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt) {
-    return getMolarMass() / getDensity();
+    // The base EOS implementation expects molar volume in units of m^3/bar·mol
+    // (i.e. actual molar volume multiplied by 1e5) since pressures are handled
+    // in bar. The reference ammonia model calculates density directly in kg/m3,
+    // so convert the density back to this expanded molar volume representation
+    // to maintain consistency with the rest of the framework.
+    return getMolarMass() / getDensity() * 1.0e5;
   }
 
   @Override

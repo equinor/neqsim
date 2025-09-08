@@ -2126,10 +2126,12 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public double getDensity() {
-    double density = 0;
+    double density = 0.0;
     for (int i = 0; i < numberOfPhases; i++) {
-      density +=
-          1.0e5 * (getPhase(i).getMolarMass() * beta[phaseIndex[i]] / getPhase(i).getMolarVolume());
+      // Use the phase densities directly to avoid assumptions about the internal
+      // molar-volume scaling (some specialised phases, like the ammonia reference
+      // EOS, provide densities directly).
+      density += beta[phaseIndex[i]] * getPhase(i).getDensity();
     }
     return density;
   }
