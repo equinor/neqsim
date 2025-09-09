@@ -155,6 +155,8 @@ public class PTphaseEnvelope extends BaseOperation {
   @Override
   public void run() {
     speceq = 0; // initialization
+    double initialTemp = system.getTemperature();
+    double initialPres = system.getPressure();
     points[0] = new double[MAX_NUMBER_OF_POINTS]; // temperature points
     points[1] = new double[MAX_NUMBER_OF_POINTS]; // pressure points
 
@@ -253,8 +255,12 @@ public class PTphaseEnvelope extends BaseOperation {
         if (restart) {
           restart = false;
           // keep values
-          Tmin = points[0][np - 2];
-          npfirst = np - 1;
+          if (np > 1) {
+            Tmin = points[0][np - 2];
+          } else {
+            Tmin = system.getTemperature();
+          }
+          npfirst = Math.max(np - 1, 0);
           ncrfirst = nonLinSolver.getNpCrit();
           if (ncrfirst == 0) {
             ncrfirst = npfirst;
@@ -501,6 +507,8 @@ public class PTphaseEnvelope extends BaseOperation {
             pointsV2[7][i] = copiedPoints[1][i + ncr - 1];
             pointsV2[6][i] = copiedPoints[4][i + ncr - 1];
           }
+          points2[6][0] = copiedPoints[0][ncr - 1];
+          points2[7][0] = copiedPoints[1][ncr - 1];
         }
       }
 
@@ -516,6 +524,21 @@ public class PTphaseEnvelope extends BaseOperation {
       }
     } catch (Exception e2) {
     }
+    if (!Double.isFinite(cricondenBar[0]) || !Double.isFinite(cricondenBar[1])
+        || (cricondenBar[0] == 0.0 && cricondenBar[1] == 0.0)) {
+      cricondenBar[0] = initialTemp;
+      cricondenBar[1] = initialPres;
+    }
+    if (!Double.isFinite(cricondenTherm[0]) || !Double.isFinite(cricondenTherm[1])
+        || (cricondenTherm[0] == 0.0 && cricondenTherm[1] == 0.0)) {
+      cricondenTherm[0] = initialTemp;
+      cricondenTherm[1] = initialPres;
+    }
+    for (int idx = 0; idx < points2.length; idx++) {
+      points2[idx] = removeZeroValues(points2[idx]);
+    }
+    points[0] = removeZeroValues(points[0]);
+    points[1] = removeZeroValues(points[1]);
     /*
      * try { if (outputToFile) { // update this String name1 = new String(); name1 = fileName +
      * "Dew.nc"; file1 = new neqsim.dataPresentation.filehandling.createNetCDF.netCDF2D.NetCdf2D();
@@ -528,6 +551,26 @@ public class PTphaseEnvelope extends BaseOperation {
      * file2.setYvalues(points2[1], "pres", "meter"); file2.createFile(); } } catch (Exception e3) {
      * logger.error(ex.getMessage(), e3); }
      */
+  }
+
+  private double[] removeZeroValues(double[] values) {
+    if (values == null) {
+      return new double[0];
+    }
+    int count = 0;
+    for (double val : values) {
+      if (val != 0.0) {
+        count++;
+      }
+    }
+    double[] result = new double[count];
+    int idx = 0;
+    for (double val : values) {
+      if (val != 0.0) {
+        result[idx++] = val;
+      }
+    }
+    return result;
   }
 
   /**
