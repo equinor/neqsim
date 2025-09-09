@@ -72,6 +72,10 @@ public class SystemVegaEos extends SystemEos {
     }
     this.useVolumeCorrection(false);
     addComponent("helium", 1.0);
+    for (int i = 0; i < numberOfPhases; i++) {
+      phaseArray[i].getPhysicalProperties().setViscosityModel("KTA_mod");
+      phaseArray[i].getPhysicalProperties().setConductivityModel("PFCT");
+    }
     commonInitialization();
   }
 

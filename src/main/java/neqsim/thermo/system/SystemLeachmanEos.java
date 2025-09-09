@@ -72,6 +72,10 @@ public class SystemLeachmanEos extends SystemEos {
     }
     this.useVolumeCorrection(false);
     addComponent("hydrogen", 1.0);
+    for (int i = 0; i < numberOfPhases; i++) {
+      phaseArray[i].getPhysicalProperties().setViscosityModel("Muzny");
+      phaseArray[i].getPhysicalProperties().setConductivityModel("PFCT");
+    }
     commonInitialization();
   }
 
