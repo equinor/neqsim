@@ -48,6 +48,7 @@ public abstract class Phase implements PhaseInterface {
 
   public int numberOfComponents = 0;
   public ComponentInterface[] componentArray;
+  private transient String[] componentNames = null;
 
   public boolean calcMolarVolume = true;
 
@@ -120,6 +121,8 @@ public abstract class Phase implements PhaseInterface {
       clonedPhase.physicalPropertyHandler = this.physicalPropertyHandler.clone();
     }
 
+    clonedPhase.componentNames = null;
+
     return clonedPhase;
   }
 
@@ -171,6 +174,7 @@ public abstract class Phase implements PhaseInterface {
 
     this.numberOfMolesInPhase += moles;
     this.numberOfComponents++;
+    componentNames = null;
   }
 
   /** {@inheritDoc} */
@@ -199,6 +203,7 @@ public abstract class Phase implements PhaseInterface {
     componentArray[numberOfComponents - 1] = null;
     numberOfMolesInPhase -= molesInPhase;
     numberOfComponents--;
+    componentNames = null;
   }
 
   /** {@inheritDoc} */
@@ -2107,19 +2112,13 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public String[] getComponentNames() {
-    ArrayList<String> components = new ArrayList<String>();
-
-    for (int j = 0; j < componentArray.length; j++) {
-      if (componentArray[j] != null) {
-        components.add(componentArray[j].getComponentName());
+    if (componentNames == null) {
+      componentNames = new String[numberOfComponents];
+      for (int j = 0; j < numberOfComponents; j++) {
+        componentNames[j] = componentArray[j].getComponentName();
       }
     }
-
-    String[] componentList = new String[components.size()];
-    for (int j = 0; j < numberOfComponents; j++) {
-      componentList[j] = components.get(j);
-    }
-    return componentList;
+    return componentNames;
   }
 
   /** {@inheritDoc} */
