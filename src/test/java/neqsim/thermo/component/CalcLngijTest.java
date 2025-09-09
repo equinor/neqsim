@@ -26,7 +26,7 @@ public class CalcLngijTest {
   @Test
   public void testComponentUMRCPA() throws Exception {
     ComponentUMRCPA comp0 = new ComponentUMRCPA(0, 100, 10, 0, 0, 1);
-    ComponentSrkCPA comp1 = new ComponentSrkCPA(1, 100, 10, 0, 0, 1);
+    ComponentSrkCPA comp1 = new ComponentSrkCPA(1, 100, 10, 0, 0, 1, new PhaseSrkEos());
     comp0.Bi = 0.2;
     comp0.Bij[1] = 0.05;
     comp1.Bi = 0.3;
@@ -40,7 +40,7 @@ public class CalcLngijTest {
   @Test
   public void testComponentElectrolyteCPA() throws Exception {
     ComponentElectrolyteCPA comp0 = new ComponentElectrolyteCPA(0, 100, 10, 0, 0, 1);
-    ComponentSrkCPA comp1 = new ComponentSrkCPA(1, 100, 10, 0, 0, 1);
+    ComponentSrkCPA comp1 = new ComponentSrkCPA(1, 100, 10, 0, 0, 1, new PhaseSrkEos());
     comp0.Bi = 0.2;
     comp0.Bij[1] = 0.05;
     comp1.Bi = 0.3;
@@ -55,7 +55,7 @@ public class CalcLngijTest {
   public void testComponentElectrolyteCPAstatoil() throws Exception {
     ComponentElectrolyteCPAstatoil comp0 =
         new ComponentElectrolyteCPAstatoil(0, 100, 10, 0, 0, 1);
-    ComponentSrkCPA comp1 = new ComponentSrkCPA(1, 100, 10, 0, 0, 1);
+    ComponentSrkCPA comp1 = new ComponentSrkCPA(1, 100, 10, 0, 0, 1, new PhaseSrkEos());
     comp0.Bi = 0.2;
     comp0.Bij[1] = 0.05;
     comp1.Bi = 0.3;
@@ -69,8 +69,8 @@ public class CalcLngijTest {
 
   @Test
   public void testComponentSrkCPAs() throws Exception {
-    ComponentSrkCPAs comp0 = new ComponentSrkCPAs(0, 100, 10, 0, 0, 1);
-    ComponentSrkCPA comp1 = new ComponentSrkCPA(1, 100, 10, 0, 0, 1);
+    ComponentSrkCPAs comp0 = new ComponentSrkCPAs(0, 100, 10, 0, 0, 1, new PhaseSrkEos());
+    ComponentSrkCPA comp1 = new ComponentSrkCPA(1, 100, 10, 0, 0, 1, new PhaseSrkEos());
     comp0.Bi = 0.2;
     comp0.Bij[1] = 0.05;
     comp1.Bi = 0.3;
@@ -84,8 +84,8 @@ public class CalcLngijTest {
 
   @Test
   public void testComponentSrkCPA() throws Exception {
-    ComponentSrkCPA comp0 = new ComponentSrkCPA(0, 100, 10, 0, 0, 1);
-    ComponentSrkCPA comp1 = new ComponentSrkCPA(1, 100, 10, 0, 0, 1);
+    ComponentSrkCPA comp0 = new ComponentSrkCPA(0, 100, 10, 0, 0, 1, new PhaseSrkEos());
+    ComponentSrkCPA comp1 = new ComponentSrkCPA(1, 100, 10, 0, 0, 1, new PhaseSrkEos());
     comp0.Bi = 0.2;
     comp0.Bij[1] = 0.05;
     comp1.Bi = 0.3;
