@@ -1,7 +1,7 @@
 package neqsim.process.measurementdevice;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.LinkedList;
 import java.util.Random;
 import neqsim.process.measurementdevice.online.OnlineSignal;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -32,10 +32,10 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   private double onlineMeasurementValue = 0.0;
   private String onlineMeasurementValueUnit = "";
 
-  private final Deque<Double> delayBuffer = new ArrayDeque<>();
+  private final Deque<Double> delayBuffer = new LinkedList<>();
   private int delaySteps = 0;
   private double noiseStdDev = 0.0;
-  private Random random = new Random();
+  private transient Random random = new Random();
 
   private boolean conditionAnalysis = true;
   private String conditionAnalysisMessage = "";
@@ -156,6 +156,9 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
    * @return value after noise and delay are applied
    */
   protected double applySignalModifiers(double rawValue) {
+    if (random == null) {
+      random = new Random();
+    }
     double noisyValue = rawValue + random.nextGaussian() * noiseStdDev;
     delayBuffer.addLast(noisyValue);
     if (delayBuffer.size() > delaySteps) {
