@@ -283,14 +283,14 @@ public class RachfordRice implements Serializable {
     }
     for (int i = 0; i < K.length; i++) {
       double Ki = K[i];
-      if (Ki < 1e-12) {
-        Ki = 1e-12;
-      } else if (Ki > 1e12) {
-        Ki = 1e12;
+      if (Ki < 1e-25) {
+        Ki = 1e-25;
+      } else if (Ki > 1e25) {
+        Ki = 1e25;
       }
       double denom = 1.0 - Ki;
-      if (Math.abs(denom) < 1e-12) {
-        denom = denom < 0 ? -1e-12 : 1e-12;
+      if (Math.abs(denom) < 1e-25) {
+        denom = denom < 0 ? -1e-25 : 1e-25;
       }
       c[i] = 1.0 / denom;
       d[i] = (alphaMin - c[i]) / (alphaMax - alphaMin);
