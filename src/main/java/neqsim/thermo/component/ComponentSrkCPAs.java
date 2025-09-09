@@ -24,8 +24,9 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
    * @param molesInPhase Number of moles in phase.
    * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentSrkCPAs(String name, double moles, double molesInPhase, int compIndex) {
-    super(name, moles, molesInPhase, compIndex);
+  public ComponentSrkCPAs(String name, double moles, double molesInPhase, int compIndex,
+      PhaseInterface phase) {
+    super(name, moles, molesInPhase, compIndex, phase);
   }
 
   /**
@@ -40,8 +41,9 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
    * @param a Acentric factor
    * @param moles Total number of moles of component.
    */
-  public ComponentSrkCPAs(int number, double TC, double PC, double M, double a, double moles) {
-    super(number, TC, PC, M, a, moles);
+  public ComponentSrkCPAs(int number, double TC, double PC, double M, double a, double moles,
+      PhaseInterface phase) {
+    super(number, TC, PC, M, a, moles, phase);
   }
 
   /** {@inheritDoc} */
