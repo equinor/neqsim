@@ -491,22 +491,18 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
-   */
+  */
   public double calc_lngij(int j, PhaseInterface phase) {
-    // return 2.0 * getBij(j) * (10.0 * phase.getTotalVolume() - phase.getB())
-    // / ((8.0 * phase.getTotalVolume() - phase.getB())
-    // * (4.0 * phase.getTotalVolume() - phase.getB()));
-
-    // akis
-    double temp = (10.0 * phase.getTotalVolume() - phase.getB())
-        / ((8.0 * phase.getTotalVolume() - phase.getB())
-            * (4.0 * phase.getTotalVolume() - phase.getB()));
-    double temp1 = (8.0 * phase.getTotalVolume() - phase.getB());
-    double temp2 = (4.0 * phase.getTotalVolume() - phase.getB());
-    double temp3 = (10.0 * phase.getTotalVolume() - phase.getB());
-    double tempj = (-((ComponentEosInterface) phase.getComponent(j)).getBi() * temp1 * temp2
-        + ((ComponentEosInterface) phase.getComponent(j)).getBi() * temp3 * (temp1 + temp2)) / temp1
-        / temp1 / temp2 / temp2;
+    double V = phase.getTotalVolume();
+    double B = phase.getB();
+    double temp1 = 8.0 * V - B;
+    double temp2 = 4.0 * V - B;
+    double temp3 = 10.0 * V - B;
+    double temp = temp3 / (temp1 * temp2);
+    double temp1sq = temp1 * temp1;
+    double temp2sq = temp2 * temp2;
+    double biJ = ((ComponentEosInterface) phase.getComponent(j)).getBi();
+    double tempj = (-biJ * temp1 * temp2 + biJ * temp3 * (temp1 + temp2)) / (temp1sq * temp2sq);
     return 2.0 * (getBij(j) * temp + getBi() * tempj);
   }
 
