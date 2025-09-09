@@ -4,6 +4,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseWaterIAPWS;
+import neqsim.physicalproperties.system.PhysicalPropertyModel;
 
 /**
  * Thermodynamic system using the IAPWS-IF97 reference model for water.
@@ -55,6 +56,7 @@ public class SystemWaterIF97 extends SystemEos {
       phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
     }
     addComponent("water", 1.0);
+    setPhysicalPropertyModel(PhysicalPropertyModel.WATER);
     commonInitialization();
   }
 

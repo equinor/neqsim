@@ -27,6 +27,10 @@ public class SystemAmmoniaEos extends SystemEos {
     }
     this.useVolumeCorrection(false);
     addComponent("ammonia", 1.0);
+    for (int i = 0; i < numberOfPhases; i++) {
+      phaseArray[i].getPhysicalProperties().setViscosityModel("PFCT");
+      phaseArray[i].getPhysicalProperties().setConductivityModel("PFCT");
+    }
   }
 
   @Override
