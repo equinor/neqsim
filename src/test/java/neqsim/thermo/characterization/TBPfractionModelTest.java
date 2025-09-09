@@ -16,6 +16,7 @@ public class TBPfractionModelTest {
     assertEquals(26.52357312690, thermoSystem.getComponent(0).getPC(), 1e-3);
     assertEquals(0.56001213933, thermoSystem.getComponent(0).getAcentricFactor(), 1e-3);
     assertEquals(437.335493, thermoSystem.getComponent(0).getCriticalVolume(), 1e-3);
+    assertEquals(0.24141893477, thermoSystem.getComponent(0).getRacketZ(), 1e-3);
   }
 
   @Test
@@ -27,6 +28,7 @@ public class TBPfractionModelTest {
     assertEquals(28.322987349048354, thermoSystem.getComponent(0).getPC(), 1e-3);
     assertEquals(0.3509842412742902, thermoSystem.getComponent(0).getAcentricFactor(), 1e-3);
     assertEquals(427.99744457199, thermoSystem.getComponent(0).getCriticalVolume(), 1e-3);
+    assertEquals(0.25976113283, thermoSystem.getComponent(0).getRacketZ(), 1e-3);
   }
 
   @Test

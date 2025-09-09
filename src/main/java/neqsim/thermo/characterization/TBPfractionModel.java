@@ -423,6 +423,13 @@ public class TBPfractionModel implements java.io.Serializable {
     public double calcAcentricFactor(double molarMass, double density) {
       return super.calcAcentricFactorKeslerLee(molarMass, density);
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density) {
+      double acs = calcAcentricFactor(molarMass, density);
+      return 0.29056 - 0.08775 * acs;
+    }
   }
 
   /**
@@ -550,6 +557,13 @@ public class TBPfractionModel implements java.io.Serializable {
       double PC = PCnalkane * (TC / Tcnalkane) * (VCnalkane / VC)
           * Math.pow(((1 + 2 * fP) / (1 - 2 * fP)), 2);
       return VC * 1e3; // m3/mol
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density) {
+      double acs = calcAcentricFactor(molarMass, density);
+      return 0.29056 - 0.08775 * acs;
     }
   }
 
