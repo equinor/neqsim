@@ -33,7 +33,7 @@ public class GibbsReactor extends TwoPortEquipment {
     try {
       double inletMass = getInletStream().getThermoSystem().getFlowRate("kg/sec");
       double outletMass = getOutletStream().getThermoSystem().getFlowRate("kg/sec");
-      return Math.abs(inletMass - outletMass);
+      return 100 * Math.abs(inletMass - outletMass) / inletMass;
     } catch (Exception e) {
       logger.debug("WARNING: Could not calculate mass balance error: {}", e.getMessage());
       return Double.NaN;
@@ -158,7 +158,7 @@ public class GibbsReactor extends TwoPortEquipment {
    * @return a double
    */
   public double getMixtureEnthalpy() {
-    double T = system != null ? system.getTemperature() : 298.15;
+    double T = system != null ? system.getTemperature() : REFERENCE_TEMPERATURE;
     return calculateMixtureEnthalpy(processedComponents, inlet_mole, T, componentMap);
   }
 
@@ -168,7 +168,7 @@ public class GibbsReactor extends TwoPortEquipment {
    * @return a double
    */
   public double getMixtureGibbsEnergy() {
-    double T = system != null ? system.getTemperature() : 298.15;
+    double T = system != null ? system.getTemperature() : REFERENCE_TEMPERATURE;
     return calculateMixtureGibbsEnergy(processedComponents, inlet_mole, componentMap, T);
   }
 
@@ -190,7 +190,9 @@ public class GibbsReactor extends TwoPortEquipment {
         throw new IllegalArgumentException(
             "Component '" + compName + "' not found in gibbsReactDatabase.");
       }
-      totalH += n.get(i) * comp.calculateEnthalpy(298.15, i); // Use 298.15K for standard enthalpy
+      totalH += n.get(i) * comp.calculateEnthalpy(REFERENCE_TEMPERATURE, i); // Use reference
+                                                                             // temperature for
+                                                                             // standard enthalpy
     }
     return totalH;
   }
@@ -267,6 +269,8 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Reference temperature in Kelvin for thermodynamic calculations. */
+  private static final double REFERENCE_TEMPERATURE = 298.15;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(GibbsReactor.class);
 
@@ -276,18 +280,18 @@ public class GibbsReactor extends TwoPortEquipment {
   private Map<String, GibbsComponent> componentMap = new HashMap<>();
 
   // Results from the last calculation
-  private double[] lambda = new double[6]; // O, N, C, H, S, Ar
+  private double[] lambda = new double[7]; // O, N, C, H, S, Ar, Z
   private Map<String, Double> lagrangeContributions = new HashMap<>();
-  private String[] elementNames = {"O", "N", "C", "H", "S", "Ar"};
+  private String[] elementNames = {"O", "N", "C", "H", "S", "Ar", "Z"};
   private List<String> processedComponents = new ArrayList<>();
   private Map<String, Double> objectiveFunctionValues = new HashMap<>();
 
   // Mole balance calculations
   private Map<String, Double> initialMoles = new HashMap<>();
   private Map<String, Double> finalMoles = new HashMap<>();
-  private double[] elementMoleBalanceIn = new double[6]; // Total moles of each element in
-  private double[] elementMoleBalanceOut = new double[6]; // Total moles of each element out
-  private double[] elementMoleBalanceDiff = new double[6]; // Difference (out - in) for each element
+  private double[] elementMoleBalanceIn = new double[7]; // Total moles of each element in
+  private double[] elementMoleBalanceOut = new double[7]; // Total moles of each element out
+  private double[] elementMoleBalanceDiff = new double[7]; // Difference (out - in) for each element
 
   // Mole lists for calculations
   private List<Double> inlet_mole = new ArrayList<>();
@@ -355,7 +359,7 @@ public class GibbsReactor extends TwoPortEquipment {
    */
   public class GibbsComponent {
     private String molecule;
-    private double[] elements = new double[6]; // O, N, C, H, S, Ar
+    private double[] elements = new double[7]; // O, N, C, H, S, Ar, Z
     private double[] heatCapacityCoeffs = new double[4]; // A, B, C, D
     private double deltaHf298; // Enthalpy of formation at 298K
     private double deltaGf298; // Gibbs energy of formation at 298K
@@ -469,11 +473,122 @@ public class GibbsReactor extends TwoPortEquipment {
             + (Double.isNaN(coeffEg) ? 0.0 : coeffEg) * T + (Double.isNaN(coeffFg) ? 0.0 : coeffFg);
         return gibbsPoly;
       }
-      // Otherwise, use standard calculation
-      double H_T = calculateEnthalpy(T, compNumber);
-      double S_T = calculateEntropy(T, compNumber);
-      double dG_T = (H_T - deltaHf298) - T * (S_T - deltaSf298 / 1000.0);
-      return deltaGf298 + dG_T;
+      // Otherwise, use standard calculation with I and J functions
+      // ΔG°f/RT = ΔG°f/RTR + (1/R)[J/T - ΔA×ln(T) - ΔB/2×T - ΔC/6×T² - ΔD/12×T³]
+      double R = 8.314462618e-3; // kJ/(mol·K)
+
+      // Reference term: ΔG°f/RTR
+      double deltaGf_RT_ref = deltaGf298 / (R * REFERENCE_TEMPERATURE);
+
+      // Calculate I at current temperature and reference temperature
+      double I = calculateI(compNumber); // I calculated with current temperature coefficients
+      double J = calculateJ(compNumber);
+
+      // Get corrected coefficients for current temperature calculation
+      double[] correctedCoeffs = calculateCorrectedHeatCapacityCoeffs(compNumber);
+      double dA = correctedCoeffs[0];
+      double dB = correctedCoeffs[1];
+      double dC = correctedCoeffs[2];
+      double dD = correctedCoeffs[3];
+
+      double deltaGf_RT = deltaGf_RT_ref + I + (1 / R) * (J / T + (-dA * Math.log(T) - dB / 2.0 * T
+          - dC / 6.0 * Math.pow(T, 2) - dD / 12.0 * Math.pow(T, 3)) / 1000);
+      double deltaGf = deltaGf_RT * R * T;
+
+      return deltaGf;
+    }
+
+    /**
+     * Calculate corrected heat capacity coefficients dA, dB, dC, dD by subtracting elemental
+     * contributions. dA = A - nO*AO - nN*AN - nC*AC - nH*AH - nS*AS
+     * 
+     * @param compNumber component index
+     * @return array of corrected coefficients [dA, dB, dC, dD]
+     */
+    public double[] calculateCorrectedHeatCapacityCoeffs(int compNumber) {
+      // Calculate corrected heat capacity coefficients using separate function
+      double A = system.getComponent(compNumber).getCpA();
+      double B = system.getComponent(compNumber).getCpB();
+      double C = system.getComponent(compNumber).getCpC();
+      double D = system.getComponent(compNumber).getCpD();
+
+      // Element heat capacity coefficients [A, B, C, D]
+      double[] cpO = {12.73, 7.60E-03, -3.58E-06, 6.56E-10};
+      double[] cpN = {14.4415, -7.85E-04, 4.04E-06, -1.44E-09};
+      double[] cpC = {8.43, 0.00E+00, 0.00E+00, 0.00E+00};
+      double[] cpH = {14.544, -9.60E-04, 2.00E-06, -4.35E-10};
+      double[] cpS = {17.815, 0.001, 0.000, 0.000};
+
+      // Calculate dA, dB, dC, dD by subtracting elemental contributions
+      // dA = A - nO*AO - nN*AN - nC*AC - nH*AH - nS*AS
+      double dA = A - (elements[0] * cpO[0]) - (elements[1] * cpN[0]) - (elements[2] * cpC[0])
+          - (elements[3] * cpH[0]) - (elements[4] * cpS[0]);
+
+      double dB = B - (elements[0] * cpO[1]) - (elements[1] * cpN[1]) - (elements[2] * cpC[1])
+          - (elements[3] * cpH[1]) - (elements[4] * cpS[1]);
+
+      double dC = C - (elements[0] * cpO[2]) - (elements[1] * cpN[2]) - (elements[2] * cpC[2])
+          - (elements[3] * cpH[2]) - (elements[4] * cpS[2]);
+
+      double dD = D - (elements[0] * cpO[3]) - (elements[1] * cpN[3]) - (elements[2] * cpC[3])
+          - (elements[3] * cpH[3]) - (elements[4] * cpS[3]);
+
+      return new double[] {dA, dB, dC, dD};
+    }
+
+    /**
+     * Calculate the corrected formation enthalpy term J. J = ΔH°f - ΔA*TR - ΔB/2*TR² - ΔC/3*TR³ -
+     * ΔD/4*TR⁴ where TR is the reference temperature and ΔA, ΔB, ΔC, ΔD are corrected heat capacity
+     * coefficients.
+     * 
+     * @param compNumber component index
+     * @return corrected formation enthalpy term J
+     */
+    public double calculateJ(int compNumber) {
+      // Get corrected heat capacity coefficients
+      double[] correctedCoeffs = calculateCorrectedHeatCapacityCoeffs(compNumber);
+      double dA = correctedCoeffs[0];
+      double dB = correctedCoeffs[1];
+      double dC = correctedCoeffs[2];
+      double dD = correctedCoeffs[3];
+
+      // Calculate J = ΔH°f - ΔA*TR - ΔB/2*TR² - ΔC/3*TR³ - ΔD/4*TR⁴
+      double J =
+          deltaHf298 - (dA * REFERENCE_TEMPERATURE - dB / 2.0 * Math.pow(REFERENCE_TEMPERATURE, 2)
+              - dC / 3.0 * Math.pow(REFERENCE_TEMPERATURE, 3)
+              - dD / 4.0 * Math.pow(REFERENCE_TEMPERATURE, 4)) / 1000;
+
+      return J;
+    }
+
+    /**
+     * Calculate the I term for thermodynamic calculations. I = (1/R) × [J/TR + ΔA×ln(TR) + ΔB/2×TR
+     * + ΔC/6×TR² + ΔD/12×TR³] where R is the gas constant, TR is the reference temperature, and J
+     * is the corrected formation enthalpy term.
+     * 
+     * @param compNumber component index
+     * @return the I term
+     */
+    public double calculateI(int compNumber) {
+      // Gas constant in kJ/(mol·K)
+      double R = 8.314462618e-3;
+
+      // Get corrected heat capacity coefficients
+      double[] correctedCoeffs = calculateCorrectedHeatCapacityCoeffs(compNumber);
+      double dA = correctedCoeffs[0];
+      double dB = correctedCoeffs[1];
+      double dC = correctedCoeffs[2];
+      double dD = correctedCoeffs[3];
+
+      // Calculate J term
+      double J = calculateJ(compNumber);
+
+      // Calculate I = (1/R) × [J/TR + ΔA×ln(TR) + ΔB/2×TR + ΔC/6×TR² + ΔD/12×TR³]
+      double I = (1.0 / R) * (-(J / REFERENCE_TEMPERATURE) + (dA * Math.log(REFERENCE_TEMPERATURE)
+          + dB / 2.0 * REFERENCE_TEMPERATURE + dC / 6.0 * Math.pow(REFERENCE_TEMPERATURE, 2)
+          + dD / 12.0 * Math.pow(REFERENCE_TEMPERATURE, 3)) / 1000);
+
+      return I;
     }
 
     /**
@@ -497,9 +612,21 @@ public class GibbsReactor extends TwoPortEquipment {
         return enthalpyPoly;
       }
       // Otherwise, use standard calculation
-      double T0 = 298.15; // Reference temperature (K)
-      double Cp = calculateHeatCapacity(T, compNumber);
-      return deltaHf298 + Cp * (T - T0) / 1000.0; // Convert Cp from J/(mol·K) to kJ/(mol·K)
+
+      // Calculate enthalpy using corrected heat capacity coefficients
+      // ΔH = ΔHf + ΔA(T - T0) + ΔB/2(T² - T0²) + ΔC/3(T³ - T0³) + ΔD/4(T⁴ - T0⁴)
+      double[] correctedCoeffs = calculateCorrectedHeatCapacityCoeffs(compNumber);
+      double dA = correctedCoeffs[0];
+      double dB = correctedCoeffs[1];
+      double dC = correctedCoeffs[2];
+      double dD = correctedCoeffs[3];
+
+      double deltaH = deltaHf298 + (dA * (T - REFERENCE_TEMPERATURE)
+          + dB / 2.0 * (Math.pow(T, 2) - Math.pow(REFERENCE_TEMPERATURE, 2))
+          + dC / 3.0 * (Math.pow(T, 3) - Math.pow(REFERENCE_TEMPERATURE, 3))
+          + dD / 4.0 * (Math.pow(T, 4) - Math.pow(REFERENCE_TEMPERATURE, 4))) / 1000;
+
+      return deltaH;
     }
 
     /**
@@ -512,13 +639,12 @@ public class GibbsReactor extends TwoPortEquipment {
     public double calculateEntropy(double temperature, int compNumber) {
       // Fallback to manual calculation if NeqSim method fails
       double T = temperature;
-      double T0 = 298.15; // Reference temperature (K)
 
       // Calculate heat capacity
       double Cp = calculateHeatCapacity(T, compNumber);
 
       // S(T) = Sref + Cp*ln(T/Tref)
-      return (deltaSf298 + Cp * Math.log(T / T0)) / 1000;
+      return (deltaSf298 + Cp * Math.log(T / REFERENCE_TEMPERATURE)) / 1000;
     }
 
     /**
@@ -529,24 +655,10 @@ public class GibbsReactor extends TwoPortEquipment {
      * @return heat capacity in J/(mol·K)
      */
     public double calculateHeatCapacity(double temperature, int compNumber) {
-      try {
-        // Get heat capacity from NeqSim's component
-        double cp0 = system.getComponent(compNumber).getCp0(temperature);
+      // Get heat capacity from NeqSim's component
+      double cp0 = system.getComponent(compNumber).getCp0(temperature);
 
-        return cp0; // NeqSim returns Cp0 in J/(mol·K)
-
-      } catch (Exception e) {
-        // Fallback to polynomial calculation if NeqSim method fails
-        double T = temperature;
-
-        // Heat capacity polynomial: Cp = A + B*T + C*T^2 + D*T^3
-        double A = heatCapacityCoeffs[0];
-        double B = heatCapacityCoeffs[1];
-        double C = heatCapacityCoeffs[2];
-        double D = heatCapacityCoeffs[3];
-
-        return A + B * T + C * T * T + D * T * T * T;
-      }
+      return cp0; // NeqSim returns Cp0 in J/(mol·K)
     }
   }
 
@@ -589,6 +701,10 @@ public class GibbsReactor extends TwoPortEquipment {
             if (parts.length == 13) {
               String compName = parts[0].trim().toLowerCase();
               double[] coeffs = new double[12];
+              // Initialize all coefficients with NaN
+              for (int j = 0; j < 12; j++) {
+                coeffs[j] = Double.NaN;
+              }
               for (int i = 0; i < 12; i++) {
                 coeffs[i] = Double.parseDouble(parts[i + 1].replace(",", "."));
               }
@@ -609,28 +725,77 @@ public class GibbsReactor extends TwoPortEquipment {
         if (line.isEmpty() || line.startsWith("#"))
           continue;
         String[] parts = line.split(";");
-        if (parts.length >= 14) {
+        // Handle both old format (15 parts, 6 elements) and new format (16 parts, 7 elements)
+        if (parts.length >= 15) {
           try {
             final String molecule = parts[0].trim();
-            double[] elements = new double[6];
-            for (int i = 0; i < 6; i++) {
+            double[] elements = new double[7];
+
+            // Determine number of elements based on parts length
+            // New format: Component + 7 elements (O,N,C,H,S,Ar,Z) + other data = 15+ parts
+            // Old format: Component + 6 elements (O,N,C,H,S,Ar) + other data = 14+ parts
+            int numElements = (parts.length >= 15) ? 7 : 6;
+            logger.debug("Loading component: " + molecule + " with " + numElements
+                + " elements (parts.length=" + parts.length + ")");
+
+            // Debug logging for ionic species - show raw parts
+            if (molecule.contains("+") || molecule.contains("-")) {
+              StringBuilder partsStr = new StringBuilder();
+              for (int i = 0; i < Math.min(parts.length, 10); i++) {
+                partsStr.append("parts[").append(i).append("]=").append(parts[i]).append(" ");
+              }
+             // System.out.println(
+               //   "DATABASE LOADING - Raw parts for " + molecule + ": " + partsStr.toString());
+             // System.out.println("DATABASE LOADING - parts.length=" + parts.length
+                //  + ", numElements=" + numElements);
+            }
+
+            // Parse available elements
+            for (int i = 0; i < numElements; i++) {
               String value = parts[i + 1].trim().replace(",", ".");
               elements[i] = Double.parseDouble(value);
+              if (molecule.contains("+") || molecule.contains("-")) {
+               //System.out.println("DATABASE LOADING - Element[" + i + "] (" + elementNames[i]
+                //    + ") = " + value + " -> " + elements[i]);
+              }
             }
+
+            // If old format (6 elements), set Z element to 0
+            if (numElements == 6) {
+              elements[6] = 0.0; // Z element defaults to 0
+              if (molecule.contains("+") || molecule.contains("-")) {
+                System.out.println("DATABASE LOADING - Old format detected, setting Z to 0.0");
+              }
+            }
+
+            // Debug logging for ionic species
+            if (molecule.contains("+") || molecule.contains("-")) {
+              System.out.println("DATABASE LOADING - Final elements for " + molecule + ": O="
+                  + elements[0] + ", N=" + elements[1] + ", C=" + elements[2] + ", H=" + elements[3]
+                  + ", S=" + elements[4] + ", Ar=" + elements[5] + ", Z=" + elements[6]);
+            }
+
             double[] heatCapCoeffs = new double[4];
+            int heatCapStartIndex = numElements + 1; // 7 for new format, 6 for old format
             for (int i = 0; i < 4; i++) {
-              String value = parts[i + 7].trim().replace(",", ".");
+              String value = parts[i + heatCapStartIndex].trim().replace(",", ".");
               heatCapCoeffs[i] = Double.parseDouble(value);
             }
-            String deltaHf298Str = parts[11].trim().replace(",", ".");
-            String deltaGf298Str = parts[12].trim().replace(",", ".");
-            String deltaSf298Str = parts[13].trim().replace(",", ".");
+
+            int thermoStartIndex = heatCapStartIndex + 4;
+            String deltaHf298Str = parts[thermoStartIndex].trim().replace(",", ".");
+            String deltaGf298Str = parts[thermoStartIndex + 1].trim().replace(",", ".");
+            String deltaSf298Str = parts[thermoStartIndex + 2].trim().replace(",", ".");
             double deltaHf298 = Double.parseDouble(deltaHf298Str);
             double deltaGf298 = Double.parseDouble(deltaGf298Str);
             double deltaSf298 = Double.parseDouble(deltaSf298Str);
 
-            // Get extra coefficients if available
-            double[] coeffs = extraCoeffMap.getOrDefault(molecule.toLowerCase(), new double[12]);
+            // Get extra coefficients if available, default to NaN array if not found
+            double[] defaultCoeffs = new double[12];
+            for (int k = 0; k < 12; k++) {
+              defaultCoeffs[k] = Double.NaN;
+            }
+            double[] coeffs = extraCoeffMap.getOrDefault(molecule.toLowerCase(), defaultCoeffs);
             GibbsComponent component = new GibbsComponent(molecule, elements, heatCapCoeffs,
                 deltaHf298, deltaGf298, deltaSf298, coeffs.length > 0 ? coeffs[0] : Double.NaN,
                 coeffs.length > 1 ? coeffs[1] : Double.NaN,
@@ -774,6 +939,13 @@ public class GibbsReactor extends TwoPortEquipment {
       elementMoleBalanceDiff[i] = elementMoleBalanceOut[i] - elementMoleBalanceIn[i];
     }
 
+    // Debug logging for element balance
+    logger.debug("=== Element Balance (mol/sec) ===");
+    for (int i = 0; i < elementNames.length; i++) {
+      logger.debug(String.format("%s: IN=%.6e, OUT=%.6e, DIFF=%.6e", elementNames[i],
+          elementMoleBalanceIn[i], elementMoleBalanceOut[i], elementMoleBalanceDiff[i]));
+    }
+
     // Calculate objective function values
     calculateObjectiveFunctionValues(system);
 
@@ -853,11 +1025,14 @@ public class GibbsReactor extends TwoPortEquipment {
       // Get element composition from database
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
       if (comp == null) {
-        // System.err.println("WARNING: Component '" + compName
-        // + "' not found in gibbsReactDatabase. Skipping element balance for this component.");
+        logger.debug("WARNING: Component '" + compName
+            + "' not found in gibbsReactDatabase. Skipping element balance for this component.");
         continue;
       }
       double[] elements = comp.getElements();
+      logger.debug("Component " + compName + " elements: O=" + elements[0] + ", N=" + elements[1]
+          + ", C=" + elements[2] + ", H=" + elements[3] + ", S=" + elements[4] + ", Ar="
+          + elements[5] + ", Z=" + elements[6]);
       for (int j = 0; j < elementNames.length; j++) {
         elementBalance[j] += elements[j] * moles;
       }
@@ -1630,7 +1805,7 @@ public class GibbsReactor extends TwoPortEquipment {
    */
   private boolean updateSystemWithNewCompositions() {
     try {
-      SystemInterface system = getOutletStream().getThermoSystem();
+      //SystemInterface system = getInletStream().getThermoSystem();
 
       // Update component moles in the system
       for (int i = 0; i < processedComponents.size(); i++) {
@@ -1655,11 +1830,15 @@ public class GibbsReactor extends TwoPortEquipment {
           // Set new moles
           double currentMoles = system.getComponent(compIndex).getNumberOfMolesInPhase();
           double molesToAdd = newMoles - currentMoles;
-
+          if ((molesToAdd < 0.0) && (Math.abs(Math.abs(molesToAdd) - currentMoles)) < 1e-6) {
+            // Prevent removing more moles than present
+            molesToAdd = -currentMoles + 1e-6; // leave a tiny amount to avoid zero
+          }
           if (Math.abs(molesToAdd) > 1e-15) {
             system.addComponent(compIndex, molesToAdd, 0);
           }
         }
+      getOutletStream().setThermoSystem(system);
       }
 
 
@@ -1670,6 +1849,16 @@ public class GibbsReactor extends TwoPortEquipment {
       calculateElementMoleBalance(system, elementMoleBalanceOut, false);
       for (int i = 0; i < elementNames.length; i++) {
         elementMoleBalanceDiff[i] = elementMoleBalanceOut[i] - elementMoleBalanceIn[i];
+      }
+
+      // Debug logging for element balance during iterations
+      logger.debug("--- Element Balance During Iteration ---");
+      for (int i = 0; i < elementNames.length; i++) {
+        // Always show Z element, and others only if significant differences
+        if (elementNames[i].equals("Z") || Math.abs(elementMoleBalanceDiff[i]) > 1e-10) {
+          logger.debug(String.format("%s: IN=%.6e, OUT=%.6e, DIFF=%.6e", elementNames[i],
+              elementMoleBalanceIn[i], elementMoleBalanceOut[i], elementMoleBalanceDiff[i]));
+        }
       }
 
       return true;
@@ -1934,6 +2123,19 @@ public class GibbsReactor extends TwoPortEquipment {
         logger.warn("Iteration update failed at iteration " + iteration);
         finalConvergenceError = deltaXNorm;
         return false;
+      }
+
+      // Debug logging for element balance during iterations
+      SystemInterface currentOutletSystem = getOutletStream().getThermoSystem();
+      calculateElementMoleBalance(currentOutletSystem, elementMoleBalanceOut, false);
+      logger.debug("Iteration " + iteration + " element balance:");
+      for (int i = 0; i < elementNames.length; i++) {
+        double diff = elementMoleBalanceOut[i] - elementMoleBalanceIn[i];
+        // Always show Z element, and others only if significant differences
+        if (elementNames[i].equals("Z") || Math.abs(diff) > 1e-10) {
+          logger.debug(String.format("  %s: IN=%.6e, OUT=%.6e, DIFF=%.6e", elementNames[i],
+              elementMoleBalanceIn[i], elementMoleBalanceOut[i], diff));
+        }
       }
 
       finalConvergenceError = deltaXNorm;
