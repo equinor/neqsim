@@ -1,5 +1,6 @@
 package neqsim.thermo.phase;
 
+import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.component.ComponentSrkCPAs;
 
 /**
@@ -25,7 +26,12 @@ public class PhaseSrkCPAsOld extends PhaseSrkCPAs {
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, moles, molesInPhase, compNumber);
-    componentArray[compNumber] = new ComponentSrkCPAs(name, moles, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentSrkCPAs(name, moles, molesInPhase, compNumber, this);
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (componentArray[i] instanceof ComponentSrkCPA) {
+        ((ComponentSrkCPA) componentArray[i]).resizeXsitedni(numberOfComponents);
+      }
+    }
   }
 
   /** {@inheritDoc} */
