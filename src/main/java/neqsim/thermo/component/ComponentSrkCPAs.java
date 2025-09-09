@@ -82,7 +82,10 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
   /** {@inheritDoc} */
   @Override
   public double calc_lngij(int j, PhaseInterface phase) {
-    double temp = phase.getTotalVolume() - 0.475 * phase.getB();
+    double V = phase.getTotalVolume();
+    double B = phase.getB();
+    double temp = V - 0.475 * B;
+    double temp2 = temp * temp;
     // System.out.println("B " + phase.getB() + " Bi " + getBi() + " bij " +
     // getBij(j));
     // return 0.475 * getBij(j) * 0 / (phase.getTotalVolume() - 0.475 * phase.getB())
@@ -91,6 +94,6 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
     // akis
     return (0.475 * getBij(j) * temp
         + 0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi() * 0.475 * getBi())
-        / (temp * temp);
+        / temp2;
   }
 }
