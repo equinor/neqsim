@@ -34,10 +34,11 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * @param molesInPhase Number of moles in phase.
    * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentSrkCPA(String name, double moles, double molesInPhase, int compIndex) {
+  public ComponentSrkCPA(String name, double moles, double molesInPhase, int compIndex,
+      PhaseInterface phase) {
     super(name, moles, molesInPhase, compIndex);
     xsite = new double[numberOfAssociationSites];
-    xsitedni = new double[numberOfAssociationSites][100];
+    xsitedni = new double[numberOfAssociationSites][phase.getNumberOfComponents()];
     xsitedV = new double[numberOfAssociationSites];
     xsitedT = new double[numberOfAssociationSites];
     xsitedTdT = new double[numberOfAssociationSites];
@@ -75,10 +76,11 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * @param a Acentric factor
    * @param moles Total number of moles of component.
    */
-  public ComponentSrkCPA(int number, double TC, double PC, double M, double a, double moles) {
+  public ComponentSrkCPA(int number, double TC, double PC, double M, double a, double moles,
+      PhaseInterface phase) {
     super(number, TC, PC, M, a, moles);
     xsite = new double[numberOfAssociationSites];
-    xsitedni = new double[numberOfAssociationSites][100];
+    xsitedni = new double[numberOfAssociationSites][phase.getNumberOfComponents()];
     xsitedV = new double[numberOfAssociationSites];
     xsitedT = new double[numberOfAssociationSites];
     xsitedTdT = new double[numberOfAssociationSites];
@@ -489,22 +491,18 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
-   */
+  */
   public double calc_lngij(int j, PhaseInterface phase) {
-    // return 2.0 * getBij(j) * (10.0 * phase.getTotalVolume() - phase.getB())
-    // / ((8.0 * phase.getTotalVolume() - phase.getB())
-    // * (4.0 * phase.getTotalVolume() - phase.getB()));
-
-    // akis
-    double temp = (10.0 * phase.getTotalVolume() - phase.getB())
-        / ((8.0 * phase.getTotalVolume() - phase.getB())
-            * (4.0 * phase.getTotalVolume() - phase.getB()));
-    double temp1 = (8.0 * phase.getTotalVolume() - phase.getB());
-    double temp2 = (4.0 * phase.getTotalVolume() - phase.getB());
-    double temp3 = (10.0 * phase.getTotalVolume() - phase.getB());
-    double tempj = (-((ComponentEosInterface) phase.getComponent(j)).getBi() * temp1 * temp2
-        + ((ComponentEosInterface) phase.getComponent(j)).getBi() * temp3 * (temp1 + temp2)) / temp1
-        / temp1 / temp2 / temp2;
+    double V = phase.getTotalVolume();
+    double B = phase.getB();
+    double temp1 = 8.0 * V - B;
+    double temp2 = 4.0 * V - B;
+    double temp3 = 10.0 * V - B;
+    double temp = temp3 / (temp1 * temp2);
+    double temp1sq = temp1 * temp1;
+    double temp2sq = temp2 * temp2;
+    double biJ = ((ComponentEosInterface) phase.getComponent(j)).getBi();
+    double tempj = (-biJ * temp1 * temp2 + biJ * temp3 * (temp1 + temp2)) / (temp1sq * temp2sq);
     return 2.0 * (getBij(j) * temp + getBi() * tempj);
   }
 
@@ -625,6 +623,27 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   @Override
   public void setXsitedni(int xnumb, int compnumb, double val) {
     xsitedni[xnumb][compnumb] = val;
+  }
+
+  /**
+   * Ensure that the xsitedni array has capacity for the specified number of components.
+   *
+   * @param numComp desired number of components
+   */
+  public void resizeXsitedni(int numComp) {
+    if (numberOfAssociationSites == 0) {
+      xsitedni = new double[0][0];
+      return;
+    }
+    if (xsitedni.length != numberOfAssociationSites ||
+        (xsitedni.length > 0 && xsitedni[0].length != numComp)) {
+      double[][] newArr = new double[numberOfAssociationSites][numComp];
+      for (int i = 0; i < Math.min(xsitedni.length, numberOfAssociationSites); i++) {
+        System.arraycopy(xsitedni[i], 0, newArr[i], 0,
+            Math.min(xsitedni[i].length, numComp));
+      }
+      xsitedni = newArr;
+    }
   }
 
   /** {@inheritDoc} */

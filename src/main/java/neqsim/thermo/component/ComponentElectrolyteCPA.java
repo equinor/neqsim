@@ -497,13 +497,14 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    * </p>
    *
    * @param j a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
-   */
+  * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+  * @return a double
+  */
   public double calc_lngij(int j, PhaseInterface phase) {
-    return 2.0 * getBij(j) * (10.0 * phase.getTotalVolume() - phase.getB())
-        / ((8.0 * phase.getTotalVolume() - phase.getB())
-            * (4.0 * phase.getTotalVolume() - phase.getB()));
+    double V = phase.getTotalVolume();
+    double B = phase.getB();
+    double denom = (8.0 * V - B) * (4.0 * V - B);
+    return 2.0 * getBij(j) * (10.0 * V - B) / denom;
   }
 
   /** {@inheritDoc} */

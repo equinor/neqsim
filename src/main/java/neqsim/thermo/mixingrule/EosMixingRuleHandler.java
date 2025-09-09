@@ -978,26 +978,44 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-      double aij = 0;
-      ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+      ComponentEosInterface[] comp = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      A = 0.0;
+      // Collect active components using in-phase moles (phase property)
+      int[] active = new int[numbcomp];
+      int m = 0;
+      double[] n = new double[numbcomp]; // n_i in current phase
+      double[] sqrtAT = new double[numbcomp]; // sqrt(a_i(T))
       for (int i = 0; i < numbcomp; i++) {
-        if (compArray[i].getNumberOfmoles() < 1e-100) {
-          continue;
-        }
-        for (int j = 0; j < numbcomp; j++) {
-          if (compArray[j].getNumberOfmoles() < 1e-100) {
-            continue;
-          }
-          aij = Math.sqrt(compArray[i].getaT() * compArray[j].getaT())
-              * (1.0 - getkij(temperature, i, j));
-          A += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
-              * aij;
+        double ni = comp[i].getNumberOfMolesInPhase();
+        if (ni >= 1e-100) {
+          n[i] = ni;
+          sqrtAT[i] = Math.sqrt(comp[i].getaT());
+          active[m++] = i;
         }
       }
-      Atot = A;
-      return A;
+
+      if (m == 0) {
+        A = 0.0;
+        Atot = 0.0;
+        return 0.0;
+      }
+
+      // Sum upper triangle and double off-diagonals (k_ij == k_ji)
+      double sum = 0.0;
+      for (int ii = 0; ii < m; ii++) {
+        int i = active[ii];
+        for (int jj = ii; jj < m; jj++) {
+          int j = active[jj];
+          double kij = getkij(temperature, i, j); // symmetric by assumption
+          double aij = sqrtAT[i] * sqrtAT[j] * (1.0 - kij); // a_ij = a_ji
+          double term = n[i] * n[j] * aij;
+          sum += (ii == jj) ? term : 2.0 * term;
+        }
+      }
+
+      A = sum;
+      Atot = sum;
+      return sum;
     }
 
     // public double calcB(PhaseInterface phase, double temperature, double
@@ -1019,16 +1037,31 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     @Override
     public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
-      double aij = 0.0;
-      ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+      ComponentEosInterface[] comp = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      A = 0.0;
+      // Cache and build active j-list using in-phase moles
+      int[] active = new int[numbcomp];
+      int m = 0;
+      double[] n = new double[numbcomp];
+      double[] sqrtAT = new double[numbcomp];
       for (int j = 0; j < numbcomp; j++) {
-        aij = Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT())
-            * (1.0 - getkij(temperature, compNumb, j));
-        A += compArray[j].getNumberOfMolesInPhase() * aij;
+        double nj = comp[j].getNumberOfMolesInPhase();
+        if (nj >= 1e-100) {
+          n[j] = nj;
+          sqrtAT[j] = Math.sqrt(comp[j].getaT());
+          active[m++] = j;
+        }
       }
-      return 2.0 * A;
+
+      double sqrtAi = Math.sqrt(comp[compNumb].getaT());
+      double sum = 0.0;
+      for (int idx = 0; idx < m; idx++) {
+        int j = active[idx];
+        double kij = getkij(temperature, compNumb, j); // k_ij == k_ji (given)
+        double aij = sqrtAi * sqrtAT[j] * (1.0 - kij);
+        sum += n[j] * aij;
+      }
+      return 2.0 * sum; // dA/dn_i
     }
 
     // public double calcBi(int compNumb, PhaseInterface phase, double temperature,
@@ -1055,22 +1088,48 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     // numbcomp)-calcBi(compNumbj, phase,temperature, pressure,
     // numbcomp))/phase.getNumberOfMolesInPhase();
     // }
+    /** {@inheritDoc} */
     @Override
     public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
-      double A = 0.0;
-      double aij = 0;
-      ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+      ComponentEosInterface[] comp = (ComponentEosInterface[]) phase.getcomponentArray();
+
+      // i-component caches
+      final double eps = 1e-300; // guard against division by ~0
+      final double ai = comp[compNumb].getaT();
+      final double aiT = comp[compNumb].getaDiffT();
+      final double aiPos = ai > eps ? ai : eps;
+      final double sqrtAi = Math.sqrt(aiPos);
+      final double logDeriv_i = aiT / aiPos; // (a_i'/a_i)
+
+      double sum = 0.0;
 
       for (int j = 0; j < numbcomp; j++) {
-        aij = 0.5 / Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT())
-            * (compArray[compNumb].getaT() * compArray[j].getaDiffT()
-                + compArray[j].getaT() * compArray[compNumb].getaDiffT())
-            * (1.0 - getkij(temperature, compNumb, j));
-        A += compArray[j].getNumberOfMolesInPhase() * aij;
+        final double nj = comp[j].getNumberOfMolesInPhase();
+        if (nj < 1e-100)
+          continue; // negligible in this phase
+
+        // j-component caches
+        final double aj = comp[j].getaT();
+        final double ajT = comp[j].getaDiffT();
+        final double ajPos = aj > eps ? aj : eps;
+        final double sqrtAj = Math.sqrt(ajPos);
+
+        // sqrt(a_i a_j)
+        final double sqrt_aiaj = sqrtAi * sqrtAj;
+
+        // (1 - kij) is T-invariant by assumption
+        final double oneMinusK = 1.0 - getkij(temperature, compNumb, j);
+
+        // d/dT sqrt(a_i a_j) = 0.5*(a_i'/a_i + a_j'/a_j) * sqrt(a_i a_j)
+        final double dSqrt_dT = 0.5 * (logDeriv_i + ajT / ajPos) * sqrt_aiaj;
+
+        // Since dkij/dT = 0: da_ij/dT = dSqrt_dT * (1 - kij)
+        sum += nj * dSqrt_dT * oneMinusK;
       }
-      // System.out.println("Ait SRK : " + (2*A));
-      return 2.0 * A;
+
+      // d/dT(dA/dn_i) = 2 * sum_j n_j * da_ij/dT
+      return 2.0 * sum;
     }
 
     /** {@inheritDoc} */

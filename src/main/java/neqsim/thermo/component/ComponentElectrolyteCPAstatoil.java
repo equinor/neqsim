@@ -78,10 +78,13 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
   /** {@inheritDoc} */
   @Override
   public double calc_lngij(int j, PhaseInterface phase) {
-    double temp = phase.getTotalVolume() - 0.475 * phase.getB();
+    double V = phase.getTotalVolume();
+    double B = phase.getB();
+    double temp = V - 0.475 * B;
+    double temp2 = temp * temp;
     // System.out.println("B " + phase.getB() + " Bi " + getBi() + " bij " +
     // getBij(j));
-    return 0.475 * getBij(j) * 0 / (phase.getTotalVolume() - 0.475 * phase.getB()) - 0.475 * getBi()
-        * 1.0 / (temp * temp) * (-0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi());
+    return 0.475 * getBij(j) * 0 / temp - 0.475 * getBi() * 1.0 / temp2
+        * (-0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi());
   }
 }

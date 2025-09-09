@@ -25,6 +25,9 @@ public class RachfordRice implements Serializable {
   private static final long serialVersionUID = 1000;
   private double[] beta = new double[2];
   private static String method = "Nielsen2023"; // alternative use Nielsen2023 or Michelsen2001
+  // Work arrays reused across iterations
+  private double[] c = new double[0];
+  private double[] d = new double[0];
 
   /**
    * <p>
@@ -274,10 +277,22 @@ public class RachfordRice implements Serializable {
     double a = (alpha - alphaMin) / (alphaMax - alpha);
     double b = 1.0 / (alpha - alphaMin);
 
-    double[] c = new double[K.length];
-    double[] d = new double[K.length];
+    if (c.length != K.length) {
+      c = new double[K.length];
+      d = new double[K.length];
+    }
     for (int i = 0; i < K.length; i++) {
-      c[i] = 1.0 / (1.0 - K[i]);
+      double Ki = K[i];
+      if (Ki < 1e-25) {
+        Ki = 1e-25;
+      } else if (Ki > 1e25) {
+        Ki = 1e25;
+      }
+      double denom = 1.0 - Ki;
+      if (Math.abs(denom) < 1e-25) {
+        denom = denom < 0 ? -1e-25 : 1e-25;
+      }
+      c[i] = 1.0 / denom;
       d[i] = (alphaMin - c[i]) / (alphaMax - alphaMin);
     }
 
@@ -288,9 +303,11 @@ public class RachfordRice implements Serializable {
     double bmin = 1.0 / (alphaMax - alphaMin);
     int iter = 0;
     int maxIterations = 300;
+    double funk = 0.0;
+    double tol = 1e-10;
     do {
       iter++;
-      double funk = 0;
+      funk = 0.0;
       double funkder = 0.0;
       hb = 0.0;
       double hbder = 0.0;
@@ -300,6 +317,9 @@ public class RachfordRice implements Serializable {
             z[i] * (a * a + (1.0 + a) * (1.0 + a) * d[i]) / Math.pow(d[i] + a * (1.0 + d[i]), 2.0);
         hb += z[i] * b / (1.0 + b * (alphaMin - c[i]));
         hbder += z[i] / Math.pow(1.0 + b * (alphaMin - c[i]), 2.0);
+      }
+      if (Math.abs(funk) < tol && Math.abs(hb) < tol) {
+        break;
       }
       if (funk > 0) {
         amax = a;
@@ -319,7 +339,7 @@ public class RachfordRice implements Serializable {
       if (b > bmax || b < bmin) {
         b = (bmax + bmin) / 2.0;
       }
-    } while (Math.abs(hb) > 1e-10 && iter < maxIterations);
+    } while (iter < maxIterations);
 
     V = -((1 / b) / a - alphaMax);
 
@@ -336,7 +356,7 @@ public class RachfordRice implements Serializable {
     beta[0] = V;
     beta[1] = 1.0 - V;
 
-    if (iter >= maxIterations) {
+    if (Math.abs(funk) >= tol || Math.abs(hb) >= tol) {
       logger.error("Rachford rice did not coverge afer " + maxIterations + " iterations");
       logger.debug("K " + Arrays.toString(K));
       logger.debug("z " + Arrays.toString(z));

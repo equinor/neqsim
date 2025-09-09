@@ -508,27 +508,32 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void addMolesChemReac(double dn, double totdn) {
-    if (numberOfMoles + totdn < 0 || numberOfMolesInPhase + dn < 0) {
-      if (Math.abs(dn) < 1e-50) {
-        dn = 0;
-        totdn = 0;
-      } else {
-        String msg = "will lead to negative number of moles of component in phase for component "
-            + getComponentName() + "  who has " + numberOfMolesInPhase
-            + " in phase  and change request was " + dn;
-        logger.error(msg);
-        if (numberOfMolesInPhase + dn < 0) {
-          dn = -numberOfMolesInPhase;
-        }
-        if (numberOfMoles + totdn < 0) {
-          totdn = -numberOfMoles;
-        }
+    double newTotal = numberOfMoles + totdn;
+    double newPhase = numberOfMolesInPhase + dn;
+    double tolerance = 1e-12;
+
+    if (newTotal < -tolerance || newPhase < -tolerance) {
+      String msg = "will lead to negative number of moles of component in phase for component "
+          + getComponentName() + "  who has " + numberOfMolesInPhase
+          + " in phase  and change request was " + dn;
+      logger.debug(msg);
+      if (newPhase < 0) {
+        newPhase = 0;
       }
-      // throw new RuntimeException(
-      // new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg));
+      if (newTotal < 0) {
+        newTotal = 0;
+      }
+    } else {
+      if (newPhase < 0) {
+        newPhase = 0;
+      }
+      if (newTotal < 0) {
+        newTotal = 0;
+      }
     }
-    numberOfMoles += totdn;
-    numberOfMolesInPhase += dn;
+
+    numberOfMoles = newTotal;
+    numberOfMolesInPhase = newPhase;
   }
 
   /** {@inheritDoc} */

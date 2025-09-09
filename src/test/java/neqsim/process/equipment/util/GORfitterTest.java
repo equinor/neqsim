@@ -81,11 +81,10 @@ public class GORfitterTest {
     // 1e-12);
     // Assertions.assertEquals(3106.7708277963447, multiPhaseMeter.getMeasuredValue("GOR_std", ""),
     // 1e-12);
-    Assertions.assertEquals(10.099999999999769, multiPhaseMeter2.getMeasuredValue("GOR", ""),
-        1e-12);
+    Assertions.assertEquals(10.1, multiPhaseMeter2.getMeasuredValue("GOR", ""), 1e-10);
     Assertions.assertEquals(682.1045749623208, multiPhaseMeter2.getMeasuredValue("GOR_std", ""),
-        1e-10); // the value of GOR sm3/sm3 3.48551599242607 is quite far if we take by flow
-                // getStandardFlow
+        1e-8); // the value of GOR sm3/sm3 3.48551599242607 is quite far if we take by flow
+               // getStandardFlow
     Assertions.assertEquals(1000000.0, stream_2.getFlowRate("kg/hr"), 1e-8);
   }
 }

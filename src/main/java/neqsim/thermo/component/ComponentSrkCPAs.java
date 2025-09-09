@@ -24,8 +24,9 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
    * @param molesInPhase Number of moles in phase.
    * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentSrkCPAs(String name, double moles, double molesInPhase, int compIndex) {
-    super(name, moles, molesInPhase, compIndex);
+  public ComponentSrkCPAs(String name, double moles, double molesInPhase, int compIndex,
+      PhaseInterface phase) {
+    super(name, moles, molesInPhase, compIndex, phase);
   }
 
   /**
@@ -40,8 +41,9 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
    * @param a Acentric factor
    * @param moles Total number of moles of component.
    */
-  public ComponentSrkCPAs(int number, double TC, double PC, double M, double a, double moles) {
-    super(number, TC, PC, M, a, moles);
+  public ComponentSrkCPAs(int number, double TC, double PC, double M, double a, double moles,
+      PhaseInterface phase) {
+    super(number, TC, PC, M, a, moles, phase);
   }
 
   /** {@inheritDoc} */
@@ -82,7 +84,10 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
   /** {@inheritDoc} */
   @Override
   public double calc_lngij(int j, PhaseInterface phase) {
-    double temp = phase.getTotalVolume() - 0.475 * phase.getB();
+    double V = phase.getTotalVolume();
+    double B = phase.getB();
+    double temp = V - 0.475 * B;
+    double temp2 = temp * temp;
     // System.out.println("B " + phase.getB() + " Bi " + getBi() + " bij " +
     // getBij(j));
     // return 0.475 * getBij(j) * 0 / (phase.getTotalVolume() - 0.475 * phase.getB())
@@ -91,6 +96,6 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
     // akis
     return (0.475 * getBij(j) * temp
         + 0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi() * 0.475 * getBi())
-        / (temp * temp);
+        / temp2;
   }
 }

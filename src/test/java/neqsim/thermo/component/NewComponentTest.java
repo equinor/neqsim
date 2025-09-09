@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -35,7 +36,8 @@ public class NewComponentTest extends neqsim.NeqSimTest {
       p.addComponent("ethane", 0, 0, -1);
     });
     Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addComponent - Input compNumber  must be valid index, i.e., between 0 and 100.",
+        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:addComponent - Input compNumber  must be valid index, i.e., between 0 and "
+            + ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS + ".",
         thrown_3.getMessage());
 
     p.addComponent("ethane", 0, 0, 0);
