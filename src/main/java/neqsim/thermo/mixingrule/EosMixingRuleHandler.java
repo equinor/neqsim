@@ -1088,22 +1088,48 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     // numbcomp)-calcBi(compNumbj, phase,temperature, pressure,
     // numbcomp))/phase.getNumberOfMolesInPhase();
     // }
+    /** {@inheritDoc} */
     @Override
     public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
-      double A = 0.0;
-      double aij = 0;
-      ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+      ComponentEosInterface[] comp = (ComponentEosInterface[]) phase.getcomponentArray();
+
+      // i-component caches
+      final double eps = 1e-300; // guard against division by ~0
+      final double ai = comp[compNumb].getaT();
+      final double aiT = comp[compNumb].getaDiffT();
+      final double aiPos = ai > eps ? ai : eps;
+      final double sqrtAi = Math.sqrt(aiPos);
+      final double logDeriv_i = aiT / aiPos; // (a_i'/a_i)
+
+      double sum = 0.0;
 
       for (int j = 0; j < numbcomp; j++) {
-        aij = 0.5 / Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT())
-            * (compArray[compNumb].getaT() * compArray[j].getaDiffT()
-                + compArray[j].getaT() * compArray[compNumb].getaDiffT())
-            * (1.0 - getkij(temperature, compNumb, j));
-        A += compArray[j].getNumberOfMolesInPhase() * aij;
+        final double nj = comp[j].getNumberOfMolesInPhase();
+        if (nj < 1e-100)
+          continue; // negligible in this phase
+
+        // j-component caches
+        final double aj = comp[j].getaT();
+        final double ajT = comp[j].getaDiffT();
+        final double ajPos = aj > eps ? aj : eps;
+        final double sqrtAj = Math.sqrt(ajPos);
+
+        // sqrt(a_i a_j)
+        final double sqrt_aiaj = sqrtAi * sqrtAj;
+
+        // (1 - kij) is T-invariant by assumption
+        final double oneMinusK = 1.0 - getkij(temperature, compNumb, j);
+
+        // d/dT sqrt(a_i a_j) = 0.5*(a_i'/a_i + a_j'/a_j) * sqrt(a_i a_j)
+        final double dSqrt_dT = 0.5 * (logDeriv_i + ajT / ajPos) * sqrt_aiaj;
+
+        // Since dkij/dT = 0: da_ij/dT = dSqrt_dT * (1 - kij)
+        sum += nj * dSqrt_dT * oneMinusK;
       }
-      // System.out.println("Ait SRK : " + (2*A));
-      return 2.0 * A;
+
+      // d/dT(dA/dn_i) = 2 * sum_j n_j * da_ij/dT
+      return 2.0 * sum;
     }
 
     /** {@inheritDoc} */
