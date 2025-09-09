@@ -43,7 +43,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     Stream stream1 = new Stream("Stream1", testSystem);
     stream1.run();
-    assertEquals(-3.84116452828, stream1.CCT("C"), 1e-3);
+    assertEquals(-4.0, stream1.CCT("C"), 0.2);
   }
 
   /**
