@@ -978,22 +978,44 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-      double aij = 0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      A = 0.0;
+      // cache number of moles in phase and sqrt(aT) for relevant components
+      double[] moles = new double[numbcomp];
+      double[] sqrtAT = new double[numbcomp];
+      int[] active = new int[numbcomp];
+      int activeCount = 0;
       for (int i = 0; i < numbcomp; i++) {
-        if (compArray[i].getNumberOfmoles() < 1e-100) {
+        moles[i] = compArray[i].getNumberOfMolesInPhase();
+        if (moles[i] < 1e-100) {
           continue;
         }
-        for (int j = 0; j < numbcomp; j++) {
-          if (compArray[j].getNumberOfmoles() < 1e-100) {
-            continue;
+        sqrtAT[i] = Math.sqrt(compArray[i].getaT());
+        active[activeCount++] = i;
+      }
+
+      // pre-compute (1-kij) matrix for active components
+      double[][] oneMinusKij = new double[activeCount][activeCount];
+      for (int ii = 0; ii < activeCount; ii++) {
+        int i = active[ii];
+        for (int jj = ii; jj < activeCount; jj++) {
+          int j = active[jj];
+          oneMinusKij[ii][jj] = 1.0 - getkij(temperature, i, j);
+          if (ii != jj) {
+            oneMinusKij[jj][ii] = oneMinusKij[ii][jj];
           }
-          aij = Math.sqrt(compArray[i].getaT() * compArray[j].getaT())
-              * (1.0 - getkij(temperature, i, j));
-          A += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
-              * aij;
+        }
+      }
+
+      // evaluate A exploiting symmetry (i <= j)
+      A = 0.0;
+      for (int ii = 0; ii < activeCount; ii++) {
+        int i = active[ii];
+        for (int jj = ii; jj < activeCount; jj++) {
+          int j = active[jj];
+          double aij = sqrtAT[i] * sqrtAT[j] * oneMinusKij[ii][jj];
+          double term = moles[i] * moles[j] * aij;
+          A += ii == jj ? term : 2.0 * term;
         }
       }
       Atot = A;
@@ -1019,14 +1041,35 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     @Override
     public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
-      double aij = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      A = 0.0;
+      if (compArray[compNumb].getNumberOfMolesInPhase() < 1e-100) {
+        return 0.0;
+      }
+
+      // cache number of moles in phase and sqrt(aT) for relevant components
+      double[] moles = new double[numbcomp];
+      double[] sqrtAT = new double[numbcomp];
+      double[] oneMinusKij = new double[numbcomp];
+      int[] active = new int[numbcomp];
+      int activeCount = 0;
+
       for (int j = 0; j < numbcomp; j++) {
-        aij = Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT())
-            * (1.0 - getkij(temperature, compNumb, j));
-        A += compArray[j].getNumberOfMolesInPhase() * aij;
+        moles[j] = compArray[j].getNumberOfMolesInPhase();
+        if (moles[j] < 1e-100) {
+          continue;
+        }
+        sqrtAT[j] = Math.sqrt(compArray[j].getaT());
+        oneMinusKij[j] = 1.0 - getkij(temperature, compNumb, j);
+        active[activeCount++] = j;
+      }
+
+      double sqrtAi = Math.sqrt(compArray[compNumb].getaT());
+      A = 0.0;
+      for (int idx = 0; idx < activeCount; idx++) {
+        int j = active[idx];
+        double aij = sqrtAi * sqrtAT[j] * oneMinusKij[j];
+        A += moles[j] * aij;
       }
       return 2.0 * A;
     }
