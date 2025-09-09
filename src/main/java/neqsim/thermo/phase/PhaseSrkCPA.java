@@ -735,13 +735,15 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * </p>
    *
    * @return a double
-   */
+  */
   public double calc_lngV() {
     tempTotVol = getTotalVolume();
-    // gv = -2.0 * getB() * (10.0 * getTotalVolume() - getB()) / getTotalVolume() /
-    // ((8.0 * getTotalVolume() - getB()) * (4.0 * getTotalVolume() - getB()));
-    return 1.0 / (2.0 - getB() / (4.0 * tempTotVol)) * getB() / (4.0 * tempTotVol * tempTotVol)
-        - 3.0 / (1.0 - getB() / (4.0 * tempTotVol)) * getB() / (4.0 * tempTotVol * tempTotVol);
+    double b = getB();
+    double t = tempTotVol;
+    double t2 = t * t;
+    double bOver4t = b / (4.0 * t);
+    double factor = b / (4.0 * t2);
+    return factor / (2.0 - bOver4t) - 3.0 * factor / (1.0 - bOver4t);
   }
 
   /**
@@ -753,11 +755,18 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    */
   public double calc_lngVV() {
     tempTotVol = getTotalVolume();
-    return 2.0
-        * (640.0 * Math.pow(tempTotVol, 3.0) - 216.0 * getB() * tempTotVol * tempTotVol
-            + 24.0 * Math.pow(getB(), 2.0) * tempTotVol - Math.pow(getB(), 3.0))
-        * getB() / (tempTotVol * tempTotVol) / Math.pow(8.0 * tempTotVol - getB(), 2.0)
-        / Math.pow(4.0 * tempTotVol - getB(), 2.0);
+    double b = getB();
+    double t = tempTotVol;
+    double t2 = t * t;
+    double t3 = t2 * t;
+    double b2 = b * b;
+    double b3 = b2 * b;
+    double denom1 = 8.0 * t - b;
+    double denom1Sq = denom1 * denom1;
+    double denom2 = 4.0 * t - b;
+    double denom2Sq = denom2 * denom2;
+    double term = 640.0 * t3 - 216.0 * b * t2 + 24.0 * b2 * t - b3;
+    return 2.0 * term * b / t2 / denom1Sq / denom2Sq;
   }
 
   /**
@@ -769,13 +778,24 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    */
   public double calc_lngVVV() {
     tempTotVol = getTotalVolume();
-    return 4.0
-        * (Math.pow(getB(), 5.0) + 17664.0 * Math.pow(tempTotVol, 4.0) * getB()
-            - 4192.0 * Math.pow(tempTotVol, 3.0) * Math.pow(getB(), 2.0)
-            + 528.0 * Math.pow(getB(), 3.0) * tempTotVol * tempTotVol
-            - 36.0 * tempTotVol * Math.pow(getB(), 4.0) - 30720.0 * Math.pow(tempTotVol, 5.0))
-        * getB() / (Math.pow(tempTotVol, 3.0)) / Math.pow(-8.0 * tempTotVol + getB(), 3.0)
-        / Math.pow(-4.0 * tempTotVol + getB(), 3.0);
+    double b = getB();
+    double t = tempTotVol;
+    double t2 = t * t;
+    double t3 = t2 * t;
+    double t4 = t3 * t;
+    double t5 = t4 * t;
+    double b2 = b * b;
+    double b3 = b2 * b;
+    double b4 = b3 * b;
+    double b5 = b4 * b;
+    double term =
+        b5 + 17664.0 * t4 * b - 4192.0 * t3 * b2 + 528.0 * b3 * t2 - 36.0 * t * b4
+            - 30720.0 * t5;
+    double denom1 = b - 8.0 * t;
+    double denom1Cubed = denom1 * denom1 * denom1;
+    double denom2 = b - 4.0 * t;
+    double denom2Cubed = denom2 * denom2 * denom2;
+    return 4.0 * term * b / t3 / denom1Cubed / denom2Cubed;
   }
 
   /**
