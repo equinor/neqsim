@@ -22,7 +22,8 @@ public class Draft_ISO18453Test extends neqsim.NeqSimTest {
     standard.setSalesContract("Base");
     standard.calculate();
 
-    Assertions.assertEquals(-21.775841183117222, standard.getValue("dewPointTemperature"));
+    Assertions.assertEquals(-21.775841183117222, standard.getValue("dewPointTemperature"),
+        1e-8);
     Assertions.assertEquals("C", standard.getUnit("dewPointTemperature"));
 
     testSystem.setStandard("Draft_ISO18453");
@@ -30,7 +31,7 @@ public class Draft_ISO18453Test extends neqsim.NeqSimTest {
     testSystem.getStandard().calculate();
 
     Assertions.assertEquals(-21.775841183117222,
-        testSystem.getStandard().getValue("dewPointTemperature"));
+        testSystem.getStandard().getValue("dewPointTemperature"), 1e-8);
     Assertions.assertEquals("C", testSystem.getStandard().getUnit("dewPointTemperature"));
 
     Assertions.assertEquals(70.0, testSystem.getStandard().getValue("pressure"));

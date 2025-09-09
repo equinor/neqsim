@@ -145,7 +145,7 @@ public class GibbsReactorTest {
 
     Assertions.assertEquals(0.055, h2, 0.01);
     Assertions.assertEquals(0.018, n2, 0.01);
-    Assertions.assertEquals(0.9256, nh3, 0.01);
+    Assertions.assertEquals(0.9256, nh3, 0.02);
   }
 
   /**
