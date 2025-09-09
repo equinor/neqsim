@@ -2,7 +2,7 @@
 package neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -97,8 +97,7 @@ public class PTPhaseEnvelopeTest {
     testOps.TPflash();
     testSystem.initProperties();
 
-    Exception exception =
-        assertThrows(ArrayIndexOutOfBoundsException.class, () -> testOps.calcPTphaseEnvelope());
+    assertDoesNotThrow(() -> testOps.calcPTphaseEnvelope());
   }
 
   @Test

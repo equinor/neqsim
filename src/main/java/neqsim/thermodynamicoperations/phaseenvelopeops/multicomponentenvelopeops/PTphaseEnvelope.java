@@ -554,6 +554,9 @@ public class PTphaseEnvelope extends BaseOperation {
   }
 
   private double[] removeZeroValues(double[] values) {
+    if (values == null) {
+      return new double[0];
+    }
     int count = 0;
     for (double val : values) {
       if (val != 0.0) {
