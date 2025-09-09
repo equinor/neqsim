@@ -123,5 +123,10 @@ public class PhaseIdealGas extends Phase implements ThermodynamicConstantsInterf
   public double getSresTP() {
     return 0.0;
   }
+
+  @Override
+  public double getJouleThomsonCoefficient() {
+    return 0.0;
+  }
 }
 
