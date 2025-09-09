@@ -493,7 +493,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     SystemInterface localSyst = getFluid().clone();
     ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
     ops.setRunAsThread(true);
-    ops.calcPTphaseEnvelope2();
+    ops.calcPTphaseEnvelope();
     ops.waitAndCheckForFinishedCalculation(10000);
     ops.displayResult();
     // ops.getJfreeChart();
@@ -505,7 +505,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     SystemInterface localSyst = getFluid().clone();
     ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
     ops.setRunAsThread(true);
-    ops.calcPTphaseEnvelope2();
+    ops.calcPTphaseEnvelope();
     ops.waitAndCheckForFinishedCalculation(10000);
     if (unit.equals("bara") || unit.equals("bar")) {
       return ops.get("cricondenbar")[1];
@@ -526,7 +526,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     SystemInterface localSyst = getFluid().clone();
     ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
     ops.setRunAsThread(true);
-    ops.calcPTphaseEnvelope2();
+    ops.calcPTphaseEnvelope();
     ops.waitAndCheckForFinishedCalculation(10000);
     if (unit.equals("bara") || unit.equals("bar")) {
       return ops.get("cricondentherm")[1];
