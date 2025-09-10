@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -72,4 +73,29 @@ class StreamTest extends neqsim.NeqSimTest {
     processOps.run();
     assertFalse(((Stream) processOps.getUnit("inlet stream")).needRecalculation());
   }
+
+
+  @Test
+  public void testSingleCComponent() {
+    // Create fluid using SRK EOS
+    SystemInterface fluid1 = new SystemSrkEos(273.15, 10.0);
+    fluid1.addComponent("propane", 1.0);
+
+    // Create stream
+    Stream stream1 = new Stream("feed stream", fluid1);
+
+    // Set specifications
+    stream1.setSpecification("gas quality");
+    stream1.setPressure(10.0, "bara");
+    stream1.setGasQuality(0.1); // on mole basis 10% gas, 90% liquid
+    stream1.setFlowRate(1000.0, "kg/hr");
+
+    // Run simulation
+    stream1.run();
+
+    assertEquals(1000.0, stream1.getFlowRate("kg/hr"), 0.1);
+    assertEquals(26.500067735830, stream1.getTemperature("C"), 0.1);
+  }
+
+
 }
