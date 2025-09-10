@@ -18,6 +18,7 @@ public class PhaseSpanWagnerEos extends PhaseEos {
   private double internalEnergy; // J/mol
   private double soundSpeed; // m/s
   private double molarDensity; // mol/m3
+  private double jouleThomson; // K/Pa
 
   public PhaseSpanWagnerEos() {
     thermoPropertyModelName = "Span-Wagner";
@@ -50,6 +51,7 @@ public class PhaseSpanWagnerEos extends PhaseEos {
       gibbsEnergy = props[7];
       soundSpeed = props[8];
       getComponent(0).setFugacityCoefficient(props[9]);
+      jouleThomson = props[10];
       if (molarDensity > 1500.0) {
         setType(PhaseType.LIQUID);
       } else {
@@ -98,7 +100,12 @@ public class PhaseSpanWagnerEos extends PhaseEos {
   }
 
   @Override
+  public double getJouleThomsonCoefficient() {
+    return jouleThomson * 1e5;
+  }
+
+  @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt) {
-    return 1.0 / molarDensity;
+    return 1.0 / molarDensity * 1e5;
   }
 }
