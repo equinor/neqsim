@@ -88,7 +88,7 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
     double ktot = 0.0;
     int chemIter = 0;
 
-    do {
+    chemLoop: do {
       chemIter++;
       oldChemPres = system.getPressure();
       iterations = 0;
@@ -153,13 +153,11 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
         // + 0.5*(ytotal*system.getPressure()-system.getPressure()));
         if (system.getPressure() < 0) {
           system.setPressure(oldChemPres / 2.0);
-          run();
-          return;
+          continue chemLoop;
         }
         if (system.getPressure() > 5 * oldChemPres) {
           system.setPressure(oldChemPres * 5);
-          run();
-          return;
+          continue chemLoop;
         }
         // logger.info("iter in bub calc " + iterations + " pres " +
         // system.getPressure()+ " ytot " + ytotal + " chem iter " + chemIter);
