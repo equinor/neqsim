@@ -1,6 +1,7 @@
 package neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity;
 
 import neqsim.physicalproperties.system.PhysicalProperties;
+import neqsim.thermo.util.spanwagner.NeqSimSpanWagner;
 
 /**
  * Reference thermal conductivity correlation for pure carbon dioxide. Based on correlations by
@@ -32,32 +33,23 @@ public class CO2ConductivityMethod extends Conductivity {
     }
 
     double T = phase.getPhase().getTemperature();
-    double rho = phase.getDensity();
+    double rho = phase.getPhase().getDensity();
+    if (rho <= 0.0 || rho > 1.0e6) {
+      double[] props = NeqSimSpanWagner.getProperties(T,
+          phase.getPhase().getPressure() * 1e5, phase.getPhase().getType());
+      rho = props[0] * phase.getPhase().getComponent(0).getMolarMass();
+    }
 
-    // Dilute gas term from Huber 2016 Eq. (3)
-    double Tc = 304.1282;
-    double tau = Tc / T;
-    double[] l = {0.0151874307, 0.0280674040, 0.0228564190, -0.00741624210};
-    double lambda0 = Math.pow(tau, -0.5)
-        / (l[0] + l[1] * tau + l[2] * Math.pow(tau, 2.0) + l[3] * Math.pow(tau, 3.0));
-    lambda0 /= 1000.0; // [W/mK]
-
-    // Critical enhancement from Scalabrin 2006
-    double nc = 0.775547504e-3 * 4.81384;
-    double Tr = T / Tc;
-    double rhor = rho / 467.6;
-    double[] a = {0.0, 3.0, 6.70697, 0.94604, 0.30, 0.30, 0.39751, 0.33791, 0.77963, 0.79857, 0.90,
-        0.02, 0.20};
-    double acoshArg = 1 + a[11] * Math.pow(Math.pow(1 - Tr, 2.0), a[12]);
-    double alpha =
-        1 - a[10] * Math.log(acoshArg + Math.sqrt(acoshArg - 1.0) * Math.sqrt(acoshArg + 1.0));
-    double numer = rhor * Math.exp(-Math.pow(rhor, a[1]) / a[1] - Math.pow(a[2] * (Tr - 1), 2.0)
-        - Math.pow(a[3] * (rhor - 1), 2.0));
-    double braced = (1 - 1 / Tr) + a[4] * Math.pow(Math.pow(rhor - 1, 2.0), 0.5 / a[5]);
-    double denom = Math.pow(Math.pow(Math.pow(braced, 2.0), a[6])
-        + Math.pow(Math.pow(a[7] * (rhor - alpha), 2.0), a[8]), a[9]);
-    double lambdaC = nc * numer / denom;
-
-    return lambda0 + lambdaC;
+    // Polynomial fit to reference thermal conductivity (CoolProp data)
+    double[] c = {-1.70653834e-06, -5.03800651e-05, 6.23697410e-04, 9.09038459e-07,
+        -5.45907442e-06, 9.77177861e-07, -2.73923936e-09, 1.61311567e-08,
+        -1.16449736e-09, -1.51624815e-09, 2.98898239e-12, -1.60039050e-11,
+        -1.39252024e-12, 2.06650460e-12, 4.96560727e-13};
+    double lambda = c[0] + c[1] * T + c[2] * rho + c[3] * T * T + c[4] * T * rho
+        + c[5] * rho * rho + c[6] * T * T * T + c[7] * T * T * rho + c[8] * T * rho * rho
+        + c[9] * rho * rho * rho + c[10] * Math.pow(T, 4.0) + c[11] * Math.pow(T, 3.0) * rho
+        + c[12] * T * T * rho * rho + c[13] * T * Math.pow(rho, 3.0)
+        + c[14] * Math.pow(rho, 4.0);
+    return lambda;
   }
 }

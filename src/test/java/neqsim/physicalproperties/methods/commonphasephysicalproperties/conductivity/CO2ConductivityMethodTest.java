@@ -1,23 +1,36 @@
 package neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermo.system.SystemSpanWagnerEos;
 
+/**
+ * Tests for the CO2 thermal conductivity model coupled with the Span–Wagner EOS
+ * over a wide range of conditions.
+ */
 public class CO2ConductivityMethodTest {
-  static neqsim.thermo.system.SystemInterface testSystem = null;
 
   @Test
-  void testCalcConductivity() {
-    double T = 300.0;
-    double P = 1.0; // Pressure in bar
-    testSystem = new neqsim.thermo.system.SystemSrkEos(T, P);
-    testSystem.addComponent("CO2", 1.0);
-    ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
-    ops.TPflash();
-    testSystem.getPhase("gas").getPhysicalProperties().setConductivityModel("CO2Model");
-    testSystem.initProperties();
-    assertEquals(0.016728951577544077,
-        testSystem.getPhase(0).getPhysicalProperties().getConductivity(), 1e-6);
+  void testConductivityAcrossConditions() {
+    double[][] states = {
+        {300.0, 1.0, 0.016773682981674743},
+        {300.0, 10.0, 0.017334537751875614},
+        {400.0, 50.0, 0.027437895523946265},
+        {220.0, 20.0, 0.17406751105456966},
+        {250.0, 50.0, 0.140254895861943},
+        {260.0, 100.0, 0.13423766706020518},
+    };
+    for (double[] st : states) {
+      SystemSpanWagnerEos system = new SystemSpanWagnerEos(st[0], st[1]);
+      ThermodynamicOperations ops = new ThermodynamicOperations(system);
+      ops.TPflash();
+      system.initPhysicalProperties();
+      assertTrue(system.getPhase(0).getPhysicalProperties().getConductivityModel()
+          instanceof CO2ConductivityMethod);
+      assertEquals(st[2],
+          system.getPhase(0).getPhysicalProperties().getConductivity(), 5e-4);
+    }
   }
 }

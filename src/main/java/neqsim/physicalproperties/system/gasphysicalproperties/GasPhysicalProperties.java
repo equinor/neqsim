@@ -8,8 +8,11 @@ package neqsim.physicalproperties.system.gasphysicalproperties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.CO2ConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
+import neqsim.thermo.phase.PhaseSpanWagnerEos;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -39,12 +42,17 @@ public class GasPhysicalProperties extends PhysicalProperties {
   public GasPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
     super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
-    // conductivityCalc = new ChungConductivityMethod(this);
-    conductivityCalc = new PFCTConductivityMethodMod86(this);
-    // viscosityCalc = new ChungViscosityMethod(this);
-    // viscosityCalc = new FrictionTheoryViscosityMethod(this);
-    // viscosityCalc = new PFCTViscosityMethodMod86(this);
-    viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
+    if (phase instanceof PhaseSpanWagnerEos) {
+      conductivityCalc = new CO2ConductivityMethod(this);
+      viscosityCalc = new CO2ViscosityMethod(this);
+    } else {
+      // conductivityCalc = new ChungConductivityMethod(this);
+      conductivityCalc = new PFCTConductivityMethodMod86(this);
+      // viscosityCalc = new ChungViscosityMethod(this);
+      // viscosityCalc = new FrictionTheoryViscosityMethod(this);
+      // viscosityCalc = new PFCTViscosityMethodMod86(this);
+      viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
+    }
 
     // viscosityCalc = new LBCViscosityMethod(this);
     diffusivityCalc =
