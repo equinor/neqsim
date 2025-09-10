@@ -1264,9 +1264,8 @@ public abstract class Component implements ComponentInterface {
   public double getAntoineVaporPressure(double temp) {
     if (antoineLiqVapPresType.equals("pow10")) {
       // equation and parameter from properties of gases (poling 5th ed)
-      // original correlation returns pressure in mmHg, convert to bar
-      return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC - 273.15)))
-          * MMHG_TO_BAR;
+      // correlation returns pressure in bar
+      return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC - 273.15)));
     } else if (antoineLiqVapPresType.equals("pow10KPa")) {
       // equation and parameter from properties o and gases (poling 5th ed)
       return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC))) / 1.0e5;
@@ -1290,7 +1289,7 @@ public abstract class Component implements ComponentInterface {
       // derivative of Antoine correlation returning pressure in bar
       double denom = AntoineC + temp - 273.15;
       double pressure = Math.pow(10.0, AntoineA - AntoineB / denom);
-      return pressure * AntoineB * Math.log(10.0) * MMHG_TO_BAR / (denom * denom);
+      return pressure * AntoineB * Math.log(10.0) / (denom * denom);
     } else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
       // (B*exp(A - B/(C + x)))/(C + x)^2
       double ans = AntoineB * (Math.exp(AntoineA - AntoineB / (AntoineC + temp)))
