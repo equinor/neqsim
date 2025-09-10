@@ -2,7 +2,6 @@ package neqsim.process.equipment.util;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.measurementdevice.MultiPhaseMeter;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -69,14 +68,15 @@ public class GORfitterTest {
     double gor_sm3gas_sm3oil_corrected = stream_2.getFluid().getPhase("gas").getCorrectedVolume()
         / stream_2.getFluid().getPhase("oil").getCorrectedVolume();
 
-    System.out.println("Stream 2 (results outside MPM) " + " GOR sm3/sm3 " + gor_sm3gas_sm3oil
-        + " GOR Corrected by volume " + gor_sm3gas_sm3oil_corrected);
-
-    System.out.println("Stream 2 (results outside MPM) getPhase(gas).getCorrectedVolume() "
-        + stream_2.getFluid().getPhase("gas").getCorrectedVolume());
-    System.out.println("Stream 2 (results outside MPM) getPhase(oil).getCorrectedVolume() "
-        + stream_2.getFluid().getPhase("oil").getCorrectedVolume());
-
+    /*
+     * System.out.println("Stream 2 (results outside MPM) " + " GOR sm3/sm3 " + gor_sm3gas_sm3oil +
+     * " GOR Corrected by volume " + gor_sm3gas_sm3oil_corrected);
+     * 
+     * System.out.println("Stream 2 (results outside MPM) getPhase(gas).getCorrectedVolume() " +
+     * stream_2.getFluid().getPhase("gas").getCorrectedVolume());
+     * System.out.println("Stream 2 (results outside MPM) getPhase(oil).getCorrectedVolume() " +
+     * stream_2.getFluid().getPhase("oil").getCorrectedVolume());
+     */
     // Assertions.assertEquals(51.3073530232923, multiPhaseMeter.getMeasuredValue("GOR", ""),
     // 1e-12);
     // Assertions.assertEquals(3106.7708277963447, multiPhaseMeter.getMeasuredValue("GOR_std", ""),

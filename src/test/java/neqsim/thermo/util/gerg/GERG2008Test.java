@@ -2,6 +2,8 @@ package neqsim.thermo.util.gerg;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.netlib.util.StringW;
@@ -11,6 +13,7 @@ import neqsim.thermo.system.SystemInterface;
 
 public class GERG2008Test {
   private GERG2008 gerg;
+  static Logger logger = LogManager.getLogger(GERG2008Test.class);
 
   @BeforeEach
   public void setUp() {
@@ -273,19 +276,17 @@ public class GERG2008Test {
     compressor_Schultz.setPolytropicMethod("schultz");
     compressor_Schultz.run();
 
-    System.out.println("Density before compressor " + GERG2008fluid.getDensity("kg/m3"));
-    System.out.println("-----------------Normal-----------------");
-    System.out.println(
+    logger.debug("Density before compressor " + GERG2008fluid.getDensity("kg/m3"));
+    logger.debug("-----------------Normal-----------------");
+    logger.debug(
         "Temperature out of Compr." + compressor_GERG2008.getOutletStream().getTemperature("C"));
-    System.out.println("Power out of Compr." + compressor_GERG2008.getPower("MW"));
-    System.out
-        .println("Polytropic Head out of Compr." + compressor_GERG2008.getPolytropicHead("kJ/kg"));
+    logger.debug("Power out of Compr." + compressor_GERG2008.getPower("MW"));
+    logger.debug("Polytropic Head out of Compr." + compressor_GERG2008.getPolytropicHead("kJ/kg"));
 
-    System.out.println("-----------------Schultz-----------------");
-    System.out.println(
+    logger.debug("-----------------Schultz-----------------");
+    logger.debug(
         "Temperature out of Compr." + compressor_Schultz.getOutletStream().getTemperature("C"));
-    System.out.println("Power out of Compr." + compressor_Schultz.getPower("MW"));
-    System.out
-        .println("Polytropic Head out of Compr." + compressor_Schultz.getPolytropicHead("kJ/kg"));
+    logger.debug("Power out of Compr." + compressor_Schultz.getPower("MW"));
+    logger.debug("Polytropic Head out of Compr." + compressor_Schultz.getPolytropicHead("kJ/kg"));
   }
 }

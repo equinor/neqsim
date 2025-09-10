@@ -61,7 +61,7 @@ public class FlowInducedVibrationAnalyserTest {
     assertTrue(lofValue < 1.0, "LOF value should be less than 1.0 for this flow regime");
 
     // The actual value will depend on the simulation results, but we can check if it's reasonable
-    System.out.println("LOF value (Stiff support): " + lofValue);
+    // System.out.println("LOF value (Stiff support): " + lofValue);
   }
 
   @Test
@@ -120,9 +120,9 @@ public class FlowInducedVibrationAnalyserTest {
     double mediumStiffValue = mediumStiffAnalyzer.getMeasuredValue();
     double mediumValue = mediumAnalyzer.getMeasuredValue();
 
-    System.out.println("LOF value (Stiff support): " + stiffValue);
-    System.out.println("LOF value (Medium stiff support): " + mediumStiffValue);
-    System.out.println("LOF value (Medium support): " + mediumValue);
+    // System.out.println("LOF value (Stiff support): " + stiffValue);
+    // System.out.println("LOF value (Medium stiff support): " + mediumStiffValue);
+    // System.out.println("LOF value (Medium support): " + mediumValue);
 
     // Different support arrangements should give different values
     // assertNotEquals(stiffValue, mediumStiffValue, DELTA);
