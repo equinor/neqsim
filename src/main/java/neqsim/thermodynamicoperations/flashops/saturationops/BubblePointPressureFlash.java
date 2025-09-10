@@ -32,9 +32,22 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    if (system.getPhase(0).getNumberOfComponents() == 1
-        && system.getTemperature() >= system.getPhase(0).getComponent(0).getTC()) {
-      throw new IllegalStateException("System is supercritical");
+    if (system.getPhase(0).getNumberOfComponents() == 1) {
+      var comp = system.getPhase(0).getComponent(0);
+      if (system.getTemperature() >= comp.getTC()) {
+        throw new IllegalStateException("System is supercritical");
+      }
+      double pGuess = comp.getAntoineVaporPressure(system.getTemperature());
+      if (Double.isNaN(pGuess) || pGuess <= 0 || pGuess < comp.getTriplePointPressure()
+          || pGuess > comp.getPC()) {
+        double tTrip = comp.getTriplePointTemperature();
+        double tCrit = comp.getTC();
+        double pTrip = comp.getTriplePointPressure();
+        double pCrit = comp.getPC();
+        double frac = (system.getTemperature() - tTrip) / (tCrit - tTrip);
+        pGuess = pTrip + frac * (pCrit - pTrip);
+      }
+      system.setPressure(pGuess);
     }
 
     int iterations = 0;

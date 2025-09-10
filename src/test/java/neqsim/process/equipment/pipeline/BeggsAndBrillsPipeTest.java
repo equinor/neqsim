@@ -341,7 +341,7 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(testSystem3.hasPhaseType("gas"), true);
 
-    Assertions.assertEquals(temperatureOut3, -8.81009355441591, 1);
+    Assertions.assertEquals(temperatureOut3, -11.044631756403703, 1);
     Assertions.assertEquals(pressureOut3, 18.3429, 1);
   }
 

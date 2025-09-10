@@ -1475,7 +1475,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void bubblePointPressureFlash() throws IsNaNException {
     system.init(0);
-    ConstantDutyFlashInterface operation = new ConstantDutyPressureFlash(system);
+    ConstantDutyFlashInterface operation = new BubblePointPressureFlash(system);
     system.setBeta(1, 1.0 - 1e-10);
     system.setBeta(0, 1e-10);
     operation.run();

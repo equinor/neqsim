@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlash;
 
 /**
  * <p>
@@ -28,9 +29,15 @@ public class DewPointPressureFlash extends ConstantDutyTemperatureFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    if (system.getPhase(0).getNumberOfComponents() == 1
-        && system.getTemperature() >= system.getPhase(0).getComponent(0).getTC()) {
-      throw new IllegalStateException("System is supercritical");
+    if (system.getPhase(0).getNumberOfComponents() == 1) {
+      var comp = system.getPhase(0).getComponent(0);
+      if (system.getTemperature() >= comp.getTC()) {
+        throw new IllegalStateException("System is supercritical");
+      }
+      BubblePointPressureFlash bubble = new BubblePointPressureFlash(system);
+      bubble.run();
+      setSuperCritical(bubble.isSuperCritical());
+      return;
     }
 
     int iterations = 0;
