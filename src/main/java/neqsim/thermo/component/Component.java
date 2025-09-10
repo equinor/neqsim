@@ -1261,7 +1261,8 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double getAntoineVaporPressure(double temp) {
     if (antoineLiqVapPresType.equals("pow10")) {
-      // equation and parameter from properties o and gases (poling 5th ed)
+      // equation and parameter from properties of gases (poling 5th ed)
+      // correlation returns pressure in bar
       return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC - 273.15)));
     } else if (antoineLiqVapPresType.equals("pow10KPa")) {
       // equation and parameter from properties o and gases (poling 5th ed)
@@ -1283,10 +1284,10 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double getAntoineVaporPressuredT(double temp) {
     if (antoineLiqVapPresType.equals("pow10")) {
-      // (10^ (A - B/(C + x - 5463/20)) *B*log(10))/(C + x - 5463/20)^2
-      double ans = (Math.pow(AntoineA - AntoineB / (AntoineC + temp - 273.15), 10.0) * AntoineB
-          * Math.log(10.0)) / Math.pow((AntoineC + temp - 273.15), 2.0);
-      return ans;
+      // derivative of Antoine correlation returning pressure in bar
+      double denom = AntoineC + temp - 273.15;
+      double pressure = Math.pow(10.0, AntoineA - AntoineB / denom);
+      return pressure * AntoineB * Math.log(10.0) / (denom * denom);
     } else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
       // (B*exp(A - B/(C + x)))/(C + x)^2
       double ans = AntoineB * (Math.exp(AntoineA - AntoineB / (AntoineC + temp)))
@@ -1300,18 +1301,38 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getAntoineVaporTemperature(double pres) {
-    double nyPres = 0;
+    double nyPres = 0.0;
     double nyTemp = criticalTemperature * 0.7;
     int iter = 0;
     do {
       iter++;
-
       nyPres = getAntoineVaporPressure(nyTemp);
-      nyTemp -= (nyPres - pres);
-      // nyTemp = nyTemp-(nyPres - pres)/getAntoineVaporPressuredT(nyTemp);
-      // System.out.println("temp Antoine " +nyTemp + " error "+Math.abs((nyPres -
-      // pres) / pres));
-    } while (Math.abs((nyPres - pres) / pres) > 0.00001 && iter < 1000);
+      double dPdT = getAntoineVaporPressuredT(nyTemp);
+      if (dPdT != 0.0) {
+        nyTemp -= (nyPres - pres) / dPdT;
+      } else {
+        nyTemp -= (nyPres - pres);
+      }
+    } while (Math.abs((nyPres - pres) / pres) > 1e-5 && iter < 100);
+
+    double tTrip = getTriplePointTemperature();
+    double tCrit = getTC();
+    if (Double.isNaN(nyTemp) || nyTemp < tTrip || nyTemp > tCrit) {
+      double low = Math.max(tTrip, 1.0);
+      double high = tCrit;
+      for (int i = 0; i < 100; i++) {
+        nyTemp = 0.5 * (low + high);
+        nyPres = getAntoineVaporPressure(nyTemp);
+        if (Math.abs((nyPres - pres) / pres) < 1e-5) {
+          break;
+        }
+        if (nyPres > pres) {
+          high = nyTemp;
+        } else {
+          low = nyTemp;
+        }
+      }
+    }
     return nyTemp;
   }
 
