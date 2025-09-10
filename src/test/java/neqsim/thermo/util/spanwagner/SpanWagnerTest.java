@@ -25,7 +25,7 @@ public class SpanWagnerTest {
     init(sys);
     PhaseInterface phase = sys.getPhase(0);
     double moles = phase.getNumberOfMolesInPhase();
-    assertEquals(422.164519, 1.0 / phase.getMolarVolume(), 1e-3);
+    assertEquals(422.164519, phase.getDensity() / phase.getMolarMass(), 1e-3);
     assertEquals(0.94964297, phase.getZ(), 1e-6);
     assertEquals(21953.7555, phase.getEnthalpy() / moles, 1e-2);
     assertEquals(100.754536, phase.getEntropy() / moles, 1e-3);
@@ -34,6 +34,7 @@ public class SpanWagnerTest {
     assertEquals(19585.0108, phase.getInternalEnergy() / moles, 1e-2);
     assertEquals(-8272.60538, phase.getGibbsEnergy() / moles, 1e-2);
     assertEquals(262.43047, phase.getSoundSpeed(), 1e-2);
+    assertEquals(1.0801733, phase.getJouleThomsonCoefficient(), 1e-6);
   }
 
   @Test
@@ -42,7 +43,7 @@ public class SpanWagnerTest {
     init(sys);
     PhaseInterface phase = sys.getPhase(1);
     double moles = phase.getNumberOfMolesInPhase();
-    assertEquals(20311.453, 1.0 / phase.getMolarVolume(), 0.2);
+    assertEquals(20311.453, phase.getDensity() / phase.getMolarMass(), 0.2);
     assertEquals(0.10573879, phase.getZ(), 1e-5);
     assertEquals(9501.661, phase.getEnthalpy() / moles, 0.2);
     assertEquals(46.275024, phase.getEntropy() / moles, 0.02);
@@ -51,6 +52,7 @@ public class SpanWagnerTest {
     assertEquals(9255.495, phase.getInternalEnergy() / moles, 0.2);
     assertEquals(-3455.3457, phase.getGibbsEnergy() / moles, 0.2);
     assertEquals(495.5176, phase.getSoundSpeed(), 0.1);
+    assertEquals(0.0568959, phase.getJouleThomsonCoefficient(), 1e-6);
   }
 
   @Test
