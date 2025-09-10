@@ -1,6 +1,7 @@
 package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity;
 
 import neqsim.physicalproperties.system.PhysicalProperties;
+import neqsim.thermo.util.spanwagner.NeqSimSpanWagner;
 
 /**
  * Reference viscosity correlation for pure carbon dioxide. Based on correlations by Laesecke et al.
@@ -32,7 +33,12 @@ public class CO2ViscosityMethod extends Viscosity {
     }
 
     double T = phase.getPhase().getTemperature();
-    double rho = phase.getDensity();
+    double rho = phase.getPhase().getDensity();
+    if (rho <= 0.0 || rho > 1.0e6) {
+      double[] props = NeqSimSpanWagner.getProperties(T,
+          phase.getPhase().getPressure() * 1e5, phase.getPhase().getType());
+      rho = props[0] * phase.getPhase().getComponent(0).getMolarMass();
+    }
 
     // Dilute-gas term (Laesecke JPCRD 2017 Eq. 4)
     double[] a = {1749.354893188350, -369.069300007128, 5423856.34887691, -2.21283852168356,

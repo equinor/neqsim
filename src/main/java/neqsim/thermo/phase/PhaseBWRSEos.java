@@ -236,6 +236,50 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
+   * Cross derivative of the polynomial F-term with respect to temperature and molar density.
+   *
+   * @return d<sup>2</sup>F<sub>pol</sub>/dT dρ
+   */
+  private double getFpoldTdRho() {
+    double term1 = 0.0;
+    double term2 = 0.0;
+    double rho = getMolarDensity();
+    for (int i = 1; i < OP; i++) {
+      term1 += ((ComponentBWRS) componentArray[0]).getBP(i) * Math.pow(rho, i - 1.0);
+      term2 += ((ComponentBWRS) componentArray[0]).getBPdT(i) * Math.pow(rho, i - 1.0);
+    }
+    return numberOfMolesInPhase / R * (-term1 / Math.pow(temperature, 2.0)
+        + term2 / temperature);
+  }
+
+  /**
+   * Cross derivative of the polynomial F-term with respect to temperature and molar volume.
+   *
+   * @return d<sup>2</sup>F<sub>pol</sub>/dT dV
+   */
+  private double getFpoldTdV() {
+    return getFpoldTdRho() * getdRhodV();
+  }
+
+  /**
+   * Second derivative of the polynomial F-term with respect to temperature.
+   *
+   * @return d<sup>2</sup>F<sub>pol</sub>/dT<sup>2</sup>
+   */
+  private double getFpoldTdT() {
+    double term1 = 0.0;
+    double term2 = 0.0;
+    double rho = getMolarDensity();
+    for (int i = 1; i < OP; i++) {
+      term1 += ((ComponentBWRS) componentArray[0]).getBP(i) / (i + 0.0) * Math.pow(rho, i);
+      term2 += ((ComponentBWRS) componentArray[0]).getBPdT(i) / (i + 0.0) * Math.pow(rho, i);
+    }
+    return numberOfMolesInPhase / R
+        * (2.0 * term1 / Math.pow(temperature, 3.0)
+            - 2.0 * term2 / Math.pow(temperature, 2.0));
+  }
+
+  /**
    * Total derivative of F with respect to molar density.
    *
    * @return dF/dρ
@@ -412,6 +456,49 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   }
 
   /**
+   * Cross derivative of Fexp with respect to temperature and molar density.
+   *
+   * @return d<sup>2</sup>Fexp/dT dρ
+   */
+  private double getFexpdTdRho() {
+    ComponentBWRS comp = (ComponentBWRS) componentArray[0];
+    double gamma = comp.getGammaBWRS();
+    double rho = getMolarDensity();
+    double oldTemp = -comp.getBE(0) / (2.0 * gamma) * getELdRho();
+    double doldTemp = -comp.getBEdT(0) / (2.0 * gamma) * getELdRho();
+    double temp = oldTemp;
+    double dtemp = doldTemp;
+    for (int i = 1; i < OE; i++) {
+      double prev = oldTemp;
+      double dprev = doldTemp;
+      oldTemp = -comp.getBE(i) / (2.0 * gamma)
+          * (getELdRho() * Math.pow(rho, 2 * i)
+              + getEL() * (2.0 * i) * Math.pow(rho, 2 * i - 1)
+              - (2.0 * i) / comp.getBE(i - 1) * prev);
+      doldTemp = -comp.getBEdT(i) / (2.0 * gamma)
+          * (getELdRho() * Math.pow(rho, 2 * i)
+              + getEL() * (2.0 * i) * Math.pow(rho, 2 * i - 1)
+              - (2.0 * i) / comp.getBE(i - 1) * prev)
+          - comp.getBE(i) / (2.0 * gamma)
+              * (-(2.0 * i) / Math.pow(comp.getBE(i - 1), 2.0) * comp.getBEdT(i - 1) * prev
+                  - (2.0 * i) / comp.getBE(i - 1) * dprev);
+      temp += oldTemp;
+      dtemp += doldTemp;
+    }
+    return numberOfMolesInPhase / R
+        * (-temp / Math.pow(temperature, 2.0) + dtemp / temperature);
+  }
+
+  /**
+   * Cross derivative of Fexp with respect to temperature and molar volume.
+   *
+   * @return d<sup>2</sup>Fexp/dT dV
+   */
+  private double getFexpdTdV() {
+    return getFexpdTdRho() * getdRhodV();
+  }
+
+  /**
    * <p>
    * getFexpdT.
    * </p>
@@ -455,6 +542,75 @@ public class PhaseBWRSEos extends PhaseSrkEos {
       temp += oldTemp;
     }
     return -getFexp() / temperature + numberOfMolesInPhase / (R * temperature) * temp;
+  }
+
+  /**
+   * Second derivative of Fexp with respect to temperature.
+   *
+   * @return d<sup>2</sup>Fexp/dT<sup>2</sup>
+   */
+  private double getFexpdTdT() {
+    ComponentBWRS comp = (ComponentBWRS) componentArray[0];
+    double gamma = comp.getGammaBWRS();
+    double rho = getMolarDensity();
+    double elMinus1 = getEL() - 1.0;
+
+    double oldTemp = -comp.getBEdT(0) / (2.0 * gamma) * elMinus1;
+    double oldTemp2 = -comp.getBE(0) / (2.0 * gamma) * elMinus1;
+    double doldTemp = 0.0; // BEdTdT terms are zero
+    double doldTemp2 = -comp.getBEdT(0) / (2.0 * gamma) * elMinus1;
+    double temp = oldTemp;
+    double dtemp = doldTemp;
+
+    for (int i = 1; i < OE; i++) {
+      double term1 = -comp.getBEdT(i) / (2.0 * gamma)
+          * (getEL() * Math.pow(rho, 2.0 * i)
+              - (2.0 * i) / comp.getBE(i - 1) * oldTemp2);
+      double term2 = -comp.getBE(i) / (2.0 * gamma)
+          * ((2.0 * i) / Math.pow(comp.getBE(i - 1), 2.0) * oldTemp2) * comp.getBEdT(i - 1);
+      double term3 = comp.getBE(i) / (2.0 * gamma)
+          * ((2.0 * i) / comp.getBE(i - 1) * oldTemp);
+      oldTemp = term1 + term2 + term3;
+
+      double dterm1 = -comp.getBEdT(i) / (2.0 * gamma)
+          * (-(2.0 * i) / comp.getBE(i - 1) * doldTemp2
+              + (2.0 * i) / Math.pow(comp.getBE(i - 1), 2.0) * comp.getBEdT(i - 1) * oldTemp2);
+      double dterm2 = -(comp.getBEdT(i) / (2.0 * gamma))
+          * ((2.0 * i) / Math.pow(comp.getBE(i - 1), 2.0) * oldTemp2 * comp.getBEdT(i - 1))
+          - (comp.getBE(i) / (2.0 * gamma))
+              * ((2.0 * i) * (-2.0) / Math.pow(comp.getBE(i - 1), 3.0)
+                  * comp.getBEdT(i - 1) * oldTemp2 * comp.getBEdT(i - 1)
+                  + (2.0 * i) / Math.pow(comp.getBE(i - 1), 2.0) * doldTemp2 * comp.getBEdT(i - 1));
+      double dterm3 = (comp.getBEdT(i) / (2.0 * gamma))
+          * ((2.0 * i) / comp.getBE(i - 1) * oldTemp)
+          + (comp.getBE(i) / (2.0 * gamma))
+              * ((2.0 * i) / comp.getBE(i - 1) * doldTemp
+                  - (2.0 * i) / Math.pow(comp.getBE(i - 1), 2.0) * comp.getBEdT(i - 1) * oldTemp);
+      doldTemp = dterm1 + dterm2 + dterm3;
+
+      double termBase = -comp.getBE(i) / (2.0 * gamma)
+          * (getEL() * Math.pow(rho, 2.0 * i)
+              - (2.0 * i) / comp.getBE(i - 1) * oldTemp2);
+      double dtermBase = -(comp.getBEdT(i) / (2.0 * gamma))
+          * (getEL() * Math.pow(rho, 2.0 * i)
+              - (2.0 * i) / comp.getBE(i - 1) * oldTemp2)
+          - (comp.getBE(i) / (2.0 * gamma))
+              * (-(2.0 * i) / comp.getBE(i - 1) * doldTemp2
+                  + (2.0 * i) / Math.pow(comp.getBE(i - 1), 2.0) * comp.getBEdT(i - 1)
+                      * oldTemp2);
+      oldTemp2 = termBase;
+      doldTemp2 = dtermBase;
+
+      temp += oldTemp;
+      dtemp += doldTemp;
+    }
+
+    double Fexp = getFexp();
+    double FexpdT = -Fexp / temperature + numberOfMolesInPhase / (R * temperature) * temp;
+
+    return -FexpdT / temperature + Fexp / Math.pow(temperature, 2.0)
+        + numberOfMolesInPhase / R
+            * (-temp / Math.pow(temperature, 2.0) + dtemp / temperature);
   }
 
   /**
@@ -561,28 +717,13 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   /** {@inheritDoc} */
   @Override
   public double dFdTdT() {
-    double dv = temperature / 1000.0;
-    temperature += dv;
-    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
-    double fold = dFdT();
-    temperature -= 2 * dv;
-    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
-    double fnew = dFdT();
-    temperature += dv;
-    init(numberOfMolesInPhase, numberOfComponents, 3, 1.0);
-    return (fold - fnew) / (2 * dv);
+    return (getFpoldTdT() + getFexpdTdT()) * 1e3;
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdTdV() {
-    double dv = getMolarVolume() / 1000.0;
-    setMolarVolume(getMolarVolume() + dv);
-    double fold = dFdT();
-    setMolarVolume(getMolarVolume() - 2 * dv);
-    double fnew = dFdT();
-    setMolarVolume(getMolarVolume() + dv);
-    return (fold - fnew) / (2 * dv);
+    return (getFpoldTdV() + getFexpdTdV()) * 1e3 * 1e-5;
   }
 
   /** {@inheritDoc} */
@@ -615,6 +756,23 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   @Override
   public double dFdVdVdV() {
     return (getFpoldVdVdV() + getFexpdVdVdV()) * 1e3 * 1e-15;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getJouleThomsonCoefficient() {
+    double dP = pressure * 1e-4;
+    PhaseBWRSEos plus = this.clone();
+    plus.setPressure(pressure + dP);
+    plus.init(getNumberOfMolesInPhase(), getNumberOfComponents(), 1, getType(), 1.0);
+    double hPlus = plus.getEnthalpy();
+
+    PhaseBWRSEos minus = this.clone();
+    minus.setPressure(pressure - dP);
+    minus.init(getNumberOfMolesInPhase(), getNumberOfComponents(), 1, getType(), 1.0);
+    double hMinus = minus.getEnthalpy();
+
+    return -(hPlus - hMinus) / (2.0 * dP * getCp());
   }
 
   /** {@inheritDoc} */

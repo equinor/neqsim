@@ -128,7 +128,7 @@ public final class NeqSimSpanWagner {
   private static double density(double tau, double pressure, PhaseType type) {
     double delta;
     if (type == PhaseType.LIQUID) {
-      delta = 1.0; // high density initial guess
+      delta = 3.0; // improved high-density initial guess
     } else {
       delta = pressure / (R * (TC / tau)) / RHOC; // gas-like guess
     }

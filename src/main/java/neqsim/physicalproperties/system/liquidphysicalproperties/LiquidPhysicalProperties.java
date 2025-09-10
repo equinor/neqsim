@@ -8,8 +8,11 @@ package neqsim.physicalproperties.system.liquidphysicalproperties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.CO2ConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
+import neqsim.thermo.phase.PhaseSpanWagnerEos;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.density.Density;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.SiddiqiLucasMethod;
 import neqsim.physicalproperties.system.PhysicalProperties;
@@ -41,13 +44,18 @@ public class LiquidPhysicalProperties extends PhysicalProperties {
   public LiquidPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
     super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
-    // conductivityCalc = new Conductivity(this);
-    conductivityCalc = new PFCTConductivityMethodMod86(this);
-    // viscosityCalc = new Viscosity(this);
-    // viscosityCalc = new FrictionTheoryViscosityMethod(this);
-    // viscosityCalc = new PFCTViscosityMethodMod86(this);
-    // viscosityCalc = new LBCViscosityMethod(this);
-    viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
+    if (phase instanceof PhaseSpanWagnerEos) {
+      conductivityCalc = new CO2ConductivityMethod(this);
+      viscosityCalc = new CO2ViscosityMethod(this);
+    } else {
+      // conductivityCalc = new Conductivity(this);
+      conductivityCalc = new PFCTConductivityMethodMod86(this);
+      // viscosityCalc = new Viscosity(this);
+      // viscosityCalc = new FrictionTheoryViscosityMethod(this);
+      // viscosityCalc = new PFCTViscosityMethodMod86(this);
+      // viscosityCalc = new LBCViscosityMethod(this);
+      viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
+    }
     diffusivityCalc = new SiddiqiLucasMethod(this);
     densityCalc = new Density(this);
   }

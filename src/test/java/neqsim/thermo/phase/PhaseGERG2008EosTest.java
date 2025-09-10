@@ -39,7 +39,7 @@ class PhaseGERG2008EosTest {
     assertEquals(props[11], soundSpeed, 1e-2);
 
     double jt = system.getPhase(0).getJouleThomsonCoefficient();
-    assertEquals(props[13] * 1e3, jt, 1e-6);
+    assertEquals(props[13] * 1e2, jt, 1e-6);
 
     double density = system.getPhase(0).getDensity();
     double gergDensity = system.getPhase(0).getDensity_GERG2008();
