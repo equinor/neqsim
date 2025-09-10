@@ -383,14 +383,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       }
     } else if (getSpecification().equals("gas quality")) {
       try {
-        thermoSystem.init(0);
-        thermoSystem.init(2);
-        double gasEnthalpy = thermoSystem.getPhase(0).getEnthalpy();
-        double liquidEnthalpy = thermoSystem.getPhase(1).getEnthalpy();
-
-        double enthalpySpec =
-            getGasQuality() * gasEnthalpy + (1.0 - getGasQuality()) * liquidEnthalpy;
-        thermoOps.PHflash(enthalpySpec);
+        thermoSystem.setPressure(getPressure());
+        thermoOps.constantPhaseFractionTemperatureFlash(getGasQuality());
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
         thermoOps.TPflash();

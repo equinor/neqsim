@@ -1,7 +1,6 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -46,26 +45,6 @@ public class BWRSvsGERG2008MethaneTest {
     double prJT = pr.getPhase(0).getJouleThomsonCoefficient();
     double prCo = pr.getPhase(0).getIsothermalCompressibility();
     double prSpeed = pr.getPhase(0).getSoundSpeed();
-
-    System.out.println("Pressure: " + pressure + " bar");
-    System.out.println("BWRS density: " + bwrsDensity + " kg/m3");
-    System.out.println("GERG density: " + gergDensity + " kg/m3");
-    System.out.println("PR density: " + prDensity + " kg/m3");
-    System.out.println("BWRS Z: " + bwrsZ);
-    System.out.println("GERG Z: " + gergZ);
-    System.out.println("PR Z: " + prZ);
-    System.out.println("BWRS Cp: " + bwrsCp + " J/molK");
-    System.out.println("GERG Cp: " + gergCp + " J/molK");
-    System.out.println("PR Cp: " + prCp + " J/molK");
-    System.out.println("BWRS JT: " + bwrsJT + " K/bar");
-    System.out.println("GERG JT: " + gergJT + " K/bar");
-    System.out.println("PR JT: " + prJT + " K/bar");
-    System.out.println("BWRS Co: " + bwrsCo + " 1/bar");
-    System.out.println("GERG Co: " + gergCo + " 1/bar");
-    System.out.println("PR Co: " + prCo + " 1/bar");
-    System.out.println("BWRS speed: " + bwrsSpeed + " m/s");
-    System.out.println("GERG speed: " + gergSpeed + " m/s");
-    System.out.println("PR speed: " + prSpeed + " m/s");
 
     assertEquals(gergDensity, bwrsDensity, gergDensity * 0.05);
     assertEquals(gergZ, bwrsZ, gergZ * 0.05);

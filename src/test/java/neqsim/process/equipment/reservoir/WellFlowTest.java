@@ -132,8 +132,8 @@ public class WellFlowTest {
     process.add(adjuster);
     process.run();
 
-    System.out
-        .println("gas production " + reservoirOps.getGasProdution("Sm3/day") / 1e6 + " MSm3/day");
+    // System.out
+    // .println("gas production " + reservoirOps.getGasProdution("Sm3/day") / 1e6 + " MSm3/day");
   }
 
   @Test
