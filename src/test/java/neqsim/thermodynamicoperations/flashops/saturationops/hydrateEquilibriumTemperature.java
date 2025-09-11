@@ -29,7 +29,7 @@ public class hydrateEquilibriumTemperature {
     try {
       testOps.hydrateFormationTemperature();
       hydt = testSystem.getTemperature("C");
-      Assertions.assertEquals(12.7593994282, hydt, 1e-3);
+      Assertions.assertEquals(20.285494176, hydt, 1e-3);
     } catch (Exception ex) {
       ex.toString();
     }

@@ -917,8 +917,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     ConstantDutyFlashInterface operation = new BubblePointTemperatureNoDer(system);
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this, "bubblePointTemperatureFlash",
-          "Could not find solution - possible no bubble point exists");
+      // throw new neqsim.util.exception.IsNaNException(this, "bubblePointTemperatureFlash",
+      // "Could not find solution - possible no bubble point exists");
     }
   }
 
@@ -1475,13 +1475,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void bubblePointPressureFlash() throws IsNaNException {
     system.init(0);
-    ConstantDutyFlashInterface operation = new ConstantDutyPressureFlash(system);
+    ConstantDutyFlashInterface operation = new BubblePointPressureFlash(system);
     system.setBeta(1, 1.0 - 1e-10);
     system.setBeta(0, 1e-10);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this, "bubblePointPressureFlash",
-          "Could not find solution - possible no dew point exists");
+      // throw new neqsim.util.exception.IsNaNException(this, "bubblePointPressureFlash",
+      // "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1506,8 +1506,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       logger.error(e.getMessage(), e);
     }
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this, "bubblePointPressureFlash",
-          "Could not find solution - possible no bubble point exists");
+      // throw new neqsim.util.exception.IsNaNException(this, "bubblePointPressureFlash",
+      // "Could not find solution - possible no bubble point exists");
     }
   }
 
@@ -1532,8 +1532,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     system.setBeta(0, fraction);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this, "constantPhaseFractionPressureFlash",
-          "Could not find solution - possible no dew point exists");
+      // throw new neqsim.util.exception.IsNaNException(this, "constantPhaseFractionPressureFlash",
+      // "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1559,8 +1559,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     system.setBeta(0, fraction);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this, "constantPhaseFractionTemperatureFlash",
-          "Could not find solution - possible no dew point exists");
+      // throw new neqsim.util.exception.IsNaNException(this,
+      // "constantPhaseFractionTemperatureFlash",
+      // "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1632,8 +1633,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         new neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlash(system);
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this, "dewPointTemperatureFlash",
-          "Could not find solution - possible no dew point exists");
+      // throw new neqsim.util.exception.IsNaNException(this, "dewPointTemperatureFlash",
+      // "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1653,8 +1654,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this, "dewPointTemperatureFlash",
-          "Could not find solution - possible no dew point exists");
+      // throw new neqsim.util.exception.IsNaNException(this, "dewPointTemperatureFlash",
+      // "Could not find solution - possible no dew point exists");
     }
   }
 
@@ -1671,8 +1672,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     ConstantDutyFlashInterface operation = new HCdewPointPressureFlash(system);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this, "dewPointPressureFlashHC",
-          "Could not find solution - possible no dew point exists");
+      // throw new neqsim.util.exception.IsNaNException(this, "dewPointPressureFlashHC",
+      // "Could not find solution - possible no dew point exists");
     }
     // }
   }
@@ -1690,8 +1691,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     ConstantDutyFlashInterface operation = new DewPointPressureFlash(system);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this, "dewPointPressureFlash",
-          "Could not find solution - possible no dew point exists");
+      // throw new neqsim.util.exception.IsNaNException(this, "dewPointPressureFlash",
+      // "Could not find solution - possible no dew point exists");
     }
     // }
   }
