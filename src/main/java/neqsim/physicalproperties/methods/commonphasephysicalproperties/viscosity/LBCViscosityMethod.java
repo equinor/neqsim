@@ -40,35 +40,32 @@ public class LBCViscosityMethod extends Viscosity {
     double temp3 = 0.0;
     double temp4 = 0.0;
     double critDens = 0.0;
-    double par1 = 0.0;
-    double par2 = 0.0;
-    double par3 = 0.0;
     double par4 = 0.0;
+    double eps = 0.0;
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
-      par1 += phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(i).getTC();
-      par2 += phase.getPhase().getComponent(i).getx()
-          * phase.getPhase().getComponent(i).getMolarMass() * 1000.0;
-      par3 += phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(i).getPC();
       par4 += phase.getPhase().getComponent(i).getx()
           * phase.getPhase().getComponent(i).getCriticalVolume();
-      double TR = phase.getPhase().getTemperature() / phase.getPhase().getComponent(i).getTC();
-      temp2 = Math.pow(phase.getPhase().getComponent(i).getTC(), 1.0 / 6.0)
-          / (Math.pow(phase.getPhase().getComponent(i).getMolarMass() * 1000.0, 1.0 / 2.0)
-              * Math.pow(phase.getPhase().getComponent(i).getPC(), 2.0 / 3.0));
+
+      double molarMass = phase.getPhase().getComponent(i).getMolarMass() * 1000.0;
+      double tc = phase.getPhase().getComponent(i).getTC();
+      double pc = phase.getPhase().getComponent(i).getPC();
+      double TR = phase.getPhase().getTemperature() / tc;
+      temp2 = Math.pow(tc, 1.0 / 6.0)
+          / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pc, 2.0 / 3.0));
       temp = TR < 1.5 ? 34.0e-5 * 1.0 / temp2 * Math.pow(TR, 0.94)
           : 17.78e-5 * 1.0 / temp2 * Math.pow(4.58 * TR - 1.67, 5.0 / 8.0);
 
       temp3 += phase.getPhase().getComponent(i).getx() * temp
-          * Math.pow(phase.getPhase().getComponent(i).getMolarMass() * 1000.0, 1.0 / 2.0);
-      temp4 += phase.getPhase().getComponent(i).getx()
-          * Math.pow(phase.getPhase().getComponent(i).getMolarMass() * 1000.0, 1.0 / 2.0);
+          * Math.pow(molarMass, 1.0 / 2.0);
+      temp4 += phase.getPhase().getComponent(i).getx() * Math.pow(molarMass, 1.0 / 2.0);
+
+      eps += phase.getPhase().getComponent(i).getx() * Math.pow(tc, 1.0 / 6.0)
+          / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pc, 2.0 / 3.0));
     }
 
     lowPresVisc = temp3 / temp4;
     // logger.info("LP visc " + lowPresVisc);
     critDens = 1.0 / par4; // mol/cm3
-    double eps =
-        Math.pow(par1, 1.0 / 6.0) * Math.pow(par2, -1.0 / 2.0) * Math.pow(par3, -2.0 / 3.0);
     double reducedDensity = phase.getPhase().getPhysicalProperties().getDensity()
         / phase.getPhase().getMolarMass() / critDens / 1000000.0;
     // System.out.println("reduced density " + reducedDensity);
