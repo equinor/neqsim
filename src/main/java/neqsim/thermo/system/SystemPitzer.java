@@ -6,17 +6,25 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  * Thermodynamic system using the Pitzer GE model.
+ *
+ * @author esol
  */
 public class SystemPitzer extends SystemEos {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  /** Default constructor. */
+  /**
+   * Default constructor.
+   */
   public SystemPitzer() {
     this(298.15, 1.0, false);
   }
 
   /**
+   * <p>
+   * Constructor for SystemPitzer.
+   * </p>
+   *
    * @param T temperature in K
    * @param P pressure in bara
    */
@@ -25,6 +33,10 @@ public class SystemPitzer extends SystemEos {
   }
 
   /**
+   * <p>
+   * Constructor for SystemPitzer.
+   * </p>
+   *
    * @param T temperature in K
    * @param P pressure in bara
    * @param checkForSolids include solid phase
@@ -54,10 +66,11 @@ public class SystemPitzer extends SystemEos {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setMixingRule(String typename) {
-    super.setMixingRule(neqsim.thermo.mixingrule.EosMixingRuleType
-        .byName(typename.replace("-", "_")));
+    super.setMixingRule(
+        neqsim.thermo.mixingrule.EosMixingRuleType.byName(typename.replace("-", "_")));
     for (int i = 1; i < numberOfPhases; i++) {
       phaseArray[i].initRefPhases(false);
     }

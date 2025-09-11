@@ -1586,6 +1586,16 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
+   * getInternalEnergy.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
+  public double getInternalEnergy(String unit);
+
+  /**
+   * <p>
    * getdPdrho.
    * </p>
    *
@@ -2147,18 +2157,16 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getSoundSpeed(String unit);
 
   /**
-   * method to return name of thermodynamic model
+   * method to return name of thermodynamic model.
    *
    * @return String model name
    */
   public String getModelName();
 
   /**
-   * method to return Z volume corrected gas compressibility
+   * method to return Z volume corrected gas compressibility.
    *
    * @return double Z volume corrected
    */
   public double getZvolcorr();
-
-  public double getInternalEnergy(String unit);
 }

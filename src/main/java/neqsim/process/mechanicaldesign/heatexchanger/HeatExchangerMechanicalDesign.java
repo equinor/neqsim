@@ -5,9 +5,10 @@ import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 
 /**
- * Mechanical design for a generic heat exchanger. Provides rough estimates of
- * size
- * and weight based on duty and assumed overall heat-transfer coefficients.
+ * Mechanical design for a generic heat exchanger. Provides rough estimates of size and weight based
+ * on duty and assumed overall heat-transfer coefficients.
+ *
+ * @author esol
  */
 public class HeatExchangerMechanicalDesign extends MechanicalDesign {
   /** Serialization version UID. */
@@ -16,8 +17,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
   /**
    * Constructor for HeatExchangerMechanicalDesign.
    *
-   * @param equipment {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *                  object
+   * @param equipment {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public HeatExchangerMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);

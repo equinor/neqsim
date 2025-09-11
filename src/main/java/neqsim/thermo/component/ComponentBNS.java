@@ -49,12 +49,14 @@ public class ComponentBNS extends ComponentPR {
     return (ComponentBNS) super.clone();
   }
 
+  /** {@inheritDoc} */
   @Override
   public double calca() {
     a = omegaA * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     return a;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double calcb() {
     b = omegaB * R * criticalTemperature / criticalPressure;

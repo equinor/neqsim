@@ -23,6 +23,7 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
    * @param compIndex Index number of component in phase object component array.
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public ComponentSrkCPAs(String name, double moles, double molesInPhase, int compIndex,
       PhaseInterface phase) {
@@ -40,6 +41,7 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
    * @param M Molar mass
    * @param a Acentric factor
    * @param moles Total number of moles of component.
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public ComponentSrkCPAs(int number, double TC, double PC, double M, double a, double moles,
       PhaseInterface phase) {

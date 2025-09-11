@@ -85,6 +85,7 @@ public class SystemDuanSun extends SystemEos {
     return clonedSystem;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void addComponent(String componentName, double moles) {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
@@ -94,6 +95,7 @@ public class SystemDuanSun extends SystemEos {
     super.addComponent(componentName, moles);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void addComponent(ComponentInterface inComponent) {
     String name = ComponentInterface.getComponentNameFromAlias(inComponent.getComponentName());

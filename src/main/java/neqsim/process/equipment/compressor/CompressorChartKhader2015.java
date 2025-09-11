@@ -305,6 +305,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * {@inheritDoc}
    *
+   * <p>
    * The method first converts the input flow and speed to dimensionless numbers using the sound
    * speed and impeller diameter:
    * <ul>
@@ -314,6 +315,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * It then interpolates/extrapolates the polytropic head from the reference compressor curves in
    * this dimensionless space, and finally converts the result back to physical units by multiplying
    * with c<sub>s</sub><sup>2</sup>.
+   * </p>
    */
   @Override
   public double getPolytropicHead(double flow, double speed) {
@@ -334,6 +336,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * {@inheritDoc}
    *
+   * <p>
    * The method first converts the input flow and speed to dimensionless numbers using the sound
    * speed and impeller diameter:
    * <ul>
@@ -342,6 +345,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * </ul>
    * It then interpolates/extrapolates the polytropic efficiency from the reference compressor
    * curves in this dimensionless space.
+   * </p>
    */
   @Override
   public double getPolytropicEfficiency(double flow, double speed) {

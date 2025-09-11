@@ -201,7 +201,7 @@ public class SystemBnsEos extends SystemEos {
    * @param yN2 mole fraction of N2 (must be &gt;= 0)
    * @param yH2 mole fraction of H2 (must be &gt;= 0)
    * @param associatedGas true for associated gas, false for gas condensate
-   * @throws IllegalArgumentException if any mole fraction is negative or sum exceeds 1.0
+   * @throws java.lang.IllegalArgumentException if any mole fraction is negative or sum exceeds 1.0
    */
   public void setComposition(double sg, double yCO2, double yH2S, double yN2, double yH2,
       boolean associatedGas) {
@@ -217,7 +217,7 @@ public class SystemBnsEos extends SystemEos {
    * @param yH2S mole fraction of H2S (must be &gt;= 0)
    * @param yN2 mole fraction of N2 (must be &gt;= 0)
    * @param yH2 mole fraction of H2 (must be &gt;= 0)
-   * @throws IllegalArgumentException if any mole fraction is negative or sum exceeds 1.0
+   * @throws java.lang.IllegalArgumentException if any mole fraction is negative or sum exceeds 1.0
    */
   public void setComposition(double yCO2, double yH2S, double yN2, double yH2) {
     // Validate input parameters
@@ -245,7 +245,7 @@ public class SystemBnsEos extends SystemEos {
    * </p>
    *
    * @param sg a double (relative density, must be positive)
-   * @throws IllegalArgumentException if relative density is not positive
+   * @throws java.lang.IllegalArgumentException if relative density is not positive
    */
   public void setRelativeDensity(double sg) {
     if (sg <= 0) {
