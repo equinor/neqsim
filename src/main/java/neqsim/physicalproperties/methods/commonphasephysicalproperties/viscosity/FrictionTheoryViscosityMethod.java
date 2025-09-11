@@ -13,7 +13,7 @@ import neqsim.thermo.phase.PhasePrEos;
  * excess friction is obtained from repulsive and attractive EOS pressures.
  *
  * <p>References:
- * Quiñones-Cisneros, R., & Firoozabadi, A. (2000). Friction theory for the viscosity of fluids.
+ * Quiñones-Cisneros, R., and Firoozabadi, A. (2000). Friction theory for the viscosity of fluids.
  * AIChE Journal, 46(4), 16–23.
  * </p>
  *
