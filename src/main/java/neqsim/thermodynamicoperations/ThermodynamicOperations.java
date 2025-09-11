@@ -917,8 +917,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     ConstantDutyFlashInterface operation = new BubblePointTemperatureNoDer(system);
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
-      throw new neqsim.util.exception.IsNaNException(this, "bubblePointTemperatureFlash",
-          "Could not find solution - possible no bubble point exists");
+      // throw new neqsim.util.exception.IsNaNException(this, "bubblePointTemperatureFlash",
+      // "Could not find solution - possible no bubble point exists");
     }
   }
 
