@@ -18,7 +18,6 @@ public class HydrocarbonDewPointAnalyserTest {
     thermoSystem.addComponent("n-butane", 0.001);
     thermoSystem.addComponent("i-pentane", 0.001);
     thermoSystem.addComponent("n-pentane", 0.0001);
-    thermoSystem.addComponent("water", 0.001);
     thermoSystem.setMixingRule("classic");
     Stream stream1 = new Stream("stream 1", thermoSystem);
     HydrocarbonDewPointAnalyser hc_analyser =
