@@ -5,6 +5,8 @@ import neqsim.thermo.util.steam.Iapws_if97;
 
 /**
  * Phase implementation using the IAPWS-IF97 reference equations for pure water.
+ *
+ * @author esol
  */
 public class PhaseWaterIAPWS extends PhaseEos {
   /** Serialization version UID. */
@@ -18,11 +20,14 @@ public class PhaseWaterIAPWS extends PhaseEos {
   private double internalEnergy = 0.0; // J/mol
   private double soundSpeed = 0.0; // m/s
 
-  /** Default constructor. */
+  /**
+   * Default constructor.
+   */
   public PhaseWaterIAPWS() {
     thermoPropertyModelName = "IAPWS-IF97";
   }
 
+  /** {@inheritDoc} */
   @Override
   public PhaseWaterIAPWS clone() {
     PhaseWaterIAPWS cloned = null;
@@ -34,12 +39,14 @@ public class PhaseWaterIAPWS extends PhaseEos {
     return cloned;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentWater(name, moles, molesInPhase, compNumber);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
@@ -81,41 +88,49 @@ public class PhaseWaterIAPWS extends PhaseEos {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getEnthalpy() {
     return enthalpy * numberOfMolesInPhase;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getEntropy() {
     return entropy * numberOfMolesInPhase;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getGibbsEnergy() {
     return gibbsEnergy * numberOfMolesInPhase;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getInternalEnergy() {
     return internalEnergy * numberOfMolesInPhase;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getCp() {
     return cp * numberOfMolesInPhase;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getCv() {
     return cv * numberOfMolesInPhase;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getSoundSpeed() {
     return soundSpeed;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt) {
     double pMPa = pressure / 10.0;
@@ -123,6 +138,7 @@ public class PhaseWaterIAPWS extends PhaseEos {
     return vSpec * getMolarMass();
   }
 
+  /** {@inheritDoc} */
   @Override
   public double calcPressure() {
     // Estimate pressure from current molar volume using iteration
@@ -138,6 +154,7 @@ public class PhaseWaterIAPWS extends PhaseEos {
     return pMPa * 10.0;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double calcPressuredV() {
     // Numerical derivative of pressure with respect to volume

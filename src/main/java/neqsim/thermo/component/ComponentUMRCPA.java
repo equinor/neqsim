@@ -501,9 +501,9 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
    * </p>
    *
    * @param j a int
-  * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-  * @return a double
-  */
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @return a double
+   */
   public double calc_lngij(int j, PhaseInterface phase) {
     double V = phase.getTotalVolume();
     double B = phase.getB();

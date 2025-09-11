@@ -9,6 +9,8 @@ import neqsim.util.exception.TooManyIterationsException;
 
 /**
  * Phase implementation for the Pitzer activity coefficient model.
+ *
+ * @author esol
  */
 public class PhasePitzer extends PhaseGE {
   /** Serialization version UID. */

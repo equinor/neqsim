@@ -22,7 +22,8 @@ import neqsim.util.NamedBaseClass;
  *
  * <p>
  * The controller operates on a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
- * transmitter and exposes a standard PID API through {@link ControllerDeviceInterface}.
+ * transmitter and exposes a standard PID API through
+ * {@link neqsim.process.controllerdevice.ControllerDeviceInterface}.
  * </p>
  *
  * @author ESOL
@@ -252,25 +253,26 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Set minimum and maximum controller output for anti-windup handling.
    * </p>
-   *
-   * @param min Minimum controller response
-   * @param max Maximum controller response
    */
+  @Override
   public void setOutputLimits(double min, double max) {
     this.minResponse = min;
     this.maxResponse = max;
   }
 
   /**
+   * {@inheritDoc}
+   *
    * <p>
    * Set derivative filter time constant. Set to zero to disable filtering.
    * </p>
-   *
-   * @param timeConstant Filter time constant in seconds
    */
+  @Override
   public void setDerivativeFilterTime(double timeConstant) {
     if (timeConstant >= 0) {
       this.derivativeFilterTime = timeConstant;

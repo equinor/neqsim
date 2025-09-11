@@ -33,6 +33,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
    * @param compIndex Index number of component in phase object component array.
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public ComponentSrkCPA(String name, double moles, double molesInPhase, int compIndex,
       PhaseInterface phase) {
@@ -75,6 +76,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * @param M Molar mass
    * @param a Acentric factor
    * @param moles Total number of moles of component.
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public ComponentSrkCPA(int number, double TC, double PC, double M, double a, double moles,
       PhaseInterface phase) {
@@ -491,7 +493,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
-  */
+   */
   public double calc_lngij(int j, PhaseInterface phase) {
     double V = phase.getTotalVolume();
     double B = phase.getB();
@@ -635,12 +637,11 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
       xsitedni = new double[0][0];
       return;
     }
-    if (xsitedni.length != numberOfAssociationSites ||
-        (xsitedni.length > 0 && xsitedni[0].length != numComp)) {
+    if (xsitedni.length != numberOfAssociationSites
+        || (xsitedni.length > 0 && xsitedni[0].length != numComp)) {
       double[][] newArr = new double[numberOfAssociationSites][numComp];
       for (int i = 0; i < Math.min(xsitedni.length, numberOfAssociationSites); i++) {
-        System.arraycopy(xsitedni[i], 0, newArr[i], 0,
-            Math.min(xsitedni[i].length, numComp));
+        System.arraycopy(xsitedni[i], 0, newArr[i], 0, Math.min(xsitedni[i].length, numComp));
       }
       xsitedni = newArr;
     }

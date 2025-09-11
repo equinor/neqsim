@@ -1,19 +1,23 @@
 package neqsim.thermo.system;
 
+import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseWaterIAPWS;
-import neqsim.physicalproperties.system.PhysicalPropertyModel;
 
 /**
  * Thermodynamic system using the IAPWS-IF97 reference model for water.
+ *
+ * @author esol
  */
 public class SystemWaterIF97 extends SystemEos {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
 
-  /** Default constructor setting 298.15 K and 1.0 bara. */
+  /**
+   * Default constructor setting 298.15 K and 1.0 bara.
+   */
   public SystemWaterIF97() {
     this(298.15, 1.0, false);
   }
@@ -30,6 +34,10 @@ public class SystemWaterIF97 extends SystemEos {
 
   /**
    * Create a system with temperature, pressure and optional solid phase check.
+   *
+   * @param T a double
+   * @param P a double
+   * @param checkForSolids a boolean
    */
   public SystemWaterIF97(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
@@ -60,6 +68,7 @@ public class SystemWaterIF97 extends SystemEos {
     commonInitialization();
   }
 
+  /** {@inheritDoc} */
   @Override
   public SystemWaterIF97 clone() {
     SystemWaterIF97 cloned = null;
@@ -71,13 +80,16 @@ public class SystemWaterIF97 extends SystemEos {
     return cloned;
   }
 
-  /** Common initialisation of flags. */
+  /**
+   * Common initialisation of flags.
+   */
   public void commonInitialization() {
     setImplementedCompositionDeriativesofFugacity(false);
     setImplementedPressureDeriativesofFugacity(false);
     setImplementedTemperatureDeriativesofFugacity(false);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void addComponent(String componentName, double moles) {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
@@ -87,6 +99,7 @@ public class SystemWaterIF97 extends SystemEos {
     super.addComponent(componentName, moles);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void addComponent(ComponentInterface inComponent) {
     String name = ComponentInterface.getComponentNameFromAlias(inComponent.getComponentName());

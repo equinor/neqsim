@@ -5,18 +5,42 @@ import neqsim.thermo.phase.PhaseAmmoniaEos;
 
 /**
  * Thermodynamic system using a simplified ammonia reference equation of state.
+ *
+ * @author esol
  */
 public class SystemAmmoniaEos extends SystemEos {
   private static final long serialVersionUID = 1000L;
 
+  /**
+   * <p>
+   * Constructor for SystemAmmoniaEos.
+   * </p>
+   */
   public SystemAmmoniaEos() {
     this(298.15, 1.0, false);
   }
 
+  /**
+   * <p>
+   * Constructor for SystemAmmoniaEos.
+   * </p>
+   *
+   * @param T a double
+   * @param P a double
+   */
   public SystemAmmoniaEos(double T, double P) {
     this(T, P, false);
   }
 
+  /**
+   * <p>
+   * Constructor for SystemAmmoniaEos.
+   * </p>
+   *
+   * @param T a double
+   * @param P a double
+   * @param checkForSolids a boolean
+   */
   public SystemAmmoniaEos(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
     modelName = "Ammonia-EOS";
@@ -33,6 +57,7 @@ public class SystemAmmoniaEos extends SystemEos {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public SystemAmmoniaEos clone() {
     SystemAmmoniaEos cloned = null;
@@ -44,6 +69,7 @@ public class SystemAmmoniaEos extends SystemEos {
     return cloned;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void addComponent(String componentName, double moles) {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
@@ -53,6 +79,7 @@ public class SystemAmmoniaEos extends SystemEos {
     super.addComponent(componentName, moles);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void addComponent(ComponentInterface inComponent) {
     String name = ComponentInterface.getComponentNameFromAlias(inComponent.getComponentName());

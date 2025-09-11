@@ -6,10 +6,12 @@ import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.util.referenceequations.Ammonia2023;
 
 /**
- * Phase implementation for the Ammonia2023 reference equation of state based on
- * a multiparameter Helmholtz energy formulation. Thermodynamic properties are
- * evaluated from ideal and residual Helmholtz energy derivatives provided by
- * {@link Ammonia2023}.
+ * Phase implementation for the Ammonia2023 reference equation of state based on a multiparameter
+ * Helmholtz energy formulation. Thermodynamic properties are evaluated from ideal and residual
+ * Helmholtz energy derivatives provided by
+ * {@link neqsim.thermo.util.referenceequations.Ammonia2023}.
+ *
+ * @author esol
  */
 public class PhaseAmmoniaEos extends PhaseEos {
   private static final long serialVersionUID = 1000L;
@@ -28,10 +30,16 @@ public class PhaseAmmoniaEos extends PhaseEos {
   private doubleW[] a0;
   private doubleW[][] ar;
 
+  /**
+   * <p>
+   * Constructor for PhaseAmmoniaEos.
+   * </p>
+   */
   public PhaseAmmoniaEos() {
     thermoPropertyModelName = "Ammonia Reference Eos";
   }
 
+  /** {@inheritDoc} */
   @Override
   public PhaseAmmoniaEos clone() {
     PhaseAmmoniaEos cloned = null;
@@ -43,13 +51,14 @@ public class PhaseAmmoniaEos extends PhaseEos {
     return cloned;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, molesInPhase, compNumber);
-    componentArray[compNumber] =
-        new ComponentAmmoniaEos(name, moles, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentAmmoniaEos(name, moles, molesInPhase, compNumber);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
@@ -75,53 +84,63 @@ public class PhaseAmmoniaEos extends PhaseEos {
     setType(pt);
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getGibbsEnergy() {
     return gibbsEnergy * numberOfMolesInPhase;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getJouleThomsonCoefficient() {
     return JTcoef * 100.0; // convert from K/kPa to K/bar
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getEnthalpy() {
     return enthalpy * numberOfMolesInPhase;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getEntropy() {
     return entropy * numberOfMolesInPhase;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getInternalEnergy() {
     return internalEnergy * numberOfMolesInPhase;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getCp() {
     return Cp * numberOfMolesInPhase;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getCv() {
     return Cv * numberOfMolesInPhase;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getViscosity() {
     ammoniaUtil.setPhase(this);
     return ammoniaUtil.getViscosity();
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getThermalConductivity() {
     ammoniaUtil.setPhase(this);
     return ammoniaUtil.getThermalConductivity();
   }
 
+  /** {@inheritDoc} */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt) {
     // The base EOS implementation expects molar volume in units of m^3/bar·mol
@@ -132,63 +151,93 @@ public class PhaseAmmoniaEos extends PhaseEos {
     return getMolarMass() / getDensity() * 1.0e5;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double calcPressure() {
     return pressure;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double calcPressuredV() {
     return 0.0;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double dFdN(int i) {
     return ((ComponentEosInterface) getComponent(i)).dFdN(this, this.getNumberOfComponents(),
         temperature, pressure);
   }
 
+  /** {@inheritDoc} */
   @Override
   public double dFdNdN(int i, int j) {
     return ((ComponentEosInterface) getComponent(i)).dFdNdN(j, this, this.getNumberOfComponents(),
         temperature, pressure);
   }
 
+  /** {@inheritDoc} */
   @Override
   public double dFdNdV(int i) {
     return ((ComponentEosInterface) getComponent(i)).dFdNdV(this, this.getNumberOfComponents(),
         temperature, pressure);
   }
 
+  /** {@inheritDoc} */
   @Override
   public double dFdNdT(int i) {
     return ((ComponentEosInterface) getComponent(i)).dFdNdT(this, this.getNumberOfComponents(),
         temperature, pressure);
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getDensity() {
     ammoniaUtil.setPhase(this);
     return ammoniaUtil.getDensity();
   }
 
+  /**
+   * <p>
+   * getAlpha0.
+   * </p>
+   *
+   * @return an array of {@link org.netlib.util.doubleW} objects
+   */
   public doubleW[] getAlpha0() {
     return a0;
   }
 
+  /**
+   * <p>
+   * getAlphares.
+   * </p>
+   *
+   * @return an array of {@link org.netlib.util.doubleW} objects
+   */
   public doubleW[][] getAlphares() {
     return ar;
   }
 
+  /**
+   * <p>
+   * getHresTP.
+   * </p>
+   *
+   * @return a double
+   */
   public double getHresTP() {
     return numberOfMolesInPhase * R * temperature * (ar[1][0].val + ar[0][1].val);
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getdPdTVn() {
     return (getNumberOfMolesInPhase() / getVolume()) * R;
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getSoundSpeed() {
     return W;
@@ -196,7 +245,7 @@ public class PhaseAmmoniaEos extends PhaseEos {
 
   /**
    * Return the isothermal compressibility in 1/Pa as evaluated by the
-   * {@link Ammonia2023} helper.
+   * {@link neqsim.thermo.util.referenceequations.Ammonia2023} helper.
    *
    * @return isothermal compressibility (1/Pa)
    */

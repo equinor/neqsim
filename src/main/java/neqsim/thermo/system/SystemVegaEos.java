@@ -103,6 +103,7 @@ public class SystemVegaEos extends SystemEos {
     setImplementedTemperatureDeriativesofFugacity(false);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void addComponent(String componentName, double moles) {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
@@ -112,6 +113,7 @@ public class SystemVegaEos extends SystemEos {
     super.addComponent(componentName, moles);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void addComponent(ComponentInterface inComponent) {
     String name = ComponentInterface.getComponentNameFromAlias(inComponent.getComponentName());
