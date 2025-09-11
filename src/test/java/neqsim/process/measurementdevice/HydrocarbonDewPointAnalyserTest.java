@@ -12,8 +12,8 @@ public class HydrocarbonDewPointAnalyserTest {
   void testHCdewPoint() {
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 50.0);
     thermoSystem.addComponent("methane", 1.0);
-    thermoSystem.addComponent("ethane", .01);
-    thermoSystem.addComponent("propane", 0.001);
+    thermoSystem.addComponent("ethane", .1);
+    thermoSystem.addComponent("propane", 0.1);
     thermoSystem.addComponent("i-butane", 0.001);
     thermoSystem.addComponent("n-butane", 0.001);
     thermoSystem.addComponent("i-pentane", 0.001);
@@ -29,8 +29,8 @@ public class HydrocarbonDewPointAnalyserTest {
     process1.run();
     hc_analyser.setReferencePressure(40.0);
     hc_analyser.getMeasuredValue("C");
-    Assertions.assertEquals(-14.0173918, hc_analyser.getMeasuredValue("C"), 1e-5);
+    Assertions.assertEquals(-15.5320654461238, hc_analyser.getMeasuredValue("C"), 1e-5);
 
-    Assertions.assertEquals(-14.0173918, stream1.getHydrocarbonDewPoint("C", 40.0, "bara"), 1e-5);
+    Assertions.assertEquals(-15.532065446123, stream1.getHydrocarbonDewPoint("C", 40.0, "bara"), 1e-5);
   }
 }
