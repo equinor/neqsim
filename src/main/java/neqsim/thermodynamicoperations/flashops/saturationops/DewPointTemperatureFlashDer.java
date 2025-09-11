@@ -1,5 +1,6 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -148,7 +149,7 @@ public class DewPointTemperatureFlashDer extends ConstantDutyTemperatureFlash {
       setSuperCritical(true);
     }
     if (ktot < 1.0e-3 && system.getPhase(0).getNumberOfComponents() == 1) {
-      var comp = system.getPhase(0).getComponent(0);
+      ComponentInterface comp = system.getPhase(0).getComponent(0);
       if (system.getPressure() >= comp.getPC() || system.getTemperature() >= comp.getTC()) {
         setSuperCritical(true);
       }

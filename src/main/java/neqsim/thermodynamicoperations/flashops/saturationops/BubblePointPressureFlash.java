@@ -2,6 +2,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -33,7 +34,7 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
   @Override
   public void run() {
     if (system.getPhase(0).getNumberOfComponents() == 1) {
-      var comp = system.getPhase(0).getComponent(0);
+      ComponentInterface comp = system.getPhase(0).getComponent(0);
       if (system.getTemperature() >= comp.getTC()) {
         throw new IllegalStateException("System is supercritical");
       }

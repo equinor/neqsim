@@ -2,6 +2,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -50,7 +51,7 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
         && system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
       double tGuess =
           system.getPhase(0).getComponent(0).getAntoineVaporTemperature(system.getPressure());
-      var comp = system.getPhase(0).getComponent(0);
+      ComponentInterface comp = system.getPhase(0).getComponent(0);
       if (Double.isNaN(tGuess) || tGuess < comp.getTriplePointTemperature()
           || tGuess > comp.getTC()) {
         double tTrip = comp.getTriplePointTemperature();
@@ -148,7 +149,7 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
       setSuperCritical(true);
     }
     if (system.getPhase(0).getNumberOfComponents() == 1) {
-      var comp = system.getPhase(0).getComponent(0);
+      ComponentInterface comp = system.getPhase(0).getComponent(0);
       if (system.getPressure() >= comp.getPC() || system.getTemperature() >= comp.getTC()) {
         setSuperCritical(true);
       }
