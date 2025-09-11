@@ -3,10 +3,18 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosit
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.system.PhysicalProperties;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhasePrEos;
 
 /**
- * <p>
- * FrictionTheoryViscosityMethod class.
+ * Implementation of the friction-theory viscosity model of Quiñones-Cisneros and
+ * Firoozabadi for mixtures. A Chung correlation provides the pure-component baseline while
+ * excess friction is obtained from repulsive and attractive EOS pressures.
+ *
+ * <p>References:
+ * Quiñones-Cisneros, R., & Firoozabadi, A. (2000). Friction theory for the viscosity of fluids.
+ * AIChE Journal, 46(4), 16–23.
  * </p>
  *
  * @author esol
@@ -24,33 +32,27 @@ public class FrictionTheoryViscosityMethod extends Viscosity
   public double[] omegaVisc;
   protected double[] chungE = new double[10];
   static double TBPcorrection = 1.0;
-  // SRK
+  private static final double CHUNG_A = 1.16145;
+  private static final double CHUNG_B = 0.14874;
+  private static final double CHUNG_C = 0.52487;
+  private static final double CHUNG_D = 0.77320;
+  private static final double CHUNG_E = 2.16178;
+  private static final double CHUNG_F = 2.43787;
+  // SRK constants
+  // Base attractive, repulsive and cross constants
   protected double kapac_fconst = -0.165302;
   protected double kaprc_fconst = 6.99574e-3;
   protected double kaprrc_fconst = 1.26358e-3;
 
+  // Temperature dependent polynomials for attractive and repulsive contributions
   protected double[][] kapa_fconst = {{-0.114804, 0.246622, -3.94638e-2},
       {0.246622, -1.15648e-4, 4.18863e-5}, {-3.94638e-2, 4.18863e-5, -5.91999e-9}};
 
   protected double[][] kapr_fconst = {{-0.315903, 0.566713, -7.29995e-2},
       {0.566713, -1.0086e-4, 5.17459e-5}, {-7.29995e-2, 5.17459e-5, -5.68708e-9}};
 
+  // Second-order repulsive term constant
   protected double kaprr_fconst = 1.35994e-8;
-
-  // PR
-  // protected double kapac_fconst = -0.140464;
-  // protected double kaprc_fconst = 1.19902e-2;
-  // protected double kaprrc_fconst = 8.55115e-4;
-
-  // protected double[][] kapa_fconst = {{-4.89197e-2, 0.270572,-4.48111e-2},
-  // {0.270572, -1.10473e-4, 4.08972e-5},
-  // {-4.48111e-2,4.08972e-5,-5.79765e-9}};
-
-  // protected double[][] kapr_fconst = {{-0.357875, 0.637572 , -7.9024e-2 },
-  // {0.637572 , -6.02128e-5, 3.72408e-5},
-  // {-7.9024e-2,3.72408e-5,-5.65610e-9}};
-
-  // protected double kaprr_fconst = 1.37290e-8;
 
   /**
    * <p>
@@ -65,21 +67,60 @@ public class FrictionTheoryViscosityMethod extends Viscosity
     Fc = new double[phase.getPhase().getNumberOfComponents()];
     omegaVisc = new double[phase.getPhase().getNumberOfComponents()];
 
-    if (this.getClass().getName().equals("neqsim.thermo.phase.PhasePrEos")) {
-      kapac_fconst = -0.140464;
-      kaprc_fconst = 1.19902e-2;
-      kaprrc_fconst = 8.55115e-4;
+    setEosDependentConstants();
+  }
 
-      double[][] kapa_fconst = {{-4.89197e-2, 0.270572, -4.48111e-2},
-          {0.270572, -1.10473e-4, 4.08972e-5}, {-4.48111e-2, 4.08972e-5, -5.79765e-9}};
-      this.kapa_fconst = kapa_fconst;
-
-      double[][] kapr_fconst = {{-0.357875, 0.637572, -7.9024e-2},
-          {0.637572, -6.02128e-5, 3.72408e-5}, {-7.9024e-2, 3.72408e-5, -5.65610e-9}};
-      this.kapr_fconst = kapr_fconst;
-
-      kaprr_fconst = 1.37290e-8;
+  /**
+   * Select EOS specific friction-theory constants.
+   */
+  private void setEosDependentConstants() {
+    if (phase.getPhase() instanceof PhasePrEos) {
+      setPengRobinsonConstants();
+    } else {
+      setSrkConstants();
     }
+  }
+
+  private void setSrkConstants() {
+    kapac_fconst = -0.165302;
+    kaprc_fconst = 6.99574e-3;
+    kaprrc_fconst = 1.26358e-3;
+    kapa_fconst = new double[][] {{-0.114804, 0.246622, -3.94638e-2},
+        {0.246622, -1.15648e-4, 4.18863e-5}, {-3.94638e-2, 4.18863e-5, -5.91999e-9}};
+    kapr_fconst = new double[][] {{-0.315903, 0.566713, -7.29995e-2},
+        {0.566713, -1.0086e-4, 5.17459e-5}, {-7.29995e-2, 5.17459e-5, -5.68708e-9}};
+    kaprr_fconst = 1.35994e-8;
+  }
+
+  private void setPengRobinsonConstants() {
+    kapac_fconst = -0.140464;
+    kaprc_fconst = 1.19902e-2;
+    kaprrc_fconst = 8.55115e-4;
+    kapa_fconst = new double[][] {{-4.89197e-2, 0.270572, -4.48111e-2},
+        {0.270572, -1.10473e-4, 4.08972e-5}, {-4.48111e-2, 4.08972e-5, -5.79765e-9}};
+    kapr_fconst = new double[][] {{-0.357875, 0.637572, -7.9024e-2},
+        {0.637572, -6.02128e-5, 3.72408e-5}, {-7.9024e-2, 3.72408e-5, -5.65610e-9}};
+    kaprr_fconst = 1.37290e-8;
+  }
+
+  /**
+   * Allow user supplied friction-theory constants for other EOS models.
+   *
+   * @param kapac first constant set
+   * @param kaprc second constant set
+   * @param kaprrc third constant set
+   * @param kapa matrix for attractive term
+   * @param kapr matrix for repulsive term
+   * @param kaprr constant for repulsive-repulsive term
+   */
+  public void setFrictionTheoryConstants(double kapac, double kaprc, double kaprrc,
+      double[][] kapa, double[][] kapr, double kaprr) {
+    kapac_fconst = kapac;
+    kaprc_fconst = kaprc;
+    kaprrc_fconst = kaprrc;
+    kapa_fconst = kapa;
+    kapr_fconst = kapr;
+    kaprr_fconst = kaprr;
   }
 
   /** {@inheritDoc} */
@@ -87,25 +128,23 @@ public class FrictionTheoryViscosityMethod extends Viscosity
   public double calcViscosity() {
     initChungPureComponentViscosity();
 
+    PhaseInterface localPhase = phase.getPhase();
+    int numComp = localPhase.getNumberOfComponents();
+    double[] molarMassPow = new double[numComp];
     double visk0 = 0.0;
-    double visk1 = 0.0;
     double MM = 0.0;
-    for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
-      visk0 += phase.getPhase().getComponent(i).getx() * Math.log(getPureComponentViscosity(i));
-      MM += phase.getPhase().getComponent(i).getx()
-          / Math.pow(phase.getPhase().getComponent(i).getMolarMass(), 0.3);
+    for (int i = 0; i < numComp; i++) {
+      ComponentInterface comp = localPhase.getComponent(i);
+      molarMassPow[i] = Math.pow(comp.getMolarMass(), 0.3);
+      visk0 += comp.getx() * Math.log(getPureComponentViscosity(i));
+      MM += comp.getx() / molarMassPow[i];
     }
     visk0 = Math.exp(visk0);
-    double Prepulsive = 1;
-    double Pattractive = 1;
+    double Prepulsive = 1.0;
+    double Pattractive = 1.0;
     try {
-      // frictional term
-      Prepulsive =
-          ((neqsim.thermo.phase.PhaseEosInterface) phase.getPhase()).getPressureRepulsive();
-      Pattractive =
-          ((neqsim.thermo.phase.PhaseEosInterface) phase.getPhase()).getPressureAttractive();
-      // logger.info("P rep " + Prepulsive);
-      // logger.info("P atr " + Pattractive);
+      Prepulsive = ((neqsim.thermo.phase.PhaseEosInterface) localPhase).getPressureRepulsive();
+      Pattractive = ((neqsim.thermo.phase.PhaseEosInterface) localPhase).getPressureAttractive();
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -113,47 +152,43 @@ public class FrictionTheoryViscosityMethod extends Viscosity
     double kapamx = 0.0;
     double kaprrmx = 0.0;
 
-    for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
-      double nci = phase.getPhase().getComponent(i).getCriticalViscosity() * 1e7;
-      if (phase.getPhase().getComponent(i).isIsPlusFraction()
-          || phase.getPhase().getComponent(i).isIsTBPfraction()) {
+    double temperature = localPhase.getTemperature();
+    for (int i = 0; i < numComp; i++) {
+      ComponentInterface comp = localPhase.getComponent(i);
+      double nci = comp.getCriticalViscosity() * comp.getViscosityFrictionK();
+      if (comp.isIsPlusFraction() || comp.isIsTBPfraction()) {
         nci *= TBPcorrection;
       }
 
-      double phi = 1e1 * R * phase.getPhase().getComponent(i).getTC()
-          / phase.getPhase().getComponent(i).getPC();
-      double bigGam = phase.getPhase().getComponent(i).getTC() / phase.getPhase().getTemperature();
+      double pc = comp.getPC();
+      double phi = 1e1 * R * comp.getTC() / pc;
+      double bigGam = comp.getTC() / temperature;
 
-      double kapri = getRedKapr(i, phi, bigGam);
-      double kaprri = getRedKaprr(i, phi, bigGam);
-      double kapai = getRedKapa(i, phi, bigGam);
+      double kapri = getRedKapr(phi, bigGam);
+      double kaprri = getRedKaprr(phi, bigGam);
+      double kapai = getRedKapa(phi, bigGam);
 
-      double zi = phase.getPhase().getComponent(i).getx()
-          / (Math.pow(phase.getPhase().getComponent(i).getMolarMass(), 0.3) * MM);
-      kaprmx += zi * nci * kapri / phase.getPhase().getComponent(i).getPC();
-      kapamx += zi * nci * kapai / phase.getPhase().getComponent(i).getPC();
-      kaprrmx += zi * nci * kaprri
-          / (phase.getPhase().getComponent(i).getPC() * phase.getPhase().getComponent(i).getPC());
+      double zi = comp.getx() / (molarMassPow[i] * MM);
+      kaprmx += zi * nci * kapri / pc;
+      kapamx += zi * nci * kapai / pc;
+      kaprrmx += zi * nci * kaprri / (pc * pc);
     }
-    visk1 = kaprmx * Prepulsive + kapamx * Pattractive + kaprrmx * Prepulsive * Prepulsive;
+    double visk1 = kaprmx * Prepulsive + kapamx * Pattractive + kaprrmx * Prepulsive * Prepulsive;
 
     if ((visk0 + visk1) < 1e-20) {
       return 1e-6;
     }
-    return (visk0 + visk1) * 1.0e-7;
+    return visk0 + visk1;
   }
 
   /**
-   * <p>
-   * getRedKapr.
-   * </p>
+   * Reduced repulsive constant.
    *
-   * @param compNumb a int
    * @param phi a double
    * @param bigGamma a double
    * @return a double
    */
-  public double getRedKapr(int compNumb, double phi, double bigGamma) {
+  public double getRedKapr(double phi, double bigGamma) {
     return kaprc_fconst + kapr_fconst[0][0] * (bigGamma - 1.0)
         + (kapr_fconst[1][0] + kapr_fconst[1][1] * phi) * (Math.exp(bigGamma - 1.0) - 1.0)
         + (kapr_fconst[2][0] + kapr_fconst[2][1] * phi + kapr_fconst[2][2] * phi * phi)
@@ -161,31 +196,25 @@ public class FrictionTheoryViscosityMethod extends Viscosity
   }
 
   /**
-   * <p>
-   * getRedKaprr.
-   * </p>
+   * Reduced repulsive-repulsive constant.
    *
-   * @param compNumb a int
    * @param phi a double
    * @param bigGamma a double
    * @return a double
    */
-  public double getRedKaprr(int compNumb, double phi, double bigGamma) {
+  public double getRedKaprr(double phi, double bigGamma) {
     return kaprrc_fconst
         + kaprr_fconst * phi * (Math.exp(2.0 * bigGamma) - 1.0) * Math.pow(bigGamma - 1.0, 2.0);
   }
 
   /**
-   * <p>
-   * getRedKapa.
-   * </p>
+   * Reduced attractive constant.
    *
-   * @param compNumb a int
    * @param phi a double
    * @param bigGamma a double
    * @return a double
    */
-  public double getRedKapa(int compNumb, double phi, double bigGamma) {
+  public double getRedKapa(double phi, double bigGamma) {
     return kapac_fconst + kapa_fconst[0][0] * (bigGamma - 1.0)
         + (kapa_fconst[1][0] + kapa_fconst[1][1] * phi) * (Math.exp(bigGamma - 1.0) - 1.0)
         + (kapa_fconst[2][0] + kapa_fconst[2][1] * phi + kapa_fconst[2][2] * phi * phi)
@@ -204,35 +233,25 @@ public class FrictionTheoryViscosityMethod extends Viscosity
    * </p>
    */
   public void initChungPureComponentViscosity() {
-    double tempVar = 0;
-    double A = 1.16145;
+    PhaseInterface localPhase = phase.getPhase();
+    double temperature = localPhase.getTemperature();
+    for (int i = 0; i < localPhase.getNumberOfComponents(); i++) {
+      ComponentInterface comp = localPhase.getComponent(i);
+      Fc[i] = 1.0 - 0.2756 * comp.getAcentricFactor();
 
-    double B = 0.14874;
-    double C = 0.52487;
-    double D = 0.77320;
-    double E = 2.16178;
-    double F = 2.43787;
-    for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
-      Fc[i] = 1.0 - 0.2756 * phase.getPhase().getComponent(i).getAcentricFactor();
-
-      tempVar =
-          1.2593 * phase.getPhase().getTemperature() / phase.getPhase().getComponent(i).getTC();
-      // eq. 9.4.3 TPoLG
+      double tempVar = 1.2593 * temperature / comp.getTC();
       double varLast = -6.435e-4 * Math.pow(tempVar, 0.14874)
           * Math.sin(18.0323 * Math.pow(tempVar, -0.76830) - 7.27371);
 
-      omegaVisc[i] = A / Math.pow(tempVar, B) + C / Math.exp(D * tempVar)
-          + E / Math.exp(F * tempVar) + varLast;
+      omegaVisc[i] = CHUNG_A / Math.pow(tempVar, CHUNG_B)
+          + CHUNG_C / Math.exp(CHUNG_D * tempVar) + CHUNG_E / Math.exp(CHUNG_F * tempVar)
+          + varLast;
 
-      // double critVol = 0.000235751e6+
-      // 1e4*3.4277*(phase.getPhase().getComponent(i).getPC()/(R*phase.getPhase().getComponent(i).getTC()));
-      double critVol = phase.getPhase().getPhase().getComponent(i).getCriticalVolume();
-
+      double critVol = comp.getCriticalVolume();
       pureComponentViscosity[i] = 40.785
-          * Math.sqrt(phase.getPhase().getComponent(i).getMolarMass() * 1000.0
-              * phase.getPhase().getTemperature())
-          / (Math.pow(critVol, 2.0 / 3.0) * omegaVisc[i]) * Fc[i];
-      // logger.info("visk " + pureComponentViscosity[i]);
+          * Math.sqrt(comp.getMolarMass() * 1000.0 * temperature)
+          / (Math.pow(critVol, 2.0 / 3.0) * omegaVisc[i]) * Fc[i] * 1.0e-7;
+      // convert from micropoise to Pa.s
     }
   }
 
