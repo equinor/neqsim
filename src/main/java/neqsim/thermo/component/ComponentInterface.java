@@ -1475,6 +1475,20 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getViscosityCorrectionFactor();
 
   /**
+   * Get component specific friction factor used in friction-theory viscosity model.
+   *
+   * @return friction factor
+   */
+  public double getViscosityFrictionK();
+
+  /**
+   * Set component specific friction factor used in friction-theory viscosity model.
+   *
+   * @param viscosityFrictionK friction factor
+   */
+  public void setViscosityFrictionK(double viscosityFrictionK);
+
+  /**
    * <p>
    * getCriticalVolume.
    * </p>
