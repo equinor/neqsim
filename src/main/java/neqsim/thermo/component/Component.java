@@ -842,6 +842,18 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getViscosityFrictionK() {
+    return viscosityFrictionK;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setViscosityFrictionK(double viscosityFrictionK) {
+    this.viscosityFrictionK = viscosityFrictionK;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getCriticalVolume() {
     return criticalVolume;
   }
