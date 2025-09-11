@@ -18,40 +18,19 @@
 	// Set *default* container specific settings.json values on container create.
 	"customizations": {
 		"vscode": {
-			// Add the IDs of extensions you want installed when the container is created.
-			"extensions": [
-				"vscjava.vscode-java-pack",
-				"ms-vscode.test-adapter-converter",
-				"shengchen.vscode-checkstyle",
-				"mechatroner.rainbow-csv",
-				"redhat.vscode-xml",
-				"vscjava.vscode-java-test",
-				"GitHub.copilot",
-				"GitHub.copilot-chat",
-				"janisdd.vscode-edit-csv"
-			],
-			"settings": {
-				"java.configuration.updateBuildConfiguration": "interactive",
-				"[java]": {
-					"editor.defaultFormatter": "redhat.java",
-					"editor.formatOnSave": true,
-					"editor.tabSize": 2,
-					"editor.insertSpaces": true,
-					"editor.detectIndentation": false
-				},
-				"java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
-				"java.saveActions.organizeImports": true,
-				"java.checkstyle.version": "10.18.1",
-				"java.checkstyle.configuration": "${workspaceFolder}/checkstyle_neqsim.xml",
-				"[xml]": {
-					"editor.tabSize": 4,
-					"editor.insertSpaces": false
-				},
-				"[json]": {
-					"editor.tabSize": 4,
-					"editor.insertSpaces": true
-				}
-			}
-		}
-	}
+                        // Add the IDs of extensions you want installed when the container is created.
+                        "extensions": [
+                                "redhat.java",
+                                "vscjava.vscode-java-pack",
+                                "shengchen.vscode-checkstyle",
+                                "ms-vscode.test-adapter-converter",
+                                "mechatroner.rainbow-csv",
+                                "redhat.vscode-xml",
+                                "vscjava.vscode-java-test",
+                                "GitHub.copilot",
+                                "GitHub.copilot-chat",
+                                "janisdd.vscode-edit-csv"
+                        ]
+                }
+        }
 }

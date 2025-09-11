@@ -11,7 +11,6 @@
   "java.saveActions.organizeImports": true,
   "java.checkstyle.version": "10.18.1",
   "java.checkstyle.configuration": "${workspaceFolder}/checkstyle_neqsim.xml",
-  "java.debug.settings.hotCodeReplace": "never",
   "[xml]": {
     "editor.tabSize": 4,
     "editor.insertSpaces": false
