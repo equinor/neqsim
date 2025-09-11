@@ -75,11 +75,11 @@
 			<version>1.2.0</version>
 			<scope>provided</scope>
 		</dependency>
-                <dependency>
-                        <groupId>org.apache.commons</groupId>
-                        <artifactId>commons-lang3</artifactId>
-                        <version>3.18.0</version>
-                </dependency>
+			<dependency>
+				<groupId>org.apache.commons</groupId>
+				<artifactId>commons-lang3</artifactId>
+				<version>3.18.0</version>
+			</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
@@ -278,7 +278,7 @@
 					<compilerArgs>
 						<arg>-Xlint</arg>
 					</compilerArgs>
-					<showWarnings>true</showWarnings> 
+					<showWarnings>true</showWarnings>
 					Uncomment above to get compiler warnings -->
 				</configuration>
 			</plugin>
@@ -353,65 +353,65 @@
 					</execution>
 				</executions>
 			</plugin>
-                        <plugin>
-                                <groupId>org.apache.maven.plugins</groupId>
-                                <artifactId>maven-checkstyle-plugin</artifactId>
-                                <version>3.6.0</version>
-                                <configuration>
-                                        <failsOnError>true</failsOnError>
-                                </configuration>
-                        </plugin>
-                        <plugin>
-                                <groupId>com.github.spotbugs</groupId>
-                                <artifactId>spotbugs-maven-plugin</artifactId>
-                                <version>4.9.4.2</version>
-                                <configuration>
-                                        <failOnError>false</failOnError>
-                                </configuration>
-                                <executions>
-                                        <execution>
-                                                <phase>verify</phase>
-                                                <goals>
-                                                        <goal>check</goal>
-                                                </goals>
-                                        </execution>
-                                </executions>
-                        </plugin>
-                        <plugin>
-                                <groupId>org.apache.maven.plugins</groupId>
-                                <artifactId>maven-pmd-plugin</artifactId>
-                                <version>3.24.0</version>
-                                <configuration>
-                                        <failOnViolation>false</failOnViolation>
-                                </configuration>
-                                <executions>
-                                        <execution>
-                                                <phase>verify</phase>
-                                                <goals>
-                                                        <goal>check</goal>
-                                                </goals>
-                                        </execution>
-                                </executions>
-                        </plugin>
-                        <plugin>
-                                <groupId>org.codehaus.mojo</groupId>
-                                <artifactId>versions-maven-plugin</artifactId>
-                                <version>2.19.0</version>
-                        </plugin>
-                        <plugin>
-                                <groupId>org.owasp</groupId>
-                                <artifactId>dependency-check-maven</artifactId>
-                                <version>12.1.3</version>
-                                <executions>
-                                        <execution>
-                                                <goals>
-                                                        <goal>aggregate</goal>
-                                                </goals>
-                                        </execution>
-                                </executions>
-                        </plugin>
-                </plugins>
-        </build>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>3.6.0</version>
+				<configuration>
+					<failsOnError>true</failsOnError>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.github.spotbugs</groupId>
+				<artifactId>spotbugs-maven-plugin</artifactId>
+				<version>4.9.4.2</version>
+				<configuration>
+						<failOnError>false</failOnError>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-pmd-plugin</artifactId>
+				<version>3.24.0</version>
+				<configuration>
+						<failOnViolation>false</failOnViolation>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>versions-maven-plugin</artifactId>
+				<version>2.19.0</version>
+			</plugin>
+			<plugin>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>12.1.3</version>
+				<executions>
+					<execution>
+					<goals>
+						<goal>aggregate</goal>
+					</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 	<distributionManagement>
 		<repository>
 			<id>github</id>

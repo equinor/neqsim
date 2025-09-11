@@ -166,10 +166,12 @@ public final class NeqSimSpanWagner {
     double dPdrho = R * temperature * (1 + 2 * delta * d.ar_d + delta * delta * d.ar_dd);
     double w2 = cp / cv * dPdrho / 0.0440098; // molar mass kg/mol
     double w = Math.sqrt(w2);
+    double dPdT = R * rho * (1 + delta * d.ar_d - delta * tau * d.ar_dt);
+    double muJT = 1.0 / cp * (temperature / (rho * rho) * (dPdT / dPdrho) - 1.0 / rho);
     double lnPhi = d.ar + delta * d.ar_d - Math.log(Z);
     double phi = Math.exp(lnPhi);
 
-    return new double[] {rho, Z, h, s, cp, cv, u, g, w, phi};
+    return new double[] {rho, Z, h, s, cp, cv, u, g, w, phi, muJT};
   }
 }
 

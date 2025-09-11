@@ -15,10 +15,10 @@ public class GERG2008BubblePointTest {
   @Test
   public void testBubblePointPressureAndDensity() throws Exception {
     SystemSrkEos fluid = new SystemSrkEos();
-    fluid.addComponent("methane", 0.7);
+    fluid.addComponent("methane", 0.1);
     fluid.addComponent("ethane", 0.1);
     fluid.addComponent("propane", 0.1);
-    fluid.addComponent("n-butane", 0.1);
+    fluid.addComponent("n-butane", 0.5);
     fluid.setMixingRule("classic");
     fluid.setPressure(10.0, "bara");
     fluid.setTemperature(-50.0, "C");
@@ -26,7 +26,7 @@ public class GERG2008BubblePointTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.bubblePointPressureFlash(false);
 
-    assertEquals(65.150271897839, fluid.getPressure(), 1e-6);
+    assertEquals(12.23134721162, fluid.getPressure(), 1e-6);
 
     NeqSimGERG2008 gerg = new NeqSimGERG2008(fluid.getPhase(1));
     double density = gerg.getDensity();

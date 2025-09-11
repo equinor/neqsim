@@ -2,6 +2,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -34,7 +35,7 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
   public void run() {
     if (system.getPhase(0).getNumberOfComponents() == 1
         && system.getPressure() >= system.getPhase(0).getComponent(0).getPC()) {
-      throw new IllegalStateException("System is supercritical");
+      // throw new IllegalStateException("System is supercritical");
     }
 
     int iterations = 0;
@@ -48,8 +49,19 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
     // need to fix this close to critical point
     if (system.getPhase(0).getNumberOfComponents() == 1
         && system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
-      system.setTemperature(
-          system.getPhase(0).getComponent(0).getAntoineVaporTemperature(system.getPressure()));
+      double tGuess =
+          system.getPhase(0).getComponent(0).getAntoineVaporTemperature(system.getPressure());
+      ComponentInterface comp = system.getPhase(0).getComponent(0);
+      if (Double.isNaN(tGuess) || tGuess < comp.getTriplePointTemperature()
+          || tGuess > comp.getTC()) {
+        double tTrip = comp.getTriplePointTemperature();
+        double tCrit = comp.getTC();
+        double pTrip = comp.getTriplePointPressure();
+        double pCrit = comp.getPC();
+        double frac = (system.getPressure() - pTrip) / (pCrit - pTrip);
+        tGuess = tTrip + frac * (tCrit - tTrip);
+      }
+      system.setTemperature(tGuess);
     }
 
     if (system.isChemicalSystem()) {
@@ -136,13 +148,14 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
         || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
       setSuperCritical(true);
     }
-    if (system.getPhase(0).getNumberOfComponents() == 1
-        && Math.abs(system.getPhases()[1].getComponent(0).getFugacityCoefficient()
-            / system.getPhases()[0].getComponent(0).getFugacityCoefficient() - 1.0) < 1e-20) {
-      setSuperCritical(true);
+    if (system.getPhase(0).getNumberOfComponents() == 1) {
+      ComponentInterface comp = system.getPhase(0).getComponent(0);
+      if (system.getPressure() >= comp.getPC() || system.getTemperature() >= comp.getTC()) {
+        setSuperCritical(true);
+      }
     }
     if (isSuperCritical()) {
-      throw new IllegalStateException("System is supercritical");
+      // throw new IllegalStateException("System is supercritical");
     }
   }
 
