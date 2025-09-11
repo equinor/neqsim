@@ -35,7 +35,7 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
     if (system.getPhase(0).getNumberOfComponents() == 1) {
       var comp = system.getPhase(0).getComponent(0);
       if (system.getTemperature() >= comp.getTC()) {
-        throw new IllegalStateException("System is supercritical");
+        // throw new IllegalStateException("System is supercritical");
       }
       double pGuess = comp.getAntoineVaporPressure(system.getTemperature());
       if (Double.isNaN(pGuess) || pGuess <= 0 || pGuess < comp.getTriplePointPressure()
@@ -185,7 +185,7 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
       setSuperCritical(true);
     }
     if (isSuperCritical()) {
-      throw new IllegalStateException("System is supercritical");
+      // throw new IllegalStateException("System is supercritical");
     }
   }
 

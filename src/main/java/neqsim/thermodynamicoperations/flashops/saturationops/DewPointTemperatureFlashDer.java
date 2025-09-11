@@ -154,7 +154,7 @@ public class DewPointTemperatureFlashDer extends ConstantDutyTemperatureFlash {
       }
     }
     if (isSuperCritical()) {
-      throw new IllegalStateException("System is supercritical");
+      // throw new IllegalStateException("System is supercritical");
     }
   }
 

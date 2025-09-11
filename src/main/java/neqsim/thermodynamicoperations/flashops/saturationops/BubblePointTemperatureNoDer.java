@@ -34,7 +34,7 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
   public void run() {
     if (system.getPhase(0).getNumberOfComponents() == 1
         && system.getPressure() >= system.getPhase(0).getComponent(0).getPC()) {
-      throw new IllegalStateException("System is supercritical");
+      // throw new IllegalStateException("System is supercritical");
     }
 
     int iterations = 0;
@@ -48,8 +48,8 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
     // need to fix this close to critical point
     if (system.getPhase(0).getNumberOfComponents() == 1
         && system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
-      double tGuess = system.getPhase(0).getComponent(0)
-          .getAntoineVaporTemperature(system.getPressure());
+      double tGuess =
+          system.getPhase(0).getComponent(0).getAntoineVaporTemperature(system.getPressure());
       var comp = system.getPhase(0).getComponent(0);
       if (Double.isNaN(tGuess) || tGuess < comp.getTriplePointTemperature()
           || tGuess > comp.getTC()) {
@@ -154,7 +154,7 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
       }
     }
     if (isSuperCritical()) {
-      throw new IllegalStateException("System is supercritical");
+      // throw new IllegalStateException("System is supercritical");
     }
   }
 

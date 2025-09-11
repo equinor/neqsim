@@ -30,7 +30,7 @@ public class DewPointTemperatureFlash extends ConstantDutyTemperatureFlash {
   public void run() {
     if (system.getPhase(0).getNumberOfComponents() == 1) {
       if (system.getPressure() >= system.getPhase(0).getComponent(0).getPC()) {
-        throw new IllegalStateException("System is supercritical");
+        // throw new IllegalStateException("System is supercritical");
       }
       BubblePointTemperatureNoDer bubble = new BubblePointTemperatureNoDer(system);
       bubble.run();
@@ -144,7 +144,7 @@ public class DewPointTemperatureFlash extends ConstantDutyTemperatureFlash {
       }
     }
     if (isSuperCritical()) {
-      throw new IllegalStateException("System is supercritical");
+      // throw new IllegalStateException("System is supercritical");
     }
   }
 
