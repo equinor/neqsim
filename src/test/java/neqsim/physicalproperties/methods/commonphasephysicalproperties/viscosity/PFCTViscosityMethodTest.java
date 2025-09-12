@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-/** Tests for the PFCT viscosity model ensuring gas and liquid results are within 10% of a
- * reference implementation. */
+/**
+ * Tests for the PFCT viscosity model ensuring gas and liquid results are within 10% of a reference
+ * implementation.
+ */
 public class PFCTViscosityMethodTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;
 

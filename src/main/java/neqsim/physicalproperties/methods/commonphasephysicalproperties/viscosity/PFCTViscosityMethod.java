@@ -68,8 +68,6 @@ public class PFCTViscosityMethod extends Viscosity {
     double alfaMix = 1.0;
     double tempTC1 = 0.0;
     double tempTC2 = 0.0;
-    double tempPC1 = 0.0;
-    double tempPC2 = 0.0;
     double Mwtemp = 0.0;
 
     double Mmtemp = 0.0;
@@ -86,9 +84,6 @@ public class PFCTViscosityMethod extends Viscosity {
         tempTC1 += tempVar * Math.sqrt(
             phase.getPhase().getComponent(i).getTC() * phase.getPhase().getComponent(j).getTC());
         tempTC2 += tempVar;
-        tempPC1 += tempVar * Math.sqrt(
-            phase.getPhase().getComponent(i).getPC() * phase.getPhase().getComponent(j).getPC());
-        tempPC2 += tempVar;
       }
       Mwtemp += phase.getPhase().getComponent(i).getx()
           * Math.pow(phase.getPhase().getComponent(i).getMolarMass(), 2.0);
@@ -96,7 +91,7 @@ public class PFCTViscosityMethod extends Viscosity {
           phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(i).getMolarMass();
     }
 
-    PCmix = 8.0 * tempPC1 / (tempPC2 * tempPC2);
+    PCmix = 8.0 * tempTC1 / (tempTC2 * tempTC2);
     TCmix = tempTC1 / tempTC2;
     Mmix = (Mmtemp + 0.291 * (Mwtemp / Mmtemp - Mmtemp)) * 1e3; // phase.getPhase().getMolarMass();
 
@@ -107,6 +102,9 @@ public class PFCTViscosityMethod extends Viscosity {
     referenceSystem.init(1);
 
     PhaseType phaseType = phase.getPhase().getType();
+    if (phaseType != PhaseType.GAS) {
+      phaseType = PhaseType.LIQUID;
+    }
     double molDens = 1.0 / referenceSystem.getPhase(phaseType).getMolarVolume() * 100.0;
     double critMolDens = 10.15; // 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
     double redDens = molDens / critMolDens;
@@ -149,6 +147,9 @@ public class PFCTViscosityMethod extends Viscosity {
     // System.out.println("ref pres " + pres);
     referenceSystem.init(1);
     PhaseType phaseType = phase.getPhase().getType();
+    if (phaseType != PhaseType.GAS) {
+      phaseType = PhaseType.LIQUID;
+    }
     double molDens = 1.0 / referenceSystem.getPhase(phaseType).getMolarVolume() * 100.0;
     // System.out.println("mol dens " + molDens);
     double critMolDens = 10.15; // 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
