@@ -155,7 +155,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity
     double temperature = localPhase.getTemperature();
     for (int i = 0; i < numComp; i++) {
       ComponentInterface comp = localPhase.getComponent(i);
-      double nci = comp.getCriticalViscosity() * comp.getViscosityFrictionK();
+      double nci = comp.getCriticalViscosity() * comp.getViscosityFrictionK() * 1.0e7;
       if (comp.isIsPlusFraction() || comp.isIsTBPfraction()) {
         nci *= TBPcorrection;
       }
@@ -178,7 +178,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity
     if ((visk0 + visk1) < 1e-20) {
       return 1e-6;
     }
-    return visk0 + visk1;
+    return (visk0 + visk1) * 1.0e-7;
   }
 
   /**
@@ -250,8 +250,8 @@ public class FrictionTheoryViscosityMethod extends Viscosity
       double critVol = comp.getCriticalVolume();
       pureComponentViscosity[i] = 40.785
           * Math.sqrt(comp.getMolarMass() * 1000.0 * temperature)
-          / (Math.pow(critVol, 2.0 / 3.0) * omegaVisc[i]) * Fc[i] * 1.0e-7;
-      // convert from micropoise to Pa.s
+          / (Math.pow(critVol, 2.0 / 3.0) * omegaVisc[i]) * Fc[i];
+      // result in micropoise
     }
   }
 

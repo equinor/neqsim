@@ -8,6 +8,7 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosit
 
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -23,8 +24,6 @@ public class PFCTViscosityMethod extends Viscosity {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  // todo: is this parameter required?
-  int phaseTypeNumb = 1;
   SystemInterface referenceSystem =
       new SystemSrkEos(273.0, ThermodynamicConstantsInterface.referencePressure);
   double[] GVcoef = {-2.090975e5, 2.647269e5, -1.472818e5, 4.716740e4, -9.491872e3, 1.219979e3,
@@ -58,9 +57,6 @@ public class PFCTViscosityMethod extends Viscosity {
   /** {@inheritDoc} */
   @Override
   public double calcViscosity() {
-    // int phaseTypeNumb = 0;
-    // if(phase.getPhase().getPhaseType()==0) phaseTypeNumb=1;
-
     double Pc0 = referenceSystem.getPhase(0).getComponent(0).getPC();
 
     double Tc0 = referenceSystem.getPhase(0).getComponent(0).getTC();
@@ -72,8 +68,6 @@ public class PFCTViscosityMethod extends Viscosity {
     double alfaMix = 1.0;
     double tempTC1 = 0.0;
     double tempTC2 = 0.0;
-    double tempPC1 = 0.0;
-    double tempPC2 = 0.0;
     double Mwtemp = 0.0;
 
     double Mmtemp = 0.0;
@@ -90,9 +84,6 @@ public class PFCTViscosityMethod extends Viscosity {
         tempTC1 += tempVar * Math.sqrt(
             phase.getPhase().getComponent(i).getTC() * phase.getPhase().getComponent(j).getTC());
         tempTC2 += tempVar;
-        tempPC1 += tempVar * Math.sqrt(
-            phase.getPhase().getComponent(i).getTC() * phase.getPhase().getComponent(j).getTC());
-        tempPC2 += tempVar;
       }
       Mwtemp += phase.getPhase().getComponent(i).getx()
           * Math.pow(phase.getPhase().getComponent(i).getMolarMass(), 2.0);
@@ -100,7 +91,7 @@ public class PFCTViscosityMethod extends Viscosity {
           phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(i).getMolarMass();
     }
 
-    PCmix = 8.0 * tempPC1 / (tempPC2 * tempPC2);
+    PCmix = 8.0 * tempTC1 / (tempTC2 * tempTC2);
     TCmix = tempTC1 / tempTC2;
     Mmix = (Mmtemp + 0.291 * (Mwtemp / Mmtemp - Mmtemp)) * 1e3; // phase.getPhase().getMolarMass();
 
@@ -110,8 +101,11 @@ public class PFCTViscosityMethod extends Viscosity {
         * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix);
     referenceSystem.init(1);
 
-    // todo: mixing phasetype and phase index?
-    double molDens = 1.0 / referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 100.0;
+    PhaseType phaseType = phase.getPhase().getType();
+    if (phaseType != PhaseType.GAS) {
+      phaseType = PhaseType.LIQUID;
+    }
+    double molDens = 1.0 / referenceSystem.getPhase(phaseType).getMolarVolume() * 100.0;
     double critMolDens = 10.15; // 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
     double redDens = molDens / critMolDens;
 
@@ -152,13 +146,17 @@ public class PFCTViscosityMethod extends Viscosity {
     referenceSystem.setPressure(pres);
     // System.out.println("ref pres " + pres);
     referenceSystem.init(1);
-    double molDens = 1.0 / referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 100.0;
+    PhaseType phaseType = phase.getPhase().getType();
+    if (phaseType != PhaseType.GAS) {
+      phaseType = PhaseType.LIQUID;
+    }
+    double molDens = 1.0 / referenceSystem.getPhase(phaseType).getMolarVolume() * 100.0;
     // System.out.println("mol dens " + molDens);
     double critMolDens = 10.15; // 1.0/referenceSystem.getPhase(0).getComponent(0).getCriticalVolume();
     double redMolDens = (molDens - critMolDens) / critMolDens;
     // System.out.println("gv1 " +GVcoef[0]);
 
-    molDens = referenceSystem.getPhase(phaseTypeNumb).getDensity() * 1e-3;
+    molDens = referenceSystem.getPhase(phaseType).getDensity() * 1e-3;
 
     double viscRefO = GVcoef[0] * Math.pow(temp, -1.0) + GVcoef[1] * Math.pow(temp, -2.0 / 3.0)
         + GVcoef[2] * Math.pow(temp, -1.0 / 3.0) + GVcoef[3] + GVcoef[4] * Math.pow(temp, 1.0 / 3.0)
