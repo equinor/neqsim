@@ -30,6 +30,11 @@ public class ControlStructureTest {
     }
 
     @Override
+    public double getControllerSetPoint() {
+      return setPoint;
+    }
+
+    @Override
     public String getUnit() {
       return "";
     }

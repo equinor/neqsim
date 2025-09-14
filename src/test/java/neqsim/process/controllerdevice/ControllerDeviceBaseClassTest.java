@@ -94,4 +94,11 @@ public class ControllerDeviceBaseClassTest {
     c.setUnit(oldUnit);
     Assertions.assertEquals(oldUnit, c.getUnit());
   }
+
+  @Test
+  void testGetControllerSetPoint() {
+    double setPoint = 5.0;
+    c.setControllerSetPoint(setPoint);
+    Assertions.assertEquals(setPoint, c.getControllerSetPoint());
+  }
 }
