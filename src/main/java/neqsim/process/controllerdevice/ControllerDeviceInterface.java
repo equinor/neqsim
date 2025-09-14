@@ -60,6 +60,15 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
 
   /**
    * <p>
+   * getControllerSetPoint.
+   * </p>
+   *
+   * @return current controller set point
+   */
+  public double getControllerSetPoint();
+
+  /**
+   * <p>
    * getUnit.
    * </p>
    *

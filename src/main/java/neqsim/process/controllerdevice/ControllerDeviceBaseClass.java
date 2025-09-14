@@ -224,6 +224,12 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
   /** {@inheritDoc} */
   @Override
+  public double getControllerSetPoint() {
+    return controllerSetPoint;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String getUnit() {
     return unit;
   }
