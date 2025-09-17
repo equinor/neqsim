@@ -11,6 +11,10 @@ import java.awt.Container;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentEos;
@@ -607,6 +611,74 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
+    private final transient Map<PhaseInterface, WorkArrays> workCache =
+        Collections.synchronizedMap(new WeakHashMap<>());
+
+    protected WorkArrays ensureWorkArrays(PhaseInterface phase, int size) {
+      WorkArrays buffers = workCache.get(phase);
+      if (buffers == null) {
+        buffers = new WorkArrays();
+        workCache.put(phase, buffers);
+      }
+      buffers.ensureCapacity(size);
+      return buffers;
+    }
+
+    protected WorkArrays prepareWorkArrays(PhaseInterface phase, ComponentEosInterface[] comp,
+        int numbcomp) {
+      WorkArrays buffers = ensureWorkArrays(phase, numbcomp);
+      int m = 0;
+      for (int i = 0; i < numbcomp; i++) {
+        double moles = comp[i].getNumberOfMolesInPhase();
+        if (moles >= 1e-100) {
+          buffers.active[m] = i;
+          buffers.n[m] = moles;
+          double sqrt = comp[i].getSqrtAt();
+          if (!(sqrt > 0.0)) {
+            double ai = comp[i].getaT();
+            sqrt = ai > 0.0 ? Math.sqrt(ai) : 0.0;
+          }
+          buffers.sqrtAt[m] = sqrt;
+          buffers.aT[m] = comp[i].getaT();
+          buffers.aDiffT[m] = comp[i].getaDiffT();
+          m++;
+        }
+      }
+      buffers.activeCount = m;
+      return buffers;
+    }
+
+    protected double safeSqrtAt(ComponentEosInterface component) {
+      double sqrt = component.getSqrtAt();
+      if (!(sqrt > 0.0)) {
+        double ai = component.getaT();
+        sqrt = ai > 0.0 ? Math.sqrt(ai) : 0.0;
+      }
+      return sqrt;
+    }
+
+    protected final class WorkArrays {
+      int capacity;
+      int activeCount;
+      int[] active = new int[0];
+      double[] n = new double[0];
+      double[] sqrtAt = new double[0];
+      double[] aT = new double[0];
+      double[] aDiffT = new double[0];
+
+      void ensureCapacity(int size) {
+        if (capacity >= size) {
+          return;
+        }
+        capacity = size;
+        active = new int[size];
+        n = new double[size];
+        sqrtAt = new double[size];
+        aT = new double[size];
+        aDiffT = new double[size];
+      }
+    }
+
     /** {@inheritDoc} */
     @Override
     public String getName() {
@@ -978,20 +1050,24 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-      ComponentEosInterface[] comp = (ComponentEosInterface[]) phase.getcomponentArray();
+      return calcAWithDerivatives(phase, temperature, pressure, numbcomp, null, null);
+    }
 
-      // Collect active components using in-phase moles (phase property)
-      int[] active = new int[numbcomp];
-      int m = 0;
-      double[] n = new double[numbcomp]; // n_i in current phase
-      double[] sqrtAT = new double[numbcomp]; // sqrt(a_i(T))
-      for (int i = 0; i < numbcomp; i++) {
-        double ni = comp[i].getNumberOfMolesInPhase();
-        if (ni >= 1e-100) {
-          n[i] = ni;
-          sqrtAT[i] = Math.sqrt(comp[i].getaT());
-          active[m++] = i;
-        }
+    /** {@inheritDoc} */
+    @Override
+    public double calcAWithDerivatives(PhaseInterface phase, double temperature, double pressure,
+        int numbcomp, double[] outAi, double[] outAiT) {
+      ComponentEosInterface[] comp = (ComponentEosInterface[]) phase.getcomponentArray();
+      WorkArrays buffers = prepareWorkArrays(phase, comp, numbcomp);
+      int m = buffers.activeCount;
+      boolean collectAi = outAi != null;
+      boolean collectAiT = outAiT != null;
+
+      if (collectAi) {
+        Arrays.fill(outAi, 0, numbcomp, 0.0);
+      }
+      if (collectAiT) {
+        Arrays.fill(outAiT, 0, numbcomp, 0.0);
       }
 
       if (m == 0) {
@@ -1000,22 +1076,68 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         return 0.0;
       }
 
-      // Sum upper triangle and double off-diagonals (k_ij == k_ji)
       double sum = 0.0;
       for (int ii = 0; ii < m; ii++) {
-        int i = active[ii];
+        int i = buffers.active[ii];
+        double sqrtAi = buffers.sqrtAt[ii];
+        double ai = buffers.aT[ii];
+        double ai1 = buffers.aDiffT[ii];
+        double ni = buffers.n[ii];
+
         for (int jj = ii; jj < m; jj++) {
-          int j = active[jj];
-          double kij = getkij(temperature, i, j); // symmetric by assumption
-          double aij = sqrtAT[i] * sqrtAT[j] * (1.0 - kij); // a_ij = a_ji
-          double term = n[i] * n[j] * aij;
-          sum += (ii == jj) ? term : 2.0 * term;
+          int j = buffers.active[jj];
+          double sqrtAj = buffers.sqrtAt[jj];
+          double aj = buffers.aT[jj];
+          double aj1 = buffers.aDiffT[jj];
+          double nj = buffers.n[jj];
+
+          double s = sqrtAi * sqrtAj;
+          double kij = getkij(temperature, i, j);
+          double g = 1.0 - kij;
+          double contribution = ni * nj * s * g;
+          sum += (ii == jj) ? contribution : 2.0 * contribution;
+
+          if (collectAi) {
+            double contribI = 2.0 * nj * s * g;
+            outAi[i] += contribI;
+            if (ii != jj) {
+              double contribJ = 2.0 * ni * s * g;
+              outAi[j] += contribJ;
+            }
+          }
+
+          if (collectAiT) {
+            double numeratorI = ai * aj1 + aj * ai1;
+            double baseI = 0.0;
+            if (s > 0.0) {
+              baseI = 0.5 * numeratorI / s * g;
+            }
+            double dkij = getkijdT(temperature, i, j);
+            baseI -= s * dkij;
+            double contribI = 2.0 * nj * baseI;
+            outAiT[i] += contribI;
+            if (ii != jj) {
+              double numeratorJ = aj * ai1 + ai * aj1;
+              double baseJ = 0.0;
+              if (s > 0.0) {
+                baseJ = 0.5 * numeratorJ / s * g;
+              }
+              double dkji = getkijdT(temperature, j, i);
+              baseJ -= s * dkji;
+              double contribJ = 2.0 * ni * baseJ;
+              outAiT[j] += contribJ;
+            }
+          }
         }
       }
 
       A = sum;
       Atot = sum;
       return sum;
+    }
+
+    protected double getkijdT(double temperature, int i, int j) {
+      return 0.0;
     }
 
     // public double calcB(PhaseInterface phase, double temperature, double
@@ -1038,30 +1160,16 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
       ComponentEosInterface[] comp = (ComponentEosInterface[]) phase.getcomponentArray();
-
-      // Cache and build active j-list using in-phase moles
-      int[] active = new int[numbcomp];
-      int m = 0;
-      double[] n = new double[numbcomp];
-      double[] sqrtAT = new double[numbcomp];
-      for (int j = 0; j < numbcomp; j++) {
-        double nj = comp[j].getNumberOfMolesInPhase();
-        if (nj >= 1e-100) {
-          n[j] = nj;
-          sqrtAT[j] = Math.sqrt(comp[j].getaT());
-          active[m++] = j;
-        }
-      }
-
-      double sqrtAi = Math.sqrt(comp[compNumb].getaT());
+      WorkArrays buffers = prepareWorkArrays(phase, comp, numbcomp);
+      double sqrtAi = safeSqrtAt(comp[compNumb]);
       double sum = 0.0;
-      for (int idx = 0; idx < m; idx++) {
-        int j = active[idx];
-        double kij = getkij(temperature, compNumb, j); // k_ij == k_ji (given)
-        double aij = sqrtAi * sqrtAT[j] * (1.0 - kij);
-        sum += n[j] * aij;
+      for (int idx = 0; idx < buffers.activeCount; idx++) {
+        int j = buffers.active[idx];
+        double sqrtAj = buffers.sqrtAt[idx];
+        double kij = getkij(temperature, compNumb, j);
+        sum += buffers.n[idx] * sqrtAi * sqrtAj * (1.0 - kij);
       }
-      return 2.0 * sum; // dA/dn_i
+      return 2.0 * sum;
     }
 
     // public double calcBi(int compNumb, PhaseInterface phase, double temperature,
@@ -1093,42 +1201,35 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
       ComponentEosInterface[] comp = (ComponentEosInterface[]) phase.getcomponentArray();
-
-      // i-component caches
-      final double eps = 1e-300; // guard against division by ~0
-      final double ai = comp[compNumb].getaT();
-      final double aiT = comp[compNumb].getaDiffT();
-      final double aiPos = ai > eps ? ai : eps;
-      final double sqrtAi = Math.sqrt(aiPos);
-      final double logDeriv_i = aiT / aiPos; // (a_i'/a_i)
-
-      double sum = 0.0;
-
-      for (int j = 0; j < numbcomp; j++) {
-        final double nj = comp[j].getNumberOfMolesInPhase();
-        if (nj < 1e-100)
-          continue; // negligible in this phase
-
-        // j-component caches
-        final double aj = comp[j].getaT();
-        final double ajT = comp[j].getaDiffT();
-        final double ajPos = aj > eps ? aj : eps;
-        final double sqrtAj = Math.sqrt(ajPos);
-
-        // sqrt(a_i a_j)
-        final double sqrt_aiaj = sqrtAi * sqrtAj;
-
-        // (1 - kij) is T-invariant by assumption
-        final double oneMinusK = 1.0 - getkij(temperature, compNumb, j);
-
-        // d/dT sqrt(a_i a_j) = 0.5*(a_i'/a_i + a_j'/a_j) * sqrt(a_i a_j)
-        final double dSqrt_dT = 0.5 * (logDeriv_i + ajT / ajPos) * sqrt_aiaj;
-
-        // Since dkij/dT = 0: da_ij/dT = dSqrt_dT * (1 - kij)
-        sum += nj * dSqrt_dT * oneMinusK;
+      WorkArrays buffers = prepareWorkArrays(phase, comp, numbcomp);
+      double ai = comp[compNumb].getaT();
+      double ai1 = comp[compNumb].getaDiffT();
+      double sqrtAi = safeSqrtAt(comp[compNumb]);
+      if (buffers.activeCount == 0 || sqrtAi == 0.0) {
+        return 0.0;
       }
 
-      // d/dT(dA/dn_i) = 2 * sum_j n_j * da_ij/dT
+      double sum = 0.0;
+      for (int idx = 0; idx < buffers.activeCount; idx++) {
+        int j = buffers.active[idx];
+        double sqrtAj = buffers.sqrtAt[idx];
+        double aj = buffers.aT[idx];
+        double aj1 = buffers.aDiffT[idx];
+        double s = sqrtAi * sqrtAj;
+        if (s == 0.0) {
+          continue;
+        }
+        double kij = getkij(temperature, compNumb, j);
+        double g = 1.0 - kij;
+        double numerator = ai * aj1 + aj * ai1;
+        double base = 0.0;
+        if (s > 0.0) {
+          base = 0.5 * numerator / s * g;
+        }
+        double dkij = getkijdT(temperature, compNumb, j);
+        base -= s * dkij;
+        sum += buffers.n[idx] * base;
+      }
       return 2.0 * sum;
     }
 

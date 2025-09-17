@@ -103,6 +103,15 @@ public interface ComponentEosInterface extends ComponentInterface {
 
   /**
    * <p>
+   * getSqrtAt.
+   * </p>
+   *
+   * @return a double
+   */
+  double getSqrtAt();
+
+  /**
+   * <p>
    * getBij.
    * </p>
    *
