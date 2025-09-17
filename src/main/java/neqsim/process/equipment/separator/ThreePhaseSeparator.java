@@ -7,6 +7,8 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.SeparatorResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -168,6 +170,7 @@ public class ThreePhaseSeparator extends Separator {
     if (useTempMultiPhaseCheck) {
       thermoSystem.setMultiPhaseCheck(false);
     }
+    ensureOilPhaseForAqueousEntrainment();
     // thermoSystem.display();
     thermoSystem.addPhaseFractionToPhase(gasInAqueous, gasInAqueousSpec, specifiedStream, "gas",
         "aqueous");
@@ -215,6 +218,26 @@ public class ThreePhaseSeparator extends Separator {
     setCalculationIdentifier(id);
   }
 
+  private void ensureOilPhaseForAqueousEntrainment() {
+    if (aqueousInOil <= 0.0 || thermoSystem == null) {
+      return;
+    }
+    if (thermoSystem.hasPhaseType("oil") || !thermoSystem.hasPhaseType("aqueous")) {
+      return;
+    }
+    int aqueousIndex = thermoSystem.getPhaseNumberOfPhase("aqueous");
+    if (aqueousIndex < 0) {
+      return;
+    }
+    PhaseInterface oilPhaseTemplate = thermoSystem.getPhase(aqueousIndex).clone();
+    oilPhaseTemplate.setType(PhaseType.OIL);
+    oilPhaseTemplate.setEmptyFluid();
+    thermoSystem.addPhase();
+    int newPhaseIndex = thermoSystem.getNumberOfPhases() - 1;
+    thermoSystem.setPhase(oilPhaseTemplate, newPhaseIndex);
+    thermoSystem.setPhaseType(newPhaseIndex, PhaseType.OIL);
+    thermoSystem.initBeta();
+  }
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
@@ -291,3 +314,4 @@ public class ThreePhaseSeparator extends Separator {
     return new GsonBuilder().create().toJson(res);
   }
 }
+

@@ -8,6 +8,7 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
@@ -43,6 +44,7 @@ public class TPmultiflash extends TPflash {
 
   double[] multTerm;
   double[] multTerm2;
+  private final StabilityWorkspace stabilityWorkspace = new StabilityWorkspace();
 
   /**
    * <p>
@@ -241,31 +243,28 @@ public class TPmultiflash extends TPflash {
   /** {@inheritDoc} */
   @Override
   public void stabilityAnalysis() {
-    double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
+    int componentCount = system.getPhase(0).getNumberOfComponents();
+    StabilityWorkspace workspace = stabilityWorkspace;
+    workspace.ensureCapacity(componentCount);
+    workspace.reset(componentCount);
 
-    double[] deltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldoldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] sumw = new double[system.getPhase(0).getNumberOfComponents()];
+    double[] logWi = workspace.logWi;
+    double[][] Wi = workspace.Wi;
+    double[] deltalogWi = workspace.deltaLogWi;
+    double[] oldDeltalogWi = workspace.oldDeltaLogWi;
+    double[] oldoldDeltalogWi = workspace.oldOldDeltaLogWi;
+    double[] sumw = workspace.sumw;
+    double[] oldlogw = workspace.oldLogWi;
+    double[] oldoldlogw = workspace.oldOldLogWi;
+    double[] oldoldoldlogw = workspace.oldOldOldLogWi;
+    double[] d = workspace.d;
+    double[][] x = workspace.x;
+    tm = workspace.tm;
+    double[] alpha = workspace.alpha;
     double err = 0;
-    double[] oldlogw = new double[system.getPhase(0).getNumberOfComponents()];
-    double[] oldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldoldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] d = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] x = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
-    tm = new double[system.getPhase(0).getNumberOfComponents()];
-
-    double[] alpha = null;
-    // SystemInterface minimumGibbsEnergySystem;
     ArrayList<SystemInterface> clonedSystem = new ArrayList<SystemInterface>(1);
-    // if (minimumGibbsEnergySystem == null) {
-    // minimumGibbsEnergySystem = system.clone();
-    // }
     minimumGibbsEnergySystem = system;
-    clonedSystem.add(system.clone());
+    clonedSystem.add(workspace.borrowClone(system));
     /*
      * for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) { if
      * (system.getPhase(0).getComponent(i).getx() < 1e-100) { clonedSystem.add(null); continue; }
@@ -463,7 +462,7 @@ public class TPmultiflash extends TPflash {
             oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
           }
           clonedSystem.get(0).init(3, 1);
-          alpha = new double[clonedSystem.get(0).getPhases()[0].getNumberOfComponents()];
+          Arrays.fill(alpha, 0, clonedSystem.get(0).getPhases()[0].getNumberOfComponents(), 0.0);
           df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
               system.getPhases()[0].getNumberOfComponents());
           identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents());
@@ -841,7 +840,7 @@ public class TPmultiflash extends TPflash {
             oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
           }
           clonedSystem.get(0).init(3, 1);
-          alpha = new double[clonedSystem.get(0).getPhases()[0].getNumberOfComponents()];
+          Arrays.fill(alpha, 0, clonedSystem.get(0).getPhases()[0].getNumberOfComponents(), 0.0);
           df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
               system.getPhases()[0].getNumberOfComponents());
           identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents());
@@ -1204,7 +1203,7 @@ public class TPmultiflash extends TPflash {
             oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
           }
           (clonedSystem.get(j)).init(3, 1);
-          alpha = new double[(clonedSystem.get(j)).getPhases()[0].getNumberOfComponents()];
+          Arrays.fill(alpha, 0, (clonedSystem.get(j)).getPhases()[0].getNumberOfComponents(), 0.0);
           df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
               system.getPhases()[0].getNumberOfComponents());
           identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents());
@@ -1489,6 +1488,93 @@ public class TPmultiflash extends TPflash {
       /*
        * if (!secondTime) { secondTime = true; doStabilityAnalysis = false; run(); }
        */
+    }
+  }
+
+  private static final class StabilityWorkspace {
+    double[] logWi = new double[0];
+    double[][] Wi = new double[0][0];
+    double[] deltaLogWi = new double[0];
+    double[] oldDeltaLogWi = new double[0];
+    double[] oldOldDeltaLogWi = new double[0];
+    double[] sumw = new double[0];
+    double[] oldLogWi = new double[0];
+    double[] oldOldLogWi = new double[0];
+    double[] oldOldOldLogWi = new double[0];
+    double[] d = new double[0];
+    double[][] x = new double[0][0];
+    double[] tm = new double[0];
+    double[] alpha = new double[0];
+    SystemInterface candidateClone;
+
+    void ensureCapacity(int components) {
+      logWi = ensureVector(logWi, components);
+      deltaLogWi = ensureVector(deltaLogWi, components);
+      oldDeltaLogWi = ensureVector(oldDeltaLogWi, components);
+      oldOldDeltaLogWi = ensureVector(oldOldDeltaLogWi, components);
+      sumw = ensureVector(sumw, components);
+      oldLogWi = ensureVector(oldLogWi, components);
+      oldOldLogWi = ensureVector(oldOldLogWi, components);
+      oldOldOldLogWi = ensureVector(oldOldOldLogWi, components);
+      d = ensureVector(d, components);
+      tm = ensureVector(tm, components);
+      alpha = ensureVector(alpha, components);
+      Wi = ensureMatrix(Wi, components);
+      x = ensureMatrix(x, components);
+    }
+
+    void reset(int components) {
+      Arrays.fill(logWi, 0, components, 0.0);
+      Arrays.fill(deltaLogWi, 0, components, 0.0);
+      Arrays.fill(oldDeltaLogWi, 0, components, 0.0);
+      Arrays.fill(oldOldDeltaLogWi, 0, components, 0.0);
+      Arrays.fill(sumw, 0, components, 0.0);
+      Arrays.fill(oldLogWi, 0, components, 0.0);
+      Arrays.fill(oldOldLogWi, 0, components, 0.0);
+      Arrays.fill(oldOldOldLogWi, 0, components, 0.0);
+      Arrays.fill(d, 0, components, 0.0);
+      Arrays.fill(tm, 0, components, 0.0);
+      Arrays.fill(alpha, 0, components, 0.0);
+      for (int i = 0; i < components; i++) {
+        Arrays.fill(Wi[i], 0, components, 0.0);
+        Arrays.fill(x[i], 0, components, 0.0);
+      }
+    }
+
+    double[] ensureVector(double[] array, int size) {
+      return array.length >= size ? array : new double[size];
+    }
+
+    double[][] ensureMatrix(double[][] matrix, int size) {
+      if (matrix.length < size) {
+        matrix = new double[size][size];
+      }
+      for (int i = 0; i < size; i++) {
+        if (matrix[i].length < size) {
+          matrix[i] = new double[size];
+        }
+      }
+      return matrix;
+    }
+
+    SystemInterface borrowClone(SystemInterface source) {
+      if (candidateClone == null
+          || candidateClone.getPhase(0).getNumberOfComponents() != source.getPhase(0).getNumberOfComponents()) {
+        candidateClone = source.clone();
+        return candidateClone;
+      }
+
+      candidateClone.setTotalNumberOfMoles(source.getTotalNumberOfMoles());
+      candidateClone.setTemperature(source.getTemperature());
+      candidateClone.setPressure(source.getPressure());
+      candidateClone.setMolarComposition(source.getMolarComposition());
+      for (int i = 0; i < source.getNumberOfPhases(); i++) {
+        if (source.isPhase(i)) {
+          candidateClone.setBeta(i, source.getBeta(i));
+        }
+      }
+      candidateClone.init(0);
+      return candidateClone;
     }
   }
 }

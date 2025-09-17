@@ -1018,6 +1018,24 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       return sum;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public double calcAWithDerivatives(PhaseInterface phase, double temperature, double pressure,
+        int numbcomp, double[] outAi, double[] outAiT) {
+      double value = calcA(phase, temperature, pressure, numbcomp);
+      if (outAi != null) {
+        for (int k = 0; k < numbcomp; k++) {
+          outAi[k] = calcAi(k, phase, temperature, pressure, numbcomp);
+        }
+      }
+      if (outAiT != null) {
+        for (int k = 0; k < numbcomp; k++) {
+          outAiT[k] = calcAiT(k, phase, temperature, pressure, numbcomp);
+        }
+      }
+      return value;
+    }
+
     // public double calcB(PhaseInterface phase, double temperature, double
     // pressure, int numbcomp){
     // B = 0.0;

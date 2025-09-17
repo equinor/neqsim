@@ -32,6 +32,35 @@ public interface EosMixingRulesInterface extends MixingRulesInterface {
 
   /**
    * <p>
+   * calcAWithDerivatives.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param temperature a double
+   * @param pressure a double
+   * @param numbcomp a int
+   * @param outAi an array receiving dA/dn_i values, may be {@code null}
+   * @param outAiT an array receiving d^2A/dT dn_i values, may be {@code null}
+   * @return the mixture attraction parameter A
+   */
+  default double calcAWithDerivatives(PhaseInterface phase, double temperature, double pressure,
+      int numbcomp, double[] outAi, double[] outAiT) {
+    double value = calcA(phase, temperature, pressure, numbcomp);
+    if (outAi != null) {
+      for (int i = 0; i < numbcomp; i++) {
+        outAi[i] = calcAi(i, phase, temperature, pressure, numbcomp);
+      }
+    }
+    if (outAiT != null) {
+      for (int i = 0; i < numbcomp; i++) {
+        outAiT[i] = calcAiT(i, phase, temperature, pressure, numbcomp);
+      }
+    }
+    return value;
+  }
+
+  /**
+   * <p>
    * calcB.
    * </p>
    *
