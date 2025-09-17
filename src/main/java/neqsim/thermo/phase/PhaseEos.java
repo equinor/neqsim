@@ -33,10 +33,6 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   private double loc_B;
   private double f_loc = 0;
   private double g = 0;
-  private double[] cachedAi;
-  private double[] cachedAiT;
-  private boolean cachedAiValid;
-  private boolean cachedAiTValid;
   public double delta1 = 0;
   public double delta2 = 0;
 
@@ -54,13 +50,6 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       clonedPhase = (PhaseEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
-    }
-
-    if (clonedPhase != null) {
-      clonedPhase.cachedAi = null;
-      clonedPhase.cachedAiT = null;
-      clonedPhase.cachedAiValid = false;
-      clonedPhase.cachedAiTValid = false;
     }
 
     // clonedPhase.mixSelect = (EosMixingRules) mixSelect.clone();
@@ -198,7 +187,6 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     } else {
       mixRule = mixSelect.getMixingRule(mr.getValue(), this);
     }
-    invalidateMixingCache();
   }
 
   /** {@inheritDoc} */
@@ -226,7 +214,6 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     } else {
       mixRule = mixSelect.resetMixingRule(mr.getValue(), this);
     }
-    invalidateMixingCache();
   }
 
   /**
@@ -532,36 +519,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     return mixRule == null ? "none" : mixRule.getName();
   }
 
-  private void ensureMixingCacheCapacity(int size, boolean needAi, boolean needAiT) {
-    if (needAi && (cachedAi == null || cachedAi.length < size)) {
-      cachedAi = new double[size];
-    }
-    if (needAiT && (cachedAiT == null || cachedAiT.length < size)) {
-      cachedAiT = new double[size];
-    }
-  }
-
-  private void invalidateMixingCache() {
-    cachedAiValid = false;
-    cachedAiTValid = false;
-  }
-
   /** {@inheritDoc} */
   @Override
   public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    if (phase != this) {
-      return mixRule.calcA(phase, temperature, pressure, numbcomp);
-    }
-    invalidateMixingCache();
-    boolean needAi = true;
-    boolean needAiT = getInitType() >= 2;
-    ensureMixingCacheCapacity(numbcomp, needAi, needAiT);
-    double[] aiBuffer = needAi ? cachedAi : null;
-    double[] aiTBuffer = needAiT ? cachedAiT : null;
-    loc_A = mixRule.calcAWithDerivatives(this, temperature, pressure, numbcomp, aiBuffer,
-        aiTBuffer);
-    cachedAiValid = needAi && aiBuffer != null;
-    cachedAiTValid = needAiT && aiTBuffer != null;
+    loc_A = mixRule.calcA(phase, temperature, pressure, numbcomp);
     return loc_A;
   }
 
@@ -576,9 +537,6 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   @Override
   public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
       int numbcomp) {
-    if (phase == this && cachedAiValid && cachedAi != null && compNumb < cachedAi.length) {
-      return cachedAi[compNumb];
-    }
     return mixRule.calcAi(compNumb, phase, temperature, pressure, numbcomp);
   }
 
@@ -618,26 +576,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   @Override
   public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
       int numbcomp) {
-    if (phase == this && cachedAiTValid && cachedAiT != null && compNumb < cachedAiT.length) {
-      return cachedAiT[compNumb];
-    }
     return mixRule.calcAiT(compNumb, phase, temperature, pressure, numbcomp);
-  }
-
-  public boolean hasCachedAi() {
-    return cachedAiValid && cachedAi != null;
-  }
-
-  public boolean hasCachedAiT() {
-    return cachedAiTValid && cachedAiT != null;
-  }
-
-  public double getCachedAiValue(int index) {
-    return cachedAi[index];
-  }
-
-  public double getCachedAiTValue(int index) {
-    return cachedAiT[index];
   }
 
   /** {@inheritDoc} */

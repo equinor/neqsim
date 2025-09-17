@@ -31,7 +31,6 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoon;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonStatoil;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermUMRPRU;
-import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -54,8 +53,6 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   public double alpha = 0;
 
   public double aT = 1;
-
-  private double sqrtAt = Double.NaN;
 
   public double aDiffT = 0;
 
@@ -132,7 +129,6 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     }
 
     clonedComponent.setAttractiveParameter(this.getAttractiveParameter().clone());
-    clonedComponent.sqrtAt = this.sqrtAt;
 
     return clonedComponent;
   }
@@ -144,7 +140,6 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     a = calca();
     b = calcb();
     aT = a * alpha(temp);
-    sqrtAt = aT > 0.0 ? Math.sqrt(aT) : 0.0;
     if (initType >= 2) {
       aDiffT = diffaT(temp);
       aDiffDiffT = diffdiffaT(temp);
@@ -156,20 +151,9 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
       int numberOfComponents, int initType) {
     Bi = phase.calcBi(componentNumber, phase, temp, pres, numberOfComponents);
-
-    PhaseEos eosPhase = phase instanceof PhaseEos ? (PhaseEos) phase : null;
-    if (eosPhase != null && eosPhase.hasCachedAi()) {
-      Ai = eosPhase.getCachedAiValue(componentNumber);
-    } else {
-      Ai = phase.calcAi(componentNumber, phase, temp, pres, numberOfComponents);
-    }
-
+    Ai = phase.calcAi(componentNumber, phase, temp, pres, numberOfComponents);
     if (initType >= 2) {
-      if (eosPhase != null && eosPhase.hasCachedAiT()) {
-        AiT = eosPhase.getCachedAiTValue(componentNumber);
-      } else {
-        AiT = phase.calcAiT(componentNumber, phase, temp, pres, numberOfComponents);
-      }
+      AiT = phase.calcAiT(componentNumber, phase, temp, pres, numberOfComponents);
     }
     double totVol = phase.getMolarVolume() * phase.getNumberOfMolesInPhase();
     voli = -(-R * temp * dFdNdV(phase, numberOfComponents, temp, pres)
@@ -338,11 +322,6 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   @Override
   public double getaT() {
     return aT;
-  }
-
-  @Override
-  public double getSqrtAt() {
-    return sqrtAt;
   }
 
   /** {@inheritDoc} */
