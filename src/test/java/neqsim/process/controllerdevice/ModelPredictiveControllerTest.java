@@ -317,4 +317,66 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
     Assertions.assertTrue(process.getQualityB() <= 6.8 + 1.0e-6,
         "Quality B constraint should remain satisfied after the disturbance");
   }
+
+  @Test
+  public void testMovingHorizonEstimationTunesProcessModel() {
+    double ambient = 18.0;
+    double trueGain = 0.55;
+    double trueTimeConstant = 40.0;
+    double dt = 1.0;
+
+    SimpleHeaterMeasurement measurement =
+        new SimpleHeaterMeasurement("heaterAdaptive", ambient, trueTimeConstant, trueGain);
+
+    ModelPredictiveController controller = new ModelPredictiveController("adaptiveMpc");
+    controller.setTransmitter(measurement);
+    controller.enableMovingHorizonEstimation(45);
+    Assertions.assertTrue(controller.isMovingHorizonEstimationEnabled());
+    Assertions.assertEquals(45, controller.getMovingHorizonEstimationWindow());
+
+    controller.setControllerSetPoint(ambient + 15.0, "C");
+    controller.setProcessModel(0.2, 15.0);
+    controller.setProcessBias(ambient + 3.0);
+    controller.setPredictionHorizon(18);
+    controller.setWeights(1.0, 0.05, 0.15);
+    controller.setPreferredControlValue(0.0);
+    controller.setOutputLimits(0.0, 120.0);
+
+    double[] setpoints = {ambient + 15.0, ambient + 32.0, ambient + 20.0, ambient + 26.0};
+    int[] durations = {80, 110, 90, 90};
+    int stage = 0;
+    int elapsedInStage = 0;
+
+    for (int step = 0; step < 360; step++) {
+      controller.runTransient(controller.getResponse(), dt);
+      double control = controller.getResponse();
+      measurement.advance(control, dt);
+
+      elapsedInStage++;
+      if (stage < setpoints.length - 1 && elapsedInStage >= durations[stage]) {
+        stage++;
+        controller.setControllerSetPoint(setpoints[stage], "C");
+        elapsedInStage = 0;
+      }
+    }
+
+    ModelPredictiveController.MovingHorizonEstimate estimate =
+        controller.getLastMovingHorizonEstimate();
+    Assertions.assertNotNull(estimate, "Estimator should return a result after sufficient samples");
+    Assertions.assertTrue(estimate.getSampleCount() >= 40, "Expected estimation window to be used");
+
+    Assertions.assertEquals(trueGain, estimate.getProcessGain(), 0.12,
+        "Estimated process gain should be close to the true value");
+    Assertions.assertEquals(trueTimeConstant, estimate.getTimeConstant(), 8.0,
+        "Estimated time constant should approach the real process");
+    Assertions.assertEquals(ambient, estimate.getProcessBias(), 4.0,
+        "Estimated bias should reflect the ambient temperature");
+    Assertions.assertTrue(estimate.getMeanSquaredError() < 4.0,
+        "Residual prediction error should be small for the identified model");
+
+    controller.disableMovingHorizonEstimation();
+    Assertions.assertFalse(controller.isMovingHorizonEstimationEnabled());
+    controller.clearMovingHorizonHistory();
+    Assertions.assertNull(controller.getLastMovingHorizonEstimate());
+  }
 }
