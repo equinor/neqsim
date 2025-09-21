@@ -23,11 +23,19 @@ import neqsim.util.NamedBaseClass;
  * controller minimises a quadratic objective consisting of tracking error, absolute control effort
  * and control movement. The optimal actuation is calculated analytically which keeps the
  * implementation dependency free while still representing a full MPC formulation.
+ * <p>
+ * In addition to the control formulation the implementation exposes a receding horizon (moving
+ * horizon) estimation routine. The estimator reuses the same first-order model to identify the
+ * process gain, time constant and bias from historical measurement and actuation data. This allows
+ * automatic tuning of the internal model parameters when operating on real process data without
+ * requiring external optimisation packages.
  * </p>
  */
 public class ModelPredictiveController extends NamedBaseClass
     implements ControllerDeviceInterface {
   private static final long serialVersionUID = 1000L;
+
+  private static final int MIN_ESTIMATION_SAMPLES = 5;
 
   private MeasurementDeviceInterface transmitter;
   private double controllerSetPoint = 0.0;
@@ -65,6 +73,12 @@ public class ModelPredictiveController extends NamedBaseClass
   private double pendingFeedRate = 0.0;
   private boolean feedInitialised = false;
   private final Map<String, Double> predictedQualityValues = new HashMap<>();
+  private boolean movingHorizonEstimationEnabled = false;
+  private int movingHorizonWindow = 25;
+  private final List<Double> estimationMeasurements = new ArrayList<>();
+  private final List<Double> estimationControls = new ArrayList<>();
+  private final List<Double> estimationSampleTimes = new ArrayList<>();
+  private MovingHorizonEstimate lastMovingHorizonEstimate;
 
   /**
    * Representation of a quality constraint handled by the MPC. Each constraint
@@ -251,6 +265,48 @@ public class ModelPredictiveController extends NamedBaseClass
         }
         return new QualityConstraint(this);
       }
+    }
+  }
+
+  /**
+   * Result from the moving horizon estimation routine. The estimate captures the identified
+   * first-order process parameters together with a mean squared prediction error and the number of
+   * samples used.
+   */
+  public static final class MovingHorizonEstimate {
+    private final double processGain;
+    private final double timeConstant;
+    private final double processBias;
+    private final double meanSquaredError;
+    private final int sampleCount;
+
+    private MovingHorizonEstimate(double processGain, double timeConstant, double processBias,
+        double meanSquaredError, int sampleCount) {
+      this.processGain = processGain;
+      this.timeConstant = timeConstant;
+      this.processBias = processBias;
+      this.meanSquaredError = meanSquaredError;
+      this.sampleCount = sampleCount;
+    }
+
+    public double getProcessGain() {
+      return processGain;
+    }
+
+    public double getTimeConstant() {
+      return timeConstant;
+    }
+
+    public double getProcessBias() {
+      return processBias;
+    }
+
+    public double getMeanSquaredError() {
+      return meanSquaredError;
+    }
+
+    public int getSampleCount() {
+      return sampleCount;
     }
   }
 
@@ -545,6 +601,72 @@ public class ModelPredictiveController extends NamedBaseClass
   }
 
   /**
+   * Enable moving horizon (receding horizon) estimation of the internal first-order process model.
+   * The estimator analyses the most recent samples of measured output and applied control to update
+   * the process gain, time constant and bias.
+   *
+   * @param windowSize number of recent samples to keep in the estimation window (minimum of
+   *        {@value #MIN_ESTIMATION_SAMPLES})
+   */
+  public void enableMovingHorizonEstimation(int windowSize) {
+    if (windowSize < MIN_ESTIMATION_SAMPLES) {
+      throw new IllegalArgumentException(
+          "Estimation window must contain at least " + MIN_ESTIMATION_SAMPLES + " samples");
+    }
+    this.movingHorizonWindow = windowSize;
+    this.movingHorizonEstimationEnabled = true;
+    clearMovingHorizonHistory();
+  }
+
+  /**
+   * Disable the moving horizon estimation routine. Existing history and the last estimate are
+   * retained so the method can be re-enabled later.
+   */
+  public void disableMovingHorizonEstimation() {
+    this.movingHorizonEstimationEnabled = false;
+  }
+
+  /**
+   * Check whether moving horizon estimation is currently enabled.
+   *
+   * @return {@code true} when the estimator is active
+   */
+  public boolean isMovingHorizonEstimationEnabled() {
+    return movingHorizonEstimationEnabled;
+  }
+
+  /**
+   * Get the number of samples kept in the moving horizon estimation window.
+   *
+   * @return window length
+   */
+  public int getMovingHorizonEstimationWindow() {
+    return movingHorizonWindow;
+  }
+
+  /**
+   * Remove any stored estimation samples. The last estimate is cleared to make it explicit that a
+   * new identification cycle is required before accessing estimation results again.
+   */
+  public void clearMovingHorizonHistory() {
+    estimationMeasurements.clear();
+    estimationControls.clear();
+    estimationSampleTimes.clear();
+    lastMovingHorizonEstimate = null;
+  }
+
+  /**
+   * Retrieve the latest moving horizon estimate. The result contains the identified model
+   * parameters along with a simple mean squared prediction error. {@code null} is returned until
+   * the estimator has processed a sufficient number of samples.
+   *
+   * @return most recent estimate or {@code null} when unavailable
+   */
+  public MovingHorizonEstimate getLastMovingHorizonEstimate() {
+    return lastMovingHorizonEstimate;
+  }
+
+  /**
    * Configure the internal first order process model.
    *
    * @param gain steady-state process gain relating control action to the measured variable
@@ -727,6 +849,8 @@ public class ModelPredictiveController extends NamedBaseClass
     double measurement = getMeasuredValue(unit);
     lastSampledValue = measurement;
 
+    recordEstimationSample(measurement, previousControl, dt);
+
     response = computeOptimalControl(measurement, dt, previousControl);
     lastAppliedControl = response;
   }
@@ -879,6 +1003,135 @@ public class ModelPredictiveController extends NamedBaseClass
     lastFeedComposition = new LinkedHashMap<>(pendingFeedComposition);
     lastFeedRate = pendingFeedRate;
     feedInitialised = true;
+  }
+
+  private void recordEstimationSample(double measurement, double appliedControl, double dt) {
+    if (!movingHorizonEstimationEnabled) {
+      return;
+    }
+    if (!Double.isFinite(measurement) || !Double.isFinite(appliedControl) || !Double.isFinite(dt)
+        || dt <= 0.0) {
+      return;
+    }
+    if (estimationMeasurements.isEmpty()) {
+      estimationMeasurements.add(measurement);
+      return;
+    }
+    if (estimationMeasurements.size() != estimationControls.size() + 1
+        || estimationSampleTimes.size() != estimationControls.size()) {
+      clearMovingHorizonHistory();
+      estimationMeasurements.add(measurement);
+      return;
+    }
+
+    estimationControls.add(appliedControl);
+    estimationMeasurements.add(measurement);
+    estimationSampleTimes.add(dt);
+
+    while (estimationControls.size() > movingHorizonWindow) {
+      estimationControls.remove(0);
+      estimationSampleTimes.remove(0);
+      if (!estimationMeasurements.isEmpty()) {
+        estimationMeasurements.remove(0);
+      }
+    }
+
+    if (estimationControls.size() >= MIN_ESTIMATION_SAMPLES) {
+      updateMovingHorizonEstimate();
+    }
+  }
+
+  private void updateMovingHorizonEstimate() {
+    int sampleCount = estimationControls.size();
+    if (sampleCount < MIN_ESTIMATION_SAMPLES) {
+      return;
+    }
+    if (estimationMeasurements.size() != sampleCount + 1
+        || estimationSampleTimes.size() != sampleCount) {
+      return;
+    }
+
+    double[][] normal = new double[3][3];
+    double[] rhs = new double[3];
+    double mse = 0.0;
+
+    for (int i = 0; i < sampleCount; i++) {
+      double measurement = estimationMeasurements.get(i);
+      double control = estimationControls.get(i);
+      double nextMeasurement = estimationMeasurements.get(i + 1);
+      double[] row = {measurement, control, 1.0};
+      for (int rowIndex = 0; rowIndex < 3; rowIndex++) {
+        double value = row[rowIndex];
+        for (int colIndex = 0; colIndex < 3; colIndex++) {
+          normal[rowIndex][colIndex] += value * row[colIndex];
+        }
+        rhs[rowIndex] += value * nextMeasurement;
+      }
+    }
+
+    double regularisation = 1.0e-8;
+    for (int i = 0; i < 3; i++) {
+      normal[i][i] += regularisation;
+    }
+
+    double[] theta = solveLinearSystem(normal, rhs);
+    if (theta == null) {
+      return;
+    }
+
+    double a = theta[0];
+    double b = theta[1];
+    double c = theta[2];
+    if (!Double.isFinite(a) || !Double.isFinite(b) || !Double.isFinite(c)) {
+      return;
+    }
+    if (a <= 0.0 || a >= 1.0) {
+      return;
+    }
+    double oneMinusA = 1.0 - a;
+    if (oneMinusA <= 1.0e-9) {
+      return;
+    }
+
+    if (estimationSampleTimes.isEmpty()) {
+      return;
+    }
+    double dtAverage = 0.0;
+    for (double value : estimationSampleTimes) {
+      dtAverage += value;
+    }
+    dtAverage /= estimationSampleTimes.size();
+    if (!Double.isFinite(dtAverage) || dtAverage <= 0.0) {
+      return;
+    }
+
+    double estimatedTimeConstant = -dtAverage / Math.log(a);
+    if (!Double.isFinite(estimatedTimeConstant) || estimatedTimeConstant <= 0.0) {
+      return;
+    }
+
+    double estimatedGain = b / oneMinusA;
+    double estimatedBias = c / oneMinusA;
+    if (!Double.isFinite(estimatedGain) || !Double.isFinite(estimatedBias)) {
+      return;
+    }
+
+    for (int i = 0; i < sampleCount; i++) {
+      double predicted = a * estimationMeasurements.get(i) + b * estimationControls.get(i) + c;
+      double error = estimationMeasurements.get(i + 1) - predicted;
+      mse += error * error;
+    }
+    mse /= sampleCount;
+
+    processBias = estimatedBias;
+    if (reverseActing) {
+      processGain = Math.abs(estimatedGain);
+    } else {
+      processGain = estimatedGain;
+    }
+    timeConstant = Math.max(estimatedTimeConstant, 1.0e-6);
+    lastMovingHorizonEstimate = new MovingHorizonEstimate(estimatedGain, timeConstant, processBias,
+        mse, sampleCount);
   }
 
   private double[] solveQuadraticProgram(double[][] hessian, double[] gradient,
