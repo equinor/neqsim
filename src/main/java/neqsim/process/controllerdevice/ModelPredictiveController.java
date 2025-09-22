@@ -54,9 +54,9 @@ public class ModelPredictiveController extends NamedBaseClass
   private double moveWeight = 0.0;
   private double preferredControlValue = 0.0;
   private UUID calcIdentifier;
-  private double lastSampledValue = 0.0;
+  private double lastSampledValue = Double.NaN;
   private double lastSampleTime = 1.0;
-  private double lastAppliedControl = 0.0;
+  private double lastAppliedControl = Double.NaN;
   private final List<String> controlNames = new ArrayList<>();
   private double[] controlVector = new double[0];
   private double[] lastControlVector = new double[0];
@@ -251,9 +251,8 @@ public class ModelPredictiveController extends NamedBaseClass
       }
 
       public QualityConstraint build() {
-        if (measurement == null) {
-          throw new IllegalStateException("Measurement device must be provided for constraint '"
-              + name + "'");
+        if (measurement == null && (unit == null || unit.trim().isEmpty())) {
+          unit = "[?]";
         }
         if (controlSensitivity.length == 0) {
           throw new IllegalStateException(
@@ -564,6 +563,43 @@ public class ModelPredictiveController extends NamedBaseClass
   }
 
   /**
+   * Update the stored measurement for a named quality constraint. When integrating against a live
+   * plant this allows the MPC to use the latest analyser or laboratory sample even if the
+   * simulation does not contain a dedicated {@link MeasurementDeviceInterface}. The value is stored
+   * in the controller and will be used as the baseline for the next optimisation step.
+   *
+   * @param name quality constraint identifier
+   * @param measurement measured specification value in the constraint unit
+   * @return {@code true} if the constraint was found and updated
+   */
+  public boolean updateQualityMeasurement(String name, double measurement) {
+    if (name == null) {
+      return false;
+    }
+    for (QualityConstraint constraint : qualityConstraints) {
+      if (name.equals(constraint.getName())) {
+        constraint.setLastMeasurement(Double.isFinite(measurement) ? measurement : Double.NaN);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Convenience method to update multiple quality-constraint measurements in one call.
+   *
+   * @param measurements mapping of constraint name to measured value
+   */
+  public void updateQualityMeasurements(Map<String, Double> measurements) {
+    if (measurements == null || measurements.isEmpty()) {
+      return;
+    }
+    for (Map.Entry<String, Double> entry : measurements.entrySet()) {
+      updateQualityMeasurement(entry.getKey(), entry.getValue());
+    }
+  }
+
+  /**
    * Update the predicted incoming feed composition and flow rate. The values are
    * used as feedforward information in the MPC optimisation.
    *
@@ -823,6 +859,41 @@ public class ModelPredictiveController extends NamedBaseClass
     this.transmitter = device;
   }
 
+  /**
+   * Inject a measurement collected directly from a physical plant rather than the built-in
+   * transmitter abstraction. This is useful when the MPC is connected to a live facility where
+   * instrumentation values arrive asynchronously from the control system. The sample updates the
+   * diagnostic state of the controller and provides a fallback measurement if no transmitter is
+   * configured.
+   *
+   * @param measurement latest measured process value
+   * @param appliedControl control signal that was active when the sample was taken
+   * @param dt sample interval since the previous measurement
+   */
+  public void ingestPlantSample(double measurement, double appliedControl, double dt) {
+    if (!Double.isFinite(measurement)) {
+      return;
+    }
+    lastSampledValue = measurement;
+    if (Double.isFinite(appliedControl)) {
+      lastAppliedControl = appliedControl;
+    }
+    if (Double.isFinite(dt) && dt > 0.0) {
+      lastSampleTime = dt;
+    }
+  }
+
+  /**
+   * Convenience overload of {@link #ingestPlantSample(double, double, double)} when only the
+   * measurement and applied control are known.
+   *
+   * @param measurement measured process value
+   * @param appliedControl applied control signal
+   */
+  public void ingestPlantSample(double measurement, double appliedControl) {
+    ingestPlantSample(measurement, appliedControl, Double.NaN);
+  }
+
   @Override
   public void runTransient(double initResponse, double dt, UUID id) {
     calcIdentifier = id;
@@ -844,9 +915,19 @@ public class ModelPredictiveController extends NamedBaseClass
     }
 
     double previousControl = Double.isNaN(initResponse) ? lastAppliedControl : initResponse;
+    if (!Double.isFinite(previousControl)) {
+      previousControl = Double.isFinite(preferredControlValue) ? preferredControlValue : 0.0;
+    }
     previousControl = clamp(previousControl);
 
-    double measurement = getMeasuredValue(unit);
+    double measurement;
+    if (transmitter != null) {
+      measurement = getMeasuredValue(unit);
+    } else if (Double.isFinite(lastSampledValue)) {
+      measurement = lastSampledValue;
+    } else {
+      throw new IllegalStateException("MPC controller has no transmitter configured");
+    }
     lastSampledValue = measurement;
 
     recordEstimationSample(measurement, previousControl, dt);

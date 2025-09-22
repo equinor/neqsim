@@ -2,6 +2,7 @@ package neqsim.process.controllerdevice;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.DoubleSupplier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -378,5 +379,72 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
     Assertions.assertFalse(controller.isMovingHorizonEstimationEnabled());
     controller.clearMovingHorizonHistory();
     Assertions.assertNull(controller.getLastMovingHorizonEstimate());
+  }
+
+  @Test
+  public void testControllerUsesManualPlantSamples() {
+    double ambient = 25.0;
+    double processGain = 0.35;
+    double timeConstant = 25.0;
+    double setPoint = 55.0;
+    double dt = 1.0;
+
+    SimpleHeaterMeasurement plant =
+        new SimpleHeaterMeasurement("manualPlant", ambient, timeConstant, processGain);
+
+    ModelPredictiveController controller = new ModelPredictiveController("manualPlantMpc");
+    controller.setControllerSetPoint(setPoint, "C");
+    controller.setProcessModel(processGain * 0.9, timeConstant * 1.1);
+    controller.setProcessBias(ambient);
+    controller.setPredictionHorizon(20);
+    controller.setWeights(1.0, 0.02, 0.1);
+    controller.setPreferredControlValue(0.0);
+    controller.setOutputLimits(0.0, 120.0);
+    controller.enableMovingHorizonEstimation(8);
+
+    double appliedControl = 0.0;
+    for (int step = 0; step < 80; step++) {
+      controller.ingestPlantSample(plant.getMeasuredValue(), appliedControl, dt);
+      controller.runTransient(Double.NaN, dt, UUID.randomUUID());
+      appliedControl = controller.getResponse();
+      plant.advance(appliedControl, dt);
+    }
+
+    Assertions.assertTrue(Math.abs(plant.getMeasuredValue() - setPoint) < 5.0,
+        "Manual plant ingestion should drive temperature close to set point");
+    Assertions.assertNotNull(controller.getLastMovingHorizonEstimate(),
+        "Moving horizon estimator should update when ingesting plant data");
+    Assertions.assertTrue(Double.isFinite(controller.getLastAppliedControl()),
+        "Controller should track the latest applied control from the plant sample");
+  }
+
+  @Test
+  public void testQualityMeasurementUpdateAppliesManualSamples() {
+    ModelPredictiveController controller = new ModelPredictiveController("qualityFusion");
+    controller.configureControls("heaterDuty");
+    controller.setInitialControlValues(0.0);
+    controller.setControlLimits("heaterDuty", -5.0, 5.0);
+    controller.setControlWeights(1.0);
+    controller.setMoveWeights(0.1);
+    controller.setPreferredControlVector(0.0);
+
+    ModelPredictiveController.QualityConstraint constraint =
+        ModelPredictiveController.QualityConstraint.builder("spec")
+            .limit(9.5)
+            .margin(0.0)
+            .controlSensitivity(0.4)
+            .build();
+    controller.addQualityConstraint(constraint);
+
+    controller.runTransient(Double.NaN, 1.0, UUID.randomUUID());
+    double predictedWithoutManual = controller.getPredictedQuality("spec");
+
+    controller.setInitialControlValues(0.0);
+    controller.updateQualityMeasurement("spec", 7.5);
+    controller.runTransient(Double.NaN, 1.0, UUID.randomUUID());
+    double predictedWithManual = controller.getPredictedQuality("spec");
+
+    Assertions.assertTrue(predictedWithoutManual > predictedWithManual,
+        "Manual quality measurements should override the default limit baseline");
   }
 }
