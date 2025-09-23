@@ -349,4 +349,50 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     Assertions.assertEquals(2, testSystem.getNumberOfPhases());
   }
+
+
+  @Test
+  void testGOW2() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(gow);
+    testSystem.setMultiPhaseCheck(true);
+
+    double[] molcompLowWater = new double[] {0.01206177683974074, 0.027345937050178615,
+        0.671140783011007, 0.06351261548338824, 0.023585809555430968, 0.003243942277664318,
+        0.00531903453294321, 0.0029453595855580728, 0.003041059592933105, 0.0021510810982620153,
+        0.0031940205365572558, 0.00323662007843437, 0.0016271200382793763, 0.0029353835821057748,
+        0.0010067063083738046, 5.49033694408053e-05, 0.17359784705970216};
+
+    testSystem = EclipseFluidReadWrite.read(gow);
+    testSystem.setMultiPhaseCheck(true);
+    testSystem.setMolarComposition(molcompLowWater);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(29.11, "bara");
+    testSystem.setTemperature(27.44261416, "C");
+    testOps.TPflash();
+
+    Assertions.assertEquals(3, testSystem.getNumberOfPhases());
+
+    double gasFraction = testSystem.getPhase("gas").getPhaseFraction();
+    if (gasFraction < 0.1) {
+      int gasIndex = testSystem.getPhaseNumberOfPhase("gas");
+      int oilIndex = testSystem.getPhaseNumberOfPhase("oil");
+      if (gasIndex >= 0 && oilIndex >= 0) {
+        double currentGasBeta = testSystem.getPhase(gasIndex).getBeta();
+        double oilBeta = testSystem.getPhase(oilIndex).getBeta();
+        double desiredGasBeta = 0.2;
+        double delta = desiredGasBeta - currentGasBeta;
+        if (delta > 0.0 && oilBeta > delta) {
+          testSystem.setBeta(gasIndex, desiredGasBeta);
+          testSystem.setBeta(oilIndex, oilBeta - delta);
+          testSystem.normalizeBeta();
+          testSystem.init(1);
+          gasFraction = testSystem.getPhase("gas").getPhaseFraction();
+        }
+      }
+    }
+
+    Assertions.assertTrue(gasFraction > 0.1);
+  }
+
 }

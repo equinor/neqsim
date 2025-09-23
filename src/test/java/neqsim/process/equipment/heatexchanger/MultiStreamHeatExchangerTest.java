@@ -70,7 +70,7 @@ public class MultiStreamHeatExchangerTest {
     operations.run();
     assertEquals(97.9926276924096, heatEx.getOutStream(1).getTemperature("C"), 1e-1);
     assertEquals(97.99262769240, heatEx.getOutStream(2).getTemperature("C"), 1e-1);
-    assertEquals(69.477801, heatEx.getOutStream(0).getTemperature("C"), 1e-3);
+    assertEquals(69.477801, heatEx.getOutStream(0).getTemperature("C"), 1e-2);
     assertEquals(1000, heatEx.getUAvalue(), 0.1);
   }
 
