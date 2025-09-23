@@ -168,7 +168,7 @@ class TPFlashTest {
     testSystem.setMultiPhaseCheck(true);
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
-    assertEquals(2, testSystem.getNumberOfPhases());
+    assertEquals(3, testSystem.getNumberOfPhases());
     // testSystem.prettyPrint();
   }
 }

@@ -265,10 +265,10 @@ public class GibbsReactorTest {
     system.addComponent("CO2", 1e6, "mole/sec");
     system.addComponent("SO2", 0, "mole/sec");
     system.addComponent("SO3", 0, "mole/sec");
-    system.addComponent("NO2",0.0, "mole/sec");
+    system.addComponent("NO2", 0.0, "mole/sec");
     system.addComponent("NO", 0, "mole/sec");
     system.addComponent("water", 30, "mole/sec");
-    //system.addComponent("ammonia", 0, "mole/sec");
+    // system.addComponent("ammonia", 0, "mole/sec");
     system.addComponent("H2S", 10, "mole/sec");
     system.addComponent("oxygen", 0.0, "mole/sec");
     system.addComponent("sulfuric acid", 0, "mole/sec");
@@ -285,7 +285,7 @@ public class GibbsReactorTest {
     // system.addComponent("N2O", 0, "mole/sec");
     // system.addComponent("nitrogen", 0, "mole/sec");
     system.addComponent("NH2OH", 0, "mole/sec");
-    //system.addComponent("N2H4", 0, "mole/sec");
+    // system.addComponent("N2H4", 0, "mole/sec");
     system.addComponent("S8", 0, "mole/sec");
     system.addComponent("HNO2", 0, "mole/sec");
     system.addComponent("MEG", 0.0, "mole/sec");
@@ -547,7 +547,7 @@ public class GibbsReactorTest {
 
     GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
     reactor.setUseAllDatabaseSpecies(false);
-    reactor.setDampingComposition(0.1);
+    reactor.setDampingComposition(0.05);
     reactor.setMaxIterations(20000);
     reactor.setConvergenceTolerance(1e-3);
     reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);

@@ -20,7 +20,19 @@ import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
+public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
+  private static SimpleMatrix multiplyMatrices(SimpleMatrix left, SimpleMatrix right) {
+    DMatrixRMaj result = new DMatrixRMaj(left.numRows(), right.numCols());
+    CommonOps_DDRM.mult(left.getDDRM(), right.getDDRM(), result);
+    return new SimpleMatrix(result);
+  }
+
+  private static SimpleMatrix transposeMatrix(SimpleMatrix matrix) {
+    DMatrixRMaj result = new DMatrixRMaj(matrix.numCols(), matrix.numRows());
+    CommonOps_DDRM.transpose(matrix.getDDRM(), result);
+    return new SimpleMatrix(result);
+  }
+
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -370,29 +382,65 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       QMatksiksiksi.set(i, 0, 2.0 * mVector.get(i, 0) / (tempKsiRead * tempKsiRead * tempKsiRead));
     }
 
-    SimpleMatrix ksiMatrixTranspose = ksiMatrix.transpose();
+    SimpleMatrix ksiMatrixTranspose = transposeMatrix(ksiMatrix);
+
+
 
     // dXdV
-    SimpleMatrix KlkVMatrixksi = KlkVMatrix.mult(ksiMatrix);
-    SimpleMatrix XV = hessianInvers.mult(KlkVMatrixksi);
-    SimpleMatrix XVtranspose = XV.transpose();
 
-    FCPA = mVector.transpose().mult(uMatrix.minus(ksiMatrix.elementMult(udotMatrix).scale(0.5)))
-        .get(0, 0); // QCPA.get(0,
+    SimpleMatrix KlkVMatrixksi = multiplyMatrices(KlkVMatrix, ksiMatrix);
+
+    SimpleMatrix XV = multiplyMatrices(hessianInvers, KlkVMatrixksi);
+
+    SimpleMatrix XVtranspose = transposeMatrix(XV);
+
+
+
+    SimpleMatrix tempMatrix = uMatrix.minus(ksiMatrix.elementMult(udotMatrix).scale(0.5));
+
+    FCPA = multiplyMatrices(transposeMatrix(mVector), tempMatrix).get(0, 0); // QCPA.get(0,
+
                     // 0); //*0.5;
 
-    dFCPAdV = ksiMatrixTranspose.mult(KlkVMatrixksi).get(0, 0) * (-0.5);
-    SimpleMatrix KlkVVMatrixTImesKsi = KlkVVMatrix.mult(ksiMatrix);
-    dFCPAdVdV = ksiMatrixTranspose.mult(KlkVVMatrixTImesKsi).scale(-0.5)
-        .minus(KlkVMatrixksi.transpose().mult(XV)).get(0, 0);
 
-    SimpleMatrix QVVV = ksiMatrixTranspose.mult(KlkVVVMatrix.mult(ksiMatrix)); // .scale(-0.5);
+
+    dFCPAdV = multiplyMatrices(ksiMatrixTranspose, KlkVMatrixksi).get(0, 0) * (-0.5);
+
+    SimpleMatrix KlkVVMatrixTImesKsi = multiplyMatrices(KlkVVMatrix, ksiMatrix);
+
+    SimpleMatrix tempV = multiplyMatrices(ksiMatrixTranspose, KlkVVMatrixTImesKsi).scale(-0.5);
+
+    SimpleMatrix tempSub = multiplyMatrices(transposeMatrix(KlkVMatrixksi), XV);
+
+    dFCPAdVdV = tempV.minus(tempSub).get(0, 0);
+
+
+
+    SimpleMatrix QVVV = multiplyMatrices(ksiMatrixTranspose, multiplyMatrices(KlkVVVMatrix, ksiMatrix));
+
     SimpleMatrix QVVksi = KlkVVMatrixTImesKsi.scale(-1.0);
+
     SimpleMatrix QksiVksi = KlkVMatrix.scale(-1.0);
 
-    dFCPAdVdVdV = -0.5 * QVVV.get(0, 0) + QVVksi.transpose().mult(XV).get(0, 0) * 3.0
-        + XVtranspose.mult(QksiVksi.mult(XV)).get(0, 0) * 3.0
-        + XVtranspose.mult(QMatksiksiksi.mult(XVtranspose)).mult(XV).get(0, 0);
+
+
+    double term1 = -0.5 * QVVV.get(0, 0);
+
+    double term2 = multiplyMatrices(transposeMatrix(QVVksi), XV).get(0, 0) * 3.0;
+
+    SimpleMatrix tempXV = multiplyMatrices(QksiVksi, XV);
+
+    double term3 = multiplyMatrices(XVtranspose, tempXV).get(0, 0) * 3.0;
+
+    SimpleMatrix tempQ = multiplyMatrices(QMatksiksiksi, XVtranspose);
+
+    SimpleMatrix tempXV2 = multiplyMatrices(XVtranspose, tempQ);
+
+    double term4 = multiplyMatrices(tempXV2, XV).get(0, 0);
+
+    dFCPAdVdVdV = term1 + term2 + term3 + term4;
+
+
 
     if (type == 1) {
       return;

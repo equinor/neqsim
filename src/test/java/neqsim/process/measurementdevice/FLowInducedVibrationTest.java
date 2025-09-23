@@ -105,10 +105,10 @@ public class FLowInducedVibrationTest extends neqsim.NeqSimTest {
 
     double LOF = ((FlowInducedVibrationAnalyser) operations
         .getMeasurementDevice("Flow Induced Vibrations Analyzer 1")).getMeasuredValue();
-    Assertions.assertEquals(LOF, 0.161, 0.05);
+    Assertions.assertEquals(0.161, LOF, 0.05);
 
     double FRMS = ((FlowInducedVibrationAnalyser) operations
         .getMeasurementDevice("Flow Induced Vibrations Analyzer FRMS")).getMeasuredValue();
-    Assertions.assertEquals(FRMS, 176, 5);
+    Assertions.assertEquals(176, FRMS, 5);
   }
 }

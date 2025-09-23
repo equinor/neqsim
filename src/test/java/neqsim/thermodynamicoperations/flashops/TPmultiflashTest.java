@@ -1,7 +1,10 @@
 package neqsim.thermodynamicoperations.flashops;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -69,6 +72,24 @@ class TPmultiflashTest {
         + testSystem.getNumberOfPhases();
 
 
+  }
+
+  @Test
+  void testWaterDominatedHydrocarbonDropout() {
+    SystemInterface system = new neqsim.thermo.system.SystemSrkCPAstatoil(298.15, 5.0);
+    system.addComponent("water", 100.0);
+    system.addComponent("methane", 5.0);
+    system.addComponent("nC10", 5.0e-3);
+    system.createDatabase(true);
+    system.setMixingRule(10);
+    system.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    ops.TPflash();
+    system.init(1);
+    assertTrue(system.hasPhaseType(PhaseType.OIL), "Hydrocarbon phase should be present");
+    assertTrue(system.getNumberOfPhases() >= 3,
+        "Expected gas, aqueous, and oil phases for the water dominated mixture");
   }
 
 }

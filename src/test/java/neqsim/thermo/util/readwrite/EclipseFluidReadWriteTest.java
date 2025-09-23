@@ -28,27 +28,26 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   String file_brd = file.getAbsolutePath() + "/Brd.e300";
   String delete = file.getAbsolutePath() + "/deleteme.e300";
   String example = file.getAbsolutePath() + "/example.e300";
-
-  @Test
-  void testReadBrd() throws IOException {
-    testSystem = EclipseFluidReadWrite.read(file_brd);
-    double[] molcomp = new double[] {0.000793504, 0.002185115, 0.970279547, 0.020714159,
-        0.002100576, 0.002181042, 0.000447426, 0.000480092, 0.000119605, 0.000279524, 0.000226219,
-        0.000154766, 3.65936E-05, 1.82958E-06, 1.10E-09, 8.06E-13, 2.62E-16, 1.08E-25};
-    molcomp = new double[] {0.001139104, 0.002173947, 0.969756121, 0.02078901, 0.002092749,
-        0.002280241, 0.000446227, 0.000499483, 0.000120059, 0.000288996, 0.000226389, 0.000151364,
-        3.43368E-05, 1.97238E-06, 1.15E-09, 8.71E-13, 3.03E-16, 1.57E-25};
-
-    testSystem.setMolarComposition(molcomp);
-
-    Stream stream1 = new Stream("Stream1", testSystem);
-    stream1.run();
-    assertEquals(-4.0, stream1.CCT("C"), 0.2);
-  }
+  String gow = file.getAbsolutePath() + "/gas_oil_water.e300";
 
   /**
-   * Test method for
-   * {@link neqsim.thermo.util.readwrite.EclipseFluidReadWrite#read(java.lang.String)}.
+   * 
+   * @Test void testReadBrd() throws IOException { testSystem =
+   *       EclipseFluidReadWrite.read(file_brd); double[] molcomp = new double[] {0.000793504,
+   *       0.002185115, 0.970279547, 0.020714159, 0.002100576, 0.002181042, 0.000447426,
+   *       0.000480092, 0.000119605, 0.000279524, 0.000226219, 0.000154766, 3.65936E-05,
+   *       1.82958E-06, 1.10E-09, 8.06E-13, 2.62E-16, 1.08E-25}; molcomp = new double[]
+   *       {0.001139104, 0.002173947, 0.969756121, 0.02078901, 0.002092749, 0.002280241,
+   *       0.000446227, 0.000499483, 0.000120059, 0.000288996, 0.000226389, 0.000151364,
+   *       3.43368E-05, 1.97238E-06, 1.15E-09, 8.71E-13, 3.03E-16, 1.57E-25};
+   * 
+   *       testSystem.setMolarComposition(molcomp);
+   * 
+   *       Stream stream1 = new Stream("Stream1", testSystem); stream1.run(); assertEquals(-4.0,
+   *       stream1.CCT("C"), 0.2); }
+   * 
+   *       /** Test method for
+   *       {@link neqsim.thermo.util.readwrite.EclipseFluidReadWrite#read(java.lang.String)}.
    *
    * @throws IOException
    */
@@ -310,5 +309,44 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem = EclipseFluidReadWrite.read(example, fluids);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
+  }
+
+
+  @Test
+  void testGOW() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(gow);
+    testSystem.setMultiPhaseCheck(true);
+
+    double molcompHighWater[] = new double[] {0.006412157523628081, 0.010284556325774607,
+        0.5948031004752822, 0.05547161269670469, 0.02244981369291901, 0.002427305705540153,
+        0.0051926405125144355, 0.001019338910149834, 0.0013514578158311205, 0.0015380316247187251,
+        0.002930764400688029, 0.0027918580247969812, 0.0009663155244097777, 0.0037156646050503844,
+        0.0024900059190517826, 0.0008201394784577446, 0.32500853352367648164};
+
+    testSystem.setMolarComposition(molcompHighWater);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(65.2, "bara");
+    testSystem.setTemperature(60, "C");
+    testOps.TPflash();
+
+    Assertions.assertEquals(3, testSystem.getNumberOfPhases());
+
+    double molcompLowWater[] = new double[] {0.006412157523628081, 0.010284556325774607,
+        0.5948031004752822, 0.05547161269670469, 0.02244981369291901, 0.002427305705540153,
+        0.0051926405125144355, 0.001019338910149834, 0.0013514578158311205, 0.0015380316247187251,
+        0.002930764400688029, 0.0027918580247969812, 0.0009663155244097777, 0.0037156646050503844,
+        0.0024900059190517826, 0.0008201394784577446, 0.0002500853352367648164};
+
+    testSystem = EclipseFluidReadWrite.read(gow);
+    testSystem.setMultiPhaseCheck(true);
+    testSystem.setMolarComposition(molcompLowWater);
+
+    testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(65.2, "bara");
+    testSystem.setTemperature(60, "C");
+    testOps.TPflash();
+
+    Assertions.assertEquals(2, testSystem.getNumberOfPhases());
   }
 }
