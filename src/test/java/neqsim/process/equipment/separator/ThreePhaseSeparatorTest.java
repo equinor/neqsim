@@ -228,4 +228,76 @@ class ThreePhaseSeparatorTest {
      */
     // test_separator.getOilOutStream().getThermoSystem().prettyPrint();
   }
+
+  @Test
+  void testWaterEntrainmentForThreePhaseFeed() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkCPAstatoil(303.15, 50.0);
+
+    fluid.addComponent("methane", 80.0);
+    fluid.addComponent("n-heptane", 20.0);
+    fluid.addComponent("water", 10.0);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feedStream = new Stream("threePhaseFeed", fluid);
+    feedStream.setTemperature(30.0, "C");
+    feedStream.setPressure(50.0, "bara");
+    feedStream.setFlowRate(1000.0, "kg/hr");
+    feedStream.run();
+
+    double feedWaterMoles = getComponentMoles(feedStream.getFluid(), "water");
+
+    ThreePhaseSeparator separator = new ThreePhaseSeparator("threePhaseSeparator", feedStream);
+    separator.setEntrainment(0.5, "mole", "feed", "aqueous", "oil");
+    separator.run();
+    separator.getOilOutStream().run();
+    separator.getOilOutStream().getThermoSystem().prettyPrint();
+    double oilWaterMoles = getComponentMoles(separator.getOilOutStream().getFluid(), "water");
+    Assertions.assertEquals(0.5, oilWaterMoles / feedWaterMoles, 5e-3);
+  }
+
+  @Test
+  void testWaterEntrainmentWithoutHydrocarbons() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkCPAstatoil(303.15, 50.0);
+
+    fluid.addComponent("methane", 100.0);
+    fluid.addComponent("water", 10.0);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feedStream = new Stream("wetGasFeed", fluid);
+    feedStream.setTemperature(30.0, "C");
+    feedStream.setPressure(50.0, "bara");
+    feedStream.setFlowRate(1000.0, "kg/hr");
+    feedStream.run();
+
+    double feedWaterMoles = getComponentMoles(feedStream.getFluid(), "water");
+
+    ThreePhaseSeparator separator = new ThreePhaseSeparator("threePhaseSeparatorNoOil", feedStream);
+    separator.setEntrainment(0.25, "mole", "feed", "aqueous", "oil");
+    separator.run();
+    separator.getOilOutStream().run();
+    separator.getOilOutStream().getThermoSystem().prettyPrint();
+
+    double oilWaterMoles = getComponentMoles(separator.getOilOutStream().getFluid(), "water");
+
+    Assertions.assertEquals(0.25 * feedWaterMoles, oilWaterMoles, 5e-3);
+    Assertions.assertEquals(0.0,
+        getComponentMoles(separator.getOilOutStream().getFluid(), "methane"), 5e-4);
+    Assertions.assertTrue(separator.getThermoSystem().hasPhaseType("oil"));
+  }
+
+  private double getComponentMoles(neqsim.thermo.system.SystemInterface system,
+      String componentName) {
+    double total = 0.0;
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      if (system.getPhase(i).hasComponent(componentName)) {
+        total += system.getPhase(i).getComponent(componentName).getNumberOfMolesInPhase();
+      }
+    }
+    return total;
+  }
 }
+
