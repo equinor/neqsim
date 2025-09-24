@@ -556,7 +556,7 @@ public class TPmultiflash extends TPflash {
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
           if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
-            clonedSystem.get(0).getPhase(1).getComponent(i).setx(Math.exp(logWi[i]) / sumw[j]);
+            clonedSystem.get(0).getPhase(1).getComponent(i).setx(Math.exp(logWi[i]));
           }
           if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
               || system.getPhase(0).getComponent(i).isIsIon()) {
