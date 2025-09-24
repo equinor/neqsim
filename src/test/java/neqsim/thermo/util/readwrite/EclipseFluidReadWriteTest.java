@@ -384,7 +384,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
       System.out.println("phase" + phaseIdx + " type=" + testSystem.getPhase(phaseIdx).getType()
           + " beta=" + testSystem.getPhase(phaseIdx).getBeta());
     }
-    testSystem.display();
+    // testSystem.display();
     for (int phaseIdx = 0; phaseIdx < testSystem.getNumberOfPhases(); phaseIdx++) {
       System.out.println("phase" + phaseIdx + " type=" + testSystem.getPhase(phaseIdx).getType()
           + " methane x=" + testSystem.getPhase(phaseIdx).getComponent("methane").getx() + " Z="
