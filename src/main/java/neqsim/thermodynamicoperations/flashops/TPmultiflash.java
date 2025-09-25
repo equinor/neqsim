@@ -47,6 +47,8 @@ public class TPmultiflash extends TPflash {
   double[] multTerm2;
 
   private static final double[] NEWTON_DAMPING_STEPS = {0.0, 1.0e-10, 1.0e-6};
+  private static final double LOG_WI_BOUND = 100.0;
+
 
   /**
    * <p>
@@ -261,6 +263,7 @@ public class TPmultiflash extends TPflash {
     tm = new double[numComponents];
 
     double[] alpha = new double[numComponents];
+    double[] acceleratedLogWi = new double[numComponents];
     SimpleMatrix fMatrix = new SimpleMatrix(numComponents, 1);
     SimpleMatrix dfMatrix = new SimpleMatrix(numComponents, numComponents);
     DMatrixRMaj newtonRhs = new DMatrixRMaj(numComponents, 1);
@@ -409,27 +412,50 @@ public class TPmultiflash extends TPflash {
         err = 0.0;
 
         if (iter <= maxsucssubiter || !system.isImplementedCompositionDeriativesofFugacity()) {
+          boolean accelerated = false;
           if (iter % 7 == 0 && useaccsubst) {
-            double vec1 = 0.0;
-
-            double vec2 = 0.0;
             double prod1 = 0.0;
             double prod2 = 0.0;
             for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              vec1 = oldDeltalogWi[i] * oldoldDeltalogWi[i];
-              vec2 = Math.pow(oldoldDeltalogWi[i], 2.0);
+              double vec1 = oldDeltalogWi[i] * oldoldDeltalogWi[i];
+              double vec2 = Math.pow(oldoldDeltalogWi[i], 2.0);
               prod1 += vec1 * vec2;
               prod2 += vec2 * vec2;
             }
 
-            double lambda = prod1 / prod2;
-            // logger.info("lambda " + lambda);
-            for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              logWi[i] += lambda / (1.0 - lambda) * deltalogWi[i];
-              err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
-              Wi[j][i] = Math.exp(logWi[i]);
+            if (Math.abs(prod2) > 1e-24) {
+              double lambda = prod1 / prod2;
+              double denom = 1.0 - lambda;
+              if (Double.isFinite(lambda) && Math.abs(denom) > 1e-12) {
+                double factor = lambda / denom;
+                boolean validAcceleration = true;
+                for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+                  double candidateLog = logWi[i] + factor * deltalogWi[i];
+                  if (Double.isFinite(candidateLog) && Math.abs(candidateLog) < LOG_WI_BOUND) {
+                    acceleratedLogWi[i] = sanitizeLogWi(candidateLog);
+                  } else {
+                    validAcceleration = false;
+                    break;
+                  }
+                }
+
+                if (validAcceleration) {
+                  for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+                    logWi[i] = acceleratedLogWi[i];
+                    err += relativeChange(logWi[i], oldlogw[i]);
+                    Wi[j][i] = Math.exp(logWi[i]);
+                  }
+                  accelerated = true;
+                }
+              }
             }
-          } else {
+
+            if (!accelerated) {
+              useaccsubst = false;
+            }
+          }
+
+          if (!accelerated) {
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
               oldoldoldlogw[i] = oldoldlogw[i];
               oldoldlogw[i] = oldlogw[i];
@@ -443,11 +469,12 @@ public class TPmultiflash extends TPflash {
               if (!Double.isInfinite(
                   clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())
                   && system.getPhase(0).getComponent(i).getx() > 1e-100) {
-                logWi[i] = d[i]
+                double updatedLogWi = d[i]
                     - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
                 if (clonedSystem.get(0).getPhase(1).getComponent(i).getIonicCharge() != 0) {
-                  logWi[i] = -1000.0;
+                  updatedLogWi = -LOG_WI_BOUND;
                 }
+                logWi[i] = sanitizeLogWi(updatedLogWi);
               }
               deltalogWi[i] = logWi[i] - oldlogw[i];
               err += Math.abs(logWi[i] - oldlogw[i]);
@@ -499,16 +526,19 @@ public class TPmultiflash extends TPflash {
           }
 
           for (int i = 0; i < numComponents; i++) {
-            double alphaNew = alpha[i] + newtonStep.get(i, 0);
-            Wi[j][i] = Math.pow(alphaNew / 2.0, 2.0);
+            double alphaStep = newtonStep.get(i, 0);
+            double updatedWi = safeUpdateWi(alpha[i], alphaStep);
+            Wi[j][i] = updatedWi;
+            
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-              logWi[i] = Math.log(Wi[j][i]);
+              double candidateLog = Math.log(updatedWi);
+              logWi[i] = sanitizeLogWi(Double.isFinite(candidateLog) ? candidateLog : oldlogw[i]);
             }
             if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
                 || system.getPhase(0).getComponent(i).isIsIon()) {
-              logWi[i] = -1000.0;
+              logWi[i] = -LOG_WI_BOUND;
             }
-            err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
+            err += relativeChange(logWi[i], oldlogw[i]);
           }
 
           // logger.info("err newton " + err);
@@ -638,6 +668,38 @@ public class TPmultiflash extends TPflash {
     }
   }
 
+  private static double relativeChange(double newValue, double oldValue) {
+    double scale = Math.max(Math.abs(oldValue), 1.0e-12);
+    return Math.abs(newValue - oldValue) / scale;
+  }
+
+  private static double sanitizeLogWi(double value) {
+    if (!Double.isFinite(value)) {
+      return value;
+    }
+    if (value > LOG_WI_BOUND) {
+      return LOG_WI_BOUND;
+    }
+    if (value < -LOG_WI_BOUND) {
+      return -LOG_WI_BOUND;
+    }
+    return value;
+  }
+
+  private static double safeUpdateWi(double alpha, double step) {
+    double sanitizedStep = Double.isFinite(step) ? step : 0.0;
+    double candidateAlpha = alpha + sanitizedStep;
+    if (!Double.isFinite(candidateAlpha) || candidateAlpha <= 0.0) {
+      candidateAlpha = Math.max(alpha, 1.0e-12);
+    }
+    double candidateWi = Math.pow(candidateAlpha / 2.0, 2.0);
+    if (!Double.isFinite(candidateWi) || candidateWi <= 0.0) {
+      double fallbackAlpha = Math.max(alpha, 1.0e-12);
+      candidateWi = Math.pow(fallbackAlpha / 2.0, 2.0);
+    }
+    return candidateWi;
+  }
+
   /**
    * <p>
    * stabilityAnalysis3.
@@ -661,6 +723,7 @@ public class TPmultiflash extends TPflash {
     tm = new double[numComponents];
 
     double[] alpha = new double[numComponents];
+    double[] acceleratedLogWi = new double[numComponents];
     SimpleMatrix fMatrix = new SimpleMatrix(numComponents, 1);
     SimpleMatrix dfMatrix = new SimpleMatrix(numComponents, numComponents);
     DMatrixRMaj newtonRhs = new DMatrixRMaj(numComponents, 1);
@@ -799,27 +862,50 @@ public class TPmultiflash extends TPflash {
         err = 0.0;
 
         if (iter <= maxsucssubiter || !system.isImplementedCompositionDeriativesofFugacity()) {
+          boolean accelerated = false;
           if (iter % 7 == 0 && useaccsubst) {
-            double vec1 = 0.0;
-
-            double vec2 = 0.0;
             double prod1 = 0.0;
             double prod2 = 0.0;
             for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              vec1 = oldDeltalogWi[i] * oldoldDeltalogWi[i];
-              vec2 = Math.pow(oldoldDeltalogWi[i], 2.0);
+              double vec1 = oldDeltalogWi[i] * oldoldDeltalogWi[i];
+              double vec2 = Math.pow(oldoldDeltalogWi[i], 2.0);
               prod1 += vec1 * vec2;
               prod2 += vec2 * vec2;
             }
 
-            double lambda = prod1 / prod2;
-            // logger.info("lambda " + lambda);
-            for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              logWi[i] += lambda / (1.0 - lambda) * deltalogWi[i];
-              err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
-              Wi[j][i] = Math.exp(logWi[i]);
+            if (Math.abs(prod2) > 1e-24) {
+              double lambda = prod1 / prod2;
+              double denom = 1.0 - lambda;
+              if (Double.isFinite(lambda) && Math.abs(denom) > 1e-12) {
+                double factor = lambda / denom;
+                boolean validAcceleration = true;
+                for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+                  double candidateLog = logWi[i] + factor * deltalogWi[i];
+                  if (Double.isFinite(candidateLog) && Math.abs(candidateLog) < LOG_WI_BOUND) {
+                    acceleratedLogWi[i] = sanitizeLogWi(candidateLog);
+                  } else {
+                    validAcceleration = false;
+                    break;
+                  }
+                }
+
+                if (validAcceleration) {
+                  for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+                    logWi[i] = acceleratedLogWi[i];
+                    err += relativeChange(logWi[i], oldlogw[i]);
+                    Wi[j][i] = Math.exp(logWi[i]);
+                  }
+                  accelerated = true;
+                }
+              }
             }
-          } else {
+
+            if (!accelerated) {
+              useaccsubst = false;
+            }
+          }
+
+          if (!accelerated) {
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
               oldoldoldlogw[i] = oldoldlogw[i];
               oldoldlogw[i] = oldlogw[i];
@@ -833,11 +919,12 @@ public class TPmultiflash extends TPflash {
               if (!Double.isInfinite(
                   clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())
                   && system.getPhase(0).getComponent(i).getx() > 1e-100) {
-                logWi[i] = d[i]
+                double updatedLogWi = d[i]
                     - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
                 if (clonedSystem.get(0).getPhase(1).getComponent(i).getIonicCharge() != 0) {
-                  logWi[i] = -1000.0;
+                  updatedLogWi = -LOG_WI_BOUND;
                 }
+                logWi[i] = sanitizeLogWi(updatedLogWi);
               }
               deltalogWi[i] = logWi[i] - oldlogw[i];
               err += Math.abs(logWi[i] - oldlogw[i]);
@@ -889,16 +976,18 @@ public class TPmultiflash extends TPflash {
           }
 
           for (int i = 0; i < numComponents; i++) {
-            double alphaNew = alpha[i] + newtonStep.get(i, 0);
-            Wi[j][i] = Math.pow(alphaNew / 2.0, 2.0);
+            double alphaStep = newtonStep.get(i, 0);
+            double updatedWi = safeUpdateWi(alpha[i], alphaStep);
+            Wi[j][i] = updatedWi;
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-              logWi[i] = Math.log(Wi[j][i]);
+              double candidateLog = Math.log(updatedWi);
+              logWi[i] = sanitizeLogWi(Double.isFinite(candidateLog) ? candidateLog : oldlogw[i]);
             }
             if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
                 || system.getPhase(0).getComponent(i).isIsIon()) {
-              logWi[i] = -1000.0;
+              logWi[i] = -LOG_WI_BOUND;
             }
-            err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
+            err += relativeChange(logWi[i], oldlogw[i]);
           }
 
           // logger.info("err newton " + err);
@@ -1012,6 +1101,7 @@ public class TPmultiflash extends TPflash {
     tm = new double[numComponents];
 
     double[] alpha = new double[numComponents];
+    double[] acceleratedLogWi = new double[numComponents];
     SimpleMatrix fMatrix = new SimpleMatrix(numComponents, 1);
     SimpleMatrix dfMatrix = new SimpleMatrix(numComponents, numComponents);
     DMatrixRMaj newtonRhs = new DMatrixRMaj(numComponents, 1);
@@ -1137,27 +1227,46 @@ public class TPmultiflash extends TPflash {
         err = 0.0;
 
         if (iter <= 150 || !system.isImplementedCompositionDeriativesofFugacity()) {
+          boolean accelerated = false;
           if (iter % 7 == 0) {
-            double vec1 = 0.0;
-
-            double vec2 = 0.0;
             double prod1 = 0.0;
             double prod2 = 0.0;
             for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              vec1 = oldDeltalogWi[i] * oldoldDeltalogWi[i];
-              vec2 = Math.pow(oldoldDeltalogWi[i], 2.0);
+              double vec1 = oldDeltalogWi[i] * oldoldDeltalogWi[i];
+              double vec2 = Math.pow(oldoldDeltalogWi[i], 2.0);
               prod1 += vec1 * vec2;
               prod2 += vec2 * vec2;
             }
 
-            double lambda = prod1 / prod2;
-            // logger.info("lambda " + lambda);
-            for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              logWi[i] += lambda / (1.0 - lambda) * deltalogWi[i];
-              err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
-              Wi[j][i] = Math.exp(logWi[i]);
+            if (Math.abs(prod2) > 1e-24) {
+              double lambda = prod1 / prod2;
+              double denom = 1.0 - lambda;
+              if (Double.isFinite(lambda) && Math.abs(denom) > 1e-12) {
+                double factor = lambda / denom;
+                boolean validAcceleration = true;
+                for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+                  double candidateLog = logWi[i] + factor * deltalogWi[i];
+                  if (Double.isFinite(candidateLog) && Math.abs(candidateLog) < LOG_WI_BOUND) {
+                    acceleratedLogWi[i] = sanitizeLogWi(candidateLog);
+                  } else {
+                    validAcceleration = false;
+                    break;
+                  }
+                }
+
+                if (validAcceleration) {
+                  for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+                    logWi[i] = acceleratedLogWi[i];
+                    err += relativeChange(logWi[i], oldlogw[i]);
+                    Wi[j][i] = Math.exp(logWi[i]);
+                  }
+                  accelerated = true;
+                }
+              }
             }
-          } else {
+          }
+
+          if (!accelerated) {
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
               oldoldoldlogw[i] = oldoldlogw[i];
               oldoldlogw[i] = oldlogw[i];
@@ -1171,11 +1280,12 @@ public class TPmultiflash extends TPflash {
               if (!Double.isInfinite(
                   (clonedSystem.get(j)).getPhase(1).getComponent(i).getLogFugacityCoefficient())
                   && system.getPhase(0).getComponent(i).getx() > 1e-100) {
-                logWi[i] = d[i]
+                double updatedLogWi = d[i]
                     - (clonedSystem.get(j)).getPhase(1).getComponent(i).getLogFugacityCoefficient();
                 if ((clonedSystem.get(j)).getPhase(1).getComponent(i).getIonicCharge() != 0) {
-                  logWi[i] = -1000.0;
+                  updatedLogWi = -LOG_WI_BOUND;
                 }
+                logWi[i] = sanitizeLogWi(updatedLogWi);
               }
               deltalogWi[i] = logWi[i] - oldlogw[i];
               err += Math.abs(logWi[i] - oldlogw[i]);
@@ -1223,16 +1333,18 @@ public class TPmultiflash extends TPflash {
           }
 
           for (int i = 0; i < numComponents; i++) {
-            double alphaNew = alpha[i] + newtonStep.get(i, 0);
-            Wi[j][i] = Math.pow(alphaNew / 2.0, 2.0);
+            double alphaStep = newtonStep.get(i, 0);
+            double updatedWi = safeUpdateWi(alpha[i], alphaStep);
+            Wi[j][i] = updatedWi;
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-              logWi[i] = Math.log(Wi[j][i]);
+              double candidateLog = Math.log(updatedWi);
+              logWi[i] = sanitizeLogWi(Double.isFinite(candidateLog) ? candidateLog : oldlogw[i]);
             }
             if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
                 || system.getPhase(0).getComponent(i).isIsIon()) {
-              logWi[i] = -1000.0;
+              logWi[i] = -LOG_WI_BOUND;
             }
-            err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
+            err += relativeChange(logWi[i], oldlogw[i]);
           }
 
           // logger.info("err newton " + err);
