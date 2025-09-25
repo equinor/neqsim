@@ -49,7 +49,6 @@ public class TPmultiflash extends TPflash {
   private static final double[] NEWTON_DAMPING_STEPS = {0.0, 1.0e-10, 1.0e-6};
   private static final double LOG_WI_BOUND = 100.0;
 
-
   /**
    * <p>
    * Constructor for TPmultiflash.
@@ -103,8 +102,14 @@ public class TPmultiflash extends TPflash {
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-          system.getPhase(k).getComponent(i).setx(system.getPhase(0).getComponent(i).getz()
-              / Erow[i] / system.getPhase(k).getComponent(i).getFugacityCoefficient());
+          double fugacityCoefficient = sanitizePositive(
+              system.getPhase(k).getComponent(i).getFugacityCoefficient(), 1.0e-12, 1.0e12);
+          double safeE = sanitizePositive(Erow[i], 1.0e-12, 1.0e12);
+          double newX = system.getPhase(0).getComponent(i).getz() / (safeE * fugacityCoefficient);
+          if (!Double.isFinite(newX) || newX <= 0.0) {
+            newX = Math.max(system.getPhase(0).getComponent(i).getz(), 1.0e-30);
+          }
+          system.getPhase(k).getComponent(i).setx(newX);
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
             || system.getPhase(0).getComponent(i).isIsIon()
@@ -134,9 +139,11 @@ public class TPmultiflash extends TPflash {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       Erow[i] = 0.0;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        Erow[i] += system.getPhase(k).getBeta()
-            / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+        double fugacityCoefficient = sanitizePositive(
+            system.getPhase(k).getComponent(i).getFugacityCoefficient(), 1.0e-12, 1.0e12);
+        Erow[i] += system.getPhase(k).getBeta() / fugacityCoefficient;
       }
+      Erow[i] = sanitizePositive(Erow[i], 1.0e-12, 1.0e12);
     }
   }
 
@@ -159,14 +166,23 @@ public class TPmultiflash extends TPflash {
      */
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      multTerm[i] = system.getPhase(0).getComponent(i).getz() / Erow[i];
-      multTerm2[i] = system.getPhase(0).getComponent(i).getz() / (Erow[i] * Erow[i]);
+      double safeE = sanitizePositive(Erow[i], 1.0e-12, 1.0e12);
+      double numerator = system.getPhase(0).getComponent(i).getz();
+      double value = numerator / safeE;
+      multTerm[i] = Double.isFinite(value) ? value : 0.0;
+      double value2 = numerator / (safeE * safeE);
+      multTerm2[i] = Double.isFinite(value2) ? value2 : 0.0;
     }
 
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
       dQdbeta[k][0] = 1.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        dQdbeta[k][0] -= multTerm[i] / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+        double fugacityCoefficient = sanitizePositive(
+            system.getPhase(k).getComponent(i).getFugacityCoefficient(), 1.0e-12, 1.0e12);
+        double contribution = multTerm[i] / fugacityCoefficient;
+        if (Double.isFinite(contribution)) {
+          dQdbeta[k][0] -= contribution;
+        }
       }
     }
 
@@ -174,9 +190,14 @@ public class TPmultiflash extends TPflash {
       for (int j = 0; j < system.getNumberOfPhases(); j++) {
         Qmatrix[i][j] = 0.0;
         for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
-          Qmatrix[i][j] +=
-              multTerm2[k] / (system.getPhase(j).getComponent(k).getFugacityCoefficient()
-                  * system.getPhase(i).getComponent(k).getFugacityCoefficient());
+          double phiJ = sanitizePositive(system.getPhase(j).getComponent(k).getFugacityCoefficient(),
+              1.0e-12, 1.0e12);
+          double phiI = sanitizePositive(system.getPhase(i).getComponent(k).getFugacityCoefficient(),
+              1.0e-12, 1.0e12);
+          double contribution = multTerm2[k] / (phiJ * phiI);
+          if (Double.isFinite(contribution)) {
+            Qmatrix[i][j] += contribution;
+          }
         }
         if (i == j) {
           Qmatrix[i][j] += 1.0e-3;
@@ -213,10 +234,30 @@ public class TPmultiflash extends TPflash {
         logger.error(ex.getMessage());
         break;
       }
+      boolean finiteCorrection = true;
+      for (int k = 0; k < system.getNumberOfPhases(); k++) {
+        double correction = ans.get(0, k);
+        if (!Double.isFinite(correction)) {
+          finiteCorrection = false;
+          break;
+        }
+      }
+      if (!finiteCorrection) {
+        logger.error("Encountered non-finite beta correction; aborting solveBeta iteration.");
+        break;
+      }
       betaMatrix = betaMatrix.minus(ans.scale(iter / (iter + 3.0)));
       removePhase = false;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
+        double existingBeta = system.getPhase(k).getBeta();
+        if (!Double.isFinite(existingBeta)) {
+          existingBeta = Math.max(phaseFractionMinimumLimit,
+              1.0 / Math.max(1, system.getNumberOfPhases()));
+        }
         double currBeta = betaMatrix.get(0, k);
+        if (!Double.isFinite(currBeta)) {
+          currBeta = existingBeta;
+        }
         if (currBeta < phaseFractionMinimumLimit) {
           system.setBeta(k, phaseFractionMinimumLimit);
           if (checkOneRemove) {
@@ -529,7 +570,7 @@ public class TPmultiflash extends TPflash {
             double alphaStep = newtonStep.get(i, 0);
             double updatedWi = safeUpdateWi(alpha[i], alphaStep);
             Wi[j][i] = updatedWi;
-            
+
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
               double candidateLog = Math.log(updatedWi);
               logWi[i] = sanitizeLogWi(Double.isFinite(candidateLog) ? candidateLog : oldlogw[i]);
@@ -671,6 +712,20 @@ public class TPmultiflash extends TPflash {
   private static double relativeChange(double newValue, double oldValue) {
     double scale = Math.max(Math.abs(oldValue), 1.0e-12);
     return Math.abs(newValue - oldValue) / scale;
+  }
+
+  private static double sanitizePositive(double value, double minValue, double maxValue) {
+    double sanitized = value;
+    if (!Double.isFinite(sanitized)) {
+      sanitized = minValue;
+    }
+    if (sanitized < minValue) {
+      sanitized = minValue;
+    }
+    if (sanitized > maxValue) {
+      sanitized = maxValue;
+    }
+    return sanitized;
   }
 
   private static double sanitizeLogWi(double value) {
