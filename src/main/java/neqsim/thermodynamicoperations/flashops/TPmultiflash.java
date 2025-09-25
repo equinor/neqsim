@@ -12,6 +12,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
+import org.ejml.interfaces.linsol.LinearSolverDense;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -43,6 +45,8 @@ public class TPmultiflash extends TPflash {
 
   double[] multTerm;
   double[] multTerm2;
+
+  private static final double[] NEWTON_DAMPING_STEPS = {0.0, 1.0e-10, 1.0e-6};
 
   /**
    * <p>
@@ -241,23 +245,28 @@ public class TPmultiflash extends TPflash {
   /** {@inheritDoc} */
   @Override
   public void stabilityAnalysis() {
-    double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
+    int numComponents = system.getPhase(0).getNumberOfComponents();
+    double[] logWi = new double[numComponents];
+    double[][] Wi = new double[numComponents][numComponents];
 
-    double[] deltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldoldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double err = 0;
-    double[] oldlogw = new double[system.getPhase(0).getNumberOfComponents()];
-    double[] oldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldoldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] d = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] x = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
-    tm = new double[system.getPhase(0).getNumberOfComponents()];
+    double[] deltalogWi = new double[numComponents];
+    double[] oldDeltalogWi = new double[numComponents];
+    double[] oldoldDeltalogWi = new double[numComponents];
+    double err = 0.0;
+    double[] oldlogw = new double[numComponents];
+    double[] oldoldlogw = new double[numComponents];
+    double[] oldoldoldlogw = new double[numComponents];
+    double[] d = new double[numComponents];
+    double[][] x = new double[numComponents][numComponents];
+    tm = new double[numComponents];
 
-    double[] alpha = null;
+    double[] alpha = new double[numComponents];
+    SimpleMatrix fMatrix = new SimpleMatrix(numComponents, 1);
+    SimpleMatrix dfMatrix = new SimpleMatrix(numComponents, numComponents);
+    DMatrixRMaj newtonRhs = new DMatrixRMaj(numComponents, 1);
+    DMatrixRMaj newtonStep = new DMatrixRMaj(numComponents, 1);
+    DMatrixRMaj workJacobian = new DMatrixRMaj(numComponents, numComponents);
+    DMatrixRMaj pseudoInverseWorkspace = new DMatrixRMaj(numComponents, numComponents);
     // SystemInterface minimumGibbsEnergySystem;
     ArrayList<SystemInterface> clonedSystem = new ArrayList<SystemInterface>(1);
     // if (minimumGibbsEnergySystem == null) {
@@ -390,14 +399,14 @@ public class TPmultiflash extends TPflash {
       // system.getPhase(0).getComponent(j).getComponentName());
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).isInert()) break;
       int iter = 0;
-      double errOld = 1.0e100;
       boolean useaccsubst = true;
       int maxsucssubiter = 150;
       int maxiter = 200;
-      do {
-        errOld = err;
+      int residualIncreaseCount = 0;
+      while (true) {
+        double previousErr = err;
         iter++;
-        err = 0;
+        err = 0.0;
 
         if (iter <= maxsucssubiter || !system.isImplementedCompositionDeriativesofFugacity()) {
           if (iter % 7 == 0 && useaccsubst) {
@@ -445,16 +454,12 @@ public class TPmultiflash extends TPflash {
               Wi[j][i] = Math.exp(logWi[i]);
               useaccsubst = true;
             }
-            if (iter > 2 && err > errOld) {
+            if (iter > 2 && err > previousErr) {
               useaccsubst = false;
             }
           }
         } else {
-          SimpleMatrix f = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(), 1);
-          SimpleMatrix df = null;
-          SimpleMatrix identitytimesConst = null;
-          // if (!secondOrderStabilityAnalysis) {
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+          for (int i = 0; i < numComponents; i++) {
             oldoldoldlogw[i] = oldoldlogw[i];
             oldoldlogw[i] = oldlogw[i];
             oldlogw[i] = logWi[i];
@@ -462,77 +467,39 @@ public class TPmultiflash extends TPflash {
             oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
           }
           clonedSystem.get(0).init(3, 1);
-          alpha = new double[clonedSystem.get(0).getPhases()[0].getNumberOfComponents()];
-          df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
-              system.getPhases()[0].getNumberOfComponents());
-          identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents());
-          // ,
-          // system.getPhases()[0].getNumberOfComponents());
-          // secondOrderStabilityAnalysis = true;
-          // }
-
-          for (int i = 0; i < clonedSystem.get(0).getPhases()[0].getNumberOfComponents(); i++) {
+          for (int i = 0; i < numComponents; i++) {
             alpha[i] = 2.0 * Math.sqrt(Wi[j][i]);
           }
 
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+          fMatrix.zero();
+          dfMatrix.zero();
+
+          for (int i = 0; i < numComponents; i++) {
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-              f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
+              fMatrix.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
                   + clonedSystem.get(0).getPhases()[1].getComponent(i).getLogFugacityCoefficient()
                   - d[i]));
             }
-            for (int k = 0; k < clonedSystem.get(0).getPhases()[0].getNumberOfComponents(); k++) {
+            for (int k = 0; k < numComponents; k++) {
               double kronDelt = (i == k) ? 1.0 : 0.0;
               if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-                df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
+                dfMatrix.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
                     * clonedSystem.get(0).getPhases()[1].getComponent(i).getdfugdn(k));
-                // * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
               } else {
-                df.set(i, k, 0);
-                // * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                dfMatrix.set(i, k, 0.0);
               }
             }
           }
 
-          // f.print(10, 10);
-          // df.print(10, 10);
-          SimpleMatrix dx = null;
-          try {
-            // Check if the determinant is close to zero
-            double determinant = df.determinant();
-            if (Math.abs(determinant) < 1e-10) {
-              logger.warn("Matrix is nearly singular. Determinant: " + determinant);
-              // Add a small regularization term to stabilize the solution
-              dx = df.plus(identitytimesConst.scale(1e-6)).solve(f).negative();
-            } else {
-              dx = df.plus(identitytimesConst).solve(f).negative();
-            }
-          } catch (Exception e) {
-            logger.error("Error solving matrix equation: " + e.getMessage());
-            logger.debug("Attempting fallback with scaled regularization...");
-            try {
-              // Fallback: Add a larger regularization term and retry
-              dx = df.plus(identitytimesConst.scale(0.2)).solve(f).negative();
-            } catch (Exception ex) {
-              logger.error("Fallback matrix solve failed: " + ex.getMessage());
-              logger.debug("Attempting pseudo-inverse fallback...");
-              try {
-                DMatrixRMaj pinv = new DMatrixRMaj(df.numCols(), df.numRows());
-                CommonOps_DDRM.pinv(df.getDDRM(), pinv);
-                DMatrixRMaj result = new DMatrixRMaj(df.numCols(), 1);
-                CommonOps_DDRM.mult(pinv, f.getDDRM(), result);
-                dx = SimpleMatrix.wrap(result).negative();
-                logger.warn("Used pseudo-inverse matrix solve.");
-              } catch (Exception ex2) {
-                logger.error("Pseudo-inverse fallback failed: " + ex2.getMessage());
-                logger.warn("Setting dx to zero matrix as a last resort.");
-                dx = new SimpleMatrix(f.numRows(), f.numCols());
-              }
-            }
+          boolean solved =
+              solveNewtonSystem(dfMatrix, fMatrix, newtonRhs, newtonStep, workJacobian,
+                  pseudoInverseWorkspace);
+          if (!solved) {
+            logger.warn("Stability Newton step defaulted to zero update.");
           }
 
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-            double alphaNew = alpha[i] + dx.get(i, 0);
+          for (int i = 0; i < numComponents; i++) {
+            double alphaNew = alpha[i] + newtonStep.get(i, 0);
             Wi[j][i] = Math.pow(alphaNew / 2.0, 2.0);
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
               logWi[i] = Math.log(Wi[j][i]);
@@ -557,7 +524,17 @@ public class TPmultiflash extends TPflash {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(1e-50);
           }
         }
-      } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
+        if (iter > 1 && err > previousErr) {
+          residualIncreaseCount++;
+        } else {
+          residualIncreaseCount = 0;
+        }
+
+        if (!((Math.abs(err) > 1e-9 || err > previousErr) && iter < maxiter
+            && residualIncreaseCount < 3)) {
+          break;
+        }
+      }
       // logger.info("err: " + err + " ITER " + iter);
       double xTrivialCheck0 = 0.0;
       double xTrivialCheck1 = 0.0;
@@ -617,30 +594,79 @@ public class TPmultiflash extends TPflash {
     // system.display();
   }
 
+  private boolean solveNewtonSystem(SimpleMatrix jacobian, SimpleMatrix residual,
+      DMatrixRMaj rhsWorkspace, DMatrixRMaj solutionWorkspace, DMatrixRMaj jacobianWorkspace,
+      DMatrixRMaj pseudoInverseWorkspace) {
+    rhsWorkspace.setTo(residual.getDDRM());
+    CommonOps_DDRM.scale(-1.0, rhsWorkspace);
+
+    for (double damping : NEWTON_DAMPING_STEPS) {
+      jacobianWorkspace.setTo(jacobian.getDDRM());
+      if (damping > 0.0) {
+        addDiagonal(jacobianWorkspace, damping);
+      }
+      try {
+        LinearSolverDense<DMatrixRMaj> solver =
+            LinearSolverFactory_DDRM.linear(jacobianWorkspace.numRows);
+        if (!solver.setA(jacobianWorkspace)) {
+          continue;
+        }
+        solver.solve(rhsWorkspace, solutionWorkspace);
+        return true;
+      } catch (RuntimeException e) {
+        logger.debug("Linear solve failed (damping=" + damping + "): " + e.getMessage(), e);
+      }
+    }
+
+    try {
+      CommonOps_DDRM.pinv(jacobian.getDDRM(), pseudoInverseWorkspace);
+      CommonOps_DDRM.mult(pseudoInverseWorkspace, rhsWorkspace, solutionWorkspace);
+      logger.warn("Used pseudo-inverse fallback in stability analysis.");
+      return true;
+    } catch (RuntimeException e) {
+      logger.error("Pseudo-inverse fallback failed: " + e.getMessage());
+    }
+
+    solutionWorkspace.zero();
+    return false;
+  }
+
+  private static void addDiagonal(DMatrixRMaj matrix, double value) {
+    int n = Math.min(matrix.numRows, matrix.numCols);
+    for (int i = 0; i < n; i++) {
+      matrix.add(i, i, value);
+    }
+  }
+
   /**
    * <p>
    * stabilityAnalysis3.
    * </p>
    */
   public void stabilityAnalysis3() {
-    double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
+    int numComponents = system.getPhase(0).getNumberOfComponents();
+    double[] logWi = new double[numComponents];
+    double[][] Wi = new double[numComponents][numComponents];
 
-    double[] deltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldoldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] sumw = new double[system.getPhase(0).getNumberOfComponents()];
-    double err = 0;
-    double[] oldlogw = new double[system.getPhase(0).getNumberOfComponents()];
-    double[] oldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldoldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] d = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] x = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
-    tm = new double[system.getPhase(0).getNumberOfComponents()];
+    double[] deltalogWi = new double[numComponents];
+    double[] oldDeltalogWi = new double[numComponents];
+    double[] oldoldDeltalogWi = new double[numComponents];
+    double[] sumw = new double[numComponents];
+    double err = 0.0;
+    double[] oldlogw = new double[numComponents];
+    double[] oldoldlogw = new double[numComponents];
+    double[] oldoldoldlogw = new double[numComponents];
+    double[] d = new double[numComponents];
+    double[][] x = new double[numComponents][numComponents];
+    tm = new double[numComponents];
 
-    double[] alpha = null;
+    double[] alpha = new double[numComponents];
+    SimpleMatrix fMatrix = new SimpleMatrix(numComponents, 1);
+    SimpleMatrix dfMatrix = new SimpleMatrix(numComponents, numComponents);
+    DMatrixRMaj newtonRhs = new DMatrixRMaj(numComponents, 1);
+    DMatrixRMaj newtonStep = new DMatrixRMaj(numComponents, 1);
+    DMatrixRMaj workJacobian = new DMatrixRMaj(numComponents, numComponents);
+    DMatrixRMaj pseudoInverseWorkspace = new DMatrixRMaj(numComponents, numComponents);
     // SystemInterface minimumGibbsEnergySystem;
     ArrayList<SystemInterface> clonedSystem = new ArrayList<SystemInterface>(1);
     // if (minimumGibbsEnergySystem == null) {
@@ -763,14 +789,14 @@ public class TPmultiflash extends TPflash {
       // system.getPhase(0).getComponent(j).getComponentName());
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).isInert()) break;
       int iter = 0;
-      double errOld = 1.0e100;
       boolean useaccsubst = true;
       int maxsucssubiter = 150;
       int maxiter = 200;
-      do {
-        errOld = err;
+      int residualIncreaseCount = 0;
+      while (true) {
+        double previousErr = err;
         iter++;
-        err = 0;
+        err = 0.0;
 
         if (iter <= maxsucssubiter || !system.isImplementedCompositionDeriativesofFugacity()) {
           if (iter % 7 == 0 && useaccsubst) {
@@ -818,16 +844,12 @@ public class TPmultiflash extends TPflash {
               Wi[j][i] = Math.exp(logWi[i]);
               useaccsubst = true;
             }
-            if (iter > 2 && err > errOld) {
+            if (iter > 2 && err > previousErr) {
               useaccsubst = false;
             }
           }
         } else {
-          SimpleMatrix f = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(), 1);
-          SimpleMatrix df = null;
-          SimpleMatrix identitytimesConst = null;
-          // if (!secondOrderStabilityAnalysis) {
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+          for (int i = 0; i < numComponents; i++) {
             oldoldoldlogw[i] = oldoldlogw[i];
             oldoldlogw[i] = oldlogw[i];
             oldlogw[i] = logWi[i];
@@ -835,79 +857,39 @@ public class TPmultiflash extends TPflash {
             oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
           }
           clonedSystem.get(0).init(3, 1);
-          alpha = new double[clonedSystem.get(0).getPhases()[0].getNumberOfComponents()];
-          df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
-              system.getPhases()[0].getNumberOfComponents());
-          identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents());
-          // ,
-          // system.getPhases()[0].getNumberOfComponents());
-          // secondOrderStabilityAnalysis = true;
-          // }
-
-          for (int i = 0; i < clonedSystem.get(0).getPhases()[0].getNumberOfComponents(); i++) {
+          for (int i = 0; i < numComponents; i++) {
             alpha[i] = 2.0 * Math.sqrt(Wi[j][i]);
           }
 
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+          fMatrix.zero();
+          dfMatrix.zero();
+
+          for (int i = 0; i < numComponents; i++) {
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-              f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
+              fMatrix.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
                   + clonedSystem.get(0).getPhases()[1].getComponent(i).getLogFugacityCoefficient()
                   - d[i]));
             }
-            for (int k = 0; k < clonedSystem.get(0).getPhases()[0].getNumberOfComponents(); k++) {
+            for (int k = 0; k < numComponents; k++) {
               double kronDelt = (i == k) ? 1.0 : 0.0;
               if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-                df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
+                dfMatrix.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
                     * clonedSystem.get(0).getPhases()[1].getComponent(i).getdfugdn(k));
-                // * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
               } else {
-                df.set(i, k, 0);
-                // * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                dfMatrix.set(i, k, 0.0);
               }
             }
           }
 
-          // f.print(10, 10);
-          // df.print(10, 10);
-          SimpleMatrix dx = null;
-          try {
-            // Check if the determinant is close to zero
-            double determinant = df.determinant();
-            if (Math.abs(determinant) < 1e-10) {
-              logger.warn("Matrix is nearly singular. Determinant: " + determinant);
-              // Add a small regularization term to stabilize the solution
-              dx = df.plus(identitytimesConst.scale(1e-6)).solve(f).negative();
-            } else {
-              dx = df.plus(identitytimesConst).solve(f).negative();
-            }
-          } catch (Exception e) {
-            logger.error("Error solving matrix equation: " + e.getMessage());
-            logger.debug("Attempting fallback with scaled regularization...");
-            try {
-              // Fallback: Add a larger regularization term and retry
-              dx = df.plus(identitytimesConst.scale(0.5)).solve(f).negative();
-            } catch (Exception ex) {
-              logger.error("Fallback matrix solve failed: " + ex.getMessage());
-              logger.debug("Attempting pseudo-inverse fallback...");
-              try {
-                DMatrixRMaj pinv = new DMatrixRMaj(df.numCols(), df.numRows());
-                CommonOps_DDRM.pinv(df.getDDRM(), pinv);
-                DMatrixRMaj result = new DMatrixRMaj(df.numCols(), 1);
-                CommonOps_DDRM.mult(pinv, f.getDDRM(), result);
-                dx = SimpleMatrix.wrap(result).negative();
-                logger.warn("Used pseudo-inverse matrix solve.");
-              } catch (Exception ex2) {
-                logger.error("Pseudo-inverse fallback failed: " + ex2.getMessage());
-                logger.warn("Setting dx to zero matrix as a last resort.");
-                dx = new SimpleMatrix(f.numRows(), f.numCols());
-              }
-            }
+          boolean solved =
+              solveNewtonSystem(dfMatrix, fMatrix, newtonRhs, newtonStep, workJacobian,
+                  pseudoInverseWorkspace);
+          if (!solved) {
+            logger.warn("Stability Newton step defaulted to zero update.");
           }
 
-          // dx.print(10, 10);
-
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-            double alphaNew = alpha[i] + dx.get(i, 0);
+          for (int i = 0; i < numComponents; i++) {
+            double alphaNew = alpha[i] + newtonStep.get(i, 0);
             Wi[j][i] = Math.pow(alphaNew / 2.0, 2.0);
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
               logWi[i] = Math.log(Wi[j][i]);
@@ -937,7 +919,17 @@ public class TPmultiflash extends TPflash {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(1e-50);
           }
         }
-      } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
+        if (iter > 1 && err > previousErr) {
+          residualIncreaseCount++;
+        } else {
+          residualIncreaseCount = 0;
+        }
+
+        if (!((Math.abs(err) > 1e-9 || err > previousErr) && iter < maxiter
+            && residualIncreaseCount < 3)) {
+          break;
+        }
+      }
       // logger.info("err: " + err + " ITER " + iter);
       double xTrivialCheck0 = 0.0;
       double xTrivialCheck1 = 0.0;
@@ -1003,24 +995,29 @@ public class TPmultiflash extends TPflash {
    * </p>
    */
   public void stabilityAnalysis2() {
-    double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
+    int numComponents = system.getPhase(0).getNumberOfComponents();
+    double[] logWi = new double[numComponents];
+    double[][] Wi = new double[numComponents][numComponents];
 
-    double[] deltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldoldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] sumw = new double[system.getPhase(0).getNumberOfComponents()];
-    double err = 0;
-    double[] oldlogw = new double[system.getPhase(0).getNumberOfComponents()];
-    double[] oldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] oldoldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
-    double[] d = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] x = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
-    tm = new double[system.getPhase(0).getNumberOfComponents()];
+    double[] deltalogWi = new double[numComponents];
+    double[] oldDeltalogWi = new double[numComponents];
+    double[] oldoldDeltalogWi = new double[numComponents];
+    double[] sumw = new double[numComponents];
+    double err = 0.0;
+    double[] oldlogw = new double[numComponents];
+    double[] oldoldlogw = new double[numComponents];
+    double[] oldoldoldlogw = new double[numComponents];
+    double[] d = new double[numComponents];
+    double[][] x = new double[numComponents][numComponents];
+    tm = new double[numComponents];
 
-    double[] alpha = null;
+    double[] alpha = new double[numComponents];
+    SimpleMatrix fMatrix = new SimpleMatrix(numComponents, 1);
+    SimpleMatrix dfMatrix = new SimpleMatrix(numComponents, numComponents);
+    DMatrixRMaj newtonRhs = new DMatrixRMaj(numComponents, 1);
+    DMatrixRMaj newtonStep = new DMatrixRMaj(numComponents, 1);
+    DMatrixRMaj workJacobian = new DMatrixRMaj(numComponents, numComponents);
+    DMatrixRMaj pseudoInverseWorkspace = new DMatrixRMaj(numComponents, numComponents);
     // SystemInterface minimumGibbsEnergySystem;
     ArrayList<SystemInterface> clonedSystem = new ArrayList<SystemInterface>(1);
     // if (minimumGibbsEnergySystem == null) {
@@ -1133,11 +1130,11 @@ public class TPmultiflash extends TPflash {
       // system.getPhase(0).getComponent(j).getComponentName());
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).isInert()) break;
       int iter = 0;
-      double errOld = 1.0e100;
-      do {
-        errOld = err;
+      int residualIncreaseCount = 0;
+      while (true) {
+        double previousErr = err;
         iter++;
-        err = 0;
+        err = 0.0;
 
         if (iter <= 150 || !system.isImplementedCompositionDeriativesofFugacity()) {
           if (iter % 7 == 0) {
@@ -1186,79 +1183,47 @@ public class TPmultiflash extends TPflash {
             }
           }
         } else {
-          SimpleMatrix f = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(), 1);
-          SimpleMatrix df = null;
-          SimpleMatrix identitytimesConst = null;
-          // if (!secondOrderStabilityAnalysis) {
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+          SystemInterface cloned = clonedSystem.get(j);
+          for (int i = 0; i < numComponents; i++) {
             oldoldoldlogw[i] = oldoldlogw[i];
             oldoldlogw[i] = oldlogw[i];
             oldlogw[i] = logWi[i];
             oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
             oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
           }
-          (clonedSystem.get(j)).init(3, 1);
-          alpha = new double[(clonedSystem.get(j)).getPhases()[0].getNumberOfComponents()];
-          df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
-              system.getPhases()[0].getNumberOfComponents());
-          identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents());
-          // , system.getPhases()[0].getNumberOfComponents());
-          // secondOrderStabilityAnalysis = true;
-          // }
-
-          for (int i = 0; i < (clonedSystem.get(j)).getPhases()[0].getNumberOfComponents(); i++) {
+          cloned.init(3, 1);
+          for (int i = 0; i < numComponents; i++) {
             alpha[i] = 2.0 * Math.sqrt(Wi[j][i]);
           }
 
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+          fMatrix.zero();
+          dfMatrix.zero();
+
+          for (int i = 0; i < numComponents; i++) {
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-              f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
-                  + (clonedSystem.get(j)).getPhases()[1].getComponent(i).getLogFugacityCoefficient()
-                  - d[i]));
+              fMatrix.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
+                  + cloned.getPhases()[1].getComponent(i).getLogFugacityCoefficient() - d[i]));
             }
-            for (int k = 0; k < (clonedSystem.get(j)).getPhases()[0].getNumberOfComponents(); k++) {
+            for (int k = 0; k < numComponents; k++) {
               double kronDelt = (i == k) ? 1.0 : 0.0;
               if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-                df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
-                    * (clonedSystem.get(j)).getPhases()[1].getComponent(i).getdfugdn(k));
-                // *
-                // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                dfMatrix.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
+                    * cloned.getPhases()[1].getComponent(i).getdfugdn(k));
               } else {
-                df.set(i, k, 0);
-                // *
-                // clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                dfMatrix.set(i, k, 0.0);
               }
             }
           }
-          // f.print(10, 10);
-          // df.print(10, 10);
-          SimpleMatrix dx = null;
-          try {
-            // Check if the determinant is close to zero
-            double determinant = df.determinant();
-            if (Math.abs(determinant) < 1e-10) {
-              logger.warn("Matrix is nearly singular. Determinant: " + determinant);
-              // Add a small regularization term to stabilize the solution
-              dx = df.plus(identitytimesConst.scale(1e-6)).solve(f).negative();
-            } else {
-              dx = df.plus(identitytimesConst).solve(f).negative();
-            }
-          } catch (Exception e) {
-            logger.error("Error solving matrix equation: " + e.getMessage());
-            logger.debug("Attempting fallback with scaled regularization...");
-            try {
-              // Fallback: Add a larger regularization term and retry
-              dx = df.plus(identitytimesConst.scale(0.5)).solve(f).negative();
-            } catch (Exception ex) {
-              logger.error("Fallback matrix solve failed: " + ex.getMessage());
-              throw new RuntimeException("Matrix solve failed after fallback attempts", ex);
-            }
+
+          boolean solved =
+              solveNewtonSystem(dfMatrix, fMatrix, newtonRhs, newtonStep, workJacobian,
+                  pseudoInverseWorkspace);
+          if (!solved) {
+            logger.warn("Stability Newton step defaulted to zero update.");
           }
 
-          // dx.print(10, 10);
-
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-            double alphaNew = alpha[i] + dx.get(i, 0);
+          for (int i = 0; i < numComponents; i++) {
+            double alphaNew = alpha[i] + newtonStep.get(i, 0);
             Wi[j][i] = Math.pow(alphaNew / 2.0, 2.0);
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
               logWi[i] = Math.log(Wi[j][i]);
@@ -1279,16 +1244,26 @@ public class TPmultiflash extends TPflash {
           sumw[j] += Math.exp(logWi[i]);
         }
 
-        for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-          if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
-            (clonedSystem.get(j)).getPhase(1).getComponent(i).setx(Math.exp(logWi[i]) / sumw[j]);
+          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+            if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
+              (clonedSystem.get(j)).getPhase(1).getComponent(i).setx(Math.exp(logWi[i]) / sumw[j]);
+            }
+            if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+                || system.getPhase(0).getComponent(i).isIsIon()) {
+              (clonedSystem.get(j)).getPhase(1).getComponent(i).setx(1e-50);
+            }
           }
-          if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-              || system.getPhase(0).getComponent(i).isIsIon()) {
-            (clonedSystem.get(j)).getPhase(1).getComponent(i).setx(1e-50);
-          }
+        if (iter > 1 && err > previousErr) {
+          residualIncreaseCount++;
+        } else {
+          residualIncreaseCount = 0;
         }
-      } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < 200);
+
+        if (!((Math.abs(err) > 1e-9 || err > previousErr) && iter < 200
+            && residualIncreaseCount < 3)) {
+          break;
+        }
+      }
       if (iter > 198) {
         // System.out.println("too many iterations....." + err + " temperature "
         // + system.getTemperature("C") + " C " + system.getPressure("bara") + " bara");
@@ -1415,20 +1390,27 @@ public class TPmultiflash extends TPflash {
         }
         setDoubleArrays();
         iterations = 0;
+        int diffIncreaseCount = 0;
         do {
           iterations++;
           // oldBeta = system.getBeta(system.getNumberOfPhases() - 1);
           // system.init(1);
-          oldDiff = diff;
+          double previousDiff = diff;
+          oldDiff = previousDiff;
           diff = this.solveBeta();
           // diff = Math.abs((system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) /
           // oldBeta);
           // logger.info("diff multiphase " + diff);
           if (iterations % 50 == 0) {
-            maxerr *= 100.0;
+            maxerr = Math.min(maxerr * 10.0, 1.0e-6);
+          }
+          if (diff > previousDiff) {
+            diffIncreaseCount++;
+          } else {
+            diffIncreaseCount = 0;
           }
         } while (diff > maxerr && !removePhase && (diff < oldDiff || iterations < 50)
-            && iterations < 200);
+            && iterations < 200 && diffIncreaseCount < 3);
         // this.solveBeta(true);
         if (iterations >= 199) {
           logger.error("error in multiphase flash..did not solve in 200 iterations");
