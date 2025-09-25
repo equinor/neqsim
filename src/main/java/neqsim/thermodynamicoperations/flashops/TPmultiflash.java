@@ -49,6 +49,7 @@ public class TPmultiflash extends TPflash {
   private static final double[] NEWTON_DAMPING_STEPS = {0.0, 1.0e-10, 1.0e-6};
   private static final double LOG_WI_BOUND = 100.0;
 
+
   /**
    * <p>
    * Constructor for TPmultiflash.
@@ -528,6 +529,7 @@ public class TPmultiflash extends TPflash {
             double alphaStep = newtonStep.get(i, 0);
             double updatedWi = safeUpdateWi(alpha[i], alphaStep);
             Wi[j][i] = updatedWi;
+            
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
               double candidateLog = Math.log(updatedWi);
               logWi[i] = sanitizeLogWi(Double.isFinite(candidateLog) ? candidateLog : oldlogw[i]);
