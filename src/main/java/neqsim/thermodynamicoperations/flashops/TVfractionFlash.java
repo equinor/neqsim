@@ -8,6 +8,7 @@ package neqsim.thermodynamicoperations.flashops;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -167,7 +168,7 @@ public class TVfractionFlash extends Flash {
         return true;
       }
       for (int compIndex = 0; compIndex < phase.getNumberOfComponents(); compIndex++) {
-        var component = phase.getComponent(compIndex);
+        ComponentInterface component = phase.getComponent(compIndex);
         double x = component.getx();
         if (!Double.isFinite(x) || x < 0.0) {
           reportNonFinite("component x", phaseIndex, component.getComponentName(), x);
