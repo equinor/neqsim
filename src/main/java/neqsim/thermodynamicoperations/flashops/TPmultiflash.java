@@ -97,8 +97,12 @@ public class TPmultiflash extends TPflash {
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-          system.getPhase(k).getComponent(i).setx(system.getPhase(0).getComponent(i).getz()
-              / Erow[i] / system.getPhase(k).getComponent(i).getFugacityCoefficient());
+          double newX = system.getPhase(0).getComponent(i).getz() / Erow[i]
+              / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+          if (!Double.isFinite(newX) || newX <= 0.0) {
+            newX = Math.max(system.getPhase(0).getComponent(i).getz(), 1.0e-30);
+          }
+          system.getPhase(k).getComponent(i).setx(newX);
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
             || system.getPhase(0).getComponent(i).isIsIon()
@@ -113,6 +117,7 @@ public class TPmultiflash extends TPflash {
                   / system.getPhase(k).getNumberOfMolesInPhase());
         }
       }
+
 
       system.getPhase(k).normalize();
     }
@@ -130,6 +135,12 @@ public class TPmultiflash extends TPflash {
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
         Erow[i] += system.getPhase(k).getBeta()
             / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+      }
+      if (Erow[i] < 1e-100)
+        Erow[i] = 1e-100;
+      if (Double.isNaN(Erow[i])) {
+        logger.error("Erow is NaN for component " + system.getPhase(0).getComponent(i).getName());
+        Erow[i] = 1e-100;
       }
     }
   }
