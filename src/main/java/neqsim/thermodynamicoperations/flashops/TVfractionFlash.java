@@ -8,6 +8,7 @@ package neqsim.thermodynamicoperations.flashops;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -26,6 +27,7 @@ public class TVfractionFlash extends Flash {
 
   double Vfractionspec = 0;
   Flash tpFlash;
+  private boolean reportedUncountableState = false;
 
   /**
    * <p>
@@ -97,6 +99,14 @@ public class TVfractionFlash extends Flash {
       system.setPressure(nyPres);
       if (system.getPressure() < 5000) {
         tpFlash.run();
+        if (stateHasUncountableNumbers(system)) {
+          if (!reportedUncountableState) {
+            logger.error("Solution contains uncountable numbers");
+            reportedUncountableState = true;
+          }
+          system.setPressure(oldPres);
+          break;
+        }
       } else {
         logger.error("too high pressure in TVfractionFLash.....stopping");
         break;
@@ -138,5 +148,53 @@ public class TVfractionFlash extends Flash {
   @Override
   public org.jfree.chart.JFreeChart getJFreeChart(String name) {
     return null;
+  }
+
+  private boolean stateHasUncountableNumbers(SystemInterface sys) {
+    for (int phaseIndex = 0; phaseIndex < sys.getNumberOfPhases(); phaseIndex++) {
+      PhaseInterface phase = sys.getPhase(phaseIndex);
+      if (phase == null) {
+        continue;
+      }
+      if (!Double.isFinite(phase.getBeta())) {
+        reportNonFinite("phase beta", phaseIndex, null, phase.getBeta());
+        return true;
+      }
+      if (!Double.isFinite(phase.getZ())) {
+        reportNonFinite("phase Z", phaseIndex, null, phase.getZ());
+        return true;
+      }
+      for (int compIndex = 0; compIndex < phase.getNumberOfComponents(); compIndex++) {
+        var component = phase.getComponent(compIndex);
+        double x = component.getx();
+        if (!Double.isFinite(x) || x < 0.0) {
+          reportNonFinite("component x", phaseIndex, component.getComponentName(), x);
+          return true;
+        }
+        double logPhi = component.getLogFugacityCoefficient();
+        if (!Double.isFinite(logPhi)) {
+          reportNonFinite("component logPhi", phaseIndex, component.getComponentName(), logPhi);
+          return true;
+        }
+        double phi = component.getFugacityCoefficient();
+        if (!Double.isFinite(phi) || phi <= 0.0) {
+          reportNonFinite("component phi", phaseIndex, component.getComponentName(), phi);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private void reportNonFinite(String field, int phaseIndex, String componentName, double value) {
+    if (!reportedUncountableState) {
+      if (componentName != null) {
+        logger.error("Solution contains uncountable numbers: {} for component '{}' in phase {} (value={})",
+            field, componentName, phaseIndex, value);
+      } else {
+        logger.error("Solution contains uncountable numbers: {} in phase {} (value={})", field, phaseIndex,
+            value);
+      }
+    }
   }
 }
