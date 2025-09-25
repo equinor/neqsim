@@ -13,7 +13,7 @@
 	<version>${revision}${sha1}${changelist}</version>
 
 	<properties>
-		<revision>3.0.42</revision>
+		<revision>3.0.43</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<sha1 />
