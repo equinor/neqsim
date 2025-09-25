@@ -570,6 +570,7 @@ public class TPmultiflash extends TPflash {
             double alphaStep = newtonStep.get(i, 0);
             double updatedWi = safeUpdateWi(alpha[i], alphaStep);
             Wi[j][i] = updatedWi;
+
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
               double candidateLog = Math.log(updatedWi);
               logWi[i] = sanitizeLogWi(Double.isFinite(candidateLog) ? candidateLog : oldlogw[i]);
