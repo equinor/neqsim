@@ -267,7 +267,7 @@ public class TPmultiflashWAX extends TPflash {
         if (!((clonedSystem.get(k)) == null)
             && system.getPhase(0).getComponent(k).getx() > 1e-100) {
           (clonedSystem.get(k)).getPhase(waxphasenumber).getComponent(i).setx(
-              (clonedSystem.get(k)).getPhase(waxphasenumber).getComponent(i).getx() / sumw[0]);
+              (clonedSystem.get(k)).getPhase(waxphasenumber).getComponent(i).getx() / sumw[k]);
           // logger.info("x: " + (
           // clonedSystem.get(k)).getPhase(0).getComponent(i).getx());
         }
@@ -349,25 +349,25 @@ public class TPmultiflashWAX extends TPflash {
             }
           }
           err += Math.abs(logWi[i] - oldlogw[i]);
-          Wi[j][i] = Math.exp(logWi[i]);
+          Wi[j][i] = safeExp(logWi[i]);
         }
         // logger.info("err: " + err);
         sumw[j] = 0;
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-          sumw[j] += Math.exp(logWi[i]);
+          sumw[j] += safeExp(logWi[i]);
         }
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
           (clonedSystem.get(j)).getPhase(waxphasenumber).getComponent(i)
-              .setx(Math.exp(logWi[i]) / sumw[j]);
+              .setx(safeExp(logWi[i]) / sumw[j]);
         }
       } while (Math.abs(err) > 1e-9 && iter < 100);
 
       tm[j] = 1.0;
 
       for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
-        tm[j] -= Math.exp(logWi[i]);
+        tm[j] -= safeExp(logWi[i]);
         x[j][i] = (clonedSystem.get(j)).getPhase(waxphasenumber).getComponent(i).getx();
         // logger.info("txji: " + x[j][i]);
       }
