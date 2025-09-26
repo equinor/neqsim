@@ -714,24 +714,53 @@ public abstract class SystemThermo implements SystemInterface {
     if (specifiedStream.equals("feed")) {
       moleFraction = fraction;
     } else if (specifiedStream.equals("product")) {
-      // double specFractionFrom = getPhaseFraction(fromPhaseName, specification);
-      double specFractionTo = getPhaseFraction(toPhaseName, specification);
-
       double moleFractionFrom = getMoleFraction(phaseNumbFrom);
-      double moleFractionTo = getMoleFraction(phaseNumbTo);
-
-      if (specification.equals("volume") || specification.equals("mass")) {
-        double test = fraction * specFractionTo / (fraction * specFractionTo + specFractionTo);
-        moleFraction = test * moleFractionTo / specFractionTo;
-      } else if (specification.equals("mole")) {
-        double test = fraction * moleFractionTo / (fraction * moleFractionTo + moleFractionTo);
-        moleFraction = test;
-      }
-
-      moleFraction = moleFraction * moleFractionTo / moleFractionFrom;
-      if (moleFraction > moleFractionFrom) {
-        logger.debug("error in addPhaseFractionToPhase()...to low fraction in from phase");
+      if (fraction <= 0.0) {
+        moleFraction = 0.0;
+      } else if (fraction >= 1.0) {
         moleFraction = moleFractionFrom;
+      } else {
+        double molesToTransfer = 0.0;
+
+        switch (specification) {
+          case "mole": {
+            double molesInToPhase = getPhase(phaseNumbTo).getNumberOfMolesInPhase();
+            molesToTransfer = fraction / (1.0 - fraction) * molesInToPhase;
+            break;
+          }
+          case "mass": {
+            initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+            double massInToPhase = getPhase(phaseNumbTo).getMass();
+            double massToTransfer = fraction / (1.0 - fraction) * massInToPhase;
+            double maxTransfer = getPhase(phaseNumbFrom).getMass();
+            massToTransfer = Math.min(massToTransfer, maxTransfer);
+            molesToTransfer = massToTransfer / getPhase(phaseNumbFrom).getMolarMass();
+            break;
+          }
+          case "volume": {
+            initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+            double volumeInToPhase = getPhase(phaseNumbTo).getVolume("m3");
+            double volumeToTransfer = fraction / (1.0 - fraction) * volumeInToPhase;
+            double maxVolume = getPhase(phaseNumbFrom).getVolume("m3");
+            volumeToTransfer = Math.min(volumeToTransfer, maxVolume);
+            double densityFrom = getPhase(phaseNumbFrom).getDensity("kg/m3");
+            double massToTransfer = volumeToTransfer * densityFrom;
+            molesToTransfer = massToTransfer / getPhase(phaseNumbFrom).getMolarMass();
+            break;
+          }
+          default:
+            throw new RuntimeException("unit not supported " + specification);
+        }
+
+        double maxMoles = getPhase(phaseNumbFrom).getNumberOfMolesInPhase();
+        molesToTransfer = Math.min(molesToTransfer, maxMoles);
+        double moleFractionToTransfer = molesToTransfer / getTotalNumberOfMoles();
+        moleFraction = moleFractionToTransfer / moleFractionFrom;
+
+        if (moleFraction > moleFractionFrom) {
+          logger.debug("error in addPhaseFractionToPhase()...to low fraction in from phase");
+          moleFraction = moleFractionFrom;
+        }
       }
     }
 
