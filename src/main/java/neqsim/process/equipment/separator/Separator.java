@@ -577,7 +577,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * @return a double
    */
   public double getGasSuperficialVelocity() {
-    return thermoSystem.getPhase(0).getVolume("m3")
+    return thermoSystem.getPhase(0).getFlowRate("m3/sec")
         / (neqsim.thermo.ThermodynamicConstantsInterface.pi * getInternalDiameter()
             * getInternalDiameter() / 4.0);
   }

@@ -331,7 +331,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testOps.TPflash();
 
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
-    // testSystem.prettyPrint();
   }
 
   @Test
