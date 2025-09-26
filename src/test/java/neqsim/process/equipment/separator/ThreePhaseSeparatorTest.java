@@ -6,9 +6,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.phase.PhaseEosInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -192,8 +195,9 @@ class ThreePhaseSeparatorTest {
      */
   }
 
-  @Test
-  void testEntrainmentSep() {
+  @ParameterizedTest
+  @ValueSource(strings = {"volume", "mass", "mole"})
+  void testEntrainmentSep(String specification) {
     neqsim.thermo.system.SystemInterface fluid1 =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
 
@@ -211,15 +215,14 @@ class ThreePhaseSeparatorTest {
 
     ThreePhaseSeparator test_separator =
         new ThreePhaseSeparator("TEST_SEPARATOR", inlet_stream_test_sep);
-    test_separator.setEntrainment(0.05, "volume", "product", "aqueous", "oil");
+    test_separator.setEntrainment(0.05, specification, "product", "aqueous", "oil");
     test_separator.run();
     // test_separator.getFluid().prettyPrint();
 
-    Assertions.assertEquals(5.8, test_separator.getOilOutStream().getFluid().getPhase("aqueous")
-        .getFlowRate("m3/hr")
-        / (test_separator.getOilOutStream().getFluid().getPhase("oil").getFlowRate("m3/hr")
-            + test_separator.getOilOutStream().getFluid().getPhase("aqueous").getFlowRate("m3/hr"))
-        * 100, 0.1);
+    double aqueousFraction =
+        getPhaseBasisFraction(specification, test_separator.getOilOutStream().getFluid()
+            .getPhase("aqueous"), test_separator.getOilOutStream().getFluid().getPhase("oil"));
+    Assertions.assertEquals(5.0, aqueousFraction * 100, 0.1);
     /*
      * System.out.println("water in oil % " + (test_separator.getOilOutStream().getFluid()
      * .getPhase("aqueous").getFlowRate("m3/hr") /
@@ -227,5 +230,25 @@ class ThreePhaseSeparatorTest {
      * test_separator.getOilOutStream().getFluid().getPhase("aqueous").getFlowRate("m3/hr"))) 100);
      */
     // test_separator.getOilOutStream().getThermoSystem().prettyPrint();
+  }
+
+  private double getPhaseBasisFraction(String specification, PhaseInterface aqueousPhase,
+      PhaseInterface oilPhase) {
+    double aqueousBasis = getPhaseBasis(specification, aqueousPhase);
+    double oilBasis = getPhaseBasis(specification, oilPhase);
+    return aqueousBasis / (aqueousBasis + oilBasis);
+  }
+
+  private double getPhaseBasis(String specification, PhaseInterface phase) {
+    switch (specification) {
+      case "mole":
+        return phase.getNumberOfMolesInPhase();
+      case "mass":
+        return phase.getMass();
+      case "volume":
+        return phase.getVolume("m3");
+      default:
+        throw new IllegalArgumentException("Unsupported specification: " + specification);
+    }
   }
 }
