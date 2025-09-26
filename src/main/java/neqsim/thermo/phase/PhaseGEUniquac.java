@@ -52,13 +52,16 @@ public class PhaseGEUniquac extends PhaseGE {
    */
   public PhaseGEUniquac(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
       double[][] intparam) {
-    componentArray = new ComponentGEUniquac[alpha[0].length];
     this.mixRule = mixRule;
     this.alpha = alpha;
     this.Dij = Dij;
     this.intparam = intparam;
-    for (int i = 0; i < alpha[0].length; i++) {
-      numberOfComponents++;
+    numberOfComponents = alpha[0].length;
+    componentArray = new ComponentGEUniquac[numberOfComponents];
+    if (!this.getClass().equals(PhaseGEUniquac.class)) {
+      return;
+    }
+    for (int i = 0; i < numberOfComponents; i++) {
       componentArray[i] = new ComponentGEUniquac(phase.getComponent(i).getName(),
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
