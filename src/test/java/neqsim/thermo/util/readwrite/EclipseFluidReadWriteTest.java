@@ -331,7 +331,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testOps.TPflash();
 
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
-    testSystem.prettyPrint();
+    // testSystem.prettyPrint();
   }
 
   @Test
@@ -393,6 +393,44 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     }
 
     Assertions.assertTrue(gasFraction > 0.1);
+  }
+
+  @Test
+  void testGOW4() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(gow);
+    testSystem.setMultiPhaseCheck(true);
+
+    double[] molcompLowWater = new double[] {4.9107930618050546e-05, 0.0012546826725008057,
+        0.026343316936642148, 0.015782513912485484, 0.021507966038800383, 0.005719038644454519,
+        0.014456587791398226, 0.010316784218293597, 0.01494526854482507, 0.02174974260520435,
+        0.046008119779292554, 0.055040972592013085, 0.02538455516611449, 0.0906953549264313,
+        0.057955349835511455, 0.02339737645058884, 0.5693932619548259};
+
+    testSystem = EclipseFluidReadWrite.read(gow);
+    testSystem.setMultiPhaseCheck(true);
+    testSystem.setMolarComposition(molcompLowWater);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(5.1, "bara");
+    testSystem.setTemperature(52.519057394367, "C");
+    testOps.TPflash();
+    Assertions.assertEquals(3, testSystem.getNumberOfPhases());
+
+    double gasFraction = testSystem.getPhase("gas").getPhaseFraction();
+    System.out.println("gasFraction=" + gasFraction);
+    for (int phaseIdx = 0; phaseIdx < testSystem.getNumberOfPhases(); phaseIdx++) {
+      System.out.println("phase" + phaseIdx + " type=" + testSystem.getPhase(phaseIdx).getType()
+          + " beta=" + testSystem.getPhase(phaseIdx).getBeta());
+    }
+    // testSystem.display();
+    for (int phaseIdx = 0; phaseIdx < testSystem.getNumberOfPhases(); phaseIdx++) {
+      System.out.println("phase" + phaseIdx + " type=" + testSystem.getPhase(phaseIdx).getType()
+          + " methane x=" + testSystem.getPhase(phaseIdx).getComponent("methane").getx() + " Z="
+          + testSystem.getPhase(phaseIdx).getZ() + " rho="
+          + testSystem.getPhase(phaseIdx).getPhysicalProperties().getDensity());
+    }
+
+    Assertions.assertTrue(gasFraction > 0.00001);
   }
 
 }
