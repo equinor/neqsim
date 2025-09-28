@@ -137,6 +137,15 @@ public interface CompressorInterface extends ProcessEquipmentInterface, TwoPortI
 
   /**
    * <p>
+   * isStoneWall.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isStoneWall();
+
+  /**
+   * <p>
    * Set CompressorChartType
    * </p>
    *
@@ -159,3 +168,4 @@ public interface CompressorInterface extends ProcessEquipmentInterface, TwoPortI
     }
   }
 }
+
