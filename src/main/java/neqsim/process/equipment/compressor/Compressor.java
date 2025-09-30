@@ -1366,6 +1366,20 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     return getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead());
   }
 
+  @Override
+  public boolean isStoneWall() {
+    StoneWallCurve stoneWallCurve = getCompressorChart().getStoneWallCurve();
+    if (stoneWallCurve == null || !stoneWallCurve.isActive()) {
+      return false;
+    }
+    double head = getPolytropicFluidHead();
+    double flow = getInletStream().getFlowRate("m3/hr");
+    if (Double.isNaN(head) || Double.isNaN(flow)) {
+      return false;
+    }
+    return stoneWallCurve.isStoneWall(head, flow);
+  }
+
   /**
    * <p>
    * isStoneWall.
@@ -1984,3 +1998,4 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     this.limitSpeed = limitSpeed;
   }
 }
+
