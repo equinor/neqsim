@@ -263,14 +263,14 @@ public class GibbsReactorTest {
 
     SystemInterface system = new SystemSrkEos(298, 1.0);
     system.addComponent("CO2", 1e6, "mole/sec");
-    system.addComponent("SO2", 0, "mole/sec");
+    system.addComponent("SO2", 10, "mole/sec");
     system.addComponent("SO3", 0, "mole/sec");
-    system.addComponent("NO2",0.0, "mole/sec");
+    system.addComponent("NO2", 10, "mole/sec");
     system.addComponent("NO", 0, "mole/sec");
-    system.addComponent("water", 30, "mole/sec");
-    //system.addComponent("ammonia", 0, "mole/sec");
+    system.addComponent("water", 10, "mole/sec");
+    // system.addComponent("ammonia", 0, "mole/sec");
     system.addComponent("H2S", 10, "mole/sec");
-    system.addComponent("oxygen", 0.0, "mole/sec");
+    system.addComponent("oxygen", 10.0, "mole/sec");
     system.addComponent("sulfuric acid", 0, "mole/sec");
     system.addComponent("nitric acid", 0, "mole/sec");
     system.addComponent("NH4NO3", 0.0, "mole/sec");
@@ -279,13 +279,13 @@ public class GibbsReactorTest {
     system.addComponent("acetic acid", 0, "mole/sec");
     system.addComponent("methanol", 0, "mole/sec");
     system.addComponent("ethanol", 0, "mole/sec");
-    system.addComponent("CO", 0, "mole/sec");
+    system.addComponent("CO", 10, "mole/sec");
     // system.addComponent("hydrogen", 0, "mole/sec");
     // system.addComponent("N2O3", 0, "mole/sec");
     // system.addComponent("N2O", 0, "mole/sec");
     // system.addComponent("nitrogen", 0, "mole/sec");
     system.addComponent("NH2OH", 0, "mole/sec");
-    //system.addComponent("N2H4", 0, "mole/sec");
+    // system.addComponent("N2H4", 0, "mole/sec");
     system.addComponent("S8", 0, "mole/sec");
     system.addComponent("HNO2", 0, "mole/sec");
     system.addComponent("MEG", 0.0, "mole/sec");
@@ -324,10 +324,65 @@ public class GibbsReactorTest {
 
     GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
     reactor.setUseAllDatabaseSpecies(false);
+    reactor.setDampingComposition(0.0005);
+    reactor.setMaxIterations(10000);
+    reactor.setConvergenceTolerance(1e-3);
+    reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
+    // kinetics handling
+    reactor.addBlockedReaction("SO2 + 0.5O2 + H2O -> H2SO4", 1e6);
+    reactor.addBlockedReaction("SO2 + 0.5O2 -> SO3", 1e6);
+    reactor.run();
+
+    SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
+
+    // Optionally, print mole fractions for inspection
+    System.out.println("GibbsReactor outlet composition (mole fractions):");
+    for (int i = 0; i < outletSystem.getNumberOfComponents(); i++) {
+      if (outletSystem.getComponent(i).getz() * 1e6 > 0.1) {
+        System.out.println(outletSystem.getComponent(i).getComponentName() + ": "
+            + outletSystem.getComponent(i).getz() * 1e6);
+      }
+    }
+  }
+
+  /**
+   * Test GibbsReactor with a custom composition including SO2, SO3, H2SO4, HNO3, and the rest as
+   * CO2.
+   */
+  @Test
+  public void testGibbsReactorCO2WithAcidGases1() {
+
+
+    SystemInterface system = new SystemSrkEos(298, 1.0);
+    system.addComponent("CO2", 1e6, "mole/sec");
+    system.addComponent("SO2", 10, "mole/sec");
+    system.addComponent("SO3", 0, "mole/sec");
+    system.addComponent("NO2", 3, "mole/sec");
+    system.addComponent("NO", 0, "mole/sec");
+    system.addComponent("water", 10, "mole/sec");
+    system.addComponent("ammonia", 0, "mole/sec");
+    system.addComponent("H2S", 30, "mole/sec");
+    system.addComponent("oxygen", 10.0, "mole/sec");
+    system.addComponent("sulfuric acid", 0.0, "mole/sec");
+    system.addComponent("nitric acid", 0, "mole/sec");
+    system.addComponent("S8", 0, "mole/sec");
+    system.addComponent("HNO2", 0, "mole/sec");
+    system.addComponent("NH4HSO4", 0, "mole/sec");
+    system.setMixingRule(2);
+
+    Stream inletStream = new Stream("Inlet Stream", system);
+    inletStream.setPressure(20, "bara");
+    inletStream.setTemperature(-25, "C");
+    inletStream.run();
+
+
+    GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
+    reactor.setUseAllDatabaseSpecies(false);
     reactor.setDampingComposition(0.05);
     reactor.setMaxIterations(5000);
     reactor.setConvergenceTolerance(1e-3);
     reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
+    // reactor.addBlockedReaction("SO2 + 0.5O2 + H2O -> H2SO4", 1e6);
     reactor.run();
 
     SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
@@ -344,7 +399,6 @@ public class GibbsReactorTest {
       }
     }
   }
-
 
 
   /**

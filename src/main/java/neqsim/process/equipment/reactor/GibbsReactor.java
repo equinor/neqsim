@@ -744,10 +744,10 @@ public class GibbsReactor extends TwoPortEquipment {
               for (int i = 0; i < Math.min(parts.length, 10); i++) {
                 partsStr.append("parts[").append(i).append("]=").append(parts[i]).append(" ");
               }
-             // System.out.println(
-               //   "DATABASE LOADING - Raw parts for " + molecule + ": " + partsStr.toString());
-             // System.out.println("DATABASE LOADING - parts.length=" + parts.length
-                //  + ", numElements=" + numElements);
+              // System.out.println(
+              // "DATABASE LOADING - Raw parts for " + molecule + ": " + partsStr.toString());
+              // System.out.println("DATABASE LOADING - parts.length=" + parts.length
+              // + ", numElements=" + numElements);
             }
 
             // Parse available elements
@@ -755,8 +755,8 @@ public class GibbsReactor extends TwoPortEquipment {
               String value = parts[i + 1].trim().replace(",", ".");
               elements[i] = Double.parseDouble(value);
               if (molecule.contains("+") || molecule.contains("-")) {
-               //System.out.println("DATABASE LOADING - Element[" + i + "] (" + elementNames[i]
-                //    + ") = " + value + " -> " + elements[i]);
+                // System.out.println("DATABASE LOADING - Element[" + i + "] (" + elementNames[i]
+                // + ") = " + value + " -> " + elements[i]);
               }
             }
 
@@ -1092,6 +1092,61 @@ public class GibbsReactor extends TwoPortEquipment {
       double F = Gf0 + RT * Math.log(phi[i]) + RT * Math.log(yi)
           + RT * Math.log(system.getPressure("bara") / 1.0) - lagrangeSum;
       objectiveFunctionValues.put(compName, F);
+
+      // --- Penalty calculation for blocking reactions ---
+      for (BlockedReaction reaction : BlockedReactions) {
+        // For each blocked reaction, calculate penalty P
+        // P = abs((SO2inlet - SO2)*2(O2i-O2)*(H2Oi-H2O)*(H2SO4o-H2SO4i)*K)
+        // Only if every bracket is bigger than 0
+        // Use inlet_mole and outlet_mole for each component
+        List<Double> bracketTerms = new ArrayList<>();
+        boolean allPositive = true;
+        // Reactants: stoich * (inlet - outlet)
+        for (Map.Entry<String, Double> entry : reaction.reactants.entrySet()) {
+          String name = entry.getKey();
+          double stoich = entry.getValue();
+          int idx = processedComponents.indexOf(name);
+
+          double inlet = inlet_mole.get(idx);
+          double outlet = outlet_mole.get(idx);
+          double diff = inlet - outlet;
+          double term = stoich * diff;
+          bracketTerms.add(term);
+          if (term <= 0) {
+            allPositive = false;
+            break;
+          }
+        }
+        // Products: stoich * (outlet - inlet)
+        for (Map.Entry<String, Double> entry : reaction.products.entrySet()) {
+          String name = entry.getKey();
+          double stoich = entry.getValue();
+          int idx = processedComponents.indexOf(name);
+          if (idx < 0) {
+            allPositive = false;
+            break;
+          }
+          double inlet = (idx < inlet_mole.size()) ? inlet_mole.get(idx) : 0.0;
+          double outlet = (idx < outlet_mole.size()) ? outlet_mole.get(idx) : 0.0;
+          double diff = outlet - inlet;
+          double term = stoich * diff;
+          bracketTerms.add(term);
+          if (term <= 0) {
+            allPositive = false;
+            break;
+          }
+        }
+        if (allPositive) {
+          double P = Math.abs(reaction.penaltyCoefficient);
+          for (double t : bracketTerms)
+            P *= t;
+          // Add P to each product chemical's F value
+          for (String prod : reaction.products.keySet()) {
+            Double oldF = objectiveFunctionValues.get(prod);
+            objectiveFunctionValues.put(prod, oldF + P);
+          }
+        }
+      }
     }
   }
 
@@ -1805,7 +1860,7 @@ public class GibbsReactor extends TwoPortEquipment {
    */
   private boolean updateSystemWithNewCompositions() {
     try {
-      //SystemInterface system = getInletStream().getThermoSystem();
+      // SystemInterface system = getInletStream().getThermoSystem();
 
       // Update component moles in the system
       for (int i = 0; i < processedComponents.size(); i++) {
@@ -1838,7 +1893,7 @@ public class GibbsReactor extends TwoPortEquipment {
             system.addComponent(compIndex, molesToAdd, 0);
           }
         }
-      getOutletStream().setThermoSystem(system);
+        getOutletStream().setThermoSystem(system);
       }
 
 
@@ -2156,4 +2211,88 @@ public class GibbsReactor extends TwoPortEquipment {
   public boolean solveGibbsEquilibrium() {
     return solveGibbsEquilibrium(dampingComposition); // Use configured damping factor
   }
+
+  // --- Formula alias mapping for user-friendly reaction input ---
+  private static final Map<String, String> formulaToComponent = new HashMap<>();
+  static {
+    formulaToComponent.put("O2", "oxygen");
+    formulaToComponent.put("H2SO4", "sulfuric acid");
+    formulaToComponent.put("SO2", "SO2");
+    formulaToComponent.put("H2O", "water");
+    // Add more mappings as needed
+  }
+
+  /**
+   * --- Blocked reaction logic (not at top) ---
+   */
+  private static class BlockedReaction {
+    public final Map<String, Double> reactants = new HashMap<>();
+    public final Map<String, Double> products = new HashMap<>();
+    public final double penaltyCoefficient;
+    public final String reactionString;
+
+    public BlockedReaction(String reactionString, double penaltyCoefficient) {
+      this.reactionString = reactionString;
+      this.penaltyCoefficient = penaltyCoefficient;
+      parseReactionString(reactionString);
+    }
+
+    private void parseReactionString(String reaction) {
+      String[] sides = reaction.split("->");
+      if (sides.length != 2)
+        throw new IllegalArgumentException("Invalid reaction string: " + reaction);
+      parseSide(sides[0], reactants);
+      parseSide(sides[1], products);
+    }
+
+    private void parseSide(String side, Map<String, Double> map) {
+      for (String part : side.split("\\+")) {
+        part = part.trim();
+        if (part.isEmpty())
+          continue;
+        double coeff = 1.0;
+        String name = part;
+        if (Character.isDigit(part.charAt(0)) || part.contains("/")) {
+          int i = 0;
+          while (i < part.length() && (Character.isDigit(part.charAt(i)) || part.charAt(i) == '.'
+              || part.charAt(i) == '/'))
+            i++;
+          String coeffStr = part.substring(0, i);
+          name = part.substring(i).trim();
+          if (coeffStr.contains("/")) {
+            String[] frac = coeffStr.split("/");
+            coeff = Double.parseDouble(frac[0]) / Double.parseDouble(frac[1]);
+          } else {
+            coeff = Double.parseDouble(coeffStr);
+          }
+        }
+        // Map formula to NeqSim component name if needed
+        String mapped = formulaToComponent.getOrDefault(name, name);
+        map.put(mapped, coeff);
+      }
+    }
+  }
+
+  private final List<BlockedReaction> BlockedReactions = new ArrayList<>();
+
+  /**
+   * Add a Blocked reaction with penalty coefficient.
+   * 
+   * @param reactionString e.g. "SO2 + 1/2O2 + H2O -> H2SO4"
+   * @param penaltyCoefficient penalty K
+   */
+  public void addBlockedReaction(String reactionString, double penaltyCoefficient) {
+    BlockedReactions.add(new BlockedReaction(reactionString, penaltyCoefficient));
+  }
+
+  /**
+   * Get the list of blocked reactions.
+   * 
+   * @return unmodifiable list of blocked reactions
+   */
+  public List<BlockedReaction> getBlockedReactions() {
+    return Collections.unmodifiableList(BlockedReactions);
+  }
+
+
 }
