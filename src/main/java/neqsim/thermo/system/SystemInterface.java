@@ -49,6 +49,18 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   }
 
   /**
+   * Characterize a fluid to match the pseudo component definition of a reference fluid.
+   *
+   * @param source fluid to characterize
+   * @param reference fluid providing the pseudo component definition
+   * @return characterized fluid with pseudo components aligned to the reference
+   */
+  public static SystemInterface characterizeToReference(SystemInterface source,
+      SystemInterface reference) {
+    return PseudoComponentCombiner.characterizeToReference(source, reference);
+  }
+
+  /**
    * <p>
    * addCapeOpenProperty.
    * </p>
