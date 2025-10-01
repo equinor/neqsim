@@ -5,6 +5,7 @@ import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.characterization.PseudoComponentCombiner;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.mixingrule.EosMixingRuleType;
@@ -33,6 +34,30 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
     SystemInterface newFluid = addFluid1.clone();
     newFluid.addFluid(addFluid2);
     return newFluid;
+  }
+
+  /**
+   * Combine fluids and redistribute pseudo components to a requested number.
+   *
+   * @param numberOfPseudoComponents target number of pseudo components
+   * @param fluids fluids to combine
+   * @return combined fluid
+   */
+  public static SystemInterface combineReservoirFluids(int numberOfPseudoComponents,
+      SystemInterface... fluids) {
+    return PseudoComponentCombiner.combineReservoirFluids(numberOfPseudoComponents, fluids);
+  }
+
+  /**
+   * Characterize a fluid to match the pseudo component definition of a reference fluid.
+   *
+   * @param source fluid to characterize
+   * @param reference fluid providing the pseudo component definition
+   * @return characterized fluid with pseudo components aligned to the reference
+   */
+  public static SystemInterface characterizeToReference(SystemInterface source,
+      SystemInterface reference) {
+    return PseudoComponentCombiner.characterizeToReference(source, reference);
   }
 
   /**
