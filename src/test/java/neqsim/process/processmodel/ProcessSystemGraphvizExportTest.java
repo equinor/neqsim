@@ -3,6 +3,7 @@ package neqsim.process.processmodel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,8 +39,8 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     Path dotFile = tempDir.resolve("example-process.dot");
     process.exportToGraphviz(dotFile.toString());
 
-    String dot = Files.readString(dotFile);
-    String expectedDot = Files.readString(
+    String dot = readString(dotFile);
+    String expectedDot = readString(
         Paths.get("src", "test", "java", "neqsim", "process", "processmodel",
             "example-process.dot"));
     assertEquals(expectedDot.trim(), dot.trim(), "Graphviz export differs from expected fixture");
@@ -68,8 +69,8 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     Path dotFile = tempDir.resolve("three-phase-separator-process.dot");
     process.exportToGraphviz(dotFile.toString());
 
-    String dot = Files.readString(dotFile);
-    String expectedDot = Files.readString(
+    String dot = readString(dotFile);
+    String expectedDot = readString(
         Paths.get("src", "test", "java", "neqsim", "process", "processmodel",
             "three-phase-separator-process.dot"));
     assertEquals(expectedDot.trim(), dot.trim(),
@@ -94,8 +95,8 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     Path dotFile = tempDir.resolve("anti-surge-process.dot");
     process.exportToGraphviz(dotFile.toString());
 
-    String dot = Files.readString(dotFile);
-    String expectedDot = Files.readString(
+    String dot = readString(dotFile);
+    String expectedDot = readString(
         Paths.get("src", "test", "java", "neqsim", "process", "processmodel",
             "anti-surge-process.dot"));
     assertEquals(expectedDot.trim(), dot.trim(),
@@ -112,6 +113,10 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     assertTrue(dot.contains(
         "\"anti surge cooler\" -> \"recycle anti surge 1st stage compressor\""),
         "anti surge recycle loop closure missing");
+  }
+
+  private String readString(Path path) throws IOException {
+    return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
 
   private ProcessSystem createExampleProcess() {
