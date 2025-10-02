@@ -1,14 +1,28 @@
 package neqsim.thermo.util.readwrite;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
+import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.compressor.AntiSurge;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.CompressorChart;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.phase.PhaseEos;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -331,7 +345,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testOps.TPflash();
 
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
-    testSystem.prettyPrint();
   }
 
   @Test
@@ -395,4 +408,177 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertTrue(gasFraction > 0.1);
   }
 
+  @Test
+  void testGOW4() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(gow);
+    testSystem.setMultiPhaseCheck(true);
+
+    double[] molcompLowWater = new double[] {4.9107930618050546e-05, 0.0012546826725008057,
+        0.026343316936642148, 0.015782513912485484, 0.021507966038800383, 0.005719038644454519,
+        0.014456587791398226, 0.010316784218293597, 0.01494526854482507, 0.02174974260520435,
+        0.046008119779292554, 0.055040972592013085, 0.02538455516611449, 0.0906953549264313,
+        0.057955349835511455, 0.02339737645058884, 0.5693932619548259};
+
+    testSystem = EclipseFluidReadWrite.read(gow);
+    testSystem.setMultiPhaseCheck(true);
+    testSystem.setMolarComposition(molcompLowWater);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(5.1, "bara");
+    testSystem.setTemperature(52.519057394367, "C");
+    testOps.TPflash();
+    Assertions.assertEquals(3, testSystem.getNumberOfPhases());
+
+    double gasFraction = testSystem.getPhase("gas").getPhaseFraction();
+    System.out.println("gasFraction=" + gasFraction);
+    for (int phaseIdx = 0; phaseIdx < testSystem.getNumberOfPhases(); phaseIdx++) {
+      System.out.println("phase" + phaseIdx + " type=" + testSystem.getPhase(phaseIdx).getType()
+          + " beta=" + testSystem.getPhase(phaseIdx).getBeta());
+    }
+    // testSystem.display();
+    for (int phaseIdx = 0; phaseIdx < testSystem.getNumberOfPhases(); phaseIdx++) {
+      System.out.println("phase" + phaseIdx + " type=" + testSystem.getPhase(phaseIdx).getType()
+          + " methane x=" + testSystem.getPhase(phaseIdx).getComponent("methane").getx() + " Z="
+          + testSystem.getPhase(phaseIdx).getZ() + " rho="
+          + testSystem.getPhase(phaseIdx).getPhysicalProperties().getDensity());
+    }
+
+    Assertions.assertTrue(gasFraction > 0.00001);
+  }
+
+  @Test
+  void antiSurgeTest() throws IOException {
+
+    double SECOND_STAGE_PRESSURE_BARA = 7.0;
+    double THIRD_STAGE_PRESSURE_BARA = 20.0;
+    double SECOND_STAGE_COOLER_OUTLET_TEMP_C = 28.0;
+    double COMPRESSOR_SPEED_RPM = 10250.0;
+    double POLYTROPIC_EFFICIENCY = 0.80;
+    String HEAD_UNIT = "kJ/kg";
+    double[] CHART_REFERENCE = new double[] {17.3, 298.15, 1.01325, 0.92};
+    double[] SURGE_FLOW_KGH = new double[] {5607.45, 6007.91, 6480.26, 7111.75, 7799.81, 8179.81,
+        8508.5, 8749.97, 9006.93, 9248.64, 9397.9, 9578.11, 9758.49};
+    double[] SURGE_HEAD_KJKG = new double[] {150.0, 149.54, 148.83, 148.05, 146.14, 144.76, 142.98,
+        140.73, 137.29, 132.13, 127.56, 121.13, 112.65};
+    double SURGE_CONTROL_FACTOR = 0.15;
+    double LP_GAS_SPLIT_FACTOR = 0.25;
+
+    testSystem = EclipseFluidReadWrite.read(gow);
+    testSystem.setMultiPhaseCheck(true);
+
+    double[] molcompLowWater = new double[] {4.9107930618050546e-05, 0.0012546826725008057,
+        0.26343316936642148, 0.015782513912485484, 0.021507966038800383, 0.005719038644454519,
+        0.00014456587791398226, 0.00010316784218293597, 0.001494526854482507, 0.0002174974260520435,
+        0.00046008119779292554, 0.00055040972592013085, 0.0002538455516611449, 0.000906953549264313,
+        0.000057955349835511455, 0.0002339737645058884, 0.00005693932619548259};
+
+    testSystem.setMolarComposition(molcompLowWater);
+    SystemInterface suctionGas = testSystem;
+
+    ProcessSystem separationProcess = new ProcessSystem("2nd stage recompressor anti surge");
+
+    Stream firstStageDischarge = new Stream("first stage discharge", suctionGas.clone());
+    firstStageDischarge.setPressure(SECOND_STAGE_PRESSURE_BARA, "bara");
+    firstStageDischarge.setTemperature(SECOND_STAGE_COOLER_OUTLET_TEMP_C, "C");
+    firstStageDischarge.setFlowRate(1800.0, "kg/hr");
+    separationProcess.add(firstStageDischarge);
+    firstStageDischarge.run();
+
+    System.out.println("flow inlet " + firstStageDischarge.getFluid().getFlowRate("m3/hr"));
+
+    Stream lpGasFeed = new Stream("LP flash gas", suctionGas.clone());
+    lpGasFeed.setPressure(SECOND_STAGE_PRESSURE_BARA, "bara");
+    lpGasFeed.setTemperature(30.0, "C");
+    lpGasFeed.setFlowRate(firstStageDischarge.getFlowRate("kg/hr") * LP_GAS_SPLIT_FACTOR, "kg/hr");
+    separationProcess.add(lpGasFeed);
+    lpGasFeed.run();
+
+    Stream recycleGasStream2 = new Stream("recycle 2nd stage", suctionGas.clone());
+    recycleGasStream2.setPressure(SECOND_STAGE_PRESSURE_BARA, "bara");
+    recycleGasStream2.setTemperature(25.0, "C");
+    recycleGasStream2.setFlowRate(1.0, "kg/hr");
+    separationProcess.add(recycleGasStream2);
+    recycleGasStream2.run();
+
+    Mixer firstStageGasMixer = new Mixer("first stage mixer");
+    firstStageGasMixer.addStream(firstStageDischarge);
+    firstStageGasMixer.addStream(lpGasFeed);
+    firstStageGasMixer.addStream(recycleGasStream2);
+    separationProcess.add(firstStageGasMixer);
+    firstStageGasMixer.run();
+
+    Cooler firstStageCooler2 =
+        new Cooler("1st stage cooler2", firstStageGasMixer.getOutletStream());
+    firstStageCooler2.setOutTemperature(SECOND_STAGE_COOLER_OUTLET_TEMP_C, "C");
+    separationProcess.add(firstStageCooler2);
+    firstStageCooler2.run();
+
+    Separator firstStageScrubber2 =
+        new Separator("1st stage scrubber2", firstStageCooler2.getOutletStream());
+    separationProcess.add(firstStageScrubber2);
+    firstStageScrubber2.run();
+
+    System.out.println("flow inlet feed compressor start"
+        + firstStageScrubber2.getGasOutStream().getFluid().getFlowRate("m3/hr"));
+
+    Compressor secondStageCompressor =
+        new Compressor("2nd stage compressor", firstStageScrubber2.getGasOutStream());
+    secondStageCompressor.setCompressorChartType("interpolate and extrapolate");
+    secondStageCompressor.setUsePolytropicCalc(true);
+    secondStageCompressor.setPolytropicEfficiency(POLYTROPIC_EFFICIENCY);
+    secondStageCompressor.setOutletPressure(THIRD_STAGE_PRESSURE_BARA, "bara");
+    secondStageCompressor.setSpeed(COMPRESSOR_SPEED_RPM);
+
+    CompressorChart chart = (CompressorChart) secondStageCompressor.getCompressorChart();
+    chart.setHeadUnit(HEAD_UNIT);
+    chart.setReferenceConditions(CHART_REFERENCE[0], CHART_REFERENCE[1], CHART_REFERENCE[2],
+        CHART_REFERENCE[3]);
+    chart.getSurgeCurve().setCurve(CHART_REFERENCE, SURGE_FLOW_KGH, SURGE_HEAD_KJKG);
+    secondStageCompressor.run();
+    separationProcess.add(secondStageCompressor);
+
+    Splitter antiSurgeSplitter =
+        new Splitter("2nd stage anti surge splitter", secondStageCompressor.getOutletStream(), 2);
+    antiSurgeSplitter.setFlowRates(new double[] {-1.0, 1.0}, "kg/hr");
+    separationProcess.add(antiSurgeSplitter);
+    antiSurgeSplitter.run();
+
+    Calculator antiSurgeCalculator2 = new Calculator("anti surge calculator 2");
+    antiSurgeCalculator2.addInputVariable(secondStageCompressor);
+    antiSurgeCalculator2.setOutputVariable(antiSurgeSplitter);
+    separationProcess.add(antiSurgeCalculator2);
+    antiSurgeCalculator2.run();
+
+    ThrottlingValve antiSurgeValve =
+        new ThrottlingValve("anti surge valve 2", antiSurgeSplitter.getSplitStream(1));
+    antiSurgeValve.setOutletPressure(SECOND_STAGE_PRESSURE_BARA, "bara");
+    separationProcess.add(antiSurgeValve);
+    antiSurgeValve.run();
+
+    Recycle recycle2 = new Recycle("recycle anti surge 2nd stage compressor");
+    recycle2.addStream(antiSurgeValve.getOutletStream());
+    recycle2.setOutletStream(recycleGasStream2);
+    recycle2.setTolerance(1e-6);
+    separationProcess.add(recycle2);
+    recycle2.run();
+
+    separationProcess.run();
+    // separationProcess.run();
+    // separationProcess.run();
+
+    // assertFalse(secondStageCompressor.isSurge(), "compressor is surge");
+    // assertFalse(secondStageCompressor.isStoneWall(), "compressor is stone wall limited");
+
+    System.out
+        .println("compressor poytropic head end " + secondStageCompressor.getPolytropicFluidHead());
+
+    System.out.println("flow inlet feed compressor end "
+        + firstStageScrubber2.getGasOutStream().getFluid().getFlowRate("m3/hr"));
+
+    System.out.println(recycle2.toJson());
+
+  }
+
+
 }
+

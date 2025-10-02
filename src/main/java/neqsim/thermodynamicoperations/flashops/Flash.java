@@ -49,6 +49,22 @@ public abstract class Flash extends BaseOperation {
   double[] deltalnK;
   double[] tm;
   double tmLimit = -1e-8;
+  private static final double LOG_MIN_EXP = Math.log(Double.MIN_NORMAL);
+  private static final double LOG_MAX_EXP = Math.log(Double.MAX_VALUE);
+
+  protected double safeExp(double value) {
+    if (Double.isNaN(value)) {
+      return Double.NaN;
+    }
+    if (value < LOG_MIN_EXP) {
+      return Double.MIN_NORMAL;
+    }
+    if (value > LOG_MAX_EXP) {
+      return Double.MAX_VALUE;
+    }
+    return Math.exp(value);
+  }
+
   int lowestGibbsEnergyPhase = 0;
   SysNewtonRhapsonTPflash secondOrderSolver;
   /** Set true to do solid phase check and calculations */
@@ -212,7 +228,7 @@ public abstract class Flash extends BaseOperation {
             for (i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
               logWi[i] += lambda / (1.0 - lambda) * deltalogWi[i];
               error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
-              Wi[j][i] = Math.exp(logWi[i]);
+              Wi[j][i] = safeExp(logWi[i]);
             }
             if (error[j] > olderror) {
               acceleration = false;
@@ -223,7 +239,7 @@ public abstract class Flash extends BaseOperation {
               logWi[i] =
                   d[i] - clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient();
               error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
-              Wi[j][i] = Math.exp(logWi[i]);
+              Wi[j][i] = safeExp(logWi[i]);
             }
           }
         } else {
