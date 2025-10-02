@@ -1,0 +1,29 @@
+digraph process {
+  "oil from second stage";
+  "recycle 3rd stage";
+  "3RD stage separator";
+  "recycle gas 1st stage";
+  "gas mixer 0";
+  "VG-23-002";
+  "stream to closed drain";
+  "23-KA-004";
+  "1st stage anti surge splitter";
+  "anti surge calculator_1";
+  "anti surge valve";
+  "anti surge cooler";
+  "recycle anti surge 1st stage compressor";
+  "oil from second stage" -> "3RD stage separator" [label="oil from second stage"];
+  "recycle 3rd stage" -> "3RD stage separator" [label="recycle 3rd stage"];
+  "3RD stage separator" -> "gas mixer 0" [label="gasOutStream"];
+  "recycle anti surge 1st stage compressor" -> "recycle gas 1st stage" [label="recycle gas 1st stage"];
+  "recycle gas 1st stage" -> "gas mixer 0" [label="recycle gas 1st stage"];
+  "gas mixer 0" -> "VG-23-002" [label="gas mixer 0 mixed stream"];
+  "VG-23-002" -> "23-KA-004" [label="gasOutStream"];
+  "VG-23-002" -> "stream to closed drain" [label="liquidOutStream"];
+  "23-KA-004" -> "1st stage anti surge splitter" [label="gasOutStream"];
+  "anti surge calculator_1" -> "1st stage anti surge splitter" [label="gasOutStream"];
+  "1st stage anti surge splitter" -> "anti surge valve" [label="Split Stream_1"];
+  "anti surge calculator_1" -> "anti surge valve" [label="Split Stream_1"];
+  "anti surge valve" -> "anti surge cooler" [label="anti surge valve out stream"];
+  "anti surge cooler" -> "recycle anti surge 1st stage compressor" [label="outStream"];
+}
