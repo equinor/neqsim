@@ -1216,6 +1216,17 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Export the process to Graphviz with configurable stream annotations.
+   *
+   * @param filename the Graphviz output file
+   * @param options export options controlling stream annotations and table output
+   */
+  public void exportToGraphviz(String filename,
+      ProcessSystemGraphvizExporter.GraphvizExportOptions options) {
+    new ProcessSystemGraphvizExporter().export(this, filename, options);
+  }
+
+  /**
    * Load a process from a YAML file.
    *
    * @param yamlFile the YAML file to load
