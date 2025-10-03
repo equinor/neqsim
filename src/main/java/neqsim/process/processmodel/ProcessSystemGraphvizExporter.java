@@ -8,14 +8,14 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.Collections;
-import java.util.Iterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -24,7 +24,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 /**
  * Helper responsible for exporting {@link ProcessSystem} connectivity to Graphviz.
  */
-class ProcessSystemGraphvizExporter {
+public class ProcessSystemGraphvizExporter {
   private static final Logger logger = LogManager.getLogger(ProcessSystemGraphvizExporter.class);
 
   private static final String[] OUTLET_KEYWORDS = {"out", "product", "split", "mixed", "export",
@@ -76,20 +76,201 @@ class ProcessSystemGraphvizExporter {
     }
   }
 
-  void export(ProcessSystem system, String filename) {
+  public static final class GraphvizExportOptions {
+    /** Placement of the optional stream property table. */
+    public enum TablePlacement {
+      ABOVE,
+      BELOW
+    }
+
+    private final boolean includeStreamTemperatures;
+    private final boolean includeStreamPressures;
+    private final boolean includeStreamFlowRates;
+    private final boolean includeStreamPropertyTable;
+    private final boolean includeTableTemperatures;
+    private final boolean includeTablePressures;
+    private final boolean includeTableFlowRates;
+    private final TablePlacement tablePlacement;
+    private final String temperatureUnit;
+    private final String pressureUnit;
+    private final String flowRateUnit;
+
+    private GraphvizExportOptions(Builder builder) {
+      this.includeStreamTemperatures = builder.includeStreamTemperatures;
+      this.includeStreamPressures = builder.includeStreamPressures;
+      this.includeStreamFlowRates = builder.includeStreamFlowRates;
+      this.includeStreamPropertyTable = builder.includeStreamPropertyTable;
+      this.includeTableTemperatures = builder.includeTableTemperatures;
+      this.includeTablePressures = builder.includeTablePressures;
+      this.includeTableFlowRates = builder.includeTableFlowRates;
+      this.tablePlacement = builder.tablePlacement;
+      this.temperatureUnit = builder.temperatureUnit;
+      this.pressureUnit = builder.pressureUnit;
+      this.flowRateUnit = builder.flowRateUnit;
+    }
+
+    /** Create a builder for the export options. */
+    public static Builder builder() {
+      return new Builder();
+    }
+
+    /** Default export options. */
+    public static GraphvizExportOptions defaults() {
+      return builder().build();
+    }
+
+    public boolean includeStreamTemperatures() {
+      return includeStreamTemperatures;
+    }
+
+    public boolean includeStreamPressures() {
+      return includeStreamPressures;
+    }
+
+    public boolean includeStreamFlowRates() {
+      return includeStreamFlowRates;
+    }
+
+    public boolean includeStreamPropertyTable() {
+      return includeStreamPropertyTable;
+    }
+
+    public boolean includeTableTemperatures() {
+      return includeTableTemperatures;
+    }
+
+    public boolean includeTablePressures() {
+      return includeTablePressures;
+    }
+
+    public boolean includeTableFlowRates() {
+      return includeTableFlowRates;
+    }
+
+    public TablePlacement getTablePlacement() {
+      return tablePlacement;
+    }
+
+    public String getTemperatureUnit() {
+      return temperatureUnit;
+    }
+
+    public String getPressureUnit() {
+      return pressureUnit;
+    }
+
+    public String getFlowRateUnit() {
+      return flowRateUnit;
+    }
+
+    /** Builder for {@link GraphvizExportOptions}. */
+    public static final class Builder {
+      private boolean includeStreamTemperatures = false;
+      private boolean includeStreamPressures = false;
+      private boolean includeStreamFlowRates = false;
+      private boolean includeStreamPropertyTable = false;
+      private boolean includeTableTemperatures = true;
+      private boolean includeTablePressures = true;
+      private boolean includeTableFlowRates = true;
+      private TablePlacement tablePlacement = TablePlacement.ABOVE;
+      private String temperatureUnit = "C";
+      private String pressureUnit = "bara";
+      private String flowRateUnit = "kg/hr";
+
+      private Builder() {}
+
+      public Builder includeStreamTemperatures(boolean value) {
+        this.includeStreamTemperatures = value;
+        return this;
+      }
+
+      public Builder includeStreamPressures(boolean value) {
+        this.includeStreamPressures = value;
+        return this;
+      }
+
+      public Builder includeStreamFlowRates(boolean value) {
+        this.includeStreamFlowRates = value;
+        return this;
+      }
+
+      public Builder includeStreamPropertyTable(boolean value) {
+        this.includeStreamPropertyTable = value;
+        return this;
+      }
+
+      public Builder includeTableTemperatures(boolean value) {
+        this.includeTableTemperatures = value;
+        return this;
+      }
+
+      public Builder includeTablePressures(boolean value) {
+        this.includeTablePressures = value;
+        return this;
+      }
+
+      public Builder includeTableFlowRates(boolean value) {
+        this.includeTableFlowRates = value;
+        return this;
+      }
+
+      public Builder tablePlacement(TablePlacement placement) {
+        if (placement != null) {
+          this.tablePlacement = placement;
+        }
+        return this;
+      }
+
+      public Builder temperatureUnit(String unit) {
+        if (unit != null) {
+          this.temperatureUnit = unit;
+        }
+        return this;
+      }
+
+      public Builder pressureUnit(String unit) {
+        if (unit != null) {
+          this.pressureUnit = unit;
+        }
+        return this;
+      }
+
+      public Builder flowRateUnit(String unit) {
+        if (unit != null) {
+          this.flowRateUnit = unit;
+        }
+        return this;
+      }
+
+      public GraphvizExportOptions build() {
+        return new GraphvizExportOptions(this);
+      }
+    }
+  }
+
+  public void export(ProcessSystem system, String filename) {
+    export(system, filename, GraphvizExportOptions.defaults());
+  }
+
+  public void export(ProcessSystem system, String filename, GraphvizExportOptions options) {
+    GraphvizExportOptions effectiveOptions =
+        options == null ? GraphvizExportOptions.defaults() : options;
+
     try (PrintWriter writer = new PrintWriter(filename)) {
-      export(system, writer);
+      export(system, writer, effectiveOptions);
     } catch (Exception e) {
       logger.error("Error exporting to Graphviz", e);
     }
   }
 
-  private void export(ProcessSystem system, PrintWriter writer) {
+  private void export(ProcessSystem system, PrintWriter writer, GraphvizExportOptions options) {
     writer.println("digraph process {");
 
     List<List<StreamReference>> streamUsage = collectStreamUsage(system);
     Set<String> nodeLines = new LinkedHashSet<>();
     Set<String> edgeLines = new LinkedHashSet<>();
+
+    addStreamPropertyTable(writer, streamUsage, options);
 
     for (ProcessEquipmentInterface unit : system.getUnitOperations()) {
       nodeLines.add("  \"" + escapeGraphviz(unit.getName()) + "\";");
@@ -153,13 +334,13 @@ class ProcessSystemGraphvizExporter {
       if (!streamUnits.isEmpty()) {
         for (StreamReference source : sources) {
           for (StreamReference streamUnit : streamUnits) {
-            addEdge(edgeLines, source, streamUnit);
+            addEdge(edgeLines, source, streamUnit, options);
           }
         }
 
         for (StreamReference streamUnit : streamUnits) {
           for (StreamReference sink : sinks) {
-            addEdge(edgeLines, streamUnit, sink);
+            addEdge(edgeLines, streamUnit, sink, options);
           }
         }
 
@@ -168,7 +349,7 @@ class ProcessSystemGraphvizExporter {
 
       for (StreamReference source : sources) {
         for (StreamReference sink : sinks) {
-          addEdge(edgeLines, source, sink);
+          addEdge(edgeLines, source, sink, options);
         }
       }
     }
@@ -516,12 +697,13 @@ class ProcessSystemGraphvizExporter {
         && reference.unit instanceof StreamInterface;
   }
 
-  private void addEdge(Set<String> edgeLines, StreamReference source, StreamReference sink) {
+  private void addEdge(Set<String> edgeLines, StreamReference source, StreamReference sink,
+      GraphvizExportOptions options) {
     if (source == null || sink == null || source.unit == sink.unit) {
       return;
     }
 
-    String label = selectStreamLabel(source, sink);
+    String label = buildStreamLabel(source, sink, options);
     StringBuilder edgeBuilder = new StringBuilder();
     edgeBuilder.append("  \"").append(escapeGraphviz(source.unit.getName())).append("\"")
         .append(" -> ")
@@ -531,5 +713,232 @@ class ProcessSystemGraphvizExporter {
     }
     edgeBuilder.append(";");
     edgeLines.add(edgeBuilder.toString());
+  }
+
+  private String buildStreamLabel(StreamReference source, StreamReference sink,
+      GraphvizExportOptions options) {
+    String baseLabel = selectStreamLabel(source, sink);
+    StreamInterface stream = resolveStreamInterface(source, sink);
+
+    if (stream == null) {
+      return baseLabel;
+    }
+
+    List<String> labelLines = new ArrayList<>();
+    if (baseLabel != null && !baseLabel.isEmpty()) {
+      labelLines.add(baseLabel);
+    }
+
+    if (options.includeStreamTemperatures()) {
+      Double temperature = safeGetTemperature(stream, options.getTemperatureUnit());
+      String formatted = formatProperty("T", temperature, options.getTemperatureUnit());
+      if (formatted != null) {
+        labelLines.add(formatted);
+      }
+    }
+
+    if (options.includeStreamPressures()) {
+      Double pressure = safeGetPressure(stream, options.getPressureUnit());
+      String formatted = formatProperty("P", pressure, options.getPressureUnit());
+      if (formatted != null) {
+        labelLines.add(formatted);
+      }
+    }
+
+    if (options.includeStreamFlowRates()) {
+      Double flowRate = safeGetFlowRate(stream, options.getFlowRateUnit());
+      String formatted = formatProperty("F", flowRate, options.getFlowRateUnit());
+      if (formatted != null) {
+        labelLines.add(formatted);
+      }
+    }
+
+    if (labelLines.isEmpty()) {
+      return null;
+    }
+    return String.join("\\n", labelLines);
+  }
+
+  private StreamInterface resolveStreamInterface(StreamReference... references) {
+    for (StreamReference reference : references) {
+      if (reference != null && reference.stream instanceof StreamInterface) {
+        return (StreamInterface) reference.stream;
+      }
+    }
+    return null;
+  }
+
+  private Double safeGetTemperature(StreamInterface stream, String unit) {
+    try {
+      if (unit != null && !unit.isEmpty()) {
+        return stream.getTemperature(unit);
+      }
+      return stream.getTemperature();
+    } catch (Exception ex) {
+      return null;
+    }
+  }
+
+  private Double safeGetPressure(StreamInterface stream, String unit) {
+    try {
+      if (unit != null && !unit.isEmpty()) {
+        return stream.getPressure(unit);
+      }
+      return stream.getPressure();
+    } catch (Exception ex) {
+      return null;
+    }
+  }
+
+  private Double safeGetFlowRate(StreamInterface stream, String unit) {
+    try {
+      if (unit != null && !unit.isEmpty()) {
+        return stream.getFlowRate(unit);
+      }
+      return stream.getFlowRate("kg/hr");
+    } catch (Exception ex) {
+      return null;
+    }
+  }
+
+  private String formatProperty(String label, Double value, String unit) {
+    if (value == null || !Double.isFinite(value)) {
+      return null;
+    }
+
+    StringBuilder builder = new StringBuilder();
+    builder.append(label).append("=")
+        .append(String.format(Locale.ROOT, "%.2f", value));
+    if (unit != null && !unit.isEmpty()) {
+      builder.append(" ").append(unit);
+    }
+    return builder.toString();
+  }
+
+  private void addStreamPropertyTable(PrintWriter writer, List<List<StreamReference>> streamUsage,
+      GraphvizExportOptions options) {
+    if (!options.includeStreamPropertyTable()) {
+      return;
+    }
+
+    String tableLabel = buildStreamPropertyTable(streamUsage, options);
+    if (tableLabel.isEmpty()) {
+      return;
+    }
+
+    String labelLocation =
+        options.getTablePlacement() == GraphvizExportOptions.TablePlacement.BELOW ? "b" : "t";
+    writer.println("  graph [label=<" + tableLabel + ">, labelloc=\"" + labelLocation + "\"];");
+  }
+
+  private String buildStreamPropertyTable(List<List<StreamReference>> streamUsage,
+      GraphvizExportOptions options) {
+    boolean includeTemperature = options.includeTableTemperatures();
+    boolean includePressure = options.includeTablePressures();
+    boolean includeFlowRate = options.includeTableFlowRates();
+
+    if (!includeTemperature && !includePressure && !includeFlowRate) {
+      return "";
+    }
+
+    StringBuilder builder = new StringBuilder();
+    builder.append("<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">");
+    builder.append("<TR><TD><B>Stream</B></TD>");
+    if (includeTemperature) {
+      builder.append("<TD><B>Temperature (" + escapeHtml(options.getTemperatureUnit()) + ")</B></TD>");
+    }
+    if (includePressure) {
+      builder.append("<TD><B>Pressure (" + escapeHtml(options.getPressureUnit()) + ")</B></TD>");
+    }
+    if (includeFlowRate) {
+      builder.append("<TD><B>Flow Rate (" + escapeHtml(options.getFlowRateUnit()) + ")</B></TD>");
+    }
+    builder.append("</TR>");
+
+    for (List<StreamReference> references : streamUsage) {
+      if (references.isEmpty()) {
+        continue;
+      }
+
+      StreamReference first = references.get(0);
+      if (!(first.stream instanceof StreamInterface)) {
+        continue;
+      }
+
+      StreamInterface stream = (StreamInterface) first.stream;
+      String streamName = stream.getName();
+      if (streamName == null || streamName.isEmpty()) {
+        streamName = first.descriptor != null ? first.descriptor : "Unnamed Stream";
+      }
+
+      builder.append("<TR>");
+      builder.append("<TD>").append(escapeHtml(streamName)).append("</TD>");
+
+      if (includeTemperature) {
+        Double value = safeGetTemperature(stream, options.getTemperatureUnit());
+        builder.append("<TD>").append(formatTableCell(value, options.getTemperatureUnit()))
+            .append("</TD>");
+      }
+
+      if (includePressure) {
+        Double value = safeGetPressure(stream, options.getPressureUnit());
+        builder.append("<TD>").append(formatTableCell(value, options.getPressureUnit()))
+            .append("</TD>");
+      }
+
+      if (includeFlowRate) {
+        Double value = safeGetFlowRate(stream, options.getFlowRateUnit());
+        builder.append("<TD>").append(formatTableCell(value, options.getFlowRateUnit()))
+            .append("</TD>");
+      }
+
+      builder.append("</TR>");
+    }
+
+    builder.append("</TABLE>");
+    return builder.toString();
+  }
+
+  private String formatTableCell(Double value, String unit) {
+    if (value == null || !Double.isFinite(value)) {
+      return "-";
+    }
+
+    String formatted = String.format(Locale.ROOT, "%.2f", value);
+    if (unit != null && !unit.isEmpty()) {
+      formatted += " " + unit;
+    }
+    return escapeHtml(formatted);
+  }
+
+  private String escapeHtml(String value) {
+    if (value == null || value.isEmpty()) {
+      return "";
+    }
+
+    StringBuilder builder = new StringBuilder(value.length());
+    for (char ch : value.toCharArray()) {
+      switch (ch) {
+        case '&':
+          builder.append("&amp;");
+          break;
+        case '<':
+          builder.append("&lt;");
+          break;
+        case '>':
+          builder.append("&gt;");
+          break;
+        case '\"':
+          builder.append("&quot;");
+          break;
+        case '\'':
+          builder.append("&#39;");
+          break;
+        default:
+          builder.append(ch);
+          break;
+      }
+    }
+    return builder.toString();
   }
 }

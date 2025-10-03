@@ -62,6 +62,57 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  public void exportGraphvizWithStreamAnnotationsAndTable(@TempDir Path tempDir)
+      throws IOException {
+    ProcessSystem process = new ProcessSystem();
+
+    Stream feed = new Stream("feed", createWellFluid());
+    feed.setTemperature(40.0, "C");
+    feed.setPressure(50.0, "bara");
+    feed.setFlowRate(1200.0, "kg/hr");
+
+    Heater heater = new Heater("heater", feed);
+    Cooler cooler = new Cooler("cooler", heater.getOutStream());
+
+    Stream product = (Stream) cooler.getOutStream();
+    product.setName("product");
+    product.setTemperature(30.0, "C");
+    product.setPressure(45.0, "bara");
+    product.setFlowRate(1200.0, "kg/hr");
+
+    process.add(feed);
+    process.add(heater);
+    process.add(cooler);
+    process.add(product);
+
+    ProcessSystemGraphvizExporter.GraphvizExportOptions options =
+        ProcessSystemGraphvizExporter.GraphvizExportOptions.builder()
+            .includeStreamTemperatures(true)
+            .includeStreamPressures(true)
+            .includeStreamFlowRates(true)
+            .includeStreamPropertyTable(true)
+            .tablePlacement(
+                ProcessSystemGraphvizExporter.GraphvizExportOptions.TablePlacement.BELOW)
+            .build();
+
+    Path dotFile = tempDir.resolve("annotated-process.dot");
+    process.exportToGraphviz(dotFile.toString(), options);
+
+    String dot = readString(dotFile);
+
+    assertTrue(dot.contains("graph [label=<"), "Stream property table missing from graph label");
+    assertTrue(dot.contains("labelloc=\"b\""), "Property table should be placed below the graph");
+    assertTrue(dot.contains("<TD><B>Stream</B></TD>"), "Stream column missing in property table");
+    assertTrue(dot.contains("<TD>feed</TD>"), "Feed stream row missing from property table");
+    assertTrue(dot.contains("<TD>40.00 C</TD>"), "Feed stream temperature missing from table");
+    assertTrue(dot.contains("<TD>50.00 bara</TD>"), "Feed stream pressure missing from table");
+    assertTrue(dot.contains("<TD>1200.00 kg/hr</TD>"), "Feed stream flow rate missing from table");
+    assertTrue(dot.contains(
+        "\"feed\" -> \"heater\" [label=\"feed\\\\nT=40.00 C\\\\nP=50.00 bara\\\\nF=1200.00 kg/hr\"]"),
+        "Stream edge does not include temperature, pressure, and flow rate annotations");
+  }
+
+  @Test
   public void exportGraphvizForThreePhaseSeparatorProcess(@TempDir Path tempDir)
       throws IOException {
     ProcessSystem process = createThreePhaseSeparatorProcess();
