@@ -71,22 +71,58 @@ public class Calculator extends ProcessEquipmentBaseClass {
     Compressor compressor = (Compressor) inputVariable.get(0);
 
     Splitter anitSurgeSplitter = (Splitter) outputVariable;
-    double distToSurge = compressor.getDistanceToSurge();
-    double flowInAntiSurge = anitSurgeSplitter.getSplitStream(1).getFlowRate("MSm3/day");
 
-    flowInAntiSurge = anitSurgeSplitter.getSplitStream(1).getFlowRate("MSm3/day")
-        - compressor.getInletStream().getFlowRate("MSm3/day") * distToSurge * 0.5;
+    double inletFlow = compressor.getInletStream().getFlowRate("MSm3/day");
+    double currentRecycleFlow = anitSurgeSplitter.getSplitStream(1).getFlowRate("MSm3/day");
+    if (!Double.isFinite(inletFlow) || !Double.isFinite(currentRecycleFlow)) {
+      logger.warn("Invalid flow rate detected during anti-surge calculation");
+      return;
+    }
 
-    if (flowInAntiSurge > compressor.getInletStream().getFlowRate("MSm3/day")) {
-      flowInAntiSurge = compressor.getInletStream().getFlowRate("MSm3/day") * 0.99;
+    double actualFlowM3PerHour = compressor.getInletStream().getFlowRate("m3/hr");
+    double surgeFlowM3PerHour = compressor.getSurgeFlowRate();
+    double surgeControlFactor = compressor.getAntiSurge().getSurgeControlFactor();
+
+    double flowInAntiSurge = calculateAntiSurgeRecycleFlow(inletFlow, currentRecycleFlow,
+        actualFlowM3PerHour, surgeFlowM3PerHour, surgeControlFactor, 0.6);
+
+    anitSurgeSplitter.setFlowRates(new double[] {-1, flowInAntiSurge}, "MSm3/day");
+    anitSurgeSplitter.run();
+    anitSurgeSplitter.setCalculationIdentifier(id);
+  }
+
+  static double calculateAntiSurgeRecycleFlow(double inletFlowMSm3PerDay,
+      double currentRecycleFlowMSm3PerDay, double actualFlowM3PerHour, double surgeFlowM3PerHour,
+      double surgeControlFactor, double relaxationFactor) {
+    if (!Double.isFinite(inletFlowMSm3PerDay) || !Double.isFinite(currentRecycleFlowMSm3PerDay)
+        || !Double.isFinite(actualFlowM3PerHour) || !Double.isFinite(surgeFlowM3PerHour)
+        || !Double.isFinite(surgeControlFactor) || !Double.isFinite(relaxationFactor)) {
+      return currentRecycleFlowMSm3PerDay;
+    }
+
+    double relaxation = Math.max(0.0, Math.min(1.0, relaxationFactor));
+    double gain = Math.max(0.0, surgeControlFactor);
+
+    double distanceToSurge = 0.0;
+    if (surgeFlowM3PerHour > 1.0e-9) {
+      distanceToSurge = actualFlowM3PerHour / surgeFlowM3PerHour - 1.0;
+    }
+
+    double projectedRecycle = currentRecycleFlowMSm3PerDay - inletFlowMSm3PerDay * distanceToSurge
+        * 0.5 * Math.max(0.1, gain);
+
+    double flowInAntiSurge = relaxation * projectedRecycle
+        + (1.0 - relaxation) * currentRecycleFlowMSm3PerDay;
+
+    double inletCapacity = Math.max(1e-6, inletFlowMSm3PerDay);
+    if (flowInAntiSurge > inletCapacity) {
+      flowInAntiSurge = inletCapacity * 0.99;
     }
     if (flowInAntiSurge < 1e-6) {
       flowInAntiSurge = 1e-6;
     }
 
-    anitSurgeSplitter.setFlowRates(new double[] {-1, flowInAntiSurge}, "MSm3/day");
-    anitSurgeSplitter.run();
-    anitSurgeSplitter.setCalculationIdentifier(id);
+    return flowInAntiSurge;
   }
 
   /** {@inheritDoc} */
