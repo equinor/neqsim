@@ -80,15 +80,15 @@ public class Calculator extends ProcessEquipmentBaseClass {
       return;
     }
 
-    double oldFFlow = antiSurgeSplitter.getSplitStream(1).getFlowRate("Sm3/hr");
     double flowAntiSurge = antiSurgeSplitter.getSplitStream(1).getFlowRate("Sm3/hr")
         + (compressor.getSurgeFlowRateStd() - compressor.getInletStream().getFlowRate("Sm3/hr"));
     flowAntiSurge = Math.max(0.0, flowAntiSurge);
 
     antiSurgeSplitter.setFlowRates(
-        new double[] { -1, flowAntiSurge + compressor.getInletStream().getFlowRate("Sm3/hr") / 1e12 }, "Sm3/hr");
+        new double[] { -1, flowAntiSurge + compressor.getInletStream().getFlowRate("Sm3/hr") / 1e6 }, "Sm3/hr");
+    // antiSurgeSplitter.run();
     antiSurgeSplitter.getSplitStream(1)
-        .setFlowRate(flowAntiSurge + compressor.getInletStream().getFlowRate("Sm3/hr") / 1e12, "Sm3/hr");
+        .setFlowRate(flowAntiSurge + compressor.getInletStream().getFlowRate("Sm3/hr") / 1e6, "Sm3/hr");
     antiSurgeSplitter.getSplitStream(1).run();
     antiSurgeSplitter.setCalculationIdentifier(id);
   }
