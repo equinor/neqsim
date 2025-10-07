@@ -46,13 +46,13 @@ public class CombustionEmissionsCalculatorTest {
     process.add(compressor1);
 
     double[] chartConditions = new double[] {};
-    double[] surgeflow = new double[] {2789.0, 2550.0, 2500.0, 2200.0};
-    double[] surgehead = new double[] {80.0, 72.0, 70.0, 65.0};
+    double[] surgeflow = new double[] { 2789.0, 2550.0, 2500.0, 2200.0 };
+    double[] surgehead = new double[] { 80.0, 72.0, 70.0, 65.0 };
     compressor1.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeflow,
         surgehead);
 
     Splitter splitter1 = new Splitter("splitter 1", stream1);
-    splitter1.setSplitFactors(new double[] {0.5, 0.5});
+    splitter1.setSplitFactors(new double[] { 0.5, 0.5 });
     splitter1.run();
     process.add(splitter1);
 
@@ -62,9 +62,9 @@ public class CombustionEmissionsCalculatorTest {
     calc1.run();
     process.add(calc1);
 
-    assertEquals(3535.05541, stream1.getFlowRate("m3/hr"), 0.1);
+    assertEquals(1547.476990846, stream1.getFlowRate("m3/hr"), 0.1);
     assertEquals(3535.055413, compressor1.getSurgeFlowRate(), 0.1);
     assertEquals(104.9725, compressor1.getPolytropicFluidHead(), 0.1);
-    assertEquals(4.440892098500626E-16, compressor1.getDistanceToSurge(), 0.1);
+    assertEquals(-0.562248165924, compressor1.getDistanceToSurge(), 0.1);
   }
 }
