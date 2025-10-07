@@ -45,6 +45,8 @@ public interface CompressorInterface extends ProcessEquipmentInterface, TwoPortI
    */
   public void setIsentropicEfficiency(double isentropicEfficiency);
 
+  public double getSurgeFlowRateStd();
+
   /**
    * <p>
    * getPolytropicEfficiency.
