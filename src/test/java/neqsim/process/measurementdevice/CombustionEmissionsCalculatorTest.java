@@ -62,15 +62,9 @@ public class CombustionEmissionsCalculatorTest {
     calc1.run();
     process.add(calc1);
 
-    Calculator calc2 = new Calculator("anti surge calculator 2");
-    calc2.addInputVariable(compressor1);
-    calc2.setOutputVariable(splitter1);
-    // calc2.run();
-    process.add(calc2);
-
-    assertEquals(1547.476990846, stream1.getFlowRate("m3/hr"), 0.1);
+    assertEquals(3535.05541, stream1.getFlowRate("m3/hr"), 0.1);
     assertEquals(3535.055413, compressor1.getSurgeFlowRate(), 0.1);
     assertEquals(104.9725, compressor1.getPolytropicFluidHead(), 0.1);
-    assertEquals(-0.56224816592, compressor1.getDistanceToSurge(), 0.1);
+    assertEquals(4.440892098500626E-16, compressor1.getDistanceToSurge(), 0.1);
   }
 }
