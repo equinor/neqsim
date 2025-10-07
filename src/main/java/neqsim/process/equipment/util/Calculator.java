@@ -43,8 +43,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
    * addInputVariable.
    * </p>
    *
-   * @param unit a {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *             object
+   * @param unit a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public void addInputVariable(ProcessEquipmentInterface unit) {
     inputVariable.add(unit);
@@ -73,22 +72,19 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
     Splitter antiSurgeSplitter = (Splitter) outputVariable;
 
-    double inletFlow = compressor.getInletStream().getFlowRate("MSm3/day");
+    double inletFlow = compressor.getInletStream().getFlowRate("Sm3/hr");
     double currentRecycleFlow = antiSurgeSplitter.getSplitStream(1).getFlowRate("MSm3/day");
     if (!Double.isFinite(inletFlow) || !Double.isFinite(currentRecycleFlow)) {
       logger.warn("Invalid flow rate detected during anti-surge calculation");
       return;
     }
 
-    double flowAntiSurge = antiSurgeSplitter.getSplitStream(1).getFlowRate("Sm3/hr")
-        + (compressor.getSurgeFlowRateStd() - compressor.getInletStream().getFlowRate("Sm3/hr"));
-    flowAntiSurge = Math.max(compressor.getInletStream().getFlowRate("Sm3/hr") / 1e6, flowAntiSurge);
-
-    antiSurgeSplitter.setFlowRates(
-        new double[] { -1, flowAntiSurge }, "Sm3/hr");
-    antiSurgeSplitter.run();
-    antiSurgeSplitter.getSplitStream(1)
-        .setFlowRate(flowAntiSurge, "Sm3/hr");
+    double flowAntiSurge = antiSurgeSplitter.getSplitStream(1).getFlowRate("Sm3/hr") + 0.5
+        * (compressor.getSurgeFlowRateStd() - compressor.getInletStream().getFlowRate("Sm3/hr"));
+    flowAntiSurge =
+        Math.max(flowAntiSurge, compressor.getInletStream().getFlowRate("Sm3/hr") / 1e6);
+    antiSurgeSplitter.setFlowRates(new double[] {-1, flowAntiSurge}, "Sm3/hr");
+    antiSurgeSplitter.getSplitStream(1).setFlowRate(flowAntiSurge, "Sm3/hr");
     antiSurgeSplitter.getSplitStream(1).run();
     antiSurgeSplitter.setCalculationIdentifier(id);
   }
@@ -133,9 +129,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
    * Setter for the field <code>outputVariable</code>.
    * </p>
    *
-   * @param outputVariable a
-   *                       {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *                       object
+   * @param outputVariable a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public void setOutputVariable(ProcessEquipmentInterface outputVariable) {
     this.outputVariable = outputVariable;
