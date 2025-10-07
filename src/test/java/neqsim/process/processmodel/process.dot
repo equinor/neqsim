@@ -3,4 +3,5 @@ digraph process {
   "throttlingValve_1";
   "separator_1";
   "stream_1" -> "throttlingValve_1" [label="stream_1"];
+  "throttlingValve_1" -> "separator_1" [label="throttlingValve_1 out stream"];
 }

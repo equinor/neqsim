@@ -72,24 +72,20 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
     Splitter antiSurgeSplitter = (Splitter) outputVariable;
 
-    double inletFlow = compressor.getInletStream().getFlowRate("MSm3/day");
+    double inletFlow = compressor.getInletStream().getFlowRate("Sm3/hr");
     double currentRecycleFlow = antiSurgeSplitter.getSplitStream(1).getFlowRate("MSm3/day");
     if (!Double.isFinite(inletFlow) || !Double.isFinite(currentRecycleFlow)) {
       logger.warn("Invalid flow rate detected during anti-surge calculation");
       return;
     }
 
-    double oldFFlow = antiSurgeSplitter.getSplitStream(1).getFlowRate("Sm3/hr");
-    double flowAntiSurge = antiSurgeSplitter.getSplitStream(1).getFlowRate("Sm3/hr")
-        + (compressor.getSurgeFlowRateStd() - compressor.getInletStream().getFlowRate("Sm3/hr"));
-    flowAntiSurge = Math.max(0.0, flowAntiSurge);
-
-    antiSurgeSplitter.getInletStream().setFlowRate(
-        compressor.getInletStream().getFlowRate("Sm3/hr") + (flowAntiSurge - oldFFlow), "Sm3/hr");
-    antiSurgeSplitter.getInletStream().run();
-
+    double flowAntiSurge = antiSurgeSplitter.getSplitStream(1).getFlowRate("Sm3/hr") + 0.5
+        * (compressor.getSurgeFlowRateStd() - compressor.getInletStream().getFlowRate("Sm3/hr"));
+    flowAntiSurge =
+        Math.max(flowAntiSurge, compressor.getInletStream().getFlowRate("Sm3/hr") / 1e6);
     antiSurgeSplitter.setFlowRates(new double[] {-1, flowAntiSurge}, "Sm3/hr");
-    antiSurgeSplitter.run();
+    antiSurgeSplitter.getSplitStream(1).setFlowRate(flowAntiSurge, "Sm3/hr");
+    antiSurgeSplitter.getSplitStream(1).run();
     antiSurgeSplitter.setCalculationIdentifier(id);
   }
 
