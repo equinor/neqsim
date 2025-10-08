@@ -356,14 +356,14 @@ public class GibbsReactorTest {
 
     SystemInterface system = new SystemSrkEos(298, 1.0);
     system.addComponent("CO2", 1e6, "mole/sec");
-    system.addComponent("SO2", 10, "mole/sec");
+    system.addComponent("SO2", 15, "mole/sec");
     system.addComponent("SO3", 0, "mole/sec");
-    system.addComponent("NO2", 3, "mole/sec");
+    system.addComponent("NO2", 10, "mole/sec");
     system.addComponent("NO", 0, "mole/sec");
-    system.addComponent("water", 10, "mole/sec");
+    system.addComponent("water", 50, "mole/sec");
     system.addComponent("ammonia", 0, "mole/sec");
-    system.addComponent("H2S", 30, "mole/sec");
-    system.addComponent("oxygen", 10.0, "mole/sec");
+    system.addComponent("H2S", 10, "mole/sec");
+    system.addComponent("oxygen", 30.0, "mole/sec");
     system.addComponent("sulfuric acid", 0.0, "mole/sec");
     system.addComponent("nitric acid", 0, "mole/sec");
     system.addComponent("S8", 0, "mole/sec");
@@ -372,18 +372,19 @@ public class GibbsReactorTest {
     system.setMixingRule(2);
 
     Stream inletStream = new Stream("Inlet Stream", system);
-    inletStream.setPressure(20, "bara");
-    inletStream.setTemperature(-25, "C");
+    inletStream.setPressure(100, "bara");
+    inletStream.setTemperature(0, "C");
     inletStream.run();
 
 
     GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
     reactor.setUseAllDatabaseSpecies(false);
-    reactor.setDampingComposition(0.05);
-    reactor.setMaxIterations(5000);
+    reactor.setDampingComposition(0.00005);
+    reactor.setMaxIterations(100000);
     reactor.setConvergenceTolerance(1e-3);
     reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
-    // reactor.addBlockedReaction("SO2 + 0.5O2 + H2O -> H2SO4", 1e6);
+    reactor.addBlockedReaction("SO2 + 0.5O2 + H2O -> H2SO4", 1E6);
+    reactor.addBlockedReaction("SO2 + 0.5O2 -> SO3", 1E8);
     reactor.run();
 
     SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
