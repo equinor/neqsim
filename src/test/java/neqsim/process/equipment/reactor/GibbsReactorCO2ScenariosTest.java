@@ -199,13 +199,28 @@ public class GibbsReactorCO2ScenariosTest {
     runAndPrintWithAssertions(sys, "8", expectedNames, expectedPpm);
   }
 
+
+  // Scenario 9
+  @Test
+  public void scenario9() {
+    SystemSrkEos sys = createBaseSystem(25 + 273.15, 100.0);
+    sys.addComponent("water", 100.0);
+    sys.addComponent("SO2", 0.0);
+    sys.addComponent("NO2", 100.0);
+    sys.addComponent("oxygen", 300.0);
+    double[] expectedPpm = new double[] {48.6, 1.0, 7.3, 30.0, 0.0, 0.0, 0.82, 1.9};
+    String[] expectedNames =
+        new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2"};
+    runAndPrintWithAssertions(sys, "2", expectedNames, expectedPpm);
+  }
+
   /**
    * Run reactor and assert selected component ppm values against expected with tolerance.
    */
   private void runAndPrintWithAssertions(SystemInterface system, String label, String[] names,
       double[] expectedPpm) {
     SystemInterface outSys = runReactor(system);
-    // printComposition(outSys, label);
+    printComposition(outSys, label);
     assertSelectedPpm(outSys, names, expectedPpm, 0.5, label);
   }
 }
