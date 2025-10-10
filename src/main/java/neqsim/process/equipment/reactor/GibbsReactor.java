@@ -225,7 +225,7 @@ public class GibbsReactor extends TwoPortEquipment {
     ISOTHERMAL, ADIABATIC
   }
 
-  private EnergyMode energyMode = EnergyMode.ADIABATIC;
+  private EnergyMode energyMode = EnergyMode.ISOTHERMAL;
 
   /**
    * Set the energy mode of the reactor (isothermal or adiabatic).
@@ -351,8 +351,8 @@ public class GibbsReactor extends TwoPortEquipment {
 
   // Newton-Raphson iteration control
   private int maxIterations = 5000;
-  private double convergenceTolerance = 1e-6;
-  private double dampingComposition = 0.001; // Default damping factor for composition updates
+  private double convergenceTolerance = 1e-3;
+  private double dampingComposition = 0.05; // Default damping factor for composition updates
   private int actualIterations = 0;
   private boolean converged = false;
   private double finalConvergenceError = 0.0;
