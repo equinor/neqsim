@@ -24,6 +24,8 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
 
   /**
    * Set a default list of components as inert on the provided GibbsReactor.
+   *
+   * @param reactor the GibbsReactor instance to configure
    */
   private void setDefaultInertComponents(GibbsReactor reactor) {
     if (reactor == null) {
