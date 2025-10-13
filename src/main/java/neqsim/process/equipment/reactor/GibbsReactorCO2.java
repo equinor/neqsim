@@ -22,6 +22,24 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
     super(name, inlet);
   }
 
+  /**
+   * Set a default list of components as inert on the provided GibbsReactor.
+   */
+  private void setDefaultInertComponents(GibbsReactor reactor) {
+    if (reactor == null) {
+      return;
+    }
+    reactor.setComponentAsInert("CO");
+    reactor.setComponentAsInert("COS");
+    reactor.setComponentAsInert("CO2");
+    reactor.setComponentAsInert("ammonia");
+    reactor.setComponentAsInert("hydrogen");
+    reactor.setComponentAsInert("N2O3");
+    reactor.setComponentAsInert("N2O");
+    reactor.setComponentAsInert("nitrogen");
+    reactor.setComponentAsInert("N2H4");
+  }
+
   @Override
   public void run(UUID id) {
     StreamInterface inlet = getInletStream();
@@ -35,9 +53,9 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
     reactor.setMaxIterations(15000);
     reactor.setConvergenceTolerance(1e-3);
     reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
-    // Always mark CO and COS as inert for these reactor runs
-    reactor.setComponentAsInert("CO");
-    reactor.setComponentAsInert("COS");
+    // Apply default inert component list
+    setDefaultInertComponents(reactor);
+
 
     SystemInterface outletSystem2 = null;
 
@@ -49,14 +67,17 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
       try {
         no2ppm = inlet.getThermoSystem().getComponent("NO2").getz() * 1e6;
       } catch (Exception ignored) {
+        // ignored
       }
       try {
         h2sppm = inlet.getThermoSystem().getComponent("H2S").getz() * 1e6;
       } catch (Exception ignored) {
+        // ignored
       }
       try {
         oxyppm = inlet.getThermoSystem().getComponent("oxygen").getz() * 1e6;
       } catch (Exception ignored) {
+        // ignored
       }
 
       if (no2ppm > 0.01 && h2sppm > 0.01) {
@@ -70,12 +91,12 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
           H2Sreactor.setMaxIterations(15000);
           H2Sreactor.setConvergenceTolerance(1e-3);
           H2Sreactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
-          // set CO and COS inert
-          H2Sreactor.setComponentAsInert("CO");
-          H2Sreactor.setComponentAsInert("COS");
+          // apply default inert list then add H2S-specific inerts
+          setDefaultInertComponents(H2Sreactor);
           H2Sreactor.setComponentAsInert("sulfuric acid");
           H2Sreactor.setComponentAsInert("NH4HSO4");
           H2Sreactor.setComponentAsInert("SO3");
+
           if (no2ppm < 0.01) {
             H2Sreactor.setComponentAsInert("SO2");
           }
@@ -83,6 +104,7 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
           try {
             so2ppm = inlet.getThermoSystem().getComponent("SO2").getz() * 1e6;
           } catch (Exception ignored) {
+            // ignored
           }
           if (so2ppm > 0.01) {
             H2Sreactor.setComponentAsInert("H2S");
@@ -95,9 +117,8 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
           SO2reactor.setMaxIterations(15000);
           SO2reactor.setConvergenceTolerance(1e-3);
           SO2reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
-          // set CO and COS inert
-          SO2reactor.setComponentAsInert("CO");
-          SO2reactor.setComponentAsInert("COS");
+          // apply default inert list then adjust based on outlet oxygen
+          setDefaultInertComponents(SO2reactor);
           try {
             double outOxy =
                 H2Sreactor.getOutletStream().getThermoSystem().getComponent("oxygen").getz();

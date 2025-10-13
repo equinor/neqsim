@@ -8,8 +8,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Scenario tests (exercise only) for GibbsReactorCO2 using the tables provided in the attachments.
- * These tests run the reactor and print outlet mole-fractions (ppm) for manual verification. They
- * assert basic sanity (outlet present and components exist).
+ * These tests run the reactor and print outlet mole-fractions (ppm) for manual verification. T
  */
 public class GibbsReactorCO2ScenariosTest {
 
@@ -67,16 +66,18 @@ public class GibbsReactorCO2ScenariosTest {
 
   /**
    * Create a base SystemSrkEos with CO2 = 1e6 moles/sec and other components initialized to 0.
-   * Temperature in K and pressure in bara.
+   * Temperature in K and pressure in bara."hydrogen", "N2O3", "N2O", "nitrogen", "N2H4", "COS",
+   * "ammonia",
    */
   private SystemSrkEos createBaseSystem(double temperatureK, double pressureBara) {
     SystemSrkEos sys = new SystemSrkEos(temperatureK, pressureBara);
     // CO2 must be 1e6 moles/sec in all cases
     sys.addComponent("CO2", 1e6, "mole/sec");
     // Initialize other common components to 0 explicitly
-    String[] comps = new String[] {"SO2", "SO3", "NO2", "NO", "water", "H2S", "oxygen",
-        "sulfuric acid", "nitric acid", "NH4NO3", "NH4HSO4", "formic acid", "acetic acid",
-        "methanol", "ethanol", "CO", "NH2OH", "S8", "HNO2"};
+    String[] comps = new String[] {"hydrogen", "N2O3", "N2O", "nitrogen", "N2H4", "COS", "ammonia",
+        "SO2", "SO3", "NO2", "NO", "water", "H2S", "oxygen", "sulfuric acid", "nitric acid",
+        "NH4NO3", "NH4HSO4", "formic acid", "acetic acid", "methanol", "ethanol", "CO", "NH2OH",
+        "S8", "HNO2"};
     for (String c : comps) {
       try {
         sys.addComponent(c, 0.0, "mole/sec");
@@ -181,9 +182,9 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("oxygen", 10.0);
     sys.addComponent("H2S", 10.0);
     double[] expectedPpm =
-        new double[] {13.7, 16.4, 0.0, 0.0, 0.0, 0.0, 8.55, 0.0, 2.16, 1.44, 0.0};
+        new double[] {13.7, 16.4, 0.0, 0.0, 0.0, 8.55, 0.0, 0.0, 2.16, 1.44, 0.0, 0.0};
     String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO",
-        "nitric acid", "HNO2", "sulfuric acid", "NH4HSO4", "NH4NO3"};
+        "nitric acid", "HNO2", "sulfuric acid", "NH4HSO4", "NH4NO3", "S8"};
     runAndPrintWithAssertions(sys, "7", expectedNames, expectedPpm);
   }
 
@@ -208,10 +209,25 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("SO2", 0.0);
     sys.addComponent("NO2", 100.0);
     sys.addComponent("oxygen", 300.0);
-    double[] expectedPpm = new double[] {48.6, 1.0, 7.3, 30.0, 0.0, 0.0, 0.82, 1.9};
+    double[] expectedPpm = new double[] {89.5, 0.0, 79.1, 295.6, 0.0, 0.0, 18.7, 2.09};
     String[] expectedNames =
         new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2"};
     runAndPrintWithAssertions(sys, "2", expectedNames, expectedPpm);
+  }
+
+  // Scenario 10
+  @Test
+  public void scenario10() {
+    SystemSrkEos sys = createBaseSystem(273, 100.0);
+    sys.addComponent("water", 29.0);
+    sys.addComponent("SO2", 10.0);
+    sys.addComponent("NO2", 1.5);
+    sys.addComponent("oxygen", 10.0);
+    sys.addComponent("H2S", 9.9);
+    double[] expectedPpm = new double[] {35, 15, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 0.0, 0.4};
+    String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO",
+        "nitric acid", "HNO2", "sulfuric acid", "NH4HSO4", "NH4NO3", "S8"};
+    runAndPrintWithAssertions(sys, "10", expectedNames, expectedPpm);
   }
 
   /**
@@ -220,7 +236,7 @@ public class GibbsReactorCO2ScenariosTest {
   private void runAndPrintWithAssertions(SystemInterface system, String label, String[] names,
       double[] expectedPpm) {
     SystemInterface outSys = runReactor(system);
-    printComposition(outSys, label);
+    // printComposition(outSys, label);
     assertSelectedPpm(outSys, names, expectedPpm, 0.5, label);
   }
 }
