@@ -45,10 +45,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    */
   public void initializeTransientCalculation() {
     try {
-      liquidVolume =
-          Math.PI * internalDiameter * internalDiameter / 4.0 * separatorLength * liquidLevel;
-      gasVolume = Math.PI * internalDiameter * internalDiameter / 4.0 * separatorLength
-          * (1.0 - liquidLevel);
+      liquidVolume = calcLiquidVolume();
+      gasVolume = separatorVolume - liquidVolume;
+
       thermoSystem = thermoSystem2.clone();
       thermoSystem.init(1);
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
@@ -75,15 +74,13 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       thermoSystem.init(3);
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-        liquidLevel = thermoSystem.getPhase(1).getVolume("m3") / (liquidVolume + gasVolume);
-        liquidVolume = getLiquidLevel() * 3.14 / 4.0 * getInternalDiameter() * getInternalDiameter()
-            * getSeparatorLength();
+        liquidLevel = levelFromVolume(thermoSystem.getPhase(1).getVolume("m3"));
+        liquidVolume = calcLiquidVolume();
       } else {
         liquidLevel = 0.0;
         liquidVolume = 0.0;
       }
-      gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
-          * getInternalDiameter() * getSeparatorLength();
+      gasVolume = separatorVolume - liquidVolume;
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -119,13 +116,20 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   private double separatorLength = 5.0;
   /** Inner diameter/height of separator volume. */
   private double internalDiameter = 1.0;
+  private double internalRadius = internalDiameter / 2;
 
   /** LiquidLevel as volume fraction of liquidvolume/(liquid + gas volume). */
   private double liquidLevel = 0.5;
-  double liquidVolume =
-      Math.PI * internalDiameter * internalDiameter / 4.0 * separatorLength * liquidLevel;
-  double gasVolume =
-      Math.PI * internalDiameter * internalDiameter / 4.0 * separatorLength * (1.0 - liquidLevel);
+
+  /** Separator cross sectional area. */
+  private double sepCrossArea = Math.PI * internalDiameter * internalDiameter / 4.0;
+
+  /** Separator volume. */
+  private double separatorVolume = sepCrossArea * separatorLength;
+
+  double liquidVolume = calcLiquidVolume();
+  double gasVolume = separatorVolume - liquidVolume;
+
   private double designLiquidLevelFraction = 0.8;
   ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
 
@@ -404,12 +408,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         if (thermoSystem.hasPhaseType("aqueous")) {
           volumeLoc += thermoSystem.getPhase("aqueous").getVolume("m3");
         }
-        liquidLevel = volumeLoc / (liquidVolume + gasVolume);
+        liquidLevel = levelFromVolume(volumeLoc);
       }
-      liquidVolume = getLiquidLevel() * 3.14 / 4.0 * getInternalDiameter() * getInternalDiameter()
-          * getSeparatorLength();
-      gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
-          * getInternalDiameter() * getSeparatorLength();
+      liquidVolume = calcLiquidVolume();
+      gasVolume = separatorVolume - liquidVolume;
       // System.out.println("gas volume " + gasVolume + " liq volime " +
       // liquidVolume);
       setCalculationIdentifier(id);
@@ -567,6 +569,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   @Override
   public void setInternalDiameter(double diameter) {
     this.internalDiameter = diameter;
+    this.internalRadius = diameter / 2;
   }
 
   /**
@@ -577,9 +580,16 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * @return a double
    */
   public double getGasSuperficialVelocity() {
-    return thermoSystem.getPhase(0).getFlowRate("m3/sec")
-        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * getInternalDiameter()
-            * getInternalDiameter() / 4.0);
+
+    if (orientation.equals("horizontal")) {
+      return thermoSystem.getPhase(0).getFlowRate("m3/sec")
+          / (sepCrossArea - liquidArea(liquidLevel));
+    } else if (orientation.equals("vertical")) {
+      return thermoSystem.getPhase(0).getFlowRate("m3/sec") / sepCrossArea;
+    } else {
+      return 0;
+    }
+
   }
 
   /**
@@ -608,7 +618,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public double getGasLoadFactor(int phaseNumber) {
     double gasAreaFraction = 1.0;
     if (orientation.equals("horizontal")) {
-      gasAreaFraction = 1.0 - (liquidVolume / (liquidVolume + gasVolume));
+      gasAreaFraction = 1.0 - (liquidVolume / separatorVolume);
     }
     thermoSystem.initPhysicalProperties();
     double term1 = 1.0 / gasAreaFraction
@@ -686,11 +696,153 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /**
    * <p>
+   * Calculates both gas and liquid fluid section areas for horizontal separators. Results can be
+   * used for volume calculation, gas superficial velocity, and settling time.
+   * </p>
+   *
+   * @return separator liquid area.
+   */
+  public double liquidArea(double level) {
+
+    double lArea = 0;
+
+    if (orientation.equals("horizontal")) {
+
+      if (level < internalRadius) {
+
+        double d = internalRadius - level;
+        double theta = Math.acos(d / internalRadius);
+        double a = internalRadius * Math.sin(theta);
+        double triArea = 2 * a * d;
+        double circArea = 2 * theta * Math.pow(internalRadius, 2);
+        lArea = circArea - triArea;
+
+      } else if (level > internalRadius) {
+
+        double d = level - internalRadius;
+        double theta = Math.acos(d / internalRadius);
+        double a = internalRadius * Math.sin(theta);
+        double triArea = 2 * a * d;
+        double circArea = (Math.PI - 2 * theta) * Math.pow(internalRadius, 2);
+        lArea = circArea + triArea;
+
+
+      } else {
+        lArea = 0.5 * Math.PI * Math.pow(internalRadius, 2);
+
+      }
+    } else if (orientation.equals("vertical")) {
+
+      lArea = sepCrossArea;
+    } else {
+      lArea = 0;
+    }
+
+
+    return lArea;
+  }
+
+  /**
+   * <p>
+   * calculates liquid volume based on separator type.
+   * </p>
+   *
+   * @return liquid level in the separator
+   */
+  public double calcLiquidVolume() {
+
+    double lVolume = 0.0;
+
+    if (orientation.equals("horizontal")) {
+
+      lVolume = liquidArea(liquidLevel) * separatorLength;
+
+    } else if (orientation.equals("vertical")) {
+
+      lVolume = sepCrossArea * liquidLevel;
+
+    } else {
+
+      lVolume = 0;
+
+    }
+    return lVolume;
+  }
+
+  /**
+   * <p>
+   * Estimates liquid level based on volume for horizontal separators using bisection method.
+   * Vertical separators too. tol and maxIter are bisection loop parameters.
+   * </p>
+   *
+   * @return liquid level in the separator
+   */
+  public double levelFromVolume(double volumeTarget) {
+
+
+    double tol = 1e-4;
+    int maxIter = 100;
+
+    double areaTarget = volumeTarget / separatorLength;
+    double a = 0.0;
+    double b = internalDiameter;
+
+    if (orientation.equals("horizontal")) {
+
+      double fa = liquidArea(a) - areaTarget;
+      double fb = liquidArea(b) - areaTarget;
+
+      if (Math.abs(fa) < tol) {
+        return a;
+      }
+
+      if (Math.abs(fb) < tol) {
+        return b;
+      }
+
+      if (fa * fb > 0) {
+        throw new IllegalArgumentException("No root in interval — check volumeTarget");
+      }
+
+      double h = 0.0;
+
+      for (int i = 0; i < maxIter; i++) {
+        h = 0.5 * (a + b);
+        double fh = liquidArea(h) - areaTarget;
+
+        if (Math.abs(fh) < tol) {
+          return h;
+        }
+
+        if (fa * fh < 0) {
+          b = h;
+          fb = fh;
+        } else {
+          a = h;
+          fa = fh;
+        }
+      }
+
+      return 0.5 * (a + b);
+    } else if (orientation.equals("vertical")) {
+
+      return volumeTarget / sepCrossArea;
+
+    } else {
+
+      return 0;
+
+    }
+  }
+
+  /**
+   * <p>
    * Getter for the field <code>separatorLength</code>.
    * </p>
    *
    * @return the separatorLength
    */
+
   public double getSeparatorLength() {
     return separatorLength;
   }
