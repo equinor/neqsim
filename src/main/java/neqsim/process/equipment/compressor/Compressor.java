@@ -327,10 +327,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
       setPower(energyStream.getDuty());
     }
 
-    if (useEnergyEfficiencyChart()) {
-      double flow = getInletStream().getFlowRate("m3/hr");
-      polytropicEfficiency = getCompressorChart().getPolytropicEfficiency(flow, getSpeed()) / 100.0;
-    }
+
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
     thermoOps = new ThermodynamicOperations(getThermoSystem());
@@ -340,6 +337,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     double hinn = getThermoSystem().getEnthalpy();
     double densInn = getThermoSystem().getDensity();
     double entropy = getThermoSystem().getEntropy();
+
+    if (useEnergyEfficiencyChart()) {
+      double flow = getThermoSystem().getFlowRate("m3/hr");
+      polytropicEfficiency = getCompressorChart().getPolytropicEfficiency(flow, getSpeed()) / 100.0;
+    }
 
     if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
       double[] gergProps;
