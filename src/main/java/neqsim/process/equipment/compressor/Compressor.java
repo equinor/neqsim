@@ -72,6 +72,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   private boolean useLeachman = false;
   private boolean useVega = false;
   private boolean limitSpeed = false;
+  private boolean useEnergyEfficiencyChart = false;
 
   CompressorMechanicalDesign mechanicalDesign;
 
@@ -326,6 +327,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
       setPower(energyStream.getDuty());
     }
 
+
+
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
     thermoOps = new ThermodynamicOperations(getThermoSystem());
     getThermoSystem().init(3);
@@ -334,6 +337,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     double hinn = getThermoSystem().getEnthalpy();
     double densInn = getThermoSystem().getDensity();
     double entropy = getThermoSystem().getEntropy();
+
+    if (useEnergyEfficiencyChart()) {
+      double flow = getThermoSystem().getFlowRate("m3/hr");
+      polytropicEfficiency = getCompressorChart().getPolytropicEfficiency(flow, getSpeed()) / 100.0;
+    }
 
     if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
       double[] gergProps;
@@ -1018,6 +1026,14 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
     polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
     actualCompressionRatio = getOutletPressure() / presinn;
     setCalculationIdentifier(id);
+  }
+
+  private boolean useEnergyEfficiencyChart() {
+    return useEnergyEfficiencyChart;
+  }
+
+  public void setUseEnergyEfficiencyChart(boolean useEnergyEfficiencyChart) {
+    this.useEnergyEfficiencyChart = useEnergyEfficiencyChart;
   }
 
   /** {@inheritDoc} */
