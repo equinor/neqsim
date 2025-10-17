@@ -119,7 +119,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   private double internalRadius = internalDiameter / 2;
 
   /** LiquidLevel as volume fraction of liquidvolume/(liquid + gas volume). */
-  private double liquidLevel = 0.5;
+  private double liquidLevel = 0.05;
 
   /** Separator cross sectional area. */
   private double sepCrossArea = Math.PI * internalDiameter * internalDiameter / 4.0;
@@ -127,8 +127,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /** Separator volume. */
   private double separatorVolume = sepCrossArea * separatorLength;
 
-  double liquidVolume = calcLiquidVolume();
-  double gasVolume = separatorVolume - liquidVolume;
+  double liquidVolume;
+  double gasVolume;
 
   private double designLiquidLevelFraction = 0.8;
   ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
@@ -145,6 +145,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    */
   public Separator(String name) {
     super(name);
+    liquidVolume = calcLiquidVolume();
+    gasVolume = separatorVolume - liquidVolume;
     setCalculateSteadyState(true);
   }
 
@@ -412,8 +414,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       }
       liquidVolume = calcLiquidVolume();
       gasVolume = separatorVolume - liquidVolume;
-      // System.out.println("gas volume " + gasVolume + " liq volime " +
-      // liquidVolume);
+
+      // System.out.printf("vol original: %.2f mine %f \n", liquidVolume, liqVol);
       setCalculationIdentifier(id);
     }
   }
@@ -518,18 +520,20 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /** {@inheritDoc} */
   @Override
   public void setLiquidLevel(double liquidlev) {
-    liquidLevel = liquidlev;
+    // edited to reflect level in meters instead of percentage
+    liquidLevel = liquidlev * internalDiameter;
   }
 
   /**
    * <p>
-   * Getter for the field <code>liquidLevel</code>.
+   * Getter for the field <code>liquidLevel</code> in percentage.
    * </p>
    *
    * @return a double
    */
   public double getLiquidLevel() {
-    return liquidLevel;
+
+    return liquidLevel / internalDiameter;
   }
 
   /**
@@ -570,6 +574,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public void setInternalDiameter(double diameter) {
     this.internalDiameter = diameter;
     this.internalRadius = diameter / 2;
+    this.sepCrossArea = Math.PI * internalDiameter * internalDiameter / 4.0;
+    this.separatorVolume = sepCrossArea * separatorLength;
   }
 
   /**
@@ -705,7 +711,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public double liquidArea(double level) {
 
     double lArea = 0;
-
+    if (level <= 0) {
+      return 0;
+    }
     if (orientation.equals("horizontal")) {
 
       if (level < internalRadius) {
@@ -716,6 +724,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         double triArea = 2 * a * d;
         double circArea = 2 * theta * Math.pow(internalRadius, 2);
         lArea = circArea - triArea;
+        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n", internalRadius, d,
+        // theta, a, lArea);
 
       } else if (level > internalRadius) {
 
@@ -725,7 +735,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         double triArea = 2 * a * d;
         double circArea = (Math.PI - 2 * theta) * Math.pow(internalRadius, 2);
         lArea = circArea + triArea;
-
+        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n", internalRadius, d,
+        // theta, a, lArea);
 
       } else {
         lArea = 0.5 * Math.PI * Math.pow(internalRadius, 2);
@@ -756,6 +767,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     if (orientation.equals("horizontal")) {
 
       lVolume = liquidArea(liquidLevel) * separatorLength;
+      // System.out.printf("from function: LVL %f Area %f\n", liquidLevel,
+      // liquidArea(liquidLevel));
 
     } else if (orientation.equals("vertical")) {
 
@@ -766,6 +779,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       lVolume = 0;
 
     }
+
     return lVolume;
   }
 
@@ -856,6 +870,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    */
   public void setSeparatorLength(double separatorLength) {
     this.separatorLength = separatorLength;
+    this.separatorVolume = sepCrossArea * separatorLength;
   }
 
   /**
