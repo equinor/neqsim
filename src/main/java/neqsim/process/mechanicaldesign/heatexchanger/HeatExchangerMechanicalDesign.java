@@ -173,7 +173,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
       calculatedUA = duty / logMeanTemperatureDifference;
     }
 
-    if (!(calculatedUA > 0.0)) {
+    if (Double.isNaN(calculatedUA) || calculatedUA <= 0.0) {
       calculatedUA = usedOverallHeatTransferCoefficient;
     }
   }
