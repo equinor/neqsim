@@ -67,7 +67,7 @@ public class HeatExchangerMechanicalDesignTest {
     HeatExchangerSizingResult selected = design.getSelectedSizingResult();
     assertNotNull(selected);
     double minArea = design.getSizingResults().stream().mapToDouble(HeatExchangerSizingResult::getRequiredArea)
-        .min().orElseThrow();
+        .min().orElseThrow(() -> new IllegalStateException("No sizing results available"));
     assertEquals(minArea, selected.getRequiredArea(), 1e-6);
 
     // Switch criterion to evaluate another automatic decision
@@ -76,7 +76,8 @@ public class HeatExchangerMechanicalDesignTest {
     design.calcDesign();
     HeatExchangerType minPressureType = design.getSizingResults().stream()
         .min(Comparator.comparingDouble(HeatExchangerSizingResult::getEstimatedPressureDrop))
-        .map(HeatExchangerSizingResult::getType).orElseThrow();
+        .map(HeatExchangerSizingResult::getType)
+        .orElseThrow(() -> new IllegalStateException("No sizing result available"));
     assertEquals(minPressureType, design.getSelectedType());
 
     Optional<HeatExchangerSizingResult> airCooler = design.getSizingResults().stream()
