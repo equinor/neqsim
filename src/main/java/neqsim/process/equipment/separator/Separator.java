@@ -118,8 +118,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   private double internalDiameter = 1.0;
   private double internalRadius = internalDiameter / 2;
 
-  /** LiquidLevel as volume fraction of liquidvolume/(liquid + gas volume). */
-  private double liquidLevel = 0.05;
+  /** Liquid level height in meters (default set to 50% of internal diameter). */
+  private double liquidLevel = 0.5 * internalDiameter;
 
   /** Separator cross sectional area. */
   private double sepCrossArea = Math.PI * internalDiameter * internalDiameter / 4.0;
@@ -522,6 +522,13 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public void setLiquidLevel(double liquidlev) {
     // edited to reflect level in meters instead of percentage
     liquidLevel = liquidlev * internalDiameter;
+    if (liquidLevel < 0.0) {
+      liquidLevel = 0.0;
+    }
+    if (internalDiameter > 0.0 && liquidLevel > internalDiameter) {
+      liquidLevel = internalDiameter;
+    }
+    updateHoldupVolumes();
   }
 
   /**
@@ -572,10 +579,13 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /** {@inheritDoc} */
   @Override
   public void setInternalDiameter(double diameter) {
+    double levelFraction = internalDiameter > 0.0 ? liquidLevel / internalDiameter : 0.0;
     this.internalDiameter = diameter;
     this.internalRadius = diameter / 2;
     this.sepCrossArea = Math.PI * internalDiameter * internalDiameter / 4.0;
     this.separatorVolume = sepCrossArea * separatorLength;
+    this.liquidLevel = Math.max(0.0, Math.min(levelFraction * internalDiameter, internalDiameter));
+    updateHoldupVolumes();
   }
 
   /**
@@ -698,6 +708,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    */
   public void setOrientation(String orientation) {
     this.orientation = orientation;
+    updateHoldupVolumes();
   }
 
   /**
@@ -781,6 +792,14 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     return lVolume;
+  }
+
+  /**
+   * Keeps cached gas/liquid holdup volumes aligned with current geometry and level.
+   */
+  private void updateHoldupVolumes() {
+    liquidVolume = calcLiquidVolume();
+    gasVolume = Math.max(separatorVolume - liquidVolume, 0.0);
   }
 
   /**
@@ -871,6 +890,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public void setSeparatorLength(double separatorLength) {
     this.separatorLength = separatorLength;
     this.separatorVolume = sepCrossArea * separatorLength;
+    updateHoldupVolumes();
   }
 
   /**
