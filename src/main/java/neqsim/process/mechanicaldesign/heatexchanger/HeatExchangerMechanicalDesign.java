@@ -155,7 +155,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
   }
 
   private void finalizeThermalEstimates(double duty) {
-    if (!(approachTemperature >= 0.0)) {
+    if (Double.isNaN(approachTemperature) || approachTemperature < 0.0) {
       approachTemperature = 0.0;
     }
 
