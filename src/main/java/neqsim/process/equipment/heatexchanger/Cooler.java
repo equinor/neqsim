@@ -3,6 +3,7 @@ package neqsim.process.equipment.heatexchanger;
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerMechanicalDesign;
 import neqsim.process.util.monitor.HeaterResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -38,6 +39,18 @@ public class Cooler extends Heater {
    */
   public Cooler(String name, StreamInterface inStream) {
     super(name, inStream);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public HeatExchangerMechanicalDesign getMechanicalDesign() {
+    return super.getMechanicalDesign();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    super.initMechanicalDesign();
   }
 
   /** {@inheritDoc} */

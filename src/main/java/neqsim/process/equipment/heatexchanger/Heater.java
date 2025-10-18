@@ -11,6 +11,7 @@ import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerMechanicalDesign;
 import neqsim.process.util.monitor.HeaterResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -57,6 +58,9 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   protected double lastDuty = 0.0;
   protected double lastPressureDrop = 0.0;
 
+  protected transient HeatExchangerMechanicalDesign mechanicalDesign;
+  private UtilityStreamSpecification utilitySpecification = new UtilityStreamSpecification();
+
   /**
    * Constructor for Heater.
    *
@@ -79,6 +83,87 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     this.inStream = inStream;
     system = inStream.getThermoSystem().clone();
     outStream = new Stream("outStream", system);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public HeatExchangerMechanicalDesign getMechanicalDesign() {
+    if (mechanicalDesign == null) {
+      initMechanicalDesign();
+    }
+    return mechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    mechanicalDesign = new HeatExchangerMechanicalDesign(this);
+  }
+
+  /**
+   * Returns the utility-side specification used by the mechanical design calculation.
+   *
+   * @return the utility specification instance for this heater/cooler
+   */
+  public UtilityStreamSpecification getUtilitySpecification() {
+    return utilitySpecification;
+  }
+
+  /**
+   * Replace the current utility-side specification.
+   *
+   * @param specification new utility specification instance
+   */
+  public void setUtilitySpecification(UtilityStreamSpecification specification) {
+    this.utilitySpecification = specification != null ? specification : new UtilityStreamSpecification();
+  }
+
+  /**
+   * Convenience method to set the utility supply temperature.
+   *
+   * @param temperature utility temperature value
+   * @param unit unit of the provided value (e.g. "K" or "C")
+   */
+  public void setUtilitySupplyTemperature(double temperature, String unit) {
+    utilitySpecification.setSupplyTemperature(temperature, unit);
+  }
+
+  /**
+   * Convenience method to set the utility return temperature.
+   *
+   * @param temperature utility temperature value
+   * @param unit unit of the provided value (e.g. "K" or "C")
+   */
+  public void setUtilityReturnTemperature(double temperature, String unit) {
+    utilitySpecification.setReturnTemperature(temperature, unit);
+  }
+
+  /**
+   * Convenience method to set the minimum approach temperature between process and utility.
+   *
+   * @param approach minimum temperature difference
+   * @param unit unit of the provided value (e.g. "K" or "C")
+   */
+  public void setUtilityApproachTemperature(double approach, String unit) {
+    utilitySpecification.setApproachTemperature(approach, unit);
+  }
+
+  /**
+   * Convenience method to set the assumed utility-side heat capacity rate.
+   *
+   * @param heatCapacityRate utility heat capacity rate in W/K
+   */
+  public void setUtilityHeatCapacityRate(double heatCapacityRate) {
+    utilitySpecification.setHeatCapacityRate(heatCapacityRate);
+  }
+
+  /**
+   * Convenience method to set the assumed overall heat-transfer coefficient for sizing.
+   *
+   * @param u overall heat-transfer coefficient in W/(m^2*K)
+   */
+  public void setUtilityOverallHeatTransferCoefficient(double u) {
+    utilitySpecification.setOverallHeatTransferCoefficient(u);
   }
 
   /** {@inheritDoc} */
