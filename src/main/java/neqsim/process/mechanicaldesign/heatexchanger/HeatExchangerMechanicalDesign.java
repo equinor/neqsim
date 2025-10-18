@@ -192,7 +192,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
       if (!(uaForType > 0.0) && duty > 0.0) {
         uaForType = duty / Math.max(typeApproach, 1.0);
       }
-      if (!(uaForType > 0.0)) {
+      if (Double.isNaN(uaForType) || uaForType <= 0.0) {
         uaForType = type.getTypicalOverallHeatTransferCoefficient();
       }
 
