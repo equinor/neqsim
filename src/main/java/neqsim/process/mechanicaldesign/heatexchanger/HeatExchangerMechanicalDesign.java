@@ -159,7 +159,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
       approachTemperature = 0.0;
     }
 
-    if (!(logMeanTemperatureDifference > 0.0)) {
+    if (Double.isNaN(logMeanTemperatureDifference) || logMeanTemperatureDifference <= 0.0) {
       if (approachTemperature > 0.0) {
         logMeanTemperatureDifference = approachTemperature;
       } else if (duty > 0.0 && usedOverallHeatTransferCoefficient > 0.0) {
