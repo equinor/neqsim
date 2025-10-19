@@ -1,16 +1,17 @@
 package neqsim.process.equipment;
 
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
+import neqsim.process.equipment.battery.BatteryStorage;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.ejector.Ejector;
+import neqsim.process.equipment.electrolyzer.CO2Electrolyzer;
+import neqsim.process.equipment.electrolyzer.Electrolyzer;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.Mixer;
-import neqsim.process.equipment.electrolyzer.Electrolyzer;
-import neqsim.process.equipment.battery.BatteryStorage;
 import neqsim.process.equipment.powergeneration.SolarPanel;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.ReservoirCVDsim;
@@ -128,6 +129,10 @@ public class EquipmentFactory {
         return new FlareStack(name);
       case "electrolyzer":
         return new Electrolyzer(name);
+      case "co2electrolyzer":
+      case "co₂electrolyzer":
+      case "co2electrolyser":
+        return new CO2Electrolyzer(name);
       case "windturbine":
         return new WindTurbine(name);
       case "batterystorage":
