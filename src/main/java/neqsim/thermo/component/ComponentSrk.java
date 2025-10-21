@@ -76,6 +76,9 @@ public class ComponentSrk extends ComponentEos {
   /** {@inheritDoc} */
   @Override
   public double getVolumeCorrection() {
+    if (hasVolumeCorrection()) {
+      return super.getVolumeCorrection();
+    }
     if (ionicCharge != 0) {
       return 0.0;
     }
