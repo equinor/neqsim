@@ -77,6 +77,9 @@ public class ComponentSrkPeneloux extends ComponentSrk {
   /** {@inheritDoc} */
   @Override
   public double getVolumeCorrection() {
+    if (hasVolumeCorrection()) {
+      return super.getVolumeCorrection();
+    }
     if (ionicCharge != 0) {
       return 0.0;
     }

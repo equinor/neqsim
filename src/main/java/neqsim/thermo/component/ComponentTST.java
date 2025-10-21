@@ -81,6 +81,9 @@ public class ComponentTST extends ComponentEos {
   /** {@inheritDoc} */
   @Override
   public double getVolumeCorrection() {
+    if (hasVolumeCorrection()) {
+      return super.getVolumeCorrection();
+    }
     if (this.getRacketZ() < 1e-10) {
       return 0.0;
     } else {

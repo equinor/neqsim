@@ -60,6 +60,9 @@ public class ComponentGERG2004 extends ComponentEos {
   /** {@inheritDoc} */
   @Override
   public double getVolumeCorrection() {
+    if (hasVolumeCorrection()) {
+      return super.getVolumeCorrection();
+    }
     return 0.0;
   }
 
