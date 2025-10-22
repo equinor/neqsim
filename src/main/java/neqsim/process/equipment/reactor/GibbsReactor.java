@@ -225,7 +225,7 @@ public class GibbsReactor extends TwoPortEquipment {
     ISOTHERMAL, ADIABATIC
   }
 
-  private EnergyMode energyMode = EnergyMode.ADIABATIC;
+  private EnergyMode energyMode = EnergyMode.ISOTHERMAL;
 
   /**
    * Set the energy mode of the reactor (isothermal or adiabatic).
@@ -285,6 +285,10 @@ public class GibbsReactor extends TwoPortEquipment {
   private String[] elementNames = {"O", "N", "C", "H", "S", "Ar", "Z"};
   private List<String> processedComponents = new ArrayList<>();
   private Map<String, Double> objectiveFunctionValues = new HashMap<>();
+  // Set of inert components (names in lowercase). Inert components are present in the
+  // system and contribute to total moles but are excluded from Jacobian and optimization
+  // variables.
+  private final java.util.Set<String> inertComponents = new java.util.HashSet<>();
 
   // Mole balance calculations
   private Map<String, Double> initialMoles = new HashMap<>();
@@ -310,10 +314,45 @@ public class GibbsReactor extends TwoPortEquipment {
   private List<String> jacobianRowLabels = new ArrayList<>();
   private List<String> jacobianColLabels = new ArrayList<>();
 
+  // Components used as optimization variables (processedComponents minus inert ones)
+  private List<String> variableComponents = new ArrayList<>();
+
+  /**
+   * Mark a component as inert by name.
+   * 
+   * @param componentName component name as in the thermo system
+   */
+  public void setComponentAsInert(String componentName) {
+    if (componentName != null) {
+      inertComponents.add(componentName.toLowerCase());
+    }
+  }
+
+  /**
+   * Mark a component as inert by index in inlet system.
+   * 
+   * @param index component index in inlet system
+   */
+  public void setComponentAsInert(int index) {
+    try {
+      String name = getInletStream().getThermoSystem().getComponent(index).getComponentName();
+      setComponentAsInert(name);
+    } catch (Exception e) {
+      // ignore invalid index
+    }
+  }
+
+  /**
+   * Check if a component is inert.
+   */
+  public boolean isComponentInert(String componentName) {
+    return componentName != null && inertComponents.contains(componentName.toLowerCase());
+  }
+
   // Newton-Raphson iteration control
   private int maxIterations = 5000;
-  private double convergenceTolerance = 1e-6;
-  private double dampingComposition = 0.001; // Default damping factor for composition updates
+  private double convergenceTolerance = 1e-3;
+  private double dampingComposition = 0.05; // Default damping factor for composition updates
   private int actualIterations = 0;
   private boolean converged = false;
   private double finalConvergenceError = 0.0;
@@ -744,10 +783,10 @@ public class GibbsReactor extends TwoPortEquipment {
               for (int i = 0; i < Math.min(parts.length, 10); i++) {
                 partsStr.append("parts[").append(i).append("]=").append(parts[i]).append(" ");
               }
-             // System.out.println(
-               //   "DATABASE LOADING - Raw parts for " + molecule + ": " + partsStr.toString());
-             // System.out.println("DATABASE LOADING - parts.length=" + parts.length
-                //  + ", numElements=" + numElements);
+              // System.out.println(
+              // "DATABASE LOADING - Raw parts for " + molecule + ": " + partsStr.toString());
+              // System.out.println("DATABASE LOADING - parts.length=" + parts.length
+              // + ", numElements=" + numElements);
             }
 
             // Parse available elements
@@ -755,24 +794,9 @@ public class GibbsReactor extends TwoPortEquipment {
               String value = parts[i + 1].trim().replace(",", ".");
               elements[i] = Double.parseDouble(value);
               if (molecule.contains("+") || molecule.contains("-")) {
-               //System.out.println("DATABASE LOADING - Element[" + i + "] (" + elementNames[i]
-                //    + ") = " + value + " -> " + elements[i]);
+                // System.out.println("DATABASE LOADING - Element[" + i + "] (" + elementNames[i]
+                // + ") = " + value + " -> " + elements[i]);
               }
-            }
-
-            // If old format (6 elements), set Z element to 0
-            if (numElements == 6) {
-              elements[6] = 0.0; // Z element defaults to 0
-              if (molecule.contains("+") || molecule.contains("-")) {
-                System.out.println("DATABASE LOADING - Old format detected, setting Z to 0.0");
-              }
-            }
-
-            // Debug logging for ionic species
-            if (molecule.contains("+") || molecule.contains("-")) {
-              System.out.println("DATABASE LOADING - Final elements for " + molecule + ": O="
-                  + elements[0] + ", N=" + elements[1] + ", C=" + elements[2] + ", H=" + elements[3]
-                  + ", S=" + elements[4] + ", Ar=" + elements[5] + ", Z=" + elements[6]);
             }
 
             double[] heatCapCoeffs = new double[4];
@@ -919,6 +943,7 @@ public class GibbsReactor extends TwoPortEquipment {
     outlet_mole.clear(); // Clear and repopulate with actual final values
 
     processedComponentIndexMap.clear();
+    variableComponents.clear();
     for (int i = 0; i < system.getNumberOfComponents(); i++) {
       String compName = system.getComponent(i).getComponentName();
       double moles = system.getComponent(i).getNumberOfMolesInPhase();
@@ -929,6 +954,11 @@ public class GibbsReactor extends TwoPortEquipment {
       // Update outlet_mole with actual final values, enforcing minimum
       double outletMoles = Math.max(moles, 1E-6);
       outlet_mole.add(outletMoles);
+
+      // Only add to variableComponents if not inert
+      if (!inertComponents.contains(compName.toLowerCase())) {
+        variableComponents.add(compName);
+      }
     }
 
     // Calculate final element mole balance
@@ -1255,17 +1285,16 @@ public class GibbsReactor extends TwoPortEquipment {
   private void calculateObjectiveMinimizationVector() {
     // Find which elements are actually present in the system
     List<Integer> activeElements = findActiveElements();
-
-    int numComponents = processedComponents.size();
+    int numComponents = variableComponents.size();
     int numActiveElements = activeElements.size();
 
     // Create vector: [F_values, mass_balance_constraints]
     objectiveMinimizationVector = new double[numComponents + numActiveElements];
     objectiveMinimizationVectorLabels.clear();
 
-    // First part: F values for each component
+    // First part: F values for each optimization variable (exclude inert components)
     for (int i = 0; i < numComponents; i++) {
-      String compName = processedComponents.get(i);
+      String compName = variableComponents.get(i);
       Double fValue = objectiveFunctionValues.get(compName);
       objectiveMinimizationVector[i] = (fValue != null) ? fValue : 0.0;
       objectiveMinimizationVectorLabels.add("F_" + compName);
@@ -1290,6 +1319,29 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
+   * Build objective vector matching the optimization variables (variableComponents) and active
+   * element balances. This excludes inert components from the variable part but keeps balances.
+   */
+  private double[] getObjectiveVectorForVariables() {
+    List<Integer> activeElements = findActiveElements();
+    int numVars = variableComponents.size();
+    int numActiveElements = activeElements.size();
+    double[] vec = new double[numVars + numActiveElements];
+
+    for (int i = 0; i < numVars; i++) {
+      String compName = variableComponents.get(i);
+      Double fVal = objectiveFunctionValues.get(compName);
+      vec[i] = (fVal != null) ? fVal : 0.0;
+    }
+
+    for (int i = 0; i < numActiveElements; i++) {
+      int elementIndex = activeElements.get(i);
+      vec[numVars + i] = elementMoleBalanceDiff[elementIndex];
+    }
+    return vec;
+  }
+
+  /**
    * Get the labels for the objective minimization vector.
    *
    * @return List of labels for each element in the objective minimization vector
@@ -1304,25 +1356,26 @@ public class GibbsReactor extends TwoPortEquipment {
    * that are actually present in the system to avoid singular matrices.
    */
   private void calculateJacobian() {
-    if (processedComponents.isEmpty()) {
+    // If there are no optimization variables (all components inert or none present), nothing to do
+    if (variableComponents.isEmpty()) {
       return;
     }
 
     // Find which elements are actually present in the system
     List<Integer> activeElements = findActiveElements();
 
-    int numComponents = processedComponents.size();
+    int numComponents = variableComponents.size();
     int numActiveElements = activeElements.size();
-    int totalVars = numComponents + numActiveElements; // components + active Lagrange multipliers
+    int totalVars = numComponents + numActiveElements; // variables + active Lagrange multipliers
 
     jacobianMatrix = new double[totalVars][totalVars];
     jacobianRowLabels.clear();
     jacobianColLabels.clear();
 
-    // Set up labels
+    // Set up labels for variables (only variableComponents are optimization variables)
     for (int i = 0; i < numComponents; i++) {
-      jacobianRowLabels.add("F_" + processedComponents.get(i));
-      jacobianColLabels.add("n_" + processedComponents.get(i));
+      jacobianRowLabels.add("F_" + variableComponents.get(i));
+      jacobianColLabels.add("n_" + variableComponents.get(i));
     }
     for (int i = 0; i < numActiveElements; i++) {
       int elementIndex = activeElements.get(i);
@@ -1343,20 +1396,29 @@ public class GibbsReactor extends TwoPortEquipment {
 
     // Fill Jacobian matrix
     for (int i = 0; i < numComponents; i++) {
-      String compI = processedComponents.get(i);
+      String compI = variableComponents.get(i);
 
       // Use outlet_mole for calculations, but with a minimum value to avoid numerical issues
-      double ni = (i < outlet_mole.size()) ? outlet_mole.get(i) : 1E-6;
+      // Find outlet mole corresponding to this variable component (use processedComponentIndexMap)
+      int globalIdx = processedComponentIndexMap.getOrDefault(compI, -1);
+      double ni =
+          (globalIdx >= 0 && globalIdx < outlet_mole.size()) ? outlet_mole.get(globalIdx) : 1E-6;
       double niForJacobian = Math.max(ni, 1e-6); // Use minimum of 1e-6 for Jacobian calculation
       system.init(3);
       for (int j = 0; j < numComponents; j++) {
+        String compJ = variableComponents.get(j);
+        int globalJ = processedComponentIndexMap.getOrDefault(compJ, -1);
+        // Diagonal elements: ∂f_i/∂n_i = RT * (1/n_i - 1/n_total) + dfugdn
         if (i == j) {
-          // Diagonal elements: ∂f_i/∂n_i = RT * (1/n_i - 1/n_total)
-          jacobianMatrix[i][j] = RT * (1.0 / niForJacobian - 1.0 / totalMoles
-              + system.getPhase(0).getComponent(i).getdfugdn(j));
+          double dfugdn = (globalIdx >= 0 && globalJ >= 0)
+              ? system.getPhase(0).getComponent(globalIdx).getdfugdn(globalJ)
+              : 0.0;
+          jacobianMatrix[i][j] = RT * (1.0 / niForJacobian - 1.0 / totalMoles + dfugdn);
         } else {
-          // Off-diagonal elements: ∂f_i/∂n_j = -RT/n_total
-          jacobianMatrix[i][j] = -RT / totalMoles + system.getPhase(0).getComponent(i).getdfugdn(j);
+          double dfugdn = (globalIdx >= 0 && globalJ >= 0)
+              ? system.getPhase(0).getComponent(globalIdx).getdfugdn(globalJ)
+              : 0.0;
+          jacobianMatrix[i][j] = -RT / totalMoles + dfugdn;
         }
       }
 
@@ -1375,7 +1437,7 @@ public class GibbsReactor extends TwoPortEquipment {
     for (int i = 0; i < numActiveElements; i++) {
       int elementIndex = activeElements.get(i);
       for (int j = 0; j < numComponents; j++) {
-        String compName = processedComponents.get(j);
+        String compName = variableComponents.get(j);
         GibbsComponent gibbsComp = componentMap.get(compName.toLowerCase());
         if (gibbsComp != null) {
           double[] elements = gibbsComp.getElements();
@@ -1687,9 +1749,8 @@ public class GibbsReactor extends TwoPortEquipment {
       return null;
     }
 
-    // Get the objective function vector F
-    double[] objectiveVector = getObjectiveMinimizationVector();
-
+    // Get the objective function vector F matching variableComponents
+    double[] objectiveVector = getObjectiveVectorForVariables();
     if (objectiveVector == null || objectiveVector.length != jacobianInverse.length) {
       logger.warn("Objective vector size mismatch with Jacobian matrix");
       return null;
@@ -1728,7 +1789,7 @@ public class GibbsReactor extends TwoPortEquipment {
       return false;
     }
 
-    int numComponents = processedComponents.size();
+    int numComponents = variableComponents.size();
     List<Integer> activeElementIndices = getActiveElementIndices();
     int numActiveElements = activeElementIndices.size();
 
@@ -1742,24 +1803,25 @@ public class GibbsReactor extends TwoPortEquipment {
     // System.out.println("\n=== Updating Outlet Compositions ===");
     deltaNorm = 0.0;
     for (int i = 0; i < numComponents; i++) {
-      String compName = processedComponents.get(i);
+      String compName = variableComponents.get(i);
       // Only update if component is in the Gibbs database
       if (componentMap.get(compName.toLowerCase()) == null) {
-        // Not in database, skip update to keep moles unchanged
         continue;
       }
-      double oldValue = outlet_mole.get(i);
+      // Find global index in processedComponents/outlet_mole
+      int globalIdx = processedComponentIndexMap.getOrDefault(compName, -1);
+      if (globalIdx < 0 || globalIdx >= outlet_mole.size()) {
+        continue;
+      }
+      double oldValue = outlet_mole.get(globalIdx);
       double deltaComposition = deltaX[i];
       double newValue = oldValue + deltaComposition * alphaComposition;
 
       // Ensure non-negative values and minimum concentration
       newValue = Math.max(newValue, 1e-15);
 
-      outlet_mole.set(i, newValue);
+      outlet_mole.set(globalIdx, newValue);
 
-      // System.out.printf(" %s: %12.6e → %12.6e (Δ = %12.6e, α*Δ = %12.6e)%n",
-      // compName, oldValue, newValue, deltaComposition,
-      // deltaComposition * alphaComposition);
       deltaNorm += Math.pow(deltaComposition * alphaComposition, 2);
     }
     deltaNorm = Math.sqrt(deltaNorm);
@@ -1805,7 +1867,7 @@ public class GibbsReactor extends TwoPortEquipment {
    */
   private boolean updateSystemWithNewCompositions() {
     try {
-      //SystemInterface system = getInletStream().getThermoSystem();
+      // SystemInterface system = getInletStream().getThermoSystem();
 
       // Update component moles in the system
       for (int i = 0; i < processedComponents.size(); i++) {
@@ -1838,7 +1900,7 @@ public class GibbsReactor extends TwoPortEquipment {
             system.addComponent(compIndex, molesToAdd, 0);
           }
         }
-      getOutletStream().setThermoSystem(system);
+        getOutletStream().setThermoSystem(system);
       }
 
 
@@ -2120,9 +2182,11 @@ public class GibbsReactor extends TwoPortEquipment {
       // Perform iteration update
       boolean updateSuccess = performIterationUpdate(deltaX, alphaComposition);
       if (!updateSuccess) {
+        // Set final convergence error for diagnostics and throw an exception to signal failure
         logger.warn("Iteration update failed at iteration " + iteration);
         finalConvergenceError = deltaXNorm;
-        return false;
+        throw new RuntimeException(
+            "Iteration update failed at iteration " + iteration + ", deltaXNorm=" + deltaXNorm);
       }
 
       // Debug logging for element balance during iterations
@@ -2148,6 +2212,17 @@ public class GibbsReactor extends TwoPortEquipment {
     return false;
   }
 
+  // --- Formula alias mapping for user-friendly reaction input ---
+  private static final Map<String, String> formulaToComponent = new HashMap<>();
+  static {
+    formulaToComponent.put("O2", "oxygen");
+    formulaToComponent.put("H2SO4", "sulfuric acid");
+    formulaToComponent.put("SO2", "SO2");
+    formulaToComponent.put("H2O", "water");
+    // Add more mappings as needed
+  }
+
+
   /**
    * Solve Gibbs equilibrium using Newton-Raphson iterations with default damping factor.
    *
@@ -2156,4 +2231,5 @@ public class GibbsReactor extends TwoPortEquipment {
   public boolean solveGibbsEquilibrium() {
     return solveGibbsEquilibrium(dampingComposition); // Use configured damping factor
   }
+
 }
