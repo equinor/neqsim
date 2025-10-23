@@ -112,6 +112,17 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   private double liquidCarryoverFraction = 0.0;
   private double gasCarryunderFraction = 0.0;
 
+  private String specifiedStream = "feed";
+
+  private double oilInGas = 0.0;
+  private String oilInGasSpec = "mole";
+
+  private double waterInGas = 0.0;
+  private String waterInGasSpec = "mole";
+
+  private double gasInLiquid = 0.0;
+  private String gasInLiquidSpec = "mole";
+
   /** Length of separator volume. */
   private double separatorLength = 5.0;
   /** Inner diameter/height of separator volume. */
@@ -270,6 +281,34 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     return thermoSystem;
   }
 
+  /**
+   * <p>
+   * setEntrainment.
+   * </p>
+   *
+   * @param val a double specifying the entrainment amount
+   * @param specType a {@link java.lang.String} object describing the specification unit
+   * @param specifiedStream a {@link java.lang.String} object describing the reference stream
+   * @param phaseFrom a {@link java.lang.String} object describing the phase entrained from
+   * @param phaseTo a {@link java.lang.String} object describing the phase entrained to
+   */
+  public void setEntrainment(double val, String specType, String specifiedStream, String phaseFrom,
+      String phaseTo) {
+    this.specifiedStream = specifiedStream;
+    if (phaseFrom.equals("oil") && phaseTo.equals("gas")) {
+      oilInGas = val;
+      oilInGasSpec = specType;
+    }
+    if (phaseFrom.equals("aqueous") && phaseTo.equals("gas")) {
+      waterInGas = val;
+      waterInGasSpec = specType;
+    }
+    if (phaseFrom.equals("gas") && phaseTo.equals("liquid")) {
+      gasInLiquid = val;
+      gasInLiquidSpec = specType;
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -291,6 +330,32 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
       ops.TPflash();
       thermoSystem2.initProperties();
+    }
+
+    thermoSystem2.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
+    thermoSystem2.addPhaseFractionToPhase(waterInGas, waterInGasSpec, specifiedStream, "aqueous",
+        "gas");
+    if (thermoSystem2.hasPhaseType("liquid")) {
+      thermoSystem2.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas",
+          "liquid");
+    } else if (thermoSystem2.hasPhaseType("oil") && thermoSystem2.hasPhaseType("aqueous")) {
+      double oilMoles = thermoSystem2.getPhase("oil").getNumberOfMolesInPhase();
+      double waterMoles = thermoSystem2.getPhase("aqueous").getNumberOfMolesInPhase();
+      double totalMoles = oilMoles + waterMoles;
+      if (totalMoles > 0.0) {
+        double oilShare = oilMoles / totalMoles;
+        double waterShare = waterMoles / totalMoles;
+        thermoSystem2.addPhaseFractionToPhase(gasInLiquid * oilShare, gasInLiquidSpec, specifiedStream,
+            "gas", "oil");
+        thermoSystem2.addPhaseFractionToPhase(gasInLiquid * waterShare, gasInLiquidSpec,
+            specifiedStream, "gas", "aqueous");
+      }
+    } else if (thermoSystem2.hasPhaseType("oil")) {
+      thermoSystem2.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas",
+          "oil");
+    } else if (thermoSystem2.hasPhaseType("aqueous")) {
+      thermoSystem2.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas",
+          "aqueous");
     }
 
     if (thermoSystem2.hasPhaseType("gas")) {
@@ -1041,11 +1106,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public int hashCode() {
     final int prime = 31;
     int result = super.hashCode();
-    result = prime * result + Objects.hash(designLiquidLevelFraction, efficiency,
-        gasCarryunderFraction, gasOutStream, gasSystem, gasVolume, inletStreamMixer,
+    result = prime * result + Objects.hash(designLiquidLevelFraction, efficiency, gasCarryunderFraction,
+        gasInLiquid, gasInLiquidSpec, gasOutStream, gasSystem, gasVolume, inletStreamMixer,
         internalDiameter, liquidCarryoverFraction, liquidLevel, liquidOutStream, liquidSystem,
-        liquidVolume, numberOfInputStreams, orientation, pressureDrop, separatorLength,
-        separatorSection, thermoSystem, thermoSystem2, thermoSystemCloned, waterSystem);
+        liquidVolume, numberOfInputStreams, oilInGas, oilInGasSpec, orientation, pressureDrop,
+        separatorLength, separatorSection, specifiedStream, thermoSystem, thermoSystem2,
+        thermoSystemCloned, waterInGas, waterInGasSpec, waterSystem);
     return result;
   }
 
@@ -1067,6 +1133,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         && Double.doubleToLongBits(efficiency) == Double.doubleToLongBits(other.efficiency)
         && Double.doubleToLongBits(gasCarryunderFraction) == Double
             .doubleToLongBits(other.gasCarryunderFraction)
+        && Double.doubleToLongBits(gasInLiquid) == Double.doubleToLongBits(other.gasInLiquid)
+        && Objects.equals(gasInLiquidSpec, other.gasInLiquidSpec)
         && Objects.equals(gasOutStream, other.gasOutStream)
         && Objects.equals(gasSystem, other.gasSystem)
         && Double.doubleToLongBits(gasVolume) == Double.doubleToLongBits(other.gasVolume)
@@ -1080,14 +1148,19 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         && Objects.equals(liquidSystem, other.liquidSystem)
         && Double.doubleToLongBits(liquidVolume) == Double.doubleToLongBits(other.liquidVolume)
         && numberOfInputStreams == other.numberOfInputStreams
+        && Double.doubleToLongBits(oilInGas) == Double.doubleToLongBits(other.oilInGas)
+        && Objects.equals(oilInGasSpec, other.oilInGasSpec)
         && Objects.equals(orientation, other.orientation)
         && Double.doubleToLongBits(pressureDrop) == Double.doubleToLongBits(other.pressureDrop)
         && Double.doubleToLongBits(separatorLength) == Double
             .doubleToLongBits(other.separatorLength)
         && Objects.equals(separatorSection, other.separatorSection)
+        && Objects.equals(specifiedStream, other.specifiedStream)
         && Objects.equals(thermoSystem, other.thermoSystem)
         && Objects.equals(thermoSystem2, other.thermoSystem2)
         && Objects.equals(thermoSystemCloned, other.thermoSystemCloned)
+        && Double.doubleToLongBits(waterInGas) == Double.doubleToLongBits(other.waterInGas)
+        && Objects.equals(waterInGasSpec, other.waterInGasSpec)
         && Objects.equals(waterSystem, other.waterSystem);
   }
 
