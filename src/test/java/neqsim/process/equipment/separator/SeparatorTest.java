@@ -103,4 +103,99 @@ class SeparatorTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(0.06976026260, separator1.getFluid().getPhase(PhaseType.OIL).getBeta(),
         1e-5);
   }
+
+  @Test
+  void testSeparatorEntrainmentTransfersExpectedMoles() {
+    double oilToGasFraction = 0.1;
+    double waterToGasFraction = 0.05;
+    double gasToLiquidFraction = 0.08;
+
+    Stream baseFeed = createEntrainmentFeed("baseFeed");
+    Separator baselineSeparator = new Separator("baseline separator", baseFeed);
+    baselineSeparator.run();
+
+    double baseGasMoles = getPhaseMoles(baselineSeparator.getGasOutStream(), "gas");
+    double baseOilMoles = getPhaseMoles(baselineSeparator.getLiquidOutStream(), "oil");
+    double baseWaterMoles = getPhaseMoles(baselineSeparator.getLiquidOutStream(), "aqueous");
+
+    double gasAfterCarryover = baseGasMoles + baseOilMoles * oilToGasFraction
+        + baseWaterMoles * waterToGasFraction;
+    double remainingOil = baseOilMoles * (1.0 - oilToGasFraction);
+    double remainingWater = baseWaterMoles * (1.0 - waterToGasFraction);
+    double liquidTotal = remainingOil + remainingWater;
+    Assertions.assertTrue(liquidTotal > 0.0, "Liquid phases expected for entrainment test");
+
+    double oilShare = remainingOil / liquidTotal;
+    double waterShare = remainingWater / liquidTotal;
+
+    double expectedGasMoles = gasAfterCarryover * (1.0 - gasToLiquidFraction);
+    double gasMolesToLiquid = gasAfterCarryover * gasToLiquidFraction;
+    double expectedOilMoles = remainingOil + gasMolesToLiquid * oilShare;
+    double expectedWaterMoles = remainingWater + gasMolesToLiquid * waterShare;
+
+    Stream entrainmentFeed = createEntrainmentFeed("entrainmentFeed");
+    Separator entrainmentSeparator = new Separator("entrainment separator", entrainmentFeed);
+    entrainmentSeparator.setEntrainment(oilToGasFraction, "mole", "feed", "oil", "gas");
+    entrainmentSeparator.setEntrainment(waterToGasFraction, "mole", "feed", "aqueous", "gas");
+    entrainmentSeparator.setEntrainment(gasToLiquidFraction, "mole", "feed", "gas", "liquid");
+    entrainmentSeparator.run();
+
+    double toleranceGas = Math.max(1e-8, expectedGasMoles * 1e-8);
+    double toleranceLiquid = Math.max(1e-8, (expectedOilMoles + expectedWaterMoles) * 1e-8);
+
+    Assertions.assertEquals(expectedGasMoles,
+        getPhaseMoles(entrainmentSeparator.getGasOutStream(), "gas"), toleranceGas);
+    Assertions.assertEquals(expectedOilMoles,
+        getPhaseMoles(entrainmentSeparator.getLiquidOutStream(), "oil"), toleranceLiquid);
+    Assertions.assertEquals(expectedWaterMoles,
+        getPhaseMoles(entrainmentSeparator.getLiquidOutStream(), "aqueous"), toleranceLiquid);
+  }
+
+  @Test
+  void testSeparatorWithoutEntrainmentMatchesBaseline() {
+    Stream baselineFeed = createEntrainmentFeed("baselineFeed");
+    Separator baselineSeparator = new Separator("baseline separator", baselineFeed);
+    baselineSeparator.run();
+
+    Stream zeroEntrainmentFeed = createEntrainmentFeed("zeroEntrainmentFeed");
+    Separator zeroEntrainmentSeparator = new Separator("zero entrainment separator",
+        zeroEntrainmentFeed);
+    zeroEntrainmentSeparator.setEntrainment(0.0, "mole", "feed", "oil", "gas");
+    zeroEntrainmentSeparator.setEntrainment(0.0, "mole", "feed", "aqueous", "gas");
+    zeroEntrainmentSeparator.setEntrainment(0.0, "mole", "feed", "gas", "liquid");
+    zeroEntrainmentSeparator.run();
+
+    double tolerance = 1e-8;
+
+    Assertions.assertEquals(getPhaseMoles(baselineSeparator.getGasOutStream(), "gas"),
+        getPhaseMoles(zeroEntrainmentSeparator.getGasOutStream(), "gas"), tolerance);
+    Assertions.assertEquals(getPhaseMoles(baselineSeparator.getLiquidOutStream(), "oil"),
+        getPhaseMoles(zeroEntrainmentSeparator.getLiquidOutStream(), "oil"), tolerance);
+    Assertions.assertEquals(getPhaseMoles(baselineSeparator.getLiquidOutStream(), "aqueous"),
+        getPhaseMoles(zeroEntrainmentSeparator.getLiquidOutStream(), "aqueous"), tolerance);
+  }
+
+  private Stream createEntrainmentFeed(String name) {
+    neqsim.thermo.system.SystemSrkCPAstatoil fluid =
+        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    fluid.addComponent("methane", 72.3870849609375);
+    fluid.addComponent("n-heptane", 13.90587639808655);
+    fluid.addComponent("water", 40.0);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feed = new Stream(name, fluid);
+    feed.setTemperature(72.6675872802734, "C");
+    feed.setPressure(10.6767892837524, "bara");
+    feed.setFlowRate(721.3143271348611, "kg/hr");
+    feed.run();
+    return feed;
+  }
+
+  private double getPhaseMoles(StreamInterface stream, String phaseType) {
+    if (!stream.getFluid().hasPhaseType(phaseType)) {
+      return 0.0;
+    }
+    return stream.getFluid().getPhase(phaseType).getNumberOfMolesInPhase();
+  }
 }
