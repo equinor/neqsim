@@ -386,6 +386,7 @@ public class TPflash extends Flash {
     gibbsEnergyOld = gibbsEnergy;
 
     // Checks if gas or oil is the most stable phase
+    PhaseType originalPhaseType0 = system.getPhase(0).getType();
     double gasgib = system.getPhase(0).getGibbsEnergy();
     system.setPhaseType(0, PhaseType.LIQUID);
     system.init(1, 0);
@@ -393,6 +394,12 @@ public class TPflash extends Flash {
 
     if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
       system.setPhaseType(0, PhaseType.GAS);
+    } else {
+      system.setPhaseType(0, PhaseType.LIQUID);
+    }
+
+    if (system.doMultiPhaseCheck() && originalPhaseType0 == PhaseType.OIL) {
+      system.setPhaseType(0, PhaseType.OIL);
     }
     system.init(1);
 
