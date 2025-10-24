@@ -345,8 +345,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       if (totalMoles > 0.0) {
         double oilShare = oilMoles / totalMoles;
         double waterShare = waterMoles / totalMoles;
-        thermoSystem2.addPhaseFractionToPhase(gasInLiquid * oilShare, gasInLiquidSpec, specifiedStream,
-            "gas", "oil");
+        thermoSystem2.addPhaseFractionToPhase(gasInLiquid * oilShare, gasInLiquidSpec,
+            specifiedStream, "gas", "oil");
         thermoSystem2.addPhaseFractionToPhase(gasInLiquid * waterShare, gasInLiquidSpec,
             specifiedStream, "gas", "aqueous");
       }
@@ -787,9 +787,14 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public double liquidArea(double level) {
 
     double lArea = 0;
+
     if (level <= 0) {
       return 0;
+
+    } else if (level >= internalDiameter) {
+      return sepCrossArea;
     }
+
     if (orientation.equals("horizontal")) {
 
       if (level < internalRadius) {
@@ -797,8 +802,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         double d = internalRadius - level;
         double theta = Math.acos(d / internalRadius);
         double a = internalRadius * Math.sin(theta);
-        double triArea = 2 * a * d;
-        double circArea = 2 * theta * Math.pow(internalRadius, 2);
+        double triArea = a * d;
+        double circArea = theta * Math.pow(internalRadius, 2);
         lArea = circArea - triArea;
         // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n", internalRadius, d,
         // theta, a, lArea);
@@ -808,8 +813,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         double d = level - internalRadius;
         double theta = Math.acos(d / internalRadius);
         double a = internalRadius * Math.sin(theta);
-        double triArea = 2 * a * d;
-        double circArea = (Math.PI - 2 * theta) * Math.pow(internalRadius, 2);
+        double triArea = a * d;
+        double circArea = (Math.PI - theta) * Math.pow(internalRadius, 2);
         lArea = circArea + triArea;
         // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n", internalRadius, d,
         // theta, a, lArea);
@@ -1106,12 +1111,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public int hashCode() {
     final int prime = 31;
     int result = super.hashCode();
-    result = prime * result + Objects.hash(designLiquidLevelFraction, efficiency, gasCarryunderFraction,
-        gasInLiquid, gasInLiquidSpec, gasOutStream, gasSystem, gasVolume, inletStreamMixer,
-        internalDiameter, liquidCarryoverFraction, liquidLevel, liquidOutStream, liquidSystem,
-        liquidVolume, numberOfInputStreams, oilInGas, oilInGasSpec, orientation, pressureDrop,
-        separatorLength, separatorSection, specifiedStream, thermoSystem, thermoSystem2,
-        thermoSystemCloned, waterInGas, waterInGasSpec, waterSystem);
+    result = prime * result + Objects.hash(designLiquidLevelFraction, efficiency,
+        gasCarryunderFraction, gasInLiquid, gasInLiquidSpec, gasOutStream, gasSystem, gasVolume,
+        inletStreamMixer, internalDiameter, liquidCarryoverFraction, liquidLevel, liquidOutStream,
+        liquidSystem, liquidVolume, numberOfInputStreams, oilInGas, oilInGasSpec, orientation,
+        pressureDrop, separatorLength, separatorSection, specifiedStream, thermoSystem,
+        thermoSystem2, thermoSystemCloned, waterInGas, waterInGasSpec, waterSystem);
     return result;
   }
 
