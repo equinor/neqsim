@@ -1421,6 +1421,42 @@ public class TPmultiflash extends TPflash {
   }
 
 
+  private boolean seedHydrocarbonLiquidFromFeed() {
+    if (system.getNumberOfPhases() >= 3 || system.hasPhaseType(PhaseType.OIL)
+        || !system.hasPhaseType(PhaseType.AQUEOUS)) {
+      return false;
+    }
+    boolean hasHydrocarbon = false;
+    for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+      if (system.getPhase(0).getComponent(comp).isHydrocarbon()
+          && system.getPhase(0).getComponent(comp).getz() > 1.0e-6) {
+        hasHydrocarbon = true;
+        break;
+      }
+    }
+    if (!hasHydrocarbon) {
+      return false;
+    }
+    system.addPhase();
+    int phaseIndex = system.getNumberOfPhases() - 1;
+    system.setPhaseType(phaseIndex, PhaseType.OIL);
+    for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+      double z = system.getPhase(0).getComponent(comp).getz();
+      if (system.getPhase(0).getComponent(comp).getIonicCharge() != 0
+          || system.getPhase(0).getComponent(comp).isIsIon()) {
+        z = 1.0e-16;
+      }
+      system.getPhase(phaseIndex).getComponent(comp).setx(z > 0 ? z : 1.0e-16);
+    }
+    system.getPhases()[phaseIndex].normalize();
+    double initialBeta = Math.max(1.0e-3, 1000.0 * phaseFractionMinimumLimit);
+    system.setBeta(phaseIndex, initialBeta);
+    system.normalizeBeta();
+    system.init(1);
+    return true;
+  }
+
+
   /** {@inheritDoc} */
   @Override
   public void run() {
@@ -1432,6 +1468,10 @@ public class TPmultiflash extends TPflash {
       stabilityAnalysis();
     }
     if (!multiPhaseTest && seedAdditionalPhaseFromFeed()) {
+      multiPhaseTest = true;
+      doStabilityAnalysis = false;
+    }
+    if (seedHydrocarbonLiquidFromFeed()) {
       multiPhaseTest = true;
       doStabilityAnalysis = false;
     }
