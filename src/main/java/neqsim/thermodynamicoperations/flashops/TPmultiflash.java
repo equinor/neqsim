@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
@@ -1451,7 +1452,7 @@ public class TPmultiflash extends TPflash {
 
     double heavyHydrocarbonTotal = 0.0;
     for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
-      var component = system.getPhase(0).getComponent(comp);
+      ComponentInterface component = system.getPhase(0).getComponent(comp);
       if (component.isHydrocarbon() && component.getz() > 1.0e-6
           && component.getMolarMass() > 0.045) {
         heavyHydrocarbonTotal += component.getz();
@@ -1466,7 +1467,7 @@ public class TPmultiflash extends TPflash {
     system.setPhaseType(phaseIndex, PhaseType.OIL);
 
     for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
-      var component = system.getPhase(0).getComponent(comp);
+      ComponentInterface component = system.getPhase(0).getComponent(comp);
       double z = component.getz();
       double x = 1.0e-16;
       if (component.getIonicCharge() != 0 || component.isIsIon()) {
