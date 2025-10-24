@@ -327,6 +327,28 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
 
   @Test
+  void testGOW34() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(gow);
+    testSystem.setMultiPhaseCheck(true);
+
+
+    double[] moleFractions = {0.00540071, 0.0127938, 0.724541, 0.0972789, 0.0746364, 0.0124884,
+        0.0296084, 0.00701328, 0.00872348, 0.00703798, 0.00641995, 0.00266744, 0.00123526,
+        0.00015286, 4.30823E-08, 7.49295E-16, 0.0100024};
+
+
+    testSystem.setMolarComposition(moleFractions);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(4., "bara");
+    testSystem.setTemperature(20.0, "C");
+    testOps.TPflash();
+
+    Assertions.assertEquals(3, testSystem.getNumberOfPhases());
+  }
+
+
+  @Test
   void testGOW() throws IOException {
     testSystem = EclipseFluidReadWrite.read(gow);
     testSystem.setMultiPhaseCheck(true);
