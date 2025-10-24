@@ -787,9 +787,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public double liquidArea(double level) {
 
     double lArea = 0;
-    if (level == 0) {
+
+    if (level <= 0) {
       return 0;
-    } else if (level == internalDiameter) {
+
+    } else if (level >= internalDiameter) {
       return sepCrossArea;
     }
 
