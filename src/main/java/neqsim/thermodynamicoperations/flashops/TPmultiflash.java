@@ -1364,6 +1364,9 @@ public class TPmultiflash extends TPflash {
   }
 
   private boolean seedAdditionalPhaseFromFeed() {
+    if (!system.doMultiPhaseCheck()) {
+      return false;
+    }
     if (system.getNumberOfPhases() >= 3) {
       return false;
     }
@@ -1422,6 +1425,9 @@ public class TPmultiflash extends TPflash {
 
 
   private boolean seedHydrocarbonLiquidFromFeed() {
+    if (!system.doMultiPhaseCheck()) {
+      return false;
+    }
     if (system.getNumberOfPhases() >= 3 || system.hasPhaseType(PhaseType.OIL)
         || !system.hasPhaseType(PhaseType.AQUEOUS)) {
       return false;
@@ -1435,7 +1441,7 @@ public class TPmultiflash extends TPflash {
         heavyHydrocarbonTotal += component.getz();
       }
     }
-    if (heavyHydrocarbonTotal < 1.0e-4) {
+    if (heavyHydrocarbonTotal < 5.0e-3) {
       return false;
     }
 
