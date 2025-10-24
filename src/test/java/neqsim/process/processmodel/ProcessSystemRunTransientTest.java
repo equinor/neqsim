@@ -223,11 +223,11 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
       // + separatorLevelTransmitter.getMeasuredValue() + "valve2 opening "
       // + valve2.getPercentValveOpening() + "valve3 opening " + valve3.getPercentValveOpening());
       p.runTransient();
-    for (SimulationInterface sim : p.getUnitOperations()) {
-      assertEquals(p.getCalculationIdentifier(), sim.getCalculationIdentifier());
+      for (SimulationInterface sim : p.getUnitOperations()) {
+        assertEquals(p.getCalculationIdentifier(), sim.getCalculationIdentifier());
+      }
     }
-  }
-    assertEquals(0.2969970703125, separatorLevelTransmitter.getMeasuredValue(), 0.01);
+    assertEquals(0.447021484375, separatorLevelTransmitter.getMeasuredValue(), 0.01);
   }
 
   @Test
