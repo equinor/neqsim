@@ -1433,6 +1433,22 @@ public class TPmultiflash extends TPflash {
       return false;
     }
 
+    double waterZ = 0.0;
+    try {
+      waterZ = system.getComponent("water").getz();
+    } catch (Exception ex) {
+      for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+        if ("water".equals(system.getPhase(0).getComponent(comp).getComponentName())) {
+          waterZ = system.getPhase(0).getComponent(comp).getz();
+          break;
+        }
+      }
+    }
+
+    if (waterZ < 1.0e-6) {
+      return false;
+    }
+
     double heavyHydrocarbonTotal = 0.0;
     for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
       var component = system.getPhase(0).getComponent(comp);
@@ -1441,7 +1457,7 @@ public class TPmultiflash extends TPflash {
         heavyHydrocarbonTotal += component.getz();
       }
     }
-    if (heavyHydrocarbonTotal < 5.0e-3) {
+    if (heavyHydrocarbonTotal < 5.0e-3 || heavyHydrocarbonTotal <= waterZ) {
       return false;
     }
 
