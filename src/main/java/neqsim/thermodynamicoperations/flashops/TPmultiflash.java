@@ -1421,6 +1421,55 @@ public class TPmultiflash extends TPflash {
   }
 
 
+  private boolean seedHydrocarbonLiquidFromFeed() {
+    if (system.getNumberOfPhases() >= 3 || system.hasPhaseType(PhaseType.OIL)
+        || !system.hasPhaseType(PhaseType.AQUEOUS)) {
+      return false;
+    }
+
+    double heavyHydrocarbonTotal = 0.0;
+    for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+      var component = system.getPhase(0).getComponent(comp);
+      if (component.isHydrocarbon() && component.getz() > 1.0e-6
+          && component.getMolarMass() > 0.045) {
+        heavyHydrocarbonTotal += component.getz();
+      }
+    }
+    if (heavyHydrocarbonTotal < 1.0e-4) {
+      return false;
+    }
+
+    system.addPhase();
+    int phaseIndex = system.getNumberOfPhases() - 1;
+    system.setPhaseType(phaseIndex, PhaseType.OIL);
+
+    for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+      var component = system.getPhase(0).getComponent(comp);
+      double z = component.getz();
+      double x = 1.0e-16;
+      if (component.getIonicCharge() != 0 || component.isIsIon()) {
+        x = 1.0e-16;
+      } else if (component.isHydrocarbon()) {
+        if (component.getMolarMass() > 0.045) {
+          x = Math.max(z, 1.0e-12);
+        } else {
+          x = Math.min(z * 1.0e-2, 1.0e-8);
+        }
+      } else if ("water".equalsIgnoreCase(component.getComponentName())) {
+        x = Math.min(z * 1.0e-2, 1.0e-8);
+      }
+      system.getPhase(phaseIndex).getComponent(comp).setx(x);
+    }
+
+    system.getPhases()[phaseIndex].normalize();
+    double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
+    system.setBeta(phaseIndex, initialBeta);
+    system.normalizeBeta();
+    system.init(1);
+    return true;
+  }
+
+
   /** {@inheritDoc} */
   @Override
   public void run() {
@@ -1432,6 +1481,10 @@ public class TPmultiflash extends TPflash {
       stabilityAnalysis();
     }
     if (!multiPhaseTest && seedAdditionalPhaseFromFeed()) {
+      multiPhaseTest = true;
+      doStabilityAnalysis = false;
+    }
+    if (seedHydrocarbonLiquidFromFeed()) {
       multiPhaseTest = true;
       doStabilityAnalysis = false;
     }
