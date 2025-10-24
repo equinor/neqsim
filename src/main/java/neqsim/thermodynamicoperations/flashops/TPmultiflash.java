@@ -1364,6 +1364,9 @@ public class TPmultiflash extends TPflash {
   }
 
   private boolean seedAdditionalPhaseFromFeed() {
+    if (!system.doMultiPhaseCheck()) {
+      return false;
+    }
     if (system.getNumberOfPhases() >= 3) {
       return false;
     }
@@ -1422,34 +1425,50 @@ public class TPmultiflash extends TPflash {
 
 
   private boolean seedHydrocarbonLiquidFromFeed() {
+    if (!system.doMultiPhaseCheck()) {
+      return false;
+    }
     if (system.getNumberOfPhases() >= 3 || system.hasPhaseType(PhaseType.OIL)
         || !system.hasPhaseType(PhaseType.AQUEOUS)) {
       return false;
     }
-    boolean hasHydrocarbon = false;
+
+    double heavyHydrocarbonTotal = 0.0;
     for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
-      if (system.getPhase(0).getComponent(comp).isHydrocarbon()
-          && system.getPhase(0).getComponent(comp).getz() > 1.0e-6) {
-        hasHydrocarbon = true;
-        break;
+      var component = system.getPhase(0).getComponent(comp);
+      if (component.isHydrocarbon() && component.getz() > 1.0e-6
+          && component.getMolarMass() > 0.045) {
+        heavyHydrocarbonTotal += component.getz();
       }
     }
-    if (!hasHydrocarbon) {
+    if (heavyHydrocarbonTotal < 5.0e-3) {
       return false;
     }
+
     system.addPhase();
     int phaseIndex = system.getNumberOfPhases() - 1;
     system.setPhaseType(phaseIndex, PhaseType.OIL);
+
     for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
-      double z = system.getPhase(0).getComponent(comp).getz();
-      if (system.getPhase(0).getComponent(comp).getIonicCharge() != 0
-          || system.getPhase(0).getComponent(comp).isIsIon()) {
-        z = 1.0e-16;
+      var component = system.getPhase(0).getComponent(comp);
+      double z = component.getz();
+      double x = 1.0e-16;
+      if (component.getIonicCharge() != 0 || component.isIsIon()) {
+        x = 1.0e-16;
+      } else if (component.isHydrocarbon()) {
+        if (component.getMolarMass() > 0.045) {
+          x = Math.max(z, 1.0e-12);
+        } else {
+          x = Math.min(z * 1.0e-2, 1.0e-8);
+        }
+      } else if ("water".equalsIgnoreCase(component.getComponentName())) {
+        x = Math.min(z * 1.0e-2, 1.0e-8);
       }
-      system.getPhase(phaseIndex).getComponent(comp).setx(z > 0 ? z : 1.0e-16);
+      system.getPhase(phaseIndex).getComponent(comp).setx(x);
     }
+
     system.getPhases()[phaseIndex].normalize();
-    double initialBeta = Math.max(1.0e-3, 1000.0 * phaseFractionMinimumLimit);
+    double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
     system.setBeta(phaseIndex, initialBeta);
     system.normalizeBeta();
     system.init(1);
