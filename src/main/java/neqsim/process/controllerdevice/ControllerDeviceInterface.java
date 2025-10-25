@@ -202,6 +202,19 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
 
   /**
    * <p>
+   * Automatically tune the controller parameters using the recorded controller event log. The
+   * implementation typically analyses a previously executed step test and estimates the process
+   * dynamics before calculating PID settings.
+   * </p>
+   *
+   * @return {@code true} if tuning succeeded, otherwise {@code false}
+   */
+  public default boolean autoTuneFromEventLog() {
+    return false;
+  }
+
+  /**
+   * <p>
    * Add a gain schedule point that switches controller parameters when the measured value exceeds
    * the specified threshold.
    * </p>

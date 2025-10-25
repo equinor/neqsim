@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.function.ToDoubleFunction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
@@ -398,6 +399,93 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
   /** {@inheritDoc} */
   @Override
+  public boolean autoTuneFromEventLog() {
+    if (eventLog.size() < 5) {
+      logger.warn("Insufficient controller events for auto tuning.");
+      return false;
+    }
+
+    ControllerEvent first = eventLog.get(0);
+    double initialMeasurement = first.getMeasuredValue();
+    double initialResponse = first.getResponse();
+    double initialTime = first.getTime();
+
+    int sampleCount = Math.min(5, eventLog.size());
+    double finalMeasurement = averageOfLast(sampleCount, ControllerEvent::getMeasuredValue);
+    double finalResponse = averageOfLast(sampleCount, ControllerEvent::getResponse);
+
+    double measurementChange = finalMeasurement - initialMeasurement;
+    double responseChange = finalResponse - initialResponse;
+
+    if (Math.abs(measurementChange) < 1e-9) {
+      logger.warn("Measured value change too small for auto tuning.");
+      return false;
+    }
+
+    if (Math.abs(responseChange) < 1e-9) {
+      logger.warn("Controller output change too small for auto tuning.");
+      return false;
+    }
+
+    double processGain = measurementChange / responseChange;
+    if (!Double.isFinite(processGain) || processGain == 0.0) {
+      logger.warn("Invalid process gain estimated from event log.");
+      return false;
+    }
+
+    boolean positiveChange = measurementChange >= 0.0;
+    double startThreshold = initialMeasurement + 0.02 * measurementChange;
+    double threshold63 = initialMeasurement + 0.632 * measurementChange;
+
+    double tStart = Double.NaN;
+    double t63 = Double.NaN;
+
+    for (ControllerEvent event : eventLog) {
+      double value = event.getMeasuredValue();
+      if (Double.isNaN(tStart)) {
+        if ((positiveChange && value >= startThreshold)
+            || (!positiveChange && value <= startThreshold)) {
+          tStart = event.getTime();
+        }
+      }
+      if (Double.isNaN(t63)) {
+        if ((positiveChange && value >= threshold63)
+            || (!positiveChange && value <= threshold63)) {
+          t63 = event.getTime();
+        }
+      }
+      if (!Double.isNaN(tStart) && !Double.isNaN(t63)) {
+        break;
+      }
+    }
+
+    if (Double.isNaN(tStart)) {
+      logger.warn("Unable to determine response start time for auto tuning.");
+      return false;
+    }
+
+    if (Double.isNaN(t63) || t63 <= tStart) {
+      logger.warn("Unable to determine process time constant for auto tuning.");
+      return false;
+    }
+
+    double deadTime = Math.max(0.0, tStart - initialTime);
+    double timeConstant = Math.max(t63 - tStart, 1e-6);
+
+    double adjustedDeadTime = deadTime;
+    if (adjustedDeadTime < 1e-6) {
+      adjustedDeadTime = 1e-6;
+    }
+
+    autoTuneStepResponse(processGain, timeConstant, adjustedDeadTime);
+    TintValue = 0.0;
+    derivativeState = 0.0;
+    logger.info("Auto tuned PID from event log: Kp={}, Ti={}, Td={}", Kp, Ti, Td);
+    return true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void addGainSchedulePoint(double processValue, double Kp, double Ti, double Td) {
     gainSchedule.put(processValue, new double[] {Kp, Ti, Td});
   }
@@ -452,5 +540,27 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       this.Ti = params[1];
       this.Td = params[2];
     }
+  }
+
+  /**
+   * Calculate the average value of the {@link ControllerEvent} properties for the last entries in
+   * the event log.
+   *
+   * @param count number of samples to include in the average
+   * @param extractor function returning the value to average from the event
+   * @return average of the selected event property
+   */
+  private double averageOfLast(int count, ToDoubleFunction<ControllerEvent> extractor) {
+    if (eventLog.isEmpty()) {
+      return 0.0;
+    }
+    int startIndex = Math.max(0, eventLog.size() - count);
+    double sum = 0.0;
+    int actualCount = 0;
+    for (int i = startIndex; i < eventLog.size(); i++) {
+      sum += extractor.applyAsDouble(eventLog.get(i));
+      actualCount++;
+    }
+    return actualCount > 0 ? sum / actualCount : 0.0;
   }
 }
