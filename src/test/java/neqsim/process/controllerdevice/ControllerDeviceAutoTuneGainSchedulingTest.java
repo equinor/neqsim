@@ -1,5 +1,6 @@
 package neqsim.process.controllerdevice;
 
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -66,5 +67,33 @@ class ControllerDeviceAutoTuneGainSchedulingTest {
     controller.runTransient(controller.getResponse(), 1.0, UUID.randomUUID());
     Assertions.assertEquals(2.0, controller.getKp(), 1e-6);
     Assertions.assertEquals(2.0, controller.getTi(), 1e-6);
+  }
+
+  @Test
+  void testAutoTuneFromEventLog() {
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("log");
+    DummyTransmitter trans = new DummyTransmitter("t", "%");
+    controller.setTransmitter(trans);
+    controller.setControllerSetPoint(0.0, "%");
+
+    controller.resetEventLog();
+    List<ControllerEvent> log = controller.getEventLog();
+    log.add(new ControllerEvent(0.0, 5.0, 0.0, 0.0, 10.0));
+    log.add(new ControllerEvent(2.0, 5.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(4.0, 8.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(6.0, 14.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(8.0, 18.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(10.0, 20.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(12.0, 20.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(14.0, 20.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(16.0, 20.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(18.0, 20.0, 0.0, 0.0, 40.0));
+
+    boolean tuned = controller.autoTuneFromEventLog();
+
+    Assertions.assertTrue(tuned);
+    Assertions.assertEquals(2.4, controller.getKp(), 1e-6);
+    Assertions.assertEquals(8.0, controller.getTi(), 1e-6);
+    Assertions.assertEquals(2.0, controller.getTd(), 1e-6);
   }
 }
