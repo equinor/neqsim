@@ -1439,7 +1439,7 @@ public class ModelPredictiveController extends NamedBaseClass
       double overshoot = futureMeasurement - (constraint.getLimit() - constraint.getMargin());
       if (overshoot > 0.0) {
         for (int i = 0; i < controlCount; i++) {
-          feedForwardGradient[i] += overshoot * sensitivity[i];
+          feedForwardGradient[i] -= overshoot * sensitivity[i];
         }
       }
       double rhs = constraint.getLimit() - constraint.getMargin() - futureMeasurement;
@@ -1599,6 +1599,11 @@ public class ModelPredictiveController extends NamedBaseClass
     double estimatedGain = estimate.getProcessGain();
     double estimatedTimeConstant = Math.max(estimate.getTimeConstant(), 1.0e-6);
     double estimatedBias = estimate.getProcessBias();
+
+    processGain = estimatedGain;
+    timeConstant = estimatedTimeConstant;
+    processBias = estimatedBias;
+
     lastMovingHorizonEstimate = new MovingHorizonEstimate(estimatedGain, estimatedTimeConstant,
         estimatedBias, estimate.getMeanSquaredError(), estimate.getSampleCount());
   }
