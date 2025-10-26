@@ -1,6 +1,8 @@
 package neqsim.process.controllerdevice;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.DoubleSupplier;
@@ -178,15 +180,21 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
     controller.setWeights(1.0, 0.01, 0.25);
     controller.setPreferredControlValue(0.0);
     controller.setOutputLimits(0.0, 120.0);
+    controller.setMoveLimits(-8.0, 10.0);
 
     double baselineControl = (setPoint - ambient) / processGain;
     double energyAccumulator = 0.0;
     int energySamples = 0;
 
+    double previousControlValue = controller.getResponse();
     for (int step = 0; step < 240; step++) {
-      controller.runTransient(controller.getResponse(), dt);
+      controller.runTransient(previousControlValue, dt);
       double control = controller.getResponse();
+      double delta = control - previousControlValue;
+      Assertions.assertTrue(delta >= -8.0 - 1.0e-9 && delta <= 10.0 + 1.0e-9,
+          "Control move should respect configured rate limits");
       measurement.advance(control, dt);
+      previousControlValue = control;
 
       if (step >= 120) {
         energyAccumulator += control;
@@ -206,6 +214,98 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
         "Average control effort should be reduced compared to the steady-state requirement");
     Assertions.assertTrue(finalControl >= controller.getMinResponse());
     Assertions.assertTrue(finalControl <= controller.getMaxResponse());
+  }
+
+  @Test
+  public void testAutoTuneConfiguresControllerFromHistory() {
+    double ambient = 25.0;
+    double processGain = 0.45;
+    double timeConstant = 28.0;
+    double dt = 1.0;
+
+    SimpleHeaterMeasurement measurement =
+        new SimpleHeaterMeasurement("autoTuneHeater", ambient, timeConstant, processGain);
+
+    ModelPredictiveController controller = new ModelPredictiveController("autoTuneController");
+    controller.setTransmitter(measurement);
+    controller.setControllerSetPoint(ambient + 20.0, "C");
+    controller.setProcessModel(0.1, 5.0);
+    controller.setProcessBias(ambient - 5.0);
+    controller.setPredictionHorizon(8);
+    controller.setWeights(0.5, 0.0, 0.0);
+    controller.setOutputLimits(0.0, 150.0);
+    controller.enableMovingHorizonEstimation(70);
+
+    double previousControl = controller.getResponse();
+    for (int step = 0; step < 200; step++) {
+      controller.runTransient(previousControl, dt);
+      double control = controller.getResponse();
+      measurement.advance(control, dt);
+      previousControl = control;
+      if (step == 120) {
+        controller.setControllerSetPoint(ambient + 30.0, "C");
+      }
+    }
+
+    ModelPredictiveController.AutoTuneResult result = controller.autoTune();
+
+    Assertions.assertTrue(result.isApplied(), "Auto-tune should apply tuning by default");
+    Assertions.assertEquals(controller.getPredictionHorizon(), result.getPredictionHorizon());
+    Assertions.assertEquals(controller.getOutputWeight(), result.getOutputWeight(), 1.0e-12);
+    Assertions.assertEquals(controller.getControlWeight(), result.getControlWeight(), 1.0e-12);
+    Assertions.assertEquals(controller.getMoveWeight(), result.getMoveWeight(), 1.0e-12);
+
+    Assertions.assertEquals(processGain, result.getProcessGain(), 0.1);
+    Assertions.assertEquals(timeConstant, result.getTimeConstant(), 5.0);
+    Assertions.assertEquals(ambient, result.getProcessBias(), 2.0);
+
+    Assertions.assertEquals(processGain, controller.getProcessGain(), 0.1);
+    Assertions.assertEquals(timeConstant, controller.getTimeConstant(), 5.0);
+    Assertions.assertEquals(result.getProcessBias(), controller.getProcessBias(), 1.0e-6);
+  }
+
+  @Test
+  public void testAutoTuneWithExternalSamplesRespectsApplyFlag() {
+    double bias = 30.0;
+    double gain = 0.35;
+    double timeConstant = 18.0;
+    double dt = 1.0;
+
+    List<Double> measurements = new ArrayList<>();
+    List<Double> controls = new ArrayList<>();
+    List<Double> sampleTimes = new ArrayList<>();
+
+    double temperature = bias;
+    measurements.add(temperature);
+    for (int step = 0; step < 60; step++) {
+      double control = step < 20 ? 0.0 : 12.0;
+      controls.add(control);
+      sampleTimes.add(dt);
+      double drivingForce = -(temperature - bias) + gain * control;
+      temperature += drivingForce * dt / timeConstant;
+      measurements.add(temperature);
+    }
+
+    ModelPredictiveController controller = new ModelPredictiveController("offlineAutoTune");
+    controller.setProcessModel(0.1, 5.0);
+    controller.setProcessBias(0.0);
+    controller.setPredictionHorizon(6);
+    controller.setWeights(1.0, 1.0, 1.0);
+
+    ModelPredictiveController.AutoTuneConfiguration configuration =
+        ModelPredictiveController.AutoTuneConfiguration.builder().applyImmediately(false).build();
+
+    ModelPredictiveController.AutoTuneResult result = controller.autoTune(measurements, controls,
+        sampleTimes, configuration);
+
+    Assertions.assertFalse(result.isApplied(), "Auto-tune should not update controller state");
+    Assertions.assertEquals(0.1, controller.getProcessGain(), 1.0e-12);
+    Assertions.assertEquals(5.0, controller.getTimeConstant(), 1.0e-12);
+    Assertions.assertEquals(0.0, controller.getProcessBias(), 1.0e-12);
+
+    Assertions.assertEquals(gain, result.getProcessGain(), 0.05);
+    Assertions.assertEquals(timeConstant, result.getTimeConstant(), 3.0);
+    Assertions.assertEquals(bias, result.getProcessBias(), 1.0);
   }
 
   @Test
@@ -232,6 +332,8 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
     controller.setControlWeights(0.4, 0.6);
     controller.setMoveWeights(0.2, 0.2);
     controller.setPreferredControlVector(35.0, 30.0);
+    controller.setControlMoveLimits("mv1", -4.0, 5.0);
+    controller.setControlMoveLimits("mv2", -3.0, 4.5);
     controller.addQualityConstraint(ModelPredictiveController.QualityConstraint.builder("qualityA")
         .measurement(qualityAMeasurement)
         .unit("qa")
@@ -257,10 +359,19 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
     process.updateFeed(baseComposition, baseRate);
 
     double dt = 1.0;
+    double previousMv1 = controller.getControlValue("mv1");
+    double previousMv2 = controller.getControlValue("mv2");
     for (int step = 0; step < 10; step++) {
       controller.runTransient(Double.NaN, dt);
-      process.applyControl(controller.getControlValue("mv1"),
-          controller.getControlValue("mv2"));
+      double mv1 = controller.getControlValue("mv1");
+      double mv2 = controller.getControlValue("mv2");
+      Assertions.assertTrue(mv1 - previousMv1 >= -4.0 - 1.0e-9
+          && mv1 - previousMv1 <= 5.0 + 1.0e-9);
+      Assertions.assertTrue(mv2 - previousMv2 >= -3.0 - 1.0e-9
+          && mv2 - previousMv2 <= 4.5 + 1.0e-9);
+      previousMv1 = mv1;
+      previousMv2 = mv2;
+      process.applyControl(mv1, mv2);
       process.updateFeed(baseComposition, baseRate);
     }
 
@@ -285,6 +396,10 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
     controller.runTransient(Double.NaN, dt);
     double predictedControl1 = controller.getControlValue("mv1");
     double predictedControl2 = controller.getControlValue("mv2");
+    Assertions.assertTrue(predictedControl1 - previousMv1 >= -4.0 - 1.0e-9
+        && predictedControl1 - previousMv1 <= 5.0 + 1.0e-9);
+    Assertions.assertTrue(predictedControl2 - previousMv2 >= -3.0 - 1.0e-9
+        && predictedControl2 - previousMv2 <= 4.5 + 1.0e-9);
     double predictedQualityA = controller.getPredictedQuality("qualityA");
     double predictedQualityB = controller.getPredictedQuality("qualityB");
     Assertions.assertTrue(predictedControl1 > baselineControl1 + 1.0e-6,
@@ -300,8 +415,15 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
     for (int step = 0; step < 6; step++) {
       controller.updateFeedConditions(heavyFeed, heavyRate);
       controller.runTransient(Double.NaN, dt);
-      process.applyControl(controller.getControlValue("mv1"),
-          controller.getControlValue("mv2"));
+      double mv1 = controller.getControlValue("mv1");
+      double mv2 = controller.getControlValue("mv2");
+      Assertions.assertTrue(mv1 - previousMv1 >= -4.0 - 1.0e-9
+          && mv1 - previousMv1 <= 5.0 + 1.0e-9);
+      Assertions.assertTrue(mv2 - previousMv2 >= -3.0 - 1.0e-9
+          && mv2 - previousMv2 <= 4.5 + 1.0e-9);
+      previousMv1 = mv1;
+      previousMv2 = mv2;
+      process.applyControl(mv1, mv2);
       process.updateFeed(heavyFeed, heavyRate);
     }
 
@@ -446,5 +568,29 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
 
     Assertions.assertTrue(predictedWithoutManual > predictedWithManual,
         "Manual quality measurements should override the default limit baseline");
+  }
+
+  @Test
+  public void testPredictedTrajectoryApproachesSteadyState() {
+    ModelPredictiveController controller = new ModelPredictiveController("trajectoryMpc");
+    controller.setProcessModel(0.5, 20.0);
+    controller.setProcessBias(30.0);
+    controller.setPreferredControlValue(0.0);
+    controller.setOutputLimits(0.0, 100.0);
+    controller.ingestPlantSample(32.0, 10.0, 2.0);
+
+    double[] trajectory = controller.getPredictedTrajectory(8, 2.0);
+    Assertions.assertEquals(8, trajectory.length);
+    double steadyState = 30.0 + 0.5 * 10.0;
+    double previous = 32.0;
+    for (double value : trajectory) {
+      Assertions.assertTrue(Double.isFinite(value));
+      Assertions.assertTrue(value >= previous - 1.0e-9,
+          "Trajectory should not decrease for a positive control gain");
+      Assertions.assertTrue(value <= steadyState + 1.0e-6,
+          "Prediction should not overshoot the steady state for a first-order model");
+      previous = value;
+    }
+    Assertions.assertEquals(steadyState, trajectory[trajectory.length - 1], 0.5);
   }
 }
