@@ -484,7 +484,26 @@ public class ProcessSystemGraphvizExporter {
         if (Modifier.isStatic(field.getModifiers())) {
           continue;
         }
-        field.setAccessible(true);
+        
+        boolean needsAccessOverride = !Modifier.isPublic(field.getModifiers())
+            || !Modifier.isPublic(field.getDeclaringClass().getModifiers());
+        
+        try {
+          if (needsAccessOverride && !field.isAccessible()) {
+            field.setAccessible(true);
+          }
+        } catch (SecurityException ex) {
+          logger.debug("Skipping field {} due to inaccessible module or security restrictions", field,
+              ex);
+          continue;
+        } catch (RuntimeException ex) {
+          if (isInaccessibleModuleAccess(ex)) {
+            logger.debug("Skipping field {} due to inaccessible module or security restrictions", field,
+                ex);
+            continue;
+          }
+          throw ex;
+        }
 
         Object value;
         try {
