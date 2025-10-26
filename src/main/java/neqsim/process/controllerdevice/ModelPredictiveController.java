@@ -1645,7 +1645,6 @@ public class ModelPredictiveController extends NamedBaseClass
 
     double[][] normal = new double[3][3];
     double[] rhs = new double[3];
-    double mse = 0.0;
 
     for (int i = 0; i < sampleCount; i++) {
       double measurement = measurements.get(i);
@@ -1697,6 +1696,7 @@ public class ModelPredictiveController extends NamedBaseClass
       return null;
     }
 
+    double mse = 0.0;
     for (int i = 0; i < sampleCount; i++) {
       double measurement = measurements.get(i);
       double control = controls.get(i);
