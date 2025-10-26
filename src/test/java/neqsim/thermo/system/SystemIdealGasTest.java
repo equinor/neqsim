@@ -5,10 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.database.NeqSimDataBase;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
-public class SystemIdealGasTest extends neqsim.NeqSimTest implements ThermodynamicConstantsInterface {
+public class SystemIdealGasTest extends neqsim.NeqSimTest
+    implements ThermodynamicConstantsInterface {
 
   @Test
   public void testFugacityCoefficient() {
@@ -16,6 +18,18 @@ public class SystemIdealGasTest extends neqsim.NeqSimTest implements Thermodynam
     testSystem.addComponent("nitrogen", 1.0);
     testSystem.getPhase(0).getComponent(0).fugcoef(testSystem.getPhase(0));
     assertEquals(1.0, testSystem.getPhase(0).getComponent(0).getFugacityCoefficient(), 1e-10);
+  }
+
+  // test with component from extended databaset
+  @Test
+  public void testComponentFromExtendedDatabase() {
+    SystemInterface testSystem = new SystemIdealGas(298.15, 10.0);
+
+    NeqSimDataBase.useExtendedComponentDatabase(true);
+    testSystem.addComponent("2-chloro-1,4-diethoxybenzene", 1.0);
+    testSystem.getPhase(0).getComponent(0).fugcoef(testSystem.getPhase(0));
+    assertEquals(1.0, testSystem.getPhase(0).getComponent(0).getFugacityCoefficient(), 1e-10);
+    testSystem.prettyPrint();
   }
 
   @Test
@@ -46,8 +60,7 @@ public class SystemIdealGasTest extends neqsim.NeqSimTest implements Thermodynam
     }
     double cvExpected = cpExpected - R;
     double gammaExpected = cpExpected / cvExpected;
-    double soundSpeedExpected =
-        Math.sqrt(gammaExpected * R * T / phase.getMolarMass());
+    double soundSpeedExpected = Math.sqrt(gammaExpected * R * T / phase.getMolarMass());
 
     assertEquals(cpExpected, phase.getCp("J/molK"), 1e-6);
     assertEquals(cvExpected, phase.getCv("J/molK"), 1e-6);
