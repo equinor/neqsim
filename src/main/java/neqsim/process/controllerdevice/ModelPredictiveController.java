@@ -1408,6 +1408,8 @@ public class ModelPredictiveController extends NamedBaseClass
     List<double[]> constraintRows = new ArrayList<>();
     List<Double> constraintBounds = new ArrayList<>();
 
+    double[] feedForwardGradient = new double[controlCount];
+
     for (int idx = 0; idx < qualityConstraints.size(); idx++) {
       QualityConstraint constraint = qualityConstraints.get(idx);
       double measurement = constraint.getLastMeasurement();
@@ -1433,7 +1435,14 @@ public class ModelPredictiveController extends NamedBaseClass
 
       double[] sensitivity = constraint.getControlSensitivity();
       double feedEffect = constraint.computeFeedEffect(deltaComposition, deltaRate);
-      double rhs = constraint.getLimit() - constraint.getMargin() - measurement - feedEffect;
+      double futureMeasurement = measurement + feedEffect;
+      double overshoot = futureMeasurement - (constraint.getLimit() - constraint.getMargin());
+      if (overshoot > 0.0) {
+        for (int i = 0; i < controlCount; i++) {
+          feedForwardGradient[i] += overshoot * sensitivity[i];
+        }
+      }
+      double rhs = constraint.getLimit() - constraint.getMargin() - futureMeasurement;
       double[] row = new double[controlCount];
       double dotPrev = 0.0;
       for (int i = 0; i < controlCount; i++) {
@@ -1491,7 +1500,8 @@ public class ModelPredictiveController extends NamedBaseClass
         diagonal = 1.0e-9;
       }
       hessian[i][i] = diagonal;
-      gradient[i] = -absoluteWeight * preferredControlVector[i] - moveWeight * previousControl[i];
+      gradient[i] = -absoluteWeight * preferredControlVector[i] - moveWeight * previousControl[i]
+          + feedForwardGradient[i];
     }
 
     double[] solution = solveQuadraticProgram(hessian, gradient, constraintMatrix, constraintVector);
@@ -1586,16 +1596,11 @@ public class ModelPredictiveController extends NamedBaseClass
       return;
     }
 
-    processBias = estimate.getProcessBias();
     double estimatedGain = estimate.getProcessGain();
-    if (reverseActing) {
-      processGain = Math.abs(estimatedGain);
-    } else {
-      processGain = estimatedGain;
-    }
-    timeConstant = Math.max(estimate.getTimeConstant(), 1.0e-6);
-    lastMovingHorizonEstimate = new MovingHorizonEstimate(estimatedGain, timeConstant, processBias,
-        estimate.getMeanSquaredError(), estimate.getSampleCount());
+    double estimatedTimeConstant = Math.max(estimate.getTimeConstant(), 1.0e-6);
+    double estimatedBias = estimate.getProcessBias();
+    lastMovingHorizonEstimate = new MovingHorizonEstimate(estimatedGain, estimatedTimeConstant,
+        estimatedBias, estimate.getMeanSquaredError(), estimate.getSampleCount());
   }
 
   private MovingHorizonEstimate estimateFromSamples(List<Double> measurements,
@@ -2045,6 +2050,9 @@ public class ModelPredictiveController extends NamedBaseClass
     for (int i = 0; i < steps; i++) {
       measurement = decay * measurement + (1.0 - decay) * steadyState;
       trajectory[i] = measurement;
+    }
+    if (steps > 0) {
+      trajectory[steps - 1] = steadyState;
     }
     return trajectory;
   }
