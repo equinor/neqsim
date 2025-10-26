@@ -45,6 +45,8 @@ public class ModelPredictiveController extends NamedBaseClass
   private double response = 0.0;
   private double minResponse = Double.NEGATIVE_INFINITY;
   private double maxResponse = Double.POSITIVE_INFINITY;
+  private double minMove = Double.NEGATIVE_INFINITY;
+  private double maxMove = Double.POSITIVE_INFINITY;
   private double processGain = 1.0;
   private double timeConstant = 10.0;
   private double processBias = 0.0;
@@ -62,6 +64,8 @@ public class ModelPredictiveController extends NamedBaseClass
   private double[] lastControlVector = new double[0];
   private double[] minControlVector = new double[0];
   private double[] maxControlVector = new double[0];
+  private double[] minControlMoveVector = new double[0];
+  private double[] maxControlMoveVector = new double[0];
   private double[] preferredControlVector = new double[0];
   private double[] controlWeightsVector = new double[0];
   private double[] moveWeightsVector = new double[0];
@@ -310,6 +314,256 @@ public class ModelPredictiveController extends NamedBaseClass
   }
 
   /**
+   * Configuration options for the MPC auto-tuning routine. The parameters control how aggressive
+   * the closed-loop response should be as well as how the quadratic weights are scaled relative to
+   * the identified process model.
+   */
+  public static final class AutoTuneConfiguration {
+    private final double closedLoopTimeConstantRatio;
+    private final double predictionHorizonMultiple;
+    private final double controlWeightFactor;
+    private final double moveWeightFactor;
+    private final double outputWeight;
+    private final int minimumHorizon;
+    private final int maximumHorizon;
+    private final Double sampleTimeOverride;
+    private final boolean applyImmediately;
+
+    private AutoTuneConfiguration(Builder builder) {
+      this.closedLoopTimeConstantRatio = builder.closedLoopTimeConstantRatio;
+      this.predictionHorizonMultiple = builder.predictionHorizonMultiple;
+      this.controlWeightFactor = builder.controlWeightFactor;
+      this.moveWeightFactor = builder.moveWeightFactor;
+      this.outputWeight = builder.outputWeight;
+      this.minimumHorizon = builder.minimumHorizon;
+      this.maximumHorizon = builder.maximumHorizon;
+      this.sampleTimeOverride = builder.sampleTimeOverride;
+      this.applyImmediately = builder.applyImmediately;
+    }
+
+    public static Builder builder() {
+      return new Builder();
+    }
+
+    public double getClosedLoopTimeConstantRatio() {
+      return closedLoopTimeConstantRatio;
+    }
+
+    public double getPredictionHorizonMultiple() {
+      return predictionHorizonMultiple;
+    }
+
+    public double getControlWeightFactor() {
+      return controlWeightFactor;
+    }
+
+    public double getMoveWeightFactor() {
+      return moveWeightFactor;
+    }
+
+    public double getOutputWeight() {
+      return outputWeight;
+    }
+
+    public int getMinimumHorizon() {
+      return minimumHorizon;
+    }
+
+    public int getMaximumHorizon() {
+      return maximumHorizon;
+    }
+
+    public Double getSampleTimeOverride() {
+      return sampleTimeOverride;
+    }
+
+    public boolean isApplyImmediately() {
+      return applyImmediately;
+    }
+
+    /** Builder for {@link AutoTuneConfiguration} objects. */
+    public static final class Builder {
+      private double closedLoopTimeConstantRatio = 1.5;
+      private double predictionHorizonMultiple = 4.0;
+      private double controlWeightFactor = 0.05;
+      private double moveWeightFactor = 0.01;
+      private double outputWeight = 1.0;
+      private int minimumHorizon = 5;
+      private int maximumHorizon = 200;
+      private Double sampleTimeOverride;
+      private boolean applyImmediately = true;
+
+      private Builder() {}
+
+      public Builder closedLoopTimeConstantRatio(double ratio) {
+        if (!Double.isFinite(ratio) || ratio <= 0.0) {
+          throw new IllegalArgumentException("Closed loop ratio must be positive and finite");
+        }
+        this.closedLoopTimeConstantRatio = ratio;
+        return this;
+      }
+
+      public Builder predictionHorizonMultiple(double multiple) {
+        if (!Double.isFinite(multiple) || multiple <= 0.0) {
+          throw new IllegalArgumentException("Prediction horizon multiple must be positive");
+        }
+        this.predictionHorizonMultiple = multiple;
+        return this;
+      }
+
+      public Builder controlWeightFactor(double factor) {
+        if (factor < 0.0) {
+          throw new IllegalArgumentException("Control weight factor must be non-negative");
+        }
+        this.controlWeightFactor = factor;
+        return this;
+      }
+
+      public Builder moveWeightFactor(double factor) {
+        if (factor < 0.0) {
+          throw new IllegalArgumentException("Move weight factor must be non-negative");
+        }
+        this.moveWeightFactor = factor;
+        return this;
+      }
+
+      public Builder outputWeight(double weight) {
+        if (weight < 0.0) {
+          throw new IllegalArgumentException("Output weight must be non-negative");
+        }
+        this.outputWeight = weight;
+        return this;
+      }
+
+      public Builder minimumHorizon(int horizon) {
+        if (horizon <= 0) {
+          throw new IllegalArgumentException("Minimum horizon must be positive");
+        }
+        this.minimumHorizon = horizon;
+        return this;
+      }
+
+      public Builder maximumHorizon(int horizon) {
+        if (horizon <= 0) {
+          throw new IllegalArgumentException("Maximum horizon must be positive");
+        }
+        this.maximumHorizon = horizon;
+        return this;
+      }
+
+      public Builder sampleTimeOverride(Double sampleTime) {
+        if (sampleTime != null && (!Double.isFinite(sampleTime) || sampleTime <= 0.0)) {
+          throw new IllegalArgumentException("Sample time override must be positive and finite");
+        }
+        this.sampleTimeOverride = sampleTime;
+        return this;
+      }
+
+      public Builder applyImmediately(boolean apply) {
+        this.applyImmediately = apply;
+        return this;
+      }
+
+      public Builder defaults() {
+        return this;
+      }
+
+      public AutoTuneConfiguration build() {
+        if (maximumHorizon < minimumHorizon) {
+          throw new IllegalStateException("Maximum horizon must be at least the minimum horizon");
+        }
+        return new AutoTuneConfiguration(this);
+      }
+    }
+  }
+
+  /**
+   * Result produced by the auto-tuning routine. The result captures the identified model
+   * parameters, recommended controller weights and diagnostic information about the estimation data
+   * that was used.
+   */
+  public static final class AutoTuneResult {
+    private final double processGain;
+    private final double timeConstant;
+    private final double processBias;
+    private final double outputWeight;
+    private final double controlWeight;
+    private final double moveWeight;
+    private final int predictionHorizon;
+    private final double sampleTime;
+    private final double closedLoopTimeConstant;
+    private final double meanSquaredError;
+    private final int sampleCount;
+    private final boolean applied;
+
+    private AutoTuneResult(double processGain, double timeConstant, double processBias,
+        double outputWeight, double controlWeight, double moveWeight, int predictionHorizon,
+        double sampleTime, double closedLoopTimeConstant, double meanSquaredError, int sampleCount,
+        boolean applied) {
+      this.processGain = processGain;
+      this.timeConstant = timeConstant;
+      this.processBias = processBias;
+      this.outputWeight = outputWeight;
+      this.controlWeight = controlWeight;
+      this.moveWeight = moveWeight;
+      this.predictionHorizon = predictionHorizon;
+      this.sampleTime = sampleTime;
+      this.closedLoopTimeConstant = closedLoopTimeConstant;
+      this.meanSquaredError = meanSquaredError;
+      this.sampleCount = sampleCount;
+      this.applied = applied;
+    }
+
+    public double getProcessGain() {
+      return processGain;
+    }
+
+    public double getTimeConstant() {
+      return timeConstant;
+    }
+
+    public double getProcessBias() {
+      return processBias;
+    }
+
+    public double getOutputWeight() {
+      return outputWeight;
+    }
+
+    public double getControlWeight() {
+      return controlWeight;
+    }
+
+    public double getMoveWeight() {
+      return moveWeight;
+    }
+
+    public int getPredictionHorizon() {
+      return predictionHorizon;
+    }
+
+    public double getSampleTime() {
+      return sampleTime;
+    }
+
+    public double getClosedLoopTimeConstant() {
+      return closedLoopTimeConstant;
+    }
+
+    public double getMeanSquaredError() {
+      return meanSquaredError;
+    }
+
+    public int getSampleCount() {
+      return sampleCount;
+    }
+
+    public boolean isApplied() {
+      return applied;
+    }
+  }
+
+  /**
    * Default constructor assigning a generic name.
    */
   public ModelPredictiveController() {
@@ -349,11 +603,15 @@ public class ModelPredictiveController extends NamedBaseClass
     lastControlVector = new double[count];
     minControlVector = new double[count];
     maxControlVector = new double[count];
+    minControlMoveVector = new double[count];
+    maxControlMoveVector = new double[count];
     preferredControlVector = new double[count];
     controlWeightsVector = new double[count];
     moveWeightsVector = new double[count];
     Arrays.fill(minControlVector, Double.NEGATIVE_INFINITY);
     Arrays.fill(maxControlVector, Double.POSITIVE_INFINITY);
+    Arrays.fill(minControlMoveVector, Double.NEGATIVE_INFINITY);
+    Arrays.fill(maxControlMoveVector, Double.POSITIVE_INFINITY);
     Arrays.fill(preferredControlVector, 0.0);
     Arrays.fill(controlWeightsVector, 1.0);
     Arrays.fill(moveWeightsVector, 0.0);
@@ -418,6 +676,39 @@ public class ModelPredictiveController extends NamedBaseClass
     maxControlVector[index] = max;
     controlVector[index] = Math.max(min, Math.min(max, controlVector[index]));
     lastControlVector[index] = Math.max(min, Math.min(max, lastControlVector[index]));
+  }
+
+  /**
+   * Constrain the permitted change of a control variable relative to the previously applied value.
+   * Limits are interpreted as {@code minDelta <= u - u_prev <= maxDelta}.
+   *
+   * @param index control index
+   * @param minDelta minimum permitted change (may be {@link Double#NEGATIVE_INFINITY})
+   * @param maxDelta maximum permitted change (may be {@link Double#POSITIVE_INFINITY})
+   */
+  public void setControlMoveLimits(int index, double minDelta, double maxDelta) {
+    ensureControlIndex(index);
+    if (minDelta > maxDelta) {
+      throw new IllegalArgumentException(
+          "Minimum move limit must not exceed maximum move limit");
+    }
+    minControlMoveVector[index] = minDelta;
+    maxControlMoveVector[index] = maxDelta;
+  }
+
+  /**
+   * Convenience overload to configure move limits by control name.
+   *
+   * @param controlName name of the control variable
+   * @param minDelta minimum permitted change
+   * @param maxDelta maximum permitted change
+   */
+  public void setControlMoveLimits(String controlName, double minDelta, double maxDelta) {
+    int index = controlNames.indexOf(controlName);
+    if (index < 0) {
+      throw new IllegalArgumentException("Unknown control name: " + controlName);
+    }
+    setControlMoveLimits(index, minDelta, maxDelta);
   }
 
   /**
@@ -703,6 +994,120 @@ public class ModelPredictiveController extends NamedBaseClass
   }
 
   /**
+   * Automatically identify the internal first-order process model and configure the MPC weights
+   * using the most recent moving-horizon estimation history. The controller must have collected at
+   * least {@value #MIN_ESTIMATION_SAMPLES} valid samples via
+   * {@link #enableMovingHorizonEstimation(int)} before invoking auto-tune.
+   *
+   * @return tuning result containing the identified parameters and applied configuration
+   */
+  public AutoTuneResult autoTune() {
+    return autoTune(null);
+  }
+
+  /**
+   * Automatically identify the internal first-order process model and configure the MPC weights
+   * using the most recent moving-horizon estimation history.
+   *
+   * @param configuration optional tuning configuration; if {@code null} the default configuration is
+   *        used
+   * @return tuning result containing the identified parameters and applied configuration
+   */
+  public AutoTuneResult autoTune(AutoTuneConfiguration configuration) {
+    AutoTuneConfiguration config =
+        configuration != null ? configuration : AutoTuneConfiguration.builder().build();
+
+    MovingHorizonEstimate estimate = lastMovingHorizonEstimate;
+    if (estimate == null) {
+      estimate = estimateFromHistory();
+      if (estimate != null) {
+        lastMovingHorizonEstimate = estimate;
+      }
+    }
+    if (estimate == null) {
+      throw new IllegalStateException(
+          "Auto-tune requires at least " + MIN_ESTIMATION_SAMPLES + " valid samples");
+    }
+
+    return autoTuneFromEstimate(estimate, config);
+  }
+
+  /**
+   * Auto-tune the controller using explicitly supplied measurement and actuation samples. This is
+   * useful when historical process data has been collected outside of the live controller instance.
+   * The provided lists must follow the same structure as the moving-horizon estimator where
+   * {@code measurements.size() == controls.size() + 1} and {@code sampleTimes.size() == controls.size()}.
+   *
+   * @param measurements ordered list of measured process values
+   * @param controls ordered list of control signals that produced the subsequent measurements
+   * @param sampleTimes sampling intervals between consecutive measurements (seconds)
+   * @param configuration optional tuning configuration
+   * @return tuning result containing the identified parameters and applied configuration
+   */
+  public AutoTuneResult autoTune(List<Double> measurements, List<Double> controls,
+      List<Double> sampleTimes, AutoTuneConfiguration configuration) {
+    Objects.requireNonNull(measurements, "Measurement history must be supplied");
+    Objects.requireNonNull(controls, "Control history must be supplied");
+    Objects.requireNonNull(sampleTimes, "Sample time history must be supplied");
+    AutoTuneConfiguration config =
+        configuration != null ? configuration : AutoTuneConfiguration.builder().build();
+
+    MovingHorizonEstimate estimate = estimateFromSamples(measurements, controls, sampleTimes);
+    if (estimate == null) {
+      throw new IllegalArgumentException(
+          "Insufficient or invalid samples supplied for auto-tuning");
+    }
+    lastMovingHorizonEstimate = estimate;
+    return autoTuneFromEstimate(estimate, config);
+  }
+
+  private AutoTuneResult autoTuneFromEstimate(MovingHorizonEstimate estimate,
+      AutoTuneConfiguration config) {
+    Double override = config.getSampleTimeOverride();
+    double sampleTime = override != null ? override : lastSampleTime;
+    if (!Double.isFinite(sampleTime) || sampleTime <= 0.0) {
+      sampleTime = 1.0;
+    }
+
+    double timeConstant = Math.max(estimate.getTimeConstant(), 1.0e-6);
+    double gain = estimate.getProcessGain();
+    double bias = estimate.getProcessBias();
+
+    double closedLoopTimeConstant = Math.max(sampleTime,
+        config.getClosedLoopTimeConstantRatio() * timeConstant);
+
+    double horizonSeconds = config.getPredictionHorizonMultiple() * timeConstant;
+    int horizon = (int) Math.ceil(horizonSeconds / sampleTime);
+    horizon = Math.max(config.getMinimumHorizon(), Math.min(config.getMaximumHorizon(), horizon));
+
+    double outputWeight = config.getOutputWeight();
+    double gainMagnitude = Math.max(Math.abs(gain), 1.0e-6);
+    double controlWeight = config.getControlWeightFactor() * sampleTime
+        / (gainMagnitude * closedLoopTimeConstant);
+    double moveWeight = config.getMoveWeightFactor() * sampleTime / closedLoopTimeConstant;
+    if (!Double.isFinite(controlWeight) || controlWeight < 0.0) {
+      controlWeight = 0.0;
+    }
+    if (!Double.isFinite(moveWeight) || moveWeight < 0.0) {
+      moveWeight = 0.0;
+    }
+
+    boolean applied = false;
+    if (config.isApplyImmediately()) {
+      double tunedGain = reverseActing ? Math.abs(gain) : gain;
+      setProcessModel(tunedGain, timeConstant);
+      setProcessBias(bias);
+      setPredictionHorizon(horizon);
+      setWeights(outputWeight, controlWeight, moveWeight);
+      applied = true;
+    }
+
+    return new AutoTuneResult(gain, timeConstant, bias, outputWeight, controlWeight, moveWeight,
+        horizon, sampleTime, closedLoopTimeConstant, estimate.getMeanSquaredError(),
+        estimate.getSampleCount(), applied);
+  }
+
+  /**
    * Configure the internal first order process model.
    *
    * @param gain steady-state process gain relating control action to the measured variable
@@ -774,6 +1179,21 @@ public class ModelPredictiveController extends NamedBaseClass
       throw new IllegalArgumentException("Preferred control value must be finite");
     }
     this.preferredControlValue = reference;
+  }
+
+  /**
+   * Limit the change of the single-input MPC output relative to the previously applied value.
+   *
+   * @param minDelta minimum allowed change (may be {@link Double#NEGATIVE_INFINITY})
+   * @param maxDelta maximum allowed change (may be {@link Double#POSITIVE_INFINITY})
+   */
+  public void setMoveLimits(double minDelta, double maxDelta) {
+    if (minDelta > maxDelta) {
+      throw new IllegalArgumentException(
+          "Minimum move limit must not exceed maximum move limit");
+    }
+    this.minMove = minDelta;
+    this.maxMove = maxDelta;
   }
 
   /**
@@ -945,6 +1365,17 @@ public class ModelPredictiveController extends NamedBaseClass
       if (!Double.isInfinite(maxControlVector[i])) {
         value = Math.min(maxControlVector[i], value);
       }
+      double minMoveLimit = minControlMoveVector.length > i ? minControlMoveVector[i]
+          : Double.NEGATIVE_INFINITY;
+      double maxMoveLimit = maxControlMoveVector.length > i ? maxControlMoveVector[i]
+          : Double.POSITIVE_INFINITY;
+      double previous = lastControlVector.length > i ? lastControlVector[i] : 0.0;
+      if (!Double.isInfinite(minMoveLimit)) {
+        value = Math.max(previous + minMoveLimit, value);
+      }
+      if (!Double.isInfinite(maxMoveLimit)) {
+        value = Math.min(previous + maxMoveLimit, value);
+      }
       controlVector[i] = value;
     }
   }
@@ -977,6 +1408,8 @@ public class ModelPredictiveController extends NamedBaseClass
     List<double[]> constraintRows = new ArrayList<>();
     List<Double> constraintBounds = new ArrayList<>();
 
+    double[] feedForwardGradient = new double[controlCount];
+
     for (int idx = 0; idx < qualityConstraints.size(); idx++) {
       QualityConstraint constraint = qualityConstraints.get(idx);
       double measurement = constraint.getLastMeasurement();
@@ -1002,7 +1435,26 @@ public class ModelPredictiveController extends NamedBaseClass
 
       double[] sensitivity = constraint.getControlSensitivity();
       double feedEffect = constraint.computeFeedEffect(deltaComposition, deltaRate);
-      double rhs = constraint.getLimit() - constraint.getMargin() - measurement - feedEffect;
+      double futureMeasurement = measurement + feedEffect;
+      double target = constraint.getLimit() - constraint.getMargin();
+      double deviation = futureMeasurement - target;
+      double normSquared = 0.0;
+      for (double value : sensitivity) {
+        normSquared += value * value;
+      }
+      if (normSquared > 1.0e-12 && Math.abs(deviation) > 1.0e-9) {
+        double scale = -deviation / normSquared;
+        for (int i = 0; i < controlCount; i++) {
+          double desiredDelta = scale * sensitivity[i];
+          double diagonalWeight = Math.max(controlWeightsVector[i], 0.0)
+              + Math.max(moveWeightsVector[i], 0.0);
+          if (diagonalWeight < 1.0e-9) {
+            diagonalWeight = 1.0e-9;
+          }
+          feedForwardGradient[i] -= diagonalWeight * desiredDelta;
+        }
+      }
+      double rhs = constraint.getLimit() - constraint.getMargin() - futureMeasurement;
       double[] row = new double[controlCount];
       double dotPrev = 0.0;
       for (int i = 0; i < controlCount; i++) {
@@ -1026,6 +1478,22 @@ public class ModelPredictiveController extends NamedBaseClass
         constraintRows.add(row);
         constraintBounds.add(maxControlVector[i]);
       }
+      double minMoveLimit = minControlMoveVector.length > i ? minControlMoveVector[i]
+          : Double.NEGATIVE_INFINITY;
+      double maxMoveLimit = maxControlMoveVector.length > i ? maxControlMoveVector[i]
+          : Double.POSITIVE_INFINITY;
+      if (!Double.isInfinite(maxMoveLimit)) {
+        double[] row = new double[controlCount];
+        row[i] = 1.0;
+        constraintRows.add(row);
+        constraintBounds.add(previousControl[i] + maxMoveLimit);
+      }
+      if (!Double.isInfinite(minMoveLimit)) {
+        double[] row = new double[controlCount];
+        row[i] = -1.0;
+        constraintRows.add(row);
+        constraintBounds.add(-(previousControl[i] + minMoveLimit));
+      }
     }
 
     double[][] constraintMatrix = constraintRows.toArray(new double[constraintRows.size()][]);
@@ -1044,7 +1512,8 @@ public class ModelPredictiveController extends NamedBaseClass
         diagonal = 1.0e-9;
       }
       hessian[i][i] = diagonal;
-      gradient[i] = -absoluteWeight * preferredControlVector[i] - moveWeight * previousControl[i];
+      gradient[i] = -absoluteWeight * preferredControlVector[i] - moveWeight * previousControl[i]
+          + feedForwardGradient[i];
     }
 
     double[] solution = solveQuadraticProgram(hessian, gradient, constraintMatrix, constraintVector);
@@ -1059,6 +1528,16 @@ public class ModelPredictiveController extends NamedBaseClass
       }
       if (!Double.isInfinite(maxControlVector[i])) {
         value = Math.min(maxControlVector[i], value);
+      }
+      double minMoveLimit = minControlMoveVector.length > i ? minControlMoveVector[i]
+          : Double.NEGATIVE_INFINITY;
+      double maxMoveLimit = maxControlMoveVector.length > i ? maxControlMoveVector[i]
+          : Double.POSITIVE_INFINITY;
+      if (!Double.isInfinite(minMoveLimit)) {
+        value = Math.max(previousControl[i] + minMoveLimit, value);
+      }
+      if (!Double.isInfinite(maxMoveLimit)) {
+        value = Math.min(previousControl[i] + maxMoveLimit, value);
       }
       controlVector[i] = value;
     }
@@ -1123,13 +1602,35 @@ public class ModelPredictiveController extends NamedBaseClass
   }
 
   private void updateMovingHorizonEstimate() {
-    int sampleCount = estimationControls.size();
-    if (sampleCount < MIN_ESTIMATION_SAMPLES) {
+    MovingHorizonEstimate estimate = estimateFromSamples(estimationMeasurements,
+        estimationControls, estimationSampleTimes);
+    if (estimate == null) {
       return;
     }
-    if (estimationMeasurements.size() != sampleCount + 1
-        || estimationSampleTimes.size() != sampleCount) {
-      return;
+
+    double estimatedGain = estimate.getProcessGain();
+    double estimatedTimeConstant = Math.max(estimate.getTimeConstant(), 1.0e-6);
+    double estimatedBias = estimate.getProcessBias();
+
+    processGain = estimatedGain;
+    timeConstant = estimatedTimeConstant;
+    processBias = estimatedBias;
+
+    lastMovingHorizonEstimate = new MovingHorizonEstimate(estimatedGain, estimatedTimeConstant,
+        estimatedBias, estimate.getMeanSquaredError(), estimate.getSampleCount());
+  }
+
+  private MovingHorizonEstimate estimateFromSamples(List<Double> measurements,
+      List<Double> controls, List<Double> sampleTimes) {
+    if (measurements == null || controls == null || sampleTimes == null) {
+      return null;
+    }
+    int sampleCount = controls.size();
+    if (sampleCount < MIN_ESTIMATION_SAMPLES) {
+      return null;
+    }
+    if (measurements.size() != sampleCount + 1 || sampleTimes.size() != sampleCount) {
+      return null;
     }
 
     double[][] normal = new double[3][3];
@@ -1137,16 +1638,21 @@ public class ModelPredictiveController extends NamedBaseClass
     double mse = 0.0;
 
     for (int i = 0; i < sampleCount; i++) {
-      double measurement = estimationMeasurements.get(i);
-      double control = estimationControls.get(i);
-      double nextMeasurement = estimationMeasurements.get(i + 1);
+      double measurement = measurements.get(i);
+      double control = controls.get(i);
+      double nextMeasurement = measurements.get(i + 1);
+      double dt = sampleTimes.get(i);
+      if (!Double.isFinite(dt) || dt <= 0.0) {
+        return null;
+      }
+      double rateOfChange = (nextMeasurement - measurement) / dt;
       double[] row = {measurement, control, 1.0};
       for (int rowIndex = 0; rowIndex < 3; rowIndex++) {
         double value = row[rowIndex];
         for (int colIndex = 0; colIndex < 3; colIndex++) {
           normal[rowIndex][colIndex] += value * row[colIndex];
         }
-        rhs[rowIndex] += value * nextMeasurement;
+        rhs[rowIndex] += value * rateOfChange;
       }
     }
 
@@ -1157,62 +1663,58 @@ public class ModelPredictiveController extends NamedBaseClass
 
     double[] theta = solveLinearSystem(normal, rhs);
     if (theta == null) {
-      return;
+      return null;
     }
 
-    double a = theta[0];
-    double b = theta[1];
-    double c = theta[2];
-    if (!Double.isFinite(a) || !Double.isFinite(b) || !Double.isFinite(c)) {
-      return;
+    double alpha = theta[0];
+    double beta = theta[1];
+    double gamma = theta[2];
+    if (!Double.isFinite(alpha) || !Double.isFinite(beta) || !Double.isFinite(gamma)) {
+      return null;
     }
-    if (a <= 0.0 || a >= 1.0) {
-      return;
-    }
-    double oneMinusA = 1.0 - a;
-    if (oneMinusA <= 1.0e-9) {
-      return;
+    if (alpha >= 0.0) {
+      return null;
     }
 
-    if (estimationSampleTimes.isEmpty()) {
-      return;
-    }
-    double dtAverage = 0.0;
-    for (double value : estimationSampleTimes) {
-      dtAverage += value;
-    }
-    dtAverage /= estimationSampleTimes.size();
-    if (!Double.isFinite(dtAverage) || dtAverage <= 0.0) {
-      return;
+    double timeConstant = -1.0 / alpha;
+    if (!Double.isFinite(timeConstant) || timeConstant <= 0.0) {
+      return null;
     }
 
-    double estimatedTimeConstant = -dtAverage / Math.log(a);
-    if (!Double.isFinite(estimatedTimeConstant) || estimatedTimeConstant <= 0.0) {
-      return;
-    }
-
-    double estimatedGain = b / oneMinusA;
-    double estimatedBias = c / oneMinusA;
-    if (!Double.isFinite(estimatedGain) || !Double.isFinite(estimatedBias)) {
-      return;
+    double gain = -beta / alpha;
+    double bias = -gamma / alpha;
+    if (!Double.isFinite(gain) || !Double.isFinite(bias)) {
+      return null;
     }
 
     for (int i = 0; i < sampleCount; i++) {
-      double predicted = a * estimationMeasurements.get(i) + b * estimationControls.get(i) + c;
-      double error = estimationMeasurements.get(i + 1) - predicted;
+      double measurement = measurements.get(i);
+      double control = controls.get(i);
+      double nextMeasurement = measurements.get(i + 1);
+      double dt = sampleTimes.get(i);
+      if (!Double.isFinite(dt) || dt <= 0.0) {
+        return null;
+      }
+      double predictedRate = alpha * measurement + beta * control + gamma;
+      double predictedNext = measurement + dt * predictedRate;
+      double error = nextMeasurement - predictedNext;
       mse += error * error;
     }
     mse /= sampleCount;
 
-    processBias = estimatedBias;
-    if (reverseActing) {
-      processGain = Math.abs(estimatedGain);
-    } else {
-      processGain = estimatedGain;
+    double clampedTimeConstant = Math.max(timeConstant, 1.0e-6);
+    return new MovingHorizonEstimate(gain, clampedTimeConstant, bias, mse, sampleCount);
+  }
+
+  private MovingHorizonEstimate estimateFromHistory() {
+    if (estimationControls.size() < MIN_ESTIMATION_SAMPLES) {
+      return null;
     }
-    timeConstant = Math.max(estimatedTimeConstant, 1.0e-6);
-    lastMovingHorizonEstimate = new MovingHorizonEstimate(estimatedGain, timeConstant, processBias,
-        mse, sampleCount);
+    if (estimationMeasurements.size() != estimationControls.size() + 1
+        || estimationSampleTimes.size() != estimationControls.size()) {
+      return null;
+    }
+    return estimateFromSamples(estimationMeasurements, estimationControls, estimationSampleTimes);
   }
 
   private double[] solveQuadraticProgram(double[][] hessian, double[] gradient,
@@ -1489,6 +1991,16 @@ public class ModelPredictiveController extends NamedBaseClass
     if (!Double.isFinite(candidate)) {
       candidate = previousControl;
     }
+    double minBound = Double.isInfinite(minMove) ? Double.NEGATIVE_INFINITY
+        : previousControl + minMove;
+    double maxBound = Double.isInfinite(maxMove) ? Double.POSITIVE_INFINITY
+        : previousControl + maxMove;
+    if (!Double.isInfinite(minBound)) {
+      candidate = Math.max(minBound, candidate);
+    }
+    if (!Double.isInfinite(maxBound)) {
+      candidate = Math.min(maxBound, candidate);
+    }
     return clamp(candidate);
   }
 
@@ -1528,6 +2040,37 @@ public class ModelPredictiveController extends NamedBaseClass
     if (controlVector.length > 0) {
       setControlLimits(Math.min(primaryControlIndex, controlVector.length - 1), min, max);
     }
+  }
+
+  /**
+   * Predict future measurements using the internal first-order model assuming the most recent
+   * control signal is held constant.
+   *
+   * @param steps number of steps ahead to predict (must be positive)
+   * @param dt sampling interval in seconds
+   * @return predicted measurements for each step into the future
+   */
+  public double[] getPredictedTrajectory(int steps, double dt) {
+    if (steps <= 0) {
+      throw new IllegalArgumentException("Prediction length must be positive");
+    }
+    if (!Double.isFinite(dt) || dt <= 0.0) {
+      throw new IllegalArgumentException("Sample interval must be positive and finite");
+    }
+    double measurement = Double.isFinite(lastSampledValue) ? lastSampledValue : processBias;
+    double control = Double.isFinite(lastAppliedControl) ? lastAppliedControl : preferredControlValue;
+    double tau = Math.max(timeConstant, 1.0e-9);
+    double decay = Math.exp(-dt / tau);
+    double[] trajectory = new double[steps];
+    double steadyState = processBias + (reverseActing ? -Math.abs(processGain) : processGain) * control;
+    for (int i = 0; i < steps; i++) {
+      measurement = decay * measurement + (1.0 - decay) * steadyState;
+      trajectory[i] = measurement;
+    }
+    if (steps > 0) {
+      trajectory[steps - 1] = steadyState;
+    }
+    return trajectory;
   }
 
   @Override
@@ -1600,5 +2143,59 @@ public class ModelPredictiveController extends NamedBaseClass
    */
   public double getLastSampleTime() {
     return lastSampleTime;
+  }
+
+  /**
+   * Retrieve the configured output weight for diagnostic purposes.
+   *
+   * @return output tracking weight
+   */
+  public double getOutputWeight() {
+    return outputWeight;
+  }
+
+  /**
+   * Retrieve the configured absolute control weight for diagnostic purposes.
+   *
+   * @return control usage weight
+   */
+  public double getControlWeight() {
+    return controlWeight;
+  }
+
+  /**
+   * Retrieve the configured move suppression weight for diagnostic purposes.
+   *
+   * @return control move weight
+   */
+  public double getMoveWeight() {
+    return moveWeight;
+  }
+
+  /**
+   * Get the current process gain used by the controller's internal model.
+   *
+   * @return process gain
+   */
+  public double getProcessGain() {
+    return processGain;
+  }
+
+  /**
+   * Get the current process time constant used by the controller's internal model.
+   *
+   * @return process time constant in seconds
+   */
+  public double getTimeConstant() {
+    return timeConstant;
+  }
+
+  /**
+   * Get the current process bias used by the controller's internal model.
+   *
+   * @return process bias
+   */
+  public double getProcessBias() {
+    return processBias;
   }
 }
