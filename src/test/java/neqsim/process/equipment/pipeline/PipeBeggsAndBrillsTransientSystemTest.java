@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,10 +18,10 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Integration-style tests exercising the dynamic Beggs & Brill pipeline together with a
- * throttling valve and separator across a variety of fluid conditions. Each test verifies that a
- * valve opening change results in a delayed separator response, illustrating the finite
- * propagation speed introduced by the transient pipeline model.
+ * Integration-style tests exercising the dynamic Beggs & Brill pipeline together with a throttling
+ * valve and separator across a variety of fluid conditions. Each test verifies that a valve opening
+ * change results in a delayed separator response, illustrating the finite propagation speed
+ * introduced by the transient pipeline model.
  */
 public class PipeBeggsAndBrillsTransientSystemTest {
 
@@ -46,7 +48,7 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     Assertions.assertFalse(fluid.hasPhaseType("aqueous"));
 
     assertDelayedSeparatorResponse("single-phase gas", this::createSinglePhaseGasFluid,
-        List.of(gasFlowProbe()));
+        Collections.singletonList(gasFlowProbe()));
   }
 
   @Test
@@ -57,7 +59,7 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     Assertions.assertFalse(fluid.hasPhaseType("aqueous"));
 
     assertDelayedSeparatorResponse("single-phase oil", this::createSinglePhaseOilFluid,
-        List.of(liquidFlowProbe()));
+        Collections.singletonList(liquidFlowProbe()));
   }
 
   @Test
@@ -68,7 +70,7 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     Assertions.assertFalse(fluid.hasPhaseType("aqueous"));
 
     assertDelayedSeparatorResponse("two-phase gas-oil", this::createTwoPhaseGasOilFluid,
-        List.of(gasFlowProbe(), liquidFlowProbe()));
+        Arrays.asList(gasFlowProbe(), liquidFlowProbe()));
   }
 
   @Test
@@ -79,7 +81,7 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     Assertions.assertTrue(fluid.hasPhaseType("aqueous"));
 
     assertDelayedSeparatorResponse("three-phase gas-oil-aqueous",
-        this::createThreePhaseGasOilWaterFluid, List.of(gasFlowProbe(), liquidFlowProbe()));
+        this::createThreePhaseGasOilWaterFluid, Arrays.asList(gasFlowProbe(), liquidFlowProbe()));
   }
 
   private void assertDelayedSeparatorResponse(String scenarioDescription,
@@ -141,9 +143,8 @@ public class PipeBeggsAndBrillsTransientSystemTest {
           scenarioDescription + " " + probe.description() + " change should be non-zero");
 
       double firstStepChange = Math.abs(firstStepFlows.get(probe) - baseline);
-      Assertions.assertTrue(firstStepChange < 0.6 * totalChange,
-          scenarioDescription + " " + probe.description()
-              + " should respond more slowly than the final steady change");
+      Assertions.assertTrue(firstStepChange < 0.6 * totalChange, scenarioDescription + " "
+          + probe.description() + " should respond more slowly than the final steady change");
 
       double tolerance = Math.max(0.2 * totalChange, 0.02);
       tolerances.put(probe, tolerance);
@@ -191,9 +192,8 @@ public class PipeBeggsAndBrillsTransientSystemTest {
               + " should reflect a significant change after multiple steps");
       double initialTargetGap = Math.abs(baseline - target);
       double finalTargetGap = Math.abs(finalFlow - target);
-      Assertions.assertTrue(finalTargetGap < initialTargetGap,
-          scenarioDescription + " " + probe.description()
-              + " should move closer to the final steady value over time");
+      Assertions.assertTrue(finalTargetGap < initialTargetGap, scenarioDescription + " "
+          + probe.description() + " should move closer to the final steady value over time");
       Assertions.assertTrue(Math.abs(firstStepFlows.get(probe) - target) > finalTargetGap,
           scenarioDescription + " " + probe.description()
               + " should be closer to the final value after the additional steps than after the"
