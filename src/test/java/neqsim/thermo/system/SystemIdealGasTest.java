@@ -25,11 +25,16 @@ public class SystemIdealGasTest extends neqsim.NeqSimTest
   public void testComponentFromExtendedDatabase() {
     SystemInterface testSystem = new SystemIdealGas(298.15, 10.0);
 
-    NeqSimDataBase.useExtendedComponentDatabase(true);
-    testSystem.addComponent("2-chloro-1,4-diethoxybenzene", 1.0);
+    // NeqSimDataBase.useExtendedComponentDatabase(true);
+    testSystem.addComponent("ethylene", 1, "mol/sec");
+    testSystem.addComponent("ethylene", 1.0);
     testSystem.getPhase(0).getComponent(0).fugcoef(testSystem.getPhase(0));
     assertEquals(1.0, testSystem.getPhase(0).getComponent(0).getFugacityCoefficient(), 1e-10);
-    testSystem.prettyPrint();
+    // testSystem.prettyPrint();
+    // we set it back to default after test to avoid having extended database in other tests to
+    // reduce running time of creating fluid and adding components due to createion of inmemory
+    // databases from csv table files
+    NeqSimDataBase.useExtendedComponentDatabase(false);
   }
 
   @Test
