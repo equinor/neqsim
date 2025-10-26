@@ -218,6 +218,7 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     pipeline.setAngle(PIPELINE_ANGLE_DEGREES);
     pipeline.setDiameter(PIPELINE_DIAMETER_METERS);
     pipeline.setNumberOfIncrements(PIPELINE_SEGMENTS);
+    pipeline.setCalculateSteadyState(false);
 
     Separator separator = new Separator("separator");
     separator.addStream(pipeline.getOutletStream());
