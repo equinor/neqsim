@@ -484,8 +484,10 @@ public class ProcessSystemGraphvizExporter {
           continue;
         }
 
+        boolean needsAccessOverride = !Modifier.isPublic(field.getModifiers())
+            || !Modifier.isPublic(field.getDeclaringClass().getModifiers());
         try {
-          if (!field.canAccess(target)) {
+          if (needsAccessOverride && !field.isAccessible()) {
             field.setAccessible(true);
           }
         } catch (SecurityException ex) {
