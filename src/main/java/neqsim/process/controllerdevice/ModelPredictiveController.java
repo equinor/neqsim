@@ -1436,10 +1436,22 @@ public class ModelPredictiveController extends NamedBaseClass
       double[] sensitivity = constraint.getControlSensitivity();
       double feedEffect = constraint.computeFeedEffect(deltaComposition, deltaRate);
       double futureMeasurement = measurement + feedEffect;
-      double overshoot = futureMeasurement - (constraint.getLimit() - constraint.getMargin());
-      if (overshoot > 0.0) {
+      double target = constraint.getLimit() - constraint.getMargin();
+      double deviation = futureMeasurement - target;
+      double normSquared = 0.0;
+      for (double value : sensitivity) {
+        normSquared += value * value;
+      }
+      if (normSquared > 1.0e-12 && Math.abs(deviation) > 1.0e-9) {
+        double scale = -deviation / normSquared;
         for (int i = 0; i < controlCount; i++) {
-          feedForwardGradient[i] -= overshoot * sensitivity[i];
+          double desiredDelta = scale * sensitivity[i];
+          double diagonalWeight = Math.max(controlWeightsVector[i], 0.0)
+              + Math.max(moveWeightsVector[i], 0.0);
+          if (diagonalWeight < 1.0e-9) {
+            diagonalWeight = 1.0e-9;
+          }
+          feedForwardGradient[i] -= diagonalWeight * desiredDelta;
         }
       }
       double rhs = constraint.getLimit() - constraint.getMargin() - futureMeasurement;
@@ -1628,13 +1640,18 @@ public class ModelPredictiveController extends NamedBaseClass
       double measurement = measurements.get(i);
       double control = controls.get(i);
       double nextMeasurement = measurements.get(i + 1);
+      double dt = sampleTimes.get(i);
+      if (!Double.isFinite(dt) || dt <= 0.0) {
+        return null;
+      }
+      double rateOfChange = (nextMeasurement - measurement) / dt;
       double[] row = {measurement, control, 1.0};
       for (int rowIndex = 0; rowIndex < 3; rowIndex++) {
         double value = row[rowIndex];
         for (int colIndex = 0; colIndex < 3; colIndex++) {
           normal[rowIndex][colIndex] += value * row[colIndex];
         }
-        rhs[rowIndex] += value * nextMeasurement;
+        rhs[rowIndex] += value * rateOfChange;
       }
     }
 
@@ -1648,51 +1665,45 @@ public class ModelPredictiveController extends NamedBaseClass
       return null;
     }
 
-    double a = theta[0];
-    double b = theta[1];
-    double c = theta[2];
-    if (!Double.isFinite(a) || !Double.isFinite(b) || !Double.isFinite(c)) {
+    double alpha = theta[0];
+    double beta = theta[1];
+    double gamma = theta[2];
+    if (!Double.isFinite(alpha) || !Double.isFinite(beta) || !Double.isFinite(gamma)) {
       return null;
     }
-    if (a <= 0.0 || a >= 1.0) {
-      return null;
-    }
-    double oneMinusA = 1.0 - a;
-    if (oneMinusA <= 1.0e-9) {
+    if (alpha >= 0.0) {
       return null;
     }
 
-    double dtAverage = 0.0;
-    for (double value : sampleTimes) {
-      dtAverage += value;
-    }
-    dtAverage /= sampleTimes.size();
-    if (!Double.isFinite(dtAverage) || dtAverage <= 0.0) {
+    double timeConstant = -1.0 / alpha;
+    if (!Double.isFinite(timeConstant) || timeConstant <= 0.0) {
       return null;
     }
 
-    double estimatedTimeConstant = -dtAverage / Math.log(a);
-    if (!Double.isFinite(estimatedTimeConstant) || estimatedTimeConstant <= 0.0) {
-      return null;
-    }
-
-    double estimatedGain = b / oneMinusA;
-    double estimatedBias = c / oneMinusA;
-    if (!Double.isFinite(estimatedGain) || !Double.isFinite(estimatedBias)) {
+    double gain = -beta / alpha;
+    double bias = -gamma / alpha;
+    if (!Double.isFinite(gain) || !Double.isFinite(bias)) {
       return null;
     }
 
     double mse = 0.0;
     for (int i = 0; i < sampleCount; i++) {
-      double predicted = a * measurements.get(i) + b * controls.get(i) + c;
-      double error = measurements.get(i + 1) - predicted;
+      double measurement = measurements.get(i);
+      double control = controls.get(i);
+      double nextMeasurement = measurements.get(i + 1);
+      double dt = sampleTimes.get(i);
+      if (!Double.isFinite(dt) || dt <= 0.0) {
+        return null;
+      }
+      double predictedRate = alpha * measurement + beta * control + gamma;
+      double predictedNext = measurement + dt * predictedRate;
+      double error = nextMeasurement - predictedNext;
       mse += error * error;
     }
     mse /= sampleCount;
 
-    double clampedTimeConstant = Math.max(estimatedTimeConstant, 1.0e-6);
-    return new MovingHorizonEstimate(estimatedGain, clampedTimeConstant, estimatedBias, mse,
-        sampleCount);
+    double clampedTimeConstant = Math.max(timeConstant, 1.0e-6);
+    return new MovingHorizonEstimate(gain, clampedTimeConstant, bias, mse, sampleCount);
   }
 
   private MovingHorizonEstimate estimateFromHistory() {
