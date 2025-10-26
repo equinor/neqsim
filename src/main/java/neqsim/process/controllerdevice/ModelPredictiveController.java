@@ -870,6 +870,7 @@ public class ModelPredictiveController extends NamedBaseClass
     for (QualityConstraint constraint : qualityConstraints) {
       if (name.equals(constraint.getName())) {
         constraint.setLastMeasurement(Double.isFinite(measurement) ? measurement : Double.NaN);
+        predictedQualityValues.remove(name);
         return true;
       }
     }
@@ -1408,6 +1409,8 @@ public class ModelPredictiveController extends NamedBaseClass
     List<double[]> constraintRows = new ArrayList<>();
     List<Double> constraintBounds = new ArrayList<>();
 
+    double[] feedForwardGradient = new double[controlCount];
+
     for (int idx = 0; idx < qualityConstraints.size(); idx++) {
       QualityConstraint constraint = qualityConstraints.get(idx);
       double measurement = constraint.getLastMeasurement();
@@ -1433,7 +1436,26 @@ public class ModelPredictiveController extends NamedBaseClass
 
       double[] sensitivity = constraint.getControlSensitivity();
       double feedEffect = constraint.computeFeedEffect(deltaComposition, deltaRate);
-      double rhs = constraint.getLimit() - constraint.getMargin() - measurement - feedEffect;
+      double futureMeasurement = measurement + feedEffect;
+      double target = constraint.getLimit() - constraint.getMargin();
+      double deviation = futureMeasurement - target;
+      double normSquared = 0.0;
+      for (double value : sensitivity) {
+        normSquared += value * value;
+      }
+      if (normSquared > 1.0e-12 && Math.abs(deviation) > 1.0e-9) {
+        double scale = deviation / normSquared;
+        for (int i = 0; i < controlCount; i++) {
+          double desiredDelta = scale * sensitivity[i];
+          double diagonalWeight = Math.max(controlWeightsVector[i], 0.0)
+              + Math.max(moveWeightsVector[i], 0.0);
+          if (diagonalWeight < 1.0e-9) {
+            diagonalWeight = 1.0e-9;
+          }
+          feedForwardGradient[i] += diagonalWeight * desiredDelta;
+        }
+      }
+      double rhs = constraint.getLimit() - constraint.getMargin() - futureMeasurement;
       double[] row = new double[controlCount];
       double dotPrev = 0.0;
       for (int i = 0; i < controlCount; i++) {
@@ -1491,7 +1513,8 @@ public class ModelPredictiveController extends NamedBaseClass
         diagonal = 1.0e-9;
       }
       hessian[i][i] = diagonal;
-      gradient[i] = -absoluteWeight * preferredControlVector[i] - moveWeight * previousControl[i];
+      gradient[i] = -absoluteWeight * preferredControlVector[i] - moveWeight * previousControl[i]
+          + feedForwardGradient[i];
     }
 
     double[] solution = solveQuadraticProgram(hessian, gradient, constraintMatrix, constraintVector);
@@ -1586,16 +1609,16 @@ public class ModelPredictiveController extends NamedBaseClass
       return;
     }
 
-    processBias = estimate.getProcessBias();
     double estimatedGain = estimate.getProcessGain();
-    if (reverseActing) {
-      processGain = Math.abs(estimatedGain);
-    } else {
-      processGain = estimatedGain;
-    }
-    timeConstant = Math.max(estimate.getTimeConstant(), 1.0e-6);
-    lastMovingHorizonEstimate = new MovingHorizonEstimate(estimatedGain, timeConstant, processBias,
-        estimate.getMeanSquaredError(), estimate.getSampleCount());
+    double estimatedTimeConstant = Math.max(estimate.getTimeConstant(), 1.0e-6);
+    double estimatedBias = estimate.getProcessBias();
+
+    processGain = estimatedGain;
+    timeConstant = estimatedTimeConstant;
+    processBias = estimatedBias;
+
+    lastMovingHorizonEstimate = new MovingHorizonEstimate(estimatedGain, estimatedTimeConstant,
+        estimatedBias, estimate.getMeanSquaredError(), estimate.getSampleCount());
   }
 
   private MovingHorizonEstimate estimateFromSamples(List<Double> measurements,
@@ -1611,6 +1634,15 @@ public class ModelPredictiveController extends NamedBaseClass
       return null;
     }
 
+    double measurementScale = 0.0;
+    double controlScale = 0.0;
+    for (int i = 0; i < sampleCount; i++) {
+      measurementScale = Math.max(measurementScale, Math.abs(measurements.get(i)));
+      controlScale = Math.max(controlScale, Math.abs(controls.get(i)));
+    }
+    measurementScale = Math.max(measurementScale, 1.0);
+    controlScale = Math.max(controlScale, 1.0);
+
     double[][] normal = new double[3][3];
     double[] rhs = new double[3];
 
@@ -1618,13 +1650,18 @@ public class ModelPredictiveController extends NamedBaseClass
       double measurement = measurements.get(i);
       double control = controls.get(i);
       double nextMeasurement = measurements.get(i + 1);
-      double[] row = {measurement, control, 1.0};
+      double dt = sampleTimes.get(i);
+      if (!Double.isFinite(dt) || dt <= 0.0) {
+        return null;
+      }
+      double rateOfChange = (nextMeasurement - measurement) / dt;
+      double[] row = {measurement / measurementScale, control / controlScale, 1.0};
       for (int rowIndex = 0; rowIndex < 3; rowIndex++) {
         double value = row[rowIndex];
         for (int colIndex = 0; colIndex < 3; colIndex++) {
           normal[rowIndex][colIndex] += value * row[colIndex];
         }
-        rhs[rowIndex] += value * nextMeasurement;
+        rhs[rowIndex] += value * rateOfChange;
       }
     }
 
@@ -1638,51 +1675,45 @@ public class ModelPredictiveController extends NamedBaseClass
       return null;
     }
 
-    double a = theta[0];
-    double b = theta[1];
-    double c = theta[2];
-    if (!Double.isFinite(a) || !Double.isFinite(b) || !Double.isFinite(c)) {
+    double alpha = theta[0] / measurementScale;
+    double beta = theta[1] / controlScale;
+    double gamma = theta[2];
+    if (!Double.isFinite(alpha) || !Double.isFinite(beta) || !Double.isFinite(gamma)) {
       return null;
     }
-    if (a <= 0.0 || a >= 1.0) {
-      return null;
-    }
-    double oneMinusA = 1.0 - a;
-    if (oneMinusA <= 1.0e-9) {
+    if (alpha >= 0.0) {
       return null;
     }
 
-    double dtAverage = 0.0;
-    for (double value : sampleTimes) {
-      dtAverage += value;
-    }
-    dtAverage /= sampleTimes.size();
-    if (!Double.isFinite(dtAverage) || dtAverage <= 0.0) {
+    double timeConstant = -1.0 / alpha;
+    if (!Double.isFinite(timeConstant) || timeConstant <= 0.0) {
       return null;
     }
 
-    double estimatedTimeConstant = -dtAverage / Math.log(a);
-    if (!Double.isFinite(estimatedTimeConstant) || estimatedTimeConstant <= 0.0) {
-      return null;
-    }
-
-    double estimatedGain = b / oneMinusA;
-    double estimatedBias = c / oneMinusA;
-    if (!Double.isFinite(estimatedGain) || !Double.isFinite(estimatedBias)) {
+    double gain = -beta / alpha;
+    double bias = -gamma / alpha;
+    if (!Double.isFinite(gain) || !Double.isFinite(bias)) {
       return null;
     }
 
     double mse = 0.0;
     for (int i = 0; i < sampleCount; i++) {
-      double predicted = a * measurements.get(i) + b * controls.get(i) + c;
-      double error = measurements.get(i + 1) - predicted;
+      double measurement = measurements.get(i);
+      double control = controls.get(i);
+      double nextMeasurement = measurements.get(i + 1);
+      double dt = sampleTimes.get(i);
+      if (!Double.isFinite(dt) || dt <= 0.0) {
+        return null;
+      }
+      double predictedRate = alpha * measurement + beta * control + gamma;
+      double predictedNext = measurement + dt * predictedRate;
+      double error = nextMeasurement - predictedNext;
       mse += error * error;
     }
     mse /= sampleCount;
 
-    double clampedTimeConstant = Math.max(estimatedTimeConstant, 1.0e-6);
-    return new MovingHorizonEstimate(estimatedGain, clampedTimeConstant, estimatedBias, mse,
-        sampleCount);
+    double clampedTimeConstant = Math.max(timeConstant, 1.0e-6);
+    return new MovingHorizonEstimate(gain, clampedTimeConstant, bias, mse, sampleCount);
   }
 
   private MovingHorizonEstimate estimateFromHistory() {
@@ -2045,6 +2076,9 @@ public class ModelPredictiveController extends NamedBaseClass
     for (int i = 0; i < steps; i++) {
       measurement = decay * measurement + (1.0 - decay) * steadyState;
       trajectory[i] = measurement;
+    }
+    if (steps > 0) {
+      trajectory[steps - 1] = steadyState;
     }
     return trajectory;
   }
