@@ -33,6 +33,8 @@ public class ProcessSystemGraphvizExporter {
   private static final String[] INLET_KEYWORDS = {"inlet", "feed", "inflow", "suction", "source",
       "supply", "import", "makeup", "recycle"};
   private static final int MAX_INDEXED_STREAMS = 16;
+  private static final Class<?> INACCESSIBLE_OBJECT_EXCEPTION_CLASS =
+      resolveClass("java.lang.reflect.InaccessibleObjectException");
 
   private enum StreamRole {
     INLET,
@@ -694,14 +696,26 @@ public class ProcessSystemGraphvizExporter {
   }
 
   private static boolean isInaccessibleModuleAccess(RuntimeException exception) {
+    if (INACCESSIBLE_OBJECT_EXCEPTION_CLASS == null) {
+      return false;
+    }
+
     Throwable current = exception;
     while (current != null) {
-      if ("java.lang.reflect.InaccessibleObjectException".equals(current.getClass().getName())) {
+      if (INACCESSIBLE_OBJECT_EXCEPTION_CLASS.isInstance(current)) {
         return true;
       }
       current = current.getCause();
     }
     return false;
+  }
+
+  private static Class<?> resolveClass(String className) {
+    try {
+      return Class.forName(className);
+    } catch (ClassNotFoundException | LinkageError ex) {
+      return null;
+    }
   }
 
   private String escapeGraphviz(String value) {
