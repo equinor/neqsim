@@ -160,6 +160,18 @@ public class PipeBeggsAndBrills extends Pipeline {
   private List<Double> elevationProfile;
   private List<Integer> incrementsProfile;
 
+  private boolean transientInitialized = false;
+  private List<Double> transientPressureProfile;
+  private List<Double> transientTemperatureProfile;
+  private List<Double> transientMassFlowProfile;
+  private List<Double> transientVelocityProfile;
+  private List<Double> transientDensityProfile;
+  private double segmentLengthMeters = Double.NaN;
+  private double crossSectionArea = Double.NaN;
+
+  private static final double MIN_TRANSIT_VELOCITY = 1.0e-3;
+  private static final double MIN_DENSITY = 1.0e-6;
+
   // Flag to run isothermal calculations
   private boolean runAdiabatic = true;
   private boolean runConstantSurfaceTemperature = false;
@@ -768,6 +780,7 @@ public class PipeBeggsAndBrills extends Pipeline {
   @Override
   public void run(UUID id) {
     iteration = 0;
+    transientInitialized = false;
 
     pressureProfile = new ArrayList<>();
     temperatureProfile = new ArrayList<>();
@@ -960,10 +973,197 @@ public class PipeBeggsAndBrills extends Pipeline {
     return enthalpy;
   }
 
+  private void initializeTransientState(UUID id) {
+    run(id);
+
+    transientPressureProfile = new ArrayList<>(pressureProfile);
+    transientTemperatureProfile = new ArrayList<>(temperatureProfile);
+
+    if (transientTemperatureProfile.size() < numberOfIncrements + 1) {
+      double fallbackTemperature;
+      if (!transientTemperatureProfile.isEmpty()) {
+        fallbackTemperature = transientTemperatureProfile.get(transientTemperatureProfile.size() - 1);
+      } else {
+        fallbackTemperature = getInletStream().getThermoSystem().getTemperature();
+      }
+      while (transientTemperatureProfile.size() < numberOfIncrements + 1) {
+        transientTemperatureProfile.add(fallbackTemperature);
+      }
+    }
+    transientMassFlowProfile = new ArrayList<>();
+    transientVelocityProfile = new ArrayList<>();
+    transientDensityProfile = new ArrayList<>();
+
+    crossSectionArea = (Math.PI / 4.0) * Math.pow(insideDiameter, 2.0);
+    segmentLengthMeters = totalLength / Math.max(1, numberOfIncrements);
+
+    SystemInterface inlet = getInletStream().getThermoSystem().clone();
+    inlet.initProperties();
+    double steadyFlow = inlet.getFlowRate("kg/sec");
+    double steadyDensity = Math.max(MIN_DENSITY, inlet.getDensity("kg/m3"));
+    double baseVelocity = steadyFlow / (steadyDensity * crossSectionArea);
+    baseVelocity = Math.max(MIN_TRANSIT_VELOCITY, baseVelocity);
+
+    for (int i = 0; i < transientPressureProfile.size(); i++) {
+      transientMassFlowProfile.add(steadyFlow);
+    }
+
+    if (mixtureSuperficialVelocityProfile != null && !mixtureSuperficialVelocityProfile.isEmpty()) {
+      for (int i = 0; i < numberOfIncrements; i++) {
+        double velocityFeetPerSecond = mixtureSuperficialVelocityProfile
+            .get(Math.min(i, mixtureSuperficialVelocityProfile.size() - 1));
+        transientVelocityProfile.add(Math.max(MIN_TRANSIT_VELOCITY, velocityFeetPerSecond * 0.3048));
+      }
+    } else {
+      for (int i = 0; i < numberOfIncrements; i++) {
+        transientVelocityProfile.add(baseVelocity);
+      }
+    }
+
+    if (mixtureDensityProfile != null && !mixtureDensityProfile.isEmpty()) {
+      for (int i = 0; i < numberOfIncrements; i++) {
+        transientDensityProfile.add(Math.max(MIN_DENSITY,
+            mixtureDensityProfile.get(Math.min(i, mixtureDensityProfile.size() - 1))));
+      }
+    } else {
+      for (int i = 0; i < numberOfIncrements; i++) {
+        transientDensityProfile.add(Math.max(MIN_DENSITY, steadyDensity));
+      }
+    }
+
+    transientInitialized = true;
+  }
+
+  private void ensureTransientState(UUID id) {
+    if (!transientInitialized || transientPressureProfile == null
+        || transientPressureProfile.size() != numberOfIncrements + 1
+        || transientTemperatureProfile == null
+        || transientTemperatureProfile.size() != numberOfIncrements + 1
+        || transientMassFlowProfile == null
+        || transientMassFlowProfile.size() != numberOfIncrements + 1
+        || transientVelocityProfile == null
+        || transientVelocityProfile.size() != numberOfIncrements
+        || transientDensityProfile == null
+        || transientDensityProfile.size() != numberOfIncrements) {
+      initializeTransientState(id);
+      return;
+    }
+    if (Double.isNaN(crossSectionArea)) {
+      crossSectionArea = (Math.PI / 4.0) * Math.pow(insideDiameter, 2.0);
+    }
+    if (Double.isNaN(segmentLengthMeters) || segmentLengthMeters <= 0) {
+      segmentLengthMeters = totalLength / Math.max(1, numberOfIncrements);
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
-    run(id);
+    ensureTransientState(id);
+
+    SystemInterface inletSystem = getInletStream().getThermoSystem().clone();
+    inletSystem.initProperties();
+
+    double inletPressureBoundary = inletSystem.getPressure();
+    double inletTemperatureBoundary = inletSystem.getTemperature();
+    double inletMassFlowBoundary = inletSystem.getFlowRate("kg/sec");
+    double inletDensityBoundary = Math.max(MIN_DENSITY, inletSystem.getDensity("kg/m3"));
+
+    double inletVelocity = inletMassFlowBoundary / (inletDensityBoundary * crossSectionArea);
+    inletVelocity = Math.max(MIN_TRANSIT_VELOCITY, inletVelocity);
+
+    List<Double> updatedPressure = new ArrayList<>(transientPressureProfile);
+    List<Double> updatedTemperature = new ArrayList<>(transientTemperatureProfile);
+    List<Double> updatedMassFlow = new ArrayList<>(transientMassFlowProfile);
+    List<Double> updatedVelocity = new ArrayList<>(transientVelocityProfile);
+    List<Double> updatedDensity = new ArrayList<>(transientDensityProfile);
+
+    updatedPressure.set(0, inletPressureBoundary);
+    updatedTemperature.set(0, inletTemperatureBoundary);
+    updatedMassFlow.set(0, inletMassFlowBoundary);
+
+    for (int segment = 0; segment < numberOfIncrements; segment++) {
+      double upstreamPressure = segment == 0 ? inletPressureBoundary : transientPressureProfile.get(segment);
+      double downstreamPressure = transientPressureProfile.get(segment + 1);
+
+      double upstreamTemperature = segment == 0 ? inletTemperatureBoundary
+          : transientTemperatureProfile.get(segment);
+      double downstreamTemperature = transientTemperatureProfile.get(segment + 1);
+
+      double upstreamMassFlow = segment == 0 ? inletMassFlowBoundary : transientMassFlowProfile.get(segment);
+      double downstreamMassFlow = transientMassFlowProfile.get(segment + 1);
+
+      double segmentDensity = transientDensityProfile.get(segment);
+      double segmentVelocity = segment == 0 ? inletVelocity : transientVelocityProfile.get(segment);
+      segmentVelocity = Math.max(MIN_TRANSIT_VELOCITY, segmentVelocity);
+
+      double tau = segmentLengthMeters / segmentVelocity;
+      double relaxation = tau > 0.0 ? Math.min(1.0, dt / tau) : 1.0;
+
+      updatedPressure.set(segment + 1,
+          downstreamPressure + relaxation * (upstreamPressure - downstreamPressure));
+      updatedTemperature.set(segment + 1,
+          downstreamTemperature + relaxation * (upstreamTemperature - downstreamTemperature));
+      updatedMassFlow.set(segment + 1,
+          downstreamMassFlow + relaxation * (upstreamMassFlow - downstreamMassFlow));
+
+      double targetVelocity = upstreamMassFlow / (Math.max(MIN_DENSITY, segmentDensity) * crossSectionArea);
+      double relaxedVelocity = segmentVelocity + relaxation * (targetVelocity - segmentVelocity);
+      if (segment < updatedVelocity.size()) {
+        updatedVelocity.set(segment, Math.max(MIN_TRANSIT_VELOCITY, relaxedVelocity));
+      }
+
+      double upstreamDensity = segment == 0 ? inletDensityBoundary : transientDensityProfile.get(segment - 1);
+      double relaxedDensity = segmentDensity + relaxation * (upstreamDensity - segmentDensity);
+      updatedDensity.set(segment, Math.max(MIN_DENSITY, relaxedDensity));
+    }
+
+    transientPressureProfile = updatedPressure;
+    transientTemperatureProfile = updatedTemperature;
+    transientMassFlowProfile = updatedMassFlow;
+    transientVelocityProfile = updatedVelocity;
+    transientDensityProfile = updatedDensity;
+
+    pressureProfile = new ArrayList<>(transientPressureProfile);
+    temperatureProfile = new ArrayList<>(transientTemperatureProfile);
+
+    pressureDropProfile = new ArrayList<>();
+    pressureDropProfile.add(0.0);
+    for (int i = 0; i < numberOfIncrements; i++) {
+      pressureDropProfile.add(transientPressureProfile.get(i) - transientPressureProfile.get(i + 1));
+    }
+
+    mixtureSuperficialVelocityProfile = new ArrayList<>();
+    for (int i = 0; i < numberOfIncrements; i++) {
+      mixtureSuperficialVelocityProfile.add(transientVelocityProfile.get(i) / 0.3048);
+    }
+
+    mixtureDensityProfile = new ArrayList<>(transientDensityProfile);
+
+    double outletPressure = transientPressureProfile.get(transientPressureProfile.size() - 1);
+    double outletTemperature = transientTemperatureProfile.get(transientTemperatureProfile.size() - 1);
+    double outletMassFlow = transientMassFlowProfile.get(transientMassFlowProfile.size() - 1);
+
+    SystemInterface outletSystem = system;
+    if (outletSystem == null) {
+      outletSystem = inletSystem.clone();
+    } else {
+      outletSystem = outletSystem.clone();
+    }
+    outletSystem.setPressure(outletPressure);
+    outletSystem.setTemperature(outletTemperature);
+    outletSystem.setTotalFlowRate(outletMassFlow, "kg/sec");
+    outletSystem.setMolarComposition(inletSystem.getMolarComposition());
+    outletSystem.initProperties();
+
+    system = outletSystem;
+    outStream.setThermoSystem(outletSystem);
+    outStream.setCalculationIdentifier(id);
+
+    totalPressureDrop = transientPressureProfile.get(0) - outletPressure;
+    pressureOut = outletPressure;
+    temperatureOut = outletTemperature;
+
     increaseTime(dt);
   }
 
