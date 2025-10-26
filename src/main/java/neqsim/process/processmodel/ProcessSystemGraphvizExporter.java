@@ -3,6 +3,7 @@ package neqsim.process.processmodel;
 import java.io.PrintWriter;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -483,7 +484,16 @@ public class ProcessSystemGraphvizExporter {
           continue;
         }
 
-        field.setAccessible(true);
+        try {
+          if (!field.canAccess(target)) {
+            field.setAccessible(true);
+          }
+        } catch (InaccessibleObjectException | SecurityException ex) {
+          logger.debug("Skipping field {} due to inaccessible module or security restrictions", field,
+              ex);
+          continue;
+        }
+
         Object value;
         try {
           value = field.get(target);
