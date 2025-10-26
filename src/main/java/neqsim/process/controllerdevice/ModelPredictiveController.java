@@ -870,6 +870,7 @@ public class ModelPredictiveController extends NamedBaseClass
     for (QualityConstraint constraint : qualityConstraints) {
       if (name.equals(constraint.getName())) {
         constraint.setLastMeasurement(Double.isFinite(measurement) ? measurement : Double.NaN);
+        predictedQualityValues.remove(name);
         return true;
       }
     }
@@ -1443,7 +1444,7 @@ public class ModelPredictiveController extends NamedBaseClass
         normSquared += value * value;
       }
       if (normSquared > 1.0e-12 && Math.abs(deviation) > 1.0e-9) {
-        double scale = -deviation / normSquared;
+        double scale = deviation / normSquared;
         for (int i = 0; i < controlCount; i++) {
           double desiredDelta = scale * sensitivity[i];
           double diagonalWeight = Math.max(controlWeightsVector[i], 0.0)
@@ -1451,7 +1452,7 @@ public class ModelPredictiveController extends NamedBaseClass
           if (diagonalWeight < 1.0e-9) {
             diagonalWeight = 1.0e-9;
           }
-          feedForwardGradient[i] -= diagonalWeight * desiredDelta;
+          feedForwardGradient[i] += diagonalWeight * desiredDelta;
         }
       }
       double rhs = constraint.getLimit() - constraint.getMargin() - futureMeasurement;
@@ -1633,6 +1634,15 @@ public class ModelPredictiveController extends NamedBaseClass
       return null;
     }
 
+    double measurementScale = 0.0;
+    double controlScale = 0.0;
+    for (int i = 0; i < sampleCount; i++) {
+      measurementScale = Math.max(measurementScale, Math.abs(measurements.get(i)));
+      controlScale = Math.max(controlScale, Math.abs(controls.get(i)));
+    }
+    measurementScale = Math.max(measurementScale, 1.0);
+    controlScale = Math.max(controlScale, 1.0);
+
     double[][] normal = new double[3][3];
     double[] rhs = new double[3];
 
@@ -1645,7 +1655,7 @@ public class ModelPredictiveController extends NamedBaseClass
         return null;
       }
       double rateOfChange = (nextMeasurement - measurement) / dt;
-      double[] row = {measurement, control, 1.0};
+      double[] row = {measurement / measurementScale, control / controlScale, 1.0};
       for (int rowIndex = 0; rowIndex < 3; rowIndex++) {
         double value = row[rowIndex];
         for (int colIndex = 0; colIndex < 3; colIndex++) {
@@ -1665,8 +1675,8 @@ public class ModelPredictiveController extends NamedBaseClass
       return null;
     }
 
-    double alpha = theta[0];
-    double beta = theta[1];
+    double alpha = theta[0] / measurementScale;
+    double beta = theta[1] / controlScale;
     double gamma = theta[2];
     if (!Double.isFinite(alpha) || !Double.isFinite(beta) || !Double.isFinite(gamma)) {
       return null;
