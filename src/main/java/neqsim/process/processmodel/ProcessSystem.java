@@ -8,8 +8,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +55,7 @@ public class ProcessSystem extends SimulationBaseClass {
   static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
   transient Thread thisThread;
-  String[][] signalDB = new String[10000][100];
+  private MeasurementHistory measurementHistory = new MeasurementHistory();
   private double surroundingTemperature = 288.15;
   private int timeStepNumber = 0;
   /**
@@ -68,6 +70,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   private final Map<String, Integer> equipmentCounter = new HashMap<>();
   private ProcessEquipmentInterface lastAddedUnit = null;
+  private transient ProcessSystem initialStateSnapshot;
 
   /**
    * <p>
@@ -571,6 +574,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
+    ensureInitialStateSnapshot();
     for (int i = 0; i < unitOperations.size(); i++) {
       ProcessEquipmentInterface unit = unitOperations.get(i);
       if (unit instanceof Setter) {
@@ -586,14 +590,17 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     timeStepNumber++;
-    signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()];
+    String[] row = new String[1 + 3 * measurementDevices.size()];
     for (int i = 0; i < measurementDevices.size(); i++) {
-      signalDB[timeStepNumber][0] = Double.toString(time);
-      signalDB[timeStepNumber][3 * i + 1] = measurementDevices.get(i).getName();
-      signalDB[timeStepNumber][3 * i + 2] =
-          Double.toString(measurementDevices.get(i).getMeasuredValue());
-      signalDB[timeStepNumber][3 * i + 3] = measurementDevices.get(i).getUnit();
+      row[0] = Double.toString(time);
+      row[3 * i + 1] = measurementDevices.get(i).getName();
+      row[3 * i + 2] = Double.toString(measurementDevices.get(i).getMeasuredValue());
+      row[3 * i + 3] = measurementDevices.get(i).getUnit();
     }
+    if (measurementDevices.isEmpty()) {
+      row[0] = Double.toString(time);
+    }
+    measurementHistory.add(row);
     setCalculationIdentifier(id);
   }
 
@@ -772,8 +779,120 @@ public class ProcessSystem extends SimulationBaseClass {
     neqsim.datapresentation.filehandling.TextFile tempFile =
         new neqsim.datapresentation.filehandling.TextFile();
     tempFile.setOutputFileName(filename);
-    tempFile.setValues(signalDB);
+    tempFile.setValues(measurementHistory.toArray());
     tempFile.createFile();
+  }
+
+  /**
+   * Clears all stored transient measurement history entries and resets the time step counter.
+   */
+  public void clearHistory() {
+    measurementHistory.clear();
+    timeStepNumber = 0;
+  }
+
+  /**
+   * Returns the number of stored transient measurement entries.
+   *
+   * @return number of stored history entries
+   */
+  public int getHistorySize() {
+    return measurementHistory.size();
+  }
+
+  /**
+   * Returns a snapshot of the transient measurement history.
+   *
+   * @return the measurement history as a two-dimensional array
+   */
+  public String[][] getHistorySnapshot() {
+    return measurementHistory.toArray();
+  }
+
+  /**
+   * Sets the maximum number of entries retained in the measurement history. A value less than or
+   * equal to zero disables truncation (unbounded history).
+   *
+   * @param maxEntries maximum number of entries to keep, or non-positive for unlimited
+   */
+  public void setHistoryCapacity(int maxEntries) {
+    measurementHistory.setMaxSize(maxEntries);
+  }
+
+  /**
+   * Returns the configured history capacity. A value less than or equal to zero means the history
+   * grows without bounds.
+   *
+   * @return configured maximum number of history entries or non-positive for unlimited
+   */
+  public int getHistoryCapacity() {
+    return measurementHistory.getMaxSize();
+  }
+
+  /**
+   * Stores a snapshot of the current process system state that can later be restored with
+   * {@link #reset()}.
+   */
+  public void storeInitialState() {
+    captureInitialState(true);
+  }
+
+  /**
+   * Restores the process system to the stored initial state. The initial state is captured
+   * automatically the first time a transient run is executed, or manually via
+   * {@link #storeInitialState()}.
+   */
+  public void reset() {
+    if (initialStateSnapshot == null) {
+      throw new IllegalStateException(
+          "Initial state has not been stored. Call storeInitialState() before reset().");
+    }
+    ProcessSystem restored = initialStateSnapshot.copy();
+    applyState(restored);
+  }
+
+  private void ensureInitialStateSnapshot() {
+    captureInitialState(false);
+  }
+
+  private void captureInitialState(boolean force) {
+    if (!force && initialStateSnapshot != null) {
+      return;
+    }
+
+    ProcessSystem previousSnapshot = initialStateSnapshot;
+    try {
+      initialStateSnapshot = null;
+      ProcessSystem snapshot = deepCopy();
+      initialStateSnapshot = snapshot;
+    } catch (RuntimeException ex) {
+      initialStateSnapshot = previousSnapshot;
+      throw ex;
+    }
+  }
+
+  private void applyState(ProcessSystem source) {
+    setName(source.getName());
+    String tagName = source.getTagName();
+    if (tagName != null) {
+      setTagName(tagName);
+    }
+    setCalculateSteadyState(source.getCalculateSteadyState());
+    setRunInSteps(source.isRunInSteps());
+    setTime(source.getTime());
+    surroundingTemperature = source.surroundingTemperature;
+    timeStepNumber = source.timeStepNumber;
+    unitOperations = new ArrayList<>(source.unitOperations);
+    measurementDevices = new ArrayList<>(source.measurementDevices);
+    recycleController = source.recycleController;
+    timeStep = source.timeStep;
+    runStep = source.runStep;
+    equipmentCounter.clear();
+    equipmentCounter.putAll(source.equipmentCounter);
+    lastAddedUnit = source.lastAddedUnit;
+    measurementHistory = source.measurementHistory.copy();
+    thisThread = null;
+    setCalculationIdentifier(source.getCalculationIdentifier());
   }
 
   /**
@@ -971,14 +1090,25 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
   public ProcessSystem copy() {
+    ProcessSystem snapshot = initialStateSnapshot;
+    try {
+      initialStateSnapshot = null;
+      return deepCopy();
+    } finally {
+      initialStateSnapshot = snapshot;
+    }
+  }
+
+  private ProcessSystem deepCopy() {
     try {
       ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-      ObjectOutputStream out = new ObjectOutputStream(byteOut);
-      out.writeObject(this);
-      out.flush();
+      try (ObjectOutputStream out = new ObjectOutputStream(byteOut)) {
+        out.writeObject(this);
+      }
       ByteArrayInputStream byteIn = new ByteArrayInputStream(byteOut.toByteArray());
-      ObjectInputStream in = new ObjectInputStream(byteIn);
-      return (ProcessSystem) in.readObject();
+      try (ObjectInputStream in = new ObjectInputStream(byteIn)) {
+        return (ProcessSystem) in.readObject();
+      }
     } catch (Exception e) {
       throw new RuntimeException("Failed to copy ProcessSystem", e);
     }
@@ -1000,9 +1130,9 @@ public class ProcessSystem extends SimulationBaseClass {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + Arrays.deepHashCode(signalDB);
-    result = prime * result + Objects.hash(measurementDevices, name, recycleController,
-        surroundingTemperature, time, timeStep, timeStepNumber, unitOperations);
+    result = prime * result
+        + Objects.hash(measurementDevices, measurementHistory, name, recycleController,
+            surroundingTemperature, time, timeStep, timeStepNumber, unitOperations);
     return result;
   }
 
@@ -1022,7 +1152,7 @@ public class ProcessSystem extends SimulationBaseClass {
     return Objects.equals(measurementDevices, other.measurementDevices)
         && Objects.equals(name, other.name)
         && Objects.equals(recycleController, other.recycleController)
-        && Arrays.deepEquals(signalDB, other.signalDB)
+        && Objects.equals(measurementHistory, other.measurementHistory)
         && Double.doubleToLongBits(surroundingTemperature) == Double
             .doubleToLongBits(other.surroundingTemperature)
         && Double.doubleToLongBits(time) == Double.doubleToLongBits(other.time)
@@ -1201,6 +1331,82 @@ public class ProcessSystem extends SimulationBaseClass {
     } catch (NoSuchMethodException ignored) {
     } catch (Exception e) {
       e.printStackTrace();
+    }
+  }
+
+  private static final class MeasurementHistory implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+    private int maxSize;
+    private Deque<String[]> entries = new ArrayDeque<>();
+
+    void add(String[] entry) {
+      if (entry == null) {
+        throw new IllegalArgumentException("History entry cannot be null");
+      }
+      if (maxSize > 0 && entries.size() >= maxSize) {
+        entries.removeFirst();
+      }
+      entries.addLast(Arrays.copyOf(entry, entry.length));
+    }
+
+    void clear() {
+      entries.clear();
+    }
+
+    int size() {
+      return entries.size();
+    }
+
+    int getMaxSize() {
+      return maxSize;
+    }
+
+    void setMaxSize(int maxSize) {
+      this.maxSize = maxSize;
+      if (maxSize > 0) {
+        while (entries.size() > maxSize) {
+          entries.removeFirst();
+        }
+      }
+    }
+
+    MeasurementHistory copy() {
+      MeasurementHistory copy = new MeasurementHistory();
+      copy.maxSize = maxSize;
+      for (String[] entry : entries) {
+        copy.entries.addLast(Arrays.copyOf(entry, entry.length));
+      }
+      return copy;
+    }
+
+    String[][] toArray() {
+      String[][] array = new String[entries.size()][];
+      int index = 0;
+      for (String[] entry : entries) {
+        array[index++] = Arrays.copyOf(entry, entry.length);
+      }
+      return array;
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + maxSize;
+      result = prime * result + Arrays.deepHashCode(toArray());
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+      MeasurementHistory other = (MeasurementHistory) obj;
+      return maxSize == other.maxSize && Arrays.deepEquals(toArray(), other.toArray());
     }
   }
 
