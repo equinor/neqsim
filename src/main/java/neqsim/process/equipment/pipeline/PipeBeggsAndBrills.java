@@ -1059,6 +1059,12 @@ public class PipeBeggsAndBrills extends Pipeline {
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
+
+    if (getCalculateSteadyState()) {
+      run(id);
+      increaseTime(dt);
+      return;
+    }
     ensureTransientState(id);
 
     SystemInterface inletSystem = getInletStream().getThermoSystem().clone();
