@@ -488,10 +488,17 @@ public class ProcessSystemGraphvizExporter {
           if (!field.canAccess(target)) {
             field.setAccessible(true);
           }
-        } catch (InaccessibleObjectException | SecurityException ex) {
+        } catch (SecurityException ex) {
           logger.debug("Skipping field {} due to inaccessible module or security restrictions", field,
               ex);
           continue;
+        } catch (RuntimeException ex) {
+          if (isInaccessibleModuleAccess(ex)) {
+            logger.debug("Skipping field {} due to inaccessible module or security restrictions", field,
+                ex);
+            continue;
+          }
+          throw ex;
         }
 
         Object value;
@@ -680,6 +687,17 @@ public class ProcessSystemGraphvizExporter {
       if (value.contains(keyword)) {
         return true;
       }
+    }
+    return false;
+  }
+
+  private static boolean isInaccessibleModuleAccess(RuntimeException exception) {
+    Throwable current = exception;
+    while (current != null) {
+      if ("java.lang.reflect.InaccessibleObjectException".equals(current.getClass().getName())) {
+        return true;
+      }
+      current = current.getCause();
     }
     return false;
   }
