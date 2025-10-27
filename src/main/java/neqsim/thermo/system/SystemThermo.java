@@ -1433,12 +1433,18 @@ public abstract class SystemThermo implements SystemInterface {
       resetDatabase();
     }
 
+    int numberOfComponentsInPhase = getPhase(0).getNumberOfComponents();
+    if (numberOfComponentsInPhase == 0) {
+      logger.debug("Skipping database population – no components available in phase 0");
+      return;
+    }
+
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       String names = new String();
-      for (int k = 0; k < getPhase(0).getNumberOfComponents() - 1; k++) {
+      for (int k = 0; k < numberOfComponentsInPhase - 1; k++) {
         names += "'" + this.getComponentNames()[k] + "', ";
       }
-      names += "'" + this.getComponentNames()[getPhase(0).getNumberOfComponents() - 1] + "'";
+      names += "'" + this.getComponentNames()[numberOfComponentsInPhase - 1] + "'";
 
       if (NeqSimDataBase.createTemporaryTables()) {
         database.execute("insert into comptemp SELECT * FROM comp WHERE name IN (" + names + ")");
