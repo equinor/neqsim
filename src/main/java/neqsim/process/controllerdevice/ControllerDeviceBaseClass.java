@@ -153,13 +153,27 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     double measurementForControl;
     double setPointForControl;
     if (usesDefaultUnit) {
-      double span = transmitter.getMaximumValue() - transmitter.getMinimumValue();
-      if (Math.abs(span) < 1e-12) {
+      double min = transmitter.getMinimumValue();
+      double max = transmitter.getMaximumValue();
+      double span = max - min;
+
+      boolean canUsePercent = span > 1e-12;
+      if (canUsePercent) {
+        double guardBand = Math.max(1.0e-9, 0.5 * span);
+        double rawSetPoint = controllerSetPoint;
+        boolean measurementInside = measurement >= min - guardBand && measurement <= max + guardBand;
+        boolean setPointInside = rawSetPoint >= min - guardBand && rawSetPoint <= max + guardBand;
+        if (!measurementInside || !setPointInside) {
+          canUsePercent = false;
+        }
+      }
+
+      if (canUsePercent) {
+        measurementForControl = transmitter.getMeasuredPercentValue();
+        setPointForControl = (controllerSetPoint - min) / span * 100.0;
+      } else {
         measurementForControl = measurement;
         setPointForControl = controllerSetPoint;
-      } else {
-        measurementForControl = transmitter.getMeasuredPercentValue();
-        setPointForControl = (controllerSetPoint - transmitter.getMinimumValue()) / span * 100.0;
       }
     } else {
       measurementForControl = measurement;
