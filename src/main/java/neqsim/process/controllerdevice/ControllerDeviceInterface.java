@@ -189,6 +189,20 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
 
   /**
    * <p>
+   * Auto tune controller using ultimate gain and period from a closed-loop test with optional
+   * derivative tuning.
+   * </p>
+   *
+   * @param ultimateGain Ultimate gain where oscillations start
+   * @param ultimatePeriod Ultimate period of sustained oscillations [s]
+   * @param tuneDerivative true to tune derivative action, false to tune PI only
+   */
+  public default void autoTune(double ultimateGain, double ultimatePeriod, boolean tuneDerivative) {
+    autoTune(ultimateGain, ultimatePeriod);
+  }
+
+  /**
+   * <p>
    * Auto tune controller from an open-loop step response using process gain, time constant and
    * dead time.
    * </p>
@@ -202,6 +216,22 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
 
   /**
    * <p>
+   * Auto tune controller from an open-loop step response using process gain, time constant and
+   * dead time with optional derivative tuning.
+   * </p>
+   *
+   * @param processGain Process gain from step response
+   * @param timeConstant Process time constant [s]
+   * @param deadTime Process dead time [s]
+   * @param tuneDerivative true to tune derivative action, false to tune PI only
+   */
+  public default void autoTuneStepResponse(double processGain, double timeConstant, double deadTime,
+      boolean tuneDerivative) {
+    autoTuneStepResponse(processGain, timeConstant, deadTime);
+  }
+
+  /**
+   * <p>
    * Automatically tune the controller parameters using the recorded controller event log. The
    * implementation typically analyses a previously executed step test and estimates the process
    * dynamics before calculating PID settings.
@@ -211,6 +241,19 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
    */
   public default boolean autoTuneFromEventLog() {
     return false;
+  }
+
+  /**
+   * <p>
+   * Automatically tune the controller parameters using the recorded controller event log with the
+   * option to omit derivative tuning.
+   * </p>
+   *
+   * @param tuneDerivative true to tune derivative action, false to tune PI only
+   * @return {@code true} if tuning succeeded, otherwise {@code false}
+   */
+  public default boolean autoTuneFromEventLog(boolean tuneDerivative) {
+    return autoTuneFromEventLog();
   }
 
   /**
