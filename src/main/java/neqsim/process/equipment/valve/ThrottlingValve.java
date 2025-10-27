@@ -379,7 +379,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     setCalculationIdentifier(id);
   }
 
-  private static final double minimumMolarFlow = 1e-100;
+  private static final double minimumMolarFlow = 1e-12;
 
   private double ensureValidMolarFlow(double flow) {
     if (Double.isFinite(flow) && flow > minimumMolarFlow) {
