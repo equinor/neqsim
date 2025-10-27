@@ -17,12 +17,15 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.util.NamedBaseClass;
 
 /**
- * Discrete PID controller implementation providing common features for process control in NeqSim.
- * The class supports anti-windup clamping, derivative filtering, gain scheduling, event logging and
+ * Discrete PID controller implementation providing common features for process
+ * control in NeqSim.
+ * The class supports anti-windup clamping, derivative filtering, gain
+ * scheduling, event logging and
  * performance metrics as well as auto-tuning utilities.
  *
  * <p>
- * The controller operates on a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
+ * The controller operates on a
+ * {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
  * transmitter and exposes a standard PID API through
  * {@link neqsim.process.controllerdevice.ControllerDeviceInterface}.
  * </p>
@@ -45,6 +48,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private MeasurementDeviceInterface transmitter = null;
   private double controllerSetPoint = 0.0;
   private double oldError = 0.0;
+  private double oldoldError = 0.0;
   private double error = 0.0;
   private double response = 30.0;
   int propConstant = 1;
@@ -123,7 +127,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    * {@inheritDoc}
    *
    * <p>
-   * If no engineering unit is configured, the controller falls back to the legacy percent-based
+   * If no engineering unit is configured, the controller falls back to the legacy
+   * percent-based
    * error formulation used by earlier NeqSim versions.
    * </p>
    */
@@ -141,6 +146,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     }
     double measurement = getMeasuredValue(unit);
     applyGainSchedule(measurement);
+    oldoldError = error;
     oldError = error;
 
     double band = 0.0;
@@ -150,75 +156,59 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
     boolean usesDefaultUnit = unit == null || unit.isEmpty() || unit.equals("[?]");
 
-    double measurementForControl;
-    double setPointForControl;
     if (usesDefaultUnit) {
-      double min = transmitter.getMinimumValue();
-      double max = transmitter.getMaximumValue();
-      double span = max - min;
+      double measurementPercent = transmitter.getMeasuredPercentValue();
+      double setPointPercent = (controllerSetPoint - transmitter.getMinimumValue())
+          / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100.0;
+      error = measurementPercent - setPointPercent;
+      if (Ti != 0) {
+        TintValue = Kp / Ti * error;
+      }
+      double TderivValue = Kp * Td * ((error - 2 * oldError + oldoldError) / (dt * dt));
+      response = initResponse
+          + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
+    } else {
+      error = measurement - controllerSetPoint;
+      integralAbsoluteError += Math.abs(error) * dt;
+      band = settlingTolerance * Math.max(Math.abs(controllerSetPoint), 1.0);
+      if (Math.abs(error) > band) {
+        lastTimeOutsideBand = totalTime;
+      }
+      TintIncrement = 0.0;
+      if (Ti > 0) {
+        TintIncrement = Kp / Ti * error * dt;
+        TintValue += TintIncrement;
+      } else {
+        TintValue = 0.0;
+      }
 
-      boolean canUsePercent = span > 1e-12;
-      if (canUsePercent) {
-        double guardBand = Math.max(1.0e-9, 0.5 * span);
-        double rawSetPoint = controllerSetPoint;
-        boolean measurementInside = measurement >= min - guardBand && measurement <= max + guardBand;
-        boolean setPointInside = rawSetPoint >= min - guardBand && rawSetPoint <= max + guardBand;
-        if (!measurementInside || !setPointInside) {
-          canUsePercent = false;
+      derivative = (error - oldError) / dt;
+      if (Td > 0) {
+        if (derivativeFilterTime > 0) {
+          derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
+        } else {
+          derivativeState = derivative;
+        }
+      } else {
+        derivativeState = 0.0;
+      }
+
+      delta = Kp * (error - oldError) + TintValue + Kp * Td * derivativeState;
+
+      response = initResponse + propConstant * delta;
+
+      if (response > maxResponse) {
+        response = maxResponse;
+        if (Ti > 0) {
+          TintValue -= TintIncrement;
+        }
+      } else if (response < minResponse) {
+        response = minResponse;
+        if (Ti > 0) {
+          TintValue -= TintIncrement;
         }
       }
 
-      if (canUsePercent) {
-        measurementForControl = transmitter.getMeasuredPercentValue();
-        setPointForControl = (controllerSetPoint - min) / span * 100.0;
-      } else {
-        measurementForControl = measurement;
-        setPointForControl = controllerSetPoint;
-      }
-    } else {
-      measurementForControl = measurement;
-      setPointForControl = controllerSetPoint;
-    }
-
-    error = measurementForControl - setPointForControl;
-    integralAbsoluteError += Math.abs(error) * dt;
-    band = settlingTolerance * Math.max(Math.abs(setPointForControl), 1.0);
-    if (Math.abs(error) > band) {
-      lastTimeOutsideBand = totalTime;
-    }
-
-    if (Ti > 0) {
-      TintIncrement = Kp / Ti * error * dt;
-      TintValue += TintIncrement;
-    } else {
-      TintValue = 0.0;
-    }
-
-    derivative = dt > 0.0 ? (error - oldError) / dt : 0.0;
-    if (Td > 0) {
-      if (derivativeFilterTime > 0) {
-        derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
-      } else {
-        derivativeState = derivative;
-      }
-    } else {
-      derivativeState = 0.0;
-    }
-
-    delta = Kp * (error - oldError) + TintValue + Kp * Td * derivativeState;
-
-    response = initResponse + propConstant * delta;
-
-    if (response > maxResponse) {
-      response = maxResponse;
-      if (Ti > 0) {
-        TintValue -= TintIncrement;
-      }
-    } else if (response < minResponse) {
-      response = minResponse;
-      if (Ti > 0) {
-        TintValue -= TintIncrement;
-      }
     }
 
     eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
@@ -525,7 +515,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   /** {@inheritDoc} */
   @Override
   public void addGainSchedulePoint(double processValue, double Kp, double Ti, double Td) {
-    gainSchedule.put(processValue, new double[] {Kp, Ti, Td});
+    gainSchedule.put(processValue, new double[] { Kp, Ti, Td });
   }
 
   /** {@inheritDoc} */
@@ -562,8 +552,10 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * Apply gain-scheduled controller parameters based on the current measurement value. The schedule
-   * selects the parameter set with the highest threshold not exceeding the measurement.
+   * Apply gain-scheduled controller parameters based on the current measurement
+   * value. The schedule
+   * selects the parameter set with the highest threshold not exceeding the
+   * measurement.
    *
    * @param measurement current process value
    */
@@ -581,10 +573,11 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * Calculate the average value of the {@link ControllerEvent} properties for the last entries in
+   * Calculate the average value of the {@link ControllerEvent} properties for the
+   * last entries in
    * the event log.
    *
-   * @param count number of samples to include in the average
+   * @param count     number of samples to include in the average
    * @param extractor function returning the value to average from the event
    * @return average of the selected event property
    */
