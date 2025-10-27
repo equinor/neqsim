@@ -1,5 +1,6 @@
 package neqsim.process.controllerdevice;
 
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -130,5 +131,39 @@ public class ProcessControlExampleTest extends neqsim.NeqSimTest {
     Assertions.assertTrue(cascadeOut >= 0.0);
     Assertions.assertTrue(ratioOut >= 0.0);
     Assertions.assertTrue(ffOut >= 0.0);
+  }
+
+  @Test
+  void testPiOnlyAutoTuneOptions() {
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("piOnly");
+
+    controller.autoTuneStepResponse(1.0, 8.0, 2.0, false);
+    Assertions.assertEquals(0.0, controller.getTd(), 1e-12);
+    Assertions.assertEquals(1.2 * (8.0 / 2.0), controller.getKp(), 1e-12);
+    Assertions.assertEquals(2.0 * 2.0, controller.getTi(), 1e-12);
+
+    controller.autoTune(2.0, 5.0, false);
+    Assertions.assertEquals(0.0, controller.getTd(), 1e-12);
+    Assertions.assertEquals(0.6 * 2.0, controller.getKp(), 1e-12);
+    Assertions.assertEquals(0.5 * 5.0, controller.getTi(), 1e-12);
+
+    controller.resetEventLog();
+    List<ControllerEvent> log = controller.getEventLog();
+    log.add(new ControllerEvent(0.0, 5.0, 0.0, 0.0, 10.0));
+    log.add(new ControllerEvent(2.0, 5.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(4.0, 8.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(6.0, 14.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(8.0, 18.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(10.0, 20.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(12.0, 20.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(14.0, 20.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(16.0, 20.0, 0.0, 0.0, 40.0));
+    log.add(new ControllerEvent(18.0, 20.0, 0.0, 0.0, 40.0));
+
+    boolean tuned = controller.autoTuneFromEventLog(false);
+    Assertions.assertTrue(tuned);
+    Assertions.assertEquals(0.0, controller.getTd(), 1e-12);
+    Assertions.assertEquals(2.4, controller.getKp(), 1e-12);
+    Assertions.assertEquals(8.0, controller.getTi(), 1e-12);
   }
 }
