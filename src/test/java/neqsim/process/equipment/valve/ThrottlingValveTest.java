@@ -1,11 +1,13 @@
 package neqsim.process.equipment.valve;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534;
 import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
+import neqsim.process.processmodel.ProcessSystem;
 
 public class ThrottlingValveTest {
   /**
@@ -380,5 +382,47 @@ public class ThrottlingValveTest {
     assertEquals(deltaPressure, valve1.getDeltaPressure(), 1e-2);
     assertEquals(deltaPressure, stream1.getPressure("bara") - stream2.getPressure("bara"), 1e-4);
     assertEquals(55.0, stream2.getTemperature("C"), 1e-2);
+  }
+
+  @Test
+  void testValveClosureDoesNotProduceNaNInTransientFlow() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkEos(273.15 + 40.0, 18.0);
+    fluid.addComponent("methane", 50.0);
+    fluid.addComponent("ethane", 5.0);
+    fluid.addComponent("propane", 2.0);
+    fluid.setMixingRule(2);
+
+    Stream inlet = new Stream("inlet", fluid);
+    inlet.setFlowRate(150.0, "kg/hr");
+    inlet.setPressure(18.0, "bara");
+    inlet.setTemperature(40.0, "C");
+    inlet.run();
+
+    ThrottlingValve valve = new ThrottlingValve("valve", inlet);
+    valve.setOutletPressure(5.0);
+    valve.setPercentValveOpening(30.0);
+    valve.setCalculateSteadyState(false);
+
+    ProcessSystem process = new ProcessSystem("transient valve test");
+    process.add(inlet);
+    process.add(valve);
+    process.run();
+    process.storeInitialState();
+    process.setTimeStep(5.0);
+
+    for (int i = 0; i < 3; i++) {
+      process.runTransient();
+    }
+
+    valve.setPercentValveOpening(0.0);
+    for (int i = 0; i < 3; i++) {
+      process.runTransient();
+    }
+
+    double outletMoles = valve.getOutletStream().getThermoSystem().getTotalNumberOfMoles();
+    assertTrue(Double.isFinite(outletMoles));
+    assertTrue(outletMoles > 0.0);
+    assertTrue(Double.isFinite(valve.getOutletStream().getThermoSystem().getMolarVolume()));
   }
 }
