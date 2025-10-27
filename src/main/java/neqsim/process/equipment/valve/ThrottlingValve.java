@@ -336,7 +336,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
     double adjustKv = adjustKv(Kv, percentValveOpening);
     if (deltaP > 0.0 && !isCalcPressure) {
-      molarFlow = calculateMolarFlow();
+      molarFlow = ensureValidMolarFlow(calculateMolarFlow());
 
       inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
       inStream.getThermoSystem().initProperties();
@@ -359,9 +359,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     outStream.setThermoSystem(thermoSystem);
 
     if (deltaP > 0.0) {
-      molarFlow = calculateMolarFlow();
+      molarFlow = ensureValidMolarFlow(calculateMolarFlow());
     } else {
-      molarFlow = 0.0;
+      molarFlow = minimumMolarFlow;
     }
 
     try {
@@ -377,6 +377,15 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       logger.error(ex.getMessage());
     }
     setCalculationIdentifier(id);
+  }
+
+  private static final double minimumMolarFlow = 1e-12;
+
+  private double ensureValidMolarFlow(double flow) {
+    if (Double.isFinite(flow) && flow > minimumMolarFlow) {
+      return flow;
+    }
+    return minimumMolarFlow;
   }
 
   /**
