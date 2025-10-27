@@ -150,7 +150,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     double derivative = 0.0;
     double delta = 0.0;
 
-    if (unit == null || unit.isEmpty() || unit.equals("[?]")) {
+    boolean usesDefaultUnit = unit == null || unit.isEmpty() || unit.equals("[?]");
+
+    if (usesDefaultUnit) {
       double measurementPercent = transmitter.getMeasuredPercentValue();
       double setPointPercent = (controllerSetPoint - transmitter.getMinimumValue())
           / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100.0;
@@ -203,9 +205,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         }
       }
 
-      eventLog
-          .add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
     }
+
+    eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
 
     calcIdentifier = id;
   }
