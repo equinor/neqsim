@@ -379,8 +379,17 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   /** {@inheritDoc} */
   @Override
   public void autoTune(double ultimateGain, double ultimatePeriod) {
+    autoTune(ultimateGain, ultimatePeriod, true);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoTune(double ultimateGain, double ultimatePeriod, boolean tuneDerivative) {
     if (ultimateGain > 0 && ultimatePeriod > 0) {
-      setControllerParameters(0.6 * ultimateGain, 0.5 * ultimatePeriod, 0.125 * ultimatePeriod);
+      double kp = 0.6 * ultimateGain;
+      double ti = 0.5 * ultimatePeriod;
+      double td = tuneDerivative ? 0.125 * ultimatePeriod : 0.0;
+      setControllerParameters(kp, ti, td);
     } else {
       logger.warn("Invalid ultimate gain or period for auto tune.");
     }
@@ -389,11 +398,18 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   /** {@inheritDoc} */
   @Override
   public void autoTuneStepResponse(double processGain, double timeConstant, double deadTime) {
+    autoTuneStepResponse(processGain, timeConstant, deadTime, true);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoTuneStepResponse(double processGain, double timeConstant, double deadTime,
+      boolean tuneDerivative) {
     if (processGain != 0.0 && timeConstant > 0 && deadTime > 0) {
-      double Kp = 1.2 / processGain * (timeConstant / deadTime);
-      double Ti = 2.0 * deadTime;
-      double Td = 0.5 * deadTime;
-      setControllerParameters(Kp, Ti, Td);
+      double kp = 1.2 / processGain * (timeConstant / deadTime);
+      double ti = 2.0 * deadTime;
+      double td = tuneDerivative ? 0.5 * deadTime : 0.0;
+      setControllerParameters(kp, ti, td);
     } else {
       logger.warn("Invalid step response parameters for auto tune.");
     }
@@ -402,6 +418,12 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   /** {@inheritDoc} */
   @Override
   public boolean autoTuneFromEventLog() {
+    return autoTuneFromEventLog(true);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean autoTuneFromEventLog(boolean tuneDerivative) {
     if (eventLog.size() < 5) {
       logger.warn("Insufficient controller events for auto tuning.");
       return false;
@@ -479,7 +501,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       adjustedDeadTime = 1e-6;
     }
 
-    autoTuneStepResponse(processGain, timeConstant, adjustedDeadTime);
+    autoTuneStepResponse(processGain, timeConstant, adjustedDeadTime, tuneDerivative);
     TintValue = 0.0;
     derivativeState = 0.0;
     logger.info("Auto tuned PID from event log: Kp={}, Ti={}, Td={}", Kp, Ti, Td);
