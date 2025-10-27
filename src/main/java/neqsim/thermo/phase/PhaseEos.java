@@ -233,6 +233,15 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public double molarVolume2(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
+    if (!Double.isFinite(numberOfMolesInPhase) || numberOfMolesInPhase <= 0.0) {
+      double currentVolume = getMolarVolume();
+      if (!Double.isFinite(currentVolume) || currentVolume <= 0.0) {
+        currentVolume = 1.0;
+      }
+      setMolarVolume(currentVolume);
+      return getMolarVolume();
+    }
+
     double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
         : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
     BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));
@@ -403,6 +412,15 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
 
+    if (!Double.isFinite(numberOfMolesInPhase) || numberOfMolesInPhase <= 0.0) {
+      double currentVolume = getMolarVolume();
+      if (!Double.isFinite(currentVolume) || currentVolume <= 0.0) {
+        currentVolume = 1.0;
+      }
+      setMolarVolume(currentVolume);
+      return getMolarVolume();
+    }
+
     double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
         : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
     BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));
@@ -486,12 +504,12 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       return molarVolumeAnalytical(pressure, temperature, pt);
     }
     if (Double.isNaN(getMolarVolume())) {
-      // A = calcA(this, temperature, pressure, numberOfComponents);
-      // molarVolume(pressure, temperature, A, B, phase);
-      throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
-      // logger.info("BonV: " + BonV + " "+" itert: " + iterations +" " +h + " " +dh +
-      // " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" +
-      // fVV());
+      double analyticalVolume = molarVolumeAnalytical(pressure, temperature, pt);
+      if (Double.isNaN(analyticalVolume) || analyticalVolume <= 0.0
+          || !Double.isFinite(analyticalVolume)) {
+        throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
+      }
+      setMolarVolume(analyticalVolume);
     }
     return getMolarVolume();
   }

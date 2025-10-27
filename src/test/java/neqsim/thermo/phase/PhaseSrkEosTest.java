@@ -59,4 +59,16 @@ public class PhaseSrkEosTest {
 
     Assertions.assertNotEquals(p.getType(), p2.getType());
   }
+
+  @Test
+  void testMolarVolumeWithNoMolesReturnsCurrentValue() {
+    p.numberOfMolesInPhase = 0.0;
+    p.setMolarVolume(1.5);
+
+    double volume = Assertions
+        .assertDoesNotThrow(() -> p.molarVolume(50.0, 300.0, 0.0, 0.0, PhaseType.GAS));
+
+    Assertions.assertEquals(1.5, volume);
+    Assertions.assertEquals(1.5, p.getMolarVolume());
+  }
 }
