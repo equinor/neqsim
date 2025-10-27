@@ -45,7 +45,6 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private MeasurementDeviceInterface transmitter = null;
   private double controllerSetPoint = 0.0;
   private double oldError = 0.0;
-  private double oldoldError = 0.0;
   private double error = 0.0;
   private double response = 30.0;
   int propConstant = 1;
@@ -142,7 +141,6 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     }
     double measurement = getMeasuredValue(unit);
     applyGainSchedule(measurement);
-    oldoldError = error;
     oldError = error;
 
     double band = 0.0;
@@ -152,59 +150,61 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
     boolean usesDefaultUnit = unit == null || unit.isEmpty() || unit.equals("[?]");
 
+    double measurementForControl;
+    double setPointForControl;
     if (usesDefaultUnit) {
-      double measurementPercent = transmitter.getMeasuredPercentValue();
-      double setPointPercent = (controllerSetPoint - transmitter.getMinimumValue())
-          / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100.0;
-      error = measurementPercent - setPointPercent;
-      if (Ti != 0) {
-        TintValue = Kp / Ti * error;
+      double span = transmitter.getMaximumValue() - transmitter.getMinimumValue();
+      if (Math.abs(span) < 1e-12) {
+        measurementForControl = measurement;
+        setPointForControl = controllerSetPoint;
+      } else {
+        measurementForControl = transmitter.getMeasuredPercentValue();
+        setPointForControl = (controllerSetPoint - transmitter.getMinimumValue()) / span * 100.0;
       }
-      double TderivValue = Kp * Td * ((error - 2 * oldError + oldoldError) / (dt * dt));
-      response = initResponse
-          + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
     } else {
-      error = measurement - controllerSetPoint;
-      integralAbsoluteError += Math.abs(error) * dt;
-      band = settlingTolerance * Math.max(Math.abs(controllerSetPoint), 1.0);
-      if (Math.abs(error) > band) {
-        lastTimeOutsideBand = totalTime;
+      measurementForControl = measurement;
+      setPointForControl = controllerSetPoint;
+    }
+
+    error = measurementForControl - setPointForControl;
+    integralAbsoluteError += Math.abs(error) * dt;
+    band = settlingTolerance * Math.max(Math.abs(setPointForControl), 1.0);
+    if (Math.abs(error) > band) {
+      lastTimeOutsideBand = totalTime;
+    }
+
+    if (Ti > 0) {
+      TintIncrement = Kp / Ti * error * dt;
+      TintValue += TintIncrement;
+    } else {
+      TintValue = 0.0;
+    }
+
+    derivative = dt > 0.0 ? (error - oldError) / dt : 0.0;
+    if (Td > 0) {
+      if (derivativeFilterTime > 0) {
+        derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
+      } else {
+        derivativeState = derivative;
       }
-      TintIncrement = 0.0;
+    } else {
+      derivativeState = 0.0;
+    }
+
+    delta = Kp * (error - oldError) + TintValue + Kp * Td * derivativeState;
+
+    response = initResponse + propConstant * delta;
+
+    if (response > maxResponse) {
+      response = maxResponse;
       if (Ti > 0) {
-        TintIncrement = Kp / Ti * error * dt;
-        TintValue += TintIncrement;
-      } else {
-        TintValue = 0.0;
+        TintValue -= TintIncrement;
       }
-
-      derivative = (error - oldError) / dt;
-      if (Td > 0) {
-        if (derivativeFilterTime > 0) {
-          derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
-        } else {
-          derivativeState = derivative;
-        }
-      } else {
-        derivativeState = 0.0;
+    } else if (response < minResponse) {
+      response = minResponse;
+      if (Ti > 0) {
+        TintValue -= TintIncrement;
       }
-
-      delta = Kp * (error - oldError) + TintValue + Kp * Td * derivativeState;
-
-      response = initResponse + propConstant * delta;
-
-      if (response > maxResponse) {
-        response = maxResponse;
-        if (Ti > 0) {
-          TintValue -= TintIncrement;
-        }
-      } else if (response < minResponse) {
-        response = minResponse;
-        if (Ti > 0) {
-          TintValue -= TintIncrement;
-        }
-      }
-
     }
 
     eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
