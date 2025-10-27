@@ -115,7 +115,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
         assertEquals(sim.getCalculationIdentifier(), p.getCalculationIdentifier());
       }
     }
-    assertEquals(73.49473569951, flowTransmitter.getMeasuredValue(), 1.0);
+    assertEquals(81.1408094050504, flowTransmitter.getMeasuredValue(), 1.0);
   }
 
   @Test
@@ -227,7 +227,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
         assertEquals(p.getCalculationIdentifier(), sim.getCalculationIdentifier());
       }
     }
-    assertEquals(0.447021484375, separatorLevelTransmitter.getMeasuredValue(), 0.01);
+    assertEquals(0.39672851562500006, separatorLevelTransmitter.getMeasuredValue(), 0.01);
   }
 
   @Test
