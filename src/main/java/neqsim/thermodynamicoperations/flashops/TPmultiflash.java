@@ -8,6 +8,7 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
@@ -16,6 +17,7 @@ import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>
@@ -1412,15 +1414,69 @@ public class TPmultiflash extends TPflash {
     system.addPhase();
     int phaseIndex = system.getNumberOfPhases() - 1;
     system.setPhaseType(phaseIndex, PhaseType.GAS);
+    double[] gasCompGuess = new double[system.getPhase(0).getNumberOfComponents()];
+    Arrays.fill(gasCompGuess, 1.0e-16);
+    double initialBeta = Math.max(5.0e-2, 1000.0 * phaseFractionMinimumLimit);
+
+    try {
+      SystemInterface hydrocarbonClone = system.clone();
+      hydrocarbonClone.setMultiPhaseCheck(false);
+      ArrayList<String> componentsToRemove = new ArrayList<>();
+      for (int comp = 0; comp < hydrocarbonClone.getPhase(0).getNumberOfComponents(); comp++) {
+        ComponentInterface component = hydrocarbonClone.getPhase(0).getComponent(comp);
+        if (component.getIonicCharge() != 0 || component.isIsIon()
+            || (!component.isHydrocarbon() && !component.isInert())
+            || "water".equalsIgnoreCase(component.getComponentName())) {
+          componentsToRemove.add(component.getComponentName());
+        }
+      }
+      for (String compName : componentsToRemove) {
+        hydrocarbonClone.removeComponent(compName);
+      }
+      if (hydrocarbonClone.getNumberOfComponents() > 0) {
+        hydrocarbonClone.init(0);
+        ThermodynamicOperations hydrocarbonOps = new ThermodynamicOperations(hydrocarbonClone);
+        hydrocarbonOps.TPflash();
+        if (hydrocarbonClone.hasPhaseType("gas")) {
+          int gasPhaseIdx = hydrocarbonClone.getPhaseNumberOfPhase("gas");
+          initialBeta = Math.max(initialBeta, hydrocarbonClone.getBeta(gasPhaseIdx));
+          for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+            ComponentInterface originalComponent = system.getPhase(0).getComponent(comp);
+            String compName = originalComponent.getComponentName();
+            if (hydrocarbonClone.hasComponent(compName)) {
+              gasCompGuess[comp] = hydrocarbonClone.getPhase(gasPhaseIdx).getComponent(compName)
+                  .getx();
+            }
+          }
+        }
+      }
+    } catch (Exception ex) {
+      logger.debug("Hydrocarbon seed flash failed: {}", ex.getMessage());
+    }
+
     for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
-      double z = system.getPhase(0).getComponent(comp).getz();
-      system.getPhase(phaseIndex).getComponent(comp).setx(z > 0 ? z : 1.0e-16);
+      ComponentInterface component = system.getPhase(0).getComponent(comp);
+      double z = component.getz();
+      double x = gasCompGuess[comp];
+      if (component.getIonicCharge() != 0 || component.isIsIon()) {
+        x = 1.0e-16;
+      } else if ("water".equalsIgnoreCase(component.getComponentName())) {
+        x = Math.min(z * 1.0e-6, 1.0e-12);
+      } else if (x <= 1.0e-16) {
+        if (component.isHydrocarbon()) {
+          x = component.getMolarMass() < 0.045 ? Math.max(z, 1.0e-8) : Math.max(z * 1.0e-2, 1.0e-10);
+        } else {
+          x = Math.max(z * 1.0e-3, 1.0e-10);
+        }
+      }
+      system.getPhase(phaseIndex).getComponent(comp).setx(x);
     }
     system.getPhases()[phaseIndex].normalize();
-    double initialBeta = Math.max(1.0e-3, 1000.0 * phaseFractionMinimumLimit);
     system.setBeta(phaseIndex, initialBeta);
     system.normalizeBeta();
     system.init(1);
+    system.getPhase(phaseIndex).setType(PhaseType.GAS);
+    system.setPhaseType(phaseIndex, PhaseType.GAS);
     return true;
   }
 
