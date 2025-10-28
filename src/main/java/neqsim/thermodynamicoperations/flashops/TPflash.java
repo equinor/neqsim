@@ -539,6 +539,22 @@ public class TPflash extends Flash {
     }
   }
 
+  /**
+   * Remove phases with a beta value below the numerical threshold while keeping composition.
+   *
+   * @return {@code true} if any phase was removed
+   */
+  boolean removeVanishingPhasesKeepComposition() {
+    boolean removed = false;
+    for (int i = system.getNumberOfPhases() - 1; i >= 0; i--) {
+      if (system.getBeta(i) < 1.1 * phaseFractionMinimumLimit) {
+        system.removePhaseKeepTotalComposition(i);
+        removed = true;
+      }
+    }
+    return removed;
+  }
+
   /** {@inheritDoc} */
   @Override
   public org.jfree.chart.JFreeChart getJFreeChart(String name) {
