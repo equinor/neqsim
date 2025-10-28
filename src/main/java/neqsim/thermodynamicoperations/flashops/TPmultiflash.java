@@ -1641,22 +1641,16 @@ public class TPmultiflash extends TPflash {
       } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100)
           || (iterOut < 3 && system.isChemicalSystem()));
 
-      boolean hasRemovedPhase = false;
-      for (int i = 0; i < system.getNumberOfPhases(); i++) {
-        if (system.getBeta(i) < 1.1 * phaseFractionMinimumLimit) {
-          if (hasAqueousPhase()
-              && gasPhaseContainsHydrocarbons(i)) {
-            system.setBeta(i, phaseFractionMinimumLimit);
-            continue;
-          }
-          system.removePhaseKeepTotalComposition(i);
-          doStabilityAnalysis = false;
-          hasRemovedPhase = true;
-        }
+      boolean hasRemovedPhase = removeLowBetaPhasesKeepComposition();
+      if (hasRemovedPhase) {
+        doStabilityAnalysis = false;
       }
 
       boolean trivialSolution = false;
-      for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
+      for (int i = system.getNumberOfPhases() - 2; i >= 0; i--) {
+        if (i + 1 >= system.getNumberOfPhases()) {
+          continue;
+        }
         for (int j = 0; j < system.getPhase(i).getNumberOfComponents(); j++) {
           if (Math.abs(
               system.getPhase(i).getDensity() - system.getPhase(i + 1).getDensity()) < 1.1e-5) {
@@ -1666,7 +1660,10 @@ public class TPmultiflash extends TPflash {
       }
 
       if (trivialSolution && !hasRemovedPhase) {
-        for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
+        for (int i = system.getNumberOfPhases() - 2; i >= 0; i--) {
+          if (i + 1 >= system.getNumberOfPhases()) {
+            continue;
+          }
           if (Math.abs(
               system.getPhase(i).getDensity() - system.getPhase(i + 1).getDensity()) < 1.1e-5) {
             system.removePhaseKeepTotalComposition(i + 1);
@@ -1697,5 +1694,21 @@ public class TPmultiflash extends TPflash {
         system.setPhaseType(phase, PhaseType.GAS);
       }
     }
+  }
+
+  /**
+   * Remove phases with a beta value below the numerical threshold while keeping composition.
+   *
+   * @return {@code true} if any phase was removed
+   */
+  boolean removeLowBetaPhasesKeepComposition() {
+    boolean removed = false;
+    for (int i = system.getNumberOfPhases() - 1; i >= 0; i--) {
+      if (system.getBeta(i) < 1.1 * phaseFractionMinimumLimit) {
+        system.removePhaseKeepTotalComposition(i);
+        removed = true;
+      }
+    }
+    return removed;
   }
 }

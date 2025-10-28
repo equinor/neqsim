@@ -522,23 +522,21 @@ public class TPflash extends Flash {
       operation.run();
     }
 
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      if (system.getBeta(i) < phaseFractionMinimumLimit * 1.01) {
-        double z = system.getPhase(i).getZ();
-        boolean isGasLike = Double.isFinite(z) && z > 0.75
-            && system.getPhase(i).getType() != PhaseType.AQUEOUS;
-        if (system.doMultiPhaseCheck() && isGasLike) {
-          system.setBeta(i, phaseFractionMinimumLimit);
-          system.setPhaseType(i, PhaseType.GAS);
-        } else {
-          system.removePhase(i);
-          i--;
-        }
-      }
-    }
+    removeLowBetaPhases();
     // system.initPhysicalProperties("density");
     system.orderByDensity();
     system.init(1);
+  }
+
+  /**
+   * Remove phases whose fraction is below the numerical limit.
+   */
+  void removeLowBetaPhases() {
+    for (int i = system.getNumberOfPhases() - 1; i >= 0; i--) {
+      if (system.getBeta(i) < phaseFractionMinimumLimit * 1.01) {
+        system.removePhaseKeepTotalComposition(i);
+      }
+    }
   }
 
   /** {@inheritDoc} */
