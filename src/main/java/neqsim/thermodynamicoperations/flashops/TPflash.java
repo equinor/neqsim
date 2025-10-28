@@ -522,14 +522,21 @@ public class TPflash extends Flash {
       operation.run();
     }
 
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      if (system.getBeta(i) < phaseFractionMinimumLimit * 1.01) {
-        system.removePhase(i);
-      }
-    }
+    removeLowBetaPhases();
     // system.initPhysicalProperties("density");
     system.orderByDensity();
     system.init(1);
+  }
+
+  /**
+   * Remove phases whose fraction is below the numerical limit.
+   */
+  void removeLowBetaPhases() {
+    for (int i = system.getNumberOfPhases() - 1; i >= 0; i--) {
+      if (system.getBeta(i) < phaseFractionMinimumLimit * 1.01) {
+        system.removePhaseKeepTotalComposition(i);
+      }
+    }
   }
 
   /** {@inheritDoc} */
