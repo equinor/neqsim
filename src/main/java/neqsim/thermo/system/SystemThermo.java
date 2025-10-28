@@ -4332,22 +4332,109 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void removePhaseKeepTotalComposition(int specPhase) {
-    ArrayList<PhaseInterface> phaseList = new ArrayList<PhaseInterface>(0);
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (specPhase != i) {
-        phaseList.add(phaseArray[phaseIndex[i]]);
+    if (specPhase < 0 || specPhase >= numberOfPhases) {
+      return;
+    }
+
+    if (numberOfPhases <= 1) {
+      // Nothing to remove, ensure single phase keeps full beta
+      beta[phaseIndex[specPhase]] = 1.0;
+      return;
+    }
+
+    PhaseInterface removedPhase = getPhase(specPhase);
+    int removedPhaseIndex = phaseIndex[specPhase];
+    double totalBefore = getTotalNumberOfMoles();
+
+    // Identify phases that can receive redistributed material.
+    int activePhaseCount = numberOfPhases;
+    double[] weights = new double[activePhaseCount];
+    int[] recipients = new int[activePhaseCount - 1];
+    int recipientPos = 0;
+    double weightSum = 0.0;
+    boolean hasPreferredRecipients = false;
+
+    for (int phase = 0; phase < numberOfPhases; phase++) {
+      if (phase == specPhase) {
+        continue;
+      }
+
+      PhaseInterface candidate = getPhase(phase);
+      double phaseMoles = candidate.getNumberOfMolesInPhase();
+      recipients[recipientPos++] = phase;
+
+      if (getBeta(phase) >= phaseFractionMinimumLimit && phaseMoles > 0.0) {
+        hasPreferredRecipients = true;
       }
     }
 
-    // phaseArray = new PhaseInterface[numberOfPhases - 1];
-    for (int i = 0; i < numberOfPhases - 1; i++) {
-      // phaseArray[i] = (PhaseInterface) phaseList.get(i);
-      if (i >= specPhase) {
-        phaseIndex[i] = phaseIndex[i + 1];
-        phaseType[i] = phaseType[i + 1];
+    if (recipientPos == 0) {
+      // No other phases available, fall back to regular removal.
+      removePhase(specPhase);
+      initBeta();
+      return;
+    }
+
+    // Assign weights either to all recipients or only to the preferred ones.
+    for (int idx = 0; idx < recipientPos; idx++) {
+      int phase = recipients[idx];
+      PhaseInterface candidate = getPhase(phase);
+      double phaseMoles = candidate.getNumberOfMolesInPhase();
+      if (hasPreferredRecipients && (getBeta(phase) < phaseFractionMinimumLimit || phaseMoles == 0.0)) {
+        weights[idx] = 0.0;
+      } else {
+        weights[idx] = phaseMoles;
+        if (weights[idx] <= 0.0) {
+          weights[idx] = 0.0;
+        }
+      }
+      weightSum += weights[idx];
+    }
+
+    if (weightSum <= 0.0) {
+      // All weights vanished (e.g. zero moles), distribute evenly.
+      weightSum = recipientPos;
+      for (int idx = 0; idx < recipientPos; idx++) {
+        weights[idx] = 1.0;
       }
     }
+
+    // Redistribute material component-wise to preserve overall composition.
+    for (int comp = 0; comp < removedPhase.getNumberOfComponents(); comp++) {
+      double removedMoles = removedPhase.getComponent(comp).getNumberOfMolesInPhase();
+      if (removedMoles == 0.0) {
+        continue;
+      }
+
+      double distributed = 0.0;
+      for (int idx = 0; idx < recipientPos; idx++) {
+        if (weights[idx] <= 0.0) {
+          continue;
+        }
+        int phase = recipients[idx];
+        double fraction = weights[idx] / weightSum;
+        double delta = removedMoles * fraction;
+        getPhase(phase).addMolesChemReac(comp, delta, delta);
+        distributed += delta;
+      }
+
+      double remainder = removedMoles - distributed;
+      if (Math.abs(remainder) > 1e-12 && recipientPos > 0) {
+        int phase = recipients[0];
+        getPhase(phase).addMolesChemReac(comp, remainder, remainder);
+      }
+
+      removedPhase.addMolesChemReac(comp, -removedMoles, -removedMoles);
+    }
+
+    for (int i = specPhase; i < numberOfPhases - 1; i++) {
+      phaseIndex[i] = phaseIndex[i + 1];
+      phaseType[i] = phaseType[i + 1];
+    }
+    beta[removedPhaseIndex] = 0.0;
     numberOfPhases--;
+    setTotalNumberOfMoles(totalBefore);
+    initBeta();
   }
 
   /** {@inheritDoc} */
