@@ -115,7 +115,7 @@ public class TPflashPhaseRemovalTest {
         1.0 - (phaseFractionMinimumLimit * (0.5 + 0.9) + 0.1));
 
     TPmultiflash flash = new TPmultiflash(system);
-    boolean removed = flash.removeLowBetaPhasesKeepComposition();
+    boolean removed = flash.removeVanishingPhasesKeepComposition();
 
     assertTrue(removed, "At least one phase should have been removed");
     assertEquals(2, system.getNumberOfPhases(),

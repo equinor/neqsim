@@ -1641,7 +1641,7 @@ public class TPmultiflash extends TPflash {
       } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100)
           || (iterOut < 3 && system.isChemicalSystem()));
 
-      boolean hasRemovedPhase = removeLowBetaPhasesKeepComposition();
+      boolean hasRemovedPhase = removeVanishingPhasesKeepComposition();
       if (hasRemovedPhase) {
         doStabilityAnalysis = false;
       }
@@ -1718,6 +1718,22 @@ public class TPmultiflash extends TPflash {
    * @return {@code true} if any phase was removed
    */
   boolean removeLowBetaPhasesKeepComposition() {
+    boolean removed = false;
+    for (int i = system.getNumberOfPhases() - 1; i >= 0; i--) {
+      if (system.getBeta(i) < 1.1 * phaseFractionMinimumLimit) {
+        system.removePhaseKeepTotalComposition(i);
+        removed = true;
+      }
+    }
+    return removed;
+  }
+
+  /**
+   * Remove phases with a beta value below the numerical threshold while keeping composition.
+   *
+   * @return {@code true} if any phase was removed
+   */
+  boolean removeVanishingPhasesKeepComposition() {
     boolean removed = false;
     for (int i = system.getNumberOfPhases() - 1; i >= 0; i--) {
       if (system.getBeta(i) < 1.1 * phaseFractionMinimumLimit) {
