@@ -1591,7 +1591,7 @@ public class TPmultiflash extends TPflash {
       boolean hasRemovedPhase = false;
       for (int i = 0; i < system.getNumberOfPhases(); i++) {
         if (system.getBeta(i) < 1.1 * phaseFractionMinimumLimit) {
-          // system.removePhaseKeepTotalComposition(i);
+          system.removePhaseKeepTotalComposition(i);
           doStabilityAnalysis = false;
           hasRemovedPhase = true;
         }
