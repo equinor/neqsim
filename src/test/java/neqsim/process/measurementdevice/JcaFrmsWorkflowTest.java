@@ -122,7 +122,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
     assertTrue(multiphaseFluid.hasPhaseType("oil"));
     assertTrue(multiphaseFluid.hasPhaseType("aqueous"));
 
-    multiphaseFluid.prettyPrint();
+    // multiphaseFluid.prettyPrint();
 
     double gasSm3PerHour = multiphaseFluid.getPhase("gas").getFlowRate("Sm3/hr");
     double oilSm3PerHour = multiphaseFluid.getPhase("oil").getFlowRate("Sm3/hr");
@@ -197,7 +197,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
         multiphaseStream.run();
 
         SystemInterface multiphaseFluid = multiphaseStream.getFluid();
-        multiphaseFluid.prettyPrint();
+        // multiphaseFluid.prettyPrint();
         // Same assertions as original test
         assertEquals(temperature, multiphaseFluid.getTemperature("C"), 1e-3); // Slightly relaxed
                                                                               // tolerance
@@ -260,7 +260,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
     multiphaseHeater.setOutTemperature(temperature, "C");
     multiphaseHeater.run();
 
-    multiphaseHeater.getOutletStream().getFluid().prettyPrint();
+    // multiphaseHeater.getOutletStream().getFluid().prettyPrint();
 
     Stream multiphaseStream = new Stream("multiphase stream", multiphaseHeater.getOutletStream());
     multiphaseStream.setPressure(pressure, "barg");
@@ -275,7 +275,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
     assertTrue(multiphaseFluid.hasPhaseType("oil"));
     assertTrue(multiphaseFluid.hasPhaseType("aqueous"));
 
-    multiphaseFluid.prettyPrint();
+    // multiphaseFluid.prettyPrint();
 
     double gasSm3PerHour = multiphaseFluid.getPhase("gas").getFlowRate("Sm3/hr");
     double oilSm3PerHour = multiphaseFluid.getPhase("oil").getFlowRate("Sm3/hr");
@@ -315,7 +315,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
     multiphaseHeater.setOutTemperature(temperature, "C");
     multiphaseHeater.run();
 
-    multiphaseHeater.getOutletStream().getFluid().prettyPrint();
+    // multiphaseHeater.getOutletStream().getFluid().prettyPrint();
 
     Stream multiphaseStream = new Stream("multiphase stream", multiphaseHeater.getOutletStream());
     multiphaseStream.setPressure(pressure, "barg");
@@ -330,7 +330,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
     assertTrue(multiphaseFluid.hasPhaseType("oil"));
     assertTrue(multiphaseFluid.hasPhaseType("aqueous"));
 
-    multiphaseFluid.prettyPrint();
+    // multiphaseFluid.prettyPrint();
 
     double gasSm3PerHour = multiphaseFluid.getPhase("gas").getFlowRate("Sm3/hr");
     double oilSm3PerHour = multiphaseFluid.getPhase("oil").getFlowRate("Sm3/hr");
