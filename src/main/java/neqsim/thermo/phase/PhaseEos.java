@@ -85,6 +85,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
+    PhaseType originalPhaseType = pt;
     if (pt != PhaseType.GAS) {
       pt = PhaseType.LIQUID;
     }
@@ -142,7 +143,11 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
         }
       }
 
-      if (getVolume() / getB() > 1.75) {
+      if (originalPhaseType == PhaseType.GAS) {
+        setType(PhaseType.GAS);
+      } else if (originalPhaseType == PhaseType.OIL || originalPhaseType == PhaseType.AQUEOUS) {
+        setType(originalPhaseType);
+      } else if (getVolume() / getB() > 1.75) {
         setType(PhaseType.GAS);
       } else if (sumHydrocarbons > sumAqueous) {
         setType(PhaseType.OIL);

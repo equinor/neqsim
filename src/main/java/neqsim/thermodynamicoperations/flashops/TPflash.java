@@ -1,8 +1,10 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -360,7 +362,11 @@ public class TPflash extends Flash {
     }
 
     if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
-      if (system.checkStability() && stabilityCheck()) {
+      boolean systemCheckStability = system.checkStability();
+      boolean stabilityCheckResult = stabilityCheck();
+      logger.debug("system.checkStability()={}, stabilityCheck()={} ", systemCheckStability,
+          stabilityCheckResult);
+      if (systemCheckStability && stabilityCheckResult) {
         if (system.doMultiPhaseCheck()) {
           // logger.info("one phase flash is stable - checking multiphase flash....");
           TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
@@ -489,6 +495,13 @@ public class TPflash extends Flash {
     if (system.doMultiPhaseCheck()) {
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
       operation.run();
+      if (!system.hasPhaseType("gas") && system.hasPhaseType("oil")
+          && system.hasPhaseType("aqueous")) {
+        if (enforceHydrocarbonGasSplit()) {
+          system.orderByDensity();
+          system.init(1);
+        }
+      }
     } else {
       try {
         // Checks if gas or oil is the most stable phase
@@ -536,6 +549,101 @@ public class TPflash extends Flash {
   @Override
   public org.jfree.chart.JFreeChart getJFreeChart(String name) {
     return null;
+  }
+
+  private boolean enforceHydrocarbonGasSplit() {
+    try {
+      SystemInterface aqueousSnapshot = null;
+      if (system.hasPhaseType("aqueous")) {
+        aqueousSnapshot = system.phaseToSystem("aqueous");
+      }
+
+      SystemInterface hydrocarbonClone = system.clone();
+      hydrocarbonClone.setMultiPhaseCheck(true);
+      ArrayList<String> componentsToRemove = new ArrayList<>();
+      for (int comp = 0; comp < hydrocarbonClone.getPhase(0).getNumberOfComponents(); comp++) {
+        ComponentInterface component = hydrocarbonClone.getPhase(0).getComponent(comp);
+        if (component.getIonicCharge() != 0 || component.isIsIon()
+            || "water".equalsIgnoreCase(component.getComponentName())
+            || (!component.isHydrocarbon() && !component.isInert())) {
+          componentsToRemove.add(component.getComponentName());
+        }
+      }
+      for (String name : componentsToRemove) {
+        hydrocarbonClone.removeComponent(name);
+      }
+      if (hydrocarbonClone.getNumberOfComponents() == 0) {
+        return false;
+      }
+      hydrocarbonClone.init(0);
+      double waterBeta = 0.0;
+      if (system.hasPhaseType("aqueous")) {
+        waterBeta = system.getPhase(system.getPhaseNumberOfPhase("aqueous")).getBeta();
+      }
+      double hydrocarbonFraction = Math.max(1.0 - waterBeta, 1.0e-8);
+      double effectivePressure = Math.max(system.getPressure() * hydrocarbonFraction, 1.0e-6);
+      hydrocarbonClone.setPressure(effectivePressure);
+      hydrocarbonClone.init(0);
+      ThermodynamicOperations hydrocarbonOps = new ThermodynamicOperations(hydrocarbonClone);
+      hydrocarbonOps.TPflash();
+      if (!hydrocarbonClone.hasPhaseType("gas")) {
+        return false;
+      }
+
+      int gasPhaseIdx = hydrocarbonClone.getPhaseNumberOfPhase("gas");
+      int liquidPhaseIdx = hydrocarbonClone.hasPhaseType("oil")
+          ? hydrocarbonClone.getPhaseNumberOfPhase("oil")
+          : hydrocarbonClone.getPhaseNumberOfPhase("liquid");
+      double gasBetaHC = hydrocarbonClone.getBeta(gasPhaseIdx);
+      double oilBetaHC = 1.0 - gasBetaHC;
+
+      system.setNumberOfPhases(3);
+      system.setPhaseType(0, PhaseType.GAS);
+      system.setPhaseType(1, PhaseType.OIL);
+      system.setPhaseType(2, PhaseType.AQUEOUS);
+
+      system.setBeta(0, Math.max(gasBetaHC * hydrocarbonFraction, 1.0e-6));
+      system.setBeta(1, Math.max(oilBetaHC * hydrocarbonFraction, 1.0e-6));
+      system.setBeta(2, Math.max(waterBeta, 1.0e-6));
+      system.normalizeBeta();
+
+      for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+        ComponentInterface originalComponent = system.getPhase(0).getComponent(comp);
+        String componentName = originalComponent.getComponentName();
+        double gasX = 1.0e-16;
+        double oilX = 1.0e-16;
+        double waterX = 1.0e-16;
+
+        if (hydrocarbonClone.hasComponent(componentName)) {
+          try {
+            gasX = hydrocarbonClone.getPhase(gasPhaseIdx).getComponent(componentName).getx();
+          } catch (Exception ex) {
+            gasX = 1.0e-16;
+          }
+          if (liquidPhaseIdx >= 0) {
+            try {
+              oilX = hydrocarbonClone.getPhase(liquidPhaseIdx).getComponent(componentName).getx();
+            } catch (Exception ex) {
+              oilX = 1.0e-16;
+            }
+          }
+        }
+        if (aqueousSnapshot != null && aqueousSnapshot.hasComponent(componentName)) {
+          waterX = aqueousSnapshot.getPhase(0).getComponent(componentName).getx();
+        }
+        system.getPhase(0).getComponent(comp).setx(gasX);
+        system.getPhase(1).getComponent(comp).setx(oilX);
+        system.getPhase(2).getComponent(comp).setx(Math.max(waterX, 1.0e-16));
+      }
+
+      system.getPhase(0).normalize();
+      system.getPhase(1).normalize();
+      system.getPhase(2).normalize();
+      return true;
+    } catch (Exception ex) {
+      logger.debug("Hydrocarbon split enforcement failed: {}", ex.getMessage());
+      return false;
+    }
   }
 
   /** {@inheritDoc} */
