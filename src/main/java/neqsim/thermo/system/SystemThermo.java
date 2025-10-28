@@ -4344,62 +4344,89 @@ public abstract class SystemThermo implements SystemInterface {
 
     PhaseInterface removedPhase = getPhase(specPhase);
     int removedPhaseIndex = phaseIndex[specPhase];
+    double totalBefore = getTotalNumberOfMoles();
 
-    double recipientTotalMoles = 0.0;
-    int recipientCount = 0;
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (i == specPhase) {
+    // Identify phases that can receive redistributed material.
+    int activePhaseCount = numberOfPhases;
+    double[] weights = new double[activePhaseCount];
+    int[] recipients = new int[activePhaseCount - 1];
+    int recipientPos = 0;
+    double weightSum = 0.0;
+    boolean hasPreferredRecipients = false;
+
+    for (int phase = 0; phase < numberOfPhases; phase++) {
+      if (phase == specPhase) {
         continue;
       }
-      if (getBeta(i) < phaseFractionMinimumLimit) {
-        continue;
+
+      PhaseInterface candidate = getPhase(phase);
+      double phaseMoles = candidate.getNumberOfMolesInPhase();
+      recipients[recipientPos++] = phase;
+
+      if (getBeta(phase) >= phaseFractionMinimumLimit && phaseMoles > 0.0) {
+        hasPreferredRecipients = true;
       }
       recipientTotalMoles += getPhase(i).getNumberOfMolesInPhase();
       recipientCount++;
     }
 
-    boolean useAllRecipients = recipientCount == 0;
-    if (useAllRecipients) {
-      for (int i = 0; i < numberOfPhases; i++) {
-        if (i == specPhase) {
-          continue;
+    if (recipientPos == 0) {
+      // No other phases available, fall back to regular removal.
+      removePhase(specPhase);
+      initBeta();
+      return;
+    }
+
+    // Assign weights either to all recipients or only to the preferred ones.
+    for (int idx = 0; idx < recipientPos; idx++) {
+      int phase = recipients[idx];
+      PhaseInterface candidate = getPhase(phase);
+      double phaseMoles = candidate.getNumberOfMolesInPhase();
+      if (hasPreferredRecipients && (getBeta(phase) < phaseFractionMinimumLimit || phaseMoles == 0.0)) {
+        weights[idx] = 0.0;
+      } else {
+        weights[idx] = phaseMoles;
+        if (weights[idx] <= 0.0) {
+          weights[idx] = 0.0;
         }
-        recipientTotalMoles += getPhase(i).getNumberOfMolesInPhase();
-        recipientCount++;
+      }
+      weightSum += weights[idx];
+    }
+
+    if (weightSum <= 0.0) {
+      // All weights vanished (e.g. zero moles), distribute evenly.
+      weightSum = recipientPos;
+      for (int idx = 0; idx < recipientPos; idx++) {
+        weights[idx] = 1.0;
       }
     }
 
-    // Distribute removed material to the remaining phases to keep overall composition unchanged.
+    // Redistribute material component-wise to preserve overall composition.
     for (int comp = 0; comp < removedPhase.getNumberOfComponents(); comp++) {
       double removedMoles = removedPhase.getComponent(comp).getNumberOfMolesInPhase();
       if (removedMoles == 0.0) {
         continue;
       }
 
-      if (recipientTotalMoles > 0.0) {
-        for (int phase = 0; phase < numberOfPhases; phase++) {
-          if (phase == specPhase) {
-            continue;
-          }
-          if (!useAllRecipients && getBeta(phase) < phaseFractionMinimumLimit) {
-            continue;
-          }
-          double share = getPhase(phase).getNumberOfMolesInPhase() / recipientTotalMoles;
-          getPhase(phase).addMolesChemReac(comp, removedMoles * share, 0.0);
+      double distributed = 0.0;
+      for (int idx = 0; idx < recipientPos; idx++) {
+        if (weights[idx] <= 0.0) {
+          continue;
         }
-      } else if (recipientCount > 0) {
-        // Fall back to even distribution if remaining phases have effectively zero moles.
-        double evenShare = removedMoles / recipientCount;
-        for (int phase = 0; phase < numberOfPhases; phase++) {
-          if (phase == specPhase) {
-            continue;
-          }
-          if (!useAllRecipients && getBeta(phase) < phaseFractionMinimumLimit) {
-            continue;
-          }
-          getPhase(phase).addMolesChemReac(comp, evenShare, 0.0);
-        }
+        int phase = recipients[idx];
+        double fraction = weights[idx] / weightSum;
+        double delta = removedMoles * fraction;
+        getPhase(phase).addMolesChemReac(comp, delta, delta);
+        distributed += delta;
       }
+
+      double remainder = removedMoles - distributed;
+      if (Math.abs(remainder) > 1e-12 && recipientPos > 0) {
+        int phase = recipients[0];
+        getPhase(phase).addMolesChemReac(comp, remainder, remainder);
+      }
+
+      removedPhase.addMolesChemReac(comp, -removedMoles, -removedMoles);
     }
 
     for (int i = specPhase; i < numberOfPhases - 1; i++) {
@@ -4408,6 +4435,7 @@ public abstract class SystemThermo implements SystemInterface {
     }
     beta[removedPhaseIndex] = 0.0;
     numberOfPhases--;
+    setTotalNumberOfMoles(totalBefore);
     initBeta();
   }
 
