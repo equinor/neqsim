@@ -113,8 +113,8 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
     SystemInterface bubbleFluid = multiphaseFluid.clone();
     ThermodynamicOperations bubbleOps = new ThermodynamicOperations(bubbleFluid);
     bubbleOps.bubblePointPressureFlash(false);
-    System.out.println("Havis mixture bubble point at " + temperature + " C = "
-        + bubbleFluid.getPressure("bara") + " bara");
+    // System.out.println("Havis mixture bubble point at " + temperature + " C = "
+    // + bubbleFluid.getPressure("bara") + " bara");
 
     assertEquals(temperature, multiphaseFluid.getTemperature("C"), 1e-6);
     assertEquals(pressure, multiphaseFluid.getPressure("barg"), 1e-6);
@@ -153,7 +153,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
 
     for (int i = 0; i < iterations; i++) {
       try {
-        System.out.println("Starting iteration " + (i + 1));
+        // System.out.println("Starting iteration " + (i + 1));
         // Apply 10% random variation to each parameter
         double gasFlow = baseGasFlow * (1.0 + (random.nextGaussian() * 0.1));
         double oilFlow = baseOilFlow * (1.0 + (random.nextGaussian() * 0.1));
@@ -161,10 +161,10 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
         double pressure = basePressure * (1.0 + (random.nextGaussian() * 0.1));
         double temperature = baseTemperature * (1.0 + (random.nextGaussian() * 0.1));
 
-        System.out.printf(
-            "Iteration %d: gasFlow=%.12f, oilFlow=%.12f, waterFlow=%.12f, "
-                + "pressure=%.12f, temperature=%.12f%n",
-            i, gasFlow, oilFlow, waterFlow, pressure, temperature);
+        // System.out.printf(
+        // "Iteration %d: gasFlow=%.12f, oilFlow=%.12f, waterFlow=%.12f, "
+        // + "pressure=%.12f, temperature=%.12f%n",
+        // i, gasFlow, oilFlow, waterFlow, pressure, temperature);
 
         // Ensure positive values
         gasFlow = Math.max(gasFlow, baseGasFlow * 0.1);
@@ -220,7 +220,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
         successfulRuns++;
       } catch (Exception e) {
         // Log failed iteration but continue with others
-        System.out.println("Iteration " + i + " failed: " + e.getMessage());
+        // System.out.println("Iteration " + i + " failed: " + e.getMessage());
       }
     }
 
@@ -229,8 +229,8 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
     assertTrue(successRate >= 0.95,
         "Success rate too low: " + successRate + " (" + successfulRuns + "/" + iterations + ")");
 
-    System.out.println("Random variation test completed: " + successfulRuns + "/" + iterations
-        + " successful runs (" + String.format("%.2f%%", successRate * 100) + ")");
+    // System.out.println("Random variation test completed: " + successfulRuns + "/" + iterations
+    // + " successful runs (" + String.format("%.2f%%", successRate * 100) + ")");
   }
 
   @Test
