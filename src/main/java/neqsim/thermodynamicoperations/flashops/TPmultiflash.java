@@ -1572,7 +1572,7 @@ public class TPmultiflash extends TPflash {
           diff = this.solveBeta();
           // diff = Math.abs((system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) /
           // oldBeta);
-          // logger.info("diff multiphase " + diff);
+          // System.out.println("diff multiphase " + diff);
           if (iterations % 50 == 0) {
             maxerr *= 100.0;
           }
@@ -1598,22 +1598,28 @@ public class TPmultiflash extends TPflash {
       }
 
       boolean trivialSolution = false;
-      for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-        for (int j = 0; j < system.getPhase(i).getNumberOfComponents(); j++) {
-          if (Math.abs(
-              system.getPhase(i).getDensity() - system.getPhase(i + 1).getDensity()) < 1.1e-5) {
+      for (int i = 0; i < system.getNumberOfPhases(); i++) {
+        for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
+          if (Math
+              .abs(system.getPhase(i).getDensity() - system.getPhase(j).getDensity()) < 1.1e-5) {
             trivialSolution = true;
+            break;
           }
+        }
+        if (trivialSolution) {
+          break;
         }
       }
 
       if (trivialSolution && !hasRemovedPhase) {
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-          if (Math.abs(
-              system.getPhase(i).getDensity() - system.getPhase(i + 1).getDensity()) < 1.1e-5) {
-            system.removePhaseKeepTotalComposition(i + 1);
-            doStabilityAnalysis = false;
-            hasRemovedPhase = true;
+          for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
+            if (Math
+                .abs(system.getPhase(i).getDensity() - system.getPhase(j).getDensity()) < 1.1e-5) {
+              system.removePhaseKeepTotalComposition(j);
+              doStabilityAnalysis = false;
+              hasRemovedPhase = true;
+            }
           }
         }
       }
@@ -1629,6 +1635,8 @@ public class TPmultiflash extends TPflash {
         stabilityAnalysis3();
         run();
       }
+
+
       /*
        * if (!secondTime) { secondTime = true; doStabilityAnalysis = false; run(); }
        */

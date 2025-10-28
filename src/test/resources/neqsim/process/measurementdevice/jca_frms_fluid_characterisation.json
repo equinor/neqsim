@@ -1,0 +1,1024 @@
+{
+  "test_gas": [
+    {
+      "name": "H2S",
+      "amount": 0.00016
+    },
+    {
+      "name": "nitrogen",
+      "amount": 0.0032
+    },
+    {
+      "name": "CO2",
+      "amount": 0.06539
+    },
+    {
+      "name": "methane",
+      "amount": 0.5686
+    },
+    {
+      "name": "ethane",
+      "amount": 0.073
+    },
+    {
+      "name": "propane",
+      "amount": 0.04149
+    },
+    {
+      "name": "i-butane",
+      "amount": 0.005189
+    },
+    {
+      "name": "n-butane",
+      "amount": 0.015133
+    },
+    {
+      "name": "i-pentane",
+      "amount": 0.004601
+    },
+    {
+      "name": "n-pentane",
+      "amount": 0.006
+    },
+    {
+      "name": "C6",
+      "amount": 0.0077,
+      "molar_mass": 86.1800003051758,
+      "density": 0.6549293012096927
+    },
+    {
+      "name": "C7",
+      "amount": 0.0132,
+      "molar_mass": 94.8470001220703,
+      "density": 0.6722593722496933
+    },
+    {
+      "name": "C8",
+      "amount": 0.0138,
+      "molar_mass": 106.220001220703,
+      "density": 0.752869265755253
+    },
+    {
+      "name": "C9",
+      "amount": 0.009357,
+      "molar_mass": 120.457000732422,
+      "density": 0.7690543114894419
+    },
+    {
+      "name": "C10_C11",
+      "amount": 0.0062,
+      "molar_mass": 140.369003295898,
+      "density": 0.7854566755737993
+    },
+    {
+      "name": "C12_C13",
+      "amount": 0.0089,
+      "molar_mass": 167.561996459961,
+      "density": 0.8042947281618298
+    },
+    {
+      "name": "C14_C15",
+      "amount": 0.0069,
+      "molar_mass": 197.501007080078,
+      "density": 0.8206290114220136
+    },
+    {
+      "name": "C16_C17",
+      "amount": 0.0053,
+      "molar_mass": 229.033996582031,
+      "density": 0.8349685759057414
+    },
+    {
+      "name": "C18_C20",
+      "amount": 0.0047,
+      "molar_mass": 262.010986328125,
+      "density": 0.8503141209735692
+    },
+    {
+      "name": "C21_C23",
+      "amount": 0.004295,
+      "molar_mass": 303.558990478516,
+      "density": 0.8667563911961843
+    },
+    {
+      "name": "C24_C28",
+      "amount": 0.003374,
+      "molar_mass": 355.920013427734,
+      "density": 0.8849370801869125
+    },
+    {
+      "name": "C29_C35",
+      "amount": 0.005,
+      "molar_mass": 437.281005859375,
+      "density": 0.9077580971223888
+    },
+    {
+      "name": "water",
+      "amount": 0.127294
+    }
+  ],
+  "test_oil": [
+    {
+      "name": "H2S",
+      "amount": 0.00016
+    },
+    {
+      "name": "nitrogen",
+      "amount": 0.0032
+    },
+    {
+      "name": "CO2",
+      "amount": 0.06539
+    },
+    {
+      "name": "methane",
+      "amount": 0.5686
+    },
+    {
+      "name": "ethane",
+      "amount": 0.073
+    },
+    {
+      "name": "propane",
+      "amount": 0.04149
+    },
+    {
+      "name": "i-butane",
+      "amount": 0.005189
+    },
+    {
+      "name": "n-butane",
+      "amount": 0.015133
+    },
+    {
+      "name": "i-pentane",
+      "amount": 0.004601
+    },
+    {
+      "name": "n-pentane",
+      "amount": 0.006
+    },
+    {
+      "name": "C6",
+      "amount": 0.0077,
+      "molar_mass": 86.1800003051758,
+      "density": 0.131586722637079
+    },
+    {
+      "name": "C7",
+      "amount": 0.0132,
+      "molar_mass": 94.8470001220703,
+      "density": 0.141086913827126
+    },
+    {
+      "name": "C8",
+      "amount": 0.0138,
+      "molar_mass": 106.220001220703,
+      "density": 0.141086913827126
+    },
+    {
+      "name": "C9",
+      "amount": 0.009357,
+      "molar_mass": 120.457000732422,
+      "density": 0.156630031108116
+    },
+    {
+      "name": "C10_C11",
+      "amount": 0.0062,
+      "molar_mass": 140.369003295898,
+      "density": 0.178710051949529
+    },
+    {
+      "name": "C12_C13",
+      "amount": 0.0089,
+      "molar_mass": 167.561996459961,
+      "density": 0.208334072812978
+    },
+    {
+      "name": "C14_C15",
+      "amount": 0.0069,
+      "molar_mass": 197.501007080078,
+      "density": 0.240670271622303
+    },
+    {
+      "name": "C16_C17",
+      "amount": 0.0053,
+      "molar_mass": 229.033996582031,
+      "density": 0.274302534479916
+    },
+    {
+      "name": "C18_C20",
+      "amount": 0.0047,
+      "molar_mass": 262.010986328125,
+      "density": 0.308134346902454
+    },
+    {
+      "name": "C21_C23",
+      "amount": 0.004295,
+      "molar_mass": 303.558990478516,
+      "density": 0.350224115520606
+    },
+    {
+      "name": "C24_C28",
+      "amount": 0.003374,
+      "molar_mass": 355.920013427734,
+      "density": 0.402198101307449
+    },
+    {
+      "name": "C29_C35",
+      "amount": 0.005,
+      "molar_mass": 437.281005859375,
+      "density": 0.48171534602177
+    },
+    {
+      "name": "water",
+      "amount": 0.127294
+    }
+  ],
+  "Skrugard_oil": [
+    {
+      "name": "N2",
+      "amount": 0.3809504,
+      "molar_mass": 28.01352,
+      "density": 0.0
+    },
+    {
+      "name": "CO2",
+      "amount": 0.08020008,
+      "molar_mass": 44.0098,
+      "density": 0.0
+    },
+    {
+      "name": "C1",
+      "amount": 35.44844,
+      "molar_mass": 16.04288,
+      "density": 0.0
+    },
+    {
+      "name": "C2",
+      "amount": 3.197978,
+      "molar_mass": 30.06982,
+      "density": 0.0
+    },
+    {
+      "name": "C3",
+      "amount": 2.215527,
+      "molar_mass": 44.09676,
+      "density": 0.0
+    },
+    {
+      "name": "iC4",
+      "amount": 0.4711755,
+      "molar_mass": 58.1237,
+      "density": 0.0
+    },
+    {
+      "name": "nC4",
+      "amount": 1.022551,
+      "molar_mass": 58.1237,
+      "density": 0.0
+    },
+    {
+      "name": "iC5",
+      "amount": 0.4411005,
+      "molar_mass": 72.15064,
+      "density": 0.0
+    },
+    {
+      "name": "nC5",
+      "amount": 0.5513756,
+      "molar_mass": 72.15065,
+      "density": 0.0
+    },
+    {
+      "name": "C6",
+      "amount": 0.8521258,
+      "molar_mass": 86.17801,
+      "density": 0.6639999
+    },
+    {
+      "name": "C7",
+      "amount": 2.045102,
+      "molar_mass": 95.99999,
+      "density": 0.7379999
+    },
+    {
+      "name": "C8",
+      "amount": 2.245602,
+      "molar_mass": 107.0,
+      "density": 0.765
+    },
+    {
+      "name": "C9",
+      "amount": 1.854627,
+      "molar_mass": 121.0,
+      "density": 0.7810001
+    },
+    {
+      "name": "C10-C12",
+      "amount": 12.23649,
+      "molar_mass": 146.4857,
+      "density": 0.8033956
+    },
+    {
+      "name": "C13-C15",
+      "amount": 9.196276,
+      "molar_mass": 189.3681,
+      "density": 0.8309535
+    },
+    {
+      "name": "C16-C17",
+      "amount": 4.823148,
+      "molar_mass": 229.15,
+      "density": 0.8498558
+    },
+    {
+      "name": "C18-C20",
+      "amount": 5.71308,
+      "molar_mass": 262.2545,
+      "density": 0.8657091
+    },
+    {
+      "name": "C21-C24",
+      "amount": 5.473133,
+      "molar_mass": 309.702,
+      "density": 0.8847905
+    },
+    {
+      "name": "C25-C28",
+      "amount": 3.739751,
+      "molar_mass": 364.8255,
+      "density": 0.9035118
+    },
+    {
+      "name": "C29-C34",
+      "amount": 3.511237,
+      "molar_mass": 433.2128,
+      "density": 0.9227785
+    },
+    {
+      "name": "C35-C45",
+      "amount": 2.622744,
+      "molar_mass": 533.401,
+      "density": 0.9463822
+    },
+    {
+      "name": "C44-C80",
+      "amount": 1.877384,
+      "molar_mass": 738.3407,
+      "density": 0.9841493
+    }
+  ],
+  "Skrugard_gas": [
+    {
+      "name": "N2",
+      "amount": 2.649916,
+      "molar_mass": 28.01352,
+      "density": 0.0
+    },
+    {
+      "name": "CO2",
+      "amount": 0.09999683,
+      "molar_mass": 44.0098,
+      "density": 0.0
+    },
+    {
+      "name": "C1",
+      "amount": 93.19704,
+      "molar_mass": 16.04288,
+      "density": 0.0
+    },
+    {
+      "name": "C2",
+      "amount": 2.659916,
+      "molar_mass": 30.06982,
+      "density": 0.0
+    },
+    {
+      "name": "C3",
+      "amount": 0.8599728,
+      "molar_mass": 44.09676,
+      "density": 0.0
+    },
+    {
+      "name": "iC4",
+      "amount": 0.1099965,
+      "molar_mass": 58.1237,
+      "density": 0.0
+    },
+    {
+      "name": "nC4",
+      "amount": 0.1799943,
+      "molar_mass": 58.1237,
+      "density": 0.0
+    },
+    {
+      "name": "iC5",
+      "amount": 0.03999873,
+      "molar_mass": 72.15064,
+      "density": 0.0
+    },
+    {
+      "name": "nC5",
+      "amount": 0.04999842,
+      "molar_mass": 72.15065,
+      "density": 0.0
+    },
+    {
+      "name": "C6",
+      "amount": 0.03999873,
+      "molar_mass": 86.17801,
+      "density": 0.6639999
+    },
+    {
+      "name": "C7",
+      "amount": 0.03999873,
+      "molar_mass": 95.99999,
+      "density": 0.7379999
+    },
+    {
+      "name": "C8",
+      "amount": 0.02999905,
+      "molar_mass": 107.0,
+      "density": 0.765
+    },
+    {
+      "name": "C9",
+      "amount": 0.009999683,
+      "molar_mass": 121.0,
+      "density": 0.7810001
+    },
+    {
+      "name": "C10-C12",
+      "amount": 0.02794495,
+      "molar_mass": 146.4857,
+      "density": 0.8033956
+    },
+    {
+      "name": "C13-C15",
+      "amount": 0.004402373,
+      "molar_mass": 189.3681,
+      "density": 0.8309535
+    },
+    {
+      "name": "C16-C17",
+      "amount": 0.0005830996,
+      "molar_mass": 229.15,
+      "density": 0.8498558
+    },
+    {
+      "name": "C18-C20",
+      "amount": 0.0002022985,
+      "molar_mass": 262.2545,
+      "density": 0.8657091
+    },
+    {
+      "name": "C21-C24",
+      "amount": 3.461044e-05,
+      "molar_mass": 309.702,
+      "density": 0.8847905
+    },
+    {
+      "name": "C25-C28",
+      "amount": 2.944773e-06,
+      "molar_mass": 364.8255,
+      "density": 0.9035118
+    },
+    {
+      "name": "C29-C34",
+      "amount": 1.939715e-07,
+      "molar_mass": 433.2128,
+      "density": 0.9227785
+    }
+  ],
+  "Havis_oil": [
+    {
+      "name": "N2",
+      "amount": 0.2526214,
+      "molar_mass": 28.01352,
+      "density": 0.0
+    },
+    {
+      "name": "CO2",
+      "amount": 1.546043,
+      "molar_mass": 44.0098,
+      "density": 0.0
+    },
+    {
+      "name": "C1",
+      "amount": 41.30865,
+      "molar_mass": 16.04288,
+      "density": 0.0
+    },
+    {
+      "name": "C2",
+      "amount": 5.497041,
+      "molar_mass": 30.06982,
+      "density": 0.0
+    },
+    {
+      "name": "C3",
+      "amount": 3.284078,
+      "molar_mass": 44.09676,
+      "density": 0.0
+    },
+    {
+      "name": "iC4",
+      "amount": 0.697235,
+      "molar_mass": 58.1237,
+      "density": 0.0
+    },
+    {
+      "name": "nC4",
+      "amount": 1.556148,
+      "molar_mass": 58.1237,
+      "density": 0.0
+    },
+    {
+      "name": "iC5",
+      "amount": 0.767969,
+      "molar_mass": 72.15064,
+      "density": 0.0
+    },
+    {
+      "name": "nC5",
+      "amount": 0.9195418,
+      "molar_mass": 72.15065,
+      "density": 0.0
+    },
+    {
+      "name": "C6",
+      "amount": 1.475309,
+      "molar_mass": 86.17801,
+      "density": 0.6639999
+    },
+    {
+      "name": "C7",
+      "amount": 3.061771,
+      "molar_mass": 95.99999,
+      "density": 0.7379999
+    },
+    {
+      "name": "C8",
+      "amount": 4.183409,
+      "molar_mass": 107.0,
+      "density": 0.765
+    },
+    {
+      "name": "C9",
+      "amount": 3.08198,
+      "molar_mass": 121.0,
+      "density": 0.7810001
+    },
+    {
+      "name": "C10-C12",
+      "amount": 8.082951,
+      "molar_mass": 146.4857,
+      "density": 0.8033956
+    },
+    {
+      "name": "C13-C15",
+      "amount": 6.066754,
+      "molar_mass": 189.3681,
+      "density": 0.8309535
+    },
+    {
+      "name": "C16-C17",
+      "amount": 3.178291,
+      "molar_mass": 229.15,
+      "density": 0.8498558
+    },
+    {
+      "name": "C18-C20",
+      "amount": 3.760688,
+      "molar_mass": 262.2545,
+      "density": 0.8657091
+    },
+    {
+      "name": "C21-C24",
+      "amount": 3.597329,
+      "molar_mass": 309.702,
+      "density": 0.8847905
+    },
+    {
+      "name": "C25-C28",
+      "amount": 2.453742,
+      "molar_mass": 364.8255,
+      "density": 0.9035118
+    },
+    {
+      "name": "C29-C34",
+      "amount": 2.298946,
+      "molar_mass": 433.2128,
+      "density": 0.9227785
+    },
+    {
+      "name": "C35-C45",
+      "amount": 1.711866,
+      "molar_mass": 533.401,
+      "density": 0.9463822
+    },
+    {
+      "name": "C44-C80",
+      "amount": 1.217641,
+      "molar_mass": 738.3407,
+      "density": 0.9841493
+    }
+  ],
+  "Havis_gas": [
+    {
+      "name": "N2",
+      "amount": 1.202975,
+      "molar_mass": 28.01352,
+      "density": 0.0
+    },
+    {
+      "name": "CO2",
+      "amount": 2.031958,
+      "molar_mass": 44.0098,
+      "density": 0.0
+    },
+    {
+      "name": "C1",
+      "amount": 88.01415,
+      "molar_mass": 16.04288,
+      "density": 0.0
+    },
+    {
+      "name": "C2",
+      "amount": 4.945897,
+      "molar_mass": 30.06982,
+      "density": 0.0
+    },
+    {
+      "name": "C3",
+      "amount": 1.776963,
+      "molar_mass": 44.09676,
+      "density": 0.0
+    },
+    {
+      "name": "iC4",
+      "amount": 0.2649945,
+      "molar_mass": 58.1237,
+      "density": 0.0
+    },
+    {
+      "name": "nC4",
+      "amount": 0.4689903,
+      "molar_mass": 58.1237,
+      "density": 0.0
+    },
+    {
+      "name": "iC5",
+      "amount": 0.1619966,
+      "molar_mass": 72.15064,
+      "density": 0.0
+    },
+    {
+      "name": "nC5",
+      "amount": 0.1689965,
+      "molar_mass": 72.15065,
+      "density": 0.0
+    },
+    {
+      "name": "C6",
+      "amount": 0.193996,
+      "molar_mass": 86.17801,
+      "density": 0.6639999
+    },
+    {
+      "name": "C7",
+      "amount": 0.2609946,
+      "molar_mass": 95.99999,
+      "density": 0.7379999
+    },
+    {
+      "name": "C8",
+      "amount": 0.2349951,
+      "molar_mass": 107.0,
+      "density": 0.765
+    },
+    {
+      "name": "C9",
+      "amount": 0.1089977,
+      "molar_mass": 121.0,
+      "density": 0.7810001
+    },
+    {
+      "name": "C10-C12",
+      "amount": 0.1262529,
+      "molar_mass": 146.4857,
+      "density": 0.8033956
+    },
+    {
+      "name": "C13-C15",
+      "amount": 0.02911352,
+      "molar_mass": 189.3681,
+      "density": 0.8309535
+    },
+    {
+      "name": "C16-C17",
+      "amount": 0.005444396,
+      "molar_mass": 229.15,
+      "density": 0.8498558
+    },
+    {
+      "name": "C18-C20",
+      "amount": 0.002524546,
+      "molar_mass": 262.2545,
+      "density": 0.8657091
+    },
+    {
+      "name": "C21-C24",
+      "amount": 0.0006496357,
+      "molar_mass": 309.702,
+      "density": 0.8847905
+    },
+    {
+      "name": "C25-C28",
+      "amount": 9.186303e-05,
+      "molar_mass": 364.8255,
+      "density": 0.9035118
+    },
+    {
+      "name": "C29-C34",
+      "amount": 1.432499e-05,
+      "molar_mass": 433.2128,
+      "density": 0.9227785
+    }
+  ],
+  "Drivis_oil": [
+    {
+      "name": "N2",
+      "amount": 0.227068,
+      "molar_mass": 28.01352,
+      "density": 0.0
+    },
+    {
+      "name": "CO2",
+      "amount": 0.8257018,
+      "molar_mass": 44.0098,
+      "density": 0.0
+    },
+    {
+      "name": "C1",
+      "amount": 37.36301,
+      "molar_mass": 16.04288,
+      "density": 0.0
+    },
+    {
+      "name": "C2",
+      "amount": 5.521881,
+      "molar_mass": 30.06982,
+      "density": 0.0
+    },
+    {
+      "name": "C3",
+      "amount": 3.643409,
+      "molar_mass": 44.09676,
+      "density": 0.0
+    },
+    {
+      "name": "iC4",
+      "amount": 0.8153806,
+      "molar_mass": 58.1237,
+      "density": 0.0
+    },
+    {
+      "name": "nC4",
+      "amount": 1.857829,
+      "molar_mass": 58.1237,
+      "density": 0.0
+    },
+    {
+      "name": "iC5",
+      "amount": 0.9185933,
+      "molar_mass": 72.15064,
+      "density": 0.0
+    },
+    {
+      "name": "nC5",
+      "amount": 1.125019,
+      "molar_mass": 72.15065,
+      "density": 0.0
+    },
+    {
+      "name": "C6",
+      "amount": 1.878472,
+      "molar_mass": 86.17801,
+      "density": 0.6639999
+    },
+    {
+      "name": "C7",
+      "amount": 4.045939,
+      "molar_mass": 95.99999,
+      "density": 0.7379999
+    },
+    {
+      "name": "C8",
+      "amount": 5.59413,
+      "molar_mass": 107.0,
+      "density": 0.765
+    },
+    {
+      "name": "C9",
+      "amount": 4.159473,
+      "molar_mass": 121.0,
+      "density": 0.7810001
+    },
+    {
+      "name": "C10-C12",
+      "amount": 7.830577,
+      "molar_mass": 146.4857,
+      "density": 0.8033956
+    },
+    {
+      "name": "C13-C15",
+      "amount": 5.918371,
+      "molar_mass": 189.3681,
+      "density": 0.8309535
+    },
+    {
+      "name": "C16-C17",
+      "amount": 3.118871,
+      "molar_mass": 229.15,
+      "density": 0.8498558
+    },
+    {
+      "name": "C18-C20",
+      "amount": 3.711501,
+      "molar_mass": 262.2545,
+      "density": 0.8657091
+    },
+    {
+      "name": "C21-C24",
+      "amount": 3.578761,
+      "molar_mass": 309.702,
+      "density": 0.8847905
+    },
+    {
+      "name": "C25-C28",
+      "amount": 2.463829,
+      "molar_mass": 364.8255,
+      "density": 0.9035118
+    },
+    {
+      "name": "C29-C34",
+      "amount": 2.334476,
+      "molar_mass": 433.2128,
+      "density": 0.9227785
+    },
+    {
+      "name": "C35-C45",
+      "amount": 1.767399,
+      "molar_mass": 533.401,
+      "density": 0.9463822
+    },
+    {
+      "name": "C44-C80",
+      "amount": 1.300312,
+      "molar_mass": 738.3407,
+      "density": 0.9841493
+    }
+  ],
+  "Drivis_gas": [
+    {
+      "name": "N2",
+      "amount": 1.31,
+      "molar_mass": 28.01352,
+      "density": 0.0
+    },
+    {
+      "name": "CO2",
+      "amount": 1.17,
+      "molar_mass": 44.0098,
+      "density": 0.0
+    },
+    {
+      "name": "C1",
+      "amount": 89.43,
+      "molar_mass": 16.04288,
+      "density": 0.0
+    },
+    {
+      "name": "C2",
+      "amount": 4.84,
+      "molar_mass": 30.06982,
+      "density": 0.0
+    },
+    {
+      "name": "C3",
+      "amount": 1.69,
+      "molar_mass": 44.09676,
+      "density": 0.0
+    },
+    {
+      "name": "iC4",
+      "amount": 0.25,
+      "molar_mass": 58.1237,
+      "density": 0.0
+    },
+    {
+      "name": "nC4",
+      "amount": 0.43,
+      "molar_mass": 58.1237,
+      "density": 0.0
+    },
+    {
+      "name": "iC5",
+      "amount": 0.13,
+      "molar_mass": 72.15064,
+      "density": 0.0
+    },
+    {
+      "name": "nC5",
+      "amount": 0.13,
+      "molar_mass": 72.15065,
+      "density": 0.0
+    },
+    {
+      "name": "C6",
+      "amount": 0.13,
+      "molar_mass": 86.17801,
+      "density": 0.6639999
+    },
+    {
+      "name": "C7",
+      "amount": 0.17,
+      "molar_mass": 95.99999,
+      "density": 0.7379999
+    },
+    {
+      "name": "C8",
+      "amount": 0.15,
+      "molar_mass": 107.0,
+      "density": 0.765
+    },
+    {
+      "name": "C9",
+      "amount": 0.05,
+      "molar_mass": 121.0,
+      "density": 0.7810001
+    },
+    {
+      "name": "C10-C12",
+      "amount": 0.07337952,
+      "molar_mass": 146.4857,
+      "density": 0.8033956
+    },
+    {
+      "name": "C13-C15",
+      "amount": 0.02850862,
+      "molar_mass": 189.3681,
+      "density": 0.8309535
+    },
+    {
+      "name": "C16-C17",
+      "amount": 0.008468931,
+      "molar_mass": 229.15,
+      "density": 0.8498558
+    },
+    {
+      "name": "C18-C20",
+      "amount": 0.00589719,
+      "molar_mass": 262.2545,
+      "density": 0.8657091
+    },
+    {
+      "name": "C21-C24",
+      "amount": 0.002684602,
+      "molar_mass": 309.702,
+      "density": 0.8847905
+    },
+    {
+      "name": "C25-C28",
+      "amount": 0.0007610534,
+      "molar_mass": 364.8255,
+      "density": 0.9035118
+    },
+    {
+      "name": "C29-C34",
+      "amount": 0.0002556617,
+      "molar_mass": 433.2128,
+      "density": 0.9227785
+    },
+    {
+      "name": "C35-C45",
+      "amount": 4.278434e-05,
+      "molar_mass": 533.401,
+      "density": 0.9463822
+    },
+    {
+      "name": "C44-C80",
+      "amount": 1.62976e-06,
+      "molar_mass": 738.3407,
+      "density": 0.9841493
+    }
+  ],
+  "water": [
+    {
+      "name": "water",
+      "amount": 1
+    }
+  ]
+}

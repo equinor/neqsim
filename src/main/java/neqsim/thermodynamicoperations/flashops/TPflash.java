@@ -444,7 +444,7 @@ public class TPflash extends Flash {
         if (((gibbsEnergy - gibbsEnergyOld) / Math.abs(gibbsEnergyOld) > 1e-8
             || system.getBeta() < phaseFractionMinimumLimit * 1.01
             || system.getBeta() > (1 - phaseFractionMinimumLimit * 1.01))
-            && !system.isChemicalSystem() && timeFromLastGibbsFail > 0) {
+            && !system.isChemicalSystem() && timeFromLastGibbsFail > 1) {
           resetK();
           timeFromLastGibbsFail = 0;
           // logger.info("gibbs decrease " + (gibbsEnergy - gibbsEnergyOld) /
