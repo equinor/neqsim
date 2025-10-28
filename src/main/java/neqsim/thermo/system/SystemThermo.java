@@ -4366,6 +4366,8 @@ public abstract class SystemThermo implements SystemInterface {
       if (getBeta(phase) >= phaseFractionMinimumLimit && phaseMoles > 0.0) {
         hasPreferredRecipients = true;
       }
+      recipientTotalMoles += getPhase(i).getNumberOfMolesInPhase();
+      recipientCount++;
     }
 
     if (recipientPos == 0) {
