@@ -72,6 +72,32 @@ public class TPmultiflash extends TPflash {
     multTerm2 = new double[system.getPhase(0).getNumberOfComponents()];
   }
 
+  private boolean hasAqueousPhase() {
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      if (system.getPhase(phase).getType() == PhaseType.AQUEOUS) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean gasPhaseContainsHydrocarbons(int phaseIndex) {
+    if (phaseIndex < 0 || phaseIndex >= system.getNumberOfPhases()) {
+      return false;
+    }
+    double z = system.getPhase(phaseIndex).getZ();
+    if (!(Double.isFinite(z) && z > 0.75)) {
+      return false;
+    }
+    double hydrocarbonSum = 0.0;
+    for (int comp = 0; comp < system.getPhase(phaseIndex).getNumberOfComponents(); comp++) {
+      if (system.getPhase(phaseIndex).getComponent(comp).isHydrocarbon()) {
+        hydrocarbonSum += system.getPhase(phaseIndex).getComponent(comp).getx();
+      }
+    }
+    return hydrocarbonSum > 1.0e-6;
+  }
+
   /**
    * <p>
    * calcMultiPhaseBeta.
@@ -223,7 +249,13 @@ public class TPmultiflash extends TPflash {
       removePhase = false;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
         double currBeta = betaMatrix.get(0, k);
+        boolean keepSmallGasPhase = hasAqueousPhase()
+            && gasPhaseContainsHydrocarbons(k);
         if (currBeta < phaseFractionMinimumLimit) {
+          if (keepSmallGasPhase) {
+            system.setBeta(k, phaseFractionMinimumLimit);
+            continue;
+          }
           system.setBeta(k, phaseFractionMinimumLimit);
           if (checkOneRemove) {
             if (system.getPhase(k).getType() == PhaseType.GAS) {
@@ -1412,9 +1444,30 @@ public class TPmultiflash extends TPflash {
     system.addPhase();
     int phaseIndex = system.getNumberOfPhases() - 1;
     system.setPhaseType(phaseIndex, PhaseType.GAS);
+
+    double hydrocarbonZtotal = 0.0;
     for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
-      double z = system.getPhase(0).getComponent(comp).getz();
-      system.getPhase(phaseIndex).getComponent(comp).setx(z > 0 ? z : 1.0e-16);
+      if (system.getPhase(0).getComponent(comp).isHydrocarbon()) {
+        hydrocarbonZtotal += Math.max(system.getPhase(0).getComponent(comp).getz(), 0.0);
+      }
+    }
+    if (hydrocarbonZtotal <= 0.0) {
+      system.removePhase(system.getNumberOfPhases() - 1);
+      return false;
+    }
+
+    for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+      double x;
+      if (system.getPhase(0).getComponent(comp).isHydrocarbon()) {
+        double z = Math.max(system.getPhase(0).getComponent(comp).getz(), 0.0);
+        x = z / hydrocarbonZtotal;
+        if (!Double.isFinite(x) || x <= 0.0) {
+          x = 1.0e-16;
+        }
+      } else {
+        x = 1.0e-16;
+      }
+      system.getPhase(phaseIndex).getComponent(comp).setx(x);
     }
     system.getPhases()[phaseIndex].normalize();
     double initialBeta = Math.max(1.0e-3, 1000.0 * phaseFractionMinimumLimit);
@@ -1591,6 +1644,11 @@ public class TPmultiflash extends TPflash {
       boolean hasRemovedPhase = false;
       for (int i = 0; i < system.getNumberOfPhases(); i++) {
         if (system.getBeta(i) < 1.1 * phaseFractionMinimumLimit) {
+          if (hasAqueousPhase()
+              && gasPhaseContainsHydrocarbons(i)) {
+            system.setBeta(i, phaseFractionMinimumLimit);
+            continue;
+          }
           system.removePhaseKeepTotalComposition(i);
           doStabilityAnalysis = false;
           hasRemovedPhase = true;
@@ -1632,6 +1690,12 @@ public class TPmultiflash extends TPflash {
       /*
        * if (!secondTime) { secondTime = true; doStabilityAnalysis = false; run(); }
        */
+    }
+
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      if (gasPhaseContainsHydrocarbons(phase)) {
+        system.setPhaseType(phase, PhaseType.GAS);
+      }
     }
   }
 }
