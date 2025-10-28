@@ -1711,4 +1711,20 @@ public class TPmultiflash extends TPflash {
     }
     return removed;
   }
+
+  /**
+   * Remove phases with a beta value below the numerical threshold while keeping composition.
+   *
+   * @return {@code true} if any phase was removed
+   */
+  boolean removeLowBetaPhasesKeepComposition() {
+    boolean removed = false;
+    for (int i = system.getNumberOfPhases() - 1; i >= 0; i--) {
+      if (system.getBeta(i) < 1.1 * phaseFractionMinimumLimit) {
+        system.removePhaseKeepTotalComposition(i);
+        removed = true;
+      }
+    }
+    return removed;
+  }
 }

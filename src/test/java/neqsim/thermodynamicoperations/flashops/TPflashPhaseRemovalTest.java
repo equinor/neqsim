@@ -3,8 +3,8 @@ package neqsim.thermodynamicoperations.flashops;
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Test;
 import java.lang.reflect.Field;
+import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -49,15 +49,56 @@ public class TPflashPhaseRemovalTest {
     }
   }
 
+  private void setPhaseFractions(SystemInterface system, double... betas) {
+    system.setNumberOfPhases(betas.length);
+    for (int i = 0; i < betas.length; i++) {
+      ensurePhaseExists(system, i);
+    }
+
+    double totalMoles = system.getTotalNumberOfMoles();
+    int components = system.getPhase(0).getNumberOfComponents();
+    double[] componentTotals = new double[components];
+    for (int comp = 0; comp < components; comp++) {
+      componentTotals[comp] = system.getPhase(0).getComponent(comp).getNumberOfmoles();
+    }
+
+    for (int phaseNum = 0; phaseNum < betas.length; phaseNum++) {
+      PhaseInterface phase = system.getPhase(phaseNum);
+      double targetPhaseMoles = totalMoles * betas[phaseNum];
+      setPhaseTotalMoles(phase, targetPhaseMoles);
+      phase.setBeta(betas[phaseNum]);
+      for (int comp = 0; comp < components; comp++) {
+        double fraction = componentTotals[comp] / totalMoles;
+        double compPhaseMoles = targetPhaseMoles * fraction;
+        phase.getComponent(comp).setNumberOfMolesInPhase(compPhaseMoles);
+      }
+      system.setBeta(phaseNum, betas[phaseNum]);
+    }
+  }
+
+  private void setPhaseTotalMoles(PhaseInterface phase, double targetPhaseMoles) {
+    Class<?> current = phase.getClass();
+    while (current != null) {
+      try {
+        Field molesField = current.getDeclaredField("numberOfMolesInPhase");
+        molesField.setAccessible(true);
+        molesField.setDouble(phase, targetPhaseMoles);
+        return;
+      } catch (NoSuchFieldException ex) {
+        current = current.getSuperclass();
+      } catch (IllegalAccessException ex) {
+        throw new RuntimeException("Unable to set phase mole count", ex);
+      }
+    }
+    throw new RuntimeException("Unable to locate numberOfMolesInPhase field");
+  }
+
   @Test
   public void removeLowBetaPhasesRemovesAllSmallPhases() {
     SystemInterface system = createBaseSystem();
-    system.setNumberOfPhases(3);
-    ensurePhaseExists(system, 2);
-
-    system.setBeta(0, phaseFractionMinimumLimit * 0.5);
-    system.setBeta(1, phaseFractionMinimumLimit * 0.8);
-    system.setBeta(2, 1.0 - system.getBeta(0) - system.getBeta(1));
+    setPhaseFractions(system, phaseFractionMinimumLimit * 0.5,
+        phaseFractionMinimumLimit * 0.8,
+        1.0 - phaseFractionMinimumLimit * (0.5 + 0.8));
 
     TPflash flash = new TPflash(system);
     flash.removeLowBetaPhases();
@@ -68,14 +109,10 @@ public class TPflashPhaseRemovalTest {
   @Test
   public void removeLowBetaPhasesKeepCompositionRemovesMultiplePhases() {
     SystemInterface system = createBaseSystem();
-    system.setNumberOfPhases(4);
-    ensurePhaseExists(system, 2);
-    ensurePhaseExists(system, 3);
-
-    system.setBeta(0, phaseFractionMinimumLimit * 0.5);
-    system.setBeta(1, phaseFractionMinimumLimit * 0.9);
-    system.setBeta(2, 0.1);
-    system.setBeta(3, 1.0 - system.getBeta(0) - system.getBeta(1) - system.getBeta(2));
+    setPhaseFractions(system, phaseFractionMinimumLimit * 0.5,
+        phaseFractionMinimumLimit * 0.9,
+        0.1,
+        1.0 - (phaseFractionMinimumLimit * (0.5 + 0.9) + 0.1));
 
     TPmultiflash flash = new TPmultiflash(system);
     boolean removed = flash.removeLowBetaPhasesKeepComposition();
