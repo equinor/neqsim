@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
@@ -76,7 +78,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
 
   @Test
   public void testFrmsWorkflowMatchesPythonReference() throws Exception {
-    Map<Integer, String> fluidMap = Map.of(0, "test", 1, "Skrugard", 2, "Havis", 3, "Drivis");
+    Map<Integer, String> fluidMap = createFluidMap();
 
     int fluidType = 2;
     double gasFlow = 16136.086849640644;
@@ -135,7 +137,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
 
   @Test
   public void testFrmsWorkflowWithRandomVariation() throws Exception {
-    Map<Integer, String> fluidMap = Map.of(0, "test", 1, "Skrugard", 2, "Havis", 3, "Drivis");
+    Map<Integer, String> fluidMap = createFluidMap();
     int fluidType = 2;
 
     // Base values
@@ -158,7 +160,6 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
         double waterFlow = baseWaterFlow * (1.0 + (random.nextGaussian() * 0.1));
         double pressure = basePressure * (1.0 + (random.nextGaussian() * 0.1));
         double temperature = baseTemperature * (1.0 + (random.nextGaussian() * 0.1));
-
 
         System.out.printf(
             "Iteration %d: gasFlow=%.12f, oilFlow=%.12f, waterFlow=%.12f, "
@@ -232,10 +233,9 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
         + " successful runs (" + String.format("%.2f%%", successRate * 100) + ")");
   }
 
-
   @Test
   public void testFrmsWorkflowMatchesPythonReferenceFail() throws Exception {
-    Map<Integer, String> fluidMap = Map.of(0, "test", 1, "Skrugard", 2, "Havis", 3, "Drivis");
+    Map<Integer, String> fluidMap = createFluidMap();
 
     int fluidType = 2;
     double gasFlow = 15415.467139934792;
@@ -281,17 +281,15 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
     double oilSm3PerHour = multiphaseFluid.getPhase("oil").getFlowRate("Sm3/hr");
     double waterSm3PerHour = multiphaseFluid.getPhase("aqueous").getFlowRate("Sm3/hr");
 
-    // assertEquals(10316.78638483792, gasSm3PerHour, 1e-6 * 10316.78638483792);
-    // assertEquals(20116.689061499594, oilSm3PerHour, 1e-6 * 20116.689061499594);
-    // assertEquals(101231.66074923359, waterSm3PerHour, 1e-6 * 101231.66074923359);
-
+    assertTrue(gasSm3PerHour > 0.0);
+    assertTrue(oilSm3PerHour > 0.0);
+    assertTrue(waterSm3PerHour > 0.0);
     assertTrue(multiphaseStream.getFlowRate("kg/hr") > 0.0);
   }
 
-
   @Test
   public void testFrmsWorkflowMatchesPythonReferenceFail22() throws Exception {
-    Map<Integer, String> fluidMap = Map.of(0, "test", 1, "Skrugard", 2, "Havis", 3, "Drivis");
+    Map<Integer, String> fluidMap = createFluidMap();
 
     int fluidType = 2;
     double gasFlow = 15370.806598234587;
@@ -338,10 +336,23 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
     double oilSm3PerHour = multiphaseFluid.getPhase("oil").getFlowRate("Sm3/hr");
     double waterSm3PerHour = multiphaseFluid.getPhase("aqueous").getFlowRate("Sm3/hr");
 
-    // assertEquals(10316.78638483792, gasSm3PerHour, 1e-6 * 10316.78638483792);
-    // assertEquals(20116.689061499594, oilSm3PerHour, 1e-6 * 20116.689061499594);
-    // assertEquals(101231.66074923359, waterSm3PerHour, 1e-6 * 101231.66074923359);
-
+    assertTrue(gasSm3PerHour > 0.0);
+    assertTrue(oilSm3PerHour > 0.0);
+    assertTrue(waterSm3PerHour > 0.0);
     assertTrue(multiphaseStream.getFlowRate("kg/hr") > 0.0);
+  }
+
+  /**
+   * Creates a deterministic, insertion-order map of fluid type indices to names. Java 8-compatible
+   * replacement for Map.of used to maintain compatibility with older runtime environments. Returns
+   * an unmodifiable view to discourage accidental mutation.
+   */
+  private static Map<Integer, String> createFluidMap() {
+    LinkedHashMap<Integer, String> map = new LinkedHashMap<>();
+    map.put(0, "test");
+    map.put(1, "Skrugard");
+    map.put(2, "Havis");
+    map.put(3, "Drivis");
+    return Collections.unmodifiableMap(map);
   }
 }
