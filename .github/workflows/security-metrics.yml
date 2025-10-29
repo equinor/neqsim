@@ -68,7 +68,7 @@ jobs:
           cat > dependabot-metrics.json <<EOF
           {
             "schemaVersion": 1,
-            "label": "deps vulns",
+            "label": "dep vulns",
             "message": "${dep}",
             "color": "${color}"
           }

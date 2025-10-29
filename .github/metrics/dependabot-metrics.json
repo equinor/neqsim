@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"label": "deps vulns",
+		"label": "dep vulns",
 	"message": "0",
 	"color": "green"
 }
