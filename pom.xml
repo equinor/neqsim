@@ -232,7 +232,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>flatten-maven-plugin</artifactId>
-				<version>1.6.0</version>
+				<version>1.7.3</version>
 				<configuration>
 					<updatePomFile>true</updatePomFile>
 				</configuration>
@@ -372,7 +372,7 @@
                         <plugin>
                                 <groupId>com.github.spotbugs</groupId>
                                 <artifactId>spotbugs-maven-plugin</artifactId>
-                                <version>4.9.4.2</version>
+                                <version>4.9.8.1</version>
                                 <configuration>
                                         <failOnError>false</failOnError>
                                 </configuration>
