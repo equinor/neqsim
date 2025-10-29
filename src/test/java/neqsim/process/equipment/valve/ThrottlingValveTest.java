@@ -67,6 +67,45 @@ public class ThrottlingValveTest {
   }
 
   @Test
+  void testZeroAndLowFlowBypassCalculation() {
+    neqsim.thermo.system.SystemInterface system =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 50.0);
+    system.addComponent("methane", 1.0);
+    system.setMixingRule(2);
+
+    Stream zeroFlowStream = new Stream("zeroFlowStream", system);
+    zeroFlowStream.setFlowRate(0.0, "kg/hr");
+    zeroFlowStream.setPressure(50.0, "bara");
+    zeroFlowStream.setTemperature(25.0, "C");
+    zeroFlowStream.run();
+
+    ThrottlingValve zeroFlowValve = new ThrottlingValve("zeroFlowValve", zeroFlowStream);
+    zeroFlowValve.setOutletPressure(30.0);
+    zeroFlowValve.run();
+
+    assertEquals(0.0, zeroFlowValve.getOutletStream().getFlowRate("mole/sec"), 1e-12);
+    assertEquals(30.0, zeroFlowValve.getOutletStream().getPressure("bara"), 1e-6);
+
+    neqsim.thermo.system.SystemInterface lowFlowSystem =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 50.0);
+    lowFlowSystem.addComponent("methane", 1.0);
+    lowFlowSystem.setMixingRule(2);
+
+    Stream lowFlowStream = new Stream("lowFlowStream", lowFlowSystem);
+    lowFlowStream.setFlowRate(1.0e-13, "mole/sec");
+    lowFlowStream.setPressure(50.0, "bara");
+    lowFlowStream.setTemperature(25.0, "C");
+    lowFlowStream.run();
+
+    ThrottlingValve lowFlowValve = new ThrottlingValve("lowFlowValve", lowFlowStream);
+    lowFlowValve.setOutletPressure(30.0);
+    lowFlowValve.run();
+
+    assertEquals(0.0, lowFlowValve.getOutletStream().getFlowRate("mole/sec"), 1e-12);
+    assertEquals(30.0, lowFlowValve.getOutletStream().getPressure("bara"), 1e-6);
+  }
+
+  @Test
   void testCalcProdChoke() {
     neqsim.thermo.system.SystemInterface testSystem2 =
         new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
@@ -422,7 +461,7 @@ public class ThrottlingValveTest {
 
     double outletMoles = valve.getOutletStream().getThermoSystem().getTotalNumberOfMoles();
     assertTrue(Double.isFinite(outletMoles));
-    assertTrue(outletMoles > 0.0);
+    assertEquals(0.0, outletMoles, 1e-12);
     assertTrue(Double.isFinite(valve.getOutletStream().getThermoSystem().getMolarVolume()));
   }
 }
