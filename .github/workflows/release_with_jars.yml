@@ -133,7 +133,7 @@ jobs:
           name: jarfiles-java21
         
       - name: Create release v${{ needs.get_versions.outputs.version_8 }}
-        uses: ncipollo/release-action@v1.11.2
+        uses: ncipollo/release-action@v1.20.0
         with:
           name: NeqSim ${{ needs.get_versions.outputs.version_8 }}
           tag: v${{ needs.get_versions.outputs.version_8 }} 
