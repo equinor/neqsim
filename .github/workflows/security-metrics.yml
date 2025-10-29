@@ -36,18 +36,40 @@ jobs:
 
       - name: Compose metrics JSON
         run: |
-          total=$((${ { steps.codeql.outputs.count } } + ${ { steps.dependabot.outputs.count } }))
+          codeql=${{ steps.codeql.outputs.count }}
+          dependabot=${{ steps.dependabot.outputs.count }}
+          total=$(( codeql + dependabot ))
+          color="green"
+          if [ "$total" -gt 0 ]; then color="yellow"; fi
+          if [ "$total" -gt 5 ]; then color="orange"; fi
+          if [ "$total" -gt 15 ]; then color="red"; fi
+          echo "Total alerts: $total (codeql=$codeql dependabot=$dependabot color=$color)"
           # Secrets scanning alerts API requires GHAS enterprise token; skipping if unavailable.
           cat > security-metrics.json <<EOF
           {
             "schemaVersion": 1,
-            "label": "security",
-            "message": "alerts ${total}",
-            "color": "blue",
+            "label": "sec alerts",
+            "message": "${total}",
+            "color": "${color}",
             "details": {
-              "codeql_open": "${{ steps.codeql.outputs.count }}",
-              "dependabot_open": "${{ steps.dependabot.outputs.count }}"
+              "codeql_open": "${codeql}",
+              "dependabot_open": "${dependabot}"
             }
+          }
+          EOF
+
+      - name: Compose dependabot-only JSON
+        run: |
+          dep=${{ steps.dependabot.outputs.count }}
+          color="green"
+          if [ "$dep" -gt 0 ]; then color="orange"; fi
+          if [ "$dep" -gt 5 ]; then color="red"; fi
+          cat > dependabot-metrics.json <<EOF
+          {
+            "schemaVersion": 1,
+            "label": "deps vulns",
+            "message": "${dep}",
+            "color": "${color}"
           }
           EOF
 
@@ -62,9 +84,10 @@ jobs:
         run: |
           mkdir -p .github/metrics
           cp security-metrics.json .github/metrics/security-metrics.json
+          cp dependabot-metrics.json .github/metrics/dependabot-metrics.json
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add .github/metrics/security-metrics.json
+          git add .github/metrics/security-metrics.json .github/metrics/dependabot-metrics.json
           if git diff --cached --quiet; then
             echo "No changes in metrics JSON"
           else
