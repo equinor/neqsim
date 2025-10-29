@@ -120,15 +120,15 @@ jobs:
     
     steps:
       - name: Download java 8 jar files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: jarfiles-java8
       - name: Download java 11 jar files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: jarfiles-java11
       - name: Download java 21 jar files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: jarfiles-java21
         
