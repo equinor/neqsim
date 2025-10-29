@@ -224,6 +224,13 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       logger.error("Inlet stream thermo system is null");
       return;
     }
+
+    double inletMolarFlow = getInletStream().getThermoSystem().getFlowRate("mole/sec");
+    if (isNegligibleFlow(inletMolarFlow)) {
+      applyZeroFlowState(id);
+      return;
+    }
+
     thermoSystem.initProperties();
 
     if (thermoSystem.hasPhaseType(PhaseType.GAS) && thermoSystem.getVolumeFraction(0) > 0.5) {
@@ -316,6 +323,13 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
     inStream.getFluid().initProperties();
     thermoSystem = inStream.getThermoSystem().clone();
+
+    double inletMolarFlow = inStream.getThermoSystem().getFlowRate("mole/sec");
+    if (isNegligibleFlow(inletMolarFlow)) {
+      applyZeroFlowState(id);
+      return;
+    }
+
     thermoSystem.init(2);
     double enthalpy = thermoSystem.getEnthalpy();
 
@@ -338,8 +352,10 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     if (deltaP > 0.0 && !isCalcPressure) {
       molarFlow = ensureValidMolarFlow(calculateMolarFlow());
 
-      inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-      inStream.getThermoSystem().initProperties();
+      if (molarFlow > 0.0) {
+        inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+        inStream.getThermoSystem().initProperties();
+      }
     }
     // update outlet pressure if required
     if (valveKvSet && isCalcPressure) {
@@ -360,8 +376,13 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
     if (deltaP > 0.0) {
       molarFlow = ensureValidMolarFlow(calculateMolarFlow());
+      if (molarFlow <= 0.0) {
+        applyZeroFlowState(id);
+        return;
+      }
     } else {
-      molarFlow = minimumMolarFlow;
+      applyZeroFlowState(id);
+      return;
     }
 
     try {
@@ -382,10 +403,40 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   private static final double minimumMolarFlow = 1e-12;
 
   private double ensureValidMolarFlow(double flow) {
-    if (Double.isFinite(flow) && flow > minimumMolarFlow) {
-      return flow;
+    if (Double.isFinite(flow)) {
+      if (flow > minimumMolarFlow) {
+        return flow;
+      }
+      return 0.0;
     }
-    return minimumMolarFlow;
+    return 0.0;
+  }
+
+  private boolean isNegligibleFlow(double flow) {
+    return !Double.isFinite(flow) || Math.abs(flow) <= minimumMolarFlow;
+  }
+
+  private void applyZeroFlowState(UUID id) {
+    molarFlow = 0.0;
+    double targetPressure = pressure;
+    if (!(targetPressure > 0.0)) {
+      try {
+        targetPressure = getOutletStream().getThermoSystem().getPressure(pressureUnit);
+      } catch (Exception ex) {
+        targetPressure = getInletStream().getThermoSystem().getPressure(pressureUnit);
+      }
+    }
+
+    try {
+      thermoSystem.setTotalNumberOfMoles(0.0);
+      thermoSystem.init(0);
+    } catch (Exception ex) {
+      logger.debug("Unable to initialize zero-flow state: {}", ex.getMessage());
+    }
+
+    thermoSystem.setPressure(targetPressure, pressureUnit);
+    outStream.setThermoSystem(thermoSystem);
+    setCalculationIdentifier(id);
   }
 
   /**
