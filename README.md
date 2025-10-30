@@ -3,7 +3,6 @@
 <!-- Badges -->
 [![Azure DevOps Build](https://neqsim.visualstudio.com/neqsim_cicd/_apis/build/status/neqsim_build?branchName=master)](https://neqsim.visualstudio.com/neqsim_cicd/_build/latest?definitionId=1&branchName=master)
 [![GitHub CI Build](https://github.com/equinor/neqsim/actions/workflows/verify_build.yml/badge.svg?branch=master)](https://github.com/equinor/neqsim/actions/workflows/verify_build.yml?query=branch%3Amaster)
-[![CodeQL Analysis](https://github.com/equinor/neqsim/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/equinor/neqsim/security/code-scanning)
 [![Coverage Status](https://codecov.io/gh/equinor/neqsim/branch/master/graph/badge.svg)](https://codecov.io/gh/equinor/neqsim)
 [![Dep Vulns](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/equinor/neqsim/master/.github/metrics/dependabot-metrics.json)](https://github.com/equinor/neqsim/security/dependabot)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
