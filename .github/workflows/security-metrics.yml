@@ -17,6 +17,7 @@ permissions:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    if: false  # Workflow disabled
     steps:
       - name: Checkout
         uses: actions/checkout@v4
