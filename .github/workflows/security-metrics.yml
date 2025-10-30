@@ -1,4 +1,4 @@
-name: Security Metrics Badge
+name: Dependabot Metrics Badge
 
 on:
   schedule:
@@ -11,7 +11,6 @@ on:
 
 permissions:
   contents: write  # need write to commit updated JSON
-  security-events: read
   actions: read
 
 jobs:
@@ -21,43 +20,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Fetch CodeQL Alerts
-        id: codeql
-        run: |
-          curl -s -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/code-scanning/alerts?state=open&per_page=100" > codeql.json
-          echo "count=$(jq '[.[] | select(.state=="open")] | length' codeql.json)" >> $GITHUB_OUTPUT
-
       - name: Fetch Dependabot Alerts
         id: dependabot
         run: |
           curl -s -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/${{ github.repository }}/dependabot/alerts?state=open&per_page=100" > dependabot.json
           echo "count=$(jq '[.[] | select(.state=="open")] | length' dependabot.json)" >> $GITHUB_OUTPUT
-
-      - name: Compose metrics JSON
-        run: |
-          codeql=${{ steps.codeql.outputs.count }}
-          dependabot=${{ steps.dependabot.outputs.count }}
-          total=$(( codeql + dependabot ))
-          color="green"
-          if [ "$total" -gt 0 ]; then color="yellow"; fi
-          if [ "$total" -gt 5 ]; then color="orange"; fi
-          if [ "$total" -gt 15 ]; then color="red"; fi
-          echo "Total alerts: $total (codeql=$codeql dependabot=$dependabot color=$color)"
-          # Secrets scanning alerts API requires GHAS enterprise token; skipping if unavailable.
-          cat > security-metrics.json <<EOF
-          {
-            "schemaVersion": 1,
-            "label": "sec alerts",
-            "message": "${total}",
-            "color": "${color}",
-            "details": {
-              "codeql_open": "${codeql}",
-              "dependabot_open": "${dependabot}"
-            }
-          }
-          EOF
 
       - name: Compose dependabot-only JSON
         run: |
@@ -77,5 +45,5 @@ jobs:
       - name: Upload artifact (for debugging)
         uses: actions/upload-artifact@v4
         with:
-          name: security-metrics
-          path: security-metrics.json
+          name: dependabot-metrics
+          path: dependabot-metrics.json
