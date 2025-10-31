@@ -8,11 +8,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -1337,7 +1337,7 @@ public class ProcessSystem extends SimulationBaseClass {
   private static final class MeasurementHistory implements java.io.Serializable {
     private static final long serialVersionUID = 1L;
     private int maxSize;
-    private Deque<String[]> entries = new ArrayDeque<>();
+    private Deque<String[]> entries = new LinkedList<>();
 
     void add(String[] entry) {
       if (entry == null) {
