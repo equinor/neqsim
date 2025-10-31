@@ -12,6 +12,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
 import com.thoughtworks.xstream.security.AnyTypePermission;
 
 /**
@@ -32,7 +33,7 @@ public class NeqSimXtream {
    * @throws java.io.IOException if any.
    */
   public static Object openNeqsim(String filename) throws IOException {
-    XStream xstream = new XStream();
+    XStream xstream = createConfiguredXStream();
     xstream.addPermission(AnyTypePermission.ANY);
 
     try (BufferedInputStream fin = new BufferedInputStream(new FileInputStream(filename));
@@ -59,7 +60,7 @@ public class NeqSimXtream {
    * @return a boolean
    */
   public static boolean saveNeqsim(Object javaobject, String filename) {
-    XStream xstream = new XStream();
+    XStream xstream = createConfiguredXStream();
     xstream.allowTypesByWildcard(new String[] {"neqsim.**"});
 
     try (BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(filename));
@@ -78,5 +79,11 @@ public class NeqSimXtream {
       System.err.println("[saveNeqsim] Error saving file: " + e);
       return false;
     }
+  }
+
+  private static XStream createConfiguredXStream() {
+    XStream xstream = new XStream(new PureJavaReflectionProvider());
+    XStream.setupDefaultSecurity(xstream);
+    return xstream;
   }
 }
