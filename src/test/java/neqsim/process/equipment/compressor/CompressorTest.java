@@ -235,7 +235,7 @@ class CompressorTest extends neqsim.NeqSimTest {
   public void testMultiPhaseCompression() {
     SystemSrkEos testSystem = new SystemSrkEos(315.0, 10.0);
     testSystem.addComponent("nitrogen", 2.0);
-    testSystem.addComponent("methane", 510.0);
+    testSystem.addComponent("methane", 50.0);
     testSystem.addComponent("nC10", 100.0);
     testSystem.addComponent("water", 100.0);
     testSystem.setMixingRule(2);
@@ -253,7 +253,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     processOps.add(inletStream);
     processOps.add(compressor1);
     processOps.run();
-    assertEquals(compressor1.getPower(), 5601180.866367393, 1110.01);
+    compressor1.run();
+    assertEquals(compressor1.getPower(), 3712607.597542703, 1110.01);
   }
 
   /**
