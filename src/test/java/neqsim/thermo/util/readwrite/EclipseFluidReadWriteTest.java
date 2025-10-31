@@ -414,18 +414,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
 
     double gasFraction = testSystem.getPhase("gas").getPhaseFraction();
-    System.out.println("gasFraction=" + gasFraction);
-    for (int phaseIdx = 0; phaseIdx < testSystem.getNumberOfPhases(); phaseIdx++) {
-      System.out.println("phase" + phaseIdx + " type=" + testSystem.getPhase(phaseIdx).getType()
-          + " beta=" + testSystem.getPhase(phaseIdx).getBeta());
-    }
-    // testSystem.display();
-    for (int phaseIdx = 0; phaseIdx < testSystem.getNumberOfPhases(); phaseIdx++) {
-      System.out.println("phase" + phaseIdx + " type=" + testSystem.getPhase(phaseIdx).getType()
-          + " methane x=" + testSystem.getPhase(phaseIdx).getComponent("methane").getx() + " Z="
-          + testSystem.getPhase(phaseIdx).getZ() + " rho="
-          + testSystem.getPhase(phaseIdx).getPhysicalProperties().getDensity());
-    }
 
     Assertions.assertTrue(gasFraction > 0.1);
   }
