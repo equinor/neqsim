@@ -36,12 +36,15 @@ public class ProcessSafetyReportBuilderTest {
     assertEquals(SeverityLevel.CRITICAL, report.getConditionFindings().get(0).getSeverity());
 
     ProcessSafetyReport.SafetyMarginAssessment margin = report.getSafetyMargins().stream()
-        .filter(m -> upset.compressor.getName().equals(m.getUnitName())).findFirst().orElseThrow();
+        .filter(m -> upset.compressor.getName().equals(m.getUnitName())).findFirst()
+        .orElseThrow(() -> new IllegalStateException(
+            "Expected safety margin assessment for " + upset.compressor.getName()));
     assertEquals(SeverityLevel.CRITICAL, margin.getSeverity());
 
     ProcessSafetyReport.ReliefDeviceAssessment reliefAssessment = report.getReliefDeviceAssessments()
         .stream().filter(r -> upset.reliefValve.getName().equals(r.getUnitName())).findFirst()
-        .orElseThrow();
+        .orElseThrow(() -> new IllegalStateException(
+            "Expected relief device assessment for " + upset.reliefValve.getName()));
     assertEquals(SeverityLevel.CRITICAL, reliefAssessment.getSeverity());
 
     assertNotNull(report.getSystemKpis());
