@@ -555,7 +555,7 @@ public class Flare extends TwoPortEquipment {
     }
 
     /**
-     * Determine if any configured capacity is overloaded (> 1.0 utilization).
+     * Determine if any configured capacity is overloaded ({@literal >} 1.0 utilization).
      *
      * @return true if overloaded
      */
