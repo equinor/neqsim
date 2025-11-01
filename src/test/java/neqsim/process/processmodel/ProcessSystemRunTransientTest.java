@@ -1,6 +1,7 @@
 package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -563,6 +564,109 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
        */
       p.runTransient();
     }
+  }
+
+  @Test
+  public void testSeparatorLevelRegulationExtremes() {
+    SystemInterface wellfluid = new neqsim.thermo.system.SystemSrkEos(273.15 + 40.0, 9.0);
+    wellfluid.addComponent("CO2", 1.5870);
+    wellfluid.addComponent("methane", 52.51);
+    wellfluid.addComponent("ethane", 6.24);
+    wellfluid.addComponent("propane", 4.23);
+    wellfluid.addComponent("i-butane", 0.855);
+    wellfluid.addComponent("n-butane", 2.213);
+    wellfluid.addComponent("i-pentane", 1.124);
+    wellfluid.addComponent("n-pentane", 1.271);
+    wellfluid.addComponent("n-hexane", 2.289);
+    wellfluid.addTBPfraction("C7+_cut1", 0.8501, 108.47 / 1000.0, 0.7411);
+    wellfluid.addTBPfraction("C7+_cut2", 1.2802, 120.4 / 1000.0, 0.755);
+    wellfluid.addTBPfraction("C7+_cut3", 1.6603, 133.64 / 1000.0, 0.7695);
+    wellfluid.addTBPfraction("C7+_cut4", 6.5311, 164.70 / 1000.0, 0.799);
+    wellfluid.addTBPfraction("C7+_cut5", 6.3311, 215.94 / 1000.0, 0.8387);
+    wellfluid.addTBPfraction("C7+_cut6", 4.9618, 273.34 / 1000.0, 0.8754);
+    wellfluid.addTBPfraction("C7+_cut7", 2.9105, 334.92 / 1000.0, 0.90731);
+    wellfluid.addTBPfraction("C7+_cut8", 3.0505, 412.79 / 1000.0, 0.9575);
+    wellfluid.setMixingRule(2);
+
+    Stream wellStream = new Stream("well stream", wellfluid);
+    wellStream.setFlowRate(400.0, "kg/hr");
+    wellStream.setPressure(9.0, "bara");
+    wellStream.setTemperature(40.0, "C");
+
+    ThrottlingValve inletValve = new ThrottlingValve("LCV-00", wellStream);
+    inletValve.setPercentValveOpening(80.0);
+    inletValve.setOutletPressure(8.0);
+    inletValve.setCalculateSteadyState(false);
+
+    Separator separator = new Separator("V-001", inletValve.getOutletStream());
+    separator.setCalculateSteadyState(false);
+    separator.setOrientation("vertical");
+    separator.setSeparatorLength(5.0);
+    separator.setInternalDiameter(1.0);
+    separator.setLiquidLevel(0.2);
+
+    ThrottlingValve liquidValve = new ThrottlingValve("LCV-001", separator.getLiquidOutStream());
+    liquidValve.setPercentValveOpening(25.0);
+    liquidValve.setOutletPressure(2.0);
+    liquidValve.setCalculateSteadyState(false);
+    liquidValve.setMinimumValveOpening(1.0);
+
+    ThrottlingValve gasValve = new ThrottlingValve("PCV-001", separator.getGasOutStream());
+    gasValve.setPercentValveOpening(55.0);
+    gasValve.setOutletPressure(2.0);
+    gasValve.setCalculateSteadyState(false);
+    gasValve.setMinimumValveOpening(0.01);
+
+    LevelTransmitter levelTransmitter = new LevelTransmitter(separator);
+    levelTransmitter.setMaximumValue(0.99);
+    levelTransmitter.setMinimumValue(0.01);
+
+    ControllerDeviceBaseClass levelController = new ControllerDeviceBaseClass();
+    levelController.setTransmitter(levelTransmitter);
+    levelController.setReverseActing(false);
+    levelController.setControllerSetPoint(0.75);
+    levelController.setControllerParameters(20.0, 300.0, 0.0);
+    levelController.setOutputLimits(0.0, 100.0);
+
+    PressureTransmitter pressureTransmitter = new PressureTransmitter(separator.getGasOutStream());
+    pressureTransmitter.setUnit("bar");
+    pressureTransmitter.setMaximumValue(50.0);
+    pressureTransmitter.setMinimumValue(1.0);
+
+    ControllerDeviceBaseClass pressureController = new ControllerDeviceBaseClass();
+    pressureController.setTransmitter(pressureTransmitter);
+    pressureController.setReverseActing(false);
+    pressureController.setControllerSetPoint(7.0);
+    pressureController.setControllerParameters(10.0, 2000.0, 0.0);
+    pressureController.setOutputLimits(0.0, 100.0);
+
+    ProcessSystem process = new ProcessSystem("level regulation");
+    process.add(wellStream);
+    process.add(inletValve);
+    process.add(separator);
+    process.add(liquidValve);
+    process.add(gasValve);
+    process.add(levelTransmitter);
+    process.add(pressureTransmitter);
+
+    liquidValve.setController(levelController);
+    gasValve.setController(pressureController);
+
+    process.run();
+    process.setTimeStep(50.0);
+
+    for (int i = 0; i < 200; i++) {
+      process.runTransient();
+    }
+    double highLevel = separator.getLiquidLevel();
+    assertTrue(highLevel > 0.30);
+
+    levelController.setControllerSetPoint(0.15);
+    for (int i = 0; i < 200; i++) {
+      process.runTransient();
+    }
+    double lowLevel = separator.getLiquidLevel();
+    assertTrue(lowLevel < highLevel - 0.10);
   }
 
   @Test

@@ -46,7 +46,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public void initializeTransientCalculation() {
     try {
       liquidVolume = calcLiquidVolume();
-      gasVolume = separatorVolume - liquidVolume;
+      enforceHeadspace();
 
       thermoSystem = thermoSystem2.clone();
       thermoSystem.init(1);
@@ -80,7 +80,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         liquidLevel = 0.0;
         liquidVolume = 0.0;
       }
-      gasVolume = separatorVolume - liquidVolume;
+      enforceHeadspace();
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -132,6 +132,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /** Liquid level height in meters (default set to 50% of internal diameter). */
   private double liquidLevel = 0.5 * internalDiameter;
 
+  private static final double MIN_HEADSPACE_FRACTION = 0.05;
+  private static final double MIN_HEADSPACE_VOLUME = 1.0e-6;
+
   /** Separator cross sectional area. */
   private double sepCrossArea = Math.PI * internalDiameter * internalDiameter / 4.0;
 
@@ -157,7 +160,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public Separator(String name) {
     super(name);
     liquidVolume = calcLiquidVolume();
-    gasVolume = separatorVolume - liquidVolume;
+    enforceHeadspace();
     setCalculateSteadyState(true);
   }
 
@@ -467,18 +470,18 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
 
       liquidLevel = 0.0;
-      if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-        double volumeLoc = 0.0;
-        if (thermoSystem.hasPhaseType("oil")) {
-          volumeLoc += thermoSystem.getPhase("oil").getVolume("m3");
+        if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+          double volumeLoc = 0.0;
+          if (thermoSystem.hasPhaseType("oil")) {
+            volumeLoc += thermoSystem.getPhase("oil").getVolume("m3");
+          }
+          if (thermoSystem.hasPhaseType("aqueous")) {
+            volumeLoc += thermoSystem.getPhase("aqueous").getVolume("m3");
+          }
+          liquidLevel = levelFromVolume(volumeLoc);
         }
-        if (thermoSystem.hasPhaseType("aqueous")) {
-          volumeLoc += thermoSystem.getPhase("aqueous").getVolume("m3");
-        }
-        liquidLevel = levelFromVolume(volumeLoc);
-      }
-      liquidVolume = calcLiquidVolume();
-      gasVolume = separatorVolume - liquidVolume;
+        liquidVolume = calcLiquidVolume();
+        enforceHeadspace();
 
       // System.out.printf("vol original: %.2f mine %f \n", liquidVolume, liqVol);
       setCalculationIdentifier(id);
@@ -585,13 +588,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /** {@inheritDoc} */
   @Override
   public void setLiquidLevel(double liquidlev) {
-    // edited to reflect level in meters instead of percentage
-    liquidLevel = liquidlev * internalDiameter;
-    if (liquidLevel < 0.0) {
+    double maxHeight = getMaxLiquidHeight();
+    if (maxHeight <= 0.0) {
       liquidLevel = 0.0;
-    }
-    if (internalDiameter > 0.0 && liquidLevel > internalDiameter) {
-      liquidLevel = internalDiameter;
+    } else {
+      liquidLevel = clampLiquidHeight(liquidlev * maxHeight);
     }
     updateHoldupVolumes();
   }
@@ -604,8 +605,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * @return a double
    */
   public double getLiquidLevel() {
-
-    return liquidLevel / internalDiameter;
+    double maxHeight = getMaxLiquidHeight();
+    if (maxHeight <= 0.0) {
+      return 0.0;
+    }
+    return liquidLevel / maxHeight;
   }
 
   /**
@@ -644,12 +648,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /** {@inheritDoc} */
   @Override
   public void setInternalDiameter(double diameter) {
-    double levelFraction = internalDiameter > 0.0 ? liquidLevel / internalDiameter : 0.0;
+    double levelFraction = getLiquidLevel();
     this.internalDiameter = diameter;
     this.internalRadius = diameter / 2;
     this.sepCrossArea = Math.PI * internalDiameter * internalDiameter / 4.0;
     this.separatorVolume = sepCrossArea * separatorLength;
-    this.liquidLevel = Math.max(0.0, Math.min(levelFraction * internalDiameter, internalDiameter));
+    this.liquidLevel = clampLiquidHeight(levelFraction * getMaxLiquidHeight());
     updateHoldupVolumes();
   }
 
@@ -772,7 +776,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * @param orientation the orientation to set
    */
   public void setOrientation(String orientation) {
-    this.orientation = orientation;
+    double levelFraction = getLiquidLevel();
+    if (orientation != null) {
+      this.orientation = orientation;
+    }
+    this.liquidLevel = clampLiquidHeight(levelFraction * getMaxLiquidHeight());
     updateHoldupVolumes();
   }
 
@@ -869,7 +877,60 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    */
   private void updateHoldupVolumes() {
     liquidVolume = calcLiquidVolume();
-    gasVolume = Math.max(separatorVolume - liquidVolume, 0.0);
+    enforceHeadspace();
+  }
+
+  private void enforceHeadspace() {
+    double rawGasVolume = separatorVolume - liquidVolume;
+    double minGasVolume = getMinGasVolume();
+    if (rawGasVolume < minGasVolume) {
+      gasVolume = Math.max(minGasVolume, 0.0);
+      if (separatorVolume > 0.0) {
+        double adjustedLiquidVolume = Math.max(separatorVolume - gasVolume, 0.0);
+        if (Math.abs(adjustedLiquidVolume - liquidVolume) > 1.0e-12) {
+          liquidLevel = levelFromVolume(adjustedLiquidVolume);
+          liquidVolume = calcLiquidVolume();
+        } else {
+          liquidVolume = adjustedLiquidVolume;
+        }
+      }
+    } else {
+      gasVolume = rawGasVolume;
+    }
+  }
+
+  private double getMaxLiquidHeight() {
+    if ("vertical".equalsIgnoreCase(orientation)) {
+      return separatorLength > 0.0 ? separatorLength : internalDiameter;
+    }
+    return internalDiameter;
+  }
+
+  private double getMinGasVolume() {
+    if (separatorVolume <= 0.0) {
+      return 0.0;
+    }
+    double candidate = Math.max(separatorVolume * MIN_HEADSPACE_FRACTION, MIN_HEADSPACE_VOLUME);
+    if (candidate >= separatorVolume) {
+      return 0.5 * separatorVolume;
+    }
+    return candidate;
+  }
+
+  private double clampLiquidHeight(double height) {
+    double maxHeight = getMaxLiquidHeight();
+    if (maxHeight <= 0.0) {
+      return 0.0;
+    }
+    if (Double.isNaN(height)) {
+      return 0.0;
+    }
+    double clamped = Math.max(0.0, Math.min(height, maxHeight));
+    if (clamped >= maxHeight) {
+      double epsilon = Math.max(maxHeight * 1.0e-6, 1.0e-6);
+      clamped = Math.max(0.0, maxHeight - epsilon);
+    }
+    return clamped;
   }
 
   /**
@@ -886,11 +947,25 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     double tol = 1e-4;
     int maxIter = 100;
 
-    double areaTarget = volumeTarget / separatorLength;
+    double headspace = getMinGasVolume();
+    double maxLiquidVolume = separatorVolume > 0.0 ? Math.max(separatorVolume - headspace, 0.0)
+        : 0.0;
+    double limitedVolume = Math.max(0.0, Math.min(volumeTarget, maxLiquidVolume));
+
     double a = 0.0;
     double b = internalDiameter;
 
-    if (orientation.equals("horizontal")) {
+    if (orientation.equalsIgnoreCase("horizontal")) {
+
+      if (internalDiameter <= 0.0) {
+        return 0.0;
+      }
+
+      if (separatorLength <= 0.0) {
+        return 0.0;
+      }
+
+      double areaTarget = limitedVolume / separatorLength;
 
       double fa = liquidArea(a) - areaTarget;
       double fb = liquidArea(b) - areaTarget;
@@ -927,9 +1002,13 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       }
 
       return 0.5 * (a + b);
-    } else if (orientation.equals("vertical")) {
+    } else if (orientation.equalsIgnoreCase("vertical")) {
 
-      return volumeTarget / sepCrossArea;
+      if (sepCrossArea <= 0.0) {
+        return 0.0;
+      }
+
+      return clampLiquidHeight(limitedVolume / sepCrossArea);
 
     } else {
 
@@ -958,8 +1037,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * @param separatorLength the separatorLength to set
    */
   public void setSeparatorLength(double separatorLength) {
+    double levelFraction = getLiquidLevel();
     this.separatorLength = separatorLength;
     this.separatorVolume = sepCrossArea * separatorLength;
+    this.liquidLevel = clampLiquidHeight(levelFraction * getMaxLiquidHeight());
     updateHoldupVolumes();
   }
 
