@@ -93,7 +93,7 @@ public final class ProcessSafetyReport {
     root.add("conditionFindings", gson.toJsonTree(conditionFindings));
     root.add("safetyMargins", gson.toJsonTree(safetyMargins));
     root.add("reliefDevices", gson.toJsonTree(reliefDeviceAssessments));
-    if (equipmentSnapshotJson != null && !equipmentSnapshotJson.isBlank()) {
+    if (equipmentSnapshotJson != null && !equipmentSnapshotJson.trim().isEmpty()) {
       try {
         JsonElement parsed = JsonParser.parseString(equipmentSnapshotJson);
         root.add("equipment", parsed);
@@ -183,7 +183,7 @@ public final class ProcessSafetyReport {
     model.put("conditionFindings", conditionFindings);
     model.put("safetyMargins", safetyMargins);
     model.put("reliefDevices", reliefDeviceAssessments);
-    if (equipmentSnapshotJson != null && !equipmentSnapshotJson.isBlank()) {
+    if (equipmentSnapshotJson != null && !equipmentSnapshotJson.trim().isEmpty()) {
       model.put("equipmentJson", equipmentSnapshotJson);
     }
     return model;
