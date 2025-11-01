@@ -1,5 +1,6 @@
 package neqsim.process.mechanicaldesign.valve;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -268,7 +269,7 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
     }
   }
 
-  private interface SafetyValveSizingStrategy {
+  private interface SafetyValveSizingStrategy extends Serializable {
     double calculateOrificeArea(SizingContext context);
   }
 
