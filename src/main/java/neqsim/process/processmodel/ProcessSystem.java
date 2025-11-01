@@ -20,6 +20,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.SimulationBaseClass;
+import neqsim.process.alarm.ProcessAlarmManager;
 import neqsim.process.conditionmonitor.ConditionMonitor;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.EquipmentFactory;
@@ -64,6 +65,7 @@ public class ProcessSystem extends SimulationBaseClass {
   private List<ProcessEquipmentInterface> unitOperations = new ArrayList<>();
   List<MeasurementDeviceInterface> measurementDevices =
       new ArrayList<MeasurementDeviceInterface>(0);
+  private ProcessAlarmManager alarmManager = new ProcessAlarmManager();
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
   private boolean runStep = false;
@@ -143,6 +145,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public void add(MeasurementDeviceInterface measurementDevice) {
     measurementDevices.add(measurementDevice);
+    alarmManager.register(measurementDevice);
   }
 
   /**
@@ -591,11 +594,16 @@ public class ProcessSystem extends SimulationBaseClass {
 
     timeStepNumber++;
     String[] row = new String[1 + 3 * measurementDevices.size()];
-    for (int i = 0; i < measurementDevices.size(); i++) {
+    if (row.length > 0) {
       row[0] = Double.toString(time);
-      row[3 * i + 1] = measurementDevices.get(i).getName();
-      row[3 * i + 2] = Double.toString(measurementDevices.get(i).getMeasuredValue());
-      row[3 * i + 3] = measurementDevices.get(i).getUnit();
+    }
+    for (int i = 0; i < measurementDevices.size(); i++) {
+      MeasurementDeviceInterface device = measurementDevices.get(i);
+      double measuredValue = device.getMeasuredValue();
+      row[3 * i + 1] = device.getName();
+      row[3 * i + 2] = Double.toString(measuredValue);
+      row[3 * i + 3] = device.getUnit();
+      alarmManager.evaluateMeasurement(device, measuredValue, dt, time);
     }
     if (measurementDevices.isEmpty()) {
       row[0] = Double.toString(time);
@@ -789,6 +797,7 @@ public class ProcessSystem extends SimulationBaseClass {
   public void clearHistory() {
     measurementHistory.clear();
     timeStepNumber = 0;
+    alarmManager.clearHistory();
   }
 
   /**
@@ -798,6 +807,15 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public int getHistorySize() {
     return measurementHistory.size();
+  }
+
+  /**
+   * Returns the alarm manager responsible for coordinating alarm evaluation.
+   *
+   * @return alarm manager
+   */
+  public ProcessAlarmManager getAlarmManager() {
+    return alarmManager;
   }
 
   /**
@@ -884,6 +902,12 @@ public class ProcessSystem extends SimulationBaseClass {
     timeStepNumber = source.timeStepNumber;
     unitOperations = new ArrayList<>(source.unitOperations);
     measurementDevices = new ArrayList<>(source.measurementDevices);
+    if (source.alarmManager != null) {
+      alarmManager.applyFrom(source.alarmManager, measurementDevices);
+    } else {
+      alarmManager = new ProcessAlarmManager();
+      alarmManager.registerAll(measurementDevices);
+    }
     recycleController = source.recycleController;
     timeStep = source.timeStep;
     runStep = source.runStep;
@@ -1131,8 +1155,9 @@ public class ProcessSystem extends SimulationBaseClass {
     final int prime = 31;
     int result = 1;
     result = prime * result
-        + Objects.hash(measurementDevices, measurementHistory, name, recycleController,
-            surroundingTemperature, time, timeStep, timeStepNumber, unitOperations);
+        + Objects.hash(alarmManager, measurementDevices, measurementHistory, name,
+            recycleController, surroundingTemperature, time, timeStep, timeStepNumber,
+            unitOperations);
     return result;
   }
 
@@ -1149,7 +1174,8 @@ public class ProcessSystem extends SimulationBaseClass {
       return false;
     }
     ProcessSystem other = (ProcessSystem) obj;
-    return Objects.equals(measurementDevices, other.measurementDevices)
+    return Objects.equals(alarmManager, other.alarmManager)
+        && Objects.equals(measurementDevices, other.measurementDevices)
         && Objects.equals(name, other.name)
         && Objects.equals(recycleController, other.recycleController)
         && Objects.equals(measurementHistory, other.measurementHistory)
