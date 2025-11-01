@@ -120,7 +120,7 @@ public class ProcessSafetyReportBuilder {
   private List<ConditionFinding> collectConditionFindings(ConditionMonitor monitor) {
     List<ConditionFinding> findings = new ArrayList<>();
     String report = monitor.getReport();
-    if (report == null || report.isBlank()) {
+    if (report == null || report.trim().isEmpty()) {
       return findings;
     }
 
