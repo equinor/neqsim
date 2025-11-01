@@ -32,7 +32,7 @@ class MechanicalDesignDataSourceTest {
     design.setMinOperationPressure(15.0);
     design.setMaxOperationTemperature(360.0);
     design.setMinOperationTemperature(265.0);
-    design.setCorrosionAllowanse(3.5);
+    design.setCorrosionAllowance(3.5);
     design.setJointEfficiency(0.97);
 
     MechanicalDesignMarginResult margins = design.validateOperatingEnvelope();
@@ -63,7 +63,7 @@ class MechanicalDesignDataSourceTest {
     design.setMinOperationPressure(7.0);
     design.setMaxOperationTemperature(370.0);
     design.setMinOperationTemperature(270.0);
-    design.setCorrosionAllowanse(6.5);
+    design.setCorrosionAllowance(6.5);
     design.setJointEfficiency(0.92);
 
     MechanicalDesignMarginResult margins = design.validateOperatingEnvelope();

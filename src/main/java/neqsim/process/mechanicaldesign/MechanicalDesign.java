@@ -107,7 +107,7 @@ public class MechanicalDesign implements java.io.Serializable {
       new MaterialPlateDesignStandard();
   private MaterialPipeDesignStandard materialPipeDesignStandard = new MaterialPipeDesignStandard();
   private String construtionMaterial = "steel";
-  private double corrosionAllowanse = 0.0; // mm
+  private double corrosionAllowance = 0.0; // mm
   private double pressureMarginFactor = 0.1;
   private DesignLimitData designLimitData = DesignLimitData.EMPTY;
   private MechanicalDesignMarginResult lastMarginResult = MechanicalDesignMarginResult.EMPTY;
@@ -178,7 +178,7 @@ public class MechanicalDesign implements java.io.Serializable {
     designLimitData = loadedData;
 
     if (!Double.isNaN(loadedData.getCorrosionAllowance())) {
-      corrosionAllowanse = loadedData.getCorrosionAllowance();
+      corrosionAllowance = loadedData.getCorrosionAllowance();
     }
     if (!Double.isNaN(loadedData.getJointEfficiency())) {
       jointEfficiency = loadedData.getJointEfficiency();
@@ -283,7 +283,7 @@ public class MechanicalDesign implements java.io.Serializable {
    */
   public MechanicalDesignMarginResult validateOperatingEnvelope() {
     return validateOperatingEnvelope(maxOperationPressure, minOperationPressure,
-        maxOperationTemperature, minOperationTemperature, corrosionAllowanse, jointEfficiency);
+        maxOperationTemperature, minOperationTemperature, corrosionAllowance, jointEfficiency);
   }
 
   /**
@@ -577,24 +577,24 @@ public class MechanicalDesign implements java.io.Serializable {
 
   /**
    * <p>
-   * Getter for the field <code>corrosionAllowanse</code>.
+   * Getter for the field <code>corrosionAllowance</code>.
    * </p>
    *
-   * @return the corrosionAllowanse
+   * @return the corrosionAllowance
    */
-  public double getCorrosionAllowanse() {
-    return corrosionAllowanse;
+  public double getCorrosionAllowance() {
+    return corrosionAllowance;
   }
 
   /**
    * <p>
-   * Setter for the field <code>corrosionAllowanse</code>.
+   * Setter for the field <code>corrosionAllowance</code>.
    * </p>
    *
-   * @param corrosionAllowanse the corrosionAllowanse to set
+   * @param corrosionAllowance the corrosionAllowance to set
    */
-  public void setCorrosionAllowanse(double corrosionAllowanse) {
-    this.corrosionAllowanse = corrosionAllowanse;
+  public void setCorrosionAllowance(double corrosionAllowance) {
+    this.corrosionAllowance = corrosionAllowance;
   }
 
   /**
@@ -1334,7 +1334,7 @@ public class MechanicalDesign implements java.io.Serializable {
   /** {@inheritDoc} */
   @Override
   public int hashCode() {
-    return Objects.hash(companySpecificDesignStandards, construtionMaterial, corrosionAllowanse,
+    return Objects.hash(companySpecificDesignStandards, construtionMaterial, corrosionAllowance,
         costEstimate, designStandard, hasSetCompanySpecificDesignStandards, innerDiameter,
         jointEfficiency, materialPipeDesignStandard, materialPlateDesignStandard,
         maxDesignGassVolumeFlow, maxDesignOilVolumeFlow, maxDesignVolumeFlow,
@@ -1361,8 +1361,8 @@ public class MechanicalDesign implements java.io.Serializable {
     MechanicalDesign other = (MechanicalDesign) obj;
     return Objects.equals(companySpecificDesignStandards, other.companySpecificDesignStandards)
         && Objects.equals(construtionMaterial, other.construtionMaterial)
-        && Double.doubleToLongBits(corrosionAllowanse) == Double
-            .doubleToLongBits(other.corrosionAllowanse)
+        && Double.doubleToLongBits(corrosionAllowance) == Double
+            .doubleToLongBits(other.corrosionAllowance)
         && Objects.equals(costEstimate, other.costEstimate)
         && Objects.equals(designStandard, other.designStandard)
         && hasSetCompanySpecificDesignStandards == other.hasSetCompanySpecificDesignStandards
