@@ -282,19 +282,19 @@ public final class DexpiXmlReader {
   private static String prependLineOrFluid(Element element, String baseName) {
     String trimmedBase = baseName == null ? "" : baseName.trim();
     String lineNumber = findAttributeInAncestors(element, "LineNumberAssignmentClass");
-    if (lineNumber != null && !lineNumber.isBlank()) {
+    if (!isBlank(lineNumber)) {
       return lineNumber.trim() + "-" + trimmedBase;
     }
     String fluidCode = firstNonEmpty(getGenericAttribute(element, "FluidCodeAssignmentClass"),
         findAttributeInAncestors(element, "FluidCodeAssignmentClass"));
-    if (fluidCode != null && !fluidCode.isBlank()) {
+    if (!isBlank(fluidCode)) {
       return fluidCode.trim() + "-" + trimmedBase;
     }
     return trimmedBase.isEmpty() ? element.getAttribute("ID") : trimmedBase;
   }
 
   private static String ensureUniqueName(ProcessSystem processSystem, String candidate) {
-    String base = candidate == null || candidate.isBlank() ? "Unit" : candidate;
+    String base = isBlank(candidate) ? "Unit" : candidate;
     Set<String> existingNames = new HashSet<>(processSystem.getAllUnitNames());
     if (!existingNames.contains(base)) {
       return base;
@@ -379,7 +379,7 @@ public final class DexpiXmlReader {
     while (current != null && current.getNodeType() == Node.ELEMENT_NODE) {
       Element element = (Element) current;
       String value = getGenericAttribute(element, attributeName);
-      if (value != null && !value.isBlank()) {
+      if (!isBlank(value)) {
         return value;
       }
       current = current.getParentNode();
@@ -392,10 +392,14 @@ public final class DexpiXmlReader {
       return null;
     }
     for (String candidate : candidates) {
-      if (candidate != null && !candidate.isBlank()) {
+      if (!isBlank(candidate)) {
         return candidate.trim();
       }
     }
     return null;
+  }
+
+  private static boolean isBlank(String value) {
+    return value == null || value.trim().isEmpty();
   }
 }

@@ -37,6 +37,26 @@ pressure, temperature and flow settings from the template stream (or a built-in 
 fallback), allowing the resulting `ProcessSystem` to perform full thermodynamic calculations when
 `run()` is invoked.
 
+### Exporting back to DEXPI
+
+The companion `DexpiXmlWriter` can serialise a process system created from DEXPI data back into a
+lightweight DEXPI XML document. This is useful when you want to post-process the imported model with
+tooling such as [pyDEXPI](https://github.com/process-intelligence-research/pyDEXPI) to produce
+graphical output.
+
+```java
+ProcessSystem process = DexpiXmlReader.read(xmlFile.toFile(), template);
+Path exportPath = Paths.get("target", "dexpi-export.xml");
+DexpiXmlWriter.write(process, exportPath.toFile());
+```
+
+The writer groups all discovered `DexpiStream` segments by line number (or fluid code when a line is
+not available) to generate simple `<PipingNetworkSystem>` elements with associated
+`<PipingNetworkSegment>` children. Equipment and valves are exported as `<Equipment>` and
+`<PipingComponent>` elements that preserve the original tag names, line numbers and fluid codes via
+`GenericAttribute` entries. The resulting XML focuses on the metadata required to rehydrate the
+process structure and is intentionally compact to ease downstream tooling consumption.
+
 ## Tested example
 
 A regression test (`DexpiXmlReaderTest`) imports the
@@ -45,4 +65,8 @@ training case provided by the
 [DEXPI Training Test Cases repository](https://gitlab.com/dexpi/TrainingTestCases/-/tree/master/dexpi%201.3/example%20pids) and
 verifies that the expected equipment (two heat exchangers, two pumps, a tank, valves and piping
 segments) are discovered. The regression additionally seeds the import with an example NeqSim feed
-stream and confirms that the generated streams remain active after `process.run()`.
+stream and confirms that the generated streams remain active after `process.run()`. A companion test
+exports the imported process with `DexpiXmlWriter`, then parses the generated XML with a hardened DOM
+builder to confirm that the document contains equipment, piping components and
+`PipingNetworkSystem`/`PipingNetworkSegment` structures ready for downstream DEXPI tooling such as
+pyDEXPI.

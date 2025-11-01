@@ -8,6 +8,11 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.stream.Stream;
@@ -77,6 +82,53 @@ class DexpiXmlReaderTest {
           .filter(DexpiStream.class::isInstance).map(DexpiStream.class::cast)
           .filter(Stream::isActive).count();
       assertTrue(activeStreams > 0, "At least one imported stream should calculate a TP flash");
+    }
+  }
+
+  @Test
+  void exportsProcessToDexpiXmlForExampleProcess() throws Exception {
+    try (InputStream inputStream = getClass().getResourceAsStream("/dexpi/C01V04-VER.EX01.xml")) {
+      assertNotNull(inputStream, "Test resource dexpi/C01V04-VER.EX01.xml is missing");
+
+      Stream templateStream = createExampleFeedStream();
+      ProcessSystem processSystem = new ProcessSystem("DEXPI example for export");
+      processSystem.add(templateStream);
+
+      DexpiXmlReader.load(inputStream, processSystem, templateStream);
+
+      Path exportPath = Paths.get("target", "test-output", "dexpi-export.xml");
+      Files.createDirectories(exportPath.getParent());
+      DexpiXmlWriter.write(processSystem, exportPath.toFile());
+      assertTrue(Files.exists(exportPath), "DEXPI export should produce an XML file");
+
+      Document document = parseExport(exportPath);
+      NodeList equipment = document.getElementsByTagName("Equipment");
+      NodeList pipingComponents = document.getElementsByTagName("PipingComponent");
+      NodeList pipingSegments = document.getElementsByTagName("PipingNetworkSegment");
+      NodeList systems = document.getElementsByTagName("PipingNetworkSystem");
+
+      assertTrue(equipment.getLength() > 0, "Export should contain equipment elements");
+      assertTrue(pipingSegments.getLength() > 0,
+          "Export should contain piping network segments");
+      assertTrue(systems.getLength() > 0, "Export should include piping network systems");
+      assertTrue(equipment.getLength() + pipingComponents.getLength() > 5,
+          "Export should include multiple pieces of equipment and piping components");
+    }
+  }
+
+  private Document parseExport(Path exportPath) throws Exception {
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+    factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+    factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+    factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+    factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+    factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+    factory.setNamespaceAware(false);
+    factory.setExpandEntityReferences(false);
+    DocumentBuilder builder = factory.newDocumentBuilder();
+    try (InputStream exportStream = Files.newInputStream(exportPath)) {
+      return builder.parse(exportStream);
     }
   }
 }
