@@ -70,12 +70,19 @@ public class DisposalNetwork implements Serializable {
       }
       AggregatedLoad load = aggregated.computeIfAbsent(unitName, k -> new AggregatedLoad());
       ReliefSourceLoad sourceLoad = entry.getValue();
-      load.massRate += sourceLoad.getMassRateKgS();
-      if (sourceLoad.getHeatDutyW() != null) {
-        load.heatDuty += sourceLoad.getHeatDutyW();
+      double massRate = sourceLoad.getMassRateKgS();
+      load.massRate += massRate;
+      Double heatDuty = sourceLoad.getHeatDutyW();
+      if (heatDuty != null) {
+        load.specifiedHeatDuty += heatDuty;
+      } else {
+        load.massWithoutHeatDuty += massRate;
       }
-      if (sourceLoad.getMolarRateMoleS() != null) {
-        load.molarRate += sourceLoad.getMolarRateMoleS();
+      Double molarRate = sourceLoad.getMolarRateMoleS();
+      if (molarRate != null) {
+        load.specifiedMolarRate += molarRate;
+      } else {
+        load.massWithoutMolarRate += massRate;
       }
     }
 
@@ -91,12 +98,20 @@ public class DisposalNetwork implements Serializable {
       }
       AggregatedLoad load = entry.getValue();
       FlarePerformanceDTO basePerformance = flare.getPerformanceSummary();
-      double heatDuty = load.heatDuty;
+      double heatDuty = load.specifiedHeatDuty;
+      if (load.massWithoutHeatDuty > 0.0) {
+        heatDuty += safeRatio(basePerformance.getHeatDutyW(), basePerformance.getMassRateKgS())
+            * load.massWithoutHeatDuty;
+      }
       if (heatDuty <= 0.0) {
         heatDuty = basePerformance.getHeatDutyW()
             * safeRatio(load.massRate, basePerformance.getMassRateKgS());
       }
-      double molarRate = load.molarRate;
+      double molarRate = load.specifiedMolarRate;
+      if (load.massWithoutMolarRate > 0.0) {
+        molarRate += safeRatio(basePerformance.getMolarRateMoleS(),
+            basePerformance.getMassRateKgS()) * load.massWithoutMolarRate;
+      }
       if (molarRate <= 0.0) {
         molarRate = basePerformance.getMolarRateMoleS()
             * safeRatio(load.massRate, basePerformance.getMassRateKgS());
@@ -126,7 +141,9 @@ public class DisposalNetwork implements Serializable {
 
   private static class AggregatedLoad {
     double massRate;
-    double molarRate;
-    double heatDuty;
+    double specifiedMolarRate;
+    double specifiedHeatDuty;
+    double massWithoutMolarRate;
+    double massWithoutHeatDuty;
   }
 }
