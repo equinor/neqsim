@@ -192,6 +192,14 @@ public final class DifferentialPressureFlowCalculator {
 
   /**
    * Convenience overload using default composition and normalisation.
+   *
+   * @param pressureBarg pressure values in barg
+   * @param temperatureC temperature values in degrees Celsius
+   * @param differentialPressureMbar differential pressure across restriction in mbar
+   * @param flowType device type (Venturi, Orifice, ISA1932, V-Cone, DallTube, Annubar, Nozzle,
+   *        Simplified, Perrys-Orifice)
+   * @param flowData geometry parameters (see individual calculation methods)
+   * @return flow calculation result
    */
   public static FlowCalculationResult calculate(double[] pressureBarg, double[] temperatureC,
       double[] differentialPressureMbar, String flowType, double[] flowData) {
@@ -201,6 +209,13 @@ public final class DifferentialPressureFlowCalculator {
 
   /**
    * Convenience overload with default flow data and composition.
+   *
+   * @param pressureBarg pressure values in barg
+   * @param temperatureC temperature values in degrees Celsius
+   * @param differentialPressureMbar differential pressure across restriction in mbar
+   * @param flowType device type (Venturi, Orifice, ISA1932, V-Cone, DallTube, Annubar, Nozzle,
+   *        Simplified, Perrys-Orifice)
+   * @return flow calculation result
    */
   public static FlowCalculationResult calculate(double[] pressureBarg, double[] temperatureC,
       double[] differentialPressureMbar, String flowType) {

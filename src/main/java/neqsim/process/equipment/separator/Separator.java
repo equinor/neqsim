@@ -790,6 +790,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * used for volume calculation, gas superficial velocity, and settling time.
    * </p>
    *
+   * @param level current liquid level inside the separator [m]
    * @return separator liquid area.
    */
   public double liquidArea(double level) {
@@ -939,6 +940,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * Vertical separators too. tol and maxIter are bisection loop parameters.
    * </p>
    *
+   * @param volumeTarget desired liquid volume to be held in the separator [m3]
    * @return liquid level in the separator
    */
   public double levelFromVolume(double volumeTarget) {
