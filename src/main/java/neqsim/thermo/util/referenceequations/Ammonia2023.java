@@ -99,6 +99,10 @@ public class Ammonia2023 {
 
   /**
    * Solve for molar density given temperature (K) and pressure (Pa) using Newton iteration.
+   *
+   * @param T temperature in Kelvin
+   * @param p pressure in Pascal
+   * @return molar density in mol/m<sup>3</sup>
    */
   private double solveDensity(double T, double p) {
     boolean liquidGuess =
@@ -233,7 +237,13 @@ public class Ammonia2023 {
     double d2alpha_dDelta_dTau;
   }
 
-  /** Compute residual Helmholtz energy and derivatives. */
+  /**
+   * Compute residual Helmholtz energy and derivatives.
+   *
+   * @param delta reduced density (rho / rhoCrit)
+   * @param tau inverse reduced temperature (Tcrit / T)
+   * @return container with residual Helmholtz energy derivatives
+   */
   private static ResidualDerivs residual(double delta, double tau) {
     ResidualDerivs r = new ResidualDerivs();
 
@@ -316,7 +326,13 @@ public class Ammonia2023 {
     double d2alpha_dTau2;
   }
 
-  /** Compute ideal-gas Helmholtz energy and derivatives. */
+  /**
+   * Compute ideal-gas Helmholtz energy and derivatives.
+   *
+   * @param delta reduced density (rho / rhoCrit)
+   * @param tau inverse reduced temperature (Tcrit / T)
+   * @return container with ideal Helmholtz derivatives
+   */
   private static IdealDerivs ideal(double delta, double tau) {
     IdealDerivs id = new IdealDerivs();
     id.alpha0 = Math.log(delta) + A1 + A2 * tau + C0 * Math.log(tau);
