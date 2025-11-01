@@ -1,6 +1,8 @@
 package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -210,6 +212,61 @@ public class DistillationColumnTest {
         / gasToDebutanizerStream.getFlowRate("kg/hr") * 100;
 
     assertEquals(0.0, massbalance, 0.2);
+  }
+
+  @Test
+  public void adaptiveSolverRecordsSolveMetrics() {
+    SystemInterface simpleSystem = new SystemSrkEos(298.15, 5.0);
+    simpleSystem.addComponent("methane", 1.0);
+    simpleSystem.addComponent("ethane", 1.0);
+    simpleSystem.createDatabase(true);
+    simpleSystem.setMixingRule("classic");
+
+    Stream feed = new Stream("metricsFeed", simpleSystem);
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("metrics column", 1, true, true);
+    column.addFeedStream(feed, 1);
+    column.run();
+
+    DistillationColumn broydenColumn = new DistillationColumn("metrics column broyden", 1, true, true);
+    Stream broydenFeed = new Stream("metricsFeedBroyden", simpleSystem.clone());
+    broydenFeed.run();
+    broydenColumn.addFeedStream(broydenFeed, 1);
+    broydenColumn.runBroyden(UUID.randomUUID());
+
+    assertTrue(column.getLastIterationCount() > 0);
+    assertTrue(column.getLastTemperatureResidual() >= 0.0);
+    assertTrue(Double.isFinite(column.getLastMassResidual()));
+    assertTrue(Double.isFinite(column.getLastEnergyResidual()));
+    assertTrue(column.getLastSolveTimeSeconds() >= 0.0);
+    assertTrue(Double.isFinite(broydenColumn.getLastMassResidual()));
+    assertTrue(Double.isFinite(broydenColumn.getLastEnergyResidual()));
+  }
+
+  @Test
+  public void multipleFeedsOnDifferentTraysAreHandled() {
+    SystemInterface simpleSystem = new SystemSrkEos(298.15, 5.0);
+    simpleSystem.addComponent("methane", 1.0);
+    simpleSystem.addComponent("ethane", 1.0);
+    simpleSystem.createDatabase(true);
+    simpleSystem.setMixingRule("classic");
+
+    Stream feedOne = new Stream("feedOne", simpleSystem.clone());
+    feedOne.run();
+    Stream feedTwo = new Stream("feedTwo", simpleSystem.clone());
+    feedTwo.run();
+    Stream feedThree = new Stream("feedThree", simpleSystem.clone());
+    feedThree.run();
+
+    DistillationColumn column = new DistillationColumn("feed tracking", 3, true, true);
+    column.addFeedStream(feedOne, 1);
+    column.addFeedStream(feedTwo, 1);
+    column.addFeedStream(feedThree, 3);
+
+    assertEquals(2, column.getFeedStreams(1).size());
+    assertEquals(1, column.getFeedStreams(3).size());
+    assertEquals(0, column.getFeedStreams(2).size());
   }
 
   /**
