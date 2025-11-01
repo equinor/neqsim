@@ -2,6 +2,7 @@ package neqsim.process.mechanicaldesign.designstandards;
 
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.MechanicalDesignMarginResult;
 
 /**
  * <p>
@@ -14,6 +15,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
 public class PressureVesselDesignStandard extends DesignStandard {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  private final MechanicalDesignMarginResult safetyMargins;
 
   /**
    * <p>
@@ -25,6 +27,7 @@ public class PressureVesselDesignStandard extends DesignStandard {
    */
   public PressureVesselDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
+    safetyMargins = computeSafetyMargins();
   }
 
   /**
@@ -66,5 +69,9 @@ public class PressureVesselDesignStandard extends DesignStandard {
               + equipment.getCorrosionAllowanse();
     }
     return wallT / 1000.0; // return wall thickness in meter
+  }
+
+  public MechanicalDesignMarginResult getSafetyMargins() {
+    return safetyMargins;
   }
 }

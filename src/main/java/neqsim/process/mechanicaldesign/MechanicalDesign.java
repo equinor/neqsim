@@ -2,13 +2,19 @@ package neqsim.process.mechanicaldesign;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import neqsim.process.costestimation.UnitCostEstimateBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.mechanicaldesign.data.DatabaseMechanicalDesignDataSource;
+import neqsim.process.mechanicaldesign.data.MechanicalDesignDataSource;
 import neqsim.process.mechanicaldesign.designstandards.AdsorptionDehydrationDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.CompressorDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.DesignStandard;
@@ -103,6 +109,9 @@ public class MechanicalDesign implements java.io.Serializable {
   private String construtionMaterial = "steel";
   private double corrosionAllowanse = 0.0; // mm
   private double pressureMarginFactor = 0.1;
+  private DesignLimitData designLimitData = DesignLimitData.EMPTY;
+  private MechanicalDesignMarginResult lastMarginResult = MechanicalDesignMarginResult.EMPTY;
+  private List<MechanicalDesignDataSource> designDataSources = new ArrayList<>();
   public double innerDiameter = 0.0;
   public double outerDiameter = 0.0;
   /** Wall thickness in mm. */
@@ -135,6 +144,196 @@ public class MechanicalDesign implements java.io.Serializable {
   public MechanicalDesign(ProcessEquipmentInterface processEquipment) {
     this.processEquipment = processEquipment;
     costEstimate = new UnitCostEstimateBaseClass(this);
+    initMechanicalDesign();
+  }
+
+  /** Initialize design data using configured data sources. */
+  public void initMechanicalDesign() {
+    loadDesignLimits();
+  }
+
+  private void loadDesignLimits() {
+    String equipmentType = resolveEquipmentType();
+    if (equipmentType.isEmpty()) {
+      designLimitData = DesignLimitData.EMPTY;
+      return;
+    }
+
+    String companyIdentifier = Objects.toString(companySpecificDesignStandards, "");
+    DesignLimitData loadedData = null;
+    for (MechanicalDesignDataSource dataSource : getActiveDesignDataSources()) {
+      Optional<DesignLimitData> candidate =
+          dataSource.getDesignLimits(equipmentType, companyIdentifier);
+      if (candidate.isPresent()) {
+        loadedData = candidate.get();
+        break;
+      }
+    }
+
+    if (loadedData == null) {
+      designLimitData = DesignLimitData.EMPTY;
+      return;
+    }
+
+    designLimitData = loadedData;
+
+    if (!Double.isNaN(loadedData.getCorrosionAllowance())) {
+      corrosionAllowanse = loadedData.getCorrosionAllowance();
+    }
+    if (!Double.isNaN(loadedData.getJointEfficiency())) {
+      jointEfficiency = loadedData.getJointEfficiency();
+    }
+  }
+
+  private List<MechanicalDesignDataSource> getActiveDesignDataSources() {
+    if (designDataSources.isEmpty()) {
+      List<MechanicalDesignDataSource> defaults = new ArrayList<>();
+      defaults.add(new DatabaseMechanicalDesignDataSource());
+      return defaults;
+    }
+    return new ArrayList<>(designDataSources);
+  }
+
+  private String resolveEquipmentType() {
+    if (processEquipment == null) {
+      return "";
+    }
+    return processEquipment.getClass().getSimpleName();
+  }
+
+  /**
+   * Configure a single data source to load design limits from.
+   *
+   * @param dataSource data source to use, {@code null} clears existing sources.
+   */
+  public void setDesignDataSource(MechanicalDesignDataSource dataSource) {
+    if (dataSource == null) {
+      designDataSources = new ArrayList<>();
+    } else {
+      designDataSources = new ArrayList<>();
+      designDataSources.add(dataSource);
+    }
+    initMechanicalDesign();
+  }
+
+  /**
+   * Configure the list of data sources to use when loading design limits.
+   *
+   * @param dataSources ordered list of data sources.
+   */
+  public void setDesignDataSources(List<MechanicalDesignDataSource> dataSources) {
+    if (dataSources == null) {
+      designDataSources = new ArrayList<>();
+    } else {
+      designDataSources = new ArrayList<>(dataSources);
+    }
+    initMechanicalDesign();
+  }
+
+  /** Add an additional data source used when loading design limits. */
+  public void addDesignDataSource(MechanicalDesignDataSource dataSource) {
+    if (dataSource == null) {
+      return;
+    }
+    designDataSources.add(dataSource);
+    initMechanicalDesign();
+  }
+
+  /**
+   * Get the immutable list of configured data sources.
+   *
+   * @return list of data sources.
+   */
+  public List<MechanicalDesignDataSource> getDesignDataSources() {
+    return Collections.unmodifiableList(designDataSources);
+  }
+
+  public DesignLimitData getDesignLimitData() {
+    return designLimitData;
+  }
+
+  public double getDesignMaxPressureLimit() {
+    return designLimitData.getMaxPressure();
+  }
+
+  public double getDesignMinPressureLimit() {
+    return designLimitData.getMinPressure();
+  }
+
+  public double getDesignMaxTemperatureLimit() {
+    return designLimitData.getMaxTemperature();
+  }
+
+  public double getDesignMinTemperatureLimit() {
+    return designLimitData.getMinTemperature();
+  }
+
+  public double getDesignCorrosionAllowance() {
+    return designLimitData.getCorrosionAllowance();
+  }
+
+  public double getDesignJointEfficiency() {
+    return designLimitData.getJointEfficiency();
+  }
+
+  /**
+   * Validate the current operating envelope against design limits.
+   *
+   * @return computed margin result.
+   */
+  public MechanicalDesignMarginResult validateOperatingEnvelope() {
+    return validateOperatingEnvelope(maxOperationPressure, minOperationPressure,
+        maxOperationTemperature, minOperationTemperature, corrosionAllowanse, jointEfficiency);
+  }
+
+  /**
+   * Validate a specific operating envelope against design limits.
+   *
+   * @param operatingMaxPressure maximum operating pressure.
+   * @param operatingMinPressure minimum operating pressure.
+   * @param operatingMaxTemperature maximum operating temperature.
+   * @param operatingMinTemperature minimum operating temperature.
+   * @param operatingCorrosionAllowance corrosion allowance used in operation.
+   * @param operatingJointEfficiency joint efficiency achieved in operation.
+   * @return computed margin result.
+   */
+  public MechanicalDesignMarginResult validateOperatingEnvelope(double operatingMaxPressure,
+      double operatingMinPressure, double operatingMaxTemperature, double operatingMinTemperature,
+      double operatingCorrosionAllowance, double operatingJointEfficiency) {
+    double maxPressureMargin = marginToUpperLimit(designLimitData.getMaxPressure(),
+        operatingMaxPressure);
+    double minPressureMargin = marginFromLowerLimit(operatingMinPressure,
+        designLimitData.getMinPressure());
+    double maxTemperatureMargin = marginToUpperLimit(designLimitData.getMaxTemperature(),
+        operatingMaxTemperature);
+    double minTemperatureMargin = marginFromLowerLimit(operatingMinTemperature,
+        designLimitData.getMinTemperature());
+    double corrosionMargin = marginFromLowerLimit(operatingCorrosionAllowance,
+        designLimitData.getCorrosionAllowance());
+    double jointMargin = marginFromLowerLimit(operatingJointEfficiency,
+        designLimitData.getJointEfficiency());
+
+    lastMarginResult = new MechanicalDesignMarginResult(maxPressureMargin, minPressureMargin,
+        maxTemperatureMargin, minTemperatureMargin, corrosionMargin, jointMargin);
+    return lastMarginResult;
+  }
+
+  public MechanicalDesignMarginResult getLastMarginResult() {
+    return lastMarginResult;
+  }
+
+  private double marginToUpperLimit(double limit, double value) {
+    if (Double.isNaN(limit) || Double.isNaN(value)) {
+      return Double.NaN;
+    }
+    return limit - value;
+  }
+
+  private double marginFromLowerLimit(double value, double limit) {
+    if (Double.isNaN(limit) || Double.isNaN(value)) {
+      return Double.NaN;
+    }
+    return value - limit;
   }
 
   /**
@@ -450,9 +649,10 @@ public class MechanicalDesign implements java.io.Serializable {
    * @param companySpecificDesignStandards the companySpecificDesignStandards to set
    */
   public void setCompanySpecificDesignStandards(String companySpecificDesignStandards) {
-    this.companySpecificDesignStandards = companySpecificDesignStandards;
+    this.companySpecificDesignStandards =
+        companySpecificDesignStandards == null ? "" : companySpecificDesignStandards;
 
-    if (companySpecificDesignStandards.equals("StatoilTR")) {
+    if (this.companySpecificDesignStandards.equals("StatoilTR")) {
       getDesignStandard().put("pressure vessel design code",
           new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
       getDesignStandard().put("separator process design",
@@ -477,7 +677,7 @@ public class MechanicalDesign implements java.io.Serializable {
       // setValveDesignStandard("TR1903_Statoil");
     } else {
       System.out.println("using default mechanical design standards...no design standard "
-          + companySpecificDesignStandards);
+          + this.companySpecificDesignStandards);
       getDesignStandard().put("pressure vessel design code",
           new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
       getDesignStandard().put("separator process design",
@@ -498,6 +698,7 @@ public class MechanicalDesign implements java.io.Serializable {
           new MaterialPipeDesignStandard("Statoil_TR1414", this));
     }
     hasSetCompanySpecificDesignStandards = true;
+    initMechanicalDesign();
   }
 
   /**
