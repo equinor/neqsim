@@ -1,8 +1,13 @@
 package neqsim.process.measurementdevice;
 
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
+import neqsim.process.alarm.AlarmConfig;
+import neqsim.process.alarm.AlarmEvent;
+import neqsim.process.alarm.AlarmState;
 import neqsim.process.measurementdevice.online.OnlineSignal;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.NamedBaseClass;
@@ -40,6 +45,9 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   private boolean conditionAnalysis = true;
   private String conditionAnalysisMessage = "";
   private double conditionAnalysisMaxDeviation = 0.0;
+
+  private AlarmConfig alarmConfig;
+  private final AlarmState alarmState = new AlarmState();
 
   /**
    * Constructor for MeasurementDeviceBaseClass.
@@ -147,6 +155,40 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   @Override
   public double getMeasuredValue(String unit) {
     return 0.0;
+  }
+
+  @Override
+  public void setAlarmConfig(AlarmConfig alarmConfig) {
+    this.alarmConfig = alarmConfig;
+    if (alarmConfig == null) {
+      alarmState.reset();
+    }
+  }
+
+  @Override
+  public AlarmConfig getAlarmConfig() {
+    return alarmConfig;
+  }
+
+  @Override
+  public AlarmState getAlarmState() {
+    return alarmState;
+  }
+
+  @Override
+  public List<AlarmEvent> evaluateAlarm(double measuredValue, double dt, double time) {
+    if (alarmConfig == null) {
+      return Collections.emptyList();
+    }
+    return alarmState.evaluate(alarmConfig, measuredValue, dt, time, getName());
+  }
+
+  @Override
+  public AlarmEvent acknowledgeAlarm(double time) {
+    if (alarmConfig == null) {
+      return null;
+    }
+    return alarmState.acknowledge(getName(), time);
   }
 
   /**
