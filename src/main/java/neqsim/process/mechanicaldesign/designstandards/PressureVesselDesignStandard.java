@@ -51,22 +51,22 @@ public class PressureVesselDesignStandard extends DesignStandard {
       wallT = equipment.getMaxOperationPressure() / 10.0 * separator.getInternalDiameter() * 1e3
           / (2.0 * maxAllowableStress * jointEfficiency
               - 1.2 * equipment.getMaxOperationPressure() / 10.0)
-          + equipment.getCorrosionAllowanse();
+          + equipment.getCorrosionAllowance();
     } else if (standardName.equals("BS 5500 - Pressure Vessel")) {
       wallT = equipment.getMaxOperationPressure() / 10.0 * separator.getInternalDiameter() * 1e3
-          / (2.0 * maxAllowableStress - jointEfficiency / 10.0) + equipment.getCorrosionAllowanse();
+          / (2.0 * maxAllowableStress - jointEfficiency / 10.0) + equipment.getCorrosionAllowance();
     } else if (standardName.equals("European Code")) {
       wallT =
           equipment.getMaxOperationPressure() / 10.0 * separator.getInternalDiameter() / 2.0 * 1e3
               / (2.0 * maxAllowableStress * jointEfficiency
                   - 0.2 * equipment.getMaxOperationPressure() / 10.0)
-              + equipment.getCorrosionAllowanse();
+              + equipment.getCorrosionAllowance();
     } else {
       wallT =
           equipment.getMaxOperationPressure() / 10.0 * separator.getInternalDiameter() / 2.0 * 1e3
               / (2.0 * maxAllowableStress * jointEfficiency
                   - 0.2 * equipment.getMaxOperationPressure() / 10.0)
-              + equipment.getCorrosionAllowanse();
+              + equipment.getCorrosionAllowance();
     }
     return wallT / 1000.0; // return wall thickness in meter
   }
