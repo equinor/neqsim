@@ -45,17 +45,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   boolean hasReboiler = false;
   boolean hasCondenser = false;
   protected ArrayList<SimpleTray> trays = new ArrayList<SimpleTray>(0);
+  /** Scaling factor used to derive a tray-proportional iteration budget. */
+  private static final double TRAY_ITERATION_FACTOR = 2.0;
   double condenserCoolingDuty = 10.0;
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
   double topTrayPressure = -1.0;
 
   /** Temperature convergence tolerance. */
-  private double temperatureTolerance = 1.0e-4;
+  private double temperatureTolerance = 1.0e-3;
   /** Mass balance convergence tolerance. */
-  private double massBalanceTolerance = 1.0e-3;
+  private double massBalanceTolerance = 5.0e-3;
   /** Enthalpy balance convergence tolerance. */
-  private double enthalpyBalanceTolerance = 1.0e-3;
+  private double enthalpyBalanceTolerance = 5.0e-3;
 
   /** Available solving strategies for the column. */
   public enum SolverType {
@@ -82,7 +84,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   Mixer feedmixer = new Mixer("temp mixer");
   double bottomTrayPressure = -1.0;
   int numberOfTrays = 1;
-  int maxNumberOfIterations = 10;
+  int maxNumberOfIterations = 8;
   StreamInterface stream_3 = new Stream("stream_3");
   StreamInterface gasOutStream = new Stream("gasOutStream");
   StreamInterface liquidOutStream = new Stream("liquidOutStream");
@@ -412,7 +414,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     trays.get(firstFeedTrayNumber).run(id);
 
-    int iterationLimit = Math.max(maxNumberOfIterations, numberOfTrays * 3);
+    int iterationLimit = computeIterationLimit();
 
     do {
       iter++;
@@ -519,6 +521,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     setCalculationIdentifier(id);
   }
 
+  /**
+   * Determine the iteration limit based on configuration and column size.
+   *
+   * @return maximum number of solver iterations allowed
+   */
+  private int computeIterationLimit() {
+    int trayBasedLimit = (int) Math.ceil(Math.max(5.0, numberOfTrays * TRAY_ITERATION_FACTOR));
+    return Math.max(Math.max(1, maxNumberOfIterations), trayBasedLimit);
+  }
 
   /**
    * Solve the column using a simple Broyden mixing of tray temperatures.
@@ -564,6 +575,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     trays.get(firstFeedTrayNumber).run(id);
 
     long startTime = System.nanoTime();
+
+    int iterationLimit = computeIterationLimit();
 
     do {
       iter++;
@@ -613,7 +626,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       logger.info("error iteration = " + iter + "   err = " + err + " massErr= " + massErr
           + " energyErr= " + energyErr);
     } while ((err > temperatureTolerance || massErr > massBalanceTolerance
-        || energyErr > enthalpyBalanceTolerance) && err < errOld && iter < maxNumberOfIterations);
+        || energyErr > enthalpyBalanceTolerance) && err < errOld && iter < iterationLimit);
 
     lastIterationCount = iter;
     lastTemperatureResidual = err;
@@ -825,7 +838,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param maxIter a int
    */
   public void setMaxNumberOfIterations(int maxIter) {
-    this.maxNumberOfIterations = maxIter;
+    this.maxNumberOfIterations = Math.max(1, maxIter);
   }
 
   /**
