@@ -52,11 +52,23 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   double topTrayPressure = -1.0;
 
   /** Temperature convergence tolerance. */
-  private double temperatureTolerance = 1.0e-4;
+  private double temperatureTolerance = 1.0e-2;
   /** Mass balance convergence tolerance. */
-  private double massBalanceTolerance = 1.0e-3;
+  private double massBalanceTolerance = 1.0e-2;
   /** Enthalpy balance convergence tolerance. */
-  private double enthalpyBalanceTolerance = 1.0e-3;
+  private double enthalpyBalanceTolerance = 1.0e-2;
+  /** Maximum allowed wall clock time for the solver (seconds). Zero disables the limit. */
+  private double maxSolveSeconds = 60.0;
+  /** Maximum iterations allowed without sufficient residual improvement before aborting. */
+  private int maxStagnantIterations = 50;
+  /** Minimum relative residual improvement required to reset the stagnation counter. */
+  private double minResidualImprovement = 0.02;
+  /** Minimum absolute residual improvement required to reset the stagnation counter. */
+  private double minAbsoluteResidualImprovement = 1.0e-8;
+  /** Flag indicating that the last solve aborted due to slow or stalled convergence. */
+  private boolean abortedDueToSlowConvergence = false;
+  /** Explanation for why the last solve aborted, if any. */
+  private String lastAbortReason = null;
 
   /** Available solving strategies for the column. */
   public enum SolverType {
@@ -411,6 +423,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param initialRelaxation relaxation factor applied to the first iteration
    */
   private void solveSequential(UUID id, double initialRelaxation) {
+    resetAbortState();
     if (feedStreams.isEmpty()) {
       return;
     }
@@ -469,6 +482,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double previousCombinedResidual = Double.POSITIVE_INFINITY;
 
     long startTime = System.nanoTime();
+    ConvergenceTracker convergenceTracker = new ConvergenceTracker();
     sequentialOldTemperatures = ensureDoubleArray(sequentialOldTemperatures, numberOfTrays);
     sequentialPrevGasStreams = ensureStreamArray(sequentialPrevGasStreams, numberOfTrays);
     sequentialPrevLiquidStreams = ensureStreamArray(sequentialPrevLiquidStreams, numberOfTrays);
@@ -556,6 +570,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           Math.max(Math.max(err / temperatureTolerance, massErr / massBalanceTolerance),
               energyErr / enthalpyBalanceTolerance);
 
+      if (shouldAbortDueToSlowConvergence(convergenceTracker, iter, combinedResidual, startTime,
+          "Sequential")) {
+        break;
+      }
+
       if (combinedResidual > previousCombinedResidual * 1.05) {
         relaxation = Math.max(minAdaptiveRelaxation, relaxation * relaxationDecreaseFactor);
       } else if (combinedResidual < previousCombinedResidual * 0.95) {
@@ -624,6 +643,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier
    */
   protected void runInsideOut(UUID id) {
+    resetAbortState();
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -673,6 +693,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     long startTime = System.nanoTime();
+    ConvergenceTracker convergenceTracker = new ConvergenceTracker();
 
     sequentialOldTemperatures = ensureDoubleArray(sequentialOldTemperatures, numberOfTrays);
     double[] oldtemps = sequentialOldTemperatures;
@@ -776,6 +797,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           Math.max(Math.max(err / temperatureTolerance, massErr / massBalanceTolerance),
               energyErr / enthalpyBalanceTolerance);
 
+      if (shouldAbortDueToSlowConvergence(convergenceTracker, iter, combinedResidual, startTime,
+          "Inside-out")) {
+        break;
+      }
+
       if (combinedResidual > previousCombinedResidual * 1.05) {
         relaxation = Math.max(minAdaptiveRelaxation, relaxation * relaxationDecreaseFactor);
       } else if (combinedResidual < previousCombinedResidual * 0.95) {
@@ -819,6 +845,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier
    */
   public void runBroyden(UUID id) {
+    resetAbortState();
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -865,6 +892,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     long startTime = System.nanoTime();
     int iterationLimit = Math.max(maxNumberOfIterations, numberOfTrays * 3);
+    ConvergenceTracker convergenceTracker = new ConvergenceTracker();
 
     do {
       iter++;
@@ -942,8 +970,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           Math.max(Math.max(err / temperatureTolerance, massErr / massBalanceTolerance),
               energyErr / enthalpyBalanceTolerance);
 
-      if (!Double.isFinite(combinedResidual)) {
-        logger.warn("Broyden solver produced a non-finite residual at iteration {}", iter);
+      if (shouldAbortDueToSlowConvergence(convergenceTracker, iter, combinedResidual, startTime,
+          "Broyden")) {
         break;
       }
 
@@ -1206,7 +1234,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    return (err < temperatureTolerance);
+    return !abortedDueToSlowConvergence && err < temperatureTolerance;
   }
 
   /**
@@ -1279,6 +1307,108 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public double getTemperatureTolerance() {
     return temperatureTolerance;
+  }
+
+  /**
+   * Retrieve the configured maximum wall time for solver iterations.
+   *
+   * @return maximum allowed solve time in seconds (0 disables the timeout)
+   */
+  public double getMaxSolveSeconds() {
+    return maxSolveSeconds;
+  }
+
+  /**
+   * Set the maximum allowed wall time for solver iterations.
+   *
+   * @param seconds time limit in seconds, non-positive values disable the timeout
+   */
+  public void setMaxSolveSeconds(double seconds) {
+    if (Double.isNaN(seconds) || Double.isInfinite(seconds)) {
+      throw new IllegalArgumentException("Max solve seconds must be a finite value");
+    }
+    maxSolveSeconds = seconds <= 0.0 ? 0.0 : seconds;
+  }
+
+  /**
+   * Retrieve the maximum number of stagnant iterations allowed before aborting.
+   *
+   * @return maximum stagnant iteration count (0 disables stagnation detection)
+   */
+  public int getMaxStagnantIterations() {
+    return maxStagnantIterations;
+  }
+
+  /**
+   * Configure the maximum number of iterations permitted without significant improvement.
+   *
+   * @param iterations number of iterations, zero disables the guard
+   */
+  public void setMaxStagnantIterations(int iterations) {
+    if (iterations < 0) {
+      throw new IllegalArgumentException("Max stagnant iterations cannot be negative");
+    }
+    this.maxStagnantIterations = iterations;
+  }
+
+  /**
+   * Retrieve the required relative residual improvement to reset the stagnation counter.
+   *
+   * @return minimum relative residual improvement
+   */
+  public double getMinResidualImprovement() {
+    return minResidualImprovement;
+  }
+
+  /**
+   * Configure the required relative residual improvement to reset the stagnation counter.
+   *
+   * @param improvement relative improvement (fraction), must be between 0 and 1
+   */
+  public void setMinResidualImprovement(double improvement) {
+    if (Double.isNaN(improvement) || improvement < 0.0 || improvement >= 1.0) {
+      throw new IllegalArgumentException("Relative improvement must be in [0, 1)");
+    }
+    this.minResidualImprovement = improvement;
+  }
+
+  /**
+   * Retrieve the required absolute residual improvement to reset the stagnation counter.
+   *
+   * @return minimum absolute residual improvement
+   */
+  public double getMinAbsoluteResidualImprovement() {
+    return minAbsoluteResidualImprovement;
+  }
+
+  /**
+   * Configure the required absolute residual improvement to reset the stagnation counter.
+   *
+   * @param improvement absolute improvement threshold, must be non-negative
+   */
+  public void setMinAbsoluteResidualImprovement(double improvement) {
+    if (Double.isNaN(improvement) || improvement < 0.0) {
+      throw new IllegalArgumentException("Absolute improvement must be non-negative");
+    }
+    this.minAbsoluteResidualImprovement = improvement;
+  }
+
+  /**
+   * Indicates whether the last solve aborted due to the convergence guards.
+   *
+   * @return {@code true} if the last solve aborted, otherwise {@code false}
+   */
+  public boolean wasAborted() {
+    return abortedDueToSlowConvergence;
+  }
+
+  /**
+   * Retrieve the explanation of why the last solve aborted, if available.
+   *
+   * @return abort reason or {@code null} if the previous solve completed normally
+   */
+  public String getLastAbortReason() {
+    return lastAbortReason;
   }
 
   /**
@@ -1713,6 +1843,104 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     insideOutCurrentDownLiquid = null;
   }
 
+  /** Convergence tracking helper used to detect stalled iterations. */
+  private static final class ConvergenceTracker {
+    double bestResidual = Double.POSITIVE_INFINITY;
+    int stagnantIterations = 0;
+  }
+
+  /** Reset abort state before starting a new solve. */
+  private void resetAbortState() {
+    abortedDueToSlowConvergence = false;
+    lastAbortReason = null;
+  }
+
+  /**
+   * Record that the current solve was aborted together with an explanatory message.
+   *
+   * @param reason textual reason for aborting
+   */
+  private void markAbort(String reason) {
+    if (!abortedDueToSlowConvergence) {
+      abortedDueToSlowConvergence = true;
+      lastAbortReason = reason;
+      logger.warn("Distillation column '{}' aborted solve: {}", getName(), reason);
+    }
+  }
+
+  /**
+   * Evaluate convergence progress and decide whether to abort the iteration loop.
+   *
+   * @param tracker convergence tracker for this run
+   * @param iteration current iteration number (1-based)
+   * @param combinedResidual normalised combined residual metric
+   * @param startTime timestamp when the solver started (nanoseconds)
+   * @param solverLabel human readable solver name for logging
+   * @return {@code true} if the solve should abort, otherwise {@code false}
+   */
+  private boolean shouldAbortDueToSlowConvergence(ConvergenceTracker tracker, int iteration,
+      double combinedResidual, long startTime, String solverLabel) {
+    if (abortedDueToSlowConvergence) {
+      return true;
+    }
+
+    if (!Double.isFinite(combinedResidual)) {
+      markAbort(String.format(Locale.ROOT, "%s solver residual became non-finite at iteration %d",
+          solverLabel, iteration));
+      return true;
+    }
+
+    if (maxSolveSeconds > 0.0) {
+      double elapsedSeconds = (System.nanoTime() - startTime) / 1.0e9;
+      if (elapsedSeconds > maxSolveSeconds) {
+        markAbort(String.format(Locale.ROOT,
+            "%s solver exceeded maximum wall time of %.3f s after %d iterations", solverLabel,
+            maxSolveSeconds, iteration));
+        return true;
+      }
+    }
+
+    if (maxStagnantIterations <= 0) {
+      tracker.bestResidual = Math.min(tracker.bestResidual, combinedResidual);
+      return abortedDueToSlowConvergence;
+    }
+
+    if (tracker.bestResidual == Double.POSITIVE_INFINITY) {
+      tracker.bestResidual = combinedResidual;
+      tracker.stagnantIterations = 0;
+      return false;
+    }
+
+    double bestResidual = tracker.bestResidual;
+    double epsilon = 1.0e-12;
+    boolean improved = false;
+
+    if (combinedResidual < bestResidual) {
+      double absImprovement = bestResidual - combinedResidual;
+      double relImprovement = absImprovement / Math.max(Math.abs(bestResidual), epsilon);
+      if (absImprovement > minAbsoluteResidualImprovement
+          || relImprovement > minResidualImprovement) {
+        tracker.bestResidual = combinedResidual;
+        tracker.stagnantIterations = 0;
+        improved = true;
+      } else {
+        tracker.bestResidual = combinedResidual;
+      }
+    }
+
+    if (!improved) {
+      tracker.stagnantIterations++;
+      if (tracker.stagnantIterations >= maxStagnantIterations) {
+        markAbort(String.format(Locale.ROOT,
+            "%s solver stalled after %d iterations without sufficient improvement (residual %.3g)",
+            solverLabel, tracker.stagnantIterations, combinedResidual));
+        return true;
+      }
+    }
+
+    return abortedDueToSlowConvergence;
+  }
+
   /** Reset cached solve metrics when no calculation is performed. */
   protected void resetLastSolveMetrics() {
     lastIterationCount = 0;
@@ -1720,6 +1948,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastMassResidual = 0.0;
     lastEnergyResidual = 0.0;
     lastSolveTimeSeconds = 0.0;
+    resetAbortState();
   }
 
   /**

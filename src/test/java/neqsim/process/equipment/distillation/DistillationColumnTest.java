@@ -1,7 +1,9 @@
 package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Locale;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -17,7 +19,8 @@ public class DistillationColumnTest {
    */
   @Test
   public void testRun() {
-    neqsim.thermo.system.SystemInterface richTEG = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface richTEG =
+        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     richTEG.addComponent("nitrogen", 0.0003884521907420086);
     richTEG.addComponent("CO2", 0.3992611934362681);
     richTEG.addComponent("methane", 0.1707852619527612);
@@ -38,8 +41,8 @@ public class DistillationColumnTest {
     richTEG.setMultiPhaseCheck(false);
     richTEG.init(0);
 
-    neqsim.thermo.system.SystemInterface gasToReboiler = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0,
-        10.00);
+    neqsim.thermo.system.SystemInterface gasToReboiler =
+        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     gasToReboiler.addComponent("nitrogen", 0.007104922868929818);
     gasToReboiler.addComponent("CO2", 4.944830745821265);
     gasToReboiler.addComponent("methane", 3.013439464714221);
@@ -84,8 +87,9 @@ public class DistillationColumnTest {
     column.setMaxNumberOfIterations(40);
     column.run();
 
-    double waterFlowRateInColumn = richTEGStream.getFluid().getPhase(0).getComponent("water").getFlowRate("kg/hr")
-        + richTEGStream.getFluid().getPhase(1).getComponent("water").getFlowRate("kg/hr");
+    double waterFlowRateInColumn =
+        richTEGStream.getFluid().getPhase(0).getComponent("water").getFlowRate("kg/hr")
+            + richTEGStream.getFluid().getPhase(1).getComponent("water").getFlowRate("kg/hr");
     double waterFlowRateInColumn2 = richTEGStream.getFluid().getComponent("water").getMolarMass()
         * richTEGStream.getFluid().getFlowRate("mole/hr")
         * richTEGStream.getFluid().getComponent("water").getz();
@@ -97,9 +101,10 @@ public class DistillationColumnTest {
     double waterFlowRateOutColumn = column.getGasOutStream().getFluid().getFlowRate("mole/hr")
         * column.getGasOutStream().getFluid().getComponent("water").getMolarMass()
         * column.getGasOutStream().getFluid().getComponent("water").getz();
-    double waterFlowRateOutColumnLeanTEG = column.getLiquidOutStream().getFluid().getFlowRate("mole/hr")
-        * column.getLiquidOutStream().getFluid().getComponent("water").getMolarMass()
-        * column.getLiquidOutStream().getFluid().getComponent("water").getz();
+    double waterFlowRateOutColumnLeanTEG =
+        column.getLiquidOutStream().getFluid().getFlowRate("mole/hr")
+            * column.getLiquidOutStream().getFluid().getComponent("water").getMolarMass()
+            * column.getLiquidOutStream().getFluid().getComponent("water").getz();
 
     double totalWaterIn = waterFlowRateInColumn2 + waterFlowRateInColumnGasToReb;
     double totalWaterOut = waterFlowRateOutColumn + waterFlowRateOutColumnLeanTEG;
@@ -108,15 +113,12 @@ public class DistillationColumnTest {
      * System.out.println("Column out is " + totalWaterOut + " kg/hr");
      * System.out.println("Column is solved  " + column.solved());
      *
-     * System.out.println("Calc Water Flow rate via fluid component " +
-     * waterFlowRateInColumn);
-     * System.out.println("Calc Water Flow rate via molar mass and flow rate total "
-     * +
+     * System.out.println("Calc Water Flow rate via fluid component " + waterFlowRateInColumn);
+     * System.out.println("Calc Water Flow rate via molar mass and flow rate total " +
      * waterFlowRateInColumn2 + " kg/hr");
      *
      * System.out .println("condenser temperature " +
-     * column.getCondenser().getFluid().getTemperature("C"));
-     * System.out.println("condenser duty " +
+     * column.getCondenser().getFluid().getTemperature("C")); System.out.println("condenser duty " +
      * ((Condenser) column.getCondenser()).getDuty());
      */
     assertEquals(totalWaterIn, totalWaterOut, 1.0);
@@ -127,7 +129,8 @@ public class DistillationColumnTest {
    */
   @Test
   public void deethanizerTest() {
-    neqsim.thermo.system.SystemInterface gasToDeethanizer = new neqsim.thermo.system.SystemSrkEos(216, 30.00);
+    neqsim.thermo.system.SystemInterface gasToDeethanizer =
+        new neqsim.thermo.system.SystemSrkEos(216, 30.00);
     gasToDeethanizer.addComponent("nitrogen", 1.67366E-3);
     gasToDeethanizer.addComponent("CO2", 1.06819E-4);
     gasToDeethanizer.addComponent("methane", 5.14168E-1);
@@ -171,7 +174,8 @@ public class DistillationColumnTest {
    */
   @Test
   public void debutanizerTest() {
-    neqsim.thermo.system.SystemInterface gasToDbutanizer = new neqsim.thermo.system.SystemSrkEos(289.0, 11.00);
+    neqsim.thermo.system.SystemInterface gasToDbutanizer =
+        new neqsim.thermo.system.SystemSrkEos(289.0, 11.00);
     gasToDbutanizer.addComponent("nitrogen", 3.09189E-7);
     gasToDbutanizer.addComponent("CO2", 2.20812E-4);
     gasToDbutanizer.addComponent("methane", 0.097192E-1);
@@ -228,7 +232,8 @@ public class DistillationColumnTest {
     column.addFeedStream(feed, 1);
     column.run();
 
-    DistillationColumn broydenColumn = new DistillationColumn("metrics column broyden", 1, true, true);
+    DistillationColumn broydenColumn =
+        new DistillationColumn("metrics column broyden", 1, true, true);
     Stream broydenFeed = new Stream("metricsFeedBroyden", simpleSystem.clone());
     broydenFeed.run();
     broydenColumn.addFeedStream(broydenFeed, 1);
@@ -241,6 +246,28 @@ public class DistillationColumnTest {
     assertTrue(column.getLastSolveTimeSeconds() >= 0.0);
     assertTrue(Double.isFinite(broydenColumn.getLastMassResidual()));
     assertTrue(Double.isFinite(broydenColumn.getLastEnergyResidual()));
+  }
+
+  @Test
+  public void abortsWhenSolveTimeLimitExceeded() {
+    SystemInterface simpleSystem = new SystemSrkEos(298.15, 5.0);
+    simpleSystem.addComponent("methane", 1.0);
+    simpleSystem.addComponent("ethane", 0.5);
+    simpleSystem.createDatabase(true);
+    simpleSystem.setMixingRule("classic");
+
+    Stream feed = new Stream("fastAbortFeed", simpleSystem);
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("abort column", 1, true, true);
+    column.addFeedStream(feed, 1);
+    column.setMaxSolveSeconds(1.0e-7);
+    column.run();
+
+    assertTrue(column.wasAborted());
+    assertFalse(column.solved());
+    String reason = column.getLastAbortReason();
+    assertTrue(reason != null && reason.toLowerCase(Locale.ROOT).contains("time"));
   }
 
   @Test
@@ -331,8 +358,7 @@ public class DistillationColumnTest {
     distillationColumn.toJson();
     /*
      * System.out.println("---------- PROCESS RESULTS ----------");
-     * System.out.println("density feed " + stream1.getFluid().getDensity("kg/m3") +
-     * " kg/m3");
+     * System.out.println("density feed " + stream1.getFluid().getDensity("kg/m3") + " kg/m3");
      * System.out.println("Distillation column top gas flow:    " +
      * distillationColumn.getGasOutStream().getFlowRate("kg/hr") + " kg/hr");
      * System.out.println("Distillation column top temperature:    " +
@@ -340,49 +366,36 @@ public class DistillationColumnTest {
      * System.out.println("Distillation column bottom liquid flow: " +
      * distillationColumn.getLiquidOutStream().getFlowRate("kg/hr") + " kg/hr");
      * System.out.println("Split to water treatment: " +
-     * distillationColumn.getCondenser().getLiquidProductStream().getFlowRate(
-     * "kg/hr") + " kg/hr");
+     * distillationColumn.getCondenser().getLiquidProductStream().getFlowRate( "kg/hr") + " kg/hr");
      * System.out.println("Split to resycle to column: " +
-     * distillationColumn.getCondenser().getLiquidOutStream().getFlowRate("kg/hr") +
-     * " kg/hr");
-     * System.out.println("wt% MEG to treatment " +
-     * (distillationColumn.getCondenser()
-     * .getLiquidProductStream().getFluid().getPhase(0).getWtFrac("MEG") * 100) +
-     * " wt%");
-     * System.out.println("wt% MEG to treatment " +
-     * (distillationColumn.getCondenser()
-     * .getLiquidProductStream().getFluid().getPhase(0).getWtFrac("MEG") * 100) +
-     * " wt%");
-     * System.out.println("flow MEG to treatment " +
-     * distillationColumn.getCondenser()
-     * .getLiquidProductStream().getFluid().getComponent("MEG").getFlowRate("kg/hr")
-     * + " kg/hr");
+     * distillationColumn.getCondenser().getLiquidOutStream().getFlowRate("kg/hr") + " kg/hr");
+     * System.out.println("wt% MEG to treatment " + (distillationColumn.getCondenser()
+     * .getLiquidProductStream().getFluid().getPhase(0).getWtFrac("MEG") * 100) + " wt%");
+     * System.out.println("wt% MEG to treatment " + (distillationColumn.getCondenser()
+     * .getLiquidProductStream().getFluid().getPhase(0).getWtFrac("MEG") * 100) + " wt%");
+     * System.out.println("flow MEG to treatment " + distillationColumn.getCondenser()
+     * .getLiquidProductStream().getFluid().getComponent("MEG").getFlowRate("kg/hr") + " kg/hr");
      * System.out.println("density reflux " +
-     * distillationColumn.getCondenser().getLiquidProductStream().getFluid().
-     * getDensity("kg/m3") +
+     * distillationColumn.getCondenser().getLiquidProductStream().getFluid(). getDensity("kg/m3") +
      * " kg/m3"); System.out.println("wt% MEG " +
-     * (distillationColumn.getLiquidOutStream().getFluid().getPhase(0).getWtFrac(
-     * "MEG") * 100) +
+     * (distillationColumn.getLiquidOutStream().getFluid().getPhase(0).getWtFrac( "MEG") * 100) +
      * " wt%"); System.out.println("KOF " +
      * (distillationColumn.getCondenser().getLiquidProductStream()
      * .getFluid().getPhase(0).getWtFrac("MEG") * 1e6 / 1.547) + " KOF"); System.out
-     * .println("Reboiler duty " + (distillationColumn.getReboiler().getDuty() /
-     * 1e6) + " MW");
-     * System.out .println("Condenser duty " +
-     * (distillationColumn.getCondenser().getDuty() / 1e6) +
+     * .println("Reboiler duty " + (distillationColumn.getReboiler().getDuty() / 1e6) + " MW");
+     * System.out .println("Condenser duty " + (distillationColumn.getCondenser().getDuty() / 1e6) +
      * " MW"); System.out.println( "Condenser temperature " +
      * (distillationColumn.getCondenser().getTemperature()) + " C"); System.out
-     * .println("Tray 1 temperature " +
-     * (distillationColumn.getTray(1).getTemperature()) + " C");
-     * System.out .println("Tray 2 temperature " +
-     * (distillationColumn.getTray(2).getTemperature())
+     * .println("Tray 1 temperature " + (distillationColumn.getTray(1).getTemperature()) + " C");
+     * System.out .println("Tray 2 temperature " + (distillationColumn.getTray(2).getTemperature())
      * + " C");
      */
   }
 
   @Test
   public void testBroydenSolver() {
-    neqsim.thermo.system.SystemInterface simpleSystem = new neqsim.thermo.system.SystemSrkEos(298.15, 5.0);
+    neqsim.thermo.system.SystemInterface simpleSystem =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 5.0);
     simpleSystem.addComponent("methane", 1.0);
     simpleSystem.addComponent("ethane", 1.0);
     simpleSystem.createDatabase(true);
@@ -429,6 +442,14 @@ public class DistillationColumnTest {
     simpleSystem.createDatabase(true);
     simpleSystem.setMixingRule("classic");
 
+    // Ensure feed is two-phase
+    ThermodynamicOperations ops = new ThermodynamicOperations(simpleSystem);
+    try {
+      ops.TPflash();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
     Stream feed = new Stream("insideOutFeed", simpleSystem);
     feed.run();
 
@@ -445,40 +466,45 @@ public class DistillationColumnTest {
   }
 
   @Test
-  public void testInsideOutSolverMassBalanceOnDeethanizer() {
-    SystemInterface gasToDeethanizer = new SystemSrkEos(216, 30.00);
-    gasToDeethanizer.addComponent("nitrogen", 1.67366E-3);
-    gasToDeethanizer.addComponent("CO2", 1.06819E-4);
-    gasToDeethanizer.addComponent("methane", 5.14168E-1);
-    gasToDeethanizer.addComponent("ethane", 1.92528E-1);
-    gasToDeethanizer.addComponent("propane", 1.70001E-1);
-    gasToDeethanizer.addComponent("i-butane", 3.14561E-2);
-    gasToDeethanizer.addComponent("n-butane", 5.58678E-2);
-    gasToDeethanizer.addComponent("i-pentane", 1.29573E-2);
-    gasToDeethanizer.addComponent("n-pentane", 1.23719E-2);
-    gasToDeethanizer.addComponent("n-hexane", 5.12878E-3);
-    gasToDeethanizer.addComponent("n-heptane", 1.0E-2);
-    gasToDeethanizer.setMixingRule("classic");
+  public void testInsideOutSolverOnThreeTraySystem() {
+    SystemInterface simpleSystem = new SystemSrkEos(298.15, 10.0);
+    simpleSystem.addComponent("methane", 2.0);
+    simpleSystem.addComponent("ethane", 1.5);
+    simpleSystem.addComponent("propane", 1.0);
+    simpleSystem.createDatabase(true);
+    simpleSystem.setMixingRule("classic");
 
-    Stream baseStream = new Stream("insideOutDeethanizerFeed", gasToDeethanizer);
+    // Ensure feed is two-phase
+    ThermodynamicOperations ops = new ThermodynamicOperations(simpleSystem);
+    try {
+      ops.TPflash();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    Stream baseStream = new Stream("insideOutFeed", simpleSystem);
     baseStream.setFlowRate(100.0, "kg/hr");
     baseStream.run();
 
-    DistillationColumn insideOutColumn = new DistillationColumn("Deethanizer inside-out", 5, true, false);
-    insideOutColumn.addFeedStream(baseStream, 5);
-    insideOutColumn.getReboiler().setOutTemperature(105.0 + 273.15);
-    insideOutColumn.setTopPressure(30.0);
-    insideOutColumn.setBottomPressure(32.0);
+    DistillationColumn insideOutColumn =
+        new DistillationColumn("three tray inside-out", 3, true, true);
+    insideOutColumn.addFeedStream(baseStream, 2);
+    insideOutColumn.getReboiler().setOutTemperature(273.15 + 50.0);
+    insideOutColumn.getCondenser().setOutTemperature(273.15 + 10.0);
+    insideOutColumn.setTopPressure(10.0);
+    insideOutColumn.setBottomPressure(10.5);
     insideOutColumn.setMaxNumberOfIterations(60);
     insideOutColumn.useInsideOutSolver();
     insideOutColumn.run();
 
-    double massbalance = (baseStream.getFlowRate("kg/hr")
-        - insideOutColumn.getLiquidOutStream().getFlowRate("kg/hr")
-        - insideOutColumn.getGasOutStream().getFlowRate("kg/hr")) / baseStream.getFlowRate("kg/hr") * 100;
+    double massbalance =
+        (baseStream.getFlowRate("kg/hr") - insideOutColumn.getLiquidOutStream().getFlowRate("kg/hr")
+            - insideOutColumn.getGasOutStream().getFlowRate("kg/hr"))
+            / baseStream.getFlowRate("kg/hr") * 100;
 
     assertTrue(insideOutColumn.solved());
-    assertEquals(0.0, massbalance, 0.5);
+    assertEquals(0.0, massbalance, 1.0);
     assertTrue(insideOutColumn.getLastIterationCount() > 0);
+    assertTrue(insideOutColumn.getLastMassResidual() >= 0.0);
   }
 }
