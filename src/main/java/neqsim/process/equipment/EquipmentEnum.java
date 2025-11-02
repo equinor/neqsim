@@ -12,7 +12,8 @@ public enum EquipmentEnum {
   Splitter, Reactor, Column, ThreePhaseSeparator, Recycle, Ejector, GORfitter, Adjuster,
   SetPoint, FlowRateAdjuster, Calculator, Expander, SimpleTEGAbsorber, Tank, ComponentSplitter,
   ReservoirCVDsim, ReservoirDiffLibsim, VirtualStream, ReservoirTPsim, SimpleReservoir, Manifold,
-  Flare, FlareStack, FuelCell, CO2Electrolyzer, Electrolyzer;
+  Flare, FlareStack, FuelCell, CO2Electrolyzer, Electrolyzer, WindTurbine, BatteryStorage,
+  SolarPanel;
 
   /** {@inheritDoc} */
   @Override

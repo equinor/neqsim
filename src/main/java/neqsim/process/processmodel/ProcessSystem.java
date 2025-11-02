@@ -260,7 +260,7 @@ public class ProcessSystem extends SimulationBaseClass {
         return i;
       }
     }
-    return 0;
+    return -1;
   }
 
   /**
@@ -272,7 +272,17 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentBaseClass} object
    */
   public void replaceObject(String unitName, ProcessEquipmentBaseClass operation) {
-    unitOperations.set(getUnitNumber(name), operation);
+    Objects.requireNonNull(unitName, "unitName");
+    Objects.requireNonNull(operation, "operation");
+
+    int index = getUnitNumber(unitName);
+    if (index < 0 || index >= unitOperations.size() || getUnit(unitName) == null) {
+      throw new IllegalArgumentException(
+          "No process equipment named '" + unitName + "' exists in this ProcessSystem");
+    }
+
+    operation.setName(unitName);
+    unitOperations.set(index, operation);
   }
 
   /**
