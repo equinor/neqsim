@@ -82,7 +82,7 @@ public class DistillationColumnTest {
     column.setTopPressure(1.12);
     column.setBottomPressure(1.12);
     column.setInternalDiameter(0.56);
-    column.setMaxNumberOfIterations(40);
+    column.setMaxNumberOfIterations(30);
     column.run();
 
     double waterFlowRateInColumn =
@@ -153,7 +153,7 @@ public class DistillationColumnTest {
     column.getReboiler().setOutTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
-    column.setMaxNumberOfIterations(50);
+    column.setMaxNumberOfIterations(35);
     column.run();
     column.run();
 
@@ -201,6 +201,7 @@ public class DistillationColumnTest {
     column.getReboiler().setOutTemperature(gasToDbutanizer.getTemperature() + 50.0);
     column.setTopPressure(9.0);
     column.setBottomPressure(13.0);
+    column.setMaxNumberOfIterations(30);
     column.run();
     // ((Condenser) column.getCondenser()).getProductOutStream().getFluid().prettyPrint();
 
@@ -239,7 +240,7 @@ public class DistillationColumnTest {
     direct.getReboiler().setOutTemperature(105.0 + 273.15);
     direct.setTopPressure(30.0);
     direct.setBottomPressure(32.0);
-    direct.setMaxNumberOfIterations(50);
+    direct.setMaxNumberOfIterations(35);
     direct.run();
 
     Stream insideOutFeed = new Stream("insideOutFeed", baseGas.clone());
@@ -251,7 +252,7 @@ public class DistillationColumnTest {
     insideOut.getReboiler().setOutTemperature(105.0 + 273.15);
     insideOut.setTopPressure(30.0);
     insideOut.setBottomPressure(32.0);
-    insideOut.setMaxNumberOfIterations(50);
+    insideOut.setMaxNumberOfIterations(35);
     insideOut.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
     insideOut.run();
 
