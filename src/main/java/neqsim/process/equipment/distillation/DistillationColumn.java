@@ -60,9 +60,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** Maximum allowed wall clock time for the solver (seconds). Zero disables the limit. */
   private double maxSolveSeconds = 60.0;
   /** Maximum iterations allowed without sufficient residual improvement before aborting. */
-  private int maxStagnantIterations = 10;
+  private int maxStagnantIterations = 0; // Disabled by default
   /** Minimum relative residual improvement required to reset the stagnation counter. */
-  private double minResidualImprovement = 0.02;
+  private double minResidualImprovement = 0.005;
   /** Minimum absolute residual improvement required to reset the stagnation counter. */
   private double minAbsoluteResidualImprovement = 1.0e-8;
   /** Flag indicating that the last solve aborted due to slow or stalled convergence. */
@@ -428,6 +428,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return;
     }
 
+    // For small systems, use more conservative relaxation
+    if (numberOfTrays <= 3) {
+      initialRelaxation = Math.min(initialRelaxation, 0.3);
+      logger.info("Small system detected, using conservative relaxation: {}", initialRelaxation);
+    }
+
     int firstFeedTrayNumber = feedStreams.keySet().stream().min(Integer::compareTo).get();
 
     if (bottomTrayPressure < 0) {
@@ -501,9 +507,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double relaxation =
         Math.max(minAdaptiveRelaxation, Math.min(maxAdaptiveRelaxation, initialRelaxation));
 
+    // For small systems, ensure even more conservative relaxation
+    if (numberOfTrays <= 3) {
+      relaxation = Math.min(relaxation, 0.2);
+    }
+
     trays.get(firstFeedTrayNumber).run(id);
 
     int iterationLimit = Math.max(maxNumberOfIterations, numberOfTrays * 3);
+
+    // For small systems, allow more iterations
+    if (numberOfTrays <= 3) {
+      iterationLimit = Math.max(iterationLimit, 100);
+    }
 
     do {
       iter++;
@@ -655,7 +671,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     int pivotTray = determineInsideOutPivotTray();
-    if (pivotTray <= 0 || pivotTray >= numberOfTrays - 1) {
+
+    // For very small systems (3 trays or less), inside-out may be unstable
+    // Use sequential solver instead
+    if (numberOfTrays <= 3 || pivotTray <= 0 || pivotTray >= numberOfTrays - 1) {
+      logger.info("Small system with {} trays or invalid pivot tray {}, using sequential solver",
+          numberOfTrays, pivotTray);
       solveSequential(id, relaxationFactor);
       return;
     }
@@ -792,6 +813,25 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
       massErr = getMassBalanceError();
       energyErr = getEnergyBalanceError();
+
+      // Debug logging for this iteration
+      if (iter > 50) {
+        logger.info(
+            "Inside-out iteration {}: massErr={}, energyErr={}, isFinite(massErr)={}, isFinite(energyErr)={}",
+            iter, massErr, energyErr, Double.isFinite(massErr), Double.isFinite(energyErr));
+      }
+
+      // Check for numerical instability in inside-out solver
+      if (Math.abs(massErr) > 1.0e12 || !Double.isFinite(massErr) || !Double.isFinite(energyErr)) {
+        logger.warn(
+            "Inside-out solver numerical instability detected (massErr: {}, energyErr: {}), switching to sequential solver",
+            massErr, energyErr);
+        // Switch to sequential solver and re-run
+        setSolverType(SolverType.DIRECT_SUBSTITUTION);
+        resetSolverState();
+        run();
+        return;
+      }
 
       double combinedResidual =
           Math.max(Math.max(err / temperatureTolerance, massErr / massBalanceTolerance),
@@ -1234,6 +1274,23 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
+    // Check for numerical instability that indicates solver failure
+    if (Math.abs(lastMassResidual) > 1e12 || !Double.isFinite(lastMassResidual)) {
+      logger.warn("Solver failure detected due to numerical instability in mass balance: {}",
+          lastMassResidual);
+      return false;
+    }
+
+    // Also check the actual mass balance error more strictly for small systems
+    if (numberOfTrays <= 3) {
+      double actualMassError = getMassBalanceError();
+      if (Math.abs(actualMassError) > 10.0) { // 10% mass balance error threshold for small systems
+        logger.warn("Small system mass balance error too large: {}%, marking as not solved",
+            actualMassError);
+        return false;
+      }
+    }
+
     return !abortedDueToSlowConvergence && err < temperatureTolerance;
   }
 
