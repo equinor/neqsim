@@ -60,7 +60,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** Maximum allowed wall clock time for the solver (seconds). Zero disables the limit. */
   private double maxSolveSeconds = 60.0;
   /** Maximum iterations allowed without sufficient residual improvement before aborting. */
-  private int maxStagnantIterations = 50;
+  private int maxStagnantIterations = 10;
   /** Minimum relative residual improvement required to reset the stagnation counter. */
   private double minResidualImprovement = 0.02;
   /** Minimum absolute residual improvement required to reset the stagnation counter. */
