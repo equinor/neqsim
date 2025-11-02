@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -26,10 +27,14 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Models a tray based distillation column with optional condenser and reboiler.
  *
  * <p>
- * The column is solved using a sequential substitution approach. The {@link #init()} method sets
- * initial tray temperatures by running the feed tray and linearly distributing temperatures towards
- * the top and bottom. During {@link #run(UUID)} the trays are iteratively solved in upward and
- * downward sweeps until the summed temperature change between iterations is below the configured
+ * The column is solved using a sequential substitution approach. The
+ * {@link #init()} method sets
+ * initial tray temperatures by running the feed tray and linearly distributing
+ * temperatures towards
+ * the top and bottom. During {@link #run(UUID)} the trays are iteratively
+ * solved in upward and
+ * downward sweeps until the summed temperature change between iterations is
+ * below the configured
  * {@link #temperatureTolerance} or the iteration limit is reached.
  * </p>
  *
@@ -62,15 +67,23 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     /** Classic sequential substitution without damping. */
     DIRECT_SUBSTITUTION,
     /** Sequential substitution with temperature damping. */
-    DAMPED_SUBSTITUTION
+    DAMPED_SUBSTITUTION,
+    /** Broyden mixing of tray temperatures. */
+    BROYDEN,
+    /** Inside-out algorithm using centre-out propagation. */
+    INSIDE_OUT
   }
 
   /** Selected solver algorithm. Defaults to direct substitution. */
   private SolverType solverType = SolverType.DIRECT_SUBSTITUTION;
 
-  /** Relaxation factor used when {@link SolverType#DAMPED_SUBSTITUTION} is active. */
+  /**
+   * Relaxation factor used when {@link SolverType#DAMPED_SUBSTITUTION} is active.
+   */
   private double relaxationFactor = 0.5;
-  /** Minimum relaxation factor used when adaptive damping scales down the step. */
+  /**
+   * Minimum relaxation factor used when adaptive damping scales down the step.
+   */
   private double minAdaptiveRelaxation = 0.1;
   /** Maximum relaxation factor allowed by the adaptive controller. */
   private double maxAdaptiveRelaxation = 1.0;
@@ -82,7 +95,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   Mixer feedmixer = new Mixer("temp mixer");
   double bottomTrayPressure = -1.0;
   int numberOfTrays = 1;
-  int maxNumberOfIterations = 10;
+  // Increased default max iterations for better convergence and stability
+  int maxNumberOfIterations = 50;
   StreamInterface stream_3 = new Stream("stream_3");
   StreamInterface gasOutStream = new Stream("gasOutStream");
   StreamInterface liquidOutStream = new Stream("liquidOutStream");
@@ -108,8 +122,54 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** Duration of the latest solve step in seconds. */
   private double lastSolveTimeSeconds = 0.0;
 
+  /** Workspace array reused by sequential solver for previous temperatures. */
+  private transient double[] sequentialOldTemperatures;
+  /** Cached previous gas streams for sequential relaxation. */
+  private transient StreamInterface[] sequentialPrevGasStreams;
+  /** Cached previous liquid streams for sequential relaxation. */
+  private transient StreamInterface[] sequentialPrevLiquidStreams;
+  /** Workspace array for current gas stream updates. */
+  private transient StreamInterface[] sequentialCurrentGasStreams;
+  /** Workspace array for current liquid stream updates. */
+  private transient StreamInterface[] sequentialCurrentLiquidStreams;
+
+  /** Workspace array reused by Broyden solver for previous temperatures. */
+  private transient double[] broydenOldTemperatures;
+  /** Residual from previous Broyden iteration. */
+  private transient double[] broydenPrevResidual;
+  /** Difference between consecutive residual vectors. */
+  private transient double[] broydenResidualDiff;
+  /** Current residual vector for Broyden solver. */
+  private transient double[] broydenResidual;
+
+  /** Cached upward gas streams produced by trays during inside-out iterations. */
+  private transient StreamInterface[] insideOutPrevUpGas;
   /**
-   * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed streams per tray number.
+   * Cached downward liquid streams produced by trays during inside-out
+   * iterations.
+   */
+  private transient StreamInterface[] insideOutPrevDownLiquid;
+  /** Workspace for current upward gas streams in inside-out iterations. */
+  private transient StreamInterface[] insideOutCurrentUpGas;
+  /** Workspace for current downward liquid streams in inside-out iterations. */
+  private transient StreamInterface[] insideOutCurrentDownLiquid;
+
+  /** Minimum acceleration factor applied in Broyden mixing. */
+  private double broydenMinAcceleration = -0.5;
+  /** Maximum acceleration factor applied in Broyden mixing. */
+  private double broydenMaxAcceleration = 0.8;
+  /** Factor used to shrink acceleration when residuals grow. */
+  private double broydenAccelerationDecreaseFactor = 0.5;
+  /** Factor used to expand acceleration when residuals shrink. */
+  private double broydenAccelerationIncreaseFactor = 1.25;
+  /** Lower bound on adaptive acceleration scaling. */
+  private double broydenMinScale = 0.1;
+  /** Upper bound on adaptive acceleration scaling. */
+  private double broydenMaxScale = 1.0;
+
+  /**
+   * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed
+   * streams per tray number.
    * This allows multiple feeds to the same tray.
    */
   private Map<Integer, List<StreamInterface>> feedStreams = new HashMap<>();
@@ -119,10 +179,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Constructor for DistillationColumn.
    * </p>
    *
-   * @param name Name of distillation column
-   * @param numberOfTraysLocal Number of SimpleTrays to add (excluding reboiler/condenser)
-   * @param hasReboiler Set true to add reboiler
-   * @param hasCondenser Set true to add Condenser
+   * @param name               Name of distillation column
+   * @param numberOfTraysLocal Number of SimpleTrays to add (excluding
+   *                           reboiler/condenser)
+   * @param hasReboiler        Set true to add reboiler
+   * @param hasCondenser       Set true to add Condenser
    */
   public DistillationColumn(String name, int numberOfTraysLocal, boolean hasReboiler,
       boolean hasCondenser) {
@@ -157,12 +218,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /**
    * <p>
-   * Add a feed stream to the specified tray. (Now allows multiple streams on the same trayNumber,
+   * Add a feed stream to the specified tray. (Now allows multiple streams on the
+   * same trayNumber,
    * using a list.)
    * </p>
    *
-   * @param inputStream the feed stream
-   * @param feedTrayNumber the tray number (0-based in the code) to which this feed goes
+   * @param inputStream    the feed stream
+   * @param feedTrayNumber the tray number (0-based in the code) to which this
+   *                       feed goes
    */
   public void addFeedStream(StreamInterface inputStream, int feedTrayNumber) {
     // Put this feed into our feedStreams list for that trayNumber
@@ -187,6 +250,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     // Mark that we need to re-initialize if new feeds are added
     setDoInitializion(true);
+    invalidateSolverWorkspace();
   }
 
   /**
@@ -204,13 +268,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Prepare the column for calculation by estimating tray temperatures and linking streams between
+   * Prepare the column for calculation by estimating tray temperatures and
+   * linking streams between
    * trays.
    *
    * <p>
-   * The feed tray is solved first to obtain a temperature estimate. This temperature is then used
-   * to linearly guess temperatures upwards to the condenser and downwards to the reboiler. Gas and
-   * liquid outlet streams are connected to neighbouring trays so that a subsequent call to
+   * The feed tray is solved first to obtain a temperature estimate. This
+   * temperature is then used
+   * to linearly guess temperatures upwards to the condenser and downwards to the
+   * reboiler. Gas and
+   * liquid outlet streams are connected to neighbouring trays so that a
+   * subsequent call to
    * {@link #run(UUID)} can iterate to convergence.
    * </p>
    */
@@ -278,8 +346,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // Rough guess for temperature steps
     double deltaTempCondenser = (feedTrayTemperature - condenserTemperature)
         / (numberOfTrays * 1.0 - firstFeedTrayNumber - 1);
-    double deltaTempReboiler =
-        (reboilerTemperature - feedTrayTemperature) / (firstFeedTrayNumber * 1.0);
+    double deltaTempReboiler = (reboilerTemperature - feedTrayTemperature) / (firstFeedTrayNumber * 1.0);
 
     // set temperature from feed tray up
     double delta = 0;
@@ -323,24 +390,41 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * <p>
    * Solve the column until tray temperatures converge.
    *
-   * The method applies sequential substitution with an adaptive relaxation controller. Pressures
-   * are set linearly between bottom and top. Each iteration performs an upward sweep where liquid
-   * flows downward followed by a downward sweep where vapour flows upward. Tray temperatures and
-   * inter-tray stream flow rates are relaxed if the combined temperature, mass and energy residuals
+   * The method applies sequential substitution with an adaptive relaxation
+   * controller. Pressures
+   * are set linearly between bottom and top. Each iteration performs an upward
+   * sweep where liquid
+   * flows downward followed by a downward sweep where vapour flows upward. Tray
+   * temperatures and
+   * inter-tray stream flow rates are relaxed if the combined temperature, mass
+   * and energy residuals
    * grow, providing basic line-search behaviour.
    * </p>
    */
   @Override
   public void run(UUID id) {
-    double initialRelaxation =
-        solverType == SolverType.DAMPED_SUBSTITUTION ? relaxationFactor : 1.0;
-    solveSequential(id, initialRelaxation);
+    switch (solverType) {
+      case BROYDEN:
+        runBroyden(id);
+        return;
+      case INSIDE_OUT:
+        runInsideOut(id);
+        return;
+      case DAMPED_SUBSTITUTION:
+        solveSequential(id, relaxationFactor);
+        return;
+      case DIRECT_SUBSTITUTION:
+      default:
+        solveSequential(id, 1.0);
+        return;
+    }
   }
 
   /**
-   * Execute the sequential substitution solver with an adaptive relaxation controller.
+   * Execute the sequential substitution solver with an adaptive relaxation
+   * controller.
    *
-   * @param id calculation identifier
+   * @param id                calculation identifier
    * @param initialRelaxation relaxation factor applied to the first iteration
    */
   private void solveSequential(UUID id, double initialRelaxation) {
@@ -402,10 +486,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double previousCombinedResidual = Double.POSITIVE_INFINITY;
 
     long startTime = System.nanoTime();
+    sequentialOldTemperatures = ensureDoubleArray(sequentialOldTemperatures, numberOfTrays);
+    sequentialPrevGasStreams = ensureStreamArray(sequentialPrevGasStreams, numberOfTrays);
+    sequentialPrevLiquidStreams = ensureStreamArray(sequentialPrevLiquidStreams, numberOfTrays);
+    sequentialCurrentGasStreams = ensureStreamArray(sequentialCurrentGasStreams, numberOfTrays);
+    sequentialCurrentLiquidStreams = ensureStreamArray(sequentialCurrentLiquidStreams, numberOfTrays);
 
-    double[] oldtemps = new double[numberOfTrays];
-    StreamInterface[] previousGasStreams = new StreamInterface[numberOfTrays];
-    StreamInterface[] previousLiquidStreams = new StreamInterface[numberOfTrays];
+    double[] oldtemps = sequentialOldTemperatures;
+    StreamInterface[] previousGasStreams = sequentialPrevGasStreams;
+    StreamInterface[] previousLiquidStreams = sequentialPrevLiquidStreams;
+    StreamInterface[] currentGasStreams = sequentialCurrentGasStreams;
+    StreamInterface[] currentLiquidStreams = sequentialCurrentLiquidStreams;
+    clearStreamArray(currentGasStreams);
+    clearStreamArray(currentLiquidStreams);
 
     double relaxation = Math.max(minAdaptiveRelaxation,
         Math.min(maxAdaptiveRelaxation, initialRelaxation));
@@ -421,8 +514,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
       }
 
-      StreamInterface[] currentGasStreams = new StreamInterface[numberOfTrays];
-      StreamInterface[] currentLiquidStreams = new StreamInterface[numberOfTrays];
+      clearStreamArray(currentGasStreams);
+      clearStreamArray(currentLiquidStreams);
 
       for (int i = firstFeedTrayNumber; i > 1; i--) {
         int replaceStream = trays.get(i - 1).getNumberOfInputStreams() - 1;
@@ -519,6 +612,215 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     setCalculationIdentifier(id);
   }
 
+  /** Determine pivot tray for inside-out iterations. */
+  protected int determineInsideOutPivotTray() {
+    if (!feedStreams.isEmpty()) {
+      int min = feedStreams.keySet().stream().min(Integer::compareTo).orElse(0);
+      int max = feedStreams.keySet().stream().max(Integer::compareTo).orElse(numberOfTrays - 1);
+      int pivot = (min + max) / 2;
+      if (pivot < 0) {
+        return 0;
+      }
+      if (pivot >= numberOfTrays) {
+        return numberOfTrays - 1;
+      }
+      return pivot;
+    }
+    return Math.max(0, Math.min(numberOfTrays / 2, numberOfTrays - 1));
+  }
+
+  /**
+   * Default inside-out implementation falls back to sequential solution.
+   * Subclasses may override to provide specialised behaviour.
+   */
+  protected void runInsideOut(UUID id) {
+    if (feedStreams.isEmpty()) {
+      resetLastSolveMetrics();
+      return;
+    }
+
+    if (numberOfTrays <= 1) {
+      solveSequential(id, relaxationFactor);
+      return;
+    }
+
+    int pivotTray = determineInsideOutPivotTray();
+    if (pivotTray <= 0 || pivotTray >= numberOfTrays - 1) {
+      solveSequential(id, relaxationFactor);
+      return;
+    }
+
+    int firstFeedTrayNumber = feedStreams.keySet().stream().min(Integer::compareTo).get();
+
+    if (bottomTrayPressure < 0) {
+      bottomTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
+    }
+    if (topTrayPressure < 0) {
+      topTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
+    }
+
+    double dp = 0.0;
+    if (numberOfTrays > 1) {
+      dp = (bottomTrayPressure - topTrayPressure) / (numberOfTrays - 1.0);
+    }
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setPressure(bottomTrayPressure - i * dp);
+    }
+
+    int[] numeroffeeds = new int[numberOfTrays];
+    for (Entry<Integer, List<StreamInterface>> entry : feedStreams.entrySet()) {
+      int feedTrayNumber = entry.getKey();
+      List<StreamInterface> trayFeeds = entry.getValue();
+      for (StreamInterface feedStream : trayFeeds) {
+        numeroffeeds[feedTrayNumber]++;
+        SystemInterface inpS = feedStream.getThermoSystem().clone();
+        trays.get(feedTrayNumber).getStream(numeroffeeds[feedTrayNumber] - 1).setThermoSystem(inpS);
+      }
+    }
+
+    if (isDoInitializion()) {
+      this.init();
+    }
+
+    long startTime = System.nanoTime();
+
+    sequentialOldTemperatures = ensureDoubleArray(sequentialOldTemperatures, numberOfTrays);
+    double[] oldtemps = sequentialOldTemperatures;
+
+    insideOutPrevUpGas = ensureStreamArray(insideOutPrevUpGas, numberOfTrays);
+    insideOutPrevDownLiquid = ensureStreamArray(insideOutPrevDownLiquid, numberOfTrays);
+    insideOutCurrentUpGas = ensureStreamArray(insideOutCurrentUpGas, numberOfTrays);
+    insideOutCurrentDownLiquid = ensureStreamArray(insideOutCurrentDownLiquid, numberOfTrays);
+    clearStreamArray(insideOutCurrentUpGas);
+    clearStreamArray(insideOutCurrentDownLiquid);
+
+    trays.get(pivotTray).run(id);
+
+    double relaxation = Math.max(minAdaptiveRelaxation,
+        Math.min(maxAdaptiveRelaxation, relaxationFactor));
+
+    double previousCombinedResidual = Double.POSITIVE_INFINITY;
+    double massErr = 1.0e10;
+    double energyErr = 1.0e10;
+    err = 1.0e10;
+    int iter = 0;
+    int iterationLimit = Math.max(maxNumberOfIterations, numberOfTrays * 3);
+
+    do {
+      iter++;
+
+      for (int i = 0; i < numberOfTrays; i++) {
+        oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
+      }
+
+      clearStreamArray(insideOutCurrentUpGas);
+      clearStreamArray(insideOutCurrentDownLiquid);
+
+      StreamInterface downStream = applyRelaxation(insideOutPrevDownLiquid[pivotTray],
+          trays.get(pivotTray).getLiquidOutStream(), relaxation);
+      insideOutCurrentDownLiquid[pivotTray] = downStream != null ? downStream.clone() : null;
+
+      for (int i = pivotTray - 1; i >= 0 && downStream != null; i--) {
+        int replaceIndex = trays.get(i).getNumberOfInputStreams() - 1;
+        trays.get(i).replaceStream(replaceIndex, downStream);
+        trays.get(i).run(id);
+        insideOutCurrentUpGas[i] = trays.get(i).getGasOutStream().clone();
+        if (i > 0) {
+          downStream = applyRelaxation(insideOutPrevDownLiquid[i], trays.get(i).getLiquidOutStream(),
+              relaxation);
+          insideOutCurrentDownLiquid[i] = downStream != null ? downStream.clone() : null;
+        }
+      }
+
+      StreamInterface upStream = applyRelaxation(insideOutPrevUpGas[pivotTray],
+          trays.get(pivotTray).getGasOutStream(), relaxation);
+      insideOutCurrentUpGas[pivotTray] = upStream != null ? upStream.clone() : null;
+
+      for (int i = pivotTray + 1; i < numberOfTrays && upStream != null; i++) {
+        int replaceIndex = trays.get(i).getNumberOfInputStreams() - 2;
+        if (i == numberOfTrays - 1) {
+          replaceIndex = trays.get(i).getNumberOfInputStreams() - 1;
+        }
+        trays.get(i).replaceStream(replaceIndex, upStream);
+        trays.get(i).run(id);
+        insideOutCurrentDownLiquid[i] = trays.get(i).getLiquidOutStream().clone();
+        if (i < numberOfTrays - 1) {
+          upStream = applyRelaxation(insideOutPrevUpGas[i], trays.get(i).getGasOutStream(), relaxation);
+          insideOutCurrentUpGas[i] = upStream != null ? upStream.clone() : null;
+        }
+      }
+
+      if (pivotTray > 0 && insideOutCurrentUpGas[pivotTray - 1] != null) {
+        int gasIndex = trays.get(pivotTray).getNumberOfInputStreams() - 2;
+        StreamInterface relaxedGas = applyRelaxation(insideOutPrevUpGas[pivotTray - 1],
+            insideOutCurrentUpGas[pivotTray - 1], relaxation);
+        trays.get(pivotTray).replaceStream(gasIndex, relaxedGas);
+        insideOutCurrentUpGas[pivotTray - 1] = relaxedGas.clone();
+      }
+
+      if (pivotTray < numberOfTrays - 1 && insideOutCurrentDownLiquid[pivotTray + 1] != null) {
+        int liquidIndex = trays.get(pivotTray).getNumberOfInputStreams() - 1;
+        StreamInterface relaxedLiquid = applyRelaxation(insideOutPrevDownLiquid[pivotTray + 1],
+            insideOutCurrentDownLiquid[pivotTray + 1], relaxation);
+        trays.get(pivotTray).replaceStream(liquidIndex, relaxedLiquid);
+        insideOutCurrentDownLiquid[pivotTray + 1] = relaxedLiquid.clone();
+      }
+
+      trays.get(pivotTray).run(id);
+      insideOutCurrentUpGas[pivotTray] = trays.get(pivotTray).getGasOutStream().clone();
+      insideOutCurrentDownLiquid[pivotTray] = trays.get(pivotTray).getLiquidOutStream().clone();
+
+      double temperatureResidual = 0.0;
+      for (int i = 0; i < numberOfTrays; i++) {
+        double updated = trays.get(i).getThermoSystem().getTemperature();
+        temperatureResidual += Math.abs(updated - oldtemps[i]);
+      }
+      temperatureResidual /= Math.max(1, numberOfTrays);
+      err = temperatureResidual;
+
+      massErr = getMassBalanceError();
+      energyErr = getEnergyBalanceError();
+
+      double combinedResidual = Math.max(
+          Math.max(err / temperatureTolerance, massErr / massBalanceTolerance),
+          energyErr / enthalpyBalanceTolerance);
+
+      if (combinedResidual > previousCombinedResidual * 1.05) {
+        relaxation = Math.max(minAdaptiveRelaxation, relaxation * relaxationDecreaseFactor);
+      } else if (combinedResidual < previousCombinedResidual * 0.95) {
+        relaxation = Math.min(maxAdaptiveRelaxation, relaxation * relaxationIncreaseFactor);
+      }
+
+      previousCombinedResidual = combinedResidual;
+
+      for (int i = 0; i < numberOfTrays; i++) {
+        if (insideOutCurrentUpGas[i] != null) {
+          insideOutPrevUpGas[i] = insideOutCurrentUpGas[i];
+        }
+        if (insideOutCurrentDownLiquid[i] != null) {
+          insideOutPrevDownLiquid[i] = insideOutCurrentDownLiquid[i];
+        }
+      }
+
+      logger.info("inside-out iteration {} relaxation={} tempErr={} massErr={} energyErr={}", iter,
+          relaxation, err, massErr, energyErr);
+    } while ((err > temperatureTolerance || massErr > massBalanceTolerance
+        || energyErr > enthalpyBalanceTolerance) && iter < iterationLimit);
+
+    double solveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
+    updateSolveMetrics(iter, err, massErr, energyErr, solveTimeSeconds);
+
+    gasOutStream
+        .setThermoSystem(trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
+    gasOutStream.setCalculationIdentifier(id);
+    liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
+    liquidOutStream.setCalculationIdentifier(id);
+
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+  }
 
   /**
    * Solve the column using a simple Broyden mixing of tray temperatures.
@@ -553,24 +855,32 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     err = 1.0e10;
-    double errOld;
     int iter = 0;
     double massErr = 1.0e10;
     double energyErr = 1.0e10;
 
-    double[] oldtemps = new double[numberOfTrays];
-    double[] oldDelta = new double[numberOfTrays];
+    broydenOldTemperatures = ensureDoubleArray(broydenOldTemperatures, numberOfTrays);
+    broydenPrevResidual = ensureDoubleArray(broydenPrevResidual, numberOfTrays);
+    broydenResidualDiff = ensureDoubleArray(broydenResidualDiff, numberOfTrays);
+    broydenResidual = ensureDoubleArray(broydenResidual, numberOfTrays);
+    fillArray(broydenPrevResidual, 0.0);
+    fillArray(broydenResidualDiff, 0.0);
+    fillArray(broydenResidual, 0.0);
+
+    double previousCombinedResidual = Double.POSITIVE_INFINITY;
+    double accelerationScale = Math.min(broydenMaxScale, Math.max(broydenMinScale, 1.0));
 
     trays.get(firstFeedTrayNumber).run(id);
 
     long startTime = System.nanoTime();
+    int iterationLimit = Math.max(maxNumberOfIterations, numberOfTrays * 3);
 
     do {
       iter++;
-      errOld = err;
-      err = 0.0;
+
+      double[] oldTemps = broydenOldTemperatures;
       for (int i = 0; i < numberOfTrays; i++) {
-        oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
+        oldTemps[i] = trays.get(i).getThermoSystem().getTemperature();
       }
 
       for (int i = firstFeedTrayNumber; i > 1; i--) {
@@ -598,22 +908,68 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         trays.get(i).run(id);
       }
 
-      double[] delta = new double[numberOfTrays];
+      double betaNumerator = 0.0;
+      double betaDenominator = 0.0;
+      double temperatureResidual = 0.0;
+
       for (int i = 0; i < numberOfTrays; i++) {
-        delta[i] = trays.get(i).getThermoSystem().getTemperature() - oldtemps[i];
-        double newTemp = oldtemps[i] + delta[i] + 0.3 * (delta[i] - oldDelta[i]);
-        trays.get(i).setTemperature(newTemp);
-        oldDelta[i] = delta[i];
-        err += Math.abs(newTemp - oldtemps[i]);
+        double residual = trays.get(i).getThermoSystem().getTemperature() - oldTemps[i];
+        double diff = residual - broydenPrevResidual[i];
+        broydenResidual[i] = residual;
+        broydenResidualDiff[i] = diff;
+        betaNumerator += residual * diff;
+        betaDenominator += diff * diff;
       }
+
+      double beta = 0.0;
+      if (betaDenominator > 1.0e-16) {
+        beta = -betaNumerator / betaDenominator;
+      }
+
+      double appliedAcceleration = accelerationScale * beta;
+      if (appliedAcceleration > broydenMaxAcceleration) {
+        appliedAcceleration = broydenMaxAcceleration;
+      } else if (appliedAcceleration < broydenMinAcceleration) {
+        appliedAcceleration = broydenMinAcceleration;
+      }
+
+      for (int i = 0; i < numberOfTrays; i++) {
+        double adjustedResidual = broydenResidual[i] + appliedAcceleration * broydenResidualDiff[i];
+        double newTemp = oldTemps[i] + adjustedResidual;
+        trays.get(i).setTemperature(newTemp);
+        temperatureResidual += Math.abs(newTemp - oldTemps[i]);
+        broydenPrevResidual[i] = broydenResidual[i];
+      }
+
+      temperatureResidual /= Math.max(1, numberOfTrays);
+      err = temperatureResidual;
 
       massErr = getMassBalanceError();
       energyErr = getEnergyBalanceError();
 
-      logger.info("error iteration = " + iter + "   err = " + err + " massErr= " + massErr
-          + " energyErr= " + energyErr);
+      double combinedResidual = Math.max(
+          Math.max(err / temperatureTolerance, massErr / massBalanceTolerance),
+          energyErr / enthalpyBalanceTolerance);
+
+      if (!Double.isFinite(combinedResidual)) {
+        logger.warn("Broyden solver produced a non-finite residual at iteration {}", iter);
+        break;
+      }
+
+      if (combinedResidual > previousCombinedResidual * 1.05) {
+        accelerationScale = Math.max(broydenMinScale, accelerationScale * broydenAccelerationDecreaseFactor);
+        if (accelerationScale <= broydenMinScale + 1.0e-8) {
+          fillArray(broydenPrevResidual, 0.0);
+        }
+      } else if (combinedResidual < previousCombinedResidual * 0.95) {
+        accelerationScale = Math.min(broydenMaxScale, accelerationScale * broydenAccelerationIncreaseFactor);
+      }
+      previousCombinedResidual = combinedResidual;
+
+      logger.info("iteration {} accel={} beta={} tempErr={} massErr={} energyErr={}", iter,
+          appliedAcceleration, beta, err, massErr, energyErr);
     } while ((err > temperatureTolerance || massErr > massBalanceTolerance
-        || energyErr > enthalpyBalanceTolerance) && err < errOld && iter < maxNumberOfIterations);
+        || energyErr > enthalpyBalanceTolerance) && iter < iterationLimit);
 
     lastIterationCount = iter;
     lastTemperatureResidual = err;
@@ -634,14 +990,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Solve the column using the adaptive sequential substitution scheme with a damped starting step.
+   * Solve the column using the adaptive sequential substitution scheme with a
+   * damped starting step.
    *
    * @param id calculation identifier
    */
   private void runDamped(UUID id) {
     solveSequential(id, relaxationFactor);
   }
-
 
   /** {@inheritDoc} */
   @Override
@@ -684,6 +1040,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
     }
     numberOfTrays = tempNumberOfTrays;
+    invalidateSolverWorkspace();
     setDoInitializion(true);
     init();
   }
@@ -694,7 +1051,122 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param solverType choice of solver
    */
   public void setSolverType(SolverType solverType) {
+    if (solverType == null) {
+      throw new IllegalArgumentException("Solver type cannot be null");
+    }
+    if (this.solverType != solverType) {
+      invalidateSolverWorkspace();
+    }
     this.solverType = solverType;
+  }
+
+  /**
+   * Convenience overload allowing solver selection by name.
+   *
+   * @param solverName textual solver identifier
+   */
+  public void setSolverType(String solverName) {
+    setSolverType(parseSolverType(solverName));
+  }
+
+  /**
+   * Parse a textual solver identifier into a {@link SolverType}.
+   *
+   * @param solverName textual solver identifier
+   * @return matching {@link SolverType}
+   */
+  public static SolverType parseSolverType(String solverName) {
+    if (solverName == null) {
+      throw new IllegalArgumentException("Solver name cannot be null");
+    }
+    String normalized = solverName.trim().toUpperCase(Locale.ROOT);
+    if (normalized.isEmpty()) {
+      throw new IllegalArgumentException("Solver name cannot be empty");
+    }
+    normalized = normalized.replace(" ", "").replace("-", "").replace("_", "");
+    switch (normalized) {
+      case "DIRECT":
+      case "DIRECTSUBSTITUTION":
+      case "SEQUENTIAL":
+      case "SEQUENTIALSUBSTITUTION":
+        return SolverType.DIRECT_SUBSTITUTION;
+      case "DAMPED":
+      case "DAMPEDSUBSTITUTION":
+      case "ADAPTIVE":
+        return SolverType.DAMPED_SUBSTITUTION;
+      case "BROYDEN":
+      case "BROUDEN":
+      case "BRODYEN":
+        return SolverType.BROYDEN;
+      case "INSIDEOUT":
+      case "INSIDEOUTALGORITHM":
+      case "INSIDE-OUT":
+        return SolverType.INSIDE_OUT;
+      default:
+        throw new IllegalArgumentException("Unknown solver type: " + solverName);
+    }
+  }
+
+  /**
+   * Retrieve the currently configured solver type.
+   *
+   * @return solver selection
+   */
+  public SolverType getSolverType() {
+    return solverType;
+  }
+
+  /**
+   * Convenience helper to select the Broyden solver.
+   */
+  public void useBroydenSolver() {
+    setSolverType(SolverType.BROYDEN);
+  }
+
+  /**
+   * Convenience helper to select the inside-out solver.
+   */
+  public void useInsideOutSolver() {
+    setSolverType(SolverType.INSIDE_OUT);
+  }
+
+  /**
+   * Reset cached solver state and progress metrics.
+   */
+  public void resetSolverState() {
+    invalidateSolverWorkspace();
+    resetLastSolveMetrics();
+  }
+
+  /**
+   * Configure the acceleration bounds used by the Broyden solver.
+   *
+   * @param minAcceleration minimum acceleration factor
+   * @param maxAcceleration maximum acceleration factor
+   */
+  public void setBroydenAccelerationBounds(double minAcceleration, double maxAcceleration) {
+    if (minAcceleration > maxAcceleration) {
+      throw new IllegalArgumentException("minAcceleration cannot be greater than maxAcceleration");
+    }
+    broydenMinAcceleration = minAcceleration;
+    broydenMaxAcceleration = maxAcceleration;
+  }
+
+  /**
+   * Configure the adaptive scaling limits applied to the Broyden acceleration.
+   *
+   * @param minScale minimum scaling value (positive)
+   * @param maxScale maximum scaling value (>= minScale)
+   */
+  public void setBroydenScalingLimits(double minScale, double maxScale) {
+    if (minScale <= 0.0) {
+      throw new IllegalArgumentException("minScale must be positive");
+    }
+    if (minScale > maxScale) {
+      throw new IllegalArgumentException("minScale cannot be greater than maxScale");
+    }
+    broydenMinScale = minScale;
+    broydenMaxScale = maxScale;
   }
 
   /**
@@ -851,8 +1323,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Calculates the Fs factor for the distillation column. The Fs factor is a measure of the gas
-   * flow rate through the column relative to the cross-sectional area and the density of the gas.
+   * Calculates the Fs factor for the distillation column. The Fs factor is a
+   * measure of the gas
+   * flow rate through the column relative to the cross-sectional area and the
+   * density of the gas.
    *
    * @return the Fs factor as a double value
    */
@@ -1141,14 +1615,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Blend the current stream update with the previous iterate using the provided relaxation factor.
+   * Blend the current stream update with the previous iterate using the provided
+   * relaxation factor.
    *
-   * @param previous stream from the previous iteration (may be {@code null})
-   * @param current current iteration stream
+   * @param previous   stream from the previous iteration (may be {@code null})
+   * @param current    current iteration stream
    * @param relaxation relaxation factor applied to the update
    * @return relaxed stream instance to be used in the next tear
    */
-  private StreamInterface applyRelaxation(StreamInterface previous, StreamInterface current,
+  protected StreamInterface applyRelaxation(StreamInterface previous, StreamInterface current,
       double relaxation) {
     StreamInterface relaxed = current.clone();
     if (previous == null) {
@@ -1175,8 +1650,65 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return relaxed;
   }
 
+  /**
+   * Ensure a double array has the required size, creating a new one if needed.
+   */
+  protected double[] ensureDoubleArray(double[] array, int size) {
+    if (array == null || array.length != size) {
+      return new double[size];
+    }
+    return array;
+  }
+
+  /**
+   * Ensure a stream array has the required size, creating a new one if needed.
+   */
+  protected StreamInterface[] ensureStreamArray(StreamInterface[] array, int size) {
+    if (array == null || array.length != size) {
+      return new StreamInterface[size];
+    }
+    return array;
+  }
+
+  /** Clear references within the provided stream array. */
+  protected void clearStreamArray(StreamInterface[] array) {
+    if (array == null) {
+      return;
+    }
+    for (int i = 0; i < array.length; i++) {
+      array[i] = null;
+    }
+  }
+
+  /** Fill the provided double array with the specified value. */
+  protected void fillArray(double[] array, double value) {
+    if (array == null) {
+      return;
+    }
+    for (int i = 0; i < array.length; i++) {
+      array[i] = value;
+    }
+  }
+
+  /** Invalidate cached solver workspaces whenever topology or solver changes. */
+  protected void invalidateSolverWorkspace() {
+    sequentialOldTemperatures = null;
+    sequentialPrevGasStreams = null;
+    sequentialPrevLiquidStreams = null;
+    sequentialCurrentGasStreams = null;
+    sequentialCurrentLiquidStreams = null;
+    broydenOldTemperatures = null;
+    broydenPrevResidual = null;
+    broydenResidualDiff = null;
+    broydenResidual = null;
+    insideOutPrevUpGas = null;
+    insideOutPrevDownLiquid = null;
+    insideOutCurrentUpGas = null;
+    insideOutCurrentDownLiquid = null;
+  }
+
   /** Reset cached solve metrics when no calculation is performed. */
-  private void resetLastSolveMetrics() {
+  protected void resetLastSolveMetrics() {
     lastIterationCount = 0;
     lastTemperatureResidual = 0.0;
     lastMassResidual = 0.0;
@@ -1184,9 +1716,35 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastSolveTimeSeconds = 0.0;
   }
 
+  /** Update cached solve metrics after a successful calculation. */
+  protected void updateSolveMetrics(int iterationCount, double temperatureResidual,
+      double massResidual, double energyResidual, double solveTimeSeconds) {
+    this.lastIterationCount = iterationCount;
+    this.lastTemperatureResidual = temperatureResidual;
+    this.lastMassResidual = massResidual;
+    this.lastEnergyResidual = energyResidual;
+    this.lastSolveTimeSeconds = solveTimeSeconds;
+  }
+
+  /** Record the current convergence error used by {@link #solved()}. */
+  protected void setCurrentError(double value) {
+    this.err = value;
+  }
+
   /**
-   * Prints a simple energy balance for each tray to the console. The method calculates the total
-   * enthalpy of all inlet streams and compares it with the outlet enthalpy in order to highlight
+   * Retrieve the latest convergence error measured for the column solution.
+   *
+   * @return current error metric
+   */
+  protected double getCurrentError() {
+    return err;
+  }
+
+  /**
+   * Prints a simple energy balance for each tray to the console. The method
+   * calculates the total
+   * enthalpy of all inlet streams and compares it with the outlet enthalpy in
+   * order to highlight
    * any discrepancies in the column setup.
    */
   public void energyBalanceCheck() {
@@ -1208,16 +1766,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * The main method demonstrates the creation and operation of a distillation column using the
+   * The main method demonstrates the creation and operation of a distillation
+   * column using the
    * NeqSim library. It performs the following steps:
    * <ol>
-   * <li>Creates a test thermodynamic system with methane, ethane, and propane components.</li>
+   * <li>Creates a test thermodynamic system with methane, ethane, and propane
+   * components.</li>
    * <li>Performs a TP flash calculation on the test system.</li>
    * <li>Creates two separate feed streams from the test system.</li>
-   * <li>Constructs a distillation column with 5 trays, a reboiler, and a condenser.</li>
+   * <li>Constructs a distillation column with 5 trays, a reboiler, and a
+   * condenser.</li>
    * <li>Adds the two feed streams to the distillation column at tray 3.</li>
    * <li>Builds and runs the process system.</li>
-   * <li>Displays the results of the distillation column, including the gas and liquid output
+   * <li>Displays the results of the distillation column, including the gas and
+   * liquid output
    * streams.</li>
    * </ol>
    *
@@ -1226,15 +1788,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // Create a test system
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 15.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 15.0);
     testSystem.addComponent("methane", 10.00);
     testSystem.addComponent("ethane", 10.0);
     testSystem.addComponent("propane", 10.0);
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
-    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(testSystem);
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+        testSystem);
     ops.TPflash();
     testSystem.display();
 
@@ -1250,8 +1811,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     column.addFeedStream(feed2, 3);
 
     // Build process
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(feed1);
     operations.add(feed2);
     operations.add(column);
