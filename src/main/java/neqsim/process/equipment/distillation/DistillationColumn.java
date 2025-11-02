@@ -27,14 +27,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Models a tray based distillation column with optional condenser and reboiler.
  *
  * <p>
- * The column is solved using a sequential substitution approach. The
- * {@link #init()} method sets
- * initial tray temperatures by running the feed tray and linearly distributing
- * temperatures towards
- * the top and bottom. During {@link #run(UUID)} the trays are iteratively
- * solved in upward and
- * downward sweeps until the summed temperature change between iterations is
- * below the configured
+ * The column is solved using a sequential substitution approach. The {@link #init()} method sets
+ * initial tray temperatures by running the feed tray and linearly distributing temperatures towards
+ * the top and bottom. During {@link #run(UUID)} the trays are iteratively solved in upward and
+ * downward sweeps until the summed temperature change between iterations is below the configured
  * {@link #temperatureTolerance} or the iteration limit is reached.
  * </p>
  *
@@ -145,8 +141,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** Cached upward gas streams produced by trays during inside-out iterations. */
   private transient StreamInterface[] insideOutPrevUpGas;
   /**
-   * Cached downward liquid streams produced by trays during inside-out
-   * iterations.
+   * Cached downward liquid streams produced by trays during inside-out iterations.
    */
   private transient StreamInterface[] insideOutPrevDownLiquid;
   /** Workspace for current upward gas streams in inside-out iterations. */
@@ -168,8 +163,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double broydenMaxScale = 1.0;
 
   /**
-   * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed
-   * streams per tray number.
+   * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed streams per tray number.
    * This allows multiple feeds to the same tray.
    */
   private Map<Integer, List<StreamInterface>> feedStreams = new HashMap<>();
@@ -179,11 +173,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Constructor for DistillationColumn.
    * </p>
    *
-   * @param name               Name of distillation column
-   * @param numberOfTraysLocal Number of SimpleTrays to add (excluding
-   *                           reboiler/condenser)
-   * @param hasReboiler        Set true to add reboiler
-   * @param hasCondenser       Set true to add Condenser
+   * @param name Name of distillation column
+   * @param numberOfTraysLocal Number of SimpleTrays to add (excluding reboiler/condenser)
+   * @param hasReboiler Set true to add reboiler
+   * @param hasCondenser Set true to add Condenser
    */
   public DistillationColumn(String name, int numberOfTraysLocal, boolean hasReboiler,
       boolean hasCondenser) {
@@ -218,14 +211,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /**
    * <p>
-   * Add a feed stream to the specified tray. (Now allows multiple streams on the
-   * same trayNumber,
+   * Add a feed stream to the specified tray. (Now allows multiple streams on the same trayNumber,
    * using a list.)
    * </p>
    *
-   * @param inputStream    the feed stream
-   * @param feedTrayNumber the tray number (0-based in the code) to which this
-   *                       feed goes
+   * @param inputStream the feed stream
+   * @param feedTrayNumber the tray number (0-based in the code) to which this feed goes
    */
   public void addFeedStream(StreamInterface inputStream, int feedTrayNumber) {
     // Put this feed into our feedStreams list for that trayNumber
@@ -268,17 +259,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Prepare the column for calculation by estimating tray temperatures and
-   * linking streams between
+   * Prepare the column for calculation by estimating tray temperatures and linking streams between
    * trays.
    *
    * <p>
-   * The feed tray is solved first to obtain a temperature estimate. This
-   * temperature is then used
-   * to linearly guess temperatures upwards to the condenser and downwards to the
-   * reboiler. Gas and
-   * liquid outlet streams are connected to neighbouring trays so that a
-   * subsequent call to
+   * The feed tray is solved first to obtain a temperature estimate. This temperature is then used
+   * to linearly guess temperatures upwards to the condenser and downwards to the reboiler. Gas and
+   * liquid outlet streams are connected to neighbouring trays so that a subsequent call to
    * {@link #run(UUID)} can iterate to convergence.
    * </p>
    */
@@ -346,7 +333,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // Rough guess for temperature steps
     double deltaTempCondenser = (feedTrayTemperature - condenserTemperature)
         / (numberOfTrays * 1.0 - firstFeedTrayNumber - 1);
-    double deltaTempReboiler = (reboilerTemperature - feedTrayTemperature) / (firstFeedTrayNumber * 1.0);
+    double deltaTempReboiler =
+        (reboilerTemperature - feedTrayTemperature) / (firstFeedTrayNumber * 1.0);
 
     // set temperature from feed tray up
     double delta = 0;
@@ -390,14 +378,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * <p>
    * Solve the column until tray temperatures converge.
    *
-   * The method applies sequential substitution with an adaptive relaxation
-   * controller. Pressures
-   * are set linearly between bottom and top. Each iteration performs an upward
-   * sweep where liquid
-   * flows downward followed by a downward sweep where vapour flows upward. Tray
-   * temperatures and
-   * inter-tray stream flow rates are relaxed if the combined temperature, mass
-   * and energy residuals
+   * The method applies sequential substitution with an adaptive relaxation controller. Pressures
+   * are set linearly between bottom and top. Each iteration performs an upward sweep where liquid
+   * flows downward followed by a downward sweep where vapour flows upward. Tray temperatures and
+   * inter-tray stream flow rates are relaxed if the combined temperature, mass and energy residuals
    * grow, providing basic line-search behaviour.
    * </p>
    */
@@ -421,10 +405,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Execute the sequential substitution solver with an adaptive relaxation
-   * controller.
+   * Execute the sequential substitution solver with an adaptive relaxation controller.
    *
-   * @param id                calculation identifier
+   * @param id calculation identifier
    * @param initialRelaxation relaxation factor applied to the first iteration
    */
   private void solveSequential(UUID id, double initialRelaxation) {
@@ -490,7 +473,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     sequentialPrevGasStreams = ensureStreamArray(sequentialPrevGasStreams, numberOfTrays);
     sequentialPrevLiquidStreams = ensureStreamArray(sequentialPrevLiquidStreams, numberOfTrays);
     sequentialCurrentGasStreams = ensureStreamArray(sequentialCurrentGasStreams, numberOfTrays);
-    sequentialCurrentLiquidStreams = ensureStreamArray(sequentialCurrentLiquidStreams, numberOfTrays);
+    sequentialCurrentLiquidStreams =
+        ensureStreamArray(sequentialCurrentLiquidStreams, numberOfTrays);
 
     double[] oldtemps = sequentialOldTemperatures;
     StreamInterface[] previousGasStreams = sequentialPrevGasStreams;
@@ -500,8 +484,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     clearStreamArray(currentGasStreams);
     clearStreamArray(currentLiquidStreams);
 
-    double relaxation = Math.max(minAdaptiveRelaxation,
-        Math.min(maxAdaptiveRelaxation, initialRelaxation));
+    double relaxation =
+        Math.max(minAdaptiveRelaxation, Math.min(maxAdaptiveRelaxation, initialRelaxation));
 
     trays.get(firstFeedTrayNumber).run(id);
 
@@ -527,8 +511,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
-      StreamInterface reboilerFeed = applyRelaxation(previousLiquidStreams[1],
-          trays.get(1).getLiquidOutStream(), relaxation);
+      StreamInterface reboilerFeed =
+          applyRelaxation(previousLiquidStreams[1], trays.get(1).getLiquidOutStream(), relaxation);
       trays.get(0).replaceStream(streamNumb, reboilerFeed);
       currentLiquidStreams[1] = reboilerFeed.clone();
       trays.get(0).run(id);
@@ -568,9 +552,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       massErr = getMassBalanceError();
       energyErr = getEnergyBalanceError();
 
-      double combinedResidual = Math.max(
-          Math.max(err / temperatureTolerance, massErr / massBalanceTolerance),
-          energyErr / enthalpyBalanceTolerance);
+      double combinedResidual =
+          Math.max(Math.max(err / temperatureTolerance, massErr / massBalanceTolerance),
+              energyErr / enthalpyBalanceTolerance);
 
       if (combinedResidual > previousCombinedResidual * 1.05) {
         relaxation = Math.max(minAdaptiveRelaxation, relaxation * relaxationDecreaseFactor);
@@ -612,7 +596,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     setCalculationIdentifier(id);
   }
 
-  /** Determine pivot tray for inside-out iterations. */
+  /**
+   * Determine pivot tray for inside-out iterations.
+   *
+   * @return tray index to use as pivot point for inside-out propagation
+   */
   protected int determineInsideOutPivotTray() {
     if (!feedStreams.isEmpty()) {
       int min = feedStreams.keySet().stream().min(Integer::compareTo).orElse(0);
@@ -630,8 +618,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Default inside-out implementation falls back to sequential solution.
-   * Subclasses may override to provide specialised behaviour.
+   * Default inside-out implementation falls back to sequential solution. Subclasses may override to
+   * provide specialised behaviour.
+   *
+   * @param id calculation identifier
    */
   protected void runInsideOut(UUID id) {
     if (feedStreams.isEmpty()) {
@@ -696,8 +686,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     trays.get(pivotTray).run(id);
 
-    double relaxation = Math.max(minAdaptiveRelaxation,
-        Math.min(maxAdaptiveRelaxation, relaxationFactor));
+    double relaxation =
+        Math.max(minAdaptiveRelaxation, Math.min(maxAdaptiveRelaxation, relaxationFactor));
 
     double previousCombinedResidual = Double.POSITIVE_INFINITY;
     double massErr = 1.0e10;
@@ -726,8 +716,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         trays.get(i).run(id);
         insideOutCurrentUpGas[i] = trays.get(i).getGasOutStream().clone();
         if (i > 0) {
-          downStream = applyRelaxation(insideOutPrevDownLiquid[i], trays.get(i).getLiquidOutStream(),
-              relaxation);
+          downStream = applyRelaxation(insideOutPrevDownLiquid[i],
+              trays.get(i).getLiquidOutStream(), relaxation);
           insideOutCurrentDownLiquid[i] = downStream != null ? downStream.clone() : null;
         }
       }
@@ -745,7 +735,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         trays.get(i).run(id);
         insideOutCurrentDownLiquid[i] = trays.get(i).getLiquidOutStream().clone();
         if (i < numberOfTrays - 1) {
-          upStream = applyRelaxation(insideOutPrevUpGas[i], trays.get(i).getGasOutStream(), relaxation);
+          upStream =
+              applyRelaxation(insideOutPrevUpGas[i], trays.get(i).getGasOutStream(), relaxation);
           insideOutCurrentUpGas[i] = upStream != null ? upStream.clone() : null;
         }
       }
@@ -781,9 +772,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       massErr = getMassBalanceError();
       energyErr = getEnergyBalanceError();
 
-      double combinedResidual = Math.max(
-          Math.max(err / temperatureTolerance, massErr / massBalanceTolerance),
-          energyErr / enthalpyBalanceTolerance);
+      double combinedResidual =
+          Math.max(Math.max(err / temperatureTolerance, massErr / massBalanceTolerance),
+              energyErr / enthalpyBalanceTolerance);
 
       if (combinedResidual > previousCombinedResidual * 1.05) {
         relaxation = Math.max(minAdaptiveRelaxation, relaxation * relaxationDecreaseFactor);
@@ -947,9 +938,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       massErr = getMassBalanceError();
       energyErr = getEnergyBalanceError();
 
-      double combinedResidual = Math.max(
-          Math.max(err / temperatureTolerance, massErr / massBalanceTolerance),
-          energyErr / enthalpyBalanceTolerance);
+      double combinedResidual =
+          Math.max(Math.max(err / temperatureTolerance, massErr / massBalanceTolerance),
+              energyErr / enthalpyBalanceTolerance);
 
       if (!Double.isFinite(combinedResidual)) {
         logger.warn("Broyden solver produced a non-finite residual at iteration {}", iter);
@@ -957,12 +948,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       if (combinedResidual > previousCombinedResidual * 1.05) {
-        accelerationScale = Math.max(broydenMinScale, accelerationScale * broydenAccelerationDecreaseFactor);
+        accelerationScale =
+            Math.max(broydenMinScale, accelerationScale * broydenAccelerationDecreaseFactor);
         if (accelerationScale <= broydenMinScale + 1.0e-8) {
           fillArray(broydenPrevResidual, 0.0);
         }
       } else if (combinedResidual < previousCombinedResidual * 0.95) {
-        accelerationScale = Math.min(broydenMaxScale, accelerationScale * broydenAccelerationIncreaseFactor);
+        accelerationScale =
+            Math.min(broydenMaxScale, accelerationScale * broydenAccelerationIncreaseFactor);
       }
       previousCombinedResidual = combinedResidual;
 
@@ -990,8 +983,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Solve the column using the adaptive sequential substitution scheme with a
-   * damped starting step.
+   * Solve the column using the adaptive sequential substitution scheme with a damped starting step.
    *
    * @param id calculation identifier
    */
@@ -1323,10 +1315,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Calculates the Fs factor for the distillation column. The Fs factor is a
-   * measure of the gas
-   * flow rate through the column relative to the cross-sectional area and the
-   * density of the gas.
+   * Calculates the Fs factor for the distillation column. The Fs factor is a measure of the gas
+   * flow rate through the column relative to the cross-sectional area and the density of the gas.
    *
    * @return the Fs factor as a double value
    */
@@ -1615,11 +1605,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Blend the current stream update with the previous iterate using the provided
-   * relaxation factor.
+   * Blend the current stream update with the previous iterate using the provided relaxation factor.
    *
-   * @param previous   stream from the previous iteration (may be {@code null})
-   * @param current    current iteration stream
+   * @param previous stream from the previous iteration (may be {@code null})
+   * @param current current iteration stream
    * @param relaxation relaxation factor applied to the update
    * @return relaxed stream instance to be used in the next tear
    */
@@ -1741,10 +1730,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Prints a simple energy balance for each tray to the console. The method
-   * calculates the total
-   * enthalpy of all inlet streams and compares it with the outlet enthalpy in
-   * order to highlight
+   * Prints a simple energy balance for each tray to the console. The method calculates the total
+   * enthalpy of all inlet streams and compares it with the outlet enthalpy in order to highlight
    * any discrepancies in the column setup.
    */
   public void energyBalanceCheck() {
@@ -1766,20 +1753,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * The main method demonstrates the creation and operation of a distillation
-   * column using the
+   * The main method demonstrates the creation and operation of a distillation column using the
    * NeqSim library. It performs the following steps:
    * <ol>
-   * <li>Creates a test thermodynamic system with methane, ethane, and propane
-   * components.</li>
+   * <li>Creates a test thermodynamic system with methane, ethane, and propane components.</li>
    * <li>Performs a TP flash calculation on the test system.</li>
    * <li>Creates two separate feed streams from the test system.</li>
-   * <li>Constructs a distillation column with 5 trays, a reboiler, and a
-   * condenser.</li>
+   * <li>Constructs a distillation column with 5 trays, a reboiler, and a condenser.</li>
    * <li>Adds the two feed streams to the distillation column at tray 3.</li>
    * <li>Builds and runs the process system.</li>
-   * <li>Displays the results of the distillation column, including the gas and
-   * liquid output
+   * <li>Displays the results of the distillation column, including the gas and liquid output
    * streams.</li>
    * </ol>
    *
@@ -1788,14 +1771,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // Create a test system
-    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 15.0);
+    neqsim.thermo.system.SystemInterface testSystem =
+        new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 15.0);
     testSystem.addComponent("methane", 10.00);
     testSystem.addComponent("ethane", 10.0);
     testSystem.addComponent("propane", 10.0);
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
-    neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
-        testSystem);
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(testSystem);
     ops.TPflash();
     testSystem.display();
 
@@ -1811,7 +1795,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     column.addFeedStream(feed2, 3);
 
     // Build process
-    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(feed1);
     operations.add(feed2);
     operations.add(column);
