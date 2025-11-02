@@ -58,17 +58,29 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private static final int POLISH_ITERATION_MARGIN = 6;
   /** Multiplier governing how much the solver can extend beyond the nominal iteration budget. */
   private static final int ITERATION_OVERFLOW_MULTIPLIER = 12;
+  /** Recommended base temperature tolerance for adaptive defaults. */
+  private static final double DEFAULT_TEMPERATURE_TOLERANCE = 4.0e-3;
+  /** Recommended base mass balance tolerance for adaptive defaults. */
+  private static final double DEFAULT_MASS_BALANCE_TOLERANCE = 1.6e-2;
+  /** Recommended base enthalpy balance tolerance for adaptive defaults. */
+  private static final double DEFAULT_ENTHALPY_BALANCE_TOLERANCE = 1.6e-2;
   double condenserCoolingDuty = 10.0;
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
   double topTrayPressure = -1.0;
 
   /** Temperature convergence tolerance. */
-  private double temperatureTolerance = 1.0e-3;
+  private double temperatureTolerance = DEFAULT_TEMPERATURE_TOLERANCE;
   /** Mass balance convergence tolerance. */
-  private double massBalanceTolerance = 5.0e-3;
+  private double massBalanceTolerance = DEFAULT_MASS_BALANCE_TOLERANCE;
   /** Enthalpy balance convergence tolerance. */
-  private double enthalpyBalanceTolerance = 5.0e-3;
+  private double enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
+  /** Track whether temperature tolerance has been manually overridden. */
+  private boolean temperatureToleranceCustomized = false;
+  /** Track whether mass balance tolerance has been manually overridden. */
+  private boolean massBalanceToleranceCustomized = false;
+  /** Track whether enthalpy balance tolerance has been manually overridden. */
+  private boolean enthalpyBalanceToleranceCustomized = false;
 
   /** Available solving strategies for the column. */
   public enum SolverType {
@@ -428,9 +440,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int overflowBand = Math.max(overflowIncrement, numberOfTrays);
     int maxIterationLimit = Math.max(iterationLimit, maxNumberOfIterations)
         + overflowBand * ITERATION_OVERFLOW_MULTIPLIER;
-    double baseTempTolerance = temperatureTolerance;
-    double baseMassTolerance = massBalanceTolerance;
-    double baseEnergyTolerance = enthalpyBalanceTolerance;
+    double baseTempTolerance = getEffectiveTemperatureTolerance();
+    double baseMassTolerance = getEffectiveMassBalanceTolerance();
+    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
     double polishTempTolerance = Math.min(baseTempTolerance, TEMPERATURE_POLISH_TARGET);
     double polishMassTolerance = Math.min(baseMassTolerance, MASS_POLISH_TARGET);
     double polishEnergyTolerance = Math.min(baseEnergyTolerance, ENERGY_POLISH_TARGET);
@@ -501,9 +513,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         massEnergyEvaluated = true;
       }
 
-      double tempScaled = err / temperatureTolerance;
-      double massScaled = massErr / massBalanceTolerance;
-      double energyScaled = energyErr / enthalpyBalanceTolerance;
+      double tempScaled = err / baseTempTolerance;
+      double massScaled = massErr / baseMassTolerance;
+      double energyScaled = energyErr / baseEnergyTolerance;
       double combinedResidual = Math.max(tempScaled, massScaled);
       if (Double.isFinite(energyScaled)) {
         combinedResidual =
@@ -580,6 +592,92 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private int computeIterationLimit() {
     int trayBasedLimit = (int) Math.ceil(Math.max(5.0, numberOfTrays * TRAY_ITERATION_FACTOR));
     return Math.max(Math.max(1, maxNumberOfIterations), trayBasedLimit);
+  }
+
+  /**
+   * Derive the effective temperature tolerance based on column complexity unless overridden.
+   *
+   * @return adaptive temperature tolerance in Kelvin
+   */
+  private double getEffectiveTemperatureTolerance() {
+    if (temperatureToleranceCustomized) {
+      return temperatureTolerance;
+    }
+    return DEFAULT_TEMPERATURE_TOLERANCE * computeToleranceComplexityMultiplier();
+  }
+
+  /**
+   * Derive the effective mass balance tolerance based on column complexity unless overridden.
+   *
+   * @return adaptive mass balance tolerance (relative)
+   */
+  private double getEffectiveMassBalanceTolerance() {
+    if (massBalanceToleranceCustomized) {
+      return massBalanceTolerance;
+    }
+    return DEFAULT_MASS_BALANCE_TOLERANCE * computeToleranceComplexityMultiplier();
+  }
+
+  /**
+   * Derive the effective enthalpy balance tolerance based on column complexity unless overridden.
+   *
+   * @return adaptive energy balance tolerance (relative)
+   */
+  private double getEffectiveEnthalpyBalanceTolerance() {
+    if (enthalpyBalanceToleranceCustomized) {
+      return enthalpyBalanceTolerance;
+    }
+    return DEFAULT_ENTHALPY_BALANCE_TOLERANCE * computeToleranceComplexityMultiplier();
+  }
+
+  /**
+   * Estimate a scaling factor that reflects the degree of distillation complexity.
+   *
+   * <p>
+   * The factor increases with the number of theoretical stages and independent feed streams and is
+   * bounded to avoid overly loose convergence criteria.
+   * </p>
+   *
+   * @return scaling multiplier for recommended tolerances
+   */
+  private double computeToleranceComplexityMultiplier() {
+    int stageCount = Math.max(1, getEffectiveStageCount());
+    double stageMultiplier = 1.0 + Math.max(0, stageCount - 3) * 0.06;
+
+    int feedCount = Math.max(0, getTotalFeedCount());
+    double feedMultiplier = 1.0 + Math.max(0, feedCount - 1) * 0.25;
+
+    double combined = Math.max(stageMultiplier, feedMultiplier);
+    return Math.min(2.5, combined);
+  }
+
+  /**
+   * Count the number of simple trays, excluding optional reboiler and condenser sections.
+   *
+   * @return effective number of equilibrium stages
+   */
+  private int getEffectiveStageCount() {
+    int stageCount = numberOfTrays;
+    if (hasReboiler && stageCount > 0) {
+      stageCount--;
+    }
+    if (hasCondenser && stageCount > 0) {
+      stageCount--;
+    }
+    return Math.max(0, stageCount);
+  }
+
+  /**
+   * Count connected feed streams across all trays.
+   *
+   * @return total number of feeds currently attached to the column
+   */
+  private int getTotalFeedCount() {
+    int total = 0;
+    for (List<StreamInterface> feeds : feedStreams.values()) {
+      total += feeds.size();
+    }
+    return total;
   }
 
   /**
@@ -700,9 +798,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int overflowBand = Math.max(overflowIncrement, numberOfTrays);
     int maxIterationLimit = Math.max(iterationLimit, maxNumberOfIterations)
         + overflowBand * ITERATION_OVERFLOW_MULTIPLIER;
-    double baseTempTolerance = temperatureTolerance;
-    double baseMassTolerance = massBalanceTolerance;
-    double baseEnergyTolerance = enthalpyBalanceTolerance;
+    double baseTempTolerance = getEffectiveTemperatureTolerance();
+    double baseMassTolerance = getEffectiveMassBalanceTolerance();
+    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
     double polishTempTolerance = Math.min(baseTempTolerance, TEMPERATURE_POLISH_TARGET);
     double polishMassTolerance = Math.min(baseMassTolerance, MASS_POLISH_TARGET);
     double polishEnergyTolerance = Math.min(baseEnergyTolerance, ENERGY_POLISH_TARGET);
@@ -770,9 +868,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         massEnergyEvaluated = true;
       }
 
-      double tempScaled = err / temperatureTolerance;
-      double massScaled = massErr / massBalanceTolerance;
-      double energyScaled = energyErr / enthalpyBalanceTolerance;
+      double tempScaled = err / baseTempTolerance;
+      double massScaled = massErr / baseMassTolerance;
+      double energyScaled = energyErr / baseEnergyTolerance;
       double combinedResidual = Math.max(tempScaled, massScaled);
       if (Double.isFinite(energyScaled)) {
         combinedResidual =
@@ -884,9 +982,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int iterationLimit = baseIterationLimit;
     int polishIterationLimit = baseIterationLimit
         + Math.max(POLISH_ITERATION_MARGIN, (int) Math.ceil(0.5 * numberOfTrays));
-    double baseTempTolerance = temperatureTolerance;
-    double baseMassTolerance = massBalanceTolerance;
-    double baseEnergyTolerance = enthalpyBalanceTolerance;
+    double baseTempTolerance = getEffectiveTemperatureTolerance();
+    double baseMassTolerance = getEffectiveMassBalanceTolerance();
+    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
     double polishTempTolerance = Math.min(baseTempTolerance, TEMPERATURE_POLISH_TARGET);
     double polishMassTolerance = Math.min(baseMassTolerance, MASS_POLISH_TARGET);
     double polishEnergyTolerance = Math.min(baseEnergyTolerance, ENERGY_POLISH_TARGET);
@@ -1105,7 +1203,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    return (err < temperatureTolerance);
+    return (err < getEffectiveTemperatureTolerance());
   }
 
   /**
@@ -1159,7 +1257,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return mass balance tolerance
    */
   public double getMassBalanceTolerance() {
-    return massBalanceTolerance;
+    return getEffectiveMassBalanceTolerance();
   }
 
   /**
@@ -1186,7 +1284,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return enthalpy balance tolerance
    */
   public double getEnthalpyBalanceTolerance() {
-    return enthalpyBalanceTolerance;
+    return getEffectiveEnthalpyBalanceTolerance();
   }
 
   /**
@@ -1195,7 +1293,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return temperature tolerance in Kelvin
    */
   public double getTemperatureTolerance() {
-    return temperatureTolerance;
+    return getEffectiveTemperatureTolerance();
   }
 
   /**
@@ -1360,6 +1458,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public void setTemperatureTolerance(double tol) {
     this.temperatureTolerance = tol;
+    this.temperatureToleranceCustomized = true;
   }
 
   /**
@@ -1369,6 +1468,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public void setMassBalanceTolerance(double tol) {
     this.massBalanceTolerance = tol;
+    this.massBalanceToleranceCustomized = true;
   }
 
   /**
@@ -1378,6 +1478,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public void setEnthalpyBalanceTolerance(double tol) {
     this.enthalpyBalanceTolerance = tol;
+    this.enthalpyBalanceToleranceCustomized = true;
+  }
+
+  /**
+   * Restore adaptive default tolerances, discarding manual overrides.
+   */
+  public void resetToleranceOverrides() {
+    temperatureToleranceCustomized = false;
+    massBalanceToleranceCustomized = false;
+    enthalpyBalanceToleranceCustomized = false;
+    temperatureTolerance = DEFAULT_TEMPERATURE_TOLERANCE;
+    massBalanceTolerance = DEFAULT_MASS_BALANCE_TOLERANCE;
+    enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
   }
 
   /**
