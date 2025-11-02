@@ -1279,24 +1279,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Control whether the solver enforces the energy balance tolerance when determining convergence.
-   *
-   * @param enforce {@code true} to require the energy residual to satisfy the configured tolerance
-   */
-  public void setEnforceEnergyBalanceTolerance(boolean enforce) {
-    this.enforceEnergyBalanceTolerance = enforce;
-  }
-
-  /**
-   * Check if the solver currently enforces the energy balance tolerance during convergence checks.
-   *
-   * @return {@code true} if the energy residual must satisfy its tolerance before convergence
-   */
-  public boolean isEnforceEnergyBalanceTolerance() {
-    return enforceEnergyBalanceTolerance;
-  }
-
-  /**
    * Access the configured relative enthalpy balance tolerance.
    *
    * @return enthalpy balance tolerance
