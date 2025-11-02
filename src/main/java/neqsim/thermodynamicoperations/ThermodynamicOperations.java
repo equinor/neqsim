@@ -34,6 +34,8 @@ import neqsim.thermodynamicoperations.flashops.TVflash;
 import neqsim.thermodynamicoperations.flashops.VHflashQfunc;
 import neqsim.thermodynamicoperations.flashops.VUflashQfunc;
 import neqsim.thermodynamicoperations.flashops.VUflashSingleComp;
+import neqsim.thermodynamicoperations.flashops.ImprovedVUflashQfunc;
+import neqsim.thermodynamicoperations.flashops.OptimizedVUflash;
 import neqsim.thermodynamicoperations.flashops.dTPflash;
 import neqsim.thermodynamicoperations.flashops.saturationops.AddIonToScaleSaturation;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlash;
@@ -868,7 +870,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (isPureComponentWithinInternalEnergyRange(Uspec)) {
       operation = new VUflashSingleComp(system, Vspec, Uspec);
     } else {
-      operation = new VUflashQfunc(system, Vspec, Uspec);
+      operation = new OptimizedVUflash(system, Vspec, Uspec);
     }
     getOperation().run();
   }
