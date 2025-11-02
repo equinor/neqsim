@@ -1148,7 +1148,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Configure the adaptive scaling limits applied to the Broyden acceleration.
    *
    * @param minScale minimum scaling value (positive)
-   * @param maxScale maximum scaling value (>= minScale)
+   * @param maxScale maximum scaling value (&gt;= minScale)
    */
   public void setBroydenScalingLimits(double minScale, double maxScale) {
     if (minScale <= 0.0) {
@@ -1641,6 +1641,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /**
    * Ensure a double array has the required size, creating a new one if needed.
+   *
+   * @param array existing array or null
+   * @param size required array size
+   * @return array with the required size
    */
   protected double[] ensureDoubleArray(double[] array, int size) {
     if (array == null || array.length != size) {
@@ -1651,6 +1655,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /**
    * Ensure a stream array has the required size, creating a new one if needed.
+   *
+   * @param array existing array or null
+   * @param size required array size
+   * @return array with the required size
    */
   protected StreamInterface[] ensureStreamArray(StreamInterface[] array, int size) {
     if (array == null || array.length != size) {
@@ -1659,7 +1667,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return array;
   }
 
-  /** Clear references within the provided stream array. */
+  /**
+   * Clear references within the provided stream array.
+   *
+   * @param array stream array to clear
+   */
   protected void clearStreamArray(StreamInterface[] array) {
     if (array == null) {
       return;
@@ -1669,7 +1681,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
   }
 
-  /** Fill the provided double array with the specified value. */
+  /**
+   * Fill the provided double array with the specified value.
+   *
+   * @param array array to fill
+   * @param value value to fill with
+   */
   protected void fillArray(double[] array, double value) {
     if (array == null) {
       return;
@@ -1705,7 +1722,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastSolveTimeSeconds = 0.0;
   }
 
-  /** Update cached solve metrics after a successful calculation. */
+  /**
+   * Update cached solve metrics after a successful calculation.
+   *
+   * @param iterationCount number of iterations performed
+   * @param temperatureResidual average temperature residual
+   * @param massResidual relative mass balance residual
+   * @param energyResidual relative enthalpy residual
+   * @param solveTimeSeconds solve time in seconds
+   */
   protected void updateSolveMetrics(int iterationCount, double temperatureResidual,
       double massResidual, double energyResidual, double solveTimeSeconds) {
     this.lastIterationCount = iterationCount;
@@ -1715,7 +1740,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.lastSolveTimeSeconds = solveTimeSeconds;
   }
 
-  /** Record the current convergence error used by {@link #solved()}. */
+  /**
+   * Record the current convergence error used by {@link #solved()}.
+   *
+   * @param value error value to set
+   */
   protected void setCurrentError(double value) {
     this.err = value;
   }
