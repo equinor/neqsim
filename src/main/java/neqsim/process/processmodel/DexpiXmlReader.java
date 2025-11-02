@@ -17,13 +17,13 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -106,7 +106,8 @@ public final class DexpiXmlReader {
    * @throws IOException if the file cannot be read
    * @throws DexpiXmlReaderException if the file cannot be parsed
    */
-  public static ProcessSystem read(File file, Stream templateStream) throws IOException, DexpiXmlReaderException {
+  public static ProcessSystem read(File file, Stream templateStream)
+      throws IOException, DexpiXmlReaderException {
     Objects.requireNonNull(file, "file");
     logger.info("Reading DEXPI XML file: {}", file.getAbsolutePath());
     try (InputStream inputStream = new FileInputStream(file)) {
@@ -122,7 +123,8 @@ public final class DexpiXmlReader {
    * @throws IOException if the stream cannot be read
    * @throws DexpiXmlReaderException if the stream cannot be parsed
    */
-  public static ProcessSystem read(InputStream inputStream) throws IOException, DexpiXmlReaderException {
+  public static ProcessSystem read(InputStream inputStream)
+      throws IOException, DexpiXmlReaderException {
     return read(inputStream, null);
   }
 
@@ -152,7 +154,8 @@ public final class DexpiXmlReader {
    * @throws IOException if reading fails
    * @throws DexpiXmlReaderException if the file cannot be parsed
    */
-  public static void load(File file, ProcessSystem processSystem) throws IOException, DexpiXmlReaderException {
+  public static void load(File file, ProcessSystem processSystem)
+      throws IOException, DexpiXmlReaderException {
     load(file, processSystem, null);
   }
 
@@ -183,7 +186,8 @@ public final class DexpiXmlReader {
    * @throws IOException if reading fails
    * @throws DexpiXmlReaderException if the stream cannot be parsed
    */
-  public static void load(InputStream inputStream, ProcessSystem processSystem) throws IOException, DexpiXmlReaderException {
+  public static void load(InputStream inputStream, ProcessSystem processSystem)
+      throws IOException, DexpiXmlReaderException {
     load(inputStream, processSystem, null);
   }
 
@@ -210,7 +214,8 @@ public final class DexpiXmlReader {
     Stream streamTemplate = templateOrDefault(templateStream);
 
     addUnits(document, processSystem, "Equipment", EQUIPMENT_CLASS_MAP, DexpiMetadata.TAG_NAME);
-    addUnits(document, processSystem, "PipingComponent", PIPING_COMPONENT_MAP, "PipingComponentNumberAssignmentClass");
+    addUnits(document, processSystem, "PipingComponent", PIPING_COMPONENT_MAP,
+        "PipingComponentNumberAssignmentClass");
     addPipingSegments(document, processSystem, streamTemplate);
   }
 
@@ -230,32 +235,48 @@ public final class DexpiXmlReader {
       Document document = builder.parse(inputStream);
       document.getDocumentElement().normalize();
       return document;
-    } catch (ParserConfigurationException | SAXException | IOException | IllegalArgumentException e) {
+    } catch (ParserConfigurationException | SAXException | IOException
+        | IllegalArgumentException e) {
       throw new DexpiXmlReaderException("Unable to parse DEXPI XML", e);
     }
   }
 
-  private static void addUnits(Document document, ProcessSystem processSystem, String tagName, Map<String, EquipmentEnum> equipmentMap, String nameAttribute) {
-    NodeList equipmentNodes = document.getElementsByTagName(tagName);
-    logger.info("Found {} {}s", equipmentNodes.getLength(), tagName);
-    for (int i = 0; i < equipmentNodes.getLength(); i++) {
-      Node node = equipmentNodes.item(i);
-      if (node.getNodeType() != Node.ELEMENT_NODE) {
-        continue;
-      }
-      Element element = (Element) node;
-      String componentClass = element.getAttribute("ComponentClass");
-      EquipmentEnum equipmentEnum = equipmentMap.get(componentClass);
-      if (equipmentEnum == null) {
-        logger.warn("Unsupported component class: {}", componentClass);
-        continue;
-      }
+  private static void addUnits(Document document, ProcessSystem processSystem, String tagName,
+      Map<String, EquipmentEnum> equipmentMap, String nameAttribute) {
+    NodeList parentNodes = document.getElementsByTagName(tagName);
+    logger.info("Found {} {} parent elements", parentNodes.getLength(), tagName);
 
-      String baseName = firstNonEmpty(attributeValue(element, nameAttribute),
-          attributeValue(element, DexpiMetadata.TAG_NAME), element.getAttribute("ID"));
-      addDexpiUnit(processSystem, element, equipmentEnum, baseName,
-          element.getAttribute("ComponentClass"));
+    int totalUnits = 0;
+    for (int i = 0; i < parentNodes.getLength(); i++) {
+      Node parentNode = parentNodes.item(i);
+      if (parentNode.getNodeType() != Node.ELEMENT_NODE) {
+        continue;
+      }
+      Element parentElement = (Element) parentNode;
+
+      // Look for all child elements of the parent (Equipment or PipingComponent)
+      NodeList childNodes = parentElement.getChildNodes();
+      for (int j = 0; j < childNodes.getLength(); j++) {
+        Node childNode = childNodes.item(j);
+        if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+          continue;
+        }
+        Element element = (Element) childNode;
+        String componentClass = element.getAttribute("ComponentClass");
+        EquipmentEnum equipmentEnum = equipmentMap.get(componentClass);
+        if (equipmentEnum == null) {
+          logger.warn("Unsupported component class: {}", componentClass);
+          continue;
+        }
+
+        String baseName = firstNonEmpty(attributeValue(element, nameAttribute),
+            attributeValue(element, DexpiMetadata.TAG_NAME), element.getAttribute("ID"));
+        addDexpiUnit(processSystem, element, equipmentEnum, baseName,
+            element.getAttribute("ComponentClass"));
+        totalUnits++;
+      }
     }
+    logger.info("Added {} units from {} elements", totalUnits, tagName);
   }
 
   private static void addPipingSegments(Document document, ProcessSystem processSystem,
