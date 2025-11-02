@@ -3,8 +3,8 @@
 The `DexpiXmlReader` utility converts [DEXPI](https://dexpi.org/) XML P&ID exports into
 [`ProcessSystem`](../src/main/java/neqsim/process/processmodel/ProcessSystem.java) models.
 It recognises major equipment such as pumps, heat exchangers, tanks and control valves as well as
-piping segments, which are imported as runnable `DexpiStream` units tagged with the source line
-number.
+complex reactors, compressors and inline analysers. Piping segments are imported as runnable
+`DexpiStream` units tagged with the source line number.
 
 ## Usage
 
@@ -34,8 +34,20 @@ Each imported equipment item is represented as a lightweight `DexpiProcessUnit` 
 original DEXPI class together with the mapped `EquipmentEnum` category and contextual information
 like line numbers or fluid codes. Piping segments become `DexpiStream` objects that clone the
 pressure, temperature and flow settings from the template stream (or a built-in methane/ethane
-fallback), allowing the resulting `ProcessSystem` to perform full thermodynamic calculations when
-`run()` is invoked.
+fallback). When available, the reader honours the recommended metadata exported by NeqSim so
+pressure, temperature and flow values embedded in DEXPI documents override the template defaults.
+The resulting `ProcessSystem` can therefore perform full thermodynamic calculations when `run()` is
+invoked without requiring downstream tooling to remap metadata.
+
+### Metadata conventions
+
+Both the reader and writer share the [`DexpiMetadata`](../src/main/java/neqsim/process/processmodel/DexpiMetadata.java)
+constants that describe the recommended generic attributes for DEXPI exchanges. Equipment exports
+include tag names, line numbers and fluid codes, while piping segments also carry segment numbers
+and operating pressure/temperature/flow triples (together with their units). Downstream tools can
+consult `DexpiMetadata.recommendedStreamAttributes()` and
+`DexpiMetadata.recommendedEquipmentAttributes()` to understand the minimal metadata sets guaranteed
+by NeqSim.
 
 ### Exporting back to DEXPI
 
@@ -54,8 +66,29 @@ The writer groups all discovered `DexpiStream` segments by line number (or fluid
 not available) to generate simple `<PipingNetworkSystem>` elements with associated
 `<PipingNetworkSegment>` children. Equipment and valves are exported as `<Equipment>` and
 `<PipingComponent>` elements that preserve the original tag names, line numbers and fluid codes via
-`GenericAttribute` entries. The resulting XML focuses on the metadata required to rehydrate the
-process structure and is intentionally compact to ease downstream tooling consumption.
+`GenericAttribute` entries. Stream metadata is enriched with operating pressure, temperature and flow
+values (stored in the default NeqSim units, but accompanied by explicit `Unit` annotations) so that
+downstream thermodynamic simulators can reproduce NeqSim's state without bespoke mappings.
+
+Each piping network is also labelled with a `NeqSimGroupingKey` generic attribute so that
+visualisation libraries—such as [pyDEXPI](https://github.com/process-intelligence-research/pyDEXPI)
+or Graphviz exports—can easily recreate line-centric layouts without additional heuristics.
+
+### Round-trip profile
+
+To codify the minimal metadata required for reliable imports/exports NeqSim exposes the
+[`DexpiRoundTripProfile`](../src/main/java/neqsim/process/processmodel/DexpiRoundTripProfile.java)
+utility. The `minimalRunnableProfile` validates that a process contains runnable `DexpiStream`
+segments (with line/fluid references and operating conditions), tagged equipment and at least one
+piece of equipment alongside the piping network. Regression tests enforce this profile on the
+reference training case and the re-imported export artefacts to guarantee round-trip fidelity.
+
+### Security considerations
+
+Both the reader and writer configure their XML factories with hardened defaults: secure-processing
+is enabled, external entity resolution is disabled and `ACCESS_EXTERNAL_DTD` /
+`ACCESS_EXTERNAL_SCHEMA` properties are cleared. These guardrails mirror the guidance in the
+regression tests and should be preserved if the parsing/serialisation logic is extended.
 
 ## Tested example
 
@@ -65,8 +98,9 @@ training case provided by the
 [DEXPI Training Test Cases repository](https://gitlab.com/dexpi/TrainingTestCases/-/tree/master/dexpi%201.3/example%20pids) and
 verifies that the expected equipment (two heat exchangers, two pumps, a tank, valves and piping
 segments) are discovered. The regression additionally seeds the import with an example NeqSim feed
-stream and confirms that the generated streams remain active after `process.run()`. A companion test
-exports the imported process with `DexpiXmlWriter`, then parses the generated XML with a hardened DOM
-builder to confirm that the document contains equipment, piping components and
-`PipingNetworkSystem`/`PipingNetworkSegment` structures ready for downstream DEXPI tooling such as
-pyDEXPI.
+stream and confirms that the generated streams remain active after `process.run()`. Companion
+assertions enforce the `DexpiRoundTripProfile` and check that exported metadata (pressure,
+temperature, flow and units) survives a round-trip reload. A companion test exports the imported
+process with `DexpiXmlWriter`, then parses the generated XML with a hardened DOM builder to confirm
+that the document contains equipment, piping components and `PipingNetworkSystem`/
+`PipingNetworkSegment` structures ready for downstream DEXPI tooling such as pyDEXPI.

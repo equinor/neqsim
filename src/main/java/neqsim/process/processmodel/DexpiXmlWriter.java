@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -13,13 +15,16 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -37,6 +42,13 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  */
 public final class DexpiXmlWriter {
   private static final Pattern NON_IDENTIFIER = Pattern.compile("[^A-Za-z0-9_-]");
+  private static final ThreadLocal<DecimalFormat> DECIMAL_FORMAT = ThreadLocal.withInitial(() -> {
+    DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
+    DecimalFormat format = new DecimalFormat("0.############", symbols);
+    format.setMaximumFractionDigits(12);
+    format.setGroupingUsed(false);
+    return format;
+  });
 
   private DexpiXmlWriter() {}
 
@@ -105,10 +117,16 @@ public final class DexpiXmlWriter {
 
   private static Document createDocument() throws IOException {
     try {
-      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-      factory.setNamespaceAware(false);
-      factory.setExpandEntityReferences(false);
-      factory.setXIncludeAware(false);
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+    factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+    factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+    factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+    factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+    factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+    factory.setNamespaceAware(false);
+    factory.setExpandEntityReferences(false);
+    factory.setXIncludeAware(false);
       DocumentBuilder builder = factory.newDocumentBuilder();
       return builder.newDocument();
     } catch (ParserConfigurationException e) {
@@ -150,11 +168,11 @@ public final class DexpiXmlWriter {
         uniqueIdentifier(elementName, processUnit.getName(), usedIds));
 
     Element genericAttributes = document.createElement("GenericAttributes");
-    appendGenericAttribute(document, genericAttributes, "TagNameAssignmentClass",
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME,
         processUnit.getName());
-    appendGenericAttribute(document, genericAttributes, "LineNumberAssignmentClass",
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.LINE_NUMBER,
         processUnit.getLineNumber());
-    appendGenericAttribute(document, genericAttributes, "FluidCodeAssignmentClass",
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE,
         processUnit.getFluidCode());
 
     if (genericAttributes.hasChildNodes()) {
@@ -173,10 +191,11 @@ public final class DexpiXmlWriter {
     Element systemAttributes = document.createElement("GenericAttributes");
     String lineNumber = streams.stream().map(DexpiStream::getLineNumber)
         .filter(value -> !isBlank(value)).findFirst().orElse(null);
-    appendGenericAttribute(document, systemAttributes, "LineNumberAssignmentClass", lineNumber);
+    appendGenericAttribute(document, systemAttributes, DexpiMetadata.LINE_NUMBER, lineNumber);
     String fluidCode = streams.stream().map(DexpiStream::getFluidCode)
         .filter(value -> !isBlank(value)).findFirst().orElse(null);
-    appendGenericAttribute(document, systemAttributes, "FluidCodeAssignmentClass", fluidCode);
+    appendGenericAttribute(document, systemAttributes, DexpiMetadata.FLUID_CODE, fluidCode);
+    appendGenericAttribute(document, systemAttributes, "NeqSimGroupingKey", key);
     if (systemAttributes.hasChildNodes()) {
       systemElement.appendChild(systemAttributes);
     }
@@ -197,12 +216,26 @@ public final class DexpiXmlWriter {
         uniqueIdentifier("Segment", stream.getName(), usedIds));
 
     Element genericAttributes = document.createElement("GenericAttributes");
-    appendGenericAttribute(document, genericAttributes, "SegmentNumberAssignmentClass",
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.SEGMENT_NUMBER,
         stream.getName());
-    appendGenericAttribute(document, genericAttributes, "LineNumberAssignmentClass",
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.LINE_NUMBER,
         stream.getLineNumber());
-    appendGenericAttribute(document, genericAttributes, "FluidCodeAssignmentClass",
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE,
         stream.getFluidCode());
+    appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_VALUE,
+        stream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT),
+        DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_UNIT,
+        DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+    appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_TEMPERATURE_VALUE,
+        stream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT),
+        DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_TEMPERATURE_UNIT,
+        DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+    appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_VALUE,
+        stream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT), DexpiMetadata.DEFAULT_FLOW_UNIT);
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_UNIT,
+        DexpiMetadata.DEFAULT_FLOW_UNIT);
     if (genericAttributes.hasChildNodes()) {
       segmentElement.appendChild(genericAttributes);
     }
@@ -212,13 +245,29 @@ public final class DexpiXmlWriter {
 
   private static void appendGenericAttribute(Document document, Element parent, String name,
       String value) {
+    appendGenericAttribute(document, parent, name, value, null);
+  }
+
+  private static void appendGenericAttribute(Document document, Element parent, String name,
+      String value, String unit) {
     if (isBlank(value)) {
       return;
     }
     Element attribute = document.createElement("GenericAttribute");
     attribute.setAttribute("Name", name);
     attribute.setAttribute("Value", value.trim());
+    if (!isBlank(unit)) {
+      attribute.setAttribute("Unit", unit.trim());
+    }
     parent.appendChild(attribute);
+  }
+
+  private static void appendNumericAttribute(Document document, Element parent, String name,
+      double value, String unit) {
+    if (Double.isNaN(value) || Double.isInfinite(value)) {
+      return;
+    }
+    appendGenericAttribute(document, parent, name, DECIMAL_FORMAT.get().format(value), unit);
   }
 
   private static String defaultComponentClass(EquipmentEnum mapped, String elementName) {
@@ -304,6 +353,9 @@ public final class DexpiXmlWriter {
       throws IOException {
     try {
       TransformerFactory factory = TransformerFactory.newInstance();
+      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+      factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
       Transformer transformer = factory.newTransformer();
       transformer.setOutputProperty(OutputKeys.INDENT, "yes");
       transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
@@ -311,6 +363,8 @@ public final class DexpiXmlWriter {
       transformer.transform(new DOMSource(document), new StreamResult(outputStream));
     } catch (TransformerException e) {
       throw new IOException("Unable to serialize DEXPI document", e);
+    } catch (TransformerFactoryConfigurationError e) {
+      throw new IOException("Unable to configure XML transformer", e);
     }
   }
 }
