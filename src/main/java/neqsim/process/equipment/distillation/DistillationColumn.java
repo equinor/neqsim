@@ -47,6 +47,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   protected ArrayList<SimpleTray> trays = new ArrayList<SimpleTray>(0);
   /** Scaling factor used to derive a tray-proportional iteration budget. */
   private static final double TRAY_ITERATION_FACTOR = 2.0;
+  /** Target relative mass imbalance for the post-processing polish stage. */
+  private static final double MASS_POLISH_TARGET = 1.0e-3;
+  /** Target relative energy imbalance for the post-processing polish stage. */
+  private static final double ENERGY_POLISH_TARGET = 1.0e-3;
+  /** Target average temperature drift for the polishing stage in Kelvin. */
+  private static final double TEMPERATURE_POLISH_TARGET = 5.0e-4;
+  /** Extra iterations granted when a polish stage is triggered. */
+  private static final int POLISH_ITERATION_MARGIN = 6;
   double condenserCoolingDuty = 10.0;
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
@@ -414,9 +422,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     trays.get(firstFeedTrayNumber).run(id);
 
-    int iterationLimit = computeIterationLimit();
+    int baseIterationLimit = computeIterationLimit();
+    int iterationLimit = baseIterationLimit;
+    int polishIterationLimit = baseIterationLimit
+        + Math.max(POLISH_ITERATION_MARGIN, (int) Math.ceil(0.5 * numberOfTrays));
+    double baseTempTolerance = temperatureTolerance;
+    double baseMassTolerance = massBalanceTolerance;
+    double baseEnergyTolerance = enthalpyBalanceTolerance;
+    double polishTempTolerance = Math.min(baseTempTolerance, TEMPERATURE_POLISH_TARGET);
+    double polishMassTolerance = Math.min(baseMassTolerance, MASS_POLISH_TARGET);
+    double polishEnergyTolerance = Math.min(baseEnergyTolerance, ENERGY_POLISH_TARGET);
+    boolean polishing = false;
 
-    do {
+    while (iter < iterationLimit) {
       iter++;
 
       for (int i = 0; i < numberOfTrays; i++) {
@@ -500,8 +518,32 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
       logger.info("iteration {} relaxation={} tempErr={} massErr={} energyErr={}", iter, relaxation,
           err, massErr, energyErr);
-    } while ((err > temperatureTolerance || massErr > massBalanceTolerance
-        || energyErr > enthalpyBalanceTolerance) && iter < iterationLimit);
+
+      boolean withinBaseTolerance = err <= baseTempTolerance && massErr <= baseMassTolerance
+          && energyErr <= baseEnergyTolerance;
+
+      if (withinBaseTolerance) {
+        boolean polishingAvailable = polishMassTolerance < baseMassTolerance
+            || polishEnergyTolerance < baseEnergyTolerance
+            || polishTempTolerance < baseTempTolerance;
+
+        if (!polishing && polishingAvailable
+            && (massErr > polishMassTolerance || energyErr > polishEnergyTolerance)) {
+          polishing = true;
+          iterationLimit = Math.max(iterationLimit, polishIterationLimit);
+          previousCombinedResidual = Double.POSITIVE_INFINITY;
+          continue;
+        }
+
+        double tempTarget = polishing ? polishTempTolerance : baseTempTolerance;
+        double massTarget = polishing ? polishMassTolerance : baseMassTolerance;
+        double energyTarget = polishing ? polishEnergyTolerance : baseEnergyTolerance;
+
+        if (err <= tempTarget && massErr <= massTarget && energyErr <= energyTarget) {
+          break;
+        }
+      }
+    }
 
     lastIterationCount = iter;
     lastTemperatureResidual = err;
@@ -564,7 +606,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     err = 1.0e10;
-    double errOld;
     int iter = 0;
     double massErr = 1.0e10;
     double energyErr = 1.0e10;
@@ -576,11 +617,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     long startTime = System.nanoTime();
 
-    int iterationLimit = computeIterationLimit();
+    int baseIterationLimit = computeIterationLimit();
+    int iterationLimit = baseIterationLimit;
+    int polishIterationLimit = baseIterationLimit
+        + Math.max(POLISH_ITERATION_MARGIN, (int) Math.ceil(0.5 * numberOfTrays));
+    double baseTempTolerance = temperatureTolerance;
+    double baseMassTolerance = massBalanceTolerance;
+    double baseEnergyTolerance = enthalpyBalanceTolerance;
+    double polishTempTolerance = Math.min(baseTempTolerance, TEMPERATURE_POLISH_TARGET);
+    double polishMassTolerance = Math.min(baseMassTolerance, MASS_POLISH_TARGET);
+    double polishEnergyTolerance = Math.min(baseEnergyTolerance, ENERGY_POLISH_TARGET);
+    boolean polishing = false;
+    double monotonicBaseline = Double.POSITIVE_INFINITY;
 
-    do {
+    while (iter < iterationLimit) {
       iter++;
-      errOld = err;
       err = 0.0;
       for (int i = 0; i < numberOfTrays; i++) {
         oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
@@ -625,8 +676,38 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
       logger.info("error iteration = " + iter + "   err = " + err + " massErr= " + massErr
           + " energyErr= " + energyErr);
-    } while ((err > temperatureTolerance || massErr > massBalanceTolerance
-        || energyErr > enthalpyBalanceTolerance) && err < errOld && iter < iterationLimit);
+
+      boolean improved = err < monotonicBaseline;
+      monotonicBaseline = err;
+      if (!improved) {
+        break;
+      }
+
+      boolean withinBaseTolerance = err <= baseTempTolerance && massErr <= baseMassTolerance
+          && energyErr <= baseEnergyTolerance;
+
+      if (withinBaseTolerance) {
+        boolean polishingAvailable = polishMassTolerance < baseMassTolerance
+            || polishEnergyTolerance < baseEnergyTolerance
+            || polishTempTolerance < baseTempTolerance;
+
+        if (!polishing && polishingAvailable
+            && (massErr > polishMassTolerance || energyErr > polishEnergyTolerance)) {
+          polishing = true;
+          iterationLimit = Math.max(iterationLimit, polishIterationLimit);
+          monotonicBaseline = Double.POSITIVE_INFINITY;
+          continue;
+        }
+
+        double tempTarget = polishing ? polishTempTolerance : baseTempTolerance;
+        double massTarget = polishing ? polishMassTolerance : baseMassTolerance;
+        double energyTarget = polishing ? polishEnergyTolerance : baseEnergyTolerance;
+
+        if (err <= tempTarget && massErr <= massTarget && energyErr <= energyTarget) {
+          break;
+        }
+      }
+    }
 
     lastIterationCount = iter;
     lastTemperatureResidual = err;
