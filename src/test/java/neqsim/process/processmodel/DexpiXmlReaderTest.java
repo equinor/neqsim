@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Element;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.junit.jupiter.api.Test;
@@ -82,6 +83,11 @@ class DexpiXmlReaderTest {
           .filter(DexpiStream.class::isInstance).map(DexpiStream.class::cast)
           .filter(Stream::isActive).count();
       assertTrue(activeStreams > 0, "At least one imported stream should calculate a TP flash");
+
+      DexpiRoundTripProfile.ValidationResult result =
+          DexpiRoundTripProfile.minimalRunnableProfile().validate(processSystem);
+      assertTrue(result.isSuccessful(),
+          () -> "Minimal runnable profile violations: " + result.getViolations());
     }
   }
 
@@ -113,6 +119,51 @@ class DexpiXmlReaderTest {
       assertTrue(systems.getLength() > 0, "Export should include piping network systems");
       assertTrue(equipment.getLength() + pipingComponents.getLength() > 5,
           "Export should include multiple pieces of equipment and piping components");
+
+      Element firstSegment = (Element) pipingSegments.item(0);
+      Element segmentAttributes = findGenericAttributes(firstSegment);
+      assertNotNull(segmentAttributes,
+          "Piping segments should carry generic attributes with operating metadata");
+      assertTrue(hasGenericAttribute(segmentAttributes, DexpiMetadata.OPERATING_PRESSURE_VALUE),
+          "Segments should include operating pressure values");
+      assertTrue(hasGenericAttribute(segmentAttributes, DexpiMetadata.OPERATING_TEMPERATURE_VALUE),
+          "Segments should include operating temperature values");
+      assertTrue(hasGenericAttribute(segmentAttributes, DexpiMetadata.OPERATING_FLOW_VALUE),
+          "Segments should include operating flow values");
+
+      Element pressureAttribute = getGenericAttribute(segmentAttributes,
+          DexpiMetadata.OPERATING_PRESSURE_VALUE);
+      assertNotNull(pressureAttribute, "Pressure attribute must be present");
+      assertTrue(pressureAttribute.hasAttribute("Unit"),
+          "Pressure attribute should declare a unit");
+
+      Stream roundTripTemplate = createExampleFeedStream();
+      roundTripTemplate.setPressure(5.0, DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+      roundTripTemplate.setTemperature(10.0, DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+      roundTripTemplate.setFlowRate(5.0, DexpiMetadata.DEFAULT_FLOW_UNIT);
+
+      try (InputStream reimportStream = Files.newInputStream(exportPath)) {
+        ProcessSystem roundTripped = DexpiXmlReader.read(reimportStream, roundTripTemplate);
+        roundTripped.run();
+
+        DexpiRoundTripProfile.ValidationResult roundTripValidation =
+            DexpiRoundTripProfile.minimalRunnableProfile().validate(roundTripped);
+        assertTrue(roundTripValidation.isSuccessful(),
+            () -> "Round-trip profile violations: " + roundTripValidation.getViolations());
+
+        DexpiStream exportedStream = (DexpiStream) roundTripped.getUnit("47121-S1");
+        if (exportedStream != null) {
+          assertEquals(templateStream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT),
+              exportedStream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT), 1e-9,
+              "Pressure metadata should survive round-trip");
+          assertEquals(templateStream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT),
+              exportedStream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT), 1e-9,
+              "Temperature metadata should survive round-trip");
+          assertEquals(templateStream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT),
+              exportedStream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT), 1e-9,
+              "Flow metadata should survive round-trip");
+        }
+      }
     }
   }
 
@@ -130,5 +181,28 @@ class DexpiXmlReaderTest {
     try (InputStream exportStream = Files.newInputStream(exportPath)) {
       return builder.parse(exportStream);
     }
+  }
+
+  private Element findGenericAttributes(Element element) {
+    NodeList nodes = element.getElementsByTagName("GenericAttributes");
+    if (nodes.getLength() == 0) {
+      return null;
+    }
+    return (Element) nodes.item(0);
+  }
+
+  private boolean hasGenericAttribute(Element parent, String name) {
+    return getGenericAttribute(parent, name) != null;
+  }
+
+  private Element getGenericAttribute(Element parent, String name) {
+    NodeList attributes = parent.getElementsByTagName("GenericAttribute");
+    for (int i = 0; i < attributes.getLength(); i++) {
+      Element attribute = (Element) attributes.item(i);
+      if (name.equals(attribute.getAttribute("Name"))) {
+        return attribute;
+      }
+    }
+    return null;
   }
 }

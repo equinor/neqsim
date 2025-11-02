@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -36,16 +37,30 @@ public final class DexpiXmlReader {
   static {
     Map<String, EquipmentEnum> equipmentMap = new HashMap<>();
     equipmentMap.put("PlateHeatExchanger", EquipmentEnum.HeatExchanger);
+    equipmentMap.put("ShellAndTubeHeatExchanger", EquipmentEnum.HeatExchanger);
     equipmentMap.put("TubularHeatExchanger", EquipmentEnum.HeatExchanger);
+    equipmentMap.put("AirCooledHeatExchanger", EquipmentEnum.HeatExchanger);
     equipmentMap.put("CentrifugalPump", EquipmentEnum.Pump);
     equipmentMap.put("ReciprocatingPump", EquipmentEnum.Pump);
+    equipmentMap.put("CentrifugalCompressor", EquipmentEnum.Compressor);
+    equipmentMap.put("ReciprocatingCompressor", EquipmentEnum.Compressor);
     equipmentMap.put("Tank", EquipmentEnum.Tank);
+    equipmentMap.put("StirredTankReactor", EquipmentEnum.Reactor);
+    equipmentMap.put("PlugFlowReactor", EquipmentEnum.Reactor);
+    equipmentMap.put("PackedBedReactor", EquipmentEnum.Reactor);
+    equipmentMap.put("InlineAnalyzer", EquipmentEnum.Calculator);
+    equipmentMap.put("GasAnalyzer", EquipmentEnum.Calculator);
+    equipmentMap.put("Spectrometer", EquipmentEnum.Calculator);
     EQUIPMENT_CLASS_MAP = Collections.unmodifiableMap(equipmentMap);
 
     Map<String, EquipmentEnum> pipingMap = new HashMap<>();
     pipingMap.put("GlobeValve", EquipmentEnum.ThrottlingValve);
     pipingMap.put("ButterflyValve", EquipmentEnum.ThrottlingValve);
     pipingMap.put("CheckValve", EquipmentEnum.ThrottlingValve);
+    pipingMap.put("ControlValve", EquipmentEnum.ThrottlingValve);
+    pipingMap.put("PressureSafetyValve", EquipmentEnum.ThrottlingValve);
+    pipingMap.put("PressureReliefValve", EquipmentEnum.ThrottlingValve);
+    pipingMap.put("PressureReducingValve", EquipmentEnum.ThrottlingValve);
     PIPING_COMPONENT_MAP = Collections.unmodifiableMap(pipingMap);
   }
 
@@ -207,7 +222,7 @@ public final class DexpiXmlReader {
         continue;
       }
 
-      String baseName = firstNonEmpty(getGenericAttribute(element, "TagNameAssignmentClass"),
+      String baseName = firstNonEmpty(attributeValue(element, DexpiMetadata.TAG_NAME),
           element.getAttribute("ID"));
       addDexpiUnit(processSystem, element, equipmentEnum, baseName,
           element.getAttribute("ComponentClass"));
@@ -228,8 +243,8 @@ public final class DexpiXmlReader {
       }
 
       String baseName = firstNonEmpty(
-          getGenericAttribute(element, "PipingComponentNumberAssignmentClass"),
-          getGenericAttribute(element, "TagNameAssignmentClass"), element.getAttribute("ID"));
+          attributeValue(element, "PipingComponentNumberAssignmentClass"),
+          attributeValue(element, DexpiMetadata.TAG_NAME), element.getAttribute("ID"));
       addDexpiUnit(processSystem, element, equipmentEnum, baseName,
           element.getAttribute("ComponentClass"));
     }
@@ -244,7 +259,7 @@ public final class DexpiXmlReader {
         continue;
       }
       Element element = (Element) node;
-      String baseName = firstNonEmpty(getGenericAttribute(element, "SegmentNumberAssignmentClass"),
+      String baseName = firstNonEmpty(attributeValue(element, DexpiMetadata.SEGMENT_NUMBER),
           element.getAttribute("ID"));
       addDexpiStream(processSystem, element, templateStream, baseName);
     }
@@ -254,9 +269,8 @@ public final class DexpiXmlReader {
       Stream templateStream, String baseName) {
     String contextualName = prependLineOrFluid(element, baseName);
     String uniqueName = ensureUniqueName(processSystem, contextualName);
-    String lineNumber = findAttributeInAncestors(element, "LineNumberAssignmentClass");
-    String fluidCode = firstNonEmpty(getGenericAttribute(element, "FluidCodeAssignmentClass"),
-        findAttributeInAncestors(element, "FluidCodeAssignmentClass"));
+    String lineNumber = attributeValue(element, DexpiMetadata.LINE_NUMBER);
+    String fluidCode = attributeValue(element, DexpiMetadata.FLUID_CODE);
 
     SystemInterface baseFluid = templateStream.getThermoSystem();
     SystemInterface fluid = baseFluid == null ? createDefaultFluid() : baseFluid.clone();
@@ -264,6 +278,14 @@ public final class DexpiXmlReader {
     DexpiStream stream = new DexpiStream(uniqueName, fluid, element.getAttribute("ComponentClass"),
         lineNumber, fluidCode);
     stream.setSpecification(templateStream.getSpecification());
+    stream.setPressure(templateStream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT),
+        DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+    stream.setTemperature(templateStream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT),
+        DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+    stream.setFlowRate(templateStream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT),
+        DexpiMetadata.DEFAULT_FLOW_UNIT);
+
+    applyStreamMetadata(element, stream);
     processSystem.addUnit(uniqueName, stream);
   }
 
@@ -271,9 +293,8 @@ public final class DexpiXmlReader {
       EquipmentEnum equipmentEnum, String baseName, String componentClass) {
     String contextualName = prependLineOrFluid(element, baseName);
     String uniqueName = ensureUniqueName(processSystem, contextualName);
-    String lineNumber = findAttributeInAncestors(element, "LineNumberAssignmentClass");
-    String fluidCode = firstNonEmpty(getGenericAttribute(element, "FluidCodeAssignmentClass"),
-        findAttributeInAncestors(element, "FluidCodeAssignmentClass"));
+    String lineNumber = attributeValue(element, DexpiMetadata.LINE_NUMBER);
+    String fluidCode = attributeValue(element, DexpiMetadata.FLUID_CODE);
     DexpiProcessUnit unit =
         new DexpiProcessUnit(uniqueName, componentClass, equipmentEnum, lineNumber, fluidCode);
     processSystem.addUnit(uniqueName, unit);
@@ -281,12 +302,11 @@ public final class DexpiXmlReader {
 
   private static String prependLineOrFluid(Element element, String baseName) {
     String trimmedBase = baseName == null ? "" : baseName.trim();
-    String lineNumber = findAttributeInAncestors(element, "LineNumberAssignmentClass");
+    String lineNumber = attributeValue(element, DexpiMetadata.LINE_NUMBER);
     if (!isBlank(lineNumber)) {
       return lineNumber.trim() + "-" + trimmedBase;
     }
-    String fluidCode = firstNonEmpty(getGenericAttribute(element, "FluidCodeAssignmentClass"),
-        findAttributeInAncestors(element, "FluidCodeAssignmentClass"));
+    String fluidCode = attributeValue(element, DexpiMetadata.FLUID_CODE);
     if (!isBlank(fluidCode)) {
       return fluidCode.trim() + "-" + trimmedBase;
     }
@@ -356,6 +376,56 @@ public final class DexpiXmlReader {
       }
     }
     return null;
+  }
+
+  private static String attributeValue(Element element, String attributeName) {
+    return firstNonEmpty(getGenericAttribute(element, attributeName),
+        findAttributeInAncestors(element, attributeName));
+  }
+
+  private static void applyStreamMetadata(Element element, DexpiStream stream) {
+    applyNumericAttribute(element, DexpiMetadata.OPERATING_PRESSURE_VALUE,
+        DexpiMetadata.OPERATING_PRESSURE_UNIT, stream::setPressure,
+        DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+    applyNumericAttribute(element, DexpiMetadata.OPERATING_TEMPERATURE_VALUE,
+        DexpiMetadata.OPERATING_TEMPERATURE_UNIT, stream::setTemperature,
+        DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+    applyNumericAttribute(element, DexpiMetadata.OPERATING_FLOW_VALUE,
+        DexpiMetadata.OPERATING_FLOW_UNIT, stream::setFlowRate, DexpiMetadata.DEFAULT_FLOW_UNIT);
+  }
+
+  private static void applyNumericAttribute(Element element, String valueAttribute,
+      String unitAttribute, BiConsumer<Double, String> consumer, String defaultUnit) {
+    String valueText = firstNonEmpty(getGenericAttribute(element, valueAttribute),
+        findAttributeInAncestors(element, valueAttribute));
+    Double value = parseNumeric(valueText);
+    if (value == null) {
+      return;
+    }
+    String unit = firstNonEmpty(getGenericAttribute(element, unitAttribute),
+        findAttributeInAncestors(element, unitAttribute), defaultUnit);
+    consumer.accept(value, unit);
+  }
+
+  private static Double parseNumeric(String valueText) {
+    if (isBlank(valueText)) {
+      return null;
+    }
+    String trimmed = valueText.trim();
+    try {
+      return Double.parseDouble(trimmed);
+    } catch (NumberFormatException ex) {
+      int spaceIndex = trimmed.indexOf(' ');
+      if (spaceIndex > 0) {
+        String candidate = trimmed.substring(0, spaceIndex);
+        try {
+          return Double.parseDouble(candidate);
+        } catch (NumberFormatException ignored) {
+          return null;
+        }
+      }
+      return null;
+    }
   }
 
   private static List<Element> directChildElements(Element element, String tagName) {
