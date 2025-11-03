@@ -371,7 +371,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       liquidOutStream.setThermoSystemFromPhase(thermoSystem2, "liquid");
       liquidOutStream.getFluid().init(2);
     } else {
-      liquidOutStream.setThermoSystem(thermoSystem2.getEmptySystemClone());
+      // No liquid phase - set empty system with zero flow
+      SystemInterface emptyLiquidSystem = thermoSystem2.getEmptySystemClone();
+      emptyLiquidSystem.setTotalFlowRate(0.0, "kg/hr");
+      liquidOutStream.setThermoSystem(emptyLiquidSystem);
     }
     if (thermoSystem2.hasPhaseType("gas") && thermoSystem2.getNumberOfComponents() > 1) {
       gasOutStream.run(id);
@@ -425,7 +428,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       try {
         gasOutStream.getThermoSystem().init(2);
-        liquidOutStream.getThermoSystem().init(2);
+        if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+          liquidOutStream.getThermoSystem().init(2);
+        }
       } catch (Exception e) {
         logger.error(e.getMessage());
       }
@@ -470,18 +475,18 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
 
       liquidLevel = 0.0;
-        if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-          double volumeLoc = 0.0;
-          if (thermoSystem.hasPhaseType("oil")) {
-            volumeLoc += thermoSystem.getPhase("oil").getVolume("m3");
-          }
-          if (thermoSystem.hasPhaseType("aqueous")) {
-            volumeLoc += thermoSystem.getPhase("aqueous").getVolume("m3");
-          }
-          liquidLevel = levelFromVolume(volumeLoc);
+      if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+        double volumeLoc = 0.0;
+        if (thermoSystem.hasPhaseType("oil")) {
+          volumeLoc += thermoSystem.getPhase("oil").getVolume("m3");
         }
-        liquidVolume = calcLiquidVolume();
-        enforceHeadspace();
+        if (thermoSystem.hasPhaseType("aqueous")) {
+          volumeLoc += thermoSystem.getPhase("aqueous").getVolume("m3");
+        }
+        liquidLevel = levelFromVolume(volumeLoc);
+      }
+      liquidVolume = calcLiquidVolume();
+      enforceHeadspace();
 
       // System.out.printf("vol original: %.2f mine %f \n", liquidVolume, liqVol);
       setCalculationIdentifier(id);
@@ -498,23 +503,30 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    */
   public void setTempPres(double temp, double pres) {
     gasOutStream.getThermoSystem().setTemperature(temp);
-    liquidOutStream.getThermoSystem().setTemperature(temp);
+    gasOutStream.getThermoSystem().setPressure(pres);
+
+    if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+      liquidOutStream.getThermoSystem().setTemperature(temp);
+      liquidOutStream.getThermoSystem().setPressure(pres);
+    }
 
     inletStreamMixer.setPressure(pres);
-    gasOutStream.getThermoSystem().setPressure(pres);
-    liquidOutStream.getThermoSystem().setPressure(pres);
 
     UUID id = UUID.randomUUID();
 
     inletStreamMixer.run(id);
     if (getThermoSystem().getNumberOfComponents() > 1) {
       gasOutStream.run(id);
-      liquidOutStream.run(id);
+      if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+        liquidOutStream.run(id);
+      }
     } else {
       gasOutStream.getFluid().init(2);
       gasOutStream.getFluid().initPhysicalProperties("density");
-      liquidOutStream.getFluid().init(2);
-      liquidOutStream.getFluid().initPhysicalProperties("density");
+      if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+        liquidOutStream.getFluid().init(2);
+        liquidOutStream.getFluid().initPhysicalProperties("density");
+      }
     }
 
   }
@@ -950,8 +962,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     int maxIter = 100;
 
     double headspace = getMinGasVolume();
-    double maxLiquidVolume = separatorVolume > 0.0 ? Math.max(separatorVolume - headspace, 0.0)
-        : 0.0;
+    double maxLiquidVolume =
+        separatorVolume > 0.0 ? Math.max(separatorVolume - headspace, 0.0) : 0.0;
     double limitedVolume = Math.max(0.0, Math.min(volumeTarget, maxLiquidVolume));
 
     double a = 0.0;
@@ -1147,18 +1159,24 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       inletStreamMixer.getStream(i).getFluid().init(3);
       entrop += inletStreamMixer.getStream(i).getFluid().getEntropy(unit);
     }
+
+    double liquidEntropy = 0.0;
     if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
       try {
         getLiquidOutStream().getThermoSystem().init(3);
+        liquidEntropy = getLiquidOutStream().getThermoSystem().getEntropy(unit);
       } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
       }
     }
+
+    double gasEntropy = 0.0;
     if (thermoSystem.hasPhaseType("gas")) {
       getGasOutStream().getThermoSystem().init(3);
+      gasEntropy = getGasOutStream().getThermoSystem().getEntropy(unit);
     }
 
-    return getLiquidOutStream().getThermoSystem().getEntropy(unit)
-        + getGasOutStream().getThermoSystem().getEntropy(unit) - entrop;
+    return liquidEntropy + gasEntropy - entrop;
   }
 
   /** {@inheritDoc} */
@@ -1169,10 +1187,20 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       inletStreamMixer.getStream(i).getFluid().init(3);
       flow += inletStreamMixer.getStream(i).getFluid().getFlowRate(unit);
     }
-    getLiquidOutStream().getThermoSystem().init(3);
-    getGasOutStream().getThermoSystem().init(3);
-    return getLiquidOutStream().getThermoSystem().getFlowRate(unit)
-        + getGasOutStream().getThermoSystem().getFlowRate(unit) - flow;
+
+    double liquidFlow = 0.0;
+    if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
+      getLiquidOutStream().getThermoSystem().init(3);
+      liquidFlow = getLiquidOutStream().getThermoSystem().getFlowRate(unit);
+    }
+
+    double gasFlow = 0.0;
+    if (thermoSystem.hasPhaseType("gas")) {
+      getGasOutStream().getThermoSystem().init(3);
+      gasFlow = getGasOutStream().getThermoSystem().getFlowRate(unit);
+    }
+
+    return liquidFlow + gasFlow - flow;
   }
 
   /** {@inheritDoc} */
@@ -1183,10 +1211,20 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       inletStreamMixer.getStream(i).getFluid().init(3);
       exergy += inletStreamMixer.getStream(i).getFluid().getExergy(surroundingTemperature, unit);
     }
-    getLiquidOutStream().getThermoSystem().init(3);
-    getGasOutStream().getThermoSystem().init(3);
-    return getLiquidOutStream().getThermoSystem().getExergy(surroundingTemperature, unit)
-        + getGasOutStream().getThermoSystem().getExergy(surroundingTemperature, unit) - exergy;
+
+    double liquidExergy = 0.0;
+    if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
+      getLiquidOutStream().getThermoSystem().init(3);
+      liquidExergy = getLiquidOutStream().getThermoSystem().getExergy(surroundingTemperature, unit);
+    }
+
+    double gasExergy = 0.0;
+    if (thermoSystem.hasPhaseType("gas")) {
+      getGasOutStream().getThermoSystem().init(3);
+      gasExergy = getGasOutStream().getThermoSystem().getExergy(surroundingTemperature, unit);
+    }
+
+    return liquidExergy + gasExergy - exergy;
   }
 
   /** {@inheritDoc} */
