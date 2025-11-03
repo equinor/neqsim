@@ -365,10 +365,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       gasOutStream.setThermoSystemFromPhase(thermoSystem2, "gas");
       gasOutStream.getFluid().init(2);
     } else {
-      // No gas phase - set empty system with zero flow and zero moles
+      // No gas phase - set empty system with very low flow
       SystemInterface emptyGasSystem = thermoSystem2.getEmptySystemClone();
-      emptyGasSystem.setTotalFlowRate(0.0, "kg/hr");
-      emptyGasSystem.setTotalNumberOfMoles(0.0);
+      emptyGasSystem.setTotalFlowRate(1e-20, "kg/hr");
       emptyGasSystem.init(0);
       gasOutStream.setThermoSystem(emptyGasSystem);
     }
@@ -376,22 +375,21 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       liquidOutStream.setThermoSystemFromPhase(thermoSystem2, "liquid");
       liquidOutStream.getFluid().init(2);
     } else {
-      // No liquid phase - set empty system with zero flow and zero moles
+      // No liquid phase - set empty system with very low flow
       SystemInterface emptyLiquidSystem = thermoSystem2.getEmptySystemClone();
-      emptyLiquidSystem.setTotalFlowRate(0.0, "kg/hr");
-      emptyLiquidSystem.setTotalNumberOfMoles(0.0);
+      emptyLiquidSystem.setTotalFlowRate(1e-20, "kg/hr");
       emptyLiquidSystem.init(0);
       liquidOutStream.setThermoSystem(emptyLiquidSystem);
     }
     if (thermoSystem2.hasPhaseType("gas") && thermoSystem2.getNumberOfComponents() > 1) {
       gasOutStream.run(id);
-    } else {
+    } else if (thermoSystem2.hasPhaseType("gas")) {
       gasOutStream.getFluid().init(3);
     }
     if (thermoSystem2.hasPhaseType("aqueous")
         || thermoSystem2.hasPhaseType("oil") && thermoSystem2.getNumberOfComponents() > 1) {
       liquidOutStream.run(id);
-    } else {
+    } else if (thermoSystem2.hasPhaseType("aqueous") || thermoSystem2.hasPhaseType("oil")) {
       try {
         liquidOutStream.getFluid().init(3);
       } catch (Exception e) {
