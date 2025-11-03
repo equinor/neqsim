@@ -5,7 +5,7 @@ import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import neqsim.fluid.characterisation.OilAssayCharacterisation;
+import neqsim.thermo.characterization.OilAssayCharacterisation;
 import neqsim.thermo.characterization.PseudoComponentCombiner;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
@@ -1617,7 +1617,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * getOilAssayCharacterisation.
    * </p>
    *
-   * @return a {@link neqsim.fluid.characterisation.OilAssayCharacterisation} object
+   * @return a {@link neqsim.thermo.characterization.OilAssayCharacterisation} object
    */
   public OilAssayCharacterisation getOilAssayCharacterisation();
 

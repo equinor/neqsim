@@ -1,4 +1,4 @@
-package neqsim.fluid.characterisation;
+package neqsim.thermo.characterization;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -18,7 +18,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   private static final Logger logger = LogManager.getLogger(OilAssayCharacterisation.class);
   private static final double FRACTION_TOLERANCE = 1e-10;
   private static final double KELVIN_OFFSET = 273.15;
-  private static final double WATER_DENSITY_60F_G_CC = 0.999016; // API definition reference density.
+  private static final double WATER_DENSITY_60F_G_CC = 0.999016; // API definition reference
+                                                                 // density.
 
   private transient SystemInterface system;
   private double totalAssayMass = 1.0; // kg basis when converting mass fraction to moles.
@@ -82,8 +83,15 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       }
 
       double density = cut.resolveDensity();
-      double boilingPoint = cut.resolveAverageBoilingPoint();
-      double molarMass = cut.resolveMolarMass(density, boilingPoint);
+      double molarMass;
+      if (cut.hasMolarMass()) {
+        // Use explicit molar mass - no boiling point needed
+        molarMass = cut.resolveMolarMass(0.0, 0.0);
+      } else {
+        // Calculate molar mass from density and boiling point
+        double boilingPoint = cut.resolveAverageBoilingPoint();
+        molarMass = cut.resolveMolarMass(density, boilingPoint);
+      }
       double moles = totalAssayMass * massFraction / molarMass;
 
       if (moles <= 0.0 || Double.isNaN(moles) || Double.isInfinite(moles)) {
@@ -118,8 +126,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     }
 
     if (specifiedMass > 1.0 + 1e-6) {
-      throw new IllegalStateException(
-          "Specified mass fractions exceed unity: " + specifiedMass);
+      throw new IllegalStateException("Specified mass fractions exceed unity: " + specifiedMass);
     }
 
     double remainingMass = Math.max(0.0, 1.0 - specifiedMass);
@@ -271,6 +278,10 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       return volumeFraction;
     }
 
+    public boolean hasMolarMass() {
+      return molarMass != null;
+    }
+
     public double resolveDensity() {
       if (density != null) {
         return density;
@@ -294,12 +305,13 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
         return molarMass;
       }
       if (!(density > 0.0) || !(boilingPointKelvin > 0.0)) {
-        throw new IllegalStateException("Cannot derive molar mass without density and boiling point");
+        throw new IllegalStateException(
+            "Cannot derive molar mass without density and boiling point");
       }
       double exponent = 2.3776;
       double densityExponent = 0.9371;
-      double molarMassKgPerMol = 5.805e-5 * Math.pow(boilingPointKelvin, exponent)
-          / Math.pow(density, densityExponent);
+      double molarMassKgPerMol =
+          5.805e-5 * Math.pow(boilingPointKelvin, exponent) / Math.pow(density, densityExponent);
       return molarMassKgPerMol;
     }
 

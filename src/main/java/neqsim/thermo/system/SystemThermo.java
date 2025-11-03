@@ -18,6 +18,7 @@ import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterfa
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.characterization.Characterise;
+import neqsim.thermo.characterization.OilAssayCharacterisation;
 import neqsim.thermo.characterization.WaxCharacterise;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
@@ -34,7 +35,6 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
 import neqsim.util.exception.InvalidInputException;
 import neqsim.util.unit.Units;
-import neqsim.fluid.characterisation.OilAssayCharacterisation;
 
 /**
  * This is the base class of the System classes.
