@@ -1,4 +1,6 @@
 name: Create release (draft)
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:  
@@ -116,6 +118,8 @@ jobs:
   create_release:
     name: Create release v${{ needs.get_versions.outputs.version_8 }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: [get_versions, compile_java_8, compile_java_11, compile_java_21]
     
     steps:
