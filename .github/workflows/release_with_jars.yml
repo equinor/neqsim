@@ -21,7 +21,7 @@ jobs:
     
     steps:
     - name: Check out neqsim java project
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Get version number for pomJava8.xml
       id: java-8
       uses: JActions/maven-version@v1.2.0
@@ -45,7 +45,7 @@ jobs:
        
     steps:
       - name: Check out neqsim java project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up JDK 8 environment
         uses: actions/setup-java@v5
         with:
@@ -70,7 +70,7 @@ jobs:
     
     steps:
       - name: Check out neqsim java project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up JDK 11 environment
         uses: actions/setup-java@v5
         with:
@@ -95,7 +95,7 @@ jobs:
     
     steps:
       - name: Check out neqsim java project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up JDK 21 environment
         uses: actions/setup-java@v5
         with:
