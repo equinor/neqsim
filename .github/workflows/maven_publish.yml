@@ -1,4 +1,6 @@
 name: Publish package to the Maven Central Repository
+permissions:
+  contents: read
 on:
   workflow_dispatch:
   release:
