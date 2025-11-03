@@ -1,4 +1,6 @@
 name: Run build, test and javadoc
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:  
