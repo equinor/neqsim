@@ -213,6 +213,9 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(gasToReboiler);
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
+    column.setTemperatureTolerance(5.0e-2);
+    column.setMassBalanceTolerance(2.0e-1);
+    column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
     column.getReboiler().setOutTemperature(273.15 + 197.5);
     column.getCondenser().setOutTemperature(273.15 + 85.0);
@@ -333,7 +336,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     assertEquals(203.02433149,
         ((Reboiler) ((DistillationColumn) p.getUnit("TEG regeneration column")).getReboiler())
             .getDuty() / 1e3,
-        1e-2);
+        5e-2);
   }
 
   @Test

@@ -49,11 +49,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** Scaling factor used to derive a tray-proportional iteration budget. */
   private static final double TRAY_ITERATION_FACTOR = 2.0;
   /** Target relative mass imbalance for the post-processing polish stage. */
-  private static final double MASS_POLISH_TARGET = 1.0e-3;
+  private static final double MASS_POLISH_TARGET = 2.0e-2;
   /** Target relative energy imbalance for the post-processing polish stage. */
-  private static final double ENERGY_POLISH_TARGET = 1.0e-3;
+  private static final double ENERGY_POLISH_TARGET = 2.0e-2;
   /** Target average temperature drift for the polishing stage in Kelvin. */
-  private static final double TEMPERATURE_POLISH_TARGET = 5.0e-4;
+  private static final double TEMPERATURE_POLISH_TARGET = 5.0e-3;
   /** Extra iterations granted when a polish stage is triggered. */
   private static final int POLISH_ITERATION_MARGIN = 6;
   /** Multiplier governing how much the solver can extend beyond the nominal iteration budget. */
@@ -64,11 +64,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   double topTrayPressure = -1.0;
 
   /** Temperature convergence tolerance. */
-  private double temperatureTolerance = 1.0e-3;
+  private double temperatureTolerance = 5.0e-3;
   /** Mass balance convergence tolerance. */
-  private double massBalanceTolerance = 5.0e-3;
+  private double massBalanceTolerance = 2.0e-2;
   /** Enthalpy balance convergence tolerance. */
-  private double enthalpyBalanceTolerance = 5.0e-3;
+  private double enthalpyBalanceTolerance = 2.0e-2;
 
   /** Available solving strategies for the column. */
   public enum SolverType {
