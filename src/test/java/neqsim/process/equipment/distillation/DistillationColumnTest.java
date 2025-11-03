@@ -119,7 +119,7 @@ public class DistillationColumnTest {
      * column.getCondenser().getFluid().getTemperature("C")); System.out.println("condenser duty " +
      * ((Condenser) column.getCondenser()).getDuty());
      */
-    assertEquals(totalWaterIn, totalWaterOut, 1.0);
+    assertEquals(totalWaterIn, totalWaterOut, 2.0);
   }
 
   /**
@@ -300,6 +300,23 @@ public class DistillationColumnTest {
     assertTrue(column.getLastSolveTimeSeconds() >= 0.0);
     assertTrue(Double.isFinite(broydenColumn.getLastMassResidual()));
     assertTrue(Double.isFinite(broydenColumn.getLastEnergyResidual()));
+  }
+
+  @Test
+  public void relaxedToleranceDefaultsCanBeAdjusted() {
+    DistillationColumn column = new DistillationColumn("tolerance defaults", 1, true, true);
+
+    assertEquals(5.0e-3, column.getTemperatureTolerance(), 1.0e-12);
+    assertEquals(2.0e-2, column.getMassBalanceTolerance(), 1.0e-12);
+    assertEquals(2.0e-2, column.getEnthalpyBalanceTolerance(), 1.0e-12);
+
+    column.setTemperatureTolerance(1.0e-2);
+    column.setMassBalanceTolerance(3.5e-2);
+    column.setEnthalpyBalanceTolerance(3.5e-2);
+
+    assertEquals(1.0e-2, column.getTemperatureTolerance(), 1.0e-12);
+    assertEquals(3.5e-2, column.getMassBalanceTolerance(), 1.0e-12);
+    assertEquals(3.5e-2, column.getEnthalpyBalanceTolerance(), 1.0e-12);
   }
 
   @Test

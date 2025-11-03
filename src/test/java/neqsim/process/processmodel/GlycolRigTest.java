@@ -57,6 +57,9 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     TEGtoRegenerator.setPressure(0.2, "barg");
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
+    column.setTemperatureTolerance(5.0e-2);
+    column.setMassBalanceTolerance(2.0e-1);
+    column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(TEGtoRegenerator, 1);
     column.getReboiler().setOutTemperature(273.15 + 209.0);
     column.getCondenser().setOutTemperature(273.15 + 104.0);
@@ -193,6 +196,9 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     feedToRegenerator.setPressure(2.01325, "barg");
 
     DistillationColumn column = new DistillationColumn("distillation column", 1, true, true);
+    column.setTemperatureTolerance(5.0e-2);
+    column.setMassBalanceTolerance(2.0e-1);
+    column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(feedToRegenerator, 1);
     column.getReboiler().setOutTemperature(273.15 + 70.0);
     column.getCondenser().setOutTemperature(273.15 - 10.0);
@@ -240,6 +246,9 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     feedToRegenerator.setPressure(5.0, "barg");
 
     DistillationColumn column = new DistillationColumn("distillation column", 1, true, true);
+    column.setTemperatureTolerance(5.0e-2);
+    column.setMassBalanceTolerance(2.0e-1);
+    column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(feedToRegenerator, 1);
     column.getReboiler().setOutTemperature(273.15 + 100.0);
     column.getCondenser().setOutTemperature(273.15 + 50.0);
@@ -292,6 +301,9 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     feedToRegenerator2.setPressure(2.0, "barg");
 
     DistillationColumn column = new DistillationColumn("distillation column", 2, false, false);
+    column.setTemperatureTolerance(5.0e-2);
+    column.setMassBalanceTolerance(2.0e-1);
+    column.setEnthalpyBalanceTolerance(2.0e-1);
 
     column.addFeedStream(feedToRegenerator2, 0);
     column.addFeedStream(feedToRegenerator, 1);

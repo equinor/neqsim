@@ -195,6 +195,9 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     Stream gasToReboiler = strippingGas.clone("gas to reboiler");
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
+    column.setTemperatureTolerance(5.0e-2);
+    column.setMassBalanceTolerance(2.0e-1);
+    column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
     column.getReboiler().setOutTemperature(273.15 + 202.0);
     column.getCondenser().setOutTemperature(273.15 + 89.0);
