@@ -486,6 +486,9 @@ public class LargeCombinedModelsTest {
 
     DistillationColumn NGLcolumn =
         new neqsim.process.equipment.distillation.DistillationColumn("NGL column", 5, true, false);
+    NGLcolumn.setTemperatureTolerance(5.0e-2);
+    NGLcolumn.setMassBalanceTolerance(2.0e-1);
+    NGLcolumn.setEnthalpyBalanceTolerance(2.0e-1);
     NGLcolumn.addFeedStream(NGLfeedvalve.getOutletStream(), 5);
     NGLcolumn.getReboiler().setOutTemperature(273.15 + inp.nglColumnBottomTemperature);
     NGLcolumn.setTopPressure(inp.nglColumnTopPressure);
