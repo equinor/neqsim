@@ -34,6 +34,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
 import neqsim.util.exception.InvalidInputException;
 import neqsim.util.unit.Units;
+import neqsim.fluid.characterisation.OilAssayCharacterisation;
 
 /**
  * This is the base class of the System classes.
@@ -144,6 +145,7 @@ public abstract class SystemThermo implements SystemInterface {
   private double totalNumberOfMoles = 0;
   private boolean useTVasIndependentVariables = false;
   protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null;
+  protected transient OilAssayCharacterisation oilAssayCharacterisation = null;
 
   /**
    * <p>
@@ -1410,8 +1412,14 @@ public abstract class SystemThermo implements SystemInterface {
       // interfaceProp.clone();
     }
     clonedSystem.characterization = characterization.clone();
-    if (clonedSystem.waxCharacterisation != null) {
+    if (waxCharacterisation != null) {
       clonedSystem.waxCharacterisation = waxCharacterisation.clone();
+    }
+    if (oilAssayCharacterisation != null) {
+      clonedSystem.oilAssayCharacterisation = oilAssayCharacterisation.clone();
+      clonedSystem.oilAssayCharacterisation.setThermoSystem(clonedSystem);
+      clonedSystem.oilAssayCharacterisation
+          .setTotalAssayMass(oilAssayCharacterisation.getTotalAssayMass());
     }
 
     System.arraycopy(this.beta, 0, clonedSystem.beta, 0, beta.length);
@@ -3431,6 +3439,15 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public double getVolumeFraction(int phaseNumber) {
     return getPhase(phaseNumber).getVolume() / getVolume();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public OilAssayCharacterisation getOilAssayCharacterisation() {
+    if (oilAssayCharacterisation == null) {
+      oilAssayCharacterisation = new OilAssayCharacterisation(this);
+    }
+    return oilAssayCharacterisation;
   }
 
   /** {@inheritDoc} */
