@@ -130,7 +130,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   private double internalRadius = internalDiameter / 2;
 
   /** Liquid level height in meters (default set to 50% of internal diameter). */
-  private double liquidLevel = 0.5 * internalDiameter;
+  protected double liquidLevel = 0.5 * internalDiameter;
 
   private static final double MIN_HEADSPACE_FRACTION = 0.05;
   private static final double MIN_HEADSPACE_VOLUME = 1.0e-6;
@@ -898,7 +898,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     enforceHeadspace();
   }
 
-  private void enforceHeadspace() {
+  protected void enforceHeadspace() {
     double rawGasVolume = separatorVolume - liquidVolume;
     double minGasVolume = getMinGasVolume();
     if (rawGasVolume < minGasVolume) {
