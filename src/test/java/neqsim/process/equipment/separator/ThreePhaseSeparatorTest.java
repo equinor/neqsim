@@ -14,7 +14,9 @@ import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.LevelTransmitter;
+import neqsim.process.measurementdevice.OilLevelTransmitter;
 import neqsim.process.measurementdevice.PressureTransmitter;
+import neqsim.process.measurementdevice.WaterLevelTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseInterface;
@@ -847,6 +849,221 @@ class ThreePhaseSeparatorTest {
     }
 
     System.out.println("\n=== End of PID Control Example ===\n");
+  }
+
+  /**
+   * Test method demonstrating the use of WaterLevelTransmitter and OilLevelTransmitter with
+   * three-phase separator and PID controllers.
+   */
+  @Test
+  void testThreePhaseSeparatorWithLevelTransmitters() {
+    // ===== PROCESS SETUP =====
+    // Create three-phase fluid system (gas + oil + water)
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 50.0, 15.00);
+
+    fluid.addComponent("methane", 85.0);
+    fluid.addComponent("ethane", 5.0);
+    fluid.addComponent("propane", 3.0);
+    fluid.addComponent("n-hexane", 2.0);
+    fluid.addComponent("n-heptane", 15.0);
+    fluid.addComponent("water", 50.0);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+
+    // Create inlet stream
+    Stream inletStream = new Stream("Separator Feed", fluid);
+    inletStream.setTemperature(50.0, "C");
+    inletStream.setPressure(15.0, "bara");
+    inletStream.setFlowRate(5000.0, "kg/hr");
+    inletStream.run();
+
+    // Create three-phase separator
+    ThreePhaseSeparator separator = new ThreePhaseSeparator("V-100", inletStream);
+    separator.setInternalDiameter(2.0); // 2 meter diameter
+    separator.setSeparatorLength(6.0); // 6 meter length
+    separator.setOrientation("horizontal");
+
+    System.out.println("\n=== Three-Phase Separator with Level Transmitters Example ===\n");
+
+    // Run initial steady-state
+    separator.run();
+
+    // ===== CREATE SPECIALIZED TRANSMITTERS =====
+
+    // LT-01: Water level transmitter (measures water level from bottom)
+    WaterLevelTransmitter lt01 = new WaterLevelTransmitter("LT-01", separator);
+
+    // LT-02: Oil level transmitter (measures total liquid level from bottom)
+    OilLevelTransmitter lt02 = new OilLevelTransmitter("LT-02", separator);
+
+    // PT-01: Pressure transmitter
+    PressureTransmitter pt01 = new PressureTransmitter("PT-01", separator.getGasOutStream());
+    pt01.setUnit("bara");
+
+    System.out.println("Transmitters Created:");
+    System.out.printf("  LT-01 (Water Level): Range %.1f-%.1f m%n", lt01.getMinimumValue(),
+        lt01.getMaximumValue());
+    System.out.printf("  LT-02 (Oil Level): Range %.1f-%.1f m%n", lt02.getMinimumValue(),
+        lt02.getMaximumValue());
+    System.out.printf("  PT-01 (Pressure): Range %.1f-%.1f bara%n", pt01.getMinimumValue(),
+        pt01.getMaximumValue());
+
+    System.out.println("\nInitial Measurements:");
+    System.out.printf("  LT-01 Reading: %.3f m (water level)%n", lt01.getMeasuredValue("m"));
+    System.out.printf("  LT-02 Reading: %.3f m (oil level)%n", lt02.getMeasuredValue("m"));
+    System.out.printf("  Oil Thickness: %.3f m%n", lt02.getOilThickness());
+    System.out.printf("  PT-01 Reading: %.2f bara%n", pt01.getMeasuredValue("bara"));
+
+    // ===== PID CONTROLLERS WITH SPECIALIZED TRANSMITTERS =====
+
+    // Control setpoints
+    final double waterLevelSP = 0.6; // meters
+    final double oilLevelSP = 1.3; // meters (total liquid level)
+    final double pressureSP = 15.0; // bara
+
+    // LC-01: Water level controller using WaterLevelTransmitter
+    ControllerDeviceBaseClass lc01 = new ControllerDeviceBaseClass("LC-01");
+    lc01.setTransmitter(lt01);
+    lc01.setReverseActing(true);
+    lc01.setControllerSetPoint(waterLevelSP);
+    lc01.setControllerParameters(15.0, 500.0, 0.0);
+    lc01.setOutputLimits(0.0, 100.0);
+
+    // LC-02: Oil level controller using OilLevelTransmitter
+    ControllerDeviceBaseClass lc02 = new ControllerDeviceBaseClass("LC-02");
+    lc02.setTransmitter(lt02);
+    lc02.setReverseActing(true);
+    lc02.setControllerSetPoint(oilLevelSP);
+    lc02.setControllerParameters(15.0, 500.0, 0.0);
+    lc02.setOutputLimits(0.0, 100.0);
+
+    // PC-01: Pressure controller
+    ControllerDeviceBaseClass pc01 = new ControllerDeviceBaseClass("PC-01");
+    pc01.setTransmitter(pt01);
+    pc01.setReverseActing(false);
+    pc01.setControllerSetPoint(pressureSP);
+    pc01.setControllerParameters(3.0, 350.0, 0.0);
+    pc01.setOutputLimits(0.0, 100.0);
+
+    System.out.println("\nController Configuration:");
+    System.out.printf("  LC-01: SP=%.2f m, Kp=%.1f, Ti=%.1f s (Water Level Control)%n",
+        lc01.getControllerSetPoint(), 15.0, 500.0);
+    System.out.printf("  LC-02: SP=%.2f m, Kp=%.1f, Ti=%.1f s (Oil Level Control)%n",
+        lc02.getControllerSetPoint(), 15.0, 500.0);
+    System.out.printf("  PC-01: SP=%.2f bara, Kp=%.1f, Ti=%.1f s (Pressure Control)%n",
+        pc01.getControllerSetPoint(), 3.0, 350.0);
+
+    // ===== TRANSIENT SIMULATION =====
+
+    System.out.println("\nStarting transient simulation...");
+
+    separator.setCalculateSteadyState(false);
+
+    double timeStep = 10.0;
+    int numSteps = 60;
+    UUID id = UUID.randomUUID();
+
+    // Data collection
+    List<Double> timeData = new ArrayList<>();
+    List<Double> waterLevelData = new ArrayList<>();
+    List<Double> oilLevelData = new ArrayList<>();
+    List<Double> oilThicknessData = new ArrayList<>();
+    List<Double> pressureData = new ArrayList<>();
+    List<Double> lc01OutputData = new ArrayList<>();
+    List<Double> lc02OutputData = new ArrayList<>();
+    List<Double> pc01OutputData = new ArrayList<>();
+
+    for (int i = 0; i < numSteps; i++) {
+      double currentTime = i * timeStep;
+
+      // Apply disturbance at t=200s
+      if (i == 20) {
+        System.out.println("\n*** Disturbance: Inlet flow increased to 5500 kg/hr ***");
+        inletStream.setFlowRate(5500.0, "kg/hr");
+        inletStream.run();
+      }
+
+      // Controllers automatically read from their transmitters
+      // Apply control outputs to valves
+      separator.setWaterOutletFlowFraction(lc01.getResponse() / 100.0);
+      separator.setOilOutletFlowFraction(lc02.getResponse() / 100.0);
+      separator.setGasOutletFlowFraction(pc01.getResponse() / 100.0);
+
+      // Run transient step
+      separator.runTransient(timeStep, id);
+
+      // Read transmitters AFTER the transient step
+      double waterLevel = lt01.getMeasuredValue("m");
+      double oilLevel = lt02.getMeasuredValue("m");
+      double oilThickness = lt02.getOilThickness();
+      double pressure = pt01.getMeasuredValue("bara");
+
+      // Collect data
+      timeData.add(currentTime);
+      waterLevelData.add(waterLevel);
+      oilLevelData.add(oilLevel);
+      oilThicknessData.add(oilThickness);
+      pressureData.add(pressure);
+      lc01OutputData.add(lc01.getResponse());
+      lc02OutputData.add(lc02.getResponse());
+      pc01OutputData.add(pc01.getResponse());
+
+      // Print every 10 steps
+      if (i % 10 == 0) {
+        System.out.printf(
+            "\nt=%.0fs | WLvl=%.3fm | OLvl=%.3fm | OilThick=%.3fm | P=%.2f bara%n",
+            currentTime, waterLevel, oilLevel, oilThickness, pressure);
+        System.out.printf("       | LC-01=%.1f%% | LC-02=%.1f%% | PC-01=%.1f%%%n",
+            lc01.getResponse(), lc02.getResponse(), pc01.getResponse());
+      }
+    }
+
+    // ===== VERIFICATION =====
+
+    System.out.println("\n\n=== Simulation Results ===");
+
+    // Verify transmitters are working
+    double finalWaterLevel = waterLevelData.get(waterLevelData.size() - 1);
+    double finalOilLevel = oilLevelData.get(oilLevelData.size() - 1);
+    double finalOilThickness = oilThicknessData.get(oilThicknessData.size() - 1);
+    double finalPressure = pressureData.get(pressureData.size() - 1);
+
+    System.out.println("\nFinal Transmitter Readings:");
+    System.out.printf("  LT-01 (Water Level): %.3f m%n", finalWaterLevel);
+    System.out.printf("  LT-02 (Oil Level): %.3f m%n", finalOilLevel);
+    System.out.printf("  Oil Thickness: %.3f m%n", finalOilThickness);
+    System.out.printf("  PT-01 (Pressure): %.2f bara%n", finalPressure);
+
+    System.out.println("\nControl Setpoints:");
+    System.out.printf("  LC-01: %.2f m%n", waterLevelSP);
+    System.out.printf("  LC-02: %.2f m%n", oilLevelSP);
+    System.out.printf("  PC-01: %.2f bara%n", pressureSP);
+
+    System.out.println("\nFinal Controller Outputs:");
+    System.out.printf("  LC-01: %.1f%% (Water valve)%n", lc01.getResponse());
+    System.out.printf("  LC-02: %.1f%% (Oil valve)%n", lc02.getResponse());
+    System.out.printf("  PC-01: %.1f%% (Gas valve)%n", pc01.getResponse());
+
+    // Assertions
+    Assertions.assertTrue(lt01.getMeasuredValue("m") >= 0.0,
+        "Water level transmitter should read non-negative");
+    Assertions.assertTrue(lt02.getMeasuredValue("m") >= lt01.getMeasuredValue("m"),
+        "Oil level should be >= water level");
+    Assertions.assertTrue(lt02.getOilThickness() >= 0.0, "Oil thickness should be non-negative");
+    Assertions.assertTrue(pt01.getMeasuredValue("bara") > 0.0,
+        "Pressure transmitter should read positive");
+
+    // Verify data consistency
+    for (int i = 0; i < timeData.size(); i++) {
+      Assertions.assertTrue(oilLevelData.get(i) >= waterLevelData.get(i),
+          "Oil level must be >= water level at all times");
+      Assertions.assertTrue(
+          Math.abs(oilThicknessData.get(i) - (oilLevelData.get(i) - waterLevelData.get(i))) < 0.001,
+          "Oil thickness should equal oilLevel - waterLevel");
+    }
+
+    System.out.println("\n=== End of Level Transmitters Example ===\n");
   }
 }
 
