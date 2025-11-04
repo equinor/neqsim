@@ -15,8 +15,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * </p>
  *
  * <p>
- * To get the oil layer thickness, subtract the water level from the oil level:
- * oilThickness = oilLevel - waterLevel
+ * To get the oil layer thickness, subtract the water level from the oil level: oilThickness =
+ * oilLevel - waterLevel
  * </p>
  *
  * @author ESOL

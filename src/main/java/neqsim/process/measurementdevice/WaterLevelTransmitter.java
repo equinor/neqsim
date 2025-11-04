@@ -10,8 +10,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  *
  * <p>
  * This transmitter measures the water level from the bottom of the separator. In a three-phase
- * separator, water is the heaviest phase and settles at the bottom, with oil floating on top of
- * the water, and gas in the upper portion.
+ * separator, water is the heaviest phase and settles at the bottom, with oil floating on top of the
+ * water, and gas in the upper portion.
  * </p>
  *
  * @author ESOL

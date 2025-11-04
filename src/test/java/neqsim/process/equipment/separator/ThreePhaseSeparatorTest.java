@@ -597,9 +597,11 @@ class ThreePhaseSeparatorTest {
    * Test method demonstrating three-phase separator with level and pressure control using PID
    * controllers. This example shows:
    * <ul>
-   * <li>Water level control using level measurements and manual valve manipulation on water outlet</li>
+   * <li>Water level control using level measurements and manual valve manipulation on water
+   * outlet</li>
    * <li>Oil level control using level measurements and manual valve manipulation on oil outlet</li>
-   * <li>Pressure control using pressure measurements and manual valve manipulation on gas outlet</li>
+   * <li>Pressure control using pressure measurements and manual valve manipulation on gas
+   * outlet</li>
    * </ul>
    */
   @Test
@@ -643,10 +645,8 @@ class ThreePhaseSeparatorTest {
     System.out.printf("  Oil Level: %.3f m%n", separator.getOilLevel());
     System.out.printf("  Oil Thickness: %.3f m%n",
         separator.getOilLevel() - separator.getWaterLevel());
-    System.out.printf("  Gas Flow: %.1f kg/hr%n",
-        separator.getGasOutStream().getFlowRate("kg/hr"));
-    System.out.printf("  Oil Flow: %.1f kg/hr%n",
-        separator.getOilOutStream().getFlowRate("kg/hr"));
+    System.out.printf("  Gas Flow: %.1f kg/hr%n", separator.getGasOutStream().getFlowRate("kg/hr"));
+    System.out.printf("  Oil Flow: %.1f kg/hr%n", separator.getOilOutStream().getFlowRate("kg/hr"));
     System.out.printf("  Water Flow: %.1f kg/hr%n",
         separator.getWaterOutStream().getFlowRate("kg/hr"));
 
@@ -743,12 +743,12 @@ class ThreePhaseSeparatorTest {
       pressureIntegral += pressureError * timeStep;
 
       // Calculate PID outputs (reverse acting for levels, direct acting for pressure)
-      waterValveOpening =
-          100.0 - (waterLevelKp * waterLevelError + waterLevelKp / waterLevelTi * waterLevelIntegral);
+      waterValveOpening = 100.0
+          - (waterLevelKp * waterLevelError + waterLevelKp / waterLevelTi * waterLevelIntegral);
       oilValveOpening =
           100.0 - (oilLevelKp * oilLevelError + oilLevelKp / oilLevelTi * oilLevelIntegral);
-      gasValveOpening =
-          gasValveOpening + (pressureKp * pressureError + pressureKp / pressureTi * pressureIntegral * timeStep);
+      gasValveOpening = gasValveOpening
+          + (pressureKp * pressureError + pressureKp / pressureTi * pressureIntegral * timeStep);
 
       // Limit outputs to 0-100%
       waterValveOpening = Math.max(0.0, Math.min(100.0, waterValveOpening));
@@ -783,8 +783,7 @@ class ThreePhaseSeparatorTest {
       }
 
       // Verify physical constraints
-      Assertions.assertTrue(separator.getWaterLevel() >= 0.0,
-          "Water level should be non-negative");
+      Assertions.assertTrue(separator.getWaterLevel() >= 0.0, "Water level should be non-negative");
       Assertions.assertTrue(separator.getOilLevel() >= separator.getWaterLevel(),
           "Oil level should be >= water level");
       Assertions.assertTrue(separator.getThermoSystem().getPressure("bara") > 0.0,
@@ -809,14 +808,11 @@ class ThreePhaseSeparatorTest {
 
     System.out.println("\nFinal Valve Positions:");
     System.out.printf("  LCV-01 (Water): %.1f%%  (Flow Fraction: %.3f)%n",
-        waterValveData.get(waterValveData.size() - 1),
-        separator.getWaterOutletFlowFraction());
+        waterValveData.get(waterValveData.size() - 1), separator.getWaterOutletFlowFraction());
     System.out.printf("  LCV-02 (Oil): %.1f%%  (Flow Fraction: %.3f)%n",
-        oilValveData.get(oilValveData.size() - 1),
-        separator.getOilOutletFlowFraction());
+        oilValveData.get(oilValveData.size() - 1), separator.getOilOutletFlowFraction());
     System.out.printf("  PCV-01 (Gas): %.1f%%  (Flow Fraction: %.3f)%n",
-        gasValveData.get(gasValveData.size() - 1),
-        separator.getGasOutletFlowFraction());
+        gasValveData.get(gasValveData.size() - 1), separator.getGasOutletFlowFraction());
 
     // Verify control performance
     double pressureError = Math.abs(finalPressure - pressureSP);
@@ -831,12 +827,9 @@ class ThreePhaseSeparatorTest {
     // Basic assertions - controllers should help manage the system
     // Allow wide tolerance since this is a demonstration of the concept
     // In practice, better PID tuning would be needed for tight control
-    Assertions.assertTrue(pressureError < 50.0,
-        "Pressure should remain in a reasonable range");
-    Assertions.assertTrue(waterLevelError < 2.0,
-        "Water level should remain in a reasonable range");
-    Assertions.assertTrue(oilLevelError < 2.0,
-        "Oil level should remain in a reasonable range");
+    Assertions.assertTrue(pressureError < 50.0, "Pressure should remain in a reasonable range");
+    Assertions.assertTrue(waterLevelError < 2.0, "Water level should remain in a reasonable range");
+    Assertions.assertTrue(oilLevelError < 2.0, "Oil level should remain in a reasonable range");
 
     // Verify the system remained stable throughout
     for (int i = 0; i < pressureData.size(); i++) {
@@ -1011,8 +1004,7 @@ class ThreePhaseSeparatorTest {
 
       // Print every 10 steps
       if (i % 10 == 0) {
-        System.out.printf(
-            "\nt=%.0fs | WLvl=%.3fm | OLvl=%.3fm | OilThick=%.3fm | P=%.2f bara%n",
+        System.out.printf("\nt=%.0fs | WLvl=%.3fm | OLvl=%.3fm | OilThick=%.3fm | P=%.2f bara%n",
             currentTime, waterLevel, oilLevel, oilThickness, pressure);
         System.out.printf("       | LC-01=%.1f%% | LC-02=%.1f%% | PC-01=%.1f%%%n",
             lc01.getResponse(), lc02.getResponse(), pc01.getResponse());
