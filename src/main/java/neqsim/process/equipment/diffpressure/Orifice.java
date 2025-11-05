@@ -230,6 +230,24 @@ public class Orifice extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public void run(UUID uuid) {
+    if (inStream != null && outStream != null) {
+      double newPressure = inStream.getPressure("bara") - calc_dp();
+      SystemInterface outfluid = (SystemInterface) inStream.clone();
+      outfluid.setPressure(newPressure);
+      outStream.setFluid(outfluid);
+      outStream.run();
+    }
+  }
+
+  /**
+   * Run transient simulation for the orifice.
+   *
+   * @param dt Time step in seconds
+   * @param id Unique identifier for this run
+   */
+  public void runTransient(double dt, UUID id) {
+    // For orifice, transient behavior is quasi-steady (no accumulation)
+    // Just run steady-state calculation
     SystemInterface thermoSystem = inStream.getThermoSystem().clone();
 
     // Handle zero or very low flow cases
@@ -237,7 +255,6 @@ public class Orifice extends TwoPortEquipment {
     if (flowRate < 1e-10) {
       // For negligible flow, just set outlet to inlet conditions
       outStream.setFluid(thermoSystem);
-      outStream.run(uuid);
       return;
     }
 
@@ -278,24 +295,14 @@ public class Orifice extends TwoPortEquipment {
       // In dynamic mode, the orifice DETERMINES the flow (not just limits it)
       // Set this as the actual flow through the orifice
       thermoSystem.setTotalFlowRate(calculatedFlow_kgs, "kg/sec");
+      inStream.getFluid().setTotalFlowRate(calculatedFlow_kgs, "kg/sec");
     }
 
     // Set outlet pressure
     thermoSystem.setPressure(P2, "bara");
     outStream.setFluid(thermoSystem);
-    outStream.run(uuid);
-  }
+    inStream.run();
 
-  /**
-   * Run transient simulation for the orifice.
-   *
-   * @param dt Time step in seconds
-   * @param id Unique identifier for this run
-   */
-  public void runTransient(double dt, UUID id) {
-    // For orifice, transient behavior is quasi-steady (no accumulation)
-    // Just run steady-state calculation
-    run(id);
-    increaseTime(dt);
+
   }
 }
