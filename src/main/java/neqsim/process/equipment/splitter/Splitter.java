@@ -64,7 +64,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
-   * <p>Getter for the field <code>inletStream</code>.</p>
+   * <p>
+   * Getter for the field <code>inletStream</code>.
+   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -262,6 +264,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       run(id);
       increaseTime(dt);
     } else {
+      increaseTime(dt);
       Mixer mixer = new Mixer("tmpMixer");
       for (int i = 0; i < splitStream.length; i++) {
         splitStream[i].setPressure(inletStream.getPressure());
@@ -278,6 +281,16 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       lastTemperature = thermoSystem.getTemperature();
       lastPressure = thermoSystem.getPressure();
       lastComposition = thermoSystem.getMolarComposition();
+      double[] splits = new double[splitFactor.length];
+      double totalFlow = 0.0;
+      for (int i = 0; i < splitFactor.length; i++) {
+        totalFlow += splits[i];
+      }
+      for (int i = 0; i < splitFactor.length; i++) {
+        splits[i] = splitFactor[i] / totalFlow;
+      }
+      splitFactor = splits;
+
       oldSplitFactor = Arrays.copyOf(splitFactor, splitFactor.length);
       setCalculationIdentifier(id);
     }

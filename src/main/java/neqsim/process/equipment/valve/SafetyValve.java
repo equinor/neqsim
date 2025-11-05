@@ -22,6 +22,8 @@ public class SafetyValve extends ThrottlingValve {
 
   private double pressureSpec = 10.0;
   private double fullOpenPressure = 10.0;
+  private double blowdownPressure = 0.0; // Pressure at which PSV reseats (closes)
+  private boolean isValveOpen = false; // Track if valve has opened (for hysteresis)
   private final List<RelievingScenario> relievingScenarios = new ArrayList<>();
   private String activeScenarioName;
 
@@ -143,12 +145,8 @@ public class SafetyValve extends ThrottlingValve {
       return;
     }
     RelievingScenario scenario = new RelievingScenario.Builder("default")
-        .fluidService(FluidService.GAS)
-        .relievingStream(getInletStream())
-        .setPressure(pressureSpec)
-        .overpressureFraction(0.1)
-        .backPressure(0.0)
-        .build();
+        .fluidService(FluidService.GAS).relievingStream(getInletStream()).setPressure(pressureSpec)
+        .overpressureFraction(0.1).backPressure(0.0).build();
     addScenario(scenario);
   }
 
@@ -172,6 +170,10 @@ public class SafetyValve extends ThrottlingValve {
    */
   public void setPressureSpec(double pressureSpec) {
     this.pressureSpec = pressureSpec;
+    // Auto-set default blowdown pressure if not explicitly set
+    if (blowdownPressure <= 0.0) {
+      this.blowdownPressure = pressureSpec * 0.93; // Default 7% blowdown
+    }
   }
 
   /**
@@ -194,20 +196,105 @@ public class SafetyValve extends ThrottlingValve {
    */
   public void setFullOpenPressure(double fullOpenPressure) {
     this.fullOpenPressure = fullOpenPressure;
-}
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>blowdownPressure</code>.
+   * </p>
+   *
+   * @return the blowdownPressure
+   */
+  public double getBlowdownPressure() {
+    return blowdownPressure;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>blowdownPressure</code>.
+   * </p>
+   *
+   * @param blowdownPressure the blowdownPressure to set (pressure at which PSV reseats)
+   */
+  public void setBlowdownPressure(double blowdownPressure) {
+    this.blowdownPressure = blowdownPressure;
+  }
+
+  /**
+   * Sets the blowdown as a percentage of set pressure. Typical values: 7-10% for gas service,
+   * 10-20% for liquid service.
+   *
+   * @param blowdownPercent percentage below set pressure (e.g., 10.0 for 10% blowdown)
+   */
+  public void setBlowdown(double blowdownPercent) {
+    this.blowdownPressure = pressureSpec * (1.0 - blowdownPercent / 100.0);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, java.util.UUID id) {
+    // Automatically adjust valve opening based on inlet pressure with hysteresis
+    if (!getCalculateSteadyState()) {
+      double inletPressure = getInletStream().getPressure("bara");
+      double opening;
+
+      // Set default blowdown pressure if not set (typically 90-95% of set pressure)
+      double reseatPressure = blowdownPressure;
+      if (reseatPressure <= 0.0) {
+        reseatPressure = pressureSpec * 0.93; // Default 7% blowdown
+      }
+
+      // Hysteresis logic: different behavior when opening vs closing
+      if (!isValveOpen) {
+        // Valve is currently closed - check if it should open
+        if (inletPressure < pressureSpec) {
+          // Below set pressure - stay closed
+          opening = 0.0;
+        } else if (inletPressure >= fullOpenPressure) {
+          // Fully open
+          opening = 100.0;
+          isValveOpen = true;
+        } else {
+          // Proportional opening between set and full open pressure
+          opening = 100.0 * (inletPressure - pressureSpec) / (fullOpenPressure - pressureSpec);
+          isValveOpen = true;
+        }
+      } else {
+        // Valve is currently open - check if it should close
+        if (inletPressure <= reseatPressure) {
+          // Pressure dropped to reseat pressure - close valve
+          opening = 0.0;
+          isValveOpen = false;
+        } else if (inletPressure >= fullOpenPressure) {
+          // Fully open
+          opening = 100.0;
+        } else if (inletPressure < pressureSpec) {
+          // Between reseat and set pressure - maintain minimum opening
+          // Gradually reduce opening as pressure drops
+          opening = 100.0 * (inletPressure - reseatPressure) / (pressureSpec - reseatPressure);
+          opening = Math.max(opening, 0.0);
+        } else {
+          // Between set and full open pressure
+          opening = 100.0 * (inletPressure - pressureSpec) / (fullOpenPressure - pressureSpec);
+        }
+      }
+
+      // Set the calculated opening
+      setPercentValveOpening(opening);
+    }
+
+    // Call parent runTransient to perform the actual valve calculations
+    super.runTransient(dt, id);
+  }
 
   /** Supported fluid service categories used for selecting the sizing strategy. */
   public enum FluidService {
-    GAS,
-    LIQUID,
-    MULTIPHASE,
-    FIRE
+    GAS, LIQUID, MULTIPHASE, FIRE
   }
 
   /** Available sizing standards for the relieving calculations. */
   public enum SizingStandard {
-    API_520,
-    ISO_4126
+    API_520, ISO_4126
   }
 
   /** Immutable description of a relieving scenario. */
