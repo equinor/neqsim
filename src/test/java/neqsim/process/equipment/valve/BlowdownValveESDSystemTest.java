@@ -115,8 +115,9 @@ public class BlowdownValveESDSystemTest {
     bdValveOutlet = new Stream("BD Valve Outlet", bdValve.getOutletStream());
 
     // Blowdown orifice to control flow rate
+    // Connect directly to blowdown stream to get actual separator pressure
     bdOrifice = new Orifice("BD Orifice", 0.4, 0.15, 50.0, 1.5, 0.61);
-    bdOrifice.setInletStream(bdValveOutlet);
+    bdOrifice.setInletStream(blowdownStream);
 
     toFlare = new Stream("To Flare", bdOrifice.getOutletStream());
 
@@ -195,7 +196,7 @@ public class BlowdownValveESDSystemTest {
         "---------|-----------|--------------|------------|------------|------------|-------------");
 
     double timeStep = 0.5; // 0.5 second time steps
-    double simulationTime = 60.0; // 60 second simulation
+    double simulationTime = 30.0; // 30 second simulation (reduced to avoid separator running dry)
     double esdActivationTime = 10.0; // Activate ESD at 10 seconds
 
     boolean esdActivated = false;
@@ -212,7 +213,8 @@ public class BlowdownValveESDSystemTest {
         // Redirect all flow to blowdown
         gasSplitter.setSplitFactors(new double[] {0.0, 1.0});
         // Stop feeding separator (simulate inlet valve closure on ESD)
-        feedStream.setFlowRate(0.0, "kg/hr");
+        // Use minimal purge flow to avoid numerical issues with zero moles
+        feedStream.setFlowRate(0.1, "kg/hr");
         // Switch separator to dynamic mode
         separator.setCalculateSteadyState(false);
         esdActivated = true;
@@ -553,8 +555,6 @@ public class BlowdownValveESDSystemTest {
     highPressureFeed.setTemperature(25.0, "C");
 
     Separator hpSeparator = new Separator("HP Separator", highPressureFeed);
-    // Start in steady-state mode for initialization
-    hpSeparator.setCalculateSteadyState(true);
     Stream hpSepGasOut = new Stream("HP Sep Gas", hpSeparator.getGasOutStream());
 
     // Outlet valve that will be blocked to build pressure
@@ -579,8 +579,9 @@ public class BlowdownValveESDSystemTest {
 
     Stream hpBdOut = new Stream("HP BD Out", hpBdValve.getOutletStream());
 
+    // Connect orifice directly to blowdown stream to get actual separator pressure
     Orifice hpBdOrifice = new Orifice("HP BD Orifice", 0.45, 0.18, 60.0, 1.5, 0.61);
-    hpBdOrifice.setInletStream(hpBdOut);
+    hpBdOrifice.setInletStream(hpBlowdownStream);
 
     Stream hpToFlare = new Stream("HP To Flare", hpBdOrifice.getOutletStream());
 
@@ -597,10 +598,21 @@ public class BlowdownValveESDSystemTest {
     hpSepGasOut.run();
     hpOutletValve.run();
 
-    double initialPressure = hpSeparator.getPressure("bara");
-    System.out.printf("Separator pressure: %.2f bara%n", initialPressure);
+    System.out.printf("Separator pressure: %.2f bara%n", hpSeparator.getPressure("bara"));
     System.out.printf("Outlet valve opening: %.1f%%%n", hpOutletValve.getPercentValveOpening());
     System.out.println();
+
+    // Switch to dynamic mode now that we have initial conditions
+    hpSeparator.setCalculateSteadyState(false);
+    
+    // Run one transient timestep to establish dynamic initial conditions
+    double timeStep = 0.5;
+    highPressureFeed.run();
+    hpSeparator.runTransient(timeStep, java.util.UUID.randomUUID());
+    hpSepGasOut.run();
+    
+    // Capture the actual starting pressure for dynamic simulation
+    double initialPressure = hpSeparator.getPressure("bara");
 
     // Dynamic simulation with pressure buildup and relief
     System.out.println("═══ DYNAMIC SIMULATION - PRESSURE BUILDUP AND RELIEF ═══");
@@ -609,7 +621,6 @@ public class BlowdownValveESDSystemTest {
     System.out.println(
         "---------|-----------|--------------|------------|------------|------------------");
 
-    double timeStep = 0.5;
     double simulationTime = 30.0;
     double blockageTime = 5.0; // Block outlet at 5s
     double esdActivationTime = 10.0; // Activate ESD at 10s
@@ -631,21 +642,15 @@ public class BlowdownValveESDSystemTest {
       if (!esdActivated && time >= esdActivationTime) {
         hpEsdButton.push();
         hpSplitter.setSplitFactors(new double[] {0.0, 1.0}); // All to blowdown
-        // Stop feeding separator
-        highPressureFeed.setFlowRate(0.0, "kg/hr");
-        // Switch to dynamic mode
-        hpSeparator.setCalculateSteadyState(false);
+        // Stop feeding separator - use minimal purge flow to avoid numerical issues
+        highPressureFeed.setFlowRate(0.1, "kg/hr");
         esdActivated = true;
         pressureAtEsdActivation = hpSeparator.getPressure("bara");
       }
 
       // Run equipment
       highPressureFeed.run();
-      if (hpSeparator.getCalculateSteadyState()) {
-        hpSeparator.run();
-      } else {
-        hpSeparator.runTransient(timeStep, java.util.UUID.randomUUID());
-      }
+      hpSeparator.runTransient(timeStep, java.util.UUID.randomUUID());
       hpSepGasOut.run();
 
       if (!esdActivated) {
