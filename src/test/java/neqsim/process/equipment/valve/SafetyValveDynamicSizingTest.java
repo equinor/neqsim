@@ -108,7 +108,7 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
     double currentTime = 0.0;
     UUID id = UUID.randomUUID();
 
-    int numSteps = 400; // Total simulation time: 200 seconds
+    int numSteps = 600; // Total simulation time: 300 seconds
 
     // Dynamic simulation
     for (int i = 0; i < numSteps; i++) {
@@ -118,6 +118,12 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
       if (currentTime >= 50.0 && currentTime < 51.0) {
         // Sudden closure of control valve (blocked outlet scenario)
         pressureControlValve.setPercentValveOpening(1.0);
+      }
+
+      // Simulate recovery at t=200s (PCV reopens) to show hysteresis
+      if (currentTime >= 200.0 && currentTime < 201.0) {
+        // Reopen control valve to allow pressure to drop
+        pressureControlValve.setPercentValveOpening(50.0);
       }
 
       // Run transient calculations
@@ -185,6 +191,37 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
     Assertions.assertTrue(maxPSVFlow > feedFlowRate * 0.8,
         "PSV should be sized to handle at least 80% of feed flow. Feed: " + feedFlowRate
             + " kg/hr, Max PSV relief: " + maxPSVFlow + " kg/hr");
+
+    // 8. Verify hysteresis behavior - PSV should not close immediately when P < Pset
+    // Find when PSV first opens
+    int firstOpenIndex = -1;
+    for (int i = 0; i < psvOpenings.size(); i++) {
+      if (psvOpenings.get(i) > 1.0) { // PSV opened
+        firstOpenIndex = i;
+        break;
+      }
+    }
+
+    if (firstOpenIndex > 0) {
+      // Check if PSV stays open even when pressure drops below set pressure
+      double blowdownPressure = pressureSafetyValve.getBlowdownPressure();
+      boolean foundHysteresis = false;
+
+      for (int i = firstOpenIndex + 5; i < psvOpenings.size(); i++) {
+        double pressure = separatorPressures.get(i);
+        double opening = psvOpenings.get(i);
+
+        // If pressure is below set but above blowdown, PSV should still be open
+        if (pressure < setPressure && pressure > blowdownPressure && opening > 1.0) {
+          foundHysteresis = true;
+          break;
+        }
+      }
+
+      Assertions.assertTrue(foundHysteresis,
+          "PSV should demonstrate hysteresis - staying open below set pressure until blowdown pressure ("
+              + blowdownPressure + " bara) is reached");
+    }
 
     // Print summary
     System.out.println("\n===== PSV SIZING SUMMARY =====");
