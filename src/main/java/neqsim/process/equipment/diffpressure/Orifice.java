@@ -2,7 +2,6 @@ package neqsim.process.equipment.diffpressure;
 
 import java.util.UUID;
 import neqsim.process.equipment.TwoPortEquipment;
-import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -15,8 +14,6 @@ import neqsim.thermo.system.SystemInterface;
 public class Orifice extends TwoPortEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-  private StreamInterface inputstream;
-  private StreamInterface outputstream;
   private Double dp;
   private Double diameter;
   private Double diameter_outer;
@@ -194,11 +191,12 @@ public class Orifice extends TwoPortEquipment {
   }
 
   /**
-   * Calculates the mass flow rate through an orifice plate using the ISO 5167
-   * formulation.
+   * Calculates the mass flow rate through an orifice plate using the ISO 5167 formulation.
    *
-   * <p>Inputs and output are all in SI units. The method iterates the
-   * Reader-Harris/Gallagher discharge coefficient until convergence.</p>
+   * <p>
+   * Inputs and output are all in SI units. The method iterates the Reader-Harris/Gallagher
+   * discharge coefficient until convergence.
+   * </p>
    *
    * @param D upstream internal pipe diameter in meters
    * @param Do orifice diameter in meters
@@ -210,8 +208,8 @@ public class Orifice extends TwoPortEquipment {
    * @param taps pressure tap type ("corner", "flange", "D", or "D/2")
    * @return mass flow rate in kg/s
    */
-  public static double calculateMassFlowRate(double D, double Do, double P1, double P2,
-      double rho, double mu, double k, String taps) {
+  public static double calculateMassFlowRate(double D, double Do, double P1, double P2, double rho,
+      double mu, double k, String taps) {
     final int MAX_ITERATIONS = 50;
     double m = 1.0;
     for (int i = 0; i < MAX_ITERATIONS; i++) {
@@ -232,12 +230,72 @@ public class Orifice extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public void run(UUID uuid) {
-    if (inputstream != null && outputstream != null) {
-      double newPressure = inputstream.getPressure("bara") - calc_dp();
-      SystemInterface outfluid = (SystemInterface) inStream.clone();
-      outfluid.setPressure(newPressure);
-      outStream.setFluid(outfluid);
-      outStream.run();
+    SystemInterface thermoSystem = inStream.getThermoSystem().clone();
+
+    // Handle zero or very low flow cases
+    double flowRate = thermoSystem.getFlowRate("mole/sec");
+    if (flowRate < 1e-10) {
+      // For negligible flow, just set outlet to inlet conditions
+      outStream.setFluid(thermoSystem);
+      outStream.run(uuid);
+      return;
     }
+
+    thermoSystem.init(3);
+
+    // Get inlet pressure from stream
+    double P1 = inStream.getPressure("bara");
+
+    // Get downstream pressure - use stored value if available, otherwise from outlet stream
+    double P2 = (pressureDownstream > 0.0) ? pressureDownstream : outStream.getPressure("bara");
+
+    // In dynamic/transient mode: Calculate flow based on pressure difference
+    // (Similar to valve behavior - flow is determined by ΔP, not by upstream conditions)
+    if (diameter != null && orificeDiameter > 0.0 && dischargeCoefficient > 0.0 && P1 > P2) {
+      double beta = orificeDiameter / diameter;
+      double beta2 = beta * beta;
+      double beta4 = beta2 * beta2;
+
+      // Get fluid properties at inlet conditions
+      double rho = thermoSystem.getDensity("kg/m3");
+      double k = thermoSystem.getGamma();
+
+      // Available pressure drop
+      double availableDeltaP_bara = P1 - P2;
+      double P1_Pa = P1 * 1e5;
+      double P2_Pa = P2 * 1e5;
+      double dP_Pa = availableDeltaP_bara * 1e5;
+
+      double C = dischargeCoefficient;
+      double epsilon = calculateExpansibility(diameter, orificeDiameter, P1_Pa, P2_Pa, k);
+      double A_orifice = 0.25 * Math.PI * orificeDiameter * orificeDiameter;
+
+      // Calculate actual mass flow through orifice based on ISO 5167
+      // m = A * C * ε * sqrt(2 * ρ * ΔP / (1 - β⁴))
+      double calculatedFlow_kgs =
+          A_orifice * C * epsilon * Math.sqrt(2.0 * rho * dP_Pa / (1.0 - beta4));
+
+      // In dynamic mode, the orifice DETERMINES the flow (not just limits it)
+      // Set this as the actual flow through the orifice
+      thermoSystem.setTotalFlowRate(calculatedFlow_kgs, "kg/sec");
+    }
+
+    // Set outlet pressure
+    thermoSystem.setPressure(P2, "bara");
+    outStream.setFluid(thermoSystem);
+    outStream.run(uuid);
+  }
+
+  /**
+   * Run transient simulation for the orifice.
+   *
+   * @param dt Time step in seconds
+   * @param id Unique identifier for this run
+   */
+  public void runTransient(double dt, UUID id) {
+    // For orifice, transient behavior is quasi-steady (no accumulation)
+    // Just run steady-state calculation
+    run(id);
+    increaseTime(dt);
   }
 }
