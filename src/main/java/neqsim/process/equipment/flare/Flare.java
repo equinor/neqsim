@@ -34,6 +34,12 @@ public class Flare extends TwoPortEquipment {
 
   private transient CapacityCheckResult lastCapacityCheck = CapacityCheckResult.empty();
 
+  // Dynamic/transient operation tracking
+  private double cumulativeHeatReleasedGJ = 0.0; // Total heat released in GJ
+  private double cumulativeGasBurnedKg = 0.0; // Total gas burned in kg
+  private double cumulativeCO2EmissionKg = 0.0; // Total CO2 emissions in kg
+  private double lastTransientTime = 0.0; // Last time step for transient tracking
+
   /**
    * Default constructor.
    *
@@ -82,6 +88,96 @@ public class Flare extends TwoPortEquipment {
     setCalculationIdentifier(id);
     lastCapacityCheck = evaluateCapacityInternal(heatDuty, inStream.getFlowRate("kg/sec"),
         inStream.getFlowRate("mole/sec"));
+  }
+
+  /**
+   * Update cumulative values for dynamic/transient operation.
+   * 
+   * @param timeStep time step in seconds
+   */
+  public void updateCumulative(double timeStep) {
+    if (timeStep > 0.0) {
+      cumulativeHeatReleasedGJ += (heatDuty * 1.0e-9) * timeStep; // W*s -> GJ
+      cumulativeGasBurnedKg += inStream.getFlowRate("kg/sec") * timeStep;
+      cumulativeCO2EmissionKg += co2Emission * timeStep;
+      lastTransientTime += timeStep;
+    }
+  }
+
+  /**
+   * Reset cumulative values (useful when starting a new transient simulation).
+   */
+  public void resetCumulative() {
+    cumulativeHeatReleasedGJ = 0.0;
+    cumulativeGasBurnedKg = 0.0;
+    cumulativeCO2EmissionKg = 0.0;
+    lastTransientTime = 0.0;
+  }
+
+  /**
+   * Reset cumulative values. Shorthand for resetCumulative().
+   */
+  public void reset() {
+    resetCumulative();
+  }
+
+  /**
+   * Get cumulative heat released.
+   * 
+   * @param unit engineering unit, e.g. "GJ", "MJ", "MMBtu"
+   * @return cumulative heat released in specified unit
+   */
+  public double getCumulativeHeatReleased(String unit) {
+    switch (unit) {
+      case "MJ":
+        return cumulativeHeatReleasedGJ * 1000.0;
+      case "MMBtu":
+        return cumulativeHeatReleasedGJ * 0.947817; // GJ to MMBtu
+      case "GJ":
+      default:
+        return cumulativeHeatReleasedGJ;
+    }
+  }
+
+  /**
+   * Get cumulative gas burned.
+   * 
+   * @param unit engineering unit, e.g. "kg", "tonnes"
+   * @return cumulative gas burned in specified unit
+   */
+  public double getCumulativeGasBurned(String unit) {
+    switch (unit) {
+      case "tonnes":
+        return cumulativeGasBurnedKg / 1000.0;
+      case "kg":
+      default:
+        return cumulativeGasBurnedKg;
+    }
+  }
+
+  /**
+   * Get cumulative CO2 emissions.
+   * 
+   * @param unit engineering unit, e.g. "kg", "tonnes"
+   * @return cumulative CO2 emissions in specified unit
+   */
+  public double getCumulativeCO2Emission(String unit) {
+    switch (unit) {
+      case "tonnes":
+        return cumulativeCO2EmissionKg / 1000.0;
+      case "kg":
+      default:
+        return cumulativeCO2EmissionKg;
+    }
+  }
+
+  /**
+   * Get total transient simulation time tracked.
+   * 
+   * @return time in seconds
+   */
+  public double getTransientTime() {
+    return lastTransientTime;
   }
 
   /**
@@ -215,8 +311,8 @@ public class Flare extends TwoPortEquipment {
    * @return radiant heat flux [W/m2]
    */
   public double estimateRadiationHeatFlux(double scenarioHeatDutyW, double groundDistanceM) {
-    double radialDistance = Math
-        .sqrt(Math.max(0.0, groundDistanceM * groundDistanceM + flameHeight * flameHeight));
+    double radialDistance =
+        Math.sqrt(Math.max(0.0, groundDistanceM * groundDistanceM + flameHeight * flameHeight));
     if (radialDistance < 1.0e-6) {
       return 0.0;
     }
@@ -235,8 +331,8 @@ public class Flare extends TwoPortEquipment {
   }
 
   /**
-   * Determine the horizontal distance at which the radiation level drops to the specified
-   * threshold for a scenario heat duty.
+   * Determine the horizontal distance at which the radiation level drops to the specified threshold
+   * for a scenario heat duty.
    *
    * @param scenarioHeatDutyW heat duty in W
    * @param fluxThresholdWm2 target heat flux [W/m2]
@@ -301,9 +397,9 @@ public class Flare extends TwoPortEquipment {
    * @return capacity check result
    */
   public CapacityCheckResult evaluateCapacity() {
-    lastCapacityCheck = evaluateCapacityInternal(heatDuty,
-        inStream != null ? inStream.getFlowRate("kg/sec") : 0.0,
-        inStream != null ? inStream.getFlowRate("mole/sec") : 0.0);
+    lastCapacityCheck =
+        evaluateCapacityInternal(heatDuty, inStream != null ? inStream.getFlowRate("kg/sec") : 0.0,
+            inStream != null ? inStream.getFlowRate("mole/sec") : 0.0);
     return lastCapacityCheck;
   }
 
@@ -320,21 +416,21 @@ public class Flare extends TwoPortEquipment {
     return evaluateCapacityInternal(scenarioHeatDutyW, massRateKgS, molarRateMoleS);
   }
 
-  private CapacityCheckResult evaluateCapacityInternal(double scenarioHeatDutyW,
-      double massRateKgS, double molarRateMoleS) {
+  private CapacityCheckResult evaluateCapacityInternal(double scenarioHeatDutyW, double massRateKgS,
+      double molarRateMoleS) {
     double heatCapacity = designHeatDutyCapacityW;
     double massCapacity = designMassFlowCapacityKgS;
     double molarCapacity = designMolarFlowCapacityMoleS;
 
-    double heatUtil = (Double.isFinite(heatCapacity) && heatCapacity > 0.0)
-        ? scenarioHeatDutyW / heatCapacity
-        : Double.NaN;
-    double massUtil = (Double.isFinite(massCapacity) && massCapacity > 0.0)
-        ? massRateKgS / massCapacity
-        : Double.NaN;
-    double molarUtil = (Double.isFinite(molarCapacity) && molarCapacity > 0.0)
-        ? molarRateMoleS / molarCapacity
-        : Double.NaN;
+    double heatUtil =
+        (Double.isFinite(heatCapacity) && heatCapacity > 0.0) ? scenarioHeatDutyW / heatCapacity
+            : Double.NaN;
+    double massUtil =
+        (Double.isFinite(massCapacity) && massCapacity > 0.0) ? massRateKgS / massCapacity
+            : Double.NaN;
+    double molarUtil =
+        (Double.isFinite(molarCapacity) && molarCapacity > 0.0) ? molarRateMoleS / molarCapacity
+            : Double.NaN;
 
     return new CapacityCheckResult(scenarioHeatDutyW, heatCapacity, massRateKgS, massCapacity,
         molarRateMoleS, molarCapacity, heatUtil, massUtil, molarUtil);
@@ -381,8 +477,8 @@ public class Flare extends TwoPortEquipment {
       molarRate = estimateMolarRateFromMassRate(massRateKgS);
     }
     double co2Rate = estimateCO2EmissionFromMassRate(massRateKgS);
-    Map<String, Double> emissions = inStream != null ? scaleEmissionMap(massRateKgS)
-        : Collections.emptyMap();
+    Map<String, Double> emissions =
+        inStream != null ? scaleEmissionMap(massRateKgS) : Collections.emptyMap();
     return buildPerformanceSummary(scenarioName, heat, massRateKgS, molarRate, co2Rate, emissions);
   }
 
@@ -392,8 +488,8 @@ public class Flare extends TwoPortEquipment {
     double flux30m = estimateRadiationHeatFlux(scenarioHeatDutyW, 30.0);
     double distance4kW = radiationDistanceForFlux(scenarioHeatDutyW, 4000.0);
     FlareDispersionSurrogateDTO dispersion = getDispersionSurrogate(massRateKgS, molarRateMoleS);
-    CapacityCheckResult capacity = evaluateCapacityInternal(scenarioHeatDutyW, massRateKgS,
-        molarRateMoleS);
+    CapacityCheckResult capacity =
+        evaluateCapacityInternal(scenarioHeatDutyW, massRateKgS, molarRateMoleS);
 
     return new FlarePerformanceDTO(label, scenarioHeatDutyW, massRateKgS, molarRateMoleS,
         co2RateKgS, flux30m, distance4kW, dispersion, emissionMap, capacity.toDTO());

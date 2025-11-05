@@ -7,6 +7,7 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.flare.Flare;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -48,7 +49,7 @@ public class PSVFlareSystemTest {
   Stream psvRelief;
   Mixer flareHeader;
   Stream flareHeaderOutlet;
-  Stream flareGas;
+  Flare flare;
 
   /**
    * Set up the process system with PSV and flare.
@@ -119,6 +120,12 @@ public class PSVFlareSystemTest {
     flareHeader.addStream(psvRelief);
 
     flareHeaderOutlet = new Stream("Flare Header Outlet", flareHeader.getOutletStream());
+
+    // Flare unit operation
+    flare = new Flare("Main Flare", flareHeaderOutlet);
+    flare.setFlameHeight(40.0); // 40 meter flame height
+    flare.setRadiantFraction(0.18); // 18% radiant heat
+    flare.setTipDiameter(0.5); // 0.5 meter tip diameter
   }
 
   /**
@@ -176,11 +183,12 @@ public class PSVFlareSystemTest {
     // Tracking variables
     double maxPressure = 0.0;
     double maxReliefFlow = 0.0;
-    double totalGasRelieved = 0.0; // kg
-    double totalHeatRelease = 0.0; // MJ
     double peakHeatReleaseRate = 0.0; // MW
     boolean psvHasOpened = false;
     double psvOpenTime = 0.0;
+
+    // Reset flare cumulative values
+    flare.resetCumulative();
 
     System.out.println("═══ DYNAMIC SIMULATION ═══");
     System.out.println(
@@ -220,42 +228,19 @@ public class PSVFlareSystemTest {
       // Flare header and flare
       flareHeader.run();
       flareHeaderOutlet.run();
+      flare.run();
+      flare.updateCumulative(dt); // Update cumulative values
 
       // Calculate PSV relief flow
       double reliefFlow = psvRelief.getFlowRate("kg/hr");
 
-      // Calculate heat release from flare combustion
-      double heatReleaseRate = 0.0; // MW
+      // Get heat release from flare unit operation
+      double heatReleaseRate = flare.getHeatDuty("MW"); // MW
+
       if (reliefFlow > 0.01) {
-        // Get heating value of relief gas using ISO 6976 standard
-        neqsim.standards.gasquality.Standard_ISO6976 standard =
-            new neqsim.standards.gasquality.Standard_ISO6976(psvRelief.getFluid(), 15.0, 15.0,
-                "volume");
-        standard.calculate();
-
-        // Get LHV (Lower Heating Value/Inferior Calorific Value) in kJ/Sm3
-        double lhvKJperSm3 = standard.getValue("InferiorCalorificValue");
-        double lhvMJperSm3 = lhvKJperSm3 / 1000.0; // Convert to MJ/Sm3
-
-        // Get flow rate in Sm3/hr at standard conditions (15°C, 1.01325 bara)
-        psvRelief.getFluid().setTemperature(15.0, "C");
-        psvRelief.getFluid().setPressure(1.01325, "bara");
-        psvRelief.run();
-        double densityStd = psvRelief.getFluid().getPhase(0).getDensity("kg/m3");
-        double volumeFlow = reliefFlow / densityStd; // Sm3/hr
-
-        // Heat release rate in MW (1 MW = 1 MJ/s)
-        heatReleaseRate = (volumeFlow / 3600.0) * lhvMJperSm3; // Sm3/s * MJ/Sm3 = MW
-
-        // Cumulative heat release
-        totalHeatRelease += heatReleaseRate * dt / 1000.0; // Convert to GJ
-
         // Track peak heat release rate
         peakHeatReleaseRate = Math.max(peakHeatReleaseRate, heatReleaseRate);
       }
-
-      // Track cumulative gas relieved
-      totalGasRelieved += reliefFlow * dt / 3600.0; // kg
 
       // Track maximum values
       maxPressure = Math.max(maxPressure, sepPressure);
@@ -272,7 +257,7 @@ public class PSVFlareSystemTest {
       if (time % 10.0 < dt) {
         System.out.printf("%7.0f  | %9.2f | %10.1f | %8.1f | %11.1f | %12.3f | %14.3f%n", time,
             sepPressure, outletValve.getPercentValveOpening(), psv.getPercentValveOpening(),
-            reliefFlow, heatReleaseRate, totalHeatRelease);
+            reliefFlow, heatReleaseRate, flare.getCumulativeHeatReleased("GJ"));
       }
     }
 
@@ -298,18 +283,18 @@ public class PSVFlareSystemTest {
     System.out.println("═══ PSV RELIEF PERFORMANCE ═══");
     System.out.printf("Maximum relief flow: %.1f kg/hr (%.2f kg/s)%n", maxReliefFlow,
         maxReliefFlow / 3600.0);
-    System.out.printf("Total gas relieved: %.1f kg%n", totalGasRelieved);
+    System.out.printf("Total gas relieved: %.1f kg%n", flare.getCumulativeGasBurned("kg"));
     System.out.printf("Average relief rate: %.1f kg/hr%n",
-        totalGasRelieved / ((incidentEnd - psvOpenTime) / 3600.0));
+        flare.getCumulativeGasBurned("kg") / ((incidentEnd - psvOpenTime) / 3600.0));
     System.out.printf("Required PSV Cv: %.1f%n", psv.getCv());
     System.out.println();
 
     System.out.println("═══ FLARE SYSTEM PERFORMANCE ═══");
     System.out.printf("Peak heat release rate: %.2f MW%n", peakHeatReleaseRate);
-    System.out.printf("Total heat released: %.2f GJ (%.2f MMBtu)%n", totalHeatRelease,
-        totalHeatRelease * 0.947817); // GJ to MMBtu
+    System.out.printf("Total heat released: %.2f GJ (%.2f MMBtu)%n",
+        flare.getCumulativeHeatReleased("GJ"), flare.getCumulativeHeatReleased("MMBtu"));
     System.out.printf("Average heat release rate: %.2f MW%n",
-        totalHeatRelease * 1000.0 / (incidentEnd - psvOpenTime));
+        flare.getCumulativeHeatReleased("GJ") * 1000.0 / (incidentEnd - psvOpenTime));
 
     // Gas composition to flare
     System.out.println();
@@ -325,49 +310,23 @@ public class PSVFlareSystemTest {
 
     System.out.println();
     System.out.println("═══ ENVIRONMENTAL IMPACT ═══");
-    // Estimate CO2 emissions (simplified - assumes complete combustion)
-    double co2Emissions = 0.0;
-    SystemInterface gas = psvRelief.getFluid();
-    for (int i = 0; i < gas.getPhase(0).getNumberOfComponents(); i++) {
-      String name = gas.getPhase(0).getComponent(i).getComponentName();
-      double moleFrac = gas.getPhase(0).getComponent(i).getz();
-      int carbonNumber = 0;
-
-      if (name.equals("methane"))
-        carbonNumber = 1;
-      else if (name.equals("ethane"))
-        carbonNumber = 2;
-      else if (name.equals("propane"))
-        carbonNumber = 3;
-      else if (name.equals("i-butane") || name.equals("n-butane"))
-        carbonNumber = 4;
-      else if (name.equals("CO2"))
-        carbonNumber = -1; // Already CO2
-
-      if (carbonNumber > 0) {
-        // Each hydrocarbon carbon becomes CO2 (44 g/mol)
-        double molMass = gas.getPhase(0).getComponent(i).getMolarMass();
-        double massFrac = moleFrac * molMass / gas.getPhase(0).getMolarMass();
-        co2Emissions += totalGasRelieved * massFrac * carbonNumber * 44.01 / molMass;
-      } else if (carbonNumber == -1) {
-        double molMass = gas.getPhase(0).getComponent(i).getMolarMass();
-        double massFrac = moleFrac * molMass / gas.getPhase(0).getMolarMass();
-        co2Emissions += totalGasRelieved * massFrac; // Direct CO2 emission
-      }
-    }
-    System.out.printf("Estimated CO2 emissions: %.1f kg (%.2f tonnes)%n", co2Emissions,
-        co2Emissions / 1000.0);
+    // Get CO2 emissions from flare unit operation
+    System.out.printf("Estimated CO2 emissions: %.1f kg (%.2f tonnes)%n",
+        flare.getCumulativeCO2Emission("kg"), flare.getCumulativeCO2Emission("tonnes"));
 
     System.out.println();
     System.out.println("═══ VALIDATION CHECKS ═══");
     assertTrue(psvHasOpened, "PSV should have opened during incident");
     assertTrue(maxPressure <= 55.0 * 1.15, "Max pressure should not exceed 115% of set pressure");
-    assertTrue(totalGasRelieved > 0, "Gas should have been relieved to flare");
-    assertTrue(totalHeatRelease > 0, "Heat should have been released from flare");
+    assertTrue(flare.getCumulativeGasBurned("kg") > 0, "Gas should have been relieved to flare");
+    assertTrue(flare.getCumulativeHeatReleased("GJ") > 0,
+        "Heat should have been released from flare");
     System.out.println("✓ PSV opened and relieved gas to flare");
     System.out.printf("✓ Maximum pressure (%.2f bara) within acceptable limits%n", maxPressure);
-    System.out.printf("✓ Total %.1f kg of gas burned in flare%n", totalGasRelieved);
-    System.out.printf("✓ Total %.2f GJ heat released to atmosphere%n", totalHeatRelease);
+    System.out.printf("✓ Total %.1f kg of gas burned in flare%n",
+        flare.getCumulativeGasBurned("kg"));
+    System.out.printf("✓ Total %.2f GJ heat released to atmosphere%n",
+        flare.getCumulativeHeatReleased("GJ"));
 
     System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
     System.out.println("║              SIMULATION COMPLETED SUCCESSFULLY                 ║");
@@ -434,27 +393,12 @@ public class PSVFlareSystemTest {
     // Combine in flare header
     flareHeader.run();
     flareHeaderOutlet.run();
+    flare.run();
 
     double totalReliefFlow = psvRelief.getFlowRate("kg/hr") + psv2Relief.getFlowRate("kg/hr");
 
-    // Calculate combined heat release
-    double heatRelease = 0.0;
-    SystemInterface combinedGas = flareHeaderOutlet.getFluid();
-
-    if (totalReliefFlow > 0) {
-      // Use ISO 6976 standard for heating value
-      neqsim.standards.gasquality.Standard_ISO6976 standard =
-          new neqsim.standards.gasquality.Standard_ISO6976(combinedGas, 15.0, 15.0, "volume");
-      standard.calculate();
-      double lhvKJperSm3 = standard.getValue("InferiorCalorificValue");
-      double lhvMJperSm3 = lhvKJperSm3 / 1000.0;
-
-      combinedGas.setTemperature(15.0, "C");
-      combinedGas.setPressure(1.01325, "bara");
-      double densityStd = combinedGas.getPhase(0).getDensity("kg/m3");
-      double volumeFlow = totalReliefFlow / densityStd;
-      heatRelease = (volumeFlow / 3600.0) * lhvMJperSm3;
-    }
+    // Get combined heat release from flare unit operation
+    double heatRelease = flare.getHeatDuty("MW"); // MW
 
     System.out.printf("PSV-101 relief flow: %.1f kg/hr%n", psvRelief.getFlowRate("kg/hr"));
     System.out.printf("PSV-102 relief flow: %.1f kg/hr%n", psv2Relief.getFlowRate("kg/hr"));
