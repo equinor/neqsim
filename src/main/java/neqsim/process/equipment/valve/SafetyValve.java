@@ -143,12 +143,8 @@ public class SafetyValve extends ThrottlingValve {
       return;
     }
     RelievingScenario scenario = new RelievingScenario.Builder("default")
-        .fluidService(FluidService.GAS)
-        .relievingStream(getInletStream())
-        .setPressure(pressureSpec)
-        .overpressureFraction(0.1)
-        .backPressure(0.0)
-        .build();
+        .fluidService(FluidService.GAS).relievingStream(getInletStream()).setPressure(pressureSpec)
+        .overpressureFraction(0.1).backPressure(0.0).build();
     addScenario(scenario);
   }
 
@@ -194,20 +190,43 @@ public class SafetyValve extends ThrottlingValve {
    */
   public void setFullOpenPressure(double fullOpenPressure) {
     this.fullOpenPressure = fullOpenPressure;
-}
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, java.util.UUID id) {
+    // Automatically adjust valve opening based on inlet pressure
+    if (!getCalculateSteadyState()) {
+      double inletPressure = getInletStream().getPressure("bara");
+      double opening;
+
+      if (inletPressure < pressureSpec) {
+        // PSV closed below set pressure
+        opening = 0.0;
+      } else if (inletPressure >= fullOpenPressure) {
+        // PSV fully open at or above full open pressure
+        opening = 100.0;
+      } else {
+        // PSV opening proportional to pressure between set and full open
+        opening = 100.0 * (inletPressure - pressureSpec) / (fullOpenPressure - pressureSpec);
+      }
+
+      // Set the calculated opening
+      setPercentValveOpening(opening);
+    }
+
+    // Call parent runTransient to perform the actual valve calculations
+    super.runTransient(dt, id);
+  }
 
   /** Supported fluid service categories used for selecting the sizing strategy. */
   public enum FluidService {
-    GAS,
-    LIQUID,
-    MULTIPHASE,
-    FIRE
+    GAS, LIQUID, MULTIPHASE, FIRE
   }
 
   /** Available sizing standards for the relieving calculations. */
   public enum SizingStandard {
-    API_520,
-    ISO_4126
+    API_520, ISO_4126
   }
 
   /** Immutable description of a relieving scenario. */
