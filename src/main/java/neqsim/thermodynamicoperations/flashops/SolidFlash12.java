@@ -340,11 +340,10 @@ public class SolidFlash12 extends TPflash {
         solidCandidate[k] = -10;
       } else {
         solidCandidate[k] = system.getPhase(0).getComponent(k).getz();
-        system.getPhase(PhaseType.SOLID).getComponent(k).setx(1.0);
+        system.getPhases()[3].getComponent(k).setx(1.0);
 
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
-          solidCandidate[k] -= system.getPhase(PhaseType.SOLID).getComponent(k)
-              .fugcoef(system.getPhase(PhaseType.SOLID))
+          solidCandidate[k] -= system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3])
               / system.getPhase(i).getComponent(k).getFugacityCoefficient();
         }
       }
@@ -352,11 +351,11 @@ public class SolidFlash12 extends TPflash {
 
     for (int i = 0; i < solidCandidate.length; i++) {
       if (solidCandidate[i] > 0.0) {
-        system.getPhase(PhaseType.SOLID).getComponent(i).setx(1.0);
+        system.getPhases()[3].getComponent(i).setx(1.0);
         solidIndex = i;
         solidsNumber++;
       } else {
-        system.getPhase(PhaseType.SOLID).getComponent(i).setx(0.0);
+        system.getPhases()[3].getComponent(i).setx(0.0);
       }
     }
 
