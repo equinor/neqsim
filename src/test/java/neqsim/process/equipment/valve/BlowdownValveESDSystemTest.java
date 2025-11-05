@@ -604,13 +604,13 @@ public class BlowdownValveESDSystemTest {
 
     // Switch to dynamic mode now that we have initial conditions
     hpSeparator.setCalculateSteadyState(false);
-    
+
     // Run one transient timestep to establish dynamic initial conditions
     double timeStep = 0.5;
     highPressureFeed.run();
     hpSeparator.runTransient(timeStep, java.util.UUID.randomUUID());
     hpSepGasOut.run();
-    
+
     // Capture the actual starting pressure for dynamic simulation
     double initialPressure = hpSeparator.getPressure("bara");
 

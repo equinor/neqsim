@@ -6,8 +6,25 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
- * Orifice class.
+ * Orifice class for flow restriction and measurement using ISO 5167 orifice plate calculations.
  * </p>
+ *
+ * <p>
+ * This class supports both steady-state and transient/dynamic simulations. In transient mode, the
+ * orifice calculates flow based on the pressure differential across the plate using ISO 5167
+ * equations, making it suitable for depressurization and blowdown scenarios.
+ * </p>
+ *
+ * <p>
+ * Key features:
+ * </p>
+ * <ul>
+ * <li>ISO 5167 compliant flow calculations with Reader-Harris/Gallagher discharge coefficient</li>
+ * <li>Support for corner, flange, D and D/2 pressure taps</li>
+ * <li>Compressible flow with expansibility factor</li>
+ * <li>Pressure-driven flow in transient simulations (flow = f(ΔP))</li>
+ * <li>Automatic handling of zero/low flow conditions</li>
+ * </ul>
  *
  * @author ESOL
  */
@@ -35,16 +52,23 @@ public class Orifice extends TwoPortEquipment {
   }
 
   /**
+   * Constructor for Orifice with full ISO 5167 parameters.
+   *
    * <p>
-   * Constructor for Orifice.
+   * Creates an orifice plate flow restriction device with specified geometry and operating
+   * conditions. This constructor is typically used for transient/dynamic simulations where the
+   * orifice controls flow based on pressure differential.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @param diameter a double
-   * @param orificeDiameter a double
-   * @param pressureUpstream a double
-   * @param pressureDownstream a double
-   * @param dischargeCoefficient a double
+   * @param name Name of the orifice equipment
+   * @param diameter Upstream pipe internal diameter in meters
+   * @param orificeDiameter Orifice bore diameter in meters
+   * @param pressureUpstream Upstream design pressure in bara (used for reference)
+   * @param pressureDownstream Downstream boundary pressure in bara (e.g., flare header pressure).
+   *        This value is used in transient simulations to establish the driving pressure
+   *        differential.
+   * @param dischargeCoefficient Orifice discharge coefficient (typically 0.60-0.62 for sharp-edged
+   *        orifices, or calculated using Reader-Harris/Gallagher method)
    */
   public Orifice(String name, double diameter, double orificeDiameter, double pressureUpstream,
       double pressureDownstream, double dischargeCoefficient) {
@@ -57,14 +81,20 @@ public class Orifice extends TwoPortEquipment {
   }
 
   /**
+   * Set orifice parameters for legacy compatibility.
+   *
    * <p>
-   * setOrificeParameters.
+   * <b>Note:</b> These parameters are currently not used in the ISO 5167 calculations. Use the
+   * constructor with diameter, orificeDiameter, and dischargeCoefficient instead for transient
+   * simulations.
    * </p>
    *
-   * @param diameter a {@link java.lang.Double} object
-   * @param diameter_outer a {@link java.lang.Double} object
-   * @param C a {@link java.lang.Double} object
+   * @param diameter Orifice diameter
+   * @param diameter_outer Outer diameter
+   * @param C Discharge coefficient
+   * @deprecated Use constructor parameters instead
    */
+  @Deprecated
   public void setOrificeParameters(Double diameter, Double diameter_outer, Double C) {
     this.diameter = diameter;
     this.diameter_outer = diameter_outer;
@@ -72,11 +102,15 @@ public class Orifice extends TwoPortEquipment {
   }
 
   /**
+   * Calculate the non-recoverable pressure drop across the orifice.
+   *
    * <p>
-   * calc_dp.
+   * This method calculates the permanent pressure loss (deltaW) across an orifice plate, which
+   * represents the portion of pressure drop that is not recovered downstream. The calculation is
+   * based on the discharge coefficient and beta ratio.
    * </p>
    *
-   * @return a {@link java.lang.Double} object
+   * @return Non-recoverable pressure drop in bar
    */
   public Double calc_dp() {
     double beta = orificeDiameter / diameter;
@@ -242,8 +276,42 @@ public class Orifice extends TwoPortEquipment {
   /**
    * Run transient simulation for the orifice.
    *
-   * @param dt Time step in seconds
-   * @param id Unique identifier for this run
+   * <p>
+   * In transient mode, the orifice acts as a pressure-driven flow restriction device. The flow rate
+   * through the orifice is calculated based on the pressure differential using ISO 5167 equations:
+   * </p>
+   *
+   * <pre>
+   * m = A × C × ε × √(2ρΔP / (1 - β⁴))
+   * </pre>
+   *
+   * <p>
+   * where:
+   * </p>
+   * <ul>
+   * <li>A = orifice area (m²)</li>
+   * <li>C = discharge coefficient</li>
+   * <li>ε = expansibility factor (accounts for compressibility)</li>
+   * <li>ρ = fluid density at inlet (kg/m³)</li>
+   * <li>ΔP = pressure drop across orifice (Pa)</li>
+   * <li>β = diameter ratio (d/D)</li>
+   * </ul>
+   *
+   * <p>
+   * The downstream pressure is taken from the stored pressureDownstream value if available (e.g.,
+   * flare header pressure), otherwise it reads from the outlet stream. This ensures proper flow
+   * calculation even when stream pressures aren't updated in the flow network.
+   * </p>
+   *
+   * <p>
+   * <b>Important:</b> In dynamic simulations, the orifice DETERMINES the flow rate based on
+   * available ΔP. This is different from steady-state mode where flow may be specified upstream.
+   * The calculated flow is set on both the thermoSystem and inStream to ensure consistency in the
+   * process network.
+   * </p>
+   *
+   * @param dt Time step in seconds (not used for orifice as it has no accumulation/storage)
+   * @param id Unique identifier for this simulation run
    */
   public void runTransient(double dt, UUID id) {
     // For orifice, transient behavior is quasi-steady (no accumulation)
