@@ -12,7 +12,6 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * A PSD valve is a fast-acting isolation valve that provides emergency shutdown protection. It
  * monitors a pressure transmitter and closes rapidly when a High-High (HIHI) alarm is triggered,
  * preventing overpressure conditions from propagating through the process.
- * </p>
  * 
  * <p>
  * Key features:
@@ -22,7 +21,6 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * <li>Manual reset capability after alarm clears</li>
  * <li>Trip state tracking for safety interlock logic</li>
  * </ul>
- * </p>
  * 
  * <p>
  * Typical usage:
@@ -42,7 +40,6 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * system.runTransient(dt, UUID.randomUUID());
  * // Valve automatically closes if PT-101 goes into HIHI alarm
  * </pre>
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
