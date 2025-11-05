@@ -2,21 +2,35 @@ package neqsim.process.equipment.diffpressure;
 
 import java.util.UUID;
 import neqsim.process.equipment.TwoPortEquipment;
-import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
- * Orifice class.
+ * Orifice class for flow restriction and measurement using ISO 5167 orifice plate calculations.
  * </p>
+ *
+ * <p>
+ * This class supports both steady-state and transient/dynamic simulations. In transient mode, the
+ * orifice calculates flow based on the pressure differential across the plate using ISO 5167
+ * equations, making it suitable for depressurization and blowdown scenarios.
+ * </p>
+ *
+ * <p>
+ * Key features:
+ * </p>
+ * <ul>
+ * <li>ISO 5167 compliant flow calculations with Reader-Harris/Gallagher discharge coefficient</li>
+ * <li>Support for corner, flange, D and D/2 pressure taps</li>
+ * <li>Compressible flow with expansibility factor</li>
+ * <li>Pressure-driven flow in transient simulations (flow = f(ΔP))</li>
+ * <li>Automatic handling of zero/low flow conditions</li>
+ * </ul>
  *
  * @author ESOL
  */
 public class Orifice extends TwoPortEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-  private StreamInterface inputstream;
-  private StreamInterface outputstream;
   private Double dp;
   private Double diameter;
   private Double diameter_outer;
@@ -38,16 +52,23 @@ public class Orifice extends TwoPortEquipment {
   }
 
   /**
+   * Constructor for Orifice with full ISO 5167 parameters.
+   *
    * <p>
-   * Constructor for Orifice.
+   * Creates an orifice plate flow restriction device with specified geometry and operating
+   * conditions. This constructor is typically used for transient/dynamic simulations where the
+   * orifice controls flow based on pressure differential.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @param diameter a double
-   * @param orificeDiameter a double
-   * @param pressureUpstream a double
-   * @param pressureDownstream a double
-   * @param dischargeCoefficient a double
+   * @param name Name of the orifice equipment
+   * @param diameter Upstream pipe internal diameter in meters
+   * @param orificeDiameter Orifice bore diameter in meters
+   * @param pressureUpstream Upstream design pressure in bara (used for reference)
+   * @param pressureDownstream Downstream boundary pressure in bara (e.g., flare header pressure).
+   *        This value is used in transient simulations to establish the driving pressure
+   *        differential.
+   * @param dischargeCoefficient Orifice discharge coefficient (typically 0.60-0.62 for sharp-edged
+   *        orifices, or calculated using Reader-Harris/Gallagher method)
    */
   public Orifice(String name, double diameter, double orificeDiameter, double pressureUpstream,
       double pressureDownstream, double dischargeCoefficient) {
@@ -60,14 +81,20 @@ public class Orifice extends TwoPortEquipment {
   }
 
   /**
+   * Set orifice parameters for legacy compatibility.
+   *
    * <p>
-   * setOrificeParameters.
+   * <b>Note:</b> These parameters are currently not used in the ISO 5167 calculations. Use the
+   * constructor with diameter, orificeDiameter, and dischargeCoefficient instead for transient
+   * simulations.
    * </p>
    *
-   * @param diameter a {@link java.lang.Double} object
-   * @param diameter_outer a {@link java.lang.Double} object
-   * @param C a {@link java.lang.Double} object
+   * @param diameter Orifice diameter
+   * @param diameter_outer Outer diameter
+   * @param C Discharge coefficient
+   * @deprecated Use constructor parameters instead
    */
+  @Deprecated
   public void setOrificeParameters(Double diameter, Double diameter_outer, Double C) {
     this.diameter = diameter;
     this.diameter_outer = diameter_outer;
@@ -75,11 +102,15 @@ public class Orifice extends TwoPortEquipment {
   }
 
   /**
+   * Calculate the non-recoverable pressure drop across the orifice.
+   *
    * <p>
-   * calc_dp.
+   * This method calculates the permanent pressure loss (deltaW) across an orifice plate, which
+   * represents the portion of pressure drop that is not recovered downstream. The calculation is
+   * based on the discharge coefficient and beta ratio.
    * </p>
    *
-   * @return a {@link java.lang.Double} object
+   * @return Non-recoverable pressure drop in bar
    */
   public Double calc_dp() {
     double beta = orificeDiameter / diameter;
@@ -194,11 +225,12 @@ public class Orifice extends TwoPortEquipment {
   }
 
   /**
-   * Calculates the mass flow rate through an orifice plate using the ISO 5167
-   * formulation.
+   * Calculates the mass flow rate through an orifice plate using the ISO 5167 formulation.
    *
-   * <p>Inputs and output are all in SI units. The method iterates the
-   * Reader-Harris/Gallagher discharge coefficient until convergence.</p>
+   * <p>
+   * Inputs and output are all in SI units. The method iterates the Reader-Harris/Gallagher
+   * discharge coefficient until convergence.
+   * </p>
    *
    * @param D upstream internal pipe diameter in meters
    * @param Do orifice diameter in meters
@@ -210,8 +242,8 @@ public class Orifice extends TwoPortEquipment {
    * @param taps pressure tap type ("corner", "flange", "D", or "D/2")
    * @return mass flow rate in kg/s
    */
-  public static double calculateMassFlowRate(double D, double Do, double P1, double P2,
-      double rho, double mu, double k, String taps) {
+  public static double calculateMassFlowRate(double D, double Do, double P1, double P2, double rho,
+      double mu, double k, String taps) {
     final int MAX_ITERATIONS = 50;
     double m = 1.0;
     for (int i = 0; i < MAX_ITERATIONS; i++) {
@@ -232,12 +264,113 @@ public class Orifice extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public void run(UUID uuid) {
-    if (inputstream != null && outputstream != null) {
-      double newPressure = inputstream.getPressure("bara") - calc_dp();
+    if (inStream != null && outStream != null) {
+      double newPressure = inStream.getPressure("bara") - calc_dp();
       SystemInterface outfluid = (SystemInterface) inStream.clone();
       outfluid.setPressure(newPressure);
       outStream.setFluid(outfluid);
       outStream.run();
     }
+  }
+
+  /**
+   * Run transient simulation for the orifice.
+   *
+   * <p>
+   * In transient mode, the orifice acts as a pressure-driven flow restriction device. The flow rate
+   * through the orifice is calculated based on the pressure differential using ISO 5167 equations:
+   * </p>
+   *
+   * <pre>
+   * m = A × C × ε × √(2ρΔP / (1 - β⁴))
+   * </pre>
+   *
+   * <p>
+   * where:
+   * </p>
+   * <ul>
+   * <li>A = orifice area (m²)</li>
+   * <li>C = discharge coefficient</li>
+   * <li>ε = expansibility factor (accounts for compressibility)</li>
+   * <li>ρ = fluid density at inlet (kg/m³)</li>
+   * <li>ΔP = pressure drop across orifice (Pa)</li>
+   * <li>β = diameter ratio (d/D)</li>
+   * </ul>
+   *
+   * <p>
+   * The downstream pressure is taken from the stored pressureDownstream value if available (e.g.,
+   * flare header pressure), otherwise it reads from the outlet stream. This ensures proper flow
+   * calculation even when stream pressures aren't updated in the flow network.
+   * </p>
+   *
+   * <p>
+   * <b>Important:</b> In dynamic simulations, the orifice DETERMINES the flow rate based on
+   * available ΔP. This is different from steady-state mode where flow may be specified upstream.
+   * The calculated flow is set on both the thermoSystem and inStream to ensure consistency in the
+   * process network.
+   * </p>
+   *
+   * @param dt Time step in seconds (not used for orifice as it has no accumulation/storage)
+   * @param id Unique identifier for this simulation run
+   */
+  public void runTransient(double dt, UUID id) {
+    // For orifice, transient behavior is quasi-steady (no accumulation)
+    // Just run steady-state calculation
+    SystemInterface thermoSystem = inStream.getThermoSystem().clone();
+
+    // Handle zero or very low flow cases
+    double flowRate = thermoSystem.getFlowRate("mole/sec");
+    if (flowRate < 1e-10) {
+      // For negligible flow, just set outlet to inlet conditions
+      outStream.setFluid(thermoSystem);
+      return;
+    }
+
+    thermoSystem.init(3);
+
+    // Get inlet pressure from stream
+    double P1 = inStream.getPressure("bara");
+
+    // Get downstream pressure - use stored value if available, otherwise from outlet stream
+    double P2 = (pressureDownstream > 0.0) ? pressureDownstream : outStream.getPressure("bara");
+
+    // In dynamic/transient mode: Calculate flow based on pressure difference
+    // (Similar to valve behavior - flow is determined by ΔP, not by upstream conditions)
+    if (diameter != null && orificeDiameter > 0.0 && dischargeCoefficient > 0.0 && P1 > P2) {
+      double beta = orificeDiameter / diameter;
+      double beta2 = beta * beta;
+      double beta4 = beta2 * beta2;
+
+      // Get fluid properties at inlet conditions
+      double rho = thermoSystem.getDensity("kg/m3");
+      double k = thermoSystem.getGamma();
+
+      // Available pressure drop
+      double availableDeltaP_bara = P1 - P2;
+      double P1_Pa = P1 * 1e5;
+      double P2_Pa = P2 * 1e5;
+      double dP_Pa = availableDeltaP_bara * 1e5;
+
+      double C = dischargeCoefficient;
+      double epsilon = calculateExpansibility(diameter, orificeDiameter, P1_Pa, P2_Pa, k);
+      double A_orifice = 0.25 * Math.PI * orificeDiameter * orificeDiameter;
+
+      // Calculate actual mass flow through orifice based on ISO 5167
+      // m = A * C * ε * sqrt(2 * ρ * ΔP / (1 - β⁴))
+      double calculatedFlow_kgs =
+          A_orifice * C * epsilon * Math.sqrt(2.0 * rho * dP_Pa / (1.0 - beta4));
+
+      // In dynamic mode, the orifice DETERMINES the flow (not just limits it)
+      // Set this as the actual flow through the orifice
+      thermoSystem.setTotalFlowRate(calculatedFlow_kgs, "kg/sec");
+      inStream.getFluid().setTotalFlowRate(calculatedFlow_kgs, "kg/sec");
+    }
+
+    // Set outlet pressure
+    thermoSystem.setPressure(P2, "bara");
+    outStream.setFluid(thermoSystem);
+    inStream.run();
+
+
   }
 }
