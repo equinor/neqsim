@@ -208,10 +208,11 @@ public class HIPPSExample {
       }
 
       // Print status every second
-      if (time % 1.0 < timeStep / 2.0 || hippsValve.hasTripped() && time > tripTime - timeStep
-          && time < tripTime + 2.0) {
-        System.out.printf("  %5.1f  |   %6.2f    |    %d/%d    |   %5.1f%%   |  %5.1f%%  | %12s | %10s%n",
-            time, currentPressure, hippsValve.getActiveTransmitterCount(), 3,
+      if (time % 1.0 < timeStep / 2.0
+          || hippsValve.hasTripped() && time > tripTime - timeStep && time < tripTime + 2.0) {
+        System.out.printf(
+            "  %5.1f  |   %6.2f    |    %d/%d    |   %5.1f%%   |  %5.1f%%  | %12s | %10s%n", time,
+            currentPressure, hippsValve.getActiveTransmitterCount(), 3,
             hippsValve.getPercentValveOpening(), psv.getPercentValveOpening(),
             hippsValve.hasTripped() ? "TRIPPED" : "NORMAL",
             psv.getPercentValveOpening() > 0 ? "LIFTING" : "CLOSED");

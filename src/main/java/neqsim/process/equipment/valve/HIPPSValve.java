@@ -29,6 +29,7 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * <p>
  * <b>HIPPS vs. PSV:</b>
  * <table border="1">
+ * <caption>Comparison between HIPPS and PSV protection systems</caption>
  * <tr>
  * <th>Aspect</th>
  * <th>HIPPS</th>
