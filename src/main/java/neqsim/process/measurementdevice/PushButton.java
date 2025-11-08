@@ -1,10 +1,14 @@
 package neqsim.process.measurementdevice;
 
+import java.util.ArrayList;
+import java.util.List;
 import neqsim.process.equipment.valve.BlowdownValve;
+import neqsim.process.logic.ProcessLogic;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * Push Button instrument for manual activation of equipment (e.g., ESD blowdown valves).
+ * Push Button instrument for manual activation of equipment (e.g., ESD blowdown valves) and process
+ * logic sequences.
  * 
  * <p>
  * A push button is a simple binary instrument that can be in one of two states: pushed (active) or
@@ -15,7 +19,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Key features:
  * <ul>
  * <li>Binary state: active (pushed) or inactive (not pushed)</li>
- * <li>Can be linked to BlowdownValve for direct activation</li>
+ * <li>Can be linked to BlowdownValve for direct activation (legacy)</li>
+ * <li>Can be linked to ProcessLogic sequences (ESD, startup, etc.)</li>
  * <li>Manual activation and reset capability</li>
  * <li>Measured value: 1.0 when pushed, 0.0 when not pushed</li>
  * <li>Supports alarm configuration for activation logging</li>
@@ -53,11 +58,14 @@ public class PushButton extends MeasurementDeviceBaseClass {
   /** Indicates if button is currently pushed (active). */
   private boolean isPushed = false;
 
-  /** Optional blowdown valve that this button controls. */
+  /** Optional blowdown valve that this button controls (legacy support). */
   private BlowdownValve linkedBlowdownValve = null;
 
   /** Flag to enable/disable automatic valve activation on push. */
   private boolean autoActivateValve = true;
+
+  /** List of process logic sequences linked to this button. */
+  private List<ProcessLogic> linkedLogics = new ArrayList<>();
 
   /**
    * Constructor for PushButton.
@@ -105,19 +113,49 @@ public class PushButton extends MeasurementDeviceBaseClass {
   }
 
   /**
+   * Links this push button to a process logic sequence.
+   * 
+   * <p>
+   * When the button is pushed, all linked logic sequences will be activated. This allows a single
+   * button to trigger complex multi-step operations like ESD sequences, startup procedures, etc.
+   * </p>
+   *
+   * @param logic process logic to activate when button is pushed
+   */
+  public void linkToLogic(ProcessLogic logic) {
+    if (!linkedLogics.contains(logic)) {
+      linkedLogics.add(logic);
+    }
+  }
+
+  /**
+   * Gets the list of linked process logic sequences.
+   *
+   * @return list of linked logic sequences (unmodifiable)
+   */
+  public List<ProcessLogic> getLinkedLogics() {
+    return new ArrayList<>(linkedLogics);
+  }
+
+  /**
    * Pushes the button, activating it.
    * 
    * <p>
    * If a blowdown valve is linked and auto-activation is enabled, this will also activate the
-   * valve.
+   * valve. Additionally, all linked process logic sequences will be activated.
    * </p>
    */
   public void push() {
     isPushed = true;
 
-    // Activate linked blowdown valve if configured
+    // Activate linked blowdown valve if configured (legacy support)
     if (linkedBlowdownValve != null && autoActivateValve) {
       linkedBlowdownValve.activate();
+    }
+
+    // Activate all linked logic sequences
+    for (ProcessLogic logic : linkedLogics) {
+      logic.activate();
     }
   }
 
@@ -222,6 +260,17 @@ public class PushButton extends MeasurementDeviceBaseClass {
       sb.append(", Linked to: ").append(linkedBlowdownValve.getName());
       sb.append(" (").append(linkedBlowdownValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED")
           .append(")");
+    }
+    if (!linkedLogics.isEmpty()) {
+      sb.append(", Linked Logic: [");
+      for (int i = 0; i < linkedLogics.size(); i++) {
+        if (i > 0) {
+          sb.append(", ");
+        }
+        ProcessLogic logic = linkedLogics.get(i);
+        sb.append(logic.getName()).append(" (").append(logic.getState()).append(")");
+      }
+      sb.append("]");
     }
     return sb.toString();
   }
