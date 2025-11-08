@@ -152,6 +152,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   private double lastFlowRate;
   private double lastPressure;
 
+  // Heat input capabilities
+  private boolean setHeatInput = false;
+  private double heatInput = 0.0; // W (watts)
+  private String heatInputUnit = "W";
+
   /**
    * Constructor for Separator.
    *
@@ -329,7 +334,19 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     lastPressure = inletStreamMixer.getOutletStream().getPressure();
     thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
     thermoSystem2.setPressure(thermoSystem2.getPressure() - pressureDrop);
-    if (Math.abs(pressureDrop) > 1e-6) {
+
+    // Handle heat input for steady-state operations
+    if (setHeatInput && heatInput != 0.0) {
+      // Add heat input to the system enthalpy
+      double currentEnthalpy = thermoSystem2.getEnthalpy(); // Default unit is J
+      double newEnthalpy = currentEnthalpy + heatInput; // heatInput is in watts (J/s) - for steady
+                                                        // state we add directly
+
+      // Perform HP flash (enthalpy-pressure flash) with heat input
+      ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
+      ops.PHflash(newEnthalpy, 0); // Second parameter is typically 0
+      thermoSystem2.initProperties();
+    } else if (Math.abs(pressureDrop) > 1e-6) {
       ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
       ops.TPflash();
       thermoSystem2.initProperties();
@@ -447,6 +464,12 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       }
       double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
           - gasOutStream.getThermoSystem().getEnthalpy() + deliq;
+
+      // Add external heat input (e.g., from flare radiation)
+      if (setHeatInput && heatInput != 0.0) {
+        deltaEnergy += heatInput; // Heat input in watts (J/s)
+      }
+
       double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
       thermoSystem.init(0);
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
@@ -1321,6 +1344,117 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     SeparatorResponse res = new SeparatorResponse(this);
     res.applyConfig(cfg);
     return new GsonBuilder().create().toJson(res);
+  }
+
+  /**
+   * Set heat input to the separator (e.g., from flare radiation, external heating).
+   *
+   * @param heatInput heat duty in watts
+   */
+  public void setHeatInput(double heatInput) {
+    this.heatInput = heatInput;
+    this.heatInputUnit = "W";
+    this.setHeatInput = true;
+  }
+
+  /**
+   * Set heat input to the separator with specified unit.
+   *
+   * @param heatInput heat duty value
+   * @param unit heat duty unit (W, kW, MW, J/s, etc.)
+   */
+  public void setHeatInput(double heatInput, String unit) {
+    this.heatInputUnit = unit;
+    // Convert to watts for internal calculations
+    switch (unit.toLowerCase()) {
+      case "kw":
+        this.heatInput = heatInput * 1000.0;
+        break;
+      case "mw":
+        this.heatInput = heatInput * 1.0e6;
+        break;
+      case "j/s":
+      case "w":
+      default:
+        this.heatInput = heatInput;
+        break;
+    }
+    this.setHeatInput = true;
+  }
+
+  /**
+   * Set heat duty (alias for setHeatInput).
+   *
+   * @param heatDuty heat duty in watts
+   */
+  public void setHeatDuty(double heatDuty) {
+    setHeatInput(heatDuty);
+  }
+
+  /**
+   * Set heat duty with unit (alias for setHeatInput).
+   *
+   * @param heatDuty heat duty value
+   * @param unit heat duty unit
+   */
+  public void setHeatDuty(double heatDuty, String unit) {
+    setHeatInput(heatDuty, unit);
+  }
+
+  /**
+   * Get heat input in watts.
+   *
+   * @return heat input in watts
+   */
+  public double getHeatInput() {
+    return heatInput;
+  }
+
+  /**
+   * Get heat input in specified unit.
+   *
+   * @param unit desired unit (W, kW, MW)
+   * @return heat input in specified unit
+   */
+  public double getHeatInput(String unit) {
+    switch (unit.toLowerCase()) {
+      case "kw":
+        return heatInput / 1000.0;
+      case "mw":
+        return heatInput / 1.0e6;
+      case "j/s":
+      case "w":
+      default:
+        return heatInput;
+    }
+  }
+
+  /**
+   * Get heat duty (alias for getHeatInput).
+   *
+   * @return heat duty in watts
+   */
+  public double getHeatDuty() {
+    return getHeatInput();
+  }
+
+  /**
+   * Get heat duty in specified unit.
+   *
+   * @param unit desired unit
+   * @return heat duty in specified unit
+   */
+  public double getHeatDuty(String unit) {
+    return getHeatInput(unit);
+  }
+
+  /**
+   * Check if heat input is set.
+   *
+   * @return true if heat input is explicitly set
+   */
+  public boolean isSetHeatInput() {
+    return setHeatInput;
   }
 
   /*

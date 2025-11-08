@@ -32,15 +32,33 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class AdvancedProcessLogicExample {
+
+  /**
+   * Java 8 compatible method to repeat a string.
+   * 
+   * @param str the string to repeat
+   * @param count the number of times to repeat
+   * @return the repeated string
+   */
+  private static String repeat(String str, int count) {
+    if (count <= 0)
+      return "";
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < count; i++) {
+      sb.append(str);
+    }
+    return sb.toString();
+  }
+
   /**
    * Main method to run the advanced logic example.
    *
    * @param args command line arguments
    */
   public static void main(String[] args) {
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("ADVANCED PROCESS LOGIC FEATURES EXAMPLE");
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println();
 
     // Create process equipment
@@ -71,9 +89,9 @@ public class AdvancedProcessLogicExample {
     // ======================================================================================
     // FEATURE 1: VOTING LOGIC FOR REDUNDANT SENSORS
     // ======================================================================================
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("FEATURE 1: VOTING LOGIC (2oo3 for Pressure Sensors)");
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
 
     // Simulate 3 redundant pressure transmitters
     double actualPressure = feedStream.getPressure();
@@ -118,9 +136,9 @@ public class AdvancedProcessLogicExample {
     // ======================================================================================
     // FEATURE 2: STARTUP LOGIC WITH PERMISSIVES
     // ======================================================================================
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("FEATURE 2: STARTUP LOGIC WITH PERMISSIVE CHECKS");
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
 
     StartupLogic startupLogic = new StartupLogic("Separator Startup");
 
@@ -166,7 +184,7 @@ public class AdvancedProcessLogicExample {
     double totalTime = 15.0;
 
     System.out.println("Time (s) | Status");
-    System.out.println("---------|" + "-".repeat(70));
+    System.out.println("---------|" + repeat("-", 70));
 
     for (double time = 0.0; time <= totalTime; time += timeStep) {
       warmupTime.update(timeStep);
@@ -190,9 +208,9 @@ public class AdvancedProcessLogicExample {
     // ======================================================================================
     // FEATURE 3: CONDITIONAL BRANCHING
     // ======================================================================================
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("FEATURE 3: CONDITIONAL BRANCHING (If-Then-Else Logic)");
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
 
     // Scenario: If pressure > 12 bara, reduce flow; else increase flow
     PressureCondition highPressure = new PressureCondition(feedStream, 12.0, ">");
@@ -224,9 +242,9 @@ public class AdvancedProcessLogicExample {
     // ======================================================================================
     // FEATURE 4: PARALLEL ACTION EXECUTION
     // ======================================================================================
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("FEATURE 4: PARALLEL ACTION EXECUTION");
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
 
     // Create multiple actions to execute in parallel
     ParallelActionGroup parallelActions = new ParallelActionGroup("Open all valves");
@@ -262,9 +280,9 @@ public class AdvancedProcessLogicExample {
     // ======================================================================================
     // FEATURE 5: CONTROLLED SHUTDOWN WITH RAMP-DOWN
     // ======================================================================================
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("FEATURE 5: CONTROLLED SHUTDOWN WITH RAMP-DOWN");
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
 
     ShutdownLogic shutdownLogic = new ShutdownLogic("Separator Shutdown");
     shutdownLogic.setRampDownTime(10.0); // 10 second controlled shutdown
@@ -301,7 +319,7 @@ public class AdvancedProcessLogicExample {
     System.out.println("Shutdown activated...\n");
 
     System.out.println("Time (s) | Valve (%) | Progress | Status");
-    System.out.println("---------|-----------|----------|" + "-".repeat(50));
+    System.out.println("---------|-----------|----------|" + repeat("-", 50));
 
     for (double time = 0.0; time <= 12.0; time += timeStep) {
       shutdownLogic.execute(timeStep);
@@ -326,9 +344,9 @@ public class AdvancedProcessLogicExample {
     // ======================================================================================
     // FEATURE 6: EMERGENCY SHUTDOWN (FASTER)
     // ======================================================================================
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("FEATURE 6: EMERGENCY SHUTDOWN (Accelerated Timing)");
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
 
     // Reset valve
     feedValve.setPercentValveOpening(100.0);
@@ -375,9 +393,9 @@ public class AdvancedProcessLogicExample {
     // ======================================================================================
     // SUMMARY
     // ======================================================================================
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("FEATURES DEMONSTRATED");
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("✓ Voting Logic: 2oo3 digital and analog voting for redundant sensors");
     System.out.println("✓ Startup Logic: Permissive checks with temperature, pressure, and timer");
     System.out.println("✓ Conditional Branching: If-then-else logic for dynamic decision making");
@@ -386,9 +404,9 @@ public class AdvancedProcessLogicExample {
     System.out.println("✓ Emergency Shutdown: Accelerated shutdown with scaled timing");
     System.out.println();
 
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("EXAMPLE COMPLETED");
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
   }
 
   /**

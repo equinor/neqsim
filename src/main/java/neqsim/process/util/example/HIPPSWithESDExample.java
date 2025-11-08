@@ -40,14 +40,32 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class HIPPSWithESDExample {
   /**
+   * Java 8 compatible string repeat utility method.
+   *
+   * @param str the string to repeat
+   * @param count the number of times to repeat
+   * @return the repeated string
+   */
+  private static String repeat(String str, int count) {
+    if (count <= 0) {
+      return "";
+    }
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < count; i++) {
+      sb.append(str);
+    }
+    return sb.toString();
+  }
+
+  /**
    * Main method to run the example.
    *
    * @param args command line arguments
    */
   public static void main(String[] args) {
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("HIPPS WITH ESD ESCALATION EXAMPLE");
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println();
 
     // Create process system
@@ -85,7 +103,7 @@ public class HIPPSWithESDExample {
     double esdSetpoint = maop * 0.98; // ESD at 98% MAOP = 98 bara
 
     System.out.println("SAFETY SYSTEM CONFIGURATION:");
-    System.out.println("-".repeat(80));
+    System.out.println(repeat("-", 80));
     System.out.printf("Maximum Allowable Operating Pressure (MAOP): %.1f bara\n", maop);
     System.out.printf("HIPPS Activation Setpoint (95%% MAOP):       %.1f bara\n", hippsSetpoint);
     System.out.printf("ESD Activation Setpoint (98%% MAOP):         %.1f bara\n", esdSetpoint);
@@ -119,7 +137,7 @@ public class HIPPSWithESDExample {
     hipps.linkToEscalationLogic(esdLogic, 5.0);
 
     System.out.println("HIPPS CONFIGURATION:");
-    System.out.println("-".repeat(80));
+    System.out.println(repeat("-", 80));
     System.out.println("Voting Logic: 2oo3 (2 out of 3 pressure transmitters must trip)");
     System.out.println("Pressure Transmitters:");
     System.out.println("  - PT-101A: Setpoint = " + hippsSetpoint + " bara");
@@ -130,7 +148,7 @@ public class HIPPSWithESDExample {
     System.out.println();
 
     System.out.println("ESD CONFIGURATION:");
-    System.out.println("-".repeat(80));
+    System.out.println(repeat("-", 80));
     System.out.println("Activation: Manual (backup) or automatic escalation from HIPPS");
     System.out.println("Actions: Trip ESD valve");
     System.out.println();
@@ -138,9 +156,9 @@ public class HIPPSWithESDExample {
     // ======================================================================================
     // SCENARIO 1: NORMAL OPERATION
     // ======================================================================================
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("SCENARIO 1: NORMAL OPERATION (Pressure = 50 bara)");
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
 
     feedStream.run();
     separator.run();
@@ -161,9 +179,9 @@ public class HIPPSWithESDExample {
     // ======================================================================================
     // SCENARIO 2: HIPPS ACTIVATION (Pressure rises to 96 bara)
     // ======================================================================================
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("SCENARIO 2: HIPPS ACTIVATION (Pressure rises to 96 bara)");
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
 
     // Simulate pressure rise
     double highPressure = 96.0; // Above HIPPS setpoint (95 bara)
@@ -177,7 +195,7 @@ public class HIPPSWithESDExample {
     hipps.update(highPressure, highPressure, highPressure);
 
     System.out.println("IMMEDIATE RESPONSE:");
-    System.out.println("-".repeat(80));
+    System.out.println(repeat("-", 80));
     System.out.println("PT-101A: " + hippsPT1.toString());
     System.out.println("PT-101B: " + hippsPT2.toString());
     System.out.println("PT-101C: " + hippsPT3.toString());
@@ -198,9 +216,9 @@ public class HIPPSWithESDExample {
     // ======================================================================================
     // SCENARIO 3: HIPPS FAILURE - ESCALATION TO ESD
     // ======================================================================================
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("SCENARIO 3: HIPPS FAILURE - ESCALATION TO ESD");
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("Simulating scenario where HIPPS trips but pressure remains high...");
     System.out.println("(This would indicate HIPPS valve failure or continued pressure source)");
     System.out.println();
@@ -250,7 +268,7 @@ public class HIPPSWithESDExample {
     }
 
     System.out.println("KEY FEATURES DEMONSTRATED:");
-    System.out.println("-".repeat(80));
+    System.out.println(repeat("-", 80));
     System.out.println("✓ HIPPS acts as first line of defense (95% MAOP)");
     System.out.println("✓ 2oo3 voting provides high reliability (SIL 3)");
     System.out.println("✓ Rapid isolation valve closure prevents overpressure");
@@ -260,7 +278,7 @@ public class HIPPSWithESDExample {
     System.out.println();
 
     System.out.println("SAFETY INTEGRITY:");
-    System.out.println("-".repeat(80));
+    System.out.println(repeat("-", 80));
     System.out
         .println("• HIPPS prevents PSV lifting and flaring (environmental and economic benefit)");
     System.out.println("• 2oo3 voting balances safety integrity with availability");
@@ -269,8 +287,8 @@ public class HIPPSWithESDExample {
     System.out.println("• Complies with IEC 61508/61511 for SIL 2/3 applications");
     System.out.println();
 
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
     System.out.println("EXAMPLE COMPLETED");
-    System.out.println("=".repeat(80));
+    System.out.println(repeat("=", 80));
   }
 }

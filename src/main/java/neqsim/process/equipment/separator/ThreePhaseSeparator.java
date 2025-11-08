@@ -327,8 +327,22 @@ public class ThreePhaseSeparator extends Separator {
       useTempMultiPhaseCheck = true;
       thermoSystem2.setMultiPhaseCheck(true);
     }
+
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem2);
-    thermoOps.TPflash();
+
+    // Handle heat input for steady-state operations
+    if (isSetHeatInput() && getHeatInput() != 0.0) {
+      // Add heat input to the system enthalpy
+      double currentEnthalpy = thermoSystem2.getEnthalpy(); // Default unit is J
+      double newEnthalpy = currentEnthalpy + getHeatInput(); // getHeatInput() is in watts (J/s) -
+                                                             // for steady state we add directly
+
+      // Perform HP flash (enthalpy-pressure flash) with heat input
+      thermoOps.PHflash(newEnthalpy, 0); // Second parameter is typically 0
+    } else {
+      thermoOps.TPflash();
+    }
+
     if (useTempMultiPhaseCheck) {
       thermoSystem2.setMultiPhaseCheck(false);
     }
@@ -520,6 +534,12 @@ public class ThreePhaseSeparator extends Separator {
       double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
           - gasOutStream.getThermoSystem().getEnthalpy() * gasOutletFlowFraction + deOil
           + deAqueous;
+
+      // Add external heat input (e.g., from flare radiation)
+      if (isSetHeatInput() && getHeatInput() != 0.0) {
+        deltaEnergy += getHeatInput(); // Heat input in watts (J/s)
+      }
+
       double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
       thermoSystem.init(0);
 
