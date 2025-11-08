@@ -15,10 +15,10 @@ import neqsim.process.logic.LogicCondition;
  * 
  * <pre>
  * // Check if temperature is above 80°C
- * TemperatureCondition minTemp = new TemperatureCondition(heater, 80.0, ">=");
+ * TemperatureCondition minTemp = new TemperatureCondition(heater, 80.0, "&gt;=");
  * 
  * // Check if temperature is below 200°C (max limit)
- * TemperatureCondition maxTemp = new TemperatureCondition(reactor, 200.0, "<");
+ * TemperatureCondition maxTemp = new TemperatureCondition(reactor, 200.0, "&lt;");
  * </pre>
  *
  * @author ESOL

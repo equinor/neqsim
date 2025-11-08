@@ -18,8 +18,8 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * Example usage:
  * 
  * <pre>
- * LogicCondition tempReady = new TemperatureCondition(heater, 80.0, ">=");
- * LogicCondition pressureOK = new PressureCondition(vessel, 5.0, ">");
+ * LogicCondition tempReady = new TemperatureCondition(heater, 80.0, "&gt;=");
+ * LogicCondition pressureOK = new PressureCondition(vessel, 5.0, "&gt;");
  * 
  * StartupLogic startup = new StartupLogic("Startup Sequence");
  * startup.addPermissive(tempReady);

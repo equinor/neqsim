@@ -18,8 +18,8 @@ import neqsim.process.logic.LogicCondition;
  * Example usage:
  * 
  * <pre>
- * // If temperature > 100°C, open cooling valve; else open bypass valve
- * LogicCondition highTemp = new TemperatureCondition(reactor, 100.0, ">");
+ * // If temperature &gt; 100°C, open cooling valve; else open bypass valve
+ * LogicCondition highTemp = new TemperatureCondition(reactor, 100.0, "&gt;");
  * LogicAction openCooling = new OpenValveAction(coolingValve);
  * LogicAction openBypass = new OpenValveAction(bypassValve);
  * 

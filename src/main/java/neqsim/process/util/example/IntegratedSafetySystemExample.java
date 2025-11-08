@@ -412,6 +412,26 @@ public class IntegratedSafetySystemExample {
 
   /**
    * Scenario 2: HIPPS activation due to high pressure.
+   *
+   * @param highPressureFeed High pressure feed stream
+   * @param hippsValve HIPPS valve
+   * @param esdInletValve ESD inlet valve
+   * @param separatorInlet Separator inlet stream
+   * @param separator Separator vessel
+   * @param separatorGasOut Separator gas outlet
+   * @param gasSplitter Gas stream splitter
+   * @param processStream Process stream
+   * @param blowdownStream Blowdown stream
+   * @param bdValve Blowdown valve
+   * @param psv Pressure safety valve
+   * @param psvOutlet PSV outlet stream
+   * @param flareHeader Flare header mixer
+   * @param flareHeaderOutlet Flare header outlet
+   * @param flare Flare system
+   * @param hippsPT1 HIPPS pressure transmitter 1
+   * @param hippsPT2 HIPPS pressure transmitter 2
+   * @param hippsPT3 HIPPS pressure transmitter 3
+   * @param fireSystem Fire and gas detection system
    */
   private static void runScenario2_HIPPSActivation(Stream highPressureFeed,
       ThrottlingValve hippsValve, ThrottlingValve esdInletValve, Stream separatorInlet,
@@ -459,6 +479,30 @@ public class IntegratedSafetySystemExample {
 
   /**
    * Scenario 3: ESD activation and blowdown.
+   *
+   * @param highPressureFeed High pressure feed stream
+   * @param hippsValve HIPPS valve
+   * @param esdInletValve ESD inlet valve
+   * @param separatorInlet Separator inlet stream
+   * @param separator Separator vessel
+   * @param separatorGasOut Separator gas outlet
+   * @param gasSplitter Gas stream splitter
+   * @param processStream Process stream
+   * @param blowdownStream Blowdown stream
+   * @param bdValve Blowdown valve
+   * @param psv Pressure safety valve
+   * @param psvOutlet PSV outlet stream
+   * @param flareHeader Flare header mixer
+   * @param flareHeaderOutlet Flare header outlet
+   * @param flare Flare system
+   * @param hippsPT1 HIPPS pressure transmitter 1
+   * @param hippsPT2 HIPPS pressure transmitter 2
+   * @param separatorPT Separator pressure transmitter
+   * @param separatorTT Separator temperature transmitter
+   * @param hippsController HIPPS controller
+   * @param esdController ESD controller
+   * @param fireSystem Fire and gas detection system
+   * @param esdButton ESD push button
    */
   private static void runScenario3_ESDAndBlowdown(Stream highPressureFeed,
       ThrottlingValve hippsValve, ThrottlingValve esdInletValve, Stream separatorInlet,

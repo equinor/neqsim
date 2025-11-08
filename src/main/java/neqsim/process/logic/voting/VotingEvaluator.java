@@ -20,7 +20,7 @@ import java.util.List;
  * <p>
  * Common applications:
  * <ul>
- * <li>Safety systems (HIPPS, Fire & Gas, ESD)</li>
+ * <li>Safety systems (HIPPS, Fire &amp; Gas, ESD)</li>
  * <li>Critical process measurements (pressure, temperature, level)</li>
  * <li>Redundant control loops</li>
  * <li>Quality measurements</li>
@@ -31,14 +31,14 @@ import java.util.List;
  * 
  * <pre>
  * // Digital voting: 2 out of 3 pressure switches must be high
- * VotingEvaluator<Boolean> pressureVoting = new VotingEvaluator<>(VotingPattern.TWO_OUT_OF_THREE);
+ * VotingEvaluator&lt;Boolean&gt; pressureVoting = new VotingEvaluator&lt;&gt;(VotingPattern.TWO_OUT_OF_THREE);
  * pressureVoting.addInput(pt1.isHigh(), pt1.isFaulty());
  * pressureVoting.addInput(pt2.isHigh(), pt2.isFaulty());
  * pressureVoting.addInput(pt3.isHigh(), pt3.isFaulty());
  * boolean pressureHigh = pressureVoting.evaluateDigital();
  * 
  * // Analog voting: median of 3 temperature sensors
- * VotingEvaluator<Double> tempVoting = new VotingEvaluator<>(VotingPattern.TWO_OUT_OF_THREE);
+ * VotingEvaluator&lt;Double&gt; tempVoting = new VotingEvaluator&lt;&gt;(VotingPattern.TWO_OUT_OF_THREE);
  * tempVoting.addInput(tt1.getValue(), tt1.isFaulty());
  * tempVoting.addInput(tt2.getValue(), tt2.isFaulty());
  * tempVoting.addInput(tt3.getValue(), tt3.isFaulty());

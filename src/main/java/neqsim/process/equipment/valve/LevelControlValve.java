@@ -20,7 +20,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Configurable control gain</li>
  * <li>Fail-open or fail-closed configurations</li>
  * </ul>
- * </p>
  * 
  * <p>
  * Control action:
@@ -29,7 +28,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * discharge)</li>
  * <li>REVERSE: Increase opening decreases outflow, increases level (rare)</li>
  * </ul>
- * </p>
  * 
  * <p>
  * Common applications:
@@ -40,7 +38,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Tank level regulation</li>
  * <li>Interface level control</li>
  * </ul>
- * </p>
  * 
  * <p>
  * Example usage:
@@ -61,7 +58,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * System.out.println("Valve opening: " + lcv.getPercentValveOpening() + "%");
  * System.out.println("Level error: " + lcv.getControlError() + "%");
  * </pre>
- * </p>
  *
  * @author ESOL
  * @version 1.0

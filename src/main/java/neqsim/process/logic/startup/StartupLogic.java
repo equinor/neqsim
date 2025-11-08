@@ -32,8 +32,8 @@ import neqsim.process.logic.ProcessLogic;
  * StartupLogic startup = new StartupLogic("Compressor Startup");
  * 
  * // Add permissives (must all be true before starting)
- * startup.addPermissive(new TemperatureCondition(cooler, 50.0, "<")); // Cooled
- * startup.addPermissive(new PressureCondition(suction, 3.0, ">")); // Min pressure
+ * startup.addPermissive(new TemperatureCondition(cooler, 50.0, "&lt;")); // Cooled
+ * startup.addPermissive(new PressureCondition(suction, 3.0, "&gt;")); // Min pressure
  * startup.addPermissive(new TimerCondition(60.0)); // Min 60s warm-up
  * 
  * // Add startup actions
