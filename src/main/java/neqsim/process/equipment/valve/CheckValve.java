@@ -20,7 +20,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Zero leakage when closed (ideal model)</li>
  * <li>Minimal pressure drop when fully open</li>
  * </ul>
- * </p>
  * 
  * <p>
  * Common applications:
@@ -31,7 +30,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Gravity drainage systems</li>
  * <li>Preventing siphoning</li>
  * </ul>
- * </p>
  * 
  * <p>
  * Example usage:
