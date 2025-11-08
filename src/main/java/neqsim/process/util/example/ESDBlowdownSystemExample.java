@@ -4,7 +4,8 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.valve.BlowdownValve;
-import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.equipment.valve.ControlValve;
+import neqsim.process.equipment.valve.ESDValve;
 import neqsim.process.equipment.diffpressure.Orifice;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.flare.Flare;
@@ -14,16 +15,20 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * Example demonstrating Emergency Shutdown (ESD) system with Blowdown Valve and Push Button.
+ * Example demonstrating Emergency Shutdown (ESD) system with Control Valve, ESD Valve, Blowdown
+ * Valve and Push Button.
  * 
  * <p>
  * This example shows:
  * <ul>
+ * <li>Inlet control valve (throttling valve) for flow control</li>
+ * <li>ESD inlet valve (normally open, fail-closed) for process isolation</li>
  * <li>High-pressure separator with gas outlet</li>
  * <li>Splitter directing gas to process or blowdown</li>
  * <li>Blowdown valve (normally closed) activated by ESD push button</li>
  * <li>Orifice controlling blowdown flow rate</li>
  * <li>Flare system receiving and combusting blowdown gas</li>
+ * <li>Coordinated ESD valve closure and blowdown valve opening</li>
  * </ul>
  *
  * @author ESOL
@@ -56,11 +61,19 @@ public class ESDBlowdownSystemExample {
     feedStream.setPressure(50.0, "bara");
     feedStream.setTemperature(25.0, "C");
 
-    // ESD inlet valve (normally open, closes on ESD)
-    ThrottlingValve esdInletValve = new ThrottlingValve("ESD-XV-101", feedStream);
-    esdInletValve.setPercentValveOpening(100.0); // Initially fully open
+    // Inlet control valve for flow control
+    ControlValve controlValve = new ControlValve("FCV-101", feedStream);
+    controlValve.setPercentValveOpening(50.0); // 50% opening for flow control
+    controlValve.setCv(300.0);
+    controlValve.setOutletPressure(48.0); // Slight pressure drop
+
+    Stream afterControlValve = new Stream("After Control Valve", controlValve.getOutletStream());
+
+    // ESD inlet valve (normally open, fail-closed safety valve)
+    ESDValve esdInletValve = new ESDValve("ESD-XV-101", afterControlValve);
+    esdInletValve.setStrokeTime(5.0); // 5 seconds to close
     esdInletValve.setCv(500.0); // Large Cv for minimal pressure drop
-    esdInletValve.setOutletPressure(50.0);
+    esdInletValve.energize(); // Energized during normal operation
 
     Stream separatorInlet = new Stream("Separator Inlet", esdInletValve.getOutletStream());
 
@@ -111,7 +124,11 @@ public class ESDBlowdownSystemExample {
     System.out.println("═══ SYSTEM CONFIGURATION ═══");
     System.out.println("Separator: HP Separator at 50 bara");
     System.out.println("Gas flow rate: 10000 kg/hr");
-    System.out.println("ESD inlet valve: ESD-XV-101 (normally open)");
+    System.out.println("Inlet control valve: FCV-101 (50% opening for flow control)");
+    System.out.println("  - Type: ControlValve with Cv=300");
+    System.out.println("ESD inlet valve: ESD-XV-101 (normally open, fail-closed)");
+    System.out.println("  - Type: ESDValve with 5s stroke time");
+    System.out.println("  - Fail-safe: Closed (spring-return actuator)");
     System.out.println("Blowdown valve: BD-101 (normally closed)");
     System.out.println("ESD push button: ESD-PB-101");
     System.out.println("BD orifice: D=0.4m, d=0.05m, Cd=0.61 (beta=0.125, restrictive)");
@@ -121,6 +138,8 @@ public class ESDBlowdownSystemExample {
     // Run initial steady state - normal operation
     System.out.println("═══ NORMAL OPERATION ═══");
     feedStream.run();
+    controlValve.run();
+    afterControlValve.run();
     esdInletValve.run();
     separatorInlet.run();
     separator.run();
@@ -130,7 +149,11 @@ public class ESDBlowdownSystemExample {
     blowdownStream.run();
     bdValve.run();
 
-    System.out.printf("Inlet valve opening: %.1f%%%n", esdInletValve.getPercentValveOpening());
+    System.out.printf("Control valve: %.1f%% open, outlet P=%.2f bara%n",
+        controlValve.getPercentValveOpening(), afterControlValve.getPressure("bara"));
+    System.out.printf("ESD inlet valve: %s, %.1f%% open%n",
+        esdInletValve.isEnergized() ? "ENERGIZED" : "DE-ENERGIZED",
+        esdInletValve.getPercentValveOpening());
     System.out.printf("Separator inlet flow: %.1f kg/hr%n", separatorInlet.getFlowRate("kg/hr"));
     System.out.printf("Process flow: %.1f kg/hr%n", processStream.getFlowRate("kg/hr"));
     System.out.printf("Blowdown flow: %.1f kg/hr%n", blowdownStream.getFlowRate("kg/hr"));
@@ -142,11 +165,12 @@ public class ESDBlowdownSystemExample {
     // Simulate ESD activation - operator pushes button
     System.out.println("═══ EMERGENCY SHUTDOWN ACTIVATED ═══");
     System.out.println(">>> OPERATOR PUSHES ESD BUTTON <<<");
-    System.out.println(">>> ESD INLET VALVE CLOSES <<<");
+    System.out.println(">>> DE-ENERGIZING ESD INLET VALVE (FAIL-SAFE CLOSURE) <<<");
+    System.out.println(">>> ACTIVATING BLOWDOWN VALVE <<<");
     esdButton.push();
 
-    // Close ESD inlet valve on ESD signal
-    esdInletValve.setPercentValveOpening(0.0);
+    // De-energize ESD inlet valve - triggers fail-safe closure
+    esdInletValve.trip();
 
     // Redirect flow to blowdown
     gasSplitter.setSplitFactors(new double[] {0.0, 1.0});
@@ -155,16 +179,17 @@ public class ESDBlowdownSystemExample {
     separator.setCalculateSteadyState(false);
 
     System.out.printf("ESD button state: %s%n", esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
+    System.out.printf("ESD inlet valve: %s%n", esdInletValve.isClosing() ? "CLOSING" : "CLOSED");
     System.out.printf("ESD inlet valve opening: %.1f%%%n", esdInletValve.getPercentValveOpening());
     System.out.printf("BD valve activated: %s%n", bdValve.isActivated() ? "YES" : "NO");
     System.out.println();
 
     // Simulate blowdown over time with pressure monitoring
-    System.out.println("═══ BLOWDOWN SIMULATION WITH PRESSURE MONITORING ═══");
+    System.out.println("═══ BLOWDOWN SIMULATION WITH COORDINATED VALVE OPERATION ═══");
     System.out.println(
-        "Time (s) | Sep Press (bara) | BD Opening (%) | BD Flow (kg/hr) | Inlet Valve (%) | Flare Heat (MW) | P_bd (bara) | ΔP (bar) | ρ (kg/m³)");
+        "Time (s) | Sep Press (bara) | ESD Valve (%) | BD Opening (%) | BD Flow (kg/hr) | Flare Heat (MW)");
     System.out.println(
-        "---------|------------------|----------------|-----------------|-----------------|-----------------|-------------|----------|----------");
+        "---------|------------------|---------------|----------------|-----------------|----------------");
 
     double timeStep = 1.0;
     double totalTime = 20.0;
@@ -176,6 +201,9 @@ public class ESDBlowdownSystemExample {
     double pressureAtEnd = initialPressure;
 
     for (double time = 0.0; time <= totalTime; time += timeStep) {
+      // Run ESD valve transient (progressive closure)
+      esdInletValve.runTransient(timeStep, java.util.UUID.randomUUID());
+
       // Control feed flow based on inlet valve position
       if (esdInletValve.getPercentValveOpening() < 1.0) {
         // Inlet valve closed - minimal purge flow to avoid numerical issues
@@ -183,6 +211,8 @@ public class ESDBlowdownSystemExample {
       } else {
         // Inlet valve open - run normally
         feedStream.run();
+        controlValve.run();
+        afterControlValve.run();
         esdInletValve.run();
         separatorInlet.run();
       }
@@ -213,24 +243,16 @@ public class ESDBlowdownSystemExample {
         pressureAtEnd = currentPressure;
       }
 
-      // Get diagnostic info
-      double bdInletPress = bdValveOutlet.getPressure("bara");
-      double sepOutPress = separatorGasOut.getPressure("bara");
-      double blowdownStreamPress = blowdownStream.getPressure("bara");
-      double orificeInletPress = bdOrifice.getInletStream().getPressure("bara");
-      double orificeOutletPress = toFlare.getPressure("bara");
-      double deltaP = orificeInletPress - orificeOutletPress;
-      double density = bdValveOutlet.getFluid().getDensity("kg/m3");
-
-      System.out.printf(
-          "%8.1f | %16.2f | %14.1f | %15.1f | %15.1f | %15.2f | BDS=%.2f VOut=%.2f OrIn=%.2f OrOut=%.2f ΔP=%.2f%n",
-          time, currentPressure, bdValve.getPercentValveOpening(), toFlare.getFlowRate("kg/hr"),
-          esdInletValve.getPercentValveOpening(), flare.getHeatDuty("MW"), blowdownStreamPress,
-          bdInletPress, orificeInletPress, orificeOutletPress, deltaP);
+      System.out.printf("%8.1f | %16.2f | %13.1f | %14.1f | %15.1f | %15.2f%n", time,
+          currentPressure, esdInletValve.getPercentValveOpening(), bdValve.getPercentValveOpening(),
+          toFlare.getFlowRate("kg/hr"), flare.getHeatDuty("MW"));
     }
 
     System.out.println();
     System.out.println("═══ BLOWDOWN SUMMARY ═══");
+    System.out.printf("ESD inlet valve: %s (%.1f%% open)%n",
+        esdInletValve.hasTripCompleted() ? "TRIP COMPLETED" : "CLOSING",
+        esdInletValve.getPercentValveOpening());
     System.out.printf("BD valve final opening: %.1f%%%n", bdValve.getPercentValveOpening());
     System.out.printf("Total gas blown down: %.1f kg%n", flare.getCumulativeGasBurned("kg"));
     System.out.printf("Total heat released: %.2f GJ%n", flare.getCumulativeHeatReleased("GJ"));
@@ -247,6 +269,12 @@ public class ESDBlowdownSystemExample {
         100.0 * (initialPressure - pressureAtEnd) / initialPressure);
 
     // Verification checks
+    if (esdInletValve.hasTripCompleted() && esdInletValve.getPercentValveOpening() < 1.0) {
+      System.out.println("✓ ESD inlet valve successfully closed (fail-safe operation)");
+    } else {
+      System.out.println("✗ WARNING: ESD inlet valve closure not completed");
+    }
+
     if (pressureAtEnd < initialPressure) {
       System.out.println("✓ Pressure successfully reduced via blowdown valve");
     } else {
@@ -268,6 +296,8 @@ public class ESDBlowdownSystemExample {
 
     System.out.println("═══ SYSTEM STATUS ═══");
     System.out.println(esdButton.toString());
+    System.out.println(controlValve.toString());
+    System.out.println(esdInletValve.toString());
     System.out.println(bdValve.toString());
     System.out.println();
 
