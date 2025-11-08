@@ -46,7 +46,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  *   System.out.println("Check valve is closed, no flow or reverse ΔP");
  * }
  * </pre>
- * </p>
  *
  * @author ESOL
  * @version 1.0

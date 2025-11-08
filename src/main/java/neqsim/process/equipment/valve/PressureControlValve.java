@@ -20,7 +20,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Configurable control gain</li>
  * <li>Min/max opening limits</li>
  * </ul>
- * </p>
  * 
  * <p>
  * Control modes:
@@ -29,7 +28,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>UPSTREAM: Maintains upstream (inlet) pressure at setpoint (back-pressure control)</li>
  * <li>DIFFERENTIAL: Maintains pressure difference across valve</li>
  * </ul>
- * </p>
  * 
  * <p>
  * Common applications:
@@ -40,7 +38,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Back-pressure control on vessels</li>
  * <li>Steam pressure regulation</li>
  * </ul>
- * </p>
  * 
  * <p>
  * Example usage:
@@ -56,7 +53,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * System.out.println("Valve opening: " + pcv.getPercentValveOpening() + "%");
  * System.out.println("Process variable: " + pcv.getProcessVariable() + " bara");
  * </pre>
- * </p>
  *
  * @author ESOL
  * @version 1.0

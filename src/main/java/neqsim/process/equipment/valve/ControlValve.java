@@ -19,7 +19,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Temperature control valves (TCV)</li>
  * <li>Level control valves (LCV)</li>
  * </ul>
- * </p>
  * 
  * <p>
  * Example usage:
@@ -30,7 +29,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * flowControlValve.setCv(300.0); // Flow coefficient
  * flowControlValve.run();
  * </pre>
- * </p>
  *
  * @author ESOL
  * @version 1.0

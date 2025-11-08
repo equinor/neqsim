@@ -430,7 +430,10 @@ public class IntegratedSafetySystemExample {
    * @param flare Flare system
    * @param hippsPT1 HIPPS pressure transmitter 1
    * @param hippsPT2 HIPPS pressure transmitter 2
-   * @param hippsPT3 HIPPS pressure transmitter 3
+   * @param separatorPT Separator pressure transmitter
+   * @param separatorTT Separator temperature transmitter
+   * @param hippsController HIPPS controller
+   * @param esdController ESD controller
    * @param fireSystem Fire and gas detection system
    */
   private static void runScenario2_HIPPSActivation(Stream highPressureFeed,
