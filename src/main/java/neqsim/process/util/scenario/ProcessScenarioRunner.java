@@ -33,7 +33,7 @@ import neqsim.process.util.monitor.ScenarioKPI;
  * runner.addLogic(startupLogic);
  * 
  * ProcessSafetyScenario scenario = ProcessSafetyScenario.builder("High Pressure")
- *     .customManipulator("Feed", stream -> stream.setPressure(80.0, "bara")).build();
+ *     .customManipulator("Feed", stream -&gt; stream.setPressure(80.0, "bara")).build();
  * 
  * runner.runScenario("High Pressure Test", scenario, 60.0, 1.0);
  * </pre>
