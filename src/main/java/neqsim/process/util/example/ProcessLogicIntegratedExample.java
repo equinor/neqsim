@@ -27,8 +27,7 @@ import neqsim.process.logic.condition.TimerCondition;
 import neqsim.process.logic.condition.ValvePositionCondition;
 import neqsim.process.safety.ProcessSafetyScenario;
 import neqsim.process.util.scenario.ProcessScenarioRunner;
-import neqsim.process.util.scenario.ScenarioExecutionSummary;
-import neqsim.process.util.monitor.KPIDashboard;
+import neqsim.process.util.scenario.ScenarioTestRunner;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -85,8 +84,10 @@ public class ProcessLogicIntegratedExample {
     // Setup process logic
     ProcessLogicSetup logicSetup = setupProcessLogic(processSystem, instruments);
 
-    // Create scenario runner
+    // Create scenario runner and initialize steady-state
     ProcessScenarioRunner runner = new ProcessScenarioRunner(processSystem);
+    runner.initializeSteadyState(); // This calls processSystem.run() and shows initial conditions
+
     runner.addLogic(logicSetup.hippsLogic);
     runner.addLogic(logicSetup.esdLogic);
     runner.addLogic(logicSetup.startupLogic);
@@ -301,63 +302,23 @@ public class ProcessLogicIntegratedExample {
   }
 
   /**
-   * Runs comprehensive test scenarios.
+   * Runs comprehensive test scenarios using the simplified ScenarioTestRunner.
    */
   private static void runTestScenarios(ProcessScenarioRunner runner) {
-    System.out.println("=".repeat(70));
-    System.out.println("RUNNING TEST SCENARIOS");
-    System.out.println("=".repeat(70));
-
-    // Create KPI Dashboard for comparison
-    KPIDashboard dashboard = new KPIDashboard();
+    // Create test runner with automatic KPI collection
+    ScenarioTestRunner testRunner = new ScenarioTestRunner(runner);
+    testRunner.printHeader();
 
     // Scenario 1: Normal startup sequence
-    System.out.println("\n### SCENARIO 1: NORMAL STARTUP ###");
     ProcessSafetyScenario normalScenario = ProcessSafetyScenario.builder("Normal Startup").build();
+    testRunner.executeScenario("Normal Startup", normalScenario, "System Startup", 30.0, 1.0);
 
-    // Activate startup logic using convenience method
-    runner.activateLogic("System Startup");
-
-    ScenarioExecutionSummary summary1 =
-        runner.runScenario("Normal Startup", normalScenario, 30.0, 1.0);
-    summary1.printResults(); // Use built-in results printer
-
-    // Collect KPIs for scenario 1
-    if (summary1.getKPI() != null) {
-      dashboard.addScenario("Normal Startup", summary1.getKPI());
-    }
-
-    // Reset for next scenario
-    runner.reset();
-
-    // Scenario 2: Manual ESD activation
-    System.out.println("\n### SCENARIO 2: MANUAL ESD ACTIVATION ###");
+    // Scenario 2: Manual ESD activation (delayed by 5 seconds)
     ProcessSafetyScenario esdScenario = ProcessSafetyScenario.builder("Manual ESD").build();
+    testRunner.executeScenarioWithDelayedActivation("Manual ESD", esdScenario, "ESD Level 1", 5000,
+        "OPERATOR ACTIVATES ESD BUTTON", 25.0, 0.5);
 
-    // Simulate operator pressing ESD button after 5 seconds
-    new Thread(() -> {
-      try {
-        Thread.sleep(5000); // Wait 5 seconds
-        System.out.println(">>> OPERATOR ACTIVATES ESD BUTTON <<<");
-        runner.activateLogic("ESD Level 1"); // Use convenience method
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-    }).start();
-
-    ScenarioExecutionSummary summary2 = runner.runScenario("Manual ESD", esdScenario, 25.0, 0.5);
-    summary2.printResults(); // Use built-in results printer
-
-    // Collect KPIs for scenario 2
-    if (summary2.getKPI() != null) {
-      dashboard.addScenario("Manual ESD", summary2.getKPI());
-    }
-
-    // Reset for next scenario
-    runner.reset();
-
-    // Scenario 3: High pressure scenario
-    System.out.println("\n### SCENARIO 3: HIGH PRESSURE SCENARIO ###");
+    // Scenario 3: High pressure scenario with delayed ESD trigger
     ProcessSafetyScenario highPressureScenario =
         ProcessSafetyScenario.builder("High Pressure").customManipulator("HP Feed", equipment -> {
           if (equipment instanceof Stream) {
@@ -366,45 +327,16 @@ public class ProcessLogicIntegratedExample {
                 .println("  - Feed pressure increased to 70 bara (simulating upstream upset)");
           }
         }).build();
-
-    // In this scenario, we'd normally have automatic pressure triggers, but for simplicity
-    // we'll manually activate ESD after some time
-    new Thread(() -> {
-      try {
-        Thread.sleep(8000); // Wait 8 seconds for pressure to build up
-        System.out.println(">>> HIGH PRESSURE DETECTED - AUTO ESD TRIGGERED <<<");
-        runner.activateLogic("ESD Level 1"); // Use convenience method
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-    }).start();
-
-    ScenarioExecutionSummary summary3 =
-        runner.runScenario("High Pressure", highPressureScenario, 30.0, 1.0);
-    summary3.printResults(); // Use built-in results printer
-
-    // Collect KPIs for scenario 3
-    if (summary3.getKPI() != null) {
-      dashboard.addScenario("High Pressure", summary3.getKPI());
-    }
+    testRunner.executeScenarioWithDelayedActivation("High Pressure", highPressureScenario,
+        "ESD Level 1", 8000, "HIGH PRESSURE DETECTED - AUTO ESD TRIGGERED", 30.0, 1.0);
 
     // Scenario 4: Equipment failure scenario
-    System.out.println("\n### SCENARIO 4: EQUIPMENT FAILURE ###");
     ProcessSafetyScenario failureScenario =
         ProcessSafetyScenario.builder("Equipment Failure").utilityLoss("HP Separator").build();
-
-    ScenarioExecutionSummary summary4 =
-        runner.runScenario("Equipment Failure", failureScenario, 20.0, 1.0);
-    summary4.printResults(); // Use built-in results printer
-
-    // Collect KPIs for scenario 4
-    if (summary4.getKPI() != null) {
-      dashboard.addScenario("Equip Failure", summary4.getKPI());
-    }
+    testRunner.executeScenario("Equip Failure", failureScenario, 20.0, 1.0);
 
     // Display comprehensive KPI dashboard
-    System.out.println("\n\n");
-    dashboard.printDashboard();
+    testRunner.displayDashboard();
   }
 
   /**

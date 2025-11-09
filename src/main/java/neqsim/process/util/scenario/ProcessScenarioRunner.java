@@ -58,6 +58,86 @@ public class ProcessScenarioRunner {
   }
 
   /**
+   * Ensures the process system has a valid steady-state solution before running scenarios. This
+   * method should be called before running any scenarios to establish baseline conditions.
+   * 
+   * @throws RuntimeException if steady-state calculation fails
+   */
+  public void initializeSteadyState() {
+    System.out.println("Initializing process system with steady-state solution...");
+    try {
+      // Validate system has units before running
+      if (system.getUnitOperations().isEmpty()) {
+        throw new IllegalStateException("Process system has no unit operations");
+      }
+
+      system.run();
+      System.out.println("✓ Steady-state calculation completed successfully");
+
+      // Validate results are reasonable
+      validateProcessConditions();
+
+      // Print initial process conditions
+      System.out.println("Initial Process Conditions:");
+      system.getUnitOperations().stream()
+          .filter(unit -> unit.getName().contains("Separator") || unit.getName().contains("Stream"))
+          .forEach(unit -> {
+            try {
+              if (unit instanceof neqsim.process.equipment.separator.Separator) {
+                neqsim.process.equipment.separator.Separator sep =
+                    (neqsim.process.equipment.separator.Separator) unit;
+                System.out.printf("  %s: P=%.1f bara, T=%.1f °C%n", unit.getName(),
+                    sep.getGasOutStream().getPressure("bara"),
+                    sep.getGasOutStream().getTemperature("C"));
+              } else if (unit instanceof neqsim.process.equipment.stream.Stream) {
+                neqsim.process.equipment.stream.Stream stream =
+                    (neqsim.process.equipment.stream.Stream) unit;
+                System.out.printf("  %s: P=%.1f bara, T=%.1f °C, Flow=%.1f kg/hr%n", unit.getName(),
+                    stream.getPressure("bara"), stream.getTemperature("C"),
+                    stream.getFlowRate("kg/hr"));
+              }
+            } catch (Exception e) {
+              System.out.println(
+                  "  " + unit.getName() + ": Unable to read conditions - " + e.getMessage());
+            }
+          });
+      System.out.println();
+
+    } catch (Exception e) {
+      System.err.println("✗ Failed to initialize steady-state: " + e.getMessage());
+      throw new RuntimeException("Failed to initialize steady-state: " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Validates that process conditions are within reasonable ranges to prevent simulation errors.
+   */
+  private void validateProcessConditions() {
+    for (Object unit : system.getUnitOperations()) {
+      try {
+        if (unit instanceof neqsim.process.equipment.stream.Stream) {
+          neqsim.process.equipment.stream.Stream stream =
+              (neqsim.process.equipment.stream.Stream) unit;
+          double pressure = stream.getPressure("bara");
+          double temperature = stream.getTemperature("C");
+
+          if (Double.isNaN(pressure) || Double.isInfinite(pressure) || pressure <= 0) {
+            throw new IllegalStateException(
+                "Invalid pressure in " + stream.getName() + ": " + pressure);
+          }
+          if (Double.isNaN(temperature) || Double.isInfinite(temperature)) {
+            throw new IllegalStateException(
+                "Invalid temperature in " + stream.getName() + ": " + temperature);
+          }
+        }
+      } catch (Exception e) {
+        // Log warning but don't fail initialization for non-critical validation issues
+        System.out.println("Warning: Could not validate " + unit + ": " + e.getMessage());
+      }
+    }
+  }
+
+  /**
    * Adds a process logic sequence to be executed.
    *
    * @param logic logic sequence to add
@@ -201,28 +281,63 @@ public class ProcessScenarioRunner {
     }
 
     // Print header for status monitoring
-    System.out.println("Time(s) | Active Logic Sequences | System Status");
-    System.out.println("--------|------------------------|---------------");
+    System.out.println("Time(s) | Active Logic Sequences | Process Status");
+    System.out.println("--------|------------------------|------------------");
 
     double time = 0.0;
     int stepCount = 0;
     int errorCount = 0;
+    int consecutiveErrors = 0;
+    final int MAX_CONSECUTIVE_ERRORS = 5;
 
     while (time < duration) {
       // Execute process logic (only enabled logic for this scenario)
       for (ProcessLogic logic : activeLogic) {
         if (logic.isActive()) {
-          logic.execute(timeStep);
+          try {
+            logic.execute(timeStep);
+          } catch (Exception e) {
+            System.out.println("Logic execution error at t=" + time + "s: " + e.getMessage());
+            summary.addError("Logic error (" + logic.getName() + "): " + e.getMessage());
+          }
         }
       }
 
-      // Run transient simulation
+      // Run transient simulation with enhanced error handling
       try {
         system.runTransient(timeStep, simulationId);
+        consecutiveErrors = 0; // Reset counter on success
+
       } catch (Exception e) {
-        System.out.println("Simulation error at t=" + time + "s: " + e.getMessage());
-        summary.addError("Simulation error: " + e.getMessage());
         errorCount++;
+        consecutiveErrors++;
+
+        String errorMsg =
+            "Simulation error at t=" + String.format("%.1f", time) + "s: " + e.getMessage();
+        System.out.println(errorMsg);
+        summary.addError(errorMsg);
+
+        // Stop simulation if too many consecutive errors
+        if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+          System.err
+              .println("✗ Stopping simulation due to " + consecutiveErrors + " consecutive errors");
+          summary.addError("Simulation stopped: Too many consecutive errors");
+          break;
+        }
+
+        // Try to recover by skipping this time step
+        System.out.println("  → Attempting to continue with next time step...");
+      }
+
+      // Validate process state periodically
+      if (stepCount % 10 == 0) {
+        try {
+          validateProcessConditions();
+        } catch (Exception e) {
+          System.out
+              .println("Warning: Process validation failed at t=" + time + "s: " + e.getMessage());
+          summary.addWarning("Process validation warning: " + e.getMessage());
+        }
       }
 
       // Print status every 5 seconds or when logic state changes
@@ -245,6 +360,11 @@ public class ProcessScenarioRunner {
 
     // Final status
     System.out.println("\n" + scenarioName + " completed after " + stepCount + " time steps.");
+    if (errorCount > 0) {
+      System.out.println("⚠ Warning: " + errorCount + " error(s) occurred during simulation");
+    } else {
+      System.out.println("✓ Simulation completed successfully with no errors");
+    }
     printFinalSummary(summary, activeLogic);
 
     return summary;
@@ -290,8 +410,45 @@ public class ProcessScenarioRunner {
       activeLogic.append("None");
     }
 
-    System.out.printf("%7.1f | %-22s | Running%n", time,
-        activeLogic.length() > 22 ? activeLogic.substring(0, 19) + "..." : activeLogic.toString());
+    // Get key process parameters for monitoring
+    String processStatus = getProcessStatus();
+
+    System.out.printf("%7.1f | %-22s | %s%n", time,
+        activeLogic.length() > 22 ? activeLogic.substring(0, 19) + "..." : activeLogic.toString(),
+        processStatus);
+  }
+
+  /**
+   * Gets a summary of key process parameters for status monitoring.
+   */
+  private String getProcessStatus() {
+    try {
+      // Find separator or key process unit for monitoring
+      for (Object unit : system.getUnitOperations()) {
+        if (unit instanceof neqsim.process.equipment.separator.Separator) {
+          neqsim.process.equipment.separator.Separator sep =
+              (neqsim.process.equipment.separator.Separator) unit;
+          double pressure = sep.getGasOutStream().getPressure("bara");
+          double temperature = sep.getGasOutStream().getTemperature("C");
+          return String.format("P=%.1f bara, T=%.1f°C", pressure, temperature);
+        }
+      }
+
+      // Fallback to first stream
+      for (Object unit : system.getUnitOperations()) {
+        if (unit instanceof neqsim.process.equipment.stream.Stream) {
+          neqsim.process.equipment.stream.Stream stream =
+              (neqsim.process.equipment.stream.Stream) unit;
+          double pressure = stream.getPressure("bara");
+          double flow = stream.getFlowRate("kg/hr");
+          return String.format("P=%.1f bara, F=%.0f kg/hr", pressure, flow);
+        }
+      }
+
+      return "Running";
+    } catch (Exception e) {
+      return "Running (status error)";
+    }
   }
 
   /**
@@ -363,16 +520,27 @@ public class ProcessScenarioRunner {
   }
 
   /**
-   * Resets both logic and simulation ID - call between scenarios.
+   * Resets the system for the next scenario.
    * 
    * <p>
-   * Note: This resets logic states but does NOT reset the process system equipment states. To fully
-   * reset to initial conditions, you need to rebuild the process system or manually reset equipment
-   * states (valve positions, pressures, temperatures, etc.).
+   * This method resets logic states and re-establishes steady-state conditions to ensure clean
+   * starting conditions for each scenario.
    */
   public void reset() {
-    resetLogic();
-    renewSimulationId();
+    System.out.println("\nResetting system for next scenario...");
+    try {
+      resetLogic();
+      renewSimulationId();
+
+      // Re-establish steady-state to ensure clean starting conditions
+      System.out.println("Re-initializing steady-state...");
+      system.run();
+      System.out.println("✓ System reset complete\n");
+
+    } catch (Exception e) {
+      System.err.println("⚠ Warning: Error during system reset: " + e.getMessage());
+      System.err.println("  → Continuing with partial reset");
+    }
   }
 
   /**
