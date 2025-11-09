@@ -1,5 +1,7 @@
 package neqsim.process.util.scenario;
 
+import java.util.ArrayList;
+import java.util.List;
 import neqsim.process.safety.ProcessSafetyScenario;
 import neqsim.process.util.monitor.KPIDashboard;
 
@@ -29,6 +31,18 @@ import neqsim.process.util.monitor.KPIDashboard;
  * testRunner.executeScenario("Manual ESD", esdScenario, "ESD Level 1", 25.0, 0.5);
  * 
  * // Display results
+ * testRunner.displayDashboard();
+ * </pre>
+ * 
+ * <p>
+ * Batch execution example using builder:
+ * 
+ * <pre>
+ * testRunner.printHeader();
+ * testRunner.batch().add("Normal Startup", normalScenario, "System Startup", 30.0, 1.0)
+ *     .add("Manual ESD", esdScenario, "ESD Level 1", 25.0, 0.5).addDelayed("High Pressure",
+ *         highPressureScenario, "ESD Level 1", 8000, "HIGH PRESSURE DETECTED", 30.0, 1.0)
+ *     .execute();
  * testRunner.displayDashboard();
  * </pre>
  *
@@ -214,5 +228,146 @@ public class ScenarioTestRunner {
    */
   public void resetCounter() {
     scenarioCounter = 0;
+  }
+
+  /**
+   * Creates a batch executor for running multiple scenarios in sequence.
+   * 
+   * <p>
+   * This provides a fluent API for defining and executing multiple scenarios:
+   * 
+   * <pre>
+   * testRunner.batch().add("Scenario 1", scenario1, "Logic 1", 30.0, 1.0)
+   *     .add("Scenario 2", scenario2, null, 25.0, 0.5)
+   *     .addDelayed("Scenario 3", scenario3, "ESD Logic", 5000, "ESD TRIGGERED", 30.0, 1.0)
+   *     .execute();
+   * </pre>
+   *
+   * @return a new batch executor
+   */
+  public BatchExecutor batch() {
+    return new BatchExecutor();
+  }
+
+  /**
+   * Fluent builder for batch execution of multiple scenarios.
+   * 
+   * <p>
+   * This inner class provides a convenient way to define and execute multiple scenarios in sequence
+   * with automatic header printing and dashboard display at the end.
+   */
+  public class BatchExecutor {
+    private final List<ScenarioConfig> scenarios = new ArrayList<>();
+
+    /**
+     * Adds a standard scenario to the batch.
+     *
+     * @param name the display name for the scenario
+     * @param scenario the safety scenario to execute
+     * @param logicToActivate the name of the logic to activate (can be null)
+     * @param duration the simulation duration in seconds
+     * @param timeStep the time step in seconds
+     * @return this batch executor for method chaining
+     */
+    public BatchExecutor add(String name, ProcessSafetyScenario scenario, String logicToActivate,
+        double duration, double timeStep) {
+      scenarios.add(new ScenarioConfig(name, scenario, logicToActivate, duration, timeStep));
+      return this;
+    }
+
+    /**
+     * Adds a scenario with delayed logic activation to the batch.
+     *
+     * @param name the display name for the scenario
+     * @param scenario the safety scenario to execute
+     * @param logicToActivate the name of the logic to activate
+     * @param activationDelay the delay in milliseconds before activating logic
+     * @param activationMessage the message to print when activating logic
+     * @param duration the simulation duration in seconds
+     * @param timeStep the time step in seconds
+     * @return this batch executor for method chaining
+     */
+    public BatchExecutor addDelayed(String name, ProcessSafetyScenario scenario,
+        String logicToActivate, long activationDelay, String activationMessage, double duration,
+        double timeStep) {
+      scenarios.add(new ScenarioConfig(name, scenario, logicToActivate, duration, timeStep,
+          activationDelay, activationMessage));
+      return this;
+    }
+
+    /**
+     * Executes all scenarios in the batch with automatic header and dashboard display.
+     */
+    public void execute() {
+      printHeader();
+
+      for (ScenarioConfig config : scenarios) {
+        if (config.isDelayed()) {
+          executeScenarioWithDelayedActivation(config.name, config.scenario, config.logicToActivate,
+              config.activationDelay, config.activationMessage, config.duration, config.timeStep);
+        } else {
+          executeScenario(config.name, config.scenario, config.logicToActivate, config.duration,
+              config.timeStep);
+        }
+      }
+
+      displayDashboard();
+    }
+
+    /**
+     * Executes all scenarios in the batch without printing header or dashboard (manual control).
+     */
+    public void executeWithoutWrapper() {
+      for (ScenarioConfig config : scenarios) {
+        if (config.isDelayed()) {
+          executeScenarioWithDelayedActivation(config.name, config.scenario, config.logicToActivate,
+              config.activationDelay, config.activationMessage, config.duration, config.timeStep);
+        } else {
+          executeScenario(config.name, config.scenario, config.logicToActivate, config.duration,
+              config.timeStep);
+        }
+      }
+    }
+  }
+
+  /**
+   * Internal configuration class for batch scenario execution.
+   */
+  private static class ScenarioConfig {
+    final String name;
+    final ProcessSafetyScenario scenario;
+    final String logicToActivate;
+    final double duration;
+    final double timeStep;
+    final long activationDelay;
+    final String activationMessage;
+
+    // Standard scenario constructor
+    ScenarioConfig(String name, ProcessSafetyScenario scenario, String logicToActivate,
+        double duration, double timeStep) {
+      this.name = name;
+      this.scenario = scenario;
+      this.logicToActivate = logicToActivate;
+      this.duration = duration;
+      this.timeStep = timeStep;
+      this.activationDelay = 0;
+      this.activationMessage = null;
+    }
+
+    // Delayed activation constructor
+    ScenarioConfig(String name, ProcessSafetyScenario scenario, String logicToActivate,
+        double duration, double timeStep, long activationDelay, String activationMessage) {
+      this.name = name;
+      this.scenario = scenario;
+      this.logicToActivate = logicToActivate;
+      this.duration = duration;
+      this.timeStep = timeStep;
+      this.activationDelay = activationDelay;
+      this.activationMessage = activationMessage;
+    }
+
+    boolean isDelayed() {
+      return activationDelay > 0;
+    }
   }
 }

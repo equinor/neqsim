@@ -1,5 +1,8 @@
 package neqsim.process.util.example;
 
+import java.util.ArrayList;
+import java.util.List;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.splitter.Splitter;
@@ -14,6 +17,8 @@ import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.measurementdevice.TemperatureTransmitter;
 import neqsim.process.logic.esd.ESDLogic;
 import neqsim.process.logic.startup.StartupLogic;
+import neqsim.process.logic.ProcessLogic;
+import neqsim.process.logic.LogicState;
 
 import neqsim.process.logic.action.SetSplitterAction;
 import neqsim.process.logic.action.CloseValveAction;
@@ -302,41 +307,35 @@ public class ProcessLogicIntegratedExample {
   }
 
   /**
-   * Runs comprehensive test scenarios using the simplified ScenarioTestRunner.
+   * Runs comprehensive test scenarios using the batch execution API.
    */
   private static void runTestScenarios(ProcessScenarioRunner runner) {
     // Create test runner with automatic KPI collection
     ScenarioTestRunner testRunner = new ScenarioTestRunner(runner);
-    testRunner.printHeader();
 
-    // Scenario 1: Normal startup sequence
-    ProcessSafetyScenario normalScenario = ProcessSafetyScenario.builder("Normal Startup").build();
-    testRunner.executeScenario("Normal Startup", normalScenario, "System Startup", 30.0, 1.0);
+    // Execute all scenarios in batch with automatic header and dashboard display
+    testRunner.batch()
+        .add("Normal Startup", ProcessSafetyScenario.builder("Normal Startup").build(),
+            "System Startup", 30.0, 1.0)
 
-    // Scenario 2: Manual ESD activation (delayed by 5 seconds)
-    ProcessSafetyScenario esdScenario = ProcessSafetyScenario.builder("Manual ESD").build();
-    testRunner.executeScenarioWithDelayedActivation("Manual ESD", esdScenario, "ESD Level 1", 5000,
-        "OPERATOR ACTIVATES ESD BUTTON", 25.0, 0.5);
+        .addDelayed("Manual ESD", ProcessSafetyScenario.builder("Manual ESD").build(),
+            "ESD Level 1", 5000, "OPERATOR ACTIVATES ESD BUTTON", 25.0, 0.5)
 
-    // Scenario 3: High pressure scenario with delayed ESD trigger
-    ProcessSafetyScenario highPressureScenario =
-        ProcessSafetyScenario.builder("High Pressure").customManipulator("HP Feed", equipment -> {
-          if (equipment instanceof Stream) {
-            ((Stream) equipment).setPressure(70.0, "bara");
-            System.out
-                .println("  - Feed pressure increased to 70 bara (simulating upstream upset)");
-          }
-        }).build();
-    testRunner.executeScenarioWithDelayedActivation("High Pressure", highPressureScenario,
-        "ESD Level 1", 8000, "HIGH PRESSURE DETECTED - AUTO ESD TRIGGERED", 30.0, 1.0);
+        .addDelayed("High Pressure", ProcessSafetyScenario.builder("High Pressure")
+            .customManipulator("HP Feed", equipment -> {
+              if (equipment instanceof Stream) {
+                ((Stream) equipment).setPressure(70.0, "bara");
+                System.out
+                    .println("  - Feed pressure increased to 70 bara (simulating upstream upset)");
+              }
+            }).build(), "ESD Level 1", 8000, "HIGH PRESSURE DETECTED - AUTO ESD TRIGGERED", 30.0,
+            1.0)
 
-    // Scenario 4: Equipment failure scenario
-    ProcessSafetyScenario failureScenario =
-        ProcessSafetyScenario.builder("Equipment Failure").utilityLoss("HP Separator").build();
-    testRunner.executeScenario("Equip Failure", failureScenario, 20.0, 1.0);
+        .add("Equip Failure",
+            ProcessSafetyScenario.builder("Equipment Failure").utilityLoss("HP Separator").build(),
+            null, 20.0, 1.0)
 
-    // Display comprehensive KPI dashboard
-    testRunner.displayDashboard();
+        .execute();
   }
 
   /**
@@ -368,5 +367,132 @@ public class ProcessLogicIntegratedExample {
     hippsLogic.addAction(new CloseValveAction(hippsValve), 0.0);
 
     return hippsLogic;
+  }
+
+  /**
+   * Example: Custom logic class for gradual pressure reduction.
+   * 
+   * <p>
+   * This demonstrates how to create custom logic not in the library by implementing the
+   * ProcessLogic interface. For production use, move this to a separate file like:
+   * neqsim/process/logic/control/GradualPressureReductionLogic.java
+   * </p>
+   * 
+   * <p>
+   * Usage example:
+   * </p>
+   * 
+   * <pre>
+   * // Create instance
+   * ProcessLogic customLogic =
+   *     new GradualPressureReductionLogic("Gradual Reduction", inletValve, 30.0, // target opening
+   *                                                                              // %
+   *         2.0 // step size %
+   *     );
+   * 
+   * // Add to runner
+   * runner.addLogic(customLogic);
+   * 
+   * // Activate and execute
+   * customLogic.activate();
+   * while (!customLogic.isComplete()) {
+   *   customLogic.execute(1.0); // 1 second timestep
+   *   system.runTransient(1.0);
+   * }
+   * </pre>
+   */
+  private static class GradualPressureReductionLogic implements ProcessLogic {
+    private final String name;
+    private final ControlValve valve;
+    private final double targetOpening;
+    private final double step;
+    private LogicState state = LogicState.IDLE;
+    private double currentOpening;
+
+    /**
+     * Creates gradual pressure reduction logic.
+     * 
+     * @param name logic name
+     * @param valve control valve to adjust
+     * @param targetOpening target valve opening (%)
+     * @param step opening change per time step (%)
+     */
+    public GradualPressureReductionLogic(String name, ControlValve valve, double targetOpening,
+        double step) {
+      this.name = name;
+      this.valve = valve;
+      this.targetOpening = targetOpening;
+      this.step = step;
+    }
+
+    @Override
+    public String getName() {
+      return name;
+    }
+
+    @Override
+    public LogicState getState() {
+      return state;
+    }
+
+    @Override
+    public void activate() {
+      if (state == LogicState.IDLE || state == LogicState.COMPLETED) {
+        state = LogicState.RUNNING;
+        currentOpening = valve.getPercentValveOpening();
+        System.out.println(
+            name + " activated: Current=" + currentOpening + "%, Target=" + targetOpening + "%");
+      }
+    }
+
+    @Override
+    public void deactivate() {
+      state = LogicState.IDLE;
+    }
+
+    @Override
+    public boolean reset() {
+      state = LogicState.IDLE;
+      return true;
+    }
+
+    @Override
+    public void execute(double timeStep) {
+      if (state == LogicState.RUNNING) {
+        // Gradually adjust valve opening
+        if (Math.abs(currentOpening - targetOpening) > step) {
+          currentOpening += (targetOpening > currentOpening) ? step : -step;
+          valve.setPercentValveOpening(currentOpening);
+        } else {
+          // Reached target
+          valve.setPercentValveOpening(targetOpening);
+          state = LogicState.COMPLETED;
+          System.out.println(name + " completed at " + targetOpening + "%");
+        }
+      }
+    }
+
+    @Override
+    public boolean isActive() {
+      return state == LogicState.RUNNING;
+    }
+
+    @Override
+    public boolean isComplete() {
+      return state == LogicState.COMPLETED;
+    }
+
+    @Override
+    public List<ProcessEquipmentInterface> getTargetEquipment() {
+      List<ProcessEquipmentInterface> equipment = new ArrayList<>();
+      equipment.add(valve);
+      return equipment;
+    }
+
+    @Override
+    public String getStatusDescription() {
+      return name + " - Current: " + String.format("%.1f", currentOpening) + "%, Target: "
+          + targetOpening + "%";
+    }
   }
 }
