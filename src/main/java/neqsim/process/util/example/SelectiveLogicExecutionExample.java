@@ -6,6 +6,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ControlValve;
 import neqsim.process.equipment.valve.ESDValve;
 import neqsim.process.equipment.valve.HIPPSValve;
+import neqsim.process.logic.ProcessLogic;
 import neqsim.process.logic.esd.ESDLogic;
 import neqsim.process.logic.action.CloseValveAction;
 import neqsim.process.logic.action.EnergizeESDValveAction;
@@ -60,7 +61,7 @@ public class SelectiveLogicExecutionExample {
     runner.addLogic(esdLogic);
 
     System.out.println("Registered logic sequences:");
-    for (var logic : runner.getLogicSequences()) {
+    for (ProcessLogic logic : runner.getLogicSequences()) {
       System.out.println("  - " + logic.getName());
     }
     System.out.println();

@@ -202,8 +202,8 @@ public class ScenarioExecutionSummary {
     }
 
     System.out.println("Logic Results:");
-    for (var entry : logicResults.entrySet()) {
-      var result = entry.getValue();
+    for (Map.Entry<String, LogicResult> entry : logicResults.entrySet()) {
+      LogicResult result = entry.getValue();
       System.out.println("  " + entry.getKey() + ": " + result.getFinalState() + " ("
           + result.getStatusDescription() + ")");
     }
