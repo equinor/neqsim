@@ -602,7 +602,8 @@ public class IntegratedSafetySystemWithLogicExample {
 
     // Print analysis results
     System.out.println("SCENARIO ANALYSIS RESULTS:");
-    System.out.println("=" + "=".repeat(80));
+    String separator = new String(new char[81]).replace("\0", "=");
+    System.out.println(separator);
 
     for (ProcessSafetyScenario scenario : analysisScenarios) {
       System.out.println("Scenario: " + scenario.getName());
@@ -614,7 +615,8 @@ public class IntegratedSafetySystemWithLogicExample {
 
     // System-wide safety summary
     System.out.println("SYSTEM SAFETY SUMMARY:");
-    System.out.println("=" + "=".repeat(50));
+    String separator2 = new String(new char[51]).replace("\0", "=");
+    System.out.println(separator2);
     System.out.println("Safety Integrity Levels Implemented:");
     System.out.println("  SIL-3: HIPPS with 2oo2 voting @ " + HIPPS_ACTIVATION_PRESSURE + " bara");
     System.out

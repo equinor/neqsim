@@ -67,9 +67,10 @@ public class SelectiveLogicExecutionExample {
     System.out.println();
 
     // Scenario 1: Test HIPPS independently
-    System.out.println("\n" + "=".repeat(70));
+    String separator = new String(new char[70]).replace("\0", "=");
+    System.out.println("\n" + separator);
     System.out.println("SCENARIO 1: HIPPS PROTECTION ONLY");
-    System.out.println("=".repeat(70));
+    System.out.println(separator);
 
     ProcessSafetyScenario highPressure =
         ProcessSafetyScenario.builder("High Pressure").customManipulator("Feed", equipment -> {
@@ -80,25 +81,25 @@ public class SelectiveLogicExecutionExample {
 
     runner.activateLogic("HIPPS Protection");
     ScenarioExecutionSummary summary1 = runner.runScenarioWithLogic("HIPPS Only Test", highPressure,
-        15.0, 1.0, List.of("HIPPS Protection"));
+        15.0, 1.0, java.util.Collections.singletonList("HIPPS Protection"));
     summary1.printResults();
     runner.reset();
 
     // Scenario 2: Test ESD independently
-    System.out.println("\n" + "=".repeat(70));
+    System.out.println("\n" + separator);
     System.out.println("SCENARIO 2: ESD SYSTEM ONLY");
-    System.out.println("=".repeat(70));
+    System.out.println(separator);
 
     runner.activateLogic("ESD Level 1");
-    ScenarioExecutionSummary summary2 =
-        runner.runScenarioWithLogic("ESD Only Test", null, 15.0, 1.0, List.of("ESD Level 1"));
+    ScenarioExecutionSummary summary2 = runner.runScenarioWithLogic("ESD Only Test", null, 15.0,
+        1.0, java.util.Collections.singletonList("ESD Level 1"));
     summary2.printResults();
     runner.reset();
 
     // Scenario 3: Test both systems together
-    System.out.println("\n" + "=".repeat(70));
+    System.out.println("\n" + separator);
     System.out.println("SCENARIO 3: BOTH HIPPS AND ESD");
-    System.out.println("=".repeat(70));
+    System.out.println(separator);
 
     runner.activateLogic("HIPPS Protection");
     runner.activateLogic("ESD Level 1");
