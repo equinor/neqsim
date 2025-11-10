@@ -45,4 +45,48 @@ public class PumpChartAlternativeMapLookupExtrapolate
   public void setUsePumpChart(boolean usePumpChart) {
     this.usePumpChart = usePumpChart;
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getBestEfficiencyFlowRate() {
+    // TODO: Implement BEP calculation for alternative pump chart
+    logger.warn("getBestEfficiencyFlowRate not yet implemented for alternative pump chart");
+    return 0.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSpecificSpeed() {
+    // TODO: Implement specific speed calculation for alternative pump chart
+    logger.warn("getSpecificSpeed not yet implemented for alternative pump chart");
+    return 0.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getOperatingStatus(double flow, double speed) {
+    // TODO: Implement operating status check for alternative pump chart
+    return "UNKNOWN";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setNPSHCurve(double[][] npshRequired) {
+    // TODO: Implement NPSH curve for alternative pump chart
+    logger.warn("setNPSHCurve not yet implemented for alternative pump chart");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getNPSHRequired(double flow, double speed) {
+    // TODO: Implement NPSH calculation for alternative pump chart
+    return 0.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean hasNPSHCurve() {
+    // TODO: Implement NPSH curve check for alternative pump chart
+    return false;
+  }
 }

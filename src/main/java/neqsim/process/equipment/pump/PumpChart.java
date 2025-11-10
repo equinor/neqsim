@@ -58,6 +58,13 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   double minReducedFlow = Double.MAX_VALUE;
   double maxReducedFlow = -Double.MAX_VALUE;
 
+  // NPSH curve data
+  double[][] npsh; // NPSH required in meters for each speed and flow point
+  double[][] redNPSH; // Reduced NPSH: NPSH/(N²)
+  final WeightedObservedPoints reducedNPSHFitter = new WeightedObservedPoints();
+  PolynomialFunction reducedNPSHFunc = null;
+  boolean hasNPSHCurve = false;
+
   /**
    * <p>
    * Constructor for PumpChart.
@@ -126,6 +133,118 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   }
 
   /**
+   * Set NPSH (Net Positive Suction Head) required curves for the pump.
+   *
+   * <p>
+   * NPSH required is the minimum suction head needed to prevent cavitation. It varies with flow
+   * rate and follows affinity laws: NPSH ∝ N² (where N is speed).
+   * </p>
+   *
+   * <p>
+   * The NPSH data should correspond to the same speed and flow points as the performance curves set
+   * by setCurves(). If dimensions don't match, an exception is thrown.
+   * </p>
+   *
+   * @param npshRequired 2D array of NPSH required values [speed index][flow index] in meters
+   * @throws IllegalArgumentException if dimensions don't match flow/speed arrays
+   */
+  public void setNPSHCurve(double[][] npshRequired) {
+    if (speed == null || flow == null) {
+      throw new IllegalArgumentException(
+          "Must call setCurves() before setNPSHCurve() to establish speed and flow arrays");
+    }
+
+    if (npshRequired.length != speed.length) {
+      throw new IllegalArgumentException("NPSH array must have same number of speeds ("
+          + npshRequired.length + ") as performance curves (" + speed.length + ")");
+    }
+
+    for (int i = 0; i < npshRequired.length; i++) {
+      if (npshRequired[i].length != flow[i].length) {
+        throw new IllegalArgumentException("NPSH array at speed index " + i + " has "
+            + npshRequired[i].length + " points but flow array has " + flow[i].length);
+      }
+    }
+
+    this.npsh = npshRequired;
+    this.redNPSH = new double[npsh.length][npsh[0].length];
+
+    // Calculate reduced NPSH: NPSH_red = NPSH / N²
+    // This follows affinity law: NPSH scales with speed squared
+    for (int i = 0; i < speed.length; i++) {
+      for (int j = 0; j < flow[i].length; j++) {
+        redNPSH[i][j] = npsh[i][j] / (speed[i] * speed[i]);
+        reducedNPSHFitter.add(redflow[i][j], redNPSH[i][j]);
+      }
+    }
+
+    // Fit polynomial to reduced NPSH data
+    fitNPSHCurve();
+    hasNPSHCurve = true;
+    logger.info("NPSH curve loaded with {} speed points", speed.length);
+  }
+
+  /**
+   * Fit polynomial function to reduced NPSH data.
+   */
+  private void fitNPSHCurve() {
+    if (reducedNPSHFitter.toList().isEmpty()) {
+      logger.warn("No NPSH data points to fit");
+      return;
+    }
+    // Use 2nd order polynomial for NPSH curve (typically increases with flow)
+    PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
+    reducedNPSHFunc = new PolynomialFunction(fitter.fit(reducedNPSHFitter.toList()));
+  }
+
+  /**
+   * Get NPSH required at specified flow and speed.
+   *
+   * <p>
+   * Uses affinity law scaling: NPSH = NPSH_reduced × N²
+   * </p>
+   *
+   * @param flow flow rate in m³/hr
+   * @param speed pump speed in rpm
+   * @return NPSH required in meters, or 0.0 if no NPSH curve is available
+   */
+  public double getNPSHRequired(double flow, double speed) {
+    if (!hasNPSHCurve || reducedNPSHFunc == null) {
+      return 0.0; // No NPSH curve available
+    }
+
+    double rFlow = flow / speed;
+
+    // Warn if outside measured range
+    if (rFlow < minReducedFlow || rFlow > maxReducedFlow) {
+      logger.warn("Flow {} m³/hr at speed {} rpm outside NPSH curve range for interpolation", flow,
+          speed);
+    }
+
+    // Get reduced NPSH and scale by speed squared
+    double npshReduced = reducedNPSHFunc.value(rFlow);
+
+    // NPSH cannot be negative
+    if (npshReduced < 0.0) {
+      logger.warn("Calculated reduced NPSH {} is negative at rFlow={}, clamping to 0.01",
+          npshReduced, rFlow);
+      npshReduced = 0.01;
+    }
+
+    double npshReq = npshReduced * speed * speed;
+    return npshReq;
+  }
+
+  /**
+   * Check if pump chart has NPSH curve data.
+   *
+   * @return true if NPSH curve is available
+   */
+  public boolean hasNPSHCurve() {
+    return hasNPSHCurve;
+  }
+
+  /**
    * <p>
    * fitReducedCurve.
    * </p>
@@ -143,8 +262,16 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   @Override
   public double getHead(double flow, double speed) {
     double rFlow = flow / speed;
-    if (rFlow < minReducedFlow || rFlow > maxReducedFlow) {
-      logger.warn("Flow {} at speed {} outside pump curve range", flow, speed);
+    if (rFlow < minReducedFlow) {
+      logger.warn("Flow {} m³/hr at speed {} rpm is below pump curve minimum range (rFlow={} < {})",
+          flow, speed, String.format("%.4f", rFlow), String.format("%.4f", minReducedFlow));
+      // Use minimum reduced flow for extrapolation
+      rFlow = minReducedFlow;
+    } else if (rFlow > maxReducedFlow) {
+      logger.warn("Flow {} m³/hr at speed {} rpm exceeds pump curve maximum range (rFlow={} > {})",
+          flow, speed, String.format("%.4f", rFlow), String.format("%.4f", maxReducedFlow));
+      // Use maximum reduced flow for extrapolation
+      rFlow = maxReducedFlow;
     }
     return reducedHeadFitterFunc.value(rFlow) * speed * speed;
   }
@@ -153,10 +280,28 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   @Override
   public double getEfficiency(double flow, double speed) {
     double rFlow = flow / speed;
-    if (rFlow < minReducedFlow || rFlow > maxReducedFlow) {
-      logger.warn("Flow {} at speed {} outside pump curve range", flow, speed);
+    if (rFlow < minReducedFlow) {
+      logger.warn("Flow {} m³/hr at speed {} rpm is below pump curve minimum range (rFlow={} < {})",
+          flow, speed, String.format("%.4f", rFlow), String.format("%.4f", minReducedFlow));
+      // Use minimum reduced flow for extrapolation
+      rFlow = minReducedFlow;
+    } else if (rFlow > maxReducedFlow) {
+      logger.warn("Flow {} m³/hr at speed {} rpm exceeds pump curve maximum range (rFlow={} > {})",
+          flow, speed, String.format("%.4f", rFlow), String.format("%.4f", maxReducedFlow));
+      // Use maximum reduced flow for extrapolation
+      rFlow = maxReducedFlow;
     }
-    return reducedEfficiencyFunc.value(rFlow);
+    double efficiency = reducedEfficiencyFunc.value(rFlow);
+    // Clamp efficiency to physically reasonable range
+    if (efficiency < 0.0) {
+      logger.warn("Calculated efficiency {} is negative, clamping to 0.1%", efficiency);
+      return 0.1;
+    }
+    if (efficiency > 100.0) {
+      logger.warn("Calculated efficiency {} exceeds 100%, clamping to 99%", efficiency);
+      return 99.0;
+    }
+    return efficiency;
   }
 
   /** {@inheritDoc} */
@@ -222,8 +367,15 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * @return a boolean
    */
   public boolean checkSurge1(double flow, double head) {
-    double derivative = reducedHeadFitterFunc.polynomialDerivative().value(flow / referenceSpeed);
-    return derivative > 0.0;
+    double rFlow = flow / referenceSpeed;
+    double derivative = reducedHeadFitterFunc.polynomialDerivative().value(rFlow);
+    // Surge occurs when head increases with flow (positive slope)
+    // In a properly operating pump, head should decrease as flow increases (negative slope)
+    if (derivative > 0.0) {
+      logger.warn("Surge condition detected at flow {} m³/hr: dH/dQ > 0", flow);
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -249,7 +401,95 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * @return a boolean
    */
   public boolean checkStoneWall(double flow, double speed) {
-    return flow > maxFlow;
+    if (flow > maxFlow) {
+      logger.warn("Stonewall condition detected at flow {} m³/hr (max: {} m³/hr)", flow, maxFlow);
+      return true;
+    }
+    // Also check if efficiency drops too low at high flow
+    double efficiency = getEfficiency(flow, speed);
+    if (efficiency < 30.0) { // Less than 30% efficiency
+      logger.warn("Very low efficiency ({} %) at flow {} m³/hr indicates stonewall region",
+          String.format("%.1f", efficiency), flow);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Get the best efficiency point (BEP) flow rate.
+   *
+   * @return flow rate at BEP in m³/hr at reference speed
+   */
+  public double getBestEfficiencyFlowRate() {
+    // Find maximum efficiency by searching through reduced flow range
+    double bestFlow = 0.0;
+    double bestEff = 0.0;
+    int nPoints = 50;
+    for (int i = 0; i <= nPoints; i++) {
+      double rFlow = minReducedFlow + (maxReducedFlow - minReducedFlow) * i / nPoints;
+      double eff = reducedEfficiencyFunc.value(rFlow);
+      if (eff > bestEff) {
+        bestEff = eff;
+        bestFlow = rFlow * referenceSpeed;
+      }
+    }
+    return bestFlow;
+  }
+
+  /**
+   * Calculate pump specific speed at best efficiency point.
+   *
+   * <p>
+   * Ns = N·√Q / H^(3/4) where N is in rpm, Q in m³/s, H in m
+   * </p>
+   *
+   * <p>
+   * Used to classify pump type:
+   * </p>
+   * <ul>
+   * <li>Ns &lt; 1000: Radial flow (centrifugal)</li>
+   * <li>1000 &lt; Ns &lt; 4000: Mixed flow</li>
+   * <li>Ns &gt; 4000: Axial flow</li>
+   * </ul>
+   *
+   * @return specific speed (dimensionless)
+   */
+  public double getSpecificSpeed() {
+    if (!headUnit.equals("meter")) {
+      logger.warn("Specific speed calculation requires head in meters");
+      return 0.0;
+    }
+    double Q_BEP_m3hr = getBestEfficiencyFlowRate();
+    double Q_BEP_m3s = Q_BEP_m3hr / 3600.0;
+    double H_BEP = getHead(Q_BEP_m3hr, referenceSpeed);
+    return referenceSpeed * Math.sqrt(Q_BEP_m3s) / Math.pow(H_BEP, 0.75);
+  }
+
+  /**
+   * Check operating status of pump at given flow and speed.
+   *
+   * @param flow flow rate in m³/hr
+   * @param speed pump speed in rpm
+   * @return operating status string
+   */
+  public String getOperatingStatus(double flow, double speed) {
+    if (checkSurge2(flow, speed)) {
+      return "SURGE";
+    }
+    if (checkStoneWall(flow, speed)) {
+      return "STONEWALL";
+    }
+    double efficiency = getEfficiency(flow, speed);
+    double bepFlow = getBestEfficiencyFlowRate();
+    double bepEfficiency = getEfficiency(bepFlow, speed);
+
+    if (efficiency < 0.7 * bepEfficiency) {
+      return "LOW_EFFICIENCY";
+    }
+    if (Math.abs(flow - bepFlow) / bepFlow < 0.2) {
+      return "OPTIMAL";
+    }
+    return "NORMAL";
   }
 
   /** {@inheritDoc} */

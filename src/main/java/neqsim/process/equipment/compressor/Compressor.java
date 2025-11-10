@@ -1377,6 +1377,15 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   /** {@inheritDoc} */
   @Override
   public double getDistanceToSurge() {
+    // For single speed compressors, surge curve is not active, so use getSurgeFlowAtSpeed
+    if (!getCompressorChart().getSurgeCurve().isActive()) {
+      double surgeFlowAtSpeed = getCompressorChart().getSurgeFlowAtSpeed(getSpeed());
+      if (surgeFlowAtSpeed > 0) {
+        return getInletStream().getFlowRate("m3/hr") / surgeFlowAtSpeed - 1.0;
+      }
+      return Double.POSITIVE_INFINITY; // No surge data available
+    }
+    // For multi-speed compressors, use the surge curve interpolation
     return getInletStream().getFlowRate("m3/hr")
         / getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead()) - 1;
   }
@@ -1417,6 +1426,40 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   }
 
   /**
+   * Calculate the distance to the stone wall (choke) limit.
+   * 
+   * <p>
+   * Returns a positive value indicating the percentage margin to stone wall. For example, 0.5 means
+   * the stone wall is 50% above the current flow rate.
+   * </p>
+   * 
+   * <p>
+   * For single speed compressors where the stone wall curve is not active, this method uses the
+   * maximum flow point at the current speed. For multi-speed compressors, it uses the stone wall
+   * curve interpolation.
+   * </p>
+   *
+   * @return distance to stone wall as a ratio (stone wall flow / current flow - 1)
+   */
+  public double getDistanceToStoneWall() {
+    // For single speed compressors, stone wall curve is not active, so use getStoneWallFlowAtSpeed
+    if (!getCompressorChart().getStoneWallCurve().isActive()) {
+      double stoneWallFlowAtSpeed = getCompressorChart().getStoneWallFlowAtSpeed(getSpeed());
+      if (stoneWallFlowAtSpeed > 0) {
+        return stoneWallFlowAtSpeed / getInletStream().getFlowRate("m3/hr") - 1.0;
+      }
+      return Double.POSITIVE_INFINITY; // No stone wall data available
+    }
+    // For multi-speed compressors, use the stone wall curve interpolation
+    double stoneWallFlow =
+        getCompressorChart().getStoneWallCurve().getStoneWallFlow(getPolytropicFluidHead());
+    if (stoneWallFlow > 0) {
+      return stoneWallFlow / getInletStream().getFlowRate("m3/hr") - 1.0;
+    }
+    return Double.POSITIVE_INFINITY;
+  }
+
+  /**
    * <p>
    * isStoneWall.
    * </p>
@@ -1438,6 +1481,34 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    */
   public void setAntiSurge(AntiSurge antiSurge) {
     this.antiSurge = antiSurge;
+  }
+
+  /**
+   * <p>
+   * Get the safety-factor-corrected surge flow and head at the current compressor speed.
+   * </p>
+   * <p>
+   * This method returns the safe minimum operating point by applying the surge control factor
+   * (typically 1.05 for 5% margin) to the surge flow at the current speed. The head is calculated
+   * at this safe flow rate using the compressor chart. This is particularly useful for single speed
+   * compressors where speed cannot be adjusted to move away from surge.
+   * </p>
+   *
+   * @return A double array with two elements: [0] = safe surge flow (m3/hr), [1] = head at safe
+   *         flow (kJ/kg or meter depending on chart headUnit)
+   */
+  public double[] getSafetyFactorCorrectedFlowHeadAtCurrentSpeed() {
+    double currentSpeed = getSpeed();
+    double surgeFlow = getCompressorChart().getSurgeFlowAtSpeed(currentSpeed);
+    double surgeControlFactor = getAntiSurge().getSurgeControlFactor();
+
+    // Apply safety factor to surge flow
+    double safeFlow = surgeFlow * surgeControlFactor;
+
+    // Get head at the safe flow rate
+    double safeHead = getCompressorChart().getPolytropicHead(safeFlow, currentSpeed);
+
+    return new double[] {safeFlow, safeHead};
   }
 
   /**
