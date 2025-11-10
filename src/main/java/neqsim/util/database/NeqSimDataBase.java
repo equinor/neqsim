@@ -485,7 +485,7 @@ public class NeqSimDataBase
       String sqlString =
           "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('file:" + url + "')";
       database.execute(sqlString);
-      System.out.println("Updated table " + tableName + " from file: " + url.getPath());
+      // System.out.println("Updated table " + tableName + " from file: " + url.getPath());
     } catch (Exception ex) {
       logger.error("Failed updating table " + tableName, ex);
     }
