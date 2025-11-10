@@ -543,4 +543,153 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   public java.util.List<RealCurve> getRealCurves() {
     return realCurves;
   }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Override to use RealCurve data which contains the corrected flow and head values for the actual
+   * fluid.
+   * </p>
+   */
+  @Override
+  public double getSurgeFlowAtSpeed(double speed) {
+    if (realCurves.isEmpty()) {
+      return Double.NaN;
+    }
+
+    // Find the curve closest to the specified speed
+    RealCurve closestCurve = realCurves.get(0);
+    double minSpeedDiff = Math.abs(closestCurve.speed - speed);
+
+    for (RealCurve curve : realCurves) {
+      double speedDiff = Math.abs(curve.speed - speed);
+      if (speedDiff < minSpeedDiff) {
+        minSpeedDiff = speedDiff;
+        closestCurve = curve;
+      }
+    }
+
+    // Return the minimum flow on this curve
+    double minFlow = closestCurve.flow[0];
+    for (double flow : closestCurve.flow) {
+      if (flow < minFlow) {
+        minFlow = flow;
+      }
+    }
+    return minFlow;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Override to use RealCurve data which contains the corrected flow and head values for the actual
+   * fluid.
+   * </p>
+   */
+  @Override
+  public double getSurgeHeadAtSpeed(double speed) {
+    if (realCurves.isEmpty()) {
+      return Double.NaN;
+    }
+
+    // Find the curve closest to the specified speed
+    RealCurve closestCurve = realCurves.get(0);
+    double minSpeedDiff = Math.abs(closestCurve.speed - speed);
+
+    for (RealCurve curve : realCurves) {
+      double speedDiff = Math.abs(curve.speed - speed);
+      if (speedDiff < minSpeedDiff) {
+        minSpeedDiff = speedDiff;
+        closestCurve = curve;
+      }
+    }
+
+    // Find the minimum flow index
+    int minFlowIdx = 0;
+    double minFlow = closestCurve.flow[0];
+    for (int i = 1; i < closestCurve.flow.length; i++) {
+      if (closestCurve.flow[i] < minFlow) {
+        minFlow = closestCurve.flow[i];
+        minFlowIdx = i;
+      }
+    }
+    return closestCurve.head[minFlowIdx];
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Override to use RealCurve data which contains the corrected flow and head values for the actual
+   * fluid.
+   * </p>
+   */
+  @Override
+  public double getStoneWallFlowAtSpeed(double speed) {
+    if (realCurves.isEmpty()) {
+      return Double.NaN;
+    }
+
+    // Find the curve closest to the specified speed
+    RealCurve closestCurve = realCurves.get(0);
+    double minSpeedDiff = Math.abs(closestCurve.speed - speed);
+
+    for (RealCurve curve : realCurves) {
+      double speedDiff = Math.abs(curve.speed - speed);
+      if (speedDiff < minSpeedDiff) {
+        minSpeedDiff = speedDiff;
+        closestCurve = curve;
+      }
+    }
+
+    // Return the maximum flow on this curve
+    double maxFlow = closestCurve.flow[0];
+    for (double flow : closestCurve.flow) {
+      if (flow > maxFlow) {
+        maxFlow = flow;
+      }
+    }
+    return maxFlow;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Override to use RealCurve data which contains the corrected flow and head values for the actual
+   * fluid.
+   * </p>
+   */
+  @Override
+  public double getStoneWallHeadAtSpeed(double speed) {
+    if (realCurves.isEmpty()) {
+      return Double.NaN;
+    }
+
+    // Find the curve closest to the specified speed
+    RealCurve closestCurve = realCurves.get(0);
+    double minSpeedDiff = Math.abs(closestCurve.speed - speed);
+
+    for (RealCurve curve : realCurves) {
+      double speedDiff = Math.abs(curve.speed - speed);
+      if (speedDiff < minSpeedDiff) {
+        minSpeedDiff = speedDiff;
+        closestCurve = curve;
+      }
+    }
+
+    // Find the maximum flow index
+    int maxFlowIdx = 0;
+    double maxFlow = closestCurve.flow[0];
+    for (int i = 1; i < closestCurve.flow.length; i++) {
+      if (closestCurve.flow[i] > maxFlow) {
+        maxFlow = closestCurve.flow[i];
+        maxFlowIdx = i;
+      }
+    }
+    return closestCurve.head[maxFlowIdx];
+  }
 }
+

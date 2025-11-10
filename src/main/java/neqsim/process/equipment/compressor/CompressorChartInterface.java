@@ -212,12 +212,60 @@ public interface CompressorChartInterface extends Cloneable {
   public double getMinSpeedCurve();
 
   /**
-   * <p>generateSurgeCurve.</p>
+   * <p>
+   * generateSurgeCurve.
+   * </p>
    */
   public void generateSurgeCurve();
 
   /**
-   * <p>generateStoneWallCurve.</p>
+   * <p>
+   * generateStoneWallCurve.
+   * </p>
    */
   public void generateStoneWallCurve();
+
+  /**
+   * <p>
+   * Get the surge flow (minimum flow) at a specific speed.
+   * </p>
+   *
+   * @param speed The compressor speed in RPM
+   * @return The surge flow (minimum flow) at the specified speed in m3/hr, or Double.NaN if no
+   *         curves exist
+   */
+  public double getSurgeFlowAtSpeed(double speed);
+
+  /**
+   * <p>
+   * Get the surge head (polytropic head at minimum flow) at a specific speed.
+   * </p>
+   *
+   * @param speed The compressor speed in RPM
+   * @return The surge head at the specified speed in kJ/kg or meter (depending on headUnit), or
+   *         Double.NaN if no curves exist
+   */
+  public double getSurgeHeadAtSpeed(double speed);
+
+  /**
+   * <p>
+   * Get the stone wall flow (maximum flow) at a specific speed.
+   * </p>
+   *
+   * @param speed The compressor speed in RPM
+   * @return The stone wall flow (maximum flow) at the specified speed in m3/hr, or Double.NaN if no
+   *         curves exist
+   */
+  public double getStoneWallFlowAtSpeed(double speed);
+
+  /**
+   * <p>
+   * Get the stone wall head (polytropic head at maximum flow) at a specific speed.
+   * </p>
+   *
+   * @param speed The compressor speed in RPM
+   * @return The stone wall head at the specified speed in kJ/kg or meter (depending on headUnit),
+   *         or Double.NaN if no curves exist
+   */
+  public double getStoneWallHeadAtSpeed(double speed);
 }
