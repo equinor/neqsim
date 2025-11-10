@@ -22,6 +22,7 @@ public class ComponentPRvolcor extends ComponentPR {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   private double c;
+  private double cT;
   // private double calcc;
   public double[] Cij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   public double Ci = 0;
@@ -52,8 +53,10 @@ public class ComponentPRvolcor extends ComponentPR {
    * @return a double
    */
   public double calcc() {
-    return (0.1154 - 0.4406 * (0.29056 - 0.08775 * getAcentricFactor())) * R * criticalTemperature
-        / criticalPressure;
+    // return (0.1154 - 0.4406 * (0.29056 - 0.08775 * getAcentricFactor())) * R *
+    // criticalTemperature
+    // / criticalPressure;
+    return getVolumeCorrection();
   }
 
   // derivative of translation with regards to temperature
@@ -65,7 +68,7 @@ public class ComponentPRvolcor extends ComponentPR {
    * @return a double
    */
   public double calccT() {
-    return 0.;
+    return getVolumeCorrectionT();
   }
 
   // second derivative of translation with regards to temperature*temperature
@@ -94,6 +97,7 @@ public class ComponentPRvolcor extends ComponentPR {
     super(name, moles, molesInPhase, compIndex);
     c = (0.1154 - 0.4406 * (0.29056 - 0.08775 * getAcentricFactor())) * R * criticalTemperature
         / criticalPressure;
+    cT = calccT();
   }
 
   /** {@inheritDoc} */
@@ -101,6 +105,7 @@ public class ComponentPRvolcor extends ComponentPR {
   public void init(double temp, double pres, double totMoles, double beta, int initType) {
     super.init(temp, pres, totMoles, beta, initType);
     c = calcc();
+    cT = calccT();
   }
 
   /**
@@ -122,7 +127,7 @@ public class ComponentPRvolcor extends ComponentPR {
    * @return a double
    */
   public double getcT() {
-    return 0;
+    return cT;
   }
 
   // derivative of C with regards to mole fraction
