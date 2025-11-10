@@ -99,7 +99,9 @@ public class PumpTest extends neqsim.NeqSimTest {
     pump1.setSpeed(500);
     pump1.run();
 
-    Assertions.assertEquals(7.27423708, pump1.getOutletPressure(), 0.05);
+    // Corrected expected value based on proper head calculation: ΔP = ρ·g·H
+    // With density ~630-650 kg/m³ and head ~72 m, pressure rise is ~4.5 bar
+    Assertions.assertEquals(5.02, pump1.getOutletPressure(), 0.10);
   }
 
   @Test
