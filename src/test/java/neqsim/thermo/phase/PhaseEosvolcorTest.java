@@ -69,6 +69,40 @@ public class PhaseEosvolcorTest {
         component -> ((ComponentSrkvolcor) component).calccT());
   }
 
+  @Test
+  void prPhaseCalculatesTemperatureDependentTranslation() {
+    SystemInterface system = new SystemPrEosvolcor(300.0, 50.0);
+    system.addComponent("methane", 1.0);
+    system.setMixingRule("classic");
+    system.init(0);
+
+    double translation = 1.23e-4;
+    double translationDerivative = -4.56e-7;
+
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      ComponentPRvolcor component = (ComponentPRvolcor) system.getPhase(phaseIndex).getComponent(0);
+      component.setVolumeCorrection(translation);
+      component.setVolumeCorrectionT(translationDerivative);
+    }
+
+    system.init(0);
+
+    PhasePrEosvolcor phase = (PhasePrEosvolcor) system.getPhase(0);
+    ComponentPRvolcor component = (ComponentPRvolcor) phase.getComponent(0);
+
+    Assertions.assertEquals(translation, component.getc(), 1e-12);
+    Assertions.assertEquals(translationDerivative, component.getcT(), 1e-12);
+    Assertions.assertEquals(translationDerivative, phase.getCT(), 1e-12);
+    Assertions.assertEquals(translationDerivative,
+        phase.calcCiT(0, phase, system.getTemperature(), system.getPressure(),
+            phase.getNumberOfComponents()),
+        1e-12);
+
+    component.Finit(phase, system.getTemperature(), system.getPressure(),
+        system.getTotalNumberOfMoles(), 1.0, phase.getNumberOfComponents(), 2);
+    Assertions.assertEquals(translationDerivative, component.getCiT(), 1e-12);
+  }
+
   private void assertMolarVolumeMatchesTranslation(String componentName, double temperature,
       double pressure, SystemFactory baseFactory, SystemFactory translatedFactory,
       Function<ComponentEosInterface, Double> translationCorrelation,

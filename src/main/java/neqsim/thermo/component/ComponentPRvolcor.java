@@ -22,9 +22,11 @@ public class ComponentPRvolcor extends ComponentPR {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   private double c;
+  private double cT;
   // private double calcc;
   public double[] Cij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   public double Ci = 0;
+  private double CiT = 0;
 
   /**
    * <p>
@@ -92,6 +94,7 @@ public class ComponentPRvolcor extends ComponentPR {
   public ComponentPRvolcor(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
     c = calcc();
+    cT = calccT();
   }
 
   /** {@inheritDoc} */
@@ -99,6 +102,7 @@ public class ComponentPRvolcor extends ComponentPR {
   public void init(double temp, double pres, double totMoles, double beta, int initType) {
     super.init(temp, pres, totMoles, beta, initType);
     c = calcc();
+    cT = calccT();
   }
 
   /** {@inheritDoc} */
@@ -127,7 +131,7 @@ public class ComponentPRvolcor extends ComponentPR {
    * @return a double
    */
   public double getcT() {
-    return calccT();
+    return cT;
   }
 
   // derivative of C with regards to mole fraction
@@ -138,7 +142,7 @@ public class ComponentPRvolcor extends ComponentPR {
     super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, initType);
     Ci = ((PhasePrEosvolcor) phase).calcCi(componentNumber, phase, temp, pres, numberOfComponents);
     if (initType >= 2) {
-      ((PhasePrEosvolcor) phase).calcCiT(componentNumber, phase, temp, pres, numberOfComponents);
+      CiT = ((PhasePrEosvolcor) phase).calcCiT(componentNumber, phase, temp, pres, numberOfComponents);
     }
 
     if (initType >= 3) {
@@ -158,6 +162,17 @@ public class ComponentPRvolcor extends ComponentPR {
    */
   public double getCi() {
     return Ci;
+  }
+
+  /**
+   * <p>
+   * getCiT.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getCiT() {
+    return CiT;
   }
 
   private double calculatePenelouxShift() {
@@ -184,17 +199,6 @@ public class ComponentPRvolcor extends ComponentPR {
   /**
    * <p>
    * getCiT.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getCiT() {
-    return 0;
-  }
-
-  /**
-   * <p>
-   * getcTT.
    * </p>
    *
    * @return a double

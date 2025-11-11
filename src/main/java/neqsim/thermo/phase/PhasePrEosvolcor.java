@@ -217,7 +217,17 @@ public class PhasePrEosvolcor extends PhasePrEos {
    * @return a double
    */
   public double calcCT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-    return 0.0;
+    double locCT = 0.0;
+    ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+
+    for (int i = 0; i < numbcomp; i++) {
+      for (int j = 0; j < numbcomp; j++) {
+        locCT += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
+            * getcijT(compArray[i], compArray[j]);
+      }
+    }
+
+    return locCT / phase.getNumberOfMolesInPhase();
   }
 
   /**
