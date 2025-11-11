@@ -7,7 +7,6 @@
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentEosInterface;
-import neqsim.thermo.component.ComponentPRvolcor;
 import neqsim.thermo.component.ComponentSrkvolcor;
 
 /**
@@ -98,7 +97,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
    * @return a double
    */
   public double getcij(ComponentEosInterface compArray, ComponentEosInterface compArray2) {
-    return ((((ComponentPRvolcor) compArray).getc()) + (((ComponentPRvolcor) compArray2).getc()))
+    return ((((ComponentSrkvolcor) compArray).getc()) + (((ComponentSrkvolcor) compArray2).getc()))
         * 0.5;
   }
 
@@ -112,7 +111,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
    * @return a double
    */
   public double getcijT(ComponentEosInterface compArray, ComponentEosInterface compArray2) {
-    return (((ComponentPRvolcor) compArray).getcT() + ((ComponentPRvolcor) compArray2).getcT())
+    return (((ComponentSrkvolcor) compArray).getcT() + ((ComponentSrkvolcor) compArray2).getcT())
         * 0.5;
   }
 
@@ -121,11 +120,11 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
    * getcijTT.
    * </p>
    *
-   * @param compi a {@link neqsim.thermo.component.ComponentPRvolcor} object
-   * @param compj a {@link neqsim.thermo.component.ComponentPRvolcor} object
+   * @param compi a {@link neqsim.thermo.component.ComponentSrkvolcor} object
+   * @param compj a {@link neqsim.thermo.component.ComponentSrkvolcor} object
    * @return a double
    */
-  public double getcijTT(ComponentPRvolcor compi, ComponentPRvolcor compj) {
+  public double getcijTT(ComponentSrkvolcor compi, ComponentSrkvolcor compj) {
     // return (compi.getcTT() + compj.getcTT()) * 0.5;
     return 0;
   }
@@ -176,8 +175,8 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
     cij = getcij(compArray[compNumb], compArray[compNumbj]);
-    return (2.0 * cij - ((ComponentPRvolcor) compArray[compNumb]).getCi()
-        - ((ComponentPRvolcor) compArray[compNumbj]).getCi()) / phase.getNumberOfMolesInPhase();
+    return (2.0 * cij - ((ComponentSrkvolcor) compArray[compNumb]).getCi()
+        - ((ComponentSrkvolcor) compArray[compNumbj]).getCi()) / phase.getNumberOfMolesInPhase();
   }
 
   /**
