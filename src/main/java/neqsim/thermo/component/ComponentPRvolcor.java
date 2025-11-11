@@ -52,8 +52,7 @@ public class ComponentPRvolcor extends ComponentPR {
    * @return a double
    */
   public double calcc() {
-    return (0.1154 - 0.4406 * (0.29056 - 0.08775 * getAcentricFactor())) * R * criticalTemperature
-        / criticalPressure;
+    return getVolumeCorrection();
   }
 
   // derivative of translation with regards to temperature
@@ -65,7 +64,7 @@ public class ComponentPRvolcor extends ComponentPR {
    * @return a double
    */
   public double calccT() {
-    return 0.;
+    return super.getVolumeCorrectionT();
   }
 
   // second derivative of translation with regards to temperature*temperature
@@ -92,8 +91,7 @@ public class ComponentPRvolcor extends ComponentPR {
    */
   public ComponentPRvolcor(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
-    c = (0.1154 - 0.4406 * (0.29056 - 0.08775 * getAcentricFactor())) * R * criticalTemperature
-        / criticalPressure;
+    c = calcc();
   }
 
   /** {@inheritDoc} */
@@ -103,6 +101,16 @@ public class ComponentPRvolcor extends ComponentPR {
     c = calcc();
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double getVolumeCorrection() {
+    if (hasVolumeCorrection()) {
+      return super.getVolumeCorrection();
+    }
+    return calculatePenelouxShift();
+  }
+
+  /** {@inheritDoc} */
   /**
    * <p>
    * getc.
@@ -153,6 +161,11 @@ public class ComponentPRvolcor extends ComponentPR {
    */
   public double getCi() {
     return Ci;
+  }
+
+  private double calculatePenelouxShift() {
+    return (0.1154 - 0.4406 * (0.29056 - 0.08775 * getAcentricFactor())) * R * criticalTemperature
+        / criticalPressure;
   }
 
   /**
