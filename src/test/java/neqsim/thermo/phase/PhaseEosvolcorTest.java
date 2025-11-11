@@ -1,7 +1,7 @@
 package neqsim.thermo.phase;
 
 import java.util.function.Function;
-
+import org.apache.logging.log4j.core.util.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -120,10 +120,10 @@ public class PhaseEosvolcorTest {
     Assertions.assertEquals(component.getVolumeCorrectionT(),
         translationDerivative.apply(component), 1e-12);
 
-    Assertions.assertEquals(baseLiquidMolarVolume - penelouxShift, translatedLiquidMolarVolume, 1e-10);
+    Assertions.assertEquals(baseLiquidMolarVolume - penelouxShift, translatedLiquidMolarVolume,
+        1e-10);
 
-    double baseLiquidMolarVolumeSI =
-        baseSystem.getPhase(baseLiquidIndex).getMolarVolume("m3/mol");
+    double baseLiquidMolarVolumeSI = baseSystem.getPhase(baseLiquidIndex).getMolarVolume("m3/mol");
     double translatedLiquidMolarVolumeSI =
         translatedSystem.getPhase(translatedLiquidIndex).getMolarVolume("m3/mol");
     double unitConversion = (baseLiquidMolarVolumeSI - translatedLiquidMolarVolumeSI)
@@ -149,6 +149,7 @@ public class PhaseEosvolcorTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     ops.TPflash();
     system.initProperties();
+    // system.prettyPrint();
     return system;
   }
 
@@ -186,5 +187,74 @@ public class PhaseEosvolcorTest {
   @FunctionalInterface
   private interface SystemFactory {
     SystemInterface create(double temperature, double pressure);
+  }
+
+  @Test
+  void testFlashPR() {
+    SystemInterface system = new SystemPrEos(298.15, 1.0);
+
+    system.addComponent("n-heptane", 1.0);
+    system.setMixingRule("classic");
+    system.useVolumeCorrection(true);
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    ops.TPflash();
+    system.initProperties();
+    // system.prettyPrint();
+    double density1 = system.getPhase(0).getPhysicalProperties().getDensity();
+
+    SystemInterface system2 = new SystemPrEosvolcor(298.15, 1.0);
+    system2.addComponent("n-heptane", 1.0);
+    system2.setMixingRule("classic");
+
+    ThermodynamicOperations ops2 = new ThermodynamicOperations(system2);
+    system2.useVolumeCorrection(false);
+    ops2.TPflash();
+    system2.initProperties();
+    // system2.prettyPrint();
+    double density2 = system2.getPhase(0).getPhysicalProperties().getDensity();
+
+    Assertions.assertEquals(density1, density2, 1e-10);
+  }
+
+
+  @Test
+  void testFlashSrk() {
+    SystemInterface system = new SystemSrkEos(308.15, 1.0);
+
+    system.addComponent("n-heptane", 1.0);
+    system.setMixingRule("classic");
+    system.useVolumeCorrection(true);
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    ops.TPflash();
+    system.initProperties();
+    // system.prettyPrint();
+    double density1 = system.getPhase(0).getPhysicalProperties().getDensity();
+
+    SystemInterface system2 = new SystemSrkEosvolcor(308.15, 1.0);
+    system2.addComponent("n-heptane", 1.0);
+    system2.setMixingRule("classic");
+
+    ThermodynamicOperations ops2 = new ThermodynamicOperations(system2);
+    ops2.TPflash();
+    system2.initProperties();
+
+    double density2 = system2.getPhase(0).getPhysicalProperties().getDensity();
+
+    Assertions.assertEquals(density1, density2, 1e-10);
+
+
+    double volcor = system2.getPhase(0).getComponent(0).getVolumeCorrection();
+
+    system2.getPhase(0).getComponent(0).setVolumeCorrection(volcor);
+    system2.getPhase(1).getComponent(0).setVolumeCorrection(volcor);
+
+    ThermodynamicOperations ops3 = new ThermodynamicOperations(system2);
+    system2.useVolumeCorrection(false);
+    ops3.TPflash();
+    system2.initProperties();
+
+    double density3 = system2.getPhase(0).getPhysicalProperties().getDensity();
+
+    Assertions.assertEquals(density1, density3, 1e-10);
   }
 }
