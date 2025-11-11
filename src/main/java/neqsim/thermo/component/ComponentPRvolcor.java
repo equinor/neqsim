@@ -104,10 +104,7 @@ public class ComponentPRvolcor extends ComponentPR {
   /** {@inheritDoc} */
   @Override
   public double getVolumeCorrection() {
-    if (hasVolumeCorrection()) {
-      return super.getVolumeCorrection();
-    }
-    return calculatePenelouxShift();
+    return super.getVolumeCorrection();
   }
 
   /** {@inheritDoc} */
@@ -130,7 +127,7 @@ public class ComponentPRvolcor extends ComponentPR {
    * @return a double
    */
   public double getcT() {
-    return 0;
+    return calccT();
   }
 
   // derivative of C with regards to mole fraction

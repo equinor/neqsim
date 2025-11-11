@@ -104,10 +104,7 @@ public class ComponentSrkvolcor extends ComponentSrk {
   /** {@inheritDoc} */
   @Override
   public double getVolumeCorrection() {
-    if (hasVolumeCorrection()) {
-      return super.getVolumeCorrection();
-    }
-    return calculatePenelouxShift();
+    return super.getVolumeCorrection();
   }
 
   /**
@@ -129,7 +126,7 @@ public class ComponentSrkvolcor extends ComponentSrk {
    * @return a double
    */
   public double getcT() {
-    return 0;
+    return calccT();
   }
 
   // derivative of C with regards to mole fraction
@@ -262,7 +259,7 @@ public class ComponentSrkvolcor extends ComponentSrk {
     // + phase.FBD() * (getBi() * comp_Array[j].getAi() + comp_Array[j].getBi() * getAi())
     // + phase.FB() * getBij(j) + phase.FBB() * getBi() * comp_Array[j].getBi()
     // + phase.FD() * getAij(j);
-      double loc_Cj = ((ComponentSrkvolcor) comp_Array[j]).getCi();
+    double loc_Cj = ((ComponentSrkvolcor) comp_Array[j]).getCi();
     // double loc_Ci= ((ComponentSrkvolcor)) component.getCi();
     return phase.FnB() * comp_Array[j].getBi() + loc_FnC * loc_Cj
         + (phase.FnB() + phase.FBB() * comp_Array[j].getBi() + loc_FBC * loc_Cj
