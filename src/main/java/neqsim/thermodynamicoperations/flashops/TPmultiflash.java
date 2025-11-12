@@ -1304,7 +1304,8 @@ public class TPmultiflash extends TPflash {
       if (iter > 198) {
         // System.out.println("too many iterations....." + err + " temperature "
         // + system.getTemperature("C") + " C " + system.getPressure("bara") + " bara");
-        new neqsim.util.exception.TooManyIterationsException(this, "stabilityAnalysis2", 200);
+        throw new RuntimeException(
+            new neqsim.util.exception.TooManyIterationsException(this, "stabilityAnalysis2", 200));
       }
       // logger.info("err: " + err + " ITER " + iter);
       double xTrivialCheck0 = 0.0;
