@@ -556,7 +556,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         liquidOutStream.getFluid().initPhysicalProperties("density");
       }
     }
-
   }
 
   /**
@@ -714,7 +713,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     } else {
       return 0;
     }
-
   }
 
   /**
@@ -839,7 +837,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
     if (level <= 0) {
       return 0;
-
     } else if (level >= internalDiameter) {
       return sepCrossArea;
     }
@@ -856,9 +853,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         lArea = circArea - triArea;
         // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n", internalRadius, d,
         // theta, a, lArea);
-
       } else if (level > internalRadius) {
-
         double d = level - internalRadius;
         double theta = Math.acos(d / internalRadius);
         double a = internalRadius * Math.sin(theta);
@@ -867,18 +862,14 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         lArea = circArea + triArea;
         // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n", internalRadius, d,
         // theta, a, lArea);
-
       } else {
         lArea = 0.5 * Math.PI * Math.pow(internalRadius, 2);
-
       }
     } else if (orientation.equals("vertical")) {
-
       lArea = sepCrossArea;
     } else {
       lArea = 0;
     }
-
 
     return lArea;
   }
@@ -895,19 +886,13 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     double lVolume = 0.0;
 
     if (orientation.equals("horizontal")) {
-
       lVolume = liquidArea(liquidLevel) * separatorLength;
       // System.out.printf("from function: LVL %f Area %f\n", liquidLevel,
       // liquidArea(liquidLevel));
-
     } else if (orientation.equals("vertical")) {
-
       lVolume = sepCrossArea * liquidLevel;
-
     } else {
-
       lVolume = 0;
-
     }
 
     return lVolume;
@@ -1051,11 +1036,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       }
 
       return clampLiquidHeight(limitedVolume / sepCrossArea);
-
     } else {
-
-      return 0;
-
+      return 0.0;
     }
   }
 

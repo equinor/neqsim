@@ -33,6 +33,5 @@ public class hydrateEquilibriumTemperature {
     } catch (Exception ex) {
       ex.toString();
     }
-
   }
 }

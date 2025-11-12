@@ -96,6 +96,4 @@ class StreamTest extends neqsim.NeqSimTest {
     assertEquals(1000.0, stream1.getFlowRate("kg/hr"), 0.1);
     assertEquals(26.500067735830, stream1.getTemperature("C"), 0.1);
   }
-
-
 }

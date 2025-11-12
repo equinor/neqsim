@@ -235,5 +235,4 @@ public class ComponentGERG2008Eos extends ComponentEos {
     logfugcoefdN(phase);
     return dfugdn[k];
   }
-
 }

@@ -63,7 +63,6 @@ public class ThrottlingValveTest {
     valve1.setIsCalcOutPressure(true);
     valve1.runTransient(0.1);
     assertEquals(9.000001952, valve1.getOutletStream().getPressure("bara"), 0.01); // choked
-
   }
 
   @Test
@@ -148,7 +147,6 @@ public class ThrottlingValveTest {
     valve1.setIsCalcOutPressure(true);
     valve1.runTransient(0.1);
     assertEquals(9.000001952, valve1.getOutletStream().getPressure("bara"), 0.01); // choked
-
   }
 
   @Test

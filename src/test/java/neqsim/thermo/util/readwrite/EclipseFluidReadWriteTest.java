@@ -383,9 +383,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testOps.TPflash();
 
     Assertions.assertEquals(2, testSystem.getNumberOfPhases());
-
   }
-
 
   @Test
   void testGOW2() throws IOException {
@@ -454,7 +452,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
   @Test
   void antiSurgeTest() throws IOException {
-
     double SECOND_STAGE_PRESSURE_BARA = 7.0;
     double THIRD_STAGE_PRESSURE_BARA = 20.0;
     double SECOND_STAGE_COOLER_OUTLET_TEMP_C = 28.0;
@@ -575,16 +572,11 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // assertFalse(secondStageCompressor.isSurge(), "compressor is surge");
     // assertFalse(secondStageCompressor.isStoneWall(), "compressor is stone wall limited");
 
-    System.out
-        .println("compressor poytropic head end " + secondStageCompressor.getPolytropicFluidHead());
-
+    System.out.println(
+        "compressor polytropic head end " + secondStageCompressor.getPolytropicFluidHead());
     System.out.println("flow inlet feed compressor end "
         + firstStageScrubber2.getGasOutStream().getFluid().getFlowRate("m3/hr"));
-
     System.out.println(recycle2.toJson());
-
   }
-
-
 }
 

@@ -370,7 +370,5 @@ public class Orifice extends TwoPortEquipment {
     thermoSystem.setPressure(P2, "bara");
     outStream.setFluid(thermoSystem);
     inStream.run();
-
-
   }
 }

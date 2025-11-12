@@ -241,12 +241,11 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   public Map<String, Object> calcValveSize(double percentOpening) {
     SystemInterface fluid =
         ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
-    Map<String, Object> result;
+    // Map<String, Object> result;
     if (fluid.hasPhaseType(PhaseType.GAS)) {
       return sizeControlValveGas(fluid.getTemperature(), fluid.getMolarMass("gr/mol"),
           fluid.getGamma2(), fluid.getZ(), getValve().getInletPressure() * 1e5,
           getValve().getOutletPressure() * 1e5, fluid.getFlowRate("m3/sec"), percentOpening);
-
     } else {
       return sizeControlValveLiquid(fluid.getDensity("kg/m3"), fluid.getZ(), fluid.getPC() * 1e5,
           getValve().getInletPressure() * 1e5, getValve().getOutletPressure() * 1e5,
@@ -293,14 +292,12 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
       double gammaOrPsat, double ZOrPc, double P1, double P2, double Q, Double D1, Double D2,
       Double d, double FL, double Fd, double xTOrNone, boolean allowChoked, boolean allowLaminar,
       boolean fullOutput, double percentOpening) {
-    Map<String, Object> result = fullOutput ? new HashMap<>() : null;
+    // Map<String, Object> result = fullOutput ? new HashMap<>() : null;
 
     if (type == FluidType.LIQUID) {
       return sizeControlValveLiquid(rhoOrT, gammaOrPsat, ZOrPc, P1, P2, Q, percentOpening);
-
     } else if (type == FluidType.GAS) {
       return sizeControlValveGas(rhoOrT, MW, gammaOrPsat, ZOrPc, P1, P2, Q, percentOpening);
-
     } else {
       throw new IllegalArgumentException("Invalid fluid type");
     }

@@ -2772,5 +2772,4 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return a double
    */
   public double calculateMolarMassFromDensityAndBoilingPoint(double density, double boilingPoint);
-
 }

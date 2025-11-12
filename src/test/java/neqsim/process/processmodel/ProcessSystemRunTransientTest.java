@@ -1021,6 +1021,5 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
           separator1.getLiquidLevel(), flowTransmitter.getMeasuredValue());
       p.runTransient(deltaTsec);
     }
-
   }
 }
