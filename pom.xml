@@ -12,11 +12,18 @@
 	<packaging>jar</packaging>
 	<version>${revision}</version>
 
+	<scm>
+		<connection>scm:git:https://github.com/equinor/neqsim.git</connection>
+		<developerConnection>scm:git:https://github.com/equinor/neqsim.git</developerConnection>
+		<url>https://github.com/equinor/neqsim</url>
+	</scm>
+
 	<properties>
 		<revision>3.1.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
+		<skipFlattening>false</skipFlattening>
 	</properties>
 	<licenses>
 		<license>
@@ -129,6 +136,9 @@
 	<profiles>
 		<profile>
 			<id>release</id>
+			<properties>
+				<skipFlattening>true</skipFlattening>
+			</properties>
 			<build>
 				<plugins>
 					<plugin>
@@ -235,6 +245,8 @@
 				<version>1.7.3</version>
 				<configuration>
 					<updatePomFile>true</updatePomFile>
+					<flattenMode>oss</flattenMode>
+					<skip>${skipFlattening}</skip>
 				</configuration>
 				<executions>
 					<execution>
@@ -415,20 +427,13 @@
 				<artifactId>dependency-check-maven</artifactId>
 				<version>12.1.9</version>
 				<reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>aggregate</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
+					<reportSet>
+						<reports>
+							<report>aggregate</report>
+						</reports>
+					</reportSet>
+				</reportSets>
 			</plugin>
 		</plugins>
 	</reporting>
-	<distributionManagement>
-		<repository>
-			<id>github</id>
-			<name>GitHub Equinor Apache Maven Packages</name>
-			<url>https://maven.pkg.github.com/Equinor/neqsim</url>
-		</repository>
-	</distributionManagement>
 </project>
