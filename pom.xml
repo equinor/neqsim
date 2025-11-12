@@ -424,11 +424,4 @@
 			</plugin>
 		</plugins>
 	</reporting>
-	<distributionManagement>
-		<repository>
-			<id>github</id>
-			<name>GitHub Equinor Apache Maven Packages</name>
-			<url>https://maven.pkg.github.com/Equinor/neqsim</url>
-		</repository>
-	</distributionManagement>
 </project>
