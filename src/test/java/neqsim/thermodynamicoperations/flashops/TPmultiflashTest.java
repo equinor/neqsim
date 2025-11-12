@@ -41,7 +41,6 @@ class TPmultiflashTest {
         System.out.println("Multiple phases detected at pressure: " + p + " bara");
       }
     }
-
   }
 
   @Test
@@ -67,8 +66,5 @@ class TPmultiflashTest {
     testSystem.initProperties();
     assert (testSystem.getNumberOfPhases() == 2) : "Expected 2 phases, got "
         + testSystem.getNumberOfPhases();
-
-
   }
-
 }

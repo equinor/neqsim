@@ -3,8 +3,8 @@ package neqsim.process.util.scenario;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import neqsim.process.logic.ProcessLogic;
 import neqsim.process.logic.LogicState;
+import neqsim.process.logic.ProcessLogic;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.ProcessSafetyScenario;
 import neqsim.process.util.monitor.ScenarioKPI;
@@ -102,7 +102,6 @@ public class ProcessScenarioRunner {
             }
           });
       System.out.println();
-
     } catch (Exception e) {
       System.err.println("✗ Failed to initialize steady-state: " + e.getMessage());
       throw new RuntimeException("Failed to initialize steady-state: " + e.getMessage(), e);
@@ -307,7 +306,6 @@ public class ProcessScenarioRunner {
       try {
         system.runTransient(timeStep, simulationId);
         consecutiveErrors = 0; // Reset counter on success
-
       } catch (Exception e) {
         errorCount++;
         consecutiveErrors++;
@@ -536,7 +534,6 @@ public class ProcessScenarioRunner {
       System.out.println("Re-initializing steady-state...");
       system.run();
       System.out.println("✓ System reset complete\n");
-
     } catch (Exception e) {
       System.err.println("⚠ Warning: Error during system reset: " + e.getMessage());
       System.err.println("  → Continuing with partial reset");

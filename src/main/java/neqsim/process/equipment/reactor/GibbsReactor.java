@@ -744,10 +744,10 @@ public class GibbsReactor extends TwoPortEquipment {
               for (int i = 0; i < Math.min(parts.length, 10); i++) {
                 partsStr.append("parts[").append(i).append("]=").append(parts[i]).append(" ");
               }
-             // System.out.println(
-               //   "DATABASE LOADING - Raw parts for " + molecule + ": " + partsStr.toString());
-             // System.out.println("DATABASE LOADING - parts.length=" + parts.length
-                //  + ", numElements=" + numElements);
+              // System.out.println(
+              // "DATABASE LOADING - Raw parts for " + molecule + ": " + partsStr.toString());
+              // System.out.println("DATABASE LOADING - parts.length=" + parts.length
+              // + ", numElements=" + numElements);
             }
 
             // Parse available elements
@@ -755,8 +755,8 @@ public class GibbsReactor extends TwoPortEquipment {
               String value = parts[i + 1].trim().replace(",", ".");
               elements[i] = Double.parseDouble(value);
               if (molecule.contains("+") || molecule.contains("-")) {
-               //System.out.println("DATABASE LOADING - Element[" + i + "] (" + elementNames[i]
-                //    + ") = " + value + " -> " + elements[i]);
+                // System.out.println("DATABASE LOADING - Element[" + i + "] (" + elementNames[i]
+                // + ") = " + value + " -> " + elements[i]);
               }
             }
 
@@ -1805,7 +1805,7 @@ public class GibbsReactor extends TwoPortEquipment {
    */
   private boolean updateSystemWithNewCompositions() {
     try {
-      //SystemInterface system = getInletStream().getThermoSystem();
+      // SystemInterface system = getInletStream().getThermoSystem();
 
       // Update component moles in the system
       for (int i = 0; i < processedComponents.size(); i++) {
@@ -1838,7 +1838,7 @@ public class GibbsReactor extends TwoPortEquipment {
             system.addComponent(compIndex, molesToAdd, 0);
           }
         }
-      getOutletStream().setThermoSystem(system);
+        getOutletStream().setThermoSystem(system);
       }
 
 
@@ -1862,7 +1862,6 @@ public class GibbsReactor extends TwoPortEquipment {
       }
 
       return true;
-
     } catch (Exception e) {
       logger.error("Error updating system with new compositions: " + e.getMessage());
       return false;

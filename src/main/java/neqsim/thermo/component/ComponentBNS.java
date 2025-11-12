@@ -61,6 +61,5 @@ public class ComponentBNS extends ComponentPR {
   public double calcb() {
     b = omegaB * R * criticalTemperature / criticalPressure;
     return b;
-
   }
 }

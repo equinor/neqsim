@@ -477,5 +477,4 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
     }
     return false;
   }
-
 }

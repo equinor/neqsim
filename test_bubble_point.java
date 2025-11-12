@@ -38,7 +38,6 @@ public class test_bubble_point {
 
       System.out.println("Bubble point pressure: " + bubbleFluid.getPressure() + " bara");
       System.out.println("SUCCESS!");
-
     } catch (Exception e) {
       System.err.println("ERROR: " + e.getMessage());
       e.printStackTrace();

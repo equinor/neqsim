@@ -1,24 +1,21 @@
 package neqsim.process.equipment.separator;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemPrEos;
+import org.junit.jupiter.api.Test;
+import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.LevelTransmitter;
 import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.measurementdevice.VolumeFlowTransmitter;
-import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 
 /**
  * Test class for transient separator simulation using improved VU flash calculations. This test
@@ -233,7 +230,6 @@ public class TransientSeparatorVUFlashTest {
 
         // Run next time step
         oilProcess.runTransient(TIME_STEP);
-
       } catch (Exception e) {
         System.err.printf("Error at step %d: %s%n", i, e.getMessage());
         throw new RuntimeException("Simulation failed at step " + i, e);
@@ -335,8 +331,9 @@ public class TransientSeparatorVUFlashTest {
    * Calculate variance of a list of values
    */
   private double calculateVariance(List<Double> values) {
-    if (values.size() < 2)
+    if (values.size() < 2) {
       return 0.0;
+    }
 
     double mean = values.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
     double variance =

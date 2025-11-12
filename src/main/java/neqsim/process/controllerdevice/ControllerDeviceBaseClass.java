@@ -17,15 +17,12 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.util.NamedBaseClass;
 
 /**
- * Discrete PID controller implementation providing common features for process
- * control in NeqSim.
- * The class supports anti-windup clamping, derivative filtering, gain
- * scheduling, event logging and
+ * Discrete PID controller implementation providing common features for process control in NeqSim.
+ * The class supports anti-windup clamping, derivative filtering, gain scheduling, event logging and
  * performance metrics as well as auto-tuning utilities.
  *
  * <p>
- * The controller operates on a
- * {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
+ * The controller operates on a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
  * transmitter and exposes a standard PID API through
  * {@link neqsim.process.controllerdevice.ControllerDeviceInterface}.
  * </p>
@@ -127,8 +124,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    * {@inheritDoc}
    *
    * <p>
-   * If no engineering unit is configured, the controller falls back to the legacy
-   * percent-based
+   * If no engineering unit is configured, the controller falls back to the legacy percent-based
    * error formulation used by earlier NeqSim versions.
    * </p>
    */
@@ -208,11 +204,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
           TintValue -= TintIncrement;
         }
       }
-
     }
 
     eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
-
     calcIdentifier = id;
   }
 
@@ -477,8 +471,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         }
       }
       if (Double.isNaN(t63)) {
-        if ((positiveChange && value >= threshold63)
-            || (!positiveChange && value <= threshold63)) {
+        if ((positiveChange && value >= threshold63) || (!positiveChange && value <= threshold63)) {
           t63 = event.getTime();
         }
       }
@@ -515,7 +508,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   /** {@inheritDoc} */
   @Override
   public void addGainSchedulePoint(double processValue, double Kp, double Ti, double Td) {
-    gainSchedule.put(processValue, new double[] { Kp, Ti, Td });
+    gainSchedule.put(processValue, new double[] {Kp, Ti, Td});
   }
 
   /** {@inheritDoc} */
@@ -552,10 +545,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * Apply gain-scheduled controller parameters based on the current measurement
-   * value. The schedule
-   * selects the parameter set with the highest threshold not exceeding the
-   * measurement.
+   * Apply gain-scheduled controller parameters based on the current measurement value. The schedule
+   * selects the parameter set with the highest threshold not exceeding the measurement.
    *
    * @param measurement current process value
    */
@@ -573,11 +564,10 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * Calculate the average value of the {@link ControllerEvent} properties for the
-   * last entries in
+   * Calculate the average value of the {@link ControllerEvent} properties for the last entries in
    * the event log.
    *
-   * @param count     number of samples to include in the average
+   * @param count number of samples to include in the average
    * @param extractor function returning the value to average from the event
    * @return average of the selected event property
    */

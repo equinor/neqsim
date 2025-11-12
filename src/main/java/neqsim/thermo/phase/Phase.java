@@ -1059,7 +1059,6 @@ public abstract class Phase implements PhaseInterface {
       case "J/K":
         // No conversion needed as the base unit is J/K.
         return refCp;
-
       case "J/molK":
         // To get molar heat capacity, divide the total heat capacity by the number of moles.
         if (getNumberOfMolesInPhase() == 0) {
@@ -1067,14 +1066,12 @@ public abstract class Phase implements PhaseInterface {
               "Number of moles in phase cannot be zero for J/molK conversion.");
         }
         return refCp / getNumberOfMolesInPhase();
-
       case "kJ/molK":
         if (getNumberOfMolesInPhase() == 0) {
           throw new ArithmeticException(
               "Number of moles in phase cannot be zero for kJ/molK conversion.");
         }
         return refCp / getNumberOfMolesInPhase() / 1000.0;
-
       case "J/kgK": {
         // To get specific heat capacity, divide the total heat capacity by the total mass.
         // Total mass = moles in phase * molar mass (in kg/mol).
@@ -1084,7 +1081,6 @@ public abstract class Phase implements PhaseInterface {
         }
         return refCp / totalMass;
       }
-
       case "kJ/kgK": {
         // Same as J/kgK, but with an additional conversion from J to kJ.
         double totalMass = getNumberOfMolesInPhase() * getMolarMass();
@@ -1094,7 +1090,6 @@ public abstract class Phase implements PhaseInterface {
         // Divide by total mass for specific heat capacity, and by 1000 for kJ.
         return refCp / totalMass / 1000.0;
       }
-
       case "btu/lbmole-F": {
         // This conversion is performed from the molar heat capacity (J/molK).
         if (getNumberOfMolesInPhase() == 0) {
@@ -1134,7 +1129,6 @@ public abstract class Phase implements PhaseInterface {
       case "J/K":
         // No conversion needed as the base unit is J/K.
         return refCv;
-
       case "J/molK":
         // To get molar heat capacity, divide the total heat capacity by the number of moles.
         if (getNumberOfMolesInPhase() == 0) {
@@ -1142,14 +1136,12 @@ public abstract class Phase implements PhaseInterface {
               "Number of moles in phase cannot be zero for J/molK conversion.");
         }
         return refCv / getNumberOfMolesInPhase();
-
       case "kJ/molK":
         if (getNumberOfMolesInPhase() == 0) {
           throw new ArithmeticException(
               "Number of moles in phase cannot be zero for kJ/molK conversion.");
         }
         return refCv / getNumberOfMolesInPhase() / 1000.0;
-
       case "J/kgK": {
         // To get specific heat capacity, divide the total heat capacity by the total mass.
         // Total mass = moles in phase * molar mass (in kg/mol).
@@ -1159,7 +1151,6 @@ public abstract class Phase implements PhaseInterface {
         }
         return refCv / totalMass;
       }
-
       case "kJ/kgK": {
         // Same as J/kgK, but with an additional conversion from J to kJ.
         double totalMass = getNumberOfMolesInPhase() * getMolarMass();
@@ -1169,7 +1160,6 @@ public abstract class Phase implements PhaseInterface {
         // Divide by total mass for specific heat capacity, and by 1000 for kJ.
         return refCv / totalMass / 1000.0;
       }
-
       case "btu/lbmole-F": {
         // This conversion is performed from the molar heat capacity (J/molK).
         if (getNumberOfMolesInPhase() == 0) {
@@ -1221,12 +1211,10 @@ public abstract class Phase implements PhaseInterface {
       case "J":
         // No conversion needed.
         return refEnthalpy;
-
       case "Btu":
         // 1 J = 0.000947817 Btu
         final double J_TO_BTU = 0.000947817;
         return refEnthalpy * J_TO_BTU;
-
       case "J/mol":
       case "kJ/kmol": { // Note: J/mol and kJ/kmol are numerically equivalent units.
         if (getNumberOfMolesInPhase() == 0) {
@@ -1235,7 +1223,6 @@ public abstract class Phase implements PhaseInterface {
         }
         return refEnthalpy / getNumberOfMolesInPhase();
       }
-
       case "J/kg": {
         // To get specific enthalpy, divide total enthalpy by total mass.
         // Total mass = moles in phase * molar mass (in kg/mol).
@@ -1245,7 +1232,6 @@ public abstract class Phase implements PhaseInterface {
         }
         return refEnthalpy / totalMass;
       }
-
       case "kJ/kg": {
         double totalMass = getNumberOfMolesInPhase() * getMolarMass();
         if (totalMass == 0) {
@@ -1254,7 +1240,6 @@ public abstract class Phase implements PhaseInterface {
         // Divide by total mass for specific enthalpy, and by 1000 for kJ.
         return refEnthalpy / totalMass / 1000.0;
       }
-
       case "Btu/lbmol": {
         if (getNumberOfMolesInPhase() == 0) {
           throw new ArithmeticException(
@@ -1265,7 +1250,6 @@ public abstract class Phase implements PhaseInterface {
         final double J_PER_MOL_TO_BTU_PER_LBMOL = 0.429923;
         return molarEnthalpy * J_PER_MOL_TO_BTU_PER_LBMOL;
       }
-
       default:
         // Use a more specific exception for an invalid argument.
         throw new IllegalArgumentException("Unit not supported: " + unit);
