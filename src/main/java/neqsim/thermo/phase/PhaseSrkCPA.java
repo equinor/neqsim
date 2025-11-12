@@ -794,8 +794,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     double b4 = b3 * b;
     double b5 = b4 * b;
     double term =
-        b5 + 17664.0 * t4 * b - 4192.0 * t3 * b2 + 528.0 * b3 * t2 - 36.0 * t * b4
-            - 30720.0 * t5;
+        b5 + 17664.0 * t4 * b - 4192.0 * t3 * b2 + 528.0 * b3 * t2 - 36.0 * t * b4 - 30720.0 * t5;
     double denom1 = b - 8.0 * t;
     double denom1Cubed = denom1 * denom1 * denom1;
     double denom2 = b - 4.0 * t;
@@ -1388,6 +1387,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     double deltaV = 0;
 
     do {
+      iterations = iterations + 1;
       A = calcA(this, temperature, pressure, numberOfComponents);
       B = calcB(this, temperature, pressure, numberOfComponents);
 
@@ -1414,10 +1414,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         Z = 1e-6;
         setMolarVolume(Z * R * temperature / pressure);
       }
-
       // System.out.println("Z " + Z);
     } while (Math.abs(err) > 1.0e-8 || iterations < 100);
-    // System.out.println("Z " + Z);
     return getMolarVolume();
   }
 
