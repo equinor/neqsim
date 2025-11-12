@@ -99,23 +99,123 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
     // that's not too high (which could be supercritical or cause NaN)
     if (!singleComponent) {
       double currentPressure = system.getPressure();
-      // If starting pressure seems too high (>100 bar), use a more conservative guess
-      if (currentPressure > 100.0) {
-        double avgPc = 0.0;
-        int count = 0;
-        for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-          double zi = system.getPhases()[0].getComponent(i).getz();
-          if (zi > 1e-10) {
-            avgPc += zi * system.getPhases()[0].getComponent(i).getPC();
-            count++;
+
+      // Analyze fluid composition to improve initial guess
+      boolean hasWater = false;
+      boolean hasTBPfractions = false;
+      boolean hasHeavyComponents = false;
+      double lightMoleFraction = 0.0;
+      double heavyMoleFraction = 0.0;
+      double avgPc = 0.0;
+      double avgAntoinePressure = 0.0;
+      int antoineCount = 0;
+      int count = 0;
+
+      for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+        ComponentInterface comp = system.getPhases()[0].getComponent(i);
+        double zi = comp.getz();
+        if (zi > 1e-10) {
+          String compName = comp.getComponentName().toLowerCase();
+
+          // Check for water
+          if (compName.contains("water") || compName.equals("h2o")) {
+            hasWater = true;
+          }
+
+          // Check for TBP fractions (typically have "tbp" or "plus" in name, or are added via
+          // addTBPfraction)
+          if (compName.contains("tbp") || compName.contains("plus") || comp.isIsTBPfraction()) {
+            hasTBPfractions = true;
+          }
+
+          // Classify components by molecular weight
+          double mw = comp.getMolarMass();
+          if (mw < 50.0) {
+            lightMoleFraction += zi;
+          } else if (mw > 150.0) {
+            heavyMoleFraction += zi;
+            hasHeavyComponents = true;
+          }
+
+          avgPc += zi * comp.getPC();
+          count++;
+
+          // Try to get Antoine vapor pressure for initial guess
+          try {
+            double antoineP = comp.getAntoineVaporPressure(system.getTemperature());
+            if (Double.isFinite(antoineP) && antoineP > 0.0 && antoineP < 1000.0) {
+              avgAntoinePressure += zi * antoineP;
+              antoineCount++;
+            }
+          } catch (Exception e) {
+            // Skip if Antoine fails
           }
         }
-        if (count > 0) {
-          // Start at a safer pressure: max of current/2 or 0.3*avgPc
-          double safePressure =
-              Math.max(currentPressure * 0.5, Math.min(currentPressure, 0.3 * avgPc));
-          system.setPressure(Math.max(1e-4, safePressure));
-          lastStablePressure = system.getPressure();
+      }
+
+      if (count > 0) {
+        avgPc /= count;
+      }
+
+      // Determine a better initial pressure guess based on fluid characteristics
+      double initialGuess = currentPressure;
+
+      // For complex fluids with TBP fractions, water, or heavy components, use a conservative
+      // approach
+      if (hasTBPfractions || hasWater || hasHeavyComponents) {
+        // Use Antoine-based estimate if available
+        if (antoineCount > 0 && avgAntoinePressure > 0.0) {
+          // Weight Antoine pressure more heavily for light components
+          double antoineFactor = Math.max(0.3, lightMoleFraction);
+          initialGuess = avgAntoinePressure * (1.0 + antoineFactor);
+          initialGuess = Math.min(initialGuess, 0.4 * avgPc); // Cap at 40% of pseudo-critical
+        } else {
+          // Fallback: use a fraction of pseudo-critical pressure based on composition
+          if (heavyMoleFraction > 0.3) {
+            // Heavy oil-like mixture: very conservative guess
+            initialGuess = Math.min(currentPressure, 0.15 * avgPc);
+          } else {
+            // Mixed composition: moderate guess
+            initialGuess = Math.min(currentPressure, 0.25 * avgPc);
+          }
+        }
+
+        // For water-containing systems, ensure pressure is reasonable for aqueous phase
+        if (hasWater) {
+          double waterSatP = 0.0;
+          for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+            ComponentInterface comp = system.getPhases()[0].getComponent(i);
+            String compName = comp.getComponentName().toLowerCase();
+            if (compName.contains("water") || compName.equals("h2o")) {
+              try {
+                waterSatP = comp.getAntoineVaporPressure(system.getTemperature());
+                if (Double.isFinite(waterSatP) && waterSatP > 0.0) {
+                  // Don't start below water saturation pressure for water-containing systems
+                  initialGuess = Math.max(initialGuess, waterSatP * 0.5);
+                }
+              } catch (Exception e) {
+                // Continue with current guess
+              }
+              break;
+            }
+          }
+        }
+      } else if (currentPressure > 100.0) {
+        // Standard multicomponent case with high initial pressure
+        initialGuess = Math.max(currentPressure * 0.5, Math.min(currentPressure, 0.3 * avgPc));
+      }
+
+      // Apply bounds to ensure physically reasonable pressure
+      initialGuess = Math.max(1e-4, Math.min(initialGuess, 0.95 * avgPc));
+
+      // Only update if we computed a better guess
+      if (Math.abs(initialGuess - currentPressure) / Math.max(currentPressure, 1.0) > 0.01) {
+        system.setPressure(initialGuess);
+        lastStablePressure = system.getPressure();
+        if (logger.isDebugEnabled()) {
+          logger.debug(
+              "Adjusted initial pressure for complex fluid: {} bar (TBP={}, water={}, heavy={})",
+              initialGuess, hasTBPfractions, hasWater, hasHeavyComponents);
         }
       }
     }
