@@ -94,6 +94,31 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
     double lowerPressure = Double.NaN;
     double upperPressure = Double.NaN;
     double lastStablePressure = system.getPressure();
+
+    // For multicomponent systems, ensure we have a reasonable starting pressure
+    // that's not too high (which could be supercritical or cause NaN)
+    if (!singleComponent) {
+      double currentPressure = system.getPressure();
+      // If starting pressure seems too high (>100 bar), use a more conservative guess
+      if (currentPressure > 100.0) {
+        double avgPc = 0.0;
+        int count = 0;
+        for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+          double zi = system.getPhases()[0].getComponent(i).getz();
+          if (zi > 1e-10) {
+            avgPc += zi * system.getPhases()[0].getComponent(i).getPC();
+            count++;
+          }
+        }
+        if (count > 0) {
+          // Start at a safer pressure: max of current/2 or 0.3*avgPc
+          double safePressure =
+              Math.max(currentPressure * 0.5, Math.min(currentPressure, 0.3 * avgPc));
+          system.setPressure(Math.max(1e-4, safePressure));
+          lastStablePressure = system.getPressure();
+        }
+      }
+    }
     if (system.isChemicalSystem()) {
       system.getChemicalReactionOperations().solveChemEq(1, 0);
       system.getChemicalReactionOperations().solveChemEq(1, 1);

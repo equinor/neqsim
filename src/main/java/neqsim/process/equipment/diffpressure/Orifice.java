@@ -266,7 +266,7 @@ public class Orifice extends TwoPortEquipment {
   public void run(UUID uuid) {
     if (inStream != null && outStream != null) {
       double newPressure = inStream.getPressure("bara") - calc_dp();
-      SystemInterface outfluid = (SystemInterface) inStream.clone();
+      SystemInterface outfluid = inStream.getThermoSystem().clone();
       outfluid.setPressure(newPressure);
       outStream.setFluid(outfluid);
       outStream.run();
