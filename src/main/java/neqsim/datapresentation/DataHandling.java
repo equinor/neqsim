@@ -57,8 +57,8 @@ public class DataHandling {
    */
   public String[] getLegendItemLabels() {
     String[] str = new String[2];
+    str[0] = "";
     str[1] = "";
-    str[2] = "";
     return str;
   }
 
