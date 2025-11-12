@@ -23,6 +23,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
+		<skipFlattening>false</skipFlattening>
 	</properties>
 	<licenses>
 		<license>
@@ -135,6 +136,9 @@
 	<profiles>
 		<profile>
 			<id>release</id>
+			<properties>
+				<skipFlattening>true</skipFlattening>
+			</properties>
 			<build>
 				<plugins>
 					<plugin>
@@ -238,9 +242,11 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>flatten-maven-plugin</artifactId>
-				<version>1.7.3</version>
+				<version>1.6.0</version>
 				<configuration>
 					<updatePomFile>true</updatePomFile>
+					<flattenMode>oss</flattenMode>
+					<skip>${skipFlattening}</skip>
 				</configuration>
 				<executions>
 					<execution>
