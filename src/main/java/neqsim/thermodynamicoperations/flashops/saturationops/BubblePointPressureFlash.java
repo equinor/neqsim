@@ -219,28 +219,6 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
         }
       }
     }
-
-    // Pre-initialize with 2-phase configuration at initial pressure to verify stability
-    // This helps catch NaN issues before entering the main iteration loop
-    try {
-      system.init(0);
-      system.init(3);
-    } catch (RuntimeException preInitException) {
-      if (isCausedByNaN(preInitException)) {
-        // Initial pressure caused NaN - reduce significantly
-        double safePressure = Math.max(1e-4, system.getPressure() * 0.1);
-        if (logger.isDebugEnabled()) {
-          logger.debug("Pre-initialization NaN at {} bar, reducing to {} bar", system.getPressure(),
-              safePressure);
-        }
-        system.setPressure(safePressure);
-        lastStablePressure = system.getPressure();
-        system.init(0);
-      } else {
-        throw preInitException;
-      }
-    }
-
     if (system.isChemicalSystem()) {
       system.getChemicalReactionOperations().solveChemEq(1, 0);
       system.getChemicalReactionOperations().solveChemEq(1, 1);
