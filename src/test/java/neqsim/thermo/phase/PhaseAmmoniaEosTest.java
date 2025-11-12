@@ -3,12 +3,10 @@ package neqsim.thermo.phase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import neqsim.thermo.phase.PhaseType;
-import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemAmmoniaEos;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Simple sanity check for the {@link PhaseAmmoniaEos} implementation.
@@ -41,8 +39,8 @@ class PhaseAmmoniaEosTest {
 
   @Test
   void testGasPropertiesAt1atm30C() {
-    SystemInterface system = new SystemAmmoniaEos(303.15,
-        ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface system =
+        new SystemAmmoniaEos(303.15, ThermodynamicConstantsInterface.referencePressure);
     system.setNumberOfPhases(1);
     system.setMaxNumberOfPhases(1);
     system.setForcePhaseTypes(true);

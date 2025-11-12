@@ -4,9 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import org.junit.jupiter.api.Test;
-
 import neqsim.process.equipment.ejector.Ejector;
 import neqsim.process.equipment.powergeneration.WindTurbine;
 import neqsim.process.equipment.reservoir.ReservoirCVDsim;
@@ -14,7 +12,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.GORfitter;
 import neqsim.process.equipment.valve.ThrottlingValve;
-import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -42,7 +39,8 @@ public class EquipmentFactoryTest extends neqsim.NeqSimTest {
 
   @Test
   public void ejectorRequiresStreams() {
-    assertThrows(IllegalArgumentException.class, () -> EquipmentFactory.createEquipment("ej", "ejector"));
+    assertThrows(IllegalArgumentException.class,
+        () -> EquipmentFactory.createEquipment("ej", "ejector"));
 
     StreamInterface motive = new Stream("motive");
     StreamInterface suction = new Stream("suction");
