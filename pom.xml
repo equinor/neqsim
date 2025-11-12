@@ -12,6 +12,12 @@
 	<packaging>jar</packaging>
 	<version>${revision}</version>
 
+	<scm>
+		<connection>scm:git:https://github.com/equinor/neqsim.git</connection>
+		<developerConnection>scm:git:https://github.com/equinor/neqsim.git</developerConnection>
+		<url>https://github.com/equinor/neqsim</url>
+	</scm>
+
 	<properties>
 		<revision>3.1.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
