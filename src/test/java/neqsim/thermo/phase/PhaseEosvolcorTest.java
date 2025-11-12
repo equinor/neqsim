@@ -1,12 +1,9 @@
 package neqsim.thermo.phase;
 
 import java.util.function.Function;
-import org.apache.logging.log4j.core.util.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentPRvolcor;
 import neqsim.thermo.component.ComponentSrkvolcor;
@@ -15,6 +12,7 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemPrEosvolcor;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemSrkEosvolcor;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class PhaseEosvolcorTest {
   static PhasePrEosvolcor prPhase;
@@ -93,10 +91,8 @@ public class PhaseEosvolcorTest {
     Assertions.assertEquals(translation, component.getc(), 1e-12);
     Assertions.assertEquals(translationDerivative, component.getcT(), 1e-12);
     Assertions.assertEquals(translationDerivative, phase.getCT(), 1e-12);
-    Assertions.assertEquals(translationDerivative,
-        phase.calcCiT(0, phase, system.getTemperature(), system.getPressure(),
-            phase.getNumberOfComponents()),
-        1e-12);
+    Assertions.assertEquals(translationDerivative, phase.calcCiT(0, phase, system.getTemperature(),
+        system.getPressure(), phase.getNumberOfComponents()), 1e-12);
 
     component.Finit(phase, system.getTemperature(), system.getPressure(),
         system.getTotalNumberOfMoles(), 1.0, phase.getNumberOfComponents(), 2);

@@ -4,10 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.phase.PhaseInterface;
 
 public class SystemIdealGasTest extends neqsim.NeqSimTest
     implements ThermodynamicConstantsInterface {
