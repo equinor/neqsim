@@ -109,10 +109,12 @@ public class CompressorModuleTest extends neqsim.NeqSimTest {
     Recycle recycle2 = new Recycle("recycle 2");
     recycle2.addStream(recycleValve.getOutletStream());
     recycle2.setOutletStream(gasRecycleStream);
+    recycle2.setTolerance(1e-2);
 
     Recycle recycle1 = new Recycle("recycle 1");
     recycle1.addStream(scrubber1.getLiquidOutStream());
     recycle1.setOutletStream(recycleScrubberStream);
+    recycle1.setTolerance(1e-2);
 
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();

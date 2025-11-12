@@ -125,6 +125,11 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       // streams.get(k).getThermoSystem().getPhase(0).setPressure(lowestPressure);
     }
     for (int k = 1; k < streams.size(); k++) {
+      // Skip streams with negligible flow to avoid mixing in zero/negative moles
+      if (streams.get(k).getFlowRate("kg/hr") <= getMinimumFlow()) {
+        continue;
+      }
+
       for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
           .getNumberOfComponents(); i++) {
         boolean gotComponent = false;
@@ -214,6 +219,29 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   public void run(UUID id) {
     double enthalpy = 0.0;
     // ((Stream) streams.get(0)).getThermoSystem().display();
+
+    // Check if all streams have zero/negligible flow
+    boolean hasFlow = false;
+    for (int k = 0; k < streams.size(); k++) {
+      if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
+        hasFlow = true;
+        break;
+      }
+    }
+
+    if (!hasFlow) {
+      // All streams have zero flow - set mixer inactive and use first stream as template
+      SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
+      // Set all component moles to zero to reflect no flow
+      for (int i = 0; i < thermoSystem2.getPhase(0).getNumberOfComponents(); i++) {
+        thermoSystem2.getPhase(0).getComponent(i).setNumberOfmoles(0.0);
+      }
+      mixedStream.setThermoSystem(thermoSystem2);
+      isActive(false);
+      setCalculationIdentifier(id);
+      return;
+    }
+
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
     isActive(true);
     // System.out.println("total number of moles " +

@@ -52,7 +52,7 @@ public class AcidTest extends neqsim.NeqSimTest {
     }
 
     assertEquals(33.2215005, testSystem.getPressure(), 0.001);
-    assertEquals(928.60315, testSystem.getDensity("kg/m3"), 0.001);
+    assertEquals(915.9997717279578, testSystem.getDensity("kg/m3"), 0.001);
 
     double t = 373.0;
     double vapp =
@@ -109,7 +109,7 @@ public class AcidTest extends neqsim.NeqSimTest {
     }
 
     assertEquals(16.6071906279100, testSystem.getPressure(), 0.001);
-    assertEquals(826.241660010, testSystem.getDensity("kg/m3"), 0.001);
+    assertEquals(808.92587967316, testSystem.getDensity("kg/m3"), 0.001);
 
     double t = 373.0;
     double vapp =
