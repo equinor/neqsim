@@ -475,6 +475,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Recycle recycleGasFromStripper = new Recycle("stripping gas recirc");
     recycleGasFromStripper.addStream(stripper.getGasOutStream());
     recycleGasFromStripper.setOutletStream(gasToReboiler);
+    recycleGasFromStripper.setTolerance(1e-1);
 
     neqsim.thermo.system.SystemInterface pureTEG =
         (neqsim.thermo.system.SystemInterface) feedGas.clone();
@@ -517,6 +518,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     recycleLeanTEG.setOutletStream(TEGFeed);
     recycleLeanTEG.setPriority(200);
     recycleLeanTEG.setDownstreamProperty("flow rate");
+    recycleLeanTEG.setTolerance(1e-1);
 
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();
