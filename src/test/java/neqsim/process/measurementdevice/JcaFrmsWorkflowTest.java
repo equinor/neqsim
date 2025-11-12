@@ -111,8 +111,9 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
     SystemInterface multiphaseFluid = multiphaseStream.getFluid();
 
     SystemInterface bubbleFluid = multiphaseFluid.clone();
+    bubbleFluid.removeComponent("water");
     ThermodynamicOperations bubbleOps = new ThermodynamicOperations(bubbleFluid);
-    bubbleOps.bubblePointPressureFlash(false);
+    bubbleOps.bubblePointPressureFlash();
     // System.out.println("Havis mixture bubble point at " + temperature + " C = "
     // + bubbleFluid.getPressure("bara") + " bara");
 

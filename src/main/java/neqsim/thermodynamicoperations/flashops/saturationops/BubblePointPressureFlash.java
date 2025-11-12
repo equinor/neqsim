@@ -34,6 +34,7 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
+    system.init(0);
     boolean singleComponent = system.getPhase(0).getNumberOfComponents() == 1;
     double minPurePressure = Double.NaN;
     double maxPurePressure = Double.NaN;
