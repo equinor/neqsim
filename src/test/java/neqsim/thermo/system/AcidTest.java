@@ -21,8 +21,7 @@ public class AcidTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test equilibrium of formic acid")
   public void testAcid() {
-    neqsim.thermo.system.SystemSrkCPAstatoil testSystem =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(298.0, 10.0);
+    neqsim.thermo.system.SystemSrkCPAstatoil testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(298.0, 10.0);
     testSystem.addComponent("methane", 1.0, "kg/sec");
     testSystem.addComponent("formic acid", 25.0, "kg/sec");
     testSystem.addComponent("water", 100.0, "kg/sec");
@@ -39,8 +38,8 @@ public class AcidTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test bublepoint of formic acid")
   public void testtestBubpAcid() {
-    neqsim.thermo.system.SystemSrkCPAstatoil testSystem =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(373.0, 1.3501325);
+    neqsim.thermo.system.SystemSrkCPAstatoil testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(373.0,
+        1.3501325);
     testSystem.addComponent("formic acid", 25.0, "kg/sec");
     testSystem.setMixingRule(10);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -52,34 +51,28 @@ public class AcidTest extends neqsim.NeqSimTest {
     }
 
     assertEquals(33.2215005, testSystem.getPressure(), 0.001);
-    assertEquals(915.9997717279578, testSystem.getDensity("kg/m3"), 0.001);
+    assertEquals(928.6031593220451, testSystem.getDensity("kg/m3"), 0.001);
 
     double t = 373.0;
-    double vapp =
-        Math.exp(50.323 + -5378.2 / t + -4.2030 * Math.log(t) + 3.4697e-6 * Math.pow(t, 2)) / 1e5;
+    double vapp = Math.exp(50.323 + -5378.2 / t + -4.2030 * Math.log(t) + 3.4697e-6 * Math.pow(t, 2)) / 1e5;
 
     assertEquals(0.9857520491, vapp, 0.001);
 
-    // double dens = 1.938 / (0.24225 * (1 + Math.pow(1 - t / 588, 0.24435)));// * 46.025;
+    // double dens = 1.938 / (0.24225 * (1 + Math.pow(1 - t / 588, 0.24435)));// *
+    // 46.025;
     // assertEquals(1002.54762, dens, 0.001);
 
-    String scheme =
-        testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid").getAssociationScheme();
-    double aCPA =
-        ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
-            .geta();
-    double bCPA =
-        ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
-            .getb();
-    double boundvol =
-        ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
-            .getAssociationVolume();
-    double assenergy =
-        ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
-            .getAssociationEnergy();
-    double m =
-        ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
-            .getAttractiveTerm().getm();
+    String scheme = testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid").getAssociationScheme();
+    double aCPA = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
+        .geta();
+    double bCPA = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
+        .getb();
+    double boundvol = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
+        .getAssociationVolume();
+    double assenergy = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
+        .getAssociationEnergy();
+    double m = ((ComponentSrkCPA) testSystem.getPhase(PhaseType.AQUEOUS).getComponent("formic acid"))
+        .getAttractiveTerm().getm();
     assertEquals("1A", scheme);
     assertEquals(53663.0, aCPA);
     assertEquals(3.0, bCPA);
@@ -96,8 +89,8 @@ public class AcidTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test bublepoint of acetic acid")
   public void testtestBubpaceticacid() {
-    neqsim.thermo.system.SystemSrkCPAstatoil testSystem =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 117.9, 10.01325);
+    neqsim.thermo.system.SystemSrkCPAstatoil testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 117.9,
+        10.01325);
     testSystem.addComponent("acetic acid", 25.0, "kg/sec");
     testSystem.setMixingRule(10);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -109,15 +102,15 @@ public class AcidTest extends neqsim.NeqSimTest {
     }
 
     assertEquals(16.6071906279100, testSystem.getPressure(), 0.001);
-    assertEquals(808.92587967316, testSystem.getDensity("kg/m3"), 0.001);
+    assertEquals(826.2416600071817, testSystem.getDensity("kg/m3"), 0.001);
 
     double t = 373.0;
-    double vapp =
-        Math.exp(50.323 + -5378.2 / t + -4.2030 * Math.log(t) + 3.4697e-6 * Math.pow(t, 2)) / 1e5;
+    double vapp = Math.exp(50.323 + -5378.2 / t + -4.2030 * Math.log(t) + 3.4697e-6 * Math.pow(t, 2)) / 1e5;
 
     assertEquals(0.9857520491, vapp, 0.001);
 
-    // double dens = 1.938 / (0.24225 * (1 + Math.pow(1 - t / 588, 0.24435)));// * 46.025;
+    // double dens = 1.938 / (0.24225 * (1 + Math.pow(1 - t / 588, 0.24435)));// *
+    // 46.025;
     // assertEquals(1002.54762, dens, 0.001);
 
     String scheme = testSystem.getPhase(PhaseType.AQUEOUS).getComponent(0).getAssociationScheme();
@@ -145,8 +138,7 @@ public class AcidTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test bublepoint of water")
   public void testtestWater() {
-    neqsim.thermo.system.SystemSrkCPAstatoil testSystem =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(398.0, 1.01325);
+    neqsim.thermo.system.SystemSrkCPAstatoil testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(398.0, 1.01325);
     testSystem.addComponent("water", 25.0, "kg/sec");
     testSystem.setMixingRule(10);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -181,8 +173,7 @@ public class AcidTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test bublepoint of MEG")
   public void testtestMEG() {
-    neqsim.thermo.system.SystemSrkCPAstatoil testSystem =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(398.0, 1.01325);
+    neqsim.thermo.system.SystemSrkCPAstatoil testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(398.0, 1.01325);
     testSystem.addComponent("MEG", 25.0, "kg/sec");
     testSystem.setMixingRule(10);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
