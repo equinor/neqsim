@@ -10,7 +10,7 @@
 	<description>NeqSim is a library for calculation of fluid behavior, phase equilibrium and process simulation.</description>
 	<url>https://github.com/equinor/neqsim</url>
 	<packaging>jar</packaging>
-	<version>${revision}${sha1}${changelist}</version>
+	<version>${revision}-Java21</version>
 
 	<scm>
 		<connection>scm:git:https://github.com/equinor/neqsim.git</connection>
