@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import neqsim.process.controllerdevice.ControllerDeviceInterface.StepResponseTuningMethod;
 import neqsim.process.measurementdevice.MeasurementDeviceBaseClass;
 
 class ControllerDeviceAutoTuneGainSchedulingTest {
@@ -41,10 +42,31 @@ class ControllerDeviceAutoTuneGainSchedulingTest {
   @Test
   void testAutoTuneStepResponse() {
     ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("step");
+    controller.setStepResponseTuningMethod(StepResponseTuningMethod.CLASSIC);
     controller.autoTuneStepResponse(2.0, 10.0, 2.0);
     Assertions.assertEquals(3.0, controller.getKp(), 1e-6);
     Assertions.assertEquals(4.0, controller.getTi(), 1e-6);
     Assertions.assertEquals(1.0, controller.getTd(), 1e-6);
+  }
+
+  @Test
+  void testAutoTuneStepResponseSimc() {
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("stepSimc");
+    controller.setStepResponseTuningMethod(StepResponseTuningMethod.SIMC);
+    controller.autoTuneStepResponse(2.0, 10.0, 2.0);
+    Assertions.assertEquals(1.5714286, controller.getKp(), 1e-6);
+    Assertions.assertEquals(11.0, controller.getTi(), 1e-6);
+    Assertions.assertEquals(0.9090909, controller.getTd(), 1e-6);
+  }
+
+  @Test
+  void testAutoTuneStepResponseSimcPiOnly() {
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("stepSimcPi");
+    controller.setStepResponseTuningMethod(StepResponseTuningMethod.SIMC);
+    controller.autoTuneStepResponse(2.0, 10.0, 2.0, false);
+    Assertions.assertEquals(1.1111111, controller.getKp(), 1e-6);
+    Assertions.assertEquals(10.0, controller.getTi(), 1e-6);
+    Assertions.assertEquals(0.0, controller.getTd(), 1e-6);
   }
 
   @Test

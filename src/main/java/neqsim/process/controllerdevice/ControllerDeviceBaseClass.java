@@ -53,6 +53,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double Kp = 1.0;
   private double Ti = 300.0;
   private double Td = 0.0;
+  private StepResponseTuningMethod stepResponseTuningMethod = StepResponseTuningMethod.CLASSIC;
   // Internal state of integration contribution
   private double TintValue = 0.0;
   private double derivativeState = 0.0;
@@ -374,6 +375,20 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     }
   }
 
+  @Override
+  public void setStepResponseTuningMethod(StepResponseTuningMethod method) {
+    if (method == null) {
+      this.stepResponseTuningMethod = StepResponseTuningMethod.CLASSIC;
+    } else {
+      this.stepResponseTuningMethod = method;
+    }
+  }
+
+  @Override
+  public StepResponseTuningMethod getStepResponseTuningMethod() {
+    return stepResponseTuningMethod;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void autoTune(double ultimateGain, double ultimatePeriod) {
@@ -403,14 +418,41 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   @Override
   public void autoTuneStepResponse(double processGain, double timeConstant, double deadTime,
       boolean tuneDerivative) {
-    if (processGain != 0.0 && timeConstant > 0 && deadTime > 0) {
-      double kp = 1.2 / processGain * (timeConstant / deadTime);
-      double ti = 2.0 * deadTime;
-      double td = tuneDerivative ? 0.5 * deadTime : 0.0;
-      setControllerParameters(kp, ti, td);
-    } else {
+    if (processGain == 0.0 || timeConstant <= 0.0) {
       logger.warn("Invalid step response parameters for auto tune.");
+      return;
     }
+
+    double kp;
+    double ti;
+    double td = 0.0;
+
+    if (stepResponseTuningMethod == StepResponseTuningMethod.SIMC) {
+      double theta = Math.max(deadTime, 1.0e-6);
+      double lambda = Math.max(theta, timeConstant / 4.0);
+
+      if (tuneDerivative) {
+        double halfTheta = 0.5 * theta;
+        kp = (timeConstant + halfTheta) / (lambda + halfTheta) / processGain;
+        ti = timeConstant + halfTheta;
+        double denominator = 2.0 * timeConstant + theta;
+        td = denominator > 0.0 ? timeConstant * theta / denominator : 0.0;
+      } else {
+        kp = timeConstant / (lambda + theta) / processGain;
+        ti = Math.min(timeConstant, 4.0 * (lambda + theta));
+      }
+    } else {
+      double theta = deadTime;
+      if (theta <= 0.0) {
+        logger.warn("Invalid dead time for classic step response auto tune.");
+        return;
+      }
+      kp = 1.2 / processGain * (timeConstant / theta);
+      ti = 2.0 * theta;
+      td = tuneDerivative ? 0.5 * theta : 0.0;
+    }
+
+    setControllerParameters(kp, ti, td);
   }
 
   /** {@inheritDoc} */
