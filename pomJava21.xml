@@ -316,10 +316,6 @@
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.5.4</version>
-				<configuration>
-					<!-- Preserve any Jacoco agent injection (${argLine}) and add required module opens for XStream reflection under Java 21 -->
-					<argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
-				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-failsafe-plugin</artifactId>
