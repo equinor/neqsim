@@ -310,10 +310,18 @@
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.5.4</version>
+				<configuration>
+					<!-- Add required module opens for XStream reflection when running tests on JDK >= 17 -->
+                    <argLine>--add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+                </configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>3.5.4</version>
+				<configuration>
+					<!-- Add required module opens for XStream reflection when running tests on JDK >= 17 -->
+                    <argLine>--add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+                </configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
