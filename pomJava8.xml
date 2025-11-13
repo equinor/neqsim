@@ -47,7 +47,7 @@
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<version>2.2.224</version>
+			<version>2.4.240</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
@@ -76,11 +76,11 @@
 			<version>1.2.0</version>
 			<scope>provided</scope>
 		</dependency>
-				<dependency>
-						<groupId>org.apache.commons</groupId>
-						<artifactId>commons-lang3</artifactId>
-						<version>3.18.0</version>
-				</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.19.0</version>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
@@ -89,7 +89,7 @@
 		<dependency>
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-all</artifactId>
-			<version>0.41</version>
+			<version>0.44</version>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
@@ -114,18 +114,17 @@
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
-			<version>2.12.1</version>
+			<version>2.13.2</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.15.2</version>
+			<version>2.20.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-yaml</artifactId>
-			<version>2.15.2</version>
+			<version>2.20.1</version>
 			</dependency>
 		</dependencies>
 	<build>
@@ -168,6 +167,8 @@
 				<version>1.7.3</version>
 				<configuration>
 					<updatePomFile>true</updatePomFile>
+					<flattenMode>oss</flattenMode>
+					<skip>${skipFlattening}</skip>
 				</configuration>
 				<executions>
 					<execution>
@@ -189,7 +190,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.6.0</version>
+				<version>3.6.1</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -202,7 +203,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.14.0</version>
+				<version>3.14.1</version>
 				<configuration>
 					<!--<release>8</release>-->
 					<source>1.8</source>
@@ -212,7 +213,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.6.3</version>
+				<version>3.12.0</version>
 				<configuration>
 					<show>private</show>
 					<nohelp>true</nohelp>
@@ -312,9 +313,7 @@
 					<groupId>org.sonatype.central</groupId>
 					<artifactId>central-publishing-maven-plugin</artifactId>
 					<version>0.9.0</version>
-
 					<extensions>true</extensions>
-
 					<configuration>
 						<publishingServerId>central</publishingServerId>
 						<autoPublish>true</autoPublish>
