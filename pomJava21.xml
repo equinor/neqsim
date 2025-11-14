@@ -18,15 +18,16 @@
 		<url>https://github.com/equinor/neqsim</url>
 	</scm>
 
-	<properties>
-		<revision>3.1.0</revision>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<sha1 />
-		<changelist />
-		<checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
-		<skipFlattening>false</skipFlattening>
-	</properties>
+        <properties>
+                <revision>3.1.0</revision>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+                <sha1 />
+                <changelist />
+                <checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
+                <skipFlattening>false</skipFlattening>
+                <jvm.module.opens.argLine></jvm.module.opens.argLine>
+        </properties>
 	<licenses>
 		<license>
 			<name>The Apache Software License, Version 2.0</name>
@@ -135,9 +136,18 @@
 			<version>2.20.1</version>
 		</dependency>
 	</dependencies>
-	<profiles>
-		<profile>
-			<id>release</id>
+        <profiles>
+                <profile>
+                        <id>add-jvm-module-opens</id>
+                        <activation>
+                                <jdk>[9,)</jdk>
+                        </activation>
+                        <properties>
+                                <jvm.module.opens.argLine> --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</jvm.module.opens.argLine>
+                        </properties>
+                </profile>
+                <profile>
+                        <id>release</id>
 			<properties>
 				<skipFlattening>true</skipFlattening>
 			</properties>
@@ -314,20 +324,20 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<!-- Add required module opens for XStream reflection when running tests on JDK >= 17 -->
-                    <argLine>--add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
-                </configuration>
-				<version>3.5.4</version>
+                                <artifactId>maven-surefire-plugin</artifactId>
+                                <configuration>
+                                        <!-- Add required module opens for XStream reflection when running tests on JDK >= 17 -->
+                                        <argLine>${argLine}${jvm.module.opens.argLine}</argLine>
+                                </configuration>
+                                <version>3.5.4</version>
 			</plugin>
 			<plugin>
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>3.5.4</version>
-				<configuration>
-					<!-- Add required module opens for XStream reflection when running tests on JDK >= 17 -->
-					<argLine>$--add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
-				</configuration>
+                                <configuration>
+                                        <!-- Add required module opens for XStream reflection when running tests on JDK >= 17 -->
+                                        <argLine>${argLine}${jvm.module.opens.argLine}</argLine>
+                                </configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
