@@ -26,7 +26,6 @@
                 <changelist />
                 <checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
                 <skipFlattening>false</skipFlattening>
-                <jvm.module.opens.argLine></jvm.module.opens.argLine>
         </properties>
 	<licenses>
 		<license>
@@ -138,18 +137,9 @@
 	</dependencies>
         <profiles>
                 <profile>
-                        <id>add-jvm-module-opens</id>
-                        <activation>
-                                <jdk>[9,)</jdk>
-                        </activation>
-                        <properties>
-                                <jvm.module.opens.argLine> --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</jvm.module.opens.argLine>
-                        </properties>
-                </profile>
-                <profile>
                         <id>release</id>
-			<properties>
-				<skipFlattening>true</skipFlattening>
+                        <properties>
+                                <skipFlattening>true</skipFlattening>
 			</properties>
 			<build>
 				<plugins>
@@ -326,8 +316,8 @@
 			<plugin>
                                 <artifactId>maven-surefire-plugin</artifactId>
                                 <configuration>
-                                        <!-- Add required module opens for XStream reflection when running tests on JDK >= 17 -->
-                                        <argLine>${argLine}${jvm.module.opens.argLine}</argLine>
+                                        <!-- Preserve any Jacoco agent injection (${argLine}) and add required module opens for XStream reflection when running tests on JDK >= 17 -->
+                                        <argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
                                 </configuration>
                                 <version>3.5.4</version>
 			</plugin>
@@ -335,8 +325,8 @@
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>3.5.4</version>
                                 <configuration>
-                                        <!-- Add required module opens for XStream reflection when running tests on JDK >= 17 -->
-                                        <argLine>${argLine}${jvm.module.opens.argLine}</argLine>
+                                        <!-- Preserve any Jacoco agent injection (${argLine}) and add required module opens for XStream reflection when running integration tests on JDK >= 17 -->
+                                        <argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
                                 </configuration>
 			</plugin>
 			<plugin>
