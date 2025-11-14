@@ -18,13 +18,14 @@
 		<url>https://github.com/equinor/neqsim</url>
 	</scm>
 
-	<properties>
-		<revision>3.1.0</revision>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
-		<skipFlattening>false</skipFlattening>
-	</properties>
+        <properties>
+                <revision>3.1.0</revision>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+                <checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
+                <skipFlattening>false</skipFlattening>
+                <argLine></argLine>
+        </properties>
 	<licenses>
 		<license>
 			<name>The Apache Software License, Version 2.0</name>
@@ -133,9 +134,9 @@
 			<version>2.20.1</version>
 		</dependency>
 	</dependencies>
-	<profiles>
-		<profile>
-			<id>release</id>
+        <profiles>
+                <profile>
+                        <id>release</id>
 			<properties>
 				<skipFlattening>true</skipFlattening>
 			</properties>
@@ -311,22 +312,22 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.5.4</version>
-				<configuration>
-					<!-- Preserve any Jacoco agent injection (${argLine}) and add required module opens for XStream reflection when running tests on JDK >= 17 -->
-					<argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
-				</configuration>
-			</plugin>
-			<plugin>
-				<artifactId>maven-failsafe-plugin</artifactId>
-				<version>3.5.4</version>
-				<configuration>
-					<!-- Preserve any Jacoco agent injection (${argLine}) and add required module opens for XStream reflection when running tests on JDK >= 17 -->
-					<argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
-				</configuration>
-			</plugin>
+                        <plugin>
+                                <artifactId>maven-surefire-plugin</artifactId>
+                                <version>3.5.4</version>
+                                <configuration>
+                                        <!-- Preserve any Jacoco agent injection (${argLine}) and add required module opens for XStream reflection when running tests on JDK >= 11 -->
+                                        <argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+                                </configuration>
+                        </plugin>
+                        <plugin>
+                                <artifactId>maven-failsafe-plugin</artifactId>
+                                <version>3.5.4</version>
+                                <configuration>
+                                        <!-- Preserve any Jacoco agent injection (${argLine}) and add required module opens for XStream reflection when running tests on JDK >= 11 -->
+                                        <argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+                                </configuration>
+                        </plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
