@@ -26,6 +26,7 @@
                 <changelist />
                 <checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
                 <skipFlattening>false</skipFlattening>
+                <argLine></argLine>
                 <jvm.module.opens.argLine></jvm.module.opens.argLine>
         </properties>
 	<licenses>
@@ -317,22 +318,22 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.5.4</version>
+                        <plugin>
+                                <artifactId>maven-surefire-plugin</artifactId>
+                                <version>3.5.4</version>
                                 <configuration>
                                         <!-- Add required module opens for XStream reflection when running tests on JDK >= 17 -->
-                                        <argLine>@{argLine}${jvm.module.opens.argLine}</argLine>
+                                        <argLine>${argLine}${jvm.module.opens.argLine}</argLine>
                                 </configuration>
-			</plugin>
-			<plugin>
-				<artifactId>maven-failsafe-plugin</artifactId>
-				<version>3.5.4</version>
+                        </plugin>
+                        <plugin>
+                                <artifactId>maven-failsafe-plugin</artifactId>
+                                <version>3.5.4</version>
                                 <configuration>
                                         <!-- Add required module opens for XStream reflection when running tests on JDK >= 17 -->
-                                        <argLine>@{argLine}${jvm.module.opens.argLine}</argLine>
+                                        <argLine>${argLine}${jvm.module.opens.argLine}</argLine>
                                 </configuration>
-			</plugin>
+                        </plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
