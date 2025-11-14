@@ -322,7 +322,7 @@
 				<version>3.5.4</version>
                                 <configuration>
                                         <!-- Add required module opens for XStream reflection when running tests on JDK >= 17 -->
-                                        <argLine>${argLine}${jvm.module.opens.argLine}</argLine>
+                                        <argLine>@{argLine}${jvm.module.opens.argLine}</argLine>
                                 </configuration>
 			</plugin>
 			<plugin>
@@ -330,7 +330,7 @@
 				<version>3.5.4</version>
                                 <configuration>
                                         <!-- Add required module opens for XStream reflection when running tests on JDK >= 17 -->
-                                        <argLine>${argLine}${jvm.module.opens.argLine}</argLine>
+                                        <argLine>@{argLine}${jvm.module.opens.argLine}</argLine>
                                 </configuration>
 			</plugin>
 			<plugin>

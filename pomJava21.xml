@@ -316,8 +316,8 @@
 			<plugin>
                                 <artifactId>maven-surefire-plugin</artifactId>
                                 <configuration>
-                                        <!-- Preserve any Jacoco agent injection (${argLine}) and add required module opens for XStream reflection when running tests on JDK >= 17 -->
-                                        <argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+                                        <!-- Preserve any Jacoco agent injection (@{argLine}) and add required module opens for XStream reflection when running tests on JDK >= 17 -->
+                                        <argLine>@{argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
                                 </configuration>
                                 <version>3.5.4</version>
 			</plugin>
@@ -325,8 +325,8 @@
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>3.5.4</version>
                                 <configuration>
-                                        <!-- Preserve any Jacoco agent injection (${argLine}) and add required module opens for XStream reflection when running integration tests on JDK >= 17 -->
-                                        <argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+                                        <!-- Preserve any Jacoco agent injection (@{argLine}) and add required module opens for XStream reflection when running integration tests on JDK >= 17 -->
+                                        <argLine>@{argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
                                 </configuration>
 			</plugin>
 			<plugin>
