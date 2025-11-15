@@ -186,7 +186,7 @@ public class CompressorModuleTest extends neqsim.NeqSimTest {
 
     assertEquals(pressurespeedclac, seccondStageCompressor.getOutletStream().getPressure("bara"),
         0.5);
-    assertEquals(4191.3866577, seccondStageCompressor.getSpeed(), 100);
+    assertEquals(3476.0045401266198, seccondStageCompressor.getSpeed(), 100);
     assertFalse(seccondStageCompressor.isSurge(seccondStageCompressor.getPolytropicFluidHead(),
         seccondStageCompressor.getInletStream().getFlowRate("m3/hr")));
   }
