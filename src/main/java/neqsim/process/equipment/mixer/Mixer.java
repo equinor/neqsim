@@ -259,9 +259,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
             .equals("neqsim.thermo.system.SystemSoreideWhitson")) {
           ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(),
               "mole/sec");
+          mixedStream.run();
         }
-
-        mixedStream.run();
 
         if (isSetOutTemperature) {
           if (!Double.isNaN(getOutTemperature())) {
@@ -271,7 +270,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
           mixedStream.getThermoSystem().init(2);
         } else {
           try {
-            testOps.PHflash(enthalpy, 0);
+            testOps.PHflash(enthalpy);
           } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             if (!Double.isNaN(guessTemperature())) {
@@ -295,13 +294,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       }
     }
 
-    // System.out.println("enthalpy: " +
-    // mixedStream.getThermoSystem().getEnthalpy())
-    // System.out.println("enthalpy: " + en
-    // System.out.println("temperature: " +
-
-    // System.out.println("beta " + mixedStream.getThermoSystem(
-    // outStream.setThermoSystem(mixedStream.getThermoSystem());
     setCalculationIdentifier(id);
   }
 
@@ -500,12 +492,12 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     // Only count streams that have significant flow (were actually mixed)
     // to match the logic in mixStream() which skips negligible flows
     for (int i = 0; i < numberOfInputStreams; i++) {
-      double streamFlow = getStream(i).getFluid().getFlowRate(unit);
+      double streamFlow = getStream(i).getFlowRate(unit);
       if (streamFlow > getMinimumFlow()) {
         inletFlow += streamFlow;
       }
     }
-    return getOutletStream().getThermoSystem().getFlowRate(unit) - inletFlow;
+    return getOutletStream().getFlowRate(unit) - inletFlow;
   }
 
   /** {@inheritDoc} */
