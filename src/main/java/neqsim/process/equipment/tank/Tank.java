@@ -460,6 +460,19 @@ public class Tank extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  public double getMassBalance(String unit) {
+    double inletFlow = 0.0;
+    for (int i = 0; i < numberOfInputStreams; i++) {
+      inletStreamMixer.getStream(i).getThermoSystem();
+      inletFlow += inletStreamMixer.getStream(i).getThermoSystem().getFlowRate(unit);
+    }
+    double outletFlow = getGasOutStream().getThermoSystem().getFlowRate(unit)
+        + getLiquidOutStream().getThermoSystem().getFlowRate(unit);
+    return outletFlow - inletFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new TankResponse(this));
   }

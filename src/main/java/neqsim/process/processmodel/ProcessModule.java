@@ -5,7 +5,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -259,6 +261,82 @@ public class ProcessModule extends SimulationBaseClass {
    */
   public ArrayList<String[]> getReport() {
     return null;
+  }
+
+  /**
+   * Check mass balance of all unit operations in all process systems within this module.
+   *
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @return a map with unit operation name as key and mass balance result as value
+   */
+  public Map<String, ProcessSystem.MassBalanceResult> checkMassBalance(String unit) {
+    Map<String, ProcessSystem.MassBalanceResult> allResults = new HashMap<>();
+
+    // Check mass balance for all process systems
+    for (ProcessSystem processSystem : addedUnitOperations) {
+      Map<String, ProcessSystem.MassBalanceResult> systemResults =
+          processSystem.checkMassBalance(unit);
+      allResults.putAll(systemResults);
+    }
+
+    // Recursively check mass balance for all nested modules
+    for (ProcessModule module : addedModules) {
+      Map<String, ProcessSystem.MassBalanceResult> moduleResults = module.checkMassBalance(unit);
+      allResults.putAll(moduleResults);
+    }
+
+    return allResults;
+  }
+
+  /**
+   * Check mass balance of all unit operations in all process systems using kg/sec.
+   *
+   * @return a map with unit operation name as key and mass balance result as value in kg/sec
+   */
+  public Map<String, ProcessSystem.MassBalanceResult> checkMassBalance() {
+    return checkMassBalance("kg/sec");
+  }
+
+  /**
+   * Get unit operations that failed mass balance check based on percentage error threshold.
+   *
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @param percentThreshold percentage error threshold (default: 0.1%)
+   * @return a map with failed unit operation names and their mass balance results
+   */
+  public Map<String, ProcessSystem.MassBalanceResult> getFailedMassBalance(String unit,
+      double percentThreshold) {
+    Map<String, ProcessSystem.MassBalanceResult> allResults = checkMassBalance(unit);
+    Map<String, ProcessSystem.MassBalanceResult> failedUnits = new HashMap<>();
+
+    for (Map.Entry<String, ProcessSystem.MassBalanceResult> entry : allResults.entrySet()) {
+      ProcessSystem.MassBalanceResult result = entry.getValue();
+      if (Double.isNaN(result.getPercentError())
+          || Math.abs(result.getPercentError()) > percentThreshold) {
+        failedUnits.put(entry.getKey(), result);
+      }
+    }
+    return failedUnits;
+  }
+
+  /**
+   * Get unit operations that failed mass balance check using kg/sec and 0.1% threshold.
+   *
+   * @return a map with failed unit operation names and their mass balance results
+   */
+  public Map<String, ProcessSystem.MassBalanceResult> getFailedMassBalance() {
+    return getFailedMassBalance("kg/sec", 0.1);
+  }
+
+  /**
+   * Get unit operations that failed mass balance check using specified threshold.
+   *
+   * @param percentThreshold percentage error threshold
+   * @return a map with failed unit operation names and their mass balance results in kg/sec
+   */
+  public Map<String, ProcessSystem.MassBalanceResult> getFailedMassBalance(
+      double percentThreshold) {
+    return getFailedMassBalance("kg/sec", percentThreshold);
   }
 
   /** {@inheritDoc} */

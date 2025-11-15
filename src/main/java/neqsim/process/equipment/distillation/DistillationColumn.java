@@ -1265,6 +1265,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return liquidOutStream;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double getMassBalance(String unit) {
+    double inletFlow = 0.0;
+    for (List<StreamInterface> feedList : feedStreams.values()) {
+      for (StreamInterface feed : feedList) {
+        inletFlow += feed.getThermoSystem().getFlowRate(unit);
+      }
+    }
+    double outletFlow = getGasOutStream().getThermoSystem().getFlowRate(unit)
+        + getLiquidOutStream().getThermoSystem().getFlowRate(unit);
+    return outletFlow - inletFlow;
+  }
+
   /**
    * <p>
    * getReboiler.
