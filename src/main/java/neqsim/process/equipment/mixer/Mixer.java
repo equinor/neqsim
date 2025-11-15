@@ -500,6 +500,16 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getMassBalance(String unit) {
+    double inletFlow = 0.0;
+    for (int i = 0; i < numberOfInputStreams; i++) {
+      inletFlow += getStream(i).getFluid().getFlowRate(unit);
+    }
+    return getOutletStream().getThermoSystem().getFlowRate(unit) - inletFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public int hashCode() {
     final int prime = 31;
     int result = super.hashCode();

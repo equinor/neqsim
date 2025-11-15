@@ -666,6 +666,16 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
   /** {@inheritDoc} */
   @Override
+  public double getMassBalance(String unit) {
+    double inletFlow = 0.0;
+    for (int i = 0; i < numberOfInputStreams; i++) {
+      inletFlow += streams.get(i).getThermoSystem().getFlowRate(unit);
+    }
+    return getOutletStream().getThermoSystem().getFlowRate(unit) - inletFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void removeInputStream(int i) {
     streams.remove(i);
   }

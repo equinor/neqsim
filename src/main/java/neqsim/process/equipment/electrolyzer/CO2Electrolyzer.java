@@ -103,12 +103,21 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Liquid product stream.
+   * Get liquid product stream.
    *
    * @return liquid product stream
    */
   public StreamInterface getLiquidProductStream() {
     return liquidProductStream;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMassBalance(String unit) {
+    double inletFlow = inletStream.getThermoSystem().getFlowRate(unit);
+    double outletFlow = gasProductStream.getThermoSystem().getFlowRate(unit)
+        + liquidProductStream.getThermoSystem().getFlowRate(unit);
+    return outletFlow - inletFlow;
   }
 
   /**
@@ -220,7 +229,8 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
     return system;
   }
 
-  private double distributeBySelectivity(Map<String, Double> gasMoles, Map<String, Double> liquidMoles) {
+  private double distributeBySelectivity(Map<String, Double> gasMoles,
+      Map<String, Double> liquidMoles) {
     SystemInterface inlet = inletStream.getThermoSystem();
     double co2Flow = getInletComponentFlow(co2ComponentName);
 
@@ -297,8 +307,8 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
 
     double electronMoles = 0.0;
     for (String product : electronsPerProduct.keySet()) {
-      double outletMoles = gasMoles.getOrDefault(product, 0.0)
-          + liquidMoles.getOrDefault(product, 0.0);
+      double outletMoles =
+          gasMoles.getOrDefault(product, 0.0) + liquidMoles.getOrDefault(product, 0.0);
       double produced = Math.max(0.0, outletMoles - getInletComponentFlow(product));
       if (produced > 0.0) {
         electronMoles += calculateElectronUsage(product, produced);

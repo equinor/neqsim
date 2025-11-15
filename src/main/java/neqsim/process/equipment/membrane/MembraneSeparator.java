@@ -205,4 +205,13 @@ public class MembraneSeparator extends ProcessEquipmentBaseClass {
     run(id);
     increaseTime(dt);
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMassBalance(String unit) {
+    double inletFlow = inletStream.getThermoSystem().getFlowRate(unit);
+    double outletFlow = permeateStream.getThermoSystem().getFlowRate(unit)
+        + retentateStream.getThermoSystem().getFlowRate(unit);
+    return outletFlow - inletFlow;
+  }
 }

@@ -73,6 +73,8 @@ public class ProcessSystem extends SimulationBaseClass {
   private final Map<String, Integer> equipmentCounter = new HashMap<>();
   private ProcessEquipmentInterface lastAddedUnit = null;
   private transient ProcessSystem initialStateSnapshot;
+  private double massBalanceErrorThreshold = 0.1; // Default 0.1% error threshold
+  private double minimumFlowForMassBalanceError = 1e-6; // Default 1e-6 kg/sec
 
   /**
    * <p>
@@ -484,8 +486,8 @@ public class ProcessSystem extends SimulationBaseClass {
             }
           } catch (Exception ex) {
             // String error = ex.getMessage();
-            logger.error("error running unit uperation " + unit.getName() + " "
-                + ex.getMessage(), ex);
+            logger.error("error running unit uperation " + unit.getName() + " " + ex.getMessage(),
+                ex);
             ex.printStackTrace();
           }
         }
@@ -1159,15 +1161,215 @@ public class ProcessSystem extends SimulationBaseClass {
     return new ConditionMonitor(this);
   }
 
+  /**
+   * Check mass balance of all unit operations in the process system.
+   *
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @return a map with unit operation name as key and mass balance result as value
+   */
+  public Map<String, MassBalanceResult> checkMassBalance(String unit) {
+    Map<String, MassBalanceResult> massBalanceResults = new HashMap<>();
+    for (ProcessEquipmentInterface unitOp : unitOperations) {
+      try {
+        double massBalanceError = unitOp.getMassBalance(unit);
+        double inletFlow = calculateInletFlow(unitOp, unit);
+        double percentError = calculatePercentError(massBalanceError, inletFlow);
+        massBalanceResults.put(unitOp.getName(),
+            new MassBalanceResult(massBalanceError, percentError, unit));
+      } catch (Exception e) {
+        logger.warn("Failed to calculate mass balance for unit: " + unitOp.getName(), e);
+        massBalanceResults.put(unitOp.getName(),
+            new MassBalanceResult(Double.NaN, Double.NaN, unit));
+      }
+    }
+    return massBalanceResults;
+  }
+
+  /**
+   * Check mass balance of all unit operations in the process system using kg/sec.
+   *
+   * @return a map with unit operation name as key and mass balance result as value in kg/sec
+   */
+  public Map<String, MassBalanceResult> checkMassBalance() {
+    return checkMassBalance("kg/sec");
+  }
+
+  /**
+   * Get unit operations that failed mass balance check based on percentage error threshold.
+   *
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @param percentThreshold percentage error threshold (default: 0.1%)
+   * @return a map with failed unit operation names and their mass balance results
+   */
+  public Map<String, MassBalanceResult> getFailedMassBalance(String unit, double percentThreshold) {
+    Map<String, MassBalanceResult> allResults = checkMassBalance(unit);
+    Map<String, MassBalanceResult> failedUnits = new HashMap<>();
+
+    // Convert minimum flow threshold to the requested unit
+    double minimumFlowInUnit = minimumFlowForMassBalanceError;
+    if (unit.equals("kg/hr")) {
+      minimumFlowInUnit *= 3600.0; // kg/sec to kg/hr
+    } else if (unit.equals("mole/sec")) {
+      // For mole/sec, we use the kg/sec threshold as approximation
+      // since we don't have molecular weight info here
+      minimumFlowInUnit = minimumFlowForMassBalanceError;
+    }
+
+    for (Map.Entry<String, MassBalanceResult> entry : allResults.entrySet()) {
+      MassBalanceResult result = entry.getValue();
+      ProcessEquipmentInterface unitOp = getUnit(entry.getKey());
+      double inletFlow = calculateInletFlow(unitOp, unit);
+
+      // Skip units with insignificant inlet flow
+      if (Math.abs(inletFlow) < minimumFlowInUnit) {
+        continue;
+      }
+
+      if (Double.isNaN(result.getPercentError())
+          || Math.abs(result.getPercentError()) > percentThreshold) {
+        failedUnits.put(entry.getKey(), result);
+      }
+    }
+    return failedUnits;
+  }
+
+  /**
+   * Get unit operations that failed mass balance check using kg/sec and default threshold.
+   *
+   * @return a map with failed unit operation names and their mass balance results
+   */
+  public Map<String, MassBalanceResult> getFailedMassBalance() {
+    return getFailedMassBalance("kg/sec", massBalanceErrorThreshold);
+  }
+
+  /**
+   * Get unit operations that failed mass balance check using specified threshold.
+   *
+   * @param percentThreshold percentage error threshold
+   * @return a map with failed unit operation names and their mass balance results in kg/sec
+   */
+  public Map<String, MassBalanceResult> getFailedMassBalance(double percentThreshold) {
+    return getFailedMassBalance("kg/sec", percentThreshold);
+  }
+
+  /**
+   * Set the default mass balance error threshold for this process system.
+   *
+   * @param percentThreshold percentage error threshold (e.g., 0.1 for 0.1%)
+   */
+  public void setMassBalanceErrorThreshold(double percentThreshold) {
+    this.massBalanceErrorThreshold = percentThreshold;
+  }
+
+  /**
+   * Get the default mass balance error threshold for this process system.
+   *
+   * @return percentage error threshold
+   */
+  public double getMassBalanceErrorThreshold() {
+    return massBalanceErrorThreshold;
+  }
+
+  /**
+   * Set the minimum flow threshold for mass balance error checking. Units with inlet flow below
+   * this threshold are not considered errors.
+   *
+   * @param minimumFlow minimum flow in kg/sec (e.g., 1e-6)
+   */
+  public void setMinimumFlowForMassBalanceError(double minimumFlow) {
+    this.minimumFlowForMassBalanceError = minimumFlow;
+  }
+
+  /**
+   * Get the minimum flow threshold for mass balance error checking.
+   *
+   * @return minimum flow in kg/sec
+   */
+  public double getMinimumFlowForMassBalanceError() {
+    return minimumFlowForMassBalanceError;
+  }
+
+  private double calculateInletFlow(ProcessEquipmentInterface unitOp, String unit) {
+    try {
+      // Try to get inlet flow from the unit operation's thermodynamic system
+      if (unitOp.getThermoSystem() != null) {
+        return unitOp.getThermoSystem().getFlowRate(unit);
+      }
+    } catch (Exception e) {
+      // Ignore and return 0
+    }
+    return 0.0;
+  }
+
+  private double calculatePercentError(double massBalanceError, double inletFlow) {
+    if (inletFlow == 0.0 || Double.isNaN(inletFlow) || Double.isNaN(massBalanceError)) {
+      return Double.NaN;
+    }
+    return 100.0 * Math.abs(massBalanceError) / Math.abs(inletFlow);
+  }
+
+  /**
+   * Inner class to hold mass balance results.
+   */
+  public static class MassBalanceResult {
+    private final double absoluteError;
+    private final double percentError;
+    private final String unit;
+
+    /**
+     * Constructor for MassBalanceResult.
+     *
+     * @param absoluteError absolute mass balance error (outlet - inlet)
+     * @param percentError percentage error
+     * @param unit unit of measurement
+     */
+    public MassBalanceResult(double absoluteError, double percentError, String unit) {
+      this.absoluteError = absoluteError;
+      this.percentError = percentError;
+      this.unit = unit;
+    }
+
+    /**
+     * Get the absolute mass balance error.
+     *
+     * @return absolute error (outlet - inlet)
+     */
+    public double getAbsoluteError() {
+      return absoluteError;
+    }
+
+    /**
+     * Get the percentage error.
+     *
+     * @return percentage error
+     */
+    public double getPercentError() {
+      return percentError;
+    }
+
+    /**
+     * Get the unit of measurement.
+     *
+     * @return unit string
+     */
+    public String getUnit() {
+      return unit;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%.6f %s (%.4f%%)", absoluteError, unit, percentError);
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result
-        + Objects.hash(alarmManager, measurementDevices, measurementHistory, name,
-            recycleController, surroundingTemperature, time, timeStep, timeStepNumber,
-            unitOperations);
+    result = prime * result + Objects.hash(alarmManager, measurementDevices, measurementHistory,
+        name, recycleController, surroundingTemperature, time, timeStep, timeStepNumber,
+        unitOperations);
     return result;
   }
 

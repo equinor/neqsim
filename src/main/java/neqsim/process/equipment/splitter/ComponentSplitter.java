@@ -125,6 +125,17 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  public double getMassBalance(String unit) {
+    double inletFlow = inletStream.getThermoSystem().getFlowRate(unit);
+    double outletFlow = 0.0;
+    for (int i = 0; i < splitStream.length; i++) {
+      outletFlow += splitStream[i].getThermoSystem().getFlowRate(unit);
+    }
+    return outletFlow - inletFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   @ExcludeFromJacocoGeneratedReport
   public void displayResult() {}
 }
