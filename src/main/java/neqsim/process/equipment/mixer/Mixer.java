@@ -33,6 +33,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
+
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -567,5 +568,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     MixerResponse res = new MixerResponse(this);
     res.applyConfig(cfg);
     return new GsonBuilder().create().toJson(res);
+  }
+
+  public StreamInterface getMixedStream() {
+    return mixedStream;
   }
 }
