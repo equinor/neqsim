@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
@@ -135,23 +134,30 @@ public class Report {
         json_reports.put(processEquipment.getName(), eqJson);
       }
     }
-    if (fluid != null) {
-      json_reports.put(fluid.getFluidName(), fluid.toJson());
-    }
-
     if (processmodel != null) {
       for (ProcessSystem process : processmodel.getAllProcesses()) {
         JsonObject processJson = new JsonObject();
-
+        
+        // Add process metadata
+        JsonObject processMetadata = new JsonObject();
+        processMetadata.addProperty("processName", process.getName() != null ? process.getName() : "UnnamedProcess");
+        processMetadata.addProperty("unitCount", process.getUnitOperations().size());
+        processJson.add("_processMetadata", processMetadata);
+        
+        // Add units with their type information
+        JsonObject unitsJson = new JsonObject();
         for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
           try {
             String unitJson = unit.toJson(cfg);
             String unitName = unit.getName() != null ? unit.getName() : "UnnamedUnit";
+            String unitType = unit.getClass().getSimpleName();
 
             if (unitJson != null && !unitJson.isEmpty()) {
               try {
-                JsonElement parsedJson = JsonParser.parseString(unitJson);
-                processJson.add(unitName, parsedJson);
+                JsonObject unitObject = JsonParser.parseString(unitJson).getAsJsonObject();
+                // Add unit type as metadata
+                unitObject.addProperty("_unitType", unitType);
+                unitsJson.add(unitName, unitObject);
               } catch (Exception parseEx) {
                 logger.error("Failed to parse JSON for unit: " + unitName, parseEx);
               }
@@ -162,9 +168,11 @@ public class Report {
             logger.error("Error handling unit: " + unit.getName(), unitEx);
           }
         }
+        
+        processJson.add("units", unitsJson);
 
-        if (processJson.size() == 0) {
-          logger.warn("processJson is empty for process: " + process.getName());
+        if (unitsJson.size() == 0) {
+          logger.warn("No units found for process: " + process.getName());
         }
 
         // Safely serialize the JSON using Gson with support for NaN and Infinity
