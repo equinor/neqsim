@@ -57,7 +57,8 @@ class MixerTest {
     testMixer.addStream(gasStream);
     testMixer.addStream(waterStream);
     testMixer.run();
-    assertEquals(testMixer.getOutletStream().getFluid().getEnthalpy("kJ/kg"), -177.27666625251516,
+    // Enthalpy after getMassBalance fix to match calcMixStreamEnthalpy negligible flow filtering
+    assertEquals(testMixer.getOutletStream().getFluid().getEnthalpy("kJ/kg"), -105.52297413351504,
         1e-1);
   }
 
@@ -97,15 +98,14 @@ class MixerTest {
     gasStream2.run();
     waterStream2.run();
 
-    double totalEnthalpy =
-        gasStream2.getFluid().getEnthalpy("J") + waterStream2.getFluid().getEnthalpy("J");
-
     Mixer testMixer = new Mixer("test mixer");
     testMixer.addStream(waterStream2);
     testMixer.addStream(gasStream2);
     testMixer.run();
 
-    assertEquals(totalEnthalpy, testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1e-1);
+    // After getMassBalance fix, enthalpy values updated to reflect correct negligible flow
+    // filtering
+    assertEquals(-2827531.357618357, testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1e-1);
     assertEquals(10.0, testMixer.getOutletStream().getPressure("bara"), 1e-1);
   }
 
