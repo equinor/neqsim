@@ -264,6 +264,63 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
   }
 
+
+  @Test
+  void testFluidWater_os_sep_test() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(fluid_water);
+
+    // testSystem.init(0);
+
+    double molcomp[] = new double[] {0.0049752318083319345, 0.009802256678856439,
+        0.6127328136798169, 0.05318413284932072, 0.022876807664082562, 0.0027497115252020565,
+        0.00583830266751484, 0.001287341207321444, 0.0016384794380879418, 0.0016725772874843416,
+        0.0020738533986531414, 0.001425440397298664, 0.0010756267985809135, 0.001450404269771801,
+        0.0007258366746739167, 0.000253086850706585, 0.276238096804296};
+
+    testSystem.setMolarComposition(molcomp);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(62.0, "bara");
+    testSystem.setTemperature(67.628172810359, "C");
+    testSystem.setMultiPhaseCheck(true);
+    testOps.TPflash();
+
+    testSystem.prettyPrint();
+
+    // Create stream and three-phase separator
+    Stream stream1 = new Stream("Stream1", testSystem);
+    stream1.setFlowRate(100.0, "kg/hr");
+    stream1.setTemperature(67.628172810359, "C");
+    stream1.setPressure(62.0, "bara");
+    stream1.run();
+
+    ThreePhaseSeparator separator = new ThreePhaseSeparator("ThreePhaseSeparator", stream1);
+    separator.run();
+
+    // Check mass balance
+    double massBalanceError = separator.getMassBalance("kg/hr");
+    System.out.println("Mass balance error: " + massBalanceError + " kg/hr");
+
+    double inletFlow = stream1.getFlowRate("kg/hr");
+    double gasOutFlow = separator.getGasOutStream().getFlowRate("kg/hr");
+    double oilOutFlow = separator.getOilOutStream().getFlowRate("kg/hr");
+    double waterOutFlow = separator.getWaterOutStream().getFlowRate("kg/hr");
+    double totalOutFlow = gasOutFlow + oilOutFlow + waterOutFlow;
+
+    System.out.println("Inlet flow: " + inletFlow + " kg/hr");
+    System.out.println("Gas out: " + gasOutFlow + " kg/hr");
+    System.out.println("Oil out: " + oilOutFlow + " kg/hr");
+    System.out.println("Water out: " + waterOutFlow + " kg/hr");
+    System.out.println("Total out: " + totalOutFlow + " kg/hr");
+
+    // Verify mass balance (outlet - inlet should be near zero)
+    Assertions.assertEquals(0.0, massBalanceError, 0.01, "Mass balance error should be near zero");
+    Assertions.assertEquals(inletFlow, totalOutFlow, 0.01,
+        "Total outlet flow should equal inlet flow");
+
+    Assertions.assertTrue(testSystem.hasPhaseType("oil"));
+  }
+
   @Test
   void testFluidWater3() throws IOException {
     testSystem = EclipseFluidReadWrite.read(fluid_water);
