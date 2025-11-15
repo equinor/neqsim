@@ -1,5 +1,6 @@
 package neqsim.process.processmodel;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -14,7 +15,11 @@ import neqsim.process.util.report.Report;
  *
  * @author ESOL
  */
-public class ProcessModel implements Runnable {
+public class ProcessModel implements Runnable, Serializable {
+  /**
+   * Serialization version UID.
+   */
+  private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ProcessModel.class);
   private Map<String, ProcessSystem> processes = new LinkedHashMap<>();
