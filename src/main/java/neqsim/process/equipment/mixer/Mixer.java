@@ -259,8 +259,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
             .equals("neqsim.thermo.system.SystemSoreideWhitson")) {
           ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(),
               "mole/sec");
-          mixedStream.run();
         }
+        mixedStream.run();
 
         if (isSetOutTemperature) {
           if (!Double.isNaN(getOutTemperature())) {
