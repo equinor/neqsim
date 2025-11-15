@@ -297,7 +297,7 @@ public class ProcessModel implements Runnable {
     for (Map.Entry<String, Map<String, ProcessSystem.MassBalanceResult>> processEntry : allResults
         .entrySet()) {
       report.append("\nProcess: ").append(processEntry.getKey()).append("\n");
-      report.append("=".repeat(60)).append("\n");
+      report.append(String.format("%0" + 60 + "d", 0).replace('0', '=')).append("\n");
 
       Map<String, ProcessSystem.MassBalanceResult> unitResults = processEntry.getValue();
       if (unitResults.isEmpty()) {
@@ -341,7 +341,7 @@ public class ProcessModel implements Runnable {
       for (Map.Entry<String, Map<String, ProcessSystem.MassBalanceResult>> processEntry : failedResults
           .entrySet()) {
         report.append("\nProcess: ").append(processEntry.getKey()).append("\n");
-        report.append("=".repeat(60)).append("\n");
+        report.append(String.format("%0" + 60 + "d", 0).replace('0', '=')).append("\n");
 
         Map<String, ProcessSystem.MassBalanceResult> unitResults = processEntry.getValue();
         for (Map.Entry<String, ProcessSystem.MassBalanceResult> unitEntry : unitResults

@@ -108,4 +108,21 @@ class MixerTest {
     assertEquals(totalEnthalpy, testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1e-1);
     assertEquals(10.0, testMixer.getOutletStream().getPressure("bara"), 1e-1);
   }
+
+  /**
+   * Test method for mass balance conservation in Mixer.
+   */
+  @Test
+  void testMassBalanceConservation() {
+    Mixer testMixer = new Mixer("test mixer");
+    testMixer.addStream(gasStream);
+    testMixer.addStream(waterStream);
+    testMixer.run();
+
+    // Mass balance should be approximately zero (outlet flow - inlet flow)
+    // getMassBalance() now only counts streams with flow > minimumFlow()
+    double massBalance = testMixer.getMassBalance("kg/hr");
+    assertEquals(0.0, massBalance, 1e-6,
+        "Mixer mass balance error: outlet flow should equal sum of inlet flows");
+  }
 }

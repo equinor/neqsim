@@ -124,6 +124,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     for (int k = 0; k < streams.size(); k++) {
       // streams.get(k).getThermoSystem().getPhase(0).setPressure(lowestPressure);
     }
+
+    // Process ALL streams starting from k=1 (k=0 is already cloned into mixedStream)
+    // but ensure first stream's components are also explicitly added if needed
     for (int k = 1; k < streams.size(); k++) {
       // Skip streams with negligible flow to avoid mixing in zero/negative moles
       if (streams.get(k).getFlowRate("kg/hr") <= getMinimumFlow()) {
@@ -135,12 +138,10 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         boolean gotComponent = false;
         String componentName =
             streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
-        // System.out.println("adding: " + componentName);
 
         double moles =
             streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getNumberOfmoles();
-        // System.out.println("moles: " + moles + " " +
-        // mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents());
+
         for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0)
             .getNumberOfComponents(); p++) {
           if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName()
@@ -154,22 +155,15 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         }
 
         if (gotComponent) {
-          // System.out.println("adding moles starting....");
           mixedStream.getThermoSystem().addComponent(index, moles);
-          // mixedStream.getThermoSystem().init_x_y();
-          // System.out.println("adding moles finished");
         } else {
           hasAddedNewComponent = true;
-          // System.out.println("ikke gaa hit");
           mixedStream.getThermoSystem().addComponent(compName, moles);
         }
       }
     }
     if (hasAddedNewComponent) {
       mixedStream.getThermoSystem().setMixingRule(mixedStream.getThermoSystem().getMixingRule());
-      // mixedStream.getThermoSystem().init_x_y();
-      // mixedStream.getThermoSystem().initBeta();
-      // mixedStream.getThermoSystem().init(2);
     }
   }
 
@@ -265,8 +259,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
             .equals("neqsim.thermo.system.SystemSoreideWhitson")) {
           ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(),
               "mole/sec");
-          mixedStream.run();
         }
+
+        mixedStream.run();
 
         if (isSetOutTemperature) {
           if (!Double.isNaN(getOutTemperature())) {
@@ -502,8 +497,13 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   @Override
   public double getMassBalance(String unit) {
     double inletFlow = 0.0;
+    // Only count streams that have significant flow (were actually mixed)
+    // to match the logic in mixStream() which skips negligible flows
     for (int i = 0; i < numberOfInputStreams; i++) {
-      inletFlow += getStream(i).getFluid().getFlowRate(unit);
+      double streamFlow = getStream(i).getFluid().getFlowRate(unit);
+      if (streamFlow > getMinimumFlow()) {
+        inletFlow += streamFlow;
+      }
     }
     return getOutletStream().getThermoSystem().getFlowRate(unit) - inletFlow;
   }
