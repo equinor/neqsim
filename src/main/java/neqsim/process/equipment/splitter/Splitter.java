@@ -4,11 +4,15 @@ import java.util.Arrays;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.process.util.monitor.SplitterResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -319,6 +323,17 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     return splitFactor;
   }
 
+  /**
+   * <p>
+   * getSplitNumber.
+   * </p>
+   *
+   * @return number of split outlets
+   */
+  public int getSplitNumber() {
+    return splitNumber;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getMassBalance(String unit) {
@@ -328,6 +343,23 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       outletFlow += splitStream[i].getThermoSystem().getFlowRate(unit);
     }
     return outletFlow - inletFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new SplitterResponse(this));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    SplitterResponse res = new SplitterResponse(this);
+    res.applyConfig(cfg);
+    return new GsonBuilder().create().toJson(res);
   }
 
   /** {@inheritDoc} */
