@@ -684,16 +684,26 @@ public class ThreePhaseSeparator extends Separator {
   public double getEntropyProduction(String unit) {
     double entrop = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
-      inletStreamMixer.getStream(i).getFluid().init(3);
-      entrop += inletStreamMixer.getStream(i).getFluid().getEntropy(unit);
+      if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
+        inletStreamMixer.getStream(i).getFluid().init(3);
+        entrop += inletStreamMixer.getStream(i).getFluid().getEntropy(unit);
+      }
     }
-    getWaterOutStream().getThermoSystem().init(3);
-    getOilOutStream().getThermoSystem().init(3);
-    getGasOutStream().getThermoSystem().init(3);
 
-    return getWaterOutStream().getThermoSystem().getEntropy(unit)
-        + getOilOutStream().getThermoSystem().getEntropy(unit)
-        + getGasOutStream().getThermoSystem().getEntropy(unit) - entrop;
+    if (thermoSystem.hasPhaseType("aqueous")) {
+      getWaterOutStream().getThermoSystem().init(3);
+      entrop -= getWaterOutStream().getThermoSystem().getEntropy(unit);
+    }
+    if (thermoSystem.hasPhaseType("oil")) {
+      getOilOutStream().getThermoSystem().init(3);
+      entrop -= getOilOutStream().getThermoSystem().getEntropy(unit);
+    }
+    if (thermoSystem.hasPhaseType("gas")) {
+      getGasOutStream().getThermoSystem().init(3);
+      entrop -= getGasOutStream().getThermoSystem().getEntropy(unit);
+    }
+
+    return entrop;
   }
 
   /** {@inheritDoc} */
@@ -701,17 +711,40 @@ public class ThreePhaseSeparator extends Separator {
   public double getMassBalance(String unit) {
     double inletFlow = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
-      inletStreamMixer.getStream(i).getFluid().init(3);
-      inletFlow += inletStreamMixer.getStream(i).getFluid().getFlowRate(unit);
+      if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
+        inletStreamMixer.getStream(i).getFluid().init(3);
+        inletFlow += inletStreamMixer.getStream(i).getFluid().getFlowRate(unit);
+      }
     }
 
-    getWaterOutStream().getThermoSystem().init(3);
-    getOilOutStream().getThermoSystem().init(3);
-    getGasOutStream().getThermoSystem().init(3);
+    // Only initialize and get flow rates for phases that actually exist
+    double waterFlow = 0.0;
+    double oilFlow = 0.0;
+    double gasFlow = 0.0;
 
-    double waterFlow = getWaterOutStream().getThermoSystem().getFlowRate(unit);
-    double oilFlow = getOilOutStream().getThermoSystem().getFlowRate(unit);
-    double gasFlow = getGasOutStream().getThermoSystem().getFlowRate(unit);
+    if (thermoSystem.hasPhaseType("aqueous")) {
+      getWaterOutStream().getThermoSystem().init(3);
+      waterFlow = getWaterOutStream().getThermoSystem().getFlowRate(unit);
+      if (waterFlow < 1e-10) {
+        waterFlow = 0.0;
+      }
+    }
+
+    if (thermoSystem.hasPhaseType("oil")) {
+      getOilOutStream().getThermoSystem().init(3);
+      oilFlow = getOilOutStream().getThermoSystem().getFlowRate(unit);
+      if (oilFlow < 1e-10) {
+        oilFlow = 0.0;
+      }
+    }
+
+    if (thermoSystem.hasPhaseType("gas")) {
+      getGasOutStream().getThermoSystem().init(3);
+      gasFlow = getGasOutStream().getThermoSystem().getFlowRate(unit);
+      if (gasFlow < 1e-10) {
+        gasFlow = 0.0;
+      }
+    }
 
     return waterFlow + oilFlow + gasFlow - inletFlow;
   }
@@ -719,18 +752,28 @@ public class ThreePhaseSeparator extends Separator {
   /** {@inheritDoc} */
   @Override
   public double getExergyChange(String unit, double surroundingTemperature) {
-    double entrop = 0.0;
+    double exergy = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
-      inletStreamMixer.getStream(i).getFluid().init(3);
-      entrop += inletStreamMixer.getStream(i).getFluid().getExergy(surroundingTemperature, unit);
+      if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
+        inletStreamMixer.getStream(i).getFluid().init(3);
+        exergy += inletStreamMixer.getStream(i).getFluid().getExergy(surroundingTemperature, unit);
+      }
     }
-    getWaterOutStream().getThermoSystem().init(3);
-    getOilOutStream().getThermoSystem().init(3);
-    getGasOutStream().getThermoSystem().init(3);
 
-    return getWaterOutStream().getThermoSystem().getExergy(surroundingTemperature, unit)
-        + getOilOutStream().getThermoSystem().getEntropy(unit)
-        + getGasOutStream().getThermoSystem().getExergy(surroundingTemperature, unit) - entrop;
+    if (thermoSystem.hasPhaseType("aqueous")) {
+      getWaterOutStream().getThermoSystem().init(3);
+      exergy -= getWaterOutStream().getThermoSystem().getExergy(surroundingTemperature, unit);
+    }
+    if (thermoSystem.hasPhaseType("oil")) {
+      getOilOutStream().getThermoSystem().init(3);
+      exergy -= getOilOutStream().getThermoSystem().getExergy(surroundingTemperature, unit);
+    }
+    if (thermoSystem.hasPhaseType("gas")) {
+      getGasOutStream().getThermoSystem().init(3);
+      exergy -= getGasOutStream().getThermoSystem().getExergy(surroundingTemperature, unit);
+    }
+
+    return exergy;
   }
 
   /** {@inheritDoc} */
