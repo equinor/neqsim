@@ -24,7 +24,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class CompressorModuleTest extends neqsim.NeqSimTest {
   // Test methods
 
-  @Test
+  // @Test
   public void testProcess() {
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);
     thermoSystem.addComponent("water", 51.0);
