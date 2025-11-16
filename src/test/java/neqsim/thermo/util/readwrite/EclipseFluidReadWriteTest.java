@@ -264,6 +264,30 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
   }
 
+  @Test
+  void testFluidWater222() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(fluid_water);
+    testSystem.setMultiPhaseCheck(true);
+
+    // testSystem.init(0);
+
+    double molcomp[] = new double[] {0.00010073836721612647, 0.008498223381288974,
+        0.4966714442086843, 0.17280427751505803, 0.1606550990492106, 0.08304099784638264,
+        0.031567842584520195, 0.007037046430749713, 0.008472609878881437, 0.00669797852869787,
+        0.00639411397776832, 0.0034358957032069003, 0.0009595908295842405, 0.00015500703470607276,
+        5.872676388764145e-09, 4.1608474953608437e-17, 0.01350912879136841};
+
+    testSystem.setMolarComposition(molcomp);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(2.099970727022911, "bara");
+    testSystem.setTemperature(30.0, "C");
+    testOps.TPflash();
+
+    testSystem.prettyPrint();
+    Assertions.assertEquals(3, testSystem.getNumberOfPhases());
+  }
+
 
   @Test
   void testFluidWater_os_sep_test() throws IOException {
