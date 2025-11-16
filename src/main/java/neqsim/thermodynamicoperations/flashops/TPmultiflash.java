@@ -41,6 +41,7 @@ public class TPmultiflash extends TPflash {
   boolean removePhase = false;
   boolean checkOneRemove = false;
   boolean secondTime = false;
+  boolean aqueousPhaseSeedAttempted = false;
 
   double[] multTerm;
   double[] multTerm2;
@@ -1588,6 +1589,60 @@ public class TPmultiflash extends TPflash {
         }
       } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100)
           || (iterOut < 3 && system.isChemicalSystem()));
+
+      // Check if water is present and if an aqueous phase should be seeded
+      // Only try to seed aqueous phase once per flash operation (not on recursive calls)
+      if (system.hasComponent("water") && !aqueousPhaseSeedAttempted && system.doMultiPhaseCheck()
+          && !system.hasPhaseType(PhaseType.AQUEOUS)) {
+        aqueousPhaseSeedAttempted = true;
+        double waterZ = 0.0;
+        int waterComponentIndex = -1;
+        try {
+          waterZ = system.getComponent("water").getz();
+          waterComponentIndex = system.getComponent("water").getComponentNumber();
+        } catch (Exception ex) {
+          for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+            if ("water".equals(system.getPhase(0).getComponent(comp).getComponentName())) {
+              waterZ = system.getPhase(0).getComponent(comp).getz();
+              waterComponentIndex = comp;
+              break;
+            }
+          }
+        }
+
+        // If water content is significant (> 1e-6), seed an aqueous phase.
+        // Limit total active phases to a maximum of 3 (e.g. gas, liquid, aqueous) to avoid
+        // indexing beyond what downstream algorithms expect. Do not create a new aqueous
+        // phase if one already exists.
+        if (waterZ > 1.0e-6 && waterComponentIndex >= 0 && system.getNumberOfPhases() < 3
+            && !system.hasPhaseType(PhaseType.AQUEOUS)) {
+          system.addPhase();
+          int aquPhaseIndex = system.getNumberOfPhases() - 1;
+          system.setPhaseType(aquPhaseIndex, PhaseType.AQUEOUS);
+
+          // Initialize aqueous phase with water and trace amounts of other components
+          for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+            double x = 1.0e-16;
+            if (comp == waterComponentIndex) {
+              // Concentrate water in aqueous phase
+              x = Math.max(waterZ, 1.0e-12);
+            } else if (!system.getPhase(0).getComponent(comp).isHydrocarbon()
+                && !system.getPhase(0).getComponent(comp).isInert()) {
+              // Other aqueous components get trace amounts
+              x = Math.min(system.getPhase(0).getComponent(comp).getz() * 1.0e-2, 1.0e-8);
+            }
+            system.getPhase(aquPhaseIndex).getComponent(comp).setx(x);
+          }
+
+          system.getPhases()[aquPhaseIndex].normalize();
+          double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
+          system.setBeta(aquPhaseIndex, initialBeta);
+          system.normalizeBeta();
+          system.init(1);
+          multiPhaseTest = true;
+          doStabilityAnalysis = false;
+        }
+      }
 
       boolean hasRemovedPhase = false;
       for (int i = 0; i < system.getNumberOfPhases(); i++) {
