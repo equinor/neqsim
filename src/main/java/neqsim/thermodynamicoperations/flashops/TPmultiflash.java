@@ -1592,7 +1592,7 @@ public class TPmultiflash extends TPflash {
 
       // Check if water is present and if an aqueous phase should be seeded
       // Only try to seed aqueous phase once per flash operation (not on recursive calls)
-      if (!aqueousPhaseSeedAttempted && system.doMultiPhaseCheck()
+      if (system.hasComponent("water") && !aqueousPhaseSeedAttempted && system.doMultiPhaseCheck()
           && !system.hasPhaseType(PhaseType.AQUEOUS)) {
         aqueousPhaseSeedAttempted = true;
         double waterZ = 0.0;
