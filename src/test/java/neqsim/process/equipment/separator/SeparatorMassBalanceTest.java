@@ -78,7 +78,8 @@ public class SeparatorMassBalanceTest {
     procSys.run();
 
     double massBalance = sepGas.getMassBalance("kg/hr");
-    assertTrue(Math.abs(massBalance) < 10.0, "Mass balance deviation for gas phase: " + massBalance);
+    assertTrue(Math.abs(massBalance) < 10.0,
+        "Mass balance deviation for gas phase: " + massBalance);
   }
 
   /**
@@ -104,7 +105,8 @@ public class SeparatorMassBalanceTest {
     procSys.run();
 
     double massBalance = sep.getMassBalance("kg/hr");
-    assertTrue(Math.abs(massBalance) < 1e-6, "Mass balance should be near zero for negligible flow");
+    assertTrue(Math.abs(massBalance) < 1e-6,
+        "Mass balance should be near zero for negligible flow");
   }
 
   /**
@@ -227,7 +229,9 @@ public class SeparatorMassBalanceTest {
     procSys.add(sep);
     procSys.run();
 
-    double entropyProd = sep.getEntropyProduction("J/K");
+    // Should not throw exception even with negligible flow
+    // (unit parameter is for flow rate, not entropy)
+    double entropyProd = sep.getEntropyProduction("kg/hr");
     assertNotNull(entropyProd, "Entropy production should be calculable");
   }
 
@@ -253,7 +257,7 @@ public class SeparatorMassBalanceTest {
     procSys.add(sep);
     procSys.run();
 
-    double exergyChange = sep.getExergyChange("J", 288.15);
+    double exergyChange = sep.getExergyChange("kg/hr", 288.15);
     assertNotNull(exergyChange, "Exergy change should be calculable");
   }
 
@@ -281,8 +285,8 @@ public class SeparatorMassBalanceTest {
 
     assertDoesNotThrow(() -> {
       double mb = sep.getMassBalance("kg/hr");
-      double ep = sep.getEntropyProduction("J/K");
-      double ec = sep.getExergyChange("J", 288.15);
+      double ep = sep.getEntropyProduction("kg/hr");
+      double ec = sep.getExergyChange("kg/hr", 288.15);
     }, "Methods should handle any phase configuration without throwing");
   }
 }

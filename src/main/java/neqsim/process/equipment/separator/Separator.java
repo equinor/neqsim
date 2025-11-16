@@ -1168,7 +1168,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     for (int i = 0; i < numberOfInputStreams; i++) {
       if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
         inletStreamMixer.getStream(i).getFluid().init(3);
-        entrop += inletStreamMixer.getStream(i).getFluid().getEntropy(unit);
+        entrop += inletStreamMixer.getStream(i).getFluid().getEntropy();
       }
     }
 
@@ -1176,7 +1176,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
       try {
         getLiquidOutStream().getThermoSystem().init(3);
-        liquidEntropy = getLiquidOutStream().getThermoSystem().getEntropy(unit);
+        liquidEntropy = getLiquidOutStream().getThermoSystem().getEntropy();
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }
@@ -1185,7 +1185,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     double gasEntropy = 0.0;
     if (thermoSystem.hasPhaseType("gas")) {
       getGasOutStream().getThermoSystem().init(3);
-      gasEntropy = getGasOutStream().getThermoSystem().getEntropy(unit);
+      gasEntropy = getGasOutStream().getThermoSystem().getEntropy();
     }
 
     return liquidEntropy + gasEntropy - entrop;
