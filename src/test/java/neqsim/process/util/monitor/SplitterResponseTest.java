@@ -56,7 +56,7 @@ public class SplitterResponseTest {
     String json = splitter.toJson();
     JsonElement element = JsonParser.parseString(json);
     assertTrue(element.getAsJsonObject().has("data"), "JSON should contain data object");
-    var dataObj = element.getAsJsonObject().getAsJsonObject("data");
+    com.google.gson.JsonObject dataObj = element.getAsJsonObject().getAsJsonObject("data");
     assertTrue(dataObj.has("inlet mass flow"), "data should contain inlet mass flow");
     assertTrue(dataObj.has("inlet temperature"), "data should contain inlet temperature");
     assertTrue(dataObj.has("inlet pressure"), "data should contain inlet pressure");
@@ -67,7 +67,7 @@ public class SplitterResponseTest {
     String json = splitter.toJson();
     JsonElement element = JsonParser.parseString(json);
     assertTrue(element.getAsJsonObject().has("data"), "JSON should contain data object");
-    var dataObj = element.getAsJsonObject().getAsJsonObject("data");
+    com.google.gson.JsonObject dataObj = element.getAsJsonObject().getAsJsonObject("data");
     assertTrue(dataObj.has("outlet 1 mass flow"), "data should contain outlet 1 mass flow");
     assertTrue(dataObj.has("outlet 1 temperature"), "data should contain outlet 1 temperature");
     assertTrue(dataObj.has("outlet 1 pressure"), "data should contain outlet 1 pressure");
@@ -79,7 +79,7 @@ public class SplitterResponseTest {
     String json = splitter.toJson();
     JsonElement element = JsonParser.parseString(json);
     assertTrue(element.getAsJsonObject().has("data"), "JSON should contain data object");
-    var dataObj = element.getAsJsonObject().getAsJsonObject("data");
+    com.google.gson.JsonObject dataObj = element.getAsJsonObject().getAsJsonObject("data");
     assertTrue(dataObj.has("outlet 2 mass flow"), "data should contain outlet 2 mass flow");
     assertTrue(dataObj.has("outlet 3 mass flow"), "data should contain outlet 3 mass flow");
   }
