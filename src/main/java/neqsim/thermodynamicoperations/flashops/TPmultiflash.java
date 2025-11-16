@@ -1610,8 +1610,12 @@ public class TPmultiflash extends TPflash {
           }
         }
 
-        // If water content is significant (> 1e-6), seed an aqueous phase
-        if (waterZ > 1.0e-6 && waterComponentIndex >= 0 && system.getNumberOfPhases() < 4) {
+        // If water content is significant (> 1e-6), seed an aqueous phase.
+        // Limit total active phases to a maximum of 3 (e.g. gas, liquid, aqueous) to avoid
+        // indexing beyond what downstream algorithms expect. Do not create a new aqueous
+        // phase if one already exists.
+        if (waterZ > 1.0e-6 && waterComponentIndex >= 0 && system.getNumberOfPhases() < 3
+            && !system.hasPhaseType(PhaseType.AQUEOUS)) {
           system.addPhase();
           int aquPhaseIndex = system.getNumberOfPhases() - 1;
           system.setPhaseType(aquPhaseIndex, PhaseType.AQUEOUS);
