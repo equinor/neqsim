@@ -1166,8 +1166,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public double getEntropyProduction(String unit) {
     double entrop = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
-      inletStreamMixer.getStream(i).getFluid().init(3);
-      entrop += inletStreamMixer.getStream(i).getFluid().getEntropy(unit);
+      if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
+        inletStreamMixer.getStream(i).getFluid().init(3);
+        entrop += inletStreamMixer.getStream(i).getFluid().getEntropy(unit);
+      }
     }
 
     double liquidEntropy = 0.0;
@@ -1194,20 +1196,28 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public double getMassBalance(String unit) {
     double flow = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
-      inletStreamMixer.getStream(i).getFluid().init(3);
-      flow += inletStreamMixer.getStream(i).getFluid().getFlowRate(unit);
+      if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
+        inletStreamMixer.getStream(i).getFluid().init(3);
+        flow += inletStreamMixer.getStream(i).getFluid().getFlowRate(unit);
+      }
     }
 
     double liquidFlow = 0.0;
     if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
       getLiquidOutStream().getThermoSystem().init(3);
       liquidFlow = getLiquidOutStream().getThermoSystem().getFlowRate(unit);
+      if (liquidFlow < 1e-10) {
+        liquidFlow = 0.0;
+      }
     }
 
     double gasFlow = 0.0;
     if (thermoSystem.hasPhaseType("gas")) {
       getGasOutStream().getThermoSystem().init(3);
       gasFlow = getGasOutStream().getThermoSystem().getFlowRate(unit);
+      if (gasFlow < 1e-10) {
+        gasFlow = 0.0;
+      }
     }
 
     return liquidFlow + gasFlow - flow;
@@ -1218,8 +1228,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public double getExergyChange(String unit, double surroundingTemperature) {
     double exergy = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
-      inletStreamMixer.getStream(i).getFluid().init(3);
-      exergy += inletStreamMixer.getStream(i).getFluid().getExergy(surroundingTemperature, unit);
+      if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
+        inletStreamMixer.getStream(i).getFluid().init(3);
+        exergy += inletStreamMixer.getStream(i).getFluid().getExergy(surroundingTemperature, unit);
+      }
     }
 
     double liquidExergy = 0.0;
