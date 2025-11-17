@@ -402,6 +402,40 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testOps.TPflash();
   }
 
+  @Test
+  void testGOWRVP() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(gow);
+    testSystem.setMultiPhaseCheck(true);
+
+    double[] moleFractions = {2.416120417100702e-07, 0.00011528576517550497, 0.0008371259734404491,
+        0.004125688540309072, 0.016506471715686536, 0.007445430041947814, 0.023751140326894123,
+        0.014074464672789768, 0.022995570140592198, 0.06406911413410432, 0.13427982438504948,
+        0.14903860624984122, 0.11563770449499852, 0.22014618406983588, 0.1588584627903986,
+        0.06588672605995642, 0.0022319590269387086};
+
+    testSystem.setMolarComposition(moleFractions);
+    testSystem.setTemperature(37.0, "C");
+    testSystem.setPressure(1.01325, "bara");
+
+    Stream stream1 = new Stream("RVP Test Stream", testSystem);
+    stream1.setFlowRate(1.0, "kg/hr");
+    stream1.setTemperature(37.0, "C");
+    stream1.run();
+
+    double rvp = stream1.getRVP(37.8, "C", "bara");
+
+    System.out.println("RVP at 37C: " + rvp + " bara");
+
+    Assertions.assertEquals(0.487131521390, rvp, 0.01);
+    stream1.setPressure(rvp, "bara");
+    stream1.setTemperature(37.8, "C");
+    stream1.run();
+    stream1.getFluid().initPhysicalProperties();
+    Assertions.assertEquals(0.8, stream1.getFluid().getPhase("gas").getCorrectedVolume()
+        / stream1.getFluid().getCorrectedVolume(), 0.01);
+    stream1.getFluid().prettyPrint();
+  }
+
 
   @Test
   void testGOW34() throws IOException {
