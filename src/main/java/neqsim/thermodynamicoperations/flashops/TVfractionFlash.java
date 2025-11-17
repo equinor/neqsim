@@ -82,22 +82,38 @@ public class TVfractionFlash extends Flash {
     double nyPres = system.getPressure();
     int iterations = 0;
     double error = 100.0;
+    double errorOld = error;
     double pressureStep = 1.0;
+    double dampingFactor = 100.0; // Adaptive damping parameter
+
     do {
       iterations++;
       system.init(3);
       oldPres = nyPres;
       double dqdv = calcdQdV();
       double dqdvdp = calcdQdVdP();
-      nyPres = oldPres - iterations / (iterations + 100.0) * dqdv / dqdvdp;
+
+      // Adaptive damping: reduce damping if converging well
+      if (iterations > 3 && error < errorOld * 0.9) {
+        dampingFactor = Math.max(20.0, dampingFactor * 0.9);
+      }
+
+      double stepFraction = iterations / (iterations + dampingFactor);
+      nyPres = oldPres - stepFraction * dqdv / dqdvdp;
       pressureStep = nyPres - oldPres;
 
+      // Prevent negative pressure
       if (nyPres <= 0.0) {
         nyPres = oldPres * 0.9;
       }
-      if (Math.abs(nyPres - oldPres) >= 10.0) {
-        nyPres = oldPres + Math.signum(nyPres - oldPres) * 10.0;
+
+      // Limit large pressure steps
+      double maxStep = Math.min(10.0, Math.abs(oldPres) * 0.5);
+      if (Math.abs(pressureStep) > maxStep) {
+        nyPres = oldPres + Math.signum(pressureStep) * maxStep;
+        pressureStep = nyPres - oldPres;
       }
+
       system.setPressure(nyPres);
       if (system.getPressure() < 5000) {
         tpFlash.run();
@@ -106,14 +122,25 @@ public class TVfractionFlash extends Flash {
         break;
       }
 
+      errorOld = error;
       error = Math.abs(dqdv / Vfractionspec);
-      logger.debug("pressure " + nyPres + "  iteration " + iterations);
-      // System.out.println("error " + error + "iteration " + iterations + " dQdv " +
-      // calcdQdV()
-      // + " new pressure " + nyPres + " error " + Math.abs((nyPres - oldPres) /
-      // (nyPres))
-      // + " numberofphases " + system.getNumberOfPhases());
+
+      logger.debug("iter {} pressure {:.6f} error {:.3e} damping {:.1f}", iterations, nyPres, error,
+          dampingFactor);
+
+      // Convergence check with early exit
+      if (error < 1e-8 && iterations > 3) {
+        logger.debug("Early convergence achieved at iteration {}", iterations);
+        break;
+      }
+
     } while ((error > 1e-6 && Math.abs(pressureStep) > 1e-6 && iterations < 200) || iterations < 6);
+
+    if (error > 1e-4) {
+      logger.warn("TVfractionFlash converged with high error: {:.3e} after {} iterations", error,
+          iterations);
+    }
+
     return nyPres;
   }
 
@@ -130,7 +157,7 @@ public class TVfractionFlash extends Flash {
       system.setPressure(oldPres);
     }
 
-    if (system.getNumberOfPhases() == 1) {
+    if (system.getNumberOfPhases() == 1 || !system.hasPhaseType("gas")) {
       do {
         system.setPressure(system.getPressure() * 0.9);
         tpFlash.run();
