@@ -3,9 +3,13 @@ package neqsim.process.equipment.splitter;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.monitor.ComponentSplitterResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -54,6 +58,17 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
 
   /**
    * <p>
+   * Getter for the field <code>inletStream</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
+  public StreamInterface getInletStream() {
+    return inletStream;
+  }
+
+  /**
+   * <p>
    * setSplitFactors.
    * </p>
    *
@@ -95,6 +110,17 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
     return splitStream[i];
   }
 
+  /**
+   * <p>
+   * Getter for the field <code>splitNumber</code>.
+   * </p>
+   *
+   * @return number of split outlets
+   */
+  public int getSplitNumber() {
+    return splitStream != null ? splitStream.length : splitNumber;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -132,6 +158,23 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
       outletFlow += splitStream[i].getThermoSystem().getFlowRate(unit);
     }
     return outletFlow - inletFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new ComponentSplitterResponse(this));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    ComponentSplitterResponse res = new ComponentSplitterResponse(this);
+    res.applyConfig(cfg);
+    return new GsonBuilder().create().toJson(res);
   }
 
   /** {@inheritDoc} */
