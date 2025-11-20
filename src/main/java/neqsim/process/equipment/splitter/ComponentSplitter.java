@@ -127,24 +127,32 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
     for (int i = 0; i < 2; i++) {
       thermoSystem = inletStream.getThermoSystem().clone();
       thermoSystem.setEmptyFluid();
+      double totalMoles = 0.0;
       if (i == 0) {
         for (int k = 0; k < thermoSystem.getNumberOfComponents(); k++) {
-          thermoSystem.addComponent(k,
-              inletStream.getThermoSystem().getComponent(k).getNumberOfmoles() * splitFactor[k]);
+          double moles =
+              inletStream.getThermoSystem().getComponent(k).getNumberOfmoles() * splitFactor[k];
+          thermoSystem.addComponent(k, moles);
+          totalMoles += moles;
         }
       } else {
         for (int k = 0; k < thermoSystem.getNumberOfComponents(); k++) {
-          thermoSystem.addComponent(k,
-              inletStream.getThermoSystem().getComponent(k).getNumberOfmoles()
-                  * (1.0 - splitFactor[k]));
+          double moles = inletStream.getThermoSystem().getComponent(k).getNumberOfmoles()
+              * (1.0 - splitFactor[k]);
+          thermoSystem.addComponent(k, moles);
+          totalMoles += moles;
         }
       }
 
-      thermoSystem.init(0);
-      splitStream[i].setThermoSystem(thermoSystem);
-      ThermodynamicOperations thermoOps =
-          new ThermodynamicOperations(splitStream[i].getThermoSystem());
-      thermoOps.TPflash();
+      if (totalMoles > 0.0) {
+        thermoSystem.init(0);
+        splitStream[i].setThermoSystem(thermoSystem);
+        ThermodynamicOperations thermoOps =
+            new ThermodynamicOperations(splitStream[i].getThermoSystem());
+        thermoOps.TPflash();
+      } else {
+        splitStream[i].setThermoSystem(thermoSystem);
+      }
     }
     setCalculationIdentifier(id);
   }
