@@ -13,6 +13,7 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -692,6 +693,196 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     System.out.println("flow inlet feed compressor end "
         + firstStageScrubber2.getGasOutStream().getFluid().getFlowRate("m3/hr"));
     System.out.println(recycle2.toJson());
+  }
+
+  @Test
+  void distillation_deethanizer() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(gow);
+    testSystem.setMultiPhaseCheck(true);
+
+    double[] moleFractions = {1.1269232486923688e-06, 0.002642638817095049, 0.015237623814512286,
+        0.09479920295855006, 0.2664367133684378, 0.072638890369372, 0.18433074090670493,
+        0.05893425834431258, 0.07525119431180687, 0.07925100506320992, 0.0814576540555948,
+        0.04665775189490658, 0.01708982141273816, 0.004685723238493833, 5.666335741724731e-06,
+        2.608641697723448e-12, 0.0005799881826661595};
+
+
+    testSystem.setMolarComposition(moleFractions);
+
+    ProcessSystem processSystem = new ProcessSystem("Distillation Process");
+
+    Stream feedStream = new Stream("Deethanizer Feed", testSystem);
+    feedStream.setFlowRate(69198.0, "kg/hr");
+    feedStream.setTemperature(35.18356, "C");
+    feedStream.setPressure(14.8, "bara");
+    feedStream.run();
+    processSystem.add(feedStream);
+
+    neqsim.process.equipment.pump.Pump pump2 =
+        new neqsim.process.equipment.pump.Pump("feed pump 2", feedStream);
+    pump2.setOutletPressure(14.8, "bara");
+    pump2.run();
+    processSystem.add(pump2);
+
+    neqsim.process.equipment.splitter.ComponentSplitter waterDehydration =
+        new neqsim.process.equipment.splitter.ComponentSplitter("molsieve dehydration",
+            pump2.getOutletStream());
+    int complen = pump2.getOutletStream().getFluid().getNumberOfComponents();
+    double[] splitFactors = new double[complen];
+    for (int i = 0; i < complen - 1; i++) {
+      splitFactors[i] = 1.0;
+    }
+    splitFactors[complen - 1] = 0.0;
+    waterDehydration.setSplitFactors(splitFactors);
+    waterDehydration.run();
+    processSystem.add(waterDehydration);
+
+    neqsim.process.equipment.heatexchanger.Heater feedHeater =
+        new neqsim.process.equipment.heatexchanger.Heater("deethanizer feed heater",
+            waterDehydration.getSplitStream(0));
+    feedHeater.setOutTemperature(273.15 + 20.0);
+    feedHeater.run();
+    processSystem.add(feedHeater);
+
+    Stream lqiuidrefluc = new Stream("recycle", testSystem.clone());
+    lqiuidrefluc.setFlowRate(20000.0, "kg/hr");
+    lqiuidrefluc.setTemperature(30.0, "C");
+    lqiuidrefluc.setPressure(14.8, "bara");
+    lqiuidrefluc.run();
+    processSystem.add(lqiuidrefluc);
+
+    neqsim.process.equipment.distillation.DistillationColumn deethanizer =
+        new neqsim.process.equipment.distillation.DistillationColumn("de ethanizer column", 5, true,
+            false);
+    deethanizer.addFeedStream(feedHeater.getOutletStream(), 3);
+    deethanizer.addFeedStream(lqiuidrefluc, 5);
+    deethanizer.getReboiler().setOutTemperature(273.15 + 78.0);
+    deethanizer.setTopPressure(14.8);
+    deethanizer.setBottomPressure(14.8);
+    deethanizer.run();
+    processSystem.add(deethanizer);
+
+    Stream napthaRecycle = new Stream("recycle napht", testSystem.clone());
+    napthaRecycle.setFlowRate(8000.0, "kg/hr");
+    napthaRecycle.setTemperature(30.0, "C");
+    napthaRecycle.setPressure(14.8, "bara");
+    napthaRecycle.run();
+    processSystem.add(napthaRecycle);
+
+    Mixer gasfromDeethanizerMixer = new Mixer("gas from deethanizer mixer");
+    gasfromDeethanizerMixer.addStream(deethanizer.getGasOutStream());
+    gasfromDeethanizerMixer.addStream(napthaRecycle);
+    gasfromDeethanizerMixer.run();
+    processSystem.add(gasfromDeethanizerMixer);
+
+    Cooler gasfromDeethanizerCooler =
+        new Cooler("gas from deethanizer cooler", gasfromDeethanizerMixer.getOutletStream());
+    gasfromDeethanizerCooler.setOutTemperature(30.0, "C");
+    gasfromDeethanizerCooler.run();
+    processSystem.add(gasfromDeethanizerCooler);
+
+    Separator deethanizerSeparator =
+        new Separator("deethanizer gas separator", gasfromDeethanizerCooler.getOutletStream());
+    deethanizerSeparator.run();
+    processSystem.add(deethanizerSeparator);
+
+    Stream gasfromDeethanizerSeparator =
+        new Stream("gas from deethanizer separator", deethanizerSeparator.getGasOutStream());
+    gasfromDeethanizerSeparator.run();
+    processSystem.add(gasfromDeethanizerSeparator);
+
+    Stream liquidFromDeethanizerSeparator =
+        new Stream("liquid from deethanizer separator", deethanizerSeparator.getLiquidOutStream());
+    liquidFromDeethanizerSeparator.run();
+    processSystem.add(liquidFromDeethanizerSeparator);
+
+    Recycle deethanizerRecycle = new Recycle("ethane liquid to deethanizer recycle");
+    deethanizerRecycle.addStream(liquidFromDeethanizerSeparator);
+    deethanizerRecycle.setOutletStream(lqiuidrefluc);
+    deethanizerRecycle.setTolerance(1e-2);
+    deethanizerRecycle.run();
+    processSystem.add(deethanizerRecycle);
+
+    ThrottlingValve valveDebutanizer =
+        new ThrottlingValve("debutanizer valve", deethanizer.getLiquidOutStream());
+    valveDebutanizer.setOutletPressure(8.4, "bara");
+    valveDebutanizer.run();
+    processSystem.add(valveDebutanizer);
+
+    neqsim.process.equipment.distillation.DistillationColumn debutanizer =
+        new neqsim.process.equipment.distillation.DistillationColumn("de butanizer column", 2, true,
+            true);
+    debutanizer.addFeedStream(valveDebutanizer.getOutletStream(), 1);
+    debutanizer.getReboiler().setOutTemperature(273.15 + 120.0);
+    debutanizer.getCondenser().setTotalCondenser(true);
+    debutanizer.getCondenser().setRefluxRatio(0.1);
+    debutanizer.setTopPressure(8.4);
+    debutanizer.setBottomPressure(8.4);
+    debutanizer.run();
+    processSystem.add(debutanizer);
+
+    Stream liquidFromDebutanizer =
+        new Stream("liquid from butanizer", debutanizer.getLiquidOutStream());
+    liquidFromDebutanizer.run();
+    processSystem.add(liquidFromDebutanizer);
+
+    StreamInterface lpgexport = debutanizer.getGasOutStream();
+    lpgexport.run();
+    processSystem.add(lpgexport);
+
+
+    neqsim.process.equipment.pump.Pump napthaLiquidToDethanizerPump =
+        new neqsim.process.equipment.pump.Pump("naphta liquid to deethanizer pump",
+            liquidFromDebutanizer);
+    napthaLiquidToDethanizerPump.setOutletPressure(14.8, "bara");
+    napthaLiquidToDethanizerPump.run();
+    processSystem.add(napthaLiquidToDethanizerPump);
+
+    Cooler napthaLiquidToDethanizerCooler = new Cooler("naphta liquid to deethanizer cooler",
+        napthaLiquidToDethanizerPump.getOutletStream());
+    napthaLiquidToDethanizerCooler.setOutTemperature(273.15 + 50.0);
+    napthaLiquidToDethanizerCooler.run();
+    processSystem.add(napthaLiquidToDethanizerCooler);
+
+    Splitter napthaLiquidSplitter =
+        new Splitter("butane liquid splitter", napthaLiquidToDethanizerCooler.getOutletStream(), 2);
+    napthaLiquidSplitter.setFlowRates(new double[] {-1.0, 11000.0}, "kg/hr");
+    napthaLiquidSplitter.run();
+    processSystem.add(napthaLiquidSplitter);
+
+    Stream napthaLiquidProduct =
+        new Stream("naphta liquid product", napthaLiquidSplitter.getSplitStream(0));
+    napthaLiquidProduct.run();
+    processSystem.add(napthaLiquidProduct);
+
+    Stream napthaLiquidToDeethanizer =
+        new Stream("naphta liquid to deethanizer", napthaLiquidSplitter.getSplitStream(1));
+    napthaLiquidToDeethanizer.run();
+    processSystem.add(napthaLiquidToDeethanizer);
+
+    Recycle napthaLiquidToDethanizerRecycle = new Recycle("naphta liquid to deethanizer recycle");
+    napthaLiquidToDethanizerRecycle.addStream(napthaLiquidToDeethanizer);
+    napthaLiquidToDethanizerRecycle.setOutletStream(napthaRecycle);
+    napthaLiquidToDethanizerRecycle.setTolerance(1e-2);
+    napthaLiquidToDethanizerRecycle.run();
+    processSystem.add(napthaLiquidToDethanizerRecycle);
+
+    processSystem.run_step();
+
+    Assertions.assertEquals(deethanizer.getReboiler().getDuty() / 1e6, 3.30412, 0.1,
+        "Deethanizer feed heater duty check");
+
+    Assertions.assertEquals(debutanizer.getReboiler().getDuty() / 1e6, 4.6554, 0.1,
+        "Deethanizer feed heater duty check");
+
+    Assertions.assertEquals(gasfromDeethanizerSeparator.getFlowRate("Sm3/hr"), 1158.245684, 1.1);
+    Assertions.assertEquals(napthaLiquidToDeethanizer.getFlowRate("m3/hr"), 16.60364, 1.1);
+
+    Assertions.assertEquals(gasfromDeethanizerSeparator.getFlowRate("Sm3/sec")
+        * gasfromDeethanizerSeparator.LCV() / 1e6, 19.896296, 0.1);
+
+    Assertions.assertEquals(napthaLiquidProduct.getFlowRate("m3/hr"), 37.4944, 0.1);
+    Assertions.assertEquals(lpgexport.getFlowRate("m3/hr"), 71.292, 0.1);
   }
 }
 
