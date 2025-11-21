@@ -5070,9 +5070,8 @@ public abstract class SystemThermo implements SystemInterface {
 
     double totalFlow = getTotalNumberOfMoles();
     if (totalFlow < 1e-100) {
-      // If the system is empty, scale moles by the provided mole fraction sum to preserve the
-      // intended distribution while supporting non-normalized inputs.
-      totalFlow = sum;
+      throw new RuntimeException(new InvalidInputException(this, "setMolarComposition",
+          "totalFlow", "must be larger than 0 (1e-100) when setting molar composition"));
     }
     setEmptyFluid();
 
