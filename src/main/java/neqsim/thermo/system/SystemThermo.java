@@ -5060,15 +5060,19 @@ public abstract class SystemThermo implements SystemInterface {
    * @param type Type of fluid. Supports "PlusFluid", "Plus" and default.
    */
   private void setMolarFractions(double[] molefractions, String type) {
-    double totalFlow = getTotalNumberOfMoles();
-    if (totalFlow < 1e-100) {
-      String msg = "must be larger than 0 (1e-100) when setting molar composition";
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "setMolarComposition", "totalFlow", msg));
-    }
     double sum = 0;
     for (double value : molefractions) {
       sum += value;
+    }
+    if (sum <= 0) {
+      throw new IllegalArgumentException("Mole fractions must sum to a positive value.");
+    }
+
+    double totalFlow = getTotalNumberOfMoles();
+    if (totalFlow < 1e-100) {
+      // If the system is empty, scale moles by the provided mole fraction sum to preserve the
+      // intended distribution while supporting non-normalized inputs.
+      totalFlow = sum;
     }
     setEmptyFluid();
 
