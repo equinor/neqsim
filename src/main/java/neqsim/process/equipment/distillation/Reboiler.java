@@ -66,6 +66,19 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
     // return calcMixStreamEnthalpy();
   }
 
+  /**
+   * <p>
+   * getDuty.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
+  public double getDuty(String unit) {
+    neqsim.util.unit.PowerUnit powerUnit = new neqsim.util.unit.PowerUnit(duty, "W");
+    return powerUnit.getValue(unit);
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
