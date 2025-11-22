@@ -172,6 +172,35 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
+   * Specify the well outlet pressure to be used when solving for flow from backpressure
+   * (i.e. {@link #solveFlowFromOutletPressure(boolean)} set to true).
+   *
+   * @param pressure outlet pressure
+   * @param unit pressure unit
+   */
+  public void setOutletPressure(double pressure, String unit) {
+    this.pressureOut = pressure;
+    this.pressureUnit = unit;
+  }
+
+  /**
+   * Enable solving for flow rate from a specified outlet pressure instead of solving for outlet
+   * pressure from a specified flow rate.
+   *
+   * @param solve true to compute flow from the set outlet pressure
+   */
+  public void solveFlowFromOutletPressure(boolean solve) {
+    this.calcpressure = !solve;
+  }
+
+  /**
+   * @return true if the well is set to compute outlet pressure from the inlet stream flowrate.
+   */
+  public boolean isCalculatingOutletPressure() {
+    return calcpressure;
+  }
+
+  /**
    * Use Vogel inflow performance relationship.
    *
    * @param qTest flow rate at test conditions (same unit as stream)
