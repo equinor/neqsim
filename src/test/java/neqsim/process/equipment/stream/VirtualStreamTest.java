@@ -1,6 +1,7 @@
 package neqsim.process.equipment.stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.processmodel.ProcessSystem;
@@ -72,5 +73,11 @@ public class VirtualStreamTest {
     virtStream.setTemperature(22.0, "C");
     virtStream.run();
     assertEquals(22.0, virtStream.getOutStream().getTemperature("C"), 1e-6);
+  }
+
+  @Test
+  void testSolvedFlag() {
+    virtStream.run();
+    assertTrue(virtStream.solved());
   }
 }

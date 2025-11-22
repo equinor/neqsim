@@ -567,8 +567,12 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     } while (Math.abs((BonV - BonVold) / BonV) > 1.0e-10 && iterations < maxIterations);
     this.volInit();
     if (iterations >= maxIterations) {
-      throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume",
-          maxIterations);
+      logger.warn("molarVolume did not converge after {} iterations for phase {}. Using last"
+          + " valid estimate to continue calculations.", iterations, pt);
+      BonV = Math.max(Math.min(BonV, 1.0 - 1.0e-6), 1.0e-8);
+      setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
+      Z = pressure * getMolarVolume() / (R * temperature);
+      return getMolarVolume();
     }
     if (Double.isNaN(getMolarVolume())) {
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
