@@ -120,7 +120,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     void addInboundPipeline(PipeBeggsAndBrills pipeline) {
       if (pipeline != null) {
         inboundPipelines.add(pipeline);
-        mixer.addStream(pipeline.getOutletStream());
+        // Note: Stream is added to mixer in runManifold() after pipeline has been wired and run
       }
     }
 
@@ -236,11 +236,12 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * @param manifold manifold that should receive the branch outlet
    * @return the created {@link Branch}
    */
-  public Branch addBranch(String branchName, StreamInterface reservoirStream, ManifoldNode manifold) {
+  public Branch addBranch(String branchName, StreamInterface reservoirStream,
+      ManifoldNode manifold) {
     WellFlow well = new WellFlow(branchName + " well");
     well.setInletStream(reservoirStream);
-    PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills(branchName + " pipeline",
-        well.getOutletStream());
+    PipeBeggsAndBrills pipeline =
+        new PipeBeggsAndBrills(branchName + " pipeline", well.getOutletStream());
     return addBranch(branchName, well, pipeline, null, manifold);
   }
 
@@ -299,7 +300,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   public ManifoldNode addManifold(String name, PipeBeggsAndBrills connectionPipeline) {
     Objects.requireNonNull(connectionPipeline, "connectionPipeline cannot be null");
     ManifoldNode previousTail = getTailManifold();
-    connectionPipeline.setInletStream(previousTail.getMixer().getOutletStream());
+    // Note: inlet stream connection is deferred until run() when outlet stream is guaranteed to
+    // exist
     previousTail.setPipelineToNext(connectionPipeline);
 
     ManifoldNode newNode = new ManifoldNode(name);
@@ -320,7 +322,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     Objects.requireNonNull(upstream, "upstream manifold cannot be null");
     Objects.requireNonNull(downstream, "downstream manifold cannot be null");
     Objects.requireNonNull(connectionPipeline, "connectionPipeline cannot be null");
-    connectionPipeline.setInletStream(upstream.getMixer().getOutletStream());
+    // Note: inlet stream connection is deferred until run() when outlet stream is guaranteed to
+    // exist
     upstream.setPipelineToNext(connectionPipeline);
     downstream.addInboundPipeline(connectionPipeline);
   }
@@ -384,12 +387,24 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * @return arrival stream
    */
   public StreamInterface getArrivalStream() {
-    return getTailManifold().getMixer().getOutletStream();
+    ManifoldNode tail = getTailManifold();
+    if (tail == null) {
+      return null;
+    }
+    Mixer mixer = tail.getMixer();
+    if (mixer == null) {
+      return null;
+    }
+    if (mixer.getNumberOfInputStreams() == 0) {
+      // Tail manifold has no input streams, cannot produce outlet stream
+      return null;
+    }
+    return mixer.getOutletStream();
   }
 
   /**
-   * Report the most recent pressure enforced at the terminal manifold while solving toward a
-   * target endpoint pressure.
+   * Report the most recent pressure enforced at the terminal manifold while solving toward a target
+   * endpoint pressure.
    *
    * @param unit requested unit
    * @return terminal manifold pressure, or {@code null} if the network has not been run
@@ -552,10 +567,37 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
 
   private void runManifold(ManifoldNode manifold, UUID id, boolean overridePressure,
       Double forcedPressure) {
+    // Step 1: Run all inbound pipelines and add their outlet streams to the mixer
     for (PipeBeggsAndBrills inbound : manifold.getInboundPipelines()) {
+      // Wire inlet stream if it's a pipelineToNext from an upstream manifold
+      if (inbound.getInletStream() == null) {
+        // Find the upstream manifold that has this pipeline as its pipelineToNext
+        for (ManifoldNode upstream : manifolds) {
+          if (upstream.getPipelineToNext() == inbound) {
+            inbound.setInletStream(upstream.getMixer().getOutletStream());
+            break;
+          }
+        }
+      }
       inbound.run(id);
+
+      // Add outlet stream to mixer if not already added
+      StreamInterface inboundStream = inbound.getOutletStream();
+      if (inboundStream != null) {
+        boolean alreadyAdded = false;
+        for (int i = 0; i < manifold.getMixer().getNumberOfInputStreams(); i++) {
+          if (manifold.getMixer().getStream(i) == inboundStream) {
+            alreadyAdded = true;
+            break;
+          }
+        }
+        if (!alreadyAdded) {
+          manifold.getMixer().addStream(inboundStream);
+        }
+      }
     }
 
+    // Step 2: Run all branches
     for (Branch branch : manifold.getBranches()) {
       if (forceFlowFromPressureSolve && branch.getWell().isCalculatingOutletPressure()) {
         branch.getWell().solveFlowFromOutletPressure(true);
@@ -569,8 +611,12 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
       branch.run(id);
     }
 
-    manifold.getMixer().run(id);
+    // Step 3: Run mixer to combine all inbound and branch streams
+    if (manifold.getMixer().getNumberOfInputStreams() > 0) {
+      manifold.getMixer().run(id);
+    }
 
+    // Step 4: Propagate manifold pressure back to all outlets
     double manifoldPressure = manifold.getMixer().getOutletStream().getPressure("bara");
     if (overridePressure && forcedPressure != null) {
       manifoldPressure = forcedPressure;
@@ -591,8 +637,12 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
       inbound.getOutletStream().setPressure(manifoldPressure, "bara");
     }
 
-    manifold.getMixer().run(id);
+    // Step 5: Re-run mixer to ensure all pressures are consistent
+    if (manifold.getMixer().getNumberOfInputStreams() > 0) {
+      manifold.getMixer().run(id);
+    }
 
+    // Step 6: Run pipelineToNext if it exists
     if (manifold.getPipelineToNext() != null) {
       manifold.getPipelineToNext().setInletStream(manifold.getMixer().getOutletStream());
       manifold.getPipelineToNext().run(id);
