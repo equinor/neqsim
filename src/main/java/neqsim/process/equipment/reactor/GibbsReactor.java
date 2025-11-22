@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.simple.SimpleMatrix;
@@ -274,6 +275,8 @@ public class GibbsReactor extends TwoPortEquipment {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(GibbsReactor.class);
 
+  private static final Pattern ION_NAME_PATTERN = Pattern.compile(".*[+\\-]+$");
+
   private String method = "DirectGibbsMinimization";
   private boolean useAllDatabaseSpecies = false;
   private List<GibbsComponent> gibbsDatabase = new ArrayList<>();
@@ -331,6 +334,10 @@ public class GibbsReactor extends TwoPortEquipment {
   private double GOLD = 0.0;
   private double G = 0.0;
   private double dG = 0.0;
+
+  private boolean isIonicComponent(String moleculeName) {
+    return ION_NAME_PATTERN.matcher(moleculeName).matches();
+  }
 
 
   /**
@@ -739,40 +746,38 @@ public class GibbsReactor extends TwoPortEquipment {
                 + " elements (parts.length=" + parts.length + ")");
 
             // Debug logging for ionic species - show raw parts
-            if (molecule.contains("+") || molecule.contains("-")) {
+            if (isIonicComponent(molecule)) {
               StringBuilder partsStr = new StringBuilder();
               for (int i = 0; i < Math.min(parts.length, 10); i++) {
                 partsStr.append("parts[").append(i).append("]=").append(parts[i]).append(" ");
               }
-              // System.out.println(
-              // "DATABASE LOADING - Raw parts for " + molecule + ": " + partsStr.toString());
-              // System.out.println("DATABASE LOADING - parts.length=" + parts.length
-              // + ", numElements=" + numElements);
+              logger.debug("DATABASE LOADING - Raw parts for {}: {}", molecule, partsStr);
             }
 
             // Parse available elements
             for (int i = 0; i < numElements; i++) {
               String value = parts[i + 1].trim().replace(",", ".");
               elements[i] = Double.parseDouble(value);
-              if (molecule.contains("+") || molecule.contains("-")) {
-                // System.out.println("DATABASE LOADING - Element[" + i + "] (" + elementNames[i]
-                // + ") = " + value + " -> " + elements[i]);
+              if (isIonicComponent(molecule)) {
+                logger.debug("DATABASE LOADING - Element[{}] ({} ) = {} -> {}", i,
+                    elementNames[i], value, elements[i]);
               }
             }
 
             // If old format (6 elements), set Z element to 0
             if (numElements == 6) {
               elements[6] = 0.0; // Z element defaults to 0
-              if (molecule.contains("+") || molecule.contains("-")) {
-                System.out.println("DATABASE LOADING - Old format detected, setting Z to 0.0");
+              if (isIonicComponent(molecule)) {
+                logger.debug("DATABASE LOADING - Old format detected for {}. Setting Z to 0.0",
+                    molecule);
               }
             }
 
             // Debug logging for ionic species
-            if (molecule.contains("+") || molecule.contains("-")) {
-              System.out.println("DATABASE LOADING - Final elements for " + molecule + ": O="
-                  + elements[0] + ", N=" + elements[1] + ", C=" + elements[2] + ", H=" + elements[3]
-                  + ", S=" + elements[4] + ", Ar=" + elements[5] + ", Z=" + elements[6]);
+            if (isIonicComponent(molecule)) {
+              logger.debug("DATABASE LOADING - Final elements for {}: O={}, N={}, C={}, H={}, S={}, Ar={}, Z={}",
+                  molecule, elements[0], elements[1], elements[2], elements[3], elements[4],
+                  elements[5], elements[6]);
             }
 
             double[] heatCapCoeffs = new double[4];
