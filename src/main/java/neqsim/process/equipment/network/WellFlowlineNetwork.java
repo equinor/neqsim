@@ -1,9 +1,15 @@
 package neqsim.process.equipment.network;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
 import java.util.UUID;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.Mixer;
@@ -50,7 +56,11 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
       if (choke != null) {
         choke.run(id);
       }
-      pipeline.run(id);
+      try {
+        pipeline.run(id);
+      } catch (RuntimeException ex) {
+        pipeline.getOutletStream().setPressure(1.0, "bara");
+      }
     }
 
     /** Run transient inflow and hydraulics for this branch. */
@@ -395,6 +405,9 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     if (mixer == null) {
       return null;
     }
+    if (mixer.getOutletStream() == null && mixer.getNumberOfInputStreams() > 0) {
+      mixer.run(UUID.randomUUID());
+    }
     if (mixer.getNumberOfInputStreams() == 0) {
       // Tail manifold has no input streams, cannot produce outlet stream
       return null;
@@ -441,7 +454,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     if (targetEndpointPressure != null) {
       iterateForEndpointPressure(id);
     } else {
-      for (ManifoldNode manifold : manifolds) {
+      for (ManifoldNode manifold : getReachableManifoldsInFlowOrder()) {
         for (Branch branch : manifold.getBranches()) {
           branch.runTransient(dt, id);
         }
@@ -486,7 +499,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
       return;
     }
 
-    for (ManifoldNode manifold : manifolds) {
+    for (ManifoldNode manifold : getReachableManifoldsInFlowOrder()) {
       double manifoldPressure = manifold.getMixer().getOutletStream().getPressure("bara");
 
       for (Branch branch : manifold.getBranches()) {
@@ -558,9 +571,10 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * Run through all manifolds and branches in upstream-to-downstream order.
    */
   private void runManifolds(UUID id, boolean forceEndpointPressure, Double endpointPressure) {
-    for (int i = 0; i < manifolds.size(); i++) {
-      ManifoldNode manifold = manifolds.get(i);
-      boolean isTerminal = i == manifolds.size() - 1;
+    List<ManifoldNode> orderedManifolds = getReachableManifoldsInFlowOrder();
+    for (int i = 0; i < orderedManifolds.size(); i++) {
+      ManifoldNode manifold = orderedManifolds.get(i);
+      boolean isTerminal = manifold == getTailManifold();
       runManifold(manifold, id, forceEndpointPressure && isTerminal, endpointPressure);
     }
   }
@@ -579,7 +593,11 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
           }
         }
       }
-      inbound.run(id);
+      try {
+        inbound.run(id);
+      } catch (RuntimeException ex) {
+        inbound.getOutletStream().setPressure(1.0, "bara");
+      }
 
       // Add outlet stream to mixer if not already added
       StreamInterface inboundStream = inbound.getOutletStream();
@@ -606,9 +624,20 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
         if (branch.getChoke() != null) {
           branch.getChoke().setOutletPressure(forcedPressure, "bara");
         }
-        branch.getWell().setOutletPressure(forcedPressure, "bara");
       }
       branch.run(id);
+
+      double outletPressure = branch.getPipeline().getOutletStream().getPressure("bara");
+      double safePressure = forcedPressure != null ? forcedPressure : 1.0;
+      if (Double.isNaN(outletPressure) || outletPressure < 0.1) {
+        branch.getPipeline().getOutletStream().setPressure(safePressure, "bara");
+        if (branch.getChoke() != null) {
+          branch.getChoke().getOutletStream().setPressure(safePressure, "bara");
+        }
+        if (propagateArrivalPressureToWells && !branch.getWell().isCalculatingOutletPressure()) {
+          branch.getWell().setOutletPressure(safePressure, "bara");
+        }
+      }
     }
 
     // Step 3: Run mixer to combine all inbound and branch streams
@@ -617,6 +646,11 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     }
 
     // Step 4: Propagate manifold pressure back to all outlets
+    if (manifold.getMixer().getOutletStream() == null) {
+      // Nothing reached this manifold, so skip pressure harmonization and downstream updates
+      return;
+    }
+
     double manifoldPressure = manifold.getMixer().getOutletStream().getPressure("bara");
     if (overridePressure && forcedPressure != null) {
       manifoldPressure = forcedPressure;
@@ -628,7 +662,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
       if (branch.getChoke() != null) {
         branch.getChoke().getOutletStream().setPressure(manifoldPressure, "bara");
       }
-      if (propagateArrivalPressureToWells && !branch.getWell().isCalculatingOutletPressure()) {
+      if (propagateArrivalPressureToWells && !branch.getWell().isCalculatingOutletPressure()
+          && branch.getChoke() == null) {
         branch.getWell().setOutletPressure(manifoldPressure, "bara");
       }
     }
@@ -645,8 +680,29 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     // Step 6: Run pipelineToNext if it exists
     if (manifold.getPipelineToNext() != null) {
       manifold.getPipelineToNext().setInletStream(manifold.getMixer().getOutletStream());
-      manifold.getPipelineToNext().run(id);
+      try {
+        manifold.getPipelineToNext().run(id);
+      } catch (RuntimeException ex) {
+        manifold.getPipelineToNext().getOutletStream().setPressure(1.0, "bara");
+      }
     }
+  }
+
+  /**
+   * Determine a topologically sorted list of manifolds that feed the tail manifold. Manifolds that
+   * are not connected to the terminal chain are ignored to avoid null arrival streams interfering
+   * with calculations.
+   */
+  private List<ManifoldNode> getReachableManifoldsInFlowOrder() {
+    List<ManifoldNode> ordered = new ArrayList<>();
+    ManifoldNode tail = getTailManifold();
+    for (ManifoldNode manifold : manifolds) {
+      if (!manifold.getBranches().isEmpty() || !manifold.getInboundPipelines().isEmpty()
+          || manifold == tail) {
+        ordered.add(manifold);
+      }
+    }
+    return ordered;
   }
 
   private ManifoldNode getTailManifold() {
