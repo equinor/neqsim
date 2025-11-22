@@ -23,6 +23,7 @@ import neqsim.process.equipment.separator.sectiontype.ValveSection;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
+import neqsim.process.util.fire.SeparatorFireExposure;
 import neqsim.process.util.monitor.SeparatorResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -960,6 +961,107 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /**
+   * Calculates the total inner surface area of the separator, including shell and heads.
+   *
+   * @return inner surface area in square meters
+   */
+  public double getInnerSurfaceArea() {
+    if (internalRadius <= 0.0 || separatorLength <= 0.0) {
+      return 0.0;
+    }
+    double shellArea = 2.0 * Math.PI * internalRadius * separatorLength;
+    double headArea = 2.0 * sepCrossArea;
+    return shellArea + headArea;
+  }
+
+  /**
+   * Estimates the wetted inner surface area based on current liquid level and orientation.
+   *
+   * <p>For horizontal separators, the wetted area uses the circular segment defined by the
+   * liquid level to apportion the cylindrical shell and head areas. For vertical separators, the
+   * wetted area is the side area up to the current level plus the bottom head.
+   *
+   * @return wetted area in square meters
+   */
+  public double getWettedArea() {
+    if (internalRadius <= 0.0 || separatorLength <= 0.0) {
+      return 0.0;
+    }
+
+    if (orientation.equalsIgnoreCase("horizontal")) {
+      double level = clampLiquidHeight(liquidLevel);
+      if (level <= 0.0) {
+        return 0.0;
+      }
+
+      double r = internalRadius;
+      double cappedLevel = Math.min(level, 2.0 * r);
+      double theta = 2.0 * Math.acos((r - cappedLevel) / r); // central angle of liquid segment
+
+      double wettedShellArea = r * theta * separatorLength; // arc length * length
+      double wettedHeadArea = 2.0 * liquidArea(cappedLevel);
+      return wettedShellArea + wettedHeadArea;
+    }
+
+    if (orientation.equalsIgnoreCase("vertical")) {
+      double level = clampLiquidHeight(liquidLevel);
+      if (level <= 0.0) {
+        return 0.0;
+      }
+
+      double wettedShellArea = 2.0 * Math.PI * internalRadius * level;
+      double wettedHeadArea = sepCrossArea; // bottom head is always wetted when level > 0
+      if (level >= separatorLength) {
+        wettedHeadArea += sepCrossArea; // top head becomes wetted when full
+      }
+      return wettedShellArea + wettedHeadArea;
+    }
+
+    return 0.0;
+  }
+
+  /**
+   * Estimates the unwetted (dry) area as the remaining inner area not in contact with liquid.
+   *
+   * @return unwetted area in square meters
+   */
+  public double getUnwettedArea() {
+    double wetted = getWettedArea();
+    double total = getInnerSurfaceArea();
+    if (total <= 0.0) {
+      return 0.0;
+    }
+    return Math.max(total - wetted, 0.0);
+  }
+
+  /**
+   * Evaluates fire exposure using the separator geometry and process conditions.
+   *
+   * @param config fire scenario configuration
+   * @return aggregated fire exposure result
+   */
+  public SeparatorFireExposure.FireExposureResult evaluateFireExposure(
+      SeparatorFireExposure.FireScenarioConfig config) {
+    return SeparatorFireExposure.evaluate(this, config);
+  }
+
+  /**
+   * Evaluates fire exposure using separator geometry and process conditions while accounting for
+   * flare radiation based on the real flaring heat duty.
+   *
+   * @param config fire scenario configuration
+   * @param flare flare supplying heat duty and radiation parameters
+   * @param flareGroundDistanceM horizontal distance from flare base to separator [m]
+   * @return aggregated fire exposure result
+   */
+  public SeparatorFireExposure.FireExposureResult evaluateFireExposure(
+      SeparatorFireExposure.FireScenarioConfig config,
+      neqsim.process.equipment.flare.Flare flare,
+      double flareGroundDistanceM) {
+    return SeparatorFireExposure.evaluate(this, config, flare, flareGroundDistanceM);
+  }
+
+  /**
    * <p>
    * Estimates liquid level based on volume for horizontal separators using bisection method.
    * Vertical separators too. tol and maxIter are bisection loop parameters.
@@ -1392,6 +1494,25 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * @param unit heat duty unit
    */
   public void setHeatDuty(double heatDuty, String unit) {
+    setHeatInput(heatDuty, unit);
+  }
+
+  /**
+   * Set heat duty (alias preserved for compatibility with energy-stream style naming).
+   *
+   * @param heatDuty heat duty in watts
+   */
+  public void setDuty(double heatDuty) {
+    setHeatInput(heatDuty);
+  }
+
+  /**
+   * Set heat duty with unit (alias preserved for compatibility with energy-stream style naming).
+   *
+   * @param heatDuty heat duty value
+   * @param unit heat duty unit
+   */
+  public void setDuty(double heatDuty, String unit) {
     setHeatInput(heatDuty, unit);
   }
 
