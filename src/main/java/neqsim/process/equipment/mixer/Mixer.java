@@ -114,7 +114,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
    */
   public void mixStream() {
     int index = 0;
-    String compName = new String();
     lowestPressure = mixedStream.getThermoSystem().getPhase(0).getPressure();
     boolean hasAddedNewComponent = false;
     for (int k = 1; k < streams.size(); k++) {
@@ -150,8 +149,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
             gotComponent = true;
             index =
                 streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
-            compName =
-                streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentName();
           }
         }
 
@@ -159,7 +156,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
           mixedStream.getThermoSystem().addComponent(index, moles);
         } else {
           hasAddedNewComponent = true;
-          mixedStream.getThermoSystem().addComponent(compName, moles);
+          mixedStream.getThermoSystem().addComponent(componentName, moles);
         }
       }
     }

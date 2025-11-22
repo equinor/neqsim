@@ -96,13 +96,8 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * @return a double
    */
   public double getPower(String unit) {
-    if (unit.equals("W")) {
-    } else if (unit.equals("kW")) {
-      return dH / 1000.0;
-    } else if (unit.equals("MW")) {
-      return dH / 1.0e6;
-    }
-    return dH;
+    neqsim.util.unit.PowerUnit powerUnit = new neqsim.util.unit.PowerUnit(dH, "W");
+    return powerUnit.getValue(unit);
   }
 
   /**

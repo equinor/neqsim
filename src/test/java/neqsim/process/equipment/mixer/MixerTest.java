@@ -125,4 +125,32 @@ class MixerTest {
     assertEquals(0.0, massBalance, 1e-6,
         "Mixer mass balance error: outlet flow should equal sum of inlet flows");
   }
+
+  @Test
+  void testAddsNewComponentsFromMixedStreams() {
+    SystemSrkEos nitrogenSystem = new SystemSrkEos(298.15, 10.0);
+    nitrogenSystem.addComponent("nitrogen", 1.0);
+    nitrogenSystem.setMixingRule(2);
+
+    SystemSrkEos methaneSystem = new SystemSrkEos(298.15, 10.0);
+    methaneSystem.addComponent("methane", 1.0);
+    methaneSystem.setMixingRule(2);
+
+    Stream nitrogenStream = new Stream("nitrogen stream", nitrogenSystem);
+    Stream methaneStream = new Stream("methane stream", methaneSystem);
+    nitrogenStream.run();
+    methaneStream.run();
+
+    Mixer testMixer = new Mixer("component mixer");
+    testMixer.addStream(nitrogenStream);
+    testMixer.addStream(methaneStream);
+    testMixer.run();
+
+    assertTrue(testMixer.getThermoSystem().getPhase(0).hasComponent("nitrogen"));
+    assertTrue(testMixer.getThermoSystem().getPhase(0).hasComponent("methane"));
+
+    double[] molarComposition = testMixer.getThermoSystem().getMolarComposition();
+    assertEquals(0.5, molarComposition[0], 1e-6);
+    assertEquals(0.5, molarComposition[1], 1e-6);
+  }
 }
