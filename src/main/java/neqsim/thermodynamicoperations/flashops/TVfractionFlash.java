@@ -150,10 +150,6 @@ public class TVfractionFlash extends Flash {
     tpFlash.run();
 
     if (stateHasUncountableNumbers(system)) {
-      if (!reportedUncountableState) {
-        logger.error("Solution contains uncountable numbers");
-        reportedUncountableState = true;
-      }
       system.setPressure(oldPres);
     }
 
@@ -217,15 +213,19 @@ public class TVfractionFlash extends Flash {
   }
 
   private void reportNonFinite(String field, int phaseIndex, String componentName, double value) {
-    if (!reportedUncountableState) {
-      if (componentName != null) {
-        logger.error(
-            "Solution contains uncountable numbers: {} for component '{}' in phase {} (value={})",
-            field, componentName, phaseIndex, value);
-      } else {
-        logger.error("Solution contains uncountable numbers: {} in phase {} (value={})", field,
-            phaseIndex, value);
-      }
+    if (reportedUncountableState) {
+      return;
+    }
+
+    reportedUncountableState = true;
+
+    if (componentName != null) {
+      logger.error(
+          "Solution contains uncountable numbers: {} for component '{}' in phase {} (value={})",
+          field, componentName, phaseIndex, value);
+    } else {
+      logger.error("Solution contains uncountable numbers: {} in phase {} (value={})", field,
+          phaseIndex, value);
     }
   }
 }
