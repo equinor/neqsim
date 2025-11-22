@@ -9,9 +9,9 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * FurnaceBurner mixes a fuel gas stream with combustion air and evaluates adiabatic combustion
- * using the {@link GibbsReactor}. The unit returns the reacted outlet stream together with simple
- * emission estimates and heat release.
+ * FurnaceBurner mixes a fuel gas stream with combustion air and evaluates combustion using the
+ * {@link GibbsReactor}. The unit supports adiabatic and cooled designs, returning the reacted
+ * outlet stream together with emission estimates and heat release.
  */
 public class FurnaceBurner extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1L;
@@ -20,6 +20,18 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   private StreamInterface airInlet;
   private StreamInterface outletStream;
   private GibbsReactor reactor;
+
+  /** Burner design options controlling how the energy balance is handled. */
+  public enum BurnerDesign {
+    /** Fully adiabatic combustion (default). */
+    ADIABATIC,
+    /** Combustion with heat loss to surroundings represented by a cooling factor. */
+    COOLED
+  }
+
+  private BurnerDesign burnerDesign = BurnerDesign.ADIABATIC;
+  private double surroundingsTemperatureK = Double.NaN;
+  private double coolingFactor = 0.0;
 
   private double excessAirFraction = 0.0;
   private double flameTemperature = Double.NaN;
@@ -54,6 +66,35 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Set the burner design option.
+   *
+   * @param design burner design
+   */
+  public void setBurnerDesign(BurnerDesign design) {
+    this.burnerDesign = design == null ? BurnerDesign.ADIABATIC : design;
+  }
+
+  /**
+   * Provide a cooling factor (0-1) that pulls the flame temperature towards the surroundings.
+   * A value of 0.0 keeps adiabatic operation, while 1.0 forces the products to the surroundings
+   * temperature.
+   *
+   * @param factor cooling factor between 0 and 1
+   */
+  public void setCoolingFactor(double factor) {
+    this.coolingFactor = Math.max(0.0, Math.min(1.0, factor));
+  }
+
+  /**
+   * Specify the surroundings (ambient) temperature used when applying cooling.
+   *
+   * @param temperatureK surroundings temperature in kelvin
+   */
+  public void setSurroundingsTemperature(double temperatureK) {
+    this.surroundingsTemperatureK = temperatureK;
+  }
+
+  /**
    * Specify excess air as a fraction of stoichiometric air (0.1 = 10% excess).
    *
    * @param fraction fraction of excess air
@@ -72,7 +113,7 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Get the calculated adiabatic flame temperature (K).
+   * Get the calculated flame temperature (K) after considering the burner design.
    *
    * @return flame temperature in kelvin
    */
@@ -123,9 +164,14 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     }
     fuelSystem.init(3);
 
+    SystemInterface inletBasis = fuelSystem.clone();
+    inletBasis.init(3);
+    double inletEnthalpyJ = inletBasis.getEnthalpy("J");
+
     Stream mixedStream = new Stream(getName() + " mixture", fuelSystem);
     mixedStream.run(id);
 
+    // First perform an adiabatic equilibrium to establish baseline combustion
     if (reactor == null) {
       reactor = new GibbsReactor(getName() + " Gibbs reactor", mixedStream);
     } else {
@@ -140,7 +186,36 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
 
     SystemInterface outletSystem = outletStream.getThermoSystem();
     flameTemperature = outletSystem.getTemperature();
-    heatReleasekW = -reactor.getEnthalpyOfReactions();
+    heatReleasekW = Math.abs(reactor.getEnthalpyOfReactions());
+
+    boolean applyCooling = burnerDesign == BurnerDesign.COOLED || coolingFactor > 0.0;
+    if (applyCooling) {
+      double ambientTemp = Double.isNaN(surroundingsTemperatureK) ? airSystem.getTemperature()
+          : surroundingsTemperatureK;
+      double cooledTemperature = ambientTemp + (flameTemperature - ambientTemp) * (1.0 - coolingFactor);
+
+      SystemInterface cooledFeed = mixedStream.getThermoSystem().clone();
+      cooledFeed.setTemperature(cooledTemperature);
+      cooledFeed.init(3);
+
+      Stream cooledStream = new Stream(getName() + " cooled mixture", cooledFeed);
+      cooledStream.run(id);
+
+      GibbsReactor cooledReactor = new GibbsReactor(getName() + " cooled Gibbs reactor",
+          cooledStream);
+      cooledReactor.setUseAllDatabaseSpecies(false);
+      cooledReactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
+      cooledReactor.run(id);
+
+      outletStream = cooledReactor.getOutletStream();
+      outletStream.run(id);
+      outletSystem = outletStream.getThermoSystem();
+
+      flameTemperature = outletSystem.getTemperature();
+
+      double outletEnthalpyJ = outletSystem.getEnthalpy("J");
+      heatReleasekW = Math.abs(inletEnthalpyJ - outletEnthalpyJ) / 1000.0;
+    }
 
     emissionRatesKgPerHr.clear();
     for (String compName : tracked) {
