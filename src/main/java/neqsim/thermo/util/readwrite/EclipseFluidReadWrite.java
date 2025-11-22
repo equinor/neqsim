@@ -50,7 +50,6 @@ public class EclipseFluidReadWrite {
    * @param inputFile a {@link java.lang.String} object
    */
   public static void setComposition(SystemInterface fluid, String inputFile) {
-    fluid.setEmptyFluid();
     try (BufferedReader br = new BufferedReader(new FileReader(new File(inputFile)))) {
       String st;
       ArrayList<String> names = new ArrayList<String>();
@@ -74,42 +73,9 @@ public class EclipseFluidReadWrite {
           }
         }
       }
-      for (int counter = 0; counter < names.size(); counter++) {
-        String name = names.get(counter);
-        if (name.equals("C1")) {
-          name = "methane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("C2")) {
-          name = "ethane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("N2")) {
-          name = "nitrogen";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("iC4")) {
-          name = "i-butane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("C4")) {
-          name = "n-butane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("iC5")) {
-          name = "i-pentane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("C5")) {
-          name = "n-pentane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("C6")) {
-          name = "n-hexane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("C3")) {
-          name = "propane";
-          fluid.addComponent(name, ZI.get(counter));
-        } else if (name.equals("CO2")) {
-          name = "CO2";
-          fluid.addComponent(name, ZI.get(counter));
-        } else {
-          fluid.addComponent(name + pseudoName, ZI.get(counter));
-        }
-      }
+      double[] composition = ZI.stream().mapToDouble(Double::doubleValue).toArray();
+      String nameDef = pseudoName.startsWith("_") ? pseudoName.substring(1) : pseudoName;
+      fluid.setMolarCompositionOfNamedComponents(nameDef, composition);
     } catch (RuntimeException ex) {
       logger.error(ex.getMessage());
     } catch (Exception ex) {
