@@ -3,9 +3,11 @@ package neqsim.process.processmodel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -68,5 +70,31 @@ public class DexpiXmlReaderTest extends NeqSimTest {
 
     // Verify that a DexpiXmlReaderException is thrown
     assertThrows(DexpiXmlReaderException.class, () -> DexpiXmlReader.read(tempFile));
+  }
+
+  @Test
+  public void testReadInvalidXmlDoesNotLogToStderr() throws IOException {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
+        + "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"P-101\">"
+        + "      <GenericAttributes>"
+        + "        <GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"P-101\" />"
+        + "      </GenericAttributes>" + "    </PlateHeatExchanger>" + "  </Equipment>"
+        + "</PlantModel2>";
+
+    File tempFile = File.createTempFile("test", ".xml");
+    try (FileWriter writer = new FileWriter(tempFile)) {
+      writer.write(xml);
+    }
+
+    PrintStream originalErr = System.err;
+    ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+    System.setErr(new PrintStream(errContent));
+    try {
+      assertThrows(DexpiXmlReaderException.class, () -> DexpiXmlReader.read(tempFile));
+    } finally {
+      System.setErr(originalErr);
+    }
+
+    assertEquals("", errContent.toString().trim());
   }
 }
