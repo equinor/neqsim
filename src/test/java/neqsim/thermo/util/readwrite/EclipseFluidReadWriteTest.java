@@ -704,7 +704,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
         0.09479920295855006, 0.2664367133684378, 0.072638890369372, 0.18433074090670493,
         0.05893425834431258, 0.07525119431180687, 0.07925100506320992, 0.0814576540555948,
         0.04665775189490658, 0.01708982141273816, 0.004685723238493833, 5.666335741724731e-06,
-        2.608641697723448e-12, 0.0005799881826661595};
+        2.608641697723448e-12, 0.0};
 
 
     testSystem.setMolarComposition(moleFractions);
@@ -810,12 +810,13 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     processSystem.add(valveDebutanizer);
 
     neqsim.process.equipment.distillation.DistillationColumn debutanizer =
-        new neqsim.process.equipment.distillation.DistillationColumn("de butanizer column", 2, true,
+        new neqsim.process.equipment.distillation.DistillationColumn("de butanizer column", 4, true,
             true);
     debutanizer.addFeedStream(valveDebutanizer.getOutletStream(), 1);
     debutanizer.getReboiler().setOutTemperature(273.15 + 120.0);
-    debutanizer.getCondenser().setTotalCondenser(true);
     debutanizer.getCondenser().setRefluxRatio(0.1);
+    // debutanizer.getCondenser().setSeparation_with_liquid_reflux(true, 2000.0, "kg/hr");
+    debutanizer.getCondenser().setTotalCondenser(true);
     debutanizer.setTopPressure(8.4);
     debutanizer.setBottomPressure(8.4);
     debutanizer.run();
@@ -826,10 +827,9 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     liquidFromDebutanizer.run();
     processSystem.add(liquidFromDebutanizer);
 
-    StreamInterface lpgexport = debutanizer.getGasOutStream();
+    StreamInterface lpgexport = new Stream("lpg export", debutanizer.getGasOutStream());
     lpgexport.run();
     processSystem.add(lpgexport);
-
 
     neqsim.process.equipment.pump.Pump napthaLiquidToDethanizerPump =
         new neqsim.process.equipment.pump.Pump("naphta liquid to deethanizer pump",
@@ -868,6 +868,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     processSystem.add(napthaLiquidToDethanizerRecycle);
 
     processSystem.run_step();
+    processSystem.run_step();
+    processSystem.run_step();
 
     Assertions.assertEquals(deethanizer.getReboiler().getDuty() / 1e6, 3.30412, 0.1,
         "Deethanizer feed heater duty check");
@@ -875,14 +877,14 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(debutanizer.getReboiler().getDuty() / 1e6, 4.6554, 0.1,
         "Deethanizer feed heater duty check");
 
-    Assertions.assertEquals(gasfromDeethanizerSeparator.getFlowRate("Sm3/hr"), 1158.245684, 1.1);
+    Assertions.assertEquals(gasfromDeethanizerSeparator.getFlowRate("Sm3/hr"), 1095.3504, 1.1);
     Assertions.assertEquals(napthaLiquidToDeethanizer.getFlowRate("m3/hr"), 16.60364, 1.1);
 
     Assertions.assertEquals(gasfromDeethanizerSeparator.getFlowRate("Sm3/sec")
-        * gasfromDeethanizerSeparator.LCV() / 1e6, 19.896296, 0.1);
+        * gasfromDeethanizerSeparator.LCV() / 1e6, 17.61828466, 0.1);
 
-    Assertions.assertEquals(napthaLiquidProduct.getFlowRate("m3/hr"), 37.4944, 0.1);
-    Assertions.assertEquals(lpgexport.getFlowRate("m3/hr"), 71.292, 0.1);
+    Assertions.assertEquals(napthaLiquidProduct.getFlowRate("m3/hr"), 47.24077, 0.1);
+    Assertions.assertEquals(lpgexport.getFlowRate("m3/hr"), 68.2539, 0.1);
   }
 }
 
