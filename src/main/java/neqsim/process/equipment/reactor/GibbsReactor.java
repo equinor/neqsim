@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -824,8 +825,24 @@ public class GibbsReactor extends TwoPortEquipment {
       }
       scanner.close();
       logger.info("Loaded " + gibbsDatabase.size() + " components from Gibbs database");
+
+      addAliasMappings();
     } catch (Exception e) {
       logger.error("Error loading Gibbs database: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Populate {@link #componentMap} with common component aliases so fluids imported with shorthand
+   * names (e.g. Eclipse E300) are resolved to Gibbs database entries.
+   */
+  private void addAliasMappings() {
+    Map<String, String> aliasMap = ComponentInterface.getComponentNameMap();
+    for (Map.Entry<String, String> entry : aliasMap.entrySet()) {
+      GibbsComponent component = componentMap.get(entry.getValue().toLowerCase());
+      if (component != null) {
+        componentMap.putIfAbsent(entry.getKey().toLowerCase(), component);
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 package neqsim.process.equipment.reactor;
 
+import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -52,6 +53,29 @@ public class GibbsReactorTest {
     // Assert that mass balance is converged
     Assertions.assertTrue(reactor.getMassBalanceConverged(),
         "Mass balance should be converged for TBPfraction test");
+  }
+
+  /**
+   * Verify that shorthand component names (e.g. iC4) are resolved to Gibbs database entries to
+   * support Eclipse E300 fluids in reactors.
+   */
+  @Test
+  public void testAliasComponentsResolvedInGibbsDatabase() {
+    SystemInterface system = new SystemSrkEos(298.15, 1.0);
+    system.addComponent("iC4", 0.1);
+    system.addComponent("C1", 0.9);
+    system.addComponent("oxygen", 0.5);
+    system.addComponent("nitrogen", 1.9);
+    system.createDatabase(true);
+    system.setMixingRule(2);
+
+    Stream inletStream = new Stream("Alias inlet", system);
+
+    GibbsReactor reactor = new GibbsReactor("Alias reactor", inletStream);
+    reactor.setUseAllDatabaseSpecies(false);
+    reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
+
+    Assertions.assertDoesNotThrow(() -> reactor.run(UUID.randomUUID()));
   }
 
   /**
