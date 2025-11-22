@@ -10,6 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Determine release version
+        id: release_version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v5
         with:
@@ -22,7 +27,7 @@ jobs:
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
       # --- Java 8 artifact ---
       - name: Set version (Java 8)
-        run: mvn -f pomJava8.xml versions:set -DnewVersion=${{ github.event.release.tag_name }}-Java8
+        run: mvn -f pomJava8.xml versions:set -DnewVersion=${{ steps.release_version.outputs.version }}-Java8
       - name: Publish package (Java 8)
         run: mvn -f pomJava8.xml -P release --batch-mode deploy -DskipTests -Djacoco.skip=true
         env:
@@ -31,7 +36,7 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
       # --- Java 11 artifact ---
       - name: Set version
-        run: mvn versions:set -DnewVersion=${{ github.event.release.tag_name }}
+        run: mvn versions:set -DnewVersion=${{ steps.release_version.outputs.version }}
       - name: Publish package
         run: mvn -P release --batch-mode deploy -DskipTests -Djacoco.skip=true
         env:
