@@ -7,18 +7,19 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.system.SystemSrkEos;
 
 public class FurnaceBurnerTest {
 
   @Test
   public void testNaturalGasCombustion() {
-    SystemInterface fuel = new SystemSrkCPAstatoil(298.15, 20.0);
+    SystemInterface fuel = new SystemSrkEos(298.15, 20.0);
     fuel.addComponent("methane", 1.0);
     fuel.addComponent("ethane", 0.1);
     fuel.setTotalFlowRate(10.0, "mole/sec");
     fuel.init(0);
 
-    SystemInterface air = new SystemSrkCPAstatoil(298.15, 20.0);
+    SystemInterface air = new SystemSrkEos(298.15, 20.0);
     air.addComponent("nitrogen", 79.0);
     air.addComponent("oxygen", 21.0);
     air.setTotalFlowRate(300.0, "mole/sec");
@@ -46,12 +47,12 @@ public class FurnaceBurnerTest {
 
   @Test
   public void testCooledBurnerLowersFlameTemperature() {
-    SystemInterface fuel = new SystemSrkCPAstatoil(298.15, 20.0);
+    SystemInterface fuel = new SystemSrkEos(298.15, 20.0);
     fuel.addComponent("methane", 1.0);
     fuel.setTotalFlowRate(5.0, "mole/sec");
     fuel.init(0);
 
-    SystemInterface air = new SystemSrkCPAstatoil(298.15, 20.0);
+    SystemInterface air = new SystemSrkEos(298.15, 20.0);
     air.addComponent("nitrogen", 79.0);
     air.addComponent("oxygen", 21.0);
     air.setTotalFlowRate(160.0, "mole/sec");
@@ -82,5 +83,36 @@ public class FurnaceBurnerTest {
         "Cooling should reduce flame temperature");
     Assertions.assertTrue(cooledBurner.getHeatReleasekW() > 0.0,
         "Heat release should remain positive when cooled");
+  }
+
+  @Test
+  public void testSulfurSpeciesTrackedInEmissions() {
+    SystemInterface fuel = new SystemSrkEos(298.15, 20.0);
+    fuel.addComponent("methane", 1.0);
+    fuel.addComponent("ethane", 0.05);
+    fuel.addComponent("H2S", 0.01);
+    fuel.setTotalFlowRate(8.0, "mole/sec");
+    fuel.init(0);
+
+    SystemInterface air = new SystemSrkEos(298.15, 20.0);
+    air.addComponent("nitrogen", 79.0);
+    air.addComponent("oxygen", 21.0);
+    air.setTotalFlowRate(260.0, "mole/sec");
+    air.init(0);
+
+    StreamInterface fuelStream = new Stream("fuel", fuel);
+    StreamInterface airStream = new Stream("air", air);
+    fuelStream.run();
+    airStream.run();
+
+    FurnaceBurner burner = new FurnaceBurner("sulfur burner");
+    burner.setFuelInlet(fuelStream);
+    burner.setAirInlet(airStream);
+    burner.setExcessAirFraction(0.1);
+    burner.run();
+
+    Map<String, Double> emissions = burner.getEmissionRatesKgPerHr();
+    Assertions.assertTrue(emissions.containsKey("SO2"), "SO2 should be tracked in emissions");
+    Assertions.assertTrue(emissions.containsKey("SO3"), "SO3 should be tracked in emissions");
   }
 }

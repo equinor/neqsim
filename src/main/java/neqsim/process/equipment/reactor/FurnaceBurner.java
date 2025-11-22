@@ -156,7 +156,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
 
     fuelSystem.addFluid(airSystem);
     fuelSystem.createDatabase(true);
-    String[] tracked = {"CO2", "CO", "NO", "NO2", "oxygen", "water", "nitrogen"};
+    String[] tracked = {"CO2", "CO", "NO", "NO2", "SO2", "SO3", "H2S", "oxygen",
+        "water", "nitrogen"};
     for (String compName : tracked) {
       if (!fuelSystem.hasComponent(compName)) {
         fuelSystem.addComponent(compName, 0.0, "mole/sec");
