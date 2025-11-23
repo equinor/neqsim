@@ -1144,6 +1144,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double[] getMolarComposition();
 
   /**
+   * <p>
+   * Returns the overall composition vector in unit mass fraction.
+   * </p>
+   *
+   * @return an array of type double
+   */
+  public double[] getWeightBasedComposition();
+
+  /**
    * Get molar mass of system.
    *
    * @return molar mass in unit kg/mol
