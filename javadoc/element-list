@@ -134,6 +134,7 @@ neqsim.process.equipment.heatexchanger
 neqsim.process.equipment.manifold
 neqsim.process.equipment.membrane
 neqsim.process.equipment.mixer
+neqsim.process.equipment.network
 neqsim.process.equipment.pipeline
 neqsim.process.equipment.powergeneration
 neqsim.process.equipment.pump
@@ -177,6 +178,7 @@ neqsim.process.processmodel.processmodules
 neqsim.process.safety
 neqsim.process.safety.dto
 neqsim.process.util.example
+neqsim.process.util.fire
 neqsim.process.util.monitor
 neqsim.process.util.report
 neqsim.process.util.report.safety
