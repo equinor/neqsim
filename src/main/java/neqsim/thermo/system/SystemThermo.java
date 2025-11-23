@@ -2840,6 +2840,26 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double[] getWeightBasedComposition() {
+    PhaseInterface phase = this.getPhase(0);
+    double[] comp = new double[phase.getNumberOfComponents()];
+
+    double totalMass = 0.0;
+    for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
+      totalMass +=
+          phase.getComponent(compNumb).getz() * phase.getComponent(compNumb).getMolarMass();
+    }
+
+    for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
+      comp[compNumb] =
+          phase.getComponent(compNumb).getz() * phase.getComponent(compNumb).getMolarMass()
+              / totalMass;
+    }
+    return comp;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getMolarMass() {
     double tempVar = 0;
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
