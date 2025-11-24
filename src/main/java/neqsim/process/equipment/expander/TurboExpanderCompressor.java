@@ -389,6 +389,24 @@ public class TurboExpanderCompressor extends Expander {
 
   /**
    * <p>
+   * Getter for the field <code>powerExpander</code> with unit conversion.
+   * </p>
+   *
+   * @param unit the desired unit ("W", "kW" or "MW")
+   * @return expander power in the requested unit
+   */
+  public double getPowerExpander(String unit) {
+    double conversionFactor = 1.0;
+    if (unit.equals("MW")) {
+      conversionFactor = 1.0e-6;
+    } else if (unit.equals("kW")) {
+      conversionFactor = 1.0e-3;
+    }
+    return conversionFactor * getPowerExpander();
+  }
+
+  /**
+   * <p>
    * Getter for the field <code>powerCompressor</code>.
    * </p>
    *
@@ -396,6 +414,24 @@ public class TurboExpanderCompressor extends Expander {
    */
   public double getPowerCompressor() {
     return powerCompressor;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>powerCompressor</code> with unit conversion.
+   * </p>
+   *
+   * @param unit the desired unit ("W", "kW" or "MW")
+   * @return compressor power in the requested unit
+   */
+  public double getPowerCompressor(String unit) {
+    double conversionFactor = 1.0;
+    if (unit.equals("MW")) {
+      conversionFactor = 1.0e-6;
+    } else if (unit.equals("kW")) {
+      conversionFactor = 1.0e-3;
+    }
+    return conversionFactor * getPowerCompressor();
   }
 
   /**
