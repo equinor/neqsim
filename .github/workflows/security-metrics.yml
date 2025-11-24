@@ -20,7 +20,7 @@ jobs:
     if: false  # Workflow disabled
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Fetch CodeQL Alerts
         id: codeql
