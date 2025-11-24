@@ -60,21 +60,68 @@ alternative reference maps or updated dynamically from external performance moni
    populate result fields and outlet streams. Retrieve shaft powers with `getPowerExpander(unit)` and
    `getPowerCompressor(unit)` or inspect efficiencies, head, and Q/N ratios through the getters.
 
-A minimal example:
+A realistic setup that mirrors common plant data collection and map-updating workflows:
 
 ```java
-Stream feed = new Stream("expander feed", thermoSystem);
-TurboExpanderCompressor expComp = new TurboExpanderCompressor("tec", feed);
-expComp.setDesignSpeed(6850.0);
-expComp.setDesignUC(0.7);
-expComp.setDesignQn(0.03328);
-expComp.setCompressorDesignPolytropicHead(20.47);
-// Optional: override reference curves
-expComp.setQNEfficiencycurve(new double[] {0.8, 1.0, 1.2}, new double[] {0.95, 1.0, 0.96});
-expComp.setQNHeadcurve(new double[] {0.8, 1.0, 1.2}, new double[] {0.92, 1.0, 1.05});
-expComp.run();
-double expanderPowerMW = expComp.getPowerExpander("MW");
+TurboExpanderCompressor turboExpanderComp = new TurboExpanderCompressor(
+    "TurboExpanderCompressor", jt_tex_splitter.getSplitStream(0));
+turboExpanderComp.setUCcurve(
+    new double[] {0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
+        0.9552460269880922, 1.0},
+    new double[] {0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364,
+        0.9943181818181818, 1.0});
+turboExpanderComp.setQNEfficiencycurve(
+    new double[] {0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6},
+    new double[] {0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6});
+turboExpanderComp.setQNHeadcurve(
+    new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
+    new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
+turboExpanderComp.setImpellerDiameter(0.424);
+turboExpanderComp.setDesignSpeed(6850.0);
+turboExpanderComp.setExpanderDesignIsentropicEfficiency(0.88);
+turboExpanderComp.setDesignUC(0.7);
+turboExpanderComp.setDesignQn(0.03328);
+turboExpanderComp.setExpanderOutPressure(inp.expander_out_pressure);
+turboExpanderComp.setCompressorDesignPolytropicEfficiency(0.81);
+turboExpanderComp.setCompressorDesignPolytropicHead(20.47);
+turboExpanderComp.setMaximumIGVArea(1.637e4);
+
+// Run the coupled model and retrieve power with unit conversion
+turboExpanderComp.run();
+double expanderPowerMW = turboExpanderComp.getPowerExpander("MW");
+double compressorPowerMW = turboExpanderComp.getPowerCompressor("MW");
 ```
+
+Parameter intent:
+
+- **UC/efficiency curve**: normalizes the velocity ratio \(uc = U / (C \cdot designUC)\) to an
+  efficiency multiplier via a constrained parabola fitted to the supplied points.【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L193-L224】【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L503-L539】
+- **Q/N efficiency curve**: cubic Hermite spline that scales expander and compressor efficiencies
+  against flow coefficient deviations \(Q/N\).【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L195-L223】【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L541-L619】
+- **Q/N head curve**: spline used to scale the compressor polytropic head for off-design flows
+  before applying the \((N/N_{design})^2\) speed law.【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L215-L223】【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L621-L700】
+- **Impeller diameter & design speed**: set the peripheral velocity \(U\) at design, anchoring UC
+  corrections and the Newton iteration for speed matching.【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L182-L224】
+- **Design efficiencies and heads**: base values multiplied by the curve factors to compute actual
+  efficiency/head during each iteration.【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L195-L224】
+- **Design Q/N values**: reference flow coefficients for both expander (`setDesignExpanderQn`) and
+  compressor (`setDesignQn`) used when interpolating the spline multipliers.【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L195-L223】【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L704-L759】
+- **Expander outlet pressure**: target pressure for the isentropic flash that produces the enthalpy
+  drop \(h_s\).【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L182-L214】
+- **IGV geometry**: `setMaximumIGVArea` and optional `setIgvAreaIncreaseFactor` bound the inlet guide
+  vane throat; `IGVopening` is updated automatically per run, but can be preset for sensitivity
+  studies.【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L71-L79】【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L804-L808】【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L871-L892】【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L989-L992】
 
 The same update paths can be invoked during runtime if monitoring identifies drift in the reference
 maps; supplying new curve points and re-running will propagate the new performance predictions.
+
+### IGV handling
+
+IGV opening is computed from the last stage enthalpy drop, mass flow, and volumetric flow each time
+`run` completes. The helper `evaluateIGV` infers density, estimates a nozzle velocity from half the
+stage enthalpy drop, and derives the area needed to pass the flow; the requested opening is the area
+ratio relative to the active throat area. If the required area exceeds the installed IGV area, an
+optional enlargement factor (`setIgvAreaIncreaseFactor`) increases the available area and records
+that the expanded setting is being used. The calculated fraction is capped at 1.0 and exposed via
+`calcIGVOpening`, with the actual open area in mm² available through `calcIGVOpenArea` or
+`getCurrentIGVArea`.【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L779-L808】【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L871-L899】【F:src/main/java/neqsim/process/equipment/expander/TurboExpanderCompressor.java†L973-L1000】
