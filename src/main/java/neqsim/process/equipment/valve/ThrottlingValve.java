@@ -310,11 +310,25 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
           }
         }
       }
-      outStream.setThermoSystem(thermoSystem);
     } catch (Exception ex) {
       logger.error("Valve {} calculation failed, keeping inlet state", getName(), ex);
-      outStream.setThermoSystem(thermoSystem);
+      thermoSystem = inStream.getThermoSystem().clone();
+      thermoSystem.setPressure(outPres, pressureUnit);
+      try {
+        thermoSystem.init(1);
+      } catch (Exception initEx) {
+        logger.error("Fallback initialization failed in valve {}", getName(), initEx);
+      }
     }
+
+    if (thermoSystem == null || Double.isNaN(thermoSystem.getTemperature())
+        || Double.isNaN(thermoSystem.getPressure())) {
+      thermoSystem = inStream.getThermoSystem().clone();
+      thermoSystem.setPressure(outPres, pressureUnit);
+      thermoSystem.init(0);
+    }
+
+    outStream.setThermoSystem(thermoSystem);
 
     setCalculationIdentifier(id);
   }
