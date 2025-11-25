@@ -1341,4 +1341,23 @@ public class TurboExpanderCompressor extends Expander {
   public void setExpanderDesignIsentropicEfficiency(double expanderDesignIsentropicEfficiency) {
     this.expanderDesignIsentropicEfficiency = expanderDesignIsentropicEfficiency;
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMassBalance(String unit) {
+    double expanderBalance = 0.0;
+    double compressorBalance = 0.0;
+
+    if (expanderFeedStream != null && expanderOutletStream != null) {
+      expanderBalance = expanderOutletStream.getFlowRate(unit)
+          - expanderFeedStream.getFlowRate(unit);
+    }
+
+    if (compressorFeedStream != null && compressorOutletStream != null) {
+      compressorBalance = compressorOutletStream.getFlowRate(unit)
+          - compressorFeedStream.getFlowRate(unit);
+    }
+
+    return expanderBalance + compressorBalance;
+  }
 }
