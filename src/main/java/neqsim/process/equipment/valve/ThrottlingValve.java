@@ -283,51 +283,14 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       thermoSystem.setPressure(outStream.getPressure(), pressureUnit);
     }
 
-    try {
-      ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-      if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6
-          || thermoSystem.getTotalNumberOfMoles() < 1e-12 || pressure == 0) {
-        thermoSystem.setPressure(outPres, pressureUnit);
-        thermoOps.TPflash();
-      } else {
-        try {
-          thermoOps.PHflash(enthalpy, 0);
-        } catch (Exception ex) {
-          logger.warn("PH flash failed in valve {} at pressure {}, falling back to TPflash", getName(),
-              thermoSystem.getPressure(pressureUnit), ex);
-          thermoSystem.setPressure(outPres, pressureUnit);
-          try {
-            thermoOps.TPflash();
-          } catch (Exception tpEx) {
-            logger.error("TP flash fallback failed in valve {}, using simplified initialization", getName(),
-                tpEx);
-            try {
-              thermoSystem.init(1);
-            } catch (Exception initEx) {
-              logger.error("Simplified initialization failed in valve {}", getName(), initEx);
-            }
-            thermoSystem.setPressure(outPres, pressureUnit);
-          }
-        }
-      }
-    } catch (Exception ex) {
-      logger.error("Valve {} calculation failed, keeping inlet state", getName(), ex);
-      thermoSystem = inStream.getThermoSystem().clone();
+    ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+    if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6
+        || thermoSystem.getTotalNumberOfMoles() < 1e-12 || pressure == 0) {
       thermoSystem.setPressure(outPres, pressureUnit);
-      try {
-        thermoSystem.init(1);
-      } catch (Exception initEx) {
-        logger.error("Fallback initialization failed in valve {}", getName(), initEx);
-      }
+      thermoOps.TPflash();
+    } else {
+      thermoOps.PHflash(enthalpy, 0);
     }
-
-    if (thermoSystem == null || Double.isNaN(thermoSystem.getTemperature())
-        || Double.isNaN(thermoSystem.getPressure())) {
-      thermoSystem = inStream.getThermoSystem().clone();
-      thermoSystem.setPressure(outPres, pressureUnit);
-      thermoSystem.init(0);
-    }
-
     outStream.setThermoSystem(thermoSystem);
 
     setCalculationIdentifier(id);
