@@ -1253,6 +1253,81 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Get a formatted mass balance report for this process system.
+   *
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @return a formatted string report with mass balance results
+   */
+  public String getMassBalanceReport(String unit) {
+    StringBuilder report = new StringBuilder();
+    report.append("Process: ").append(getName()).append("\n");
+    report.append(String.format("%0" + 60 + "d", 0).replace('0', '=')).append("\n");
+
+    Map<String, MassBalanceResult> results = checkMassBalance(unit);
+    if (results.isEmpty()) {
+      report.append("No unit operations found.\n");
+    } else {
+      for (Map.Entry<String, MassBalanceResult> entry : results.entrySet()) {
+        report.append(String.format("  %-30s: %s\n", entry.getKey(), entry.getValue().toString()));
+      }
+    }
+    return report.toString();
+  }
+
+  /**
+   * Get a formatted mass balance report for this process system using kg/sec.
+   *
+   * @return a formatted string report with mass balance results
+   */
+  public String getMassBalanceReport() {
+    return getMassBalanceReport("kg/sec");
+  }
+
+  /**
+   * Get a formatted report of failed mass balance checks for this process system.
+   *
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @param percentThreshold percentage error threshold
+   * @return a formatted string report with failed unit operations
+   */
+  public String getFailedMassBalanceReport(String unit, double percentThreshold) {
+    StringBuilder report = new StringBuilder();
+    Map<String, MassBalanceResult> failedResults = getFailedMassBalance(unit, percentThreshold);
+
+    if (failedResults.isEmpty()) {
+      report.append("All unit operations passed mass balance check.\n");
+    } else {
+      report.append("Process: ").append(getName()).append("\n");
+      report.append(String.format("%0" + 60 + "d", 0).replace('0', '=')).append("\n");
+      for (Map.Entry<String, MassBalanceResult> entry : failedResults.entrySet()) {
+        report.append(String.format("  %-30s: %s\n", entry.getKey(), entry.getValue().toString()));
+      }
+    }
+    return report.toString();
+  }
+
+  /**
+   * Get a formatted report of failed mass balance checks for this process system using kg/sec and
+   * default threshold.
+   *
+   * @return a formatted string report with failed unit operations
+   */
+  public String getFailedMassBalanceReport() {
+    return getFailedMassBalanceReport("kg/sec", massBalanceErrorThreshold);
+  }
+
+  /**
+   * Get a formatted report of failed mass balance checks for this process system using specified
+   * threshold.
+   *
+   * @param percentThreshold percentage error threshold
+   * @return a formatted string report with failed unit operations in kg/sec
+   */
+  public String getFailedMassBalanceReport(double percentThreshold) {
+    return getFailedMassBalanceReport("kg/sec", percentThreshold);
+  }
+
+  /**
    * Set the default mass balance error threshold for this process system.
    *
    * @param percentThreshold percentage error threshold (e.g., 0.1 for 0.1%)
