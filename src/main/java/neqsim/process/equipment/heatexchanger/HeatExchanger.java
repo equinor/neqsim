@@ -774,7 +774,14 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   private void alignOutStreamFlowRates() {
     for (int i = 0; i < outStream.length; i++) {
       if (outStream[i] != null && inStream[i] != null) {
-        outStream[i].setFlowRate(inStream[i].getFlowRate("kg/sec"), "kg/sec");
+        double inFlowRate = inStream[i].getFlowRate("kg/sec");
+        if (!Double.isFinite(inFlowRate)) {
+          continue;
+        }
+        if (outStream[i].getThermoSystem().getTotalNumberOfMoles() < 0.0) {
+          outStream[i].getThermoSystem().setTotalNumberOfMoles(0.0);
+        }
+        outStream[i].setFlowRate(Math.max(0.0, inFlowRate), "kg/sec");
       }
     }
   }
