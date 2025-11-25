@@ -240,6 +240,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     testOps.PHflash(enthalpyOutRef);
     System.out.println("out temperature " + systemOut0.getTemperature("C"));
     outStream[nonOutStreamSpecifiedStreamNumber].setFluid(systemOut0);
+    alignOutStreamFlowRates();
   }
 
   /**
@@ -324,6 +325,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
 
       UAvalue = dEntalphy / (outStream[streamToSet].getThermoSystem().getTemperature()
           - inStream[streamToSet].getThermoSystem().getTemperature());
+
+      alignOutStreamFlowRates();
     }
 
     setCalculationIdentifier(id);
@@ -421,6 +424,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
       }
       duty = dEntalphy;
       hotColdDutyBalance = 1.0;
+      alignOutStreamFlowRates();
       // outStream[0].displayResult();
       // outStream[1].displayResult();
       // System.out.println("temperatur Stream 1 out " +
@@ -765,5 +769,13 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   public void setDeltaT(double deltaT) {
     useDeltaT = true;
     this.deltaT = deltaT;
+  }
+
+  private void alignOutStreamFlowRates() {
+    for (int i = 0; i < outStream.length; i++) {
+      if (outStream[i] != null && inStream[i] != null) {
+        outStream[i].setFlowRate(inStream[i].getFlowRate("kg/sec"), "kg/sec");
+      }
+    }
   }
 }
