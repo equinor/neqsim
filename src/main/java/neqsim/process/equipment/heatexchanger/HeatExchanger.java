@@ -431,8 +431,17 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         testOps.PHflash(inStream[streamToSet].getThermoSystem().getEnthalpy() + dEntalphy, 0);
       }
       hotColdDutyBalance = 1.0;
-      alignOutStreamFlowRates();
-      updateHeatTransferBalance();
+      try {
+        alignOutStreamFlowRates();
+        updateHeatTransferBalance();
+      } catch (Exception e) {
+        // If alignment fails due to negative moles, reset outstreams to instreams
+        for (int i = 0; i < 2; i++) {
+          outStream[i].setFluid(inStream[i].getThermoSystem().clone());
+          outStream[i].setFlowRate(inStream[i].getFlowRate("kg/sec"), "kg/sec");
+        }
+        updateHeatTransferBalance();
+      }
       // outStream[0].displayResult();
       // outStream[1].displayResult();
       // System.out.println("temperatur Stream 1 out " +
@@ -803,11 +812,20 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         if (!Double.isFinite(inFlowRate)) {
           continue;
         }
-        if (outStream[i].getThermoSystem().getTotalNumberOfMoles() < 0.0) {
-          outStream[i].getThermoSystem().setTotalNumberOfMoles(1e-20);
+        try {
+          outStream[i].setFlowRate(Math.max(0.0, inFlowRate), "kg/sec");
+          outStream[i].run();
+        } catch (Exception e) {
+          // If flow rate setting fails due to negative moles, reinitialize from inlet stream
+          try {
+            outStream[i].setFluid(inStream[i].getThermoSystem().clone());
+            outStream[i].setFlowRate(Math.max(0.0, inFlowRate), "kg/sec");
+            outStream[i].run();
+          } catch (Exception e2) {
+            // Last resort: skip this stream alignment
+            continue;
+          }
         }
-        outStream[i].setFlowRate(Math.max(1e-20, inFlowRate), "kg/sec");
-        outStream[i].run();
       }
     }
   }
