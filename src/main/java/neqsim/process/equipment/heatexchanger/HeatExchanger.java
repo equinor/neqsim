@@ -806,7 +806,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         if (outStream[i].getThermoSystem().getTotalNumberOfMoles() < 0.0) {
           outStream[i].getThermoSystem().setTotalNumberOfMoles(1e-20);
         }
-        outStream[i].setFlowRate(Math.max(0.0, inFlowRate), "kg/sec");
+        outStream[i].setFlowRate(Math.max(1e-20, inFlowRate), "kg/sec");
         outStream[i].run();
       }
     }
