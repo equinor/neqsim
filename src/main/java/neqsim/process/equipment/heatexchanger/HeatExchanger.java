@@ -241,6 +241,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     System.out.println("out temperature " + systemOut0.getTemperature("C"));
     outStream[nonOutStreamSpecifiedStreamNumber].setFluid(systemOut0);
     alignOutStreamFlowRates();
+    updateHeatTransferBalance();
   }
 
   /**
@@ -283,8 +284,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
       outStream[streamToSet].run(id);
       double dEntalphy1 = outStream[streamToSet].getThermoSystem().getEnthalpy()
           - inStream[streamToSet].getThermoSystem().getEnthalpy();
-      double C1 = Math.abs(dEntalphy1) / Math.abs((outStream[streamToSet].getThermoSystem().getTemperature()
-          - inStream[streamToSet].getThermoSystem().getTemperature()));
+      double deltaTStream1 = outStream[streamToSet].getThermoSystem().getTemperature()
+          - inStream[streamToSet].getThermoSystem().getTemperature();
+      double C1 = Math.abs(dEntalphy1) / Math.max(1e-10, Math.abs(deltaTStream1));
 
       outStream[streamToCalculate].setTemperature(
           inStream[streamToSet].getThermoSystem().getTemperature() - sign * deltaT, "K");
@@ -294,9 +296,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
       outStream[streamToCalculate].run(id);
       double dEntalphy2 = outStream[streamToCalculate].getThermoSystem().getEnthalpy()
           - inStream[streamToCalculate].getThermoSystem().getEnthalpy();
-      double C2 = Math.abs(dEntalphy2)
-          / Math.abs(outStream[streamToCalculate].getThermoSystem().getTemperature()
-              - inStream[streamToCalculate].getThermoSystem().getTemperature());
+      double deltaTStream2 = outStream[streamToCalculate].getThermoSystem().getTemperature()
+          - inStream[streamToCalculate].getThermoSystem().getTemperature();
+      double C2 = Math.abs(dEntalphy2) / Math.max(1e-10, Math.abs(deltaTStream2));
       double Cmin = C1;
       double Cmax = C2;
       if (C2 < C1) {
@@ -320,13 +322,16 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         testOps = new ThermodynamicOperations(outStream[streamToSet].getThermoSystem());
         testOps.PHflash(inStream[streamToSet].getThermoSystem().getEnthalpy() + dEntalphy, 0);
       }
-      duty = dEntalphy;
       hotColdDutyBalance = 1.0;
 
-      UAvalue = dEntalphy / (outStream[streamToSet].getThermoSystem().getTemperature()
-          - inStream[streamToSet].getThermoSystem().getTemperature());
+      double uaDeltaT = outStream[streamToSet].getThermoSystem().getTemperature()
+          - inStream[streamToSet].getThermoSystem().getTemperature();
+      if (Math.abs(uaDeltaT) > 1e-10) {
+        UAvalue = dEntalphy / uaDeltaT;
+      }
 
       alignOutStreamFlowRates();
+      updateHeatTransferBalance();
     }
 
     setCalculationIdentifier(id);
@@ -378,8 +383,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
       outStream[streamToSet].run(id);
       double dEntalphy1 = outStream[streamToSet].getThermoSystem().getEnthalpy()
           - inStream[streamToSet].getThermoSystem().getEnthalpy();
-      double C1 = Math.abs(dEntalphy1) / Math.abs((outStream[streamToSet].getThermoSystem().getTemperature()
-          - inStream[streamToSet].getThermoSystem().getTemperature()));
+      double deltaTStream1 = outStream[streamToSet].getThermoSystem().getTemperature()
+          - inStream[streamToSet].getThermoSystem().getTemperature();
+      double C1 = Math.abs(dEntalphy1) / Math.max(1e-10, Math.abs(deltaTStream1));
 
       outStream[streamToCalculate]
           .setTemperature(inStream[streamToSet].getThermoSystem().getTemperature(), "K");
@@ -389,9 +395,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
       outStream[streamToCalculate].run(id);
       double dEntalphy2 = outStream[streamToCalculate].getThermoSystem().getEnthalpy()
           - inStream[streamToCalculate].getThermoSystem().getEnthalpy();
-      double C2 = Math.abs(dEntalphy2)
-          / Math.abs(outStream[streamToCalculate].getThermoSystem().getTemperature()
-              - inStream[streamToCalculate].getThermoSystem().getTemperature());
+      double deltaTStream2 = outStream[streamToCalculate].getThermoSystem().getTemperature()
+          - inStream[streamToCalculate].getThermoSystem().getTemperature();
+      double C2 = Math.abs(dEntalphy2) / Math.max(1e-10, Math.abs(deltaTStream2));
       double Cmin = C1;
       double Cmax = C2;
       if (C2 < C1) {
@@ -422,9 +428,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         testOps = new ThermodynamicOperations(outStream[streamToSet].getThermoSystem());
         testOps.PHflash(inStream[streamToSet].getThermoSystem().getEnthalpy() + dEntalphy, 0);
       }
-      duty = dEntalphy;
       hotColdDutyBalance = 1.0;
       alignOutStreamFlowRates();
+      updateHeatTransferBalance();
       // outStream[0].displayResult();
       // outStream[1].displayResult();
       // System.out.println("temperatur Stream 1 out " +
@@ -769,6 +775,27 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   public void setDeltaT(double deltaT) {
     useDeltaT = true;
     this.deltaT = deltaT;
+  }
+
+  /**
+   * Update duty and hot/cold balance based on both streams to ensure consistent mass and
+   * energy accounting.
+   */
+  private void updateHeatTransferBalance() {
+    double dutyStream0 = outStream[0].getThermoSystem().getEnthalpy()
+        - inStream[0].getThermoSystem().getEnthalpy();
+    double dutyStream1 = outStream[1].getThermoSystem().getEnthalpy()
+        - inStream[1].getThermoSystem().getEnthalpy();
+
+    duty = 0.5 * (dutyStream0 - dutyStream1);
+
+    double coldDutyAbs = Math.abs(dutyStream0);
+    double hotDutyAbs = Math.abs(dutyStream1);
+    if (coldDutyAbs > 1e-12 && hotDutyAbs > 1e-12) {
+      hotColdDutyBalance = coldDutyAbs / hotDutyAbs;
+    } else {
+      hotColdDutyBalance = 1.0;
+    }
   }
 
   private void alignOutStreamFlowRates() {
