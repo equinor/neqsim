@@ -1233,6 +1233,34 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  public void testMassBalanceReportGeneration() {
+    neqsim.thermo.system.SystemInterface fluid1 =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid1.addComponent("methane", 1.0);
+    fluid1.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+
+    Stream stream1 = new Stream("Stream1", fluid1);
+    stream1.setFlowRate(100.0, "kg/hr");
+    stream1.setTemperature(25.0, "C");
+    stream1.setPressure(10.0, "bara");
+
+    Separator separator = new Separator("Separator1", stream1);
+
+    process.add(stream1);
+    process.add(separator);
+    process.run();
+
+    String report = process.getMassBalanceReport("kg/hr");
+    assertTrue(report.contains("Process:"));
+    assertTrue(report.contains("Separator1"));
+
+    String failedReport = process.getFailedMassBalanceReport("kg/hr", 0.1);
+    assertTrue(failedReport.contains("All unit operations passed mass balance check."));
+  }
+
+  @Test
   public void testMassBalanceComplexProcess() {
     // Test mass balance on a more complex process with multiple units
     neqsim.thermo.system.SystemInterface fluid1 =
