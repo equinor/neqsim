@@ -233,4 +233,15 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
 
     setCalculationIdentifier(id);
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMassBalance(String unit) {
+    if (fuelInlet == null || airInlet == null || outletStream == null) {
+      return Double.NaN;
+    }
+
+    double inletMass = fuelInlet.getFlowRate(unit) + airInlet.getFlowRate(unit);
+    return outletStream.getFlowRate(unit) - inletMass;
+  }
 }
