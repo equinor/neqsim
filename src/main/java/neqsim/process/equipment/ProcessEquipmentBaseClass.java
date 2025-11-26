@@ -262,6 +262,12 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public double getMassBalance() {
+    return getMassBalance("kg/sec");
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getExergyChange(String unit, double surroundingTemperature) {
     return 0.0;
   }

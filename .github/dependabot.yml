@@ -1,0 +1,35 @@
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    allow:
+      - dependency-type: "direct"
+    reviewers:
+      - "equinor/security-team"
+    # Labels help routing and automation
+    labels:
+      - "security"
+      - "dependencies"
+    # Use groups to bundle related updates (e.g., logging libs) if desired later.
+    # groups:
+    #   logging:
+    #     patterns:
+    #       - "org.apache.logging.log4j*"
+
+  # (Optional future) GitHub Actions ecosystem
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:30"
+      timezone: "UTC"
+    labels:
+      - "security"
+      - "dependencies"

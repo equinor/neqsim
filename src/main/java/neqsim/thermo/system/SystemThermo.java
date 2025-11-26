@@ -18,6 +18,7 @@ import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterfa
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.characterization.Characterise;
+import neqsim.thermo.characterization.OilAssayCharacterisation;
 import neqsim.thermo.characterization.WaxCharacterise;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
@@ -144,6 +145,7 @@ public abstract class SystemThermo implements SystemInterface {
   private double totalNumberOfMoles = 0;
   private boolean useTVasIndependentVariables = false;
   protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null;
+  protected transient OilAssayCharacterisation oilAssayCharacterisation = null;
 
   /**
    * <p>
@@ -1410,8 +1412,14 @@ public abstract class SystemThermo implements SystemInterface {
       // interfaceProp.clone();
     }
     clonedSystem.characterization = characterization.clone();
-    if (clonedSystem.waxCharacterisation != null) {
+    if (waxCharacterisation != null) {
       clonedSystem.waxCharacterisation = waxCharacterisation.clone();
+    }
+    if (oilAssayCharacterisation != null) {
+      clonedSystem.oilAssayCharacterisation = oilAssayCharacterisation.clone();
+      clonedSystem.oilAssayCharacterisation.setThermoSystem(clonedSystem);
+      clonedSystem.oilAssayCharacterisation
+          .setTotalAssayMass(oilAssayCharacterisation.getTotalAssayMass());
     }
 
     System.arraycopy(this.beta, 0, clonedSystem.beta, 0, beta.length);
@@ -1433,12 +1441,18 @@ public abstract class SystemThermo implements SystemInterface {
       resetDatabase();
     }
 
+    int numberOfComponentsInPhase = getPhase(0).getNumberOfComponents();
+    if (numberOfComponentsInPhase == 0) {
+      logger.debug("Skipping database population – no components available in phase 0");
+      return;
+    }
+
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       String names = new String();
-      for (int k = 0; k < getPhase(0).getNumberOfComponents() - 1; k++) {
+      for (int k = 0; k < numberOfComponentsInPhase - 1; k++) {
         names += "'" + this.getComponentNames()[k] + "', ";
       }
-      names += "'" + this.getComponentNames()[getPhase(0).getNumberOfComponents() - 1] + "'";
+      names += "'" + this.getComponentNames()[numberOfComponentsInPhase - 1] + "'";
 
       if (NeqSimDataBase.createTemporaryTables()) {
         database.execute("insert into comptemp SELECT * FROM comp WHERE name IN (" + names + ")");
@@ -2241,17 +2255,28 @@ public abstract class SystemThermo implements SystemInterface {
 
     SystemInterface newSystem = this.clone();
 
+    double totalMolesInSystem = 0.0;
+    double scaleFactor = 1.0e30;
+
     for (int j = 0; j < getMaxNumberOfPhases(); j++) {
       phaseNumber = j;
+      double phaseMoles = 0.0;
       for (int i = 0; i < getPhase(j).getNumberOfComponents(); i++) {
-        newSystem.getPhase(j).getComponent(i).setNumberOfmoles(
-            getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase() / 1.0e30);
-        newSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(
-            getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase() / 1.0e30);
+        double scaledMoles =
+            getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase() / scaleFactor;
+        newSystem.getPhase(j).getComponent(i).setNumberOfmoles(scaledMoles);
+        newSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(scaledMoles);
+        phaseMoles += scaledMoles;
       }
+      totalMolesInSystem += phaseMoles;
     }
 
-    newSystem.setTotalNumberOfMoles(getPhase(phaseNumber).getNumberOfMolesInPhase() / 1.0e30);
+    if (totalMolesInSystem <= 0.0) {
+      totalMolesInSystem = 1.0e-50;
+    }
+
+    newSystem.setTotalNumberOfMoles(totalMolesInSystem);
+    ((SystemThermo) newSystem).isInitialized = false;
 
     newSystem.init(0);
     // newSystem.init(1);
@@ -2809,6 +2834,26 @@ public abstract class SystemThermo implements SystemInterface {
 
     for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
       comp[compNumb] = phase.getComponent(compNumb).getz();
+    }
+    return comp;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[] getWeightBasedComposition() {
+    PhaseInterface phase = this.getPhase(0);
+    double[] comp = new double[phase.getNumberOfComponents()];
+
+    double totalMass = 0.0;
+    for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
+      totalMass +=
+          phase.getComponent(compNumb).getz() * phase.getComponent(compNumb).getMolarMass();
+    }
+
+    for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
+      comp[compNumb] =
+          phase.getComponent(compNumb).getz() * phase.getComponent(compNumb).getMolarMass()
+              / totalMass;
     }
     return comp;
   }
@@ -3414,6 +3459,15 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public double getVolumeFraction(int phaseNumber) {
     return getPhase(phaseNumber).getVolume() / getVolume();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public OilAssayCharacterisation getOilAssayCharacterisation() {
+    if (oilAssayCharacterisation == null) {
+      oilAssayCharacterisation = new OilAssayCharacterisation(this);
+    }
+    return oilAssayCharacterisation;
   }
 
   /** {@inheritDoc} */
@@ -5026,15 +5080,18 @@ public abstract class SystemThermo implements SystemInterface {
    * @param type Type of fluid. Supports "PlusFluid", "Plus" and default.
    */
   private void setMolarFractions(double[] molefractions, String type) {
-    double totalFlow = getTotalNumberOfMoles();
-    if (totalFlow < 1e-100) {
-      String msg = "must be larger than 0 (1e-100) when setting molar composition";
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "setMolarComposition", "totalFlow", msg));
-    }
     double sum = 0;
     for (double value : molefractions) {
       sum += value;
+    }
+    if (sum <= 0) {
+      throw new IllegalArgumentException("Mole fractions must sum to a positive value.");
+    }
+
+    double totalFlow = getTotalNumberOfMoles();
+    if (totalFlow < 1e-100) {
+      throw new RuntimeException(new InvalidInputException(this, "setMolarComposition",
+          "totalFlow", "must be larger than 0 (1e-100) when setting molar composition"));
     }
     setEmptyFluid();
 

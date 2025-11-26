@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.separator.SeparatorInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.MechanicalDesignMarginResult;
 
 /**
  * <p>
@@ -44,6 +45,7 @@ public class SeparatorDesignStandard extends DesignStandard {
   double gasLoadFactor = 0.11;
   private double Fg = 0.8;
   private double volumetricDesignFactor = 1.0;
+  private final MechanicalDesignMarginResult safetyMargins;
 
   /**
    * <p>
@@ -55,13 +57,14 @@ public class SeparatorDesignStandard extends DesignStandard {
    */
   public SeparatorDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
+    safetyMargins = computeSafetyMargins();
     try (neqsim.util.database.NeqSimProcessDesignDataBase database =
         new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
         dataSet = database.getResultSet(
             ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Separator' AND Company='"
-                + standardName + "'"));
+                + resolveCompanyIdentifier() + "'"));
         while (dataSet.next()) {
           String specName = dataSet.getString("SPECIFICATION");
           if (specName.equals("GasLoadFactor")) {
@@ -162,5 +165,17 @@ public class SeparatorDesignStandard extends DesignStandard {
       }
     }
     return retTime;
+  }
+
+  public MechanicalDesignMarginResult getSafetyMargins() {
+    return safetyMargins;
+  }
+
+  private String resolveCompanyIdentifier() {
+    String identifier = equipment != null ? equipment.getCompanySpecificDesignStandards() : null;
+    if (identifier == null || identifier.isEmpty()) {
+      return standardName;
+    }
+    return identifier;
   }
 }

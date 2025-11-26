@@ -33,8 +33,6 @@ public class SystemBnsEosParityTest {
     assertEquals(5.456788345314515, jt, 0.2);
     assertEquals(7.750037498921, density, 0.001);
     assertEquals(411.4566767812817, speed, 1.0);
-
-
   }
 
   @Test
@@ -66,8 +64,6 @@ public class SystemBnsEosParityTest {
     assertEquals(30.73168795781629, cv, 1.0);
     assertEquals(3.800162780643346, jt, 0.1);
     assertEquals(427.91066622776856, speed, 10.0);
-
-
   }
 
   @Test

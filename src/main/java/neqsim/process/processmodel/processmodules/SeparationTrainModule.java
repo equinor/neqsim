@@ -1,7 +1,6 @@
 package neqsim.process.processmodel.processmodules;
 
 import java.util.UUID;
-import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -283,30 +282,29 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     // (ProcessEquipmentBaseClass) operations.getUnit("2nd stage recompressor");
     // tempStr.displayResult();
     // wellStream.displayResult();
-    separationModule.getOperations().getUnit("Inlet separator")
-        .getMechanicalDesign().calcDesign();
-    separationModule.getOperations().getUnit("Inlet separator")
-        .getMechanicalDesign().displayResults();
+    separationModule.getOperations().getUnit("Inlet separator").getMechanicalDesign().calcDesign();
+    separationModule.getOperations().getUnit("Inlet separator").getMechanicalDesign()
+        .displayResults();
 
-    separationModule.getOperations().getUnit("1st stage separator")
-        .getMechanicalDesign().calcDesign();
-    separationModule.getOperations().getUnit("1st stage separator")
-        .getMechanicalDesign().displayResults();
+    separationModule.getOperations().getUnit("1st stage separator").getMechanicalDesign()
+        .calcDesign();
+    separationModule.getOperations().getUnit("1st stage separator").getMechanicalDesign()
+        .displayResults();
 
-    separationModule.getOperations().getUnit("2nd stage Separator")
-        .getMechanicalDesign().calcDesign();
-    separationModule.getOperations().getUnit("2nd stage Separator")
-        .getMechanicalDesign().displayResults();
+    separationModule.getOperations().getUnit("2nd stage Separator").getMechanicalDesign()
+        .calcDesign();
+    separationModule.getOperations().getUnit("2nd stage Separator").getMechanicalDesign()
+        .displayResults();
 
-    separationModule.getOperations().getUnit("3rd stage Separator")
-        .getMechanicalDesign().calcDesign();
-    separationModule.getOperations().getUnit("3rd stage Separator")
-        .getMechanicalDesign().displayResults();
+    separationModule.getOperations().getUnit("3rd stage Separator").getMechanicalDesign()
+        .calcDesign();
+    separationModule.getOperations().getUnit("3rd stage Separator").getMechanicalDesign()
+        .displayResults();
 
-    separationModule.getOperations().getUnit("2nd stage recompressor")
-        .getMechanicalDesign().calcDesign();
-    separationModule.getOperations().getUnit("2nd stage recompressor")
-        .getMechanicalDesign().displayResults();
+    separationModule.getOperations().getUnit("2nd stage recompressor").getMechanicalDesign()
+        .calcDesign();
+    separationModule.getOperations().getUnit("2nd stage recompressor").getMechanicalDesign()
+        .displayResults();
 
     // operations.getSystemMechanicalDesign().runDesignCalculation();
     // operations.getSystemMechanicalDesign().getTotalPlotSpace();

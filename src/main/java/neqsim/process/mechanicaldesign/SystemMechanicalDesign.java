@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -73,18 +72,15 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     for (int i = 0; i < names.size(); i++) {
       try {
         if (!(this.processSystem.getUnit(names.get(i)) == null)) {
-          this.processSystem.getUnit(names.get(i))
-              .initMechanicalDesign();
-          this.processSystem.getUnit(names.get(i))
-              .getMechanicalDesign().calcDesign();
-          totalPlotSpace += this.processSystem.getUnit(names.get(i))
-              .getMechanicalDesign().getModuleHeight()
-              * this.processSystem.getUnit(names.get(i))
-                  .getMechanicalDesign().getModuleLength();
-          totalVolume += this.processSystem.getUnit(names.get(i))
-              .getMechanicalDesign().getVolumeTotal();
-          totalWeight += this.processSystem.getUnit(names.get(i))
-              .getMechanicalDesign().getWeightTotal();
+          this.processSystem.getUnit(names.get(i)).initMechanicalDesign();
+          this.processSystem.getUnit(names.get(i)).getMechanicalDesign().calcDesign();
+          totalPlotSpace += this.processSystem.getUnit(names.get(i)).getMechanicalDesign()
+              .getModuleHeight()
+              * this.processSystem.getUnit(names.get(i)).getMechanicalDesign().getModuleLength();
+          totalVolume +=
+              this.processSystem.getUnit(names.get(i)).getMechanicalDesign().getVolumeTotal();
+          totalWeight +=
+              this.processSystem.getUnit(names.get(i)).getMechanicalDesign().getWeightTotal();
           numberOfModules++;
         }
       } catch (Exception ex) {

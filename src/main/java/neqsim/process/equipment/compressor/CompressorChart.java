@@ -609,4 +609,170 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   public void setMinSpeedCurve(double minSpeedCurve) {
     this.minSpeedCurve = minSpeedCurve;
   }
+
+  /**
+   * <p>
+   * Get the surge flow (minimum flow) at a specific speed.
+   * </p>
+   * <p>
+   * This method finds the compressor curve closest to the specified speed and returns the minimum
+   * flow on that curve. This is useful for single speed compressors where the surge curve is not
+   * active, as well as for multi-speed compressors to get the surge point at a specific speed.
+   * </p>
+   *
+   * @param speed The compressor speed in RPM
+   * @return The surge flow (minimum flow) at the specified speed in m3/hr, or Double.NaN if no
+   *         curves exist
+   */
+  public double getSurgeFlowAtSpeed(double speed) {
+    if (chartValues.isEmpty()) {
+      return Double.NaN;
+    }
+
+    // Find the curve closest to the specified speed
+    CompressorCurve closestCurve = chartValues.get(0);
+    double minSpeedDiff = Math.abs(closestCurve.speed - speed);
+
+    for (CompressorCurve curve : chartValues) {
+      double speedDiff = Math.abs(curve.speed - speed);
+      if (speedDiff < minSpeedDiff) {
+        minSpeedDiff = speedDiff;
+        closestCurve = curve;
+      }
+    }
+
+    // Return the minimum flow on this curve (first element is typically minimum)
+    double minFlow = closestCurve.flow[0];
+    for (double flow : closestCurve.flow) {
+      if (flow < minFlow) {
+        minFlow = flow;
+      }
+    }
+    return minFlow;
+  }
+
+  /**
+   * <p>
+   * Get the surge head (polytropic head at minimum flow) at a specific speed.
+   * </p>
+   * <p>
+   * This method finds the compressor curve closest to the specified speed and returns the
+   * polytropic head at the minimum flow point (surge point) on that curve.
+   * </p>
+   *
+   * @param speed The compressor speed in RPM
+   * @return The surge head at the specified speed in kJ/kg or meter (depending on headUnit), or
+   *         Double.NaN if no curves exist
+   */
+  public double getSurgeHeadAtSpeed(double speed) {
+    if (chartValues.isEmpty()) {
+      return Double.NaN;
+    }
+
+    // Find the curve closest to the specified speed
+    CompressorCurve closestCurve = chartValues.get(0);
+    double minSpeedDiff = Math.abs(closestCurve.speed - speed);
+
+    for (CompressorCurve curve : chartValues) {
+      double speedDiff = Math.abs(curve.speed - speed);
+      if (speedDiff < minSpeedDiff) {
+        minSpeedDiff = speedDiff;
+        closestCurve = curve;
+      }
+    }
+
+    // Find the minimum flow index
+    int minFlowIdx = 0;
+    double minFlow = closestCurve.flow[0];
+    for (int i = 1; i < closestCurve.flow.length; i++) {
+      if (closestCurve.flow[i] < minFlow) {
+        minFlow = closestCurve.flow[i];
+        minFlowIdx = i;
+      }
+    }
+    return closestCurve.head[minFlowIdx];
+  }
+
+  /**
+   * <p>
+   * Get the stone wall flow (maximum flow) at a specific speed.
+   * </p>
+   * <p>
+   * This method finds the compressor curve closest to the specified speed and returns the maximum
+   * flow on that curve (choke limit). This is useful for single speed compressors where the stone
+   * wall curve is not active.
+   * </p>
+   *
+   * @param speed The compressor speed in RPM
+   * @return The stone wall flow (maximum flow) at the specified speed in m3/hr, or Double.NaN if no
+   *         curves exist
+   */
+  public double getStoneWallFlowAtSpeed(double speed) {
+    if (chartValues.isEmpty()) {
+      return Double.NaN;
+    }
+
+    // Find the curve closest to the specified speed
+    CompressorCurve closestCurve = chartValues.get(0);
+    double minSpeedDiff = Math.abs(closestCurve.speed - speed);
+
+    for (CompressorCurve curve : chartValues) {
+      double speedDiff = Math.abs(curve.speed - speed);
+      if (speedDiff < minSpeedDiff) {
+        minSpeedDiff = speedDiff;
+        closestCurve = curve;
+      }
+    }
+
+    // Return the maximum flow on this curve (last element is typically maximum)
+    double maxFlow = closestCurve.flow[0];
+    for (double flow : closestCurve.flow) {
+      if (flow > maxFlow) {
+        maxFlow = flow;
+      }
+    }
+    return maxFlow;
+  }
+
+  /**
+   * <p>
+   * Get the stone wall head (polytropic head at maximum flow) at a specific speed.
+   * </p>
+   * <p>
+   * This method finds the compressor curve closest to the specified speed and returns the
+   * polytropic head at the maximum flow point (choke limit) on that curve.
+   * </p>
+   *
+   * @param speed The compressor speed in RPM
+   * @return The stone wall head at the specified speed in kJ/kg or meter (depending on headUnit),
+   *         or Double.NaN if no curves exist
+   */
+  public double getStoneWallHeadAtSpeed(double speed) {
+    if (chartValues.isEmpty()) {
+      return Double.NaN;
+    }
+
+    // Find the curve closest to the specified speed
+    CompressorCurve closestCurve = chartValues.get(0);
+    double minSpeedDiff = Math.abs(closestCurve.speed - speed);
+
+    for (CompressorCurve curve : chartValues) {
+      double speedDiff = Math.abs(curve.speed - speed);
+      if (speedDiff < minSpeedDiff) {
+        minSpeedDiff = speedDiff;
+        closestCurve = curve;
+      }
+    }
+
+    // Find the maximum flow index
+    int maxFlowIdx = 0;
+    double maxFlow = closestCurve.flow[0];
+    for (int i = 1; i < closestCurve.flow.length; i++) {
+      if (closestCurve.flow[i] > maxFlow) {
+        maxFlow = closestCurve.flow[i];
+        maxFlowIdx = i;
+      }
+    }
+    return closestCurve.head[maxFlowIdx];
+  }
 }

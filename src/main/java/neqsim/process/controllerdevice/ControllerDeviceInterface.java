@@ -189,6 +189,49 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
 
   /**
    * <p>
+   * Auto tune controller using ultimate gain and period from a closed-loop test with optional
+   * derivative tuning.
+   * </p>
+   *
+   * @param ultimateGain Ultimate gain where oscillations start
+   * @param ultimatePeriod Ultimate period of sustained oscillations [s]
+   * @param tuneDerivative true to tune derivative action, false to tune PI only
+   */
+  public default void autoTune(double ultimateGain, double ultimatePeriod, boolean tuneDerivative) {
+    autoTune(ultimateGain, ultimatePeriod);
+  }
+
+  /** Available tuning rules for step-response based auto-tuning. */
+  public static enum StepResponseTuningMethod {
+    /** Original Ziegler-Nichols-inspired correlations used historically in NeqSim. */
+    CLASSIC,
+    /** Skogestad Internal Model Control (SIMC) correlations. */
+    SIMC
+  }
+
+  /**
+   * <p>
+   * Select the tuning correlations that should be used when calling one of the step response
+   * auto-tuning helpers.
+   * </p>
+   *
+   * @param method tuning rule to use
+   */
+  public default void setStepResponseTuningMethod(StepResponseTuningMethod method) {}
+
+  /**
+   * <p>
+   * Retrieve the currently selected step-response tuning correlations.
+   * </p>
+   *
+   * @return the active tuning method
+   */
+  public default StepResponseTuningMethod getStepResponseTuningMethod() {
+    return StepResponseTuningMethod.CLASSIC;
+  }
+
+  /**
+   * <p>
    * Auto tune controller from an open-loop step response using process gain, time constant and
    * dead time.
    * </p>
@@ -199,6 +242,48 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
    */
   public default void autoTuneStepResponse(double processGain, double timeConstant,
       double deadTime) {}
+
+  /**
+   * <p>
+   * Auto tune controller from an open-loop step response using process gain, time constant and
+   * dead time with optional derivative tuning.
+   * </p>
+   *
+   * @param processGain Process gain from step response
+   * @param timeConstant Process time constant [s]
+   * @param deadTime Process dead time [s]
+   * @param tuneDerivative true to tune derivative action, false to tune PI only
+   */
+  public default void autoTuneStepResponse(double processGain, double timeConstant, double deadTime,
+      boolean tuneDerivative) {
+    autoTuneStepResponse(processGain, timeConstant, deadTime);
+  }
+
+  /**
+   * <p>
+   * Automatically tune the controller parameters using the recorded controller event log. The
+   * implementation typically analyses a previously executed step test and estimates the process
+   * dynamics before calculating PID settings.
+   * </p>
+   *
+   * @return {@code true} if tuning succeeded, otherwise {@code false}
+   */
+  public default boolean autoTuneFromEventLog() {
+    return false;
+  }
+
+  /**
+   * <p>
+   * Automatically tune the controller parameters using the recorded controller event log with the
+   * option to omit derivative tuning.
+   * </p>
+   *
+   * @param tuneDerivative true to tune derivative action, false to tune PI only
+   * @return {@code true} if tuning succeeded, otherwise {@code false}
+   */
+  public default boolean autoTuneFromEventLog(boolean tuneDerivative) {
+    return autoTuneFromEventLog();
+  }
 
   /**
    * <p>

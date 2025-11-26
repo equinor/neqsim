@@ -5,6 +5,7 @@ import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.characterization.OilAssayCharacterisation;
 import neqsim.thermo.characterization.PseudoComponentCombiner;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
@@ -1143,6 +1144,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double[] getMolarComposition();
 
   /**
+   * <p>
+   * Returns the overall composition vector in unit mass fraction.
+   * </p>
+   *
+   * @return an array of type double
+   */
+  public double[] getWeightBasedComposition();
+
+  /**
    * Get molar mass of system.
    *
    * @return molar mass in unit kg/mol
@@ -1610,6 +1620,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return volume fraction
    */
   public double getVolumeFraction(int phaseNumber);
+
+  /**
+   * <p>
+   * getOilAssayCharacterisation.
+   * </p>
+   *
+   * @return a {@link neqsim.thermo.characterization.OilAssayCharacterisation} object
+   */
+  public OilAssayCharacterisation getOilAssayCharacterisation();
 
   /**
    * <p>
@@ -2762,5 +2781,4 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return a double
    */
   public double calculateMolarMassFromDensityAndBoilingPoint(double density, double boilingPoint);
-
 }

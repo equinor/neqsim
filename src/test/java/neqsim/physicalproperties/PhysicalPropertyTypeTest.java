@@ -1,7 +1,9 @@
 package neqsim.physicalproperties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
+import neqsim.util.exception.InvalidInputException;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -24,6 +26,10 @@ public class PhysicalPropertyTypeTest {
     assertEquals(PhysicalPropertyType.byName("conductivity"),
         PhysicalPropertyType.THERMAL_CONDUCTIVITY);
     assertEquals(PhysicalPropertyType.byName("viscosity"), PhysicalPropertyType.DYNAMIC_VISCOSITY);
+
+    RuntimeException ex = assertThrows(RuntimeException.class,
+        () -> PhysicalPropertyType.byName(null), "null input should be rejected");
+    assertEquals(InvalidInputException.class, ex.getCause().getClass());
   }
 
   @Test

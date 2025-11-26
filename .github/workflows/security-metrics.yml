@@ -1,0 +1,98 @@
+name: Security Metrics Badge
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # hourly refresh
+  workflow_dispatch:
+  push:
+    branches: [ "master" ]
+    paths:
+      - '.github/workflows/security-metrics.yml'
+
+permissions:
+  contents: write  # need write to commit updated JSON
+  security-events: read
+  actions: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    if: false  # Workflow disabled
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Fetch CodeQL Alerts
+        id: codeql
+        run: |
+          curl -s -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/code-scanning/alerts?state=open&per_page=100" > codeql.json
+          echo "count=$(jq '[.[] | select(.state=="open")] | length' codeql.json)" >> $GITHUB_OUTPUT
+
+      - name: Fetch Dependabot Alerts
+        id: dependabot
+        run: |
+          curl -s -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/dependabot/alerts?state=open&per_page=100" > dependabot.json
+          echo "count=$(jq '[.[] | select(.state=="open")] | length' dependabot.json)" >> $GITHUB_OUTPUT
+
+      - name: Compose metrics JSON
+        run: |
+          codeql=${{ steps.codeql.outputs.count }}
+          dependabot=${{ steps.dependabot.outputs.count }}
+          total=$(( codeql + dependabot ))
+          color="green"
+          if [ "$total" -gt 0 ]; then color="yellow"; fi
+          if [ "$total" -gt 5 ]; then color="orange"; fi
+          if [ "$total" -gt 15 ]; then color="red"; fi
+          echo "Total alerts: $total (codeql=$codeql dependabot=$dependabot color=$color)"
+          # Secrets scanning alerts API requires GHAS enterprise token; skipping if unavailable.
+          cat > security-metrics.json <<EOF
+          {
+            "schemaVersion": 1,
+            "label": "sec alerts",
+            "message": "${total}",
+            "color": "${color}",
+            "details": {
+              "codeql_open": "${codeql}",
+              "dependabot_open": "${dependabot}"
+            }
+          }
+          EOF
+
+      - name: Compose dependabot-only JSON
+        run: |
+          dep=${{ steps.dependabot.outputs.count }}
+          color="green"
+          if [ "$dep" -gt 0 ]; then color="orange"; fi
+          if [ "$dep" -gt 5 ]; then color="red"; fi
+          cat > dependabot-metrics.json <<EOF
+          {
+            "schemaVersion": 1,
+            "label": "dep vulns",
+            "message": "${dep}",
+            "color": "${color}"
+          }
+          EOF
+
+      - name: Upload artifact (for debugging)
+        uses: actions/upload-artifact@v5
+        with:
+          name: security-metrics
+          path: security-metrics.json
+
+      - name: Commit metrics JSON (skip CI)
+        if: github.ref == 'refs/heads/master'
+        run: |
+          mkdir -p .github/metrics
+          cp security-metrics.json .github/metrics/security-metrics.json
+          cp dependabot-metrics.json .github/metrics/dependabot-metrics.json
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .github/metrics/security-metrics.json .github/metrics/dependabot-metrics.json
+          if git diff --cached --quiet; then
+            echo "No changes in metrics JSON"
+          else
+            git commit -m "chore: update security metrics badge JSON [skip ci]"
+            git push origin HEAD:master
+          fi

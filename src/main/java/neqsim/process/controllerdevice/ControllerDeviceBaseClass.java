@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.function.ToDoubleFunction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
@@ -52,6 +53,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double Kp = 1.0;
   private double Ti = 300.0;
   private double Td = 0.0;
+  private StepResponseTuningMethod stepResponseTuningMethod = StepResponseTuningMethod.CLASSIC;
   // Internal state of integration contribution
   private double TintValue = 0.0;
   private double derivativeState = 0.0;
@@ -149,7 +151,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     double derivative = 0.0;
     double delta = 0.0;
 
-    if (unit == null || unit.isEmpty() || unit.equals("[?]")) {
+    boolean usesDefaultUnit = unit == null || unit.isEmpty() || unit.equals("[?]");
+
+    if (usesDefaultUnit) {
       double measurementPercent = transmitter.getMeasuredPercentValue();
       double setPointPercent = (controllerSetPoint - transmitter.getMinimumValue())
           / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100.0;
@@ -201,11 +205,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
           TintValue -= TintIncrement;
         }
       }
-
-      eventLog
-          .add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
     }
 
+    eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
     calcIdentifier = id;
   }
 
@@ -373,11 +375,34 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     }
   }
 
+  @Override
+  public void setStepResponseTuningMethod(StepResponseTuningMethod method) {
+    if (method == null) {
+      this.stepResponseTuningMethod = StepResponseTuningMethod.CLASSIC;
+    } else {
+      this.stepResponseTuningMethod = method;
+    }
+  }
+
+  @Override
+  public StepResponseTuningMethod getStepResponseTuningMethod() {
+    return stepResponseTuningMethod;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void autoTune(double ultimateGain, double ultimatePeriod) {
+    autoTune(ultimateGain, ultimatePeriod, true);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoTune(double ultimateGain, double ultimatePeriod, boolean tuneDerivative) {
     if (ultimateGain > 0 && ultimatePeriod > 0) {
-      setControllerParameters(0.6 * ultimateGain, 0.5 * ultimatePeriod, 0.125 * ultimatePeriod);
+      double kp = 0.6 * ultimateGain;
+      double ti = 0.5 * ultimatePeriod;
+      double td = tuneDerivative ? 0.125 * ultimatePeriod : 0.0;
+      setControllerParameters(kp, ti, td);
     } else {
       logger.warn("Invalid ultimate gain or period for auto tune.");
     }
@@ -386,14 +411,140 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   /** {@inheritDoc} */
   @Override
   public void autoTuneStepResponse(double processGain, double timeConstant, double deadTime) {
-    if (processGain != 0.0 && timeConstant > 0 && deadTime > 0) {
-      double Kp = 1.2 / processGain * (timeConstant / deadTime);
-      double Ti = 2.0 * deadTime;
-      double Td = 0.5 * deadTime;
-      setControllerParameters(Kp, Ti, Td);
-    } else {
+    autoTuneStepResponse(processGain, timeConstant, deadTime, true);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoTuneStepResponse(double processGain, double timeConstant, double deadTime,
+      boolean tuneDerivative) {
+    if (processGain == 0.0 || timeConstant <= 0.0) {
       logger.warn("Invalid step response parameters for auto tune.");
+      return;
     }
+
+    double kp;
+    double ti;
+    double td = 0.0;
+
+    if (stepResponseTuningMethod == StepResponseTuningMethod.SIMC) {
+      double theta = Math.max(deadTime, 1.0e-6);
+      double lambda = Math.max(theta, timeConstant / 4.0);
+
+      if (tuneDerivative) {
+        double halfTheta = 0.5 * theta;
+        kp = (timeConstant + halfTheta) / (lambda + halfTheta) / processGain;
+        ti = timeConstant + halfTheta;
+        double denominator = 2.0 * timeConstant + theta;
+        td = denominator > 0.0 ? timeConstant * theta / denominator : 0.0;
+      } else {
+        kp = timeConstant / (lambda + theta) / processGain;
+        ti = Math.min(timeConstant, 4.0 * (lambda + theta));
+      }
+    } else {
+      double theta = deadTime;
+      if (theta <= 0.0) {
+        logger.warn("Invalid dead time for classic step response auto tune.");
+        return;
+      }
+      kp = 1.2 / processGain * (timeConstant / theta);
+      ti = 2.0 * theta;
+      td = tuneDerivative ? 0.5 * theta : 0.0;
+    }
+
+    setControllerParameters(kp, ti, td);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean autoTuneFromEventLog() {
+    return autoTuneFromEventLog(true);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean autoTuneFromEventLog(boolean tuneDerivative) {
+    if (eventLog.size() < 5) {
+      logger.warn("Insufficient controller events for auto tuning.");
+      return false;
+    }
+
+    ControllerEvent first = eventLog.get(0);
+    double initialMeasurement = first.getMeasuredValue();
+    double initialResponse = first.getResponse();
+    double initialTime = first.getTime();
+
+    int sampleCount = Math.min(5, eventLog.size());
+    double finalMeasurement = averageOfLast(sampleCount, ControllerEvent::getMeasuredValue);
+    double finalResponse = averageOfLast(sampleCount, ControllerEvent::getResponse);
+
+    double measurementChange = finalMeasurement - initialMeasurement;
+    double responseChange = finalResponse - initialResponse;
+
+    if (Math.abs(measurementChange) < 1e-9) {
+      logger.warn("Measured value change too small for auto tuning.");
+      return false;
+    }
+
+    if (Math.abs(responseChange) < 1e-9) {
+      logger.warn("Controller output change too small for auto tuning.");
+      return false;
+    }
+
+    double processGain = measurementChange / responseChange;
+    if (!Double.isFinite(processGain) || processGain == 0.0) {
+      logger.warn("Invalid process gain estimated from event log.");
+      return false;
+    }
+
+    boolean positiveChange = measurementChange >= 0.0;
+    double startThreshold = initialMeasurement + 0.02 * measurementChange;
+    double threshold63 = initialMeasurement + 0.632 * measurementChange;
+
+    double tStart = Double.NaN;
+    double t63 = Double.NaN;
+
+    for (ControllerEvent event : eventLog) {
+      double value = event.getMeasuredValue();
+      if (Double.isNaN(tStart)) {
+        if ((positiveChange && value >= startThreshold)
+            || (!positiveChange && value <= startThreshold)) {
+          tStart = event.getTime();
+        }
+      }
+      if (Double.isNaN(t63)) {
+        if ((positiveChange && value >= threshold63) || (!positiveChange && value <= threshold63)) {
+          t63 = event.getTime();
+        }
+      }
+      if (!Double.isNaN(tStart) && !Double.isNaN(t63)) {
+        break;
+      }
+    }
+
+    if (Double.isNaN(tStart)) {
+      logger.warn("Unable to determine response start time for auto tuning.");
+      return false;
+    }
+
+    if (Double.isNaN(t63) || t63 <= tStart) {
+      logger.warn("Unable to determine process time constant for auto tuning.");
+      return false;
+    }
+
+    double deadTime = Math.max(0.0, tStart - initialTime);
+    double timeConstant = Math.max(t63 - tStart, 1e-6);
+
+    double adjustedDeadTime = deadTime;
+    if (adjustedDeadTime < 1e-6) {
+      adjustedDeadTime = 1e-6;
+    }
+
+    autoTuneStepResponse(processGain, timeConstant, adjustedDeadTime, tuneDerivative);
+    TintValue = 0.0;
+    derivativeState = 0.0;
+    logger.info("Auto tuned PID from event log: Kp={}, Ti={}, Td={}", Kp, Ti, Td);
+    return true;
   }
 
   /** {@inheritDoc} */
@@ -452,5 +603,27 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       this.Ti = params[1];
       this.Td = params[2];
     }
+  }
+
+  /**
+   * Calculate the average value of the {@link ControllerEvent} properties for the last entries in
+   * the event log.
+   *
+   * @param count number of samples to include in the average
+   * @param extractor function returning the value to average from the event
+   * @return average of the selected event property
+   */
+  private double averageOfLast(int count, ToDoubleFunction<ControllerEvent> extractor) {
+    if (eventLog.isEmpty()) {
+      return 0.0;
+    }
+    int startIndex = Math.max(0, eventLog.size() - count);
+    double sum = 0.0;
+    int actualCount = 0;
+    for (int i = startIndex; i < eventLog.size(); i++) {
+      sum += extractor.applyAsDouble(eventLog.get(i));
+      actualCount++;
+    }
+    return actualCount > 0 ? sum / actualCount : 0.0;
   }
 }

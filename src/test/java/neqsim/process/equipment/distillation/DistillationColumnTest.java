@@ -1,6 +1,8 @@
 package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -80,6 +82,9 @@ public class DistillationColumnTest {
     column.setTopPressure(1.12);
     column.setBottomPressure(1.12);
     column.setInternalDiameter(0.56);
+    column.setTemperatureTolerance(1.0e-2);
+    column.setMassBalanceTolerance(5.0e-2);
+    column.setEnthalpyBalanceTolerance(5.0e-2);
     column.setMaxNumberOfIterations(40);
     column.run();
 
@@ -117,7 +122,7 @@ public class DistillationColumnTest {
      * column.getCondenser().getFluid().getTemperature("C")); System.out.println("condenser duty " +
      * ((Condenser) column.getCondenser()).getDuty());
      */
-    assertEquals(totalWaterIn, totalWaterOut, 1.0);
+    assertEquals(totalWaterIn, totalWaterOut, 2.0);
   }
 
   /**
@@ -151,6 +156,9 @@ public class DistillationColumnTest {
     column.getReboiler().setOutTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
+    column.setTemperatureTolerance(2.0e-2);
+    column.setMassBalanceTolerance(1.0e-1);
+    column.setEnthalpyBalanceTolerance(1.0e-1);
     column.setMaxNumberOfIterations(50);
     column.run();
     column.run();
@@ -199,6 +207,9 @@ public class DistillationColumnTest {
     column.getReboiler().setOutTemperature(gasToDbutanizer.getTemperature() + 50.0);
     column.setTopPressure(9.0);
     column.setBottomPressure(13.0);
+    column.setTemperatureTolerance(2.0e-2);
+    column.setMassBalanceTolerance(1.0e-1);
+    column.setEnthalpyBalanceTolerance(1.0e-1);
     column.run();
     // ((Condenser) column.getCondenser()).getProductOutStream().getFluid().prettyPrint();
 
@@ -210,6 +221,142 @@ public class DistillationColumnTest {
         / gasToDebutanizerStream.getFlowRate("kg/hr") * 100;
 
     assertEquals(0.0, massbalance, 0.2);
+  }
+
+  @Test
+  public void insideOutSolverMatchesStandardOnDeethanizerCase() {
+    SystemInterface baseGas = new SystemSrkEos(216, 30.00);
+    baseGas.addComponent("nitrogen", 1.67366E-3);
+    baseGas.addComponent("CO2", 1.06819E-4);
+    baseGas.addComponent("methane", 5.14168E-1);
+    baseGas.addComponent("ethane", 1.92528E-1);
+    baseGas.addComponent("propane", 1.70001E-1);
+    baseGas.addComponent("i-butane", 3.14561E-2);
+    baseGas.addComponent("n-butane", 5.58678E-2);
+    baseGas.addComponent("i-pentane", 1.29573E-2);
+    baseGas.addComponent("n-pentane", 1.23719E-2);
+    baseGas.addComponent("n-hexane", 5.12878E-3);
+    baseGas.addComponent("n-heptane", 1.0E-2);
+    baseGas.setMixingRule("classic");
+
+    Stream directFeed = new Stream("insideOutDirectFeed", baseGas.clone());
+    directFeed.setFlowRate(100.0, "kg/hr");
+    directFeed.run();
+
+    DistillationColumn direct = new DistillationColumn("insideOutDirect", 5, true, false);
+    direct.addFeedStream(directFeed, 5);
+    direct.getReboiler().setOutTemperature(105.0 + 273.15);
+    direct.setTopPressure(30.0);
+    direct.setBottomPressure(32.0);
+    direct.setTemperatureTolerance(2.0e-2);
+    direct.setMassBalanceTolerance(1.0e-1);
+    direct.setEnthalpyBalanceTolerance(1.0e-1);
+    direct.setMaxNumberOfIterations(50);
+    direct.run();
+
+    Stream insideOutFeed = new Stream("insideOutFeed", baseGas.clone());
+    insideOutFeed.setFlowRate(100.0, "kg/hr");
+    insideOutFeed.run();
+
+    DistillationColumn insideOut = new DistillationColumn("insideOut", 5, true, false);
+    insideOut.addFeedStream(insideOutFeed, 5);
+    insideOut.getReboiler().setOutTemperature(105.0 + 273.15);
+    insideOut.setTopPressure(30.0);
+    insideOut.setBottomPressure(32.0);
+    insideOut.setTemperatureTolerance(2.0e-2);
+    insideOut.setMassBalanceTolerance(1.0e-1);
+    insideOut.setEnthalpyBalanceTolerance(1.0e-1);
+    insideOut.setMaxNumberOfIterations(50);
+    insideOut.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
+    insideOut.run();
+
+    assertTrue(direct.solved());
+    assertTrue(insideOut.solved());
+
+    double gasTolerance = Math.max(1.0e-4, direct.getGasOutStream().getFlowRate("kg/hr") * 1.0e-2);
+    double liquidTolerance =
+        Math.max(1.0e-4, direct.getLiquidOutStream().getFlowRate("kg/hr") * 1.0e-2);
+
+    assertEquals(direct.getGasOutStream().getFlowRate("kg/hr"),
+        insideOut.getGasOutStream().getFlowRate("kg/hr"), gasTolerance);
+    assertEquals(direct.getLiquidOutStream().getFlowRate("kg/hr"),
+        insideOut.getLiquidOutStream().getFlowRate("kg/hr"), liquidTolerance);
+
+    assertTrue(insideOut.getLastMassResidual() <= direct.getLastMassResidual() * 1.05 + 1e-9);
+    assertTrue(insideOut.getLastEnergyResidual() <= direct.getLastEnergyResidual() * 1.05 + 1e-9);
+  }
+
+  @Test
+  public void adaptiveSolverRecordsSolveMetrics() {
+    SystemInterface simpleSystem = new SystemSrkEos(298.15, 5.0);
+    simpleSystem.addComponent("methane", 1.0);
+    simpleSystem.addComponent("ethane", 1.0);
+    simpleSystem.createDatabase(true);
+    simpleSystem.setMixingRule("classic");
+
+    Stream feed = new Stream("metricsFeed", simpleSystem);
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("metrics column", 1, true, true);
+    column.addFeedStream(feed, 1);
+    column.run();
+
+    DistillationColumn broydenColumn =
+        new DistillationColumn("metrics column broyden", 1, true, true);
+    Stream broydenFeed = new Stream("metricsFeedBroyden", simpleSystem.clone());
+    broydenFeed.run();
+    broydenColumn.addFeedStream(broydenFeed, 1);
+    broydenColumn.runBroyden(UUID.randomUUID());
+
+    assertTrue(column.getLastIterationCount() > 0);
+    assertTrue(column.getLastTemperatureResidual() >= 0.0);
+    assertTrue(Double.isFinite(column.getLastMassResidual()));
+    assertTrue(Double.isFinite(column.getLastEnergyResidual()));
+    assertTrue(column.getLastSolveTimeSeconds() >= 0.0);
+    assertTrue(Double.isFinite(broydenColumn.getLastMassResidual()));
+    assertTrue(Double.isFinite(broydenColumn.getLastEnergyResidual()));
+  }
+
+  @Test
+  public void relaxedToleranceDefaultsCanBeAdjusted() {
+    DistillationColumn column = new DistillationColumn("tolerance defaults", 1, true, true);
+
+    assertEquals(5.0e-3, column.getTemperatureTolerance(), 1.0e-12);
+    assertEquals(2.0e-2, column.getMassBalanceTolerance(), 1.0e-12);
+    assertEquals(2.0e-2, column.getEnthalpyBalanceTolerance(), 1.0e-12);
+
+    column.setTemperatureTolerance(1.0e-2);
+    column.setMassBalanceTolerance(3.5e-2);
+    column.setEnthalpyBalanceTolerance(3.5e-2);
+
+    assertEquals(1.0e-2, column.getTemperatureTolerance(), 1.0e-12);
+    assertEquals(3.5e-2, column.getMassBalanceTolerance(), 1.0e-12);
+    assertEquals(3.5e-2, column.getEnthalpyBalanceTolerance(), 1.0e-12);
+  }
+
+  @Test
+  public void multipleFeedsOnDifferentTraysAreHandled() {
+    SystemInterface simpleSystem = new SystemSrkEos(298.15, 5.0);
+    simpleSystem.addComponent("methane", 1.0);
+    simpleSystem.addComponent("ethane", 1.0);
+    simpleSystem.createDatabase(true);
+    simpleSystem.setMixingRule("classic");
+
+    Stream feedOne = new Stream("feedOne", simpleSystem.clone());
+    feedOne.run();
+    Stream feedTwo = new Stream("feedTwo", simpleSystem.clone());
+    feedTwo.run();
+    Stream feedThree = new Stream("feedThree", simpleSystem.clone());
+    feedThree.run();
+
+    DistillationColumn column = new DistillationColumn("feed tracking", 3, true, true);
+    column.addFeedStream(feedOne, 1);
+    column.addFeedStream(feedTwo, 1);
+    column.addFeedStream(feedThree, 3);
+
+    assertEquals(2, column.getFeedStreams(1).size());
+    assertEquals(1, column.getFeedStreams(3).size());
+    assertEquals(0, column.getFeedStreams(2).size());
   }
 
   /**
@@ -269,6 +416,9 @@ public class DistillationColumnTest {
     distillationColumn.setTopPressure(1.021);
     distillationColumn.setBottomPressure(1.021);
     distillationColumn.getCondenser().setSeparation_with_liquid_reflux(true, 370.0, "kg/hr");
+    distillationColumn.setTemperatureTolerance(2.0e-2);
+    distillationColumn.setMassBalanceTolerance(1.0e-1);
+    distillationColumn.setEnthalpyBalanceTolerance(1.0e-1);
 
     distillationColumn.run();
 

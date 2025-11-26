@@ -258,9 +258,6 @@ public class CompressorChartKhader2015Test {
             "PolyEff mismatch at curve " + i + ", point " + j);
       }
     }
-
-
-
   }
 
   @Test
@@ -280,13 +277,13 @@ public class CompressorChartKhader2015Test {
 
     testFluid.setTemperature(24.0, "C");
     testFluid.setPressure(48.0, "bara");
-    testFluid.setTotalFlowRate(3.0, "MSm3/day");
+    testFluid.setTotalFlowRate(4.5, "MSm3/day"); // Increased flow to be above surge at 12913 RPM
 
     Stream stream_1 = new Stream("Stream1", testFluid);
     stream_1.run();
     Compressor comp1 = new Compressor("cmp1", stream_1);
     comp1.setUsePolytropicCalc(true);
-    double compspeed = 10000;
+    double compspeed = 12913; // IMPORTANT: Match the single speed curve!
     comp1.setSpeed(compspeed);
 
     // compressor chart conditions: temperature [C], pressure [bara], density
@@ -309,6 +306,211 @@ public class CompressorChartKhader2015Test {
     comp1.setCompressorChart(compChart);
     comp1.getCompressorChart().setHeadUnit("kJ/kg");
 
-  }
+    // For single speed compressor, surge and stone wall curves should NOT be active
+    // as they require at least 2 speed curves to be properly generated
+    // The check `if (chartValues.size() > 1)` prevents generation for single speed
+    Assertions.assertNotNull(compChart.getSurgeCurve(),
+        "Surge curve object should exist (but not active)");
+    Assertions.assertFalse(compChart.getSurgeCurve().isActive(),
+        "Surge curve should not be active for single speed compressor");
+    Assertions.assertNotNull(compChart.getStoneWallCurve(),
+        "Stone wall curve object should exist (but not active)");
+    Assertions.assertFalse(compChart.getStoneWallCurve().isActive(),
+        "Stone wall curve should not be active for single speed compressor");
 
+    // Verify that for a single speed compressor, we only have one RealCurve
+    Assertions.assertEquals(1, compChart.getRealCurves().size(),
+        "Single speed compressor should have exactly one real curve");
+
+    // For a single speed compressor:
+    // - The surge point would be the minimum flow point on the single curve
+    // - The stone wall (choke) point would be the maximum flow point on the single curve
+    // - Both are SINGLE POINTS, not curves (you need multiple speeds to form a curve)
+    RealCurve singleCurve = compChart.getRealCurves().get(0);
+    double minFlow = singleCurve.flow[0]; // First point (minimum flow)
+    double maxFlow = singleCurve.flow[singleCurve.flow.length - 1]; // Last point (maximum flow)
+
+    System.out.println("Single speed compressor operating envelope:");
+    System.out.println("  Speed: " + singleCurve.speed + " RPM");
+    System.out.println("  Surge point (min flow): " + minFlow + " m3/hr at head "
+        + singleCurve.head[0] + " kJ/kg");
+    System.out.println("  Stone wall point (max flow): " + maxFlow + " m3/hr at head "
+        + singleCurve.head[singleCurve.head.length - 1] + " kJ/kg");
+    System.out.println(
+        "  Note: These are SINGLE POINTS, not curves. Multiple speeds are needed for surge/stone wall curves.");
+
+    // Verify the compressor can still operate and calculate head/efficiency
+    double testFlow = 3500.0; // m3/hr - middle of the flow range
+    double testSpeed = 12913; // Use the single speed available
+
+    double headValue = compChart.getPolytropicHead(testFlow, testSpeed);
+    double effValue = compChart.getPolytropicEfficiency(testFlow, testSpeed);
+
+    Assertions.assertTrue(headValue > 0, "Head should be calculated for single speed compressor");
+    Assertions.assertTrue(effValue > 0,
+        "Efficiency should be calculated for single speed compressor");
+
+    // Test extrapolation below minimum flow (should still work)
+    double lowFlow = 2000.0; // m3/hr - below minimum flow
+    double headLowFlow = compChart.getPolytropicHead(lowFlow, testSpeed);
+    Assertions.assertTrue(headLowFlow > 0, "Head should be extrapolated for flow below minimum");
+
+    // Test extrapolation above maximum flow (should still work)
+    double highFlow = 6000.0; // m3/hr - above maximum flow
+    double headHighFlow = compChart.getPolytropicHead(highFlow, testSpeed);
+    Assertions.assertTrue(headHighFlow > 0, "Head should be extrapolated for flow above maximum");
+
+    // Verify head decreases with increasing flow (typical compressor behavior)
+    Assertions.assertTrue(headLowFlow > headValue, "Head should be higher at lower flow");
+    Assertions.assertTrue(headValue > headHighFlow, "Head should be lower at higher flow");
+
+    // Demonstrate that the operating envelope is bounded by single points:
+    // - Cannot operate below surge point (minFlow at this speed)
+    // - Cannot operate above stone wall point (maxFlow at this speed)
+    Assertions.assertTrue(minFlow < maxFlow,
+        "Surge point flow should be less than stone wall point flow");
+
+    // ===== Test Surge Safety Factor =====
+    // The compressor has an AntiSurge object with a safety factor (default 1.05 = 5% margin)
+    AntiSurge antiSurge = comp1.getAntiSurge();
+    Assertions.assertNotNull(antiSurge, "AntiSurge object should exist");
+    Assertions.assertEquals(1.05, antiSurge.getSurgeControlFactor(), 0.001,
+        "Default surge control factor should be 1.05 (5% safety margin)");
+
+    // For a single speed compressor, the surge point is the minimum flow on the curve
+    // The surge control factor ensures operation at a safe distance from this point
+    // Minimum safe flow = minimum curve flow * surgeControlFactor
+    double actualSurgeFlow = minFlow; // The actual surge point (minimum flow on curve)
+    double safeSurgeFlow = actualSurgeFlow * antiSurge.getSurgeControlFactor();
+
+    System.out.println("\nSurge Safety Margin for Single Speed Compressor:");
+    System.out.println("  Actual surge flow (minimum flow point): " + actualSurgeFlow + " m3/hr");
+    System.out.println("  Surge control factor: " + antiSurge.getSurgeControlFactor());
+    System.out.println("  Safe minimum flow (with 5% margin): " + safeSurgeFlow + " m3/hr");
+    System.out.println("  Safety margin: " + (safeSurgeFlow - actualSurgeFlow) + " m3/hr ("
+        + ((antiSurge.getSurgeControlFactor() - 1.0) * 100) + "%)");
+
+    // User can modify the safety factor
+    antiSurge.setSurgeControlFactor(1.10); // 10% safety margin
+    Assertions.assertEquals(1.10, antiSurge.getSurgeControlFactor(), 0.001);
+    double safeSurgeFlow10pct = actualSurgeFlow * 1.10;
+    System.out.println("\nWith 10% safety margin:");
+    System.out.println("  Safe minimum flow: " + safeSurgeFlow10pct + " m3/hr");
+    System.out.println("  Safety margin: " + (safeSurgeFlow10pct - actualSurgeFlow) + " m3/hr");
+
+    // For a single speed compressor:
+    // - The surge point is fixed at the minimum flow of that speed curve
+    // - The safety margin moves the operating limit to the right (higher flow)
+    // - This is CRITICAL because you cannot change speed to move away from surge
+    // - The AntiSurge system will add flow to keep the compressor above safe limit
+    Assertions.assertTrue(safeSurgeFlow > actualSurgeFlow,
+        "Safe surge flow should be higher than actual surge flow");
+    Assertions.assertTrue(safeSurgeFlow10pct > safeSurgeFlow,
+        "Higher safety factor should give more margin");
+
+    System.out.println("\nKey Point for Single Speed Compressors:");
+    System.out.println(
+        "  Since speed cannot be adjusted, the safety margin is ESSENTIAL to prevent surge.");
+    System.out.println("  The AntiSurge system will recirculate/add flow if operation gets too "
+        + "close to surge point.");
+
+    // ===== NEW: Using getSurgeFlowAtSpeed() and getSurgeHeadAtSpeed() =====
+    // These methods work for BOTH single speed and multi-speed compressors
+    // They retrieve the surge point at the current speed directly from the chart
+    System.out.println("\n=== Using getSurgeFlowAtSpeed() and getSurgeHeadAtSpeed() ===");
+    double currentSpeed = comp1.getSpeed(); // This is now 12913 RPM
+    double surgeFlowAtSpeed = compChart.getSurgeFlowAtSpeed(currentSpeed);
+    double surgeHeadAtSpeed = compChart.getSurgeHeadAtSpeed(currentSpeed);
+    double stoneWallFlowAtSpeed = compChart.getStoneWallFlowAtSpeed(currentSpeed);
+    double stoneWallHeadAtSpeed = compChart.getStoneWallHeadAtSpeed(currentSpeed);
+
+    System.out.println("Current compressor speed: " + currentSpeed + " RPM");
+    System.out.println("Surge flow at this speed: " + surgeFlowAtSpeed + " m3/hr");
+    System.out.println("Surge head at this speed: " + surgeHeadAtSpeed + " kJ/kg");
+    System.out.println("Stone wall flow at this speed: " + stoneWallFlowAtSpeed + " m3/hr");
+    System.out.println("Stone wall head at this speed: " + stoneWallHeadAtSpeed + " kJ/kg");
+
+    // Verify these match the curve data
+    Assertions.assertEquals(minFlow, surgeFlowAtSpeed, 0.01,
+        "getSurgeFlowAtSpeed should return minimum flow");
+    Assertions.assertEquals(maxFlow, stoneWallFlowAtSpeed, 0.01,
+        "getStoneWallFlowAtSpeed should return maximum flow");
+
+    // Calculate safe operating flow with surge control factor
+    double safeMinFlowFromMethod = surgeFlowAtSpeed * antiSurge.getSurgeControlFactor();
+    System.out.println(
+        "\nSafe minimum flow (using method + safety factor): " + safeMinFlowFromMethod + " m3/hr");
+    Assertions.assertEquals(safeSurgeFlow10pct, safeMinFlowFromMethod, 0.01,
+        "Safe flow calculated from method should match");
+
+    // ===== NEW: Using getSafetyFactorCorrectedFlowHeadAtCurrentSpeed() =====
+    // This convenience method returns both safe flow and head in one call
+    System.out.println("\n=== Using getSafetyFactorCorrectedFlowHeadAtCurrentSpeed() ===");
+    double[] safeFlowHead = comp1.getSafetyFactorCorrectedFlowHeadAtCurrentSpeed();
+    System.out.println("Safe operating point at current speed:");
+    System.out.println("  Safe flow (with " + ((antiSurge.getSurgeControlFactor() - 1.0) * 100)
+        + "% margin): " + safeFlowHead[0] + " m3/hr");
+    System.out.println("  Head at safe flow: " + safeFlowHead[1] + " kJ/kg");
+
+    // Verify the results match
+    Assertions.assertEquals(safeMinFlowFromMethod, safeFlowHead[0], 0.01,
+        "Safe flow from convenience method should match manual calculation");
+
+    // The head at safe flow should be slightly lower than surge head (since flow is higher)
+    System.out.println("\nComparison:");
+    System.out.println("  Surge head at surge flow: " + surgeHeadAtSpeed + " kJ/kg");
+    System.out.println("  Head at safe flow: " + safeFlowHead[1] + " kJ/kg");
+    System.out.println("  Head difference: " + (surgeHeadAtSpeed - safeFlowHead[1]) + " kJ/kg");
+
+    // ===== Test Distance to Surge (Current Implementation Issue) =====
+    System.out.println("\n=== Testing Distance to Surge for Single Speed ===");
+
+    // Run the compressor at a test flow to get actual operating point
+    comp1.run();
+    double actualFlow = comp1.getInletStream().getFlowRate("m3/hr");
+    System.out.println("Compressor inlet flow: " + actualFlow + " m3/hr");
+
+    // Try the existing getDistanceToSurge() method
+    // This should NOW work for single speed because we updated the implementation
+    double distanceToSurge = comp1.getDistanceToSurge();
+    System.out.println("Distance to surge (using getDistanceToSurge()): " + distanceToSurge);
+    System.out.println("  Operating at " + (distanceToSurge * 100) + "% above surge point");
+
+    // Calculate distance to surge manually using the new methods to verify
+    double manualDistanceToSurge = actualFlow / surgeFlowAtSpeed - 1.0;
+    System.out.println("\nManual calculation using getSurgeFlowAtSpeed():");
+    System.out.println("  Distance to surge: " + manualDistanceToSurge);
+    System.out.println("  Current flow / Surge flow = " + actualFlow + " / " + surgeFlowAtSpeed
+        + " = " + (actualFlow / surgeFlowAtSpeed));
+
+    // Verify they match
+    Assertions.assertEquals(manualDistanceToSurge, distanceToSurge, 0.001,
+        "getDistanceToSurge() should match manual calculation for single speed");
+
+    // Test the new getDistanceToStoneWall() method
+    double distanceToStoneWall = comp1.getDistanceToStoneWall();
+    System.out.println(
+        "\nDistance to stone wall (using getDistanceToStoneWall()): " + distanceToStoneWall);
+    System.out.println("  Stone wall is " + (distanceToStoneWall * 100) + "% above current flow");
+
+    // Calculate distance to stone wall manually to verify
+    double manualDistanceToStoneWall = stoneWallFlowAtSpeed / actualFlow - 1.0;
+    System.out.println("\nManual calculation using getStoneWallFlowAtSpeed():");
+    System.out.println("  Distance to stone wall: " + manualDistanceToStoneWall);
+    System.out.println("  Stone wall flow / Current flow = " + stoneWallFlowAtSpeed + " / "
+        + actualFlow + " = " + (stoneWallFlowAtSpeed / actualFlow));
+
+    // Verify they match
+    Assertions.assertEquals(manualDistanceToStoneWall, distanceToStoneWall, 0.001,
+        "getDistanceToStoneWall() should match manual calculation for single speed");
+
+    // Verify we're operating within the envelope
+    Assertions.assertTrue(actualFlow > surgeFlowAtSpeed, "Should be operating above surge point");
+    Assertions.assertTrue(actualFlow < stoneWallFlowAtSpeed,
+        "Should be operating below stone wall point");
+    Assertions.assertTrue(distanceToSurge > 0,
+        "Distance to surge should be positive (operating above surge)");
+    Assertions.assertTrue(distanceToStoneWall > 0,
+        "Distance to stone wall should be positive (stone wall above current flow)");
+  }
 }

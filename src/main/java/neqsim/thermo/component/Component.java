@@ -93,6 +93,7 @@ public abstract class Component implements ComponentInterface {
   private double racketZCPA = 0;
   private double criticalCompressibilityFactor = 0.0;
   private double volumeCorrectionConst = 0.0;
+  private Double volumeCorrection = null;
   private double volumeCorrectionT = 0.0;
   private double volumeCorrectionT_CPA = 0.0;
   protected double criticalPressure;
@@ -2362,13 +2363,29 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getVolumeCorrection() {
-    return 0.0;
+    return volumeCorrection != null ? volumeCorrection : 0.0;
+  }
+
+  /**
+   * Check if a volume correction has been explicitly specified.
+   *
+   * @return {@code true} if an explicit correction value has been provided.
+   */
+  protected boolean hasVolumeCorrection() {
+    return volumeCorrection != null;
   }
 
   /** {@inheritDoc} */
   @Override
   public void setVolumeCorrectionConst(double getVolumeCorrectionConst) {
     this.volumeCorrectionConst = getVolumeCorrectionConst;
+    this.volumeCorrection = null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setVolumeCorrection(double volumeCorrection) {
+    this.volumeCorrection = volumeCorrection;
   }
 
   /** {@inheritDoc} */

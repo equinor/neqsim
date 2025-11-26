@@ -71,6 +71,15 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
+   * setVolumeCorrection.
+   * </p>
+   *
+   * @param volumeCorrection a double
+   */
+  public void setVolumeCorrection(double volumeCorrection);
+
+  /**
+   * <p>
    * setVolumeCorrectionT.
    * </p>
    *

@@ -9,6 +9,8 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -31,6 +33,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 public class Pump extends TwoPortEquipment implements PumpInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(Pump.class);
 
   SystemInterface thermoSystem;
   double dH = 0.0;
@@ -46,6 +50,9 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   public boolean powerSet = false;
   private String pressureUnit = "bara";
   private PumpChartInterface pumpChart = new PumpChart();
+  private boolean checkNPSH = false;
+  private double npshMargin = 1.3; // Safety margin for NPSH (NPSHa should be > npshMargin *
+                                   // NPSHr)
 
   /**
    * Constructor for Pump.
@@ -89,13 +96,8 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * @return a double
    */
   public double getPower(String unit) {
-    if (unit.equals("W")) {
-    } else if (unit.equals("kW")) {
-      return dH / 1000.0;
-    } else if (unit.equals("MW")) {
-      return dH / 1.0e6;
-    }
-    return dH;
+    neqsim.util.unit.PowerUnit powerUnit = new neqsim.util.unit.PowerUnit(dH, "W");
+    return powerUnit.getValue(unit);
   }
 
   /**
@@ -132,6 +134,12 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
       outStream.setThermoSystem(thermoSystem);
       outStream.setCalculationIdentifier(id);
       setCalculationIdentifier(id);
+      return;
+    }
+
+    // Check for cavitation risk if enabled
+    if (checkNPSH && isCavitating()) {
+      logger.warn("Pump " + getName() + " may be operating in cavitation conditions");
     }
 
     inStream.getThermoSystem().init(3);
@@ -164,31 +172,58 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
         thermoOps.PHflash(hout, 0);
       } else if (pumpChart.isUsePumpChart()) {
         thermoSystem = inStream.getThermoSystem().clone();
-        double pumpHead = getPumpChart().getHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
-        isentropicEfficiency =
-            getPumpChart().getEfficiency(thermoSystem.getFlowRate("m3/hr"), getSpeed());
-        double deltaP;
+        double flowRate_m3hr = inStream.getThermoSystem().getFlowRate("m3/hr");
+        double pumpHead = getPumpChart().getHead(flowRate_m3hr, getSpeed());
+        double efficiencyPercent = getPumpChart().getEfficiency(flowRate_m3hr, getSpeed());
+        double efficiencyDecimal = efficiencyPercent / 100.0;
+        isentropicEfficiency = efficiencyPercent; // Store as percentage for consistency
+
+        // Calculate pressure rise based on head unit
+        double deltaP_Pa; // Pressure rise in Pa
+        double densityInlet = inStream.getThermoSystem().getDensity("kg/m3");
+
         if (getPumpChart().getHeadUnit().equals("meter")) {
-          deltaP = pumpHead * 1000.0 * ThermodynamicConstantsInterface.gravity / 1.0E5;
+          // Head in meters: ΔP = ρ·g·H
+          deltaP_Pa = pumpHead * densityInlet * ThermodynamicConstantsInterface.gravity;
+        } else if (getPumpChart().getHeadUnit().equals("kJ/kg")) {
+          // Specific energy in kJ/kg: ΔP = E·ρ
+          deltaP_Pa = pumpHead * 1000.0 * densityInlet; // Convert kJ to J
         } else {
-          double rho = inStream.getThermoSystem().getDensity("kg/m3");
-          deltaP = pumpHead * rho * 1000.0 / 1.0E5;
+          throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "run",
+              "headUnit", "Unsupported head unit: " + getPumpChart().getHeadUnit()
+                  + ". Use 'meter' or 'kJ/kg'."));
         }
-        thermoSystem = inStream.getThermoSystem().clone();
-        thermoSystem.setPressure(inStream.getPressure() + deltaP);
-        double dH = thermoSystem.getFlowRate("kg/sec") / thermoSystem.getDensity("kg/m3")
-            * (thermoSystem.getPressure("Pa") - inStream.getThermoSystem().getPressure("Pa"))
-            / (isentropicEfficiency / 100.0);
+
+        // Set outlet pressure
+        double deltaP_bar = deltaP_Pa / 1.0e5;
+        thermoSystem.setPressure(inStream.getPressure() + deltaP_bar);
+
+        // Calculate shaft power and enthalpy rise
+        double volumetricFlow = thermoSystem.getFlowRate("kg/sec") / densityInlet; // m³/s
+        double hydraulicPower = volumetricFlow * deltaP_Pa; // W
+        double shaftPower = hydraulicPower / efficiencyDecimal; // W (accounts for losses)
+        dH = shaftPower; // J/s = W
+
+        // Flash to find outlet temperature
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
         double hout = hinn + dH;
         thermoOps.PHflash(hout, 0);
         thermoSystem.init(3);
       } else {
+        // Simple pressure rise calculation without pump curve
         thermoSystem = inStream.getThermoSystem().clone();
         thermoSystem.setPressure(pressure, pressureUnit);
-        double dH = thermoSystem.getFlowRate("kg/sec") / thermoSystem.getDensity("kg/m3")
-            * (thermoSystem.getPressure("Pa") - inStream.getThermoSystem().getPressure("Pa"))
-            / isentropicEfficiency;
+
+        // Calculate hydraulic power and shaft power
+        double volumetricFlow =
+            thermoSystem.getFlowRate("kg/sec") / thermoSystem.getDensity("kg/m3"); // m³/s
+        double deltaP_Pa =
+            thermoSystem.getPressure("Pa") - inStream.getThermoSystem().getPressure("Pa");
+        double hydraulicPower = volumetricFlow * deltaP_Pa; // W
+        double shaftPower = hydraulicPower / isentropicEfficiency; // W
+        dH = shaftPower;
+
+        // Flash to find outlet temperature
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
         double hout = hinn + dH;
         thermoOps.PHflash(hout, 0);
@@ -501,5 +536,157 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
+  }
+
+  /**
+   * Calculate the Net Positive Suction Head Available (NPSHa) at the pump inlet.
+   *
+   * <p>
+   * NPSHa represents the absolute pressure head available at the pump suction above the fluid vapor
+   * pressure. It must exceed the pump's NPSHr to avoid cavitation.
+   * </p>
+   *
+   * <p>
+   * Formula: NPSHa = (P_suction - P_vapor) / (ρ·g) + v²/(2·g) + z
+   * </p>
+   *
+   * @return NPSHa in meters
+   */
+  public double getNPSHAvailable() {
+    try {
+      inStream.getThermoSystem().init(3);
+      double pressureSuction = inStream.getPressure("Pa");
+      double temperature = inStream.getTemperature("K");
+
+      // Calculate vapor pressure at inlet temperature
+      SystemInterface tempSystem = inStream.getThermoSystem().clone();
+      tempSystem.setTemperature(temperature);
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempSystem);
+      try {
+        thermoOps.bubblePointPressureFlash(false);
+      } catch (Exception e) {
+        // If bubble point flash fails, fluid might be in supercritical state or single phase
+        // Use a conservative estimate or return high value
+        logger.warn("Could not calculate vapor pressure for NPSH calculation: " + e.getMessage());
+        return 1000.0; // Return large value to indicate no cavitation risk
+      }
+      double pressureVapor = tempSystem.getPressure("Pa");
+
+      double density = inStream.getThermoSystem().getDensity("kg/m3");
+
+      // Calculate velocity from flow rate and pipe diameter if available
+      // For conservative estimate, assume low velocity contribution
+      double velocity = 0.0; // m/s - velocity head contribution typically small
+
+      // NPSH_a = (P_suction - P_vapor)/(ρ·g) + v²/(2·g)
+      // Elevation term (z) is typically handled in the system layout
+      double npsha =
+          (pressureSuction - pressureVapor) / (density * ThermodynamicConstantsInterface.gravity)
+              + (velocity * velocity) / (2.0 * ThermodynamicConstantsInterface.gravity);
+
+      return npsha;
+    } catch (Exception e) {
+      logger.error("Error calculating NPSH available: " + e.getMessage());
+      return 0.0;
+    }
+  }
+
+  /**
+   * Get the required Net Positive Suction Head (NPSHr) for the pump at current operating
+   * conditions.
+   *
+   * <p>
+   * If a pump chart with NPSH curve is available, uses manufacturer data. Otherwise returns a
+   * conservative estimate based on pump type and flow rate.
+   * </p>
+   *
+   * @return NPSHr in meters
+   */
+  public double getNPSHRequired() {
+    // Try to get NPSH from pump chart if available
+    if (pumpChart != null && pumpChart.isUsePumpChart() && pumpChart.hasNPSHCurve()) {
+      try {
+        double flowRate = inStream.getFlowRate("m3/hr");
+        double npshFromChart = pumpChart.getNPSHRequired(flowRate, speed);
+        if (npshFromChart > 0.0) {
+          return npshFromChart;
+        }
+      } catch (Exception e) {
+        logger.warn(
+            "Error reading NPSH from pump chart: " + e.getMessage() + ". Using estimated value.");
+      }
+    }
+
+    // Fallback: Conservative estimate based on pump flow rate
+    // Typical values: 2-10 m for centrifugal pumps
+    double flowRate = inStream.getFlowRate("m3/hr");
+    if (flowRate < 10) {
+      return 2.0; // Low flow pumps
+    } else if (flowRate < 100) {
+      return 5.0; // Medium flow pumps
+    } else {
+      return 8.0; // High flow pumps
+    }
+  }
+
+  /**
+   * Check if the pump is at risk of cavitation based on NPSH criteria.
+   *
+   * <p>
+   * Cavitation occurs when NPSHa &lt; NPSHr, causing vapor bubbles to form and collapse,
+   * potentially damaging the pump.
+   * </p>
+   *
+   * @return true if cavitation risk exists (NPSHa &lt; npshMargin * NPSHr)
+   */
+  public boolean isCavitating() {
+    if (!checkNPSH) {
+      return false;
+    }
+    double npsha = getNPSHAvailable();
+    double npshr = getNPSHRequired();
+    boolean cavitating = npsha < (npshMargin * npshr);
+    if (cavitating) {
+      logger.warn("Pump " + getName() + " cavitation risk: NPSHa=" + String.format("%.2f", npsha)
+          + " m < " + String.format("%.2f", npshMargin) + " × NPSHr=" + String.format("%.2f", npshr)
+          + " m");
+    }
+    return cavitating;
+  }
+
+  /**
+   * Enable or disable NPSH checking during pump operation.
+   *
+   * @param checkNPSH true to enable NPSH checking
+   */
+  public void setCheckNPSH(boolean checkNPSH) {
+    this.checkNPSH = checkNPSH;
+  }
+
+  /**
+   * Get whether NPSH checking is enabled.
+   *
+   * @return true if NPSH checking is enabled
+   */
+  public boolean isCheckNPSH() {
+    return checkNPSH;
+  }
+
+  /**
+   * Set the NPSH safety margin. NPSHa must be greater than npshMargin × NPSHr.
+   *
+   * @param npshMargin safety margin factor (typically 1.1 to 1.5)
+   */
+  public void setNPSHMargin(double npshMargin) {
+    this.npshMargin = npshMargin;
+  }
+
+  /**
+   * Get the NPSH safety margin factor.
+   *
+   * @return NPSH margin factor
+   */
+  public double getNPSHMargin() {
+    return npshMargin;
   }
 }

@@ -68,6 +68,9 @@ public class ComponentGERG2008Eos extends ComponentEos {
   /** {@inheritDoc} */
   @Override
   public double getVolumeCorrection() {
+    if (hasVolumeCorrection()) {
+      return super.getVolumeCorrection();
+    }
     return 0.0;
   }
 
@@ -232,5 +235,4 @@ public class ComponentGERG2008Eos extends ComponentEos {
     logfugcoefdN(phase);
     return dfugdn[k];
   }
-
 }

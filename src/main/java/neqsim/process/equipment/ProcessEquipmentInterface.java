@@ -126,13 +126,22 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
 
   /**
    * <p>
-   * Retrieves the mass balance of the process equipment in specified unit.
+   * getMassBalance.
    * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return The mass balance of the process equipment.
    */
   public double getMassBalance(String unit);
+
+  /**
+   * <p>
+   * getMassBalance in kg/sec.
+   * </p>
+   *
+   * @return The mass balance of the process equipment in kg/sec.
+   */
+  public double getMassBalance();
 
   /**
    * <p>

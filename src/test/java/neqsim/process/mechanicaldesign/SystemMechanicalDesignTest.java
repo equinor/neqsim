@@ -104,6 +104,7 @@ public class SystemMechanicalDesignTest {
     Recycle recycle1 = new Recycle("oil recirc 1");
     recycle1.addStream(valveLP1.getOutletStream());
     recycle1.setOutletStream(recircstream1);
+    recycle1.setTolerance(1e-2);
 
     operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(feedStream);

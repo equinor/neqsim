@@ -1,4 +1,6 @@
 name: Create release (draft)
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:  
@@ -21,7 +23,7 @@ jobs:
     
     steps:
     - name: Check out neqsim java project
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Get version number for pomJava8.xml
       id: java-8
       uses: JActions/maven-version@v1.2.0
@@ -45,9 +47,9 @@ jobs:
        
     steps:
       - name: Check out neqsim java project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up JDK 8 environment
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '8'
@@ -56,7 +58,7 @@ jobs:
         run: mvn -B package --file pomJava8.xml
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*Java8.jar staging
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: jarfiles-java8
           path: staging
@@ -70,9 +72,9 @@ jobs:
     
     steps:
       - name: Check out neqsim java project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up JDK 11 environment
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '11'
@@ -81,7 +83,7 @@ jobs:
         run: mvn -B package --file pom.xml
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*.jar staging
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: jarfiles-java11
           path: staging
@@ -95,9 +97,9 @@ jobs:
     
     steps:
       - name: Check out neqsim java project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up JDK 21 environment
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -108,7 +110,7 @@ jobs:
         run: cd target && find . -type f -name "neqsim-*.jar" -exec sh -c 'mv -f $0 ${0%.jar}-Java21.jar' {} \; && cd ..
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*Java21.jar staging
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: jarfiles-java21
           path: staging
@@ -116,24 +118,26 @@ jobs:
   create_release:
     name: Create release v${{ needs.get_versions.outputs.version_8 }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: [get_versions, compile_java_8, compile_java_11, compile_java_21]
     
     steps:
       - name: Download java 8 jar files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: jarfiles-java8
       - name: Download java 11 jar files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: jarfiles-java11
       - name: Download java 21 jar files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: jarfiles-java21
         
       - name: Create release v${{ needs.get_versions.outputs.version_8 }}
-        uses: ncipollo/release-action@v1.11.2
+        uses: ncipollo/release-action@v1.20.0
         with:
           name: NeqSim ${{ needs.get_versions.outputs.version_8 }}
           tag: v${{ needs.get_versions.outputs.version_8 }} 

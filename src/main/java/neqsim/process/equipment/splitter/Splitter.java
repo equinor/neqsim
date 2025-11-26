@@ -4,11 +4,15 @@ import java.util.Arrays;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.process.util.monitor.SplitterResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -64,7 +68,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
-   * <p>Getter for the field <code>inletStream</code>.</p>
+   * <p>
+   * Getter for the field <code>inletStream</code>.
+   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -262,6 +268,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       run(id);
       increaseTime(dt);
     } else {
+      increaseTime(dt);
       Mixer mixer = new Mixer("tmpMixer");
       for (int i = 0; i < splitStream.length; i++) {
         splitStream[i].setPressure(inletStream.getPressure());
@@ -278,6 +285,16 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       lastTemperature = thermoSystem.getTemperature();
       lastPressure = thermoSystem.getPressure();
       lastComposition = thermoSystem.getMolarComposition();
+      double[] splits = new double[splitFactor.length];
+      double totalFlow = 0.0;
+      for (int i = 0; i < splitFactor.length; i++) {
+        totalFlow += splits[i];
+      }
+      for (int i = 0; i < splitFactor.length; i++) {
+        splits[i] = splitFactor[i] / totalFlow;
+      }
+      splitFactor = splits;
+
       oldSplitFactor = Arrays.copyOf(splitFactor, splitFactor.length);
       setCalculationIdentifier(id);
     }
@@ -304,6 +321,45 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    */
   public double[] getSplitFactors() {
     return splitFactor;
+  }
+
+  /**
+   * <p>
+   * getSplitNumber.
+   * </p>
+   *
+   * @return number of split outlets
+   */
+  public int getSplitNumber() {
+    return splitNumber;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMassBalance(String unit) {
+    double inletFlow = getInletStream().getThermoSystem().getFlowRate(unit);
+    double outletFlow = 0.0;
+    for (int i = 0; i < splitStream.length; i++) {
+      outletFlow += splitStream[i].getThermoSystem().getFlowRate(unit);
+    }
+    return outletFlow - inletFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new SplitterResponse(this));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    SplitterResponse res = new SplitterResponse(this);
+    res.applyConfig(cfg);
+    return new GsonBuilder().create().toJson(res);
   }
 
   /** {@inheritDoc} */

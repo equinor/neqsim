@@ -119,6 +119,18 @@ public class Manifold extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  public double getMassBalance(String unit) {
+    double inletFlow = localmixer.getMassBalance(unit)
+        + localmixer.getOutletStream().getThermoSystem().getFlowRate(unit);
+    double outletFlow = 0.0;
+    for (int i = 0; i < getNumberOfOutputStreams(); i++) {
+      outletFlow += getSplitStream(i).getThermoSystem().getFlowRate(unit);
+    }
+    return outletFlow - inletFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String toJson() {
     return new GsonBuilder().create().toJson(new ManifoldResponse(this));
   }

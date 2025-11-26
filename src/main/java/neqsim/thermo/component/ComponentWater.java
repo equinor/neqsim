@@ -57,6 +57,9 @@ public class ComponentWater extends ComponentEos {
   /** {@inheritDoc} */
   @Override
   public double getVolumeCorrection() {
+    if (hasVolumeCorrection()) {
+      return super.getVolumeCorrection();
+    }
     return 0.0;
   }
 

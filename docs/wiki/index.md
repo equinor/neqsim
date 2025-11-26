@@ -16,6 +16,7 @@ This folder holds additional documentation for the NeqSim project. Below are use
 - [Humid air mathematics](humid_air_math.md)
 - [Flow meter models](flow_meter_models.md)
 - [Air cooler unit operation](air_cooler.md)
+- [Heat exchanger mechanical design](heat_exchanger_mechanical_design.md)
 - [Water cooler](water_cooler.md)
 - [Steam heater](steam_heater.md)
 - [Battery storage unit](battery_storage.md)

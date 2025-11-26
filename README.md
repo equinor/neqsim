@@ -1,10 +1,13 @@
 ![NeqSim Logo](https://github.com/equinor/neqsim/blob/master/docs/wiki/neqsimlogocircleflatsmall.png)
 
-[![Build Status](https://neqsim.visualstudio.com/neqsim_cicd/_apis/build/status/neqsim_build?branchName=master)](https://neqsim.visualstudio.com/neqsim_cicd/_build/latest?definitionId=1&branchName=master)
-![Build maven](https://github.com/equinor/neqsim/actions/workflows/verify_build.yml/badge.svg?branch=master)
-[![Known Vulnerabilities](https://snyk.io/test/github/equinor/neqsim/badge.svg)](https://snyk.io/test/github/equinor/neqsim)
-[![codecov](https://codecov.io/gh/equinor/neqsim/branch/master/graph/badge.svg?token=IRnbAwRDtc)](https://codecov.io/gh/equinor/neqsim)
-[![SCM Compliance](https://scm-compliance-api.radix.equinor.com/repos/equinor/neqsim/badge)](https://scm-compliance-api.radix.equinor.com/repos/equinor/neqsim/badge)
+<!-- Badges -->
+[![Azure DevOps Build](https://neqsim.visualstudio.com/neqsim_cicd/_apis/build/status/neqsim_build?branchName=master)](https://neqsim.visualstudio.com/neqsim_cicd/_build/latest?definitionId=1&branchName=master)
+[![GitHub CI Build](https://github.com/equinor/neqsim/actions/workflows/verify_build.yml/badge.svg?branch=master)](https://github.com/equinor/neqsim/actions/workflows/verify_build.yml?query=branch%3Amaster)
+[![CodeQL Analysis](https://github.com/equinor/neqsim/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/equinor/neqsim/security/code-scanning)
+[![Coverage Status](https://codecov.io/gh/equinor/neqsim/branch/master/graph/badge.svg)](https://codecov.io/gh/equinor/neqsim)
+[![Dep Vulns](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/equinor/neqsim/master/.github/metrics/dependabot-metrics.json)](https://github.com/equinor/neqsim/security/dependabot)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Total Security Alerts](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/equinor/neqsim/master/.github/metrics/security-metrics.json)](https://github.com/equinor/neqsim/security)
 
 
 NeqSim is the main part of the [NeqSim project](https://equinor.github.io/neqsimhome/). NeqSim (Non-Equilibrium Simulator) is a Java library for estimating fluid properties and process design.
@@ -20,6 +23,55 @@ NeqSim can be used in a Java application by adding the neqsim-x.x.x.jar found in
 
 ## Use of the NeqSim package
 NeqSim can be set up as a dependency in a Java project via the [NeqSim GitHub package distribution](https://github.com/equinor/neqsim/packages/42822).
+
+### Using NeqSim from the GitHub Maven package repository
+1. Configure authentication for the GitHub Packages repository in your Maven `settings.xml` (use a Personal Access Token with at least the `read:packages` scope):
+
+```xml
+<servers>
+  <server>
+    <id>github</id>
+    <username>YOUR_GITHUB_USERNAME</username>
+    <password>${env.GITHUB_TOKEN}</password>
+  </server>
+</servers>
+```
+
+2. Add the GitHub Packages repository and NeqSim dependency to your project's `pom.xml`:
+
+```xml
+<repositories>
+  <repository>
+    <id>github</id>
+    <url>https://maven.pkg.github.com/equinor/neqsim</url>
+  </repository>
+</repositories>
+
+<dependencies>
+  <dependency>
+    <groupId>com.equinor.neqsim</groupId>
+    <artifactId>neqsim</artifactId>
+    <version>3.1.2</version>
+  </dependency>
+</dependencies>
+```
+
+3. Build your project as normal (`mvn clean install`). Maven will fetch NeqSim from the GitHub Maven package repository using the credentials configured in step 1.
+
+### Using NeqSim from Maven Central
+If you prefer to pull NeqSim from Maven Central, you only need to declare the dependency because Maven Central is enabled by default in Maven builds:
+
+```xml
+<dependencies>
+  <dependency>
+    <groupId>com.equinor.neqsim</groupId>
+    <artifactId>neqsim</artifactId>
+    <version>3.1.2</version>
+  </dependency>
+</dependencies>
+```
+
+Run your Maven build (`mvn clean install`) and NeqSim will be resolved from the Central repository without additional repository configuration.
 
 ## Getting Started as a NeqSim Java developer
 

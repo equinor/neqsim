@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.simple.SimpleMatrix;
@@ -274,6 +275,8 @@ public class GibbsReactor extends TwoPortEquipment {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(GibbsReactor.class);
 
+  private static final Pattern ION_NAME_PATTERN = Pattern.compile(".*[+\\-]+$");
+
   private String method = "DirectGibbsMinimization";
   private boolean useAllDatabaseSpecies = false;
   private List<GibbsComponent> gibbsDatabase = new ArrayList<>();
@@ -370,6 +373,10 @@ public class GibbsReactor extends TwoPortEquipment {
   private double GOLD = 0.0;
   private double G = 0.0;
   private double dG = 0.0;
+
+  private boolean isIonicComponent(String moleculeName) {
+    return ION_NAME_PATTERN.matcher(moleculeName).matches();
+  }
 
 
   /**
@@ -778,7 +785,7 @@ public class GibbsReactor extends TwoPortEquipment {
                 + " elements (parts.length=" + parts.length + ")");
 
             // Debug logging for ionic species - show raw parts
-            if (molecule.contains("+") || molecule.contains("-")) {
+            if (isIonicComponent(molecule)) {
               StringBuilder partsStr = new StringBuilder();
               for (int i = 0; i < Math.min(parts.length, 10); i++) {
                 partsStr.append("parts[").append(i).append("]=").append(parts[i]).append(" ");
@@ -798,7 +805,6 @@ public class GibbsReactor extends TwoPortEquipment {
                 // + ") = " + value + " -> " + elements[i]);
               }
             }
-
             double[] heatCapCoeffs = new double[4];
             int heatCapStartIndex = numElements + 1; // 7 for new format, 6 for old format
             for (int i = 0; i < 4; i++) {
@@ -1924,7 +1930,6 @@ public class GibbsReactor extends TwoPortEquipment {
       }
 
       return true;
-
     } catch (Exception e) {
       logger.error("Error updating system with new compositions: " + e.getMessage());
       return false;

@@ -38,4 +38,22 @@ public class bubblePointPressureFlashTest {
     }
     assertEquals(67.6788201368, fluid0_HC.getTemperature("C"), 1e-2);
   }
+
+  @Test
+  void testRun2() {
+    SystemSrkEos fluid0_HC = new SystemSrkEos();
+    fluid0_HC.addComponent("CO2", 0.1);
+    fluid0_HC.setMixingRule("classic");
+
+    fluid0_HC.setPressure(10.0, "bara");
+    fluid0_HC.setTemperature(302, "K");
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid0_HC);
+    try {
+      ops.bubblePointPressureFlash();
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+    }
+    assertEquals(70.374, fluid0_HC.getPressure("bara"), 1e-2);
+  }
 }

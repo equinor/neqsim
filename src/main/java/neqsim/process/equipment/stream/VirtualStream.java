@@ -143,6 +143,8 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
       outStream.getFluid().setMolarComposition(composition);
     }
     outStream.run(id);
+
+    isSolved = outStream.solved();
   }
 
   /**
@@ -159,7 +161,6 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
-    // TODO Auto-generated method stub
-    return false;
+    return outStream != null ? outStream.solved() : super.solved();
   }
 }

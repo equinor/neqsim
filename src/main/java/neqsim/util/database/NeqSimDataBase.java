@@ -456,6 +456,18 @@ public class NeqSimDataBase
   }
 
   /**
+   * Use extended component database.
+   *
+   * @param useExtendedDatabase the use extended database
+   */
+  public static void useExtendedComponentDatabase(boolean useExtendedDatabase) {
+    if (useExtendedDatabase)
+      updateTable("COMP", "data/COMP_EXT.csv");
+    else
+      updateTable("COMP", "data/COMP.csv");
+  }
+
+  /**
    * Drops and re-creates table from contents in csv file.
    *
    * @param tableName Name of table to replace
@@ -472,6 +484,7 @@ public class NeqSimDataBase
       String sqlString =
           "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('file:" + url + "')";
       database.execute(sqlString);
+      // System.out.println("Updated table " + tableName + " from file: " + url.getPath());
     } catch (Exception ex) {
       logger.error("Failed updating table " + tableName, ex);
     }

@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
@@ -40,6 +41,7 @@ public class TPmultiflash extends TPflash {
   boolean removePhase = false;
   boolean checkOneRemove = false;
   boolean secondTime = false;
+  boolean aqueousPhaseSeedAttempted = false;
 
   double[] multTerm;
   double[] multTerm2;
@@ -1303,7 +1305,8 @@ public class TPmultiflash extends TPflash {
       if (iter > 198) {
         // System.out.println("too many iterations....." + err + " temperature "
         // + system.getTemperature("C") + " C " + system.getPressure("bara") + " bara");
-        new neqsim.util.exception.TooManyIterationsException(this, "stabilityAnalysis2", 200);
+        throw new RuntimeException(
+            new neqsim.util.exception.TooManyIterationsException(this, "stabilityAnalysis2", 200));
       }
       // logger.info("err: " + err + " ITER " + iter);
       double xTrivialCheck0 = 0.0;
@@ -1364,6 +1367,9 @@ public class TPmultiflash extends TPflash {
   }
 
   private boolean seedAdditionalPhaseFromFeed() {
+    if (!system.doMultiPhaseCheck()) {
+      return false;
+    }
     if (system.getNumberOfPhases() >= 3) {
       return false;
     }
@@ -1421,6 +1427,74 @@ public class TPmultiflash extends TPflash {
   }
 
 
+  private boolean seedHydrocarbonLiquidFromFeed() {
+    if (!system.doMultiPhaseCheck()) {
+      return false;
+    }
+    if (system.getNumberOfPhases() >= 3 || system.hasPhaseType(PhaseType.OIL)
+        || !system.hasPhaseType(PhaseType.AQUEOUS)) {
+      return false;
+    }
+
+    double waterZ = 0.0;
+    try {
+      waterZ = system.getComponent("water").getz();
+    } catch (Exception ex) {
+      for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+        if ("water".equals(system.getPhase(0).getComponent(comp).getComponentName())) {
+          waterZ = system.getPhase(0).getComponent(comp).getz();
+          break;
+        }
+      }
+    }
+
+    if (waterZ < 1.0e-6) {
+      return false;
+    }
+
+    double heavyHydrocarbonTotal = 0.0;
+    for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+      ComponentInterface component = system.getPhase(0).getComponent(comp);
+      if (component.isHydrocarbon() && component.getz() > 1.0e-6
+          && component.getMolarMass() > 0.045) {
+        heavyHydrocarbonTotal += component.getz();
+      }
+    }
+    if (heavyHydrocarbonTotal < 5.0e-3 || heavyHydrocarbonTotal <= waterZ) {
+      return false;
+    }
+
+    system.addPhase();
+    int phaseIndex = system.getNumberOfPhases() - 1;
+    system.setPhaseType(phaseIndex, PhaseType.OIL);
+
+    for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+      ComponentInterface component = system.getPhase(0).getComponent(comp);
+      double z = component.getz();
+      double x = 1.0e-16;
+      if (component.getIonicCharge() != 0 || component.isIsIon()) {
+        x = 1.0e-16;
+      } else if (component.isHydrocarbon()) {
+        if (component.getMolarMass() > 0.045) {
+          x = Math.max(z, 1.0e-12);
+        } else {
+          x = Math.min(z * 1.0e-2, 1.0e-8);
+        }
+      } else if ("water".equalsIgnoreCase(component.getComponentName())) {
+        x = Math.min(z * 1.0e-2, 1.0e-8);
+      }
+      system.getPhase(phaseIndex).getComponent(comp).setx(x);
+    }
+
+    system.getPhases()[phaseIndex].normalize();
+    double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
+    system.setBeta(phaseIndex, initialBeta);
+    system.normalizeBeta();
+    system.init(1);
+    return true;
+  }
+
+
   /** {@inheritDoc} */
   @Override
   public void run() {
@@ -1432,6 +1506,10 @@ public class TPmultiflash extends TPflash {
       stabilityAnalysis();
     }
     if (!multiPhaseTest && seedAdditionalPhaseFromFeed()) {
+      multiPhaseTest = true;
+      doStabilityAnalysis = false;
+    }
+    if (seedHydrocarbonLiquidFromFeed()) {
       multiPhaseTest = true;
       doStabilityAnalysis = false;
     }
@@ -1496,7 +1574,7 @@ public class TPmultiflash extends TPflash {
           diff = this.solveBeta();
           // diff = Math.abs((system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) /
           // oldBeta);
-          // logger.info("diff multiphase " + diff);
+          // System.out.println("diff multiphase " + diff);
           if (iterations % 50 == 0) {
             maxerr *= 100.0;
           }
@@ -1512,6 +1590,60 @@ public class TPmultiflash extends TPflash {
       } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100)
           || (iterOut < 3 && system.isChemicalSystem()));
 
+      // Check if water is present and if an aqueous phase should be seeded
+      // Only try to seed aqueous phase once per flash operation (not on recursive calls)
+      if (system.hasComponent("water") && !aqueousPhaseSeedAttempted && system.doMultiPhaseCheck()
+          && !system.hasPhaseType(PhaseType.AQUEOUS)) {
+        aqueousPhaseSeedAttempted = true;
+        double waterZ = 0.0;
+        int waterComponentIndex = -1;
+        try {
+          waterZ = system.getComponent("water").getz();
+          waterComponentIndex = system.getComponent("water").getComponentNumber();
+        } catch (Exception ex) {
+          for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+            if ("water".equals(system.getPhase(0).getComponent(comp).getComponentName())) {
+              waterZ = system.getPhase(0).getComponent(comp).getz();
+              waterComponentIndex = comp;
+              break;
+            }
+          }
+        }
+
+        // If water content is significant (> 1e-6), seed an aqueous phase.
+        // Limit total active phases to a maximum of 3 (e.g. gas, liquid, aqueous) to avoid
+        // indexing beyond what downstream algorithms expect. Do not create a new aqueous
+        // phase if one already exists.
+        if (waterZ > 1.0e-6 && waterComponentIndex >= 0 && system.getNumberOfPhases() < 3
+            && !system.hasPhaseType(PhaseType.AQUEOUS)) {
+          system.addPhase();
+          int aquPhaseIndex = system.getNumberOfPhases() - 1;
+          system.setPhaseType(aquPhaseIndex, PhaseType.AQUEOUS);
+
+          // Initialize aqueous phase with water and trace amounts of other components
+          for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+            double x = 1.0e-16;
+            if (comp == waterComponentIndex) {
+              // Concentrate water in aqueous phase
+              x = Math.max(waterZ, 1.0e-12);
+            } else if (!system.getPhase(0).getComponent(comp).isHydrocarbon()
+                && !system.getPhase(0).getComponent(comp).isInert()) {
+              // Other aqueous components get trace amounts
+              x = Math.min(system.getPhase(0).getComponent(comp).getz() * 1.0e-2, 1.0e-8);
+            }
+            system.getPhase(aquPhaseIndex).getComponent(comp).setx(x);
+          }
+
+          system.getPhases()[aquPhaseIndex].normalize();
+          double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
+          system.setBeta(aquPhaseIndex, initialBeta);
+          system.normalizeBeta();
+          system.init(1);
+          multiPhaseTest = true;
+          doStabilityAnalysis = false;
+        }
+      }
+
       boolean hasRemovedPhase = false;
       for (int i = 0; i < system.getNumberOfPhases(); i++) {
         if (system.getBeta(i) < 1.1 * phaseFractionMinimumLimit) {
@@ -1522,22 +1654,28 @@ public class TPmultiflash extends TPflash {
       }
 
       boolean trivialSolution = false;
-      for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-        for (int j = 0; j < system.getPhase(i).getNumberOfComponents(); j++) {
-          if (Math.abs(
-              system.getPhase(i).getDensity() - system.getPhase(i + 1).getDensity()) < 1.1e-5) {
+      for (int i = 0; i < system.getNumberOfPhases(); i++) {
+        for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
+          if (Math
+              .abs(system.getPhase(i).getDensity() - system.getPhase(j).getDensity()) < 1.1e-5) {
             trivialSolution = true;
+            break;
           }
+        }
+        if (trivialSolution) {
+          break;
         }
       }
 
       if (trivialSolution && !hasRemovedPhase) {
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-          if (Math.abs(
-              system.getPhase(i).getDensity() - system.getPhase(i + 1).getDensity()) < 1.1e-5) {
-            system.removePhaseKeepTotalComposition(i + 1);
-            doStabilityAnalysis = false;
-            hasRemovedPhase = true;
+          for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
+            if (Math
+                .abs(system.getPhase(i).getDensity() - system.getPhase(j).getDensity()) < 1.1e-5) {
+              system.removePhaseKeepTotalComposition(j);
+              doStabilityAnalysis = false;
+              hasRemovedPhase = true;
+            }
           }
         }
       }
@@ -1553,6 +1691,8 @@ public class TPmultiflash extends TPflash {
         stabilityAnalysis3();
         run();
       }
+
+
       /*
        * if (!secondTime) { secondTime = true; doStabilityAnalysis = false; run(); }
        */

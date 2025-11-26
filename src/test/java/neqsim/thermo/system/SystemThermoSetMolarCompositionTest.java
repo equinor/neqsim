@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
@@ -101,5 +102,25 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
     double flowRate = sys.getFlowRate("kg/hr");
 
     assertEquals(876223.6458342039, flowRate, 1e-3);
+  }
+
+  @Test
+  void testWeightBasedComposition() {
+    SystemInterface weightSystem = new SystemSrkEos(298.0, 50.0);
+    weightSystem.addComponent("methane", 1.0);
+    weightSystem.addComponent("ethane", 1.0);
+    weightSystem.setMolarComposition(new double[] {0.25, 0.75});
+
+    double[] weightComposition = weightSystem.getWeightBasedComposition();
+
+    double mixtureMolarMass = weightSystem.getMolarMass();
+    double expectedFirst = weightSystem.getPhase(0).getComponent(0).getMolarMass() * 0.25
+        / mixtureMolarMass;
+    double expectedSecond = weightSystem.getPhase(0).getComponent(1).getMolarMass() * 0.75
+        / mixtureMolarMass;
+
+    assertEquals(expectedFirst, weightComposition[0]);
+    assertEquals(expectedSecond, weightComposition[1]);
+    assertEquals(1.0, Arrays.stream(weightComposition).sum(), 1e-12);
   }
 }

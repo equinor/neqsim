@@ -64,10 +64,20 @@ public class TurboExpanderCompressor extends Expander {
   private double QNratiocompressor = 0.7;
   /** Design Q/N (flow/speed ratio). */
   private double designQn = 0.03328;
+  /** Design Q/N for the expander (flow/speed ratio). */
+  private double designExpanderQn = 0.0;
   /** Actual Q/N (flow/speed ratio). */
   private double Qn = 0.03328;
-  /** Maximum IGV area [mm^2]. */
+  /** Maximum IGV area [mm^2] for the installed hardware. */
   private double maximumIGVArea = 1.637e4;
+  /** Allowable IGV area increase factor (e.g. 1.14 for +14%). */
+  private double igvAreaIncreaseFactor = 1.14;
+  /** Flag indicating whether the enlarged IGV area is being used. */
+  private boolean usingExpandedIGVArea = false;
+  /** Current effective IGV area [mm^2]. */
+  private double currentIGVArea = 0.0;
+  /** Last calculated stage isentropic enthalpy drop [J/kg]. */
+  private double lastStageEnthalpyDrop = 0.0;
   /** Compressor polytropic efficiency (design/actual). */
   private double compressorDesignPolytropicEfficiency = 0.81;
   private double compressorPolytropicEfficiency = 0.81;
@@ -144,6 +154,7 @@ public class TurboExpanderCompressor extends Expander {
     double N_design = designSpeed;
     double m1 = expanderFeedStream.getFlowRate("kg/sec");
     double Q_comp = 0.0;
+    double Q_exp = 0.0;
     double m_comp = 0.0;
     double eta_s = 0.0;
     double Hp = 0.0;
@@ -161,7 +172,12 @@ public class TurboExpanderCompressor extends Expander {
     double uc = 0.0;
     double uc2 = 0.0;
     double qn_ratio = 0.0;
+    double qn_ratio_exp = 1.0;
     double qn_ratio2 = 0.0;
+    double qn_ratio_exp2 = 1.0;
+    boolean applyExpanderQnCorrection = designExpanderQn > 0.0;
+    double designQnExp = designExpanderQn;
+    double h_s = 0.0;
     do {
       double outPress = expanderOutPressure;
       SystemInterface fluid2 = expanderFeedStream.getThermoSystem().clone();
@@ -173,18 +189,35 @@ public class TurboExpanderCompressor extends Expander {
       flash.PSflash(s1, "kJ/kgK");
       fluid2.init(3);
       double h_out = fluid2.getEnthalpy("kJ/kg");
-      double h_s = (h_in - h_out) * 1000; // J/kg
+      h_s = (h_in - h_out) * 1000; // J/kg
       double U = Math.PI * D * N / 60.0;
       double C = Math.sqrt(2.0 * h_s);
       uc = U / C / designUC;
       double CF = getEfficiencyFromUC(uc);
-      eta_s = eta_s_design * CF;
+      Q_exp = expanderFeedStream.getFluid().getFlowRate("m3/sec");
+      double CF_qn_exp = 1.0;
+      if (applyExpanderQnCorrection && designQnExp > 0.0 && N > 0.0) {
+        qn_ratio_exp = (Q_exp * 60.0 / N) / designQnExp;
+        CF_qn_exp = getEfficiencyFromQN(qn_ratio_exp);
+        if (CF_qn_exp < 0.0) {
+          CF_qn_exp = 0.0;
+        }
+      } else {
+        qn_ratio_exp = 1.0;
+      }
+      double CF_total = CF * CF_qn_exp;
+      if (CF_total < 0.0) {
+        CF_total = 0.0;
+      }
+      eta_s = eta_s_design * CF_total;
       W_expander = m1 * h_s * eta_s;
       m_comp = compressorFeedStream.getFluid().getFlowRate("kg/sec");
       Q_comp = compressorFeedStream.getFluid().getFlowRate("m3/sec");
       qn_ratio = (Q_comp * 60.0 / N) / designQn;
       CF_eff_comp = getEfficiencyFromQN(qn_ratio);
+      CF_eff_comp = Math.max(CF_eff_comp, 1e-6);
       CF_head_comp = getHeadFromQN(qn_ratio);
+      CF_head_comp = Math.max(CF_head_comp, 1e-6);
       Hp = Hp_design * (N / N_design) * (N / N_design) * CF_head_comp;
       eta_p = CF_eff_comp * eta_p_design;
       W_compressor = m_comp * Hp / eta_p * 1000.0;
@@ -196,10 +229,25 @@ public class TurboExpanderCompressor extends Expander {
       double U2 = Math.PI * D * N2 / 60.0;
       uc2 = U2 / C / designUC;
       double CF2 = getEfficiencyFromUC(uc2);
-      eta_s2 = eta_s_design * CF2;
+      double CF_qn_exp2 = 1.0;
+      if (applyExpanderQnCorrection && designQnExp > 0.0 && N2 > 0.0) {
+        qn_ratio_exp2 = (Q_exp * 60.0 / N2) / designQnExp;
+        CF_qn_exp2 = getEfficiencyFromQN(qn_ratio_exp2);
+        if (CF_qn_exp2 < 0.0) {
+          CF_qn_exp2 = 0.0;
+        }
+      } else {
+        qn_ratio_exp2 = 1.0;
+      }
+      double CF_total2 = CF2 * CF_qn_exp2;
+      if (CF_total2 < 0.0) {
+        CF_total2 = 0.0;
+      }
+      eta_s2 = eta_s_design * CF_total2;
       double W_expander2 = m1 * h_s * eta_s2;
       qn_ratio2 = (Q_comp * 60.0 / N2) / designQn;
       double CF_eff_comp2 = getEfficiencyFromQN(qn_ratio2);
+      CF_eff_comp2 = Math.max(CF_eff_comp2, 1e-6);
       Hp2 = Hp_design * (N2 / N_design) * (N2 / N_design) * CF_head_comp;
       eta_p2 = CF_eff_comp2 * eta_p_design;
       double W_compressor2 = m_comp * Hp2 / eta_p2 * 1000.0;
@@ -237,6 +285,8 @@ public class TurboExpanderCompressor extends Expander {
     powerExpander = W_expander;
     powerCompressor = W_compressor;
     setUCratioexpander(uc);
+    setQNratioexpander(qn_ratio_exp);
+    updateIGVState(h_s, m1, Q_exp);
     setQNratiocompressor(qn_ratio);
     setQn(N / 60.0 * Q_comp / designQn);
 
@@ -339,6 +389,24 @@ public class TurboExpanderCompressor extends Expander {
 
   /**
    * <p>
+   * Getter for the field <code>powerExpander</code> with unit conversion.
+   * </p>
+   *
+   * @param unit the desired unit ("W", "kW" or "MW")
+   * @return expander power in the requested unit
+   */
+  public double getPowerExpander(String unit) {
+    double conversionFactor = 1.0;
+    if (unit.equals("MW")) {
+      conversionFactor = 1.0e-6;
+    } else if (unit.equals("kW")) {
+      conversionFactor = 1.0e-3;
+    }
+    return conversionFactor * getPowerExpander();
+  }
+
+  /**
+   * <p>
    * Getter for the field <code>powerCompressor</code>.
    * </p>
    *
@@ -346,6 +414,24 @@ public class TurboExpanderCompressor extends Expander {
    */
   public double getPowerCompressor() {
     return powerCompressor;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>powerCompressor</code> with unit conversion.
+   * </p>
+   *
+   * @param unit the desired unit ("W", "kW" or "MW")
+   * @return compressor power in the requested unit
+   */
+  public double getPowerCompressor(String unit) {
+    double conversionFactor = 1.0;
+    if (unit.equals("MW")) {
+      conversionFactor = 1.0e-6;
+    } else if (unit.equals("kW")) {
+      conversionFactor = 1.0e-3;
+    }
+    return conversionFactor * getPowerCompressor();
   }
 
   /**
@@ -491,7 +577,7 @@ public class TurboExpanderCompressor extends Expander {
   public double getEfficiencyFromQN(double qn) {
     if (qnEffCurveQnValues == null || qnEffCurveEffValues == null
         || qnEffCurveQnValues.length < 2) {
-      return 0.0;
+      return 1.0;
     }
     double[] x = qnEffCurveQnValues;
     double[] y = qnEffCurveEffValues;
@@ -574,7 +660,7 @@ public class TurboExpanderCompressor extends Expander {
   public double getHeadFromQN(double qn) {
     if (qnHeadCurveQnValues == null || qnHeadCurveHeadValues == null
         || qnHeadCurveQnValues.length < 2) {
-      return 0.0;
+      return 1.0;
     }
     double[] x = qnHeadCurveQnValues;
     double[] y = qnHeadCurveHeadValues;
@@ -633,27 +719,94 @@ public class TurboExpanderCompressor extends Expander {
    * @return the IGV open area in mm²
    */
   public double calcIGVOpenArea() {
-    return IGVopening * maximumIGVArea;
+    if (currentIGVArea > 0.0) {
+      return currentIGVArea;
+    }
+    double massFlow =
+        expanderFeedStream != null ? expanderFeedStream.getFluid().getFlowRate("kg/sec") : 0.0;
+    double volumetricFlow =
+        expanderFeedStream != null ? expanderFeedStream.getFluid().getFlowRate("m3/sec") : 0.0;
+    IGVModelResult res = evaluateIGV(lastStageEnthalpyDrop, massFlow, volumetricFlow);
+    return res.areaMm2;
   }
 
   /**
-   * Calculate the IGV (Inlet Guide Vane) opening as the ratio of the volumetric flow into the
-   * expander to the maximum IGV area (assuming unit velocity for simplicity).
+   * Calculate the IGV (Inlet Guide Vane) opening using the current flow conditions and last computed
+   * stage enthalpy drop.
    *
    * @return IGV opening (fraction of max area, capped at 1.0)
    */
   public double calcIGVOpeningFromFlow() {
-    // Volumetric flow into expander in m3/s
+    double massFlow =
+        expanderFeedStream != null ? expanderFeedStream.getFluid().getFlowRate("kg/sec") : 0.0;
     double volumetricFlow =
         expanderFeedStream != null ? expanderFeedStream.getFluid().getFlowRate("m3/sec") : 0.0;
-    // Maximum IGV area in m2 (convert from mm2)
-    double maxArea = maximumIGVArea / 1.0e6;
-    // Assume a reference velocity (e.g., 1 m/s) for area calculation
-    double referenceVelocity = 1.0; // m/s
-    double requiredArea = volumetricFlow / referenceVelocity;
-    double opening = maxArea > 0.0 ? requiredArea / maxArea : 0.0;
-    // Cap at 1.0 (cannot open more than max area)s
-    return Math.min(opening, 1.0);
+    IGVModelResult res = evaluateIGV(lastStageEnthalpyDrop, massFlow, volumetricFlow);
+    return res.opening;
+  }
+
+  private static final class IGVModelResult {
+    private final double opening;
+    private final double areaMm2;
+    private final boolean expanded;
+
+    private IGVModelResult(double opening, double areaMm2, boolean expanded) {
+      this.opening = opening;
+      this.areaMm2 = areaMm2;
+      this.expanded = expanded;
+    }
+  }
+
+  private IGVModelResult evaluateIGV(double stageDrop, double massFlow, double volumetricFlow) {
+    double opening = 0.0;
+    double areaMm2 = 0.0;
+    boolean expanded = false;
+    if (massFlow > 0.0 && stageDrop > 0.0) {
+      double density = Double.NaN;
+      if (expanderFeedStream != null) {
+        density = expanderFeedStream.getFluid().getDensity("kg/m3");
+      }
+      if (!(density > 0.0) && volumetricFlow > 0.0) {
+        density = massFlow / volumetricFlow;
+      }
+      if (density > 0.0) {
+        double deltaHigv = 0.5 * stageDrop;
+        if (deltaHigv <= 0.0) {
+          deltaHigv = Math.max(stageDrop * 0.5, 1.0);
+        }
+        double velocity = Math.sqrt(2.0 * Math.max(deltaHigv, 1e-6));
+        double requiredArea = massFlow / (density * velocity);
+        double baseArea = maximumIGVArea / 1.0e6;
+        double expandedArea = baseArea * igvAreaIncreaseFactor;
+        double availableArea = baseArea;
+        if (requiredArea > baseArea && expandedArea > baseArea) {
+          availableArea = expandedArea;
+          expanded = true;
+        }
+        if (availableArea > 0.0) {
+          opening = requiredArea / availableArea;
+        }
+        if (!Double.isFinite(opening) || opening < 0.0) {
+          opening = 0.0;
+        }
+        if (opening > 1.0) {
+          opening = 1.0;
+        }
+        areaMm2 = opening * availableArea * 1.0e6;
+        if (opening >= 1.0 && requiredArea > availableArea) {
+          areaMm2 = availableArea * 1.0e6;
+        }
+      }
+    }
+    return new IGVModelResult(opening, areaMm2, expanded);
+  }
+
+  private void updateIGVState(double stageDrop, double massFlow, double volumetricFlow) {
+    IGVModelResult res = evaluateIGV(stageDrop, massFlow, volumetricFlow);
+    IGVopening = res.opening;
+    currentIGVArea = res.areaMm2;
+    usingExpandedIGVArea = res.expanded;
+    lastStageEnthalpyDrop = stageDrop;
   }
 
   // --- Setters ---
@@ -701,6 +854,18 @@ public class TurboExpanderCompressor extends Expander {
     this.designQn = designQn;
   }
 
+  public double getDesignExpanderQn() {
+    return designExpanderQn;
+  }
+
+  public void setDesignExpanderQn(double designExpanderQn) {
+    if (designExpanderQn <= 0.0) {
+      this.designExpanderQn = 0.0;
+    } else {
+      this.designExpanderQn = designExpanderQn;
+    }
+  }
+
   /**
    * <p>
    * Setter for the field <code>maximumIGVArea</code>.
@@ -710,6 +875,19 @@ public class TurboExpanderCompressor extends Expander {
    */
   public void setMaximumIGVArea(double maximumIGVArea) {
     this.maximumIGVArea = maximumIGVArea;
+    double activeArea = usingExpandedIGVArea ? maximumIGVArea * igvAreaIncreaseFactor : maximumIGVArea;
+    currentIGVArea = IGVopening * activeArea;
+  }
+
+  public double getIgvAreaIncreaseFactor() {
+    return igvAreaIncreaseFactor;
+  }
+
+  public void setIgvAreaIncreaseFactor(double igvAreaIncreaseFactor) {
+    double factor = igvAreaIncreaseFactor < 1.0 ? 1.0 : igvAreaIncreaseFactor;
+    this.igvAreaIncreaseFactor = factor;
+    double activeArea = usingExpandedIGVArea ? maximumIGVArea * this.igvAreaIncreaseFactor : maximumIGVArea;
+    currentIGVArea = IGVopening * activeArea;
   }
 
   // --- Getters ---
@@ -809,7 +987,17 @@ public class TurboExpanderCompressor extends Expander {
    * @param iGVopening a double
    */
   public void setIGVopening(double iGVopening) {
-    IGVopening = iGVopening;
+    IGVopening = Math.max(0.0, Math.min(1.0, iGVopening));
+    usingExpandedIGVArea = false;
+    currentIGVArea = IGVopening * maximumIGVArea;
+  }
+
+  public boolean isUsingExpandedIGVArea() {
+    return usingExpandedIGVArea;
+  }
+
+  public double getCurrentIGVArea() {
+    return currentIGVArea;
   }
 
   /**

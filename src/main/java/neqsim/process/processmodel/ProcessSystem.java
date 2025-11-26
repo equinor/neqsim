@@ -10,7 +10,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -18,6 +20,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.SimulationBaseClass;
+import neqsim.process.alarm.ProcessAlarmManager;
 import neqsim.process.conditionmonitor.ConditionMonitor;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.EquipmentFactory;
@@ -53,7 +56,7 @@ public class ProcessSystem extends SimulationBaseClass {
   static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
   transient Thread thisThread;
-  String[][] signalDB = new String[10000][100];
+  private MeasurementHistory measurementHistory = new MeasurementHistory();
   private double surroundingTemperature = 288.15;
   private int timeStepNumber = 0;
   /**
@@ -62,12 +65,16 @@ public class ProcessSystem extends SimulationBaseClass {
   private List<ProcessEquipmentInterface> unitOperations = new ArrayList<>();
   List<MeasurementDeviceInterface> measurementDevices =
       new ArrayList<MeasurementDeviceInterface>(0);
+  private ProcessAlarmManager alarmManager = new ProcessAlarmManager();
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
   private boolean runStep = false;
 
   private final Map<String, Integer> equipmentCounter = new HashMap<>();
   private ProcessEquipmentInterface lastAddedUnit = null;
+  private transient ProcessSystem initialStateSnapshot;
+  private double massBalanceErrorThreshold = 0.1; // Default 0.1% error threshold
+  private double minimumFlowForMassBalanceError = 1e-6; // Default 1e-6 kg/sec
 
   /**
    * <p>
@@ -140,6 +147,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public void add(MeasurementDeviceInterface measurementDevice) {
     measurementDevices.add(measurementDevice);
+    alarmManager.register(measurementDevice);
   }
 
   /**
@@ -254,7 +262,7 @@ public class ProcessSystem extends SimulationBaseClass {
         return i;
       }
     }
-    return 0;
+    return -1;
   }
 
   /**
@@ -266,7 +274,17 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentBaseClass} object
    */
   public void replaceObject(String unitName, ProcessEquipmentBaseClass operation) {
-    unitOperations.set(getUnitNumber(name), operation);
+    Objects.requireNonNull(unitName, "unitName");
+    Objects.requireNonNull(operation, "operation");
+
+    int index = getUnitNumber(unitName);
+    if (index < 0 || index >= unitOperations.size() || getUnit(unitName) == null) {
+      throw new IllegalArgumentException(
+          "No process equipment named '" + unitName + "' exists in this ProcessSystem");
+    }
+
+    operation.setName(unitName);
+    unitOperations.set(index, operation);
   }
 
   /**
@@ -468,8 +486,8 @@ public class ProcessSystem extends SimulationBaseClass {
             }
           } catch (Exception ex) {
             // String error = ex.getMessage();
-            logger.error("error running unit uperation " + unit.getName() + " "
-                + ex.getMessage(), ex);
+            logger.error("error running unit uperation " + unit.getName() + " " + ex.getMessage(),
+                ex);
             ex.printStackTrace();
           }
         }
@@ -571,6 +589,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
+    ensureInitialStateSnapshot();
     for (int i = 0; i < unitOperations.size(); i++) {
       ProcessEquipmentInterface unit = unitOperations.get(i);
       if (unit instanceof Setter) {
@@ -586,14 +605,22 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     timeStepNumber++;
-    signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()];
-    for (int i = 0; i < measurementDevices.size(); i++) {
-      signalDB[timeStepNumber][0] = Double.toString(time);
-      signalDB[timeStepNumber][3 * i + 1] = measurementDevices.get(i).getName();
-      signalDB[timeStepNumber][3 * i + 2] =
-          Double.toString(measurementDevices.get(i).getMeasuredValue());
-      signalDB[timeStepNumber][3 * i + 3] = measurementDevices.get(i).getUnit();
+    String[] row = new String[1 + 3 * measurementDevices.size()];
+    if (row.length > 0) {
+      row[0] = Double.toString(time);
     }
+    for (int i = 0; i < measurementDevices.size(); i++) {
+      MeasurementDeviceInterface device = measurementDevices.get(i);
+      double measuredValue = device.getMeasuredValue();
+      row[3 * i + 1] = device.getName();
+      row[3 * i + 2] = Double.toString(measuredValue);
+      row[3 * i + 3] = device.getUnit();
+      alarmManager.evaluateMeasurement(device, measuredValue, dt, time);
+    }
+    if (measurementDevices.isEmpty()) {
+      row[0] = Double.toString(time);
+    }
+    measurementHistory.add(row);
     setCalculationIdentifier(id);
   }
 
@@ -772,8 +799,136 @@ public class ProcessSystem extends SimulationBaseClass {
     neqsim.datapresentation.filehandling.TextFile tempFile =
         new neqsim.datapresentation.filehandling.TextFile();
     tempFile.setOutputFileName(filename);
-    tempFile.setValues(signalDB);
+    tempFile.setValues(measurementHistory.toArray());
     tempFile.createFile();
+  }
+
+  /**
+   * Clears all stored transient measurement history entries and resets the time step counter.
+   */
+  public void clearHistory() {
+    measurementHistory.clear();
+    timeStepNumber = 0;
+    alarmManager.clearHistory();
+  }
+
+  /**
+   * Returns the number of stored transient measurement entries.
+   *
+   * @return number of stored history entries
+   */
+  public int getHistorySize() {
+    return measurementHistory.size();
+  }
+
+  /**
+   * Returns the alarm manager responsible for coordinating alarm evaluation.
+   *
+   * @return alarm manager
+   */
+  public ProcessAlarmManager getAlarmManager() {
+    return alarmManager;
+  }
+
+  /**
+   * Returns a snapshot of the transient measurement history.
+   *
+   * @return the measurement history as a two-dimensional array
+   */
+  public String[][] getHistorySnapshot() {
+    return measurementHistory.toArray();
+  }
+
+  /**
+   * Sets the maximum number of entries retained in the measurement history. A value less than or
+   * equal to zero disables truncation (unbounded history).
+   *
+   * @param maxEntries maximum number of entries to keep, or non-positive for unlimited
+   */
+  public void setHistoryCapacity(int maxEntries) {
+    measurementHistory.setMaxSize(maxEntries);
+  }
+
+  /**
+   * Returns the configured history capacity. A value less than or equal to zero means the history
+   * grows without bounds.
+   *
+   * @return configured maximum number of history entries or non-positive for unlimited
+   */
+  public int getHistoryCapacity() {
+    return measurementHistory.getMaxSize();
+  }
+
+  /**
+   * Stores a snapshot of the current process system state that can later be restored with
+   * {@link #reset()}.
+   */
+  public void storeInitialState() {
+    captureInitialState(true);
+  }
+
+  /**
+   * Restores the process system to the stored initial state. The initial state is captured
+   * automatically the first time a transient run is executed, or manually via
+   * {@link #storeInitialState()}.
+   */
+  public void reset() {
+    if (initialStateSnapshot == null) {
+      throw new IllegalStateException(
+          "Initial state has not been stored. Call storeInitialState() before reset().");
+    }
+    ProcessSystem restored = initialStateSnapshot.copy();
+    applyState(restored);
+  }
+
+  private void ensureInitialStateSnapshot() {
+    captureInitialState(false);
+  }
+
+  private void captureInitialState(boolean force) {
+    if (!force && initialStateSnapshot != null) {
+      return;
+    }
+
+    ProcessSystem previousSnapshot = initialStateSnapshot;
+    try {
+      initialStateSnapshot = null;
+      ProcessSystem snapshot = deepCopy();
+      initialStateSnapshot = snapshot;
+    } catch (RuntimeException ex) {
+      initialStateSnapshot = previousSnapshot;
+      throw ex;
+    }
+  }
+
+  private void applyState(ProcessSystem source) {
+    setName(source.getName());
+    String tagName = source.getTagName();
+    if (tagName != null) {
+      setTagName(tagName);
+    }
+    setCalculateSteadyState(source.getCalculateSteadyState());
+    setRunInSteps(source.isRunInSteps());
+    setTime(source.getTime());
+    surroundingTemperature = source.surroundingTemperature;
+    timeStepNumber = source.timeStepNumber;
+    unitOperations = new ArrayList<>(source.unitOperations);
+    measurementDevices = new ArrayList<>(source.measurementDevices);
+    if (source.alarmManager != null) {
+      alarmManager.applyFrom(source.alarmManager, measurementDevices);
+    } else {
+      alarmManager = new ProcessAlarmManager();
+      alarmManager.registerAll(measurementDevices);
+    }
+    recycleController = source.recycleController;
+    timeStep = source.timeStep;
+    runStep = source.runStep;
+    equipmentCounter.clear();
+    equipmentCounter.putAll(source.equipmentCounter);
+    lastAddedUnit = source.lastAddedUnit;
+    measurementHistory = source.measurementHistory.copy();
+    thisThread = null;
+    setCalculationIdentifier(source.getCalculationIdentifier());
   }
 
   /**
@@ -971,14 +1126,25 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
   public ProcessSystem copy() {
+    ProcessSystem snapshot = initialStateSnapshot;
+    try {
+      initialStateSnapshot = null;
+      return deepCopy();
+    } finally {
+      initialStateSnapshot = snapshot;
+    }
+  }
+
+  private ProcessSystem deepCopy() {
     try {
       ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-      ObjectOutputStream out = new ObjectOutputStream(byteOut);
-      out.writeObject(this);
-      out.flush();
+      try (ObjectOutputStream out = new ObjectOutputStream(byteOut)) {
+        out.writeObject(this);
+      }
       ByteArrayInputStream byteIn = new ByteArrayInputStream(byteOut.toByteArray());
-      ObjectInputStream in = new ObjectInputStream(byteIn);
-      return (ProcessSystem) in.readObject();
+      try (ObjectInputStream in = new ObjectInputStream(byteIn)) {
+        return (ProcessSystem) in.readObject();
+      }
     } catch (Exception e) {
       throw new RuntimeException("Failed to copy ProcessSystem", e);
     }
@@ -995,14 +1161,215 @@ public class ProcessSystem extends SimulationBaseClass {
     return new ConditionMonitor(this);
   }
 
+  /**
+   * Check mass balance of all unit operations in the process system.
+   *
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @return a map with unit operation name as key and mass balance result as value
+   */
+  public Map<String, MassBalanceResult> checkMassBalance(String unit) {
+    Map<String, MassBalanceResult> massBalanceResults = new HashMap<>();
+    for (ProcessEquipmentInterface unitOp : unitOperations) {
+      try {
+        double massBalanceError = unitOp.getMassBalance(unit);
+        double inletFlow = calculateInletFlow(unitOp, unit);
+        double percentError = calculatePercentError(massBalanceError, inletFlow);
+        massBalanceResults.put(unitOp.getName(),
+            new MassBalanceResult(massBalanceError, percentError, unit));
+      } catch (Exception e) {
+        logger.warn("Failed to calculate mass balance for unit: " + unitOp.getName(), e);
+        massBalanceResults.put(unitOp.getName(),
+            new MassBalanceResult(Double.NaN, Double.NaN, unit));
+      }
+    }
+    return massBalanceResults;
+  }
+
+  /**
+   * Check mass balance of all unit operations in the process system using kg/sec.
+   *
+   * @return a map with unit operation name as key and mass balance result as value in kg/sec
+   */
+  public Map<String, MassBalanceResult> checkMassBalance() {
+    return checkMassBalance("kg/sec");
+  }
+
+  /**
+   * Get unit operations that failed mass balance check based on percentage error threshold.
+   *
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @param percentThreshold percentage error threshold (default: 0.1%)
+   * @return a map with failed unit operation names and their mass balance results
+   */
+  public Map<String, MassBalanceResult> getFailedMassBalance(String unit, double percentThreshold) {
+    Map<String, MassBalanceResult> allResults = checkMassBalance(unit);
+    Map<String, MassBalanceResult> failedUnits = new HashMap<>();
+
+    // Convert minimum flow threshold to the requested unit
+    double minimumFlowInUnit = minimumFlowForMassBalanceError;
+    if (unit.equals("kg/hr")) {
+      minimumFlowInUnit *= 3600.0; // kg/sec to kg/hr
+    } else if (unit.equals("mole/sec")) {
+      // For mole/sec, we use the kg/sec threshold as approximation
+      // since we don't have molecular weight info here
+      minimumFlowInUnit = minimumFlowForMassBalanceError;
+    }
+
+    for (Map.Entry<String, MassBalanceResult> entry : allResults.entrySet()) {
+      MassBalanceResult result = entry.getValue();
+      ProcessEquipmentInterface unitOp = getUnit(entry.getKey());
+      double inletFlow = calculateInletFlow(unitOp, unit);
+
+      // Skip units with insignificant inlet flow
+      if (Math.abs(inletFlow) < minimumFlowInUnit) {
+        continue;
+      }
+
+      if (Double.isNaN(result.getPercentError())
+          || Math.abs(result.getPercentError()) > percentThreshold) {
+        failedUnits.put(entry.getKey(), result);
+      }
+    }
+    return failedUnits;
+  }
+
+  /**
+   * Get unit operations that failed mass balance check using kg/sec and default threshold.
+   *
+   * @return a map with failed unit operation names and their mass balance results
+   */
+  public Map<String, MassBalanceResult> getFailedMassBalance() {
+    return getFailedMassBalance("kg/sec", massBalanceErrorThreshold);
+  }
+
+  /**
+   * Get unit operations that failed mass balance check using specified threshold.
+   *
+   * @param percentThreshold percentage error threshold
+   * @return a map with failed unit operation names and their mass balance results in kg/sec
+   */
+  public Map<String, MassBalanceResult> getFailedMassBalance(double percentThreshold) {
+    return getFailedMassBalance("kg/sec", percentThreshold);
+  }
+
+  /**
+   * Set the default mass balance error threshold for this process system.
+   *
+   * @param percentThreshold percentage error threshold (e.g., 0.1 for 0.1%)
+   */
+  public void setMassBalanceErrorThreshold(double percentThreshold) {
+    this.massBalanceErrorThreshold = percentThreshold;
+  }
+
+  /**
+   * Get the default mass balance error threshold for this process system.
+   *
+   * @return percentage error threshold
+   */
+  public double getMassBalanceErrorThreshold() {
+    return massBalanceErrorThreshold;
+  }
+
+  /**
+   * Set the minimum flow threshold for mass balance error checking. Units with inlet flow below
+   * this threshold are not considered errors.
+   *
+   * @param minimumFlow minimum flow in kg/sec (e.g., 1e-6)
+   */
+  public void setMinimumFlowForMassBalanceError(double minimumFlow) {
+    this.minimumFlowForMassBalanceError = minimumFlow;
+  }
+
+  /**
+   * Get the minimum flow threshold for mass balance error checking.
+   *
+   * @return minimum flow in kg/sec
+   */
+  public double getMinimumFlowForMassBalanceError() {
+    return minimumFlowForMassBalanceError;
+  }
+
+  private double calculateInletFlow(ProcessEquipmentInterface unitOp, String unit) {
+    try {
+      // Try to get inlet flow from the unit operation's thermodynamic system
+      if (unitOp.getThermoSystem() != null) {
+        return unitOp.getThermoSystem().getFlowRate(unit);
+      }
+    } catch (Exception e) {
+      // Ignore and return 0
+    }
+    return 0.0;
+  }
+
+  private double calculatePercentError(double massBalanceError, double inletFlow) {
+    if (inletFlow == 0.0 || Double.isNaN(inletFlow) || Double.isNaN(massBalanceError)) {
+      return Double.NaN;
+    }
+    return 100.0 * Math.abs(massBalanceError) / Math.abs(inletFlow);
+  }
+
+  /**
+   * Inner class to hold mass balance results.
+   */
+  public static class MassBalanceResult {
+    private final double absoluteError;
+    private final double percentError;
+    private final String unit;
+
+    /**
+     * Constructor for MassBalanceResult.
+     *
+     * @param absoluteError absolute mass balance error (outlet - inlet)
+     * @param percentError percentage error
+     * @param unit unit of measurement
+     */
+    public MassBalanceResult(double absoluteError, double percentError, String unit) {
+      this.absoluteError = absoluteError;
+      this.percentError = percentError;
+      this.unit = unit;
+    }
+
+    /**
+     * Get the absolute mass balance error.
+     *
+     * @return absolute error (outlet - inlet)
+     */
+    public double getAbsoluteError() {
+      return absoluteError;
+    }
+
+    /**
+     * Get the percentage error.
+     *
+     * @return percentage error
+     */
+    public double getPercentError() {
+      return percentError;
+    }
+
+    /**
+     * Get the unit of measurement.
+     *
+     * @return unit string
+     */
+    public String getUnit() {
+      return unit;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%.6f %s (%.4f%%)", absoluteError, unit, percentError);
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + Arrays.deepHashCode(signalDB);
-    result = prime * result + Objects.hash(measurementDevices, name, recycleController,
-        surroundingTemperature, time, timeStep, timeStepNumber, unitOperations);
+    result = prime * result + Objects.hash(alarmManager, measurementDevices, measurementHistory,
+        name, recycleController, surroundingTemperature, time, timeStep, timeStepNumber,
+        unitOperations);
     return result;
   }
 
@@ -1019,10 +1386,11 @@ public class ProcessSystem extends SimulationBaseClass {
       return false;
     }
     ProcessSystem other = (ProcessSystem) obj;
-    return Objects.equals(measurementDevices, other.measurementDevices)
+    return Objects.equals(alarmManager, other.alarmManager)
+        && Objects.equals(measurementDevices, other.measurementDevices)
         && Objects.equals(name, other.name)
         && Objects.equals(recycleController, other.recycleController)
-        && Arrays.deepEquals(signalDB, other.signalDB)
+        && Objects.equals(measurementHistory, other.measurementHistory)
         && Double.doubleToLongBits(surroundingTemperature) == Double
             .doubleToLongBits(other.surroundingTemperature)
         && Double.doubleToLongBits(time) == Double.doubleToLongBits(other.time)
@@ -1201,6 +1569,82 @@ public class ProcessSystem extends SimulationBaseClass {
     } catch (NoSuchMethodException ignored) {
     } catch (Exception e) {
       e.printStackTrace();
+    }
+  }
+
+  private static final class MeasurementHistory implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+    private int maxSize;
+    private Deque<String[]> entries = new LinkedList<>();
+
+    void add(String[] entry) {
+      if (entry == null) {
+        throw new IllegalArgumentException("History entry cannot be null");
+      }
+      if (maxSize > 0 && entries.size() >= maxSize) {
+        entries.removeFirst();
+      }
+      entries.addLast(Arrays.copyOf(entry, entry.length));
+    }
+
+    void clear() {
+      entries.clear();
+    }
+
+    int size() {
+      return entries.size();
+    }
+
+    int getMaxSize() {
+      return maxSize;
+    }
+
+    void setMaxSize(int maxSize) {
+      this.maxSize = maxSize;
+      if (maxSize > 0) {
+        while (entries.size() > maxSize) {
+          entries.removeFirst();
+        }
+      }
+    }
+
+    MeasurementHistory copy() {
+      MeasurementHistory copy = new MeasurementHistory();
+      copy.maxSize = maxSize;
+      for (String[] entry : entries) {
+        copy.entries.addLast(Arrays.copyOf(entry, entry.length));
+      }
+      return copy;
+    }
+
+    String[][] toArray() {
+      String[][] array = new String[entries.size()][];
+      int index = 0;
+      for (String[] entry : entries) {
+        array[index++] = Arrays.copyOf(entry, entry.length);
+      }
+      return array;
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + maxSize;
+      result = prime * result + Arrays.deepHashCode(toArray());
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+      MeasurementHistory other = (MeasurementHistory) obj;
+      return maxSize == other.maxSize && Arrays.deepEquals(toArray(), other.toArray());
     }
   }
 

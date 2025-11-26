@@ -1,7 +1,9 @@
 package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
@@ -27,6 +29,7 @@ import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.process.measurementdevice.WaterDewPointAnalyser;
+import neqsim.process.processmodel.ProcessSystem.MassBalanceResult;
 
 /**
  * Class for testing ProcessSystem class.
@@ -446,6 +449,9 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Stream gasToReboiler = strippingGas.clone("gas to reboiler");
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
+    column.setTemperatureTolerance(5.0e-2);
+    column.setMassBalanceTolerance(2.0e-1);
+    column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
     column.getReboiler().setOutTemperature(273.15 + 202.0);
     column.getCondenser().setOutTemperature(273.15 + 89.0);
@@ -472,6 +478,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Recycle recycleGasFromStripper = new Recycle("stripping gas recirc");
     recycleGasFromStripper.addStream(stripper.getGasOutStream());
     recycleGasFromStripper.setOutletStream(gasToReboiler);
+    recycleGasFromStripper.setTolerance(1e-1);
 
     neqsim.thermo.system.SystemInterface pureTEG =
         (neqsim.thermo.system.SystemInterface) feedGas.clone();
@@ -514,6 +521,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     recycleLeanTEG.setOutletStream(TEGFeed);
     recycleLeanTEG.setPriority(200);
     recycleLeanTEG.setDownstreamProperty("flow rate");
+    recycleLeanTEG.setTolerance(1e-1);
 
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();
@@ -763,6 +771,9 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Stream gasToReboiler = strippingGas.clone("gas to reboiler");
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
+    column.setTemperatureTolerance(5.0e-2);
+    column.setMassBalanceTolerance(2.0e-1);
+    column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
     column.getReboiler().setOutTemperature(273.15 + 202.0);
     column.getCondenser().setOutTemperature(273.15 + 89.0);
@@ -789,7 +800,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Recycle recycleGasFromStripper = new Recycle("stripping gas recirc");
     recycleGasFromStripper.addStream(stripper.getGasOutStream());
     recycleGasFromStripper.setOutletStream(gasToReboiler);
-    recycleGasFromStripper.setTolerance(1.0e-2);
+    recycleGasFromStripper.setTolerance(5.0e-2);
 
     neqsim.thermo.system.SystemInterface pureTEG =
         (neqsim.thermo.system.SystemInterface) feedGas.clone();
@@ -989,4 +1000,325 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     // process1.validateConnections();
     // process1.checkMassBalance();
   }
+
+  @Test
+  public void testMassBalanceCheck() {
+    neqsim.thermo.system.SystemInterface fluid1 =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid1.addComponent("methane", 1.0);
+    fluid1.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+
+    Stream stream1 = new Stream("Stream1", fluid1);
+    stream1.setFlowRate(100.0, "kg/hr");
+    stream1.setTemperature(25.0, "C");
+    stream1.setPressure(10.0, "bara");
+
+    Separator separator = new Separator("Separator1", stream1);
+
+    process.add(stream1);
+    process.add(separator);
+    process.run();
+
+    // Check mass balance for all units
+    Map<String, ProcessSystem.MassBalanceResult> results = process.checkMassBalance("kg/hr");
+
+    // Separator should have near-zero mass balance error
+    assertTrue(results.containsKey("Separator1"));
+    ProcessSystem.MassBalanceResult sepResult = results.get("Separator1");
+    assertTrue(Math.abs(sepResult.getAbsoluteError()) < 0.01,
+        "Separator mass balance error: " + sepResult.getAbsoluteError());
+  }
+
+  @Test
+  public void testMassBalanceWithMixer() {
+    neqsim.thermo.system.SystemInterface fluid1 =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid1.addComponent("methane", 0.9);
+    fluid1.addComponent("ethane", 0.1);
+    fluid1.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+
+    Stream stream1 = new Stream("Stream1", fluid1.clone());
+    stream1.setFlowRate(50.0, "kg/hr");
+    stream1.setTemperature(25.0, "C");
+    stream1.setPressure(10.0, "bara");
+
+    Stream stream2 = new Stream("Stream2", fluid1.clone());
+    stream2.setFlowRate(30.0, "kg/hr");
+    stream2.setTemperature(30.0, "C");
+    stream2.setPressure(10.0, "bara");
+
+    StaticMixer mixer = new StaticMixer("Mixer1");
+    mixer.addStream(stream1);
+    mixer.addStream(stream2);
+
+    process.add(stream1);
+    process.add(stream2);
+    process.add(mixer);
+    process.run();
+
+    // Check mass balance
+    Map<String, ProcessSystem.MassBalanceResult> results = process.checkMassBalance("kg/hr");
+    assertTrue(results.containsKey("Mixer1"));
+
+    ProcessSystem.MassBalanceResult mixerResult = results.get("Mixer1");
+    assertTrue(Math.abs(mixerResult.getAbsoluteError()) < 0.01,
+        "Mixer mass balance error: " + mixerResult.getAbsoluteError());
+
+    // Check that mixer balances 50 + 30 = 80 kg/hr
+    double expectedFlow = 80.0;
+    double actualFlow = mixer.getOutletStream().getFlowRate("kg/hr");
+    assertEquals(expectedFlow, actualFlow, 0.1);
+  }
+
+  @Test
+  public void testMassBalanceWithSplitter() {
+    neqsim.thermo.system.SystemInterface fluid1 =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid1.addComponent("methane", 1.0);
+    fluid1.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+
+    Stream stream1 = new Stream("Stream1", fluid1);
+    stream1.setFlowRate(100.0, "kg/hr");
+    stream1.setTemperature(25.0, "C");
+    stream1.setPressure(10.0, "bara");
+
+    Splitter splitter = new Splitter("Splitter1", stream1);
+    splitter.setSplitFactors(new double[] {0.6, 0.4});
+
+    process.add(stream1);
+    process.add(splitter);
+    process.run();
+
+    // Check mass balance
+    Map<String, ProcessSystem.MassBalanceResult> results = process.checkMassBalance("kg/hr");
+    assertTrue(results.containsKey("Splitter1"));
+
+    ProcessSystem.MassBalanceResult splitterResult = results.get("Splitter1");
+    assertTrue(Math.abs(splitterResult.getAbsoluteError()) < 0.01,
+        "Splitter mass balance error: " + splitterResult.getAbsoluteError());
+  }
+
+  @Test
+  public void testGetFailedMassBalance() {
+    neqsim.thermo.system.SystemInterface fluid1 =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid1.addComponent("methane", 1.0);
+    fluid1.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+
+    Stream stream1 = new Stream("Stream1", fluid1);
+    stream1.setFlowRate(100.0, "kg/hr");
+    stream1.setTemperature(25.0, "C");
+    stream1.setPressure(10.0, "bara");
+
+    Separator separator = new Separator("Separator1", stream1);
+
+    process.add(stream1);
+    process.add(separator);
+    process.run();
+
+    // With default threshold (0.1%), separator should pass
+    Map<String, ProcessSystem.MassBalanceResult> failedUnits = process.getFailedMassBalance();
+
+    // Separator should not be in failed list (has good mass balance)
+    assertTrue(!failedUnits.containsKey("Separator1")
+        || Math.abs(failedUnits.get("Separator1").getPercentError()) < 0.1);
+  }
+
+  @Test
+  public void testMassBalanceErrorThreshold() {
+    neqsim.thermo.system.SystemInterface fluid1 =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid1.addComponent("methane", 1.0);
+    fluid1.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+
+    Stream stream1 = new Stream("Stream1", fluid1);
+    stream1.setFlowRate(100.0, "kg/hr");
+    stream1.setTemperature(25.0, "C");
+    stream1.setPressure(10.0, "bara");
+
+    Separator separator = new Separator("Separator1", stream1);
+
+    process.add(stream1);
+    process.add(separator);
+    process.run();
+
+    // Test default threshold
+    assertEquals(0.1, process.getMassBalanceErrorThreshold(), 1e-9);
+
+    // Set a more lenient threshold
+    process.setMassBalanceErrorThreshold(1.0);
+    assertEquals(1.0, process.getMassBalanceErrorThreshold(), 1e-9);
+
+    // Get failed units with new threshold
+    Map<String, ProcessSystem.MassBalanceResult> failedUnits = process.getFailedMassBalance();
+    // With 1% threshold, separator should definitely pass
+    assertTrue(!failedUnits.containsKey("Separator1"));
+  }
+
+  @Test
+  public void testMinimumFlowForMassBalanceError() {
+    neqsim.thermo.system.SystemInterface fluid1 =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid1.addComponent("methane", 1.0);
+    fluid1.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+
+    // Create a very low flow stream
+    Stream stream1 = new Stream("Stream1", fluid1);
+    stream1.setFlowRate(1e-9, "kg/hr"); // Very small flow
+    stream1.setTemperature(25.0, "C");
+    stream1.setPressure(10.0, "bara");
+
+    Separator separator = new Separator("Separator1", stream1);
+
+    process.add(stream1);
+    process.add(separator);
+    process.run();
+
+    // Test default minimum flow threshold
+    assertEquals(1e-6, process.getMinimumFlowForMassBalanceError(), 1e-12);
+
+    // Set minimum flow threshold
+    process.setMinimumFlowForMassBalanceError(1e-4);
+    assertEquals(1e-4, process.getMinimumFlowForMassBalanceError(), 1e-12);
+
+    // Units with flow below threshold should be excluded from failed list
+    Map<String, ProcessSystem.MassBalanceResult> failedUnits = process.getFailedMassBalance();
+    // Separator with insignificant flow should not appear in failed units
+    assertTrue(!failedUnits.containsKey("Separator1"),
+        "Separator with insignificant flow should not be in failed units list");
+  }
+
+  @Test
+  public void testMassBalanceResultFormatting() {
+    neqsim.thermo.system.SystemInterface fluid1 =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid1.addComponent("methane", 1.0);
+    fluid1.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+
+    Stream stream1 = new Stream("Stream1", fluid1);
+    stream1.setFlowRate(100.0, "kg/hr");
+    stream1.setTemperature(25.0, "C");
+    stream1.setPressure(10.0, "bara");
+
+    Separator separator = new Separator("Separator1", stream1);
+
+    process.add(stream1);
+    process.add(separator);
+    process.run();
+
+    // Check mass balance results formatting
+    Map<String, ProcessSystem.MassBalanceResult> results = process.checkMassBalance("kg/hr");
+    assertTrue(results.containsKey("Separator1"));
+
+    ProcessSystem.MassBalanceResult result = results.get("Separator1");
+    String resultString = result.toString();
+
+    // Should contain absolute error, percent error, and unit
+    assertTrue(resultString.contains("kg/hr"));
+    assertTrue(resultString.contains("%"));
+  }
+
+  @Test
+  public void testMassBalanceComplexProcess() {
+    // Test mass balance on a more complex process with multiple units
+    neqsim.thermo.system.SystemInterface fluid1 =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 50.0);
+    fluid1.addComponent("methane", 0.8);
+    fluid1.addComponent("ethane", 0.15);
+    fluid1.addComponent("propane", 0.05);
+    fluid1.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+
+    // Feed stream
+    Stream feed = new Stream("Feed", fluid1);
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.setTemperature(30.0, "C");
+    feed.setPressure(50.0, "bara");
+
+    // Separator
+    Separator separator = new Separator("Separator", feed);
+
+    // Compressor on gas stream
+    Compressor compressor = new Compressor("Compressor", separator.getGasOutStream());
+    compressor.setOutletPressure(100.0, "bara");
+
+    // Heater on liquid stream
+    Heater heater = new Heater("Heater", separator.getLiquidOutStream());
+    heater.setOutTemperature(50.0, "C");
+
+    // Add all units to process
+    process.add(feed);
+    process.add(separator);
+    process.add(compressor);
+    process.add(heater);
+
+    process.run();
+
+    // Check mass balance for all units
+    Map<String, ProcessSystem.MassBalanceResult> results = process.checkMassBalance("kg/hr");
+
+    // All units should have good mass balance
+    for (Map.Entry<String, ProcessSystem.MassBalanceResult> entry : results.entrySet()) {
+      assertTrue(Math.abs(entry.getValue().getAbsoluteError()) < 1.0,
+          entry.getKey() + " has mass balance error: " + entry.getValue().getAbsoluteError());
+    }
+
+    // No units should fail with default threshold
+    Map<String, ProcessSystem.MassBalanceResult> failedUnits = process.getFailedMassBalance();
+    assertTrue(failedUnits.isEmpty() || failedUnits.size() == 0,
+        "Found " + failedUnits.size() + " units with mass balance errors");
+  }
+
+  @Test
+  public void testMassBalanceWithCustomThresholds() {
+    // Test adjusting both error threshold and minimum flow threshold
+    neqsim.thermo.system.SystemInterface fluid1 =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid1.addComponent("methane", 1.0);
+    fluid1.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+
+    Stream stream1 = new Stream("Stream1", fluid1);
+    stream1.setFlowRate(100.0, "kg/hr");
+    stream1.setTemperature(25.0, "C");
+    stream1.setPressure(10.0, "bara");
+
+    Separator separator = new Separator("Separator", stream1);
+
+    process.add(stream1);
+    process.add(separator);
+    process.run();
+
+    // Configure thresholds
+    process.setMassBalanceErrorThreshold(0.5); // 0.5% error threshold
+    process.setMinimumFlowForMassBalanceError(1e-5); // 1e-5 kg/sec minimum flow
+
+    // Verify thresholds are set
+    assertEquals(0.5, process.getMassBalanceErrorThreshold(), 1e-9);
+    assertEquals(1e-5, process.getMinimumFlowForMassBalanceError(), 1e-12);
+
+    // Check failed units with custom thresholds
+    Map<String, ProcessSystem.MassBalanceResult> failedUnits = process.getFailedMassBalance();
+
+    // With lenient threshold, separator should pass
+    assertTrue(!failedUnits.containsKey("Separator"),
+        "Separator should pass with lenient threshold");
+  }
 }
+

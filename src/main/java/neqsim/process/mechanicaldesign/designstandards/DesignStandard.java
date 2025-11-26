@@ -2,6 +2,7 @@ package neqsim.process.mechanicaldesign.designstandards;
 
 import java.util.Objects;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.MechanicalDesignMarginResult;
 
 /**
  * <p>
@@ -91,6 +92,18 @@ public class DesignStandard implements java.io.Serializable {
    */
   public void setStandardName(String standardName) {
     this.standardName = standardName;
+  }
+
+  /**
+   * Compute the safety margins for the associated equipment.
+   *
+   * @return margin result or {@link MechanicalDesignMarginResult#EMPTY} if unavailable.
+   */
+  public MechanicalDesignMarginResult computeSafetyMargins() {
+    if (equipment == null) {
+      return MechanicalDesignMarginResult.EMPTY;
+    }
+    return equipment.validateOperatingEnvelope();
   }
 
   /** {@inheritDoc} */

@@ -2,6 +2,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -65,13 +66,13 @@ public class FreezingPointTemperatureFlashOld extends ConstantDutyTemperatureFla
 
           for (int i = 0; i < system.getNumberOfPhases(); i++) {
             funk -= system.getPhases()[i].getBeta()
-                * system.getPhases()[3].getComponent(k).getFugacityCoefficient()
+                * system.getPhase(PhaseType.SOLID).getComponent(k).getFugacityCoefficient()
                 / system.getPhases()[i].getComponent(k).getFugacityCoefficient();
             deriv -= 0.01 * system.getPhases()[i].getBeta()
-                * (system.getPhases()[3].getComponent(k).getFugacityCoefficient()
+                * (system.getPhase(PhaseType.SOLID).getComponent(k).getFugacityCoefficient()
                     * Math.exp(system.getPhases()[i].getComponent(k).getdfugdt()) * -1.0
                     / Math.pow(system.getPhases()[i].getComponent(k).getFugacityCoefficient(), 2.0)
-                    + Math.exp(system.getPhases()[3].getComponent(k).getdfugdt())
+                    + Math.exp(system.getPhase(PhaseType.SOLID).getComponent(k).getdfugdt())
                         / system.getPhases()[i].getComponent(k).getFugacityCoefficient());
           }
           if (iterations >= 2) {

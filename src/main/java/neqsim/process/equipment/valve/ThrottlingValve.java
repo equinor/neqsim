@@ -43,6 +43,12 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   private double maxValveOpening = 100.0;
   private double minValveOpening = 0.0;
   private double percentValveOpening = 100.0;
+  private double requestedValveOpening = percentValveOpening;
+  private double valveTravelTimeSec = 0.0;
+  private double valveOpeningTravelTimeSec = Double.NaN;
+  private double valveClosingTravelTimeSec = Double.NaN;
+  private double valveTimeConstantSec = 0.0;
+  private ValveTravelModel travelModel = ValveTravelModel.NONE;
   double molarFlow = 0.0;
   private String pressureUnit = "bara";
   private boolean acceptNegativeDP = true;
@@ -64,7 +70,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     super(name);
     setCalculateSteadyState(true);
     initMechanicalDesign();
-
   }
 
   /**
@@ -218,6 +223,13 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       logger.error("Inlet stream thermo system is null");
       return;
     }
+
+    double inletMolarFlow = getInletStream().getThermoSystem().getFlowRate("mole/sec");
+    if (isNegligibleFlow(inletMolarFlow)) {
+      applyZeroFlowState(id);
+      return;
+    }
+
     thermoSystem.initProperties();
 
     if (thermoSystem.hasPhaseType(PhaseType.GAS) && thermoSystem.getVolumeFraction(0) > 0.5) {
@@ -310,6 +322,13 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
     inStream.getFluid().initProperties();
     thermoSystem = inStream.getThermoSystem().clone();
+
+    double inletMolarFlow = inStream.getThermoSystem().getFlowRate("mole/sec");
+    if (isNegligibleFlow(inletMolarFlow)) {
+      applyZeroFlowState(id);
+      return;
+    }
+
     thermoSystem.init(2);
     double enthalpy = thermoSystem.getEnthalpy();
 
@@ -330,10 +349,12 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
     double adjustKv = adjustKv(Kv, percentValveOpening);
     if (deltaP > 0.0 && !isCalcPressure) {
-      molarFlow = calculateMolarFlow();
+      molarFlow = ensureValidMolarFlow(calculateMolarFlow());
 
-      inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-      inStream.getThermoSystem().initProperties();
+      if (molarFlow > 0.0) {
+        inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+        inStream.getThermoSystem().initProperties();
+      }
     }
     // update outlet pressure if required
     if (valveKvSet && isCalcPressure) {
@@ -353,9 +374,14 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     outStream.setThermoSystem(thermoSystem);
 
     if (deltaP > 0.0) {
-      molarFlow = calculateMolarFlow();
+      molarFlow = ensureValidMolarFlow(calculateMolarFlow());
+      if (molarFlow <= 0.0) {
+        applyZeroFlowState(id);
+        return;
+      }
     } else {
-      molarFlow = 0.0;
+      applyZeroFlowState(id);
+      return;
     }
 
     try {
@@ -373,6 +399,45 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     setCalculationIdentifier(id);
   }
 
+  private static final double minimumMolarFlow = 1e-12;
+
+  private double ensureValidMolarFlow(double flow) {
+    if (Double.isFinite(flow)) {
+      if (flow > minimumMolarFlow) {
+        return flow;
+      }
+      return 0.0;
+    }
+    return 0.0;
+  }
+
+  private boolean isNegligibleFlow(double flow) {
+    return !Double.isFinite(flow) || Math.abs(flow) <= minimumMolarFlow;
+  }
+
+  private void applyZeroFlowState(UUID id) {
+    molarFlow = 0.0;
+    double targetPressure = pressure;
+    if (!(targetPressure > 0.0)) {
+      try {
+        targetPressure = getOutletStream().getThermoSystem().getPressure(pressureUnit);
+      } catch (Exception ex) {
+        targetPressure = getInletStream().getThermoSystem().getPressure(pressureUnit);
+      }
+    }
+
+    try {
+      thermoSystem.setTotalNumberOfMoles(0.0);
+      thermoSystem.init(0);
+    } catch (Exception ex) {
+      logger.debug("Unable to initialize zero-flow state: {}", ex.getMessage());
+    }
+
+    thermoSystem.setPressure(targetPressure, pressureUnit);
+    outStream.setThermoSystem(thermoSystem);
+    setCalculationIdentifier(id);
+  }
+
   /**
    * <p>
    * runController.
@@ -382,18 +447,69 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * @param id Calculation identifier
    */
   public void runController(double dt, UUID id) {
+    double controllerRequest = requestedValveOpening;
     if (hasController && getController().isActive()) {
       getController().runTransient(this.percentValveOpening, dt, id);
-      this.percentValveOpening = getController().getResponse();
-      if (this.percentValveOpening > maxValveOpening) {
-        this.percentValveOpening = maxValveOpening;
-      }
-      if (this.percentValveOpening < minValveOpening) {
-        this.percentValveOpening = minValveOpening;
-      }
-      // System.out.println("valve opening " + this.percentValveOpening + " %");
+      controllerRequest = getController().getResponse();
     }
+    controllerRequest = clampValveOpening(controllerRequest);
+    setTargetPercentValveOpening(controllerRequest);
+    percentValveOpening =
+        clampValveOpening(applyTravelDynamics(percentValveOpening, requestedValveOpening, dt));
     setCalculationIdentifier(id);
+  }
+
+  private double clampValveOpening(double value) {
+    return Math.min(maxValveOpening, Math.max(minValveOpening, value));
+  }
+
+  private double applyTravelDynamics(double current, double target, double dt) {
+    if (travelModel == null || travelModel == ValveTravelModel.NONE) {
+      return target;
+    }
+
+    double effectiveDt = Math.max(0.0, dt);
+    switch (travelModel) {
+      case LINEAR_RATE_LIMIT:
+        double delta = target - current;
+        if (Math.abs(delta) < 1e-12 || effectiveDt <= 0.0) {
+          return target;
+        }
+        double travelTime =
+            delta >= 0.0 ? getEffectiveOpeningTravelTime() : getEffectiveClosingTravelTime();
+        if (travelTime <= 0.0) {
+          return target;
+        }
+        double maxRate = 100.0 / travelTime;
+        double maxChange = maxRate * effectiveDt;
+        if (Math.abs(delta) <= maxChange) {
+          return target;
+        }
+        return current + Math.copySign(maxChange, delta);
+      case FIRST_ORDER_LAG:
+        double tau = valveTimeConstantSec > 0.0 ? valveTimeConstantSec : valveTravelTimeSec;
+        if (tau <= 0.0 || effectiveDt <= 0.0) {
+          return target;
+        }
+        double alpha = 1.0 - Math.exp(-effectiveDt / tau);
+        return current + alpha * (target - current);
+      default:
+        return target;
+    }
+  }
+
+  private double getEffectiveOpeningTravelTime() {
+    if (!Double.isNaN(valveOpeningTravelTimeSec)) {
+      return Math.max(0.0, valveOpeningTravelTimeSec);
+    }
+    return Math.max(0.0, valveTravelTimeSec);
+  }
+
+  private double getEffectiveClosingTravelTime() {
+    if (!Double.isNaN(valveClosingTravelTimeSec)) {
+      return Math.max(0.0, valveClosingTravelTimeSec);
+    }
+    return Math.max(0.0, valveTravelTimeSec);
   }
 
   /**
@@ -404,7 +520,20 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    * @param minopen a double
    */
   public void setMinimumValveOpening(double minopen) {
-    minValveOpening = minopen;
+    minValveOpening = Math.max(0.0, Math.min(maxValveOpening, minopen));
+    percentValveOpening = clampValveOpening(percentValveOpening);
+    requestedValveOpening = clampValveOpening(requestedValveOpening);
+  }
+
+  /**
+   * Sets the maximum valve opening in percent.
+   *
+   * @param maxopen a double representing the maximum permitted opening
+   */
+  public void setMaximumValveOpening(double maxopen) {
+    maxValveOpening = Math.max(minValveOpening, Math.min(100.0, maxopen));
+    percentValveOpening = clampValveOpening(percentValveOpening);
+    requestedValveOpening = clampValveOpening(requestedValveOpening);
   }
 
   /** {@inheritDoc} */
@@ -457,6 +586,70 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   /** {@inheritDoc} */
   @Override
+  public void setTravelTime(double travelTimeSec) {
+    valveTravelTimeSec = Math.max(0.0, travelTimeSec);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getTravelTime() {
+    return Math.max(0.0, valveTravelTimeSec);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setOpeningTravelTime(double travelTimeSec) {
+    valveOpeningTravelTimeSec = travelTimeSec > 0.0 ? travelTimeSec : Double.NaN;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getOpeningTravelTime() {
+    return getEffectiveOpeningTravelTime();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setClosingTravelTime(double travelTimeSec) {
+    valveClosingTravelTimeSec = travelTimeSec > 0.0 ? travelTimeSec : Double.NaN;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getClosingTravelTime() {
+    return getEffectiveClosingTravelTime();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setTravelTimeConstant(double timeConstantSec) {
+    valveTimeConstantSec = Math.max(0.0, timeConstantSec);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getTravelTimeConstant() {
+    return valveTimeConstantSec;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setTravelModel(ValveTravelModel travelModel) {
+    if (travelModel == null) {
+      this.travelModel = ValveTravelModel.NONE;
+    } else {
+      this.travelModel = travelModel;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ValveTravelModel getTravelModel() {
+    return travelModel;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getCg() {
     double Cl = 1360.0;
     return getCv() * Cl;
@@ -471,7 +664,21 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   /** {@inheritDoc} */
   @Override
   public void setPercentValveOpening(double percentValveOpening) {
-    this.percentValveOpening = percentValveOpening;
+    double clamped = clampValveOpening(percentValveOpening);
+    this.percentValveOpening = clamped;
+    this.requestedValveOpening = clamped;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getTargetPercentValveOpening() {
+    return requestedValveOpening;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setTargetPercentValveOpening(double percentValveOpening) {
+    this.requestedValveOpening = clampValveOpening(percentValveOpening);
   }
 
   /**

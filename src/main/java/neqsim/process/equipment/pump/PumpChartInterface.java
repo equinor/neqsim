@@ -120,4 +120,50 @@ public interface PumpChartInterface extends Cloneable {
    * </p>
    */
   public void plot();
+
+  /**
+   * Get the flow rate at best efficiency point (BEP).
+   *
+   * @return flow rate at BEP in m³/hr
+   */
+  public double getBestEfficiencyFlowRate();
+
+  /**
+   * Calculate pump specific speed at BEP.
+   *
+   * @return specific speed (dimensionless)
+   */
+  public double getSpecificSpeed();
+
+  /**
+   * Check operating status at given flow and speed.
+   *
+   * @param flow flow rate in m³/hr
+   * @param speed pump speed in rpm
+   * @return operating status string
+   */
+  public String getOperatingStatus(double flow, double speed);
+
+  /**
+   * Set NPSH (Net Positive Suction Head) required curve.
+   *
+   * @param npshRequired 2D array of NPSH values [speed][flow] in meters
+   */
+  public void setNPSHCurve(double[][] npshRequired);
+
+  /**
+   * Get NPSH required at specified flow and speed.
+   *
+   * @param flow flow rate in m³/hr
+   * @param speed pump speed in rpm
+   * @return NPSH required in meters
+   */
+  public double getNPSHRequired(double flow, double speed);
+
+  /**
+   * Check if NPSH curve data is available.
+   *
+   * @return true if NPSH curve is available
+   */
+  public boolean hasNPSHCurve();
 }

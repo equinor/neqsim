@@ -54,8 +54,6 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   private boolean useDeltaT = false;
   private double deltaT = 1.0;
 
-  HeatExchangerMechanicalDesign mechanicalDesign;
-
   /**
    * Constructor for HeatExchanger.
    *
@@ -124,13 +122,13 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
   /** {@inheritDoc} */
   @Override
   public HeatExchangerMechanicalDesign getMechanicalDesign() {
-    return mechanicalDesign;
+    return super.getMechanicalDesign();
   }
 
   /** {@inheritDoc} */
   @Override
   public void initMechanicalDesign() {
-    mechanicalDesign = new HeatExchangerMechanicalDesign(this);
+    super.initMechanicalDesign();
   }
 
   /** {@inheritDoc} */

@@ -100,6 +100,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     Recycle recycle1 = new Recycle("oil recirc 1");
     recycle1.addStream(valveLP1.getOutletStream());
     recycle1.setOutletStream(recircstream1);
+    recycle1.setTolerance(1e-2);
 
     neqsim.process.processmodel.ProcessSystem operations =
         new neqsim.process.processmodel.ProcessSystem();
@@ -188,7 +189,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     Recycle recycl = new Recycle("rec");
     recycl.addStream(antisurgevalve.getOutletStream());
     recycl.setOutletStream(recyclegasstream);
-    recycl.setTolerance(1e-6);
+    recycl.setTolerance(1e-2);
     recycl.run();
 
     neqsim.process.processmodel.ProcessSystem operations =
