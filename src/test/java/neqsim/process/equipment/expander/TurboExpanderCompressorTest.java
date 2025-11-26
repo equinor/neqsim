@@ -82,7 +82,9 @@ public class TurboExpanderCompressorTest {
 
     Assertions.assertEquals(6614.447912, turboExpander.getSpeed(), 1e-2);
     Assertions.assertEquals(3001861.63337, turboExpander.getPowerExpander(), 1e-2);
+    Assertions.assertEquals(3.00186163337, turboExpander.getPowerExpander("MW"), 1e-6);
     Assertions.assertEquals(3001852.309290, turboExpander.getPowerCompressor(), 1e-2);
+    Assertions.assertEquals(3.00185230929, turboExpander.getPowerCompressor("MW"), 1e-6);
     Assertions.assertEquals(0.7748200353, turboExpander.getCompressorPolytropicEfficiency(), 1e-2);
     Assertions.assertEquals(0.83552030, turboExpander.getExpanderIsentropicEfficiency(), 1e-2);
     Assertions.assertEquals(19.774925264, turboExpander.getCompressorPolytropicHead(), 1e-2);
