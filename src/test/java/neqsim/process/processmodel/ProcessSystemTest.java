@@ -593,7 +593,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
      * coolerhOTteg3.getOutletStream().getFlowRate("kg/hr")); System.out.println("leantoresirc " +
      * leanTEGtoabs.getFlowRate("kg/hr"));
      */
-    assertEquals(1.5190167770308253E-5, dehydratedGas.getFluid().getComponent("water").getx(),
+    assertEquals(1.5449593316401103E-5, dehydratedGas.getFluid().getComponent("water").getx(),
         1e-6);
   }
 
@@ -929,13 +929,13 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.run();
     operations.run();
     operations.run();
-    assertEquals(1.534523506704036E-5, dehydratedGas.getFluid().getComponent("water").getx(), 1e-6);
+    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(), 1e-6);
 
     operations.run();
     operations.run();
     operations.run();
     operations.run();
-    assertEquals(1.534523506704036E-5, dehydratedGas.getFluid().getComponent("water").getx(), 1e-6);
+    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(), 1e-6);
 
     // run as time step as thread
     Thread thread = operations.runAsThread();
