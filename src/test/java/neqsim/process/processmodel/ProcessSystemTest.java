@@ -29,7 +29,6 @@ import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.process.measurementdevice.WaterDewPointAnalyser;
-import neqsim.process.processmodel.ProcessSystem.MassBalanceResult;
 
 /**
  * Class for testing ProcessSystem class.
@@ -930,15 +929,13 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.run();
     operations.run();
     operations.run();
-    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
-        1e-6);
+    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(), 1e-6);
 
     operations.run();
     operations.run();
     operations.run();
     operations.run();
-    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
-        1e-6);
+    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(), 1e-6);
 
     // run as time step as thread
     Thread thread = operations.runAsThread();
@@ -1230,6 +1227,34 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     // Should contain absolute error, percent error, and unit
     assertTrue(resultString.contains("kg/hr"));
     assertTrue(resultString.contains("%"));
+  }
+
+  @Test
+  public void testMassBalanceReportGeneration() {
+    neqsim.thermo.system.SystemInterface fluid1 =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid1.addComponent("methane", 1.0);
+    fluid1.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+
+    Stream stream1 = new Stream("Stream1", fluid1);
+    stream1.setFlowRate(100.0, "kg/hr");
+    stream1.setTemperature(25.0, "C");
+    stream1.setPressure(10.0, "bara");
+
+    Separator separator = new Separator("Separator1", stream1);
+
+    process.add(stream1);
+    process.add(separator);
+    process.run();
+
+    String report = process.getMassBalanceReport("kg/hr");
+    assertTrue(report.contains("Process:"));
+    assertTrue(report.contains("Separator1"));
+
+    String failedReport = process.getFailedMassBalanceReport("kg/hr", 0.1);
+    assertTrue(failedReport.contains("All unit operations passed mass balance check."));
   }
 
   @Test

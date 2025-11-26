@@ -285,4 +285,44 @@ public class TurboExpanderCompressorTest {
     Assertions.assertEquals(-37.03361130,
         turboExpander.getExpanderOutletStream().getTemperature("C"), 1e-2);
   }
+
+  @Test
+  void testMassBalance() {
+    neqsim.thermo.system.SystemInterface feedGas =
+        new neqsim.thermo.system.SystemSrkEos(273.15 + 20.0, 50.0);
+    feedGas.addComponent("methane", 0.95);
+    feedGas.addComponent("ethane", 0.05);
+    feedGas.setMixingRule(2);
+    feedGas.init(0);
+
+    Stream expanderFeed = new Stream("expander feed", feedGas);
+    expanderFeed.setFlowRate(10000.0, "kg/hr");
+    expanderFeed.setTemperature(20.0, "C");
+    expanderFeed.setPressure(50.0, "bara");
+    expanderFeed.run();
+
+    Stream compressorFeed = new Stream("compressor feed", feedGas.clone());
+    compressorFeed.setFlowRate(7500.0, "kg/hr");
+    compressorFeed.setTemperature(5.0, "C");
+    compressorFeed.setPressure(30.0, "bara");
+    compressorFeed.run();
+
+    TurboExpanderCompressor turboExpander =
+        new TurboExpanderCompressor("TurboExpander", expanderFeed);
+    turboExpander.setCompressorFeedStream(compressorFeed);
+    turboExpander.setExpanderOutPressure(25.0);
+    turboExpander.setCompressorDesignPolytropicEfficiency(0.8);
+    turboExpander.setCompressorDesignPolytropicHead(10.0);
+
+    turboExpander.run();
+
+    double expanderInletFlow = turboExpander.getInletStream().getFlowRate("kg/hr");
+    double expanderOutletFlow = turboExpander.getExpanderOutletStream().getFlowRate("kg/hr");
+    double compressorInletFlow = turboExpander.getCompressorFeedStream().getFlowRate("kg/hr");
+    double compressorOutletFlow = turboExpander.getCompressorOutletStream().getFlowRate("kg/hr");
+
+    Assertions.assertEquals(expanderInletFlow, expanderOutletFlow, 1e-6);
+    Assertions.assertEquals(compressorInletFlow, compressorOutletFlow, 1e-6);
+    Assertions.assertEquals(0.0, turboExpander.getMassBalance("kg/hr"), 1e-6);
+  }
 }
