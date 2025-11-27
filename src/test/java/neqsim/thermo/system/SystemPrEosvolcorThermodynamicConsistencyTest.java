@@ -96,4 +96,25 @@ public class SystemPrEosvolcorThermodynamicConsistencyTest extends neqsim.NeqSim
         prepareSystem(system, new double[] {4.0e-5, 3.5e-5, 2.5e-5});
     assertThermodynamicConsistency(modelTest);
   }
+
+  @Test
+  @DisplayName("Thermodynamic consistency is preserved after repeated cached property calls")
+  public void testCachedPropertyThermodynamicConsistency() {
+    SystemInterface system = new SystemPrEosvolcor(320.0, 60.0);
+    system.addComponent("methane", 0.6);
+    system.addComponent("ethane", 0.25);
+    system.addComponent("propane", 0.15);
+    system.setMixingRule("classic");
+
+    ThermodynamicModelTest modelTest =
+        prepareSystem(system, new double[] {3.0e-5, 2.5e-5, 2.0e-5});
+    assertThermodynamicConsistency(modelTest);
+
+    system.init(3);
+    system.initProperties();
+    system.init(3);
+    system.initProperties();
+
+    assertThermodynamicConsistency(new ThermodynamicModelTest(system));
+  }
 }

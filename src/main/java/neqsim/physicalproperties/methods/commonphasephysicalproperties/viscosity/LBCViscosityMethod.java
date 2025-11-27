@@ -40,11 +40,16 @@ public class LBCViscosityMethod extends Viscosity {
     double temp3 = 0.0;
     double temp4 = 0.0;
     double critDens = 0.0;
-    double par4 = 0.0;
-    double eps = 0.0;
+    double volumeMixRooted = 0.0;
+    double epsilonMixSum = 0.0;
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
-      par4 += phase.getPhase().getComponent(i).getx()
-          * phase.getPhase().getComponent(i).getCriticalVolume();
+      double criticalVolume = phase.getPhase().getComponent(i).getCriticalVolume();
+      // Book correlation requires critical volume in cm3/mol. Component data may be stored in m3/mol
+      // for TBP/plus fractions, so convert when needed before applying the cubic mixing rule.
+      if (criticalVolume < 1.0) {
+        criticalVolume *= 1.0e6; // convert from m3/mol to cm3/mol
+      }
+      volumeMixRooted += phase.getPhase().getComponent(i).getx() * Math.cbrt(criticalVolume);
 
       double molarMass = phase.getPhase().getComponent(i).getMolarMass() * 1000.0;
       double tc = phase.getPhase().getComponent(i).getTC();
@@ -52,6 +57,7 @@ public class LBCViscosityMethod extends Viscosity {
       double TR = phase.getPhase().getTemperature() / tc;
       temp2 = Math.pow(tc, 1.0 / 6.0)
           / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pc, 2.0 / 3.0));
+      epsilonMixSum += phase.getPhase().getComponent(i).getx() * Math.pow(temp2, 6.0);
       temp = TR < 1.5 ? 34.0e-5 * 1.0 / temp2 * Math.pow(TR, 0.94)
           : 17.78e-5 * 1.0 / temp2 * Math.pow(4.58 * TR - 1.67, 5.0 / 8.0);
 
@@ -59,22 +65,21 @@ public class LBCViscosityMethod extends Viscosity {
           * Math.pow(molarMass, 1.0 / 2.0);
       temp4 += phase.getPhase().getComponent(i).getx() * Math.pow(molarMass, 1.0 / 2.0);
 
-      eps += phase.getPhase().getComponent(i).getx() * Math.pow(tc, 1.0 / 6.0)
-          / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pc, 2.0 / 3.0));
     }
 
     lowPresVisc = temp3 / temp4;
     // logger.info("LP visc " + lowPresVisc);
-    critDens = 1.0 / par4; // mol/cm3
+    double pseudoCriticalVolume = Math.pow(volumeMixRooted, 3.0); // cm3/mol
+    critDens = 1.0 / pseudoCriticalVolume; // mol/cm3
+    double epsilonMix = Math.pow(epsilonMixSum, 1.0 / 6.0);
     double reducedDensity = phase.getPhase().getPhysicalProperties().getDensity()
         / phase.getPhase().getMolarMass() / critDens / 1000000.0;
     // System.out.println("reduced density " + reducedDensity);
-    double numb = a[0] + a[1] * reducedDensity + a[2] * Math.pow(reducedDensity, 2.0)
+    double poly = a[0] + a[1] * reducedDensity + a[2] * Math.pow(reducedDensity, 2.0)
         + a[3] * Math.pow(reducedDensity, 3.0) + a[4] * Math.pow(reducedDensity, 4.0);
-    double viscosity = (-Math.pow(10.0, -4.0) + Math.pow(numb, 4.0)) / eps + lowPresVisc;
-    viscosity /= 1.0e3;
-    // System.out.println("visc " + viscosity);
-    return viscosity;
+    double denseContribution = (Math.pow(poly, 4.0) - 1.0e-4) / epsilonMix;
+    double viscositycP = denseContribution + lowPresVisc;
+    return viscositycP / 1.0e3;
   }
 
   /** {@inheritDoc} */

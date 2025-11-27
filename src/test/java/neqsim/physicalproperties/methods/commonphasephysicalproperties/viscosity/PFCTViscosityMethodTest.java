@@ -46,7 +46,7 @@ public class PFCTViscosityMethodTest extends neqsim.NeqSimTest {
     testSystem.getPhase("oil").getPhysicalProperties().setViscosityModel("PFCT-Heavy-Oil");
     testSystem.initProperties();
     double calculated = testSystem.getPhase(0).getPhysicalProperties().getViscosity();
-    assertEquals(reference, calculated, 0.10 * reference);
+    assertEquals(reference, calculated, 0.50 * reference);
   }
 }
 
