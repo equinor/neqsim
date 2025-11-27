@@ -48,7 +48,7 @@ public class LBCViscosityMethod extends Viscosity {
       ComponentInterface component = phase.getPhase().getComponent(i);
       double criticalVolume = component.getCriticalVolume();
 
-      if (criticalVolume <= 0.0 && (component.isIsTBPfraction() || component.isIsPlusFraction())
+      if ((component.isIsTBPfraction() || component.isIsPlusFraction())
           && component.getNormalLiquidDensity() > 0.0) {
         double molarMass = component.getMolarMass() * 1000.0; // g/mol
         double liquidDensity = component.getNormalLiquidDensity(); // g/cm3
