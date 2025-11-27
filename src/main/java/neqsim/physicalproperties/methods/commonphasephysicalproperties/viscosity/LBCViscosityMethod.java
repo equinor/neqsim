@@ -48,14 +48,6 @@ public class LBCViscosityMethod extends Viscosity {
       ComponentInterface component = phase.getPhase().getComponent(i);
       double criticalVolume = component.getCriticalVolume();
 
-      if ((component.isIsTBPfraction() || component.isIsPlusFraction())
-          && component.getNormalLiquidDensity() > 0.0) {
-        double molarMass = component.getMolarMass() * 1000.0; // g/mol
-        double liquidDensity = component.getNormalLiquidDensity(); // g/cm3
-        criticalVolume = 21.573 + 0.015122 * molarMass - 27.656 * liquidDensity
-            + 0.070615 * molarMass * liquidDensity; // cm3/mol
-      }
-
       if (criticalVolume <= 0.0) {
         double criticalCompressibility = component.getCriticalCompressibilityFactor();
         if (criticalCompressibility <= 0.0) {
@@ -63,29 +55,28 @@ public class LBCViscosityMethod extends Viscosity {
         }
         double tc = component.getTC();
         double pc = component.getPC();
-        criticalVolume = criticalCompressibility * ThermodynamicConstantsInterface.R * tc
-            / (pc * 1.0e5);
+        criticalVolume =
+            criticalCompressibility * ThermodynamicConstantsInterface.R * tc / (pc * 1.0e5);
       }
-      // Book correlation requires critical volume in cm3/mol. Component data may be stored in m3/mol
+      // Book correlation requires critical volume in cm3/mol. Component data may be stored in
+      // m3/mol
       // for TBP/plus fractions, so convert when needed before applying the cubic mixing rule.
       if (criticalVolume < 1.0) {
         criticalVolume *= 1.0e6; // convert from m3/mol to cm3/mol
       }
-      volumeMixRooted += phase.getPhase().getComponent(i).getx()
-          * Math.pow(criticalVolume, 1.0 / 6.0);
+      volumeMixRooted +=
+          phase.getPhase().getComponent(i).getx() * Math.pow(criticalVolume, 1.0 / 6.0);
 
       double molarMass = phase.getPhase().getComponent(i).getMolarMass() * 1000.0;
       double tc = phase.getPhase().getComponent(i).getTC();
       double pc = phase.getPhase().getComponent(i).getPC();
       double TR = phase.getPhase().getTemperature() / tc;
-      temp2 = Math.pow(tc, 1.0 / 6.0)
-          / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pc, 2.0 / 3.0));
+      temp2 = Math.pow(tc, 1.0 / 6.0) / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pc, 2.0 / 3.0));
       epsilonMixSum += phase.getPhase().getComponent(i).getx() * Math.pow(temp2, 6.0);
       temp = TR < 1.5 ? 34.0e-5 * 1.0 / temp2 * Math.pow(TR, 0.94)
           : 17.78e-5 * 1.0 / temp2 * Math.pow(4.58 * TR - 1.67, 5.0 / 8.0);
 
-      temp3 += phase.getPhase().getComponent(i).getx() * temp
-          * Math.pow(molarMass, 1.0 / 2.0);
+      temp3 += phase.getPhase().getComponent(i).getx() * temp * Math.pow(molarMass, 1.0 / 2.0);
       temp4 += phase.getPhase().getComponent(i).getx() * Math.pow(molarMass, 1.0 / 2.0);
 
     }
