@@ -46,24 +46,7 @@ public class LBCViscosityMethod extends Viscosity {
     double epsilonMixSum = 0.0;
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       ComponentInterface component = phase.getPhase().getComponent(i);
-      double criticalVolume = component.getCriticalVolume();
-
-      if (criticalVolume <= 0.0) {
-        double criticalCompressibility = component.getCriticalCompressibilityFactor();
-        if (criticalCompressibility <= 0.0) {
-          criticalCompressibility = 0.28; // typical default when no data is available
-        }
-        double tc = component.getTC();
-        double pc = component.getPC();
-        criticalVolume =
-            criticalCompressibility * ThermodynamicConstantsInterface.R * tc / (pc * 1.0e5);
-      }
-      // Book correlation requires critical volume in cm3/mol. Component data may be stored in
-      // m3/mol
-      // for TBP/plus fractions, so convert when needed before applying the cubic mixing rule.
-      if (criticalVolume < 1.0) {
-        criticalVolume *= 1.0e6; // convert from m3/mol to cm3/mol
-      }
+      double criticalVolume = getOrEstimateCriticalVolume(component);
       volumeMixRooted +=
           phase.getPhase().getComponent(i).getx() * Math.pow(criticalVolume, 1.0 / 6.0);
 
@@ -100,5 +83,54 @@ public class LBCViscosityMethod extends Viscosity {
   @Override
   public double getPureComponentViscosity(int i) {
     return 0;
+  }
+
+  /**
+   * Estimate the critical volume when it is missing from component data.
+   *
+   * <p>The LBC method requires critical volume in cm^3/mol. For pseudo components this property
+   * is rarely tabulated, so we fall back to the Racket compressibility if available, or the widely
+   * used Lee-Kesler style correlation (Zc = 0.29 - 0.087·ω) described by Twu (1984) for
+   * petroleum fractions. The correlation keeps Zc within physically reasonable bounds for heavy
+   * oils while allowing the viscosity model to operate without bespoke input data.</p>
+   *
+   * @param component the component to evaluate
+   * @return critical volume in cm3/mol
+   */
+  private double getOrEstimateCriticalVolume(ComponentInterface component) {
+    double criticalVolume = component.getCriticalVolume();
+    if (criticalVolume > 0) {
+      return convertToCm3PerMol(criticalVolume);
+    }
+
+    double criticalCompressibility = component.getCriticalCompressibilityFactor();
+    double racketZ = component.getRacketZ();
+    double acentricFactor = component.getAcentricFactor();
+
+    // Prefer the Rackett Z if the characterization model provided one for the pseudo component.
+    if (criticalCompressibility <= 0.0 && racketZ > 1.0e-6) {
+      criticalCompressibility = racketZ;
+    }
+
+    // Literature correlation for heavy-oil fractions (Twu, 1984). Maintain bounds to avoid
+    // unrealistic volumes for extreme pseudo components.
+    if (criticalCompressibility <= 0.0) {
+      criticalCompressibility = 0.29 - 0.087 * acentricFactor;
+      criticalCompressibility = Math.max(0.15, Math.min(criticalCompressibility, 0.35));
+    }
+
+    double tc = component.getTC();
+    double pc = component.getPC();
+    criticalVolume = criticalCompressibility * ThermodynamicConstantsInterface.R * tc / (pc * 1.0e5);
+    return convertToCm3PerMol(criticalVolume);
+  }
+
+  private double convertToCm3PerMol(double criticalVolume) {
+    // Book correlation requires critical volume in cm3/mol. Component data may be stored in m3/mol
+    // for TBP/plus fractions, so convert when needed before applying the cubic mixing rule.
+    if (criticalVolume < 1.0) {
+      return criticalVolume * 1.0e6; // convert from m3/mol to cm3/mol
+    }
+    return criticalVolume;
   }
 }

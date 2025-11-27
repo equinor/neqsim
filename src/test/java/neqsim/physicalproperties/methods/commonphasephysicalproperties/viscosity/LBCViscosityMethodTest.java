@@ -107,6 +107,25 @@ public class LBCViscosityMethodTest {
           "LBC and friction theory viscosities should stay within a few orders of magnitude for pseudo components");
     }
 
+    @Test
+    void testPseudoComponentViscosityAgainstDecaneData() {
+      SystemInterface oilSystem = new neqsim.thermo.system.SystemSrkEos(298.15, 1.0);
+      // Pseudo component resembling n-decane (Mw ~142 g/mol, rho ~0.73 g/cm3)
+      oilSystem.addTBPfraction("C10", 1.0, 0.142, 0.73);
+      oilSystem.setMixingRule("classic");
+      new ThermodynamicOperations(oilSystem).TPflash();
+      oilSystem.getPhase(0).getPhysicalProperties().setViscosityModel("LBC");
+      oilSystem.initProperties();
+      double viscosity = oilSystem.getPhase(0).getViscosity("cP");
+
+      double expectedViscosity = 0.92; // cP at 25 C for n-decane
+      System.out.println("Pseudo-decane viscosity (LBC): " + viscosity + " cP vs experimental "
+          + expectedViscosity + " cP");
+      assertTrue(viscosity > 0.0);
+      assertEquals(expectedViscosity, viscosity, expectedViscosity * 0.75,
+          "Pseudo-component viscosity should be in line with n-decane data when critical volume is estimated");
+    }
+
     private double oilViscosity(SystemInterface system, String model) {
       system.getPhase("oil").getPhysicalProperties().setViscosityModel(model);
       system.initProperties();
