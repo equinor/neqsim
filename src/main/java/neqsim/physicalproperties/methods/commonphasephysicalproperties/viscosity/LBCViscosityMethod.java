@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.component.ComponentInterface;
 
 /**
  * <p>
@@ -44,15 +45,24 @@ public class LBCViscosityMethod extends Viscosity {
     double volumeMixRooted = 0.0;
     double epsilonMixSum = 0.0;
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
-      double criticalVolume = phase.getPhase().getComponent(i).getCriticalVolume();
+      ComponentInterface component = phase.getPhase().getComponent(i);
+      double criticalVolume = component.getCriticalVolume();
+
+      if ((component.isIsTBPfraction() || component.isIsPlusFraction())
+          && component.getNormalLiquidDensity() > 0.0) {
+        double molarMass = component.getMolarMass() * 1000.0; // g/mol
+        double liquidDensity = component.getNormalLiquidDensity(); // g/cm3
+        criticalVolume = 21.573 + 0.015122 * molarMass - 27.656 * liquidDensity
+            + 0.070615 * molarMass * liquidDensity; // cm3/mol
+      }
+
       if (criticalVolume <= 0.0) {
-        double criticalCompressibility = phase.getPhase().getComponent(i)
-            .getCriticalCompressibilityFactor();
+        double criticalCompressibility = component.getCriticalCompressibilityFactor();
         if (criticalCompressibility <= 0.0) {
           criticalCompressibility = 0.28; // typical default when no data is available
         }
-        double tc = phase.getPhase().getComponent(i).getTC();
-        double pc = phase.getPhase().getComponent(i).getPC();
+        double tc = component.getTC();
+        double pc = component.getPC();
         criticalVolume = criticalCompressibility * ThermodynamicConstantsInterface.R * tc
             / (pc * 1.0e5);
       }
