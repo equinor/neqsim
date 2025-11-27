@@ -3,6 +3,7 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosit
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.system.PhysicalProperties;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  * <p>
@@ -44,12 +45,24 @@ public class LBCViscosityMethod extends Viscosity {
     double epsilonMixSum = 0.0;
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       double criticalVolume = phase.getPhase().getComponent(i).getCriticalVolume();
+      if (criticalVolume <= 0.0) {
+        double criticalCompressibility = phase.getPhase().getComponent(i)
+            .getCriticalCompressibilityFactor();
+        if (criticalCompressibility <= 0.0) {
+          criticalCompressibility = 0.28; // typical default when no data is available
+        }
+        double tc = phase.getPhase().getComponent(i).getTC();
+        double pc = phase.getPhase().getComponent(i).getPC();
+        criticalVolume = criticalCompressibility * ThermodynamicConstantsInterface.R * tc
+            / (pc * 1.0e5);
+      }
       // Book correlation requires critical volume in cm3/mol. Component data may be stored in m3/mol
       // for TBP/plus fractions, so convert when needed before applying the cubic mixing rule.
       if (criticalVolume < 1.0) {
         criticalVolume *= 1.0e6; // convert from m3/mol to cm3/mol
       }
-      volumeMixRooted += phase.getPhase().getComponent(i).getx() * Math.cbrt(criticalVolume);
+      volumeMixRooted += phase.getPhase().getComponent(i).getx()
+          * Math.pow(criticalVolume, 1.0 / 6.0);
 
       double molarMass = phase.getPhase().getComponent(i).getMolarMass() * 1000.0;
       double tc = phase.getPhase().getComponent(i).getTC();
@@ -69,7 +82,7 @@ public class LBCViscosityMethod extends Viscosity {
 
     lowPresVisc = temp3 / temp4;
     // logger.info("LP visc " + lowPresVisc);
-    double pseudoCriticalVolume = Math.pow(volumeMixRooted, 3.0); // cm3/mol
+    double pseudoCriticalVolume = Math.pow(volumeMixRooted, 6.0); // cm3/mol
     critDens = 1.0 / pseudoCriticalVolume; // mol/cm3
     double epsilonMix = Math.pow(epsilonMixSum, 1.0 / 6.0);
     double reducedDensity = phase.getPhase().getPhysicalProperties().getDensity()
