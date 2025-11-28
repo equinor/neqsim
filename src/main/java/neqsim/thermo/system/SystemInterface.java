@@ -2480,6 +2480,62 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setPC(double PC);
 
   /**
+   * Set critical properties and acentric factor for a component in all phases.
+   *
+   * @param componentIndex index of component to update
+   * @param tc critical temperature in K
+   * @param pc critical pressure in bara
+   * @param acentricFactor component acentric factor
+   */
+  public void setComponentCriticalParameters(int componentIndex, double tc, double pc,
+      double acentricFactor);
+
+  /**
+   * Set critical properties and acentric factor for a component in all phases.
+   *
+   * @param componentName name of component to update
+   * @param tc critical temperature in K
+   * @param pc critical pressure in bara
+   * @param acentricFactor component acentric factor
+   */
+  public void setComponentCriticalParameters(String componentName, double tc, double pc,
+      double acentricFactor);
+
+  /**
+   * Set Peneloux volume correction for a component in all phases.
+   *
+   * @param componentIndex index of component to update
+   * @param volumeCorrection Peneloux volume correction
+   */
+  public void setComponentVolumeCorrection(int componentIndex, double volumeCorrection);
+
+  /**
+   * Set Peneloux volume correction for a component in all phases.
+   *
+   * @param componentName name of component to update
+   * @param volumeCorrection Peneloux volume correction
+   */
+  public void setComponentVolumeCorrection(String componentName, double volumeCorrection);
+
+  /**
+   * Set binary interaction parameter for all phase mixing rules.
+   *
+   * @param component1 index of first component
+   * @param component2 index of second component
+   * @param value kij value
+   */
+  public void setBinaryInteractionParameter(int component1, int component2, double value);
+
+  /**
+   * Set binary interaction parameter for all phase mixing rules.
+   *
+   * @param component1 name of first component
+   * @param component2 name of second component
+   * @param value kij value
+   */
+  public void setBinaryInteractionParameter(String component1, String component2, double value);
+
+  /**
    * <p>
    * Set <code>phaseArray[phaseIndex] = phase</code>. NB! Transfers the pressure and temperature
    * from the currently existing phase object at index numb
