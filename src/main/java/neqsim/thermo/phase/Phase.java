@@ -2452,9 +2452,23 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getDensity_EOSCG() {
+    neqsim.thermo.util.gerg.NeqSimEOSCG test = new neqsim.thermo.util.gerg.NeqSimEOSCG(this);
+    return test.getDensity();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double[] getProperties_GERG2008() {
     neqsim.thermo.util.gerg.NeqSimGERG2008 test = new neqsim.thermo.util.gerg.NeqSimGERG2008(this);
     return test.propertiesGERG();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[] getProperties_EOSCG() {
+    neqsim.thermo.util.gerg.NeqSimEOSCG test = new neqsim.thermo.util.gerg.NeqSimEOSCG(this);
+    return test.propertiesEOSCG();
   }
 
   /** {@inheritDoc} */
@@ -2466,9 +2480,23 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
+  public doubleW[] getAlpha0_EOSCG() {
+    neqsim.thermo.util.gerg.NeqSimEOSCG test = new neqsim.thermo.util.gerg.NeqSimEOSCG(this);
+    return test.getAlpha0_EOSCG();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public doubleW[][] getAlphares_GERG2008() {
     neqsim.thermo.util.gerg.NeqSimGERG2008 test = new neqsim.thermo.util.gerg.NeqSimGERG2008(this);
     return test.getAlphares_GERG2008();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public doubleW[][] getAlphares_EOSCG() {
+    neqsim.thermo.util.gerg.NeqSimEOSCG test = new neqsim.thermo.util.gerg.NeqSimEOSCG(this);
+    return test.getAlphares_EOSCG();
   }
 
   /** {@inheritDoc} */
