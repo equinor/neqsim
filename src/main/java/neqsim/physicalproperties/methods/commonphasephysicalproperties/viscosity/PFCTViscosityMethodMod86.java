@@ -96,8 +96,10 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
     double Mmix =
         (Mmtemp + 1.304e-4 * (Math.pow(Mwtemp / Mmtemp, 2.303) - Math.pow(Mmtemp, 2.303))) * 1e3; // phase.getPhase().getMolarMass();
 
-    referenceSystem.setTemperature(phase.getPhase().getTemperature());
-    referenceSystem.setPressure(phase.getPhase().getPressure());
+    referenceSystem.setTemperature(phase.getPhase().getTemperature()
+        * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix);
+    referenceSystem.setPressure(phase.getPhase().getPressure()
+        * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix);
     referenceSystem.init(1);
 
     double molDens = 1.0 / referenceSystem.getLowestGibbsEnergyPhase().getMolarVolume() * 100.0;

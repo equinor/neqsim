@@ -48,5 +48,38 @@ public class PFCTViscosityMethodTest extends neqsim.NeqSimTest {
     double calculated = testSystem.getPhase("oil").getPhysicalProperties().getViscosity();
     assertEquals(reference, calculated, 0.50 * reference);
   }
+
+  @Test
+  void comparePFCTandPFCTHeavyOil() {
+    double T = 300.0; // K
+    double P = 100.0; // bar(a)
+    testSystem = new neqsim.thermo.system.SystemSrkEos(T, P);
+    testSystem.addComponent("methane", 0.5);
+    testSystem.addComponent("nC10", 0.5);
+    testSystem.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
+    ops.TPflash();
+
+    // Gas Phase
+    testSystem.getPhase("gas").getPhysicalProperties().setViscosityModel("PFCT");
+    testSystem.initProperties();
+    double gasPFCT = testSystem.getPhase("gas").getViscosity();
+
+    testSystem.getPhase("gas").getPhysicalProperties().setViscosityModel("PFCT-Heavy-Oil");
+    testSystem.initProperties();
+    double gasPFCTHeavy = testSystem.getPhase("gas").getViscosity();
+
+    // Liquid Phase
+    testSystem.getPhase("oil").getPhysicalProperties().setViscosityModel("PFCT");
+    testSystem.initProperties();
+    double oilPFCT = testSystem.getPhase("oil").getViscosity();
+
+    testSystem.getPhase("oil").getPhysicalProperties().setViscosityModel("PFCT-Heavy-Oil");
+    testSystem.initProperties();
+    double oilPFCTHeavy = testSystem.getPhase("oil").getViscosity();
+
+    assertEquals(gasPFCT, gasPFCTHeavy, 0.05 * gasPFCT);
+    assertEquals(oilPFCT, oilPFCTHeavy, 0.05 * oilPFCT);
+  }
 }
 
