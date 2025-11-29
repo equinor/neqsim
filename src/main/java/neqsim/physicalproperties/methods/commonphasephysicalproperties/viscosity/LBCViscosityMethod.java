@@ -47,35 +47,40 @@ public class LBCViscosityMethod extends Viscosity {
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       ComponentInterface component = phase.getPhase().getComponent(i);
       double criticalVolume = getOrEstimateCriticalVolume(component);
-      volumeMixRooted += component.getx() * Math.pow(criticalVolume, 1.0 / 6.0);
+      volumeMixRooted += component.getx() * Math.cbrt(criticalVolume);
 
       double molarMass = component.getMolarMass() * 1000.0; // g/mol
       double tc = component.getTC();
       double tr = phase.getPhase().getTemperature() / tc;
-      double pcBar = component.getPC() / 1.0e5;
-      double temp2Epsilon = Math.pow(tc, 1.0 / 6.0)
-          / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pcBar, 2.0 / 3.0));
+      double pc = component.getPC(); // bar
+      double pcAtm = pc / 1.01325;
+      double temp2Epsilon =
+          Math.pow(tc, 1.0 / 6.0) / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pcAtm, 2.0 / 3.0));
 
       epsilonMixSum += component.getx() * Math.pow(temp2Epsilon, 6.0);
 
-      double temp2Gas = Math.pow(tc, 1.0 / 6.0)
-          / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pcBar, 2.0 / 3.0));
+      double temp2Gas =
+          Math.pow(tc, 1.0 / 6.0) / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pcAtm, 2.0 / 3.0));
       double lowPressureCorrelation = tr < 1.5 ? 34.0e-5 / temp2Gas * Math.pow(tr, 0.94)
           : 17.78e-5 / temp2Gas * Math.pow(4.58 * tr - 1.67, 5.0 / 8.0);
+      lowPressureCorrelation *= 1.0e4; // cP -> micropoise
 
       double molarMassSqrt = Math.pow(molarMass, 1.0 / 2.0);
       weightedGasViscosity += component.getx() * lowPressureCorrelation * molarMassSqrt;
       mixtureMolarMassSqrt += component.getx() * molarMassSqrt;
     }
 
-    double lowPressureViscositycP = selectReferenceViscosity(weightedGasViscosity,
+    double lowPressureViscosityMicropoise = selectReferenceViscosity(weightedGasViscosity,
         mixtureMolarMassSqrt == 0.0 ? 1.0 : mixtureMolarMassSqrt);
 
-    double pseudoCriticalVolume = Math.pow(volumeMixRooted, 6.0); // cm3/mol
+    double pseudoCriticalVolume = Math.pow(volumeMixRooted, 3.0); // cm3/mol
     double critDens = pseudoCriticalVolume > 0.0 ? 1.0 / pseudoCriticalVolume : 0.0; // mol/cm3
     double epsilonMix = Math.pow(epsilonMixSum, 1.0 / 6.0);
-    double reducedDensity = critDens > 0.0 ? phase.getPhase().getPhysicalProperties().getDensity()
-        / phase.getPhase().getMolarMass() / critDens / 1.0e6 : 0.0;
+    double reducedDensity =
+        critDens > 0.0
+            ? phase.getPhase().getPhysicalProperties().getDensity()
+                / phase.getPhase().getMolarMass() / critDens / 1.0e6
+            : 0.0;
 
     PhaseType phaseType = phase.getPhase().getType();
     double denseContribution = 0.0;
@@ -83,60 +88,42 @@ public class LBCViscosityMethod extends Viscosity {
       double poly = a[0] + a[1] * reducedDensity + a[2] * Math.pow(reducedDensity, 2.0)
           + a[3] * Math.pow(reducedDensity, 3.0) + a[4] * Math.pow(reducedDensity, 4.0);
       denseContribution = Math.max(0.0, (Math.pow(poly, 4.0) - 1.0e-4) / epsilonMix);
-      if (phaseType != PhaseType.GAS) {
-        double denseCap = Math.max(0.0, lowPressureViscositycP * 50.0);
-        denseContribution = Math.max(0.0, Math.min(denseContribution, denseCap));
-      }
+      denseContribution *= 1.0e4; // cP -> micropoise
     }
 
-    return (denseContribution + lowPressureViscositycP) / 1.0e3;
+    return (denseContribution + lowPressureViscosityMicropoise) / 1.0e7;
   }
 
-  private double selectReferenceViscosity(double weightedGasViscosity, double mixtureMolarMassSqrt) {
+  private double selectReferenceViscosity(double weightedGasViscosity,
+      double mixtureMolarMassSqrt) {
     PhaseType phaseType = phase.getPhase().getType();
     if (phaseType == PhaseType.AQUEOUS) {
-      return waterViscositycP();
-    }
-
-    if (phaseType == PhaseType.GAS) {
-      double gasViscosity = leeGonzalezEakinGasViscosityCp(weightedGasViscosity, mixtureMolarMassSqrt);
-      double frictionReference = frictionTheoryViscositycP();
-      if (frictionReference > 0.0 && gasViscosity < frictionReference * 0.2) {
-        return frictionReference;
-      }
-      return gasViscosity;
-    }
-
-    return frictionTheoryViscositycP();
+      return waterViscosityMicropoise();
+    } else
+      return leeGonzalezEakinGasViscosityMicropoise(weightedGasViscosity, mixtureMolarMassSqrt);
   }
+
 
   /**
    * The Lee-Gonzalez-Eakin dilute-gas correlation returns viscosity in micropoise when critical
-   * pressure is supplied in bar. Convert the weighted mixture estimate to cP so it can be summed
-   * with the dense-gas LBC correction.
+   * pressure is supplied in bar. This weighted mixture estimate stays in micropoise to match the
+   * units expected by the LBC dense-fluid correction.
    */
-  private double leeGonzalezEakinGasViscosityCp(double weightedGasViscosity,
+  private double leeGonzalezEakinGasViscosityMicropoise(double weightedGasViscosity,
       double mixtureMolarMassSqrt) {
     if (mixtureMolarMassSqrt <= 0.0) {
       return 0.0;
     }
 
-    double gasViscosityMicropoise = weightedGasViscosity / mixtureMolarMassSqrt;
-    double leeScale = 4200.0; // anchors methane to empirical dense-gas values when Pc is in bar
-    return gasViscosityMicropoise * leeScale * 1.0e-4; // micropoise -> cP
+    return weightedGasViscosity / mixtureMolarMassSqrt; // micropoise
   }
 
-  private double frictionTheoryViscositycP() {
-    FrictionTheoryViscosityMethod ftMethod = new FrictionTheoryViscosityMethod(phase);
-    return ftMethod.calcViscosity() * 1.0e3;
-  }
-
-  private double waterViscositycP() {
+  private double waterViscosityMicropoise() {
     double temperatureC = phase.getPhase().getTemperature() - 273.15;
     double baseViscosityPaS = 2.414e-5 * Math.pow(10.0, 247.8 / (temperatureC + 133.15));
     double pressureBar = phase.getPhase().getPressure();
     double pressureCorrection = Math.exp(0.002 * Math.max(pressureBar, 0.0));
-    return baseViscosityPaS * pressureCorrection * 1.0e3;
+    return baseViscosityPaS * pressureCorrection * 1.0e7; // Pa·s -> micropoise
   }
 
   /** {@inheritDoc} */
@@ -148,11 +135,13 @@ public class LBCViscosityMethod extends Viscosity {
   /**
    * Estimate the critical volume when it is missing from component data.
    *
-   * <p>The LBC method requires critical volume in cm^3/mol. For pseudo components this property
-   * is rarely tabulated, so we fall back to the Racket compressibility if available, or the widely
-   * used Lee-Kesler style correlation (Zc = 0.29 - 0.087·ω) described by Twu (1984) for
-   * petroleum fractions. The correlation keeps Zc within physically reasonable bounds for heavy
-   * oils while allowing the viscosity model to operate without bespoke input data.</p>
+   * <p>
+   * The LBC method requires critical volume in cm^3/mol. For pseudo components this property is
+   * rarely tabulated, so we fall back to the Racket compressibility if available, or the widely
+   * used Lee-Kesler style correlation (Zc = 0.29 - 0.087·ω) described by Twu (1984) for petroleum
+   * fractions. The correlation keeps Zc within physically reasonable bounds for heavy oils while
+   * allowing the viscosity model to operate without bespoke input data.
+   * </p>
    *
    * @param component the component to evaluate
    * @return critical volume in cm3/mol
@@ -198,7 +187,8 @@ public class LBCViscosityMethod extends Viscosity {
 
     double tc = component.getTC();
     double pc = component.getPC();
-    criticalVolume = criticalCompressibility * ThermodynamicConstantsInterface.R * tc / (pc * 1.0e5);
+    criticalVolume =
+        criticalCompressibility * ThermodynamicConstantsInterface.R * tc / (pc * 1.0e5);
     return convertToCm3PerMol(criticalVolume);
   }
 
@@ -209,6 +199,7 @@ public class LBCViscosityMethod extends Viscosity {
   private double estimateTbpCriticalVolume(ComponentInterface component) {
     if (!component.isIsTBPfraction()) {
       return -1.0;
+
     }
 
     double liquidDensity = component.getNormalLiquidDensity(); // g/cm3
@@ -217,8 +208,8 @@ public class LBCViscosityMethod extends Viscosity {
       return -1.0;
     }
 
-    double criticalVolumeFt3PerLbmol = 21.573 + 0.015122 * molarMassGPerMol
-        - 27.656 * liquidDensity + 0.070615 * molarMassGPerMol * liquidDensity;
+    double criticalVolumeFt3PerLbmol = 21.573 + 0.015122 * molarMassGPerMol - 27.656 * liquidDensity
+        + 0.070615 * molarMassGPerMol * liquidDensity;
     double criticalVolumeCm3PerMol = criticalVolumeFt3PerLbmol * FT3_PER_LBMOL_TO_CM3_PER_MOL;
 
     if (criticalVolumeCm3PerMol <= 0.0) {
