@@ -14,9 +14,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class EOSCGModel {
-  // Variables containing the common parameters in the GERG-2008 equations
-  double RGERG;
-  int NcGERG = 21;
+  // Variables containing the common parameters in the EOS-CG equations
+  double REOSCG;
+  int NcEOSCG = 21;
   int MaxFlds = 21;
   int MaxMdl = 10;
   int MaxTrmM = 12;
@@ -40,7 +40,7 @@ public class EOSCGModel {
 
   double[] Dc = new double[MaxFlds + 1];
   double[] Tc = new double[MaxFlds + 1];
-  double[] MMiGERG = new double[MaxFlds + 1];
+  double[] MMiEOSCG = new double[MaxFlds + 1];
   double[] Vc3 = new double[MaxFlds + 1];
   double[] Tc2 = new double[MaxFlds + 1];
 
@@ -92,8 +92,8 @@ public class EOSCGModel {
     // Mm - Molar mass (g/mol)
 
     Mm.val = 0;
-    for (int i = 1; i <= NcGERG; ++i) {
-      Mm.val += x[i] * MMiGERG[i];
+    for (int i = 1; i <= NcEOSCG; ++i) {
+      Mm.val += x[i] * MMiEOSCG[i];
     }
   }
 
@@ -140,8 +140,8 @@ public class EOSCGModel {
     AlpharEOSCG(0, 0, T, D, x, ar);
 
     Z.val = 1 + ar[0][1].val;
-    P.val = D * RGERG * T * Z.val;
-    dPdDsave = RGERG * T * (1 + 2 * ar[0][1].val + ar[0][2].val);
+    P.val = D * REOSCG * T * Z.val;
+    dPdDsave = REOSCG * T * (1 + 2 * ar[0][1].val + ar[0][2].val);
   }
 
   /**
@@ -233,10 +233,10 @@ public class EOSCGModel {
       return;
     }
     tolr = 0.0000001;
-    PseudoCriticalPointGERG(x, Tcx, Dcx);
+    PseudoCriticalPointEOSCG(x, Tcx, Dcx);
 
     if (D.val > -epsilon) {
-      D.val = P / RGERG / T; // Ideal gas estimate for vapor phase
+      D.val = P / REOSCG / T; // Ideal gas estimate for vapor phase
       if (iFlag == 2) {
         D.val = Dcx.val * 3;
       } // Initial estimate for liquid phase
@@ -256,7 +256,7 @@ public class EOSCGModel {
           // indicate possible 2-phase state)
           ierr.val = 1;
           herr.val = "Calculation failed to converge in GERG method, ideal gas density returned.";
-          D.val = P / RGERG / T;
+          D.val = P / REOSCG / T;
         }
         nFail++;
         if (nFail == 1) {
@@ -312,7 +312,7 @@ public class EOSCGModel {
                 ierr.val = 1;
                 herr.val =
                     "Calculation failed to converge in GERG method, ideal gas density returned.";
-                D.val = P / RGERG / T;
+                D.val = P / REOSCG / T;
               }
             }
             return; // Iteration converged
@@ -324,7 +324,7 @@ public class EOSCGModel {
     // indicate possible 2-phase state)
     ierr.val = 1;
     herr.val = "Calculation failed to converge in GERG method, ideal gas density returned.";
-    D.val = P / RGERG / T;
+    D.val = P / REOSCG / T;
   }
 
   /**
@@ -417,7 +417,7 @@ public class EOSCGModel {
     // temperature and/or density.
     AlpharEOSCG(1, 0, T, D, x, ar);
 
-    R = RGERG;
+    R = REOSCG;
     RT = R * T;
     Z.val = 1 + ar[0][1].val;
     P.val = D * RT * Z.val;
@@ -477,7 +477,7 @@ public class EOSCGModel {
     // Check to see if a component fraction has changed. If x is the same as the previous call,
     // then exit.
     icheck = 0;
-    for (int i = 1; i <= NcGERG; ++i) {
+    for (int i = 1; i <= NcEOSCG; ++i) {
       if (Math.abs(x[i] - xold[i]) > 0.0000001) {
         icheck = 1;
       }
@@ -495,10 +495,10 @@ public class EOSCGModel {
     Dr.val = 0;
     Vr = 0;
     Tr.val = 0;
-    for (int i = 1; i <= NcGERG; ++i) {
+    for (int i = 1; i <= NcEOSCG; ++i) {
       if (x[i] > epsilon) {
         F = 1;
-        for (int j = i; j <= NcGERG; ++j) {
+        for (int j = i; j <= NcEOSCG; ++j) {
           if (x[j] > epsilon) {
             xij = F * (x[i] * x[j]) * (x[i] + x[j]);
             Vr = Vr + xij * gvij[i][j] / (bvij[i][j] * x[i] + x[j]);
@@ -560,7 +560,7 @@ public class EOSCGModel {
       LogD = Math.log(epsilon);
     }
     LogT = Math.log(T);
-    for (int i = 1; i <= NcGERG; ++i) {
+    for (int i = 1; i <= NcEOSCG; ++i) {
       if (x[i] > epsilon) {
         LogxD = LogD + Math.log(x[i]);
         SumHyp0 = 0;
@@ -669,7 +669,7 @@ public class EOSCGModel {
     Trold2 = Tr.val;
 
     // Calculate pure fluid contributions
-    for (int i = 1; i <= NcGERG; ++i) {
+    for (int i = 1; i <= NcEOSCG; ++i) {
       if (x[i] > epsilon) {
         for (int k = 1; k <= kpol[i]; ++k) {
           ndt = x[i] * delp[doik[i][k]] * taup[i][k];
@@ -707,9 +707,9 @@ public class EOSCGModel {
     }
 
     // Calculate mixture contributions
-    for (int i = 1; i <= NcGERG - 1; ++i) {
+    for (int i = 1; i <= NcEOSCG - 1; ++i) {
       if (x[i] > epsilon) {
-        for (int j = i + 1; j <= NcGERG; ++j) {
+        for (int j = i + 1; j <= NcEOSCG; ++j) {
           if (x[j] > epsilon) {
             mn = mNumb[i][j];
             if (mn >= 0) {
@@ -773,7 +773,7 @@ public class EOSCGModel {
     for (int k = 1; k <= kpol[i] + kexp[i]; ++k) {
       taup0[k] = Math.exp(toik[i][k] * lntau);
     }
-    for (i = 1; i <= NcGERG; ++i) {
+    for (i = 1; i <= NcEOSCG; ++i) {
       if (x[i] > epsilon) {
         if (i > 4 && i != 15 && i != 18 && i != 20) {
           for (int k = 1; k <= kpol[i] + kexp[i]; ++k) {
@@ -787,9 +787,9 @@ public class EOSCGModel {
       }
     }
 
-    for (i = 1; i <= NcGERG - 1; ++i) {
+    for (i = 1; i <= NcEOSCG - 1; ++i) {
       if (x[i] > epsilon) {
-        for (int j = i + 1; j <= NcGERG; ++j) {
+        for (int j = i + 1; j <= NcEOSCG; ++j) {
           if (x[j] > epsilon) {
             mn = mNumb[i][j];
             if (mn >= 0) {
@@ -808,8 +808,8 @@ public class EOSCGModel {
    * @param Tcx temperature in Kelvin
    * @param Dcx density
    */
-  void PseudoCriticalPointGERG(double[] x, doubleW Tcx, doubleW Dcx) {
-    // PseudoCriticalPointGERG(x, Tcx, Dcx)
+  void PseudoCriticalPointEOSCG(double[] x, doubleW Tcx, doubleW Dcx) {
+    // PseudoCriticalPointEOSCG(x, Tcx, Dcx)
 
     // Calculate a pseudo critical point as the mole fraction average of the
     // critical temperatures and critical volumes
@@ -818,7 +818,7 @@ public class EOSCGModel {
     Tcx.val = 0;
     Vcx = 0;
     Dcx.val = 0;
-    for (int i = 1; i <= NcGERG; ++i) {
+    for (int i = 1; i <= NcEOSCG; ++i) {
       Tcx.val = Tcx.val + x[i] * Tc[i];
       Vcx = Vcx + x[i] / Dc[i];
     }
@@ -846,9 +846,9 @@ public class EOSCGModel {
 
     double d0;
     // ThermodynamicConstantsInterface.R
-    RGERG = 8.314472;
+    REOSCG = 8.314472;
     Rs = 8.31451;
-    Rsr = Rs / RGERG;
+    Rsr = Rs / REOSCG;
     o13 = 1.0 / 3.0;
 
     for (int i = 1; i <= MaxFlds; ++i) {
@@ -857,27 +857,27 @@ public class EOSCGModel {
     Told = 0;
 
     // Molar masses [g/mol]
-    MMiGERG[1] = 16.04246; // Methane
-    MMiGERG[2] = 28.0134; // Nitrogen
-    MMiGERG[3] = 44.0095; // Carbon dioxide
-    MMiGERG[4] = 30.06904; // Ethane
-    MMiGERG[5] = 44.09562; // Propane
-    MMiGERG[6] = 58.1222; // Isobutane
-    MMiGERG[7] = 58.1222; // n-Butane
-    MMiGERG[8] = 72.14878; // Isopentane
-    MMiGERG[9] = 72.14878; // n-Pentane
-    MMiGERG[10] = 86.17536; // Hexane
-    MMiGERG[11] = 100.20194; // Heptane
-    MMiGERG[12] = 114.22852; // Octane
-    MMiGERG[13] = 128.2551; // Nonane
-    MMiGERG[14] = 142.28168; // Decane
-    MMiGERG[15] = 2.01588; // Hydrogen
-    MMiGERG[16] = 31.9988; // Oxygen
-    MMiGERG[17] = 28.0101; // Carbon monoxide
-    MMiGERG[18] = 18.01528; // Water
-    MMiGERG[19] = 34.08088; // Hydrogen sulfide
-    MMiGERG[20] = 4.002602; // Helium
-    MMiGERG[21] = 39.948; // Argon
+    MMiEOSCG[1] = 16.04246; // Methane
+    MMiEOSCG[2] = 28.0134; // Nitrogen
+    MMiEOSCG[3] = 44.0095; // Carbon dioxide
+    MMiEOSCG[4] = 30.06904; // Ethane
+    MMiEOSCG[5] = 44.09562; // Propane
+    MMiEOSCG[6] = 58.1222; // Isobutane
+    MMiEOSCG[7] = 58.1222; // n-Butane
+    MMiEOSCG[8] = 72.14878; // Isopentane
+    MMiEOSCG[9] = 72.14878; // n-Pentane
+    MMiEOSCG[10] = 86.17536; // Hexane
+    MMiEOSCG[11] = 100.20194; // Heptane
+    MMiEOSCG[12] = 114.22852; // Octane
+    MMiEOSCG[13] = 128.2551; // Nonane
+    MMiEOSCG[14] = 142.28168; // Decane
+    MMiEOSCG[15] = 2.01588; // Hydrogen
+    MMiEOSCG[16] = 31.9988; // Oxygen
+    MMiEOSCG[17] = 28.0101; // Carbon monoxide
+    MMiEOSCG[18] = 18.01528; // Water
+    MMiEOSCG[19] = 34.08088; // Hydrogen sulfide
+    MMiEOSCG[20] = 4.002602; // Helium
+    MMiEOSCG[21] = 39.948; // Argon
 
     // Number of polynomial and exponential terms
     for (int i = 1; i <= MaxFlds; ++i) {
@@ -3190,7 +3190,7 @@ public class EOSCGModel {
 
     // Ideal gas terms
     T0 = 298.15;
-    d0 = 101.325 / RGERG / T0;
+    d0 = 101.325 / REOSCG / T0;
     for (int i = 1; i <= MaxFlds; ++i) {
       n0i[i][3] = n0i[i][3] - 1;
       n0i[i][2] = n0i[i][2] + T0;
@@ -3205,7 +3205,7 @@ public class EOSCGModel {
     // This is not called in the current code, but included below to show how the values were
     // calculated. The return above can be removed to call this code.
     // T0 = 298.15;
-    // d0 = 101.325 / RGERG / T0;
+    // d0 = 101.325 / REOSCG / T0;
     // for (int i = 1; i <= MaxFlds; ++i){
     // n1 = 0; n2 = 0;
     // if (th0i[i][4] > epsilon) { n2 += - n0i[i][4] * th0i[i][4] / Tanh(th0i[i][4] / T0); n1 +=
