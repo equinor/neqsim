@@ -39,7 +39,7 @@ public class LBCViscosityMethod extends Viscosity {
   /** {@inheritDoc} */
   @Override
   public double calcViscosity() {
-    double volumeMixRooted = 0.0;
+    double volumeMixSum = 0.0;
     double epsilonMixSum = 0.0;
     double mixtureMolarMassSqrt = 0.0;
     double weightedGasViscosity = 0.0;
@@ -47,7 +47,7 @@ public class LBCViscosityMethod extends Viscosity {
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       ComponentInterface component = phase.getPhase().getComponent(i);
       double criticalVolume = getOrEstimateCriticalVolume(component);
-      volumeMixRooted += component.getx() * Math.cbrt(criticalVolume);
+      volumeMixSum += component.getx() * criticalVolume;
 
       double molarMass = component.getMolarMass() * 1000.0; // g/mol
       double tc = component.getTC();
@@ -73,7 +73,7 @@ public class LBCViscosityMethod extends Viscosity {
     double lowPressureViscosityMicropoise = selectReferenceViscosity(weightedGasViscosity,
         mixtureMolarMassSqrt == 0.0 ? 1.0 : mixtureMolarMassSqrt);
 
-    double pseudoCriticalVolume = Math.pow(volumeMixRooted, 3.0); // cm3/mol
+    double pseudoCriticalVolume = volumeMixSum; // cm3/mol
     double critDens = pseudoCriticalVolume > 0.0 ? 1.0 / pseudoCriticalVolume : 0.0; // mol/cm3
     double epsilonMix = Math.pow(epsilonMixSum, 1.0 / 6.0);
     double reducedDensity =
