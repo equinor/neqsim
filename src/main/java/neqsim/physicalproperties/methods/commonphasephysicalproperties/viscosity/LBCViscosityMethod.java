@@ -158,25 +158,7 @@ public class LBCViscosityMethod extends Viscosity {
     }
 
     double criticalCompressibility = component.getCriticalCompressibilityFactor();
-    double racketZ = component.getRacketZ();
     double acentricFactor = component.getAcentricFactor();
-
-    // Prefer the Rackett Z if the characterization model provided one for the pseudo component.
-    if (criticalCompressibility <= 0.0 && racketZ > 1.0e-6) {
-      criticalCompressibility = racketZ;
-    }
-
-    // TBP fractions may lack critical data but provide liquid density information. Use the molar
-    // volume at standard conditions as a soft lower bound to avoid unrealistic pseudo-critical
-    // volumes for heavy cuts when acentric factors are missing or poorly estimated.
-    if (criticalCompressibility <= 0.0 && component.isIsTBPfraction()) {
-      double liquidDensity = component.getNormalLiquidDensity();
-      if (liquidDensity > 1.0e-6) {
-        double molarVolumeCm3 = component.getMolarMass() / liquidDensity * 1.0e6; // cm3/mol
-        // Critical volume should be larger than saturated liquid volume; apply a modest scaling.
-        criticalVolume = Math.max(criticalVolume, molarVolumeCm3 * 1.2);
-      }
-    }
 
     // Literature correlation for heavy-oil fractions (Twu, 1984). Maintain bounds to avoid
     // unrealistic volumes for extreme pseudo components.
