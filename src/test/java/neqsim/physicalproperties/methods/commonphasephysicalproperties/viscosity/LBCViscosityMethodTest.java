@@ -2,8 +2,11 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosit
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
+import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 public class LBCViscosityMethodTest {
@@ -12,7 +15,7 @@ public class LBCViscosityMethodTest {
   @Test
   void testGasMethaneMatchesReferenceMagnitude() {
     double T = 273.15;
-    double P = 20; // Pressure in MPa
+    double P = 20.0; // MPa
     testSystem = new neqsim.thermo.system.SystemSrkEos(T, P * 10);
     testSystem.addComponent("methane", 1.0);
     testSystem.setMixingRule("classic");
@@ -22,9 +25,9 @@ public class LBCViscosityMethodTest {
     testSystem.initProperties();
     double viscosity = testSystem.getPhase("gas").getViscosity("cP");
 
-    double expectedGasViscosity = 0.021; // cP at 273 K, ~200 bar from literature charts
-    assertTrue(viscosity > 0.0 && viscosity < 2.0,
-        "Methane gas viscosity should stay within a reasonable bound of the reference charts");
+    double expectedGasViscosity = 0.021; // cP at 0 C and ~200 bar from literature charts
+    assertEquals(expectedGasViscosity, viscosity, expectedGasViscosity * 0.25,
+        "Methane dense-gas viscosity should stay close to reference data");
     System.out.println(
         "Viscosity_LBC_methane: " + viscosity + "[cP], reference " + expectedGasViscosity);
   }
@@ -44,7 +47,7 @@ public class LBCViscosityMethodTest {
 
     double expectedLiquidViscosity = 0.389; // cP at 25 C (CRC Handbook)
     assertTrue(viscosity > 0.0);
-    assertEquals(expectedLiquidViscosity, viscosity, expectedLiquidViscosity * 0.75);
+    assertEquals(expectedLiquidViscosity, viscosity, expectedLiquidViscosity * 0.1);
     System.out.println("Viscosity_LBC_nHeptane: " + viscosity * Math.pow(10, 3) + "[mPa*s] vs "
         + expectedLiquidViscosity * 1.0e3);
   }
@@ -61,7 +64,7 @@ public class LBCViscosityMethodTest {
 
     double expectedViscosity = 0.92; // cP at 25 C
     assertTrue(viscosity > 0.0);
-    assertEquals(expectedViscosity, viscosity, expectedViscosity * 1.0);
+    assertEquals(expectedViscosity, viscosity, expectedViscosity * 0.2);
     System.out.println(
         "Viscosity_LBC_nDecane: " + viscosity + "[cP] vs experimental " + expectedViscosity);
   }
@@ -81,8 +84,8 @@ public class LBCViscosityMethodTest {
       double ratio = lbcVisc / frictionVisc;
       System.out.println("nC7/nC10 mixture viscosities: frictionTheory=" + frictionVisc
           + " cP, LBC=" + lbcVisc + " cP, ratio=" + ratio);
-      assertTrue(ratio > 0.5 && ratio < 2.0,
-          "LBC and friction theory viscosities should stay within +/-100% for defined oils");
+      assertTrue(ratio > 0.7 && ratio < 1.3,
+          "LBC viscosity for normal oils should closely follow friction-theory reference");
     }
 
     @Test
@@ -103,8 +106,28 @@ public class LBCViscosityMethodTest {
       System.out.println(
           "Pseudo-component oil viscosities: frictionTheory=" + frictionVisc + " cP, LBC=" + lbcVisc
               + " cP, ratio=" + ratio);
-      assertTrue(ratio > 0.001 && ratio < 10.0,
-          "LBC and friction theory viscosities should stay within a few orders of magnitude for pseudo components");
+      assertTrue(ratio > 0.5 && ratio < 1.5,
+          "Pseudo-component oils should be reproduced by LBC within 50% of friction-theory reference");
+    }
+
+    @Test
+    void testHeavyTBPFractionsStayPhysical() {
+      SystemInterface oilSystem = new neqsim.thermo.system.SystemSrkEos(303.15, 20.0);
+      oilSystem.addTBPfraction("C20", 0.5, 0.28, 0.86);
+      oilSystem.addTBPfraction("C24", 0.3, 0.34, 0.87);
+      oilSystem.addTBPfraction("C28", 0.2, 0.40, 0.88);
+      oilSystem.setMixingRule("classic");
+      new ThermodynamicOperations(oilSystem).TPflash();
+
+      double frictionVisc = oilViscosity(oilSystem, "friction theory");
+      double lbcVisc = oilViscosity(oilSystem, "LBC");
+
+      assertTrue(lbcVisc > 0.0 && frictionVisc > 0.0);
+      double ratio = lbcVisc / frictionVisc;
+      System.out.println("Heavy TBP oil viscosities: frictionTheory=" + frictionVisc + " cP, LBC="
+          + lbcVisc + " cP, ratio=" + ratio);
+      assertTrue(ratio > 0.6 && ratio < 1.6,
+          "LBC should give physically reasonable viscosities for heavy TBP fractions relative to friction theory");
     }
 
     @Test
@@ -122,8 +145,53 @@ public class LBCViscosityMethodTest {
       System.out.println("Pseudo-decane viscosity (LBC): " + viscosity + " cP vs experimental "
           + expectedViscosity + " cP");
       assertTrue(viscosity > 0.0);
-      assertEquals(expectedViscosity, viscosity, expectedViscosity * 0.75,
+      assertEquals(expectedViscosity, viscosity, expectedViscosity * 0.2,
           "Pseudo-component viscosity should be in line with n-decane data when critical volume is estimated");
+    }
+
+    @Test
+    void testTBPCriticalVolumeUsesWhitsonCorrelation() throws Exception {
+      SystemInterface oilSystem = new neqsim.thermo.system.SystemSrkEos(298.15, 1.0);
+      oilSystem.addTBPfraction("C12", 1.0, 0.17, 0.82);
+      oilSystem.setMixingRule("classic");
+      new ThermodynamicOperations(oilSystem).TPflash();
+      oilSystem.getPhase(0).getPhysicalProperties().setViscosityModel("LBC");
+      oilSystem.initProperties();
+
+      PhysicalProperties properties = (PhysicalProperties) oilSystem.getPhase(0).getPhysicalProperties();
+      LBCViscosityMethod method = new LBCViscosityMethod(properties);
+      ComponentInterface tbpComponent = oilSystem.getPhase(0).getComponent(0);
+
+      Method getter = LBCViscosityMethod.class.getDeclaredMethod("getOrEstimateCriticalVolume",
+          ComponentInterface.class);
+      getter.setAccessible(true);
+      double estimatedVolume = (double) getter.invoke(method, tbpComponent);
+
+      double molarMassGPerMol = tbpComponent.getMolarMass() * 1.0e3;
+      double liquidDensity = tbpComponent.getNormalLiquidDensity();
+      double expectedFt3PerLbmol = 21.573 + 0.015122 * molarMassGPerMol - 27.656 * liquidDensity
+          + 0.070615 * molarMassGPerMol * liquidDensity;
+      double expectedCm3PerMol = expectedFt3PerLbmol * 62.42796;
+
+      assertEquals(expectedCm3PerMol, estimatedVolume, expectedCm3PerMol * 0.05,
+          "TBP critical volume should follow the Whitson ft3/lbmol correlation converted to cm3/mol");
+    }
+
+    @Test
+    void testWaterViscosityCloseToData() {
+      SystemInterface waterSystem = new neqsim.thermo.system.SystemSrkEos(298.15, 0.101325 * 10);
+      waterSystem.addComponent("water", 1.0);
+      waterSystem.setMixingRule("classic");
+      new ThermodynamicOperations(waterSystem).TPflash();
+      waterSystem.getPhase(0).getPhysicalProperties().setViscosityModel("LBC");
+      waterSystem.initProperties();
+      double viscosity = waterSystem.getPhase(0).getViscosity("cP");
+
+      double expectedViscosity = 0.890; // cP at 25 C
+      assertEquals(expectedViscosity, viscosity, expectedViscosity * 0.05,
+          "Water viscosity should match tabulated data within 5%");
+      System.out.println("Water viscosity (LBC): " + viscosity + " cP vs reference " + expectedViscosity
+          + " cP");
     }
 
     private double oilViscosity(SystemInterface system, String model) {
