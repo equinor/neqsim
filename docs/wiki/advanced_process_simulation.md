@@ -143,3 +143,44 @@ for (int i = 0; i < 100; i++) {
 *   `process.setTimeStep(double seconds)`: Sets the integration step.
 *   `process.runTransient()`: Advances the simulation by one time step.
 *   `unit.setCalculateSteadyState(boolean)`: Toggles between steady-state (mass balance) and dynamic (accumulation) modes for specific equipment.
+
+## 4. Combining Process Systems (ProcessModel)
+
+For large simulations, it is often better to split the plant into smaller, manageable `ProcessSystem` objects (e.g., "Inlet Separation", "Gas Compression", "Oil Stabilization") and then combine them into a single `ProcessModel`.
+
+### Benefits
+*   **Modularity**: Develop and test sections independently.
+*   **Organization**: Keeps large flowsheets structured.
+*   **Execution Control**: The `ProcessModel` manages the execution of sub-systems.
+
+### Example
+
+```java
+import neqsim.process.processmodel.ProcessModel;
+import neqsim.process.processmodel.ProcessSystem;
+
+// 1. Create Individual Process Systems
+ProcessSystem inletSystem = new ProcessSystem();
+inletSystem.setName("Inlet Section");
+// ... add units to inletSystem ...
+
+ProcessSystem compressionSystem = new ProcessSystem();
+compressionSystem.setName("Compression Section");
+// ... add units to compressionSystem ...
+
+// 2. Connect Systems
+// Typically, a stream from the first system is used as input to the second
+Stream gasFromInlet = (Stream) inletSystem.getUnit("Inlet Separator").getGasOutStream();
+Compressor compressor = new Compressor("1st Stage Compressor", gasFromInlet);
+compressionSystem.add(compressor);
+
+// 3. Create ProcessModel
+ProcessModel plantModel = new ProcessModel();
+plantModel.add("Inlet", inletSystem);
+plantModel.add("Compression", compressionSystem);
+
+// 4. Run the Full Model
+plantModel.run();
+```
+
+The `ProcessModel` will execute the added systems in the order they were added (or based on internal logic if configured). It ensures that data flows correctly between the connected systems.
