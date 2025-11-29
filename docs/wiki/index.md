@@ -3,6 +3,8 @@
 Welcome to the NeqSim documentation. This wiki collects tips and guides for using the library and contributing to development.
 
 - [Getting started](getting_started.md)
+- [Thermodynamics Guide](thermodynamics_guide.md)
+- [Fluid Characterization](fluid_characterization.md)
 - [Process Simulation Guide](process_simulation.md)
 - [Advanced Process Simulation](advanced_process_simulation.md)
 - [Usage examples](usage_examples.md)
