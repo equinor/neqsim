@@ -33,25 +33,21 @@ public class PhaseEOSCGEos extends PhaseGERG2008Eos {
       IPHASE = pt == PhaseType.LIQUID ? -2 : -1;
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     }
-    if (initType >= 1) {
-      double[] temp = new double[18];
-      temp = getProperties_EOSCG();
-      a0 = getAlpha0_EOSCG();
-      ar = getAlphares_EOSCG();
+  }
 
-      pressure = temp[0] / 100;
-      Z = temp[1];
-      W = temp[11];
-      JTcoef = temp[13];
-      kappa = temp[14];
-      gibbsEnergy = temp[12];
-      internalEnery = temp[6];
-      enthalpy = temp[7];
-      entropy = temp[8];
-      CpGERG2008 = temp[10];
-      CvGERG2008 = temp[9];
-      super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
-    }
+  @Override
+  public double[] getProperties_GERG2008() {
+    return getProperties_EOSCG();
+  }
+
+  @Override
+  public doubleW[] getAlpha0_GERG2008() {
+    return getAlpha0_EOSCG();
+  }
+
+  @Override
+  public doubleW[][] getAlphares_GERG2008() {
+    return getAlphares_EOSCG();
   }
 
   @Override
