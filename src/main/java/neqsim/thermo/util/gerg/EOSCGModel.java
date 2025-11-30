@@ -16,8 +16,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 public class EOSCGModel {
   // Variables containing the common parameters in the EOS-CG equations
   double REOSCG;
-  int NcEOSCG = 21;
-  int MaxFlds = 21;
+  int NcEOSCG = 27;
+  int MaxFlds = 27;
   int MaxMdl = 10;
   int MaxTrmM = 12;
   int MaxTrmP = 24;
@@ -35,6 +35,7 @@ public class EOSCGModel {
   int[][] mNumb = new int[MaxFlds + 1][MaxFlds + 1];
   int[] kpol = new int[MaxFlds + 1];
   int[] kexp = new int[MaxFlds + 1];
+  int[] kgauss = new int[MaxFlds + 1];
   int[] kpolij = new int[MaxMdl + 1];
   int[] kexpij = new int[MaxMdl + 1];
 
@@ -46,6 +47,10 @@ public class EOSCGModel {
 
   double[][] noik = new double[MaxFlds + 1][MaxTrmP + 1];
   double[][] toik = new double[MaxFlds + 1][MaxTrmP + 1];
+  double[][] eta_pure = new double[MaxFlds + 1][MaxTrmP + 1];
+  double[][] beta_pure = new double[MaxFlds + 1][MaxTrmP + 1];
+  double[][] gamma_pure = new double[MaxFlds + 1][MaxTrmP + 1];
+  double[][] epsilon_pure = new double[MaxFlds + 1][MaxTrmP + 1];
 
   double[][] cijk = new double[MaxMdl + 1][MaxTrmM + 1];
 
@@ -273,6 +278,8 @@ public class EOSCGModel {
       }
       D.val = Math.exp(-vlog);
       PressureEOSCG(T, D.val, x, P2, Z);
+      // System.out.println("DensityEOSCG: it=" + it + ", D=" + D.val + ", P2=" + P2.val + ", vlog="
+      // + vlog + ", iFlag=" + iFlag);
       if (dPdDsave < epsilon || P2.val < epsilon) {
         // Current state is 2-phase, try locating a different state that is single phase
         vinc = 0.1;
@@ -567,7 +574,13 @@ public class EOSCGModel {
         SumHyp1 = 0;
         SumHyp2 = 0;
         for (int j = 4; j <= 7; ++j) {
-          if (th0i[i][j] > epsilon) {
+          if (th0i[i][j] < -0.5) {
+            // Special term n * tau^-1 = n * T / Tc
+            double term = n0i[i][j] * T / Tc[i];
+            a0[0].val += x[i] * term;
+            a0[1].val += x[i] * (-term);
+            a0[2].val += x[i] * (2 * term);
+          } else if (th0i[i][j] > epsilon) {
             th0T = th0i[i][j] / T;
             ep = Math.exp(th0T);
             em = 1 / ep;
@@ -703,6 +716,46 @@ public class EOSCGModel {
             ar[0][3].val += ndt * (ex3 * (ex2 - 2) - ex * (3 * ex2 - 3 + coik[i][k]) * coik[i][k]);
           }
         }
+        for (int k = 1 + kpol[i] + kexp[i]; k <= kpol[i] + kexp[i] + kgauss[i]; ++k) {
+          double delta = del;
+          double tau_val = tau;
+          double d_val = doik[i][k];
+          double t_val = toik[i][k];
+          double eta = eta_pure[i][k];
+          double eps = epsilon_pure[i][k];
+          double beta = beta_pure[i][k];
+          double gam = gamma_pure[i][k];
+          double Delta = delta - eps;
+          double Theta = tau_val - gam;
+          double exp_val = Math.exp(-eta * Delta * Delta - beta * Theta * Theta);
+          ndt = x[i] * delp[(int) d_val] * taup[i][k] * exp_val;
+
+          double term_d = d_val - 2 * eta * delta * Delta;
+          ar[0][1].val += ndt * term_d;
+
+          double delta_term_d_prime = -2 * eta * delta * (2 * delta - eps);
+          double term_d2 = term_d * term_d - term_d + delta_term_d_prime;
+          ar[0][2].val += ndt * term_d2;
+
+          if (itau > 0) {
+            ar[0][0].val += ndt;
+
+            double term_t = t_val - 2 * beta * tau_val * Theta;
+            ar[1][0].val += ndt * term_t;
+
+            double tau_term_t_prime = -2 * beta * tau_val * (2 * tau_val - gam);
+            double term_t2 = term_t * term_t - term_t + tau_term_t_prime;
+            ar[2][0].val += ndt * term_t2;
+
+            ar[1][1].val += ndt * term_t * term_d;
+            ar[1][2].val += ndt * term_t * term_d2;
+
+            double delta2_term_d_double_prime = -4 * eta * delta * delta;
+            double delta_B_prime = 2 * term_d * delta_term_d_prime + delta2_term_d_double_prime;
+            double term_d3 = term_d * term_d2 + delta_B_prime - 2 * term_d2;
+            ar[0][3].val += ndt * term_d3;
+          }
+        }
       }
     }
 
@@ -775,12 +828,12 @@ public class EOSCGModel {
     }
     for (i = 1; i <= NcEOSCG; ++i) {
       if (x[i] > epsilon) {
-        if (i > 4 && i != 15 && i != 18 && i != 20) {
-          for (int k = 1; k <= kpol[i] + kexp[i]; ++k) {
+        if (i > 4 && i != 15 && i != 18 && i != 20 && i != 22 && i < 23) {
+          for (int k = 1; k <= kpol[i] + kexp[i] + kgauss[i]; ++k) {
             taup[i][k] = noik[i][k] * taup0[k];
           }
         } else {
-          for (int k = 1; k <= kpol[i] + kexp[i]; ++k) {
+          for (int k = 1; k <= kpol[i] + kexp[i] + kgauss[i]; ++k) {
             taup[i][k] = noik[i][k] * Math.exp(toik[i][k] * lntau);
           }
         }
@@ -1334,6 +1387,690 @@ public class EOSCGModel {
     noik[21][10] = -0.016387350791552;
     noik[21][11] = -0.024987666851475;
     noik[21][12] = 8.8769204815709E-03;
+    // SO2
+    MMiEOSCG[22] = 64.0638;
+    Dc[22] = 8.195;
+    Tc[22] = 430.64;
+    kpol[22] = 5;
+    kexp[22] = 5;
+    kgauss[22] = 6;
+
+    // Power terms
+    noik[22][1] = 0.01744413;
+    toik[22][1] = 1.0;
+    doik[22][1] = 4;
+    coik[22][1] = 0;
+    noik[22][2] = 1.814878;
+    toik[22][2] = 0.45;
+    doik[22][2] = 1;
+    coik[22][2] = 0;
+    noik[22][3] = -2.246338;
+    toik[22][3] = 0.9994;
+    doik[22][3] = 1;
+    coik[22][3] = 0;
+    noik[22][4] = -0.4602906;
+    toik[22][4] = 1.0;
+    doik[22][4] = 2;
+    coik[22][4] = 0;
+    noik[22][5] = 0.1097049;
+    toik[22][5] = 0.45;
+    doik[22][5] = 3;
+    coik[22][5] = 0;
+
+    // Exponential terms
+    noik[22][6] = -0.9485769;
+    toik[22][6] = 2.907;
+    doik[22][6] = 1;
+    coik[22][6] = 2;
+    noik[22][7] = -0.8751541;
+    toik[22][7] = 2.992;
+    doik[22][7] = 3;
+    coik[22][7] = 2;
+    noik[22][8] = 0.4228777;
+    toik[22][8] = 0.87;
+    doik[22][8] = 2;
+    coik[22][8] = 1;
+    noik[22][9] = -0.4174962;
+    toik[22][9] = 3.302;
+    doik[22][9] = 2;
+    coik[22][9] = 2;
+    noik[22][10] = -0.002903451;
+    toik[22][10] = 1.002;
+    doik[22][10] = 7;
+    coik[22][10] = 1;
+
+    // Gaussian terms
+    noik[22][11] = 1.64041;
+    toik[22][11] = 1.15;
+    doik[22][11] = 1;
+    beta_pure[22][11] = 0.967;
+    gamma_pure[22][11] = 1.276;
+    epsilon_pure[22][11] = 0.832;
+    eta_pure[22][11] = 1.061;
+    noik[22][12] = -0.4103535;
+    toik[22][12] = 0.997;
+    doik[22][12] = 1;
+    beta_pure[22][12] = 2.538;
+    gamma_pure[22][12] = 0.738;
+    epsilon_pure[22][12] = 0.69;
+    eta_pure[22][12] = 0.945;
+    noik[22][13] = -0.08316597;
+    toik[22][13] = 1.36;
+    doik[22][13] = 3;
+    beta_pure[22][13] = 2.758;
+    gamma_pure[22][13] = 0.71;
+    epsilon_pure[22][13] = 0.35;
+    eta_pure[22][13] = 1.741;
+    noik[22][14] = -0.2728126;
+    toik[22][14] = 2.086;
+    doik[22][14] = 2;
+    beta_pure[22][14] = 1.062;
+    gamma_pure[22][14] = 0.997;
+    epsilon_pure[22][14] = 0.961;
+    eta_pure[22][14] = 1.139;
+    noik[22][15] = -0.1075782;
+    toik[22][15] = 0.855;
+    doik[22][15] = 2;
+    beta_pure[22][15] = 1.039;
+    gamma_pure[22][15] = 1.35;
+    epsilon_pure[22][15] = 0.981;
+    eta_pure[22][15] = 1.644;
+    noik[22][16] = -0.4348434;
+    toik[22][16] = 0.785;
+    doik[22][16] = 1;
+    beta_pure[22][16] = 0.41;
+    gamma_pure[22][16] = 0.919;
+    epsilon_pure[22][16] = 0.333;
+    eta_pure[22][16] = 0.647;
+
+    // Alpha0
+    n0i[22][1] =
+        -4.5414235721 + 3.0 * Math.log(430.64) + 1.0875 * Math.log(2.0) + 1.916 * Math.log(2.0);
+    n0i[22][2] = 4.4732289572 * 430.64 - 1.0875 * 783.0 / 2.0 - 1.916 * 1864.0 / 2.0;
+    n0i[22][3] = 3.0;
+    n0i[22][4] = 1.0875;
+    th0i[22][4] = 783.0 / 2.0;
+    n0i[22][5] = 1.916;
+    th0i[22][5] = 1864.0 / 2.0;
+    n0i[22][7] = -0.0159272204;
+    th0i[22][7] = -1.0;
+
+    // Interaction parameters
+    bvij[3][22] = 0.889865;
+    bvij[22][3] = 0.889865;
+    gvij[3][22] = 1.060993;
+    gvij[22][3] = 1.060993;
+    btij[3][22] = 0.990704;
+    btij[22][3] = 0.990704;
+    gtij[3][22] = 0.939474;
+    gtij[22][3] = 0.939474;
+
+    bvij[18][22] = 0.866927;
+    bvij[22][18] = 0.866927;
+    gvij[18][22] = 0.866272;
+    gvij[22][18] = 0.866272;
+    btij[18][22] = 0.939018;
+    btij[22][18] = 0.939018;
+    gtij[18][22] = 1.100835;
+    gtij[22][18] = 1.100835;
+
+    bvij[2][22] = 1.176405;
+    bvij[22][2] = 1.176405;
+    gvij[2][22] = 0.629694;
+    gvij[22][2] = 0.629694;
+    btij[2][22] = 0.968537;
+    btij[22][2] = 0.968537;
+    gtij[2][22] = 1.078774;
+    gtij[22][2] = 1.078774;
+
+    bvij[16][22] = 0.946600;
+    bvij[22][16] = 0.946600;
+    gvij[16][22] = 1.080500;
+    gvij[22][16] = 1.080500;
+    btij[16][22] = 0.983500;
+    btij[22][16] = 0.983500;
+    gtij[16][22] = 1.035500;
+    gtij[22][16] = 1.035500;
+
+    bvij[21][22] = 1.096300;
+    bvij[22][21] = 1.096300;
+    gvij[21][22] = 0.872600;
+    gvij[22][21] = 0.872600;
+    btij[21][22] = 0.971400;
+    btij[22][21] = 0.971400;
+    gtij[21][22] = 1.043200;
+    gtij[22][21] = 1.043200;
+
+    bvij[1][22] = 1.038100;
+    bvij[22][1] = 1.038100;
+    gvij[1][22] = 1.009000;
+    gvij[22][1] = 1.009000;
+    btij[1][22] = 0.986200;
+    btij[22][1] = 0.986200;
+    gtij[1][22] = 1.035500;
+    gtij[22][1] = 1.035500;
+
+    bvij[15][22] = 1.320000;
+    bvij[22][15] = 1.320000;
+    gvij[15][22] = 1.000000;
+    gvij[22][15] = 1.000000;
+    btij[15][22] = 1.000000;
+    btij[22][15] = 1.000000;
+    gtij[15][22] = 1.000000;
+    gtij[22][15] = 1.000000;
+
+    // Ammonia (23)
+    MMiEOSCG[23] = 17.03052;
+    Dc[23] = 13.696;
+    Tc[23] = 405.56;
+    kpol[23] = 5;
+    kexp[23] = 3;
+    kgauss[23] = 10;
+    noik[23][1] = 0.006132232;
+    doik[23][1] = 4;
+    toik[23][1] = 1.0;
+    coik[23][1] = 0;
+    noik[23][2] = 1.7395866;
+    doik[23][2] = 1;
+    toik[23][2] = 0.382;
+    coik[23][2] = 0;
+    noik[23][3] = -2.2261792;
+    doik[23][3] = 1;
+    toik[23][3] = 1.0;
+    coik[23][3] = 0;
+    noik[23][4] = -0.30127553;
+    doik[23][4] = 2;
+    toik[23][4] = 1.0;
+    coik[23][4] = 0;
+    noik[23][5] = 0.08967023;
+    doik[23][5] = 3;
+    toik[23][5] = 0.677;
+    coik[23][5] = 0;
+    noik[23][6] = -0.076387037;
+    doik[23][6] = 3;
+    toik[23][6] = 2.915;
+    coik[23][6] = 2;
+    noik[23][7] = -0.84063963;
+    doik[23][7] = 2;
+    toik[23][7] = 3.51;
+    coik[23][7] = 2;
+    noik[23][8] = -0.27026327;
+    doik[23][8] = 3;
+    toik[23][8] = 1.063;
+    coik[23][8] = 1;
+    int k = 9;
+    noik[23][k] = 6.212578;
+    doik[23][k] = 1;
+    toik[23][k] = 0.655;
+    eta_pure[23][k] = 0.42776;
+    beta_pure[23][k] = 1.708;
+    gamma_pure[23][k] = 1.036;
+    epsilon_pure[23][k] = -0.0726;
+    k++;
+    noik[23][k] = -5.7844357;
+    doik[23][k] = 1;
+    toik[23][k] = 1.3;
+    eta_pure[23][k] = 0.6424;
+    beta_pure[23][k] = 1.4865;
+    gamma_pure[23][k] = 1.2777;
+    epsilon_pure[23][k] = -0.1274;
+    k++;
+    noik[23][k] = 2.4817542;
+    doik[23][k] = 1;
+    toik[23][k] = 3.1;
+    eta_pure[23][k] = 0.8175;
+    beta_pure[23][k] = 2.0915;
+    gamma_pure[23][k] = 1.083;
+    epsilon_pure[23][k] = 0.7527;
+    k++;
+    noik[23][k] = -2.3739168;
+    doik[23][k] = 2;
+    toik[23][k] = 1.4395;
+    eta_pure[23][k] = 0.7995;
+    beta_pure[23][k] = 2.43;
+    gamma_pure[23][k] = 1.2906;
+    epsilon_pure[23][k] = 0.57;
+    k++;
+    noik[23][k] = 0.01493697;
+    doik[23][k] = 2;
+    toik[23][k] = 1.623;
+    eta_pure[23][k] = 0.91;
+    beta_pure[23][k] = 0.488;
+    gamma_pure[23][k] = 0.928;
+    epsilon_pure[23][k] = 2.2;
+    k++;
+    noik[23][k] = -3.7749264;
+    doik[23][k] = 1;
+    toik[23][k] = 0.643;
+    eta_pure[23][k] = 0.3574;
+    beta_pure[23][k] = 1.1;
+    gamma_pure[23][k] = 0.934;
+    epsilon_pure[23][k] = -0.243;
+    k++;
+    noik[23][k] = 0.0006254348;
+    doik[23][k] = 3;
+    toik[23][k] = 1.13;
+    eta_pure[23][k] = 1.21;
+    beta_pure[23][k] = 0.85;
+    gamma_pure[23][k] = 0.919;
+    epsilon_pure[23][k] = 2.96;
+    k++;
+    noik[23][k] = -1.7359e-05;
+    doik[23][k] = 3;
+    toik[23][k] = 4.5;
+    eta_pure[23][k] = 4.14;
+    beta_pure[23][k] = 1.14;
+    gamma_pure[23][k] = 1.852;
+    epsilon_pure[23][k] = 3.02;
+    k++;
+    noik[23][k] = -0.13462033;
+    doik[23][k] = 1;
+    toik[23][k] = 1.0;
+    eta_pure[23][k] = 22.56;
+    beta_pure[23][k] = 945.64;
+    gamma_pure[23][k] = 1.05897;
+    epsilon_pure[23][k] = 0.9574;
+    k++;
+    noik[23][k] = 0.07749072839;
+    doik[23][k] = 1;
+    toik[23][k] = 4.0;
+    eta_pure[23][k] = 22.68;
+    beta_pure[23][k] = 993.85;
+    gamma_pure[23][k] = 1.05277;
+    epsilon_pure[23][k] = 0.9576;
+    k++;
+    n0i[23][3] = 3.0;
+    n0i[23][4] = 2.224;
+    th0i[23][4] = 1646.0 / 2.0;
+    n0i[23][5] = 3.148;
+    th0i[23][5] = 3965.0 / 2.0;
+    n0i[23][6] = 0.9579;
+    th0i[23][6] = 7231.0 / 2.0;
+    n0i[23][1] = 0.0 + 3.0 * Math.log(405.56) + (2.224 + 3.148 + 0.9579) * Math.log(2.0);
+    n0i[23][2] = 0.0 * 405.56 - (2.224 * 1646.0 + 3.148 * 3965.0 + 0.9579 * 7231.0) / 2.0;
+
+    // Chlorine (24)
+    MMiEOSCG[24] = 70.906;
+    Dc[24] = 8.060;
+    Tc[24] = 416.8654;
+    kpol[24] = 5;
+    kexp[24] = 5;
+    kgauss[24] = 5;
+    noik[24][1] = 0.0245017;
+    doik[24][1] = 4;
+    toik[24][1] = 1.0;
+    coik[24][1] = 0;
+    noik[24][2] = 0.9132904;
+    doik[24][2] = 1;
+    toik[24][2] = 0.196;
+    coik[24][2] = 0;
+    noik[24][3] = -1.72309;
+    doik[24][3] = 1;
+    toik[24][3] = 1.0;
+    coik[24][3] = 0;
+    noik[24][4] = -0.3359344;
+    doik[24][4] = 2;
+    toik[24][4] = 1.08;
+    coik[24][4] = 0;
+    noik[24][5] = 0.1200495;
+    doik[24][5] = 3;
+    toik[24][5] = 0.39;
+    coik[24][5] = 0;
+    noik[24][6] = -1.214889;
+    doik[24][6] = 1;
+    toik[24][6] = 1.64;
+    coik[24][6] = 2;
+    noik[24][7] = -0.10167;
+    doik[24][7] = 3;
+    toik[24][7] = 3.2;
+    coik[24][7] = 2;
+    noik[24][8] = 0.6196819;
+    doik[24][8] = 2;
+    toik[24][8] = 1.32;
+    coik[24][8] = 1;
+    noik[24][9] = -0.6578512;
+    doik[24][9] = 2;
+    toik[24][9] = 2.163;
+    coik[24][9] = 2;
+    noik[24][10] = -0.009159452;
+    doik[24][10] = 7;
+    toik[24][10] = 0.93;
+    coik[24][10] = 1;
+    k = 11;
+    noik[24][k] = 1.909418;
+    doik[24][k] = 1;
+    toik[24][k] = 0.872;
+    eta_pure[24][k] = 0.969;
+    beta_pure[24][k] = 1.22;
+    gamma_pure[24][k] = 1.142;
+    epsilon_pure[24][k] = 0.88;
+    k++;
+    noik[24][k] = -0.07163412;
+    doik[24][k] = 1;
+    toik[24][k] = 2.08;
+    eta_pure[24][k] = 1.89;
+    beta_pure[24][k] = 6.8;
+    gamma_pure[24][k] = 1.22;
+    epsilon_pure[24][k] = 0.73;
+    k++;
+    noik[24][k] = -0.1893345;
+    doik[24][k] = 3;
+    toik[24][k] = 1.6;
+    eta_pure[24][k] = 1.32;
+    beta_pure[24][k] = 3.5;
+    gamma_pure[24][k] = 1.552;
+    epsilon_pure[24][k] = 0.28;
+    k++;
+    noik[24][k] = -0.5698469;
+    doik[24][k] = 2;
+    toik[24][k] = 1.37;
+    eta_pure[24][k] = 1.012;
+    beta_pure[24][k] = 1.276;
+    gamma_pure[24][k] = 1.135;
+    epsilon_pure[24][k] = 0.863;
+    k++;
+    noik[24][k] = -0.8964496;
+    doik[24][k] = 2;
+    toik[24][k] = 1.05;
+    eta_pure[24][k] = 0.98;
+    beta_pure[24][k] = 1.6;
+    gamma_pure[24][k] = 0.754;
+    epsilon_pure[24][k] = 0.554;
+    k++;
+    n0i[24][3] = 2.5;
+    n0i[24][4] = 1.0256;
+    th0i[24][4] = 800.0 / 2.0;
+    n0i[24][5] = 0.067756;
+    th0i[24][5] = 3000.0 / 2.0;
+    n0i[24][6] = 0.14068;
+    th0i[24][6] = 8200.0 / 2.0;
+    n0i[24][1] = 0.0 + 2.5 * Math.log(416.8654) + (1.0256 + 0.067756 + 0.14068) * Math.log(2.0);
+    n0i[24][2] = 0.0 * 416.8654 - (1.0256 * 800.0 + 0.067756 * 3000.0 + 0.14068 * 8200.0) / 2.0;
+
+    // HCl (25)
+    MMiEOSCG[25] = 36.4609;
+    Dc[25] = 11.870;
+    Tc[25] = 324.68;
+    kpol[25] = 5;
+    kexp[25] = 5;
+    kgauss[25] = 5;
+    noik[25][1] = 0.01952802;
+    doik[25][1] = 4;
+    toik[25][1] = 1.0;
+    coik[25][1] = 0;
+    noik[25][2] = 1.926809;
+    doik[25][2] = 1;
+    toik[25][2] = 0.553;
+    coik[25][2] = 0;
+    noik[25][3] = -2.835744;
+    doik[25][3] = 1;
+    toik[25][3] = 1.037;
+    coik[25][3] = 0;
+    noik[25][4] = -0.2276121;
+    doik[25][4] = 2;
+    toik[25][4] = 0.817;
+    coik[25][4] = 0;
+    noik[25][5] = 0.08843713;
+    doik[25][5] = 3;
+    toik[25][5] = 0.378;
+    coik[25][5] = 0;
+    noik[25][6] = -2.433471;
+    doik[25][6] = 1;
+    toik[25][6] = 1.523;
+    coik[25][6] = 2;
+    noik[25][7] = -0.2636625;
+    doik[25][7] = 3;
+    toik[25][7] = 2.656;
+    coik[25][7] = 2;
+    noik[25][8] = 0.6307008;
+    doik[25][8] = 2;
+    toik[25][8] = 1.338;
+    coik[25][8] = 1;
+    noik[25][9] = -0.6382638;
+    doik[25][9] = 2;
+    toik[25][9] = 2.828;
+    coik[25][9] = 2;
+    noik[25][10] = -0.006851438;
+    doik[25][10] = 7;
+    toik[25][10] = 0.75;
+    coik[25][10] = 1;
+    k = 11;
+    noik[25][k] = 7.363661;
+    doik[25][k] = 1;
+    toik[25][k] = 0.644;
+    eta_pure[25][k] = 1.141;
+    beta_pure[25][k] = 0.95;
+    gamma_pure[25][k] = 1.56;
+    epsilon_pure[25][k] = 0.855;
+    k++;
+    noik[25][k] = -1.262993;
+    doik[25][k] = 1;
+    toik[25][k] = 2.892;
+    eta_pure[25][k] = 1.162;
+    beta_pure[25][k] = 0.92;
+    gamma_pure[25][k] = 1.14;
+    epsilon_pure[25][k] = 0.91;
+    k++;
+    noik[25][k] = -0.006539739;
+    doik[25][k] = 3;
+    toik[25][k] = 0.76;
+    eta_pure[25][k] = 34.6;
+    beta_pure[25][k] = 1550;
+    gamma_pure[25][k] = 1.06;
+    epsilon_pure[25][k] = 0.942;
+    k++;
+    noik[25][k] = -0.8752692;
+    doik[25][k] = 2;
+    toik[25][k] = 1.323;
+    eta_pure[25][k] = 1.175;
+    beta_pure[25][k] = 1.2;
+    gamma_pure[25][k] = 0.94;
+    epsilon_pure[25][k] = 0.702;
+    k++;
+    noik[25][k] = -3.224835;
+    doik[25][k] = 2;
+    toik[25][k] = 0.693;
+    eta_pure[25][k] = 0.99;
+    beta_pure[25][k] = 0.89;
+    gamma_pure[25][k] = 1.25;
+    epsilon_pure[25][k] = 0.487;
+    k++;
+    n0i[25][3] = 2.5;
+    n0i[25][4] = 0.0033327;
+    th0i[25][4] = 0.924 * 324.68 / 2.0;
+    n0i[25][5] = 0.935243;
+    th0i[25][5] = 12.32 * 324.68 / 2.0;
+    n0i[25][6] = 0.209996;
+    th0i[25][6] = 19.41 * 324.68 / 2.0;
+    n0i[25][1] =
+        -4.069044527 + 2.5 * Math.log(324.68) + (0.0033327 + 0.935243 + 0.209996) * Math.log(2.0);
+    n0i[25][2] = 4.0257768311 * 324.68
+        - (0.0033327 * 0.924 * 324.68 + 0.935243 * 12.32 * 324.68 + 0.209996 * 19.41 * 324.68)
+            / 2.0;
+
+    // MEA (26)
+    MMiEOSCG[26] = 61.0831;
+    Dc[26] = 5.390;
+    Tc[26] = 671.4;
+    kpol[26] = 5;
+    kexp[26] = 5;
+    kgauss[26] = 4;
+    noik[26][1] = 0.034371657;
+    doik[26][1] = 4;
+    toik[26][1] = 1.0;
+    coik[26][1] = 0;
+    noik[26][2] = 2.804815;
+    doik[26][2] = 1;
+    toik[26][2] = 0.53;
+    coik[26][2] = 0;
+    noik[26][3] = -3.5328022;
+    doik[26][3] = 1;
+    toik[26][3] = 1.146;
+    coik[26][3] = 0;
+    noik[26][4] = -0.26052106;
+    doik[26][4] = 2;
+    toik[26][4] = 0.95;
+    coik[26][4] = 0;
+    noik[26][5] = 0.073728099;
+    doik[26][5] = 3;
+    toik[26][5] = 0.35;
+    coik[26][5] = 0;
+    noik[26][6] = -0.9232864;
+    doik[26][6] = 1;
+    toik[26][6] = 1.47;
+    coik[26][6] = 2;
+    noik[26][7] = -0.15243636;
+    doik[26][7] = 3;
+    toik[26][7] = 2.8;
+    coik[26][7] = 2;
+    noik[26][8] = 0.44837938;
+    doik[26][8] = 2;
+    toik[26][8] = 0.9;
+    coik[26][8] = 1;
+    noik[26][9] = -0.17517565;
+    doik[26][9] = 2;
+    toik[26][9] = 3.0;
+    coik[26][9] = 2;
+    noik[26][10] = -0.012936362;
+    doik[26][10] = 7;
+    toik[26][10] = 0.83;
+    coik[26][10] = 1;
+    k = 11;
+    noik[26][k] = 1.0823719;
+    doik[26][k] = 1;
+    toik[26][k] = 1.03;
+    eta_pure[26][k] = 0.71;
+    beta_pure[26][k] = 1.82;
+    gamma_pure[26][k] = 1.04;
+    epsilon_pure[26][k] = 0.84;
+    k++;
+    noik[26][k] = -0.56755523;
+    doik[26][k] = 1;
+    toik[26][k] = 0.76;
+    eta_pure[26][k] = 1.16;
+    beta_pure[26][k] = 1.5;
+    gamma_pure[26][k] = 1.04;
+    epsilon_pure[26][k] = 0.77;
+    k++;
+    noik[26][k] = -0.38808402;
+    doik[26][k] = 3;
+    toik[26][k] = 0.7;
+    eta_pure[26][k] = 0.733;
+    beta_pure[26][k] = 1.74;
+    gamma_pure[26][k] = 1.04;
+    epsilon_pure[26][k] = 0.6;
+    k++;
+    noik[26][k] = -6.7388446;
+    doik[26][k] = 3;
+    toik[26][k] = 1.04;
+    eta_pure[26][k] = 4.08;
+    beta_pure[26][k] = 57.0;
+    gamma_pure[26][k] = 1.37;
+    epsilon_pure[26][k] = 0.59;
+    k++;
+    n0i[26][3] = 3.0;
+    n0i[26][4] = 13.7;
+    th0i[26][4] = 970.0 / 2.0;
+    n0i[26][5] = 11.1;
+    th0i[26][5] = 3380.0 / 2.0;
+    n0i[26][1] = 0.0 + 3.0 * Math.log(671.4) + (13.7 + 11.1) * Math.log(2.0);
+    n0i[26][2] = 0.0 * 671.4 - (13.7 * 970.0 + 11.1 * 3380.0) / 2.0;
+
+    // DEA (27)
+    MMiEOSCG[27] = 105.1356;
+    Dc[27] = 3.300;
+    Tc[27] = 736.5;
+    kpol[27] = 5;
+    kexp[27] = 5;
+    kgauss[27] = 5;
+    noik[27][1] = 0.066088158;
+    doik[27][1] = 4;
+    toik[27][1] = 1.0;
+    coik[27][1] = 0;
+    noik[27][2] = 6.1059245;
+    doik[27][2] = 1;
+    toik[27][2] = 0.507;
+    coik[27][2] = 0;
+    noik[27][3] = -7.0526968;
+    doik[27][3] = 1;
+    toik[27][3] = 0.907;
+    coik[27][3] = 0;
+    noik[27][4] = -0.29739545;
+    doik[27][4] = 2;
+    toik[27][4] = 1.22;
+    coik[27][4] = 0;
+    noik[27][5] = 0.11592105;
+    doik[27][5] = 3;
+    toik[27][5] = 0.649;
+    coik[27][5] = 0;
+    noik[27][6] = -1.8616953;
+    doik[27][6] = 1;
+    toik[27][6] = 2.14;
+    coik[27][6] = 2;
+    noik[27][7] = -0.97392153;
+    doik[27][7] = 3;
+    toik[27][7] = 2.89;
+    coik[27][7] = 2;
+    noik[27][8] = 0.14690655;
+    doik[27][8] = 2;
+    toik[27][8] = 1.54;
+    coik[27][8] = 1;
+    noik[27][9] = -0.63284478;
+    doik[27][9] = 2;
+    toik[27][9] = 3.34;
+    coik[27][9] = 2;
+    noik[27][10] = -0.037820123;
+    doik[27][10] = 7;
+    toik[27][10] = 0.998;
+    coik[27][10] = 1;
+    k = 11;
+    noik[27][k] = 2.774726;
+    doik[27][k] = 1;
+    toik[27][k] = 0.92;
+    eta_pure[27][k] = 0.8971;
+    beta_pure[27][k] = 0.9691;
+    gamma_pure[27][k] = 1.216;
+    epsilon_pure[27][k] = 0.6694;
+    k++;
+    noik[27][k] = -1.0230468;
+    doik[27][k] = 1;
+    toik[27][k] = 1.16;
+    eta_pure[27][k] = 1.499;
+    beta_pure[27][k] = 1.518;
+    gamma_pure[27][k] = 0.6775;
+    epsilon_pure[27][k] = 0.6466;
+    k++;
+    noik[27][k] = -0.19552536;
+    doik[27][k] = 3;
+    toik[27][k] = 1.43;
+    eta_pure[27][k] = 1.681;
+    beta_pure[27][k] = 1.328;
+    gamma_pure[27][k] = 0.7815;
+    epsilon_pure[27][k] = 0.6669;
+    k++;
+    noik[27][k] = -0.14997584;
+    doik[27][k] = 2;
+    toik[27][k] = 1.24;
+    eta_pure[27][k] = 1.661;
+    beta_pure[27][k] = 1.23;
+    gamma_pure[27][k] = 0.8796;
+    epsilon_pure[27][k] = 1.189;
+    k++;
+    noik[27][k] = -0.23421918;
+    doik[27][k] = 2;
+    toik[27][k] = 0.801;
+    eta_pure[27][k] = 1.245;
+    beta_pure[27][k] = 1.112;
+    gamma_pure[27][k] = 1.357;
+    epsilon_pure[27][k] = 1.248;
+    k++;
+    n0i[27][3] = 3.0;
+    n0i[27][4] = 4.25;
+    th0i[27][4] = 96.0 / 2.0;
+    n0i[27][5] = 37.7;
+    th0i[27][5] = 1165.0 / 2.0;
+    n0i[27][1] = 0.0 + 3.0 * Math.log(736.5) + (4.25 + 37.7) * Math.log(2.0);
+    n0i[27][2] = 0.0 * 736.5 - (4.25 * 96.0 + 37.7 * 1165.0) / 2.0;
     // Carbon dioxide
     coik[3][1] = 0;
     doik[3][1] = 1;

@@ -3,6 +3,7 @@ package neqsim.thermo.system;
 import neqsim.thermo.phase.PhaseEOSCGEos;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePureComponentSolid;
+import neqsim.thermo.phase.PhaseType;
 
 /** Thermodynamic system using the EOS-CG equation of state. */
 public class SystemEOSCGEos extends SystemEos {
@@ -24,6 +25,10 @@ public class SystemEOSCGEos extends SystemEos {
       phaseArray[i] = new PhaseEOSCGEos();
       phaseArray[i].setTemperature(T);
       phaseArray[i].setPressure(P);
+    }
+    phaseArray[0].setType(PhaseType.GAS);
+    if (numberOfPhases > 1) {
+      phaseArray[1].setType(PhaseType.LIQUID);
     }
 
     if (solidPhaseCheck) {

@@ -24,6 +24,9 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   private double CT;
   public double C;
   public double Ctot = 0;
+  private double[] cachedCi;
+  private double[] cachedCiT;
+  private double[][] cachedCij;
 
   /**
    * Creates new PhaseSrkEos.
@@ -37,8 +40,20 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+    cachedCi = null;
+    cachedCiT = null;
+    cachedCij = null;
     loc_C = calcC(this, temperature, pressure, numberOfComponents);
     CT = calcCT(this, temperature, pressure, numberOfComponents);
+    if (initType >= 1) {
+      ensureCiCache(numberOfComponents);
+    }
+    if (initType >= 2) {
+      ensureCiTCache(numberOfComponents);
+    }
+    if (initType >= 3) {
+      ensureCijCache(numberOfComponents);
+    }
   }
 
   /**
@@ -144,16 +159,8 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
    */
   public double calcCi(int compNumb, PhaseInterface phase, double temperature, double pressure,
       int numbcomp) {
-    double Ci = 0.0;
-
-    ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
-
-    for (int j = 0; j < numbcomp; j++) {
-      Ci += compArray[j].getNumberOfMolesInPhase() * getcij(compArray[compNumb], compArray[j]);
-    }
-
-    Ci = (2.0 * Ci - getC()) / phase.getNumberOfMolesInPhase();
-    return Ci;
+    ensureCiCache(numbcomp);
+    return cachedCi[compNumb];
   }
 
   /**
@@ -171,12 +178,8 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
    */
   public double calcCij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
       double pressure, int numbcomp) {
-    double cij = 0.0;
-    ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
-
-    cij = getcij(compArray[compNumb], compArray[compNumbj]);
-    return (2.0 * cij - ((ComponentSrkvolcor) compArray[compNumb]).getCi()
-        - ((ComponentSrkvolcor) compArray[compNumbj]).getCi()) / phase.getNumberOfMolesInPhase();
+    ensureCijCache(numbcomp);
+    return cachedCij[compNumb][compNumbj];
   }
 
   /**
@@ -193,16 +196,59 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
    */
   public double calcCiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
       int numbcomp) {
-    double CiT = 0.0;
+    ensureCiTCache(numbcomp);
+    return cachedCiT[compNumb];
+  }
 
-    ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
-
-    for (int j = 0; j < numbcomp; j++) {
-      CiT += compArray[j].getNumberOfMolesInPhase() * getcijT(compArray[compNumb], compArray[j]);
+  private void ensureCiCache(int numbcomp) {
+    if (cachedCi != null && cachedCi.length >= numbcomp) {
+      return;
     }
 
-    CiT = (2.0 * CiT - getCT()) / phase.getNumberOfMolesInPhase();
-    return CiT;
+    cachedCi = new double[numbcomp];
+    ComponentEosInterface[] compArray = (ComponentEosInterface[]) this.getcomponentArray();
+    double totalMolesInPhase = getNumberOfMolesInPhase();
+    for (int i = 0; i < numbcomp; i++) {
+      double CiVal = 0.0;
+      for (int j = 0; j < numbcomp; j++) {
+        CiVal += compArray[j].getNumberOfMolesInPhase() * getcij(compArray[i], compArray[j]);
+      }
+      cachedCi[i] = (2.0 * CiVal - getC()) / totalMolesInPhase;
+    }
+  }
+
+  private void ensureCiTCache(int numbcomp) {
+    if (cachedCiT != null && cachedCiT.length >= numbcomp) {
+      return;
+    }
+
+    cachedCiT = new double[numbcomp];
+    ComponentEosInterface[] compArray = (ComponentEosInterface[]) this.getcomponentArray();
+    double totalMolesInPhase = getNumberOfMolesInPhase();
+    for (int i = 0; i < numbcomp; i++) {
+      double CiTVal = 0.0;
+      for (int j = 0; j < numbcomp; j++) {
+        CiTVal += compArray[j].getNumberOfMolesInPhase() * getcijT(compArray[i], compArray[j]);
+      }
+      cachedCiT[i] = (2.0 * CiTVal - getCT()) / totalMolesInPhase;
+    }
+  }
+
+  private void ensureCijCache(int numbcomp) {
+    if (cachedCij != null && cachedCij.length >= numbcomp) {
+      return;
+    }
+
+    cachedCij = new double[numbcomp][numbcomp];
+    ComponentEosInterface[] compArray = (ComponentEosInterface[]) this.getcomponentArray();
+    double totalMolesInPhase = getNumberOfMolesInPhase();
+    for (int i = 0; i < numbcomp; i++) {
+      for (int j = 0; j < numbcomp; j++) {
+        double cij = getcij(compArray[i], compArray[j]);
+        cachedCij[i][j] = (2.0 * cij - ((ComponentSrkvolcor) compArray[i]).getCi()
+            - ((ComponentSrkvolcor) compArray[j]).getCi()) / totalMolesInPhase;
+      }
+    }
   }
 
   /**
@@ -253,11 +299,12 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
     }
     C /= phase.getNumberOfMolesInPhase();
     Ctot = C;
+    loc_C = C;
     return C;
   }
 
   private double loc_C() {
-    return calcC(this, temperature, pressure, numberOfComponents);
+    return loc_C;
   }
 
   /**

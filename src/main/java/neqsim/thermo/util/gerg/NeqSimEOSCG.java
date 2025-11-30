@@ -9,8 +9,8 @@ import java.util.Arrays;
 
 /** Wrapper for calling the EOS-CG multi-fluid model using the GERG-2008 API. */
 public class NeqSimEOSCG {
-  double[] normalizedComposition = new double[21 + 1];
-  double[] notNormalizedComposition = new double[21 + 1];
+  double[] normalizedComposition = new double[27 + 1];
+  double[] notNormalizedComposition = new double[27 + 1];
   PhaseInterface phase = null;
   EOSCG eosCG = new EOSCG();
 
@@ -62,6 +62,10 @@ public class NeqSimEOSCG {
     doubleW D = new doubleW(0.0);
     double pressure = phase.getPressure() * 1.0e2;
     eosCG.density(flag, phase.getTemperature(), pressure, normalizedComposition, D, ierr, herr);
+    if (ierr.val != 0) {
+      // System.out.println("NeqSimEOSCG: Density solver failed. ierr=" + ierr.val + ", herr=" +
+      // herr.val);
+    }
     return D.val;
   }
 
@@ -183,6 +187,25 @@ public class NeqSimEOSCG {
           break;
         case "argon":
           notNormalizedComposition[21] = phase.getComponent(i).getx();
+          break;
+        case "SO2":
+          notNormalizedComposition[22] = phase.getComponent(i).getx();
+          break;
+        case "ammonia":
+          notNormalizedComposition[23] = phase.getComponent(i).getx();
+          break;
+        case "chlorine":
+          notNormalizedComposition[24] = phase.getComponent(i).getx();
+          break;
+        case "HCl":
+        case "hydrochloric acid":
+          notNormalizedComposition[25] = phase.getComponent(i).getx();
+          break;
+        case "MEA":
+          notNormalizedComposition[26] = phase.getComponent(i).getx();
+          break;
+        case "DEA":
+          notNormalizedComposition[27] = phase.getComponent(i).getx();
           break;
         default:
           double molarMass = phase.getComponent(i).getMolarMass();
