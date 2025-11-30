@@ -120,3 +120,66 @@ public class BottleneckExample {
 ## Extending to Other Equipment
 
 To support capacity analysis for other equipment types (e.g., Pumps, Heat Exchangers), implement the `getCapacityDuty()` and `getCapacityMax()` methods in the respective classes. Ensure that the units for duty and capacity are consistent (e.g., both in Watts or both in kg/hr).
+
+## Production Optimization
+
+The bottleneck analysis feature is a powerful tool for optimizing production. By identifying the limiting constraint in a process, you can maximize throughput or identify the most effective upgrades (debottlenecking).
+
+### Optimization Workflow
+
+1.  **Define Objective**: Typically, the goal is to maximize the feed flow rate.
+2.  **Identify Constraints**: The constraints are the maximum capacities of all equipment in the system.
+3.  **Iterative Solver**:
+    *   Run the simulation with an initial feed rate.
+    *   Check `process.getBottleneck()`.
+    *   If the bottleneck utilization is < 100%, increase the feed rate.
+    *   If the bottleneck utilization is > 100%, decrease the feed rate.
+    *   Repeat until the bottleneck utilization is exactly 100% (or a safety margin, e.g., 95%).
+
+### Example: Maximizing Production
+
+This example demonstrates a simple optimization loop to find the maximum possible feed rate before hitting a bottleneck.
+
+```java
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.processmodel.ProcessSystem;
+
+public class OptimizationExample {
+    public static void optimizeProduction(ProcessSystem process, Stream inletStream) {
+        double low = 0.0;
+        double high = 1000.0; // Assume a high upper bound for flow rate
+        double tolerance = 0.01; // Convergence tolerance
+
+        while ((high - low) > tolerance) {
+            double mid = (low + high) / 2.0;
+            inletStream.setFlowRate(mid, "MSm3/day");
+            process.run();
+
+            ProcessEquipmentInterface bottleneck = process.getBottleneck();
+            double maxUtilization = 0.0;
+            
+            if (bottleneck != null) {
+                maxUtilization = bottleneck.getCapacityDuty() / bottleneck.getCapacityMax();
+            }
+
+            if (maxUtilization > 1.0) {
+                high = mid; // Too high, reduce flow
+            } else {
+                low = mid; // Safe, try increasing flow
+            }
+        }
+
+        System.out.println("Maximum Production Rate: " + low + " MSm3/day");
+        System.out.println("Limiting Factor: " + process.getBottleneck().getName());
+    }
+}
+```
+
+### Debottlenecking Studies
+
+Once the bottleneck is identified (e.g., a compressor), you can simulate a "debottlenecking" project:
+1.  Increase the capacity of the bottleneck equipment (e.g., `compressor.getMechanicalDesign().maxDesignPower = newPower`).
+2.  Re-run the optimization loop.
+3.  Identify the *new* bottleneck and the new maximum production rate.
+4.  Calculate the ROI of the upgrade based on the increased production.
+
