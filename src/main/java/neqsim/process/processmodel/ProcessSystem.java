@@ -1758,6 +1758,30 @@ public class ProcessSystem extends SimulationBaseClass {
     }
   }
 
+  /**
+   * <p>
+   * getBottleneck.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   */
+  public ProcessEquipmentInterface getBottleneck() {
+    ProcessEquipmentInterface bottleneck = null;
+    double maxUtilization = 0.0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      double capacity = unit.getCapacityMax();
+      double duty = unit.getCapacityDuty();
+      if (capacity > 1e-12) {
+        double utilization = duty / capacity;
+        if (utilization > maxUtilization) {
+          maxUtilization = utilization;
+          bottleneck = unit;
+        }
+      }
+    }
+    return bottleneck;
+  }
+
   /*
    * @XmlRootElement private class Report extends Object{ public Double name; public
    * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();

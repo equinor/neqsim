@@ -276,4 +276,73 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
   /** {@inheritDoc} */
   @Override
   public String getReport_json();
+
+  /**
+   * <p>
+   * getEntropyProduction.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
+  public default double getEntropyProduction(String unit) {
+    return 0.0;
+  }
+
+  /**
+   * <p>
+   * getMassBalance.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
+  public default double getMassBalance(String unit) {
+    return 0.0;
+  }
+
+  /**
+   * <p>
+   * getExergyChange.
+   * </p>
+   *
+   * @param unit a {@link java.lang.String} object
+   * @return a double
+   */
+  public default double getExergyChange(String unit) {
+    return 0.0;
+  }
+
+  /**
+   * <p>
+   * getCapacityDuty.
+   * </p>
+   *
+   * @return a double
+   */
+  public default double getCapacityDuty() {
+    return 0.0;
+  }
+
+  /**
+   * <p>
+   * getCapacityMax.
+   * </p>
+   *
+   * @return a double
+   */
+  public default double getCapacityMax() {
+    return 0.0;
+  }
+
+  /**
+   * <p>
+   * getRestCapacity.
+   * </p>
+   *
+   * @return a double
+   */
+  public default double getRestCapacity() {
+    return getCapacityMax() - getCapacityDuty();
+  }
 }

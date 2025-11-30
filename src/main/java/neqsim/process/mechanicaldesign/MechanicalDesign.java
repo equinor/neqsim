@@ -96,6 +96,8 @@ public class MechanicalDesign implements java.io.Serializable {
   public double minDesignOilFLow = 0.0;
   public double maxDesignWaterVolumeFlow = 0.0;
   public double minDesignWaterVolumeFLow = 0.0;
+  public double maxDesignPower = 0.0;
+  public double minDesignPower = 0.0;
   private String companySpecificDesignStandards = "Statoil";
   private ProcessEquipmentInterface processEquipment = null;
   // private String pressureVesselDesignStandard = "ASME - Pressure Vessel Code";
@@ -300,18 +302,18 @@ public class MechanicalDesign implements java.io.Serializable {
   public MechanicalDesignMarginResult validateOperatingEnvelope(double operatingMaxPressure,
       double operatingMinPressure, double operatingMaxTemperature, double operatingMinTemperature,
       double operatingCorrosionAllowance, double operatingJointEfficiency) {
-    double maxPressureMargin = marginToUpperLimit(designLimitData.getMaxPressure(),
-        operatingMaxPressure);
-    double minPressureMargin = marginFromLowerLimit(operatingMinPressure,
-        designLimitData.getMinPressure());
-    double maxTemperatureMargin = marginToUpperLimit(designLimitData.getMaxTemperature(),
-        operatingMaxTemperature);
-    double minTemperatureMargin = marginFromLowerLimit(operatingMinTemperature,
-        designLimitData.getMinTemperature());
-    double corrosionMargin = marginFromLowerLimit(operatingCorrosionAllowance,
-        designLimitData.getCorrosionAllowance());
-    double jointMargin = marginFromLowerLimit(operatingJointEfficiency,
-        designLimitData.getJointEfficiency());
+    double maxPressureMargin =
+        marginToUpperLimit(designLimitData.getMaxPressure(), operatingMaxPressure);
+    double minPressureMargin =
+        marginFromLowerLimit(operatingMinPressure, designLimitData.getMinPressure());
+    double maxTemperatureMargin =
+        marginToUpperLimit(designLimitData.getMaxTemperature(), operatingMaxTemperature);
+    double minTemperatureMargin =
+        marginFromLowerLimit(operatingMinTemperature, designLimitData.getMinTemperature());
+    double corrosionMargin =
+        marginFromLowerLimit(operatingCorrosionAllowance, designLimitData.getCorrosionAllowance());
+    double jointMargin =
+        marginFromLowerLimit(operatingJointEfficiency, designLimitData.getJointEfficiency());
 
     lastMarginResult = new MechanicalDesignMarginResult(maxPressureMargin, minPressureMargin,
         maxTemperatureMargin, minTemperatureMargin, corrosionMargin, jointMargin);

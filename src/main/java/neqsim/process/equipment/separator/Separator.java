@@ -168,6 +168,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     liquidVolume = calcLiquidVolume();
     enforceHeadspace();
     setCalculateSteadyState(true);
+    initMechanicalDesign();
   }
 
   /**
@@ -977,9 +978,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /**
    * Estimates the wetted inner surface area based on current liquid level and orientation.
    *
-   * <p>For horizontal separators, the wetted area uses the circular segment defined by the
-   * liquid level to apportion the cylindrical shell and head areas. For vertical separators, the
-   * wetted area is the side area up to the current level plus the bottom head.
+   * <p>
+   * For horizontal separators, the wetted area uses the circular segment defined by the liquid
+   * level to apportion the cylindrical shell and head areas. For vertical separators, the wetted
+   * area is the side area up to the current level plus the bottom head.
    *
    * @return wetted area in square meters
    */
@@ -1055,8 +1057,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * @return aggregated fire exposure result
    */
   public SeparatorFireExposure.FireExposureResult evaluateFireExposure(
-      SeparatorFireExposure.FireScenarioConfig config,
-      neqsim.process.equipment.flare.Flare flare,
+      SeparatorFireExposure.FireScenarioConfig config, neqsim.process.equipment.flare.Flare flare,
       double flareGroundDistanceM) {
     return SeparatorFireExposure.evaluate(this, config, flare, flareGroundDistanceM);
   }
@@ -1570,6 +1571,46 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    */
   public boolean isSetHeatInput() {
     return setHeatInput;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getEntropyProduction(String unit) {
+    double outEntropy = 0.0;
+    for (int i = 0; i < getNumberOfOutStreams(); i++) {
+      outEntropy += getOutStream(i).getThermoSystem().getEntropy(unit);
+    }
+    return outEntropy - getFeedStream().getThermoSystem().getEntropy(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExergyChange(String unit) {
+    double T0 = 288.15;
+    if (unit.equals("J")) {
+      double inExergy = getFeedStream().getThermoSystem().getEnthalpy(unit)
+          - T0 * getFeedStream().getThermoSystem().getEntropy(unit);
+      double outExergy = 0.0;
+      for (int i = 0; i < getNumberOfOutStreams(); i++) {
+        outExergy += getOutStream(i).getThermoSystem().getEnthalpy(unit)
+            - T0 * getOutStream(i).getThermoSystem().getEntropy(unit);
+      }
+      return outExergy - inExergy;
+    } else {
+      return 0.0;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityDuty() {
+    return getGasOutStream().getFlowRate("m3/hr");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityMax() {
+    return getMechanicalDesign().getMaxDesignGassVolumeFlow();
   }
 
   /*
