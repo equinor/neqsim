@@ -102,6 +102,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double maxEnergyRelaxationWeight = 10.0;
   /** Control whether energy residual must satisfy tolerance before convergence. */
   private boolean enforceEnergyBalanceTolerance = false;
+  private boolean doMultiPhaseCheck = true;
 
   Mixer feedmixer = new Mixer("temp mixer");
   double bottomTrayPressure = -1.0;
@@ -138,6 +139,32 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private Map<Integer, List<StreamInterface>> feedStreams = new HashMap<>();
   private List<StreamInterface> unassignedFeedStreams = new ArrayList<>();
+
+  /**
+   * <p>
+   * Setter for the field <code>doMultiPhaseCheck</code>.
+   * </p>
+   *
+   * @param doMultiPhaseCheck a boolean
+   */
+  public void setMultiPhaseCheck(boolean doMultiPhaseCheck) {
+    this.doMultiPhaseCheck = doMultiPhaseCheck;
+    feedmixer.setMultiPhaseCheck(doMultiPhaseCheck);
+    for (SimpleTray tray : trays) {
+      tray.setMultiPhaseCheck(doMultiPhaseCheck);
+    }
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>doMultiPhaseCheck</code>.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isDoMultiPhaseCheck() {
+    return doMultiPhaseCheck;
+  }
 
   /**
    * <p>
@@ -490,9 +517,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
       // Reset feedmixer to avoid accumulating feeds across iterations
       feedmixer = new Mixer("temp mixer");
+      feedmixer.setMultiPhaseCheck(doMultiPhaseCheck);
 
       if (hasReboiler) {
         Reboiler reb = new Reboiler("Reboiler");
+        reb.setMultiPhaseCheck(doMultiPhaseCheck);
         reb.setRefluxRatio(reboilerReflux);
         if (reboilerHasSetTemp)
           reb.setOutTemperature(reboilerTemp);
@@ -503,12 +532,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       // Middle trays
       int simpleTrays = n - (hasReboiler ? 1 : 0) - (hasCondenser ? 1 : 0);
       for (int i = 0; i < simpleTrays; i++) {
-        trays.add(new SimpleTray("SimpleTray" + (i + 1)));
+        SimpleTray tray = new SimpleTray("SimpleTray" + (i + 1));
+        tray.setMultiPhaseCheck(doMultiPhaseCheck);
+        trays.add(tray);
         trayCount++;
       }
 
       if (hasCondenser) {
         Condenser cond = new Condenser("Condenser");
+        cond.setMultiPhaseCheck(doMultiPhaseCheck);
         cond.setRefluxRatio(condenserReflux);
         if (condenserHasSetTemp)
           cond.setOutTemperature(condenserTemp);
@@ -1824,6 +1856,23 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     gasOutStream.setCalculationIdentifier(id);
     liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
     liquidOutStream.setCalculationIdentifier(id);
+
+    boolean anyFeedMultiPhase = false;
+    for (List<StreamInterface> feeds : feedStreams.values()) {
+      for (StreamInterface feed : feeds) {
+        if (feed.getThermoSystem().doMultiPhaseCheck()) {
+          anyFeedMultiPhase = true;
+          break;
+        }
+      }
+      if (anyFeedMultiPhase) {
+        break;
+      }
+    }
+    if (anyFeedMultiPhase) {
+      gasOutStream.getThermoSystem().setMultiPhaseCheck(true);
+      liquidOutStream.getThermoSystem().setMultiPhaseCheck(true);
+    }
 
     for (int i = 0; i < numberOfTrays; i++) {
       trays.get(i).setCalculationIdentifier(id);
