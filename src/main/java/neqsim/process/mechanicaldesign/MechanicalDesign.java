@@ -98,6 +98,8 @@ public class MechanicalDesign implements java.io.Serializable {
   public double minDesignWaterVolumeFLow = 0.0;
   public double maxDesignPower = 0.0;
   public double minDesignPower = 0.0;
+  public double maxDesignDuty = 0.0;
+  public double minDesignDuty = 0.0;
   private String companySpecificDesignStandards = "Statoil";
   private ProcessEquipmentInterface processEquipment = null;
   // private String pressureVesselDesignStandard = "ASME - Pressure Vessel Code";

@@ -56,6 +56,11 @@ Currently, the following equipment types support capacity analysis:
 |-----------|-------------|--------------------|
 | **Compressor** | Power (W) | `MechanicalDesign.maxDesignPower` |
 | **Separator** | Gas Flow ($m^3/hr$) | `MechanicalDesign.maxDesignGassVolumeFlow` |
+| **Pump** | Power (W) | `MechanicalDesign.maxDesignPower` |
+| **Heater** | Duty (W) | `MechanicalDesign.maxDesignDuty` |
+| **Cooler** | Duty (W) | `MechanicalDesign.maxDesignDuty` |
+| **ThrottlingValve** | Volume Flow ($m^3/hr$) | `MechanicalDesign.maxDesignVolumeFlow` |
+| **Pipeline** | Volume Flow ($m^3/hr$) | `MechanicalDesign.maxDesignVolumeFlow` |
 
 ## Example Usage
 
