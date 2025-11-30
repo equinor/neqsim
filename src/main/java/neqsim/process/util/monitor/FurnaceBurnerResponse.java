@@ -26,6 +26,24 @@ public class FurnaceBurnerResponse extends BaseResponse {
   public FurnaceBurnerResponse(FurnaceBurner burner) {
     super(burner);
 
+    if (burner.getFuelInlet() != null) {
+      data.put("fuel inlet temperature",
+          new Value(Double.toString(burner.getFuelInlet().getTemperature("K")), "K"));
+      data.put("fuel inlet pressure",
+          new Value(Double.toString(burner.getFuelInlet().getPressure("bara")), "bara"));
+      data.put("fuel inlet flow",
+          new Value(Double.toString(burner.getFuelInlet().getFlowRate("kg/hr")), "kg/hr"));
+    }
+
+    if (burner.getAirInlet() != null) {
+      data.put("air inlet temperature",
+          new Value(Double.toString(burner.getAirInlet().getTemperature("K")), "K"));
+      data.put("air inlet pressure",
+          new Value(Double.toString(burner.getAirInlet().getPressure("bara")), "bara"));
+      data.put("air inlet flow",
+          new Value(Double.toString(burner.getAirInlet().getFlowRate("kg/hr")), "kg/hr"));
+    }
+
     if (burner.getOutletStream() != null) {
       data.put("outlet temperature",
           new Value(Double.toString(burner.getOutletStream().getTemperature("K")), "K"));

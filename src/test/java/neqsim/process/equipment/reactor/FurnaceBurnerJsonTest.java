@@ -42,5 +42,11 @@ public class FurnaceBurnerJsonTest {
     assertTrue(json.contains("outlet temperature"));
     assertTrue(json.contains("mole fraction CO2"));
     assertTrue(json.contains("mole fraction nitrogen"));
+    assertTrue(json.contains("fuel inlet temperature"));
+    assertTrue(json.contains("fuel inlet pressure"));
+    assertTrue(json.contains("fuel inlet flow"));
+    assertTrue(json.contains("air inlet temperature"));
+    assertTrue(json.contains("air inlet pressure"));
+    assertTrue(json.contains("air inlet flow"));
   }
 }

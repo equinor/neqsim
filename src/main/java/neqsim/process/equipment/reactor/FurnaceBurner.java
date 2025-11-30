@@ -108,6 +108,24 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Get the natural gas (fuel) inlet stream.
+   *
+   * @return fuel stream
+   */
+  public StreamInterface getFuelInlet() {
+    return fuelInlet;
+  }
+
+  /**
+   * Get the combustion air inlet stream.
+   *
+   * @return air stream
+   */
+  public StreamInterface getAirInlet() {
+    return airInlet;
+  }
+
+  /**
    * Get the reacted outlet stream from the furnace burner.
    *
    * @return reacted outlet stream
