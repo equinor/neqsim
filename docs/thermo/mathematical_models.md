@@ -3,10 +3,32 @@
 NeqSim bundles several thermodynamic and transport models so you can switch between correlations without rewriting system setup code. The sections below summarize the most commonly used options and when to consider them.
 
 ## Equations of State (EoS)
-- **Peng–Robinson (PR) family**: Standard PR (`SystemPrEos`), volume-corrected variants, and tuned versions such as the Søreide–Whitson model for sour service. Suitable for general gas/condensate and light-oil systems.
-- **Soave–Redlich–Kwong (SRK) family**: Core SRK (`SystemSrkEos`), SRK-Twu, and CPA-SRK for associating fluids such as water and glycols.
-- **Cubic-Plus-Association (CPA)**: Adds association terms to SRK to represent hydrogen bonding while keeping cubic EoS performance.
-- **Activity-coefficient hybrids**: Huron–Vidal and Wong–Sandler mixing rules combine cubic EoS with excess-Gibbs models for improved liquid-phase behavior.
+
+NeqSim primarily uses cubic equations of state of the general form:
+
+\[
+P = \frac{RT}{v - b} - \frac{a(T)}{(v + \epsilon b)(v + \sigma b)}
+\]
+
+where $P$ is pressure, $T$ is temperature, $v$ is molar volume, $R$ is the gas constant, and $a(T), b$ are the energy and co-volume parameters.
+
+### Supported Families
+
+- **Peng–Robinson (PR) family** ($\epsilon = 1 - \sqrt{2}, \sigma = 1 + \sqrt{2}$):
+  Standard PR (`SystemPrEos`), volume-corrected variants (Peneloux), and tuned versions such as the Søreide–Whitson model for sour service. Suitable for general gas/condensate and light-oil systems.
+
+- **Soave–Redlich–Kwong (SRK) family** ($\epsilon = 0, \sigma = 1$):
+  Core SRK (`SystemSrkEos`), SRK-Twu, and CPA-SRK for associating fluids such as water and glycols.
+
+- **Cubic-Plus-Association (CPA)**:
+  Adds an association term to the SRK or PR equation to represent hydrogen bonding:
+  \[
+  P = P_{\text{cubic}} - \frac{1}{2} RT \rho \sum_i x_i \sum_{A_i} \left( 1 - X_{A_i} \right) \frac{\partial \ln g}{\partial v}
+  \]
+  where $X_{A_i}$ is the fraction of site A on molecule i not bonded to other active sites.
+
+- **Activity-coefficient hybrids**:
+  Huron–Vidal and Wong–Sandler mixing rules combine cubic EoS with excess-Gibbs models ($G^E$) for improved liquid-phase behavior.
 
 ### Selecting an EoS
 ```java

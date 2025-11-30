@@ -78,7 +78,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     /** Sequential substitution with temperature damping. */
     DAMPED_SUBSTITUTION,
     /** Inside-out style simultaneous correction of upward/downward flows. */
-    INSIDE_OUT
+    INSIDE_OUT,
+    /** Matrix based solver. */
+    MATRIX_SOLVER
   }
 
   /** Selected solver algorithm. Defaults to direct substitution. */
@@ -402,6 +404,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         break;
       case INSIDE_OUT:
         solveInsideOut(id);
+        break;
+      case MATRIX_SOLVER:
+        if (isDoInitializion()) {
+          init();
+        }
+        DistillationColumnMatrixSolver matrixSolver = new DistillationColumnMatrixSolver(this);
+        matrixSolver.solve(id);
         break;
       case DIRECT_SUBSTITUTION:
       default:
@@ -1352,6 +1361,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   @Override
   public boolean solved() {
     return (err < temperatureTolerance);
+  }
+
+  void setError(double err) {
+    this.err = err;
   }
 
   /**
