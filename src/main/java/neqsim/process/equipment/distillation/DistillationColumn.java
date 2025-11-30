@@ -48,7 +48,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   boolean hasCondenser = false;
   protected ArrayList<SimpleTray> trays = new ArrayList<SimpleTray>(0);
   /** Scaling factor used to derive a tray-proportional iteration budget. */
-  private static final double TRAY_ITERATION_FACTOR = 2.0;
+  private static final double TRAY_ITERATION_FACTOR = 5.0;
   /** Target relative mass imbalance for the post-processing polish stage. */
   private static final double MASS_POLISH_TARGET = 2.0e-2;
   /** Target relative energy imbalance for the post-processing polish stage. */
@@ -106,7 +106,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   Mixer feedmixer = new Mixer("temp mixer");
   double bottomTrayPressure = -1.0;
   int numberOfTrays = 1;
-  int maxNumberOfIterations = 8;
+  int maxNumberOfIterations = 50;
   StreamInterface stream_3 = new Stream("stream_3");
   StreamInterface gasOutStream = new Stream("gasOutStream");
   StreamInterface liquidOutStream = new Stream("liquidOutStream");
