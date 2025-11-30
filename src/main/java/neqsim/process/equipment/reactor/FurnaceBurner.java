@@ -3,9 +3,13 @@ package neqsim.process.equipment.reactor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.monitor.FurnaceBurnerResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -75,8 +79,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Provide a cooling factor (0-1) that pulls the flame temperature towards the surroundings.
-   * A value of 0.0 keeps adiabatic operation, while 1.0 forces the products to the surroundings
+   * Provide a cooling factor (0-1) that pulls the flame temperature towards the surroundings. A
+   * value of 0.0 keeps adiabatic operation, while 1.0 forces the products to the surroundings
    * temperature.
    *
    * @param factor cooling factor between 0 and 1
@@ -156,8 +160,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
 
     fuelSystem.addFluid(airSystem);
     fuelSystem.createDatabase(true);
-    String[] tracked = {"CO2", "CO", "NO", "NO2", "SO2", "SO3", "H2S", "oxygen",
-        "water", "nitrogen"};
+    String[] tracked =
+        {"CO2", "CO", "NO", "NO2", "SO2", "SO3", "H2S", "oxygen", "water", "nitrogen"};
     for (String compName : tracked) {
       if (!fuelSystem.hasComponent(compName)) {
         fuelSystem.addComponent(compName, 0.0, "mole/sec");
@@ -193,7 +197,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     if (applyCooling) {
       double ambientTemp = Double.isNaN(surroundingsTemperatureK) ? airSystem.getTemperature()
           : surroundingsTemperatureK;
-      double cooledTemperature = ambientTemp + (flameTemperature - ambientTemp) * (1.0 - coolingFactor);
+      double cooledTemperature =
+          ambientTemp + (flameTemperature - ambientTemp) * (1.0 - coolingFactor);
 
       SystemInterface cooledFeed = mixedStream.getThermoSystem().clone();
       cooledFeed.setTemperature(cooledTemperature);
@@ -202,8 +207,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
       Stream cooledStream = new Stream(getName() + " cooled mixture", cooledFeed);
       cooledStream.run(id);
 
-      GibbsReactor cooledReactor = new GibbsReactor(getName() + " cooled Gibbs reactor",
-          cooledStream);
+      GibbsReactor cooledReactor =
+          new GibbsReactor(getName() + " cooled Gibbs reactor", cooledStream);
       cooledReactor.setUseAllDatabaseSpecies(false);
       cooledReactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
       cooledReactor.run(id);
@@ -243,5 +248,22 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
 
     double inletMass = fuelInlet.getFlowRate(unit) + airInlet.getFlowRate(unit);
     return outletStream.getFlowRate(unit) - inletMass;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new FurnaceBurnerResponse(this));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    FurnaceBurnerResponse res = new FurnaceBurnerResponse(this);
+    res.applyConfig(cfg);
+    return new GsonBuilder().create().toJson(res);
   }
 }
