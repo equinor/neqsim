@@ -1575,31 +1575,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /** {@inheritDoc} */
   @Override
-  public double getEntropyProduction(String unit) {
-    double outEntropy = 0.0;
-    for (int i = 0; i < getNumberOfOutStreams(); i++) {
-      outEntropy += getOutStream(i).getThermoSystem().getEntropy(unit);
-    }
-    return outEntropy - getFeedStream().getThermoSystem().getEntropy(unit);
+  public double getExergyChange(String unit) {
+    return getExergyChange(unit, 288.15);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getExergyChange(String unit) {
-    double T0 = 288.15;
-    if (unit.equals("J")) {
-      double inExergy = getFeedStream().getThermoSystem().getEnthalpy(unit)
-          - T0 * getFeedStream().getThermoSystem().getEntropy(unit);
-      double outExergy = 0.0;
-      for (int i = 0; i < getNumberOfOutStreams(); i++) {
-        outExergy += getOutStream(i).getThermoSystem().getEnthalpy(unit)
-            - T0 * getOutStream(i).getThermoSystem().getEntropy(unit);
-      }
-      return outExergy - inExergy;
-    } else {
-      return 0.0;
-    }
-  }
 
   /** {@inheritDoc} */
   @Override

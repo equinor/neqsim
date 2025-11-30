@@ -2099,24 +2099,10 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
 
   /** {@inheritDoc} */
   @Override
-  public double getEntropyProduction(String unit) {
-    return outStream.getThermoSystem().getEntropy(unit)
-        - inStream.getThermoSystem().getEntropy(unit);
+  public double getExergyChange(String unit) {
+    return getExergyChange(unit, 288.15);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getExergyChange(String unit) {
-    double T0 = 288.15;
-    if (unit.equals("J")) {
-      return (outStream.getThermoSystem().getEnthalpy(unit)
-          - T0 * outStream.getThermoSystem().getEntropy(unit))
-          - (inStream.getThermoSystem().getEnthalpy(unit)
-              - T0 * inStream.getThermoSystem().getEntropy(unit));
-    } else {
-      return 0.0;
-    }
-  }
 
   /** {@inheritDoc} */
   @Override

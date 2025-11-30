@@ -126,16 +126,6 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
 
   /**
    * <p>
-   * getMassBalance.
-   * </p>
-   *
-   * @param unit a {@link java.lang.String} object
-   * @return The mass balance of the process equipment.
-   */
-  public double getMassBalance(String unit);
-
-  /**
-   * <p>
    * getMassBalance in kg/sec.
    * </p>
    *
@@ -216,14 +206,6 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * @return a {@link java.lang.String} object
    */
   public String getConditionAnalysisMessage();
-
-  /**
-   * Get entropy production of the process equipment.
-   *
-   * @param unit Supported units are J/K and kJ/K
-   * @return entropy in specified unit
-   */
-  public double getEntropyProduction(String unit);
 
   /**
    * Get exergy change production of the process equipment.

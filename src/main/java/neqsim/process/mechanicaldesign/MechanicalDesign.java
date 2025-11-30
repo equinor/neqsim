@@ -100,6 +100,55 @@ public class MechanicalDesign implements java.io.Serializable {
   public double minDesignPower = 0.0;
   public double maxDesignDuty = 0.0;
   public double minDesignDuty = 0.0;
+
+  public void setMaxDesignVolumeFlow(double maxDesignVolumeFlow) {
+    this.maxDesignVolumeFlow = maxDesignVolumeFlow;
+  }
+
+  public void setMinDesignVolumeFlow(double minDesignVolumeFLow) {
+    this.minDesignVolumeFLow = minDesignVolumeFLow;
+  }
+
+  public void setMaxDesignGassVolumeFlow(double maxDesignGassVolumeFlow) {
+    this.maxDesignGassVolumeFlow = maxDesignGassVolumeFlow;
+  }
+
+  public void setMinDesignGassVolumeFlow(double minDesignGassVolumeFLow) {
+    this.minDesignGassVolumeFLow = minDesignGassVolumeFLow;
+  }
+
+  public void setMaxDesignOilVolumeFlow(double maxDesignOilVolumeFlow) {
+    this.maxDesignOilVolumeFlow = maxDesignOilVolumeFlow;
+  }
+
+  public void setMinDesignOilFlow(double minDesignOilFLow) {
+    this.minDesignOilFLow = minDesignOilFLow;
+  }
+
+  public void setMaxDesignWaterVolumeFlow(double maxDesignWaterVolumeFlow) {
+    this.maxDesignWaterVolumeFlow = maxDesignWaterVolumeFlow;
+  }
+
+  public void setMinDesignWaterVolumeFlow(double minDesignWaterVolumeFLow) {
+    this.minDesignWaterVolumeFLow = minDesignWaterVolumeFLow;
+  }
+
+  public void setMaxDesignPower(double maxDesignPower) {
+    this.maxDesignPower = maxDesignPower;
+  }
+
+  public void setMinDesignPower(double minDesignPower) {
+    this.minDesignPower = minDesignPower;
+  }
+
+  public void setMaxDesignDuty(double maxDesignDuty) {
+    this.maxDesignDuty = maxDesignDuty;
+  }
+
+  public void setMinDesignDuty(double minDesignDuty) {
+    this.minDesignDuty = minDesignDuty;
+  }
+
   private String companySpecificDesignStandards = "Statoil";
   private ProcessEquipmentInterface processEquipment = null;
   // private String pressureVesselDesignStandard = "ASME - Pressure Vessel Code";
