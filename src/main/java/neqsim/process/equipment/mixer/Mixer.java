@@ -46,6 +46,30 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   private double outTemperature = Double.NaN;
   double lowestPressure = Double.NEGATIVE_INFINITY;
 
+  private boolean doMultiPhaseCheck = true;
+
+  /**
+   * <p>
+   * Setter for the field <code>doMultiPhaseCheck</code>.
+   * </p>
+   *
+   * @param doMultiPhaseCheck a boolean
+   */
+  public void setMultiPhaseCheck(boolean doMultiPhaseCheck) {
+    this.doMultiPhaseCheck = doMultiPhaseCheck;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>doMultiPhaseCheck</code>.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isDoMultiPhaseCheck() {
+    return doMultiPhaseCheck;
+  }
+
   /**
    * <p>
    * Constructor for Mixer.
@@ -234,7 +258,11 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       return;
     }
 
+    boolean inletMultiPhaseCheck = streams.get(0).getThermoSystem().doMultiPhaseCheck();
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
+    if (!doMultiPhaseCheck) {
+      thermoSystem2.setMultiPhaseCheck(false);
+    }
     isActive(true);
     // System.out.println("total number of moles " +
     // thermoSystem2.getTotalNumberOfMoles());
@@ -290,6 +318,10 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         mixedStream.getThermoSystem().initProperties();
         isActive(false);
       }
+    }
+
+    if (inletMultiPhaseCheck) {
+      mixedStream.getThermoSystem().setMultiPhaseCheck(true);
     }
 
     setCalculationIdentifier(id);
