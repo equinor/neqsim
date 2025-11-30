@@ -88,8 +88,10 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     }
 
     for (int k = 0; k < streams.size(); k++) {
-      streams.get(k).getThermoSystem().init(3);
-      enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
+      if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
+        streams.get(k).getThermoSystem().init(3);
+        enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
+      }
       // System.out.println("total enthalpy k : " + ( ((Stream)
       // streams.get(k)).getThermoSystem()).getEnthalpy());
     }
