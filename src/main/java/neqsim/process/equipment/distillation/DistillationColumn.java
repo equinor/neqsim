@@ -1561,6 +1561,29 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         + step * (current.getPressure("bara") - previous.getPressure("bara"));
     relaxed.setPressure(mixedPressure, "bara");
 
+    double[] zPrev = previous.getThermoSystem().getMolarComposition();
+    double totalMolesPrev = previous.getThermoSystem().getTotalNumberOfMoles();
+    double[] zCurr = current.getThermoSystem().getMolarComposition();
+    double totalMolesCurr = current.getThermoSystem().getTotalNumberOfMoles();
+
+    double[] zMixed = new double[zPrev.length];
+    double totalMolesMixed = 0.0;
+
+    for (int i = 0; i < zPrev.length; i++) {
+      double molesPrev_i = zPrev[i] * totalMolesPrev;
+      double molesCurr_i = zCurr[i] * totalMolesCurr;
+      double mixedMoles_i = molesPrev_i + step * (molesCurr_i - molesPrev_i);
+      zMixed[i] = mixedMoles_i;
+      totalMolesMixed += mixedMoles_i;
+    }
+
+    if (totalMolesMixed > 1e-12) {
+      for (int i = 0; i < zMixed.length; i++) {
+        zMixed[i] /= totalMolesMixed;
+      }
+      relaxed.getThermoSystem().setMolarComposition(zMixed);
+    }
+
     relaxed.run();
 
     return relaxed;
