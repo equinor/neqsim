@@ -38,6 +38,7 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   private double coolingFactor = 0.0;
 
   private double excessAirFraction = 0.0;
+  private double airFuelRatioMass = Double.NaN;
   private double flameTemperature = Double.NaN;
   private double heatReleasekW = Double.NaN;
   private final Map<String, Double> emissionRatesKgPerHr = new HashMap<>();
@@ -108,6 +109,29 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Set the air-fuel ratio on a mass basis (kg air / kg fuel). When set, the air flow rate will be
+   * automatically calculated from the fuel flow rate during run(). This overrides any manually set
+   * air flow rate.
+   *
+   * @param ratio mass air to mass fuel ratio
+   */
+  public void setAirFuelRatioMass(double ratio) {
+    if (ratio < 0.0) {
+      throw new IllegalArgumentException("Air-fuel ratio must be non-negative");
+    }
+    this.airFuelRatioMass = ratio;
+  }
+
+  /**
+   * Get the configured air-fuel ratio on a mass basis (kg air / kg fuel).
+   *
+   * @return air-fuel ratio or NaN if not set
+   */
+  public double getAirFuelRatioMass() {
+    return airFuelRatioMass;
+  }
+
+  /**
    * Get the natural gas (fuel) inlet stream.
    *
    * @return fuel stream
@@ -170,6 +194,14 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     // Combine the fuel and air streams, scaling air for requested excess
     SystemInterface fuelSystem = fuelInlet.getThermoSystem().clone();
     SystemInterface airSystem = airInlet.getThermoSystem().clone();
+
+    // If air-fuel ratio is set, calculate air flow rate from fuel flow rate
+    if (!Double.isNaN(airFuelRatioMass)) {
+      double fuelMassRate = fuelSystem.getFlowRate("kg/sec");
+      double requiredAirMassRate = fuelMassRate * airFuelRatioMass;
+      airSystem.setTotalFlowRate(requiredAirMassRate, "kg/sec");
+      airSystem.init(3);
+    }
     if (excessAirFraction > 0.0) {
       double scaledAirFlow = airSystem.getFlowRate("mole/sec") * (1.0 + excessAirFraction);
       airSystem.setTotalFlowRate(scaledAirFlow, "mole/sec");
