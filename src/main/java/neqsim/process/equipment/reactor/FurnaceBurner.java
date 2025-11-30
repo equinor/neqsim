@@ -109,29 +109,6 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Set the air-fuel ratio on a mass basis (kg air / kg fuel). When set, the air flow rate will be
-   * automatically calculated from the fuel flow rate during run(). This overrides any manually set
-   * air flow rate.
-   *
-   * @param ratio mass air to mass fuel ratio
-   */
-  public void setAirFuelRatioMass(double ratio) {
-    if (ratio < 0.0) {
-      throw new IllegalArgumentException("Air-fuel ratio must be non-negative");
-    }
-    this.airFuelRatioMass = ratio;
-  }
-
-  /**
-   * Get the configured air-fuel ratio on a mass basis (kg air / kg fuel).
-   *
-   * @return air-fuel ratio or NaN if not set
-   */
-  public double getAirFuelRatioMass() {
-    return airFuelRatioMass;
-  }
-
-  /**
    * Get the natural gas (fuel) inlet stream.
    *
    * @return fuel stream
