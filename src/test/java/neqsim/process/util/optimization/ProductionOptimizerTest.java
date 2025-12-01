@@ -2,6 +2,8 @@ package neqsim.process.util.optimization;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +78,7 @@ public class ProductionOptimizerTest {
         "Keep overall system size bounded");
 
     OptimizationResult result = optimizer.optimize(process, inletStream, config,
-        List.of(minimizePower), List.of(softConstraint, hardConstraint));
+        Collections.singletonList(minimizePower), Arrays.asList(softConstraint, hardConstraint));
 
     Assertions.assertTrue(result.isFeasible(), "Feasible solution should respect hard limits");
     Assertions.assertNotNull(result.getBottleneck(), "Bottleneck should be identified");
@@ -126,7 +128,7 @@ public class ProductionOptimizerTest {
         "Ensure system remains small");
 
     OptimizationResult result = optimizer.optimize(process, inletStream, config,
-        List.of(minimizePower), List.of(keepUnitsReasonable));
+        Collections.singletonList(minimizePower), Collections.singletonList(keepUnitsReasonable));
 
     Assertions.assertNotNull(result.getIterationHistory(), "Iteration history should be kept");
     Assertions.assertFalse(result.getIterationHistory().isEmpty(),
@@ -159,7 +161,8 @@ public class ProductionOptimizerTest {
         .utilizationLimitForName(compressor.getName(), 1.0)
         .utilizationMarginFraction(0.1).capacityUncertaintyFraction(0.2);
 
-    OptimizationResult result = optimizer.optimize(process, inlet, config, List.of(), List.of());
+    OptimizationResult result = optimizer.optimize(process, inlet, config, Collections.emptyList(),
+        Collections.emptyList());
 
     Assertions.assertFalse(result.getUtilizationRecords().isEmpty());
 
@@ -199,12 +202,12 @@ public class ProductionOptimizerTest {
         .rateUnit("kg/hr");
 
     ScenarioRequest baseScenario = new ScenarioRequest("base", baseProcess, baseStream, baseConfig,
-        List.of(), List.of());
+        Collections.emptyList(), Collections.emptyList());
     ScenarioRequest debottleneckScenario = new ScenarioRequest("debottleneck", debottleneckProcess,
-        debottleneckStream, debottleneckConfig, List.of(), List.of());
+        debottleneckStream, debottleneckConfig, Collections.emptyList(), Collections.emptyList());
 
-    List<ScenarioResult> results = optimizer.optimizeScenarios(List.of(baseScenario,
-        debottleneckScenario));
+    List<ScenarioResult> results = optimizer.optimizeScenarios(
+        Arrays.asList(baseScenario, debottleneckScenario));
 
     Assertions.assertEquals(2, results.size(), "Both scenarios should be evaluated");
     Map<String, ScenarioResult> byName = results.stream()
@@ -248,14 +251,14 @@ public class ProductionOptimizerTest {
     OptimizationConfig config = new OptimizationConfig(100.0, 2_000.0).rateUnit("kg/hr");
 
     ScenarioRequest baseScenario = new ScenarioRequest("base", baseProcess, baseStream, config,
-        List.of(), List.of());
+        Collections.emptyList(), Collections.emptyList());
     ScenarioRequest debottleneckScenario = new ScenarioRequest("debottleneck", debottleneckProcess,
-        debottleneckStream, config, List.of(), List.of());
+        debottleneckStream, config, Collections.emptyList(), Collections.emptyList());
 
-    List<ScenarioKpi> kpis = List.of(ScenarioKpi.optimalRate("kg/hr"), ScenarioKpi.score());
+    List<ScenarioKpi> kpis = Arrays.asList(ScenarioKpi.optimalRate("kg/hr"), ScenarioKpi.score());
 
-    ScenarioComparisonResult comparison = optimizer.compareScenarios(
-        List.of(baseScenario, debottleneckScenario), kpis);
+    ScenarioComparisonResult comparison =
+        optimizer.compareScenarios(Arrays.asList(baseScenario, debottleneckScenario), kpis);
 
     Assertions.assertEquals("base", comparison.getBaselineScenario(),
         "First scenario should be treated as baseline");
@@ -299,8 +302,12 @@ public class ProductionOptimizerTest {
     upgradeProcess.add(feed2);
     upgradeProcess.add(compressor2);
 
-    Map<String, ProcessSystem> processes = Map.of("base", baseProcess, "upgrade", upgradeProcess);
-    Map<String, StreamInterface> feeds = Map.of("feed1", feed1, "feed2", feed2);
+    Map<String, ProcessSystem> processes = new HashMap<>();
+    processes.put("base", baseProcess);
+    processes.put("upgrade", upgradeProcess);
+    Map<String, StreamInterface> feeds = new HashMap<>();
+    feeds.put("feed1", feed1);
+    feeds.put("feed2", feed2);
 
     Map<String, java.util.function.ToDoubleFunction<ProcessSystem>> metrics = new HashMap<>();
     metrics.put("throughput", proc -> proc == baseProcess ? feed1.getFlowRate("kg/hr")
@@ -397,7 +404,7 @@ public class ProductionOptimizerTest {
         proc -> inlet.getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     OptimizationResult result = optimizer.optimize(process, inlet, config,
-        List.of(maximizeRate), List.of());
+        Collections.singletonList(maximizeRate), Collections.emptyList());
 
     boolean pressureConstraintApplied = result.getConstraintStatuses().stream()
         .anyMatch(status -> status.getName().contains("pressure ratio"));
@@ -437,7 +444,7 @@ public class ProductionOptimizerTest {
         proc -> compressor.getPower(), 1.0, ObjectiveType.MINIMIZE);
 
     OptimizationResult result = optimizer.optimize(process, inlet, config,
-        List.of(minimizePower), List.of());
+        Collections.singletonList(minimizePower), Collections.emptyList());
 
     Assertions.assertFalse(result.getIterationHistory().isEmpty());
     Assertions.assertTrue(result.getIterations() <= config.getMaxIterations());
@@ -445,7 +452,7 @@ public class ProductionOptimizerTest {
 
   @Test
   public void testUtilizationReportHelper() {
-    List<ProductionOptimizer.UtilizationRecord> records = List.of(
+    List<ProductionOptimizer.UtilizationRecord> records = Arrays.asList(
         new ProductionOptimizer.UtilizationRecord("pump", 100.0, 200.0, 0.5, 0.9));
     String report = ProductionOptimizer.formatUtilizationTable(records);
     Assertions.assertTrue(report.contains("pump"));
@@ -476,8 +483,8 @@ public class ProductionOptimizerTest {
     OptimizationObjective maximizeRate = new OptimizationObjective("throughput",
         proc -> inlet.getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
-    OptimizationResult result = optimizer.optimize(process, inlet, config, List.of(maximizeRate),
-        List.of());
+    OptimizationResult result = optimizer.optimize(process, inlet, config,
+        Collections.singletonList(maximizeRate), Collections.emptyList());
 
     Assertions.assertFalse(result.getIterationHistory().isEmpty(),
         "Particle swarm should record iteration history");
@@ -524,7 +531,8 @@ public class ProductionOptimizerTest {
     OptimizationConfig config = new OptimizationConfig(100.0, 100.0).rateUnit("kg/hr")
         .columnFsFactorLimit(1.0).utilizationMarginFraction(0.0);
 
-    OptimizationResult result = optimizer.optimize(process, inlet, config, List.of(), List.of());
+    OptimizationResult result = optimizer.optimize(process, inlet, config, Collections.emptyList(),
+        Collections.emptyList());
 
     Assertions.assertFalse(result.getUtilizationRecords().isEmpty(),
         "Column capacity rule should produce utilization records");
@@ -552,7 +560,8 @@ public class ProductionOptimizerTest {
     OptimizationConfig config = new OptimizationConfig(10.0, 100.0).rateUnit("kg/hr")
         .capacityRangeSpreadFraction(0.2).capacityPercentile(0.9).defaultUtilizationLimit(1.0);
 
-    OptimizationResult result = optimizer.optimize(process, inlet, config, List.of(), List.of());
+    OptimizationResult result = optimizer.optimize(process, inlet, config, Collections.emptyList(),
+        Collections.emptyList());
 
     Assertions.assertEquals(1, result.getUtilizationRecords().size(),
         "Separator should be covered by default capacity rules");
@@ -602,8 +611,8 @@ public class ProductionOptimizerTest {
         proc -> feedA.getFlowRate("kg/hr") + feedB.getFlowRate("kg/hr"), 1.0,
         ObjectiveType.MAXIMIZE);
 
-    OptimizationResult result = optimizer.optimize(process, List.of(varA, varB), config,
-        List.of(throughput), List.of());
+    OptimizationResult result = optimizer.optimize(process, Arrays.asList(varA, varB), config,
+        Collections.singletonList(throughput), Collections.emptyList());
 
     Assertions.assertFalse(result.getDecisionVariables().isEmpty(),
         "Decision variables should be tracked");
@@ -636,8 +645,8 @@ public class ProductionOptimizerTest {
         proc -> proc.getUnitOperations().size(), 10.0, ConstraintSeverity.HARD, 0.0,
         "Sanity check");
 
-    OptimizationSummary summary = optimizer.quickOptimize(process, inlet, "kg/hr",
-        List.of(keepSmall));
+    OptimizationSummary summary =
+        optimizer.quickOptimize(process, inlet, "kg/hr", Collections.singletonList(keepSmall));
 
     Assertions.assertNotNull(summary.getLimitingEquipment());
     Assertions.assertTrue(summary.getUtilizationLimit() >= summary.getUtilization());
@@ -671,8 +680,8 @@ public class ProductionOptimizerTest {
     OptimizationObjective objective = new OptimizationObjective("throughput",
         proc -> inlet.getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
-    OptimizationResult result = optimizer.optimize(process, inlet, config, List.of(objective),
-        List.of());
+    OptimizationResult result = optimizer.optimize(process, inlet, config,
+        Collections.singletonList(objective), Collections.emptyList());
 
     List<UtilizationSeries> series = ProductionOptimizer
         .buildUtilizationSeries(result.getIterationHistory());
