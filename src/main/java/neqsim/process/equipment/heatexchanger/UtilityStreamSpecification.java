@@ -6,9 +6,11 @@ import neqsim.util.unit.TemperatureUnit;
 /**
  * Specification object describing the utility side of a single-stream heater or cooler.
  *
- * <p>This class stores the supply and return temperatures together with optional minimum
- * approach, heat-capacity rate and assumed overall heat-transfer coefficient so the mechanical
- * design package can derive an approximate size when only the process stream has been simulated.</p>
+ * <p>
+ * This class stores the supply and return temperatures together with optional minimum approach,
+ * heat-capacity rate and assumed overall heat-transfer coefficient so the mechanical design package
+ * can derive an approximate size when only the process stream has been simulated.
+ * </p>
  */
 public class UtilityStreamSpecification implements Serializable {
   private static final long serialVersionUID = 1000L;
