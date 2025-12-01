@@ -1,5 +1,6 @@
 package neqsim.process.util.optimization;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -342,7 +343,7 @@ public class ProductionOptimizerTest {
         "      penaltyWeight: 0.0", "      description: Keep compressor within design");
 
     Path specFile = Files.createTempFile("optimization", ".yaml");
-    Files.writeString(specFile, yaml);
+    Files.write(specFile, yaml.getBytes(StandardCharsets.UTF_8));
 
     List<ProductionOptimizer.ScenarioRequest> scenarios = ProductionOptimizationSpecLoader
         .load(specFile, processes, feeds, metrics);
