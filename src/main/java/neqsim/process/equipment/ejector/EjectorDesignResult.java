@@ -46,12 +46,11 @@ public final class EjectorDesignResult {
    * @param dischargeConnectionLength discharge connection length
    */
   public EjectorDesignResult(double mixingPressure, double motiveNozzleThroatArea,
-      double motiveNozzleExitVelocity,
-      double suctionInletArea, double suctionInletVelocity, double mixingChamberArea,
-      double mixingChamberVelocity, double diffuserOutletArea, double diffuserOutletVelocity,
-      double entrainmentRatio, double motiveNozzleEffectiveLength, double suctionInletLength,
-      double mixingChamberLength, double diffuserOutletLength, double bodyVolume,
-      double connectedPipingVolume, double suctionConnectionLength,
+      double motiveNozzleExitVelocity, double suctionInletArea, double suctionInletVelocity,
+      double mixingChamberArea, double mixingChamberVelocity, double diffuserOutletArea,
+      double diffuserOutletVelocity, double entrainmentRatio, double motiveNozzleEffectiveLength,
+      double suctionInletLength, double mixingChamberLength, double diffuserOutletLength,
+      double bodyVolume, double connectedPipingVolume, double suctionConnectionLength,
       double dischargeConnectionLength) {
     this.mixingPressure = mixingPressure;
     this.motiveNozzleThroatArea = motiveNozzleThroatArea;
@@ -77,8 +76,8 @@ public final class EjectorDesignResult {
    * Returns an empty design result.
    */
   public static EjectorDesignResult empty() {
-    return new EjectorDesignResult(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    return new EjectorDesignResult(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0);
   }
 
   public double getMixingPressure() {
