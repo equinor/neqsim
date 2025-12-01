@@ -92,3 +92,20 @@ public class CalculatorExample {
     *   The lambda receives two arguments:
         1.  `inputs`: An `ArrayList` of the input equipment added via `addInputVariable`.
         2.  `output`: The output equipment set via `setOutputVariable`.
+
+## Related Functionality
+
+Similar flexibility has been added to `Adjuster` and `SetPoint` classes.
+
+### `Adjuster`
+
+The `Adjuster` class can now use a custom function to calculate the current value of the target variable, instead of relying on hardcoded property strings.
+
+*   `setTargetValueCalculator(Function<ProcessEquipmentInterface, Double> calculator)`: Sets a function that calculates the current value from the target equipment.
+
+### `SetPoint`
+
+The `SetPoint` class can now use a custom function to calculate the value to be set on the target equipment, based on the source equipment.
+
+*   `setSourceValueCalculator(Function<ProcessEquipmentInterface, Double> calculator)`: Sets a function that calculates the value to set from the source equipment.
+

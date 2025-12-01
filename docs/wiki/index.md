@@ -7,6 +7,7 @@ Welcome to the NeqSim documentation. This wiki collects tips and guides for usin
 - [Fluid Characterization](fluid_characterization.md)
 - [Process Simulation Guide](process_simulation.md)
 - [Advanced Process Simulation](advanced_process_simulation.md)
+- [Logical Unit Operations](logical_unit_operations.md)
 - [Usage examples](usage_examples.md)
 - [Frequently asked questions](faq.md)
 

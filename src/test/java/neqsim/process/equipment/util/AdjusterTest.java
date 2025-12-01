@@ -86,4 +86,95 @@ public class AdjusterTest {
     assertEquals(flowline1.getOutletStream().getFlowRate("MSm3/day"), 4.0, 1e-3);
     assertEquals(flowline1.getInletStream().getPressure(), 199.976882003305, 0.1);
   }
+
+  @Test
+  public void testFlexibleAdjuster() {
+    neqsim.thermo.system.SystemSrkEos testSystem =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    testSystem.addComponent("methane", 100.0);
+
+    neqsim.process.equipment.stream.Stream inletStream =
+        new neqsim.process.equipment.stream.Stream("inlet stream", testSystem);
+    inletStream.setFlowRate(100.0, "kg/hr");
+    inletStream.setTemperature(25.0, "C");
+    inletStream.run();
+
+    // We want to adjust the flow rate of the inlet stream
+    // until a custom calculated value (Flow * Temperature in Kelvin) equals a target.
+    // Target = 100.0 kg/hr * 300.0 K = 30000.0
+
+    Adjuster adjuster = new Adjuster("Custom Adjuster");
+    adjuster.setAdjustedVariable(inletStream, "flow", "kg/hr");
+    adjuster.setTargetVariable(inletStream, "custom", 30000.0, "-");
+
+    adjuster.setTargetValueCalculator((equipment) -> {
+      neqsim.process.equipment.stream.Stream s = (neqsim.process.equipment.stream.Stream) equipment;
+      return s.getFlowRate("kg/hr") * s.getTemperature("K");
+    });
+
+    // Set inlet temperature to 300 K to make math easy
+    inletStream.setTemperature(300.0, "K");
+    // Initial flow is 100. 100 * 300 = 30000. It should already be solved.
+    // Let's change initial flow to 50. 50 * 300 = 15000.
+    inletStream.setFlowRate(50.0, "kg/hr");
+
+    neqsim.process.processmodel.ProcessSystem process =
+        new neqsim.process.processmodel.ProcessSystem();
+    process.add(inletStream);
+    process.add(adjuster);
+    process.run();
+
+    assertEquals(100.0, inletStream.getFlowRate("kg/hr"), 0.1);
+  }
+
+  @Test
+  public void testFlexibleAdjusterWithCustomSetter() {
+    neqsim.thermo.system.SystemSrkEos testSystem =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    testSystem.addComponent("methane", 100.0);
+
+    neqsim.process.equipment.stream.Stream inletStream =
+        new neqsim.process.equipment.stream.Stream("inlet stream", testSystem);
+    inletStream.setFlowRate(100.0, "kg/hr");
+    inletStream.setTemperature(300.0, "K");
+
+    // We want to adjust the temperature (via custom setter) to achieve a target flow * temperature
+    // product.
+    // Target = 30000.0
+    // Flow is fixed at 100.0.
+    // So target Temperature should be 300.0.
+    // Let's start with Temperature = 200.0.
+    inletStream.setTemperature(200.0, "K");
+
+    Adjuster adjuster = new Adjuster("Custom Adjuster");
+    // We still need to set adjustedVariable to something to pass internal checks, or we can rely on
+    // our custom getter/setter.
+    // The run() method checks: if (adjustedValueGetter != null) ...
+    // So we don't strictly need setAdjustedVariable if we provide the getter/setter.
+    // However, we need to pass the equipment to the constructor or set it.
+    // setAdjustedVariable sets 'adjustedEquipment'.
+    adjuster.setAdjustedVariable(inletStream, "temperature", "K");
+
+    adjuster.setAdjustedValueGetter((equipment) -> {
+      return ((neqsim.process.equipment.stream.Stream) equipment).getTemperature("K");
+    });
+
+    adjuster.setAdjustedValueSetter((equipment, val) -> {
+      ((neqsim.process.equipment.stream.Stream) equipment).setTemperature(val, "K");
+    });
+
+    adjuster.setTargetVariable(inletStream, "custom", 30000.0, "-");
+    adjuster.setTargetValueCalculator((equipment) -> {
+      neqsim.process.equipment.stream.Stream s = (neqsim.process.equipment.stream.Stream) equipment;
+      return s.getFlowRate("kg/hr") * s.getTemperature("K");
+    });
+
+    neqsim.process.processmodel.ProcessSystem process =
+        new neqsim.process.processmodel.ProcessSystem();
+    process.add(inletStream);
+    process.add(adjuster);
+    process.run();
+
+    assertEquals(300.0, inletStream.getTemperature("K"), 0.1);
+  }
 }
