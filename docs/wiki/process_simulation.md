@@ -125,5 +125,6 @@ public class MyCustomModule extends ProcessModuleBaseClass {
 *   **Recycles**: Use the `Recycle` class to close loops in the process.
 *   **Controllers**: Add PID controllers to adjust parameters dynamically during the simulation.
 *   **Dynamic Simulation**: `ProcessSystem` supports dynamic simulation for time-dependent analysis.
+*   **Bottleneck Analysis**: Analyze capacity utilization and identify system bottlenecks. See [Bottleneck Analysis](bottleneck_analysis.md).
 
 For more examples, check the `src/test/java/neqsim/process` folder in the source code.

@@ -108,6 +108,10 @@ public class LBCViscosityMethod extends Viscosity {
    * The Lee-Gonzalez-Eakin dilute-gas correlation returns viscosity in micropoise when critical
    * pressure is supplied in bar. This weighted mixture estimate stays in micropoise to match the
    * units expected by the LBC dense-fluid correction.
+   *
+   * @param weightedGasViscosity weighted gas viscosity in micropoise
+   * @param mixtureMolarMassSqrt square root of mixture molar mass
+   * @return gas viscosity in micropoise
    */
   private double leeGonzalezEakinGasViscosityMicropoise(double weightedGasViscosity,
       double mixtureMolarMassSqrt) {
@@ -177,6 +181,9 @@ public class LBCViscosityMethod extends Viscosity {
   /**
    * Estimate critical volume for TBP fractions using the Whitson correlation (ft3/lbmol) converted
    * to cm3/mol.
+   *
+   * @param component the component to estimate critical volume for
+   * @return critical volume in cm3/mol, or -1.0 if not applicable
    */
   private double estimateTbpCriticalVolume(ComponentInterface component) {
     if (!component.isIsTBPfraction()) {

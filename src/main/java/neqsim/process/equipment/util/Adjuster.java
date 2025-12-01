@@ -1,6 +1,8 @@
 package neqsim.process.equipment.util;
 
 import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
@@ -40,9 +42,11 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   double oldInputValue = 0.0;
   private double error = 1e6;
   private double oldError = 1.0e6;
-
   int iterations = 0;
   private boolean activateWhenLess = false;
+  private Function<ProcessEquipmentInterface, Double> targetValueCalculator;
+  private Function<ProcessEquipmentInterface, Double> adjustedValueGetter;
+  private BiConsumer<ProcessEquipmentInterface, Double> adjustedValueSetter;
 
   /**
    * <p>
@@ -150,23 +154,27 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   public void run(UUID id) {
     oldError = error;
 
-    if (adjustedVariable.equals("mass flow")) {
+    if (adjustedValueGetter != null) {
+      inputValue = adjustedValueGetter.apply(adjustedEquipment);
+    } else if (adjustedVariable.equals("mass flow")) {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate("kg/hr");
     } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate(adjustedVariableUnit);
     } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
       inputValue = ((Stream) adjustedEquipment).getPressure(adjustedVariableUnit);
     } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
-      inputValue = ((Stream) adjustedEquipment).getTemperature(adjustedVariableUnit);
     } else {
       inputValue = ((Stream) adjustedEquipment).getThermoSystem().getNumberOfMoles();
     }
 
     double targetValueCurrent = 0.0;
-    if (targetVariable.equals("mass fraction") && !targetPhase.equals("")
+    if (targetValueCalculator != null) {
+      targetValueCurrent = targetValueCalculator.apply(targetEquipment);
+    } else if (targetVariable.equals("mass fraction") && !targetPhase.equals("")
         && !targetComponent.equals("")) {
       targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getPhase(targetPhase)
           .getWtFrac(targetComponent);
+    } else if (targetVariable.equals("gasVolumeFlow")) {
     } else if (targetVariable.equals("gasVolumeFlow")) {
       targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getFlowRate(targetUnit);
     } else if (targetVariable.equals("pressure")) {
@@ -188,7 +196,14 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     error = deviation;
 
     if (iterations < 2) {
-      if (adjustedVariable.equals("mass flow")) {
+      if (adjustedValueSetter != null) {
+        // For custom setter, we use a 1% perturbation in the direction of deviation
+        double perturbation = inputValue * 0.01 * Math.signum(deviation);
+        if (Math.abs(perturbation) < 1e-12) {
+          perturbation = 1e-6 * Math.signum(deviation);
+        }
+        adjustedValueSetter.accept(adjustedEquipment, inputValue + perturbation);
+      } else if (adjustedVariable.equals("mass flow")) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation,
             "kg/hr");
       } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
@@ -219,7 +234,10 @@ public class Adjuster extends ProcessEquipmentBaseClass {
           error = tolerance * 0.9;
         }
       }
-      if (adjustedVariable.equals("mass flow")) {
+
+      if (adjustedValueSetter != null) {
+        adjustedValueSetter.accept(adjustedEquipment, inputValue - newVal);
+      } else if (adjustedVariable.equals("mass flow")) {
         ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
             "kg/hr");
       } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
@@ -398,5 +416,41 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    */
   public double getMinAdjustedValue() {
     return minAdjustedValue;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>targetValueCalculator</code>.
+   * </p>
+   *
+   * @param targetValueCalculator a {@link java.util.function.Function} object
+   */
+  public void setTargetValueCalculator(
+      Function<ProcessEquipmentInterface, Double> targetValueCalculator) {
+    this.targetValueCalculator = targetValueCalculator;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>adjustedValueGetter</code>.
+   * </p>
+   *
+   * @param adjustedValueGetter a {@link java.util.function.Function} object
+   */
+  public void setAdjustedValueGetter(
+      Function<ProcessEquipmentInterface, Double> adjustedValueGetter) {
+    this.adjustedValueGetter = adjustedValueGetter;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>adjustedValueSetter</code>.
+   * </p>
+   *
+   * @param adjustedValueSetter a {@link java.util.function.BiConsumer} object
+   */
+  public void setAdjustedValueSetter(
+      BiConsumer<ProcessEquipmentInterface, Double> adjustedValueSetter) {
+    this.adjustedValueSetter = adjustedValueSetter;
   }
 }

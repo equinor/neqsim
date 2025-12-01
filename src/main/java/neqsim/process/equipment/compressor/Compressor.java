@@ -2096,5 +2096,24 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   public void setLimitSpeed(boolean limitSpeed) {
     this.limitSpeed = limitSpeed;
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExergyChange(String unit) {
+    return getExergyChange(unit, 288.15);
+  }
+
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityDuty() {
+    return getTotalWork();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityMax() {
+    return getMechanicalDesign().maxDesignPower;
+  }
 }
 

@@ -39,10 +39,55 @@ system.getCharacterization().setPlusFractionModel("Pedersen");
 ```
 
 #### Available Plus Fraction Models
-*   **"Pedersen"**: The standard Pedersen model (exponential distribution). Default.
-*   **"Pedersen Heavy Oil"**: Adjusted for heavy oils (extends to C200).
-*   **"Whitson Gamma Model"**: Uses a Gamma distribution for molar mass and Watson UOP for density.
-    *   *Note*: The shape factor ($\alpha$) and minimum molar mass ($\eta$) are currently fixed to default values ($\alpha=1.0$, $\eta=90$ g/mol) in the standard API.
+
+##### Pedersen Model
+The standard Pedersen model assumes an exponential distribution for the mole fraction $z_i$ of each carbon number fraction $i$:
+
+\[
+z_i = \exp(A + B \cdot i)
+\]
+
+where $i$ is the carbon number, and $A$ and $B$ are coefficients determined to match the total mole fraction and average molar mass of the plus fraction.
+
+The density $\rho_i$ is modeled as a logarithmic function of the carbon number:
+
+\[
+\rho_i = C + D \cdot \ln(i)
+\]
+
+where $C$ and $D$ are fitted coefficients.
+
+##### Whitson Gamma Model
+The Whitson Gamma model uses a three-parameter Gamma probability density function (PDF) to describe the molar mass distribution:
+
+\[
+p(M) = \frac{(M - \eta)^{\alpha - 1} \exp\left(-\frac{M - \eta}{\beta}\right)}{\beta^\alpha \Gamma(\alpha)}
+\]
+
+where:
+*   $M$ is the molar mass.
+*   $\eta$ is the minimum molar mass (default 90 g/mol).
+*   $\alpha$ is the shape factor (default 1.0).
+*   $\beta$ is the scale parameter, calculated as $\beta = \frac{M_{plus} - \eta}{\alpha}$.
+*   $\Gamma(\alpha)$ is the Gamma function.
+
+The mole fraction $z_i$ for a pseudo-component covering the molar mass range $[M_{L}, M_{U}]$ is obtained by integrating the PDF:
+
+\[
+z_i = z_{plus} \int_{M_{L}}^{M_{U}} p(M) \, dM
+\]
+
+The density of each pseudo-component is calculated using the Watson UOP characterization factor $K_w$:
+
+\[
+K_w = 4.5579 \cdot (M_{plus})^{0.15178} \cdot \rho_{plus}^{-1.18241}
+\]
+
+\[
+\rho_i = 6.0108 \cdot M_i^{0.17947} \cdot K_w^{-1.18241}
+\]
+
+(Note: Molar masses are in g/mol and densities in g/cm³ for these correlations).
 
 ### 2.2 Running Characterization
 Once models are set, execute the characterization.

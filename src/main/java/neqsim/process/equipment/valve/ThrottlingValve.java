@@ -100,6 +100,18 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
 
   /** {@inheritDoc} */
   @Override
+  public double getCapacityDuty() {
+    return getOutStream().getFlowRate("m3/hr");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityMax() {
+    return getMechanicalDesign().maxDesignVolumeFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getOutletPressure() {
     return this.pressure;
   }
