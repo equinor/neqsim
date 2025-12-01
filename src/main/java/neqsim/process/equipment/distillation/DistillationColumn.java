@@ -1775,6 +1775,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double outlet = trays.get(i).getGasOutStream().getFluid().getEnthalpy();
       outlet += trays.get(i).getLiquidOutStream().getFluid().getEnthalpy();
 
+      if (trays.get(i) instanceof Reboiler) {
+        inlet += ((Reboiler) trays.get(i)).getDuty();
+      } else if (trays.get(i) instanceof Condenser) {
+        inlet += ((Condenser) trays.get(i)).getDuty();
+      }
+
       double absInlet = Math.abs(inlet);
       double imbalance = Math.abs(inlet - outlet);
       if (absInlet > 1e-12) {
