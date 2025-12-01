@@ -218,8 +218,8 @@ public class ProductionOptimizer {
         boolean feasible, double score, int iterations, List<IterationRecord> iterationHistory) {
       this.optimalRate = optimalRate;
       this.rateUnit = rateUnit;
-      this.decisionVariables = decisionVariables == null ? Map.of()
-          : new HashMap<>(decisionVariables);
+      this.decisionVariables =
+          decisionVariables == null ? Collections.emptyMap() : new HashMap<>(decisionVariables);
       this.bottleneck = bottleneck;
       this.bottleneckUtilization = bottleneckUtilization;
       this.utilizationRecords = utilizationRecords;
@@ -306,10 +306,12 @@ public class ProductionOptimizer {
       this.utilizationLimit = utilizationLimit;
       this.utilizationMargin = utilizationMargin;
       this.feasible = feasible;
-      this.decisionVariables = decisionVariables == null ? Map.of()
-          : new HashMap<>(decisionVariables);
-      this.utilizations = utilizations == null ? List.of() : new ArrayList<>(utilizations);
-      this.constraints = constraints == null ? List.of() : new ArrayList<>(constraints);
+      this.decisionVariables =
+          decisionVariables == null ? Collections.emptyMap() : new HashMap<>(decisionVariables);
+      this.utilizations =
+          utilizations == null ? Collections.emptyList() : new ArrayList<>(utilizations);
+      this.constraints =
+          constraints == null ? Collections.emptyList() : new ArrayList<>(constraints);
     }
 
     public double getMaxRate() {
@@ -414,8 +416,8 @@ public class ProductionOptimizer {
         List<UtilizationRecord> utilizations) {
       this.rate = rate;
       this.rateUnit = rateUnit;
-      this.decisionVariables = decisionVariables == null ? Map.of()
-          : new HashMap<>(decisionVariables);
+      this.decisionVariables =
+          decisionVariables == null ? Collections.emptyMap() : new HashMap<>(decisionVariables);
       this.bottleneckName = bottleneckName;
       this.bottleneckUtilization = bottleneckUtilization;
       this.utilizationWithinLimits = utilizationWithinLimits;
@@ -866,8 +868,8 @@ public class ProductionOptimizer {
       this.utilizationRecords = utilizationRecords;
       this.constraintStatuses = constraintStatuses;
       this.objectiveValues = objectiveValues;
-      this.decisionVariables = decisionVariables == null ? Map.of()
-          : new HashMap<>(decisionVariables);
+      this.decisionVariables =
+          decisionVariables == null ? Collections.emptyMap() : new HashMap<>(decisionVariables);
       this.utilizationWithinLimits = utilizationWithinLimits;
       this.hardOk = hardOk;
       this.score = score;
@@ -1026,7 +1028,8 @@ public class ProductionOptimizer {
     if (scenarios.isEmpty()) {
       throw new IllegalArgumentException("At least one scenario is required");
     }
-    List<ScenarioKpi> safeKpis = kpis == null ? List.of() : new ArrayList<>(kpis);
+      List<ScenarioKpi> safeKpis =
+          kpis == null ? Collections.emptyList() : new ArrayList<>(kpis);
     List<ScenarioResult> results = optimizeScenarios(scenarios);
     Map<String, Map<String, Double>> kpiValues = new LinkedHashMap<>();
     Map<String, Map<String, Double>> kpiDeltas = new LinkedHashMap<>();
@@ -1070,7 +1073,8 @@ public class ProductionOptimizer {
     OptimizationConfig config = new OptimizationConfig(lowerBound, upperBound).rateUnit(rateUnit);
     OptimizationObjective throughput = new OptimizationObjective("throughput",
         proc -> feedStream.getFlowRate(rateUnit), 1.0, ObjectiveType.MAXIMIZE);
-    return optimize(process, feedStream, config, List.of(throughput), additionalConstraints);
+      return optimize(process, feedStream, config, Collections.singletonList(throughput),
+          additionalConstraints);
   }
 
   /** Render a compact Markdown table describing utilization per unit. */
@@ -1092,7 +1096,8 @@ public class ProductionOptimizer {
   public static String formatScenarioComparisonTable(ScenarioComparisonResult comparison,
       List<ScenarioKpi> kpis) {
     Objects.requireNonNull(comparison, "comparison");
-    List<ScenarioKpi> safeKpis = kpis == null ? List.of() : new ArrayList<>(kpis);
+      List<ScenarioKpi> safeKpis =
+          kpis == null ? Collections.emptyList() : new ArrayList<>(kpis);
     StringBuilder sb = new StringBuilder();
     sb.append("| Scenario | Feasible | Optimal Rate | Bottleneck | Score |");
     for (ScenarioKpi kpi : safeKpis) {
@@ -1116,10 +1121,12 @@ public class ProductionOptimizer {
           .append("|")
           .append(String.format("%.3f", result.getScore())).append("|");
       for (ScenarioKpi kpi : safeKpis) {
-        double value = comparison.getKpiValues().getOrDefault(scenarioResult.getName(), Map.of())
-            .getOrDefault(kpi.getName(), Double.NaN);
-        double delta = comparison.getKpiDeltas().getOrDefault(scenarioResult.getName(), Map.of())
-            .getOrDefault(kpi.getName(), 0.0);
+          double value = comparison.getKpiValues()
+              .getOrDefault(scenarioResult.getName(), Collections.emptyMap())
+              .getOrDefault(kpi.getName(), Double.NaN);
+          double delta = comparison.getKpiDeltas()
+              .getOrDefault(scenarioResult.getName(), Collections.emptyMap())
+              .getOrDefault(kpi.getName(), 0.0);
         sb.append(String.format("%.3f (%.3f)", value, delta)).append("|");
       }
       sb.append("\n");
@@ -1192,10 +1199,10 @@ public class ProductionOptimizer {
     }
 
     return utilizationByEquipment.entrySet().stream()
-        .map(entry -> new UtilizationSeries(entry.getKey(), entry.getValue(),
-            bottleneckFlags.getOrDefault(entry.getKey(), List.of()),
-            limits.getOrDefault(entry.getKey(), DEFAULT_UTILIZATION_LIMIT)))
-        .collect(Collectors.toList());
+          .map(entry -> new UtilizationSeries(entry.getKey(), entry.getValue(),
+              bottleneckFlags.getOrDefault(entry.getKey(), Collections.emptyList()),
+              limits.getOrDefault(entry.getKey(), DEFAULT_UTILIZATION_LIMIT)))
+          .collect(Collectors.toList());
   }
 
   /**
@@ -1251,7 +1258,8 @@ public class ProductionOptimizer {
     double upper = baseRate * 2.0;
     OptimizationConfig config = new OptimizationConfig(lower, upper).rateUnit(rateUnit)
         .tolerance(baseRate * 0.005).maxIterations(40);
-    OptimizationResult result = optimize(process, feedStream, config, List.of(), constraints);
+      OptimizationResult result =
+          optimize(process, feedStream, config, Collections.emptyList(), constraints);
     UtilizationRecord bottleneck = result.getUtilizationRecords().stream()
         .filter(record -> result.getBottleneck() != null
             && record.getEquipmentName().equals(result.getBottleneck().getName()))

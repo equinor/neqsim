@@ -5,6 +5,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +32,7 @@ public final class ProductionOptimizationSpecLoader {
       metrics) throws IOException {
     ObjectMapper mapper = specPath.toString().endsWith(".yaml") || specPath.toString()
         .endsWith(".yml") ? new ObjectMapper(new YAMLFactory()) : new ObjectMapper();
-    String raw = Files.readString(specPath);
+      String raw = new String(Files.readAllBytes(specPath), StandardCharsets.UTF_8);
     Spec spec = mapper.readValue(raw, Spec.class);
 
     List<ScenarioRequest> scenarios = new ArrayList<>();
@@ -111,7 +113,7 @@ public final class ProductionOptimizationSpecLoader {
 
   /** Spec root. */
   private static final class Spec {
-    public List<ScenarioSpec> scenarios = List.of();
+      public List<ScenarioSpec> scenarios = Collections.emptyList();
   }
 
   /** Scenario configuration from YAML. */
