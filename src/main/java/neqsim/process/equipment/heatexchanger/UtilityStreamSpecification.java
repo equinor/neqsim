@@ -154,27 +154,47 @@ public class UtilityStreamSpecification implements Serializable {
     this.overallHeatTransferCoefficient = overallHeatTransferCoefficient;
   }
 
-  /** Returns true if a supply temperature has been specified. */
+  /**
+   * Returns true if a supply temperature has been specified.
+   *
+   * @return true if supply temperature is specified
+   */
   public boolean hasSupplyTemperature() {
     return !Double.isNaN(supplyTemperature);
   }
 
-  /** Returns true if a return temperature has been specified. */
+  /**
+   * Returns true if a return temperature has been specified.
+   *
+   * @return true if return temperature is specified
+   */
   public boolean hasReturnTemperature() {
     return !Double.isNaN(returnTemperature);
   }
 
-  /** Returns true if a minimum approach temperature has been specified. */
+  /**
+   * Returns true if a minimum approach temperature has been specified.
+   *
+   * @return true if approach temperature is specified
+   */
   public boolean hasApproachTemperature() {
     return !Double.isNaN(approachTemperature);
   }
 
-  /** Returns true if a heat-capacity rate has been specified. */
+  /**
+   * Returns true if a heat-capacity rate has been specified.
+   *
+   * @return true if heat capacity rate is specified
+   */
   public boolean hasHeatCapacityRate() {
     return !Double.isNaN(heatCapacityRate) && heatCapacityRate > 0.0;
   }
 
-  /** Returns true if an overall heat-transfer coefficient has been specified. */
+  /**
+   * Returns true if an overall heat-transfer coefficient has been specified.
+   *
+   * @return true if overall heat transfer coefficient is specified
+   */
   public boolean hasOverallHeatTransferCoefficient() {
     return !Double.isNaN(overallHeatTransferCoefficient) && overallHeatTransferCoefficient > 0.0;
   }

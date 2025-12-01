@@ -251,7 +251,11 @@ public class MechanicalDesign implements java.io.Serializable {
     initMechanicalDesign();
   }
 
-  /** Add an additional data source used when loading design limits. */
+  /**
+   * Add an additional data source used when loading design limits.
+   *
+   * @param dataSource the data source to add
+   */
   public void addDesignDataSource(MechanicalDesignDataSource dataSource) {
     if (dataSource == null) {
       return;

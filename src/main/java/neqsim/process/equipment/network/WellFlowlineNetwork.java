@@ -50,7 +50,11 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
       }
     }
 
-    /** Run steady-state inflow and hydraulics for this branch. */
+    /**
+     * Run steady-state inflow and hydraulics for this branch.
+     *
+     * @param id calculation identifier
+     */
     void run(UUID id) {
       well.run(id);
       if (choke != null) {
@@ -63,7 +67,12 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
       }
     }
 
-    /** Run transient inflow and hydraulics for this branch. */
+    /**
+     * Run transient inflow and hydraulics for this branch.
+     *
+     * @param dt time step
+     * @param id calculation identifier
+     */
     void runTransient(double dt, UUID id) {
       well.runTransient(dt, id);
       if (choke != null) {
@@ -493,6 +502,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   /**
    * Force a single pressure at each manifold outlet and optionally push that backpressure to wells
    * that solve for flow from outlet pressure.
+   *
+   * @param id calculation identifier
    */
   private void enforceManifoldPressures(UUID id) {
     if (getBranches().isEmpty()) {
@@ -528,6 +539,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   /**
    * Iteratively adjust terminal manifold pressure so that the endpoint (arrival or facility outlet)
    * pressure matches the configured target.
+   *
+   * @param id calculation identifier
    */
   private void iterateForEndpointPressure(UUID id) {
     double manifoldGuess = targetEndpointPressure;
@@ -569,6 +582,10 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
 
   /**
    * Run through all manifolds and branches in upstream-to-downstream order.
+   *
+   * @param id calculation identifier
+   * @param forceEndpointPressure whether to force endpoint pressure
+   * @param endpointPressure the endpoint pressure to force
    */
   private void runManifolds(UUID id, boolean forceEndpointPressure, Double endpointPressure) {
     List<ManifoldNode> orderedManifolds = getReachableManifoldsInFlowOrder();
@@ -692,6 +709,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * Determine a topologically sorted list of manifolds that feed the tail manifold. Manifolds that
    * are not connected to the terminal chain are ignored to avoid null arrival streams interfering
    * with calculations.
+   *
+   * @return list of manifolds in flow order
    */
   private List<ManifoldNode> getReachableManifoldsInFlowOrder() {
     List<ManifoldNode> ordered = new ArrayList<>();

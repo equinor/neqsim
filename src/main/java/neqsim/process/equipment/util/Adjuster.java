@@ -52,8 +52,6 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    * <p>
    * Constructor for Adjuster.
    * </p>
-   * tructor for Adjuster.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */

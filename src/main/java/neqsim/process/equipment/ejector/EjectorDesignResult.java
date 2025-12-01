@@ -74,6 +74,8 @@ public final class EjectorDesignResult {
 
   /**
    * Returns an empty design result.
+   *
+   * @return an empty ejector design result with all fields set to 0.0
    */
   public static EjectorDesignResult empty() {
     return new EjectorDesignResult(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
