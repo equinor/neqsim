@@ -31,6 +31,10 @@ $$
 \text{Rest Capacity} = \text{Maximum Capacity} - \text{Current Duty}
 $$
 
+Use `ProductionOptimizer.OptimizationConfig.capacityRangeForType` to supply P10/P50/P90
+envelopes for equipment without deterministic limits and specify a percentile via
+`capacityPercentile` (e.g., 0.1 for P10 or 0.9 for P90 stress tests).
+
 ## Implementation Details
 
 ### ProcessEquipmentInterface
@@ -54,13 +58,15 @@ Currently, the following equipment types support capacity analysis:
 
 | Equipment | Duty Metric | Capacity Parameter |
 |-----------|-------------|--------------------|
-| **Compressor** | Power (W) | `MechanicalDesign.maxDesignPower` |
+| **Compressor** | Power (W) | `MechanicalDesign.maxDesignPower` with optional P10/P50/P90 overrides |
 | **Separator** | Gas Flow ($m^3/hr$) | `MechanicalDesign.maxDesignGassVolumeFlow` |
 | **Pump** | Power (W) | `MechanicalDesign.maxDesignPower` |
 | **Heater** | Duty (W) | `MechanicalDesign.maxDesignDuty` |
 | **Cooler** | Duty (W) | `MechanicalDesign.maxDesignDuty` |
 | **ThrottlingValve** | Volume Flow ($m^3/hr$) | `MechanicalDesign.maxDesignVolumeFlow` |
 | **Pipeline** | Volume Flow ($m^3/hr$) | `MechanicalDesign.maxDesignVolumeFlow` |
+| **DistillationColumn** | Fs hydraulic factor | `OptimizationConfig.columnFsFactorLimit` (default 2.5) |
+| **Custom types** | User-supplied duty/limit lambdas | Configure via `capacityRuleForType` |
 
 ## Example Usage
 
@@ -132,53 +138,221 @@ The bottleneck analysis feature is a powerful tool for optimizing production. By
 
 ### Optimization Workflow
 
-1.  **Define Objective**: Typically, the goal is to maximize the feed flow rate.
-2.  **Identify Constraints**: The constraints are the maximum capacities of all equipment in the system.
-3.  **Iterative Solver**:
-    *   Run the simulation with an initial feed rate.
-    *   Check `process.getBottleneck()`.
-    *   If the bottleneck utilization is < 100%, increase the feed rate.
-    *   If the bottleneck utilization is > 100%, decrease the feed rate.
-    *   Repeat until the bottleneck utilization is exactly 100% (or a safety margin, e.g., 95%).
+1.  **Define Objective**: Configure one or more objectives (e.g., maximize throughput while penalizing power) using `OptimizationObjective` weights.
+2.  **Identify Constraints**: Provide utilization limits per equipment name or type plus custom hard/soft constraints via `OptimizationConstraint`. Safety margins and capacity-uncertainty factors can be applied globally so bottleneck checks keep headroom.
+3.  **Iterative Solver (selectable)**:
+    *   `BINARY_FEASIBILITY` (default) targets monotonic systems and searches on feasibility margins.
+    *   `GOLDEN_SECTION_SCORE` samples non-monotonic responses using weighted objectives and constraint penalties to guide the search.
+    *   `NELDER_MEAD_SCORE` applies a simplex-based heuristic to handle noisy or coupled objectives without assuming monotonicity.
+    *   `PARTICLE_SWARM_SCORE` explores the design space with a configurable swarm size/inertia/weights, useful when the objective landscape has multiple peaks.
+4.  **Diagnostics & reporting**:
+    *   Each run keeps an `iterationHistory` with per-iteration utilization snapshots so you can plot trajectories of bottleneck movement and score versus candidate rate to understand convergence.
+    *   Use `ProductionOptimizer.buildUtilizationSeries(result.getIterationHistory())` to feed plotting libraries or CSV exports and `formatUtilizationTimeline(...)` to highlight bottlenecks per iteration in Markdown.
+    *   Use `ProductionOptimizer.formatUtilizationTable(result.getUtilizationRecords())` to render a quick Markdown table of duties, capacities, and limits for reports.
+    *   Scenario helpers let you run a base case and multiple debottleneck cases in one call for side-by-side reporting, including KPI deltas and Markdown tables that highlight the gain relative to the baseline.
+    *   Caching (enabled by default) reuses steady-state evaluations at similar rates to cut down on reruns during heuristic searches.
 
-### Example: Maximizing Production
+### Example: Using `ProductionOptimizer`
 
-This example demonstrates a simple optimization loop to find the maximum possible feed rate before hitting a bottleneck.
+The `ProductionOptimizer` utility adds structured reporting and constraint handling on top of the existing bottleneck functions:
 
 ```java
-import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.processmodel.ProcessSystem;
+import java.util.List;
+import neqsim.process.util.optimization.ProductionOptimizer;
+import neqsim.process.util.optimization.ProductionOptimizer.ConstraintSeverity;
+import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig;
+import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConstraint;
+import neqsim.process.util.optimization.ProductionOptimizer.OptimizationObjective;
+import neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult;
 
-public class OptimizationExample {
-    public static void optimizeProduction(ProcessSystem process, Stream inletStream) {
-        double low = 0.0;
-        double high = 1000.0; // Assume a high upper bound for flow rate
-        double tolerance = 0.01; // Convergence tolerance
+ProductionOptimizer optimizer = new ProductionOptimizer();
 
-        while ((high - low) > tolerance) {
-            double mid = (low + high) / 2.0;
-            inletStream.setFlowRate(mid, "MSm3/day");
-            process.run();
+OptimizationConfig config = new OptimizationConfig(100.0, 5_000.0)
+    .rateUnit("kg/hr")
+    .tolerance(5.0)
+    .defaultUtilizationLimit(0.95)
+    .utilizationMarginFraction(0.1) // keep 10% headroom on every unit
+    .capacityUncertaintyFraction(0.05) // down-rate capacities for uncertainty
+    .capacityPercentile(0.1) // pick P10/P50/P90 from optional ranges
+    .capacityRangeSpreadFraction(0.15) // auto-build P10/P90 around design capacity
+    .columnFsFactorLimit(2.2) // set column hydraulic headroom
+    .utilizationLimitForName("compressor", 0.9);
 
-            ProcessEquipmentInterface bottleneck = process.getBottleneck();
-            double maxUtilization = 0.0;
-            
-            if (bottleneck != null) {
-                maxUtilization = bottleneck.getCapacityDuty() / bottleneck.getCapacityMax();
-            }
+OptimizationObjective objective = new OptimizationObjective("maximize rate",
+    proc -> process.getBottleneck().getCapacityDuty(), 1.0);
 
-            if (maxUtilization > 1.0) {
-                high = mid; // Too high, reduce flow
-            } else {
-                low = mid; // Safe, try increasing flow
-            }
-        }
+OptimizationConstraint keepPowerLow = OptimizationConstraint.lessThan("compressor load",
+    proc -> compressor.getCapacityDuty() / compressor.getCapacityMax(), 0.9,
+    ConstraintSeverity.SOFT, 5.0, "Prefer 10% safety margin on compressor");
 
-        System.out.println("Maximum Production Rate: " + low + " MSm3/day");
-        System.out.println("Limiting Factor: " + process.getBottleneck().getName());
-    }
-}
+// Enforce equipment-type constraints (e.g., pressure ratio below 10 for all compressors)
+config.equipmentConstraintRule(new EquipmentConstraintRule(Compressor.class, "pressure ratio",
+    unit -> ((Compressor) unit).getOutStream().getPressure() / ((Compressor) unit)
+        .getInletStream().getPressure(), 10.0,
+    ProductionOptimizer.ConstraintDirection.LESS_THAN, ConstraintSeverity.HARD, 0.0,
+    "Keep pressure ratio within design"));
+
+OptimizationResult result = optimizer.optimize(process, inletStream, config,
+    List.of(objective), List.of(keepPowerLow));
+
+System.out.println("Optimal rate: " + result.getOptimalRate() + " " + result.getRateUnit());
+System.out.println("Bottleneck: " + result.getBottleneck().getName());
+result.getUtilizationRecords().forEach(record ->
+    System.out.println(record.getEquipmentName() + " utilization: " + record.getUtilization()));
+// Optional: plot or log iteration history for transparency
+result.getIterationHistory().forEach(iter -> System.out.println(
+    "Iter " + iter.getRate() + " " + iter.getRateUnit() + " bottleneck="
+        + iter.getBottleneckName() + " feasible=" + iter.isFeasible() + " score="
+        + iter.getScore() + " utilizationCount=" + iter.getUtilizations().size()));
+
+// Quick high-level summary without manual bounds/objective wiring
+OptimizationSummary summary = optimizer.quickOptimize(process, inletStream);
+System.out.println("Max rate: " + summary.getMaxRate() + " " + summary.getRateUnit());
+System.out.println("Limiting equipment: " + summary.getLimitingEquipment()
+    + " margin=" + summary.getUtilizationMargin());
+System.out.println(ProductionOptimizer.formatUtilizationTimeline(result.getIterationHistory()));
+
+// Built-in capacity coverage now includes separators (liquid level fraction) and
+// MultiStream heat exchangers (duty vs design) in addition to compressors/pumps/columns.
+
+// Swarm search example via YAML/JSON specs
+// searchMode, swarmSize, inertiaWeight, and capacityPercentile can be provided per scenario
 ```
+
+To vary multiple feeds or set points at once (e.g., two inlet streams plus a compressor pressure),
+define `ManipulatedVariable` instances and call the multi-variable overload:
+
+```java
+ManipulatedVariable feedNorth = new ManipulatedVariable("north", 100.0, 800.0, "kg/hr",
+    (proc, value) -> northStream.setFlowRate(value, "kg/hr"));
+ManipulatedVariable feedSouth = new ManipulatedVariable("south", 100.0, 800.0, "kg/hr",
+    (proc, value) -> southStream.setFlowRate(value, "kg/hr"));
+ManipulatedVariable compressorSetPoint = new ManipulatedVariable("compressor pressure", 40.0,
+    80.0, "bara", (proc, value) -> compressor.setOutletPressure(value));
+
+OptimizationResult multiVar = optimizer.optimize(process, List.of(feedNorth, feedSouth,
+    compressorSetPoint), config.searchMode(SearchMode.PARTICLE_SWARM_SCORE), List.of(objective),
+    List.of(keepPowerLow));
+```
+
+### Comparing debottlenecking scenarios
+
+Use `compareScenarios` to run a baseline plus multiple upgrades and compute KPI deltas in one
+report-ready table:
+
+```java
+ScenarioRequest baseCase = new ScenarioRequest("base", baseProcess, baseFeed, baseConfig,
+    List.of(objective), List.of(keepPowerLow));
+ScenarioRequest upgradeCase = new ScenarioRequest("upgrade", upgradedProcess, upgradedFeed,
+    baseConfig, List.of(objective), List.of(keepPowerLow));
+
+List<ScenarioKpi> kpis = List.of(ScenarioKpi.optimalRate("kg/hr"), ScenarioKpi.score());
+ScenarioComparisonResult comparison = optimizer.compareScenarios(
+    List.of(baseCase, upgradeCase), kpis);
+
+System.out.println(ProductionOptimizer.formatScenarioComparisonTable(comparison, kpis));
+```
+
+The first scenario is treated as the baseline; each KPI cell shows `value (Δbaseline)` so uplift from
+debottlenecking is immediately visible alongside bottleneck names and feasibility flags.
+
+### Running from JSON/YAML specs
+
+For reproducible CLI/CI runs, define scenarios in a YAML or JSON file (bounds, objectives,
+constraints) and load them via `ProductionOptimizationSpecLoader.load(...)` while passing in a
+registry of process models, feed streams, and metric functions keyed by name. This allows
+side-by-side optimization of investment options without hard-coding Java configuration:
+
+```yaml
+scenarios:
+  - name: base
+    process: baseProcess
+    feedStream: inlet
+    lowerBound: 100.0
+    upperBound: 2000.0
+    rateUnit: kg/hr
+    searchMode: BINARY_FEASIBILITY
+    constraints:
+      - name: column_pressure
+        metric: columnPressureRatio
+        limit: 1.8
+        direction: LESS_THAN
+        severity: HARD
+  - name: upgrade
+    process: upgradedProcess
+    feedStream: inlet
+    lowerBound: 100.0
+    upperBound: 2500.0
+    rateUnit: kg/hr
+    searchMode: PARTICLE_SWARM_SCORE
+```
+
+After loading, call `optimizer.optimizeScenarios(...)` or `optimizer.compareScenarios(...)` to render
+side-by-side KPIs automatically for the pipeline or report.
+
+#### Advanced YAML with multi-objective scoring and variable feeds
+
+To mirror the multi-objective/variable-driven test coverage, you can encode both throughput and
+penalty objectives while letting a swarm search vary a feed stream directly:
+
+```yaml
+scenarios:
+  - name: base
+    process: base
+    feedStream: feed1
+    lowerBound: 100.0
+    upperBound: 320.0
+    rateUnit: kg/hr
+    capacityPercentile: 0.9
+    objectives:
+      - name: rate
+        metric: throughput
+        weight: 1.0
+        type: MAXIMIZE
+      - name: compressorUtilPenalty
+        metric: compressorUtil
+        weight: -0.1
+        type: MAXIMIZE
+    constraints:
+      - name: utilizationCap
+        metric: compressorUtil
+        limit: 0.95
+        direction: LESS_THAN
+        severity: HARD
+        penaltyWeight: 0.0
+        description: Keep compressor within design
+  - name: upgrade
+    process: upgrade
+    lowerBound: 120.0
+    upperBound: 340.0
+    rateUnit: kg/hr
+    searchMode: PARTICLE_SWARM_SCORE
+    utilizationMarginFraction: 0.05
+    capacityPercentile: 0.9
+    variables:
+      - name: feed2Variable
+        stream: feed2
+        lowerBound: 120.0
+        upperBound: 340.0
+        unit: kg/hr
+    objectives:
+      - name: rate
+        metric: throughput
+        weight: 1.0
+        type: MAXIMIZE
+    constraints:
+      - name: utilizationCap
+        metric: compressorUtil
+        limit: 0.95
+        direction: LESS_THAN
+        severity: HARD
+        penaltyWeight: 0.0
+        description: Keep compressor within design
+```
+
+Hook this into `ProductionOptimizationSpecLoader.load(...)` with metric lambdas for `throughput` and
+`compressorUtil`, then call `optimizer.optimizeScenarios(...)` to exercise the same workflow shown in
+the regression test while generating Markdown comparison tables for reports.
 
 ### Debottlenecking Studies
 
