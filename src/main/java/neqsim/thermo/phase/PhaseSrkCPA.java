@@ -1151,7 +1151,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       d2 = -dh / dhh;
       // System.out.println("h " + h + " iter " + iterations + " " + d1 + " d2 " + d2
       // + " d1 / d2 " + (d1 / d2));
-      if (Math.abs(d1 / d2) <= 1.0) {
+      if (Double.isNaN(d1) || Double.isNaN(d2)) {
+        return molarVolumeChangePhase(pressure, temperature, A, B, pt);
+      } else if (Math.abs(d1 / d2) <= 1.0) {
         BonV += d1 * (1.0 + 0.5 * d1 / d2);
       } else if (d1 / d2 < -1) {
         BonV += 0.5 * d1;
@@ -1169,6 +1171,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       }
       if (Math.abs((BonV - BonVold) / BonV) > 0.1) {
         BonV = BonVold + 0.1 * (BonV - BonVold);
+      }
+      if (Double.isNaN(BonV)) {
+        return molarVolumeChangePhase(pressure, temperature, A, B, pt);
       }
       if (BonV < 0) {
         if (iterations < 10) {
@@ -1304,7 +1309,11 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       d1 = -h / dh;
       d2 = -dh / dhh;
       // System.out.println("d1" + d1 + " d2 " + d2 + " d1 / d2 " + (d1 / d2));
-      if (Math.abs(d1 / d2) <= 1.0) {
+
+      if (Double.isNaN(d1) || Double.isNaN(d2)) {
+        BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+      } else if (Math.abs(d1 / d2) <= 1.0) {
         BonV += d1 * (1.0 + 0.5 * d1 / d2);
       } else if (d1 / d2 < -1) {
         BonV += 0.5 * d1;
@@ -1320,6 +1329,11 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       }
       if (Math.abs((BonV - BonVold) / BonVold) > 0.1) {
         BonV = BonVold + 0.1 * (BonV - BonVold);
+      }
+
+      if (Double.isNaN(BonV)) {
+        BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
       }
 
       if (BonV > 1.1) {
