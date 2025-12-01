@@ -141,6 +141,8 @@ public class DistillationColumnMatrixSolver {
    * Solves the tridiagonal matrix for each component to find liquid molar flow rates. Returns
    * x[tray][component] (liquid mole fractions) or l[tray][component] (molar flows). Let's return
    * molar flows l[tray][component].
+   *
+   * @return liquid molar flow rates as l[tray][component]
    */
   private double[][] solveComponentBalances() {
     double[][] l_flows = new double[nTrays][nComps];

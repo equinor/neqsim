@@ -367,6 +367,29 @@ public class IntegratedSafetySystemExample {
 
   /**
    * Scenario 1: Normal operation with monitoring.
+   *
+   * @param highPressureFeed high pressure feed stream
+   * @param hippsValve HIPPS valve
+   * @param esdInletValve ESD inlet valve
+   * @param separatorInlet separator inlet stream
+   * @param separator separator equipment
+   * @param separatorGasOut separator gas outlet stream
+   * @param gasSplitter gas splitter
+   * @param processStream process stream
+   * @param blowdownStream blowdown stream
+   * @param bdValve blowdown valve
+   * @param psv pressure safety valve
+   * @param psvOutlet PSV outlet stream
+   * @param flareHeader flare header mixer
+   * @param flareHeaderOutlet flare header outlet stream
+   * @param flare flare equipment
+   * @param hippsPT1 HIPPS pressure transmitter 1
+   * @param hippsPT2 HIPPS pressure transmitter 2
+   * @param separatorPT separator pressure transmitter
+   * @param separatorTT separator temperature transmitter
+   * @param hippsController HIPPS controller
+   * @param esdController ESD controller
+   * @param fireSystem fire detection system
    */
   private static void runScenario1_NormalOperation(Stream highPressureFeed,
       ThrottlingValve hippsValve, ThrottlingValve esdInletValve, Stream separatorInlet,

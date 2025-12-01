@@ -25,6 +25,25 @@ public final class EjectorDesignResult {
 
   /**
    * Creates a new design result.
+   *
+   * @param mixingPressure mixing pressure
+   * @param motiveNozzleThroatArea motive nozzle throat area
+   * @param motiveNozzleExitVelocity motive nozzle exit velocity
+   * @param suctionInletArea suction inlet area
+   * @param suctionInletVelocity suction inlet velocity
+   * @param mixingChamberArea mixing chamber area
+   * @param mixingChamberVelocity mixing chamber velocity
+   * @param diffuserOutletArea diffuser outlet area
+   * @param diffuserOutletVelocity diffuser outlet velocity
+   * @param entrainmentRatio entrainment ratio
+   * @param motiveNozzleEffectiveLength motive nozzle effective length
+   * @param suctionInletLength suction inlet length
+   * @param mixingChamberLength mixing chamber length
+   * @param diffuserOutletLength diffuser outlet length
+   * @param bodyVolume body volume
+   * @param connectedPipingVolume connected piping volume
+   * @param suctionConnectionLength suction connection length
+   * @param dischargeConnectionLength discharge connection length
    */
   public EjectorDesignResult(double mixingPressure, double motiveNozzleThroatArea,
       double motiveNozzleExitVelocity,
