@@ -2,6 +2,7 @@ package neqsim.process.equipment.util;
 
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
@@ -25,6 +26,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
   ArrayList<ProcessEquipmentInterface> inputVariable = new ArrayList<ProcessEquipmentInterface>();
   private ProcessEquipmentInterface outputVariable;
+  private BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> calculationMethod;
   String type = "sumTEG";
 
   /**
@@ -92,6 +94,15 @@ public class Calculator extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (calculationMethod != null) {
+      try {
+        calculationMethod.accept(inputVariable, outputVariable);
+      } catch (Exception ex) {
+        logger.error("Error in custom calculation", ex);
+      }
+      setCalculationIdentifier(id);
+      return;
+    }
     double sum = 0.0;
     if (name.startsWith("anti surge calculator")) {
       runAntiSurgeCalc(id);
@@ -133,5 +144,17 @@ public class Calculator extends ProcessEquipmentBaseClass {
    */
   public void setOutputVariable(ProcessEquipmentInterface outputVariable) {
     this.outputVariable = outputVariable;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>calculationMethod</code>.
+   * </p>
+   *
+   * @param calculationMethod a {@link java.util.function.BiConsumer} object
+   */
+  public void setCalculationMethod(
+      BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> calculationMethod) {
+    this.calculationMethod = calculationMethod;
   }
 }
