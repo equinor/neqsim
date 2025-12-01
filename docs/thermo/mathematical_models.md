@@ -39,6 +39,15 @@ fluid.setMixingRule(2); // 2 = Huron–Vidal; use 1 for classical van der Waals
 ```
 Use `SystemSrkCPAstatoil` or `SystemSrkCPAs` when hydrogen bonding is important, and prefer PR variants for high-pressure gas processing.
 
+### Reference Equations of State (Helmholtz Energy)
+
+For high-accuracy applications involving natural gas or CCS mixtures, NeqSim supports multi-parameter equations of state explicit in the Helmholtz free energy:
+
+- **GERG-2008** (`SystemGERG2008Eos`): The ISO 20765-2 standard for natural gas.
+- **EOS-CG** (`SystemEOSCGEos`): An extension of GERG-2008 for combustion gases and CCS mixtures (including impurities like SO2, NO, NO2).
+
+See the [GERG-2008 and EOS-CG guide](gerg2008_eoscg.md) for details.
+
 ## Activity-Coefficient Models
 NeqSim provides NRTL/UNIQUAC/UNIFAC variants for non-ideal liquid mixtures. They can be used directly for gamma-phi flashes or combined with cubic EoS via Wong–Sandler mixing rules.
 
