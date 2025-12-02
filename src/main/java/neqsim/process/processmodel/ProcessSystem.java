@@ -35,6 +35,7 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.RecycleController;
 import neqsim.process.equipment.util.Setter;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
+import neqsim.process.util.ProcessSystemUtils;
 import neqsim.process.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -1793,4 +1794,98 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * public Report getReport(){ return this.new Report(); }
    */
+
+  // New enum for equipment types
+  public enum EquipmentEnum {
+    STREAM("Stream"), THROTTLING_VALVE("ThrottlingValve"), COMPRESSOR("Compressor"), PUMP(
+        "Pump"), SEPARATOR("Separator");
+
+    private final String typeName;
+
+    EquipmentEnum(String typeName) {
+      this.typeName = typeName;
+    }
+
+    public String getTypeName() {
+      return typeName;
+    }
+  }
+
+  // Overloaded addUnit method
+  public ProcessEquipmentInterface addUnit(String name, EquipmentEnum equipmentType) {
+    ProcessEquipmentInterface unit = createUnit(equipmentType);
+    unit.setName(name);
+    this.add(unit);
+    return unit;
+  }
+
+  public ProcessEquipmentInterface addUnit(EquipmentEnum equipmentType) {
+    String defaultName = generateDefaultName(equipmentType);
+    return addUnit(defaultName, equipmentType);
+  }
+
+  private ProcessEquipmentInterface createUnit(EquipmentEnum equipmentType) {
+    switch (equipmentType) {
+      case STREAM:
+        return new neqsim.process.equipment.stream.Stream();
+      case THROTTLING_VALVE:
+        return new neqsim.process.equipment.valve.ThrottlingValve();
+      case COMPRESSOR:
+        return new neqsim.process.equipment.compressor.Compressor();
+      case PUMP:
+        return new neqsim.process.equipment.pump.Pump();
+      case SEPARATOR:
+        return new neqsim.process.equipment.separator.Separator();
+      default:
+        throw new IllegalArgumentException("Unsupported equipment type: " + equipmentType);
+    }
+  }
+
+  private String generateDefaultName(EquipmentEnum equipmentType) {
+    String baseName = equipmentType.name().toLowerCase();
+    int count = 1;
+    while (hasUnitName(baseName + "_" + count)) {
+      count++;
+    }
+    return baseName + "_" + count;
+  }
+
+  // Automatic connection of streams
+  public void connectStreams(ProcessEquipmentInterface source, ProcessEquipmentInterface target) {
+    if (source instanceof neqsim.process.equipment.stream.Stream
+        && target instanceof neqsim.process.equipment.stream.ProcessEquipmentInterface) {
+      ((neqsim.process.equipment.stream.ProcessEquipmentInterface) target)
+          .setInletStream((neqsim.process.equipment.stream.Stream) source);
+    }
+  }
+
+  // Method to create a process system from a YAML/JSON file
+  public void createFromDescription(String filePath) {
+    try {
+      ProcessSystemUtils.createFromDescription(this, filePath);
+    } catch (Exception e) {
+      logger.error("Error creating process system from description: " + e.getMessage(), e);
+    }
+  }
+
+  // Method to export process flow diagram
+  public void exportProcessFlowDiagram(String outputFilePath) {
+    try {
+      ProcessSystemUtils.exportProcessFlowDiagram(this, outputFilePath);
+    } catch (Exception e) {
+      logger.error("Error exporting process flow diagram: " + e.getMessage(), e);
+    }
+  }
+
+  public void connect(ProcessEquipmentInterface fromUnit, ProcessEquipmentInterface toUnit) {
+    try {
+        java.lang.reflect.Method getOutlet = fromUnit.getClass().getMethod("getOutletStream");
+        Object outletStream = getOutlet.invoke(fromUnit);
+
+        java.lang.reflect.Method setInlet = toUnit.getClass().getMethod("setInletStream", outletStream.getClass());
+        setInlet.invoke(toUnit, outletStream);
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
 }
