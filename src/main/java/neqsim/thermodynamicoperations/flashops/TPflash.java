@@ -74,13 +74,13 @@ public class TPflash extends Flash {
    */
   public void sucsSubs() {
     deviation = 0;
-    var phase0 = system.getPhase(0);
-    var phase1 = system.getPhase(1);
+    neqsim.thermo.phase.PhaseInterface phase0 = system.getPhase(0);
+    neqsim.thermo.phase.PhaseInterface phase1 = system.getPhase(1);
     int numComponents = phase0.getNumberOfComponents();
 
     for (i = 0; i < numComponents; i++) {
-      var comp0 = phase0.getComponent(i);
-      var comp1 = phase1.getComponent(i);
+      neqsim.thermo.component.ComponentInterface comp0 = phase0.getComponent(i);
+      neqsim.thermo.component.ComponentInterface comp1 = phase1.getComponent(i);
       if (comp0.getIonicCharge() != 0 || comp0.isIsIon()) {
         Kold = comp0.getK();
         comp0.setK(1.0e-40);
@@ -90,7 +90,7 @@ public class TPflash extends Flash {
         double newK = comp1.getFugacityCoefficient() / comp0.getFugacityCoefficient() * presdiff;
         if (Double.isNaN(newK)) {
           comp0.setK(Kold);
-          system.init(1);
+          // Note: No init(1) here - it will be called at the end of sucsSubs after calc_x_y
         } else {
           comp0.setK(newK);
         }
@@ -127,8 +127,8 @@ public class TPflash extends Flash {
    * </p>
    */
   public void accselerateSucsSubs() {
-    var phase0 = system.getPhase(0);
-    var phase1 = system.getPhase(1);
+    neqsim.thermo.phase.PhaseInterface phase0 = system.getPhase(0);
+    neqsim.thermo.phase.PhaseInterface phase1 = system.getPhase(1);
     int numComponents = phase0.getNumberOfComponents();
     double prod1 = 0.0;
     double prod2 = 0.0;
@@ -173,8 +173,8 @@ public class TPflash extends Flash {
    * </p>
    */
   public void setNewK() {
-    var phase0 = system.getPhase(0);
-    var phase1 = system.getPhase(1);
+    neqsim.thermo.phase.PhaseInterface phase0 = system.getPhase(0);
+    neqsim.thermo.phase.PhaseInterface phase1 = system.getPhase(1);
     int numComponents = phase0.getNumberOfComponents();
     for (i = 0; i < numComponents; i++) {
       lnOldOldOldK[i] = lnOldOldK[i];
@@ -195,8 +195,8 @@ public class TPflash extends Flash {
    * </p>
    */
   public void resetK() {
-    var phase0 = system.getPhase(0);
-    var phase1 = system.getPhase(1);
+    neqsim.thermo.phase.PhaseInterface phase0 = system.getPhase(0);
+    neqsim.thermo.phase.PhaseInterface phase1 = system.getPhase(1);
     int numComponents = phase0.getNumberOfComponents();
     for (i = 0; i < numComponents; i++) {
       lnK[i] = lnOldK[i];
@@ -478,14 +478,18 @@ public class TPflash extends Flash {
         chemdev = 0.0;
 
         double[] xchem = new double[system.getPhase(0).getNumberOfComponents()];
+        boolean needsInit = false; // First iteration doesn't need init - sucsSubs already called it
 
         for (int phaseNum = 1; phaseNum < system.getNumberOfPhases(); phaseNum++) {
           for (i = 0; i < system.getPhase(phaseNum).getNumberOfComponents(); i++) {
             xchem[i] = system.getPhase(phaseNum).getComponent(i).getx();
           }
 
-          system.init(1);
+          if (needsInit) {
+            system.init(1);
+          }
           system.getChemicalReactionOperations().solveChemEq(phaseNum, 1);
+          needsInit = true; // After first solveChemEq, subsequent iterations need init
 
           for (i = 0; i < system.getPhase(phaseNum).getNumberOfComponents(); i++) {
             chemdev +=
