@@ -120,16 +120,24 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   @Override
   public void run(UUID id) {
     double enthalpy = 0.0;
+    // double flowRate = ((Stream)
+    // streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
+    // ((Stream) streams.get(0)).getThermoSystem().display();
     boolean changeTo2Phase = false;
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
     if (thermoSystem2.doMultiPhaseCheck()) {
       changeTo2Phase = true;
       thermoSystem2.setMultiPhaseCheck(false);
     }
-    if (trayPressure > 0) {
+    // System.out.println("total number of moles " +
+    // thermoSystem2.getTotalNumberOfMoles());
+    if (trayPressure > 0)
+
+    {
       thermoSystem2.setPressure(trayPressure);
     }
     mixedStream.setThermoSystem(thermoSystem2);
+    // thermoSystem2.display();
     ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
     if (streams.size() > 0) {
       mixedStream.getThermoSystem().setNumberOfPhases(2);
@@ -140,9 +148,13 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
         mixedStream.setPressure(trayPressure, "bara");
       }
       enthalpy = calcMixStreamEnthalpy();
-      if (isSetOutTemperature()) {
+      // System.out.println("temp guess " + guessTemperature());
+      if (!isSetOutTemperature()) {
+        // mixedStream.getThermoSystem().setTemperature(guessTemperature());
+      } else {
         mixedStream.setTemperature(getOutTemperature(), "K");
       }
+      // System.out.println("filan temp " + mixedStream.getTemperature());
     }
     if (isSetOutTemperature()) {
       if (!Double.isNaN(getOutTemperature())) {
