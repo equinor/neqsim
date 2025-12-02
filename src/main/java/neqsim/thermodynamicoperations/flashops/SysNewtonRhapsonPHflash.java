@@ -283,6 +283,53 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
    * @return a int
    */
   public int solve(int np) {
+    if (Math.abs(system.getBeta()) < 1e-6 || Math.abs(system.getBeta() - 1.0) < 1e-6) {
+      int iterSingle = 0;
+      double err = 0.0;
+      double oldTemp = system.getTemperature();
+
+      do {
+        iterSingle++;
+        system.init(3);
+        double val = 0.0;
+        double dValdT = 0.0;
+
+        if (type == 0) { // PH Flash
+          val = system.getEnthalpy();
+          dValdT = system.getCp();
+        } else { // PS Flash
+          val = system.getEntropy();
+          dValdT = system.getCp() / system.getTemperature();
+        }
+
+        err = val - specVar;
+
+        if (Math.abs(err) < 1e-6) {
+          return 1;
+        }
+
+        double dT = err / dValdT;
+
+        // Limit step size
+        if (Math.abs(dT) > 0.2 * system.getTemperature()) {
+          dT = Math.signum(dT) * 0.2 * system.getTemperature();
+        }
+
+        system.setTemperature(system.getTemperature() - dT);
+
+        if (system.getTemperature() <= 0) {
+          system.setTemperature(oldTemp);
+          break; // Failed, go to 2-phase
+        }
+
+      } while (iterSingle < 100);
+
+      // If converged
+      if (Math.abs(err) < 1e-6) {
+        return 1;
+      }
+    }
+
     iter = 1;
     do {
       iter++;
