@@ -695,7 +695,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[i],
             trays.get(i).getLiquidOutStream(), relaxation);
         trays.get(i - 1).replaceStream(replaceStream, relaxedLiquid);
-        currentLiquidStreams[i] = relaxedLiquid.clone();
+        currentLiquidStreams[i] = relaxedLiquid;
         trays.get(i - 1).run(id);
       }
 
@@ -703,7 +703,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       StreamInterface reboilerFeed =
           applyRelaxation(previousLiquidStreams[1], trays.get(1).getLiquidOutStream(), relaxation);
       trays.get(0).replaceStream(streamNumb, reboilerFeed);
-      currentLiquidStreams[1] = reboilerFeed.clone();
+      currentLiquidStreams[1] = reboilerFeed;
       trays.get(0).run(id);
 
       for (int i = 1; i <= numberOfTrays - 1; i++) {
@@ -714,7 +714,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         StreamInterface relaxedGas = applyRelaxation(previousGasStreams[i - 1],
             trays.get(i - 1).getGasOutStream(), relaxation);
         trays.get(i).replaceStream(replaceStream, relaxedGas);
-        currentGasStreams[i - 1] = relaxedGas.clone();
+        currentGasStreams[i - 1] = relaxedGas;
         trays.get(i).run(id);
       }
 
@@ -723,7 +723,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[i + 1],
             trays.get(i + 1).getLiquidOutStream(), relaxation);
         trays.get(i).replaceStream(replaceStream, relaxedLiquid);
-        currentLiquidStreams[i + 1] = relaxedLiquid.clone();
+        currentLiquidStreams[i + 1] = relaxedLiquid;
         trays.get(i).run(id);
       }
 
@@ -974,7 +974,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[stage],
             trays.get(stage).getLiquidOutStream(), relaxation);
         trays.get(target).replaceStream(replaceStream, relaxedLiquid);
-        currentLiquidStreams[stage] = relaxedLiquid.clone();
+        currentLiquidStreams[stage] = relaxedLiquid;
         trays.get(target).run(id);
       }
 
@@ -986,7 +986,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         StreamInterface relaxedGas = applyRelaxation(previousGasStreams[stage - 1],
             trays.get(stage - 1).getGasOutStream(), relaxation);
         trays.get(stage).replaceStream(replaceStream, relaxedGas);
-        currentGasStreams[stage - 1] = relaxedGas.clone();
+        currentGasStreams[stage - 1] = relaxedGas;
         trays.get(stage).run(id);
       }
 
@@ -995,7 +995,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[stage + 1],
             trays.get(stage + 1).getLiquidOutStream(), relaxation);
         trays.get(stage).replaceStream(replaceStream, relaxedLiquid);
-        currentLiquidStreams[stage + 1] = relaxedLiquid.clone();
+        currentLiquidStreams[stage + 1] = relaxedLiquid;
         trays.get(stage).run(id);
       }
 
@@ -1804,7 +1804,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private StreamInterface applyRelaxation(StreamInterface previous, StreamInterface current,
       double relaxation) {
-    StreamInterface relaxed = current.clone();
+    StreamInterface relaxed = current;
     if (previous == null) {
       relaxed.run();
       return relaxed;
