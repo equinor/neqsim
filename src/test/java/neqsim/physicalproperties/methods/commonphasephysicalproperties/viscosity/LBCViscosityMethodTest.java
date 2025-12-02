@@ -225,6 +225,34 @@ public class LBCViscosityMethodTest {
         "LBC viscosity for high pressure Methane+TBP mixture should be within reasonable range of friction-theory reference");
   }
 
+  @Test
+  void testLbcParametersCanBeTuned() {
+    SystemInterface system = new neqsim.thermo.system.SystemSrkEos(320.0, 150.0);
+    system.addComponent("n-heptane", 0.3);
+    system.addComponent("nC10", 0.3);
+    system.addTBPfraction("C16", 0.4, 0.22, 0.83);
+    system.setMixingRule("classic");
+    new ThermodynamicOperations(system).TPflash();
+
+    system.getPhase("oil").getPhysicalProperties().setViscosityModel("LBC");
+    system.initProperties();
+    double baseViscosity = system.getPhase("oil").getViscosity("cP");
+
+    double[] tunedParameters = {0.2, 0.05, 0.10, 0.02, 0.01};
+    system.getPhase("oil").getPhysicalProperties().setLbcParameters(tunedParameters);
+    system.initPhysicalProperties();
+    double tunedViscosity = system.getPhase("oil").getViscosity("cP");
+
+    system.getPhase("oil").getPhysicalProperties().setLbcParameter(0, 0.15);
+    system.initPhysicalProperties();
+    double adjustedViscosity = system.getPhase("oil").getViscosity("cP");
+
+    assertTrue(tunedViscosity > baseViscosity,
+        "Tuned LBC parameters should allow increasing the dense-fluid viscosity contribution");
+    assertTrue(adjustedViscosity < tunedViscosity,
+        "Adjusting a single LBC parameter should update the calculated viscosity");
+  }
+
   private double oilViscosity(SystemInterface system, String model) {
     system.getPhase("oil").getPhysicalProperties().setViscosityModel(model);
     system.initProperties();

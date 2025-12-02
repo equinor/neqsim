@@ -22,8 +22,10 @@ public class LBCViscosityMethod extends Viscosity {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LBCViscosityMethod.class);
   private static final double FT3_PER_LBMOL_TO_CM3_PER_MOL = 62.42796;
+  private static final double[] DEFAULT_DENSE_CONTRIBUTION_PARAMETERS = {0.10230, 0.023364,
+      0.058533, -0.040758, 0.0093324};
 
-  double[] a = {0.10230, 0.023364, 0.058533, -0.040758, 0.0093324};
+  double[] denseContributionParameters = DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.clone();
 
   /**
    * <p>
@@ -85,8 +87,10 @@ public class LBCViscosityMethod extends Viscosity {
     PhaseType phaseType = phase.getPhase().getType();
     double denseContribution = 0.0;
     if (phaseType != PhaseType.AQUEOUS && epsilonMix > 0.0 && reducedDensity > 0.0) {
-      double poly = a[0] + a[1] * reducedDensity + a[2] * Math.pow(reducedDensity, 2.0)
-          + a[3] * Math.pow(reducedDensity, 3.0) + a[4] * Math.pow(reducedDensity, 4.0);
+      double poly = denseContributionParameters[0] + denseContributionParameters[1] * reducedDensity
+          + denseContributionParameters[2] * Math.pow(reducedDensity, 2.0)
+          + denseContributionParameters[3] * Math.pow(reducedDensity, 3.0)
+          + denseContributionParameters[4] * Math.pow(reducedDensity, 4.0);
       denseContribution = Math.max(0.0, (Math.pow(poly, 4.0) - 1.0e-4) / epsilonMix);
       denseContribution *= 1.0e4; // cP -> micropoise
     }
@@ -134,6 +138,44 @@ public class LBCViscosityMethod extends Viscosity {
   @Override
   public double getPureComponentViscosity(int i) {
     return 0;
+  }
+
+  /**
+   * Set the dense-fluid contribution parameters used by the LBC correlation.
+   *
+   * @param parameters array of five coefficients for the dense-fluid polynomial term
+   */
+  public void setDenseContributionParameters(double[] parameters) {
+    if (parameters == null || parameters.length != DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.length) {
+      throw new IllegalArgumentException(
+          "LBC dense contribution requires exactly "
+              + DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.length + " parameters");
+    }
+    denseContributionParameters = parameters.clone();
+  }
+
+  /**
+   * Set an individual dense-fluid contribution parameter used by the LBC correlation.
+   *
+   * @param index coefficient index (0-4)
+   * @param value coefficient value
+   */
+  public void setDenseContributionParameter(int index, double value) {
+    if (index < 0 || index >= denseContributionParameters.length) {
+      throw new IllegalArgumentException(
+          "LBC dense contribution parameter index must be between 0 and "
+              + (denseContributionParameters.length - 1));
+    }
+    denseContributionParameters[index] = value;
+  }
+
+  /**
+   * Get a copy of the current dense-fluid contribution parameters.
+   *
+   * @return array of dense-fluid contribution coefficients
+   */
+  public double[] getDenseContributionParameters() {
+    return denseContributionParameters.clone();
   }
 
   /**
@@ -229,5 +271,13 @@ public class LBCViscosityMethod extends Viscosity {
 
     // Already in cm3/mol
     return criticalVolume;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public LBCViscosityMethod clone() {
+    LBCViscosityMethod method = (LBCViscosityMethod) super.clone();
+    method.denseContributionParameters = denseContributionParameters.clone();
+    return method;
   }
 }
