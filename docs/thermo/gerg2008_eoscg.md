@@ -102,6 +102,11 @@ Includes all 21 components from GERG-2008, plus:
 *   Chlorine (Cl₂)
 *   Carbonyl Sulfide (COS)
 
+Recent PRs refreshed the EOS-CG component tables with updated critical properties and binary
+interaction data, improving phase behavior for acid-gas heavy blends. The refresh aligns the
+library with the latest GERG-compatible datasets so CCS mixtures match reference densities and
+sound speed benchmarks more closely.
+
 ### Usage in NeqSim
 
 To use EOS-CG in NeqSim, use the `SystemEOSCGEos` class.
