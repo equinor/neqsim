@@ -186,6 +186,12 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     double Epp =
         Math.pow(system.getPressure(), 2.0) / (R * system.getTemperature()) * system.getdVdPtn();
     Jac.set(numberOfComponents + 1, numberOfComponents + 1, Epp);
+
+    // Force pressure to be constant by setting the last row to [0...0 1] and residual to 0
+    for (int i = 0; i < numberOfComponents + 1; i++) {
+      Jac.set(numberOfComponents + 1, i, 0.0);
+    }
+    Jac.set(numberOfComponents + 1, numberOfComponents + 1, 1.0);
   }
 
   /**
