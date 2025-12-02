@@ -14,6 +14,7 @@ import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
@@ -96,32 +97,34 @@ public class TPmultiflash extends TPflash {
    * </p>
    */
   public void setXY() {
-    for (int k = 0; k < system.getNumberOfPhases(); k++) {
-      for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-          double newX = system.getPhase(0).getComponent(i).getz() / Erow[i]
-              / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+    int numComponents = system.getPhase(0).getNumberOfComponents();
+    int numPhases = system.getNumberOfPhases();
+    neqsim.thermo.phase.PhaseInterface phase0 = system.getPhase(0);
+
+    for (int k = 0; k < numPhases; k++) {
+      neqsim.thermo.phase.PhaseInterface phaseK = system.getPhase(k);
+      PhaseType phaseKType = phaseK.getType();
+
+      for (int i = 0; i < numComponents; i++) {
+        ComponentInterface comp0i = phase0.getComponent(i);
+        ComponentInterface compKi = phaseK.getComponent(i);
+
+        if (comp0i.getz() > 1e-100) {
+          double newX = comp0i.getz() / Erow[i] / compKi.getFugacityCoefficient();
           if (!Double.isFinite(newX) || newX <= 0.0) {
-            newX = Math.max(system.getPhase(0).getComponent(i).getz(), 1.0e-30);
+            newX = Math.max(comp0i.getz(), 1.0e-30);
           }
-          system.getPhase(k).getComponent(i).setx(newX);
+          compKi.setx(newX);
         }
-        if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            || system.getPhase(0).getComponent(i).isIsIon()
-                && system.getPhase(k).getType() != PhaseType.AQUEOUS) {
-          system.getPhase(k).getComponent(i).setx(1e-50);
+        if (comp0i.getIonicCharge() != 0 || comp0i.isIsIon() && phaseKType != PhaseType.AQUEOUS) {
+          compKi.setx(1e-50);
         }
-        if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            || system.getPhase(0).getComponent(i).isIsIon()
-                && system.getPhase(k).getType() == PhaseType.AQUEOUS) {
-          system.getPhase(k).getComponent(i)
-              .setx(system.getPhase(k).getComponent(i).getNumberOfmoles()
-                  / system.getPhase(k).getNumberOfMolesInPhase());
+        if (comp0i.getIonicCharge() != 0 || comp0i.isIsIon() && phaseKType == PhaseType.AQUEOUS) {
+          compKi.setx(compKi.getNumberOfmoles() / phaseK.getNumberOfMolesInPhase());
         }
       }
 
-
-      system.getPhase(k).normalize();
+      phaseK.normalize();
     }
   }
 
@@ -131,19 +134,30 @@ public class TPmultiflash extends TPflash {
    * </p>
    */
   public void calcE() {
-    // E = new double[system.getPhase(0).getNumberOfComponents()];
-    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      Erow[i] = 0.0;
-      for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        Erow[i] += system.getPhase(k).getBeta()
-            / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+    int numComponents = system.getPhase(0).getNumberOfComponents();
+    int numPhases = system.getNumberOfPhases();
+
+    // Cache phase references and betas for faster access
+    neqsim.thermo.phase.PhaseInterface[] phases = new neqsim.thermo.phase.PhaseInterface[numPhases];
+    double[] betas = new double[numPhases];
+    for (int k = 0; k < numPhases; k++) {
+      phases[k] = system.getPhase(k);
+      betas[k] = phases[k].getBeta();
+    }
+
+    for (int i = 0; i < numComponents; i++) {
+      double eSum = 0.0;
+      for (int k = 0; k < numPhases; k++) {
+        eSum += betas[k] / phases[k].getComponent(i).getFugacityCoefficient();
       }
-      if (Erow[i] < 1e-100)
-        Erow[i] = 1e-100;
-      if (Double.isNaN(Erow[i])) {
+      if (eSum < 1e-100) {
+        eSum = 1e-100;
+      }
+      if (Double.isNaN(eSum)) {
         logger.error("Erow is NaN for component " + system.getPhase(0).getComponent(i).getName());
-        Erow[i] = 1e-100;
+        eSum = 1e-100;
       }
+      Erow[i] = eSum;
     }
   }
 
@@ -165,29 +179,38 @@ public class TPmultiflash extends TPflash {
      * system.getPhase(0).getComponent(i).getz(); }
      */
 
-    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      multTerm[i] = system.getPhase(0).getComponent(i).getz() / Erow[i];
-      multTerm2[i] = system.getPhase(0).getComponent(i).getz() / (Erow[i] * Erow[i]);
+    PhaseInterface phase0 = system.getPhase(0);
+    int numComponents = phase0.getNumberOfComponents();
+    int numPhases = system.getNumberOfPhases();
+
+    for (int i = 0; i < numComponents; i++) {
+      double z = phase0.getComponent(i).getz();
+      double erow = Erow[i];
+      multTerm[i] = z / erow;
+      multTerm2[i] = z / (erow * erow);
     }
 
-    for (int k = 0; k < system.getNumberOfPhases(); k++) {
+    for (int k = 0; k < numPhases; k++) {
       dQdbeta[k][0] = 1.0;
-      for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        dQdbeta[k][0] -= multTerm[i] / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+      PhaseInterface phaseK = system.getPhase(k);
+      for (int i = 0; i < numComponents; i++) {
+        dQdbeta[k][0] -= multTerm[i] / phaseK.getComponent(i).getFugacityCoefficient();
       }
     }
 
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      for (int j = 0; j < system.getNumberOfPhases(); j++) {
-        Qmatrix[i][j] = 0.0;
-        for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
-          Qmatrix[i][j] +=
-              multTerm2[k] / (system.getPhase(j).getComponent(k).getFugacityCoefficient()
-                  * system.getPhase(i).getComponent(k).getFugacityCoefficient());
+    for (int i = 0; i < numPhases; i++) {
+      PhaseInterface phaseI = system.getPhase(i);
+      for (int j = 0; j < numPhases; j++) {
+        PhaseInterface phaseJ = system.getPhase(j);
+        double qij = 0.0;
+        for (int k = 0; k < numComponents; k++) {
+          qij += multTerm2[k] / (phaseJ.getComponent(k).getFugacityCoefficient()
+              * phaseI.getComponent(k).getFugacityCoefficient());
         }
         if (i == j) {
-          Qmatrix[i][j] += 1.0e-3;
+          qij += 1.0e-3;
         }
+        Qmatrix[i][j] = qij;
       }
     }
     return Q;
