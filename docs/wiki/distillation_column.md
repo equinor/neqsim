@@ -80,6 +80,8 @@ stability.
 - Convergence metric: average absolute temperature change.
 - Relaxation policy: decreases when combined residual (temperature, mass, energy) grows by
   more than 5 %, increases when it shrinks by more than 2 %.
+- Default tolerances were tightened in recent iterations (temperature to 0.01 K, mass/energy to
+  1e-4 relative) to prevent premature termination when using highly non-ideal feeds.
 
 ### Inside-out specifics
 
@@ -89,6 +91,10 @@ stability.
   more often near convergence.
 - Optional polishing stage tightens tolerances to 1e-5 K / relative mass 1e-4 when base tolerances
   are met but the user requires stricter balances.
+- Tracks per-iteration mass and energy residuals alongside relaxed stream norms so operators can
+  audit the inside-out trajectory when debugging column stability.
+- Records the peak relaxation factors applied to trays, providing a quick signal when the column
+  required aggressive damping to converge.
 
 ### Matrix solver specifics
 
