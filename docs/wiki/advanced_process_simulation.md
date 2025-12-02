@@ -184,3 +184,107 @@ plantModel.run();
 ```
 
 The `ProcessModel` will execute the added systems in the order they were added (or based on internal logic if configured). It ensures that data flows correctly between the connected systems.
+
+## 5. Reusable templates and composition helpers
+
+To reduce boilerplate when assembling larger flowsheets, reuse the `Recycle`, controller, and `ProcessModel` patterns as pre-made building blocks. The following templates can be copied as-is or combined inside a `ProcessModel` catalog to let automated agents stitch together flowsheets without rewiring every unit manually.
+
+### Template: Inlet separator train with recycle
+
+**Building blocks:** feed stream → choke valve (optional) → inlet cooler → three-phase separator → level/pressure controllers → recycle loop.
+
+**Why this helps:** captures the standard inlet handling motif (cooling, phase split, level trim) while providing a ready-made recycle loop for gas reprocessing or compressor suction stabilization.
+
+```java
+// Streams
+Stream feed = new Stream("Feed", feedFluid);
+Stream recycleStream = new Stream("Recycle Seed", feedFluid.clone());
+
+// Front-end conditioning
+ThrottlingValve choke = new ThrottlingValve("Choke", feed);
+Cooler inletCooler = new Cooler("Inlet Cooler", choke.getOutletStream());
+Separator inletSep = new Separator("Inlet Separator", inletCooler.getOutletStream());
+
+// Controllers
+LevelTransmitter levelTI = new LevelTransmitter(inletSep);
+ControllerDeviceBaseClass levelController = new ControllerDeviceBaseClass();
+levelController.setTransmitter(levelTI);
+levelController.setControllerSetPoint(0.6); // 60% level
+levelController.setReverseActing(true);
+ThrottlingValve levelValve = new ThrottlingValve("Liquid LV", inletSep.getLiquidOutStream());
+levelValve.setController(levelController);
+
+PressureTransmitter pTI = new PressureTransmitter(inletSep);
+ControllerDeviceBaseClass pressureController = new ControllerDeviceBaseClass();
+pressureController.setTransmitter(pTI);
+pressureController.setControllerSetPoint(50.0); // bara
+pressureController.setReverseActing(false);
+ThrottlingValve pressureValve = new ThrottlingValve("Gas PCV", inletSep.getGasOutStream());
+pressureValve.setController(pressureController);
+
+// Recycle
+Recycle recycle = new Recycle("Separator Gas Recycle");
+recycle.addStream(pressureValve.getOutletStream());
+recycle.setTolerance(1e-6);
+recycle.setMaximumIterations(50);
+
+// Stitch recycle back to the front-end mixer (or directly to choke/cooler)
+StaticMixer frontMixer = new StaticMixer("Front Mixer");
+frontMixer.addStream(feed);
+frontMixer.addStream(recycle.getOutletStream());
+choke.setOutletStream(frontMixer.getOutStream());
+
+// Register in a ProcessSystem
+ProcessSystem inletSystem = new ProcessSystem();
+inletSystem.add(feed, recycleStream, choke, inletCooler, inletSep, levelTI, levelValve, pTI, pressureValve, recycle, frontMixer);
+```
+
+**Composition hints:**
+- Expose `inletSep.getGasOutStream()` and `inletSep.getOilOutStream()` as outputs so other templates (e.g., gas compression or stabilizer) can consume them.
+- When embedding inside a `ProcessModel`, add this system first so downstream templates can reference the separator gas as an upstream dependency.
+
+### Template: Two-stage compression with interstage cooling
+
+**Building blocks:** gas feed → stage 1 compressor → interstage cooler + separator (optional) → stage 2 compressor → aftercooler → pressure controller or recycle.
+
+**Why this helps:** standardizes multi-stage compression including thermal conditioning between stages and hooks for surge/recycle control.
+
+```java
+// Assume gasFeed is provided by an upstream template (e.g., inlet separator train)
+Compressor comp1 = new Compressor("1st Stage", gasFeed);
+Cooler intercooler = new Cooler("Interstage Cooler", comp1.getOutletStream());
+Separator interSep = new Separator("Interstage Separator", intercooler.getOutletStream());
+
+Compressor comp2 = new Compressor("2nd Stage", interSep.getGasOutStream());
+Cooler afterCooler = new Cooler("Aftercooler", comp2.getOutletStream());
+
+// Discharge pressure control via recycle
+PressureTransmitter dischargePT = new PressureTransmitter(afterCooler);
+ControllerDeviceBaseClass dischargePC = new ControllerDeviceBaseClass();
+dischargePC.setTransmitter(dischargePT);
+dischargePC.setControllerSetPoint(100.0); // bara
+dischargePC.setReverseActing(false);
+
+ThrottlingValve recycleValve = new ThrottlingValve("Discharge Recycle Valve", afterCooler.getOutletStream());
+recycleValve.setController(dischargePC);
+
+Recycle dischargeRecycle = new Recycle("Compression Recycle");
+dischargeRecycle.addStream(recycleValve.getOutletStream());
+dischargeRecycle.setTolerance(1e-7);
+dischargeRecycle.setMaximumIterations(75);
+
+// Tie recycle back to first-stage suction
+StaticMixer suctionMixer = new StaticMixer("Suction Mixer");
+suctionMixer.addStream(gasFeed);
+suctionMixer.addStream(dischargeRecycle.getOutletStream());
+comp1.setInletStream(suctionMixer.getOutStream());
+
+// Organize as a ProcessSystem for catalog reuse
+ProcessSystem compressionSystem = new ProcessSystem();
+compressionSystem.add(comp1, intercooler, interSep, comp2, afterCooler, dischargePT, recycleValve, dischargeRecycle, suctionMixer);
+```
+
+**Composition hints:**
+- When combined with the inlet separator template, connect `gasFeed` to `inletSep.getGasOutStream()` and merge the `ProcessSystem` instances using `ProcessModel`.
+- Expose optional outputs (e.g., `interSep.getOilOutStream()`) for condensate handling templates.
+- PID tuning parameters (`setControllerParameters`) can be kept in a shared catalog so AI agents can swap them without editing structure.

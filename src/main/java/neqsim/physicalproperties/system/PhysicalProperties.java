@@ -242,6 +242,33 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
+   * Set LBC dense-fluid contribution coefficients for tuning the viscosity correlation.
+   *
+   * @param parameters array of five LBC dense contribution parameters
+   */
+  public void setLbcParameters(double[] parameters) {
+    if (viscosityCalc instanceof LBCViscosityMethod) {
+      ((LBCViscosityMethod) viscosityCalc).setDenseContributionParameters(parameters);
+    } else {
+      throw new IllegalStateException("Current viscosity model is not LBC");
+    }
+  }
+
+  /**
+   * Set an individual LBC dense-fluid contribution parameter.
+   *
+   * @param index parameter index (0-4)
+   * @param value parameter value
+   */
+  public void setLbcParameter(int index, double value) {
+    if (viscosityCalc instanceof LBCViscosityMethod) {
+      ((LBCViscosityMethod) viscosityCalc).setDenseContributionParameter(index, value);
+    } else {
+      throw new IllegalStateException("Current viscosity model is not LBC");
+    }
+  }
+
+  /**
    * <p>
    * setDiffusionCoefficientModel.
    * </p>

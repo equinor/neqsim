@@ -354,6 +354,116 @@ Hook this into `ProductionOptimizationSpecLoader.load(...)` with metric lambdas 
 `compressorUtil`, then call `optimizer.optimizeScenarios(...)` to exercise the same workflow shown in
 the regression test while generating Markdown comparison tables for reports.
 
+#### Real-world spec-driven workflows
+
+The same YAML/JSON specs can be extended to mirror common operational optimization tasks instead of
+toy throughput maximization:
+
+**1. Energy minimization across compressor trains**
+
+Model a three-stage compression train with interstage coolers and set the objective to minimize
+total power while still honoring a required discharge pressure and anti-surge utilization headroom:
+
+```yaml
+scenarios:
+  - name: energy_min_train
+    process: c_train
+    feedStream: feed_gas
+    lowerBound: 40.0
+    upperBound: 90.0
+    rateUnit: bara # target discharge pressure instead of flow
+    variables:
+      - name: stage1_pressure
+        unit: bara
+        lowerBound: 30.0
+        upperBound: 45.0
+        stream: stage1_out
+      - name: stage2_pressure
+        unit: bara
+        lowerBound: 50.0
+        upperBound: 70.0
+        stream: stage2_out
+    objectives:
+      - name: minimize_power
+        metric: totalPowerMw
+        weight: -1.0
+        type: MAXIMIZE
+    constraints:
+      - name: discharge_pressure
+        metric: dischargePressure
+        limit: 90.0
+        direction: GREATER_THAN
+        severity: HARD
+        description: Keep export pressure above spec
+      - name: anti_surge_headroom
+        metric: minSurgeMargin
+        limit: 1.1
+        direction: GREATER_THAN
+        severity: HARD
+        description: Maintain 10% margin to surge lines on all compressors
+    searchMode: PARTICLE_SWARM_SCORE
+    inertiaWeight: 0.8
+    swarmSize: 24
+```
+
+Wire metrics via the spec loader to compute `totalPowerMw` from compressor duties (sum of
+`getShaftWork()` per stage) and `minSurgeMargin` from a helper that returns the lowest ratio of
+operating flow to surge flow across the train. Inspect `result.getIterationHistory()` to see where
+power flattens out—large step sizes in the swarm can reveal solver-cost bottlenecks when each
+iteration requires full thermodynamics and anti-surge calculations.
+
+**2. Choke optimization under sand/erosion constraints**
+
+Use a sand production limit and downstream separator capacity as hard constraints while maximizing
+oil throughput in a well/test separator setup. The choke opening becomes the manipulated variable,
+and penalty objectives can keep gas-lift rates reasonable:
+
+```yaml
+scenarios:
+  - name: choke_max_oil
+    process: wellpad
+    feedStream: wellhead
+    lowerBound: 10.0
+    upperBound: 80.0
+    rateUnit: percent_open
+    variables:
+      - name: choke_opening
+        unit: percent
+        lowerBound: 10.0
+        upperBound: 80.0
+        stream: choke_setting
+    objectives:
+      - name: oil_rate
+        metric: stabilizedOilBpd
+        weight: 1.0
+        type: MAXIMIZE
+      - name: gaslift_penalty
+        metric: gasliftRate
+        weight: -0.05
+        type: MAXIMIZE
+    constraints:
+      - name: sand_limit
+        metric: sandRate
+        limit: 20.0
+        direction: LESS_THAN
+        severity: HARD
+        description: Protect downstream erosion limit (kg/day)
+      - name: separator_capacity
+        metric: separatorUtil
+        limit: 0.95
+        direction: LESS_THAN
+        severity: HARD
+        description: Keep test separator within design envelope
+    searchMode: BINARY_FEASIBILITY
+```
+
+For this case, metric functions can map to production tests: `sandRate` computed from empirical
+correlations, `separatorUtil` derived from `getCapacityDuty()/getCapacityMax()`, and
+`gasliftRate` pulled from a gas-lift valve set point. The feasibility-first search will quickly
+highlight whether the sand constraint or separator capacity is the binding limitation, while the
+iteration history logs identify performance hotspots (e.g., separator flash calculations dominating
+runtime during tight binary searches).
+
 ### Debottlenecking Studies
 
 Once the bottleneck is identified (e.g., a compressor), you can simulate a "debottlenecking" project:
