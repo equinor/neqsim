@@ -25,6 +25,8 @@ public class TPflash extends Flash {
 
   SystemInterface clonedSystem;
   double presdiff = 1.0;
+  /** Reusable RachfordRice solver to avoid repeated allocations. */
+  private RachfordRice rachfordRice;
 
   /**
    * <p>
@@ -49,6 +51,7 @@ public class TPflash extends Flash {
     oldoldDeltalnK = new double[system.getPhases()[0].getNumberOfComponents()];
     oldDeltalnK = new double[system.getPhases()[0].getNumberOfComponents()];
     deltalnK = new double[system.getPhases()[0].getNumberOfComponents()];
+    rachfordRice = new RachfordRice();
   }
 
   /**
@@ -71,30 +74,33 @@ public class TPflash extends Flash {
    */
   public void sucsSubs() {
     deviation = 0;
+    var phase0 = system.getPhase(0);
+    var phase1 = system.getPhase(1);
+    int numComponents = phase0.getNumberOfComponents();
 
-    for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-          || system.getPhase(0).getComponent(i).isIsIon()) {
-        Kold = system.getPhase(0).getComponent(i).getK();
-        system.getPhase(0).getComponent(i).setK(1.0e-40);
-        system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
+    for (i = 0; i < numComponents; i++) {
+      var comp0 = phase0.getComponent(i);
+      var comp1 = phase1.getComponent(i);
+      if (comp0.getIonicCharge() != 0 || comp0.isIsIon()) {
+        Kold = comp0.getK();
+        comp0.setK(1.0e-40);
+        comp1.setK(comp0.getK());
       } else {
-        Kold = system.getPhase(0).getComponent(i).getK();
-        system.getPhase(0).getComponent(i)
-            .setK(system.getPhase(1).getComponent(i).getFugacityCoefficient()
-                / system.getPhase(0).getComponent(i).getFugacityCoefficient() * presdiff);
-        if (Double.isNaN(system.getPhase(0).getComponent(i).getK())) {
-          system.getPhase(0).getComponent(i).setK(Kold);
+        Kold = comp0.getK();
+        double newK = comp1.getFugacityCoefficient() / comp0.getFugacityCoefficient() * presdiff;
+        if (Double.isNaN(newK)) {
+          comp0.setK(Kold);
           system.init(1);
+        } else {
+          comp0.setK(newK);
         }
-        system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
-        deviation += Math.abs(Math.log(system.getPhase(0).getComponent(i).getK()) - Math.log(Kold));
+        comp1.setK(comp0.getK());
+        deviation += Math.abs(Math.log(comp0.getK()) - Math.log(Kold));
       }
     }
 
     double oldBeta = system.getBeta();
 
-    RachfordRice rachfordRice = new RachfordRice();
     try {
       // system.setBeta(rachfordRice.calcBetaS(system));
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
@@ -121,24 +127,28 @@ public class TPflash extends Flash {
    * </p>
    */
   public void accselerateSucsSubs() {
+    var phase0 = system.getPhase(0);
+    var phase1 = system.getPhase(1);
+    int numComponents = phase0.getNumberOfComponents();
     double prod1 = 0.0;
     double prod2 = 0.0;
-    for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+    for (i = 0; i < numComponents; i++) {
       prod1 += oldDeltalnK[i] * oldoldDeltalnK[i];
       prod2 += oldoldDeltalnK[i] * oldoldDeltalnK[i];
     }
 
     double lambda = prod1 / prod2;
+    double lambdaFactor = lambda / (1.0 - lambda);
 
-    for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+    for (i = 0; i < numComponents; i++) {
       // lnK[i] = lnK[i] + lambda*lambda*oldoldDeltalnK[i]/(1.0-lambda); // byttet +
       // til -
-      lnK[i] += lambda / (1.0 - lambda) * deltalnK[i];
-      system.getPhase(0).getComponent(i).setK(Math.exp(lnK[i]));
-      system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
+      lnK[i] += lambdaFactor * deltalnK[i];
+      double kValue = Math.exp(lnK[i]);
+      phase0.getComponent(i).setK(kValue);
+      phase1.getComponent(i).setK(kValue);
     }
     double oldBeta = system.getBeta();
-    RachfordRice rachfordRice = new RachfordRice();
     try {
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (Exception ex) {
@@ -163,12 +173,15 @@ public class TPflash extends Flash {
    * </p>
    */
   public void setNewK() {
-    for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+    var phase0 = system.getPhase(0);
+    var phase1 = system.getPhase(1);
+    int numComponents = phase0.getNumberOfComponents();
+    for (i = 0; i < numComponents; i++) {
       lnOldOldOldK[i] = lnOldOldK[i];
       lnOldOldK[i] = lnOldK[i];
       lnOldK[i] = lnK[i];
-      lnK[i] = Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
-          - Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient());
+      lnK[i] = Math.log(phase1.getComponent(i).getFugacityCoefficient())
+          - Math.log(phase0.getComponent(i).getFugacityCoefficient());
 
       oldoldDeltalnK[i] = lnOldOldK[i] - lnOldOldOldK[i];
       oldDeltalnK[i] = lnOldK[i] - lnOldOldK[i];
@@ -182,13 +195,16 @@ public class TPflash extends Flash {
    * </p>
    */
   public void resetK() {
-    for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+    var phase0 = system.getPhase(0);
+    var phase1 = system.getPhase(1);
+    int numComponents = phase0.getNumberOfComponents();
+    for (i = 0; i < numComponents; i++) {
       lnK[i] = lnOldK[i];
-      system.getPhase(0).getComponent(i).setK(Math.exp(lnK[i]));
-      system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
+      double kValue = Math.exp(lnK[i]);
+      phase0.getComponent(i).setK(kValue);
+      phase1.getComponent(i).setK(kValue);
     }
     try {
-      RachfordRice rachfordRice = new RachfordRice();
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
       system.calc_x_y();
       system.init(1);
@@ -276,7 +292,6 @@ public class TPflash extends Flash {
 
     // Calculates phase fractions and initial composition based on Wilson K-factors
     try {
-      RachfordRice rachfordRice = new RachfordRice();
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (Exception ex) {
       logger.error(ex.getMessage());

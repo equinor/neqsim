@@ -69,6 +69,12 @@ public class PSFlash extends QfuncFlash {
     double newCorr = 1.0;
     system.init(2);
 
+    // Early exit if initial guess is already very close
+    double initialError = Math.abs(-system.getEntropy() + Sspec);
+    if (initialError < 1e-10) {
+      return nyTemp;
+    }
+
     do {
       if (error > errorOld && factor > 0.1 && correctFactor) {
         factor *= 0.5;
@@ -79,7 +85,19 @@ public class PSFlash extends QfuncFlash {
       iterations++;
       oldTemp = system.getTemperature();
 
-      newCorr = factor * calcdQdT() / calcdQdTT();
+      // Inline calcdQdT and calcdQdTT to avoid method call overhead
+      double dQdT = -system.getEntropy() + Sspec;
+      double dQdTT;
+      if (system.getNumberOfPhases() == 1) {
+        dQdTT = -system.getPhase(0).getCp() / system.getTemperature();
+      } else {
+        dQdTT = 0.0;
+        for (int i = 0; i < system.getNumberOfPhases(); i++) {
+          dQdTT -= system.getPhase(i).getCp() / system.getPhase(i).getTemperature();
+        }
+      }
+
+      newCorr = factor * dQdT / dQdTT;
       nyTemp = oldTemp - newCorr;
       if (Math.abs(system.getTemperature() - nyTemp) > 10.0) {
         nyTemp = system.getTemperature() - Math.signum(system.getTemperature() - nyTemp) * 10.0;
@@ -98,11 +116,7 @@ public class PSFlash extends QfuncFlash {
       tpFlash.run();
       system.init(2);
       errorOld = error;
-      error = Math.abs(calcdQdT()); // Math.abs((nyTemp - oldTemp) / (nyTemp));
-      // if(error>errorOld) factor *= -1.0;
-      // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
-      // " error "+ error + " correction " + newCorr + " factor "+ factor);
-      // newCorr = Math.abs(factor * calcdQdT() / calcdQdTT());
+      error = Math.abs(-system.getEntropy() + Sspec);
     } while (((error + errorOld) > 1e-8 || iterations < 3) && iterations < 200);
     return nyTemp;
   }

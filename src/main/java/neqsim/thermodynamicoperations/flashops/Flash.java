@@ -51,6 +51,8 @@ public abstract class Flash extends BaseOperation {
   double tmLimit = -1e-8;
   private static final double LOG_MIN_EXP = Math.log(Double.MIN_NORMAL);
   private static final double LOG_MAX_EXP = Math.log(Double.MAX_VALUE);
+  /** Reusable RachfordRice solver for stability analysis. */
+  protected RachfordRice stabilityRachfordRice = new RachfordRice();
 
   protected double safeExp(double value) {
     if (Double.isNaN(value)) {
@@ -393,13 +395,12 @@ public abstract class Flash extends BaseOperation {
         this.solidPhaseFlash();
       }
     } else {
-      RachfordRice rachfordRice = new RachfordRice();
       try {
-        system.setBeta(
-            rachfordRice.calcBeta(system.getKvector(), minimumGibbsEnergySystem.getzvector()));
+        system.setBeta(stabilityRachfordRice.calcBeta(system.getKvector(),
+            minimumGibbsEnergySystem.getzvector()));
       } catch (Exception ex) {
-        if (!Double.isNaN(rachfordRice.getBeta()[0])) {
-          system.setBeta(rachfordRice.getBeta()[0]);
+        if (!Double.isNaN(stabilityRachfordRice.getBeta()[0])) {
+          system.setBeta(stabilityRachfordRice.getBeta()[0]);
         } else {
           system.setBeta(Double.NaN);
         }

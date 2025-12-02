@@ -74,7 +74,7 @@ public class PHflash extends Flash {
   public double solveQ() {
     double oldTemp = 1.0 / system.getTemperature();
     double nyTemp = 1.0 / system.getTemperature();
-    double iterations = 1;
+    int iterations = 1;
     double error = 1.0;
     double errorOld = 1.0e10;
     double factor = 0.8;
@@ -84,15 +84,28 @@ public class PHflash extends Flash {
     double maxTemperature = 1e10;
     double minTemperature = 0.0;
 
+    // Pre-compute absolute value of Hspec for normalization
+    double absHspec = Math.abs(Hspec);
+
+    // Early exit if initial guess is already very close
+    double initialError = Math.abs((system.getEnthalpy() - Hspec) / absHspec);
+    if (initialError < 1e-10) {
+      return 1.0 / nyTemp;
+    }
+
     do {
       if (Math.abs(error) > Math.abs(errorOld) && factor > 0.1 && correctFactor) {
         factor *= 0.5;
       } else if (Math.abs(error) < Math.abs(errorOld) && correctFactor) {
-        factor = iterations / (iterations + 1.0) * 1.0;
+        factor = iterations / (iterations + 1.0);
       }
       iterations++;
       oldTemp = nyTemp;
-      newCorr = factor * calcdQdT() / calcdQdTT();
+
+      // Inline calcdQdT and calcdQdTT to avoid method call overhead
+      double dQ = (system.getEnthalpy() - Hspec) / absHspec;
+      double dQdTT = -system.getTemperature() * system.getTemperature() * system.getCp() / absHspec;
+      newCorr = factor * dQ / dQdTT;
       nyTemp = oldTemp - newCorr;
 
       if (iterations > 150 && Math.abs(error) < 10.0) {
@@ -121,7 +134,7 @@ public class PHflash extends Flash {
       tpFlash.run();
       system.init(2);
       errorOld = error;
-      error = calcdQdT();
+      error = (system.getEnthalpy() - Hspec) / absHspec;
 
       if (error > 0 && system.getTemperature() > maxTemperature) {
         maxTemperature = system.getTemperature();
@@ -142,24 +155,38 @@ public class PHflash extends Flash {
   public double solveQ2() {
     double oldTemp = 1.0 / system.getTemperature();
     double nyTemp = 1.0 / system.getTemperature();
-    double iterations = 1;
+    int iterations = 1;
     double error = 1.0;
     double errorOld = 1.0e10;
     double factor = 0.8;
     double newCorr = 1.0;
     system.init(2);
     boolean correctFactor = true;
-    // System.out.println("temp start " + system.getTemperature());
+
+    // Pre-compute absolute value of Hspec for normalization
+    double absHspec = Math.abs(Hspec);
+
+    // Early exit if initial guess is already very close
+    double initialError = Math.abs((system.getEnthalpy() - Hspec) / absHspec);
+    if (initialError < 1e-10) {
+      return 1.0 / nyTemp;
+    }
+
     do {
       if (error > errorOld && factor > 0.1 && correctFactor) {
         factor *= 0.5;
       } else if (error < errorOld && correctFactor) {
-        factor = iterations / (iterations + 1.0) * 1.0;
+        factor = iterations / (iterations + 1.0);
       }
       iterations++;
       oldTemp = nyTemp;
-      newCorr = factor * calcdQdT() / calcdQdTT();
+
+      // Inline calcdQdT and calcdQdTT to avoid method call overhead
+      double dQ = (system.getEnthalpy() - Hspec) / absHspec;
+      double dQdTT = -system.getTemperature() * system.getTemperature() * system.getCp() / absHspec;
+      newCorr = factor * dQ / dQdTT;
       nyTemp = oldTemp - newCorr;
+
       if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
         nyTemp = 1.0 / (system.getTemperature()
             - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
@@ -177,14 +204,8 @@ public class PHflash extends Flash {
       tpFlash.run();
       system.init(2);
       errorOld = error;
-      error = Math.abs(calcdQdT());
-      // error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
-      // if(iterations>100) System.out.println("temp " + system.getTemperature() + "
-      // iter "+ iterations + " error "+ error + " correction " + newCorr + " factor
-      // "+ factor);
+      error = Math.abs((system.getEnthalpy() - Hspec) / absHspec);
     } while (((error + errorOld) > 1e-8 || iterations < 3) && iterations < 200);
-    // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
-    // " error "+ error );
     return 1.0 / nyTemp;
   }
 

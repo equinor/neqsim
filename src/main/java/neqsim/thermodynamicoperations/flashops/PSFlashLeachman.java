@@ -63,6 +63,15 @@ public class PSFlashLeachman extends QfuncFlash {
     boolean correctFactor = true;
     double newCorr = 1.0;
     double[] LeachmanProps;
+
+    // Get initial properties and check for early exit
+    LeachmanProps = system.getPhase(0).getProperties_Leachman();
+    entropy_Leachman = LeachmanProps[8] * system.getPhase(0).getNumberOfMolesInPhase();
+    double initialError = Math.abs(-entropy_Leachman + Sspec);
+    if (initialError < 1e-10) {
+      return nyTemp;
+    }
+
     do {
       if (error > errorOld && factor > 0.1 && correctFactor) {
         factor *= 0.5;
@@ -75,7 +84,11 @@ public class PSFlashLeachman extends QfuncFlash {
       LeachmanProps = system.getPhase(0).getProperties_Leachman();
       entropy_Leachman = LeachmanProps[8] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
       cP_Leachman = LeachmanProps[10] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
-      newCorr = factor * calcdQdT() / calcdQdTT();
+
+      // Inline calcdQdT and calcdQdTT to avoid method call overhead
+      double dQdT = -entropy_Leachman + Sspec;
+      double dQdTT = -cP_Leachman / system.getTemperature();
+      newCorr = factor * dQdT / dQdTT;
       nyTemp = oldTemp - newCorr;
       if (Math.abs(system.getTemperature() - nyTemp) > 10.0) {
         nyTemp = system.getTemperature() - Math.signum(system.getTemperature() - nyTemp) * 10.0;
@@ -92,7 +105,7 @@ public class PSFlashLeachman extends QfuncFlash {
 
       system.setTemperature(nyTemp);
       errorOld = error;
-      error = Math.abs(calcdQdT()); // Math.abs((nyTemp - oldTemp) / (nyTemp));
+      error = Math.abs(-entropy_Leachman + Sspec);
     } while (((error + errorOld) > 1e-8 || iterations < 3) && iterations < 200);
     return nyTemp;
   }
