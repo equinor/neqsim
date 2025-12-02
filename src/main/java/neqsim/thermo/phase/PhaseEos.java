@@ -239,28 +239,41 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));
 
     double BonVold = BonV;
-    double Btemp = getB();
-    double Dtemp = getA();
+    final double Btemp = getB();
+    final double Dtemp = getA();
+    final double BtempOnN = Btemp / numberOfMolesInPhase;
+    final double DtempOnNT = Dtemp / (numberOfMolesInPhase * temperature);
+    final double pressureTerm = pressure * BtempOnN / (R * temperature);
+    final double deltaDiff = delta1 - delta2;
 
-    setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
+    setMolarVolume(1.0 / BonV * BtempOnN);
     int iterations = 0;
     int maxIterations = 1000;
     do {
       iterations++;
       BonVold = BonV;
-      double h = BonV + Btemp * gV() + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fv()
-          - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
-      double dh = 1.0 - Btemp / (BonV * BonV)
-          * (Btemp * gVV() + Btemp * Dtemp * fVV() / (numberOfMolesInPhase * temperature));
-      double fvvv = 1.0 / (R * Btemp * (delta1 - delta2))
-          * (2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() + Btemp * delta1, 3.0)
-              - 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() + Btemp * delta2, 3.0));
-      double gvvv = 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() - Btemp, 3.0)
-          - 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume(), 3.0);
-      double dhh = 2.0 * Btemp / Math.pow(BonV, 3.0)
-          * (Btemp * gVV() + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fVV())
-          + Btemp * Btemp / Math.pow(BonV, 4.0)
-              * (Btemp * gvvv + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fvvv);
+
+      // Cache derivative values to avoid duplicate method calls
+      final double gV_val = gV();
+      final double fv_val = fv();
+      final double gVV_val = gVV();
+      final double fVV_val = fVV();
+
+      // Compute fVVV and gVVV inline (avoiding separate method calls)
+      final double nV = numberOfMolesInPhase * getMolarVolume();
+      final double nVplusDelta1B = nV + Btemp * delta1;
+      final double nVplusDelta2B = nV + Btemp * delta2;
+      final double nVminusB = nV - Btemp;
+      final double fvvv =
+          1.0 / (R * Btemp * deltaDiff) * (2.0 / (nVplusDelta1B * nVplusDelta1B * nVplusDelta1B)
+              - 2.0 / (nVplusDelta2B * nVplusDelta2B * nVplusDelta2B));
+      final double gvvv = 2.0 / (nVminusB * nVminusB * nVminusB) - 2.0 / (nV * nV * nV);
+
+      double h = BonV + Btemp * gV_val + Btemp * DtempOnNT * fv_val - pressureTerm;
+      final double BtempGVV_plus_DtermFVV = Btemp * gVV_val + Btemp * DtempOnNT * fVV_val;
+      double dh = 1.0 - Btemp / (BonV * BonV) * BtempGVV_plus_DtermFVV;
+      double dhh = 2.0 * Btemp / (BonV * BonV * BonV) * BtempGVV_plus_DtermFVV
+          + Btemp * Btemp / (BonV * BonV * BonV * BonV) * (Btemp * gvvv + Btemp * DtempOnNT * fvvv);
 
       double d1 = -h / dh;
       double d2 = -dh / dhh;
@@ -286,7 +299,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
         BonVold = 10;
       }
 
-      setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
+      setMolarVolume(1.0 / BonV * BtempOnN);
       Z = pressure * getMolarVolume() / (R * temperature);
     } while (Math.abs(BonV - BonVold) > 1.0e-9 && iterations < maxIterations);
     // molarVolume = 1.0/BonV*Btemp/numberOfMolesInPhase;
@@ -409,7 +422,9 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
     double BonVold = BonV;
 
-    double Btemp = getB();
+    final double Btemp = getB();
+    final double BtempOnN = Btemp / numberOfMolesInPhase;
+    final double pressureTerm = pressure * BtempOnN / (R * temperature);
     double h;
     double dh;
     double dhh;
@@ -419,7 +434,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     if (Btemp < 0) {
       logger.info("b negative in volume calc");
     }
-    setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
+    setMolarVolume(1.0 / BonV * BtempOnN);
     boolean changeFase = false;
     double error = 1.0;
     double errorOld = 1.0e10;
@@ -430,11 +445,18 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       iterations++;
       BonVold = BonV;
       BonV2 = BonV * BonV;
-      h = BonV - Btemp / numberOfMolesInPhase * dFdV()
-          - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
-      dh = 1.0 + Btemp / (BonV2) * (Btemp / numberOfMolesInPhase * dFdVdV());
-      dhh = -2.0 * Btemp / (BonV2 * BonV) * (Btemp / numberOfMolesInPhase * dFdVdV())
-          - Btemp * Btemp / (BonV2 * BonV2) * (Btemp / numberOfMolesInPhase * dFdVdVdV());
+
+      // Compute derivatives - cache dFdVdV since it's used twice
+      final double dFdV_val = dFdV();
+      final double dFdVdV_val = dFdVdV();
+      final double dFdVdVdV_val = dFdVdVdV();
+
+      // Use cached derivatives
+      final double BtempOnN_dFdVdV = BtempOnN * dFdVdV_val;
+      h = BonV - BtempOnN * dFdV_val - pressureTerm;
+      dh = 1.0 + Btemp / BonV2 * BtempOnN_dFdVdV;
+      dhh = -2.0 * Btemp / (BonV2 * BonV) * BtempOnN_dFdVdV
+          - Btemp * Btemp / (BonV2 * BonV2) * (BtempOnN * dFdVdVdV_val);
 
       d1 = -h / dh;
       d2 = -dh / dhh;
@@ -473,7 +495,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
       }
 
-      setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
+      setMolarVolume(1.0 / BonV * BtempOnN);
       Z = pressure * getMolarVolume() / (R * temperature);
       // logger.info("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold)));
     } while (Math.abs((BonV - BonVold) / BonVold) > 1.0e-10 && iterations < maxIterations);
