@@ -2,6 +2,7 @@ package neqsim.process.util.scenario;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -252,7 +253,7 @@ class IntegratedSafetyChainTransientTest {
 
     @Override
     public List<neqsim.process.equipment.ProcessEquipmentInterface> getTargetEquipment() {
-      return List.of(separator);
+      return Collections.singletonList(separator);
     }
 
     @Override
