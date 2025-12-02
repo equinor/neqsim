@@ -843,11 +843,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private boolean shouldEvaluateBalances(int iteration, int iterationLimit, boolean polishing,
       double tempResidual, double baseTempTolerance, int balanceCheckStride) {
-    if (polishing || iteration <= 2 || iteration >= iterationLimit - 1) {
+    // Always evaluate near the end or in polishing phase
+    if (polishing || iteration >= iterationLimit - 1) {
       return true;
     }
+    // Always evaluate in first few iterations for adaptive relaxation
+    if (iteration <= 2) {
+      return true;
+    }
+    // Evaluate when temperature is approaching tolerance
     if (tempResidual <= baseTempTolerance * 4.0) {
       return true;
+    }
+    // When temperature is far from convergence, skip more often
+    if (tempResidual > baseTempTolerance * 20.0) {
+      return iteration % (balanceCheckStride * 2) == 0;
     }
     return balanceCheckStride <= 1 || iteration % balanceCheckStride == 0;
   }
@@ -1016,8 +1026,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       boolean evaluateBalances = shouldEvaluateBalances(iter, iterationLimit, polishing, err,
           baseTempTolerance, balanceCheckStride);
       if (evaluateBalances || !massEnergyEvaluated) {
-        massErr = getMassBalanceError();
-        energyErr = getEnergyBalanceError();
+        double[] balanceErrors = getBalanceErrors();
+        massErr = balanceErrors[0];
+        energyErr = balanceErrors[1];
         massEnergyEvaluated = true;
       }
 
@@ -1189,8 +1200,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       boolean evaluateBalances = shouldEvaluateBalances(iter, iterationLimit, polishing, err,
           baseTempTolerance, balanceCheckStride);
       if (evaluateBalances || !massEnergyEvaluated) {
-        massErr = getMassBalanceError();
-        energyErr = getEnergyBalanceError();
+        double[] balanceErrors = getBalanceErrors();
+        massErr = balanceErrors[0];
+        energyErr = balanceErrors[1];
         massEnergyEvaluated = true;
       }
 
@@ -1729,30 +1741,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return maximum of tray-wise and overall relative mass imbalance
    */
   public double getMassBalanceError() {
-    double trayRelativeError = 0.0;
-    double totalInlet = 0.0;
-    double totalResidual = 0.0;
-
-    for (int i = 0; i < numberOfTrays; i++) {
-      double inlet = 0.0;
-      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
-      for (int j = 0; j < numberOfInputStreams; j++) {
-        inlet += trays.get(i).getStream(j).getFluid().getFlowRate("kg/hr");
-      }
-
-      double outlet = trays.get(i).getThermoSystem().getFlowRate("kg/hr");
-
-      double absInlet = Math.abs(inlet);
-      double imbalance = Math.abs(inlet - outlet);
-      if (absInlet > 1e-12) {
-        trayRelativeError = Math.max(trayRelativeError, imbalance / absInlet);
-      }
-      totalInlet += absInlet;
-      totalResidual += imbalance;
-    }
-
-    double columnRelative = totalInlet > 1e-12 ? totalResidual / totalInlet : totalResidual;
-    return Math.max(trayRelativeError, columnRelative);
+    return getBalanceErrors()[0];
   }
 
   /**
@@ -1761,37 +1750,79 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return maximum of tray-wise and overall relative enthalpy imbalance
    */
   public double getEnergyBalanceError() {
-    double trayRelativeError = 0.0;
-    double totalInlet = 0.0;
-    double totalResidual = 0.0;
+    return getBalanceErrors()[1];
+  }
+
+  /**
+   * Calculate both mass and energy balance errors in a single pass through trays. This avoids
+   * duplicate iteration over trays and repeated stream lookups.
+   *
+   * @return array of [massError, energyError]
+   */
+  private double[] getBalanceErrors() {
+    double massRelativeError = 0.0;
+    double massTotalInlet = 0.0;
+    double massTotalResidual = 0.0;
+
+    double energyRelativeError = 0.0;
+    double energyTotalInlet = 0.0;
+    double energyTotalResidual = 0.0;
 
     for (int i = 0; i < numberOfTrays; i++) {
-      double inlet = 0.0;
-      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
+      SimpleTray tray = trays.get(i);
+      int numberOfInputStreams = tray.getNumberOfInputStreams();
+
+      double massInlet = 0.0;
+      double energyInlet = 0.0;
+
+      // Calculate inlet mass and energy in one pass
       for (int j = 0; j < numberOfInputStreams; j++) {
-        inlet += trays.get(i).getStream(j).getFluid().getEnthalpy();
+        SystemInterface fluid = tray.getStream(j).getFluid();
+        massInlet += fluid.getFlowRate("kg/hr");
+        energyInlet += fluid.getEnthalpy();
       }
 
-      double outlet = trays.get(i).getGasOutStream().getFluid().getEnthalpy();
-      outlet += trays.get(i).getLiquidOutStream().getFluid().getEnthalpy();
+      // Get outlet values
+      SystemInterface traySystem = tray.getThermoSystem();
+      double massOutlet = traySystem.getFlowRate("kg/hr");
 
-      if (trays.get(i) instanceof Reboiler) {
-        inlet += ((Reboiler) trays.get(i)).getDuty();
-      } else if (trays.get(i) instanceof Condenser) {
-        inlet += ((Condenser) trays.get(i)).getDuty();
+      StreamInterface gasOut = tray.getGasOutStream();
+      StreamInterface liqOut = tray.getLiquidOutStream();
+      double energyOutlet = gasOut.getFluid().getEnthalpy() + liqOut.getFluid().getEnthalpy();
+
+      // Add duty for reboiler/condenser
+      if (tray instanceof Reboiler) {
+        energyInlet += ((Reboiler) tray).getDuty();
+      } else if (tray instanceof Condenser) {
+        energyInlet += ((Condenser) tray).getDuty();
       }
 
-      double absInlet = Math.abs(inlet);
-      double imbalance = Math.abs(inlet - outlet);
-      if (absInlet > 1e-12) {
-        trayRelativeError = Math.max(trayRelativeError, imbalance / absInlet);
+      // Mass balance error
+      double absMassInlet = Math.abs(massInlet);
+      double massImbalance = Math.abs(massInlet - massOutlet);
+      if (absMassInlet > 1e-12) {
+        massRelativeError = Math.max(massRelativeError, massImbalance / absMassInlet);
       }
-      totalInlet += absInlet;
-      totalResidual += imbalance;
+      massTotalInlet += absMassInlet;
+      massTotalResidual += massImbalance;
+
+      // Energy balance error
+      double absEnergyInlet = Math.abs(energyInlet);
+      double energyImbalance = Math.abs(energyInlet - energyOutlet);
+      if (absEnergyInlet > 1e-12) {
+        energyRelativeError = Math.max(energyRelativeError, energyImbalance / absEnergyInlet);
+      }
+      energyTotalInlet += absEnergyInlet;
+      energyTotalResidual += energyImbalance;
     }
 
-    double columnRelative = totalInlet > 1e-12 ? totalResidual / totalInlet : totalResidual;
-    return Math.max(trayRelativeError, columnRelative);
+    double massColumnRelative =
+        massTotalInlet > 1e-12 ? massTotalResidual / massTotalInlet : massTotalResidual;
+    double energyColumnRelative =
+        energyTotalInlet > 1e-12 ? energyTotalResidual / energyTotalInlet : energyTotalResidual;
+
+    return new double[] {Math.max(massRelativeError, massColumnRelative),
+        Math.max(energyRelativeError, energyColumnRelative)};
   }
 
   /**
@@ -1811,23 +1842,34 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     double step = Math.max(0.0, Math.min(1.0, relaxation));
-    double previousFlow = previous.getFlowRate("kg/hr");
-    double currentFlow = current.getFlowRate("kg/hr");
+
+    // When step is 1.0, no blending is needed - just run the current stream
+    if (step >= 0.9999) {
+      relaxed.run();
+      return relaxed;
+    }
+
+    // Get values directly to avoid repeated unit conversion overhead
+    SystemInterface prevSys = previous.getThermoSystem();
+    SystemInterface currSys = current.getThermoSystem();
+
+    double previousFlow = prevSys.getFlowRate("kg/hr");
+    double currentFlow = currSys.getFlowRate("kg/hr");
     double mixedFlow = previousFlow + step * (currentFlow - previousFlow);
     relaxed.setFlowRate(mixedFlow, "kg/hr");
 
-    double mixedTemperature = previous.getTemperature("K")
-        + step * (current.getTemperature("K") - previous.getTemperature("K"));
+    double mixedTemperature =
+        prevSys.getTemperature() + step * (currSys.getTemperature() - prevSys.getTemperature());
     relaxed.setTemperature(mixedTemperature, "K");
 
-    double mixedPressure = previous.getPressure("bara")
-        + step * (current.getPressure("bara") - previous.getPressure("bara"));
+    double mixedPressure =
+        prevSys.getPressure() + step * (currSys.getPressure() - prevSys.getPressure());
     relaxed.setPressure(mixedPressure, "bara");
 
-    double[] zPrev = previous.getThermoSystem().getMolarComposition();
-    double totalMolesPrev = previous.getThermoSystem().getTotalNumberOfMoles();
-    double[] zCurr = current.getThermoSystem().getMolarComposition();
-    double totalMolesCurr = current.getThermoSystem().getTotalNumberOfMoles();
+    double[] zPrev = prevSys.getMolarComposition();
+    double totalMolesPrev = prevSys.getTotalNumberOfMoles();
+    double[] zCurr = currSys.getMolarComposition();
+    double totalMolesCurr = currSys.getTotalNumberOfMoles();
 
     double[] zMixed = new double[zPrev.length];
     double totalMolesMixed = 0.0;
