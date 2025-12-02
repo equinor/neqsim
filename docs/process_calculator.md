@@ -1,6 +1,6 @@
 # Process Calculator
 
-The `Calculator` unit operation in NeqSim provides a flexible way to perform custom calculations and data manipulation within a process simulation. It allows users to define arbitrary logic that can read properties from input process equipment and modify properties of output process equipment.
+The `Calculator` unit operation in NeqSim provides a flexible way to perform custom calculations and data manipulation within a process simulation. It allows users to define arbitrary logic that can read properties from input process equipment and modify properties of output process equipment. Custom lambdas are the recommended hook for AI-generated calculations so you can swap in new behavior without rebuilding the process topology.
 
 This is particularly useful for:
 - Calculating derived properties (e.g., total energy, efficiency).
@@ -16,7 +16,7 @@ The `Calculator` class is located in `neqsim.process.equipment.util`.
 1.  **Create the Calculator**: Instantiate the `Calculator` with a name.
 2.  **Add Inputs**: Use `addInputVariable()` to add one or more process equipment objects (e.g., Streams) that will be used in the calculation.
 3.  **Set Output**: Use `setOutputVariable()` to set the target process equipment that will be modified by the calculation.
-4.  **Define Logic**: Use `setCalculationMethod()` to define the custom calculation logic. This method accepts a `BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface>`, which can be easily implemented using a Java Lambda expression.
+4.  **Define Logic**: Use `setCalculationMethod()` to define the custom calculation logic. This method accepts a `BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface>`, which can be easily implemented using a Java Lambda expression or a declarative preset.
 
 ### Example: Energy Calculation and Temperature Adjustment
 
@@ -81,6 +81,27 @@ public class CalculatorExample {
     }
 }
 ```
+
+### Declarative presets for common calculations
+
+When you want standardized behavior without re-implementing a lambda, use the presets in `CalculatorLibrary`:
+
+```java
+Calculator preset = new Calculator("energy balancer");
+preset.addInputVariable(inletStream);
+preset.setOutputVariable(outletStream);
+
+// Resolve by enum
+preset.setCalculationMethod(CalculatorLibrary.preset(CalculatorLibrary.Preset.ENERGY_BALANCE));
+
+// ...or dynamically by name from metadata/AI text
+// preset.setCalculationMethod(CalculatorLibrary.byName("energyBalance"));
+```
+
+Available presets:
+
+- **ENERGY_BALANCE**: flashes the output stream at its current pressure so its enthalpy equals the sum of input enthalpies.
+- **DEW_POINT_TARGETING**: sets the output stream temperature to the hydrocarbon dew point of the first input stream at the output pressure. Use `CalculatorLibrary.dewPointTargeting(double marginKelvin)` to add a temperature margin above dew point.
 
 ## API Reference
 
