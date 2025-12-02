@@ -213,18 +213,35 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
    * </p>
    */
   public void init() {
-    double tempBeta = system.getBeta();
+    double oldBeta = system.getBeta();
+    double tempBeta = oldBeta;
 
     for (int i = 0; i < numberOfComponents; i++) {
       tempBeta += u.get(i, 0);
     }
+
+    if (tempBeta < 1e-10) {
+      tempBeta = 1e-10;
+    }
+    if (tempBeta > 1.0 - 1e-10) {
+      tempBeta = 1.0 - 1e-10;
+    }
+
     system.setBeta(tempBeta);
 
     for (int i = 0; i < numberOfComponents; i++) {
       double v = 0.0;
       double l = 0.0;
-      v = system.getPhases()[0].getComponent(i).getx() * system.getBeta() + u.get(i, 0);
-      l = system.getPhases()[0].getComponent(i).getz() - v;
+      v = system.getPhases()[0].getComponent(i).getx() * oldBeta + u.get(i, 0);
+      double z = system.getPhases()[0].getComponent(i).getz();
+      if (v < 0) {
+        v = 1e-20;
+      }
+      if (v > z) {
+        v = z - 1e-20;
+      }
+      l = z - v;
+
       system.getPhases()[0].getComponent(i).setx(v / system.getBeta());
       system.getPhases()[1].getComponent(i).setx(l / (1.0 - system.getBeta()));
       system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getx()
@@ -238,11 +255,21 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     // system.init(1);
     // v1 = system.getVolume();
     // system.setPressure(Math.exp(u.get(numberOfComponents+1,0)));
-    logger.info("temperature: " + system.getTemperature());
-    system
-        .setTemperature(Math.exp(u.get(numberOfComponents, 0) + Math.log(system.getTemperature())));
-    system.setPressure(Math.exp(u.get(numberOfComponents + 1, 0) + Math.log(system.getPressure())));
-    logger.info("etter temperature: " + system.getTemperature());
+    // logger.info("temperature: " + system.getTemperature());
+
+    double dLnT = u.get(numberOfComponents, 0);
+    double dLnP = u.get(numberOfComponents + 1, 0);
+
+    if (Math.abs(dLnT) > 1.0) {
+      dLnT = Math.signum(dLnT) * 1.0;
+    }
+    if (Math.abs(dLnP) > 1.0) {
+      dLnP = Math.signum(dLnP) * 1.0;
+    }
+
+    system.setTemperature(Math.exp(dLnT + Math.log(system.getTemperature())));
+    system.setPressure(Math.exp(dLnP + Math.log(system.getPressure())));
+    // logger.info("etter temperature: " + system.getTemperature());
 
     system.init(3);
   }
@@ -262,16 +289,16 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
       init();
       setfvec();
       setJac();
-      fvec.print(10, 10);
-      Jac.print(10, 10);
+      // fvec.print(10, 10);
+      // Jac.print(10, 10);
       u = Jac.solve(fvec.times(-1.0));
       // u.equals(dx.timesEquals(1.0));
-      fvec.print(10, 10);
-      logger.info("iter: " + iter);
+      // fvec.print(10, 10);
+      // logger.info("iter: " + iter);
     } while (fvec.norm2() > 1.e-10 && iter < 1000); // && Double.isNaN(dx.norm2()));
-    logger.info("iter: " + iter);
-    logger.info("temperature: " + system.getTemperature());
-    logger.info("pressure: " + system.getPressure());
+    // logger.info("iter: " + iter);
+    // logger.info("temperature: " + system.getTemperature());
+    // logger.info("pressure: " + system.getPressure());
     init();
     return iter;
   }
