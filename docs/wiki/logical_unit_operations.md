@@ -4,7 +4,7 @@ NeqSim provides several "logical" unit operations that do not represent physical
 
 ## Calculator
 
-The `Calculator` unit operation allows for custom calculations and data manipulation within a process simulation. It is useful for calculating derived properties or implementing simple control logic.
+The `Calculator` unit operation allows for custom calculations and data manipulation within a process simulation. It is useful for calculating derived properties or implementing simple control logic. Custom lambdas are the preferred hook for AI-generated logic because they let you keep the same simulator graph while swapping in new behavior at runtime.
 
 ### Usage
 
@@ -29,9 +29,28 @@ energyCalc.setCalculationMethod((inputs, output) -> {
 });
 ```
 
+### Declarative presets (energy balance, dew point targeting)
+
+For frequently reused logic you can rely on `CalculatorLibrary` presets instead of hand-written lambdas. This makes it easier to reference calculations declaratively (e.g., from an AI agent or configuration file):
+
+```java
+Calculator presetCalc = new Calculator("dew point targeter");
+presetCalc.addInputVariable(feedStream);
+presetCalc.setOutputVariable(targetStream);
+
+// Apply by enum or by name
+presetCalc.setCalculationMethod(CalculatorLibrary.preset(CalculatorLibrary.Preset.DEW_POINT_TARGETING));
+// presetCalc.setCalculationMethod(CalculatorLibrary.byName("dewPointTargeting"));
+```
+
+Available presets:
+
+- **ENERGY_BALANCE** – matches the output stream enthalpy to the sum of input enthalpies by flashing at the output pressure.
+- **DEW_POINT_TARGETING** – sets the output stream temperature to the source stream dew point at the output pressure (optionally with a temperature margin via `CalculatorLibrary.dewPointTargeting(double marginKelvin)`).
+
 ## Adjuster
 
-The `Adjuster` is used to vary a parameter in one unit operation (the "adjusted variable") to achieve a specific value in another unit operation (the "target variable"). It is essentially a single-variable solver.
+The `Adjuster` is used to vary a parameter in one unit operation (the "adjusted variable") to achieve a specific value in another unit operation (the "target variable"). It is essentially a single-variable solver. Use lambdas for the getters/setters to keep the hook flexible for AI-generated control logic.
 
 ### Standard Usage
 
