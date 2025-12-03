@@ -223,7 +223,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     compressor1.run();
     // double head2 = compressor1.getPolytropicHead("kJ/kg");
     // logger.info("gerg power " + compressor1.getPower() + " W");
-    assertEquals(compressor1.getPolytropicHead("kJ/kg"), 94.32923841459161, 0.01);
+    assertEquals(compressor1.getPolytropicHead("kJ/kg"), 95.08102547831594, 0.01);
   }
 
   /**
@@ -250,11 +250,12 @@ class CompressorTest extends neqsim.NeqSimTest {
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setPolytropicEfficiency(0.5);
+    compressor1.setPolytropicMethod("detailed"); // Use detailed for multiphase compression
     processOps.add(inletStream);
     processOps.add(compressor1);
     processOps.run();
     compressor1.run();
-    assertEquals(compressor1.getPower(), 3712607.597542703, 1110.01);
+    assertEquals(compressor1.getPower(), 3712607.6072621644, 1110.01);
   }
 
   /**
@@ -293,7 +294,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     processOps.add(inletStream);
     processOps.add(compressor1);
     processOps.run();
-    assertEquals(139.7216108, compressor1.getOutletStream().getTemperature("C"), 0.01);
+    assertEquals(139.96712736879175, compressor1.getOutletStream().getTemperature("C"), 0.01);
     // compressor1.getOutletStream().getFluid().prettyPrint();
   }
 
@@ -403,11 +404,11 @@ class CompressorTest extends neqsim.NeqSimTest {
     compressor1.setUsePolytropicCalc(true);
     compressor1.setUseLeachman(true);
     compressor1.run();
-    assertEquals(compressor1.getPolytropicHead("kJ/kg"), 888.7512012528256, 0.01);
+    assertEquals(compressor1.getPolytropicHead("kJ/kg"), 892.8523725096532, 0.01);
     compressor1.setUseLeachman(false);
     compressor1.setUseGERG2008(true);
     compressor1.run();
-    assertEquals(compressor1.getPolytropicHead("kJ/kg"), 888.7059204667879, 0.01);
+    assertEquals(compressor1.getPolytropicHead("kJ/kg"), 892.8739303731953, 0.01);
   }
 
   /**
@@ -467,10 +468,10 @@ class CompressorTest extends neqsim.NeqSimTest {
     compressor1.setUsePolytropicCalc(true);
     compressor1.setUseVega(true);
     compressor1.run();
-    assertEquals(compressor1.getPolytropicHead("kJ/kg"), 466.97515072687054, 0.01);
+    assertEquals(compressor1.getPolytropicHead("kJ/kg"), 468.1908178008024, 0.01);
     compressor1.setUseVega(false);
     compressor1.setUseGERG2008(true);
     compressor1.run();
-    assertEquals(compressor1.getPolytropicHead("kJ/kg"), 466.82945407210633, 0.01);
+    assertEquals(compressor1.getPolytropicHead("kJ/kg"), 467.9507559516084, 0.01);
   }
 }

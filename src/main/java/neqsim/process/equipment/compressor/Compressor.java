@@ -77,7 +77,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   CompressorMechanicalDesign mechanicalDesign;
 
   private String pressureUnit = "bara";
-  private String polytropicMethod = "detailed";
+  private String polytropicMethod = "schultz";
 
   /**
    * Constructor for Compressor.

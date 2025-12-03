@@ -162,6 +162,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
 
     Compressor gascompressor = new Compressor("gas compressor");
     gascompressor.setInletStream(gascooler.getOutletStream());
+    gascompressor.setPolytropicMethod("detailed"); // Use detailed for precise calculations
     gascompressor.setCompressorChartType("interpolate and extrapolate");
     gascompressor.setUsePolytropicCalc(true);
     gascompressor.setOutletPressure(90.0, "bara");
