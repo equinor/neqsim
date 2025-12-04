@@ -177,4 +177,69 @@ public class AdjusterTest {
 
     assertEquals(300.0, inletStream.getTemperature("K"), 0.1);
   }
+
+  @Test
+  void testFunctionalInterfaceSupport() {
+    // Create a simple system
+    neqsim.thermo.system.SystemSrkEos fluid = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("methane", 100.0); // 100 moles
+
+    neqsim.process.equipment.stream.Stream feed =
+        new neqsim.process.equipment.stream.Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr"); // Total flow 1000 kg/hr
+
+    neqsim.process.equipment.splitter.Splitter splitter =
+        new neqsim.process.equipment.splitter.Splitter("splitter", feed);
+    splitter.setSplitNumber(2);
+    splitter.setSplitFactors(new double[] {0.5, 0.5});
+
+    // Initial guess: split 50/50
+    neqsim.process.equipment.stream.Stream stream1 =
+        new neqsim.process.equipment.stream.Stream("stream1", splitter.getSplitStream(0));
+    neqsim.process.equipment.stream.Stream stream2 =
+        new neqsim.process.equipment.stream.Stream("stream2", splitter.getSplitStream(1));
+
+    // We want to adjust stream 2 flow rate (via splitter)
+    // so that stream 1 flow rate becomes 800 kg/hr.
+    // Since total is 1000, stream 2 should become 200.
+
+    Adjuster adjuster = new Adjuster("adjuster");
+
+    // Set the target value (Setpoint)
+    adjuster.setTargetValue(800.0);
+    adjuster.setMinAdjustedValue(0.0); // Flow rate cannot be negative
+    adjuster.setMaxAdjustedValue(1000.0); // Flow rate cannot exceed feed
+
+    // Set the logic using functional interfaces
+
+    // Setter: Adjusts the flow rate of the second outlet (index 1) of the splitter
+    // Note: Splitter.setFlowRates takes an array of flow rates. -1 means calculated.
+    adjuster.setAdjustedValueSetter((val) -> {
+      splitter.setFlowRates(new double[] {-1, val}, "kg/hr");
+    });
+
+    // Getter: Gets the current flow rate of the second outlet (index 1)
+    adjuster.setAdjustedValueGetter(() -> {
+      return splitter.getSplitStream(1).getFlowRate("kg/hr");
+    });
+
+    // Target Calculator: Gets the flow rate of stream 1 (the measured variable)
+    adjuster.setTargetValueCalculator(() -> {
+      return stream1.getFlowRate("kg/hr") * 2;
+    });
+
+    neqsim.process.processmodel.ProcessSystem process =
+        new neqsim.process.processmodel.ProcessSystem();
+    process.add(feed);
+    process.add(splitter);
+    process.add(stream1);
+    process.add(stream2);
+    process.add(adjuster);
+
+    process.run();
+
+    // Verify results
+    assertEquals(400.0, stream1.getFlowRate("kg/hr"), 1.0);
+    assertEquals(600.0, stream2.getFlowRate("kg/hr"), 1.0);
+  }
 }
