@@ -106,8 +106,6 @@ public class SafeSplineSurgeCurveTest {
 
     Compressor firstStageCompressor =
         new Compressor("1st stage compressor", cooler.getOutletStream());
-    firstStageCompressor.setPolytropicMethod("detailed"); // Use detailed for precise head
-                                                          // calculations
     firstStageCompressor.setUsePolytropicCalc(true);
     firstStageCompressor.setPolytropicEfficiency(0.8);
     firstStageCompressor.setOutletPressure(12.0, "bara");
@@ -239,8 +237,6 @@ public class SafeSplineSurgeCurveTest {
 
     Compressor firstStageCompressor =
         new Compressor("1st stage compressor", cooler.getOutletStream());
-    firstStageCompressor.setPolytropicMethod("detailed"); // Use detailed for precise head
-                                                          // calculations
     firstStageCompressor.setUsePolytropicCalc(true);
     firstStageCompressor.setPolytropicEfficiency(0.8);
     firstStageCompressor.setOutletPressure(12.0, "bara");

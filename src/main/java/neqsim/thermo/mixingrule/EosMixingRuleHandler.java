@@ -752,41 +752,19 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+      double aij = 0.0;
+      double A = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      // Collect active components with moles >= threshold
-      int[] active = new int[numbcomp];
-      int m = 0;
-      double[] n = new double[numbcomp];
-      double[] sqrtAT = new double[numbcomp];
       for (int i = 0; i < numbcomp; i++) {
-        double ni = compArray[i].getNumberOfMolesInPhase();
-        if (ni >= 1e-100) {
-          n[i] = ni;
-          sqrtAT[i] = Math.sqrt(compArray[i].getaT());
-          active[m++] = i;
+        for (int j = 0; j < numbcomp; j++) {
+          aij = Math.sqrt(compArray[i].getaT() * compArray[j].getaT());
+          A += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
+              * aij;
         }
       }
-
-      if (m == 0) {
-        Atot = 0.0;
-        return 0.0;
-      }
-
-      // Use symmetry: sum upper triangle and double off-diagonals
-      double sum = 0.0;
-      for (int ii = 0; ii < m; ii++) {
-        int i = active[ii];
-        for (int jj = ii; jj < m; jj++) {
-          int j = active[jj];
-          double aij = sqrtAT[i] * sqrtAT[j];
-          double term = n[i] * n[j] * aij;
-          sum += (ii == jj) ? term : 2.0 * term;
-        }
-      }
-
-      Atot = sum;
-      return sum;
+      Atot = A;
+      return A;
     }
 
     /** {@inheritDoc} */
@@ -813,39 +791,16 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
     public double calcBFull(PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
+      B = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      // Collect active components with moles >= threshold
-      int[] active = new int[numbcomp];
-      int m = 0;
-      double[] n = new double[numbcomp];
       for (int i = 0; i < numbcomp; i++) {
-        double ni = compArray[i].getNumberOfMolesInPhase();
-        if (ni >= 1e-100) {
-          n[i] = ni;
-          active[m++] = i;
+        for (int j = 0; j < numbcomp; j++) {
+          B += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
+              * getbij(compArray[i], compArray[j]); // (compArray[i].getb()+compArray[j].getb())/2;
         }
       }
-
-      if (m == 0) {
-        B = 0.0;
-        Btot = 0.0;
-        return 0.0;
-      }
-
-      // Use symmetry: sum upper triangle and double off-diagonals
-      double sum = 0.0;
-      for (int ii = 0; ii < m; ii++) {
-        int i = active[ii];
-        for (int jj = ii; jj < m; jj++) {
-          int j = active[jj];
-          double bij = getbij(compArray[i], compArray[j]);
-          double term = n[i] * n[j] * bij;
-          sum += (ii == jj) ? term : 2.0 * term;
-        }
-      }
-
-      B = sum / phase.getNumberOfMolesInPhase();
+      B /= phase.getNumberOfMolesInPhase();
       Btot = B;
       return B;
     }
@@ -854,35 +809,27 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     @Override
     public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
+      double aij = 0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      double sqrtAi = Math.sqrt(compArray[compNumb].getaT());
-      double sum = 0.0;
+      Ai = 0.0;
       for (int j = 0; j < numbcomp; j++) {
-        double nj = compArray[j].getNumberOfMolesInPhase();
-        if (nj < 1e-100) {
-          continue;
-        }
-        double aij = sqrtAi * Math.sqrt(compArray[j].getaT());
-        sum += nj * aij;
+        aij = Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT());
+        Ai += compArray[j].getNumberOfMolesInPhase() * aij;
       }
 
-      Ai = sum;
-      return 2.0 * sum;
+      return 2.0 * Ai;
     }
 
     /** {@inheritDoc} */
     public double calcBiFull(int compNumb, PhaseInterface phase, double temperature,
         double pressure, int numbcomp) {
+      double Bi = 0.0;
+
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      double Bi = 0.0;
       for (int j = 0; j < numbcomp; j++) {
-        double nj = compArray[j].getNumberOfMolesInPhase();
-        if (nj < 1e-100) {
-          continue;
-        }
-        Bi += nj * getbij(compArray[compNumb], compArray[j]);
+        Bi += compArray[j].getNumberOfMolesInPhase() * getbij(compArray[compNumb], compArray[j]);
       }
 
       Bi = (2.0 * Bi - getB()) / phase.getNumberOfMolesInPhase();
@@ -923,25 +870,18 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     @Override
     public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
+      double A = 0.0;
+      double aij = 0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      double aiT = compArray[compNumb].getaT();
-      double aiDiffT = compArray[compNumb].getaDiffT();
-      double sqrtAi = Math.sqrt(aiT);
-
-      double sum = 0.0;
       for (int j = 0; j < numbcomp; j++) {
-        double nj = compArray[j].getNumberOfMolesInPhase();
-        if (nj < 1e-100) {
-          continue;
-        }
-        double ajT = compArray[j].getaT();
-        double sqrtAj = Math.sqrt(ajT);
-        double aij = 0.5 / (sqrtAi * sqrtAj) * (aiT * compArray[j].getaDiffT() + ajT * aiDiffT);
-        sum += nj * aij;
+        aij = 0.5 / Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT())
+            * (compArray[compNumb].getaT() * compArray[j].getaDiffT()
+                + compArray[j].getaT() * compArray[compNumb].getaDiffT());
+        A += compArray[j].getNumberOfMolesInPhase() * aij;
       }
 
-      return 2.0 * sum;
+      return 2.0 * A;
     }
 
     /** {@inheritDoc} */
@@ -959,67 +899,40 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** {@inheritDoc} */
     @Override
     public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+      double A = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      double sum = 0.0;
       for (int i = 0; i < numbcomp; i++) {
-        double ni = compArray[i].getNumberOfMolesInPhase();
-        if (ni < 1e-100) {
-          continue;
-        }
-        sum += ni * phase.calcAiT(i, phase, temperature, pressure, numbcomp);
+        A += compArray[i].getNumberOfMolesInPhase()
+            * phase.calcAiT(i, phase, temperature, pressure, numbcomp);
       }
 
-      return 0.5 * sum;
+      return 0.5 * A;
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+      double aij = 0;
+      double sqrtaij = 0;
+      double tempPow = 0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      // Collect active components with moles >= threshold
-      int[] active = new int[numbcomp];
-      int m = 0;
-      double[] n = new double[numbcomp];
-      double[] sqrtaT = new double[numbcomp];
-      double[] aT = new double[numbcomp];
-      double[] aDiffT = new double[numbcomp];
-      double[] aDiffDiffT = new double[numbcomp];
+      A = 0.0;
       for (int i = 0; i < numbcomp; i++) {
-        double ni = compArray[i].getNumberOfMolesInPhase();
-        if (ni >= 1e-100) {
-          n[i] = ni;
-          aT[i] = compArray[i].getaT();
-          sqrtaT[i] = Math.sqrt(aT[i]);
-          aDiffT[i] = compArray[i].getaDiffT();
-          aDiffDiffT[i] = compArray[i].getaDiffDiffT();
-          active[m++] = i;
+        for (int j = 0; j < numbcomp; j++) {
+          sqrtaij = Math.sqrt(compArray[i].getaT() * compArray[j].getaT());
+          tempPow = compArray[i].getaT() * compArray[j].getaDiffT()
+              + compArray[j].getaT() * compArray[i].getaDiffT();
+          aij = 0.5 * ((2.0 * compArray[i].getaDiffT() * compArray[j].getaDiffT()
+              + compArray[i].getaT() * compArray[j].getaDiffDiffT()
+              + compArray[j].getaT() * compArray[i].getaDiffDiffT()) / sqrtaij
+              - tempPow * tempPow / (2.0 * sqrtaij * compArray[i].getaT() * compArray[j].getaT()));
+          A += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
+              * aij;
         }
       }
-
-      if (m == 0) {
-        A = 0.0;
-        return 0.0;
-      }
-
-      // Use symmetry: sum upper triangle and double off-diagonals
-      double sum = 0.0;
-      for (int ii = 0; ii < m; ii++) {
-        int i = active[ii];
-        for (int jj = ii; jj < m; jj++) {
-          int j = active[jj];
-          double sqrtaij = sqrtaT[i] * sqrtaT[j];
-          double tempPow = aT[i] * aDiffT[j] + aT[j] * aDiffT[i];
-          double aij =
-              0.5 * ((2.0 * aDiffT[i] * aDiffT[j] + aT[i] * aDiffDiffT[j] + aT[j] * aDiffDiffT[i])
-                  / sqrtaij - tempPow * tempPow / (2.0 * sqrtaij * aT[i] * aT[j]));
-          double term = n[i] * n[j] * aij;
-          sum += (ii == jj) ? term : 2.0 * term;
-        }
-      }
-      A = sum;
-      return sum;
+      return A;
     }
 
     /** {@inheritDoc} */
@@ -1229,67 +1142,53 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** {@inheritDoc} */
     @Override
     public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+      double A = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      double sum = 0.0;
       for (int i = 0; i < numbcomp; i++) {
-        double ni = compArray[i].getNumberOfMolesInPhase();
-        if (ni < 1e-100) {
-          continue;
-        }
-        sum += ni * ((ComponentEosInterface) phase.getComponent(i)).getAiT();
+        A += compArray[i].getNumberOfMolesInPhase()
+            * ((ComponentEosInterface) phase.getComponent(i)).getAiT();
+        // phase.calcAiT(i, phase, temperature, pressure, numbcomp);
       }
-      return 0.5 * sum;
+      // System.out.println("AT SRK: " + (0.5*A));
+      return 0.5 * A;
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+      double aij = 0;
+      double temp1;
+      double[] sqrtai = new double[numbcomp];
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      // Collect active components with moles >= threshold
-      int[] active = new int[numbcomp];
-      int m = 0;
-      double[] n = new double[numbcomp];
-      double[] sqrtaT = new double[numbcomp];
-      double[] aT = new double[numbcomp];
-      double[] aDiffT = new double[numbcomp];
-      double[] aDiffDiffT = new double[numbcomp];
       for (int i = 0; i < numbcomp; i++) {
-        double ni = compArray[i].getNumberOfMolesInPhase();
-        if (ni >= 1e-100) {
-          n[i] = ni;
-          aT[i] = compArray[i].getaT();
-          sqrtaT[i] = Math.sqrt(aT[i]);
-          aDiffT[i] = compArray[i].getaDiffT();
-          aDiffDiffT[i] = compArray[i].getaDiffDiffT();
-          active[m++] = i;
+        sqrtai[i] = Math.sqrt(compArray[i].getaT());
+      }
+
+      A = 0.0;
+      for (int i = 0; i < numbcomp; i++) {
+        if (compArray[i].getNumberOfmoles() < 1e-100) {
+          continue;
         }
-      }
-
-      if (m == 0) {
-        A = 0.0;
-        return 0.0;
-      }
-
-      // Use symmetry: sum upper triangle and double off-diagonals
-      double sum = 0.0;
-      for (int ii = 0; ii < m; ii++) {
-        int i = active[ii];
-        for (int jj = ii; jj < m; jj++) {
-          int j = active[jj];
-          double sqrtaij = sqrtaT[i] * sqrtaT[j];
-          double temp1 = aT[i] * aDiffT[j] + aT[j] * aDiffT[i];
-          double aij = 0.5
-              * ((2.0 * aDiffT[i] * aDiffT[j] + aT[i] * aDiffDiffT[j] + aT[j] * aDiffDiffT[i])
-                  / sqrtaij - temp1 * temp1 / (2.0 * sqrtaij * aT[i] * aT[j]))
+        for (int j = 0; j < numbcomp; j++) {
+          if (compArray[j].getNumberOfmoles() < 1e-100) {
+            continue;
+          }
+          temp1 = compArray[i].getaT() * compArray[j].getaDiffT()
+              + compArray[j].getaT() * compArray[i].getaDiffT();
+          aij = 0.5
+              * ((2.0 * compArray[i].getaDiffT() * compArray[j].getaDiffT()
+                  + compArray[i].getaT() * compArray[j].getaDiffDiffT()
+                  + compArray[j].getaT() * compArray[i].getaDiffDiffT()) / sqrtai[i] / sqrtai[j]
+                  - temp1 * temp1
+                      / (2.0 * sqrtai[i] * sqrtai[j] * compArray[i].getaT() * compArray[j].getaT()))
               * (1.0 - getkij(temperature, i, j));
-          double term = n[i] * n[j] * aij;
-          sum += (ii == jj) ? term : 2.0 * term;
+          A += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
+              * aij;
         }
       }
-      A = sum;
-      return sum;
+      return A;
     }
 
     /** {@inheritDoc} */
