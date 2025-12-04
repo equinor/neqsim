@@ -225,7 +225,7 @@ public class AdjusterTest {
 
     // Target Calculator: Gets the flow rate of stream 1 (the measured variable)
     adjuster.setTargetValueCalculator(() -> {
-      return stream1.getFlowRate("kg/hr") * 2;
+      return stream1.getFlowRate("kg/hr");
     });
 
     neqsim.process.processmodel.ProcessSystem process =
@@ -239,7 +239,7 @@ public class AdjusterTest {
     process.run();
 
     // Verify results
-    assertEquals(400.0, stream1.getFlowRate("kg/hr"), 1.0);
-    assertEquals(600.0, stream2.getFlowRate("kg/hr"), 1.0);
+    assertEquals(800.0, stream1.getFlowRate("kg/hr"), 1.0);
+    assertEquals(200.0, stream2.getFlowRate("kg/hr"), 1.0);
   }
 }
