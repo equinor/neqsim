@@ -152,6 +152,15 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * <p>
+   * Setter for the field <code>targetValue</code>.
+   * </p>
+   *
+   * @param targetValue a double
+   */
+  public void setTargetValue(double targetValue) {
+    this.targetValue = targetValue;
+  }
 
   /**
    * <p>
