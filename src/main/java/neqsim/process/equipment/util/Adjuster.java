@@ -252,6 +252,13 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
     error = deviation;
 
+    if (iterations >= 2 && Math.abs(inputValue - oldInputValue) < 1e-12) {
+      if (Math.abs(error) < tolerance) {
+        return;
+      }
+      iterations = 1;
+    }
+
     if (iterations < 2) {
       if (adjustedValueSetter != null) {
         // For custom setter, we use a 1% perturbation in the direction of deviation
