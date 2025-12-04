@@ -153,7 +153,7 @@ public class AdjusterTest {
     // So we don't strictly need setAdjustedVariable if we provide the getter/setter.
     // However, we need to pass the equipment to the constructor or set it.
     // setAdjustedVariable sets 'adjustedEquipment'.
-    adjuster.setAdjustedVariable(inletStream, "temperature", "K");
+    adjuster.setAdjustedVariable(inletStream);
 
     adjuster.setAdjustedValueGetter((equipment) -> {
       return ((neqsim.process.equipment.stream.Stream) equipment).getTemperature("K");
@@ -163,7 +163,8 @@ public class AdjusterTest {
       ((neqsim.process.equipment.stream.Stream) equipment).setTemperature(val, "K");
     });
 
-    adjuster.setTargetVariable(inletStream, "custom", 30000.0, "-");
+    adjuster.setTargetVariable(inletStream);
+    adjuster.setTargetValue(30000.0);
     adjuster.setTargetValueCalculator((equipment) -> {
       neqsim.process.equipment.stream.Stream s = (neqsim.process.equipment.stream.Stream) equipment;
       return s.getFlowRate("kg/hr") * s.getTemperature("K");

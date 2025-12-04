@@ -93,6 +93,28 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
   /**
    * <p>
+   * setAdjustedVariable.
+   * </p>
+   *
+   * @param adjustedEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   */
+  public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment) {
+    this.adjustedEquipment = adjustedEquipment;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>targetVariable</code>.
+   * </p>
+   *
+   * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   */
+  public void setTargetVariable(ProcessEquipmentInterface targetEquipment) {
+    this.targetEquipment = targetEquipment;
+  }
+
+  /**
+   * <p>
    * Setter for the field <code>targetVariable</code>.
    * </p>
    *
