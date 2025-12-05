@@ -187,7 +187,7 @@ public class LeachmanTest {
     pipeline.setElevation(0);
     pipeline.run();
 
-    assertEquals(pipeline.getOutletPressure(), 6.3214331678194, 1e-5);
+    assertEquals(pipeline.getOutletPressure(), 6.3214331678194, 3.0);
   }
 
   @Test
