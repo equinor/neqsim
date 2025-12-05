@@ -76,7 +76,7 @@ class LiquidAccumulationTrackerTest {
   void testZoneVolume() {
     tracker.identifyAccumulationZones(sections);
 
-    var zones = tracker.getAccumulationZones();
+    List<AccumulationZone> zones = tracker.getAccumulationZones();
     assertFalse(zones.isEmpty());
 
     AccumulationZone zone = zones.get(0);
@@ -113,7 +113,7 @@ class LiquidAccumulationTrackerTest {
   void testSlugRelease() {
     tracker.identifyAccumulationZones(sections);
 
-    var zones = tracker.getAccumulationZones();
+    List<AccumulationZone> zones = tracker.getAccumulationZones();
     assertFalse(zones.isEmpty());
 
     AccumulationZone zone = zones.get(0);
