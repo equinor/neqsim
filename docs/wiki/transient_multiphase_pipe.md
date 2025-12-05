@@ -4,6 +4,10 @@
 
 The `TransientPipe` class provides a 1D transient multiphase (gas-liquid) flow simulator for pipelines. It uses the drift-flux formulation combined with mechanistic flow regime detection to model complex phenomena like terrain-induced slugging, liquid accumulation at low points, and transient pressure wave propagation.
 
+The model supports:
+- **Two-phase flow**: Gas + oil or gas + water
+- **Three-phase flow**: Gas + oil + water with volume-weighted liquid property averaging
+
 ## Key Features
 
 - **Drift-Flux Model**: Zuber-Findlay formulation with regime-dependent correlations
@@ -37,6 +41,24 @@ The distribution coefficient `C₀` and drift velocity `v_d` depend on the flow 
 | Slug | 1.05-1.2 (Fr dependent) | Bendiksen (1984) |
 | Annular | 1.0 | Film drainage model |
 | Stratified | Calculated from momentum balance | ~0 |
+
+### Three-Phase Flow Handling
+
+When both oil and aqueous (water) liquid phases are present, the model calculates volume-weighted average liquid properties:
+
+```
+ρ_L,avg = (V_oil / V_total) × ρ_oil + (V_water / V_total) × ρ_water
+μ_L,avg = (V_oil / V_total) × μ_oil + (V_water / V_total) × μ_water
+H_L,avg = (V_oil / V_total) × H_oil + (V_water / V_total) × H_water
+c_L,avg = (V_oil / V_total) × c_oil + (V_water / V_total) × c_water
+```
+
+Where:
+- `V_oil`, `V_water` = volume of oil and water phases from thermodynamic flash
+- `V_total = V_oil + V_water`
+- `ρ`, `μ`, `H`, `c` = density, viscosity, enthalpy, and sound speed
+
+This approach maintains the drift-flux framework while properly accounting for oil-water mixtures in the liquid phase. If only one liquid phase is present (oil OR water), that phase's properties are used directly.
 
 ### Flow Regime Detection
 
@@ -158,6 +180,34 @@ riser.run();
 
 // Significant pressure drop due to hydrostatic head
 double[] P = riser.getPressureProfile();
+```
+
+### Three-Phase Gas-Oil-Water Flow
+
+```java
+// Create three-phase fluid
+SystemInterface fluid = new SystemSrkEos(300, 50);
+fluid.addComponent("methane", 0.40);
+fluid.addComponent("propane", 0.10);
+fluid.addComponent("n-heptane", 0.20);
+fluid.addComponent("n-octane", 0.10);
+fluid.addComponent("water", 0.20);
+fluid.setMixingRule("classic");
+fluid.setMultiPhaseCheck(true);
+
+// Create stream and pipe
+Stream inlet = new Stream("inlet", fluid);
+inlet.setFlowRate(15, "kg/sec");
+inlet.run();
+
+TransientPipe pipe = new TransientPipe("ThreePhasePipe", inlet);
+pipe.setLength(1000);
+pipe.setDiameter(0.25);
+pipe.setNumberOfSections(50);
+pipe.run();
+
+// The model automatically uses volume-weighted averaging for liquid properties
+// when both oil and aqueous phases are present
 double deltaP = P[0] - P[39];
 System.out.println("Riser pressure drop: " + deltaP/1e5 + " bar");
 ```

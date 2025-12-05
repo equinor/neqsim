@@ -20,10 +20,18 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * behavior in production pipelines, risers, and flowlines.
  * </p>
  *
+ * <p>
+ * <b>Three-Phase Flow Support:</b> When both oil and aqueous (water) phases are present, the model
+ * automatically calculates volume-weighted average liquid properties (density, viscosity, enthalpy,
+ * sound speed) based on the individual phase volumes from the thermodynamic flash. This maintains
+ * the drift-flux framework while properly accounting for oil-water mixtures.
+ * </p>
+ *
  * <h2>Features</h2>
  * <ul>
  * <li>Drift-flux model for gas-liquid slip (Zuber-Findlay formulation)</li>
  * <li>Mechanistic flow regime detection (Taitel-Dukler, Barnea)</li>
+ * <li>Three-phase gas-oil-water flow with volume-weighted liquid property averaging</li>
  * <li>Liquid accumulation tracking at terrain low points</li>
  * <li>Lagrangian slug tracking for terrain-induced slugging</li>
  * <li>Integration with NeqSim thermodynamics (SRK, PR, CPA equations of state)</li>
@@ -377,12 +385,35 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     }
 
     if (fluid.hasPhaseType("oil") || fluid.hasPhaseType("aqueous")) {
-      String liqPhase = fluid.hasPhaseType("oil") ? "oil" : "aqueous";
-      rho_L = fluid.getPhase(liqPhase).getDensity("kg/m3");
-      mu_L = fluid.getPhase(liqPhase).getViscosity("kg/msec");
-      H_L = fluid.getPhase(liqPhase).getEnthalpy("J/mol") / fluid.getPhase(liqPhase).getMolarMass()
-          * 1000;
-      c_L = fluid.getPhase(liqPhase).getSoundSpeed();
+      // Three-phase handling: use volume-weighted average of liquid properties
+      if (fluid.hasPhaseType("oil") && fluid.hasPhaseType("aqueous")) {
+        double V_oil = fluid.getPhase("oil").getVolume();
+        double V_aq = fluid.getPhase("aqueous").getVolume();
+        double V_total = V_oil + V_aq;
+
+        double w_oil = V_oil / V_total;
+        double w_aq = V_aq / V_total;
+
+        rho_L = w_oil * fluid.getPhase("oil").getDensity("kg/m3")
+            + w_aq * fluid.getPhase("aqueous").getDensity("kg/m3");
+        mu_L = w_oil * fluid.getPhase("oil").getViscosity("kg/msec")
+            + w_aq * fluid.getPhase("aqueous").getViscosity("kg/msec");
+        H_L = w_oil
+            * (fluid.getPhase("oil").getEnthalpy("J/mol") / fluid.getPhase("oil").getMolarMass()
+                * 1000)
+            + w_aq * (fluid.getPhase("aqueous").getEnthalpy("J/mol")
+                / fluid.getPhase("aqueous").getMolarMass() * 1000);
+        c_L = w_oil * fluid.getPhase("oil").getSoundSpeed()
+            + w_aq * fluid.getPhase("aqueous").getSoundSpeed();
+      } else {
+        // Two-phase: use the single liquid phase
+        String liqPhase = fluid.hasPhaseType("oil") ? "oil" : "aqueous";
+        rho_L = fluid.getPhase(liqPhase).getDensity("kg/m3");
+        mu_L = fluid.getPhase(liqPhase).getViscosity("kg/msec");
+        H_L = fluid.getPhase(liqPhase).getEnthalpy("J/mol")
+            / fluid.getPhase(liqPhase).getMolarMass() * 1000;
+        c_L = fluid.getPhase(liqPhase).getSoundSpeed();
+      }
 
       double liqFlowRate = inStream.getFlowRate("kg/sec") * (1.0 - fluid.getPhase("gas").getBeta());
       U_SL = liqFlowRate / (rho_L * Math.PI * diameter * diameter / 4.0);
@@ -830,12 +861,35 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
         }
 
         if (fluid.hasPhaseType("oil") || fluid.hasPhaseType("aqueous")) {
-          String liqPhase = fluid.hasPhaseType("oil") ? "oil" : "aqueous";
-          section.setLiquidDensity(fluid.getPhase(liqPhase).getDensity("kg/m3"));
-          section.setLiquidViscosity(fluid.getPhase(liqPhase).getViscosity("kg/msec"));
-          section.setLiquidEnthalpy(fluid.getPhase(liqPhase).getEnthalpy("J/mol")
-              / fluid.getPhase(liqPhase).getMolarMass() * 1000);
-          section.setLiquidSoundSpeed(fluid.getPhase(liqPhase).getSoundSpeed());
+          // Three-phase handling: use volume-weighted average of liquid properties
+          if (fluid.hasPhaseType("oil") && fluid.hasPhaseType("aqueous")) {
+            double V_oil = fluid.getPhase("oil").getVolume();
+            double V_aq = fluid.getPhase("aqueous").getVolume();
+            double V_total = V_oil + V_aq;
+
+            double w_oil = V_oil / V_total;
+            double w_aq = V_aq / V_total;
+
+            section.setLiquidDensity(w_oil * fluid.getPhase("oil").getDensity("kg/m3")
+                + w_aq * fluid.getPhase("aqueous").getDensity("kg/m3"));
+            section.setLiquidViscosity(w_oil * fluid.getPhase("oil").getViscosity("kg/msec")
+                + w_aq * fluid.getPhase("aqueous").getViscosity("kg/msec"));
+            section.setLiquidEnthalpy(w_oil
+                * (fluid.getPhase("oil").getEnthalpy("J/mol") / fluid.getPhase("oil").getMolarMass()
+                    * 1000)
+                + w_aq * (fluid.getPhase("aqueous").getEnthalpy("J/mol")
+                    / fluid.getPhase("aqueous").getMolarMass() * 1000));
+            section.setLiquidSoundSpeed(w_oil * fluid.getPhase("oil").getSoundSpeed()
+                + w_aq * fluid.getPhase("aqueous").getSoundSpeed());
+          } else {
+            // Two-phase: use the single liquid phase
+            String liqPhase = fluid.hasPhaseType("oil") ? "oil" : "aqueous";
+            section.setLiquidDensity(fluid.getPhase(liqPhase).getDensity("kg/m3"));
+            section.setLiquidViscosity(fluid.getPhase(liqPhase).getViscosity("kg/msec"));
+            section.setLiquidEnthalpy(fluid.getPhase(liqPhase).getEnthalpy("J/mol")
+                / fluid.getPhase(liqPhase).getMolarMass() * 1000);
+            section.setLiquidSoundSpeed(fluid.getPhase(liqPhase).getSoundSpeed());
+          }
         }
 
         section.setSurfaceTension(fluid.getInterphaseProperties().getSurfaceTension(0, 1) * 1e-3);

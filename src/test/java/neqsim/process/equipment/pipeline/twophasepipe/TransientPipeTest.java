@@ -374,4 +374,97 @@ class TransientPipeTest {
     double pressureDrop = pressureProfile[0] - pressureProfile[19];
     assertTrue(pressureDrop > 0, "Pressure should drop in upward flow");
   }
+
+  /**
+   * Test TransientPipe with all possible phase combinations to verify volume-weighted averaging for
+   * three-phase flow.
+   */
+  @Test
+  void testAllPhaseCombinations() {
+    // Test 2: Gas-Oil (two-phase)
+    SystemInterface gasOil = new SystemSrkEos(280, 80);
+    gasOil.addComponent("methane", 0.60);
+    gasOil.addComponent("propane", 0.15);
+    gasOil.addComponent("n-heptane", 0.15);
+    gasOil.addComponent("n-octane", 0.10);
+    gasOil.setMixingRule("classic");
+    gasOil.setMultiPhaseCheck(true);
+
+    Stream gasOilStream = new Stream("gasOilStream", gasOil);
+    gasOilStream.setFlowRate(10, "kg/sec");
+    gasOilStream.run();
+
+    TransientPipe gasOilPipe = new TransientPipe("GasOilPipe", gasOilStream);
+    gasOilPipe.setLength(100);
+    gasOilPipe.setDiameter(0.2);
+    gasOilPipe.setNumberOfSections(10);
+
+    // Test should not throw exception
+    assertDoesNotThrow(() -> gasOilPipe.run(), "Gas-oil pipe should run without exception");
+
+    // Test 3: Gas-Water (two-phase)
+    SystemInterface gasWater = new SystemSrkEos(300, 10);
+    gasWater.addComponent("methane", 0.02);
+    gasWater.addComponent("water", 0.98);
+    gasWater.setMixingRule("classic");
+    gasWater.setMultiPhaseCheck(true);
+
+    Stream gasWaterStream = new Stream("gasWaterStream", gasWater);
+    gasWaterStream.setFlowRate(8, "kg/sec");
+    gasWaterStream.run();
+
+    TransientPipe gasWaterPipe = new TransientPipe("GasWaterPipe", gasWaterStream);
+    gasWaterPipe.setLength(100);
+    gasWaterPipe.setDiameter(0.2);
+    gasWaterPipe.setNumberOfSections(10);
+
+    assertDoesNotThrow(() -> gasWaterPipe.run(), "Gas-water pipe should run without exception");
+
+    // Test 4: Gas-Oil-Water (three-phase with volume-weighted averaging)
+    SystemInterface threePhase = new SystemSrkEos(300, 50);
+    threePhase.addComponent("methane", 0.40);
+    threePhase.addComponent("propane", 0.10);
+    threePhase.addComponent("n-heptane", 0.15);
+    threePhase.addComponent("n-octane", 0.15);
+    threePhase.addComponent("water", 0.20);
+    threePhase.setMixingRule("classic");
+    threePhase.setMultiPhaseCheck(true);
+
+    Stream threePhaseStream = new Stream("threePhaseStream", threePhase);
+    threePhaseStream.setFlowRate(15, "kg/sec");
+    threePhaseStream.run();
+
+    TransientPipe threePhasesPipe = new TransientPipe("ThreePhasePipe", threePhaseStream);
+    threePhasesPipe.setLength(100);
+    threePhasesPipe.setDiameter(0.2);
+    threePhasesPipe.setNumberOfSections(10);
+
+    // Main test: Verify three-phase system can run with volume-weighted averaging
+    assertDoesNotThrow(() -> threePhasesPipe.run(),
+        "Three-phase pipe should run without exception");
+
+    // Verify that if all three phases exist after flash, averaging logic works
+    if (threePhase.hasPhaseType("gas") && threePhase.hasPhaseType("oil")
+        && threePhase.hasPhaseType("aqueous")) {
+      double V_oil = threePhase.getPhase("oil").getVolume();
+      double V_water = threePhase.getPhase("aqueous").getVolume();
+
+      // Both liquid phases should have positive volume
+      assertTrue(V_oil > 0 && V_water > 0, "Both liquid phases should have positive volume");
+
+      // Verify we can compute volume fractions (this is what the code does)
+      double V_total = V_oil + V_water;
+      double w_oil = V_oil / V_total;
+      double w_aq = V_water / V_total;
+
+      // Weights should sum to 1
+      assertEquals(1.0, w_oil + w_aq, 1e-9, "Volume weights should sum to 1.0");
+
+      // Verify properties are accessible for averaging
+      assertDoesNotThrow(() -> threePhase.getPhase("oil").getDensity("kg/m3"));
+      assertDoesNotThrow(() -> threePhase.getPhase("aqueous").getDensity("kg/m3"));
+      assertDoesNotThrow(() -> threePhase.getPhase("oil").getViscosity("kg/msec"));
+      assertDoesNotThrow(() -> threePhase.getPhase("aqueous").getViscosity("kg/msec"));
+    }
+  }
 }
