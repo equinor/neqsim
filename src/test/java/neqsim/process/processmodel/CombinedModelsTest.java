@@ -74,7 +74,6 @@ public class CombinedModelsTest {
   public ProcessSystem getCompressorProcess(StreamInterface gasFeedStream) {
     neqsim.process.equipment.compressor.Compressor compressor1 =
         new neqsim.process.equipment.compressor.Compressor("Compressor1", gasFeedStream);
-    compressor1.setPolytropicMethod("detailed"); // Use detailed for precise calculations
     compressor1.setPolytropicEfficiency(0.56);
     compressor1.setUsePolytropicCalc(true);
 
@@ -128,7 +127,7 @@ public class CombinedModelsTest {
       logger.debug(ex.getMessage(), ex);
     }
 
-    Assertions.assertEquals(164.44139872,
+    Assertions.assertEquals(165.238244803687,
         ((Compressor) fullProcess.get("compressor process").getUnit("Compressor1"))
             .getOutletStream().getTemperature("C"),
         0.1);

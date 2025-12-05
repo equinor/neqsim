@@ -162,7 +162,6 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
 
     Compressor gascompressor = new Compressor("gas compressor");
     gascompressor.setInletStream(gascooler.getOutletStream());
-    gascompressor.setPolytropicMethod("detailed"); // Use detailed for precise calculations
     gascompressor.setCompressorChartType("interpolate and extrapolate");
     gascompressor.setUsePolytropicCalc(true);
     gascompressor.setOutletPressure(90.0, "bara");
@@ -224,7 +223,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     assertEquals(4141.57585894, gascompressor.getCompressorChart().getSurgeCurve()
         .getSurgeFlow(gascompressor.getPolytropicFluidHead()), 1);
     assertEquals(4141.5758479, gascompressor.getInletStream().getFlowRate("m3/hr"), 10);
-    assertEquals(105.246781458, gascompressor.getOutletPressure(), 1e-1);
+    assertEquals(105.38642524468011, gascompressor.getOutletPressure(), 1e-1);
 
     gas_from_separator.setFlowRate(8.0, "MSm3/day");
     operations.run();

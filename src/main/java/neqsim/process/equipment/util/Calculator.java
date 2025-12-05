@@ -27,6 +27,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   ArrayList<ProcessEquipmentInterface> inputVariable = new ArrayList<ProcessEquipmentInterface>();
   private ProcessEquipmentInterface outputVariable;
   private BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> calculationMethod;
+  private Runnable simpleCalculationMethod;
   String type = "sumTEG";
 
   /**
@@ -49,6 +50,30 @@ public class Calculator extends ProcessEquipmentBaseClass {
    */
   public void addInputVariable(ProcessEquipmentInterface unit) {
     inputVariable.add(unit);
+  }
+
+  /**
+   * <p>
+   * addInputVariable.
+   * </p>
+   *
+   * @param units a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   */
+  public void addInputVariable(ProcessEquipmentInterface... units) {
+    for (ProcessEquipmentInterface unit : units) {
+      inputVariable.add(unit);
+    }
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>inputVariable</code>.
+   * </p>
+   *
+   * @return a {@link java.util.ArrayList} object
+   */
+  public ArrayList<ProcessEquipmentInterface> getInputVariable() {
+    return inputVariable;
   }
 
   /**
@@ -94,6 +119,12 @@ public class Calculator extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (simpleCalculationMethod != null) {
+      simpleCalculationMethod.run();
+      setCalculationIdentifier(id);
+      return;
+    }
+
     if (calculationMethod != null) {
       try {
         calculationMethod.accept(inputVariable, outputVariable);
@@ -156,5 +187,16 @@ public class Calculator extends ProcessEquipmentBaseClass {
   public void setCalculationMethod(
       BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> calculationMethod) {
     this.calculationMethod = calculationMethod;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>calculationMethod</code>.
+   * </p>
+   *
+   * @param calculationMethod a {@link java.lang.Runnable} object
+   */
+  public void setCalculationMethod(Runnable calculationMethod) {
+    this.simpleCalculationMethod = calculationMethod;
   }
 }
