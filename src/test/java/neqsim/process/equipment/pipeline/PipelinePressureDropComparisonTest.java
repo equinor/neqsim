@@ -1226,7 +1226,7 @@ public class PipelinePressureDropComparisonTest {
 
     System.out.println(String.format("%-12s | %-12s | %-10s | %-12s | %-12s | %-10s",
         "Flow (kg/hr)", "Reynolds", "Regime", "Darcy (bar)", "Beggs (bar)", "Deviation"));
-    System.out.println("-".repeat(80));
+    System.out.println(new String(new char[80]).replace("\0", "-"));
 
     for (double massFlowKgHr : flowRatesKgHr) {
       // Use CPA EOS for water (associating fluid)
@@ -1799,7 +1799,7 @@ public class PipelinePressureDropComparisonTest {
 
     System.out.println(String.format("%-12s | %-8s | %-15s | %-10s | %-10s | %-8s", "Gas (kg/hr)",
         "GOR", "Flow Regime", "Holdup", "ΔP (bar)", "Vsg (m/s)"));
-    System.out.println("-".repeat(75));
+    System.out.println(new String(new char[75]).replace("\0", "-"));
 
     for (double gasFlowKgHr : gasFlowsKgHr) {
       SystemInterface system = new SystemSrkEos(273.15 + temperatureC, pressureBara);
