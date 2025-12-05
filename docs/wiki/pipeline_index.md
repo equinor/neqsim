@@ -18,7 +18,8 @@ This documentation covers pipeline pressure drop, flow, and heat transfer calcul
 | [Beggs & Brill Correlation](beggs_and_brill_correlation.md) | Multiphase flow correlation theory and usage |
 | [Friction Factor Models](friction_factor_models.md) | Haaland, Colebrook-White, laminar/turbulent |
 | [Heat Transfer](pipeline_heat_transfer.md) | Non-adiabatic operation, cooling, Gnielinski |
-| [Transient Simulation](pipeline_transient_simulation.md) | Dynamic simulation, wave propagation |
+| [Transient Simulation](pipeline_transient_simulation.md) | Dynamic simulation, slow wave propagation |
+| [Water Hammer](water_hammer_implementation.md) | Fast transients, pressure surges, MOC solver |
 
 ## Quick Model Selection
 
@@ -33,7 +34,8 @@ This documentation covers pipeline pressure drop, flow, and heat transfer calcul
 │  Three-Phase (G-O-W)      →  PipeBeggsAndBrills                │
 │  With Elevation           →  PipeBeggsAndBrills                │
 │  With Heat Transfer       →  PipeBeggsAndBrills                │
-│  Transient/Dynamic        →  PipeBeggsAndBrills                │
+│  Slow Transient/Dynamic   →  PipeBeggsAndBrills                │
+│  Water Hammer/Fast Trans. →  WaterHammerPipe                   │
 │  Quick Estimate           →  AdiabaticTwoPhasePipe             │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -43,7 +45,8 @@ This documentation covers pipeline pressure drop, flow, and heat transfer calcul
 
 | Class | Package | Description |
 |-------|---------|-------------|
-| `PipeBeggsAndBrills` | `neqsim.process.equipment.pipeline` | Multiphase, elevation, heat transfer, transient |
+| `PipeBeggsAndBrills` | `neqsim.process.equipment.pipeline` | Multiphase, elevation, heat transfer, slow transient |
+| `WaterHammerPipe` | `neqsim.process.equipment.pipeline` | Water hammer, fast pressure transients (MOC) |
 | `AdiabaticPipe` | `neqsim.process.equipment.pipeline` | Single-phase compressible gas |
 | `AdiabaticTwoPhasePipe` | `neqsim.process.equipment.pipeline` | Two-phase, horizontal |
 

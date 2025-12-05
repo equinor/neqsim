@@ -153,6 +153,279 @@ for (int i = 0; i < 500; i++) {
 }
 ```
 
+## Choke/Valve Closure Propagation
+
+A common transient scenario is simulating the effect of closing a downstream valve or choke and observing how the pressure/flow disturbance propagates back through the pipeline.
+
+### Example: Downstream Valve Closure
+
+```java
+// Setup: Source → Pipeline → Choke Valve → Separator
+SystemInterface gas = new SystemSrkEos(298.15, 100.0);
+gas.addComponent("methane", 1.0);
+gas.setMixingRule("classic");
+gas.setTotalFlowRate(50000, "kg/hr");
+
+Stream source = new Stream("source", gas);
+source.run();
+
+// Pipeline
+PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills("pipeline", source);
+pipeline.setLength(5000);        // 5 km
+pipeline.setDiameter(0.2);       // 200 mm
+pipeline.setNumberOfIncrements(50);
+pipeline.run();
+
+// Downstream choke valve
+ThrottlingValve choke = new ThrottlingValve("choke", pipeline.getOutletStream());
+choke.setOutletPressure(50.0);   // 50 bara downstream
+choke.run();
+
+// Build process
+ProcessSystem process = new ProcessSystem();
+process.add(source);
+process.add(pipeline);
+process.add(choke);
+process.run();
+
+System.out.println("Initial steady-state:");
+System.out.println("  Choke inlet P: " + pipeline.getOutletPressure() + " bara");
+System.out.println("  Choke opening: " + choke.getPercentValveOpening() + "%");
+System.out.println("  Flow rate: " + source.getFlowRate("kg/hr") + " kg/hr");
+
+// Switch to transient
+pipeline.setCalculateSteadyState(false);
+choke.setCalculateSteadyState(false);
+process.setTimeStep(1.0);
+
+UUID id = UUID.randomUUID();
+
+// Run transient with valve closure event
+for (int step = 0; step < 300; step++) {
+    double t = step * 1.0;  // seconds
+    
+    // Gradual valve closure from t=50s to t=100s
+    if (t >= 50 && t <= 100) {
+        double closureFraction = (t - 50) / 50.0;  // 0 to 1
+        double opening = 100.0 - closureFraction * 50.0;  // 100% → 50%
+        choke.setPercentValveOpening(opening);
+    }
+    
+    process.runTransient();
+    
+    // Monitor pressure wave propagation
+    if (step % 10 == 0) {
+        System.out.printf("t=%3.0fs: P_pipe_out=%.2f bara, Choke=%.0f%%, Flow=%.0f kg/hr%n",
+            t, pipeline.getOutletPressure(), 
+            choke.getPercentValveOpening(),
+            choke.getOutletStream().getFlowRate("kg/hr"));
+    }
+}
+```
+
+### Expected Behavior: Valve Closure
+
+When a downstream valve closes:
+
+1. **Immediate effect (t=0)**: Valve restriction increases, flow through valve decreases
+2. **Pressure buildup**: Pressure upstream of valve increases as flow backs up
+3. **Wave propagation**: Pressure increase travels upstream through pipeline
+4. **New equilibrium**: System reaches new steady-state with lower flow and higher upstream pressure
+
+| Time | Pipeline Outlet | Flow Rate | Notes |
+|------|-----------------|-----------|-------|
+| 0s | 70 bara | 50,000 kg/hr | Initial steady-state |
+| 50s | 70 bara | 50,000 kg/hr | Valve starts closing |
+| 75s | 75 bara | 40,000 kg/hr | Pressure building |
+| 100s | 82 bara | 30,000 kg/hr | Valve at 50% open |
+| 200s | 85 bara | 28,000 kg/hr | New equilibrium |
+
+### Example: Emergency Shutdown (ESD)
+
+Simulate rapid valve closure for ESD scenario:
+
+```java
+// Fast valve closure (slam shut in 5 seconds)
+for (int step = 0; step < 500; step++) {
+    double t = step * 0.1;  // 100 ms time step for fast transient
+    
+    // ESD triggered at t=10s
+    if (t >= 10 && t <= 15) {
+        double closureFraction = (t - 10) / 5.0;
+        choke.setPercentValveOpening(100.0 * (1 - closureFraction));
+    } else if (t > 15) {
+        choke.setPercentValveOpening(0.0);  // Fully closed
+    }
+    
+    process.runTransient();
+    
+    // Log high-frequency data for pressure surge analysis
+    System.out.printf("%.1f, %.3f, %.1f%n", 
+        t, pipeline.getOutletPressure(), 
+        choke.getOutletStream().getFlowRate("kg/hr"));
+}
+```
+
+### Pressure Surge Considerations
+
+For rapid valve closure (water hammer / pressure surge):
+
+| Closure Time | Pressure Rise | Model Accuracy |
+|--------------|---------------|----------------|
+| > 2×L/c | Gradual | Good |
+| ~ L/c | Moderate surge | Approximate |
+| << L/c | Severe surge | **Not supported** |
+
+Where L = pipe length, c = speed of sound (~400 m/s for gas, ~1200 m/s for liquid).
+
+**Note**: The current transient model uses advection-based propagation (fluid velocity), not acoustic waves. For severe water hammer analysis, specialized transient software may be needed.
+
+## Water Hammer Limitations
+
+### What is Water Hammer?
+
+Water hammer (hydraulic shock) occurs when a valve closes rapidly, causing pressure waves to travel at the speed of sound through the fluid. The pressure surge can be calculated using the Joukowsky equation:
+
+$$\Delta P = \rho \cdot c \cdot \Delta v$$
+
+Where:
+- $\rho$ = fluid density (kg/m³)
+- $c$ = speed of sound in fluid (m/s)
+- $\Delta v$ = velocity change (m/s)
+
+### Example Pressure Surge Calculation
+
+For water at 10 m/s suddenly stopped:
+- ρ = 1000 kg/m³
+- c = 1200 m/s (water)
+- Δv = 10 m/s
+- **ΔP = 1000 × 1200 × 10 = 12 MPa = 120 bar!**
+
+### Current Model Behavior vs Water Hammer
+
+| Aspect | NeqSim Transient Model | True Water Hammer |
+|--------|------------------------|-------------------|
+| Wave speed | Fluid velocity (1-20 m/s) | Speed of sound (400-1400 m/s) |
+| Pressure peak | Gradual buildup | Sharp spike |
+| Wave reflection | Not modeled | Multiple reflections |
+| Timing | Minutes to equilibrate | Milliseconds for surge |
+
+### When Current Model is Adequate
+
+The advection-based model is suitable for:
+
+✅ **Slow valve operations** (closure time > 2L/c)
+- 1 km water pipe: closure > 1.7 seconds OK
+- 10 km gas pipe: closure > 50 seconds OK
+
+✅ **Production rate changes** - Gradual flow adjustments
+
+✅ **Process upsets** - Separator level changes, compressor trips
+
+✅ **Quasi-steady analysis** - New equilibrium after disturbance
+
+### When Water Hammer Analysis is Needed
+
+❌ **Emergency shutdowns** - Fast valve closure (<1 second)
+
+❌ **Pump trips** - Sudden flow stoppage
+
+❌ **Check valve slam** - Reverse flow closure
+
+❌ **Pipe stress analysis** - Peak pressure for mechanical design
+
+### Workaround: Estimate Surge Pressure
+
+You can estimate the water hammer pressure surge separately:
+
+```java
+// Calculate theoretical water hammer pressure rise
+public static double joukowskyPressureSurge(double density, double soundSpeed, 
+                                             double velocityChange) {
+    return density * soundSpeed * velocityChange;  // Pa
+}
+
+// Example usage
+double rho = 800;    // kg/m³ (oil)
+double c = 1100;     // m/s (speed of sound in oil)
+double dv = 5;       // m/s (velocity before closure)
+
+double surgePressure = joukowskyPressureSurge(rho, c, dv);
+System.out.println("Max surge: " + surgePressure/1e5 + " bar");
+// Output: Max surge: 44.0 bar
+
+// Add to steady-state operating pressure for peak
+double operatingPressure = 50.0;  // bara
+double peakPressure = operatingPressure + surgePressure/1e5;
+System.out.println("Peak pressure: " + peakPressure + " bara");
+// Output: Peak pressure: 94.0 bar
+```
+
+### Speed of Sound Estimation
+
+For gases, use NeqSim's thermodynamic properties:
+
+```java
+SystemInterface gas = new SystemSrkEos(298.15, 50.0);
+gas.addComponent("methane", 1.0);
+gas.setMixingRule("classic");
+gas.init(3);
+gas.initPhysicalProperties();
+
+double soundSpeed = gas.getSoundSpeed();  // m/s
+System.out.println("Speed of sound: " + soundSpeed + " m/s");
+// Typical: 400-450 m/s for natural gas
+```
+
+### Recommended Tools for Water Hammer
+
+For detailed water hammer analysis, consider:
+
+1. **Method of Characteristics (MOC)** - Classical numerical method for transient pipe flow
+2. **Specialized software**: OLGA, PIPESIM, AFT Impulse, Synergi Pipeline Simulator
+3. **CFD** - For complex geometries or detailed surge vessel analysis
+
+### Future Enhancement
+
+A proper water hammer model would require:
+
+1. Solving the full hyperbolic wave equations
+2. Method of Characteristics or finite volume scheme
+3. Acoustic wave speed (not fluid velocity)
+4. Wave reflection at boundaries
+5. Vapor cavity modeling for column separation
+
+This is a potential future enhancement for NeqSim.
+
+### Choke Opening (Flow Increase)
+
+The reverse scenario - opening a choke to increase flow:
+
+```java
+// Start with choke partially closed
+choke.setPercentValveOpening(30.0);
+process.run();
+
+// Switch to transient
+pipeline.setCalculateSteadyState(false);
+process.setTimeStep(1.0);
+
+// Gradually open choke
+for (int step = 0; step < 200; step++) {
+    if (step >= 20 && step <= 70) {
+        double opening = 30.0 + (step - 20) * 1.4;  // 30% → 100%
+        choke.setPercentValveOpening(Math.min(opening, 100.0));
+    }
+    process.runTransient();
+}
+```
+
+When opening a valve:
+1. Flow increases immediately at the valve
+2. Pressure drops upstream of valve (flow accelerating)
+3. Pressure drop propagates upstream
+4. System equilibrates at higher flow, lower upstream pressure
+
 ## Time Step Selection
 
 ### Guidelines
@@ -316,8 +589,43 @@ Example for 1000m pipe with 12.5 m/s velocity:
 **Cause**: Time step too small relative to physics
 **Solution**: Increase time step or reduce number of segments
 
+## Future: Water Hammer Implementation
+
+Water hammer simulation is now available in NeqSim through the `WaterHammerPipe` class, which uses the Method of Characteristics (MOC) to simulate fast pressure transients. The recommended approach for water hammer analysis is:
+
+1. **Use `WaterHammerPipe` for fast transients** - valve closures, pump trips, ESD events
+2. **Leverage NeqSim thermodynamics** - wave speed calculated from EOS
+3. **Design for extensibility** - supports reservoir, valve, and closed-end boundary conditions
+4. **Validate against Joukowsky equation** - built-in surge pressure calculation
+
+The existing `PipeBeggsAndBrills` advection model remains valuable for slow transients, while `WaterHammerPipe` handles fast acoustic phenomena.
+
+### Quick Example
+
+```java
+// Create water hammer pipe
+WaterHammerPipe pipe = new WaterHammerPipe("pipe", feed);
+pipe.setLength(1000);
+pipe.setDiameter(0.2);
+pipe.setNumberOfNodes(100);
+pipe.setDownstreamBoundary(BoundaryType.VALVE);
+pipe.run();
+
+// Transient with valve closure
+for (int step = 0; step < 1000; step++) {
+    if (step == 100) pipe.setValveOpening(0.0);  // Slam shut
+    pipe.runTransient(0.001, id);
+}
+
+// Get maximum pressure surge
+double maxP = pipe.getMaxPressure("bar");
+```
+
+For detailed implementation, see [Water Hammer Implementation Guide](water_hammer_implementation.md).
+
 ## See Also
 
 - [Pipeline Pressure Drop Overview](pipeline_pressure_drop.md)
 - [Beggs & Brill Correlation](beggs_and_brill_correlation.md)
+- [Water Hammer Implementation Guide](water_hammer_implementation.md)
 - [Process Simulation Basics](../process_calculator.md)
