@@ -8,7 +8,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * <p>
  * Implements the drift-flux model equations for calculating slip between phases, pressure drop, and
  * holdup. The model uses flow-regime-dependent closure relations.
- * </p>
  *
  * <p>
  * Key equations:
@@ -17,7 +16,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * <li>C_0 = distribution coefficient (1.0 - 1.5 typically)</li>
  * <li>v_d = drift velocity (depends on flow regime)</li>
  * </ul>
- * </p>
  *
  * <p>
  * References:
@@ -27,7 +25,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * <li>Bendiksen, K.H. (1984) - An Experimental Investigation of the Motion of Long Bubbles in
  * Inclined Tubes</li>
  * </ul>
- * </p>
  *
  * @author Even Solbraa
  * @version 1.0

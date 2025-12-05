@@ -11,7 +11,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * <p>
  * Implements slug unit model with Lagrangian tracking of slug front and tail. Models slug growth,
  * decay, merging, and interaction with terrain features.
- * </p>
  *
  * <p>
  * Key features:
@@ -21,7 +20,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * <li>Handles slug merging when front catches tail</li>
  * <li>Bendiksen correlation for slug velocity</li>
  * </ul>
- * </p>
  *
  * <p>
  * References:
@@ -29,7 +27,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * <li>Bendiksen, K.H. et al. (1991) - The Dynamic Two-Fluid Model OLGA</li>
  * <li>Nydal, O.J. and Banerjee, S. (1996) - Dynamic Slug Tracking Simulations</li>
  * </ul>
- * </p>
  *
  * @author Even Solbraa
  * @version 1.0

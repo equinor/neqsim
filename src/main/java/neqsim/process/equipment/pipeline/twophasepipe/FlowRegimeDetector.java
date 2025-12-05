@@ -8,7 +8,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * <p>
  * Determines the flow pattern in two-phase pipe flow based on local conditions including fluid
  * properties, velocities, pipe geometry and inclination.
- * </p>
  *
  * <p>
  * References:
@@ -18,7 +17,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * <li>Barnea, D. (1987) - A Unified Model for Predicting Flow-Pattern Transitions for the Whole
  * Range of Pipe Inclinations</li>
  * </ul>
- * </p>
  *
  * @author Even Solbraa
  * @version 1.0
