@@ -13,7 +13,9 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 public class InterphaseTransportCoefficientBaseClass
     implements InterphaseTransportCoefficientInterface {
   /**
-   * <p>Constructor for InterphaseTransportCoefficientBaseClass.</p>
+   * <p>
+   * Constructor for InterphaseTransportCoefficientBaseClass.
+   * </p>
    */
   public InterphaseTransportCoefficientBaseClass() {}
 
@@ -34,14 +36,35 @@ public class InterphaseTransportCoefficientBaseClass
     return calcWallFrictionFactor(0, node);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Calculates the Darcy friction factor using Haaland equation for turbulent flow and f = 64/Re
+   * for laminar flow. Includes transition zone interpolation.
+   *
+   * @param phase phase index
+   * @param node flow node interface
+   * @return Darcy friction factor (dimensionless)
+   */
   @Override
   public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
-    if (Math.abs(node.getReynoldsNumber()) < 2000) {
-      return 64.0 / node.getReynoldsNumber(phase);
+    double reynolds = node.getReynoldsNumber(phase);
+    if (Math.abs(reynolds) < 1e-10) {
+      return 0.0;
+    }
+    double relativeRoughness = node.getGeometry().getRelativeRoughnes();
+    if (Math.abs(reynolds) < 2300) {
+      // Laminar flow
+      return 64.0 / reynolds;
+    } else if (Math.abs(reynolds) < 4000) {
+      // Transition zone - interpolate between laminar and turbulent
+      double fLaminar = 64.0 / 2300.0;
+      double fTurbulent = Math.pow(
+          (1.0 / (-1.8 * Math.log10(6.9 / 4000.0 + Math.pow(relativeRoughness / 3.7, 1.11)))), 2.0);
+      return fLaminar + (fTurbulent - fLaminar) * (reynolds - 2300.0) / 1700.0;
     } else {
-      return Math.pow((1.0 / (-1.8 * Math.log10(6.9 / node.getReynoldsNumber(phase)
-          + Math.pow(node.getGeometry().getRelativeRoughnes() / 3.7, 1.11)))), 2.0);
+      // Turbulent flow - Haaland equation
+      return Math.pow(
+          (1.0 / (-1.8 * Math.log10(6.9 / reynolds + Math.pow(relativeRoughness / 3.7, 1.11)))),
+          2.0);
     }
   }
 
