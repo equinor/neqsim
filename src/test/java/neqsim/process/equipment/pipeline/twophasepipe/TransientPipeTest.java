@@ -181,7 +181,7 @@ class TransientPipeTest {
     pipe.run();
 
     // Check accumulation tracker found low point
-    var accumTracker = pipe.getAccumulationTracker();
+    LiquidAccumulationTracker accumTracker = pipe.getAccumulationTracker();
     assertNotNull(accumTracker);
     assertFalse(accumTracker.getAccumulationZones().isEmpty(),
         "Should identify accumulation zone at low point");
@@ -225,7 +225,7 @@ class TransientPipeTest {
     pipe.run();
 
     // Check slug tracker
-    var slugTracker = pipe.getSlugTracker();
+    SlugTracker slugTracker = pipe.getSlugTracker();
     assertNotNull(slugTracker);
 
     // Statistics should be available
@@ -305,7 +305,7 @@ class TransientPipeTest {
 
     pipe.run();
 
-    var outlet = pipe.getOutletStream();
+    StreamInterface outlet = pipe.getOutletStream();
     assertNotNull(outlet, "Outlet stream should be created");
     assertTrue(outlet.getFluid().getPressure() < inlet.getPressure(),
         "Outlet pressure should be less than inlet");

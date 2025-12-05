@@ -306,7 +306,7 @@ class SlugTrackerTest {
 
     tracker.initializeTerrainSlug(chars, sections);
 
-    var slugList = tracker.getSlugs();
+    List<SlugUnit> slugList = tracker.getSlugs();
     assertEquals(1, slugList.size());
     assertNotNull(slugList.get(0).toString());
   }

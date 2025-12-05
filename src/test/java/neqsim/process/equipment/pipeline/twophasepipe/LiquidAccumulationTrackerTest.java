@@ -64,7 +64,7 @@ class LiquidAccumulationTrackerTest {
     tracker.identifyAccumulationZones(sections);
 
     // Should identify the low point at sections 3-4
-    var zones = tracker.getAccumulationZones();
+    List<AccumulationZone> zones = tracker.getAccumulationZones();
     assertFalse(zones.isEmpty(), "Should identify at least one accumulation zone");
 
     // Check that section 3 or 4 is marked as low point
@@ -137,7 +137,7 @@ class LiquidAccumulationTrackerTest {
   void testDrainageRate() {
     tracker.identifyAccumulationZones(sections);
 
-    var zones = tracker.getAccumulationZones();
+    List<AccumulationZone> zones = tracker.getAccumulationZones();
     if (zones.isEmpty()) {
       return;
     }
@@ -155,7 +155,7 @@ class LiquidAccumulationTrackerTest {
   void testOverflowingZones() {
     tracker.identifyAccumulationZones(sections);
 
-    var zones = tracker.getAccumulationZones();
+    List<AccumulationZone> zones = tracker.getAccumulationZones();
     if (zones.isEmpty()) {
       return;
     }
@@ -163,7 +163,7 @@ class LiquidAccumulationTrackerTest {
     // Set one zone to overflow
     zones.get(0).isOverflowing = true;
 
-    var overflowing = tracker.getOverflowingZones();
+    List<AccumulationZone> overflowing = tracker.getOverflowingZones();
     assertEquals(1, overflowing.size());
   }
 
@@ -181,7 +181,7 @@ class LiquidAccumulationTrackerTest {
 
     tracker.identifyAccumulationZones(sections);
 
-    var zones = tracker.getAccumulationZones();
+    List<AccumulationZone> zones = tracker.getAccumulationZones();
     assertTrue(zones.size() >= 2, "Should identify two low points");
   }
 
@@ -195,7 +195,7 @@ class LiquidAccumulationTrackerTest {
 
     tracker.identifyAccumulationZones(sections);
 
-    var zones = tracker.getAccumulationZones();
+    List<AccumulationZone> zones = tracker.getAccumulationZones();
     // Flat pipeline should have no terrain-induced accumulation zones
     // (though riser base detection might still trigger)
   }
