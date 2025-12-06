@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -31,8 +32,9 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * @author Even Solbraa
  * @version 1.0
  */
-public class SlugTracker {
+public class SlugTracker implements Serializable {
 
+  private static final long serialVersionUID = 1L;
   private static final double GRAVITY = 9.81;
 
   private List<SlugUnit> slugs;
@@ -51,7 +53,8 @@ public class SlugTracker {
   /**
    * Represents a single slug unit (liquid slug + Taylor bubble).
    */
-  public static class SlugUnit {
+  public static class SlugUnit implements Serializable {
+    private static final long serialVersionUID = 1L;
     /** Unique slug identifier. */
     public int id;
     /** Position of slug front (m from inlet). */

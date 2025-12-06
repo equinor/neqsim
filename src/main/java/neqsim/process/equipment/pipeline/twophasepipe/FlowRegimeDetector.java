@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import java.io.Serializable;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 
 /**
@@ -21,8 +22,9 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * @author Even Solbraa
  * @version 1.0
  */
-public class FlowRegimeDetector {
+public class FlowRegimeDetector implements Serializable {
 
+  private static final long serialVersionUID = 1L;
   private static final double GRAVITY = 9.81;
   private static final double PI = Math.PI;
 

@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import java.io.Serializable;
+
 /**
  * Represents the state of a single section/cell in the multiphase pipe.
  *
@@ -11,7 +13,9 @@ package neqsim.process.equipment.pipeline.twophasepipe;
  * @author Even Solbraa
  * @version 1.0
  */
-public class PipeSection implements Cloneable {
+public class PipeSection implements Cloneable, Serializable {
+
+  private static final long serialVersionUID = 1L;
 
   // Geometry
   private double position; // m from inlet
