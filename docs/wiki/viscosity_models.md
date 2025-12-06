@@ -87,6 +87,28 @@ public class ViscosityExample {
 }
 ```
 
+### Tuning LBC dense-fluid parameters
+
+The LBC implementation exposes the dense-fluid polynomial coefficients ("Whitson/Bray-Clark"
+$a_0 \dots a_4$ parameters) so you can tune the model against laboratory data. After selecting the
+`"LBC"` viscosity model, update the coefficients via `setLbcParameters` or `setLbcParameter`, then
+re-initialize properties to apply them:
+
+```java
+system.getPhase(1).getPhysicalProperties().setViscosityModel("LBC");
+system.initProperties();
+double baseViscosity = system.getPhase(1).getViscosity();
+
+double[] tunedCoefficients = new double[] {0.11, 0.030, 0.065, -0.045, 0.010};
+system.getPhase(1).getPhysicalProperties().setLbcParameters(tunedCoefficients);
+system.getPhase(1).getPhysicalProperties().setLbcParameter(2, 0.070); // tweak a single term
+system.initProperties();
+double tunedViscosity = system.getPhase(1).getViscosity();
+
+System.out.println("Base viscosity:  " + baseViscosity);
+System.out.println("Tuned viscosity: " + tunedViscosity);
+```
+
 ### Python Example (via JPype)
 
 ```python
