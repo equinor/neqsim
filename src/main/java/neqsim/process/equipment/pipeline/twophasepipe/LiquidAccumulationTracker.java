@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
@@ -15,14 +16,16 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * @author Even Solbraa
  * @version 1.0
  */
-public class LiquidAccumulationTracker {
+public class LiquidAccumulationTracker implements Serializable {
 
+  private static final long serialVersionUID = 1L;
   private static final double GRAVITY = 9.81;
 
   /**
    * Represents a liquid accumulation zone.
    */
-  public static class AccumulationZone {
+  public static class AccumulationZone implements Serializable {
+    private static final long serialVersionUID = 1L;
     /** Start position (m). */
     public double startPosition;
     /** End position (m). */
@@ -376,7 +379,8 @@ public class LiquidAccumulationTracker {
   /**
    * Slug characteristics for terrain-induced slugs.
    */
-  public static class SlugCharacteristics {
+  public static class SlugCharacteristics implements Serializable {
+    private static final long serialVersionUID = 1L;
     /** Front position (m from inlet). */
     public double frontPosition;
     /** Tail position (m from inlet). */

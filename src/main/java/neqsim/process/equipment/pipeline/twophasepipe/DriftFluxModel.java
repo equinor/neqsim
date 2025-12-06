@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import java.io.Serializable;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 
 /**
@@ -29,14 +30,16 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * @author Even Solbraa
  * @version 1.0
  */
-public class DriftFluxModel {
+public class DriftFluxModel implements Serializable {
 
+  private static final long serialVersionUID = 1L;
   private static final double GRAVITY = 9.81;
 
   /**
    * Drift-flux parameters for a pipe section.
    */
-  public static class DriftFluxParameters {
+  public static class DriftFluxParameters implements Serializable {
+    private static final long serialVersionUID = 1L;
     /** Distribution coefficient C_0. */
     public double C0;
     /** Drift velocity (m/s). */
@@ -357,6 +360,14 @@ public class DriftFluxModel {
     FlowRegime regime = section.getFlowRegime();
 
     switch (regime) {
+      case SINGLE_PHASE_GAS:
+        // Pure gas flow - use Darcy-Weisbach with gas properties
+        return calculateSinglePhaseGasFriction(section, roughness);
+
+      case SINGLE_PHASE_LIQUID:
+        // Pure liquid flow - use Darcy-Weisbach with liquid properties
+        return calculateSinglePhaseLiquidFriction(section, roughness);
+
       case STRATIFIED_SMOOTH:
       case STRATIFIED_WAVY:
         return calculateStratifiedFriction(section, params, roughness);
@@ -368,6 +379,54 @@ public class DriftFluxModel {
         // Use homogeneous model as default
         return calculateHomogeneousFriction(section, params, roughness);
     }
+  }
+
+  /**
+   * Calculate friction for single-phase gas flow.
+   */
+  private double calculateSinglePhaseGasFriction(PipeSection section, double roughness) {
+    double D = section.getDiameter();
+    double rho_G = section.getGasDensity();
+    double mu_G = section.getGasViscosity();
+    double U_SG = section.getSuperficialGasVelocity();
+
+    // Protect against zero/NaN values
+    if (rho_G <= 0 || mu_G <= 0 || U_SG <= 0 || D <= 0) {
+      return 0;
+    }
+
+    // Reynolds number
+    double Re = rho_G * U_SG * D / mu_G;
+
+    // Friction factor (Haaland)
+    double f = calcFrictionFactor(Re, roughness, D);
+
+    // Darcy-Weisbach: dP/dx = -f * (rho * U^2) / (2 * D)
+    return -f * rho_G * U_SG * U_SG / (2.0 * D);
+  }
+
+  /**
+   * Calculate friction for single-phase liquid flow.
+   */
+  private double calculateSinglePhaseLiquidFriction(PipeSection section, double roughness) {
+    double D = section.getDiameter();
+    double rho_L = section.getLiquidDensity();
+    double mu_L = section.getLiquidViscosity();
+    double U_SL = section.getSuperficialLiquidVelocity();
+
+    // Protect against zero/NaN values
+    if (rho_L <= 0 || mu_L <= 0 || U_SL <= 0 || D <= 0) {
+      return 0;
+    }
+
+    // Reynolds number
+    double Re = rho_L * U_SL * D / mu_L;
+
+    // Friction factor (Haaland)
+    double f = calcFrictionFactor(Re, roughness, D);
+
+    // Darcy-Weisbach: dP/dx = -f * (rho * U^2) / (2 * D)
+    return -f * rho_L * U_SL * U_SL / (2.0 * D);
   }
 
   /**
