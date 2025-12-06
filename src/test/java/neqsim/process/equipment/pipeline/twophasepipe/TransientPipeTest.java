@@ -1018,4 +1018,133 @@ class TransientPipeTest {
         "TransientPipe should match Beggs and Brill within 15% for pure gas flow. Ratio: "
             + ratioTPtoBB);
   }
+
+  /**
+   * Compare TransientPipe pressure drop with PipeBeggsAndBrills for pure oil (liquid) flow.
+   * 
+   * For single-phase liquid flow, both models should give similar steady-state pressure drops since
+   * the physics simplifies to standard Darcy-Weisbach friction.
+   */
+  @Test
+  void testPureOilFlowComparisonWithBeggsAndBrills() {
+    // ========== Create pure oil fluid ==========
+    SystemInterface oil = new neqsim.thermo.system.SystemSrkEos(320, 20);
+    oil.addComponent("n-heptane", 0.5);
+    oil.addComponent("n-octane", 0.5);
+    oil.setMixingRule("classic");
+    oil.setMultiPhaseCheck(true);
+
+    // ========== Common parameters ==========
+    double pipeLength = 1000; // m
+    double pipeDiameter = 0.2; // m (200 mm)
+    double roughness = 1e-5; // m
+    double flowRate = 10.0; // kg/s
+    double inletPressure = 20.0; // bara
+    double inletTemp = 320.0; // K
+
+    // ========== PipeBeggsAndBrills (reference model) ==========
+    Stream bbStream = new Stream("BB inlet", oil.clone());
+    bbStream.setFlowRate(flowRate, "kg/sec");
+    bbStream.setTemperature(inletTemp, "K");
+    bbStream.setPressure(inletPressure, "bara");
+    bbStream.run();
+
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills bbPipe =
+        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("BB pipe", bbStream);
+    bbPipe.setLength(pipeLength);
+    bbPipe.setDiameter(pipeDiameter);
+    bbPipe.setPipeWallRoughness(roughness);
+    bbPipe.setNumberOfIncrements(20);
+    bbPipe.setAngle(0); // Horizontal
+    bbPipe.run();
+
+    double bbOutletPressure = bbPipe.getOutletStream().getPressure("bara");
+    double bbPressureDrop = inletPressure - bbOutletPressure;
+
+    System.out.println("=== Pure Oil Flow: TransientPipe vs PipeBeggsAndBrills ===");
+    System.out.println("Conditions: " + flowRate + " kg/s, " + pipeDiameter * 1000 + " mm ID, "
+        + pipeLength + " m length");
+    System.out.println("Inlet: " + inletPressure + " bara, " + inletTemp + " K");
+    System.out.println();
+    System.out.println("PipeBeggsAndBrills:");
+    System.out.println("  Outlet pressure: " + String.format("%.4f", bbOutletPressure) + " bara");
+    System.out.println("  Pressure drop: " + String.format("%.4f", bbPressureDrop) + " bar");
+    System.out.println("  Flow regime: " + bbPipe.getFlowRegime());
+
+    // ========== TransientPipe ==========
+    Stream tpStream = new Stream("TP inlet", oil.clone());
+    tpStream.setFlowRate(flowRate, "kg/sec");
+    tpStream.setTemperature(inletTemp, "K");
+    tpStream.setPressure(inletPressure, "bara");
+    tpStream.run();
+
+    TransientPipe tpPipe = new TransientPipe("TP pipe", tpStream);
+    tpPipe.setLength(pipeLength);
+    tpPipe.setDiameter(pipeDiameter);
+    tpPipe.setRoughness(roughness);
+    tpPipe.setNumberOfSections(20);
+    tpPipe.setMaxSimulationTime(60); // Run to steady state
+    tpPipe.setInletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_FLOW);
+    tpPipe.setOutletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_PRESSURE);
+    tpPipe.run();
+
+    double[] tpPressures = tpPipe.getPressureProfile();
+    double tpInletPressure = tpPressures[0] / 1e5;
+    double tpOutletPressure = tpPressures[tpPressures.length - 1] / 1e5;
+    double tpPressureDrop = tpInletPressure - tpOutletPressure;
+
+    System.out.println("\nTransientPipe (steady state):");
+    System.out.println("  Inlet pressure: " + String.format("%.4f", tpInletPressure) + " bara");
+    System.out.println("  Outlet pressure: " + String.format("%.4f", tpOutletPressure) + " bara");
+    System.out.println("  Pressure drop: " + String.format("%.4f", tpPressureDrop) + " bar");
+
+    // Get oil properties for manual calculation
+    double oilDensity = tpStream.getFluid().getDensity("kg/m3");
+    double oilViscosity = tpStream.getFluid().getViscosity("kg/msec");
+    double area = Math.PI * pipeDiameter * pipeDiameter / 4.0;
+    double actualVelocity = flowRate / (oilDensity * area);
+    double Re = oilDensity * actualVelocity * pipeDiameter / oilViscosity;
+
+    System.out.println("\nOil properties:");
+    System.out.println("  Density: " + String.format("%.2f", oilDensity) + " kg/m3");
+    System.out.println("  Viscosity: " + String.format("%.4f", oilViscosity * 1000) + " mPa.s");
+    System.out.println("  Actual velocity: " + String.format("%.2f", actualVelocity) + " m/s");
+    System.out.println("  Reynolds number: " + String.format("%.0f", Re));
+
+    // Manual Darcy-Weisbach calculation for verification
+    double relRough = roughness / pipeDiameter;
+    double f_manual;
+    if (Re < 2300) {
+      f_manual = 64.0 / Re;
+    } else {
+      // Haaland correlation
+      double term = Math.pow(relRough / 3.7, 1.11) + 6.9 / Re;
+      f_manual = Math.pow(-1.8 * Math.log10(term), -2);
+    }
+    double dP_manual = f_manual * (pipeLength / pipeDiameter) * 0.5 * oilDensity * actualVelocity
+        * actualVelocity / 1e5;
+
+    System.out.println("\nManual Darcy-Weisbach calculation:");
+    System.out.println("  Friction factor: " + String.format("%.6f", f_manual));
+    System.out.println("  Pressure drop: " + String.format("%.4f", dP_manual) + " bar");
+
+    // ========== Comparison ==========
+    System.out.println("\n=== Comparison ===");
+    System.out.println(
+        "BB ΔP: " + String.format("%.4f", bbPressureDrop) + " bar (Beggs and Brill reference)");
+    System.out.println("TP ΔP: " + String.format("%.4f", tpPressureDrop) + " bar (TransientPipe)");
+    System.out.println("Manual ΔP: " + String.format("%.4f", dP_manual) + " bar (Darcy-Weisbach)");
+
+    double ratioTPtoBB = tpPressureDrop / bbPressureDrop;
+    double ratioTPtoManual = tpPressureDrop / dP_manual;
+    System.out.println("TP/BB ratio: " + String.format("%.2f", ratioTPtoBB));
+    System.out.println("TP/Manual ratio: " + String.format("%.2f", ratioTPtoManual));
+
+    // For pure oil flow, TransientPipe should match Beggs and Brill within 15%
+    assertTrue(tpPressureDrop > 0, "TransientPipe pressure drop should be positive");
+    assertTrue(bbPressureDrop > 0, "Beggs and Brill pressure drop should be positive");
+    assertTrue(ratioTPtoBB > 0.85 && ratioTPtoBB < 1.15,
+        "TransientPipe should match Beggs and Brill within 15% for pure oil flow. Ratio: "
+            + ratioTPtoBB);
+  }
 }

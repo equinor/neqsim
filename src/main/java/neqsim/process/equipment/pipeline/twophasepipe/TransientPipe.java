@@ -372,6 +372,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     double rho_L = 0, rho_G = 0, mu_L = 0, mu_G = 0, sigma = 0;
     double H_L = 0, H_G = 0, c_L = 0, c_G = 0;
     double U_SL = 0, U_SG = 0;
+    double gasBeta = 0; // Gas mass fraction
 
     if (fluid.hasPhaseType("gas")) {
       rho_G = fluid.getPhase("gas").getDensity("kg/m3");
@@ -379,9 +380,18 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       H_G =
           fluid.getPhase("gas").getEnthalpy("J/mol") / fluid.getPhase("gas").getMolarMass() * 1000;
       c_G = fluid.getPhase("gas").getSoundSpeed();
+      gasBeta = fluid.getPhase("gas").getBeta();
 
-      double gasFlowRate = inStream.getFlowRate("kg/sec") * fluid.getPhase("gas").getBeta();
+      double gasFlowRate = inStream.getFlowRate("kg/sec") * gasBeta;
       U_SG = gasFlowRate / (rho_G * Math.PI * diameter * diameter / 4.0);
+    } else {
+      // No gas phase - use default values to avoid division by zero
+      rho_G = 1.0; // Default gas density (kg/m3)
+      mu_G = 1e-5; // Default gas viscosity (Pa.s)
+      H_G = 0; // Default enthalpy
+      c_G = 340; // Default sound speed (m/s)
+      U_SG = 0;
+      gasBeta = 0;
     }
 
     if (fluid.hasPhaseType("oil") || fluid.hasPhaseType("aqueous")) {
@@ -415,7 +425,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
         c_L = fluid.getPhase(liqPhase).getSoundSpeed();
       }
 
-      double liqFlowRate = inStream.getFlowRate("kg/sec") * (1.0 - fluid.getPhase("gas").getBeta());
+      double liqFlowRate = inStream.getFlowRate("kg/sec") * (1.0 - gasBeta);
       U_SL = liqFlowRate / (rho_L * Math.PI * diameter * diameter / 4.0);
     } else {
       // No liquid phase - use default values to avoid division by zero
