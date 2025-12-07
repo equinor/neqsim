@@ -80,8 +80,8 @@ class TransientPipeTest {
     pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
 
     // Use TransientPipe's own methods for boundary pressures
-    pipe.setinletPressureValue(50e5);
-    pipe.setoutletPressureValue(30e5);
+    pipe.setInletPressure(50.0); // bara
+    pipe.setOutletPressure(30.0); // bara
     pipe.setInletMassFlow(10.0);
 
     // No exceptions should be thrown
@@ -690,8 +690,8 @@ class TransientPipeTest {
     pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
 
     // Initial outlet valve fully open: low back-pressure (30 bar downstream)
-    double outletPressureOpen = 30e5; // Pa
-    pipe.setoutletPressureValue(outletPressureOpen);
+    double outletPressureOpen = 30.0; // bara
+    pipe.setOutletPressure(outletPressureOpen);
 
     // ========== Build Process System ==========
     neqsim.process.processmodel.ProcessSystem process =
@@ -719,11 +719,11 @@ class TransientPipeTest {
 
     // ========== Phase 2: Transient - Simulate Partially Closed Outlet Valve ==========
     // Partially closed valve creates more resistance → higher back-pressure
-    double outletPressureClosed = 38e5; // Pa (38 bar - higher back-pressure)
+    double outletPressureClosed = 38.0; // bara (38 bar - higher back-pressure)
     System.out.println("\n=== Phase 2: Transient - Outlet Valve Closing to 30% ===");
     System.out.println("Increasing outlet back-pressure to 38 bar (simulates valve restriction)");
 
-    pipe.setoutletPressureValue(outletPressureClosed);
+    pipe.setOutletPressure(outletPressureClosed);
 
     java.util.List<Double> outletPressureHistory = new java.util.ArrayList<>();
     java.util.List<Double> inletPressureHistory = new java.util.ArrayList<>();
@@ -768,7 +768,7 @@ class TransientPipeTest {
     System.out.println("\n=== Phase 3: Transient - Outlet Valve Opening to 100% ===");
     System.out.println("Returning outlet back-pressure to 30 bar");
 
-    pipe.setoutletPressureValue(outletPressureOpen); // Back to 30 bar
+    pipe.setOutletPressure(outletPressureOpen); // Back to 30 bar
 
     for (int t = 20; t < 40; t++) {
       process.runTransient(1.0, java.util.UUID.randomUUID());

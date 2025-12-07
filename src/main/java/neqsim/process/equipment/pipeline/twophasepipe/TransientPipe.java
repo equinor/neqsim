@@ -222,7 +222,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
    * pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
    * pipe.setInletMassFlow(5.0); // kg/s
-   * pipe.setoutletPressureValue(30e5); // Pa
+   * pipe.setOutletPressure(30.0); // bara
    * }</pre>
    */
   public enum BoundaryCondition {
@@ -2251,12 +2251,45 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     this.outletBCType = bc;
   }
 
+  /**
+   * Set the inlet pressure value.
+   *
+   * @param pressure Inlet pressure in bara (bar absolute)
+   * @deprecated Use {@link #setInletPressure(double)} instead
+   */
+  @Deprecated
   public void setinletPressureValue(double pressure) {
-    this.inletPressureValue = pressure;
+    this.inletPressureValue = pressure * 1e5; // bara to Pa
   }
 
+  /**
+   * Set the inlet pressure value.
+   *
+   * @param pressure Inlet pressure in bara (bar absolute)
+   */
+  public void setInletPressure(double pressure) {
+    this.inletPressureValue = pressure * 1e5; // bara to Pa
+  }
+
+  /**
+   * Set the outlet pressure value.
+   *
+   * @param pressure Outlet pressure in bara (bar absolute)
+   * @deprecated Use {@link #setOutletPressure(double)} instead
+   */
+  @Deprecated
   public void setoutletPressureValue(double pressure) {
-    this.outletPressureValue = pressure;
+    this.outletPressureValue = pressure * 1e5; // bara to Pa
+    this.outletPressureExplicitlySet = true;
+  }
+
+  /**
+   * Set the outlet pressure value.
+   *
+   * @param pressure Outlet pressure in bara (bar absolute)
+   */
+  public void setOutletPressure(double pressure) {
+    this.outletPressureValue = pressure * 1e5; // bara to Pa
     this.outletPressureExplicitlySet = true;
   }
 

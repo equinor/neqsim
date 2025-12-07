@@ -185,7 +185,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     pipeTP.setNumberOfSections(nSections);
     pipeTP.setInclinationProfile(createUniformInclinationProfile(nSections, 0.0));
     pipeTP.setOutletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_PRESSURE);
-    pipeTP.setoutletPressureValue(outletPressureBB * 1e5); // Pa
+    pipeTP.setOutletPressure(outletPressureBB); // bara
     pipeTP.setMaxSimulationTime(300.0); // Run to steady state
     pipeTP.run();
 
@@ -269,7 +269,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     pipeTP.setNumberOfSections(nSections);
     pipeTP.setInclinationProfile(createUniformInclinationProfile(nSections, 0.0));
     pipeTP.setOutletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_PRESSURE);
-    pipeTP.setoutletPressureValue(outletPressureBB * 1e5);
+    pipeTP.setOutletPressure(outletPressureBB); // bara
     pipeTP.setMaxSimulationTime(300.0);
     pipeTP.run();
 
@@ -358,7 +358,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     pipeTP.setNumberOfSections(nSections);
     pipeTP.setInclinationProfile(createUniformInclinationProfile(nSections, angleDegrees));
     pipeTP.setOutletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_PRESSURE);
-    pipeTP.setoutletPressureValue(outletPressureBB * 1e5);
+    pipeTP.setOutletPressure(outletPressureBB); // bara
     pipeTP.setMaxSimulationTime(300.0);
     pipeTP.run();
 
@@ -437,7 +437,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     pipeTP.setNumberOfSections(nSections);
     pipeTP.setInclinationProfile(createUniformInclinationProfile(nSections, angleDegrees));
     pipeTP.setOutletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_PRESSURE);
-    pipeTP.setoutletPressureValue(outletPressureBB * 1e5);
+    pipeTP.setOutletPressure(outletPressureBB); // bara
     pipeTP.setMaxSimulationTime(300.0);
     pipeTP.run();
 
@@ -519,7 +519,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     pipeTP.setNumberOfSections(nSections);
     pipeTP.setInclinationProfile(createUniformInclinationProfile(nSections, 0.0));
     pipeTP.setOutletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_PRESSURE);
-    pipeTP.setoutletPressureValue(outletPressureBB * 1e5);
+    pipeTP.setOutletPressure(outletPressureBB); // bara
     pipeTP.setMaxSimulationTime(300.0);
     pipeTP.run();
 
@@ -639,7 +639,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     pipeTP.setNumberOfSections(nSections);
     pipeTP.setInclinationProfile(createUniformInclinationProfile(nSections, 0.0));
     pipeTP.setOutletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_PRESSURE);
-    pipeTP.setoutletPressureValue(pipeBB.getOutletPressure() * 1e5); // Pa
+    pipeTP.setOutletPressure(pipeBB.getOutletPressure()); // bara
     pipeTP.setMaxSimulationTime(600.0);
 
     // Enable heat transfer in TransientPipe
@@ -743,7 +743,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     pipeTP.setNumberOfSections(nSections);
     pipeTP.setInclinationProfile(createUniformInclinationProfile(nSections, 0.0));
     pipeTP.setOutletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_PRESSURE);
-    pipeTP.setoutletPressureValue(pipeBB.getOutletPressure() * 1e5);
+    pipeTP.setOutletPressure(pipeBB.getOutletPressure()); // bara
     pipeTP.setMaxSimulationTime(600.0);
 
     // Enable heat transfer in TransientPipe
@@ -843,7 +843,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     pipeTP.setNumberOfSections(nSections);
     pipeTP.setInclinationProfile(createUniformInclinationProfile(nSections, 0.0));
     pipeTP.setOutletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_PRESSURE);
-    pipeTP.setoutletPressureValue(outletPressureBB * 1e5);
+    pipeTP.setOutletPressure(outletPressureBB); // bara
     pipeTP.setMaxSimulationTime(600.0);
 
     // Enable energy equation but with minimal ambient heat transfer
@@ -948,7 +948,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     pipeTP.setNumberOfSections(nSections);
     pipeTP.setInclinationProfile(createUniformInclinationProfile(nSections, 0.0));
     pipeTP.setOutletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_PRESSURE);
-    pipeTP.setoutletPressureValue(pipeBB.getOutletPressure() * 1e5);
+    pipeTP.setOutletPressure(pipeBB.getOutletPressure()); // bara
     pipeTP.setMaxSimulationTime(600.0);
     // JT coefficient is now auto-calculated from gas phase thermodynamics
     pipeTP.setIncludeHeatTransfer(true);
