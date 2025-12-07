@@ -13,6 +13,7 @@ This folder holds additional documentation for the NeqSim project. Below are use
 
 - [JUnit test overview](test-overview.md)
 - [Distillation column algorithm](distillation_column.md)
+- [Gibbs reactor](gibbs_reactor.md)
 - [Humid air mathematics](humid_air_math.md)
 - [Flow meter models](flow_meter_models.md)
 - [Air cooler unit operation](air_cooler.md)

@@ -277,4 +277,35 @@ public class GibbsReactorTest {
     Assertions.assertEquals(1.66995E-7, no2, 0.01);
     Assertions.assertEquals(2.19702E-1, water, 0.01);
   }
+
+    @Test
+    public void testWaterH2O2Mix() {
+        // 600 ml water, density ~1 g/ml => 0.6 kg => ~33.3 mol
+        double waterMass = 0.6; // kg
+        double waterMolarMass = 18.015; // g/mol
+        double waterMoles = waterMass * 1000 / waterMolarMass;
+
+        double h2o2Moles = 0.0892;
+
+        SystemInterface system = new SystemSrkEos(293.15, 1.0);
+        system.addComponent("water", waterMoles);
+        system.addComponent("H2O2", h2o2Moles);
+        system.addComponent("oxygen", 0.0);
+        system.setMixingRule(2);
+        system.setMultiPhaseCheck(true);
+
+        Stream inlet = new Stream("inlet", system);
+        inlet.run();
+
+        GibbsReactor reactor = new GibbsReactor("reactor", inlet);
+        reactor.setUseAllDatabaseSpecies(false);
+        reactor.setDampingComposition(0.0005);
+        reactor.setMaxIterations(5000);
+        reactor.setConvergenceTolerance(1e-6);
+        reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
+        reactor.run();
+
+        SystemInterface outlet = reactor.getOutletStream().getThermoSystem();
+        outlet.prettyPrint();
+    }
 }

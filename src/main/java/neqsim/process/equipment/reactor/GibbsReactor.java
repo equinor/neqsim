@@ -17,12 +17,54 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * Gibbs reactor for chemical equilibrium calculations using Gibbs free energy minimization.
+ *
  * <p>
- * GibbsReactor class.
+ * This reactor computes chemical equilibrium compositions by minimizing the total Gibbs free
+ * energy of the system subject to elemental mass balance constraints. The implementation uses
+ * the Newton-Raphson method with Lagrange multipliers to solve the constrained optimization
+ * problem.
  * </p>
+ *
+ * <h2>Key Features</h2>
+ * <ul>
+ * <li>Supports both isothermal and adiabatic operation modes</li>
+ * <li>Handles multi-component systems with element balance constraints</li>
+ * <li>Allows marking specific components as inert (excluded from reactions)</li>
+ * <li>Provides detailed convergence diagnostics and mass balance verification</li>
+ * </ul>
+ *
+ * <h2>Algorithm</h2>
+ * <p>
+ * The reactor minimizes the objective function:
+ * </p>
+ * <pre>
+ * G = Σ nᵢ(μᵢ⁰ + RT ln(φᵢyᵢP)) - Σ λⱼ(Σ aᵢⱼnᵢ - bⱼ)
+ * </pre>
+ * <p>
+ * where nᵢ are molar amounts, μᵢ⁰ is standard chemical potential, φᵢ is fugacity coefficient,
+ * yᵢ is mole fraction, λⱼ are Lagrange multipliers, aᵢⱼ are stoichiometric coefficients,
+ * and bⱼ are element totals.
+ * </p>
+ *
+ * <h2>Usage Example</h2>
+ * <pre>
+ * GibbsReactor reactor = new GibbsReactor("reactor", inletStream);
+ * reactor.setEnergyMode(EnergyMode.ISOTHERMAL);
+ * reactor.setMaxIterations(5000);
+ * reactor.setConvergenceTolerance(1e-6);
+ * reactor.setDampingComposition(0.01);
+ * reactor.run();
+ *
+ * if (reactor.hasConverged()) {
+ *     Stream outlet = reactor.getOutletStream();
+ *     double enthalpyChange = reactor.getEnthalpyOfReactions();
+ * }
+ * </pre>
  *
  * @author Sviatoslav Eroshkin
  * @version $Id: $Id
+ * @see GibbsReactorCO2
  */
 public class GibbsReactor extends TwoPortEquipment {
   /**
@@ -222,9 +264,43 @@ public class GibbsReactor extends TwoPortEquipment {
     return totalH;
   }
 
+  /**
+   * Reactor energy mode: isothermal (constant temperature) or adiabatic (no heat exchange).
+   */
   public enum EnergyMode {
-    ISOTHERMAL, ADIABATIC
+    /** Isothermal mode: temperature remains constant during reaction. */
+    ISOTHERMAL,
+    /** Adiabatic mode: no heat exchange, temperature changes with reaction enthalpy. */
+    ADIABATIC
   }
+
+  // ==================== Constants ====================
+
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
+
+  /** Reference temperature in Kelvin for thermodynamic calculations (298.15 K = 25°C). */
+  private static final double REFERENCE_TEMPERATURE = 298.15;
+
+  /** Universal gas constant in kJ/(mol·K). */
+  private static final double R_KJ = 8.314462618e-3;
+
+  /** Minimum mole amount to prevent numerical issues with log(0). */
+  private static final double MIN_MOLES = 1e-6;
+
+  /** Minimum value for Jacobian calculations to avoid division by zero. */
+  private static final double MIN_JACOBIAN_MOLES = 1e-6;
+
+  /** Small threshold for detecting zero element coefficients. */
+  private static final double ELEMENT_ZERO_THRESHOLD = 1e-6;
+
+  /** Logger object for class. */
+  private static final Logger logger = LogManager.getLogger(GibbsReactor.class);
+
+  /** Pattern to identify ionic species (names ending with + or -). */
+  private static final Pattern ION_NAME_PATTERN = Pattern.compile(".*[+\\-]+$");
+
+  // ==================== Configuration Fields ====================
 
   private EnergyMode energyMode = EnergyMode.ISOTHERMAL;
 
@@ -268,14 +344,7 @@ public class GibbsReactor extends TwoPortEquipment {
     return energyMode;
   }
 
-  /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
-  /** Reference temperature in Kelvin for thermodynamic calculations. */
-  private static final double REFERENCE_TEMPERATURE = 298.15;
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(GibbsReactor.class);
-
-  private static final Pattern ION_NAME_PATTERN = Pattern.compile(".*[+\\-]+$");
+  // ==================== Method Selection ====================
 
   private String method = "DirectGibbsMinimization";
   private boolean useAllDatabaseSpecies = false;
@@ -401,7 +470,17 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Inner class to represent a component in the Gibbs reaction database.
+   * Inner class representing a component in the Gibbs reaction database.
+   *
+   * <p>
+   * Each GibbsComponent stores thermodynamic properties needed for Gibbs energy calculations:
+   * </p>
+   * <ul>
+   * <li>Elemental composition (O, N, C, H, S, Ar, Z)</li>
+   * <li>Heat capacity polynomial coefficients (A, B, C, D)</li>
+   * <li>Standard formation properties at 298.15 K (ΔHf°, ΔGf°, ΔSf°)</li>
+   * <li>Optional polynomial coefficients for direct Gibbs/enthalpy calculations</li>
+   * </ul>
    */
   public class GibbsComponent {
     private String molecule;
@@ -771,55 +850,26 @@ public class GibbsReactor extends TwoPortEquipment {
         if (line.isEmpty() || line.startsWith("#"))
           continue;
         String[] parts = line.split(";");
-        // Handle both old format (15 parts, 6 elements) and new format (16 parts, 7 elements)
-        if (parts.length >= 15) {
+        // Handle actual format: molecule + 8 elements + 4 Cp + 3 thermo = 16 columns
+        if (parts.length >= 16) {
           try {
             final String molecule = parts[0].trim();
-            double[] elements = new double[7];
-
-            // Determine number of elements based on parts length
-            // New format: Component + 7 elements (O,N,C,H,S,Ar,Z) + other data = 15+ parts
-            // Old format: Component + 6 elements (O,N,C,H,S,Ar) + other data = 14+ parts
-            int numElements = (parts.length >= 15) ? 7 : 6;
-            logger.debug("Loading component: " + molecule + " with " + numElements
-                + " elements (parts.length=" + parts.length + ")");
-
-            // Debug logging for ionic species - show raw parts
-            if (isIonicComponent(molecule)) {
-              StringBuilder partsStr = new StringBuilder();
-              for (int i = 0; i < Math.min(parts.length, 10); i++) {
-                partsStr.append("parts[").append(i).append("]=").append(parts[i]).append(" ");
-              }
-              // System.out.println(
-              // "DATABASE LOADING - Raw parts for " + molecule + ": " + partsStr.toString());
-              // System.out.println("DATABASE LOADING - parts.length=" + parts.length
-              // + ", numElements=" + numElements);
-            }
-
-            // Parse available elements
-            for (int i = 0; i < numElements; i++) {
-              String value = parts[i + 1].trim().replace(",", ".");
-              elements[i] = Double.parseDouble(value);
-              if (molecule.contains("+") || molecule.contains("-")) {
-                // System.out.println("DATABASE LOADING - Element[" + i + "] (" + elementNames[i]
-                // + ") = " + value + " -> " + elements[i]);
-              }
+            double[] elements = new double[8];
+            for (int i = 0; i < 8; i++) {
+                elements[i] = Double.parseDouble(parts[i + 1].trim().replace(",", "."));
             }
             double[] heatCapCoeffs = new double[4];
-            int heatCapStartIndex = numElements + 1; // 7 for new format, 6 for old format
+            int heatCapStartIndex = 9; // after 8 elements
             for (int i = 0; i < 4; i++) {
-              String value = parts[i + heatCapStartIndex].trim().replace(",", ".");
-              heatCapCoeffs[i] = Double.parseDouble(value);
+                heatCapCoeffs[i] = Double.parseDouble(parts[i + heatCapStartIndex].trim().replace(",", "."));
             }
-
-            int thermoStartIndex = heatCapStartIndex + 4;
+            int thermoStartIndex = heatCapStartIndex + 4; // 13
             String deltaHf298Str = parts[thermoStartIndex].trim().replace(",", ".");
             String deltaGf298Str = parts[thermoStartIndex + 1].trim().replace(",", ".");
             String deltaSf298Str = parts[thermoStartIndex + 2].trim().replace(",", ".");
             double deltaHf298 = Double.parseDouble(deltaHf298Str);
             double deltaGf298 = Double.parseDouble(deltaGf298Str);
             double deltaSf298 = Double.parseDouble(deltaSf298Str);
-
             // Get extra coefficients if available, default to NaN array if not found
             double[] defaultCoeffs = new double[12];
             for (int k = 0; k < 12; k++) {
@@ -840,7 +890,9 @@ public class GibbsReactor extends TwoPortEquipment {
                 coeffs.length > 10 ? coeffs[10] : Double.NaN,
                 coeffs.length > 11 ? coeffs[11] : Double.NaN);
             gibbsDatabase.add(component);
-            componentMap.put(molecule.toLowerCase(), component);
+            componentMap.put(molecule.toLowerCase(), component); // original line
+            // Add also trimmed version for robustness
+            componentMap.put(molecule.trim().toLowerCase(), component);
             logger.debug("Loaded component: " + molecule);
           } catch (NumberFormatException e) {
             logger.warn("Error parsing line: " + line + " - " + e.getMessage());
@@ -1084,7 +1136,7 @@ public class GibbsReactor extends TwoPortEquipment {
     objectiveFunctionValues.clear();
 
     double T = system.getTemperature();
-    double RT = 8.314462618e-3 * T; // kJ/mol
+    double RT = R_KJ * T;
 
     // Calculate total moles from outlet_mole list
     double totalMoles = 0.0;
@@ -1097,7 +1149,7 @@ public class GibbsReactor extends TwoPortEquipment {
       String compName = system.getComponent(i).getComponentName();
 
       // Use outlet_mole for formulas
-      double moles = (i < outlet_mole.size()) ? outlet_mole.get(i) : 1E-6;
+      double moles = (i < outlet_mole.size()) ? outlet_mole.get(i) : MIN_MOLES;
 
       // Get Gibbs component
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
@@ -1391,7 +1443,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
     SystemInterface system = getOutletStream().getThermoSystem();
     double T = system.getTemperature();
-    double RT = 8.314462618e-3 * T; // kJ/mol
+    double RT = R_KJ * T;
 
 
     // Calculate total moles for mole fraction derivatives using outlet_mole
@@ -1408,8 +1460,8 @@ public class GibbsReactor extends TwoPortEquipment {
       // Find outlet mole corresponding to this variable component (use processedComponentIndexMap)
       int globalIdx = processedComponentIndexMap.getOrDefault(compI, -1);
       double ni =
-          (globalIdx >= 0 && globalIdx < outlet_mole.size()) ? outlet_mole.get(globalIdx) : 1E-6;
-      double niForJacobian = Math.max(ni, 1e-6); // Use minimum of 1e-6 for Jacobian calculation
+          (globalIdx >= 0 && globalIdx < outlet_mole.size()) ? outlet_mole.get(globalIdx) : MIN_MOLES;
+      double niForJacobian = Math.max(ni, MIN_JACOBIAN_MOLES); // Use minimum of 1e-6 for Jacobian calculation
       system.init(3);
       for (int j = 0; j < numComponents; j++) {
         String compJ = variableComponents.get(j);
@@ -1548,12 +1600,11 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Enforce minimum concentration threshold to prevent numerical issues. If any component has moles
-   * less than 1E-6, it will be set to 1E-6.
+   * less than MIN_MOLES, it will be set to MIN_MOLES.
    *
    * @param system The thermodynamic system to check and modify
    */
   private void enforceMinimumConcentrations(SystemInterface system) {
-    double minConcentration = 1e-6;
     boolean modified = false;
 
     for (int i = 0; i < system.getNumberOfComponents(); i++) {
@@ -1564,10 +1615,10 @@ public class GibbsReactor extends TwoPortEquipment {
       }
       double currentMoles = system.getComponent(i).getNumberOfMolesInPhase();
 
-      if (currentMoles < minConcentration) {
-        logger.info("Component " + compName + " has very low concentration (" + currentMoles
-            + "), setting to minimum: " + minConcentration);
-        system.addComponent(i, minConcentration - currentMoles, 0);
+      if (currentMoles < MIN_MOLES) {
+        logger.info("Component {} has very low concentration ({}), setting to minimum: {}",
+            compName, currentMoles, MIN_MOLES);
+        system.addComponent(i, MIN_MOLES - currentMoles, 0);
         modified = true;
       }
     }
@@ -1618,19 +1669,20 @@ public class GibbsReactor extends TwoPortEquipment {
    * Print loaded database components for debugging.
    */
   public void printDatabaseComponents() {
-    // System.out.println("\n=== Loaded Database Components ===");
-    // System.out.println("Total components in database: " + gibbsDatabase.size());
+    logger.debug("=== Loaded Database Components ===");
+    logger.debug("Total components in database: {}", gibbsDatabase.size());
 
     for (GibbsComponent comp : gibbsDatabase) {
       String molecule = comp.getMolecule();
       double[] elements = comp.getElements();
-      // System.out.printf(" %s: O=%.1f, N=%.1f, C=%.1f, H=%.1f, S=%.1f, Ar=%.1f%n", molecule,
-      // elements[0], elements[1], elements[2], elements[3], elements[4], elements[5]);
+      logger.debug(" {}: O={}, N={}, C={}, H={}, S={}, Ar={}",
+          molecule, elements[0], elements[1], elements[2],
+          elements[3], elements[4], elements[5]);
     }
 
-    // System.out.println("\nComponent map keys:");
+    logger.debug("Component map keys:");
     for (String key : componentMap.keySet()) {
-      // System.out.println(" '" + key + "'");
+      logger.debug(" '{}'", key);
     }
   }
 
@@ -1649,13 +1701,10 @@ public class GibbsReactor extends TwoPortEquipment {
       for (String compName : processedComponents) {
         GibbsComponent comp = componentMap.get(compName.toLowerCase());
         if (comp == null) {
-          // System.err.println("WARNING: Component '" + compName
-          // + "' not found in gibbsReactDatabase. Skipping active element check for this
-          // component.");
           continue;
         }
         double[] elements = comp.getElements();
-        if (Math.abs(elements[elementIndex]) > 1E-6) {
+        if (Math.abs(elements[elementIndex]) > ELEMENT_ZERO_THRESHOLD) {
           elementPresent = true;
           break;
         }
