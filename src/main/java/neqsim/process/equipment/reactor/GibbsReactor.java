@@ -162,8 +162,9 @@ public class GibbsReactor extends TwoPortEquipment {
       String compName = componentNames.get(i);
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
       if (comp == null) {
-        throw new IllegalArgumentException(
-            "Component '" + compName + "' not found in gibbsReactDatabase.");
+        logger.warn("Component '" + compName
+            + "' not found in gibbsReactDatabase. Neglecting from enthalpy calculation.");
+        continue;
       }
       totalH += n.get(i) * comp.calculateEnthalpy(T, i);
     }
@@ -187,8 +188,9 @@ public class GibbsReactor extends TwoPortEquipment {
       String compName = componentNames.get(i);
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
       if (comp == null) {
-        throw new IllegalArgumentException(
-            "Component '" + compName + "' not found in gibbsReactDatabase.");
+        logger.warn("Component '" + compName
+            + "' not found in gibbsReactDatabase. Neglecting from Gibbs energy calculation.");
+        continue;
       }
       totalG += n.get(i) * comp.calculateGibbsEnergy(T, i);
     }
@@ -231,8 +233,9 @@ public class GibbsReactor extends TwoPortEquipment {
       String compName = componentNames.get(i);
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
       if (comp == null) {
-        throw new IllegalArgumentException(
-            "Component '" + compName + "' not found in gibbsReactDatabase.");
+        logger.warn("Component '" + compName
+            + "' not found in gibbsReactDatabase. Neglecting from standard enthalpy calculation.");
+        continue;
       }
       totalH += n.get(i) * comp.calculateEnthalpy(REFERENCE_TEMPERATURE, i); // Use reference
                                                                              // temperature for
@@ -257,8 +260,9 @@ public class GibbsReactor extends TwoPortEquipment {
       String compName = componentNames.get(i);
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
       if (comp == null) {
-        throw new IllegalArgumentException(
-            "Component '" + compName + "' not found in gibbsReactDatabase.");
+        logger.warn("Component '" + compName
+            + "' not found in gibbsReactDatabase. Neglecting from enthalpy calculation.");
+        continue;
       }
       totalH += n.get(i) * comp.calculateEnthalpy(T, i); // Use 298.15K for standard enthalpy
     }
@@ -346,6 +350,18 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   // ==================== Method Selection ====================
+
+  private static final Map<String, String> componentAliases = new HashMap<>();
+
+  static {
+    componentAliases.put("ic4", "i-butane");
+    componentAliases.put("nc4", "n-butane");
+    componentAliases.put("ic5", "i-pentane");
+    componentAliases.put("nc5", "n-pentane");
+    componentAliases.put("c1", "methane");
+    componentAliases.put("c2", "ethane");
+    componentAliases.put("c3", "propane");
+  }
 
   private String method = "DirectGibbsMinimization";
   private boolean useAllDatabaseSpecies = false;
@@ -902,6 +918,16 @@ public class GibbsReactor extends TwoPortEquipment {
         }
       }
       scanner.close();
+
+      // Add aliases to componentMap
+      for (Map.Entry<String, String> entry : componentAliases.entrySet()) {
+        String alias = entry.getKey();
+        String target = entry.getValue();
+        if (componentMap.containsKey(target)) {
+          componentMap.put(alias, componentMap.get(target));
+        }
+      }
+
       logger.info("Loaded " + gibbsDatabase.size() + " components from Gibbs database");
     } catch (Exception e) {
       logger.error("Error loading Gibbs database: " + e.getMessage());
@@ -959,8 +985,6 @@ public class GibbsReactor extends TwoPortEquipment {
     // Clear thread-local temp system to avoid cross-test contamination
     tempFugacitySystem.remove();
     system = getInletStream().getThermoSystem().clone();
-
-
 
     // Store initial moles for each component
     initialMoles.clear();

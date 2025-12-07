@@ -3,9 +3,13 @@ package neqsim.process.equipment.reactor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.monitor.FurnaceBurnerResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -34,6 +38,7 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   private double coolingFactor = 0.0;
 
   private double excessAirFraction = 0.0;
+  private double airFuelRatioMass = Double.NaN;
   private double flameTemperature = Double.NaN;
   private double heatReleasekW = Double.NaN;
   private final Map<String, Double> emissionRatesKgPerHr = new HashMap<>();
@@ -75,8 +80,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Provide a cooling factor (0-1) that pulls the flame temperature towards the surroundings.
-   * A value of 0.0 keeps adiabatic operation, while 1.0 forces the products to the surroundings
+   * Provide a cooling factor (0-1) that pulls the flame temperature towards the surroundings. A
+   * value of 0.0 keeps adiabatic operation, while 1.0 forces the products to the surroundings
    * temperature.
    *
    * @param factor cooling factor between 0 and 1
@@ -101,6 +106,43 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
    */
   public void setExcessAirFraction(double fraction) {
     this.excessAirFraction = Math.max(0.0, fraction);
+  }
+
+  /**
+   * Set the air-fuel ratio on a mass basis. When set, the air flow rate will be calculated from the
+   * fuel flow rate and this ratio during execution.
+   *
+   * @param ratio air-fuel ratio (mass air / mass fuel)
+   */
+  public void setAirFuelRatioMass(double ratio) {
+    this.airFuelRatioMass = ratio;
+  }
+
+  /**
+   * Get the air-fuel ratio on a mass basis.
+   *
+   * @return air-fuel ratio (mass air / mass fuel)
+   */
+  public double getAirFuelRatioMass() {
+    return airFuelRatioMass;
+  }
+
+  /**
+   * Get the natural gas (fuel) inlet stream.
+   *
+   * @return fuel stream
+   */
+  public StreamInterface getFuelInlet() {
+    return fuelInlet;
+  }
+
+  /**
+   * Get the combustion air inlet stream.
+   *
+   * @return air stream
+   */
+  public StreamInterface getAirInlet() {
+    return airInlet;
   }
 
   /**
@@ -148,6 +190,14 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     // Combine the fuel and air streams, scaling air for requested excess
     SystemInterface fuelSystem = fuelInlet.getThermoSystem().clone();
     SystemInterface airSystem = airInlet.getThermoSystem().clone();
+
+    // If air-fuel ratio is set, calculate air flow rate from fuel flow rate
+    if (!Double.isNaN(airFuelRatioMass)) {
+      double fuelMassRate = fuelSystem.getFlowRate("kg/sec");
+      double requiredAirMassRate = fuelMassRate * airFuelRatioMass;
+      airSystem.setTotalFlowRate(requiredAirMassRate, "kg/sec");
+      airSystem.init(3);
+    }
     if (excessAirFraction > 0.0) {
       double scaledAirFlow = airSystem.getFlowRate("mole/sec") * (1.0 + excessAirFraction);
       airSystem.setTotalFlowRate(scaledAirFlow, "mole/sec");
@@ -156,8 +206,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
 
     fuelSystem.addFluid(airSystem);
     fuelSystem.createDatabase(true);
-    String[] tracked = {"CO2", "CO", "NO", "NO2", "SO2", "SO3", "H2S", "oxygen",
-        "water", "nitrogen"};
+    String[] tracked =
+        {"CO2", "CO", "NO", "NO2", "SO2", "SO3", "H2S", "oxygen", "water", "nitrogen"};
     for (String compName : tracked) {
       if (!fuelSystem.hasComponent(compName)) {
         fuelSystem.addComponent(compName, 0.0, "mole/sec");
@@ -193,7 +243,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     if (applyCooling) {
       double ambientTemp = Double.isNaN(surroundingsTemperatureK) ? airSystem.getTemperature()
           : surroundingsTemperatureK;
-      double cooledTemperature = ambientTemp + (flameTemperature - ambientTemp) * (1.0 - coolingFactor);
+      double cooledTemperature =
+          ambientTemp + (flameTemperature - ambientTemp) * (1.0 - coolingFactor);
 
       SystemInterface cooledFeed = mixedStream.getThermoSystem().clone();
       cooledFeed.setTemperature(cooledTemperature);
@@ -202,8 +253,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
       Stream cooledStream = new Stream(getName() + " cooled mixture", cooledFeed);
       cooledStream.run(id);
 
-      GibbsReactor cooledReactor = new GibbsReactor(getName() + " cooled Gibbs reactor",
-          cooledStream);
+      GibbsReactor cooledReactor =
+          new GibbsReactor(getName() + " cooled Gibbs reactor", cooledStream);
       cooledReactor.setUseAllDatabaseSpecies(false);
       cooledReactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
       cooledReactor.run(id);
@@ -232,5 +283,33 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     }
 
     setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMassBalance(String unit) {
+    if (fuelInlet == null || airInlet == null || outletStream == null) {
+      return Double.NaN;
+    }
+
+    double inletMass = fuelInlet.getFlowRate(unit) + airInlet.getFlowRate(unit);
+    return outletStream.getFlowRate(unit) - inletMass;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new GsonBuilder().create().toJson(new FurnaceBurnerResponse(this));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    FurnaceBurnerResponse res = new FurnaceBurnerResponse(this);
+    res.applyConfig(cfg);
+    return new GsonBuilder().create().toJson(res);
   }
 }

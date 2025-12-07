@@ -87,6 +87,18 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
     return dH;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityDuty() {
+    return getPower();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityMax() {
+    return getMechanicalDesign().maxDesignPower;
+  }
+
   /**
    * <p>
    * getPower.

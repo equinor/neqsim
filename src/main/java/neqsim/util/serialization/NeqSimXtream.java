@@ -83,7 +83,8 @@ public class NeqSimXtream {
 
   private static XStream createConfiguredXStream() {
     XStream xstream = new XStream(new PureJavaReflectionProvider());
-    XStream.setupDefaultSecurity(xstream);
+    xstream.setMode(XStream.ID_REFERENCES);
+    xstream.addPermission(AnyTypePermission.ANY);
     return xstream;
   }
 }

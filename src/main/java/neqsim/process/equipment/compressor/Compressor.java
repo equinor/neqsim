@@ -77,7 +77,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   CompressorMechanicalDesign mechanicalDesign;
 
   private String pressureUnit = "bara";
-  private String polytropicMethod = "detailed";
+  private String polytropicMethod = "schultz";
 
   /**
    * Constructor for Compressor.
@@ -2095,6 +2095,25 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
    */
   public void setLimitSpeed(boolean limitSpeed) {
     this.limitSpeed = limitSpeed;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExergyChange(String unit) {
+    return getExergyChange(unit, 288.15);
+  }
+
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityDuty() {
+    return getTotalWork();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityMax() {
+    return getMechanicalDesign().maxDesignPower;
   }
 }
 

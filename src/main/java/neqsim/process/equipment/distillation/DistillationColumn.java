@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -47,7 +48,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   boolean hasCondenser = false;
   protected ArrayList<SimpleTray> trays = new ArrayList<SimpleTray>(0);
   /** Scaling factor used to derive a tray-proportional iteration budget. */
-  private static final double TRAY_ITERATION_FACTOR = 2.0;
+  private static final double TRAY_ITERATION_FACTOR = 5.0;
   /** Target relative mass imbalance for the post-processing polish stage. */
   private static final double MASS_POLISH_TARGET = 2.0e-2;
   /** Target relative energy imbalance for the post-processing polish stage. */
@@ -77,7 +78,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     /** Sequential substitution with temperature damping. */
     DAMPED_SUBSTITUTION,
     /** Inside-out style simultaneous correction of upward/downward flows. */
-    INSIDE_OUT
+    INSIDE_OUT,
+    /** Matrix based solver. */
+    MATRIX_SOLVER
   }
 
   /** Selected solver algorithm. Defaults to direct substitution. */
@@ -101,11 +104,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double maxEnergyRelaxationWeight = 10.0;
   /** Control whether energy residual must satisfy tolerance before convergence. */
   private boolean enforceEnergyBalanceTolerance = false;
+  private boolean doMultiPhaseCheck = true;
 
   Mixer feedmixer = new Mixer("temp mixer");
   double bottomTrayPressure = -1.0;
   int numberOfTrays = 1;
-  int maxNumberOfIterations = 8;
+  int maxNumberOfIterations = 50;
   StreamInterface stream_3 = new Stream("stream_3");
   StreamInterface gasOutStream = new Stream("gasOutStream");
   StreamInterface liquidOutStream = new Stream("liquidOutStream");
@@ -136,6 +140,33 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * This allows multiple feeds to the same tray.
    */
   private Map<Integer, List<StreamInterface>> feedStreams = new HashMap<>();
+  private List<StreamInterface> unassignedFeedStreams = new ArrayList<>();
+
+  /**
+   * <p>
+   * Setter for the field <code>doMultiPhaseCheck</code>.
+   * </p>
+   *
+   * @param doMultiPhaseCheck a boolean
+   */
+  public void setMultiPhaseCheck(boolean doMultiPhaseCheck) {
+    this.doMultiPhaseCheck = doMultiPhaseCheck;
+    feedmixer.setMultiPhaseCheck(doMultiPhaseCheck);
+    for (SimpleTray tray : trays) {
+      tray.setMultiPhaseCheck(doMultiPhaseCheck);
+    }
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>doMultiPhaseCheck</code>.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isDoMultiPhaseCheck() {
+    return doMultiPhaseCheck;
+  }
 
   /**
    * <p>
@@ -209,6 +240,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     liquidOutStream.getThermoSystem().setTotalNumberOfMoles(moles / 2.0);
 
     // Mark that we need to re-initialize if new feeds are added
+    setDoInitializion(true);
+  }
+
+  /**
+   * Add a feed stream to the column without specifying the tray. The optimal feed tray will be
+   * determined automatically based on temperature match.
+   *
+   * @param inputStream the feed stream
+   */
+  public void addFeedStream(StreamInterface inputStream) {
+    unassignedFeedStreams.add(inputStream);
     setDoInitializion(true);
   }
 
@@ -355,6 +397,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   @Override
   public void run(UUID id) {
+    assignUnassignedFeeds();
     switch (solverType) {
       case DAMPED_SUBSTITUTION:
         solveSequential(id, relaxationFactor);
@@ -362,11 +405,213 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       case INSIDE_OUT:
         solveInsideOut(id);
         break;
+      case MATRIX_SOLVER:
+        if (isDoInitializion()) {
+          init();
+        }
+        DistillationColumnMatrixSolver matrixSolver = new DistillationColumnMatrixSolver(this);
+        matrixSolver.solve(id);
+        break;
       case DIRECT_SUBSTITUTION:
       default:
         solveSequential(id, 1.0);
         break;
     }
+  }
+
+  private void assignUnassignedFeeds() {
+    if (unassignedFeedStreams.isEmpty()) {
+      return;
+    }
+
+    if (numberOfTrays == 0) {
+      return;
+    }
+
+    Iterator<StreamInterface> iter = unassignedFeedStreams.iterator();
+    while (iter.hasNext()) {
+      StreamInterface feed = iter.next();
+      feed.run(); // Ensure we have T
+      double feedT = feed.getTemperature();
+
+      int bestTray = -1;
+      double minDiff = Double.MAX_VALUE;
+
+      // Check if trays have reasonable temperatures (not all default)
+      // If not initialized, just pick middle.
+      boolean isInitialized = Math
+          .abs(trays.get(0).getTemperature() - trays.get(numberOfTrays - 1).getTemperature()) > 1.0;
+
+      if (!isInitialized) {
+        bestTray = numberOfTrays / 2;
+      } else {
+        for (int i = 0; i < numberOfTrays; i++) {
+          double trayT = trays.get(i).getTemperature();
+          double diff = Math.abs(trayT - feedT);
+          if (diff < minDiff) {
+            minDiff = diff;
+            bestTray = i;
+          }
+        }
+      }
+
+      addFeedStream(feed, bestTray);
+      iter.remove();
+    }
+  }
+
+  /**
+   * Find the optimal number of trays to meet a product specification.
+   *
+   * @param productSpec the target purity (mole fraction) of the key component
+   * @param componentName the name of the key component
+   * @param isTopProduct true if the spec is for the top product (distillate), false for bottom
+   * @param maxTrays the maximum number of trays to try
+   * @return the optimal number of trays, or -1 if the spec could not be met
+   */
+  public int findOptimalNumberOfTrays(double productSpec, String componentName,
+      boolean isTopProduct, int maxTrays) {
+    // Capture existing specs
+    double reboilerReflux = 0.1;
+    boolean reboilerHasSetTemp = false;
+    double reboilerTemp = Double.NaN;
+
+    double condenserReflux = 0.1;
+    boolean condenserHasSetTemp = false;
+    double condenserTemp = Double.NaN;
+
+    if (hasReboiler && getReboiler() != null) {
+      reboilerReflux = getReboiler().getRefluxRatio();
+      reboilerHasSetTemp = getReboiler().isSetOutTemperature();
+      if (reboilerHasSetTemp)
+        reboilerTemp = getReboiler().getOutTemperature();
+    }
+
+    if (hasCondenser && getCondenser() != null) {
+      condenserReflux = getCondenser().getRefluxRatio();
+      condenserHasSetTemp = getCondenser().isSetOutTemperature();
+      if (condenserHasSetTemp)
+        condenserTemp = getCondenser().getOutTemperature();
+    }
+
+    // Collect all feeds (assigned and unassigned)
+    List<StreamInterface> allFeeds = new ArrayList<>(unassignedFeedStreams);
+    for (List<StreamInterface> feeds : feedStreams.values()) {
+      allFeeds.addAll(feeds);
+    }
+
+    // Start searching from a low number of trays to find the minimum (optimal)
+    int startN = 2;
+    if (hasReboiler)
+      startN++;
+    if (hasCondenser)
+      startN++;
+
+    // Ensure we don't exceed maxTrays immediately
+    if (startN > maxTrays)
+      startN = maxTrays;
+
+    for (int n = startN; n <= maxTrays; n++) {
+      // Re-initialize column with n trays
+      // We can't easily "reset" the object, so we have to clear trays and rebuild.
+      // This mimics the constructor logic.
+      trays.clear();
+      distoperations = new neqsim.process.processmodel.ProcessSystem();
+      feedStreams.clear();
+      unassignedFeedStreams.clear();
+      unassignedFeedStreams.addAll(allFeeds); // All feeds become unassigned
+
+      this.numberOfTrays = n;
+      int trayCount = 0;
+
+      // Reset feedmixer to avoid accumulating feeds across iterations
+      feedmixer = new Mixer("temp mixer");
+      feedmixer.setMultiPhaseCheck(doMultiPhaseCheck);
+
+      if (hasReboiler) {
+        Reboiler reb = new Reboiler("Reboiler");
+        reb.setMultiPhaseCheck(doMultiPhaseCheck);
+        reb.setRefluxRatio(reboilerReflux);
+        if (reboilerHasSetTemp)
+          reb.setOutTemperature(reboilerTemp);
+        trays.add(reb);
+        trayCount++;
+      }
+
+      // Middle trays
+      int simpleTrays = n - (hasReboiler ? 1 : 0) - (hasCondenser ? 1 : 0);
+      for (int i = 0; i < simpleTrays; i++) {
+        SimpleTray tray = new SimpleTray("SimpleTray" + (i + 1));
+        tray.setMultiPhaseCheck(doMultiPhaseCheck);
+        trays.add(tray);
+        trayCount++;
+      }
+
+      if (hasCondenser) {
+        Condenser cond = new Condenser("Condenser");
+        cond.setMultiPhaseCheck(doMultiPhaseCheck);
+        cond.setRefluxRatio(condenserReflux);
+        if (condenserHasSetTemp)
+          cond.setOutTemperature(condenserTemp);
+        trays.add(cond);
+        trayCount++;
+      }
+
+      // Ensure numberOfTrays matches actual list size
+      this.numberOfTrays = trays.size();
+
+      for (int i = 0; i < this.numberOfTrays; i++) {
+        distoperations.add(trays.get(i));
+      }
+
+      // Set pressures immediately if known
+      if (topTrayPressure > 0 && bottomTrayPressure > 0) {
+        double dp = (bottomTrayPressure - topTrayPressure) / (numberOfTrays - 1.0);
+        for (int i = 0; i < numberOfTrays; i++) {
+          trays.get(i).setPressure(bottomTrayPressure - i * dp);
+        }
+      }
+
+      // Set temperatures if known to help feed assignment
+      if (reboilerHasSetTemp && condenserHasSetTemp) {
+        double dt = (condenserTemp - reboilerTemp) / (numberOfTrays - 1.0);
+        for (int i = 0; i < numberOfTrays; i++) {
+          trays.get(i).setTemperature(reboilerTemp + i * dt);
+        }
+      }
+
+      // Reset initialization flag
+      setDoInitializion(true);
+
+      // Run the column
+      try {
+        run();
+      } catch (Exception e) {
+        // If run fails (e.g. convergence error), we might want to continue or log
+        // For now, let's assume it might fail for small N and continue
+        // System.out.println("Run failed for N=" + n + ": " + e.getMessage());
+      }
+
+      if (!solved()) {
+        continue;
+      }
+
+      // Check spec
+      double purity;
+      if (isTopProduct) {
+        purity = gasOutStream.getFluid().getComponent(componentName).getz();
+      } else {
+        purity = liquidOutStream.getFluid().getComponent(componentName).getz();
+      }
+
+      // System.out.println("Trays: " + n + " Purity: " + purity);
+
+      if (purity >= productSpec) {
+        return n;
+      }
+    }
+
+    return -1;
   }
 
   /**
@@ -450,7 +695,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[i],
             trays.get(i).getLiquidOutStream(), relaxation);
         trays.get(i - 1).replaceStream(replaceStream, relaxedLiquid);
-        currentLiquidStreams[i] = relaxedLiquid.clone();
+        currentLiquidStreams[i] = relaxedLiquid;
         trays.get(i - 1).run(id);
       }
 
@@ -458,7 +703,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       StreamInterface reboilerFeed =
           applyRelaxation(previousLiquidStreams[1], trays.get(1).getLiquidOutStream(), relaxation);
       trays.get(0).replaceStream(streamNumb, reboilerFeed);
-      currentLiquidStreams[1] = reboilerFeed.clone();
+      currentLiquidStreams[1] = reboilerFeed;
       trays.get(0).run(id);
 
       for (int i = 1; i <= numberOfTrays - 1; i++) {
@@ -469,7 +714,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         StreamInterface relaxedGas = applyRelaxation(previousGasStreams[i - 1],
             trays.get(i - 1).getGasOutStream(), relaxation);
         trays.get(i).replaceStream(replaceStream, relaxedGas);
-        currentGasStreams[i - 1] = relaxedGas.clone();
+        currentGasStreams[i - 1] = relaxedGas;
         trays.get(i).run(id);
       }
 
@@ -478,7 +723,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[i + 1],
             trays.get(i + 1).getLiquidOutStream(), relaxation);
         trays.get(i).replaceStream(replaceStream, relaxedLiquid);
-        currentLiquidStreams[i + 1] = relaxedLiquid.clone();
+        currentLiquidStreams[i + 1] = relaxedLiquid;
         trays.get(i).run(id);
       }
 
@@ -486,6 +731,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double effectiveRelaxation = Math.max(minTemperatureRelaxation, Math.min(1.0, relaxation));
       for (int i = 0; i < numberOfTrays; i++) {
         double updated = trays.get(i).getThermoSystem().getTemperature();
+        if (Double.isNaN(updated) || Double.isInfinite(updated)) {
+          updated = oldtemps[i];
+        }
         double newTemp = oldtemps[i] + effectiveRelaxation * (updated - oldtemps[i]);
         trays.get(i).setTemperature(newTemp);
         temperatureResidual += Math.abs(newTemp - oldtemps[i]);
@@ -726,7 +974,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[stage],
             trays.get(stage).getLiquidOutStream(), relaxation);
         trays.get(target).replaceStream(replaceStream, relaxedLiquid);
-        currentLiquidStreams[stage] = relaxedLiquid.clone();
+        currentLiquidStreams[stage] = relaxedLiquid;
         trays.get(target).run(id);
       }
 
@@ -738,7 +986,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         StreamInterface relaxedGas = applyRelaxation(previousGasStreams[stage - 1],
             trays.get(stage - 1).getGasOutStream(), relaxation);
         trays.get(stage).replaceStream(replaceStream, relaxedGas);
-        currentGasStreams[stage - 1] = relaxedGas.clone();
+        currentGasStreams[stage - 1] = relaxedGas;
         trays.get(stage).run(id);
       }
 
@@ -747,7 +995,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[stage + 1],
             trays.get(stage + 1).getLiquidOutStream(), relaxation);
         trays.get(stage).replaceStream(replaceStream, relaxedLiquid);
-        currentLiquidStreams[stage + 1] = relaxedLiquid.clone();
+        currentLiquidStreams[stage + 1] = relaxedLiquid;
         trays.get(stage).run(id);
       }
 
@@ -755,6 +1003,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double effectiveRelaxation = Math.max(minTemperatureRelaxation, Math.min(1.0, relaxation));
       for (int i = 0; i < numberOfTrays; i++) {
         double updated = trays.get(i).getThermoSystem().getTemperature();
+        if (Double.isNaN(updated) || Double.isInfinite(updated)) {
+          updated = oldtemps[i];
+        }
         double newTemp = oldtemps[i] + effectiveRelaxation * (updated - oldtemps[i]);
         trays.get(i).setTemperature(newTemp);
         temperatureResidual += Math.abs(newTemp - oldtemps[i]);
@@ -1025,6 +1276,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return trays.get(trayNumber);
   }
 
+  public ArrayList<SimpleTray> getTrays() {
+    return trays;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setNumberOfTrays(int number) {
@@ -1106,6 +1361,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   @Override
   public boolean solved() {
     return (err < temperatureTolerance);
+  }
+
+  void setError(double err) {
+    this.err = err;
   }
 
   /**
@@ -1409,8 +1668,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       for (int j = 0; j < numberOfInputStreams; j++) {
         massInput[i] += trays.get(i).getStream(j).getFluid().getFlowRate("kg/hr");
       }
-      massOutput[i] += trays.get(i).getGasOutStream().getFlowRate("kg/hr");
-      massOutput[i] += trays.get(i).getLiquidOutStream().getFlowRate("kg/hr");
+      massOutput[i] = trays.get(i).getThermoSystem().getFlowRate("kg/hr");
       massBalance[i] = massInput[i] - massOutput[i];
 
       System.out.println("Tray " + i + ": #in=" + numberOfInputStreams + ", massIn=" + massInput[i]
@@ -1482,8 +1740,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         inlet += trays.get(i).getStream(j).getFluid().getFlowRate("kg/hr");
       }
 
-      double outlet = trays.get(i).getGasOutStream().getFlowRate("kg/hr");
-      outlet += trays.get(i).getLiquidOutStream().getFlowRate("kg/hr");
+      double outlet = trays.get(i).getThermoSystem().getFlowRate("kg/hr");
 
       double absInlet = Math.abs(inlet);
       double imbalance = Math.abs(inlet - outlet);
@@ -1518,6 +1775,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double outlet = trays.get(i).getGasOutStream().getFluid().getEnthalpy();
       outlet += trays.get(i).getLiquidOutStream().getFluid().getEnthalpy();
 
+      if (trays.get(i) instanceof Reboiler) {
+        inlet += ((Reboiler) trays.get(i)).getDuty();
+      } else if (trays.get(i) instanceof Condenser) {
+        inlet += ((Condenser) trays.get(i)).getDuty();
+      }
+
       double absInlet = Math.abs(inlet);
       double imbalance = Math.abs(inlet - outlet);
       if (absInlet > 1e-12) {
@@ -1541,7 +1804,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private StreamInterface applyRelaxation(StreamInterface previous, StreamInterface current,
       double relaxation) {
-    StreamInterface relaxed = current.clone();
+    StreamInterface relaxed = current;
     if (previous == null) {
       relaxed.run();
       return relaxed;
@@ -1560,6 +1823,29 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double mixedPressure = previous.getPressure("bara")
         + step * (current.getPressure("bara") - previous.getPressure("bara"));
     relaxed.setPressure(mixedPressure, "bara");
+
+    double[] zPrev = previous.getThermoSystem().getMolarComposition();
+    double totalMolesPrev = previous.getThermoSystem().getTotalNumberOfMoles();
+    double[] zCurr = current.getThermoSystem().getMolarComposition();
+    double totalMolesCurr = current.getThermoSystem().getTotalNumberOfMoles();
+
+    double[] zMixed = new double[zPrev.length];
+    double totalMolesMixed = 0.0;
+
+    for (int i = 0; i < zPrev.length; i++) {
+      double molesPrev_i = zPrev[i] * totalMolesPrev;
+      double molesCurr_i = zCurr[i] * totalMolesCurr;
+      double mixedMoles_i = molesPrev_i + step * (molesCurr_i - molesPrev_i);
+      zMixed[i] = mixedMoles_i;
+      totalMolesMixed += mixedMoles_i;
+    }
+
+    if (totalMolesMixed > 1e-12) {
+      for (int i = 0; i < zMixed.length; i++) {
+        zMixed[i] /= totalMolesMixed;
+      }
+      relaxed.getThermoSystem().setMolarComposition(zMixed);
+    }
 
     relaxed.run();
 
@@ -1589,6 +1875,23 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     gasOutStream.setCalculationIdentifier(id);
     liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
     liquidOutStream.setCalculationIdentifier(id);
+
+    boolean anyFeedMultiPhase = false;
+    for (List<StreamInterface> feeds : feedStreams.values()) {
+      for (StreamInterface feed : feeds) {
+        if (feed.getThermoSystem().doMultiPhaseCheck()) {
+          anyFeedMultiPhase = true;
+          break;
+        }
+      }
+      if (anyFeedMultiPhase) {
+        break;
+      }
+    }
+    if (anyFeedMultiPhase) {
+      gasOutStream.getThermoSystem().setMultiPhaseCheck(true);
+      liquidOutStream.getThermoSystem().setMultiPhaseCheck(true);
+    }
 
     for (int i = 0; i < numberOfTrays; i++) {
       trays.get(i).setCalculationIdentifier(id);

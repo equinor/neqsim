@@ -8,5 +8,6 @@ This folder collects topic-specific documentation for using NeqSim's thermodynam
 - [PVT and Fluid Characterization](pvt_fluid_characterization.md): Building realistic fluid descriptions, including heavy-end handling and lab-data reconciliation.
 - [Thermodynamic Operations](thermodynamic_operations.md): Flash calculations, phase envelopes, and other process-centric operations.
 - [Physical Properties](physical_properties.md): Density, viscosity, surface tension, and transport-property calculations.
+- [GERG-2008 and EOS-CG](gerg2008_eoscg.md): Detailed guide to the reference equations of state for natural gas and CCS applications.
 
 Each document favors short, reproducible code snippets using the Java API so the same ideas transfer to other supported languages (Python/Matlab) with minor syntax changes.

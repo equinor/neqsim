@@ -88,8 +88,10 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     }
 
     for (int k = 0; k < streams.size(); k++) {
-      streams.get(k).getThermoSystem().init(3);
-      enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
+      if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
+        streams.get(k).getThermoSystem().init(3);
+        enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
+      }
       // System.out.println("total enthalpy k : " + ( ((Stream)
       // streams.get(k)).getThermoSystem()).getEnthalpy());
     }
@@ -164,10 +166,20 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
       try {
         testOps.PHflash(enthalpy, 0);
       } catch (Exception ex) {
-        if (!Double.isNaN(getOutTemperature())) {
-          mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+        try {
+          if (!Double.isNaN(getOutTemperature())) {
+            mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+          }
+          testOps.TPflash();
+        } catch (Exception ex2) {
+          logger.warn("TPflash failed in SimpleTray: " + getName(), ex2);
         }
-        testOps.TPflash();
+      }
+    }
+
+    if (Double.isNaN(mixedStream.getTemperature())) {
+      if (!Double.isNaN(getOutTemperature())) {
+        mixedStream.setTemperature(getOutTemperature());
       }
     }
 
@@ -308,8 +320,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     for (int j = 0; j < numberOfInputStreams; j++) {
       massInput += getStream(j).getFluid().getFlowRate("kg/hr");
     }
-    massOutput += getGasOutStream().getFlowRate("kg/hr");
-    massOutput += getLiquidOutStream().getFlowRate("kg/hr");
+    massOutput = getThermoSystem().getFlowRate("kg/hr");
     return massInput - massOutput;
   }
 }
