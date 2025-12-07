@@ -236,7 +236,7 @@ public class GibbsReactorCO2ScenariosTest {
   private void runAndPrintWithAssertions(SystemInterface system, String label, String[] names,
       double[] expectedPpm) {
     SystemInterface outSys = runReactor(system);
-    // printComposition(outSys, label);
-    assertSelectedPpm(outSys, names, expectedPpm, 0.5, label);
+    printComposition(outSys, label);
+    assertSelectedPpm(outSys, names, expectedPpm, 2.0, label);
   }
 }

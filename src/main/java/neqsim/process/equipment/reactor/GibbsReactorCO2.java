@@ -37,9 +37,9 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
     reactor.setComponentAsInert("ammonia");
     reactor.setComponentAsInert("hydrogen");
     reactor.setComponentAsInert("N2O3");
-    reactor.setComponentAsInert("N2O");
     reactor.setComponentAsInert("nitrogen");
     reactor.setComponentAsInert("N2H4");
+    reactor.setComponentAsInert("N2O");
   }
 
   @Override
