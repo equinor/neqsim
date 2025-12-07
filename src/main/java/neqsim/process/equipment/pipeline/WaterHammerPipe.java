@@ -30,13 +30,17 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * lines dx/dt = ±c (speed of sound).
  * </p>
  *
- * <h3>Governing Equations:</h3>
+ * <p>
+ * <b>Governing Equations:</b>
+ * </p>
  * <ul>
  * <li>Continuity: ∂H/∂t + (c²/gA) ∂Q/∂x = 0</li>
  * <li>Momentum: ∂Q/∂t + gA ∂H/∂x + f/(2DA) Q|Q| = 0</li>
  * </ul>
  *
- * <h3>Example Usage:</h3>
+ * <p>
+ * <b>Example Usage:</b>
+ * </p>
  * 
  * <pre>
  * {@code
