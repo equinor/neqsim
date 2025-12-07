@@ -614,8 +614,9 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * numerical stability (CFL condition) while advancing by the requested {@code dt}.
    * </p>
    *
-   * <h3>Usage Example</h3>
-   * 
+   * <p>
+   * <b>Usage Example:</b>
+   * </p>
    * <pre>{@code
    * ProcessSystem process = new ProcessSystem();
    * process.add(inlet);
@@ -1596,11 +1597,13 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    *
    * <p>
    * This method updates the outlet stream with:
+   * </p>
    * <ul>
    * <li>Pressure from the outlet pipe section</li>
    * <li>Temperature from the outlet pipe section</li>
    * <li>Mass flow rate calculated from outlet section velocity and density</li>
    * </ul>
+   * <p>
    * The flow rate is computed directly from the conservation equations to maintain mass balance.
    * During slug flow, the increased liquid holdup naturally increases the outlet density, which is
    * reflected in the mass flow calculation.
