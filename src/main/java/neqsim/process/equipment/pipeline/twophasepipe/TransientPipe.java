@@ -809,6 +809,13 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Calculate adaptive time step based on CFL condition.
    *
+   * <p>
+   * Uses the full eigenvalue structure for hyperbolic systems. The characteristic wave speeds for
+   * multiphase flow are approximately |u ± c| where u is the mixture velocity and c is the mixture
+   * sound speed. We take the maximum of all four wave speeds: |u_G + c|, |u_G - c|, |u_L + c|, |u_L
+   * - c| to ensure stability for both forward and backward propagating waves.
+   * </p>
+   *
    * @return time step (s)
    */
   private double calculateTimeStep() {
@@ -817,8 +824,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     for (PipeSection section : sections) {
       // Wave speeds: sound speed and characteristic velocities
       double c_mix = section.getWallisSoundSpeed();
-      double v_gas = Math.abs(section.getGasVelocity());
-      double v_liq = Math.abs(section.getLiquidVelocity());
+      double v_gas = section.getGasVelocity();
+      double v_liq = section.getLiquidVelocity();
 
       // Handle NaN velocities
       if (Double.isNaN(v_gas)) {
@@ -828,7 +835,12 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
         v_liq = 0;
       }
 
-      double maxLocal = Math.max(c_mix + v_gas, v_liq + c_mix);
+      // Full eigenvalue structure: |u + c| and |u - c| for both phases
+      // This captures both forward and backward propagating acoustic waves
+      double maxLocalGas = Math.max(Math.abs(v_gas + c_mix), Math.abs(v_gas - c_mix));
+      double maxLocalLiq = Math.max(Math.abs(v_liq + c_mix), Math.abs(v_liq - c_mix));
+      double maxLocal = Math.max(maxLocalGas, maxLocalLiq);
+
       if (!Double.isNaN(maxLocal) && !Double.isInfinite(maxLocal)) {
         maxWaveSpeed = Math.max(maxWaveSpeed, maxLocal);
       }
@@ -884,8 +896,11 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       // Add source terms (gravity, friction)
       addSourceTerms(U_new, sections[i], dt);
 
-      // Convert back to primitive variables
-      updatePrimitiveVariables(sections[i], oldSections[i], U_new);
+      // Convert back to primitive variables, passing flux info for pressure update
+      double momentumFluxLeft = fluxes[i][2];
+      double momentumFluxRight = fluxes[i + 1][2];
+      updatePrimitiveVariables(sections[i], oldSections[i], U_new, i, dt, momentumFluxLeft,
+          momentumFluxRight);
     }
 
     // Apply boundary conditions again to enforce them on the new state
@@ -1436,8 +1451,23 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
   /**
    * Update primitive variables from conservative variables.
+   *
+   * <p>
+   * This method converts from conservative variables (densities, momentum, energy) back to
+   * primitive variables (holdups, velocities, temperature, pressure). Interior cell pressures are
+   * computed from the momentum equation residual to properly capture acoustic wave propagation.
+   * </p>
+   *
+   * @param section Current section to update
+   * @param oldSection Previous time step section state
+   * @param U Conservative variables [ρ_G·α_G, ρ_L·α_L, ρ_m·u, ρ_m·E]
+   * @param sectionIndex Index of this section (0 to numberOfSections-1)
+   * @param dt Time step (s)
+   * @param momentumFluxLeft Momentum flux at left face (Pa)
+   * @param momentumFluxRight Momentum flux at right face (Pa)
    */
-  private void updatePrimitiveVariables(PipeSection section, PipeSection oldSection, double[] U) {
+  private void updatePrimitiveVariables(PipeSection section, PipeSection oldSection, double[] U,
+      int sectionIndex, double dt, double momentumFluxLeft, double momentumFluxRight) {
     // U = [rho_G * alpha_G, rho_L * alpha_L, rho_m * u, rho_m * E]
 
     double massConc_G = Math.max(U[0], 1e-10);
@@ -1532,11 +1562,43 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       section.setTemperature(oldSection.getTemperature());
     }
 
-    // Pressure: calculate from momentum equation for interior cells
+    // Pressure update: compute from momentum equation for interior cells
     // Boundary cells will be overridden by updateBoundaryPressures()
-    // Extract pressure from momentum flux balance
-    // For now, use old pressure and let boundary updates handle consistency
-    section.setPressure(oldSection.getPressure());
+    //
+    // The momentum flux contains pressure: F_mom = ρu² + p
+    // For AUSM+, we can extract pressure contribution from the flux difference.
+    // The pressure at cell center satisfies the momentum balance:
+    // ∂(ρu)/∂t + ∂(ρu² + p)/∂x = S (gravity + friction)
+    //
+    // After the finite volume update, the momentum residual gives:
+    // p_new ≈ p_old - c² × (ρ_new - ρ_old)
+    // This is the acoustic relation for weakly compressible flow.
+    //
+    // For interior cells (not boundaries), use acoustic relation:
+    boolean isBoundaryCell = (sectionIndex == 0 || sectionIndex == numberOfSections - 1);
+    if (!isBoundaryCell) {
+      double rho_m_old = oldSection.getMixtureDensity();
+      double rho_m_new = massConc_G + massConc_L;
+      double c_mix = section.getWallisSoundSpeed();
+
+      // Acoustic pressure-density relation: dp = c² × dρ
+      double dRho = rho_m_new - rho_m_old;
+      double dP_acoustic = c_mix * c_mix * dRho;
+
+      // Limit pressure change per time step for stability (relaxation)
+      double maxDeltaP = 0.1 * oldSection.getPressure(); // Max 10% change per step
+      dP_acoustic = Math.max(-maxDeltaP, Math.min(maxDeltaP, dP_acoustic));
+
+      double newPressure = oldSection.getPressure() + dP_acoustic;
+
+      // Physical bounds (prevent negative pressure)
+      newPressure = Math.max(1e4, newPressure); // Minimum 0.1 bar
+
+      section.setPressure(newPressure);
+    } else {
+      // Boundary cells: use old pressure, will be overridden by updateBoundaryPressures()
+      section.setPressure(oldSection.getPressure());
+    }
 
     section.updateDerivedQuantities();
   }
