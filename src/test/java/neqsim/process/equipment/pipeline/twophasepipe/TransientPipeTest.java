@@ -1085,8 +1085,12 @@ class TransientPipeTest {
     tpPipe.setRoughness(roughness);
     tpPipe.setNumberOfSections(20);
     tpPipe.setMaxSimulationTime(60); // Run to steady state
-    tpPipe.setInletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_FLOW);
+    // Use CONSTANT_PRESSURE inlet to match Beggs and Brill setup
+    // This fixes the inlet pressure and lets the model calculate flow/outlet conditions
+    tpPipe.setInletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_PRESSURE);
+    tpPipe.setInletPressure(inletPressure); // Set inlet pressure explicitly
     tpPipe.setOutletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_PRESSURE);
+    tpPipe.setOutletPressure(inletPressure - 0.1); // Small pressure drop to drive flow
     tpPipe.run();
 
     double[] tpPressures = tpPipe.getPressureProfile();
