@@ -176,6 +176,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   private boolean includeHeatTransfer = false;
   private double ambientTemperature = 288.15; // K
   private double overallHeatTransferCoeff = 10.0; // W/(m²·K)
+  private double jouleThomsonCoeff = 3e-6; // K/Pa (calculated from fluid thermodynamics)
 
   // Thermodynamic coupling
   private SystemInterface referenceFluid;
@@ -377,6 +378,16 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
       double gasFlowRate = inStream.getFlowRate("kg/sec") * gasBeta;
       U_SG = gasFlowRate / (rho_G * Math.PI * diameter * diameter / 4.0);
+
+      // Calculate Joule-Thomson coefficient from gas phase thermodynamics
+      try {
+        jouleThomsonCoeff = fluid.getPhase("gas").getJouleThomsonCoefficient("K/Pa");
+        if (Double.isNaN(jouleThomsonCoeff) || Double.isInfinite(jouleThomsonCoeff)) {
+          jouleThomsonCoeff = 3e-6; // Fallback to typical natural gas value
+        }
+      } catch (Exception ex) {
+        jouleThomsonCoeff = 3e-6; // Fallback
+      }
     } else {
       // No gas phase - use default values to avoid division by zero
       rho_G = 1.0; // Default gas density (kg/m3)
@@ -1433,10 +1444,18 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       section.setLiquidVelocity(v_L);
     }
 
-    // Temperature: keep isothermal for now (energy equation not fully coupled)
-    // The complex energy coupling was causing numerical instabilities
-    // Temperature will be updated by the thermodynamic flash when called
-    section.setTemperature(oldSection.getTemperature());
+    // Temperature update using energy equation
+    if (includeHeatTransfer) {
+      DriftFluxParameters energyParams = driftFluxModel.calculateDriftFlux(section);
+      // JT coefficient is calculated from gas phase thermodynamics
+      DriftFluxModel.EnergyEquationResult energyResult =
+          driftFluxModel.calculateEnergyEquation(section, energyParams, dt, dx, ambientTemperature,
+              overallHeatTransferCoeff, jouleThomsonCoeff);
+      section.setTemperature(energyResult.newTemperature);
+    } else {
+      // Keep isothermal when heat transfer is disabled
+      section.setTemperature(oldSection.getTemperature());
+    }
 
     // Pressure: will be set by updatePressureProfile() after all cells are updated
     // Don't modify pressure here to avoid fighting with boundary conditions
@@ -1449,6 +1468,11 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Apply boundary conditions.
    */
   private void applyBoundaryConditions() {
+    // Inlet temperature boundary condition (always maintain inlet stream temperature)
+    if (inStream != null && inStream.getFluid() != null) {
+      sections[0].setTemperature(inStream.getFluid().getTemperature());
+    }
+
     // Inlet boundary
     switch (inletBCType) {
       case CONSTANT_PRESSURE:
@@ -1564,6 +1588,18 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
           section.setGasEnthalpy(fluid.getPhase("gas").getEnthalpy("J/mol")
               / fluid.getPhase("gas").getMolarMass() * 1000);
           section.setGasSoundSpeed(fluid.getPhase("gas").getSoundSpeed());
+
+          // Calculate Joule-Thomson coefficient from gas phase thermodynamics
+          try {
+            // Get JT coefficient directly in K/Pa from NeqSim thermodynamics
+            double calculatedJT = fluid.getPhase("gas").getJouleThomsonCoefficient("K/Pa");
+            // Ensure valid value for typical gases (cooling on expansion)
+            if (!Double.isNaN(calculatedJT) && !Double.isInfinite(calculatedJT)) {
+              jouleThomsonCoeff = calculatedJT;
+            }
+          } catch (Exception ex) {
+            // Keep previous value if calculation fails
+          }
         }
 
         if (fluid.hasPhaseType("oil") || fluid.hasPhaseType("aqueous")) {
@@ -1844,6 +1880,26 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   }
 
   /**
+   * Enable or disable heat transfer calculations.
+   *
+   * <p>
+   * When enabled, the energy equation is solved to calculate temperature changes along the pipe due
+   * to:
+   * </p>
+   * <ul>
+   * <li>Heat transfer to/from surroundings (ambient)</li>
+   * <li>Joule-Thomson effect (gas expansion cooling)</li>
+   * <li>Friction heating (viscous dissipation)</li>
+   * <li>Elevation work</li>
+   * </ul>
+   *
+   * @param include true to enable heat transfer calculations
+   */
+  public void setIncludeHeatTransfer(boolean include) {
+    this.includeHeatTransfer = include;
+  }
+
+  /**
    * Get ambient temperature for heat transfer calculations.
    *
    * @return Ambient temperature in Kelvin
@@ -1853,12 +1909,72 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   }
 
   /**
+   * Set ambient temperature for heat transfer calculations.
+   *
+   * <p>
+   * This is the external temperature used for heat loss/gain calculations. For subsea pipelines,
+   * this would be seawater temperature (~277-283 K). For buried onshore pipelines, this would be
+   * soil temperature.
+   * </p>
+   *
+   * @param temperature Ambient temperature in Kelvin
+   */
+  public void setAmbientTemperature(double temperature) {
+    this.ambientTemperature = temperature;
+  }
+
+  /**
    * Get overall heat transfer coefficient.
    *
    * @return Heat transfer coefficient in W/(m²·K)
    */
   public double getOverallHeatTransferCoeff() {
     return overallHeatTransferCoeff;
+  }
+
+  /**
+   * Set overall heat transfer coefficient.
+   *
+   * <p>
+   * The overall heat transfer coefficient U accounts for all heat transfer resistances between the
+   * fluid and surroundings. Typical values:
+   * </p>
+   * <ul>
+   * <li>Bare steel pipe in still air: 5-10 W/(m²·K)</li>
+   * <li>Bare steel pipe in seawater: 200-500 W/(m²·K)</li>
+   * <li>Insulated pipe (50mm): 1-3 W/(m²·K)</li>
+   * <li>Buried pipe: 2-5 W/(m²·K)</li>
+   * </ul>
+   *
+   * @param coeff Heat transfer coefficient in W/(m²·K)
+   */
+  public void setOverallHeatTransferCoeff(double coeff) {
+    this.overallHeatTransferCoeff = coeff;
+  }
+
+  /**
+   * Get Joule-Thomson coefficient for temperature change during gas expansion.
+   *
+   * <p>
+   * Returns the JT coefficient calculated from gas phase thermodynamics. This is automatically
+   * updated during simulation based on the fluid properties.
+   * </p>
+   * 
+   * <p>
+   * Typical values (at ~300K, 50 bar):
+   * </p>
+   * <ul>
+   * <li>Methane: ~4.5e-6 K/Pa (0.45 K/MPa)</li>
+   * <li>Natural gas: 2-6e-6 K/Pa</li>
+   * <li>CO2: ~1e-5 K/Pa</li>
+   * <li>Hydrogen: ~-0.3e-6 K/Pa (warms on expansion)</li>
+   * <li>Liquids: ~1e-8 K/Pa (very small)</li>
+   * </ul>
+   *
+   * @return Joule-Thomson coefficient in K/Pa
+   */
+  public double getJouleThomsonCoeff() {
+    return jouleThomsonCoeff;
   }
 
   /**
