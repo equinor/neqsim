@@ -298,6 +298,15 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Estimate liquid level in stratified flow.
+   * 
+   * @param U_SL superficial liquid velocity (m/s)
+   * @param U_SG superficial gas velocity (m/s)
+   * @param D pipe diameter (m)
+   * @param theta pipe inclination angle (rad)
+   * @param rho_L liquid density (kg/m³)
+   * @param rho_G gas density (kg/m³)
+   * @param mu_L liquid viscosity (Pa·s)
+   * @return liquid level height (m)
    */
   private double estimateStratifiedLevel(double U_SL, double U_SG, double D, double theta,
       double rho_L, double rho_G, double mu_L) {
