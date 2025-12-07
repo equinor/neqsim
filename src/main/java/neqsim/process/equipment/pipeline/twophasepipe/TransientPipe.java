@@ -617,6 +617,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * <p>
    * <b>Usage Example:</b>
    * </p>
+   * 
    * <pre>{@code
    * ProcessSystem process = new ProcessSystem();
    * process.add(inlet);
