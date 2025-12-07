@@ -428,6 +428,11 @@ public class SlugTracker implements Serializable {
    * front positions). Sections are marked as in slug bubble if they overlap with the bubble/film
    * region behind the tail.
    * </p>
+   * <p>
+   * <b>Mass Conservation Note:</b> The slug holdup represents additional liquid concentration from
+   * the slug body. The section's base holdup (from Eulerian solver) is preserved and the slug
+   * holdup is used to modify effective properties for friction/pressure calculations.
+   * </p>
    */
   private void markSlugSections(SlugUnit slug, PipeSection[] sections) {
     for (PipeSection section : sections) {
@@ -445,6 +450,8 @@ public class SlugTracker implements Serializable {
 
       if (overlapsBody) {
         section.setInSlugBody(true);
+        // Set slug holdup - this modifies effective properties but doesn't override
+        // the Eulerian liquid mass (which is in the conservative variables)
         section.setSlugHoldup(slug.bodyHoldup);
       }
 
