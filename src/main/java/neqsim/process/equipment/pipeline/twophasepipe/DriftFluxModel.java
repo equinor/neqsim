@@ -153,17 +153,27 @@ public class DriftFluxModel implements Serializable {
       double theta, double rho_L, double rho_G, double sigma) {
 
     // Zuber-Findlay (1965) for bubble flow
-    params.C0 = 1.2; // Typical value for turbulent flow
+    // C0 depends on void fraction and velocity profile
+    // C0 = 1.2 for turbulent pipe flow, 1.0-1.1 for low void fraction
+    params.C0 = 1.2;
 
-    // Harmathy bubble rise velocity
-    double deltaRho = rho_L - rho_G;
-    double U_bubble = 1.53 * Math.pow(GRAVITY * sigma * Math.abs(deltaRho) / (rho_L * rho_L), 0.25);
+    // Harmathy (1960) terminal rise velocity for single bubble
+    // v_inf = 1.53 * (g*sigma*delta_rho / rho_L^2)^0.25
+    double deltaRho = Math.max(rho_L - rho_G, 0.01);
+    double U_bubble = 1.53 * Math.pow(GRAVITY * sigma * deltaRho / (rho_L * rho_L), 0.25);
 
-    // Include inclination effect
-    params.driftVelocity = U_bubble * Math.sin(theta);
-    if (theta < 0) {
-      // Downward flow - bubbles still rise relative to liquid
-      params.driftVelocity = Math.abs(params.driftVelocity);
+    // Drift velocity in pipe direction
+    // Bubbles rise vertically; component in pipe direction depends on inclination
+    // For upward inclined pipe (theta > 0): v_d = v_bubble (bubbles assist flow)
+    // For downward inclined (theta < 0): v_d = v_bubble * |sin(theta)| (drift against flow)
+    // For horizontal (theta = 0): v_d approaches 0 (bubbles rise perpendicular to flow)
+    double absTheta = Math.abs(theta);
+    if (absTheta > 0.01) {
+      // Inclined pipe - bubble drift contributes to flow in pipe direction
+      params.driftVelocity = U_bubble * Math.abs(Math.sin(theta));
+    } else {
+      // Nearly horizontal - small drift due to bubble swarm effects
+      params.driftVelocity = 0.1 * U_bubble;
     }
   }
 

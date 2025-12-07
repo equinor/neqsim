@@ -289,6 +289,10 @@ public class SlugTracker implements Serializable {
     slug.slugBodyLength = Math.max(0, slug.frontPosition - slug.tailPosition);
     slug.bubbleLength = calculateBubbleLength(slug, frontSection);
 
+    // Update slug body holdup using Gregory et al. (1978) correlation
+    // This accounts for gas entrainment at higher velocities
+    slug.bodyHoldup = calculateSlugBodyHoldup(U_M);
+
     // Check for growth/decay
     double equilibriumLength = calculateEquilibriumLength(frontSection);
     if (slug.slugBodyLength < equilibriumLength) {
@@ -355,23 +359,64 @@ public class SlugTracker implements Serializable {
   }
 
   /**
-   * Calculate equilibrium slug length.
+   * Calculate equilibrium slug length using Nydal correlation.
+   *
+   * <p>
+   * References:
+   * </p>
+   * <ul>
+   * <li>Nydal, O.J. (1991) - An Experimental Investigation of Slug Flow</li>
+   * <li>Barnea, D. and Taitel, Y. (1993) - A Model for Slug Length Distribution</li>
+   * </ul>
+   *
+   * @param section pipe section with flow conditions
+   * @return equilibrium slug length [m]
    */
   private double calculateEquilibriumLength(PipeSection section) {
     double D = section.getDiameter();
     double U_M = section.getMixtureVelocity();
 
-    // Scott correlation for equilibrium slug length
+    // Nydal (1991) correlation for stable slug length
+    // L_s/D = 20 for horizontal pipe (lower bound)
+    // Longer slugs possible in developing flow
     double Fr = U_M / Math.sqrt(GRAVITY * D);
 
-    // L_s/D = 30 + 60*Fr for horizontal
-    double L_s = D * (30 + 60 * Fr);
+    // Barnea-Taitel (1993): L_s/D typically 15-40 depending on void fraction
+    // Use moderate value with weak Fr dependence
+    double L_s_D = 25 + 10 * Math.min(Fr, 2.0);
 
-    // Inclination effect
+    double L_s = D * L_s_D;
+
+    // Inclination effect - upward inclined pipes have longer slugs
     double theta = section.getInclination();
-    L_s *= (1 + 0.5 * Math.abs(Math.sin(theta)));
+    if (theta > 0) {
+      L_s *= (1 + 0.3 * Math.sin(theta));
+    }
 
     return Math.max(minimumSlugLength, L_s);
+  }
+
+  /**
+   * Calculate slug body holdup using Gregory et al. (1978) correlation.
+   *
+   * <p>
+   * H_LS = 1 / (1 + (U_M / 8.66)^1.39)
+   * </p>
+   * <p>
+   * This accounts for gas entrainment in the slug body at high mixture velocities.
+   * </p>
+   *
+   * @param U_M mixture velocity [m/s]
+   * @return liquid holdup in slug body (0.5 to 1.0 typically)
+   */
+  private double calculateSlugBodyHoldup(double U_M) {
+    // Gregory, Nicholson, Aziz (1978)
+    // H_LS = 1 / (1 + (U_M / 8.66)^1.39)
+    double ratio = U_M / 8.66;
+    double H_LS = 1.0 / (1.0 + Math.pow(ratio, 1.39));
+
+    // Clamp to reasonable range [0.5, 0.98]
+    return Math.max(0.5, Math.min(0.98, H_LS));
   }
 
   /**
