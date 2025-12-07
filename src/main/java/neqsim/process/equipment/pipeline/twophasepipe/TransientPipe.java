@@ -1223,10 +1223,39 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       section.setLiquidVelocity(u_m);
       section.updateDerivedQuantities();
 
-      // Now use drift-flux to refine phase velocities
+      // Get drift flux parameters (C0 and drift velocity)
       DriftFluxParameters params = driftFluxModel.calculateDriftFlux(section);
-      section.setGasVelocity(params.gasVelocity);
-      section.setLiquidVelocity(params.liquidVelocity);
+
+      // Solve for velocities satisfying both momentum conservation and drift flux relation
+      // 1. Momentum: rho_G*alpha_G*v_G + rho_L*alpha_L*v_L = rho_m*u_m
+      // 2. Drift flux: v_G = C0*(alpha_G*v_G + alpha_L*v_L) + v_d
+
+      double C0 = params.C0;
+      double v_d = params.driftVelocity;
+
+      // Derived solution for v_G
+      // v_G = (v_d + C0 * rho_m * u_m / rho_L) / (1 - C0 * alpha_G + C0 * rho_G * alpha_G / rho_L)
+      double numerator = v_d + C0 * rho_m * u_m / rho_L;
+      double denominator = 1.0 - C0 * alpha_G + C0 * rho_G * alpha_G / rho_L;
+
+      double v_G;
+      if (Math.abs(denominator) > 1e-10) {
+        v_G = numerator / denominator;
+      } else {
+        v_G = u_m; // Fallback
+      }
+
+      // Calculate v_L from momentum equation
+      // v_L = (rho_m * u_m - rho_G * alpha_G * v_G) / (rho_L * alpha_L)
+      double v_L;
+      if (alpha_L > 1e-10) {
+        v_L = (rho_m * u_m - rho_G * alpha_G * v_G) / (rho_L * alpha_L);
+      } else {
+        v_L = u_m;
+      }
+
+      section.setGasVelocity(v_G);
+      section.setLiquidVelocity(v_L);
     }
 
     section.updateDerivedQuantities();
