@@ -231,6 +231,14 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate parameters for annular flow.
+   *
+   * @param params drift flux parameters to be calculated
+   * @param U_M mixture velocity
+   * @param D pipe diameter
+   * @param theta pipe inclination angle
+   * @param rho_L liquid density
+   * @param rho_G gas density
+   * @param sigma surface tension
    */
   private void calculateAnnularFlowParameters(DriftFluxParameters params, double U_M, double D,
       double theta, double rho_L, double rho_G, double sigma) {
@@ -251,6 +259,15 @@ public class DriftFluxModel implements Serializable {
    * <p>
    * Stratified flow doesn't follow simple drift-flux; use momentum balance.
    * </p>
+   *
+   * @param params drift flux parameters to be calculated
+   * @param U_SL superficial liquid velocity
+   * @param U_SG superficial gas velocity
+   * @param D pipe diameter
+   * @param theta pipe inclination angle
+   * @param rho_L liquid density
+   * @param rho_G gas density
+   * @param mu_L liquid viscosity
    */
   private void calculateStratifiedFlowParameters(DriftFluxParameters params, double U_SL,
       double U_SG, double D, double theta, double rho_L, double rho_G, double mu_L) {
