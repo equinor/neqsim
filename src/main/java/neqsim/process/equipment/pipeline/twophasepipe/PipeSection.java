@@ -44,6 +44,7 @@ public class PipeSection implements Cloneable, Serializable {
   private double surfaceTension; // N/m
   private double gasEnthalpy; // J/kg
   private double liquidEnthalpy; // J/kg
+  private double mixtureHeatCapacity; // J/(kg·K) - Cv
 
   // Derived quantities
   private FlowRegime flowRegime;
@@ -431,6 +432,14 @@ public class PipeSection implements Cloneable, Serializable {
     this.liquidEnthalpy = liquidEnthalpy;
   }
 
+  public double getMixtureHeatCapacity() {
+    return mixtureHeatCapacity;
+  }
+
+  public void setMixtureHeatCapacity(double mixtureHeatCapacity) {
+    this.mixtureHeatCapacity = mixtureHeatCapacity;
+  }
+
   public FlowRegime getFlowRegime() {
     return flowRegime;
   }
@@ -529,5 +538,26 @@ public class PipeSection implements Cloneable, Serializable {
 
   public void setMassTransferRate(double massTransferRate) {
     this.massTransferRate = massTransferRate;
+  }
+
+  /**
+   * Calculate Wallis mixture sound speed.
+   *
+   * @return Mixture sound speed (m/s)
+   */
+  public double getWallisSoundSpeed() {
+    double rho_m = getMixtureDensity();
+    double termG =
+        (gasHoldup > 1e-6) ? gasHoldup / (gasDensity * gasSoundSpeed * gasSoundSpeed) : 0;
+    double termL =
+        (liquidHoldup > 1e-6) ? liquidHoldup / (liquidDensity * liquidSoundSpeed * liquidSoundSpeed)
+            : 0;
+
+    double compressibility = termG + termL;
+    if (compressibility <= 0 || rho_m <= 0) {
+      return Math.max(gasSoundSpeed, liquidSoundSpeed);
+    }
+
+    return Math.sqrt(1.0 / (rho_m * compressibility));
   }
 }

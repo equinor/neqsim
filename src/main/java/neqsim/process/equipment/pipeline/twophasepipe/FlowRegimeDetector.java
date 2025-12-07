@@ -257,6 +257,14 @@ public class FlowRegimeDetector implements Serializable {
 
   /**
    * Check if flow is in dispersed bubble regime.
+   *
+   * @param U_SL superficial liquid velocity [m/s]
+   * @param U_SG superficial gas velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param rho_L liquid density [kg/m³]
+   * @param rho_G gas density [kg/m³]
+   * @param sigma surface tension [N/m]
+   * @return true if flow is in dispersed bubble regime
    */
   private boolean isDispersedBubble(double U_SL, double U_SG, double D, double rho_L, double rho_G,
       double sigma) {

@@ -140,6 +140,14 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate parameters for bubble flow.
+   *
+   * @param params output structure for drift-flux parameters
+   * @param U_M mixture velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param theta pipe inclination [rad]
+   * @param rho_L liquid density [kg/m³]
+   * @param rho_G gas density [kg/m³]
+   * @param sigma surface tension [N/m]
    */
   private void calculateBubbleFlowParameters(DriftFluxParameters params, double U_M, double D,
       double theta, double rho_L, double rho_G, double sigma) {
@@ -165,6 +173,15 @@ public class DriftFluxModel implements Serializable {
    * <p>
    * Uses Bendiksen (1984) correlation for Taylor bubble velocity.
    * </p>
+   *
+   * @param params output structure for drift-flux parameters
+   * @param U_M mixture velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param theta pipe inclination [rad]
+   * @param rho_L liquid density [kg/m³]
+   * @param rho_G gas density [kg/m³]
+   * @param sigma surface tension [N/m]
+   * @param mu_L liquid viscosity [Pa.s]
    */
   private void calculateSlugFlowParameters(DriftFluxParameters params, double U_M, double D,
       double theta, double rho_L, double rho_G, double sigma, double mu_L) {

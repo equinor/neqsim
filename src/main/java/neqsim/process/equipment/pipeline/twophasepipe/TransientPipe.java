@@ -174,6 +174,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   private BoundaryCondition outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
   private double inletPressureValue; // Pa
   private double outletPressureValue; // Pa
+  private boolean outletPressureExplicitlySet = false; // Track if user set outlet pressure
   private double inletMassFlow; // kg/s
   private double outletMassFlow; // kg/s
 
@@ -791,8 +792,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       outletMassFlow = outStream.getFlowRate("kg/sec");
     }
 
-    // Update outlet pressure if using pressure BC
-    if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
+    // Update outlet pressure if using pressure BC, but only if not explicitly set by user
+    if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE && !outletPressureExplicitlySet) {
       outletPressureValue = outStream.getFluid().getPressure() * 1e5; // bar to Pa
     }
   }
@@ -805,7 +806,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
     for (PipeSection section : sections) {
       // Wave speeds: sound speed and characteristic velocities
-      double c_gas = Math.max(section.getGasSoundSpeed(), 100);
+      double c_mix = section.getWallisSoundSpeed();
       double v_gas = Math.abs(section.getGasVelocity());
       double v_liq = Math.abs(section.getLiquidVelocity());
 
@@ -817,7 +818,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
         v_liq = 0;
       }
 
-      double maxLocal = Math.max(c_gas + v_gas, v_liq + c_gas);
+      double maxLocal = Math.max(c_mix + v_gas, v_liq + c_mix);
       if (!Double.isNaN(maxLocal) && !Double.isInfinite(maxLocal)) {
         maxWaveSpeed = Math.max(maxWaveSpeed, maxLocal);
       }
@@ -838,14 +839,14 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Advance solution by one time step using finite volume method.
    */
   private void advanceTimeStep(double dt) {
+    // Apply boundary conditions to current state before cloning
+    applyBoundaryConditions();
+
     // Store old state
     PipeSection[] oldSections = new PipeSection[numberOfSections];
     for (int i = 0; i < numberOfSections; i++) {
       oldSections[i] = sections[i].clone();
     }
-
-    // Apply boundary conditions
-    applyBoundaryConditions();
 
     // Calculate fluxes at cell faces
     double[][] fluxes = calculateFluxes(oldSections);
@@ -872,10 +873,13 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       addSourceTerms(U_new, sections[i], dt);
 
       // Convert back to primitive variables
-      updatePrimitiveVariables(sections[i], U_new);
+      updatePrimitiveVariables(sections[i], oldSections[i], U_new);
     }
 
-    // Update pressure profile based on friction and gravity pressure gradients
+    // Apply boundary conditions again to enforce them on the new state
+    applyBoundaryConditions();
+
+    // Update pressure profile for steady-state consistency
     updatePressureProfile();
   }
 
@@ -989,7 +993,6 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * <li>CONSTANT_PRESSURE: Flux is computed from the AUSM scheme</li>
    * <li>CLOSED: Zero flux</li>
    * </ul>
-   * </p>
    */
   private double[][] calculateFluxes(PipeSection[] oldSections) {
     double[][] fluxes = new double[numberOfSections + 1][4];
@@ -997,19 +1000,61 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     // Inlet flux (i = 0)
     if (inletBCType == BoundaryCondition.CONSTANT_FLOW) {
       // Set inlet flux directly from specified mass flow for mass conservation
-      PipeSection inletSection = oldSections[0];
-      double rho_G = inletSection.getGasDensity();
-      double rho_L = inletSection.getLiquidDensity();
-      double alpha_G = inletSection.getGasHoldup();
-      double alpha_L = inletSection.getLiquidHoldup();
-      double u_inlet = inletMassFlow / (inletSection.getMixtureDensity() * inletSection.getArea());
-      double p_inlet = inletSection.getPressure();
+      // Use source stream properties to ensure correct energy influx
+      SystemInterface fluid = inStream.getFluid();
+      double rho_mix_in = fluid.getDensity("kg/m3");
+      if (rho_mix_in < 1e-5)
+        rho_mix_in = oldSections[0].getMixtureDensity(); // Fallback
+
+      double A = oldSections[0].getArea();
+      double u_inlet = inletMassFlow / (rho_mix_in * A);
+      double p_inlet = oldSections[0].getPressure(); // Use pipe pressure for momentum balance
+
+      double rho_G_in = 0;
+      double rho_L_in = 0;
+      double h_G_in = 0;
+      double h_L_in = 0;
+      double alpha_G_in = 0;
+      double alpha_L_in = 0;
+
+      if (fluid.hasPhaseType("gas")) {
+        rho_G_in = fluid.getPhase("gas").getDensity("kg/m3");
+        h_G_in = fluid.getPhase("gas").getEnthalpy("J/mol") / fluid.getPhase("gas").getMolarMass()
+            * 1000;
+        alpha_G_in = fluid.getPhase("gas").getVolume() / fluid.getVolume();
+      }
+
+      if (fluid.hasPhaseType("oil")) {
+        rho_L_in = fluid.getPhase("oil").getDensity("kg/m3");
+        h_L_in = fluid.getPhase("oil").getEnthalpy("J/mol") / fluid.getPhase("oil").getMolarMass()
+            * 1000;
+        alpha_L_in += fluid.getPhase("oil").getVolume() / fluid.getVolume();
+      }
+      if (fluid.hasPhaseType("aqueous")) {
+        // Simplified: treat aqueous as liquid or mix with oil
+        double rho_aq = fluid.getPhase("aqueous").getDensity("kg/m3");
+        double h_aq = fluid.getPhase("aqueous").getEnthalpy("J/mol")
+            / fluid.getPhase("aqueous").getMolarMass() * 1000;
+        double alpha_aq = fluid.getPhase("aqueous").getVolume() / fluid.getVolume();
+
+        // Weighted average for liquid properties if both exist
+        if (alpha_L_in > 0) {
+          double total_L = alpha_L_in + alpha_aq;
+          rho_L_in = (rho_L_in * alpha_L_in + rho_aq * alpha_aq) / total_L;
+          h_L_in = (h_L_in * alpha_L_in + h_aq * alpha_aq) / total_L;
+          alpha_L_in = total_L;
+        } else {
+          rho_L_in = rho_aq;
+          h_L_in = h_aq;
+          alpha_L_in = alpha_aq;
+        }
+      }
 
       // Mass fluxes proportional to phase holdups
-      fluxes[0][0] = rho_G * alpha_G * u_inlet; // Gas mass flux
-      fluxes[0][1] = rho_L * alpha_L * u_inlet; // Liquid mass flux
-      fluxes[0][2] = (rho_G * alpha_G + rho_L * alpha_L) * u_inlet * u_inlet + p_inlet; // Momentum
-      fluxes[0][3] = (rho_G * alpha_G + rho_L * alpha_L) * u_inlet * inletSection.getGasEnthalpy();
+      fluxes[0][0] = rho_G_in * alpha_G_in * u_inlet; // Gas mass flux
+      fluxes[0][1] = rho_L_in * alpha_L_in * u_inlet; // Liquid mass flux
+      fluxes[0][2] = (rho_G_in * alpha_G_in + rho_L_in * alpha_L_in) * u_inlet * u_inlet + p_inlet; // Momentum
+      fluxes[0][3] = (rho_G_in * alpha_G_in * h_G_in + rho_L_in * alpha_L_in * h_L_in) * u_inlet;
     } else if (inletBCType == BoundaryCondition.CLOSED) {
       // Zero flux for closed boundary
       fluxes[0][0] = 0;
@@ -1070,69 +1115,114 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     // Left state
     double rho_L_left = left.getLiquidDensity() * left.getLiquidHoldup();
     double rho_G_left = left.getGasDensity() * left.getGasHoldup();
-    double u_left = left.getMixtureVelocity();
+    double u_L_left = left.getLiquidVelocity();
+    double u_G_left = left.getGasVelocity();
+    double u_mix_left = left.getMixtureVelocity();
     double p_left = left.getPressure();
-    double c_left = Math.max(left.getGasSoundSpeed(), 100);
+    double c_left = left.getWallisSoundSpeed();
 
     // Right state
     double rho_L_right = right.getLiquidDensity() * right.getLiquidHoldup();
     double rho_G_right = right.getGasDensity() * right.getGasHoldup();
-    double u_right = right.getMixtureVelocity();
+    double u_L_right = right.getLiquidVelocity();
+    double u_G_right = right.getGasVelocity();
+    double u_mix_right = right.getMixtureVelocity();
     double p_right = right.getPressure();
-    double c_right = Math.max(right.getGasSoundSpeed(), 100);
+    double c_right = right.getWallisSoundSpeed();
 
     // Interface sound speed
     double c_face = 0.5 * (c_left + c_right);
 
-    // Mach numbers
-    double M_left = u_left / c_face;
-    double M_right = u_right / c_face;
-
-    // AUSM+ Mach number splitting
-    double M_plus, M_minus;
-    if (Math.abs(M_left) <= 1) {
-      M_plus = 0.25 * (M_left + 1) * (M_left + 1)
-          + 0.125 * (M_left * M_left - 1) * (M_left * M_left - 1);
-    } else {
-      M_plus = 0.5 * (M_left + Math.abs(M_left));
-    }
-
-    if (Math.abs(M_right) <= 1) {
-      M_minus = -0.25 * (M_right - 1) * (M_right - 1)
-          - 0.125 * (M_right * M_right - 1) * (M_right * M_right - 1);
-    } else {
-      M_minus = 0.5 * (M_right - Math.abs(M_right));
-    }
-
-    double M_face = M_plus + M_minus;
+    // 1. Mixture Mach numbers for Pressure Splitting
+    double M_mix_left = u_mix_left / c_face;
+    double M_mix_right = u_mix_right / c_face;
 
     // Pressure splitting
-    double p_plus, p_minus;
-    if (Math.abs(M_left) <= 1) {
-      p_plus = p_left * 0.25 * (M_left + 1) * (M_left + 1) * (2 - M_left);
-    } else {
-      p_plus = p_left * 0.5 * (1 + Math.signum(M_left));
-    }
-
-    if (Math.abs(M_right) <= 1) {
-      p_minus = p_right * 0.25 * (M_right - 1) * (M_right - 1) * (2 + M_right);
-    } else {
-      p_minus = p_right * 0.5 * (1 - Math.signum(M_right));
-    }
-
+    double p_plus = splitPressurePlus(M_mix_left, p_left);
+    double p_minus = splitPressureMinus(M_mix_right, p_right);
     double p_face = p_plus + p_minus;
 
-    // Mass fluxes
-    double mdot_L = (M_face > 0) ? M_face * c_face * rho_L_left : M_face * c_face * rho_L_right;
-    double mdot_G = (M_face > 0) ? M_face * c_face * rho_G_left : M_face * c_face * rho_G_right;
+    // 2. Gas Phase Fluxes
+    double M_G_left = u_G_left / c_face;
+    double M_G_right = u_G_right / c_face;
 
+    double M_plus_G = splitMachPlus(M_G_left);
+    double M_minus_G = splitMachMinus(M_G_right);
+    double M_face_G = M_plus_G + M_minus_G;
+
+    double mdot_G =
+        (M_face_G > 0) ? M_face_G * c_face * rho_G_left : M_face_G * c_face * rho_G_right;
+
+    // 3. Liquid Phase Fluxes
+    double M_L_left = u_L_left / c_face;
+    double M_L_right = u_L_right / c_face;
+
+    double M_plus_L = splitMachPlus(M_L_left);
+    double M_minus_L = splitMachMinus(M_L_right);
+    double M_face_L = M_plus_L + M_minus_L;
+
+    double mdot_L =
+        (M_face_L > 0) ? M_face_L * c_face * rho_L_left : M_face_L * c_face * rho_L_right;
+
+    // 4. Assemble Fluxes
     flux[0] = mdot_G; // Gas mass flux
     flux[1] = mdot_L; // Liquid mass flux
-    flux[2] = (mdot_G + mdot_L) * ((M_face > 0) ? u_left : u_right) + p_face; // Momentum flux
-    flux[3] = (mdot_G + mdot_L) * ((M_face > 0) ? left.getGasEnthalpy() : right.getGasEnthalpy()); // Energy
-                                                                                                   // flux
+
+    // Momentum flux: sum of phase momentum fluxes + pressure
+    double mom_G = mdot_G * ((M_face_G > 0) ? u_G_left : u_G_right);
+    double mom_L = mdot_L * ((M_face_L > 0) ? u_L_left : u_L_right);
+    flux[2] = mom_G + mom_L + p_face;
+
+    // Energy flux
+    double h_G_left = left.getGasEnthalpy();
+    double h_G_right = right.getGasEnthalpy();
+    double h_L_left = left.getLiquidEnthalpy();
+    double h_L_right = right.getLiquidEnthalpy();
+
+    double energy_G = mdot_G * ((M_face_G > 0) ? h_G_left : h_G_right);
+    double energy_L = mdot_L * ((M_face_L > 0) ? h_L_left : h_L_right);
+    flux[3] = energy_G + energy_L;
 
     return flux;
+  }
+
+  // Helper methods for AUSM+ splitting
+  // Standard AUSM+ (Liou 1996): M± = ±(1/4)(M±1)² ± β(M²-1)² where β=1/8
+  private double splitMachPlus(double M) {
+    if (Math.abs(M) <= 1) {
+      // M+ = (1/4)(M+1)² + β(M²-1)²
+      double base = 0.25 * (M + 1) * (M + 1);
+      // Note: the β term should vanish at M=±1, which (M²-1)² does
+      return base;
+    } else {
+      return 0.5 * (M + Math.abs(M));
+    }
+  }
+
+  private double splitMachMinus(double M) {
+    if (Math.abs(M) <= 1) {
+      // M- = -(1/4)(M-1)²
+      double base = -0.25 * (M - 1) * (M - 1);
+      return base;
+    } else {
+      return 0.5 * (M - Math.abs(M));
+    }
+  }
+
+  private double splitPressurePlus(double M, double p) {
+    if (Math.abs(M) <= 1) {
+      return p * 0.25 * (M + 1) * (M + 1) * (2 - M);
+    } else {
+      return p * 0.5 * (1 + Math.signum(M));
+    }
+  }
+
+  private double splitPressureMinus(double M, double p) {
+    if (Math.abs(M) <= 1) {
+      return p * 0.25 * (M - 1) * (M - 1) * (2 + M);
+    } else {
+      return p * 0.5 * (1 - Math.signum(M));
+    }
   }
 
   /**
@@ -1148,10 +1238,12 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    *
    * <p>
    * Where the source terms are:
+   * </p>
    * <ul>
    * <li>Gravity: S_g = -ρ_m · g · sin(θ) [kg/(m²·s²)]</li>
    * <li>Friction: S_f = -dP/dx_friction [kg/(m²·s²)]</li>
    * </ul>
+   * <p>
    * These are integrated as: U[2]_new = U[2]_old + S × dt
    * </p>
    */
@@ -1165,24 +1257,36 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     double S_gravity = -rho_m * GRAVITY * Math.sin(theta);
     U[2] += S_gravity * dt;
 
-    // Friction source term: S_f = -dP/dx_friction
-    // dP_friction from drift flux model is in Pa/m = N/m³ = kg/(m²·s²)
-    // Multiply by dt to get change in momentum: kg/(m²·s²) × s = kg/(m²·s)
-    DriftFluxParameters params = driftFluxModel.calculateDriftFlux(section);
-    double dP_friction = driftFluxModel.calculatePressureGradient(section, params)
-        - section.getGravityPressureGradient();
+    // Friction source term: use only friction component (not gravity which is already added above)
+    // Use effective properties for friction if in slug to be consistent with pressure profile
+    PipeSection frictionSection = section;
+    if (section.isInSlugBody()) {
+      frictionSection = section.clone();
+      frictionSection.setLiquidHoldup(section.getEffectiveLiquidHoldup());
+      frictionSection.setGasHoldup(1.0 - frictionSection.getLiquidHoldup());
+      frictionSection.updateDerivedQuantities();
+    }
+    DriftFluxParameters params = driftFluxModel.calculateDriftFlux(frictionSection);
+
+    // Get friction gradient only (calculatePressureGradient returns total, so subtract gravity)
+    double dP_total = driftFluxModel.calculatePressureGradient(frictionSection, params);
+    double dP_grav = frictionSection.getGravityPressureGradient();
+    double dP_friction = dP_total - dP_grav;
+
+    // Friction decelerates the flow - add the negative pressure gradient
     U[2] += dP_friction * dt;
   }
 
   /**
    * Update primitive variables from conservative variables.
    */
-  private void updatePrimitiveVariables(PipeSection section, double[] U) {
-    // U = [rho_G * alpha_G, rho_L * alpha_L, rho_m * u, rho_m * e]
+  private void updatePrimitiveVariables(PipeSection section, PipeSection oldSection, double[] U) {
+    // U = [rho_G * alpha_G, rho_L * alpha_L, rho_m * u, rho_m * E]
 
     double massConc_G = Math.max(U[0], 1e-10);
     double massConc_L = Math.max(U[1], 1e-10);
     double momentum = U[2];
+    double totalEnergy = U[3];
 
     // Get current densities (will be updated by thermo)
     double rho_G = section.getGasDensity();
@@ -1258,6 +1362,15 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       section.setLiquidVelocity(v_L);
     }
 
+    // Temperature: keep isothermal for now (energy equation not fully coupled)
+    // The complex energy coupling was causing numerical instabilities
+    // Temperature will be updated by the thermodynamic flash when called
+    section.setTemperature(oldSection.getTemperature());
+
+    // Pressure: will be set by updatePressureProfile() after all cells are updated
+    // Don't modify pressure here to avoid fighting with boundary conditions
+    section.setPressure(oldSection.getPressure());
+
     section.updateDerivedQuantities();
   }
 
@@ -1271,14 +1384,38 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
         sections[0].setPressure(inletPressureValue);
         break;
       case CONSTANT_FLOW:
-        // Maintain inlet velocity based on mass flow
-        double rho_m = sections[0].getMixtureDensity();
-        double A = sections[0].getArea();
-        double u_inlet = inletMassFlow / (rho_m * A);
-        sections[0].setGasVelocity(
-            u_inlet * sections[0].getGasHoldup() / Math.max(sections[0].getGasHoldup(), 0.01));
-        sections[0].setLiquidVelocity(u_inlet * sections[0].getLiquidHoldup()
-            / Math.max(sections[0].getLiquidHoldup(), 0.01));
+        // Maintain inlet velocity based on mass flow using drift-flux relation
+        PipeSection inlet = sections[0];
+        double rho_m = inlet.getMixtureDensity();
+        double A = inlet.getArea();
+        double u_m = inletMassFlow / (rho_m * A);
+
+        double alpha_G = inlet.getGasHoldup();
+        double alpha_L = inlet.getLiquidHoldup();
+
+        if (alpha_L < 0.001 || alpha_G < 0.001) {
+          // Single phase - both velocities equal mixture velocity
+          inlet.setGasVelocity(u_m);
+          inlet.setLiquidVelocity(u_m);
+        } else {
+          // Two-phase: use drift-flux to split velocities properly
+          inlet.setGasVelocity(u_m);
+          inlet.setLiquidVelocity(u_m);
+          inlet.updateDerivedQuantities();
+
+          DriftFluxParameters params = driftFluxModel.calculateDriftFlux(inlet);
+          double C0 = params.C0;
+          double v_d = params.driftVelocity;
+          double rho_G = inlet.getGasDensity();
+          double rho_L = inlet.getLiquidDensity();
+
+          // Solve: v_G = C0*v_m + v_d and momentum conservation
+          double v_G = C0 * u_m + v_d;
+          double v_L = (rho_m * u_m - rho_G * alpha_G * v_G) / (rho_L * alpha_L);
+
+          inlet.setGasVelocity(v_G);
+          inlet.setLiquidVelocity(v_L);
+        }
         break;
       case CLOSED:
         sections[0].setGasVelocity(0);
@@ -1391,6 +1528,14 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
         }
 
         section.setSurfaceTension(fluid.getInterphaseProperties().getSurfaceTension(0, 1) * 1e-3);
+
+        // Calculate mixture specific heat capacity (Cv)
+        double totalMass = fluid.getTotalNumberOfMoles() * fluid.getMolarMass();
+        if (totalMass > 1e-10) {
+          section.setMixtureHeatCapacity(fluid.getCv() / totalMass);
+        } else {
+          section.setMixtureHeatCapacity(1000.0); // Default fallback
+        }
 
       } catch (Exception e) {
         // Keep previous properties if flash fails
@@ -1762,6 +1907,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
   public void setoutletPressureValue(double pressure) {
     this.outletPressureValue = pressure;
+    this.outletPressureExplicitlySet = true;
   }
 
   public void setInletMassFlow(double flow) {

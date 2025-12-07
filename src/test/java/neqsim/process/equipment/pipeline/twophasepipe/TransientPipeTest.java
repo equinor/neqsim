@@ -506,8 +506,9 @@ class TransientPipeTest {
     // Run another transient step
     pipe.runTransient(2.0, java.util.UUID.randomUUID());
 
-    // Verify simulation advanced further
-    assertTrue(pipe.getSimulationTime() >= simTime1 + 2.0,
+    // Verify simulation advanced further (use tolerance for floating-point comparison)
+    double expectedMinTime = simTime1 + 2.0 - 1e-9; // Allow small floating-point error
+    assertTrue(pipe.getSimulationTime() >= expectedMinTime,
         "Simulation time should have advanced by at least 2.0 seconds");
     assertTrue(pipe.getTotalTimeSteps() > steps1, "Should have taken more time steps");
   }
