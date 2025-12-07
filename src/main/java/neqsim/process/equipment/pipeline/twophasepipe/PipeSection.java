@@ -325,6 +325,10 @@ public class PipeSection implements Cloneable, Serializable {
    */
   public double getEffectiveLiquidHoldup() {
     if (isInSlugBody || isInSlugBubble) {
+      // Guard against uninitialized or invalid slugHoldup
+      if (slugHoldup <= 0 || Double.isNaN(slugHoldup)) {
+        return liquidHoldup;
+      }
       return slugHoldup;
     }
     return liquidHoldup;
@@ -337,7 +341,12 @@ public class PipeSection implements Cloneable, Serializable {
    */
   public double getEffectiveMixtureDensity() {
     double effectiveHoldup = getEffectiveLiquidHoldup();
-    return (1.0 - effectiveHoldup) * gasDensity + effectiveHoldup * liquidDensity;
+    double density = (1.0 - effectiveHoldup) * gasDensity + effectiveHoldup * liquidDensity;
+    // Guard against NaN - return base mixture density as fallback
+    if (Double.isNaN(density) || density <= 0) {
+      return getMixtureDensity();
+    }
+    return density;
   }
 
   public void setLiquidHoldup(double liquidHoldup) {
@@ -529,7 +538,12 @@ public class PipeSection implements Cloneable, Serializable {
   }
 
   public void setSlugHoldup(double slugHoldup) {
-    this.slugHoldup = slugHoldup;
+    // Guard against NaN/Inf to prevent numerical instability propagation
+    if (Double.isNaN(slugHoldup) || Double.isInfinite(slugHoldup)) {
+      this.slugHoldup = this.liquidHoldup; // Fallback to base holdup
+    } else {
+      this.slugHoldup = Math.max(0.0, Math.min(1.0, slugHoldup)); // Clamp to valid range
+    }
   }
 
   public double getMassTransferRate() {

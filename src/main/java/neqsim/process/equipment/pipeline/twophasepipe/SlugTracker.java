@@ -191,10 +191,12 @@ public class SlugTracker implements Serializable {
       return;
     }
 
-    // Clear all section slug flags before updating
+    // Clear all section slug flags and reset slugHoldup before updating
+    // This ensures no stale holdup values are used when section leaves slug
     for (PipeSection section : sections) {
       section.setInSlugBody(false);
       section.setInSlugBubble(false);
+      section.setSlugHoldup(section.getLiquidHoldup()); // Reset to base holdup
     }
 
     // Update each slug
@@ -316,7 +318,7 @@ public class SlugTracker implements Serializable {
    * Calculate drift velocity using Bendiksen correlation.
    */
   private double calculateDriftVelocity(double D, double theta, double deltaRho, double rho_L) {
-    if (deltaRho <= 0) {
+    if (deltaRho <= 0 || rho_L <= 0) {
       return 0;
     }
 

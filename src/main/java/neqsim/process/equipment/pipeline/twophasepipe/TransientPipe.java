@@ -886,6 +886,38 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   }
 
   /**
+   * Get the controlling mass flow rate for pressure profile calculation.
+   * 
+   * <p>
+   * Returns the appropriate mass flow rate based on boundary conditions:
+   * <ul>
+   * <li>CONSTANT_FLOW inlet: use inlet mass flow</li>
+   * <li>CONSTANT_FLOW outlet: use outlet mass flow</li>
+   * <li>Both CONSTANT_PRESSURE: use inlet mass flow as fallback</li>
+   * </ul>
+   * </p>
+   *
+   * @return Mass flow rate in kg/s
+   */
+  private double getMassFlowForPressureProfile() {
+    if (inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlow > 0) {
+      return inletMassFlow;
+    } else if (outletBCType == BoundaryCondition.CONSTANT_FLOW && outletMassFlow > 0) {
+      return outletMassFlow;
+    } else if (inletMassFlow > 0) {
+      return inletMassFlow;
+    } else if (outletMassFlow > 0) {
+      return outletMassFlow;
+    }
+    // Fallback: estimate from inlet section velocity
+    if (sections != null && sections.length > 0) {
+      PipeSection inlet = sections[0];
+      return inlet.getMixtureDensity() * inlet.getMixtureVelocity() * inlet.getArea();
+    }
+    return 1.0; // Default fallback
+  }
+
+  /**
    * Update pressure profile based on friction and gravity pressure gradients.
    * 
    * <p>
@@ -895,6 +927,9 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * </p>
    */
   private void updatePressureProfile() {
+    // Determine the controlling mass flow rate based on boundary conditions
+    double massFlow = getMassFlowForPressureProfile();
+
     // For CONSTANT_FLOW inlet + CONSTANT_PRESSURE outlet: march from outlet to inlet
     if (inletBCType == BoundaryCondition.CONSTANT_FLOW
         && outletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
@@ -913,7 +948,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
         // Calculate mixture velocity from mass flow
         double A = section.getArea();
-        double u_m = inletMassFlow / (rho_m * A);
+        double u_m = massFlow / (rho_m * A);
 
         // Gravity contribution
         double theta = section.getInclination();
@@ -943,8 +978,9 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
         sections[i].setPressure(P);
       }
 
-    } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
-      // March from inlet to outlet
+    } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE
+        && outletBCType == BoundaryCondition.CONSTANT_FLOW) {
+      // CONSTANT_PRESSURE inlet + CONSTANT_FLOW outlet: march from inlet to outlet
       double P = inletPressureValue;
       sections[0].setPressure(P);
 
@@ -957,7 +993,46 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
             + section.getEffectiveLiquidHoldup() * section.getLiquidViscosity();
 
         double A = section.getArea();
-        double u_m = inletMassFlow / (rho_m * A);
+        double u_m = massFlow / (rho_m * A);
+
+        double theta = section.getInclination();
+        double dP_gravity = -rho_m * GRAVITY * Math.sin(theta) * dx;
+
+        double Re = rho_m * Math.abs(u_m) * diameter / Math.max(mu_m, 1e-10);
+        double f;
+        if (Re < 10) {
+          f = 6.4;
+        } else if (Re < 2300) {
+          f = 64.0 / Re;
+        } else {
+          double relRough = roughness / diameter;
+          double term = Math.pow(relRough / 3.7, 1.11) + 6.9 / Re;
+          f = Math.pow(-1.8 * Math.log10(term), -2);
+          f = Math.max(f, 0.001);
+        }
+        double dP_friction = -f * rho_m * u_m * Math.abs(u_m) / (2.0 * diameter) * dx;
+
+        double dP = dP_gravity + dP_friction;
+        P += dP; // dP is negative, so pressure decreases
+        P = Math.max(P, 1e5);
+        sections[i].setPressure(P);
+      }
+
+    } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
+      // March from inlet to outlet (default for CONSTANT_PRESSURE inlet)
+      double P = inletPressureValue;
+      sections[0].setPressure(P);
+
+      for (int i = 1; i < numberOfSections; i++) {
+        PipeSection section = sections[i - 1];
+
+        // Use effective properties that account for slug presence
+        double rho_m = section.getEffectiveMixtureDensity();
+        double mu_m = section.getGasHoldup() * section.getGasViscosity()
+            + section.getEffectiveLiquidHoldup() * section.getLiquidViscosity();
+
+        double A = section.getArea();
+        double u_m = massFlow / (rho_m * A);
 
         double theta = section.getInclination();
         double dP_gravity = -rho_m * GRAVITY * Math.sin(theta) * dx;
@@ -1650,12 +1725,34 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
         effectiveDensity = outletSection.getMixtureDensity();
       }
 
-      // Calculate mass flow rate (kg/s) directly from outlet section velocity
-      // The velocity comes from the solved conservation equations
-      if (effectiveDensity > 0 && pipeArea > 0 && Math.abs(velocity) > 1e-10) {
+      // For CONSTANT_FLOW inlet BC, use inlet mass flow as primary source
+      // The outlet mass flow should equal inlet mass flow for mass conservation
+      // Local velocity may be low due to momentum solver behavior with CONSTANT_PRESSURE outlet
+      if (inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlow > 0) {
+        // Use inlet mass flow - this ensures mass conservation
+        // The outlet velocity can be derived: u_out = m_dot / (rho_eff * A)
+        outletMassFlow = inletMassFlow;
+
+        // Update outlet section velocity for consistency
+        if (effectiveDensity > 0 && pipeArea > 0) {
+          double outletVelocity = inletMassFlow / (effectiveDensity * pipeArea);
+          outletSection.setGasVelocity(outletVelocity);
+          outletSection.setLiquidVelocity(outletVelocity);
+        }
+      } else if (outletBCType == BoundaryCondition.CONSTANT_FLOW && outletMassFlow > 0) {
+        // CONSTANT_FLOW outlet BC: use specified outlet mass flow
+        // Update outlet section velocity for consistency
+        if (effectiveDensity > 0 && pipeArea > 0) {
+          double outletVelocity = outletMassFlow / (effectiveDensity * pipeArea);
+          outletSection.setGasVelocity(outletVelocity);
+          outletSection.setLiquidVelocity(outletVelocity);
+        }
+        // outletMassFlow is already set by setOutletMassFlow()
+      } else if (effectiveDensity > 0 && pipeArea > 0 && Math.abs(velocity) > 0.01) {
+        // Calculate mass flow rate (kg/s) from outlet section velocity
         outletMassFlow = effectiveDensity * Math.abs(velocity) * pipeArea;
       } else if (inletMassFlow > 0) {
-        // Fallback only if velocity is essentially zero
+        // Fallback to inlet mass flow
         outletMassFlow = inletMassFlow;
       }
 
@@ -1916,6 +2013,35 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
   public void setInletMassFlow(double flow) {
     this.inletMassFlow = flow;
+  }
+
+  /**
+   * Set the outlet mass flow rate.
+   * 
+   * <p>
+   * Use this when the outlet flow is controlled by downstream equipment (e.g., a valve). When
+   * using CONSTANT_FLOW outlet boundary condition, this value is used to calculate the pressure
+   * profile and outlet stream properties.
+   * </p>
+   * 
+   * <p>
+   * This can be called before each runTransient() call to update the outlet flow from downstream
+   * valve Cv calculations.
+   * </p>
+   *
+   * @param flow Outlet mass flow rate in kg/s
+   */
+  public void setOutletMassFlow(double flow) {
+    this.outletMassFlow = flow;
+  }
+
+  /**
+   * Get the current outlet mass flow rate.
+   *
+   * @return Outlet mass flow rate in kg/s
+   */
+  public double getOutletMassFlow() {
+    return this.outletMassFlow;
   }
 
   @Override
