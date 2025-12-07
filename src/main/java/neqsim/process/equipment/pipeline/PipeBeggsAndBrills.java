@@ -1427,7 +1427,6 @@ public class PipeBeggsAndBrills extends Pipeline {
    * <li>Natural gas: 3-5×10⁻⁶ K/Pa</li>
    * <li>CO2: ~10⁻⁵ K/Pa (1 K/bar)</li>
    * </ul>
-   * </p>
    *
    * @param include true to include JT effect, false otherwise
    */

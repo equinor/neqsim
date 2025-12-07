@@ -808,6 +808,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
   /**
    * Calculate adaptive time step based on CFL condition.
+   *
+   * @return time step (s)
    */
   private double calculateTimeStep() {
     double maxWaveSpeed = 0;
@@ -845,6 +847,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
   /**
    * Advance solution by one time step using finite volume method.
+   *
+   * @param dt time step (s)
    */
   private void advanceTimeStep(double dt) {
     // Apply boundary conditions to current state before cloning
@@ -1192,6 +1196,10 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
   /**
    * Calculate AUSM+ numerical flux at interface.
+   *
+   * @param left left pipe section
+   * @param right right pipe section
+   * @return flux array [mass_L, mass_G, momentum_L, momentum_G]
    */
   private double[] calculateAUSMFlux(PipeSection left, PipeSection right) {
     double[] flux = new double[4];

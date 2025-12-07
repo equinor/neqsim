@@ -344,6 +344,10 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate holdup from liquid level in circular pipe.
+   *
+   * @param h liquid level height (m)
+   * @param D pipe diameter (m)
+   * @return liquid holdup fraction (0-1)
    */
   private double calculateHoldupFromLevel(double h, double D) {
     if (h <= 0) {
@@ -396,6 +400,11 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate friction pressure gradient.
+   *
+   * @param section pipe section with flow properties
+   * @param params drift-flux model parameters
+   * @param roughness pipe wall roughness (m)
+   * @return friction pressure gradient (Pa/m)
    */
   private double calculateFrictionGradient(PipeSection section, DriftFluxParameters params,
       double roughness) {
@@ -436,6 +445,10 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate friction for single-phase gas flow.
+   *
+   * @param section pipe section with gas properties
+   * @param roughness pipe wall roughness (m)
+   * @return friction factor
    */
   private double calculateSinglePhaseGasFriction(PipeSection section, double roughness) {
     double D = section.getDiameter();
@@ -460,6 +473,10 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate friction for single-phase liquid flow.
+   *
+   * @param section pipe section with liquid properties
+   * @param roughness pipe wall roughness (m)
+   * @return friction factor
    */
   private double calculateSinglePhaseLiquidFriction(PipeSection section, double roughness) {
     double D = section.getDiameter();

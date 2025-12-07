@@ -545,6 +545,10 @@ public class SlugTracker implements Serializable {
 
   /**
    * Find section index containing a position.
+   *
+   * @param position position along pipe (m)
+   * @param sections array of pipe sections
+   * @return section index, or -1 if not found
    */
   private int findSectionIndex(double position, PipeSection[] sections) {
     for (int i = 0; i < sections.length; i++) {
