@@ -20,10 +20,9 @@ import neqsim.thermo.system.SystemInterface;
  * Gibbs reactor for chemical equilibrium calculations using Gibbs free energy minimization.
  *
  * <p>
- * This reactor computes chemical equilibrium compositions by minimizing the total Gibbs free
- * energy of the system subject to elemental mass balance constraints. The implementation uses
- * the Newton-Raphson method with Lagrange multipliers to solve the constrained optimization
- * problem.
+ * This reactor computes chemical equilibrium compositions by minimizing the total Gibbs free energy
+ * of the system subject to elemental mass balance constraints. The implementation uses the
+ * Newton-Raphson method with Lagrange multipliers to solve the constrained optimization problem.
  * </p>
  *
  * <h2>Key Features</h2>
@@ -38,16 +37,18 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * The reactor minimizes the objective function:
  * </p>
+ * 
  * <pre>
  * G = Σ nᵢ(μᵢ⁰ + RT ln(φᵢyᵢP)) - Σ λⱼ(Σ aᵢⱼnᵢ - bⱼ)
  * </pre>
  * <p>
- * where nᵢ are molar amounts, μᵢ⁰ is standard chemical potential, φᵢ is fugacity coefficient,
- * yᵢ is mole fraction, λⱼ are Lagrange multipliers, aᵢⱼ are stoichiometric coefficients,
- * and bⱼ are element totals.
+ * where nᵢ are molar amounts, μᵢ⁰ is standard chemical potential, φᵢ is fugacity coefficient, yᵢ is
+ * mole fraction, λⱼ are Lagrange multipliers, aᵢⱼ are stoichiometric coefficients, and bⱼ are
+ * element totals.
  * </p>
  *
  * <h2>Usage Example</h2>
+ * 
  * <pre>
  * GibbsReactor reactor = new GibbsReactor("reactor", inletStream);
  * reactor.setEnergyMode(EnergyMode.ISOTHERMAL);
@@ -57,8 +58,8 @@ import neqsim.thermo.system.SystemInterface;
  * reactor.run();
  *
  * if (reactor.hasConverged()) {
- *     Stream outlet = reactor.getOutletStream();
- *     double enthalpyChange = reactor.getEnthalpyOfReactions();
+ *   Stream outlet = reactor.getOutletStream();
+ *   double enthalpyChange = reactor.getEnthalpyOfReactions();
  * }
  * </pre>
  *
@@ -856,12 +857,13 @@ public class GibbsReactor extends TwoPortEquipment {
             final String molecule = parts[0].trim();
             double[] elements = new double[8];
             for (int i = 0; i < 8; i++) {
-                elements[i] = Double.parseDouble(parts[i + 1].trim().replace(",", "."));
+              elements[i] = Double.parseDouble(parts[i + 1].trim().replace(",", "."));
             }
             double[] heatCapCoeffs = new double[4];
             int heatCapStartIndex = 9; // after 8 elements
             for (int i = 0; i < 4; i++) {
-                heatCapCoeffs[i] = Double.parseDouble(parts[i + heatCapStartIndex].trim().replace(",", "."));
+              heatCapCoeffs[i] =
+                  Double.parseDouble(parts[i + heatCapStartIndex].trim().replace(",", "."));
             }
             int thermoStartIndex = heatCapStartIndex + 4; // 13
             String deltaHf298Str = parts[thermoStartIndex].trim().replace(",", ".");
@@ -1459,9 +1461,10 @@ public class GibbsReactor extends TwoPortEquipment {
       // Use outlet_mole for calculations, but with a minimum value to avoid numerical issues
       // Find outlet mole corresponding to this variable component (use processedComponentIndexMap)
       int globalIdx = processedComponentIndexMap.getOrDefault(compI, -1);
-      double ni =
-          (globalIdx >= 0 && globalIdx < outlet_mole.size()) ? outlet_mole.get(globalIdx) : MIN_MOLES;
-      double niForJacobian = Math.max(ni, MIN_JACOBIAN_MOLES); // Use minimum of 1e-6 for Jacobian calculation
+      double ni = (globalIdx >= 0 && globalIdx < outlet_mole.size()) ? outlet_mole.get(globalIdx)
+          : MIN_MOLES;
+      double niForJacobian = Math.max(ni, MIN_JACOBIAN_MOLES); // Use minimum of 1e-6 for Jacobian
+                                                               // calculation
       system.init(3);
       for (int j = 0; j < numComponents; j++) {
         String compJ = variableComponents.get(j);
@@ -1675,9 +1678,8 @@ public class GibbsReactor extends TwoPortEquipment {
     for (GibbsComponent comp : gibbsDatabase) {
       String molecule = comp.getMolecule();
       double[] elements = comp.getElements();
-      logger.debug(" {}: O={}, N={}, C={}, H={}, S={}, Ar={}",
-          molecule, elements[0], elements[1], elements[2],
-          elements[3], elements[4], elements[5]);
+      logger.debug(" {}: O={}, N={}, C={}, H={}, S={}, Ar={}", molecule, elements[0], elements[1],
+          elements[2], elements[3], elements[4], elements[5]);
     }
 
     logger.debug("Component map keys:");
