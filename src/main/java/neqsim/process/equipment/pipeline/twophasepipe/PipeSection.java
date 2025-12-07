@@ -317,6 +317,28 @@ public class PipeSection implements Cloneable, Serializable {
     return liquidHoldup;
   }
 
+  /**
+   * Get effective liquid holdup, considering slug overlay when in a slug.
+   * 
+   * @return Effective liquid holdup (dimensionless, 0-1)
+   */
+  public double getEffectiveLiquidHoldup() {
+    if (isInSlugBody || isInSlugBubble) {
+      return slugHoldup;
+    }
+    return liquidHoldup;
+  }
+
+  /**
+   * Get effective mixture density, considering slug overlay when in a slug.
+   * 
+   * @return Effective mixture density (kg/m³)
+   */
+  public double getEffectiveMixtureDensity() {
+    double effectiveHoldup = getEffectiveLiquidHoldup();
+    return (1.0 - effectiveHoldup) * gasDensity + effectiveHoldup * liquidDensity;
+  }
+
   public void setLiquidHoldup(double liquidHoldup) {
     this.liquidHoldup = liquidHoldup;
   }

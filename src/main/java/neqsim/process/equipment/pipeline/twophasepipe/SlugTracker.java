@@ -191,6 +191,12 @@ public class SlugTracker implements Serializable {
       return;
     }
 
+    // Clear all section slug flags before updating
+    for (PipeSection section : sections) {
+      section.setInSlugBody(false);
+      section.setInSlugBubble(false);
+    }
+
     // Update each slug
     for (SlugUnit slug : slugs) {
       advanceSlug(slug, sections, dt);
@@ -204,6 +210,23 @@ public class SlugTracker implements Serializable {
 
     // Update statistics
     updateStatistics();
+  }
+
+  /** Reference velocity from inlet for fallback when sections have near-zero velocity. */
+  private double referenceVelocity = 1.0; // m/s default
+
+  /** Maximum allowed slug body length (multiples of diameter). */
+  private static final double MAX_SLUG_LENGTH_DIAMETERS = 200.0;
+
+  /**
+   * Set the reference velocity for slug propagation. This is used as fallback when section mixture
+   * velocity is near zero (e.g., with constant pressure outlet BC where momentum solver gives low
+   * velocities).
+   *
+   * @param velocity Reference velocity in m/s (typically inlet mixture velocity)
+   */
+  public void setReferenceVelocity(double velocity) {
+    this.referenceVelocity = Math.max(0.1, velocity);
   }
 
   /**
@@ -232,6 +255,12 @@ public class SlugTracker implements Serializable {
     double rho_G = frontSection.getGasDensity();
     double theta = frontSection.getInclination();
 
+    // BUG FIX: Use reference velocity when section mixture velocity is too low
+    // This happens with CONSTANT_PRESSURE outlet BC where momentum solver gives ~0 velocity
+    if (Math.abs(U_M) < 0.1 && referenceVelocity > 0.1) {
+      U_M = referenceVelocity;
+    }
+
     // Distribution coefficient
     double Fr_M = U_M / Math.sqrt(GRAVITY * D);
     double C0 = (Fr_M > 3.5) ? 1.2 : 1.05 + 0.15 * Math.sin(theta);
@@ -243,9 +272,13 @@ public class SlugTracker implements Serializable {
     // Slug front velocity = C0 * U_m + U_drift
     slug.frontVelocity = C0 * U_M + U_drift;
 
-    // Slug tail velocity (shedding from back)
-    // Tail moves slower due to liquid shedding into film
-    double sheddingFactor = 0.9;
+    // BUG FIX: Tail velocity should approach front velocity for stable slugs
+    // Use dynamic shedding factor that decreases as slug grows
+    // This prevents indefinite slug growth
+    double maxSlugLength = MAX_SLUG_LENGTH_DIAMETERS * D;
+    double lengthRatio = Math.min(1.0, slug.slugBodyLength / maxSlugLength);
+    // Shedding factor increases from 0.9 to 1.0 as slug approaches max length
+    double sheddingFactor = 0.9 + 0.1 * lengthRatio;
     slug.tailVelocity = slug.frontVelocity * sheddingFactor;
 
     // Update positions
@@ -343,22 +376,41 @@ public class SlugTracker implements Serializable {
 
   /**
    * Mark sections that are within a slug.
+   * <p>
+   * A section is marked as in slug body if it overlaps with the slug body region (between tail and
+   * front positions). Sections are marked as in slug bubble if they overlap with the bubble/film
+   * region behind the tail.
+   * </p>
    */
   private void markSlugSections(SlugUnit slug, PipeSection[] sections) {
     for (PipeSection section : sections) {
-      double pos = section.getPosition();
-      double endPos = pos + section.getLength();
+      double sectionStart = section.getPosition();
+      double sectionEnd = sectionStart + section.getLength();
 
-      // Check if section overlaps with slug body
-      if (pos <= slug.frontPosition && endPos >= slug.tailPosition) {
+      // Slug body spans from tailPosition to frontPosition
+      double slugBodyStart = slug.tailPosition;
+      double slugBodyEnd = slug.frontPosition;
+
+      // Check if section overlaps with slug body (ranges overlap if one starts before the other
+      // ends)
+      boolean overlapsBody =
+          sectionStart < slugBodyEnd && sectionEnd > slugBodyStart && slugBodyEnd > slugBodyStart;
+
+      if (overlapsBody) {
         section.setInSlugBody(true);
         section.setSlugHoldup(slug.bodyHoldup);
-      } else if (pos <= slug.tailPosition && endPos >= slug.tailPosition - slug.bubbleLength) {
+      }
+
+      // Bubble/film region is behind the tail
+      double bubbleStart = slug.tailPosition - slug.bubbleLength;
+      double bubbleEnd = slug.tailPosition;
+
+      boolean overlapsBubble =
+          sectionStart < bubbleEnd && sectionEnd > bubbleStart && bubbleEnd > bubbleStart;
+
+      if (overlapsBubble && !overlapsBody) {
         section.setInSlugBubble(true);
         section.setSlugHoldup(slug.filmHoldup);
-      } else {
-        section.setInSlugBody(false);
-        section.setInSlugBubble(false);
       }
     }
   }
@@ -409,8 +461,9 @@ public class SlugTracker implements Serializable {
     while (iter.hasNext()) {
       SlugUnit slug = iter.next();
 
-      // Remove if exited pipe
-      if (slug.tailPosition > pipeLength) {
+      // BUG FIX: Remove if front has exited pipe (not just tail)
+      // This prevents slugs from piling up at the outlet when velocity is low
+      if (slug.frontPosition > pipeLength + minimumSlugLength) {
         iter.remove();
         continue;
       }
@@ -536,6 +589,15 @@ public class SlugTracker implements Serializable {
    */
   public void setSlugBodyHoldup(double holdup) {
     this.slugHoldupBody = Math.max(0.5, Math.min(1.0, holdup));
+  }
+
+  /**
+   * Get slug body holdup.
+   *
+   * @return Holdup in slug body (0-1)
+   */
+  public double getSlugBodyHoldup() {
+    return this.slugHoldupBody;
   }
 
   /**
