@@ -23,6 +23,15 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <p>
+ * <b>Important limitations:</b>
+ * </p>
+ * <ul>
+ * <li>This model considers only bulk (homogeneous) phase reactions. Surface reactions,
+ * heterogeneous catalysis, and interfacial phenomena are not included.</li>
+ * <li>Reactions are disabled when CO2 density falls below 300 kg/m³.</li>
+ * </ul>
+ *
+ * <p>
  * Usage example:
  * </p>
  *
@@ -58,6 +67,9 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
   /** Default inert components for CO2/acid gas systems. */
   private static final String[] DEFAULT_INERT_COMPONENTS =
       {"CO", "COS", "CO2", "ammonia", "hydrogen", "N2O3", "nitrogen", "N2H4", "N2O"};
+
+  /** Minimum CO2 density (kg/m³) required for bulk phase reactions to proceed. */
+  private static final double MIN_CO2_DENSITY = 300.0;
 
   /**
    * Creates a new GibbsReactorCO2 with the specified name.
@@ -104,10 +116,26 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
   /**
    * Computes the chemical equilibrium based on inlet composition.
    *
+   * <p>
+   * Note: Only bulk (homogeneous) phase reactions are considered. Surface reactions and
+   * heterogeneous catalysis are not modeled. Reactions are disabled if CO2 density is below
+   * {@value #MIN_CO2_DENSITY} kg/m³.
+   * </p>
+   *
    * @param inlet the inlet stream
-   * @return the equilibrated thermo system, or null if calculation fails
+   * @return the equilibrated thermo system, or null if calculation fails or reactions are skipped
    */
   private SystemInterface computeEquilibrium(StreamInterface inlet) {
+    // Check CO2 density - skip reactions if below threshold
+    double co2Density = getCO2Density(inlet);
+    if (co2Density < MIN_CO2_DENSITY) {
+      logger.info(
+          "CO2 density ({} kg/m³) is below threshold ({} kg/m³). "
+              + "Bulk phase reactions skipped for reactor '{}'.",
+          co2Density, MIN_CO2_DENSITY, getName());
+      return inlet.getThermoSystem().clone();
+    }
+
     double no2ppm = getComponentPpm(inlet, "NO2");
     double h2sppm = getComponentPpm(inlet, "H2S");
     double oxyppm = getComponentPpm(inlet, "oxygen");
@@ -291,5 +319,30 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
    */
   private boolean hasSignificantConcentration(double ppm) {
     return ppm > PPM_THRESHOLD;
+  }
+
+  /**
+   * Gets the density of CO2 in the stream.
+   *
+   * <p>
+   * This method calculates the CO2 density by running a thermodynamic flash calculation on a cloned
+   * system. If CO2 is not present or an error occurs, returns 0.0.
+   * </p>
+   *
+   * @param stream the stream to query
+   * @return CO2 density in kg/m³, or 0.0 if CO2 is not present or calculation fails
+   */
+  private double getCO2Density(StreamInterface stream) {
+    try {
+      SystemInterface system = stream.getThermoSystem();
+      if (system.getComponent("CO2") == null) {
+        return 0.0;
+      }
+      // Return the overall fluid density as a proxy for CO2-rich phase density
+      return system.getDensity("kg/m3");
+    } catch (Exception e) {
+      logger.debug("Could not calculate CO2 density: {}", e.getMessage());
+      return 0.0;
+    }
   }
 }

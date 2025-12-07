@@ -239,4 +239,98 @@ public class GibbsReactorCO2ScenariosTest {
     printComposition(outSys, label);
     assertSelectedPpm(outSys, names, expectedPpm, 2.0, label);
   }
+
+  /**
+   * Scenario: Gas phase reactions stopped when CO2 density < 300 kg/m³.
+   *
+   * <p>
+   * This test verifies that bulk phase reactions are skipped when CO2 density falls below the 300
+   * kg/m³ threshold. At low pressure (e.g., 10 bara) and higher temperature, the CO2 density will
+   * be low enough to trigger this condition. The outlet composition should match the inlet
+   * composition exactly since no reactions occur.
+   * </p>
+   */
+  @Test
+  public void scenarioGasPhaseReactionsStopped() {
+    // Low pressure and moderate temperature to ensure CO2 density < 300 kg/m³
+    // At 10 bara and 298 K, CO2 is in gas phase with density well below 300 kg/m³
+    SystemSrkEos sys = createBaseSystem(298.15, 10.0);
+
+    // Add reactive components that would normally react
+    sys.addComponent("water", 50.0);
+    sys.addComponent("NO2", 10.0);
+    sys.addComponent("oxygen", 30.0);
+    sys.addComponent("H2S", 5.0);
+
+    Stream inlet = new Stream("Inlet Stream", sys);
+    inlet.run();
+
+    // Verify the density is indeed below threshold
+    double density = inlet.getThermoSystem().getDensity("kg/m3");
+    System.out.println("CO2/gas density at inlet: " + density + " kg/m³");
+    Assertions.assertTrue(density < 300.0,
+        "Test setup error: density should be below 300 kg/m³ for this scenario");
+
+    GibbsReactorCO2 reactor = new GibbsReactorCO2("GibbsReactorCO2", inlet);
+    reactor.run();
+
+    SystemInterface outSys = reactor.getOutletStream().getThermoSystem();
+    printComposition(outSys, "Gas Phase Reactions Stopped (density < 300 kg/m³)");
+
+    // Since reactions are stopped, outlet composition should match inlet composition
+    // The components should remain unchanged
+    String[] names = new String[] {"water", "NO2", "oxygen", "H2S"};
+    double[] expectedPpm = new double[] {50.0, 10.0, 30.0, 5.0};
+    assertSelectedPpm(outSys, names, expectedPpm, 0.1,
+        "Gas Phase Reactions Stopped - compositions should be unchanged");
+  }
+
+  /**
+   * Scenario: Reactions proceed when CO2 density >= 300 kg/m³.
+   *
+   * <p>
+   * This test verifies that bulk phase reactions proceed normally when CO2 density is above the 300
+   * kg/m³ threshold (high pressure conditions). The outlet composition should differ from the inlet
+   * composition as reactions occur.
+   * </p>
+   */
+  @Test
+  public void scenarioReactionsProceedAtHighDensity() {
+    // High pressure to ensure CO2 density > 300 kg/m³
+    // At 100 bara and 275 K, CO2 density is well above 300 kg/m³
+    SystemSrkEos sys = createBaseSystem(275.15, 100.0);
+
+    // Add reactive components
+    sys.addComponent("water", 50.0);
+    sys.addComponent("NO2", 10.0);
+    sys.addComponent("oxygen", 30.0);
+
+    Stream inlet = new Stream("Inlet Stream", sys);
+    inlet.run();
+
+    // Verify the density is above threshold
+    double density = inlet.getThermoSystem().getDensity("kg/m3");
+    System.out.println("CO2/gas density at inlet: " + density + " kg/m³");
+    Assertions.assertTrue(density >= 300.0,
+        "Test setup error: density should be >= 300 kg/m³ for this scenario");
+
+    GibbsReactorCO2 reactor = new GibbsReactorCO2("GibbsReactorCO2", inlet);
+    reactor.run();
+
+    SystemInterface outSys = reactor.getOutletStream().getThermoSystem();
+    printComposition(outSys, "Reactions Proceed (density >= 300 kg/m³)");
+
+    // Reactions should proceed, so we expect products like nitric acid and HNO2
+    // NO2 should be partially consumed, and acid products should form
+    double no2Out = outSys.getComponent("NO2").getz() * 1e6;
+    double nitricAcidOut = outSys.getComponent("nitric acid").getz() * 1e6;
+
+    // NO2 should be consumed (less than inlet)
+    Assertions.assertTrue(no2Out < 10.0,
+        "NO2 should be consumed when reactions proceed at high density");
+
+    // Products should form
+    Assertions.assertTrue(nitricAcidOut > 0.0,
+        "Nitric acid should form when reactions proceed at high density");
+  }
 }
