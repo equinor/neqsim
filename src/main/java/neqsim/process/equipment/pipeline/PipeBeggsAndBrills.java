@@ -30,7 +30,6 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li><b>Joule-Thomson effect</b> - Temperature change due to gas expansion (cooling)</li>
  * <li><b>Friction heating</b> - Viscous dissipation adding energy to the fluid</li>
  * </ul>
- * </p>
  *
  * <h3>Usage Example</h3>
  * 
@@ -1356,7 +1355,6 @@ public class PipeBeggsAndBrills extends Pipeline {
    * thermodynamics)</li>
    * <li>Friction heating - viscous dissipation</li>
    * </ul>
-   * </p>
    *
    * <p>
    * The final PHflash operation determines the equilibrium state at the new enthalpy and pressure,

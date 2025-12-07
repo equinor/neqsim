@@ -1075,6 +1075,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * <li>CONSTANT_PRESSURE: Flux is computed from the AUSM scheme</li>
    * <li>CLOSED: Zero flux</li>
    * </ul>
+   *
+   * @return 2D array of fluxes [section][conserved variable index]
    */
   private double[][] calculateFluxes(PipeSection[] oldSections) {
     double[][] fluxes = new double[numberOfSections + 1][4];
